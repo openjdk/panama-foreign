@@ -25,10 +25,18 @@ package com.sun.tools.jextract;
 
 import java.foreign.layout.Function;
 import java.foreign.layout.Layout;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.lang.model.SourceVersion;
+
+import jdk.internal.clang.Cursor;
+import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
 import com.sun.tools.jextract.tree.LayoutUtils;
+import jdk.internal.clang.TypeKind;
 
 /**
  * General utility functions
@@ -150,6 +158,31 @@ public class Utils {
             return double.class;
         } else {
             return clazz;
+        }
+    }
+
+    public static Stream<Cursor> flattenableChildren(Cursor c) {
+        return c.children()
+                .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
+    }
+
+    public static Optional<Cursor> lastChild(Cursor c) {
+        List<Cursor> children = flattenableChildren(c)
+                .collect(Collectors.toList());
+        return children.isEmpty() ? Optional.empty() : Optional.of(children.get(children.size() - 1));
+    }
+
+    public static boolean hasIncompleteArray(Cursor c) {
+        switch (c.kind()) {
+            case FieldDecl:
+                return c.type().kind() == TypeKind.IncompleteArray;
+            case UnionDecl:
+                return flattenableChildren(c)
+                        .anyMatch(Utils::hasIncompleteArray);
+            case StructDecl:
+                return lastChild(c).map(Utils::hasIncompleteArray).orElse(false);
+            default:
+                throw new IllegalStateException("Unhandled cursor kind: " + c.kind());
         }
     }
 }

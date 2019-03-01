@@ -23,6 +23,9 @@
 
 package jdk.internal.clang;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
 public class TranslationUnit {
     final long ptr;
 
@@ -42,7 +45,32 @@ public class TranslationUnit {
         return Index.tokenize(ptr, range);
     }
 
+    public final void save(Path path) throws TranslationUnitSaveException {
+        int res = Index.saveTranslationUnit(ptr, path.toAbsolutePath().toString());
+        if (res != 0) {
+            throw new TranslationUnitSaveException(path);
+        }
+    }
+
     public final void dispose() {
         Index.disposeTranslationUnit(ptr);
+    }
+
+    public static class TranslationUnitSaveException extends IOException {
+
+        static final long serialVersionUID = 1L;
+
+        TranslationUnitSaveException(Path path) {
+            super("Cannot save translation unit to: " + path.toAbsolutePath());
+        }
+    }
+
+    @Override
+    public int hashCode() {
+      return (int)ptr;
+    }
+
+    public boolean equals(Object o) {
+      return (o instanceof TranslationUnit) && ((TranslationUnit)o).ptr == ptr;
     }
 }

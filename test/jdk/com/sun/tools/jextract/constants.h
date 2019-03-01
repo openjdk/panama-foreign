@@ -30,8 +30,8 @@
 #define THREE ONE + TWO /* forward ref */
 #define TWO ONE + ONE
 
-#define FOUR 0x1L + THREE
-#define FIVE 0x1UL + FOUR
+#define FOUR (long long)0x1L + THREE //hack: force long carrier
+#define FIVE (long long)0x1UL + FOUR //hack: force long carrier
 
 #define SIX ONE +\
               TWO +\
@@ -57,5 +57,9 @@
 #define TEMP 1 + CYCLIC_2
 
 #define CHAR_VALUE 'h'
+#define MULTICHAR_VALUE 'hh'
+
+#define BOOL_VALUE (_Bool)1
+//we should have tests for char and shorts, but these are likely to be platform dependent
 
 #define SUB SUP + 2 //dependency

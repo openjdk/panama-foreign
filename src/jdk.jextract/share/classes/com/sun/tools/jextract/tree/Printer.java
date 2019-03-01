@@ -23,6 +23,7 @@
 package com.sun.tools.jextract.tree;
 
 import jdk.internal.clang.Cursor;
+import jdk.internal.clang.EvalResult;
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
@@ -100,7 +101,6 @@ public final class Printer {
             println("Element Type Kind: " + etype.kind().name());
             println("== Element Type ==");
             dumpType(etype, true);
-
         }
     }
 
@@ -124,6 +124,19 @@ public final class Printer {
             println("Kind: " + c.kind().name());
         } catch (NoSuchElementException ex) {
             println("Cursor kind unknown: " + c.kind1());
+        }
+        try (EvalResult res = c.eval()) {
+            switch (res.getKind()) {
+                case Integral:
+                    println("Constant value: " + res.getAsInt());
+                    break;
+                case FloatingPoint:
+                    println("Constant value: " + res.getAsFloat());
+                    break;
+                case StrLiteral:
+                    println("Constant value: " + res.getAsString());
+                    break;
+            }
         }
         if (! c.isInvalid()) {
             SourceLocation src = c.getSourceLocation();

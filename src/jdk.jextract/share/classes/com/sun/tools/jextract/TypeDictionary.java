@@ -44,7 +44,7 @@ import jdk.internal.clang.TypeKind;
  * A dictionary that find Java type for a given native type.
  * Each instance of TypeDictionary presents types for a given java package.
  */
-final class TypeDictionary {
+public final class TypeDictionary {
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private HeaderResolver resolver;
     private final HeaderFile headerFile;
@@ -52,13 +52,13 @@ final class TypeDictionary {
     private final Set<String> resolutionRoots;
     private int serialNo;
 
-    TypeDictionary(HeaderResolver resolver, HeaderFile headerFile) {
+    public TypeDictionary(HeaderResolver resolver, HeaderFile headerFile) {
         this.resolver = resolver;
         this.headerFile = headerFile;
         functionalTypes = new HashMap<>();
         resolutionRoots = new HashSet<>();
     }
-    
+
     private int serialNo() {
         return ++serialNo;
     }
@@ -76,7 +76,7 @@ final class TypeDictionary {
 	        return headerClass();
         }
     }
-    
+
     private String headerClass() {
         return Utils.toInternalName(headerFile.pkgName, headerFile.clsName);
     }
@@ -167,7 +167,7 @@ final class TypeDictionary {
                 String name = Utils.toClassName(Utils.getName(t));
                 String owner = recordOwnerClass(t);
                 resolutionRoots.add(owner);
-                return new JType.ClassType(owner + "$" + name);
+                return new JType.ClassType(owner, name);
             }
             case Pointer: {
                 JType jt = getInternal(t.getPointeeType().canonicalType(), funcResolver);

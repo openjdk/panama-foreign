@@ -56,7 +56,7 @@ public final class Address extends Value {
     private final PointeeKind pointeeKind;
     private final Descriptor descriptor;
 
-    private Address(PointeeKind pointeeKind, Descriptor descriptor, long size, Kind kind, Endianness endianness, Optional<Group> contents, Map<String, String> annotations) {
+    private Address(PointeeKind pointeeKind, Descriptor descriptor, long size, Kind kind, Optional<Endianness> endianness, Optional<Group> contents, Map<String, String> annotations) {
         super(kind, endianness, size, contents, annotations);
         this.pointeeKind = pointeeKind;
         this.descriptor = descriptor;
@@ -101,7 +101,7 @@ public final class Address extends Value {
      * @return the new address layout.
      */
     public static Address ofVoid(long size, Kind kind) {
-        return ofVoid(size, kind, Endianness.LITTLE_ENDIAN);
+        return ofVoid(size, kind, Optional.empty());
     }
 
     /**
@@ -111,7 +111,7 @@ public final class Address extends Value {
      * @param endianness address endianness.
      * @return the new address layout.
      */
-    public static Address ofVoid(long size, Kind kind, Endianness endianness) {
+    public static Address ofVoid(long size, Kind kind, Optional<Endianness> endianness) {
         return new Address(PointeeKind.VOID, null, size, kind, endianness, Optional.empty(), NO_ANNOS);
     }
 
@@ -133,7 +133,7 @@ public final class Address extends Value {
      * @return the new address layout.
      */
     public static Address ofLayout(long size, Layout layout, Kind kind) {
-        return ofLayout(size, layout, kind, Endianness.LITTLE_ENDIAN);
+        return ofLayout(size, layout, kind, Optional.empty());
     }
 
     /**
@@ -144,7 +144,7 @@ public final class Address extends Value {
      * @param layout addressee layout.
      * @return the new address layout.
      */
-    public static Address ofLayout(long size, Layout layout, Kind kind, Endianness endianness) {
+    public static Address ofLayout(long size, Layout layout, Kind kind, Optional<Endianness> endianness) {
         return new Address(PointeeKind.LAYOUT, layout, size, kind, endianness, Optional.empty(), NO_ANNOS);
     }
 
@@ -166,7 +166,7 @@ public final class Address extends Value {
      * @return the new address layout.
      */
     public static Address ofFunction(long size, Function function, Kind kind) {
-        return ofFunction(size, function, kind, Endianness.LITTLE_ENDIAN);
+        return new Address(PointeeKind.FUNCTION, function, size, kind, Optional.empty(), Optional.empty(), NO_ANNOS);
     }
 
     /**
@@ -177,7 +177,7 @@ public final class Address extends Value {
      * @param function addressee function.
      * @return the new address layout.
      */
-    public static Address ofFunction(long size, Function function, Kind kind, Endianness endianness) {
+    public static Address ofFunction(long size, Function function, Kind kind, Optional<Endianness> endianness) {
         return new Address(PointeeKind.FUNCTION, function, size, kind, endianness, Optional.empty(), NO_ANNOS);
     }
 
@@ -217,5 +217,11 @@ public final class Address extends Value {
     @Override
     public Address withAnnotation(String name, String value) {
         return (Address)super.withAnnotation(name, value);
+    }
+
+    @Override
+    public Address withEndianness(Endianness newEndian) {
+        return endianness().isPresent() ? this :
+                new Address(pointeeKind, descriptor, bitsSize(), kind(), Optional.of(newEndian), contents(), annotations());
     }
 }

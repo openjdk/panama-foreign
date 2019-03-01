@@ -24,9 +24,11 @@
 package com.sun.tools.jextract;
 
 import com.sun.tools.jextract.parser.Parser;
+import com.sun.tools.jextract.tree.FlexibleArrayWarningVisitor;
 import com.sun.tools.jextract.tree.Tree;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +47,7 @@ public class JextractTool {
     private final Function<HeaderFile, AsmCodeFactory> codeFactory;
     private final Collection<String> clangArgs;
     private final Collection<Path> sources;
+    private final PrintWriter err;
 
     public JextractTool(Context ctx) {
         this.headerResolver = new HeaderResolver(ctx);
@@ -55,6 +58,7 @@ public class JextractTool {
                 hf -> new AsmCodeFactory(ctx, hf);
         this.clangArgs = ctx.clangArgs;
         this.sources = ctx.sources;
+        this.err = ctx.err;
         assert sources.size() > 0;
     }
 
@@ -67,6 +71,7 @@ public class JextractTool {
                 .map(new EmptyNameHandler())
                 .map(new DuplicateDeclarationHandler())
                 .flatMap(h -> h.declarations().stream())
+                .peek(new FlexibleArrayWarningVisitor(err))
                 .collect(Collectors.groupingBy(this::headerFromDecl));
 
         //generate classes

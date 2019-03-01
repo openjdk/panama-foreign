@@ -26,9 +26,6 @@ package java.foreign.layout;
 
 import jdk.internal.foreign.memory.DescriptorParser;
 
-import java.util.Map;
-import java.util.Optional;
-
 /**
  * This interface models the layout of a group of bits in a memory region.
  * Layouts can be annotated in order to embed domain specific knowledge, and they can be referenced by name
@@ -50,4 +47,12 @@ public interface Layout extends Descriptor {
     static Layout of(String s) {
         return new DescriptorParser(s).parseLayout();
     }
+
+    /**
+     * Get a layout with endianness if it's not specified already.
+     *
+     * @return a layout where any contents without endianness explicitly
+     *         specified yet will have the specified endianness.
+     */
+    Layout withEndianness(Value.Endianness newEndian);
 }

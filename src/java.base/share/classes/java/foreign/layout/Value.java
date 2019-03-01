@@ -26,6 +26,7 @@ package java.foreign.layout;
 
 import java.util.Map;
 import java.util.Optional;
+import jdk.internal.misc.Unsafe;
 
 /**
  * A value layout. This layout is used to model basic native types, such as integral values and floating point numbers.
@@ -60,15 +61,19 @@ public class Value extends AbstractDescriptor<Value> implements Layout {
         /** Least-significant-bit stored at lowest address. */
         LITTLE_ENDIAN,
         /** Most-significant-bit stored at lowest address. */
-        BIG_ENDIAN
+        BIG_ENDIAN;
+
+        public static Endianness hostEndian() {
+            return Unsafe.getUnsafe().isBigEndian() ? BIG_ENDIAN : LITTLE_ENDIAN;
+        }
     }
 
     private final Kind kind;
-    private final Endianness endianness;
+    private final Optional<Endianness> endianness;
     private final long size;
     private final Optional<Group> contents;
 
-    protected Value(Kind kind, Endianness endianness, long size, Optional<Group> contents, Map<String, String> annotations) {
+    protected Value(Kind kind, Optional<Endianness> endianness, long size, Optional<Group> contents, Map<String, String> annotations) {
         super(annotations);
         this.kind = kind;
         this.endianness = endianness;
@@ -88,8 +93,32 @@ public class Value extends AbstractDescriptor<Value> implements Layout {
      * Returns the value endianness.
      * @return the value endianness.
      */
-    public Endianness endianness() {
+    public Optional<Endianness> endianness() {
         return endianness;
+    }
+
+    /**
+     * Get a Value layout with endianness if it's not specified already.
+     * @return Value layout with new specified endianness.
+     */
+    public Value withEndianness(Endianness newEndian) {
+        if (endianness.isEmpty()) {
+            return new Value(kind, Optional.of(newEndian), size, contents, annotations());
+        } else {
+            return this;
+        }
+    }
+
+    public boolean isSigned() {
+        return kind != Kind.INTEGRAL_UNSIGNED;
+    }
+
+    /**
+     * Returns true if the value endianness match native byte order
+     * @return true if endianness match system architecture.
+     */
+    public boolean isNativeByteOrder() {
+        return endianness.isEmpty() ? true : endianness.get() == Endianness.hostEndian();
     }
 
     @Override
@@ -121,7 +150,7 @@ public class Value extends AbstractDescriptor<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofFloatingPoint(long size) {
-        return ofFloatingPoint(Endianness.LITTLE_ENDIAN, size);
+        return ofFloatingPoint(Optional.empty(), size);
     }
 
     /**
@@ -131,6 +160,10 @@ public class Value extends AbstractDescriptor<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofFloatingPoint(Endianness endianness, long size) {
+        return ofFloatingPoint(Optional.of(endianness), size);
+    }
+
+    public static Value ofFloatingPoint(Optional<Endianness> endianness, long size) {
         return new Value(Kind.FLOATING_POINT, endianness, size, Optional.empty(), NO_ANNOS);
     }
 
@@ -140,7 +173,7 @@ public class Value extends AbstractDescriptor<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofUnsignedInt(long size) {
-        return ofUnsignedInt(Endianness.LITTLE_ENDIAN, size);
+        return ofUnsignedInt(Optional.empty(), size);
     }
 
     /**
@@ -150,6 +183,10 @@ public class Value extends AbstractDescriptor<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofUnsignedInt(Endianness endianness, long size) {
+        return ofUnsignedInt(Optional.of(endianness), size);
+    }
+
+    public static Value ofUnsignedInt(Optional<Endianness> endianness, long size) {
         return new Value(Kind.INTEGRAL_UNSIGNED, endianness, size, Optional.empty(), NO_ANNOS);
     }
 
@@ -159,7 +196,7 @@ public class Value extends AbstractDescriptor<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofSignedInt(long size) {
-        return ofSignedInt(Endianness.LITTLE_ENDIAN, size);
+        return ofSignedInt(Optional.empty(), size);
     }
 
     /**
@@ -169,15 +206,18 @@ public class Value extends AbstractDescriptor<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofSignedInt(Endianness endianness, long size) {
+        return ofSignedInt(Optional.of(endianness), size);
+    }
+
+    public static Value ofSignedInt(Optional<Endianness> endianness, long size) {
         return new Value(Kind.INTEGRAL_SIGNED, endianness, size, Optional.empty(), NO_ANNOS);
     }
 
     @Override
     public String toString() {
-        String prefix = wrapWithAnnotations(String.format("%s%d",
-                endianness == Endianness.BIG_ENDIAN ?
-                        kind.tag.toUpperCase() : kind.tag,
-                size));
+        String prefix = wrapWithAnnotations(String.format("%s%s%d",
+                endianness.map(e -> e == Endianness.BIG_ENDIAN ? ">" : "<").orElse(""),
+                kind.tag, size));
         return contents().map(g -> prefix + "=" + g).orElse(prefix);
     }
 

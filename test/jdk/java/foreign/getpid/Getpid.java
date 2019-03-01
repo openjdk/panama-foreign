@@ -28,9 +28,11 @@ import java.foreign.Libraries;
 /**
  * @test
  * @requires os.family != "windows"
+ * @build GetpidHelper
  * @run main Getpid
  */
-public class Getpid {
+public class Getpid extends GetpidHelper {
+
     public void testGetpid() {
         // Request an instance of unistd. This will magically weave an implementation
         // class on the fly (if it't not already there) and return an instance of it
@@ -39,14 +41,7 @@ public class Getpid {
         // call getpid(), which will return the pid for the current JVM process
         int pid = unistd.getpid();
 
-
-        int pidFromJApi = (int)ProcessHandle.current().pid();
-        if (pid != pidFromJApi) {
-            throw new AssertionError("process ids do not match: " + pid + " != " + pidFromJApi);
-        } else {
-            System.out.println("pid from unistd.h getpid() " + pid);
-            System.out.println("pid from ProcessHandle.pid() " + pidFromJApi);
-        }
+        comparePids(pid, "unistd.h");
     }
 
     public static void main(String[] args) {

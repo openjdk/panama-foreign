@@ -66,8 +66,7 @@ public class Parser {
     }
 
     public HeaderTree parse(Path path, Collection<String> args) {
-        final List<HeaderTree> headers = new ArrayList<>();
-        final Index index = LibClang.createIndex();
+        final Index index = LibClang.createIndex(false);
         logger.info(() -> {
             StringBuilder sb = new StringBuilder(
                     "Parsing header file " + path + " with following args:\n");
@@ -91,7 +90,7 @@ public class Parser {
             },
             supportMacros, args.toArray(new String[0]));
 
-        MacroParser macroParser = new MacroParser();
+        MacroParser macroParser = new MacroParser(tuCursor.getTranslationUnit());
         List<Tree> decls = new ArrayList<>();
         tuCursor.children().
             peek(c -> logger.finest(
@@ -119,47 +118,21 @@ public class Parser {
                         decls.add(treeMaker.createTree(c));
                     }
                 } else if (supportMacros && isMacro(c) && src.path() != null) {
-                    handleMacro(macroParser, c);
+                    String macroName = c.spelling();
+                    if (c.isMacroFunctionLike()) {
+                        logger.fine(() -> "Skipping function-like macro " + macroName);
+                    } else {
+                        logger.fine(() -> "Defining macro " + macroName);
+
+                        TranslationUnit tu = c.getTranslationUnit();
+                        SourceRange range = c.getExtent();
+                        String[] tokens = tu.tokens(range);
+                        decls.add(treeMaker.createMacro(c, macroParser.eval(c, tokens)));
+                    }
                 }
             });
 
-        decls.addAll(macros(macroParser));
         return treeMaker.createHeader(tuCursor, path, decls);
-    }
-
-    private List<MacroTree> macros(MacroParser macroParser) {
-        return macroParser.macros().stream()
-            .map(m -> treeMaker.createMacro(m.cursor(), macroValue(m)))
-            .collect(Collectors.toList());
-    }
-
-    private Optional<Object> macroValue(MacroParser.Macro m) {
-        try {
-            return Optional.ofNullable(m.value());
-        } catch (Exception e) {
-            return Optional.empty();
-        }
-    }
-
-    private void handleMacro(MacroParser macroParser, Cursor cursor) {
-        String macroName = cursor.spelling();
-        if (cursor.isMacroFunctionLike()) {
-            logger.fine(() -> "Skipping function-like macro " + macroName);
-            return;
-        }
-
-        if (macroParser.isDefined(macroName)) {
-            logger.fine(() -> "Macro " + macroName + " already handled");
-            return;
-        }
-
-        logger.fine(() -> "Defining macro " + macroName);
-
-        TranslationUnit tu = cursor.getTranslationUnit();
-        SourceRange range = cursor.getExtent();
-        String[] tokens = tu.tokens(range);
-
-        macroParser.parse(cursor, tokens);
     }
 
     private boolean isMacro(Cursor c) {
