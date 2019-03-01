@@ -22,37 +22,66 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.foreign.layout;
 
-import jdk.internal.foreign.memory.DescriptorParser;
+#ifdef _WIN64
+  #include <winsock2.h>
+  #define EXPORT __declspec(dllexport)
+#else
+  #include <stdint.h>
+  #include <arpa/inet.h>
+  #define EXPORT
+#endif
 
-/**
- * This interface models the layout of a group of bits in a memory region.
- * Layouts can be annotated in order to embed domain specific knowledge, and they can be referenced by name
- * (see {@link Unresolved}). A layout is always associated with a size (in bits).
- */
-public interface Layout extends Descriptor {
-    /**
-     * Computes the layout size, in bits
-     * @return the layout size.
-     */
-    long bitsSize();
+// Linux not have ntohll, use be64toh
+#ifdef be64toh
+  #define ntohll be64toh
+  #define htonll htobe64
+#endif
 
-    @Override
-    Layout withAnnotation(String name, String value);
+struct HostNetworkValues {
+  union {
+    uint16_t hs;
+    uint32_t hl;
+    uint64_t hll;
+  };
+  uint16_t ns;
+  uint32_t nl;
+  uint64_t nll;
+};
 
-    @Override
-    Layout stripAnnotations();
+static void calc(struct HostNetworkValues *p) {
+  p->ns = htons(p->hs);
+  p->nl = htonl(p->hl);
+  p->nll = htonll(p->hll);
+}
 
-    static Layout of(String s) {
-        return new DescriptorParser(s).parseLayout();
+EXPORT long initBE(struct HostNetworkValues *p, uint64_t seed) {
+  p->hll = ntohll(seed);
+  calc(p);
+  return p->hll;
+}
+
+EXPORT long initHost(struct HostNetworkValues *p, uint64_t seed) {
+  p->hll = seed;
+  calc(p);
+  return p->hll;
+}
+
+EXPORT long isSameValue(struct HostNetworkValues *p, uint64_t seed) {
+    struct HostNetworkValues v;
+    initHost(&v, seed);
+    // Not use memcmp because padding
+    if (p->hll != v.hll) {
+        return (p->hll);
     }
-
-    /**
-     * Get a layout with endianness if it's not specified already.
-     *
-     * @return a layout where any contents without endianness explicitly
-     *         specified yet will have the specified endianness.
-     */
-    Layout withEndianness(Value.Endianness newEndian);
+    if (p->ns != v.ns) {
+        return p->ns;
+    }
+    if (p->nl != v.nl) {
+        return p->nl;
+    }
+    if (p->nll != v.nll) {
+        return p->nll;
+    }
+    return 0;
 }

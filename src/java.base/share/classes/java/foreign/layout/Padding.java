@@ -85,4 +85,7 @@ public class Padding extends AbstractDescriptor<Padding> implements Layout {
     Padding withAnnotations(Map<String, String> annotations) {
         return new Padding(size, annotations);
     }
+
+    @Override
+    public Padding withEndianness(Value.Endianness newEndian) { return this; }
 }
