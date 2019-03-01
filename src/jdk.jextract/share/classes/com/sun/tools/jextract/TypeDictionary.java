@@ -45,7 +45,6 @@ import jdk.internal.clang.TypeKind;
  * Each instance of TypeDictionary presents types for a given java package.
  */
 public final class TypeDictionary {
-    private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private HeaderResolver resolver;
     private final HeaderFile headerFile;
     private final Map<String, JType> functionalTypes;
@@ -180,7 +179,6 @@ public final class TypeDictionary {
             }
             case Typedef: {
                 Type truetype = t.canonicalType();
-                logger.fine(() -> "Typedef " + t.spelling() + " as " + truetype.spelling());
                 return getInternal(truetype, funcResolver);
             }
             case BlockPointer:

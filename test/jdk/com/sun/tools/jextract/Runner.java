@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
@@ -47,6 +48,8 @@ import javax.tools.ToolProvider;
 
 import com.sun.tools.jextract.JextractTool;
 import com.sun.tools.jextract.JarWriter;
+import com.sun.tools.jextract.Log;
+import com.sun.tools.jextract.Options;
 import com.sun.tools.jextract.Writer;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
@@ -75,10 +78,8 @@ import com.sun.tools.jextract.Context;
  * @run testng Runner
  */
 public class Runner {
-    private final Path nativeSrc;
     private final Path[] javaSrcFiles;
     private final Context ctx;
-    private final String pkg;
 
     private InMemoryFileManager<StandardJavaFileManager> mfm;
     private ClassLoader expectedCL;
@@ -88,19 +89,21 @@ public class Runner {
     private Object[][] clz_data;
 
     public Runner(Path nativeSrc, String pkg, Path[] javaSrcFiles) {
-        this.ctx = new Context();
-        this.nativeSrc = nativeSrc;
-        this.pkg = pkg;
         this.javaSrcFiles = javaSrcFiles;
+        this.ctx = createContext(nativeSrc, pkg);
     }
 
-    private Writer extract() throws IOException {
+    private static Context createContext(Path nativeSrc, String pkg) {
         if (!Files.isReadable(nativeSrc)) {
             throw new IllegalArgumentException("Cannot read the file: " + nativeSrc);
         }
-        Path p = nativeSrc.toAbsolutePath();
-        ctx.setTargetPackage(pkg);
-        ctx.addSource(p);
+        nativeSrc = nativeSrc.toAbsolutePath();
+        Options.Builder options = Options.builder();
+        options.setTargetPackage(pkg);
+        return new Context(List.of(nativeSrc.toAbsolutePath()), options.build(), Log.createDefault());
+    }
+
+    private Writer extract() throws IOException {
         return new JextractTool(ctx).processHeaders();
     }
 
@@ -118,7 +121,7 @@ public class Runner {
     public void testJarManifest() throws IOException {
         // Get the jar
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        new JarWriter(writer).writeJarFile(new JarOutputStream(bos), new String[0]);
+        new JarWriter(ctx, writer).writeJarFile(new JarOutputStream(bos), new String[0]);
 
         System.out.println("Jar built, verifying...");
         JarInputStream jis = new JarInputStream(new ByteArrayInputStream(bos.toByteArray()));

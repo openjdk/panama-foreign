@@ -22,121 +22,34 @@
  */
 package com.sun.tools.jextract;
 
-import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
-import java.util.Map;
-import java.util.Set;
-import java.util.LinkedHashSet;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 /**
  * The setup for the tool execution
  */
 public final class Context {
-    // The args for parsing C
-    public final List<String> clangArgs;
-    // The set of source header files
-    public final Set<Path> sources;
-    // The list of library names
-    public final List<String> libraryNames;
-    // The list of library paths
-    public final List<String> libraryPaths;
-    // whether library paths are recorded in .class files or not?
-    public boolean recordLibraryPath;
-    // Symbol patterns to be included
-    public final List<Pattern> includeSymbols;
-    // Symbol patterns to be excluded
-    public final List<Pattern> excludeSymbols;
-    public MissingSymbolAction missingSymbolAction;
-    // no NativeLocation info
-    public boolean noNativeLocations;
-    // generate static forwarder class or not?
-    public boolean genStaticForwarder;
-    // target package
-    public String targetPackage;
-    // package mappings
-    public final Map<Path, String> pkgMappings = new LinkedHashMap<>();
+    public final List<Path> sources;
 
-    public final PrintWriter out;
-    public final PrintWriter err;
+    public final Options options;
+    public final Log log;
 
-    final Logger logger = Logger.getLogger(getClass().getPackage().getName());
-
-    public Context(PrintWriter out, PrintWriter err) {
-        this.clangArgs = new ArrayList<>();
-        this.sources = new LinkedHashSet<>();
-        this.libraryNames = new ArrayList<>();
-        this.libraryPaths = new ArrayList<>();
-        this.includeSymbols = new ArrayList<>();
-        this.excludeSymbols = new ArrayList<>();
-        this.out = out;
-        this.err = err;
+    public Context(List<Path> sources, Options options, Log log) {
+        this.sources = sources;
+        this.options = options;
+        this.log = log;
     }
 
-    public Context() {
-        this(new PrintWriter(System.out, true), new PrintWriter(System.err, true));
+    public static Context createDefault() {
+        return new Context(
+                List.of(),
+                Options.createDefault(),
+                Log.createDefault()
+        );
     }
 
-    public void addClangArg(String arg) {
-        clangArgs.add(arg);
-    }
-
-    public void addSource(Path path) {
-        sources.add(path);
-    }
-
-    public void addLibraryName(String name) {
-        libraryNames.add(name);
-    }
-
-    public void addLibraryPath(String path) {
-        libraryPaths.add(path);
-    }
-
-    public void setNoNativeLocations() {
-        noNativeLocations = true;
-    }
-
-    public void setMissingSymbolAction(MissingSymbolAction msa) {
-        missingSymbolAction = msa;
-    }
-
-    public void setRecordLibraryPath() {
-        recordLibraryPath = true;
-    }
-
-    public void addIncludeSymbols(String pattern) {
-        includeSymbols.add(Pattern.compile(pattern));
-    }
-
-    public void addExcludeSymbols(String pattern) {
-        excludeSymbols.add(Pattern.compile(pattern));
-    }
-
-    public void setGenStaticForwarder(boolean flag) {
-        this.genStaticForwarder = flag;
-    }
-
-    public void setTargetPackage(String pkg) {
-        this.targetPackage = pkg;
-    }
-
-    public void addPackageMapping(Path path, String pkg) {
-        pkgMappings.put(path, pkg);
-    }
-
-    // return the absolute path of the library of given name by searching
-    // in the given array of paths.
-    public static Optional<Path> findLibraryPath(Path[] paths, String libName) {
-        return Arrays.stream(paths).
-                map(p -> p.resolve(System.mapLibraryName(libName))).
-                filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
+    static Path getBuiltinHeadersDir() {
+        return Paths.get(System.getProperty("java.home"), "conf", "jextract");
     }
 }

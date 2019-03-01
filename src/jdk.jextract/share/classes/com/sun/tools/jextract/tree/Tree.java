@@ -26,7 +26,6 @@ import java.util.Objects;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.SourceLocation;
-import jdk.internal.clang.SourceRange;
 
 public class Tree {
     private final Cursor c;

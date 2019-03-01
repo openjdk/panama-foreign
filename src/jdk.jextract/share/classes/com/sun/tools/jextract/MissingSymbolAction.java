@@ -23,28 +23,27 @@
 
 package com.sun.tools.jextract;
 
-import java.io.PrintWriter;
 import java.util.function.BiPredicate;
 
 // What to do on missing native library symbol?
 public enum MissingSymbolAction {
     // throw error on missing symbol
-    ERROR((err, name) -> { throw new RuntimeException(Main.format("err.symbol.not.found", name)); }),
+    ERROR((log, name) -> { throw new RuntimeException(Log.format("err.symbol.not.found", name)); }),
 
     // issue warning and exclude the symbol for the output
-    EXCLUDE((err, name) -> { err.println(Main.format("warn.symbol.excluded", name)); return true; }),
+    EXCLUDE((log, name) -> { log.printWarning("warn.symbol.excluded", name); return true; }),
 
     // ignore and generate the symbol ("I know what I am doing")
-    IGNORE((err, name) -> false);
+    IGNORE((log, name) -> false);
 
-    private final BiPredicate<PrintWriter, String> action;
+    private final BiPredicate<Log, String> action;
 
-    private MissingSymbolAction(BiPredicate<PrintWriter, String> action) {
+    private MissingSymbolAction(BiPredicate<Log, String> action) {
         this.action = action;
     }
 
     // return if the symbol has to be excluded for the output
-    boolean handle(PrintWriter err, String name) {
-        return action.test(err, name);
+    boolean handle(Log log, String name) {
+        return action.test(log, name);
     }
 }

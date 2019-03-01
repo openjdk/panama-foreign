@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import com.sun.tools.jextract.tree.Tree;
 import jdk.internal.org.objectweb.asm.FieldVisitor;
@@ -77,7 +78,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
 
     AsmCodeFactoryExt(Context ctx, HeaderFile header) {
         super(ctx, header);
-        logger.info(() -> "Instantiate StaticForwarderGenerator for " + header.path);
+        log.print(Level.INFO, () -> "Instantiate StaticForwarderGenerator for " + header.path);
         this.headerClassNameDesc = "L" + headerClassName + ";";
         this.cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
         this.cw.visit(V1_8, ACC_PUBLIC | ACC_FINAL, getClassName(),
@@ -125,7 +126,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         if (super.visitFunction(funcTree, jt)) {
             assert (jt instanceof JType.Function);
             JType.Function fn = (JType.Function)jt;
-            logger.fine(() -> "Add method: " + fn.getSignature(false));
+            log.print(Level.FINE, () -> "Add method: " + fn.getSignature(false));
             emitStaticForwarder(funcTree.name(), fn.getDescriptor(), fn.getSignature(false), fn.isVarArgs);
             fn.visitInner(cw);
             return true;
@@ -139,7 +140,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         if (super.visitMacro(macroTree, jt)) {
             String name = macroTree.name();
             Object value = macroTree.value().get();
-            logger.fine(() -> "Adding macro " + name);
+            log.print(Level.FINE, () -> "Adding macro " + name);
             Class<?> macroType = Utils.unboxIfNeeded(value.getClass());
             String sig = Type.getType(macroType).getDescriptor();
             FieldVisitor fv = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, sig, null, value);

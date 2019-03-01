@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import com.sun.tools.jextract.parser.Parser;
 import com.sun.tools.jextract.tree.HeaderTree;
@@ -60,6 +62,12 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
     // Tree instances that are to be replaced from "decls" list are
     // saved in the following Map.
     private final Map<Cursor, Tree> replacements = new HashMap<>();
+
+    private final Log log;
+
+    public TypedefHandler(Context ctx) {
+        this.log = ctx.log;
+    }
 
     @Override
     public HeaderTree transform(HeaderTree ht) {
@@ -108,6 +116,7 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
                  * declaration.
                  */
                 replacements.put(defTree.cursor(), ((StructTree)defTree).withName(tt.name()));
+                log.print(Level.FINE, () -> "Typedef " + defTree.type().spelling() + " as " + tt.name());
                 return null;
             } else if (defTree.name().equals(tt.name())) {
                 /*
@@ -132,13 +141,13 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
             return;
         }
 
-        Context context = new Context();
+        Context context = Context.createDefault();
         Parser p = new Parser(context, true);
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);
         HeaderTree header = p.parse(Paths.get(args[0]), clangArgs);
         TreePrinter printer = new TreePrinter();
-        TypedefHandler handler = new TypedefHandler();
+        TypedefHandler handler = new TypedefHandler(context);
         handler.transform(header).accept(printer, null);
     }
 }

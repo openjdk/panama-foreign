@@ -26,7 +26,6 @@ package com.sun.tools.jextract.parser;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Collection;
 import java.util.function.Predicate;
@@ -46,7 +45,7 @@ public class FindSymbol {
         final Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         final List<String> clangArgs = List.of("-I" + builtinInc);
 
-        Context context = new Context();
+        Context context = Context.createDefault();
         final Parser parser = new Parser(context, true);
         final HeaderTree tu = parser.parse(Paths.get(args[0]), clangArgs);
         final Printer p = new Printer();
