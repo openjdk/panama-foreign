@@ -24,7 +24,6 @@
 /*
  * @test
  * @modules java.base/jdk.internal.foreign.abi
- * @requires os.family != "windows"
  * @run testng EndianTest
  */
 
