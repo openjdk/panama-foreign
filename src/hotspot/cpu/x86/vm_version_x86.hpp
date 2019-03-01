@@ -336,7 +336,7 @@ protected:
 #define CPU_AVX512_VPOPCNTDQ ((uint64_t)UCONST64(0x2000000000)) // Vector popcount
 #define CPU_VPCLMULQDQ ((uint64_t)UCONST64(0x4000000000)) //Vector carryless multiplication
 #define CPU_VAES ((uint64_t)UCONST64(0x8000000000))    // Vector AES instructions
-#define CPU_VNNI ((uint64_t)UCONST64(0x16000000000))   // Vector Neural Network Instructions
+#define CPU_VNNI ((uint64_t)UCONST64(0x10000000000))   // Vector Neural Network Instructions
 #define CPU_AVX512VBMI ((uint64_t)UCONST64(0x10000000000))    // Vector BMI instructions
 
   enum Extended_Family {
@@ -823,7 +823,7 @@ public:
   static bool supports_avx512vbmi() { return (_features & CPU_AVX512VBMI) != 0; }
   static bool supports_avx512vlbw() { return (supports_evex() && supports_avx512bw() && supports_avx512vl()); }
   static bool supports_avx512vldq() { return (supports_evex() && supports_avx512dq() && supports_avx512vl()); }
-  static bool supports_avx512vlbwdq() { return (supports_evex() && supports_avx512vl() && 
+  static bool supports_avx512vlbwdq() { return (supports_evex() && supports_avx512vl() &&
                                                 supports_avx512bw() && supports_avx512dq()); }
   static bool supports_avx512novl() { return (supports_evex() && !supports_avx512vl()); }
   static bool supports_avx512nobw() { return (supports_evex() && !supports_avx512bw()); }
