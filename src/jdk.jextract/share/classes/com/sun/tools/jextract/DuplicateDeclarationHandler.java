@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import com.sun.tools.jextract.parser.Parser;
 import com.sun.tools.jextract.tree.EnumTree;
 import com.sun.tools.jextract.tree.FunctionTree;
@@ -215,7 +214,7 @@ final class DuplicateDeclarationHandler extends SimpleTreeVisitor<Void, Void>
             return;
         }
 
-        Context context = new Context();
+        Context context = Context.createDefault();
         Parser p = new Parser(context, true);
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);

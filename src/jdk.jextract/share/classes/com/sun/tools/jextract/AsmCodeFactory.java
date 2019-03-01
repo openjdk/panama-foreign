@@ -23,16 +23,14 @@
 package com.sun.tools.jextract;
 
 import java.foreign.layout.Layout;
-import java.io.PrintWriter;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import jdk.internal.clang.SourceLocation;
@@ -90,20 +88,20 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     protected final Map<String, byte[]> types;
     protected final List<String> libraryNames;
     protected final List<String> libraryPaths;
-    protected final PrintWriter err;
     protected final boolean noNativeLocations;
-    protected final Logger logger = Logger.getLogger(getClass().getPackage().getName());
+
+    protected final Log log;
 
     AsmCodeFactory(Context ctx, HeaderFile header) {
-        logger.info(() -> "Instantiate AsmCodeFactory for " + header.path);
+        this.log = ctx.log;
+        log.print(Level.INFO, () -> "Instantiate AsmCodeFactory for " + header.path);
         this.headerFile = header;
         this.headerClassName = Utils.toInternalName(headerFile.pkgName, headerFile.clsName);
         this.global_cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         this.types = new HashMap<>();
-        this.libraryNames = ctx.libraryNames;
-        this.libraryPaths = ctx.recordLibraryPath? ctx.libraryPaths : null;
-        this.err = ctx.err;
-        this.noNativeLocations = ctx.noNativeLocations;
+        this.libraryNames = ctx.options.libraryNames;
+        this.libraryPaths = ctx.options.recordLibraryPath? ctx.options.libraryPaths : null;
+        this.noNativeLocations = ctx.options.noNativeLocations;
         global_cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
                 headerClassName,
                 null, "java/lang/Object", null);
@@ -149,10 +147,8 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     }
 
     private void handleException(Exception ex) {
-        err.println(Main.format("cannot.write.class.file", headerFile.pkgName + "." + headerFile.clsName, ex));
-        if (Main.DEBUG) {
-            ex.printStackTrace(err);
-        }
+        log.printError("cannot.write.class.file", headerFile.pkgName + "." + headerFile.clsName, ex);
+        log.printStackTrace(ex);
     }
 
     private void annotateNativeLocation(ClassVisitor cw, Tree tree) {
@@ -170,7 +166,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
 
     private void addClassIfNeeded(String clsName, byte[] bytes) {
         if (null != types.put(clsName, bytes)) {
-            err.println(Main.format("warn.class.overwritten", clsName));
+            log.printWarning("warn.class.overwritten", clsName);
         }
     }
 
@@ -277,12 +273,12 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         }
         String nativeName = structTree.name();
         Type type = structTree.type();
-        logger.fine(() -> "Create struct: " + nativeName);
+        log.print(Level.FINE, () -> "Create struct: " + nativeName);
 
         String intf = Utils.toClassName(nativeName);
         String name = headerClassName + "$" + intf;
 
-        logger.fine(() -> "Define class " + name + " for native type " + nativeName);
+        log.print(Level.FINE, () -> "Define class " + name + " for native type " + nativeName);
         /* FIXME: Member interface is implicit static, also ASM.CheckClassAdapter is not
          * taking static as a valid flag, so comment this out during development.
          */
@@ -324,12 +320,12 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
 
     private void createAnnotationCls(Tree tree) {
         String nativeName = tree.name();
-        logger.fine(() -> "Create annotation for: " + nativeName);
+        log.print(Level.FINE, () -> "Create annotation for: " + nativeName);
 
         String intf = Utils.toClassName(nativeName);
         String name = headerClassName + "$" + intf;
 
-        logger.fine(() -> "Define class " + name + " for native type " + nativeName);
+        log.print(Level.FINE, () -> "Define class " + name + " for native type " + nativeName);
         global_cw.visitInnerClass(name, headerClassName, intf,
                 ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE | ACC_ANNOTATION);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -357,11 +353,11 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         String nDesc = fnif.getFunction().getNativeDescriptor();
         intf = fnif.getSimpleName();
         nativeName = "anonymous function";
-        logger.fine(() -> "Create FunctionalInterface " + intf);
+        log.print(Level.FINE, () -> "Create FunctionalInterface " + intf);
 
         final String name = headerClassName + "$" + intf;
 
-        logger.fine(() -> "Define class " + name + " for native type " + nativeName + nDesc);
+        log.print(Level.FINE, () -> "Define class " + name + " for native type " + nativeName + nDesc);
         global_cw.visitInnerClass(name, headerClassName, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
@@ -398,8 +394,8 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
 
     @Override
     public Boolean visitTree(Tree tree, JType jt) {
-        logger.warning(() -> "Unsupported declaration tree:");
-        logger.warning(() -> tree.toString());
+        log.print(Level.WARNING, () -> "Unsupported declaration tree:");
+        log.print(Level.WARNING, () -> tree.toString());
         return true;
     }
 
@@ -407,7 +403,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     public Boolean visitFunction(FunctionTree funcTree, JType jt) {
         assert (jt instanceof JType.Function);
         JType.Function fn = (JType.Function)jt;
-        logger.fine(() -> "Add method: " + fn.getSignature(false));
+        log.print(Level.FINE, () -> "Add method: " + fn.getSignature(false));
         int flags = ACC_PUBLIC | ACC_ABSTRACT;
         if (fn.isVarArgs) {
             flags |= ACC_VARARGS;
@@ -419,7 +415,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         for (int i = 0; i < arg_cnt; i++) {
             String name = funcTree.paramName(i);
             final int tmp = i;
-            logger.finer(() -> "  arg " + tmp + ": " + name);
+            log.print(Level.FINER, () -> "  arg " + tmp + ": " + name);
             mv.visitParameter(name, 0);
         }
 
@@ -447,12 +443,12 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
 
     private AsmCodeFactory generateDecl(Tree tree) {
         try {
-            logger.fine(() -> "Process tree " + tree.name());
+            log.print(Level.FINE, () -> "Process tree " + tree.name());
             tree.accept(this, tree.isPreprocessing() ? null : headerFile.dictionary().lookup(tree.type()));
         } catch (Exception ex) {
             handleException(ex);
-            logger.warning("Tree causing above exception is: " + tree.name());
-            logger.warning(() -> tree.toString());
+            log.print(Level.WARNING, () -> "Tree causing above exception is: " + tree.name());
+            log.print(Level.WARNING, () -> tree.toString());
         }
         return this;
     }
@@ -460,12 +456,12 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     @Override
     public Boolean visitMacro(MacroTree macroTree, JType jt) {
         if (!macroTree.isConstant()) {
-            logger.fine(() -> "Skipping unrecognized object-like macro " + macroTree.name());
+            log.print(Level.FINE, () -> "Skipping unrecognized object-like macro " + macroTree.name());
             return false;
         }
         String name = macroTree.name();
         Object value = macroTree.value().get();
-        logger.fine(() -> "Adding macro " + name);
+        log.print(Level.FINE, () -> "Adding macro " + name);
         Class<?> macroType = Utils.unboxIfNeeded(value.getClass());
 
         String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(macroType));

@@ -23,7 +23,6 @@
 package com.sun.tools.jextract.tree;
 
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,6 @@ import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
-import jdk.internal.clang.Type;
 
 public class TreeMaker {
     private final Map<Cursor, Tree> treeCache = new HashMap<>();

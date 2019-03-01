@@ -27,23 +27,24 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.jar.JarOutputStream;
-import java.util.logging.Logger;
+import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 
 import static java.nio.file.StandardOpenOption.*;
 
 // Utility class to generate a .jmod file
 public final class JarWriter {
-    private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    private final Log log;
 
     private final Writer writer;
 
-    public JarWriter(Writer writer) {
+    public JarWriter(Context ctx, Writer writer) {
+        this.log = ctx.log;
         this.writer = writer;
     }
 
     public void writeJarFile(Path jarpath, String[] args) throws IOException {
-        logger.info(() -> "Collecting jar file " + jarpath);
+        log.print(Level.INFO, () -> "Collecting jar file " + jarpath);
         try (OutputStream os = Files.newOutputStream(jarpath, CREATE, TRUNCATE_EXISTING, WRITE);
                 JarOutputStream jar = new JarOutputStream(os)) {
             writeJarFile(jar, args);
@@ -54,7 +55,7 @@ public final class JarWriter {
         writer.results().forEach((cls, bytes) -> {
                 try {
                     String path = cls.replace('.', File.separatorChar) + ".class";
-                    logger.fine(() -> "Add " + path);
+                    log.print(Level.FINE, () -> "Add " + path);
                     jar.putNextEntry(new ZipEntry(path));
                     jar.write(bytes);
                     jar.closeEntry();

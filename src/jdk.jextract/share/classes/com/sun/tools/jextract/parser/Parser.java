@@ -24,18 +24,13 @@ package com.sun.tools.jextract.parser;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import java.util.logging.Level;
 
 import com.sun.tools.jextract.Context;
+import com.sun.tools.jextract.Log;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -45,29 +40,24 @@ import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.SourceRange;
 import jdk.internal.clang.TranslationUnit;
 import com.sun.tools.jextract.tree.HeaderTree;
-import com.sun.tools.jextract.tree.MacroTree;
-import com.sun.tools.jextract.tree.SimpleTreeVisitor;
 import com.sun.tools.jextract.tree.Tree;
 import com.sun.tools.jextract.tree.TreeMaker;
 import com.sun.tools.jextract.tree.TreePrinter;
 
 public class Parser {
-    private final PrintWriter out;
-    private final PrintWriter err;
     private final TreeMaker treeMaker;
     private final boolean supportMacros;
-    private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    private final Log log;
 
     public Parser(Context context, boolean supportMacros) {
-        this.out = context.out;
-        this.err = context.err;
+        this.log = context.log;
         this.treeMaker = new TreeMaker();
         this.supportMacros = supportMacros;
     }
 
     public HeaderTree parse(Path path, Collection<String> args) {
         final Index index = LibClang.createIndex(false);
-        logger.info(() -> {
+        log.print(Level.INFO, () -> {
             StringBuilder sb = new StringBuilder(
                     "Parsing header file " + path + " with following args:\n");
             int i = 0;
@@ -83,8 +73,8 @@ public class Parser {
 
         Cursor tuCursor = index.parse(path.toString(),
             d -> {
-                err.println(d);
-                if (d.severity() >  Diagnostic.CXDiagnostic_Warning) {
+                log.print(Level.INFO, "Clang diagnostic: " + d.toString());
+                if (d.severity() > Diagnostic.CXDiagnostic_Warning) {
                     throw new RuntimeException(d.toString());
                 }
             },
@@ -93,22 +83,22 @@ public class Parser {
         MacroParser macroParser = new MacroParser(tuCursor.getTranslationUnit());
         List<Tree> decls = new ArrayList<>();
         tuCursor.children().
-            peek(c -> logger.finest(
+            peek(c -> log.print(Level.FINEST,
                 () -> "Cursor: " + c.spelling() + "@" + c.USR() + "?" + c.isDeclaration())).
             forEach(c -> {
                 SourceLocation loc = c.getSourceLocation();
                 if (loc == null) {
-                    logger.info(() -> "Ignore Cursor " + c.spelling() + "@" + c.USR() + " has no SourceLocation");
+                    log.print(Level.INFO, () -> "Ignore Cursor " + c.spelling() + "@" + c.USR() + " has no SourceLocation");
                     return;
                 }
 
                 SourceLocation.Location src = loc.getFileLocation();
                 if (src == null) {
-                    logger.info(() -> "Cursor " + c.spelling() + "@" + c.USR() + " has no FileLocation");
+                    log.print(Level.INFO, () -> "Cursor " + c.spelling() + "@" + c.USR() + " has no FileLocation");
                     return;
                 }
 
-                logger.fine(() -> "Do cursor: " + c.spelling() + "@" + c.USR());
+                log.print(Level.FINE, () -> "Do cursor: " + c.spelling() + "@" + c.USR());
 
                 if (c.isDeclaration()) {
                     if (c.kind() == CursorKind.UnexposedDecl ||
@@ -120,9 +110,9 @@ public class Parser {
                 } else if (supportMacros && isMacro(c) && src.path() != null) {
                     String macroName = c.spelling();
                     if (c.isMacroFunctionLike()) {
-                        logger.fine(() -> "Skipping function-like macro " + macroName);
+                        log.print(Level.FINE, () -> "Skipping function-like macro " + macroName);
                     } else {
-                        logger.fine(() -> "Defining macro " + macroName);
+                        log.print(Level.FINE, () -> "Defining macro " + macroName);
 
                         TranslationUnit tu = c.getTranslationUnit();
                         SourceRange range = c.getExtent();
@@ -145,7 +135,7 @@ public class Parser {
             return;
         }
 
-        Context context = new Context();
+        Context context = Context.createDefault();
         Parser p = new Parser(context,true);
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);

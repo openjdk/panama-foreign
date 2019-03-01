@@ -29,11 +29,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.spi.ToolProvider;
 import java.util.logging.Logger;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -42,9 +40,8 @@ import jdk.internal.org.objectweb.asm.Opcodes;
 
 // Utility class to generate a .jmod file
 public final class JModWriter {
-    private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
-
-    private final Context ctx;
+    private final Options options;
+    private final Log log;
     private final Writer writer;
 
     private static ToolProvider findTool(String name) {
@@ -59,16 +56,17 @@ public final class JModWriter {
     private static final ToolProvider JMOD = findTool("jmod");
 
     public JModWriter(Context ctx, Writer writer) {
-        this.ctx = ctx;
+        this.options = ctx.options;
+        this.log = ctx.log;
         this.writer = writer;
     }
 
     public void writeJModFile(Path jmodFile, String[] args) throws IOException {
-        if (ctx.targetPackage == null || ctx.targetPackage.isEmpty()) {
+        if (options.targetPackage == null || options.targetPackage.isEmpty()) {
             throw new IllegalArgumentException("no --target-package specified");
         }
 
-        logger.info(() -> "Collecting jmod file " + jmodFile);
+        log.print(Level.INFO, () -> "Collecting jmod file " + jmodFile);
 
         String modName = jmodFile.getFileName().toString();
         modName = modName.substring(0, modName.length() - 5 /* ".jmod".length() */);
@@ -77,12 +75,12 @@ public final class JModWriter {
         Path jmodRootDir = Files.createTempDirectory("jextract.jmod");
         jmodRootDir.toFile().deleteOnExit();
 
-        logger.info(() -> "Writing .class files");
+        log.print(Level.INFO, () -> "Writing .class files");
         // write .class files
         Path modClassesDir = jmodRootDir.resolve(modName);
         writer.writeClassFiles(modClassesDir, args);
 
-        logger.info(() -> "Generating module-info.class");
+        log.print(Level.INFO, () -> "Generating module-info.class");
         // generate module-info.class
         generateModuleInfoClass(modClassesDir, modName);
 
@@ -120,15 +118,15 @@ public final class JModWriter {
 
     private void copyNativeLibraries(Path libsDir) throws IOException {
         Files.createDirectory(libsDir);
-        if (!ctx.libraryNames.isEmpty()) {
-            if (ctx.libraryPaths.isEmpty()) {
-                ctx.err.println("WARNING: " + "no library paths specified");
+        if (!options.libraryNames.isEmpty()) {
+            if (options.libraryPaths.isEmpty()) {
+                log.printWarning("warn.no.library.paths.specified");
                 return;
             }
-            logger.info(() -> "Copying native libraries");
-            Path[] paths = ctx.libraryPaths.stream().map(Paths::get).toArray(Path[]::new);
-            ctx.libraryNames.forEach(libName -> {
-                Optional<Path> absPath = Context.findLibraryPath(paths, libName);
+            log.print(Level.INFO, () -> "Copying native libraries");
+            Path[] paths = options.libraryPaths.stream().map(Paths::get).toArray(Path[]::new);
+            options.libraryNames.forEach(libName -> {
+                Optional<Path> absPath = Utils.findLibraryPath(paths, libName);
                 if (absPath.isPresent()) {
                     Path libPath = absPath.get();
                     try {
@@ -137,7 +135,7 @@ public final class JModWriter {
                         throw new UncheckedIOException(ioExp);
                     }
                 } else {
-                    ctx.err.println("WARNING: " + libName + " is not copied");
+                    log.printWarning("warn.library.not.copied", libName);
                 }
             });
         }
@@ -145,8 +143,8 @@ public final class JModWriter {
 
     private void generateJMod(Path classesDir, Path libsDir, Path jmodFile)
             throws IOException {
-        logger.info(() -> "Generating jmod file: " + jmodFile);
-        int exitCode = JMOD.run(ctx.out, ctx.err, "create",
+        log.print(Level.INFO, () -> "Generating jmod file: " + jmodFile);
+        int exitCode = JMOD.run(log.getOut(), log.getErr(), "create",
             "--class-path", classesDir.toString(),
             "--libs", libsDir.toString(),
             jmodFile.toString());

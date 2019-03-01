@@ -33,42 +33,39 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 import java.util.regex.PatternSyntaxException;
 import java.util.spi.ToolProvider;
 
 public final class Main {
     public static final boolean DEBUG = Boolean.getBoolean("jextract.debug");
 
-    // FIXME: Remove this if/when the macros support is deemed stable
-    public static boolean INCLUDE_MACROS = Boolean.parseBoolean(System.getProperty("jextract.INCLUDE_MACROS", "true"));
+    // error codes
+    private static final int OPTION_ERROR  = 1;
+    private static final int INPUT_ERROR   = 2;
+    private static final int OUTPUT_ERROR  = 3;
+    private static final int RUNTIME_ERROR = 4;
 
-    private static final String MESSAGES_RESOURCE = "com.sun.tools.jextract.resources.Messages";
+    private final PrintWriter out;
+    private final PrintWriter err;
 
-    private static final ResourceBundle MESSAGES_BUNDLE;
-    static {
-        MESSAGES_BUNDLE = ResourceBundle.getBundle(MESSAGES_RESOURCE, Locale.getDefault());
+    private Main(PrintWriter out, PrintWriter err) {
+        this.out = out;
+        this.err = err;
     }
 
-    public static String format(String msgId, Object... args) {
-        return new MessageFormat(MESSAGES_BUNDLE.getString(msgId)).format(args);
+    private void printHelp(OptionParser parser) {
+        try {
+            parser.printHelpOn(err);
+        } catch (IOException ex) {
+            throw new FatalError(RUNTIME_ERROR, ex);
+        }
     }
 
-    private final Context ctx;
-    private String targetPackage;
-
-    public Main(Context ctx) {
-        this.ctx = ctx;
-    }
-
-    private void processPackageMapping(Object arg) {
+    public static void processPackageMapping(Object arg, Options.Builder builder) {
         String str = (String) arg;
         Path p = null;
         String pkgName;
@@ -80,101 +77,26 @@ public final class Main {
             pkgName = kv.value;
 
             if (!Files.isDirectory(p)) {
-                throw new IllegalArgumentException(format("not.a.directory", kv.key));
+                throw new IllegalArgumentException(Log.format("not.a.directory", kv.key));
             }
         }
 
         Utils.validPackageName(pkgName);
-        ctx.addPackageMapping(p, pkgName);
+        builder.addPackageMapping(p, pkgName);
     }
 
-    private void setupLogging(Level level) {
-        Logger logger = ctx.logger;
-        logger.setUseParentHandlers(false);
-        ConsoleHandler log = new ConsoleHandler();
-        System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s%n");
-        log.setFormatter(new SimpleFormatter());
-        logger.setLevel(level);
-        log.setLevel(level);
-        logger.addHandler(log);
-    }
-
-    private void printHelp(OptionParser parser) {
-        try {
-            parser.printHelpOn(ctx.err);
-        } catch (IOException ex) {
-            if (Main.DEBUG) {
-                ex.printStackTrace(ctx.err);
-            }
-        }
-    }
-
-    // error codes
-    private static final int OPTION_ERROR  = 1;
-    private static final int INPUT_ERROR   = 2;
-    private static final int OUTPUT_ERROR  = 3;
-    private static final int RUNTIME_ERROR = 4;
-
-    public int run(String[] args) {
-        OptionParser parser = new OptionParser();
-        parser.accepts("C", format("help.C")).withRequiredArg();
-        parser.accepts("I", format("help.I")).withRequiredArg();
-        parser.acceptsAll(List.of("L", "library-path"), format("help.L")).withRequiredArg();
-        parser.accepts("d", format("help.d")).withRequiredArg();
-        parser.accepts("dry-run", format("help.dry_run"));
-        parser.accepts("exclude-symbols", format("help.exclude_symbols")).withRequiredArg();
-        parser.accepts("include-symbols", format("help.include_symbols")).withRequiredArg();
-        // option is expected to specify paths to load shared libraries
-        parser.accepts("l", format("help.l")).withRequiredArg();
-        parser.accepts("log", format("help.log")).withRequiredArg();
-        parser.accepts("package-map", format("help.package_map")).withRequiredArg();
-        parser.accepts("missing-symbols", format("help.missing_symbols")).withRequiredArg();
-        parser.accepts("no-locations", format("help.no.locations"));
-        parser.accepts("o", format("help.o")).withRequiredArg();
-        parser.accepts("record-library-path", format("help.record_library_path"));
-        parser.accepts("static-forwarder", format("help.static_forwarder")).
-            withRequiredArg().ofType(boolean.class);
-        parser.acceptsAll(List.of("t", "target-package"), format("help.t")).withRequiredArg();
-        parser.acceptsAll(List.of("?", "h", "help"), format("help.h")).forHelp();
-        parser.nonOptions(format("help.non.option"));
-
-        OptionSet options = null;
-        try {
-             options = parser.parse(args);
-        } catch (OptionException oe) {
-             ctx.err.println(oe.getMessage());
-             if (Main.DEBUG) {
-                 oe.printStackTrace(ctx.err);
-             }
-             printHelp(parser);
-             return OPTION_ERROR;
-        }
-
-        if (args.length == 0 || options.has("h")) {
-             printHelp(parser);
-             return args.length == 0? 1 : 0;
-        }
-
-        if (options.nonOptionArguments().isEmpty()) {
-            ctx.err.println(format("err.no.input.files"));
-            return OPTION_ERROR;
-        }
-
-        if (options.has("log")) {
-            setupLogging(Level.parse((String) options.valueOf("log")));
-        } else {
-            setupLogging(Level.WARNING);
-        }
+    private Options createOptions(OptionSet options) {
+        Options.Builder builder = Options.builder();
 
         if (options.has("I")) {
-            options.valuesOf("I").forEach(p -> ctx.addClangArg("-I" + p));
+            options.valuesOf("I").forEach(p -> builder.addClangArg("-I" + p));
         }
 
         // append the built-in headers directory
-        ctx.addClangArg("-I" + getBuiltinHeadersDir());
+        builder.addClangArg("-I" + Context.getBuiltinHeadersDir());
 
         if (options.has("C")) {
-            options.valuesOf("C").forEach(p -> ctx.addClangArg((String) p));
+            options.valuesOf("C").forEach(p -> builder.addClangArg((String) p));
         }
 
         boolean librariesSpecified = options.has("l");
@@ -182,15 +104,14 @@ public final class Main {
             for (Object arg : options.valuesOf("l")) {
                 String lib = (String)arg;
                 if (lib.indexOf(File.separatorChar) != -1) {
-                    ctx.err.println(format("l.name.should.not.be.path", lib));
-                    return OPTION_ERROR;
+                    throw new FatalError(OPTION_ERROR, Log.format("l.name.should.not.be.path", lib));
                 }
-                ctx.addLibraryName(lib);
+                builder.addLibraryName(lib);
             }
         }
 
         if (options.has("no-locations")) {
-            ctx.setNoNativeLocations();
+            builder.setNoNativeLocations();
         }
 
         // generate static forwarder class if user specified -l option
@@ -198,23 +119,21 @@ public final class Main {
         if (options.has("static-forwarder")) {
             staticForwarder = (boolean)options.valueOf("static-forwarder");
         }
-        ctx.setGenStaticForwarder(staticForwarder && options.has("l"));
+        builder.setGenStaticForwarder(staticForwarder && options.has("l"));
 
         if (options.has("include-symbols")) {
             try {
-                options.valuesOf("include-symbols").forEach(sym -> ctx.addIncludeSymbols((String) sym));
+                options.valuesOf("include-symbols").forEach(sym -> builder.addIncludeSymbols((String) sym));
             } catch (PatternSyntaxException pse) {
-                ctx.err.println(format("include.symbols.pattern.error", pse.getMessage()));
-                return OPTION_ERROR;
+                throw new FatalError(OPTION_ERROR, Log.format("include.symbols.pattern.error", pse.getMessage()));
             }
         }
 
         if (options.has("exclude-symbols")) {
             try {
-                options.valuesOf("exclude-symbols").forEach(sym -> ctx.addExcludeSymbols((String) sym));
+                options.valuesOf("exclude-symbols").forEach(sym -> builder.addExcludeSymbols((String) sym));
             } catch (PatternSyntaxException pse) {
-                ctx.err.println(format("exclude.symbols.pattern.error", pse.getMessage()));
-                return OPTION_ERROR;
+                throw new FatalError(OPTION_ERROR, Log.format("exclude.symbols.pattern.error", pse.getMessage()));
             }
         }
 
@@ -222,39 +141,39 @@ public final class Main {
         if (recordLibraryPath) {
             // "record-library-path" with no "l"
             if (!librariesSpecified) {
-                ctx.err.println(format("warn.record_library_path.without.l"));
+                err.println(Log.format("warn.record_library_path.without.l"));
             }
-            ctx.setRecordLibraryPath();
+            builder.setRecordLibraryPath();
         }
 
         if (options.has("L")) {
             List<?> libpaths = options.valuesOf("L");
             if (librariesSpecified) {
-                libpaths.forEach(p -> ctx.addLibraryPath((String) p));
+                libpaths.forEach(p -> builder.addLibraryPath((String) p));
             } else {
                 // "L" with no "l" option!
-                ctx.err.println(format("warn.L.without.l"));
+                err.println(Log.format("warn.L.without.l"));
             }
         } else {
             // "record-library-path" with no "L"
             if (recordLibraryPath) {
-                ctx.err.println(format("warn.record_library_path.without.L"));
+                err.println(Log.format("warn.record_library_path.without.L"));
             }
 
             // "l" with no "L"
             if (librariesSpecified) {
-                ctx.err.println(format("warn.l.without.L"));
+                err.println(Log.format("warn.l.without.L"));
                 // assume java.library.path
-                ctx.err.println(format("warn.using.java.library.path"));
+                err.println(Log.format("warn.using.java.library.path"));
                 String[] libPaths = System.getProperty("java.library.path").split(File.pathSeparator);
                 for (String lp : libPaths) {
-                    ctx.addLibraryPath(lp);
+                    builder.addLibraryPath(lp);
                 }
             }
         }
 
         if (options.has("package-map")) {
-            options.valuesOf("package-map").forEach(this::processPackageMapping);
+            options.valuesOf("package-map").forEach(p -> processPackageMapping(p, builder));
         }
 
         if (options.has("missing-symbols")) {
@@ -263,82 +182,144 @@ public final class Main {
             try {
                 msa = Enum.valueOf(MissingSymbolAction.class, ms.toUpperCase());
             } catch (IllegalArgumentException iae) {
-                ctx.err.println(format("invalid.missing_symbols.option.value", ms));
-                return OPTION_ERROR;
+                throw new FatalError(OPTION_ERROR, Log.format("invalid.missing_symbols.option.value", ms));
             }
-            ctx.setMissingSymbolAction(msa);
+            builder.setMissingSymbolAction(msa);
             if (!librariesSpecified) {
-                ctx.err.println(format("warn.missing_symbols.without.l"));
+                err.println(Log.format("warn.missing_symbols.without.l"));
             }
         } else {
             // default is to exclude missing symbols
-            ctx.setMissingSymbolAction(MissingSymbolAction.EXCLUDE);
+            builder.setMissingSymbolAction(MissingSymbolAction.EXCLUDE);
         }
 
-        final Writer writer;
+        String targetPackage = options.has("t") ? (String) options.valueOf("t") : "";
+        if (!targetPackage.isEmpty()) {
+            Utils.validPackageName(targetPackage);
+        }
+        builder.setTargetPackage(targetPackage);
+
+        return builder.build();
+    }
+
+    private int run(String[] args) {
         try {
-            for (Object header : options.nonOptionArguments()) {
-                Path p = Paths.get((String)header);
-                if (!Files.isReadable(p)) {
-                    ctx.err.println(format("cannot.read.header.file", header));
-                    return INPUT_ERROR;
-                }
-                p = p.normalize().toAbsolutePath();
-                ctx.addSource(p);
+            runInternal(args);
+        } catch(FatalError e) {
+            err.println(e.getMessage());
+            if(Main.DEBUG) {
+                e.printStackTrace(err);
             }
-            targetPackage = options.has("t") ? (String) options.valueOf("t") : "";
-            if (!targetPackage.isEmpty()) {
-                Utils.validPackageName(targetPackage);
+            return e.errorCode;
+        }
+
+        return 0;
+    }
+
+    private void runInternal(String[] args) {
+        OptionParser parser = new OptionParser();
+        parser.accepts("C", Log.format("help.C")).withRequiredArg();
+        parser.accepts("I", Log.format("help.I")).withRequiredArg();
+        parser.acceptsAll(List.of("L", "library-path"), Log.format("help.L")).withRequiredArg();
+        parser.accepts("d", Log.format("help.d")).withRequiredArg();
+        parser.accepts("dry-run", Log.format("help.dry_run"));
+        parser.accepts("exclude-symbols", Log.format("help.exclude_symbols")).withRequiredArg();
+        parser.accepts("include-symbols", Log.format("help.include_symbols")).withRequiredArg();
+        // option is expected to specify paths to load shared libraries
+        parser.accepts("l", Log.format("help.l")).withRequiredArg();
+        parser.accepts("log", Log.format("help.log")).withRequiredArg();
+        parser.accepts("package-map", Log.format("help.package_map")).withRequiredArg();
+        parser.accepts("missing-symbols", Log.format("help.missing_symbols")).withRequiredArg();
+        parser.accepts("no-locations", Log.format("help.no.locations"));
+        parser.accepts("o", Log.format("help.o")).withRequiredArg();
+        parser.accepts("record-library-path", Log.format("help.record_library_path"));
+        parser.accepts("static-forwarder", Log.format("help.static_forwarder")).
+                withRequiredArg().ofType(boolean.class);
+        parser.acceptsAll(List.of("t", "target-package"), Log.format("help.t")).withRequiredArg();
+        parser.acceptsAll(List.of("?", "h", "help"), Log.format("help.h")).forHelp();
+        parser.nonOptions(Log.format("help.non.option"));
+
+        OptionSet optionSet;
+        try {
+            optionSet = parser.parse(args);
+        } catch (OptionException oe) {
+            printHelp(parser);
+            throw new FatalError(OPTION_ERROR, oe);
+        }
+
+        if (args.length == 0 || optionSet.has("h")) {
+            printHelp(parser);
+            if(args.length == 0)
+                throw new FatalError(OPTION_ERROR);
+            return;
+        }
+
+        if (optionSet.nonOptionArguments().isEmpty()) {
+            throw new FatalError(OPTION_ERROR, Log.format("err.no.input.files"));
+        }
+
+        Log log;
+        if (optionSet.has("log")) {
+            log = Log.of(out, err, Level.parse((String) optionSet.valueOf("log")));
+        } else {
+            log = Log.of(out, err, Level.WARNING);
+        }
+
+        Options options = createOptions(optionSet);
+
+        List<Path> sources = new ArrayList<>();
+        for (Object header : optionSet.nonOptionArguments()) {
+            Path p = Paths.get((String)header);
+            if (!Files.isReadable(p)) {
+                throw new FatalError(INPUT_ERROR, Log.format("cannot.read.header.file", header));
             }
-            ctx.setTargetPackage(targetPackage);
+            sources.add(p.normalize().toAbsolutePath());
+        }
+        sources = Collections.unmodifiableList(sources);
+
+        Context ctx = new Context(sources, options, log);
+
+        Writer writer;
+        try {
             writer = new JextractTool(ctx).processHeaders();
         } catch (RuntimeException re) {
-            ctx.err.println(re.getMessage());
-            if (Main.DEBUG) {
-                re.printStackTrace(ctx.err);
-            }
-            return RUNTIME_ERROR;
+            throw new FatalError(RUNTIME_ERROR, re);
         }
 
-        if (options.has("dry-run")) {
-            return 0;
+        if (optionSet.has("dry-run")) {
+            return;
         }
 
         if (writer.isEmpty()) {
-            ctx.err.println(format("warn.no.output"));
-            return 0;
+            err.println(Log.format("warn.no.output"));
+            return;
         }
 
         boolean hasOutput = false;
-
-        if (options.has("d")) {
+        if (optionSet.has("d")) {
             hasOutput = true;
-            Path dest = Paths.get((String) options.valueOf("d"));
+            Path dest = Paths.get((String) optionSet.valueOf("d"));
             dest = dest.toAbsolutePath();
             try {
                 if (!Files.exists(dest)) {
                     Files.createDirectories(dest);
-                } else if (!Files.isDirectory(dest)) {
-                    ctx.err.println(format("not.a.directory", dest));
-                    return OUTPUT_ERROR;
+                }
+                if (!Files.isDirectory(dest)) {
+                    throw new FatalError(OUTPUT_ERROR, Log.format("not.a.directory", dest));
                 }
                 writer.writeClassFiles(dest, args);
             } catch (IOException ex) {
-                ctx.err.println(format("cannot.write.class.file", dest, ex));
-                if (Main.DEBUG) {
-                    ex.printStackTrace(ctx.err);
-                }
-                return OUTPUT_ERROR;
+                throw new FatalError(OPTION_ERROR, Log.format("cannot.write.class.file", dest, ex), ex);
             }
         }
 
         String outputName;
-        if (options.has("o")) {
-            outputName = (String) options.valueOf("o");
+        if (optionSet.has("o")) {
+            outputName = (String) optionSet.valueOf("o");
         } else if (hasOutput) {
-            return 0;
+            return;
         } else {
-            outputName =  Paths.get((String)options.nonOptionArguments().get(0)).getFileName() + ".jar";
+            outputName = Paths.get((String) optionSet.nonOptionArguments().get(0)).getFileName() + ".jar";
         }
 
         boolean isJMod = outputName.endsWith("jmod");
@@ -346,26 +327,18 @@ public final class Main {
             if (isJMod) {
                 new JModWriter(ctx, writer).writeJModFile(Paths.get(outputName), args);
             } else {
-                new JarWriter(writer).writeJarFile(Paths.get(outputName), args);
+                new JarWriter(ctx, writer).writeJarFile(Paths.get(outputName), args);
             }
         } catch (IOException ex) {
-            ctx.err.println(format(isJMod? "cannot.write.jmod.file" : "cannot.write.jar.file", outputName, ex));
-            if (Main.DEBUG) {
-                ex.printStackTrace(ctx.err);
-            }
-            return OUTPUT_ERROR;
+            throw new FatalError(OUTPUT_ERROR,
+                    Log.format(isJMod ? "cannot.write.jmod.file" : "cannot.write.jar.file", outputName, ex), ex);
         }
 
-        return 0;
-    }
-
-    static Path getBuiltinHeadersDir() {
-        return Paths.get(System.getProperty("java.home"), "conf", "jextract");
+        return;
     }
 
     public static void main(String... args) {
-        Main instance = new Main(new Context());
-
+        Main instance = new Main(Log.defaultOut(), Log.defaultErr());
         System.exit(instance.run(args));
     }
 
@@ -386,8 +359,35 @@ public final class Main {
                     checkPermission(new RuntimePermission("jextract"));
             }
 
-            Main instance = new Main(new Context(out, err));
+            Main instance = new Main(out, err);
             return instance.run(args);
         }
     }
+
+    private static class FatalError extends Error {
+        private static final long serialVersionUID = 0L;
+
+        public final int errorCode;
+
+        public FatalError(int errorCode) {
+            this.errorCode = errorCode;
+        }
+
+        public FatalError(int errorCode, String message) {
+            super(message);
+            this.errorCode = errorCode;
+        }
+
+        public FatalError(int errorCode, Throwable cause) {
+            super(cause);
+            this.errorCode = errorCode;
+        }
+
+        public FatalError(int errorCode, String message, Throwable cause) {
+            super(message, cause);
+            this.errorCode = errorCode;
+        }
+
+    }
+
 }
