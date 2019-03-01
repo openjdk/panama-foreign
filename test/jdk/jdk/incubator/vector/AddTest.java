@@ -51,8 +51,8 @@ public class AddTest {
 
     static void workload() {
         for (int i = 0; i < a.length; i += SPECIES.length()) {
-            FloatVector av = SPECIES.fromArray(a, i);
-            FloatVector bv = SPECIES.fromArray(b, i);
+            FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+            FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
             av.add(bv).intoArray(c, i);
         }
     }
@@ -61,8 +61,8 @@ public class AddTest {
 
     static void workloadIndexMapped() {
         for (int i = 0; i < a.length; i += SPECIES.length()) {
-            FloatVector av = SPECIES.fromArray(a, i, IDENTITY_INDEX_MAPPING, 0);
-            FloatVector bv = SPECIES.fromArray(b, i, IDENTITY_INDEX_MAPPING, 0);
+            FloatVector av = FloatVector.fromArray(SPECIES, a, i, IDENTITY_INDEX_MAPPING, 0);
+            FloatVector bv = FloatVector.fromArray(SPECIES, b, i, IDENTITY_INDEX_MAPPING, 0);
             av.add(bv).intoArray(c, i, IDENTITY_INDEX_MAPPING, 0);
         }
     }

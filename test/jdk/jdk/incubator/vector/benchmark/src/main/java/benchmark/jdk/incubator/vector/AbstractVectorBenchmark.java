@@ -109,7 +109,7 @@ public class AbstractVectorBenchmark {
 
     static <E> IntVector sum(ByteVector va) {
         IntSpecies species = IntVector.species(va.shape());
-        var acc = species.zero();
+        var acc = IntVector.zero(species);
         int limit = va.length() / species.length();
         for (int k = 0; k < limit; k++) {
             var vb = ((IntVector)(va.shiftEL(k * B64.length()).reshape(B64).cast(species))).and(0xFF);

@@ -119,7 +119,7 @@ public class VectorHash {
         int h = 1;
         int i = 0;
         for (; i < (a.length & ~(BYTE_64_SPECIES.length() - 1)); i += BYTE_64_SPECIES.length()) {
-            ByteVector b = BYTE_64_SPECIES.fromArray(a, i);
+            ByteVector b = ByteVector.fromArray(BYTE_64_SPECIES, a, i);
             IntVector x = (IntVector) b.cast(INT_256_SPECIES);
             h = h * COEFF_31_TO_8 + x.mul(H_COEFF_8).addAll();
         }
@@ -134,7 +134,7 @@ public class VectorHash {
         int h = 1;
         int i = 0;
         for (; i < (a.length & ~(BYTE_128_SPECIES.length() - 1)); i += BYTE_128_SPECIES.length()) {
-            ByteVector b = BYTE_128_SPECIES.fromArray(a, i);
+            ByteVector b = ByteVector.fromArray(BYTE_128_SPECIES, a, i);
             IntVector x = (IntVector) b.cast(INT_512_SPECIES);
             h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).addAll();
         }
@@ -165,7 +165,7 @@ public class VectorHash {
         int h = 1;
         int i = 0;
         for (; i < (a.length & ~(byteSpecies.length() - 1)); i += byteSpecies.length()) {
-            ByteVector b = byteSpecies.fromArray(a, i);
+            ByteVector b = ByteVector.fromArray(byteSpecies, a, i);
 
             for (int j = 0; j < byteSpecies.length() / intSpecies.length(); j++) {
                 // Reduce the size of the byte vector and then cast to int
@@ -207,7 +207,7 @@ public class VectorHash {
         }
 
         COEFF_31_TO_8 = a[0] * 31;
-        H_COEFF_8 = INT_256_SPECIES.fromArray(a, 0);
+        H_COEFF_8 = IntVector.fromArray(INT_256_SPECIES, a, 0);
 
 
         a = new int[INT_512_SPECIES.length()];
@@ -217,6 +217,6 @@ public class VectorHash {
         }
 
         COEFF_31_TO_16 = a[0] * 31;
-        H_COEFF_16 = INT_512_SPECIES.fromArray(a, 0);
+        H_COEFF_16 = IntVector.fromArray(INT_512_SPECIES, a, 0);
     }
 }

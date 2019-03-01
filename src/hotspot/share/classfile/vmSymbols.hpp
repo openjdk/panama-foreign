@@ -1524,11 +1524,11 @@
    do_name(vector_ternary_op_name,     "ternaryOp")                                                                                            \
                                                                                                                                                \
   do_intrinsic(_VectorBroadcastCoerced, jdk_incubator_vector_VectorIntrinsics, vector_broadcast_coerced_name, vector_broadcast_coerced_sig, F_S) \
-   do_signature(vector_broadcast_coerced_sig, "(Ljava/lang/Class;Ljava/lang/Class;IJLjava/util/function/LongFunction;)Ljava/lang/Object;")     \
+   do_signature(vector_broadcast_coerced_sig, "(Ljava/lang/Class;Ljava/lang/Class;IJLjdk/incubator/vector/Vector$Species;Ljdk/incubator/vector/VectorIntrinsics$BroadcastOperation;)Ljava/lang/Object;")     \
    do_name(vector_broadcast_coerced_name, "broadcastCoerced")                                                                                  \
                                                                                                                                                \
   do_intrinsic(_VectorLoadOp, jdk_incubator_vector_VectorIntrinsics, vector_load_op_name, vector_load_op_sig, F_S)                             \
-   do_signature(vector_load_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;ILjdk/incubator/vector/VectorIntrinsics$LoadOperation;)Ljava/lang/Object;") \
+   do_signature(vector_load_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;ILjdk/incubator/vector/Vector$Species;Ljdk/incubator/vector/VectorIntrinsics$LoadOperation;)Ljava/lang/Object;") \
    do_name(vector_load_op_name,     "load")                                                                                                    \
   do_intrinsic(_VectorStoreOp, jdk_incubator_vector_VectorIntrinsics, vector_store_op_name, vector_store_op_sig, F_S)                          \
    do_signature(vector_store_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjdk/incubator/vector/Vector;Ljava/lang/Object;ILjdk/incubator/vector/VectorIntrinsics$StoreVectorOperation;)V") \
@@ -1594,6 +1594,7 @@
                                    "Ljava/lang/Object;J"                                                                                       \
                                    "Ljdk/incubator/vector/IntVector;"                                                                             \
                                    "Ljava/lang/Object;I[II"                                                                                    \
+                                   "Ljdk/incubator/vector/Vector$Species;"                                       \
                                    "Ljdk/incubator/vector/VectorIntrinsics$LoadVectorOperationWithMap;)"                                       \
                                    "Ljdk/incubator/vector/Vector;")                                                                            \
     do_name(vector_gather_name, "loadWithMap")                                                                                                 \

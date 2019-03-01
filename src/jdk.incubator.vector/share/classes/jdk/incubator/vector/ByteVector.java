@@ -24,12 +24,15 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.vm.annotation.ForceInline;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 import java.util.concurrent.ThreadLocalRandom;
+
+import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.ForceInline;
+import static jdk.incubator.vector.VectorIntrinsics.*;
 
 
 /**
@@ -40,6 +43,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public abstract class ByteVector extends Vector<Byte> {
 
     ByteVector() {}
+
+    private static final int ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_BYTE_INDEX_SCALE);
 
     // Unary operator
 
@@ -93,7 +98,379 @@ public abstract class ByteVector extends Vector<Byte> {
 
     abstract void forEach(Mask<Byte> m, FUnCon f);
 
-    //
+    // Static factories
+
+    /**
+     * Returns a vector where all lane elements are set to the default
+     * primitive value.
+     *
+     * @return a zero vector
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static ByteVector zero(ByteSpecies species) {
+        return species.zero();
+    }
+
+    /**
+     * Loads a vector from a byte array starting at an offset.
+     * <p>
+     * Bytes are composed into primitive lane elements according to the
+     * native byte order of the underlying platform
+     * <p>
+     * This method behaves as if it returns the result of calling the
+     * byte buffer, offset, and mask accepting
+     * {@link #fromByteBuffer(ByteSpecies, ByteBuffer, int, Mask) method} as follows:
+     * <pre>{@code
+     * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
+     * }</pre>
+     *
+     * @param a the byte array
+     * @param ix the offset into the array
+     * @return a vector loaded from a byte array
+     * @throws IndexOutOfBoundsException if {@code i < 0} or
+     * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static ByteVector fromByteArray(ByteSpecies species, byte[] a, int ix) {
+        Objects.requireNonNull(a);
+        ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
+        return VectorIntrinsics.load((Class<ByteVector>) species.boxType(), byte.class, species.length(),
+                                     a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
+                                     a, ix, species,
+                                     (c, idx, s) -> {
+                                         ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                         ByteBuffer tb = bbc;
+                                         return ((ByteSpecies)s).op(i -> tb.get());
+                                     });
+    }
+
+    /**
+     * Loads a vector from a byte array starting at an offset and using a
+     * mask.
+     * <p>
+     * Bytes are composed into primitive lane elements according to the
+     * native byte order of the underlying platform.
+     * <p>
+     * This method behaves as if it returns the result of calling the
+     * byte buffer, offset, and mask accepting
+     * {@link #fromByteBuffer(ByteSpecies, ByteBuffer, int, Mask) method} as follows:
+     * <pre>{@code
+     * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
+     * }</pre>
+     *
+     * @param a the byte array
+     * @param ix the offset into the array
+     * @param m the mask
+     * @return a vector loaded from a byte array
+     * @throws IndexOutOfBoundsException if {@code i < 0} or
+     * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
+     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
+     * or {@code > a.length},
+     * for any vector lane index {@code N} where the mask at lane {@code N}
+     * is set
+     * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
+     */
+    @ForceInline
+    public static ByteVector fromByteArray(ByteSpecies species, byte[] a, int ix, Mask<Byte> m) {
+        return zero(species).blend(fromByteArray(species, a, ix), m);
+    }
+
+    /**
+     * Loads a vector from an array starting at offset.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * array element at index {@code i + N} is placed into the
+     * resulting vector at lane index {@code N}.
+     *
+     * @param a the array
+     * @param i the offset into the array
+     * @return the vector loaded from an array
+     * @throws IndexOutOfBoundsException if {@code i < 0}, or
+     * {@code i > a.length - this.length()}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static ByteVector fromArray(ByteSpecies species, byte[] a, int i){
+        Objects.requireNonNull(a);
+        i = VectorIntrinsics.checkIndex(i, a.length, species.length());
+        return VectorIntrinsics.load((Class<ByteVector>) species.boxType(), byte.class, species.length(),
+                                     a, (((long) i) << ARRAY_SHIFT) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
+                                     a, i, species,
+                                     (c, idx, s) -> ((ByteSpecies)s).op(n -> c[idx + n]));
+    }
+
+
+    /**
+     * Loads a vector from an array starting at offset and using a mask.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * if the mask lane at index {@code N} is set then the array element at
+     * index {@code i + N} is placed into the resulting vector at lane index
+     * {@code N}, otherwise the default element value is placed into the
+     * resulting vector at lane index {@code N}.
+     *
+     * @param a the array
+     * @param i the offset into the array
+     * @param m the mask
+     * @return the vector loaded from an array
+     * @throws IndexOutOfBoundsException if {@code i < 0}, or
+     * for any vector lane index {@code N} where the mask at lane {@code N}
+     * is set {@code i > a.length - N}
+     */
+    @ForceInline
+    public static ByteVector fromArray(ByteSpecies species, byte[] a, int i, Mask<Byte> m) {
+        return zero(species).blend(fromArray(species, a, i), m);
+    }
+
+    /**
+     * Loads a vector from an array using indexes obtained from an index
+     * map.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * array element at index {@code i + indexMap[j + N]} is placed into the
+     * resulting vector at lane index {@code N}.
+     *
+     * @param a the array
+     * @param i the offset into the array, may be negative if relative
+     * indexes in the index map compensate to produce a value within the
+     * array bounds
+     * @param indexMap the index map
+     * @param j the offset into the index map
+     * @return the vector loaded from an array
+     * @throws IndexOutOfBoundsException if {@code j < 0}, or
+     * {@code j > indexMap.length - this.length()},
+     * or for any vector lane index {@code N} the result of
+     * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
+     */
+    public static ByteVector fromArray(ByteSpecies species, byte[] a, int i, int[] indexMap, int j) {
+        return species.op(n -> a[i + indexMap[j + n]]);
+    }
+    /**
+     * Loads a vector from an array using indexes obtained from an index
+     * map and using a mask.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * if the mask lane at index {@code N} is set then the array element at
+     * index {@code i + indexMap[j + N]} is placed into the resulting vector
+     * at lane index {@code N}.
+     *
+     * @param a the array
+     * @param i the offset into the array, may be negative if relative
+     * indexes in the index map compensate to produce a value within the
+     * array bounds
+     * @param indexMap the index map
+     * @param j the offset into the index map
+     * @return the vector loaded from an array
+     * @throws IndexOutOfBoundsException if {@code j < 0}, or
+     * {@code j > indexMap.length - this.length()},
+     * or for any vector lane index {@code N} where the mask at lane
+     * {@code N} is set the result of {@code i + indexMap[j + N]} is
+     * {@code < 0} or {@code >= a.length}
+     */
+    public static ByteVector fromArray(ByteSpecies species, byte[] a, int i, Mask<Byte> m, int[] indexMap, int j) {
+        return species.op(m, n -> a[i + indexMap[j + n]]);
+    }
+
+    /**
+     * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
+     * offset into the byte buffer.
+     * <p>
+     * Bytes are composed into primitive lane elements according to the
+     * native byte order of the underlying platform.
+     * <p>
+     * This method behaves as if it returns the result of calling the
+     * byte buffer, offset, and mask accepting
+     * {@link #fromByteBuffer(ByteSpecies, ByteBuffer, int, Mask)} method} as follows:
+     * <pre>{@code
+     *   return this.fromByteBuffer(b, i, this.maskAllTrue())
+     * }</pre>
+     *
+     * @param bb the byte buffer
+     * @param ix the offset into the byte buffer
+     * @return a vector loaded from a byte buffer
+     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
+     * or {@code > b.limit()},
+     * or if there are fewer than
+     * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
+     * remaining in the byte buffer from the given offset
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static ByteVector fromByteBuffer(ByteSpecies species, ByteBuffer bb, int ix) {
+        if (bb.order() != ByteOrder.nativeOrder()) {
+            throw new IllegalArgumentException();
+        }
+        ix = VectorIntrinsics.checkIndex(ix, bb.limit(), species.bitSize() / Byte.SIZE);
+        return VectorIntrinsics.load((Class<ByteVector>) species.boxType(), byte.class, species.length(),
+                                     U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
+                                     bb, ix, species,
+                                     (c, idx, s) -> {
+                                         ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
+                                         ByteBuffer tb = bbc;
+                                         return ((ByteSpecies)s).op(i -> tb.get());
+                                     });
+    }
+
+    /**
+     * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
+     * offset into the byte buffer and using a mask.
+     * <p>
+     * This method behaves as if the byte buffer is viewed as a primitive
+     * {@link java.nio.Buffer buffer} for the primitive element type,
+     * according to the native byte order of the underlying platform, and
+     * the returned vector is loaded with a mask from a primitive array
+     * obtained from the primitive buffer.
+     * The following pseudocode expresses the behaviour, where
+     * {@coce EBuffer} is the primitive buffer type, {@code e} is the
+     * primitive element type, and {@code ESpecies<S>} is the primitive
+     * species for {@code e}:
+     * <pre>{@code
+     * EBuffer eb = b.duplicate().
+     *     order(ByteOrder.nativeOrder()).position(i).
+     *     asEBuffer();
+     * e[] es = new e[this.length()];
+     * for (int n = 0; n < t.length; n++) {
+     *     if (m.isSet(n))
+     *         es[n] = eb.get(n);
+     * }
+     * Vector<E> r = ((ESpecies<S>)this).fromArray(es, 0, m);
+     * }</pre>
+     *
+     * @param bb the byte buffer
+     * @param ix the offset into the byte buffer
+     * @return a vector loaded from a byte buffer
+     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
+     * or {@code > b.limit()},
+     * for any vector lane index {@code N} where the mask at lane {@code N}
+     * is set
+     * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
+     */
+    @ForceInline
+    public static ByteVector fromByteBuffer(ByteSpecies species, ByteBuffer bb, int ix, Mask<Byte> m) {
+        return zero(species).blend(fromByteBuffer(species, bb, ix), m);
+    }
+
+    @ForceInline
+    public static Mask<Byte> maskFromValues(ByteSpecies species, boolean... bits) {
+        if (species.boxType() == ByteMaxVector.class)
+            return new ByteMaxVector.ByteMaxMask(bits);
+        switch (species.bitSize()) {
+            case 64: return new Byte64Vector.Byte64Mask(bits);
+            case 128: return new Byte128Vector.Byte128Mask(bits);
+            case 256: return new Byte256Vector.Byte256Mask(bits);
+            case 512: return new Byte512Vector.Byte512Mask(bits);
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
+    static Mask<Byte> trueMask(ByteSpecies species) {
+        if (species.boxType() == ByteMaxVector.class)
+            return ByteMaxVector.ByteMaxMask.TRUE_MASK;
+        switch (species.bitSize()) {
+            case 64: return Byte64Vector.Byte64Mask.TRUE_MASK;
+            case 128: return Byte128Vector.Byte128Mask.TRUE_MASK;
+            case 256: return Byte256Vector.Byte256Mask.TRUE_MASK;
+            case 512: return Byte512Vector.Byte512Mask.TRUE_MASK;
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    static Mask<Byte> falseMask(ByteSpecies species) {
+        if (species.boxType() == ByteMaxVector.class)
+            return ByteMaxVector.ByteMaxMask.FALSE_MASK;
+        switch (species.bitSize()) {
+            case 64: return Byte64Vector.Byte64Mask.FALSE_MASK;
+            case 128: return Byte128Vector.Byte128Mask.FALSE_MASK;
+            case 256: return Byte256Vector.Byte256Mask.FALSE_MASK;
+            case 512: return Byte512Vector.Byte512Mask.FALSE_MASK;
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static Mask<Byte> maskFromArray(ByteSpecies species, boolean[] bits, int ix) {
+        Objects.requireNonNull(bits);
+        ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
+        return VectorIntrinsics.load((Class<Mask<Byte>>) species.maskType(), byte.class, species.length(),
+                                     bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                     bits, ix, species,
+                                     (c, idx, s) -> (Mask<Byte>) ((ByteSpecies)s).opm(n -> c[idx + n]));
+    }
+
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static Mask<Byte> maskAllTrue(ByteSpecies species) {
+        return VectorIntrinsics.broadcastCoerced((Class<Mask<Byte>>) species.maskType(), byte.class, species.length(),
+                                                 (byte)-1,  species,
+                                                 ((z, s) -> trueMask((ByteSpecies)s)));
+    }
+
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static Mask<Byte> maskAllFalse(ByteSpecies species) {
+        return VectorIntrinsics.broadcastCoerced((Class<Mask<Byte>>) species.maskType(), byte.class, species.length(),
+                                                 0, species, 
+                                                 ((z, s) -> falseMask((ByteSpecies)s)));
+    }
+
+    @ForceInline
+    public static Shuffle<Byte> shuffle(ByteSpecies species, IntUnaryOperator f) {
+        if (species.boxType() == ByteMaxVector.class)
+            return new ByteMaxVector.ByteMaxShuffle(f);
+        switch (species.bitSize()) {
+            case 64: return new Byte64Vector.Byte64Shuffle(f);
+            case 128: return new Byte128Vector.Byte128Shuffle(f);
+            case 256: return new Byte256Vector.Byte256Shuffle(f);
+            case 512: return new Byte512Vector.Byte512Shuffle(f);
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    @ForceInline
+    public static Shuffle<Byte> shuffleIota(ByteSpecies species) {
+        if (species.boxType() == ByteMaxVector.class)
+            return new ByteMaxVector.ByteMaxShuffle(AbstractShuffle.IDENTITY);
+        switch (species.bitSize()) {
+            case 64: return new Byte64Vector.Byte64Shuffle(AbstractShuffle.IDENTITY);
+            case 128: return new Byte128Vector.Byte128Shuffle(AbstractShuffle.IDENTITY);
+            case 256: return new Byte256Vector.Byte256Shuffle(AbstractShuffle.IDENTITY);
+            case 512: return new Byte512Vector.Byte512Shuffle(AbstractShuffle.IDENTITY);
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    @ForceInline
+    public static Shuffle<Byte> shuffleFromValues(ByteSpecies species, int... ixs) {
+        if (species.boxType() == ByteMaxVector.class)
+            return new ByteMaxVector.ByteMaxShuffle(ixs);
+        switch (species.bitSize()) {
+            case 64: return new Byte64Vector.Byte64Shuffle(ixs);
+            case 128: return new Byte128Vector.Byte128Shuffle(ixs);
+            case 256: return new Byte256Vector.Byte256Shuffle(ixs);
+            case 512: return new Byte512Vector.Byte512Shuffle(ixs);
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    @ForceInline
+    public static Shuffle<Byte> shuffleFromArray(ByteSpecies species, int[] ixs, int i) {
+        if (species.boxType() == ByteMaxVector.class)
+            return new ByteMaxVector.ByteMaxShuffle(ixs, i);
+        switch (species.bitSize()) {
+            case 64: return new Byte64Vector.Byte64Shuffle(ixs, i);
+            case 128: return new Byte128Vector.Byte128Shuffle(ixs, i);
+            case 256: return new Byte256Vector.Byte256Shuffle(ixs, i);
+            case 512: return new Byte512Vector.Byte512Shuffle(ixs, i);
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+
+    // Ops
 
     @Override
     public abstract ByteVector add(Vector<Byte> v);
@@ -1015,6 +1392,8 @@ public abstract class ByteVector extends Vector<Byte> {
 
         abstract Mask<Byte> opm(FOpm f);
 
+
+
         // Factories
 
         @Override
@@ -1073,101 +1452,6 @@ public abstract class ByteVector extends Vector<Byte> {
          * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
          */
         public abstract ByteVector scalars(byte... es);
-
-        /**
-         * Loads a vector from an array starting at offset.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * array element at index {@code i + N} is placed into the
-         * resulting vector at lane index {@code N}.
-         *
-         * @param a the array
-         * @param i the offset into the array
-         * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code i < 0}, or
-         * {@code i > a.length - this.length()}
-         */
-        public abstract ByteVector fromArray(byte[] a, int i);
-
-        /**
-         * Loads a vector from an array starting at offset and using a mask.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index,
-         * if the mask lane at index {@code N} is set then the array element at
-         * index {@code i + N} is placed into the resulting vector at lane index
-         * {@code N}, otherwise the default element value is placed into the
-         * resulting vector at lane index {@code N}.
-         *
-         * @param a the array
-         * @param i the offset into the array
-         * @param m the mask
-         * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code i < 0}, or
-         * for any vector lane index {@code N} where the mask at lane {@code N}
-         * is set {@code i > a.length - N}
-         */
-        public abstract ByteVector fromArray(byte[] a, int i, Mask<Byte> m);
-
-        /**
-         * Loads a vector from an array using indexes obtained from an index
-         * map.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * array element at index {@code i + indexMap[j + N]} is placed into the
-         * resulting vector at lane index {@code N}.
-         *
-         * @param a the array
-         * @param i the offset into the array, may be negative if relative
-         * indexes in the index map compensate to produce a value within the
-         * array bounds
-         * @param indexMap the index map
-         * @param j the offset into the index map
-         * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code j < 0}, or
-         * {@code j > indexMap.length - this.length()},
-         * or for any vector lane index {@code N} the result of
-         * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
-         */
-        public ByteVector fromArray(byte[] a, int i, int[] indexMap, int j) {
-            return op(n -> a[i + indexMap[j + n]]);
-        }
-        /**
-         * Loads a vector from an array using indexes obtained from an index
-         * map and using a mask.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index,
-         * if the mask lane at index {@code N} is set then the array element at
-         * index {@code i + indexMap[j + N]} is placed into the resulting vector
-         * at lane index {@code N}.
-         *
-         * @param a the array
-         * @param i the offset into the array, may be negative if relative
-         * indexes in the index map compensate to produce a value within the
-         * array bounds
-         * @param indexMap the index map
-         * @param j the offset into the index map
-         * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code j < 0}, or
-         * {@code j > indexMap.length - this.length()},
-         * or for any vector lane index {@code N} where the mask at lane
-         * {@code N} is set the result of {@code i + indexMap[j + N]} is
-         * {@code < 0} or {@code >= a.length}
-         */
-        public ByteVector fromArray(byte[] a, int i, Mask<Byte> m, int[] indexMap, int j) {
-            return op(m, n -> a[i + indexMap[j + n]]);
-        }
-
-        @Override
-        public abstract ByteVector fromByteArray(byte[] a, int ix);
-
-        @Override
-        public abstract ByteVector fromByteArray(byte[] a, int ix, Mask<Byte> m);
-
-        @Override
-        public abstract ByteVector fromByteBuffer(ByteBuffer bb, int ix);
-
-        @Override
-        public abstract ByteVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Byte> m);
     }
 
     /**
@@ -1195,18 +1479,13 @@ public abstract class ByteVector extends Vector<Byte> {
     @SuppressWarnings("unchecked")
     public static ByteSpecies species(Vector.Shape s) {
         Objects.requireNonNull(s);
-        if (s == Shape.S_64_BIT) {
-            return Byte64Vector.SPECIES;
-        } else if (s == Shape.S_128_BIT) {
-            return Byte128Vector.SPECIES;
-        } else if (s == Shape.S_256_BIT) {
-            return Byte256Vector.SPECIES;
-        } else if (s == Shape.S_512_BIT) {
-            return Byte512Vector.SPECIES;
-        } else if (s == Shape.S_Max_BIT) {
-            return ByteMaxVector.SPECIES;
-        } else {
-            throw new IllegalArgumentException("Bad shape: " + s);
+        switch (s) {
+            case S_64_BIT: return Byte64Vector.SPECIES;
+            case S_128_BIT: return Byte128Vector.SPECIES;
+            case S_256_BIT: return Byte256Vector.SPECIES;
+            case S_512_BIT: return Byte512Vector.SPECIES;
+            case S_Max_BIT: return ByteMaxVector.SPECIES;
+            default: throw new IllegalArgumentException("Bad shape: " + s);
         }
     }
 }

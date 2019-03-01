@@ -24,12 +24,16 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.vm.annotation.ForceInline;
-
 import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 import java.util.concurrent.ThreadLocalRandom;
+
+import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.ForceInline;
+import static jdk.incubator.vector.VectorIntrinsics.*;
 
 
 /**
@@ -40,6 +44,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public abstract class ShortVector extends Vector<Short> {
 
     ShortVector() {}
+
+    private static final int ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_SHORT_INDEX_SCALE);
 
     // Unary operator
 
@@ -93,7 +99,379 @@ public abstract class ShortVector extends Vector<Short> {
 
     abstract void forEach(Mask<Short> m, FUnCon f);
 
-    //
+    // Static factories
+
+    /**
+     * Returns a vector where all lane elements are set to the default
+     * primitive value.
+     *
+     * @return a zero vector
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static ShortVector zero(ShortSpecies species) {
+        return species.zero();
+    }
+
+    /**
+     * Loads a vector from a byte array starting at an offset.
+     * <p>
+     * Bytes are composed into primitive lane elements according to the
+     * native byte order of the underlying platform
+     * <p>
+     * This method behaves as if it returns the result of calling the
+     * byte buffer, offset, and mask accepting
+     * {@link #fromByteBuffer(ShortSpecies, ByteBuffer, int, Mask) method} as follows:
+     * <pre>{@code
+     * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
+     * }</pre>
+     *
+     * @param a the byte array
+     * @param ix the offset into the array
+     * @return a vector loaded from a byte array
+     * @throws IndexOutOfBoundsException if {@code i < 0} or
+     * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static ShortVector fromByteArray(ShortSpecies species, byte[] a, int ix) {
+        Objects.requireNonNull(a);
+        ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
+        return VectorIntrinsics.load((Class<ShortVector>) species.boxType(), short.class, species.length(),
+                                     a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
+                                     a, ix, species,
+                                     (c, idx, s) -> {
+                                         ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                         ShortBuffer tb = bbc.asShortBuffer();
+                                         return ((ShortSpecies)s).op(i -> tb.get());
+                                     });
+    }
+
+    /**
+     * Loads a vector from a byte array starting at an offset and using a
+     * mask.
+     * <p>
+     * Bytes are composed into primitive lane elements according to the
+     * native byte order of the underlying platform.
+     * <p>
+     * This method behaves as if it returns the result of calling the
+     * byte buffer, offset, and mask accepting
+     * {@link #fromByteBuffer(ShortSpecies, ByteBuffer, int, Mask) method} as follows:
+     * <pre>{@code
+     * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
+     * }</pre>
+     *
+     * @param a the byte array
+     * @param ix the offset into the array
+     * @param m the mask
+     * @return a vector loaded from a byte array
+     * @throws IndexOutOfBoundsException if {@code i < 0} or
+     * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
+     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
+     * or {@code > a.length},
+     * for any vector lane index {@code N} where the mask at lane {@code N}
+     * is set
+     * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
+     */
+    @ForceInline
+    public static ShortVector fromByteArray(ShortSpecies species, byte[] a, int ix, Mask<Short> m) {
+        return zero(species).blend(fromByteArray(species, a, ix), m);
+    }
+
+    /**
+     * Loads a vector from an array starting at offset.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * array element at index {@code i + N} is placed into the
+     * resulting vector at lane index {@code N}.
+     *
+     * @param a the array
+     * @param i the offset into the array
+     * @return the vector loaded from an array
+     * @throws IndexOutOfBoundsException if {@code i < 0}, or
+     * {@code i > a.length - this.length()}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static ShortVector fromArray(ShortSpecies species, short[] a, int i){
+        Objects.requireNonNull(a);
+        i = VectorIntrinsics.checkIndex(i, a.length, species.length());
+        return VectorIntrinsics.load((Class<ShortVector>) species.boxType(), short.class, species.length(),
+                                     a, (((long) i) << ARRAY_SHIFT) + Unsafe.ARRAY_SHORT_BASE_OFFSET,
+                                     a, i, species,
+                                     (c, idx, s) -> ((ShortSpecies)s).op(n -> c[idx + n]));
+    }
+
+
+    /**
+     * Loads a vector from an array starting at offset and using a mask.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * if the mask lane at index {@code N} is set then the array element at
+     * index {@code i + N} is placed into the resulting vector at lane index
+     * {@code N}, otherwise the default element value is placed into the
+     * resulting vector at lane index {@code N}.
+     *
+     * @param a the array
+     * @param i the offset into the array
+     * @param m the mask
+     * @return the vector loaded from an array
+     * @throws IndexOutOfBoundsException if {@code i < 0}, or
+     * for any vector lane index {@code N} where the mask at lane {@code N}
+     * is set {@code i > a.length - N}
+     */
+    @ForceInline
+    public static ShortVector fromArray(ShortSpecies species, short[] a, int i, Mask<Short> m) {
+        return zero(species).blend(fromArray(species, a, i), m);
+    }
+
+    /**
+     * Loads a vector from an array using indexes obtained from an index
+     * map.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * array element at index {@code i + indexMap[j + N]} is placed into the
+     * resulting vector at lane index {@code N}.
+     *
+     * @param a the array
+     * @param i the offset into the array, may be negative if relative
+     * indexes in the index map compensate to produce a value within the
+     * array bounds
+     * @param indexMap the index map
+     * @param j the offset into the index map
+     * @return the vector loaded from an array
+     * @throws IndexOutOfBoundsException if {@code j < 0}, or
+     * {@code j > indexMap.length - this.length()},
+     * or for any vector lane index {@code N} the result of
+     * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
+     */
+    public static ShortVector fromArray(ShortSpecies species, short[] a, int i, int[] indexMap, int j) {
+        return species.op(n -> a[i + indexMap[j + n]]);
+    }
+    /**
+     * Loads a vector from an array using indexes obtained from an index
+     * map and using a mask.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * if the mask lane at index {@code N} is set then the array element at
+     * index {@code i + indexMap[j + N]} is placed into the resulting vector
+     * at lane index {@code N}.
+     *
+     * @param a the array
+     * @param i the offset into the array, may be negative if relative
+     * indexes in the index map compensate to produce a value within the
+     * array bounds
+     * @param indexMap the index map
+     * @param j the offset into the index map
+     * @return the vector loaded from an array
+     * @throws IndexOutOfBoundsException if {@code j < 0}, or
+     * {@code j > indexMap.length - this.length()},
+     * or for any vector lane index {@code N} where the mask at lane
+     * {@code N} is set the result of {@code i + indexMap[j + N]} is
+     * {@code < 0} or {@code >= a.length}
+     */
+    public static ShortVector fromArray(ShortSpecies species, short[] a, int i, Mask<Short> m, int[] indexMap, int j) {
+        return species.op(m, n -> a[i + indexMap[j + n]]);
+    }
+
+    /**
+     * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
+     * offset into the byte buffer.
+     * <p>
+     * Bytes are composed into primitive lane elements according to the
+     * native byte order of the underlying platform.
+     * <p>
+     * This method behaves as if it returns the result of calling the
+     * byte buffer, offset, and mask accepting
+     * {@link #fromByteBuffer(ShortSpecies, ByteBuffer, int, Mask)} method} as follows:
+     * <pre>{@code
+     *   return this.fromByteBuffer(b, i, this.maskAllTrue())
+     * }</pre>
+     *
+     * @param bb the byte buffer
+     * @param ix the offset into the byte buffer
+     * @return a vector loaded from a byte buffer
+     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
+     * or {@code > b.limit()},
+     * or if there are fewer than
+     * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
+     * remaining in the byte buffer from the given offset
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static ShortVector fromByteBuffer(ShortSpecies species, ByteBuffer bb, int ix) {
+        if (bb.order() != ByteOrder.nativeOrder()) {
+            throw new IllegalArgumentException();
+        }
+        ix = VectorIntrinsics.checkIndex(ix, bb.limit(), species.bitSize() / Byte.SIZE);
+        return VectorIntrinsics.load((Class<ShortVector>) species.boxType(), short.class, species.length(),
+                                     U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
+                                     bb, ix, species,
+                                     (c, idx, s) -> {
+                                         ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
+                                         ShortBuffer tb = bbc.asShortBuffer();
+                                         return ((ShortSpecies)s).op(i -> tb.get());
+                                     });
+    }
+
+    /**
+     * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
+     * offset into the byte buffer and using a mask.
+     * <p>
+     * This method behaves as if the byte buffer is viewed as a primitive
+     * {@link java.nio.Buffer buffer} for the primitive element type,
+     * according to the native byte order of the underlying platform, and
+     * the returned vector is loaded with a mask from a primitive array
+     * obtained from the primitive buffer.
+     * The following pseudocode expresses the behaviour, where
+     * {@coce EBuffer} is the primitive buffer type, {@code e} is the
+     * primitive element type, and {@code ESpecies<S>} is the primitive
+     * species for {@code e}:
+     * <pre>{@code
+     * EBuffer eb = b.duplicate().
+     *     order(ByteOrder.nativeOrder()).position(i).
+     *     asEBuffer();
+     * e[] es = new e[this.length()];
+     * for (int n = 0; n < t.length; n++) {
+     *     if (m.isSet(n))
+     *         es[n] = eb.get(n);
+     * }
+     * Vector<E> r = ((ESpecies<S>)this).fromArray(es, 0, m);
+     * }</pre>
+     *
+     * @param bb the byte buffer
+     * @param ix the offset into the byte buffer
+     * @return a vector loaded from a byte buffer
+     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
+     * or {@code > b.limit()},
+     * for any vector lane index {@code N} where the mask at lane {@code N}
+     * is set
+     * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
+     */
+    @ForceInline
+    public static ShortVector fromByteBuffer(ShortSpecies species, ByteBuffer bb, int ix, Mask<Short> m) {
+        return zero(species).blend(fromByteBuffer(species, bb, ix), m);
+    }
+
+    @ForceInline
+    public static Mask<Short> maskFromValues(ShortSpecies species, boolean... bits) {
+        if (species.boxType() == ShortMaxVector.class)
+            return new ShortMaxVector.ShortMaxMask(bits);
+        switch (species.bitSize()) {
+            case 64: return new Short64Vector.Short64Mask(bits);
+            case 128: return new Short128Vector.Short128Mask(bits);
+            case 256: return new Short256Vector.Short256Mask(bits);
+            case 512: return new Short512Vector.Short512Mask(bits);
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
+    static Mask<Short> trueMask(ShortSpecies species) {
+        if (species.boxType() == ShortMaxVector.class)
+            return ShortMaxVector.ShortMaxMask.TRUE_MASK;
+        switch (species.bitSize()) {
+            case 64: return Short64Vector.Short64Mask.TRUE_MASK;
+            case 128: return Short128Vector.Short128Mask.TRUE_MASK;
+            case 256: return Short256Vector.Short256Mask.TRUE_MASK;
+            case 512: return Short512Vector.Short512Mask.TRUE_MASK;
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    static Mask<Short> falseMask(ShortSpecies species) {
+        if (species.boxType() == ShortMaxVector.class)
+            return ShortMaxVector.ShortMaxMask.FALSE_MASK;
+        switch (species.bitSize()) {
+            case 64: return Short64Vector.Short64Mask.FALSE_MASK;
+            case 128: return Short128Vector.Short128Mask.FALSE_MASK;
+            case 256: return Short256Vector.Short256Mask.FALSE_MASK;
+            case 512: return Short512Vector.Short512Mask.FALSE_MASK;
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static Mask<Short> maskFromArray(ShortSpecies species, boolean[] bits, int ix) {
+        Objects.requireNonNull(bits);
+        ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
+        return VectorIntrinsics.load((Class<Mask<Short>>) species.maskType(), short.class, species.length(),
+                                     bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                     bits, ix, species,
+                                     (c, idx, s) -> (Mask<Short>) ((ShortSpecies)s).opm(n -> c[idx + n]));
+    }
+
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static Mask<Short> maskAllTrue(ShortSpecies species) {
+        return VectorIntrinsics.broadcastCoerced((Class<Mask<Short>>) species.maskType(), short.class, species.length(),
+                                                 (short)-1,  species,
+                                                 ((z, s) -> trueMask((ShortSpecies)s)));
+    }
+
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static Mask<Short> maskAllFalse(ShortSpecies species) {
+        return VectorIntrinsics.broadcastCoerced((Class<Mask<Short>>) species.maskType(), short.class, species.length(),
+                                                 0, species, 
+                                                 ((z, s) -> falseMask((ShortSpecies)s)));
+    }
+
+    @ForceInline
+    public static Shuffle<Short> shuffle(ShortSpecies species, IntUnaryOperator f) {
+        if (species.boxType() == ShortMaxVector.class)
+            return new ShortMaxVector.ShortMaxShuffle(f);
+        switch (species.bitSize()) {
+            case 64: return new Short64Vector.Short64Shuffle(f);
+            case 128: return new Short128Vector.Short128Shuffle(f);
+            case 256: return new Short256Vector.Short256Shuffle(f);
+            case 512: return new Short512Vector.Short512Shuffle(f);
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    @ForceInline
+    public static Shuffle<Short> shuffleIota(ShortSpecies species) {
+        if (species.boxType() == ShortMaxVector.class)
+            return new ShortMaxVector.ShortMaxShuffle(AbstractShuffle.IDENTITY);
+        switch (species.bitSize()) {
+            case 64: return new Short64Vector.Short64Shuffle(AbstractShuffle.IDENTITY);
+            case 128: return new Short128Vector.Short128Shuffle(AbstractShuffle.IDENTITY);
+            case 256: return new Short256Vector.Short256Shuffle(AbstractShuffle.IDENTITY);
+            case 512: return new Short512Vector.Short512Shuffle(AbstractShuffle.IDENTITY);
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    @ForceInline
+    public static Shuffle<Short> shuffleFromValues(ShortSpecies species, int... ixs) {
+        if (species.boxType() == ShortMaxVector.class)
+            return new ShortMaxVector.ShortMaxShuffle(ixs);
+        switch (species.bitSize()) {
+            case 64: return new Short64Vector.Short64Shuffle(ixs);
+            case 128: return new Short128Vector.Short128Shuffle(ixs);
+            case 256: return new Short256Vector.Short256Shuffle(ixs);
+            case 512: return new Short512Vector.Short512Shuffle(ixs);
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+    @ForceInline
+    public static Shuffle<Short> shuffleFromArray(ShortSpecies species, int[] ixs, int i) {
+        if (species.boxType() == ShortMaxVector.class)
+            return new ShortMaxVector.ShortMaxShuffle(ixs, i);
+        switch (species.bitSize()) {
+            case 64: return new Short64Vector.Short64Shuffle(ixs, i);
+            case 128: return new Short128Vector.Short128Shuffle(ixs, i);
+            case 256: return new Short256Vector.Short256Shuffle(ixs, i);
+            case 512: return new Short512Vector.Short512Shuffle(ixs, i);
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
+
+    // Ops
 
     @Override
     public abstract ShortVector add(Vector<Short> v);
@@ -1015,6 +1393,8 @@ public abstract class ShortVector extends Vector<Short> {
 
         abstract Mask<Short> opm(FOpm f);
 
+
+
         // Factories
 
         @Override
@@ -1073,101 +1453,6 @@ public abstract class ShortVector extends Vector<Short> {
          * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
          */
         public abstract ShortVector scalars(short... es);
-
-        /**
-         * Loads a vector from an array starting at offset.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * array element at index {@code i + N} is placed into the
-         * resulting vector at lane index {@code N}.
-         *
-         * @param a the array
-         * @param i the offset into the array
-         * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code i < 0}, or
-         * {@code i > a.length - this.length()}
-         */
-        public abstract ShortVector fromArray(short[] a, int i);
-
-        /**
-         * Loads a vector from an array starting at offset and using a mask.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index,
-         * if the mask lane at index {@code N} is set then the array element at
-         * index {@code i + N} is placed into the resulting vector at lane index
-         * {@code N}, otherwise the default element value is placed into the
-         * resulting vector at lane index {@code N}.
-         *
-         * @param a the array
-         * @param i the offset into the array
-         * @param m the mask
-         * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code i < 0}, or
-         * for any vector lane index {@code N} where the mask at lane {@code N}
-         * is set {@code i > a.length - N}
-         */
-        public abstract ShortVector fromArray(short[] a, int i, Mask<Short> m);
-
-        /**
-         * Loads a vector from an array using indexes obtained from an index
-         * map.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * array element at index {@code i + indexMap[j + N]} is placed into the
-         * resulting vector at lane index {@code N}.
-         *
-         * @param a the array
-         * @param i the offset into the array, may be negative if relative
-         * indexes in the index map compensate to produce a value within the
-         * array bounds
-         * @param indexMap the index map
-         * @param j the offset into the index map
-         * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code j < 0}, or
-         * {@code j > indexMap.length - this.length()},
-         * or for any vector lane index {@code N} the result of
-         * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
-         */
-        public ShortVector fromArray(short[] a, int i, int[] indexMap, int j) {
-            return op(n -> a[i + indexMap[j + n]]);
-        }
-        /**
-         * Loads a vector from an array using indexes obtained from an index
-         * map and using a mask.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index,
-         * if the mask lane at index {@code N} is set then the array element at
-         * index {@code i + indexMap[j + N]} is placed into the resulting vector
-         * at lane index {@code N}.
-         *
-         * @param a the array
-         * @param i the offset into the array, may be negative if relative
-         * indexes in the index map compensate to produce a value within the
-         * array bounds
-         * @param indexMap the index map
-         * @param j the offset into the index map
-         * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code j < 0}, or
-         * {@code j > indexMap.length - this.length()},
-         * or for any vector lane index {@code N} where the mask at lane
-         * {@code N} is set the result of {@code i + indexMap[j + N]} is
-         * {@code < 0} or {@code >= a.length}
-         */
-        public ShortVector fromArray(short[] a, int i, Mask<Short> m, int[] indexMap, int j) {
-            return op(m, n -> a[i + indexMap[j + n]]);
-        }
-
-        @Override
-        public abstract ShortVector fromByteArray(byte[] a, int ix);
-
-        @Override
-        public abstract ShortVector fromByteArray(byte[] a, int ix, Mask<Short> m);
-
-        @Override
-        public abstract ShortVector fromByteBuffer(ByteBuffer bb, int ix);
-
-        @Override
-        public abstract ShortVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Short> m);
     }
 
     /**
@@ -1195,18 +1480,13 @@ public abstract class ShortVector extends Vector<Short> {
     @SuppressWarnings("unchecked")
     public static ShortSpecies species(Vector.Shape s) {
         Objects.requireNonNull(s);
-        if (s == Shape.S_64_BIT) {
-            return Short64Vector.SPECIES;
-        } else if (s == Shape.S_128_BIT) {
-            return Short128Vector.SPECIES;
-        } else if (s == Shape.S_256_BIT) {
-            return Short256Vector.SPECIES;
-        } else if (s == Shape.S_512_BIT) {
-            return Short512Vector.SPECIES;
-        } else if (s == Shape.S_Max_BIT) {
-            return ShortMaxVector.SPECIES;
-        } else {
-            throw new IllegalArgumentException("Bad shape: " + s);
+        switch (s) {
+            case S_64_BIT: return Short64Vector.SPECIES;
+            case S_128_BIT: return Short128Vector.SPECIES;
+            case S_256_BIT: return Short256Vector.SPECIES;
+            case S_512_BIT: return Short512Vector.SPECIES;
+            case S_Max_BIT: return ShortMaxVector.SPECIES;
+            default: throw new IllegalArgumentException("Bad shape: " + s);
         }
     }
 }

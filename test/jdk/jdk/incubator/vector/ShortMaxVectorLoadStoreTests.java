@@ -194,7 +194,7 @@ public class ShortMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = SPECIES.fromArray(a, i);
+                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 av.intoArray(r, i);
             }
         }
@@ -207,11 +207,11 @@ public class ShortMaxVectorLoadStoreTests extends AbstractVectorTest {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short> vmask = ShortVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = SPECIES.fromArray(a, i, vmask);
+                ShortVector av = ShortVector.fromArray(SPECIES, a, i, vmask);
                 av.intoArray(r, i);
             }
         }
@@ -220,7 +220,7 @@ public class ShortMaxVectorLoadStoreTests extends AbstractVectorTest {
         r = new short[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = SPECIES.fromArray(a, i);
+                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 av.intoArray(r, i, vmask);
             }
         }
@@ -240,7 +240,7 @@ public class ShortMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector av = SPECIES.fromByteBuffer(a, i);
+                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -263,7 +263,7 @@ public class ShortMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector av = SPECIES.fromByteBuffer(a, i);
+                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -281,14 +281,14 @@ public class ShortMaxVectorLoadStoreTests extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short> vmask = ShortVector.maskFromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector av = SPECIES.fromByteBuffer(a, i, vmask);
+                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -302,7 +302,7 @@ public class ShortMaxVectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector av = SPECIES.fromByteBuffer(a, i);
+                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i, vmask);
             }
         }
@@ -321,14 +321,14 @@ public class ShortMaxVectorLoadStoreTests extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short> vmask = ShortVector.maskFromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector av = SPECIES.fromByteBuffer(a, i, vmask);
+                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }

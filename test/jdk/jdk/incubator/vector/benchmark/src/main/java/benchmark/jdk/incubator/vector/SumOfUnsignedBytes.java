@@ -75,9 +75,9 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
     public int vectorInt() {
         final var lobyte_mask = I256.broadcast(0x000000FF);
 
-        var acc = I256.zero();
+        var acc = IntVector.zero(I256);
         for (int i = 0; i < data.length; i += B256.length()) {
-            var vb = B256.fromArray(data, i);
+            var vb = ByteVector.fromArray(B256, data, i);
             var vi = (IntVector)vb.reinterpret(I256);
             for (int j = 0; j < 4; j++) {
                 var tj = vi.shiftR(j * 8).and(lobyte_mask);
@@ -93,9 +93,9 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
         final var lobyte_mask = S256.broadcast((short) 0x00FF);
 
         // FIXME: overflow
-        var acc = S256.zero();
+        var acc = ShortVector.zero(S256);
         for (int i = 0; i < data.length; i += B256.length()) {
-            var vb = B256.fromArray(data, i);
+            var vb = ByteVector.fromArray(B256, data, i);
             var vs = (ShortVector)vb.reinterpret(S256);
             for (int j = 0; j < 2; j++) {
                 var tj = vs.shiftR(j * 8).and(lobyte_mask);
@@ -113,13 +113,13 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
     @Benchmark
     public int vectorByte() {
         int window = 256;
-        var acc_hi  = I256.zero();
-        var acc8_lo = B256.zero();
+        var acc_hi  = IntVector.zero(I256);
+        var acc8_lo = ByteVector.zero(B256);
         for (int i = 0; i < data.length; i += window) {
-            var acc8_hi = B256.zero();
+            var acc8_hi = ByteVector.zero(B256);
             int limit = Math.min(window, data.length - i);
             for (int j = 0; j < limit; j += B256.length()) {
-                var vb = B256.fromArray(data, i + j);
+                var vb = ByteVector.fromArray(B256, data, i + j);
 
                 var t0 = acc8_lo.add(vb);
                 var t1 = addSaturated(acc8_lo, vb); // MISSING
@@ -137,10 +137,10 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
 
     // 4. Sum Of Absolute Differences (SAD) (MISSING: VPSADBW, _mm256_sad_epu8)
     public int vectorSAD() {
-        var acc = I256.zero();
+        var acc = IntVector.zero(I256);
         for (int i = 0; i < data.length; i += B256.length()) {
-            var v = B256.fromArray(data, i);
-            var sad = sumOfAbsoluteDifferences(v, B256.zero()); // MISSING
+            var v = ByteVector.fromArray(B256, data, i);
+            var sad = sumOfAbsoluteDifferences(v, ByteVector.zero(B256)); // MISSING
             acc = acc.add(sad);
         }
         return acc.addAll();

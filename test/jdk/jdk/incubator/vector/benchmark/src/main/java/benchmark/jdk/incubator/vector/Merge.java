@@ -92,7 +92,7 @@ public class Merge extends AbstractVectorBenchmark {
         int vlenTo   =   to.length();
 
         if (vlenFrom == vlenTo) {
-            return from.fromArray(in, idx);
+            return IntVector.fromArray(from, in, idx);
         } else {
             var stepDown = (IntSpecies) narrow(to);
             int mid = stepDown.length();

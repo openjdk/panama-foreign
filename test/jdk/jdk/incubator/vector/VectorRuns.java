@@ -73,8 +73,8 @@ public class VectorRuns {
         int length = a.length & (species.length() - 1);
         if (length == a.length) length -= species.length();
         while (r < length) {
-            IntVector vl = species.fromArray(a, r - 1);
-            IntVector vr = species.fromArray(a, r);
+            IntVector vl = IntVector.fromArray(species, a, r - 1);
+            IntVector vr = IntVector.fromArray(species, a, r);
             Vector.Mask<Integer> m = vl.greaterThan(vr);
             if (m.anyTrue())
                 return r + Long.numberOfTrailingZeros(m.toLong());

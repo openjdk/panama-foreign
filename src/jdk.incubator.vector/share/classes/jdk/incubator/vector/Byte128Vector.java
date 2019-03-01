@@ -172,37 +172,37 @@ final class Byte128Vector extends ByteVector {
             for (int i = 0; i < limit; i++) {
                 a[i] = (byte) this.get(i);
             }
-            return (Vector) ((ByteVector.ByteSpecies)s).fromArray(a, 0);
+            return (Vector) ByteVector.fromArray((ByteVector.ByteSpecies) s, a, 0);
         } else if (stype == short.class) {
             short[] a = new short[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (short) this.get(i);
             }
-            return (Vector) ((ShortVector.ShortSpecies)s).fromArray(a, 0);
+            return (Vector) ShortVector.fromArray((ShortVector.ShortSpecies) s, a, 0);
         } else if (stype == int.class) {
             int[] a = new int[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (int) this.get(i);
             }
-            return (Vector) ((IntVector.IntSpecies)s).fromArray(a, 0);
+            return (Vector) IntVector.fromArray((IntVector.IntSpecies) s, a, 0);
         } else if (stype == long.class) {
             long[] a = new long[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (long) this.get(i);
             }
-            return (Vector) ((LongVector.LongSpecies)s).fromArray(a, 0);
+            return (Vector) LongVector.fromArray((LongVector.LongSpecies) s, a, 0);
         } else if (stype == float.class) {
             float[] a = new float[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (float) this.get(i);
             }
-            return (Vector) ((FloatVector.FloatSpecies)s).fromArray(a, 0);
+            return (Vector) FloatVector.fromArray((FloatVector.FloatSpecies) s, a, 0);
         } else if (stype == double.class) {
             double[] a = new double[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (double) this.get(i);
             }
-            return (Vector) ((DoubleVector.DoubleSpecies)s).fromArray(a, 0);
+            return (Vector) DoubleVector.fromArray((DoubleVector.DoubleSpecies) s, a, 0);
         } else {
             throw new UnsupportedOperationException("Bad lane type for casting.");
         }
@@ -480,7 +480,7 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public Byte128Vector neg() {
-        return SPECIES.zero().sub(this);
+        return (Byte128Vector)zero(SPECIES).sub(this);
     }
 
     // Unary operations
@@ -837,7 +837,7 @@ final class Byte128Vector extends ByteVector {
         for (int i = 0; i < a.length; i++) {
             sa[i] = (int) a[i];
         }
-        return SPECIES.shuffleFromArray(sa, 0);
+        return ByteVector.shuffleFromArray(SPECIES, sa, 0);
     }
 
     // Memory operations
@@ -860,8 +860,8 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public final void intoArray(byte[] a, int ax, Mask<Byte> m) {
-        Byte128Vector oldVal = SPECIES.fromArray(a, ax);
-        Byte128Vector newVal = oldVal.blend(this, m);
+        ByteVector oldVal = ByteVector.fromArray(SPECIES, a, ax);
+        ByteVector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
     }
 
@@ -884,7 +884,7 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public final void intoByteArray(byte[] a, int ix, Mask<Byte> m) {
-        Byte128Vector oldVal = SPECIES.fromByteArray(a, ix);
+        Byte128Vector oldVal = (Byte128Vector) ByteVector.fromByteArray(SPECIES, a, ix);
         Byte128Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
     }
@@ -913,7 +913,7 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Byte> m) {
-        Byte128Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
+        Byte128Vector oldVal = (Byte128Vector) ByteVector.fromByteBuffer(SPECIES, bb, ix);
         Byte128Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
     }
@@ -1215,14 +1215,6 @@ final class Byte128Vector extends ByteVector {
         }
 
         @Override
-        @ForceInline
-        public <F> Mask<F> cast(Species<F> s) {
-            if (s.length() != LENGTH)
-                throw new IllegalArgumentException("This mask's length and given species length differ");
-            return s.maskFromArray(toArray(), 0);
-        }
-
-        @Override
         public Byte128Vector toVector() {
             byte[] res = new byte[species().length()];
             boolean[] bits = getBits();
@@ -1274,15 +1266,15 @@ final class Byte128Vector extends ByteVector {
         public boolean anyTrue() {
             return VectorIntrinsics.test(COND_notZero, Byte128Mask.class, byte.class, LENGTH,
                                          this, this,
-                                         (m, __) -> anyTrueHelper(m.getBits()));
+                                         (m, __) -> anyTrueHelper(((Byte128Mask)m).getBits()));
         }
 
         @Override
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Byte128Mask.class, byte.class, LENGTH,
-                                         this, species().maskAllTrue(),
-                                         (m, __) -> allTrueHelper(m.getBits()));
+                                         this, ByteVector.maskAllTrue(species()),
+                                         (m, __) -> allTrueHelper(((Byte128Mask)m).getBits()));
         }
     }
 
@@ -1311,20 +1303,12 @@ final class Byte128Vector extends ByteVector {
         }
 
         @Override
-        @ForceInline
-        public <F> Shuffle<F> cast(Species<F> s) {
-            if (s.length() != LENGTH)
-                throw new IllegalArgumentException("This shuffle and the given species's length differ");
-            return s.shuffleFromArray(toArray(), 0);
-        }
-
-        @Override
-        public Byte128Vector toVector() {
+        public ByteVector toVector() {
             byte[] va = new byte[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
               va[i] = (byte) getElement(i);
             }
-            return species().fromArray(va, 0);
+            return ByteVector.fromArray(SPECIES, va, 0);
         }
 
         @Override
@@ -1380,6 +1364,18 @@ final class Byte128Vector extends ByteVector {
 
         @Override
         @ForceInline
+        public Class<?> boxType() {
+            return Byte128Vector.class;
+        }
+
+        @Override
+        @ForceInline
+        public Class<?> maskType() {
+            return Byte128Mask.class;
+        }
+
+        @Override
+        @ForceInline
         public int elementSize() {
             return Byte.SIZE;
         }
@@ -1430,36 +1426,11 @@ final class Byte128Vector extends ByteVector {
         // Factories
 
         @Override
-        public Byte128Mask maskFromValues(boolean... bits) {
-            return new Byte128Mask(bits);
-        }
-
-        @Override
-        public Byte128Shuffle shuffle(IntUnaryOperator f) {
-            return new Byte128Shuffle(f);
-        }
-
-        @Override
-        public Byte128Shuffle shuffleIota() {
-            return new Byte128Shuffle(AbstractShuffle.IDENTITY);
-        }
-
-        @Override
-        public Byte128Shuffle shuffleFromValues(int... ixs) {
-            return new Byte128Shuffle(ixs);
-        }
-
-        @Override
-        public Byte128Shuffle shuffleFromArray(int[] ixs, int i) {
-            return new Byte128Shuffle(ixs, i);
-        }
-
-        @Override
         @ForceInline
         public Byte128Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Byte128Vector.class, byte.class, LENGTH,
-                                                     0,
-                                                     (z -> ZERO));
+                                                     0, SPECIES,
+                                                     ((bits, s) -> ((Byte128Species)s).op(i -> (byte)bits)));
         }
 
         @Override
@@ -1467,24 +1438,8 @@ final class Byte128Vector extends ByteVector {
         public Byte128Vector broadcast(byte e) {
             return VectorIntrinsics.broadcastCoerced(
                 Byte128Vector.class, byte.class, LENGTH,
-                e,
-                ((long bits) -> SPECIES.op(i -> (byte)bits)));
-        }
-
-        @Override
-        @ForceInline
-        public Byte128Mask maskAllTrue() {
-            return VectorIntrinsics.broadcastCoerced(Byte128Mask.class, byte.class, LENGTH,
-                                                     (byte)-1,
-                                                     (z -> Byte128Mask.TRUE_MASK));
-        }
-
-        @Override
-        @ForceInline
-        public Byte128Mask maskAllFalse() {
-            return VectorIntrinsics.broadcastCoerced(Byte128Mask.class, byte.class, LENGTH,
-                                                     0,
-                                                     (z -> Byte128Mask.FALSE_MASK));
+                e, SPECIES,
+                ((bits, s) -> ((Byte128Species)s).op(i -> (byte)bits)));
         }
 
         @Override
@@ -1494,80 +1449,24 @@ final class Byte128Vector extends ByteVector {
             int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
             return VectorIntrinsics.load(Byte128Vector.class, byte.class, LENGTH,
                                          es, Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                                         es, ix,
-                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
+                                         es, ix, SPECIES,
+                                         (c, idx, s) -> ((Byte128Species)s).op(n -> c[idx + n]));
         }
 
         @Override
         @ForceInline
-        public Byte128Mask maskFromArray(boolean[] bits, int ix) {
-            Objects.requireNonNull(bits);
-            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
-            return VectorIntrinsics.load(Byte128Mask.class, byte.class, LENGTH,
-                                         bits, (((long)ix) << BOOLEAN_ARRAY_SHIFT)+ Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
-                                         bits, ix,
-                                         (c, idx) -> SPECIES.opm(n -> c[idx + n]));
+        public <E> Byte128Mask cast(Mask<E> m) {
+            if (m.length() != LENGTH)
+                throw new IllegalArgumentException("Mask length this species length differ");
+            return new Byte128Mask(m.toArray());
         }
 
         @Override
         @ForceInline
-        public Byte128Vector fromArray(byte[] a, int ix) {
-            Objects.requireNonNull(a);
-            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
-            return VectorIntrinsics.load(Byte128Vector.class, byte.class, LENGTH,
-                                         a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                                         a, ix,
-                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
-        }
-
-        @Override
-        @ForceInline
-        public Byte128Vector fromArray(byte[] a, int ax, Mask<Byte> m) {
-            return zero().blend(fromArray(a, ax), m);
-        }
-
-        @Override
-        @ForceInline
-        public Byte128Vector fromByteArray(byte[] a, int ix) {
-            Objects.requireNonNull(a);
-            ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
-            return VectorIntrinsics.load(Byte128Vector.class, byte.class, LENGTH,
-                                         a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                                         a, ix,
-                                         (c, idx) -> {
-                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
-                                             ByteBuffer tb = bbc;
-                                             return SPECIES.op(i -> tb.get());
-                                         });
-        }
-
-        @Override
-        @ForceInline
-        public Byte128Vector fromByteArray(byte[] a, int ix, Mask<Byte> m) {
-            return zero().blend(fromByteArray(a, ix), m);
-        }
-
-        @Override
-        @ForceInline
-        public Byte128Vector fromByteBuffer(ByteBuffer bb, int ix) {
-            if (bb.order() != ByteOrder.nativeOrder()) {
-                throw new IllegalArgumentException();
-            }
-            ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
-            return VectorIntrinsics.load(Byte128Vector.class, byte.class, LENGTH,
-                                         U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
-                                         bb, ix,
-                                         (c, idx) -> {
-                                             ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
-                                             ByteBuffer tb = bbc;
-                                             return SPECIES.op(i -> tb.get());
-                                         });
-        }
-
-        @Override
-        @ForceInline
-        public Byte128Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Byte> m) {
-            return zero().blend(fromByteBuffer(bb, ix), m);
+        public <E> Byte128Shuffle cast(Shuffle<E> s) {
+            if (s.length() != LENGTH)
+                throw new IllegalArgumentException("Shuffle length this species length differ");
+            return new Byte128Shuffle(s.toArray());
         }
     }
 }

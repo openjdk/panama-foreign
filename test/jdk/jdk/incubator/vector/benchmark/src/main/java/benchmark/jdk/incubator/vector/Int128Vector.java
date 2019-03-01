@@ -92,8 +92,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.add(bv).intoArray(r, i);
             }
         }
@@ -107,12 +107,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
@@ -128,8 +128,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.sub(bv).intoArray(r, i);
             }
         }
@@ -143,12 +143,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
@@ -166,8 +166,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.mul(bv).intoArray(r, i);
             }
         }
@@ -181,12 +181,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
@@ -203,8 +203,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.and(bv).intoArray(r, i);
             }
         }
@@ -220,12 +220,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.and(bv, vmask).intoArray(r, i);
             }
         }
@@ -243,8 +243,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.or(bv).intoArray(r, i);
             }
         }
@@ -260,12 +260,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.or(bv, vmask).intoArray(r, i);
             }
         }
@@ -283,8 +283,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.xor(bv).intoArray(r, i);
             }
         }
@@ -300,12 +300,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.xor(bv, vmask).intoArray(r, i);
             }
         }
@@ -323,8 +323,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.shiftR(bv).intoArray(r, i);
             }
         }
@@ -340,12 +340,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.shiftR(bv, vmask).intoArray(r, i);
             }
         }
@@ -363,8 +363,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.shiftL(bv).intoArray(r, i);
             }
         }
@@ -380,12 +380,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.shiftL(bv, vmask).intoArray(r, i);
             }
         }
@@ -403,8 +403,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.aShiftR(bv).intoArray(r, i);
             }
         }
@@ -420,12 +420,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.aShiftR(bv, vmask).intoArray(r, i);
             }
         }
@@ -443,7 +443,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.aShiftR((int)b[i]).intoArray(r, i);
             }
         }
@@ -459,11 +459,11 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.aShiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -481,7 +481,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.shiftR((int)b[i]).intoArray(r, i);
             }
         }
@@ -497,11 +497,11 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.shiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -519,7 +519,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.shiftL((int)b[i]).intoArray(r, i);
             }
         }
@@ -535,11 +535,11 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.shiftL((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -568,8 +568,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.max(bv).intoArray(r, i);
             }
         }
@@ -585,8 +585,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.min(bv).intoArray(r, i);
             }
         }
@@ -603,7 +603,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 r[i] = av.andAll();
             }
         }
@@ -611,7 +611,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = -1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 ra &= av.andAll();
             }
         }
@@ -630,7 +630,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 r[i] = av.orAll();
             }
         }
@@ -638,7 +638,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 ra |= av.orAll();
             }
         }
@@ -657,7 +657,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 r[i] = av.xorAll();
             }
         }
@@ -665,7 +665,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 ra ^= av.xorAll();
             }
         }
@@ -683,7 +683,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 r[i] = av.addAll();
             }
         }
@@ -691,7 +691,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 ra += av.addAll();
             }
         }
@@ -708,7 +708,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 r[i] = av.subAll();
             }
         }
@@ -716,7 +716,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 ra -= av.subAll();
             }
         }
@@ -733,7 +733,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 r[i] = av.mulAll();
             }
         }
@@ -741,7 +741,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 ra *= av.mulAll();
             }
         }
@@ -758,7 +758,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 r[i] = av.minAll();
             }
         }
@@ -766,7 +766,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = Integer.MAX_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 ra = (int)Math.min(ra, av.minAll());
             }
         }
@@ -783,7 +783,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 r[i] = av.maxAll();
             }
         }
@@ -791,7 +791,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = Integer.MIN_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 ra = (int)Math.max(ra, av.maxAll());
             }
         }
@@ -808,7 +808,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-                Vector.Mask<Integer> vmask = SPECIES.maskFromArray(mask, i);
+                Vector.Mask<Integer> vmask = IntVector.maskFromArray(SPECIES, mask, i);
                 r[i] = vmask.anyTrue();
             }
         }
@@ -825,7 +825,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-                Vector.Mask<Integer> vmask = SPECIES.maskFromArray(mask, i);
+                Vector.Mask<Integer> vmask = IntVector.maskFromArray(SPECIES, mask, i);
                 r[i] = vmask.allTrue();
             }
         }
@@ -841,7 +841,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.with(0, (int)4).intoArray(r, i);
             }
         }
@@ -854,12 +854,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = IntVector.maskFromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Integer> mv = av.lessThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
@@ -874,12 +874,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = IntVector.maskFromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Integer> mv = av.greaterThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
@@ -894,12 +894,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = IntVector.maskFromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Integer> mv = av.equal(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
@@ -914,12 +914,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = IntVector.maskFromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Integer> mv = av.notEqual(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
@@ -934,12 +934,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = IntVector.maskFromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Integer> mv = av.lessThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
@@ -954,12 +954,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = IntVector.maskFromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Integer> mv = av.greaterThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
@@ -975,12 +975,12 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                IntVector bv = SPECIES.fromArray(b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
@@ -996,8 +996,8 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
-                av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                av.rearrange(IntVector.shuffleFromArray(SPECIES, order, i)).intoArray(r, i);
             }
         }
 
@@ -1011,7 +1011,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 int num_lanes = SPECIES.length();
                 // Manually unroll because full unroll happens after intrinsification.
                 // Unroll is needed because get intrinsic requires for index to be a known constant.
@@ -1187,7 +1187,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.neg().intoArray(r, i);
             }
         }
@@ -1200,11 +1200,11 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.neg(vmask).intoArray(r, i);
             }
         }
@@ -1219,7 +1219,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.abs().intoArray(r, i);
             }
         }
@@ -1232,11 +1232,11 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.abs(vmask).intoArray(r, i);
             }
         }
@@ -1252,7 +1252,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.not().intoArray(r, i);
             }
         }
@@ -1267,11 +1267,11 @@ public class Int128Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer> vmask = IntVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.not(vmask).intoArray(r, i);
             }
         }
@@ -1291,7 +1291,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i, b, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i, b, i);
                 av.intoArray(r, i);
             }
         }
@@ -1309,7 +1309,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = SPECIES.fromArray(a, i);
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
                 av.intoArray(r, i, b, i);
             }
         }

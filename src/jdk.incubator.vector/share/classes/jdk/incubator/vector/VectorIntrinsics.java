@@ -9,6 +9,8 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.*;
 
+import jdk.incubator.vector.Vector;
+
 /*non-public*/ class VectorIntrinsics {
     static final Unsafe U = Unsafe.getUnsafe();
 
@@ -108,15 +110,18 @@ import java.util.function.*;
     static final int BT_no_overflow = 6;
 
     /* ============================================================================ */
+    interface BroadcastOperation<V, E> {
+        V broadcast(long l, Vector.Species<E> s);
+    }
 
     @HotSpotIntrinsicCandidate
     static
-    <VM>
-    VM broadcastCoerced(Class<VM> vmClass, Class<?> elementType, int length,
-                                  long bits,
-                                  LongFunction<VM> defaultImpl) {
+    <VM, E>
+    VM broadcastCoerced(Class<VM> vmClass, Class<?> E, int length,
+                                  long bits, Vector.Species<E> s,
+                                  BroadcastOperation<VM, E> defaultImpl) {
         assert isNonCapturingLambda(defaultImpl) : defaultImpl;
-        return defaultImpl.apply(bits);
+        return defaultImpl.broadcast(bits, s);
     }
 
     /* ============================================================================ */
@@ -207,38 +212,38 @@ import java.util.function.*;
 
     // Memory operations
 
-    interface LoadOperation<C, V> {
-        V load(C container, int index);
+    interface LoadOperation<C, V, E> {
+        V load(C container, int index, Vector.Species<E> s);
     }
 
     @HotSpotIntrinsicCandidate
     static
-    <C, VM>
-    VM load(Class<VM> vmClass, Class<?> elementType, int length,
+    <C, VM, E>
+    VM load(Class<VM> vmClass, Class<?> E, int length,
            Object base, long offset,    // Unsafe addressing
            // Vector.Mask<E,S> m,
-           C container, int index,      // Arguments for default implementation
-           LoadOperation<C, VM> defaultImpl) {
+           C container, int index, Vector.Species<E> s,     // Arguments for default implementation
+           LoadOperation<C, VM, E> defaultImpl) {
         assert isNonCapturingLambda(defaultImpl) : defaultImpl;
-        return defaultImpl.load(container, index);
+        return defaultImpl.load(container, index, s);
     }
 
     /* ============================================================================ */
 
-    interface LoadVectorOperationWithMap<C, V extends Vector<?>> {
-        V loadWithMap(C container, int index, int[] indexMap, int indexM);
+    interface LoadVectorOperationWithMap<C, V extends Vector<?>, E> {
+        V loadWithMap(C container, int index, int[] indexMap, int indexM, Vector.Species<E> s);
     }
 
     @HotSpotIntrinsicCandidate
     static
-    <C, V extends Vector<?>, W extends IntVector>
-    V loadWithMap(Class<?> vectorClass, Class<?> elementType, int length, Class<?> vectorIndexClass,
+    <C, V extends Vector<?>, W extends IntVector, E>
+    V loadWithMap(Class<?> vectorClass, Class<?> E, int length, Class<?> vectorIndexClass,
                   Object base, long offset, // Unsafe addressing
                   W index_vector,
-                  C container, int index, int[] indexMap, int indexM, // Arguments for default implementation
-                  LoadVectorOperationWithMap<C, V> defaultImpl) {
+                  C container, int index, int[] indexMap, int indexM, Vector.Species<E> s, // Arguments for default implementation
+                  LoadVectorOperationWithMap<C, V, E> defaultImpl) {
         assert isNonCapturingLambda(defaultImpl) : defaultImpl;
-        return defaultImpl.loadWithMap(container, index, indexMap, indexM);
+        return defaultImpl.loadWithMap(container, index, indexMap, indexM, s);
     }
 
     /* ============================================================================ */

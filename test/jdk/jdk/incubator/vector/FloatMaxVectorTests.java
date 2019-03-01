@@ -551,8 +551,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.add(bv).intoArray(r, i);
             }
         }
@@ -567,12 +567,12 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] b = fb.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
@@ -591,8 +591,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.sub(bv).intoArray(r, i);
             }
         }
@@ -607,12 +607,12 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] b = fb.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
@@ -632,8 +632,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.div(bv).intoArray(r, i);
             }
         }
@@ -650,12 +650,12 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] b = fb.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.div(bv, vmask).intoArray(r, i);
             }
         }
@@ -675,8 +675,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.mul(bv).intoArray(r, i);
             }
         }
@@ -691,12 +691,12 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] b = fb.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
@@ -745,8 +745,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.max(bv).intoArray(r, i);
             }
         }
@@ -765,8 +765,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.min(bv).intoArray(r, i);
             }
         }
@@ -808,7 +808,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 r[i] = av.addAll();
             }
         }
@@ -816,7 +816,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra += av.addAll();
             }
         }
@@ -852,7 +852,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 r[i] = av.subAll();
             }
         }
@@ -860,7 +860,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra -= av.subAll();
             }
         }
@@ -896,7 +896,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 r[i] = av.mulAll();
             }
         }
@@ -904,7 +904,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra *= av.mulAll();
             }
         }
@@ -936,7 +936,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 r[i] = av.minAll();
             }
         }
@@ -944,7 +944,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = Float.MAX_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra = (float)Math.min(ra, av.minAll());
             }
         }
@@ -976,7 +976,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 r[i] = av.maxAll();
             }
         }
@@ -984,7 +984,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = Float.MIN_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra = (float)Math.max(ra, av.maxAll());
             }
         }
@@ -1003,7 +1003,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.with(0, (float)4).intoArray(r, i);
             }
         }
@@ -1018,8 +1018,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Float> mv = av.lessThan(bv);
 
                 // Check results as part of computation.
@@ -1038,8 +1038,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Float> mv = av.greaterThan(bv);
 
                 // Check results as part of computation.
@@ -1058,8 +1058,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Float> mv = av.equal(bv);
 
                 // Check results as part of computation.
@@ -1078,8 +1078,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Float> mv = av.notEqual(bv);
 
                 // Check results as part of computation.
@@ -1098,8 +1098,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Float> mv = av.lessThanEq(bv);
 
                 // Check results as part of computation.
@@ -1118,8 +1118,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Float> mv = av.greaterThanEq(bv);
 
                 // Check results as part of computation.
@@ -1142,12 +1142,12 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] b = fb.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
@@ -1164,8 +1164,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                av.rearrange(FloatVector.shuffleFromArray(SPECIES, order, i)).intoArray(r, i);
             }
         }
 
@@ -1182,7 +1182,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 int num_lanes = SPECIES.length();
                 // Manually unroll because full unroll happens after intrinsification.
                 // Unroll is needed because get intrinsic requires for index to be a known constant.
@@ -1346,7 +1346,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.sin().intoArray(r, i);
             }
         }
@@ -1370,7 +1370,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.exp().intoArray(r, i);
             }
         }
@@ -1394,7 +1394,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.log1p().intoArray(r, i);
             }
         }
@@ -1418,7 +1418,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.log().intoArray(r, i);
             }
         }
@@ -1442,7 +1442,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.log10().intoArray(r, i);
             }
         }
@@ -1466,7 +1466,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.expm1().intoArray(r, i);
             }
         }
@@ -1490,7 +1490,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.cos().intoArray(r, i);
             }
         }
@@ -1514,7 +1514,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.tan().intoArray(r, i);
             }
         }
@@ -1538,7 +1538,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.sinh().intoArray(r, i);
             }
         }
@@ -1562,7 +1562,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.cosh().intoArray(r, i);
             }
         }
@@ -1586,7 +1586,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.tanh().intoArray(r, i);
             }
         }
@@ -1610,7 +1610,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.asin().intoArray(r, i);
             }
         }
@@ -1634,7 +1634,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.acos().intoArray(r, i);
             }
         }
@@ -1658,7 +1658,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.atan().intoArray(r, i);
             }
         }
@@ -1682,7 +1682,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.cbrt().intoArray(r, i);
             }
         }
@@ -1707,8 +1707,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.hypot(bv).intoArray(r, i);
             }
         }
@@ -1734,8 +1734,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.pow(bv).intoArray(r, i);
             }
         }
@@ -1761,8 +1761,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 av.atan2(bv).intoArray(r, i);
             }
         }
@@ -1786,9 +1786,9 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
-                FloatVector cv = SPECIES.fromArray(c, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                FloatVector cv = FloatVector.fromArray(SPECIES, c, i);
                 av.fma(bv, cv).intoArray(r, i);
             }
         }
@@ -1805,13 +1805,13 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] c = fc.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
-                FloatVector bv = SPECIES.fromArray(b, i);
-                FloatVector cv = SPECIES.fromArray(c, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                FloatVector cv = FloatVector.fromArray(SPECIES, c, i);
                 av.fma(bv, cv, vmask).intoArray(r, i);
             }
         }
@@ -1831,7 +1831,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.neg().intoArray(r, i);
             }
         }
@@ -1845,11 +1845,11 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.neg(vmask).intoArray(r, i);
             }
         }
@@ -1868,7 +1868,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.abs().intoArray(r, i);
             }
         }
@@ -1882,11 +1882,11 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.abs(vmask).intoArray(r, i);
             }
         }
@@ -1911,7 +1911,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.sqrt().intoArray(r, i);
             }
         }
@@ -1927,11 +1927,11 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.sqrt(vmask).intoArray(r, i);
             }
         }
@@ -1957,7 +1957,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i, b, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i, b, i);
                 av.intoArray(r, i);
             }
         }
@@ -1983,7 +1983,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.intoArray(r, i, b, i);
             }
         }

@@ -278,7 +278,23 @@ public class VectorReshapeTests {
     @ForceInline
     static <E>
     void testVectorReshape(Vector.Species<E> a, Vector.Species<E> b, byte[] input, byte[] output) {
-        Vector<E> av = a.fromByteArray(input, 0);
+        Vector<E> av;
+        Class<?> stype = a.elementType();
+        if (stype == byte.class) {
+           av =  (Vector) ByteVector.fromByteArray((ByteVector.ByteSpecies)a, input, 0);
+        } else if (stype == short.class) {
+           av =  (Vector) ShortVector.fromByteArray((ShortVector.ShortSpecies)a, input, 0);
+        } else if (stype == int.class) {
+           av =  (Vector) IntVector.fromByteArray((IntVector.IntSpecies)a, input, 0);
+        } else if (stype == long.class) {
+           av =  (Vector) LongVector.fromByteArray((LongVector.LongSpecies)a, input, 0);
+        } else if (stype == float.class) {
+           av =  (Vector) FloatVector.fromByteArray((FloatVector.FloatSpecies)a, input, 0);
+        } else if (stype == double.class) {
+           av =  (Vector) DoubleVector.fromByteArray((DoubleVector.DoubleSpecies)a, input, 0);
+        } else {
+            throw new UnsupportedOperationException("Bad lane type");
+        } 
         Vector<E> bv = av.reshape(b);
         bv.intoByteArray(output, 0);
 
@@ -567,9 +583,25 @@ public class VectorReshapeTests {
     @ForceInline
     static <E,F>
     void testVectorRebracket(Vector.Species<E> a, Vector.Species<F> b, byte[] input, byte[] output) {
-       assert(input.length == output.length);
+        assert(input.length == output.length);
+        Vector<E> av;
 
-        Vector<E> av = a.fromByteArray(input, 0);
+        Class<?> stype = a.elementType();
+        if (stype == byte.class) {
+           av =  (Vector) ByteVector.fromByteArray((ByteVector.ByteSpecies)a, input, 0);
+        } else if (stype == short.class) {
+           av =  (Vector) ShortVector.fromByteArray((ShortVector.ShortSpecies)a, input, 0);
+        } else if (stype == int.class) {
+           av =  (Vector) IntVector.fromByteArray((IntVector.IntSpecies)a, input, 0);
+        } else if (stype == long.class) {
+           av =  (Vector) LongVector.fromByteArray((LongVector.LongSpecies)a, input, 0);
+        } else if (stype == float.class) {
+           av =  (Vector) FloatVector.fromByteArray((FloatVector.FloatSpecies)a, input, 0);
+        } else if (stype == double.class) {
+           av =  (Vector) DoubleVector.fromByteArray((DoubleVector.DoubleSpecies)a, input, 0);
+        } else {
+            throw new UnsupportedOperationException("Bad lane type");
+        } 
         Vector<F> bv = av.reinterpret(b);
         bv.intoByteArray(output, 0);
 
@@ -827,7 +859,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -844,7 +876,7 @@ public class VectorReshapeTests {
     void testVectorCastByteToFloatFail(ByteVector.ByteSpecies a, FloatVector.FloatSpecies b, byte[] input) {
         assert(input.length == a.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -860,7 +892,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -877,7 +909,7 @@ public class VectorReshapeTests {
     void testVectorCastShortToFloatFail(ShortVector.ShortSpecies a, FloatVector.FloatSpecies b, short[] input) {
         assert(input.length == a.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -893,7 +925,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -910,7 +942,7 @@ public class VectorReshapeTests {
     void testVectorCastIntToFloatFail(IntVector.IntSpecies a, FloatVector.FloatSpecies b, int[] input) {
         assert(input.length == a.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -926,7 +958,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -943,7 +975,7 @@ public class VectorReshapeTests {
     void testVectorCastLongToFloatFail(LongVector.LongSpecies a, FloatVector.FloatSpecies b, long[] input) {
         assert(input.length == a.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -959,7 +991,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -976,7 +1008,7 @@ public class VectorReshapeTests {
     void testVectorCastFloatToFloatFail(FloatVector.FloatSpecies a, FloatVector.FloatSpecies b, float[] input) {
         assert(input.length == a.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -992,7 +1024,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1009,7 +1041,7 @@ public class VectorReshapeTests {
     void testVectorCastDoubleToFloatFail(DoubleVector.DoubleSpecies a, FloatVector.FloatSpecies b, double[] input) {
         assert(input.length == a.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1025,7 +1057,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1042,7 +1074,7 @@ public class VectorReshapeTests {
     void testVectorCastByteToByteFail(ByteVector.ByteSpecies a, ByteVector.ByteSpecies b, byte[] input) {
         assert(input.length == a.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1058,7 +1090,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1075,7 +1107,7 @@ public class VectorReshapeTests {
     void testVectorCastShortToByteFail(ShortVector.ShortSpecies a, ByteVector.ByteSpecies b, short[] input) {
         assert(input.length == a.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1091,7 +1123,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1108,7 +1140,7 @@ public class VectorReshapeTests {
     void testVectorCastIntToByteFail(IntVector.IntSpecies a, ByteVector.ByteSpecies b, int[] input) {
         assert(input.length == a.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1124,7 +1156,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1141,7 +1173,7 @@ public class VectorReshapeTests {
     void testVectorCastLongToByteFail(LongVector.LongSpecies a, ByteVector.ByteSpecies b, long[] input) {
         assert(input.length == a.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1157,7 +1189,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1174,7 +1206,7 @@ public class VectorReshapeTests {
     void testVectorCastFloatToByteFail(FloatVector.FloatSpecies a, ByteVector.ByteSpecies b, float[] input) {
         assert(input.length == a.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1190,7 +1222,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1207,7 +1239,7 @@ public class VectorReshapeTests {
     void testVectorCastDoubleToByteFail(DoubleVector.DoubleSpecies a, ByteVector.ByteSpecies b, double[] input) {
         assert(input.length == a.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1223,7 +1255,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1240,7 +1272,7 @@ public class VectorReshapeTests {
     void testVectorCastByteToShortFail(ByteVector.ByteSpecies a, ShortVector.ShortSpecies b, byte[] input) {
         assert(input.length == a.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1256,7 +1288,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1273,7 +1305,7 @@ public class VectorReshapeTests {
     void testVectorCastShortToShortFail(ShortVector.ShortSpecies a, ShortVector.ShortSpecies b, short[] input) {
         assert(input.length == a.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1289,7 +1321,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1306,7 +1338,7 @@ public class VectorReshapeTests {
     void testVectorCastIntToShortFail(IntVector.IntSpecies a, ShortVector.ShortSpecies b, int[] input) {
         assert(input.length == a.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1322,7 +1354,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1339,7 +1371,7 @@ public class VectorReshapeTests {
     void testVectorCastLongToShortFail(LongVector.LongSpecies a, ShortVector.ShortSpecies b, long[] input) {
         assert(input.length == a.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1355,7 +1387,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1372,7 +1404,7 @@ public class VectorReshapeTests {
     void testVectorCastFloatToShortFail(FloatVector.FloatSpecies a, ShortVector.ShortSpecies b, float[] input) {
         assert(input.length == a.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1388,7 +1420,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1405,7 +1437,7 @@ public class VectorReshapeTests {
     void testVectorCastDoubleToShortFail(DoubleVector.DoubleSpecies a, ShortVector.ShortSpecies b, double[] input) {
         assert(input.length == a.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1421,7 +1453,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1438,7 +1470,7 @@ public class VectorReshapeTests {
     void testVectorCastByteToIntFail(ByteVector.ByteSpecies a, IntVector.IntSpecies b, byte[] input) {
         assert(input.length == a.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1454,7 +1486,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1471,7 +1503,7 @@ public class VectorReshapeTests {
     void testVectorCastShortToIntFail(ShortVector.ShortSpecies a, IntVector.IntSpecies b, short[] input) {
         assert(input.length == a.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1487,7 +1519,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1504,7 +1536,7 @@ public class VectorReshapeTests {
     void testVectorCastIntToIntFail(IntVector.IntSpecies a, IntVector.IntSpecies b, int[] input) {
         assert(input.length == a.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1520,7 +1552,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1537,7 +1569,7 @@ public class VectorReshapeTests {
     void testVectorCastLongToIntFail(LongVector.LongSpecies a, IntVector.IntSpecies b, long[] input) {
         assert(input.length == a.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1553,7 +1585,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1570,7 +1602,7 @@ public class VectorReshapeTests {
     void testVectorCastFloatToIntFail(FloatVector.FloatSpecies a, IntVector.IntSpecies b, float[] input) {
         assert(input.length == a.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1586,7 +1618,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1603,7 +1635,7 @@ public class VectorReshapeTests {
     void testVectorCastDoubleToIntFail(DoubleVector.DoubleSpecies a, IntVector.IntSpecies b, double[] input) {
         assert(input.length == a.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1619,7 +1651,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1636,7 +1668,7 @@ public class VectorReshapeTests {
     void testVectorCastByteToLongFail(ByteVector.ByteSpecies a, LongVector.LongSpecies b, byte[] input) {
         assert(input.length == a.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1652,7 +1684,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1669,7 +1701,7 @@ public class VectorReshapeTests {
     void testVectorCastShortToLongFail(ShortVector.ShortSpecies a, LongVector.LongSpecies b, short[] input) {
         assert(input.length == a.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1685,7 +1717,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1702,7 +1734,7 @@ public class VectorReshapeTests {
     void testVectorCastIntToLongFail(IntVector.IntSpecies a, LongVector.LongSpecies b, int[] input) {
         assert(input.length == a.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1718,7 +1750,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1735,7 +1767,7 @@ public class VectorReshapeTests {
     void testVectorCastLongToLongFail(LongVector.LongSpecies a, LongVector.LongSpecies b, long[] input) {
         assert(input.length == a.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1751,7 +1783,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1768,7 +1800,7 @@ public class VectorReshapeTests {
     void testVectorCastFloatToLongFail(FloatVector.FloatSpecies a, LongVector.LongSpecies b, float[] input) {
         assert(input.length == a.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1784,7 +1816,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1801,7 +1833,7 @@ public class VectorReshapeTests {
     void testVectorCastDoubleToLongFail(DoubleVector.DoubleSpecies a, LongVector.LongSpecies b, double[] input) {
         assert(input.length == a.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1817,7 +1849,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1834,7 +1866,7 @@ public class VectorReshapeTests {
     void testVectorCastByteToDoubleFail(ByteVector.ByteSpecies a, DoubleVector.DoubleSpecies b, byte[] input) {
         assert(input.length == a.length());
 
-        ByteVector av = a.fromArray(input, 0);
+        ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1850,7 +1882,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1867,7 +1899,7 @@ public class VectorReshapeTests {
     void testVectorCastShortToDoubleFail(ShortVector.ShortSpecies a, DoubleVector.DoubleSpecies b, short[] input) {
         assert(input.length == a.length());
 
-        ShortVector av = a.fromArray(input, 0);
+        ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1883,7 +1915,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1900,7 +1932,7 @@ public class VectorReshapeTests {
     void testVectorCastIntToDoubleFail(IntVector.IntSpecies a, DoubleVector.DoubleSpecies b, int[] input) {
         assert(input.length == a.length());
 
-        IntVector av = a.fromArray(input, 0);
+        IntVector av = IntVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1916,7 +1948,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1933,7 +1965,7 @@ public class VectorReshapeTests {
     void testVectorCastLongToDoubleFail(LongVector.LongSpecies a, DoubleVector.DoubleSpecies b, long[] input) {
         assert(input.length == a.length());
 
-        LongVector av = a.fromArray(input, 0);
+        LongVector av = LongVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1949,7 +1981,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1966,7 +1998,7 @@ public class VectorReshapeTests {
     void testVectorCastFloatToDoubleFail(FloatVector.FloatSpecies a, DoubleVector.DoubleSpecies b, float[] input) {
         assert(input.length == a.length());
 
-        FloatVector av = a.fromArray(input, 0);
+        FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(
@@ -1982,7 +2014,7 @@ public class VectorReshapeTests {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
@@ -1999,7 +2031,7 @@ public class VectorReshapeTests {
     void testVectorCastDoubleToDoubleFail(DoubleVector.DoubleSpecies a, DoubleVector.DoubleSpecies b, double[] input) {
         assert(input.length == a.length());
 
-        DoubleVector av = a.fromArray(input, 0);
+        DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
             av.cast(b);
             Assert.fail(String.format(

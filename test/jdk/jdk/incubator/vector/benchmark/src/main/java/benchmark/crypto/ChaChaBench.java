@@ -133,7 +133,7 @@ public class ChaChaBench {
                 shuffleArr[i] = offset + ((i + amount) % 4);
             }
 
-            return intSpecies.shuffleFromValues(shuffleArr);
+            return IntVector.shuffleFromValues(intSpecies, shuffleArr);
         }
 
         private IntVector makeCounterAdd() {
@@ -141,7 +141,7 @@ public class ChaChaBench {
             for(int i = 0; i < numBlocks; i++) {
                 addArr[4 * i] = numBlocks;
             }
-            return intSpecies.fromArray(addArr, 0);
+            return IntVector.fromArray(intSpecies, addArr, 0);
         }
 
         private Vector.Shuffle<Integer>  makeRearrangeShuffle(int order) {
@@ -150,7 +150,7 @@ public class ChaChaBench {
             for (int i = 0; i < shuffleArr.length; i++) {
                 shuffleArr[i] = (i % 4) + start;
             }
-            return intSpecies.shuffleFromArray(shuffleArr, 0);
+            return IntVector.shuffleFromArray(intSpecies, shuffleArr, 0);
         }
 
         private Vector.Mask<Integer> makeRearrangeMask(int order) {
@@ -162,7 +162,7 @@ public class ChaChaBench {
                 }
             }
 
-            return intSpecies.maskFromValues(maskArr);
+            return IntVector.maskFromValues(intSpecies, maskArr);
         }
 
         public void makeState(byte[] key, byte[] nonce, long counter,
@@ -225,10 +225,10 @@ public class ChaChaBench {
 
             int len = intSpecies.length();
 
-            IntVector sa = intSpecies.fromArray(state, 0);
-            IntVector sb = intSpecies.fromArray(state, len);
-            IntVector sc = intSpecies.fromArray(state, 2 * len);
-            IntVector sd = intSpecies.fromArray(state, 3 * len);
+            IntVector sa = IntVector.fromArray(intSpecies, state, 0);
+            IntVector sb = IntVector.fromArray(intSpecies, state, len);
+            IntVector sc = IntVector.fromArray(intSpecies, state, 2 * len);
+            IntVector sd = IntVector.fromArray(intSpecies, state, 3 * len);
 
             int stateLenBytes = state.length * 4;
             int numStates = (in.length + stateLenBytes - 1) / stateLenBytes;
