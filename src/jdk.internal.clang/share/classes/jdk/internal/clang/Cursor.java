@@ -69,7 +69,7 @@ public class Cursor extends StructType {
     public native String spelling();
     public native String USR();
 
-    public native int kind1();
+    public native int kind0();
 
     public native int visitChildren(Visitor visitor, Object data);
 
@@ -92,7 +92,7 @@ public class Cursor extends StructType {
     public native boolean isBitField();
     public native int getBitFieldWidth();
 
-    native long getTranslationUnit0();
+    private native long getTranslationUnit0();
     public final TranslationUnit getTranslationUnit() {
         return new TranslationUnit(getTranslationUnit0());
     }
@@ -100,7 +100,7 @@ public class Cursor extends StructType {
     public native String getMangling();
 
     public CursorKind kind() {
-        int v = kind1();
+        int v = kind0();
         // FIXME: assert(v == getData().getInt(0));
         return CursorKind.valueOf(v);
     }
@@ -128,7 +128,9 @@ public class Cursor extends StructType {
                 new EvalResult(ptr) : EvalResult.erroneous;
     }
 
-    public native boolean equalCursor(Cursor other);
+    private native boolean equalCursor(Cursor other);
+
+    public native Comment getParsedComment();
 
     @Override
     public boolean equals(Object other) {

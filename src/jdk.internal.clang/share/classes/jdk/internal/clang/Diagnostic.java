@@ -61,18 +61,18 @@ public class Diagnostic {
         this.ptr = ptr;
     }
 
-    native int severity(long addr);
+    private native int severity(long addr);
     public int severity() { return severity(ptr); }
 
-    native SourceLocation location(long addr);
+    private native SourceLocation location(long addr);
     public SourceLocation location() { return location(ptr); }
 
-    native String spelling(long addr);
+    private native String spelling(long addr);
     public String spelling() { return spelling(ptr); }
 
-    native String format(long addr);
+    private native String format(long addr);
 
-    native void dispose(long addr);
+    private native void dispose(long addr);
     public void dispose() { dispose(ptr); }
 
     @Override

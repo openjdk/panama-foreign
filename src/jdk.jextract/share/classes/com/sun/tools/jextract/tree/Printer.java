@@ -75,7 +75,7 @@ public final class Printer {
         try {
             println("Type Kind: " + t.kind().name());
         } catch (NoSuchElementException ex) {
-            println("Type kind unknown: " + t.kind1());
+            println("Type kind unknown: " + t.kind0());
         }
         Cursor c = t.getDeclarationCursor();
         println("Declared by cursor: " + c.spelling() + " of kind " + c.kind());
@@ -123,7 +123,7 @@ public final class Printer {
         try {
             println("Kind: " + c.kind().name());
         } catch (NoSuchElementException ex) {
-            println("Cursor kind unknown: " + c.kind1());
+            println("Cursor kind unknown: " + c.kind0());
         }
         try (EvalResult res = c.eval()) {
             switch (res.getKind()) {

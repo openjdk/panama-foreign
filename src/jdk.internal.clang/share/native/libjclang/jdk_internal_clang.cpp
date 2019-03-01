@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <jni.h>
+#include <clang-c/Documentation.h>
 #include <clang-c/Index.h>
 #include <assert.h>
 
@@ -8,11 +9,13 @@ static jclass clsStructType;
 static jfieldID dataStructType;
 
 static jclass clsIndex;
+static jclass clsComment;
 static jclass clsCursor;
 static jclass clsType;
 static jclass clsjavaLangString;
 static jclass clsIAE;
 static jmethodID ctorIndex;
+static jmethodID ctorComment;
 static jmethodID ctorCursor;
 static jmethodID ctorType;
 static jmethodID visitorID;
@@ -68,22 +71,30 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
     clsIndex = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/Index"));
     ctorIndex = env->GetMethodID(clsIndex, "<init>", "(J)V");
+    assert(ctorIndex != NULL);
 
     clsStructType = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/StructType"));
     dataStructType = env->GetFieldID(clsStructType, "data", "Ljava/nio/ByteBuffer;");
     assert(dataStructType != NULL);
 
+    clsComment = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/Comment"));
+    ctorComment = env->GetMethodID(clsComment, "<init>", "(Ljava/nio/ByteBuffer;)V");
+    assert(ctorComment != NULL);
+
     clsCursor = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/Cursor"));
     ctorCursor = env->GetMethodID(clsCursor, "<init>", "(Ljava/nio/ByteBuffer;)V");
+    assert(ctorCursor != NULL);
     visitorID = env->GetStaticMethodID(clsCursor, "visit",
         "(Ljdk/internal/clang/Cursor$Visitor;Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;Ljava/lang/Object;)I");
     assert(visitorID != NULL);
 
     clsType = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/Type"));
     ctorType = env->GetMethodID(clsType, "<init>", "(Ljava/nio/ByteBuffer;)V");
+    assert(ctorType != NULL);
 
     clsSourceLocation = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/SourceLocation"));
     ctorSourceLocation = env->GetMethodID(clsSourceLocation, "<init>", "(Ljava/nio/ByteBuffer;)V");
+    assert(ctorSourceLocation != NULL);
 
     clsLocation = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/SourceLocation$Location"));
     ctorLocation = env->GetMethodID(clsLocation, "<init>", "(Ljava/lang/String;III)V");
@@ -91,6 +102,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
     clsSourceRange = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/SourceRange"));
     ctorSourceRange = env->GetMethodID(clsSourceRange, "<init>", "(Ljava/nio/ByteBuffer;)V");
+    assert(ctorSourceRange != NULL);
 
     clsUnsavedFile = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/Index$UnsavedFile"));
     unsavedFileType = env->GetFieldID(clsUnsavedFile, "file", "Ljava/lang/String;");
@@ -409,7 +421,7 @@ JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Cursor_USR
     return CX2JString(env, usr);
 }
 
-JNIEXPORT jint JNICALL Java_jdk_internal_clang_Cursor_kind1
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Cursor_kind0
   (JNIEnv *env, jobject cursor) {
     CXCursor *ptr = (CXCursor*) J2P(env, cursor);
     return clang_getCursorKind(*ptr);
@@ -561,6 +573,229 @@ JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Cursor_equalCursor
     return clang_equalCursors(*ptr, *ptrOther);
 }
 
+JNIEXPORT jobject JNICALL Java_jdk_internal_clang_Cursor_getParsedComment
+  (JNIEnv *env, jobject cursor) {
+    CXCursor *ptr = (CXCursor*) J2P(env, cursor);
+    CXComment comment = clang_Cursor_getParsedComment(*ptr);
+    jobject buffer = env->NewDirectByteBuffer(&comment, sizeof(CXComment));
+    return env->NewObject(clsComment, ctorComment, buffer);
+}
+
+/**
+ * Comment related functions
+ */
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Comment_kind0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_Comment_getKind(*ptr);
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Comment_getNumChildren
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_Comment_getNumChildren(*ptr);
+}
+
+JNIEXPORT jobject JNICALL Java_jdk_internal_clang_Comment_getChild
+  (JNIEnv *env, jobject comment, jint childIdx) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXComment childComment = clang_Comment_getChild(*ptr, childIdx);
+    jobject buffer = env->NewDirectByteBuffer(&childComment, sizeof(CXComment));
+    return env->NewObject(clsComment, ctorComment, buffer);
+}
+
+JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Comment_isWhitespace
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_Comment_isWhitespace(*ptr);
+}
+
+JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Comment_inlineContentHasTrailingNewline
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_InlineContentComment_hasTrailingNewline(*ptr);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_getText0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_TextComment_getText(*ptr);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_inlineCommandGetCommandName0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_InlineCommandComment_getCommandName(*ptr);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Comment_inlineCommandGetRenderKind0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_InlineCommandComment_getRenderKind(*ptr);
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Comment_inlineCommandGetNumArgs0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_InlineCommandComment_getNumArgs(*ptr);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_inlineCommandGetArgText0
+  (JNIEnv *env, jobject comment, jint argIdx) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_InlineCommandComment_getArgText(*ptr, argIdx);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_htmlTagGetTagName0
+  (JNIEnv *env, jobject comment, jint argIdx) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_HTMLTagComment_getTagName(*ptr);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_htmlTagGetAsString0
+  (JNIEnv *env, jobject comment, jint argIdx) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_HTMLTagComment_getAsString(*ptr);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Comment_htmlStartGetNumAttrs0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_HTMLStartTag_getNumAttrs(*ptr);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_htmlStartGetAttrName0
+  (JNIEnv *env, jobject comment, jint attrIdx) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_HTMLStartTag_getAttrName(*ptr, attrIdx);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_htmlTagGetAttrValue0
+  (JNIEnv *env, jobject comment, jint attrIdx) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_HTMLStartTag_getAttrName(*ptr, attrIdx);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_blockCommandGetCommandName0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_BlockCommandComment_getCommandName(*ptr);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Comment_blockCommandGetNumArgs0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_BlockCommandComment_getNumArgs(*ptr);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_blockCommandGetArgText0
+  (JNIEnv *env, jobject comment, jint argIdx) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_BlockCommandComment_getArgText(*ptr, argIdx);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jobject JNICALL Java_jdk_internal_clang_Comment_blockCommandGetParagraph0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXComment para = clang_BlockCommandComment_getParagraph(*ptr);
+    jobject buffer = env->NewDirectByteBuffer(&para, sizeof(CXComment));
+    return env->NewObject(clsComment, ctorComment, buffer);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_paramCommandGetParamName0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_ParamCommandComment_getParamName(*ptr);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Comment_paramCommandIsParamIndexValid0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_ParamCommandComment_isParamIndexValid(*ptr);
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Comment_paramCommandGetParamIndex0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_ParamCommandComment_getParamIndex(*ptr);
+}
+
+JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Comment_paramCommandIsDirectionExplicit0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_ParamCommandComment_isDirectionExplicit(*ptr);
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Comment_paramCommandGetDirection0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_ParamCommandComment_getDirection(*ptr);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_tparamCommandGetParamName0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_TParamCommandComment_getParamName(*ptr);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Comment_tparamCommandIsParamPositionValid0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_TParamCommandComment_isParamPositionValid(*ptr);
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Comment_tparamCommandPositionGetDepth0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_TParamCommandComment_getDepth(*ptr);
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Comment_tparamCommandGetIndex0
+  (JNIEnv *env, jobject comment, jint depth) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    return clang_TParamCommandComment_getIndex(*ptr, depth);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_verbatimBlockLineGetText0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_VerbatimBlockLineComment_getText(*ptr);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_verbatimLineGetText0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_VerbatimLineComment_getText(*ptr);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_fullCommentGetAsHTML0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_FullComment_getAsHTML(*ptr);
+    return CX2JString(env, name);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Comment_fullCommentGetAsXML0
+  (JNIEnv *env, jobject comment) {
+    CXComment *ptr = (CXComment*) J2P(env, comment);
+    CXString name = clang_FullComment_getAsXML(*ptr);
+    return CX2JString(env, name);
+}
+
 /*************************************
  * Type <-> CXType related functions
  *************************************/
@@ -593,7 +828,7 @@ JNIEXPORT jobject JNICALL Java_jdk_internal_clang_Type_argType
     return env->NewObject(clsType, ctorType, buffer);
 }
 
-JNIEXPORT jint JNICALL Java_jdk_internal_clang_Type_getCallingConvention1
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Type_getCallingConvention0
   (JNIEnv *env, jobject type) {
     CXType *ptr = (CXType*) J2P(env, type);
     return clang_getFunctionTypeCallingConv(*ptr);
@@ -636,7 +871,7 @@ JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Type_spelling
     return CX2JString(env, spelling);
 }
 
-JNIEXPORT jint JNICALL Java_jdk_internal_clang_Type_kind1
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Type_kind0
   (JNIEnv *env, jobject type) {
     CXType *ptr = (CXType*) J2P(env, type);
     return ptr->kind;
