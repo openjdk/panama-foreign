@@ -46,12 +46,12 @@ public class Type {
     public Type argType(int idx) {
         return new Type(LibClang.lib.clang_getArgType(type, idx));
     }
-    private int getCallingConvention1() {
+    private int getCallingConvention0() {
         return LibClang.lib.clang_getFunctionTypeCallingConv(type);
     }
 
     public CallingConvention getCallingConvention() {
-        int v = getCallingConvention1();
+        int v = getCallingConvention0();
         return CallingConvention.valueOf(v);
     }
 
@@ -93,7 +93,7 @@ public class Type {
         return LibClang.CXStrToString(LibClang.lib.clang_getTypeSpelling(type));
     }
 
-    public int kind1() {
+    public int kind0() {
         return type.kind$get();
     }
 
@@ -110,7 +110,7 @@ public class Type {
     }
 
     public TypeKind kind() {
-        int v = kind1();
+        int v = kind0();
         return TypeKind.valueOf(v);
     }
 
