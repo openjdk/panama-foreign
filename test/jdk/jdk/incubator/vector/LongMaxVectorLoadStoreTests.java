@@ -194,7 +194,7 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector av = SPECIES.fromArray(a, i);
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
                 av.intoArray(r, i);
             }
         }
@@ -207,11 +207,11 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
         long[] a = fa.apply(SPECIES.length());
         long[] r = new long[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = LongVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector av = SPECIES.fromArray(a, i, vmask);
+                LongVector av = LongVector.fromArray(SPECIES, a, i, vmask);
                 av.intoArray(r, i);
             }
         }
@@ -220,7 +220,7 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
         r = new long[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector av = SPECIES.fromArray(a, i);
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
                 av.intoArray(r, i, vmask);
             }
         }
@@ -240,7 +240,7 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector av = SPECIES.fromByteBuffer(a, i);
+                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -263,7 +263,7 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector av = SPECIES.fromByteBuffer(a, i);
+                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -281,14 +281,14 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = LongVector.maskFromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector av = SPECIES.fromByteBuffer(a, i, vmask);
+                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -302,7 +302,7 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector av = SPECIES.fromByteBuffer(a, i);
+                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i, vmask);
             }
         }
@@ -321,14 +321,14 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = LongVector.maskFromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector av = SPECIES.fromByteBuffer(a, i, vmask);
+                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }

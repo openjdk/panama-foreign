@@ -30,6 +30,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.function.IntUnaryOperator;
+import jdk.incubator.vector.*;
 
 /**
  * A {@code Vector} is designed for use in computations that can be transformed
@@ -722,11 +723,28 @@ public abstract class Vector<E> {
     public abstract <F> Vector<F> reinterpret(Species<F> s);
 
     @ForceInline
+    @SuppressWarnings("unchecked")
     <F> Vector<F> defaultReinterpret(Species<F> s) {
         int blen = Math.max(s.bitSize(), this.species().bitSize()) / Byte.SIZE;
         ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
         this.intoByteBuffer(bb, 0);
-        return s.fromByteBuffer(bb, 0);
+
+        Class<?> stype = s.elementType();
+        if (stype == byte.class) {
+           return (Vector) ByteVector.fromByteBuffer((ByteVector.ByteSpecies)s, bb, 0);
+        } else if (stype == short.class) {
+           return (Vector) ShortVector.fromByteBuffer((ShortVector.ShortSpecies)s, bb, 0);
+        } else if (stype == int.class) {
+           return (Vector) IntVector.fromByteBuffer((IntVector.IntSpecies)s, bb, 0);
+        } else if (stype == long.class) {
+           return (Vector) LongVector.fromByteBuffer((LongVector.LongSpecies)s, bb, 0);
+        } else if (stype == float.class) {
+           return (Vector) FloatVector.fromByteBuffer((FloatVector.FloatSpecies)s, bb, 0);
+        } else if (stype == double.class) {
+           return (Vector) DoubleVector.fromByteBuffer((DoubleVector.DoubleSpecies)s, bb, 0);
+        } else {
+            throw new UnsupportedOperationException("Bad lane type for reinterpret.");
+        }
     }
 
     /**
@@ -965,6 +983,20 @@ public abstract class Vector<E> {
         public abstract Class<E> elementType();
 
         /**
+         * Returns the vector box type for this species
+         *
+         * @return the box type
+         */
+        abstract Class<?> boxType();
+
+        /**
+         * Returns the vector mask type for this species
+         *
+         * @return the box type
+         */
+        abstract Class<?> maskType();
+
+        /**
          * Returns the element size, in bits, of vectors produced by this
          * species.
          *
@@ -1067,234 +1099,42 @@ public abstract class Vector<E> {
         public abstract Vector<E> zero();
 
         /**
-         * Loads a vector from a byte array starting at an offset.
+         * Converts a given mask of shape {@code T} and element type
+         * {@code F} to a mask of this species shape {@code S} and element
+         * type {@code E}.
          * <p>
-         * Bytes are composed into primitive lane elements according to the
-         * native byte order of the underlying platform
-         * <p>
-         * This method behaves as if it returns the result of calling the
-         * byte buffer, offset, and mask accepting
-         * {@link #fromByteBuffer(ByteBuffer, int, Mask) method} as follows:
-         * <pre>{@code
-         * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
-         * }</pre>
+         * For each mask lane, where {@code N} is the mask lane index, if the
+         * mask lane at index {@code N} is set, then the mask lane at index
+         * {@code N} of the resulting mask is set, otherwise that mask lane is
+         * not set.
          *
-         * @param a the byte array
-         * @param i the offset into the array
-         * @return a vector loaded from a byte array
-         * @throws IndexOutOfBoundsException if {@code i < 0} or
-         * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
-         */
-        public abstract Vector<E> fromByteArray(byte[] a, int i);
-
-        /**
-         * Loads a vector from a byte array starting at an offset and using a
-         * mask.
-         * <p>
-         * Bytes are composed into primitive lane elements according to the
-         * native byte order of the underlying platform.
-         * <p>
-         * This method behaves as if it returns the result of calling the
-         * byte buffer, offset, and mask accepting
-         * {@link #fromByteBuffer(ByteBuffer, int, Mask) method} as follows:
-         * <pre>{@code
-         * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
-         * }</pre>
-         *
-         * @param a the byte array
-         * @param i the offset into the array
          * @param m the mask
-         * @return a vector loaded from a byte array
-         * @throws IndexOutOfBoundsException if {@code i < 0} or
-         * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
-         * @throws IndexOutOfBoundsException if the offset is {@code < 0},
-         * or {@code > a.length},
-         * for any vector lane index {@code N} where the mask at lane {@code N}
-         * is set
-         * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
+         * @param <F> the boxed element type of the mask
+         * @return a mask, converted by shape and element type, from a given
+         * mask.
+         * @throws IllegalArgumentException if the mask length and this species
+         * length differ
          */
-        public abstract Vector<E> fromByteArray(byte[] a, int i, Mask<E> m);
+        public abstract <F> Mask<E> cast(Mask<F> m);
 
         /**
-         * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
-         * offset into the byte buffer.
+         * Converts a given shuffle of shape {@code T} and element type
+         * {@code F} to a shuffle of this species shape {@code S} and element
+         * type {@code E}.
          * <p>
-         * Bytes are composed into primitive lane elements according to the
-         * native byte order of the underlying platform.
-         * <p>
-         * This method behaves as if it returns the result of calling the
-         * byte buffer, offset, and mask accepting
-         * {@link #fromByteBuffer(ByteBuffer, int, Mask)} method} as follows:
-         * <pre>{@code
-         *   return this.fromByteBuffer(b, i, this.maskAllTrue())
-         * }</pre>
+         * For each shuffle lane, where {@code N} is the mask lane index, the
+         * shuffle element at index {@code N} is placed, unmodified, into the
+         * resulting shuffle at index {@code N}.
          *
-         * @param b the byte buffer
-         * @param i the offset into the byte buffer
-         * @return a vector loaded from a byte buffer
-         * @throws IndexOutOfBoundsException if the offset is {@code < 0},
-         * or {@code > b.limit()},
-         * or if there are fewer than
-         * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
-         * remaining in the byte buffer from the given offset
+         * @param s the shuffle
+         * @param <F> the boxed element type of the mask
+         * @return a shuffle, converted by shape and element type, from a given
+         * shuffle.
+         * @throws IllegalArgumentException if the shuffle length and this
+         * species length differ
          */
-        public abstract Vector<E> fromByteBuffer(ByteBuffer b, int i);
-
-        /**
-         * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
-         * offset into the byte buffer and using a mask.
-         * <p>
-         * This method behaves as if the byte buffer is viewed as a primitive
-         * {@link java.nio.Buffer buffer} for the primitive element type,
-         * according to the native byte order of the underlying platform, and
-         * the returned vector is loaded with a mask from a primitive array
-         * obtained from the primitive buffer.
-         * The following pseudocode expresses the behaviour, where
-         * {@coce EBuffer} is the primitive buffer type, {@code e} is the
-         * primitive element type, and {@code ESpecies<S>} is the primitive
-         * species for {@code e}:
-         * <pre>{@code
-         * EBuffer eb = b.duplicate().
-         *     order(ByteOrder.nativeOrder()).position(i).
-         *     asEBuffer();
-         * e[] es = new e[this.length()];
-         * for (int n = 0; n < t.length; n++) {
-         *     if (m.isSet(n))
-         *         es[n] = eb.get(n);
-         * }
-         * Vector<E> r = ((ESpecies<S>)this).fromArray(es, 0, m);
-         * }</pre>
-         *
-         * @param b the byte buffer
-         * @param i the offset into the byte buffer
-         * @return a vector loaded from a byte buffer
-         * @throws IndexOutOfBoundsException if the offset is {@code < 0},
-         * or {@code > b.limit()},
-         * for any vector lane index {@code N} where the mask at lane {@code N}
-         * is set
-         * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
-         */
-        public abstract Vector<E> fromByteBuffer(ByteBuffer b, int i, Mask<E> m);
-
-        //Mask and shuffle constructions
-
-        /**
-         * Returns a mask where each lane is set or unset according to a given
-         * {@code boolean} value.
-         * <p>
-         * For each mask lane, where {@code N} is the mask lane index,
-         * if the given {@code boolean} value at index {@code N} is {@code true}
-         * then the mask lane at index {@code N} is set, otherwise it is unset.
-         *
-         * @param bits the given {@code boolean} values
-         * @return a mask where each lane is set or unset according to a given
-         * {@code boolean} value
-         * @throws IndexOutOfBoundsException if {@code bits.length < this.length()}
-         */
-        public abstract Mask<E> maskFromValues(boolean... bits);
-
-        /**
-         * Loads a mask from a {@code boolean} array starting at an offset.
-         * <p>
-         * For each mask lane, where {@code N} is the mask lane index,
-         * if the array element at index {@code i + N} is {@code true} then the
-         * mask lane at index {@code N} is set, otherwise it is unset.
-         *
-         * @param a the {@code boolean} array
-         * @param i the offset into the array
-         * @return the mask loaded from a {@code boolean} array
-         * @throws IndexOutOfBoundsException if {@code i < 0}, or
-         * {@code i > a.length - this.length()}
-         */
-        public abstract Mask<E> maskFromArray(boolean[] a, int i);
-
-        /**
-         * Returns a mask where all lanes are a set.
-         *
-         * @return a mask where all lanes are a set
-         */
-        public abstract Mask<E> maskAllTrue();
-
-        /**
-         * Returns a mask where all lanes are unset.
-         *
-         * @return a mask where all lanes are unset
-         */
-        public abstract Mask<E> maskAllFalse();
-
-        /**
-         * Returns a shuffle of mapped indexes where each lane element is
-         * the result of applying a mapping function to the corresponding lane
-         * index.
-         * <p>
-         * Care should be taken to ensure Shuffle values produced from this
-         * method are consumed as constants to ensure optimal generation of
-         * code.  For example, values held in static final fields or values
-         * held in loop constant local variables.
-         * <p>
-         * This method behaves as if a shuffle is created from an array of
-         * mapped indexes as follows:
-         * <pre>{@code
-         *   int[] a = new int[this.length()];
-         *   for (int i = 0; i < a.length; i++) {
-         *       a[i] = f.applyAsInt(i);
-         *   }
-         *   return this.shuffleFromValues(a);
-         * }</pre>
-         *
-         * @param f the lane index mapping function
-         * @return a shuffle of mapped indexes.
-         */
-        public abstract Shuffle<E> shuffle(IntUnaryOperator f);
-
-        /**
-         * Returns a shuffle where each lane element is the value of its
-         * corresponding lane index.
-         * <p>
-         * This method behaves as if a shuffle is created from an identity
-         * index mapping function as follows:
-         * <pre>{@code
-         *   return this.shuffle(i -> i);
-         * }</pre>
-         *
-         * @return a shuffle of lane indexes.
-         */
-        public abstract Shuffle<E> shuffleIota();
-
-        /**
-         * Returns a shuffle where each lane element is set to a given
-         * {@code int} value logically AND'ed by the species length minus one.
-         * <p>
-         * For each shuffle lane, where {@code N} is the shuffle lane index, the
-         * the {@code int} value at index {@code N} logically AND'ed by
-         * {@code this.length() - 1} is placed into the resulting shuffle at
-         * lane index {@code N}.
-         *
-         * @param indexes the given {@code int} values
-         * @return a shuffle where each lane element is set to a given
-         * {@code int} value
-         * @throws IndexOutOfBoundsException if the number of int values is
-         * {@code < this.length()}.
-         */
-        public abstract Shuffle<E> shuffleFromValues(int... indexes);
-
-        /**
-         * Loads a shuffle from an {@code int} array starting at offset.
-         * <p>
-         * For each shuffle lane, where {@code N} is the shuffle lane index, the
-         * array element at index {@code i + N} logically AND'ed by
-         * {@code this.length() - 1} is placed into the resulting shuffle at lane
-         * index {@code N}.
-         *
-         * @param a the {@code int} array
-         * @param i the offset into the array
-         * @return a shuffle loaded from an {@code int} array
-         * @throws IndexOutOfBoundsException if {@code i < 0}, or
-         * {@code i > a.length - this.length()}
-         */
-        public abstract Shuffle<E> shuffleFromArray(int[] a, int i);
+        public abstract <F> Shuffle<E> cast(Shuffle<F> s);
     }
-        // Shuffle iota, 0...N
 
     /**
      * A {@code Mask} represents an ordered immutable sequence of {@code boolean}
@@ -1385,7 +1225,10 @@ public abstract class Vector<E> {
          * @throws IllegalArgumentException if this mask length and the species
          * length differ
          */
-        public abstract <F> Mask<F> cast(Species<F> s);
+        @ForceInline
+        public <F> Mask<F> cast(Species<F> species) {
+            return species.cast(this);
+        }
 
         /**
          * Returns the lane elements of this mask packed into a {@code long}
@@ -1574,7 +1417,10 @@ public abstract class Vector<E> {
          * @throws IllegalArgumentException if this shuffle length and the
          * species length differ
          */
-        public abstract <F> Shuffle<F> cast(Species<F> species);
+        @ForceInline
+        public <F> Shuffle<F> cast(Species<F> species) {
+            return species.cast(this);
+        }
 
         /**
          * Returns an {@code int} array containing the lane elements of this

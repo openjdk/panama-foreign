@@ -418,8 +418,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.add(bv).intoArray(r, i);
             }
         }
@@ -434,12 +434,12 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
@@ -458,8 +458,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.sub(bv).intoArray(r, i);
             }
         }
@@ -474,12 +474,12 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
@@ -500,8 +500,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.mul(bv).intoArray(r, i);
             }
         }
@@ -516,12 +516,12 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
@@ -541,8 +541,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.and(bv).intoArray(r, i);
             }
         }
@@ -559,12 +559,12 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.and(bv, vmask).intoArray(r, i);
             }
         }
@@ -585,8 +585,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.or(bv).intoArray(r, i);
             }
         }
@@ -603,12 +603,12 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.or(bv, vmask).intoArray(r, i);
             }
         }
@@ -629,8 +629,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.xor(bv).intoArray(r, i);
             }
         }
@@ -647,12 +647,12 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.xor(bv, vmask).intoArray(r, i);
             }
         }
@@ -685,7 +685,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.aShiftR((int)b[i]).intoArray(r, i);
             }
         }
@@ -702,11 +702,11 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.aShiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -727,7 +727,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.shiftL((int)b[i]).intoArray(r, i);
             }
         }
@@ -744,11 +744,11 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.shiftL((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -769,7 +769,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.shiftR((int)b[i]).intoArray(r, i);
             }
         }
@@ -786,11 +786,11 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.shiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -816,8 +816,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.max(bv).intoArray(r, i);
             }
         }
@@ -836,8 +836,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.min(bv).intoArray(r, i);
             }
         }
@@ -876,7 +876,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 r[i] = av.andAll();
             }
         }
@@ -884,7 +884,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = -1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 ra &= av.andAll();
             }
         }
@@ -924,7 +924,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 r[i] = av.orAll();
             }
         }
@@ -932,7 +932,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 ra |= av.orAll();
             }
         }
@@ -972,7 +972,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 r[i] = av.xorAll();
             }
         }
@@ -980,7 +980,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 ra ^= av.xorAll();
             }
         }
@@ -1017,7 +1017,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 r[i] = av.addAll();
             }
         }
@@ -1025,7 +1025,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 ra += av.addAll();
             }
         }
@@ -1061,7 +1061,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 r[i] = av.subAll();
             }
         }
@@ -1069,7 +1069,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 ra -= av.subAll();
             }
         }
@@ -1105,7 +1105,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 r[i] = av.mulAll();
             }
         }
@@ -1113,7 +1113,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 ra *= av.mulAll();
             }
         }
@@ -1145,7 +1145,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 r[i] = av.minAll();
             }
         }
@@ -1153,7 +1153,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = Byte.MAX_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 ra = (byte)Math.min(ra, av.minAll());
             }
         }
@@ -1185,7 +1185,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 r[i] = av.maxAll();
             }
         }
@@ -1193,7 +1193,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = Byte.MIN_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 ra = (byte)Math.max(ra, av.maxAll());
             }
         }
@@ -1218,7 +1218,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-                Vector.Mask<Byte> vmask = SPECIES.maskFromArray(mask, i);
+                Vector.Mask<Byte> vmask = ByteVector.maskFromArray(SPECIES, mask, i);
                 r[i] = vmask.anyTrue();
             }
         }
@@ -1244,7 +1244,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-                Vector.Mask<Byte> vmask = SPECIES.maskFromArray(mask, i);
+                Vector.Mask<Byte> vmask = ByteVector.maskFromArray(SPECIES, mask, i);
                 r[i] = vmask.allTrue();
             }
         }
@@ -1260,7 +1260,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.with(0, (byte)4).intoArray(r, i);
             }
         }
@@ -1275,8 +1275,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Byte> mv = av.lessThan(bv);
 
                 // Check results as part of computation.
@@ -1295,8 +1295,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Byte> mv = av.greaterThan(bv);
 
                 // Check results as part of computation.
@@ -1315,8 +1315,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Byte> mv = av.equal(bv);
 
                 // Check results as part of computation.
@@ -1335,8 +1335,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Byte> mv = av.notEqual(bv);
 
                 // Check results as part of computation.
@@ -1355,8 +1355,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Byte> mv = av.lessThanEq(bv);
 
                 // Check results as part of computation.
@@ -1375,8 +1375,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 Vector.Mask<Byte> mv = av.greaterThanEq(bv);
 
                 // Check results as part of computation.
@@ -1399,12 +1399,12 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                ByteVector bv = SPECIES.fromArray(b, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
@@ -1421,8 +1421,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                av.rearrange(ByteVector.shuffleFromArray(SPECIES, order, i)).intoArray(r, i);
             }
         }
 
@@ -1439,7 +1439,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 int num_lanes = SPECIES.length();
                 // Manually unroll because full unroll happens after intrinsification.
                 // Unroll is needed because get intrinsic requires for index to be a known constant.
@@ -1620,7 +1620,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.neg().intoArray(r, i);
             }
         }
@@ -1634,11 +1634,11 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.neg(vmask).intoArray(r, i);
             }
         }
@@ -1657,7 +1657,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.abs().intoArray(r, i);
             }
         }
@@ -1671,11 +1671,11 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.abs(vmask).intoArray(r, i);
             }
         }
@@ -1697,7 +1697,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.not().intoArray(r, i);
             }
         }
@@ -1713,11 +1713,11 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = ByteVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 av.not(vmask).intoArray(r, i);
             }
         }

@@ -362,13 +362,13 @@ public class PopulationCount extends AbstractVectorBenchmark {
 
     @Benchmark
     public long Mula128() {
-        var acc = L128.zero(); // IntVector
+        var acc = LongVector.zero(L128); // IntVector
         int step = 32; // % B128.length() == 0!
         int upper = data.length - (data.length % step);
         for (int i = 0; i < upper; i += step) {
-            var bacc = B128.zero();
+            var bacc = ByteVector.zero(B128);
             for (int j = 0; j < step; j += L128.length()) {
-                var v1 = L128.fromArray(data, i + j);
+                var v1 = LongVector.fromArray(L128, data, i + j);
                 var v2 = (ByteVector)v1.reinterpret(B128);
                 var v3 = popcntB128(v2);
                 bacc = bacc.add(v3);
@@ -466,13 +466,13 @@ public class PopulationCount extends AbstractVectorBenchmark {
 
     @Benchmark
     public long Mula256() {
-        var acc = L256.zero();
+        var acc = LongVector.zero(L256);
         int step = 32; // % B256.length() == 0!
         int upper = data.length - (data.length % step);
         for (int i = 0; i < upper; i += step) {
-            var bacc = B256.zero();
+            var bacc = ByteVector.zero(B256);
             for (int j = 0; j < step; j += L256.length()) {
-                var v1 = L256.fromArray(data, i + j);
+                var v1 = LongVector.fromArray(L256, data, i + j);
                 var v2 = popcntB256((ByteVector)(v1.reinterpret(B256)));
                 bacc = bacc.add(v2);
             }
@@ -519,15 +519,15 @@ public class PopulationCount extends AbstractVectorBenchmark {
         int upper = data.length - (data.length % step);
         for (int i = 0; i < upper; i += step) {
             // CSA(&twosA, &ones, ones, d[i+0], d[i +1]);
-            var d0 = L256.fromArray(data, i + 0 * vlen);
-            var d1 = L256.fromArray(data, i + 1 * vlen);
+            var d0 = LongVector.fromArray(L256, data, i + 0 * vlen);
+            var d1 = LongVector.fromArray(L256, data, i + 1 * vlen);
 
             twosA = csaHigh(ones, d0, d1);
             ones  = csaLow(ones, d0, d1);
 
             // CSA(&twosB, &ones, ones, d[i+2], d[i+3]);
-            var d2 = L256.fromArray(data, i + 2 * vlen);
-            var d3 = L256.fromArray(data, i + 3 * vlen);
+            var d2 = LongVector.fromArray(L256, data, i + 2 * vlen);
+            var d3 = LongVector.fromArray(L256, data, i + 3 * vlen);
             twosB = csaHigh(ones, d2, d3);
             ones  = csaLow(ones, d2, d3);
 
@@ -538,14 +538,14 @@ public class PopulationCount extends AbstractVectorBenchmark {
             // ====================================
 
             // CSA(&twosA, &ones, ones, d[i+4], d[i+5]);
-            var d4 = L256.fromArray(data, i + 4 * vlen);
-            var d5 = L256.fromArray(data, i + 5 * vlen);
+            var d4 = LongVector.fromArray(L256, data, i + 4 * vlen);
+            var d5 = LongVector.fromArray(L256, data, i + 5 * vlen);
             twosA = csaHigh(ones, d4, d5);
             ones  = csaLow(ones, d4, d5);
 
             // CSA(&twosB, &ones, ones, d[i+6], d[i+7]);
-            var d6 = L256.fromArray(data, i + 6 * vlen);
-            var d7 = L256.fromArray(data, i + 7 * vlen);
+            var d6 = LongVector.fromArray(L256, data, i + 6 * vlen);
+            var d7 = LongVector.fromArray(L256, data, i + 7 * vlen);
             twosB = csaHigh(ones, d6, d7);
             ones  = csaLow(ones, d6, d7);
 
@@ -562,14 +562,14 @@ public class PopulationCount extends AbstractVectorBenchmark {
             // ====================================
 
             // CSA(&twosA, &ones, ones, d[i+8], d[i+9]);
-            var d8 = L256.fromArray(data, i + 8 * vlen);
-            var d9 = L256.fromArray(data, i + 9 * vlen);
+            var d8 = LongVector.fromArray(L256, data, i + 8 * vlen);
+            var d9 = LongVector.fromArray(L256, data, i + 9 * vlen);
             twosA = csaHigh(ones, d8, d9);
             ones  = csaLow(ones, d8, d9);
 
             // CSA(&twosB, &ones, ones, d[i+10],d[i+11]);
-            var d10 = L256.fromArray(data, i + 10 * vlen);
-            var d11 = L256.fromArray(data, i + 11 * vlen);
+            var d10 = LongVector.fromArray(L256, data, i + 10 * vlen);
+            var d11 = LongVector.fromArray(L256, data, i + 11 * vlen);
             twosB = csaHigh(ones, d10, d11);
             ones  = csaLow(ones, d10, d11);
 
@@ -580,14 +580,14 @@ public class PopulationCount extends AbstractVectorBenchmark {
             // ====================================
 
             // CSA(&twosA, &ones, ones, d[i+12], d[i +13]);
-            var d12 = L256.fromArray(data, i + 12 * vlen);
-            var d13 = L256.fromArray(data, i + 13 * vlen);
+            var d12 = LongVector.fromArray(L256, data, i + 12 * vlen);
+            var d13 = LongVector.fromArray(L256, data, i + 13 * vlen);
             twosA = csaHigh(ones, d12, d13);
             ones  = csaLow(ones, d12, d13);
 
             // CSA(&twosB, &ones, ones, d[i+14], d[i +15]);
-            var d14 = L256.fromArray(data, i + 14 * vlen);
-            var d15 = L256.fromArray(data, i + 15 * vlen);
+            var d14 = LongVector.fromArray(L256, data, i + 14 * vlen);
+            var d15 = LongVector.fromArray(L256, data, i + 15 * vlen);
             twosB = csaHigh(ones, d14, d15);
             ones  = csaLow(ones, d14, d15);
 

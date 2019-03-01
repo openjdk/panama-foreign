@@ -67,8 +67,8 @@ public class VectorArrays {
         int i = 0;
         // @@@ Method on species to truncate the length?
         for (; i < (length & ~(species.length() - 1)); i += species.length()) {
-            Vector<Byte> va = species.fromArray(a, i);
-            Vector<Byte> vb = species.fromArray(b, i);
+            Vector<Byte> va = ByteVector.fromArray(species, a, i);
+            Vector<Byte> vb = ByteVector.fromArray(species, b, i);
             Vector.Mask<Byte> m = va.notEqual(vb);
             // @@@ count number of leading zeros with explicit method
             if (m.anyTrue()) {

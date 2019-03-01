@@ -3,7 +3,7 @@
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-                Vector.Mask<$Wideboxtype$> vmask = SPECIES.maskFromArray(mask, i);
+                Vector.Mask<$Wideboxtype$> vmask = $abstractvectortype$.maskFromArray(SPECIES, mask, i);
                 r[i] = vmask.[[TEST]]();
             }
         }

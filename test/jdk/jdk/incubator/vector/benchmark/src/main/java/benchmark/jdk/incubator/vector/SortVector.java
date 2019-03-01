@@ -77,14 +77,14 @@ public class SortVector extends AbstractVectorBenchmark {
 
 
     void sort(IntSpecies spec) {
-        var iota = (IntVector)spec.shuffleIota().toVector(); // [ 0 1 ... n ]
+        var iota = (IntVector) IntVector.shuffleIota(spec).toVector(); // [ 0 1 ... n ]
 
         var result = spec.broadcast(0);
         var index = spec.broadcast(0);
         var incr = spec.broadcast(1);
 
         for (int i = 0; i < in.length; i += spec.length()) {
-            var input = spec.fromArray(in, i);
+            var input = IntVector.fromArray(spec, in, i);
 
             for (int j = 0; j < input.length(); j++) {
                 var shuf = index.toShuffle();

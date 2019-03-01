@@ -185,7 +185,7 @@ public class Float128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.intoArray(r, i);
             }
         }
@@ -198,11 +198,11 @@ public class Float128VectorLoadStoreTests extends AbstractVectorTest {
         float[] a = fa.apply(SPECIES.length());
         float[] r = new float[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i, vmask);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i, vmask);
                 av.intoArray(r, i);
             }
         }
@@ -211,7 +211,7 @@ public class Float128VectorLoadStoreTests extends AbstractVectorTest {
         r = new float[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 av.intoArray(r, i, vmask);
             }
         }
@@ -231,7 +231,7 @@ public class Float128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                FloatVector av = SPECIES.fromByteBuffer(a, i);
+                FloatVector av = FloatVector.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -254,7 +254,7 @@ public class Float128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                FloatVector av = SPECIES.fromByteBuffer(a, i);
+                FloatVector av = FloatVector.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -272,14 +272,14 @@ public class Float128VectorLoadStoreTests extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                FloatVector av = SPECIES.fromByteBuffer(a, i, vmask);
+                FloatVector av = FloatVector.fromByteBuffer(SPECIES, a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -293,7 +293,7 @@ public class Float128VectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                FloatVector av = SPECIES.fromByteBuffer(a, i);
+                FloatVector av = FloatVector.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i, vmask);
             }
         }
@@ -312,14 +312,14 @@ public class Float128VectorLoadStoreTests extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                FloatVector av = SPECIES.fromByteBuffer(a, i, vmask);
+                FloatVector av = FloatVector.fromByteBuffer(SPECIES, a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }

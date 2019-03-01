@@ -209,7 +209,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                $abstractvectortype$ av = SPECIES.fromArray(a, i);
+                $abstractvectortype$ av = $abstractvectortype$.fromArray(SPECIES, a, i);
                 av.intoArray(r, i);
             }
         }
@@ -222,11 +222,11 @@ public class $vectorteststype$ extends AbstractVectorTest {
         $type$[] a = fa.apply(SPECIES.length());
         $type$[] r = new $type$[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Boxtype$> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<$Boxtype$> vmask = $abstractvectortype$.maskFromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                $abstractvectortype$ av = SPECIES.fromArray(a, i, vmask);
+                $abstractvectortype$ av = $abstractvectortype$.fromArray(SPECIES, a, i, vmask);
                 av.intoArray(r, i);
             }
         }
@@ -235,7 +235,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         r = new $type$[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                $abstractvectortype$ av = SPECIES.fromArray(a, i);
+                $abstractvectortype$ av = $abstractvectortype$.fromArray(SPECIES, a, i);
                 av.intoArray(r, i, vmask);
             }
         }
@@ -255,7 +255,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                $abstractvectortype$ av = SPECIES.fromByteBuffer(a, i);
+                $abstractvectortype$ av = $abstractvectortype$.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -278,7 +278,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                $abstractvectortype$ av = SPECIES.fromByteBuffer(a, i);
+                $abstractvectortype$ av = $abstractvectortype$.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -296,14 +296,14 @@ public class $vectorteststype$ extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Boxtype$> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<$Boxtype$> vmask = $abstractvectortype$.maskFromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                $abstractvectortype$ av = SPECIES.fromByteBuffer(a, i, vmask);
+                $abstractvectortype$ av = $abstractvectortype$.fromByteBuffer(SPECIES, a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -317,7 +317,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                $abstractvectortype$ av = SPECIES.fromByteBuffer(a, i);
+                $abstractvectortype$ av = $abstractvectortype$.fromByteBuffer(SPECIES, a, i);
                 av.intoByteBuffer(r, i, vmask);
             }
         }
@@ -336,14 +336,14 @@ public class $vectorteststype$ extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Boxtype$> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<$Boxtype$> vmask = $abstractvectortype$.maskFromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                $abstractvectortype$ av = SPECIES.fromByteBuffer(a, i, vmask);
+                $abstractvectortype$ av = $abstractvectortype$.fromByteBuffer(SPECIES, a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }

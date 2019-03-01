@@ -44,6 +44,11 @@ final class Double64Vector extends DoubleVector {
 
     static final int LENGTH = SPECIES.length();
 
+    // Index vector species
+    private static final IntVector.IntSpecies INDEX_SPEC;
+    static {
+        INDEX_SPEC = (IntVector.IntSpecies) Species.of(int.class, Shape.S_64_BIT);
+    }
     private final double[] vec; // Don't access directly, use getElements() instead.
 
     private double[] getElements() {
@@ -173,37 +178,37 @@ final class Double64Vector extends DoubleVector {
             for (int i = 0; i < limit; i++) {
                 a[i] = (byte) this.get(i);
             }
-            return (Vector) ((ByteVector.ByteSpecies)s).fromArray(a, 0);
+            return (Vector) ByteVector.fromArray((ByteVector.ByteSpecies) s, a, 0);
         } else if (stype == short.class) {
             short[] a = new short[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (short) this.get(i);
             }
-            return (Vector) ((ShortVector.ShortSpecies)s).fromArray(a, 0);
+            return (Vector) ShortVector.fromArray((ShortVector.ShortSpecies) s, a, 0);
         } else if (stype == int.class) {
             int[] a = new int[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (int) this.get(i);
             }
-            return (Vector) ((IntVector.IntSpecies)s).fromArray(a, 0);
+            return (Vector) IntVector.fromArray((IntVector.IntSpecies) s, a, 0);
         } else if (stype == long.class) {
             long[] a = new long[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (long) this.get(i);
             }
-            return (Vector) ((LongVector.LongSpecies)s).fromArray(a, 0);
+            return (Vector) LongVector.fromArray((LongVector.LongSpecies) s, a, 0);
         } else if (stype == float.class) {
             float[] a = new float[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (float) this.get(i);
             }
-            return (Vector) ((FloatVector.FloatSpecies)s).fromArray(a, 0);
+            return (Vector) FloatVector.fromArray((FloatVector.FloatSpecies) s, a, 0);
         } else if (stype == double.class) {
             double[] a = new double[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (double) this.get(i);
             }
-            return (Vector) ((DoubleVector.DoubleSpecies)s).fromArray(a, 0);
+            return (Vector) DoubleVector.fromArray((DoubleVector.DoubleSpecies) s, a, 0);
         } else {
             throw new UnsupportedOperationException("Bad lane type for casting.");
         }
@@ -938,7 +943,7 @@ final class Double64Vector extends DoubleVector {
         for (int i = 0; i < a.length; i++) {
             sa[i] = (int) a[i];
         }
-        return SPECIES.shuffleFromArray(sa, 0);
+        return DoubleVector.shuffleFromArray(SPECIES, sa, 0);
     }
 
     // Memory operations
@@ -961,8 +966,8 @@ final class Double64Vector extends DoubleVector {
     @Override
     @ForceInline
     public final void intoArray(double[] a, int ax, Mask<Double> m) {
-        Double64Vector oldVal = SPECIES.fromArray(a, ax);
-        Double64Vector newVal = oldVal.blend(this, m);
+        DoubleVector oldVal = DoubleVector.fromArray(SPECIES, a, ax);
+        DoubleVector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
     }
     @Override
@@ -975,8 +980,8 @@ final class Double64Vector extends DoubleVector {
      @ForceInline
      public final void intoArray(double[] a, int ax, Mask<Double> m, int[] b, int iy) {
          // @@@ This can result in out of bounds errors for unset mask lanes
-         Double64Vector oldVal = SPECIES.fromArray(a, ax, b, iy);
-         Double64Vector newVal = oldVal.blend(this, m);
+         DoubleVector oldVal = DoubleVector.fromArray(SPECIES, a, ax, b, iy);
+         DoubleVector newVal = oldVal.blend(this, m);
          newVal.intoArray(a, ax, b, iy);
      }
 
@@ -999,7 +1004,7 @@ final class Double64Vector extends DoubleVector {
     @Override
     @ForceInline
     public final void intoByteArray(byte[] a, int ix, Mask<Double> m) {
-        Double64Vector oldVal = SPECIES.fromByteArray(a, ix);
+        Double64Vector oldVal = (Double64Vector) DoubleVector.fromByteArray(SPECIES, a, ix);
         Double64Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
     }
@@ -1028,7 +1033,7 @@ final class Double64Vector extends DoubleVector {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Double> m) {
-        Double64Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
+        Double64Vector oldVal = (Double64Vector) DoubleVector.fromByteBuffer(SPECIES, bb, ix);
         Double64Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
     }
@@ -1339,14 +1344,6 @@ final class Double64Vector extends DoubleVector {
         }
 
         @Override
-        @ForceInline
-        public <F> Mask<F> cast(Species<F> s) {
-            if (s.length() != LENGTH)
-                throw new IllegalArgumentException("This mask's length and given species length differ");
-            return s.maskFromArray(toArray(), 0);
-        }
-
-        @Override
         public Double64Vector toVector() {
             double[] res = new double[species().length()];
             boolean[] bits = getBits();
@@ -1398,15 +1395,15 @@ final class Double64Vector extends DoubleVector {
         public boolean anyTrue() {
             return VectorIntrinsics.test(COND_notZero, Double64Mask.class, long.class, LENGTH,
                                          this, this,
-                                         (m, __) -> anyTrueHelper(m.getBits()));
+                                         (m, __) -> anyTrueHelper(((Double64Mask)m).getBits()));
         }
 
         @Override
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Double64Mask.class, long.class, LENGTH,
-                                         this, species().maskAllTrue(),
-                                         (m, __) -> allTrueHelper(m.getBits()));
+                                         this, DoubleVector.maskAllTrue(species()),
+                                         (m, __) -> allTrueHelper(((Double64Mask)m).getBits()));
         }
     }
 
@@ -1435,20 +1432,12 @@ final class Double64Vector extends DoubleVector {
         }
 
         @Override
-        @ForceInline
-        public <F> Shuffle<F> cast(Species<F> s) {
-            if (s.length() != LENGTH)
-                throw new IllegalArgumentException("This shuffle and the given species's length differ");
-            return s.shuffleFromArray(toArray(), 0);
-        }
-
-        @Override
-        public Double64Vector toVector() {
+        public DoubleVector toVector() {
             double[] va = new double[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
               va[i] = (double) getElement(i);
             }
-            return species().fromArray(va, 0);
+            return DoubleVector.fromArray(SPECIES, va, 0);
         }
 
         @Override
@@ -1504,6 +1493,18 @@ final class Double64Vector extends DoubleVector {
 
         @Override
         @ForceInline
+        public Class<?> boxType() {
+            return Double64Vector.class;
+        }
+
+        @Override
+        @ForceInline
+        public Class<?> maskType() {
+            return Double64Mask.class;
+        }
+
+        @Override
+        @ForceInline
         public int elementSize() {
             return Double.SIZE;
         }
@@ -1520,6 +1521,11 @@ final class Double64Vector extends DoubleVector {
         public Shape shape() {
             return Shape.S_64_BIT;
         }
+
+       @Override
+       IntVector.IntSpecies indexSpecies() {
+          return INDEX_SPEC;
+       }
 
         @Override
         Double64Vector op(FOp f) {
@@ -1554,36 +1560,11 @@ final class Double64Vector extends DoubleVector {
         // Factories
 
         @Override
-        public Double64Mask maskFromValues(boolean... bits) {
-            return new Double64Mask(bits);
-        }
-
-        @Override
-        public Double64Shuffle shuffle(IntUnaryOperator f) {
-            return new Double64Shuffle(f);
-        }
-
-        @Override
-        public Double64Shuffle shuffleIota() {
-            return new Double64Shuffle(AbstractShuffle.IDENTITY);
-        }
-
-        @Override
-        public Double64Shuffle shuffleFromValues(int... ixs) {
-            return new Double64Shuffle(ixs);
-        }
-
-        @Override
-        public Double64Shuffle shuffleFromArray(int[] ixs, int i) {
-            return new Double64Shuffle(ixs, i);
-        }
-
-        @Override
         @ForceInline
         public Double64Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Double64Vector.class, double.class, LENGTH,
-                                                     Double.doubleToLongBits(0.0f),
-                                                     (z -> ZERO));
+                                                     Double.doubleToLongBits(0.0f), SPECIES, 
+                                                     ((bits, s) -> ((Double64Species)s).op(i -> Double.longBitsToDouble((long)bits))));
         }
 
         @Override
@@ -1591,24 +1572,8 @@ final class Double64Vector extends DoubleVector {
         public Double64Vector broadcast(double e) {
             return VectorIntrinsics.broadcastCoerced(
                 Double64Vector.class, double.class, LENGTH,
-                Double.doubleToLongBits(e),
-                ((long bits) -> SPECIES.op(i -> Double.longBitsToDouble((long)bits))));
-        }
-
-        @Override
-        @ForceInline
-        public Double64Mask maskAllTrue() {
-            return VectorIntrinsics.broadcastCoerced(Double64Mask.class, long.class, LENGTH,
-                                                     (long)-1,
-                                                     (z -> Double64Mask.TRUE_MASK));
-        }
-
-        @Override
-        @ForceInline
-        public Double64Mask maskAllFalse() {
-            return VectorIntrinsics.broadcastCoerced(Double64Mask.class, long.class, LENGTH,
-                                                     0,
-                                                     (z -> Double64Mask.FALSE_MASK));
+                Double.doubleToLongBits(e), SPECIES,
+                ((bits, s) -> ((Double64Species)s).op(i -> Double.longBitsToDouble((long)bits))));
         }
 
         @Override
@@ -1618,93 +1583,24 @@ final class Double64Vector extends DoubleVector {
             int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
             return VectorIntrinsics.load(Double64Vector.class, double.class, LENGTH,
                                          es, Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
-                                         es, ix,
-                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
+                                         es, ix, SPECIES,
+                                         (c, idx, s) -> ((Double64Species)s).op(n -> c[idx + n]));
         }
 
         @Override
         @ForceInline
-        public Double64Mask maskFromArray(boolean[] bits, int ix) {
-            Objects.requireNonNull(bits);
-            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
-            return VectorIntrinsics.load(Double64Mask.class, long.class, LENGTH,
-                                         bits, (((long)ix) << BOOLEAN_ARRAY_SHIFT)+ Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
-                                         bits, ix,
-                                         (c, idx) -> SPECIES.opm(n -> c[idx + n]));
+        public <E> Double64Mask cast(Mask<E> m) {
+            if (m.length() != LENGTH)
+                throw new IllegalArgumentException("Mask length this species length differ");
+            return new Double64Mask(m.toArray());
         }
 
         @Override
         @ForceInline
-        public Double64Vector fromArray(double[] a, int ix) {
-            Objects.requireNonNull(a);
-            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
-            return VectorIntrinsics.load(Double64Vector.class, double.class, LENGTH,
-                                         a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
-                                         a, ix,
-                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
-        }
-
-        @Override
-        @ForceInline
-        public Double64Vector fromArray(double[] a, int ax, Mask<Double> m) {
-            return zero().blend(fromArray(a, ax), m);
-        }
-
-        @Override
-        @ForceInline
-        public Double64Vector fromByteArray(byte[] a, int ix) {
-            Objects.requireNonNull(a);
-            ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
-            return VectorIntrinsics.load(Double64Vector.class, double.class, LENGTH,
-                                         a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                                         a, ix,
-                                         (c, idx) -> {
-                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
-                                             DoubleBuffer tb = bbc.asDoubleBuffer();
-                                             return SPECIES.op(i -> tb.get());
-                                         });
-        }
-        @Override
-        @ForceInline
-        public Double64Vector fromArray(double[] a, int ix, int[] b, int iy) {
-            return SPECIES.fromArray(a, ix + b[iy]);
-       }
-
-       @Override
-       @ForceInline
-       public Double64Vector fromArray(double[] a, int ax, Mask<Double> m, int[] indexMap, int j) {
-           // @@@ This can result in out of bounds errors for unset mask lanes
-           return zero().blend(fromArray(a, ax, indexMap, j), m);
-       }
-
-
-        @Override
-        @ForceInline
-        public Double64Vector fromByteArray(byte[] a, int ix, Mask<Double> m) {
-            return zero().blend(fromByteArray(a, ix), m);
-        }
-
-        @Override
-        @ForceInline
-        public Double64Vector fromByteBuffer(ByteBuffer bb, int ix) {
-            if (bb.order() != ByteOrder.nativeOrder()) {
-                throw new IllegalArgumentException();
-            }
-            ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
-            return VectorIntrinsics.load(Double64Vector.class, double.class, LENGTH,
-                                         U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
-                                         bb, ix,
-                                         (c, idx) -> {
-                                             ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
-                                             DoubleBuffer tb = bbc.asDoubleBuffer();
-                                             return SPECIES.op(i -> tb.get());
-                                         });
-        }
-
-        @Override
-        @ForceInline
-        public Double64Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Double> m) {
-            return zero().blend(fromByteBuffer(bb, ix), m);
+        public <E> Double64Shuffle cast(Shuffle<E> s) {
+            if (s.length() != LENGTH)
+                throw new IllegalArgumentException("Shuffle length this species length differ");
+            return new Double64Shuffle(s.toArray());
         }
     }
 }
