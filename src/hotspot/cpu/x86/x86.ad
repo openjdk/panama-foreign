@@ -8755,7 +8755,7 @@ instruct rvmin16I_reduction_evex(rRegI dst, rRegI src1, vecZ src2, regF tmp, reg
 %}
 
 // Long Min Reduction
-instruct rsmin1L_reduction_reg(rRegL dst, rRegL src1, vecD src2, rxmm0 tmp, regF tmp2) %{
+instruct rsmin1L_reduction_reg(rRegL dst, rRegL src1, legVecD src2, rxmm0 tmp, legVecD tmp2) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
@@ -8774,7 +8774,7 @@ instruct rsmin1L_reduction_reg(rRegL dst, rRegL src1, vecD src2, rxmm0 tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 xmm_0, regF tmp2, regF tmp3) %{
+instruct rsmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 xmm_0, vecX tmp2, vecX tmp3) %{
   predicate(UseSSE > 3 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP xmm_0, TEMP tmp2, TEMP tmp3);
@@ -8803,7 +8803,7 @@ instruct rsmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 xmm_0, re
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, regF tmp, regF tmp2, regF tmp3) %{
+instruct rvmin2L_reduction_reg(rRegL dst, rRegL src1, legVecX src2, legVecX tmp, legVecX tmp2, legVecX tmp3) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
@@ -8827,7 +8827,7 @@ instruct rvmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin4L_reduction_reg(rRegL dst, rRegL src1, vecY src2, regF tmp, regF tmp2, regF tmp3) %{
+instruct rvmin4L_reduction_reg(rRegL dst, rRegL src1, legVecY src2, legVecY tmp, legVecY tmp2, legVecY tmp3) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
@@ -8857,7 +8857,7 @@ instruct rvmin4L_reduction_reg(rRegL dst, rRegL src1, vecY src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin8L_reduction_reg(rRegL dst, rRegL src1, vecZ src2, regF tmp, regF tmp2, regF tmp3) %{
+instruct rvmin8L_reduction_reg(rRegL dst, rRegL src1, legVecZ src2, legVecZ tmp, legVecZ tmp2, legVecZ tmp3) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
@@ -9857,7 +9857,7 @@ instruct rvmax16I_reduction_evex(rRegI dst, rRegI src1, vecZ src2, regF tmp, reg
 %}
 
 // Long Max Reduction
-instruct rsmax1L_reduction_reg(rRegL dst, rRegL src1, vecD src2, rxmm0 xmm_0, regF tmp2, regF tmp3) %{
+instruct rsmax1L_reduction_reg(rRegL dst, rRegL src1, legVecD src2, rxmm0 xmm_0, legVecD tmp2, legVecD tmp3) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxReductionV src1 src2));
   effect(TEMP xmm_0, TEMP tmp2, TEMP tmp3);
@@ -9877,7 +9877,7 @@ instruct rsmax1L_reduction_reg(rRegL dst, rRegL src1, vecD src2, rxmm0 xmm_0, re
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmax2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 xmm_0, regF tmp2, regF tmp3) %{
+instruct rsmax2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 xmm_0, vecX tmp2, vecX tmp3) %{
   predicate(UseSSE > 3 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxReductionV src1 src2));
   effect(TEMP xmm_0, TEMP tmp2, TEMP tmp3);
@@ -9904,7 +9904,7 @@ instruct rsmax2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 xmm_0, re
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmax2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, regF tmp, regF tmp2, regF tmp3) %{
+instruct rvmax2L_reduction_reg(rRegL dst, rRegL src1, legVecX src2, legVecX tmp, legVecX tmp2, legVecX tmp3) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
@@ -9928,7 +9928,7 @@ instruct rvmax2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmax4L_reduction_reg(rRegL dst, rRegL src1, vecY src2, regF tmp, regF tmp2, regF tmp3) %{
+instruct rvmax4L_reduction_reg(rRegL dst, rRegL src1, legVecY src2, legVecY tmp, legVecY tmp2, legVecY tmp3) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
@@ -9958,7 +9958,7 @@ instruct rvmax4L_reduction_reg(rRegL dst, rRegL src1, vecY src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmax8L_reduction_reg(rRegL dst, rRegL src1, vecZ src2, regF tmp, regF tmp2, regF tmp3) %{
+instruct rvmax8L_reduction_reg(rRegL dst, rRegL src1, legVecZ src2, legVecZ tmp, legVecZ tmp2, legVecZ tmp3) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
