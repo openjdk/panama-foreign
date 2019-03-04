@@ -23,7 +23,9 @@
 
 package com.sun.tools.jextract.parser;
 
+import com.sun.tools.jextract.Context;
 import com.sun.tools.jextract.JType;
+import com.sun.tools.jextract.Log;
 import com.sun.tools.jextract.TypeDictionary;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
@@ -37,16 +39,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
-class MacroParser {
+public class MacroParser {
 
     private final TypeDictionary dictionary = new TypeDictionary(null, null);
     private Reparser reparser;
+    private Log log;
 
-    public MacroParser(TranslationUnit tu) {
+    public MacroParser(TranslationUnit tu, Log log) {
         try {
             this.reparser = new ClangReparser(tu);
+            this.log = log;
         } catch (IOException ex) {
             this.reparser = Reparser.DUMMY;
         }
@@ -58,25 +63,44 @@ class MacroParser {
      * If that is not possible (e.g. because the macro refers to other macro, or has a more complex grammar), fall
      * back to use clang evaluation support.
      */
-    Optional<Object> eval(Cursor macro, String... tokens) {
+    Optional<Macro> eval(Cursor macro, String... tokens) {
         if (tokens.length == 2) {
             //check for fast path
-            Number num = toNumber(tokens[1]);
+            Integer num = toNumber(tokens[1]);
             if (num != null) {
-                return Optional.of(num);
+                return Optional.of(Macro.longMacro(JType.Int, num));
             }
         }
         //slow path
         try {
-            return reparser.reparse(constantDecl(macro))
-                    .filter(c -> c.kind() == CursorKind.VarDecl)
-                    .findAny().map(this::computeValue);
+            //step one, parse constant as is
+            MacroResult result = reparse(constantDecl(macro.spelling(), false));
+            if (!result.success() &&
+                    result.type().getDescriptor().equals("Ljava/foreign/memory/Pointer;")) {
+                //step two, attempt parsing pointer constant, by forcing it to uintptr_t
+                result = reparse(constantDecl(macro.spelling(), true))
+                        .withType(result.type());
+            }
+            return result.success() ?
+                    Optional.of((Macro)result) :
+                    Optional.empty();
         } catch (Throwable ex) {
+            log.print(Level.FINE, () ->
+                    String.format("Unknown error when processing macro: %s",
+                            macro.spelling()));
             return Optional.empty();
         }
     }
 
-    private Number toNumber(String str) {
+    MacroResult reparse(String snippet) {
+        return reparser.reparse(snippet)
+                .filter(c -> c.kind() == CursorKind.VarDecl &&
+                        c.spelling().contains("jextract$"))
+                .map(c -> compute(c))
+                .findAny().get();
+    }
+
+    private Integer toNumber(String str) {
         try {
             // Integer.decode supports '#' hex literals which is not valid in C.
             return str.length() > 0 && str.charAt(0) != '#'? Integer.decode(str) : null;
@@ -85,51 +109,108 @@ class MacroParser {
         }
     }
 
-    String constantDecl(Cursor macro) {
-        String macroName = macro.spelling();
+    String constantDecl(String macroName, boolean forcePtr) {
         //we use __auto_type, so that clang will also do type inference for us
-        return "__auto_type jextract$macro$" + macroName + " = " + macroName + ";";
+        return (forcePtr) ?
+                "#include <stdint.h> \n __auto_type jextract$macro$ptr$" + macroName + " = (uintptr_t)" + macroName + ";" :
+                "__auto_type jextract$macro$" + macroName + " = " + macroName + ";";
     }
 
-    Object computeValue(Cursor decl) {
+    MacroResult compute(Cursor decl) {
         try (EvalResult result = decl.eval()) {
             JType jtype = dictionary.enterIfAbsent(decl.type().canonicalType());
             switch (result.getKind()) {
                 case Integral: {
                     long value = result.getAsInt();
-                    switch (jtype.getDescriptor()) {
-                        case "Z":
-                            return value == 1;
-                        case "B":
-                            return (byte) value;
-                        case "C":
-                            return (char) value;
-                        case "S":
-                            return (short) value;
-                        case "I":
-                            return (int) value;
-                        case "J":
-                            return value;
-                        default:
-                            throw new IllegalStateException("Unexpected type: " + jtype.getDescriptor());
-                    }
+                    return Macro.longMacro(jtype, value);
                 }
                 case FloatingPoint: {
                     double value = result.getAsFloat();
-                    switch (jtype.getDescriptor()) {
-                        case "F":
-                            return (float) value;
-                        case "D":
-                            return value;
-                        default:
-                            throw new IllegalStateException("Unexpected type: " + jtype.getDescriptor());
-                    }
+                    return Macro.doubleMacro(jtype, value);
                 }
-                case StrLiteral:
-                    return result.getAsString();
+                case StrLiteral: {
+                    String value = result.getAsString();
+                    return Macro.stringMacro(jtype, value);
+                }
                 default:
-                    return null;
+                    log.print(Level.FINE, () ->
+                            String.format("Error when processing macro snippet:\n%s\nUnexpected type: %s",
+                                    decl.spelling(),
+                                    decl.type().canonicalType()));
+                    return new Failure(jtype);
             }
+        }
+    }
+
+    static abstract class MacroResult {
+        JType type;
+
+        MacroResult(JType type) {
+            this.type = type;
+        }
+
+        public JType type() {
+            return type;
+        }
+
+        abstract boolean success();
+
+        abstract MacroResult withType(JType type);
+    }
+
+    static class Failure extends MacroResult {
+        Failure(JType type) {
+            super(type);
+        }
+
+        @Override
+        boolean success() {
+            return false;
+        }
+
+        @Override
+        MacroResult withType(JType type) {
+            return new Failure(type);
+        }
+    }
+
+    public static class Macro extends MacroResult {
+        Object value;
+
+        private Macro(JType type, Object value) {
+            super(type);
+            this.value = value;
+        }
+
+        @Override
+        boolean success() {
+            return true;
+        }
+
+        @Override
+        MacroResult withType(JType type) {
+            return new Macro(type, value);
+        }
+
+        @Override
+        public JType type() {
+            return type;
+        }
+
+        public Object value() {
+            return value;
+        }
+
+        static Macro longMacro(JType type, long value) {
+            return new Macro(type, value);
+        }
+
+        static Macro doubleMacro(JType type, double value) {
+            return new Macro(type, value);
+        }
+
+        static Macro stringMacro(JType type, String value) {
+            return new Macro(type, value);
         }
     }
 
@@ -144,7 +225,7 @@ class MacroParser {
      * For performance reasons, the set of includes (which comes from the jextract parser) is compiled
      * into a precompiled header, so as to speed to incremental recompilation of the generated snippets.
      */
-    static class ClangReparser implements Reparser {
+    class ClangReparser implements Reparser {
         final Path macro;
         final Index macroIndex = LibClang.createIndex(true);
         final TranslationUnit macroUnit;
@@ -156,16 +237,27 @@ class MacroParser {
             this.macro = Files.createTempFile("jextract$", ".h");
             this.macro.toFile().deleteOnExit();
             this.macroUnit = macroIndex.parse(macro.toAbsolutePath().toString(),
-                    BadMacroException::new,
+                    d -> processDiagnostics(null, d),
                     false, //add serialization support (needed for macros)
+                    "-I", Context.getBuiltinHeadersDir().toString(),
                     "-include-pch", precompiled.toAbsolutePath().toString()).getTranslationUnit();
         }
 
         @Override
         public Stream<Cursor> reparse(String snippet) {
-            macroIndex.reparse(BadMacroException::new, macroUnit,
+            macroIndex.reparse(d -> processDiagnostics(snippet, d), macroUnit,
                     Index.UnsavedFile.of(macro, snippet));
             return macroUnit.getCursor().children();
+        }
+
+        void processDiagnostics(String snippet, Diagnostic diag) {
+            if (diag.severity() > Diagnostic.CXDiagnostic_Warning) {
+                log.print(Level.FINE, () ->
+                        String.format("Error when processing macro snippet:\n%s\nCause: %s",
+                                snippet,
+                                diag.spelling()));
+                throw new BadMacroException(diag);
+            }
         }
     }
 

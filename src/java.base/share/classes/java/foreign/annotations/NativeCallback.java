@@ -27,11 +27,11 @@ import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
 
-@Target(ElementType.TYPE)
-@Retention(RUNTIME)
 /**
  * Annotation for every native callback.
  */
+@Target(ElementType.TYPE)
+@Retention(RUNTIME)
 public @interface NativeCallback {
     // descriptor for the native callback
     String value();

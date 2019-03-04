@@ -27,11 +27,11 @@ import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
 
-@Target(ElementType.TYPE)
-@Retention(RUNTIME)
 /**
  * Annotation for every native struct or union.
  */
+@Target(ElementType.TYPE)
+@Retention(RUNTIME)
 public @interface NativeStruct {
     // layout String for this native struct/union.
     String value();

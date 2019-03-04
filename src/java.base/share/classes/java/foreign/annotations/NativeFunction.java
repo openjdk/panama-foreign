@@ -29,12 +29,12 @@ import java.lang.annotation.Target;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Target(ElementType.METHOD)
-@Retention(RUNTIME)
 /**
  * Annotation for every native function member in a given header interface (see {@link NativeHeader}). This annotation
  * can also be used to mark native callback functional interfaces. In the latter case the function name can be omitted.
  */
+@Target(ElementType.METHOD)
+@Retention(RUNTIME)
 public @interface NativeFunction {
     String value();
 }
