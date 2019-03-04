@@ -22,6 +22,8 @@
  */
 package com.sun.tools.jextract.tree;
 
+import com.sun.tools.jextract.parser.MacroParser;
+
 import java.util.List;
 
 public class TreePrinter extends SimpleTreeVisitor<Void, Void> {
@@ -61,11 +63,14 @@ public class TreePrinter extends SimpleTreeVisitor<Void, Void> {
         return null;
     }
 
+
     @Override
     public Void visitMacro(MacroTree m, Void v) {
         defaultAction(m, v);
         if (m.isConstant()) {
-            System.out.printf("Macro %s = %s\n\n", m.name(), m.value().get());
+            MacroParser.Macro macro = m.macro().get();
+            System.out.printf("Macro %s = %s : %s\n\n", m.name(),
+                    macro.value(), macro.type().getDescriptor());
         }
         return null;
     }

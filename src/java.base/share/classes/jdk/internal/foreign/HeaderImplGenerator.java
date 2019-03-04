@@ -55,6 +55,9 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ALOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.ARETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
 import static jdk.internal.org.objectweb.asm.Opcodes.GETFIELD;
+import static jdk.internal.org.objectweb.asm.Opcodes.I2B;
+import static jdk.internal.org.objectweb.asm.Opcodes.I2C;
+import static jdk.internal.org.objectweb.asm.Opcodes.I2S;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
@@ -116,6 +119,9 @@ class HeaderImplGenerator extends BinderClassGenerator {
             generateFunctionMethod(cw, method, (FunctionInfo)memberInfo);
         } else if (memberInfo instanceof VarInfo) {
             generateGlobalVariableMethod(cw, method, (VarInfo)memberInfo);
+        } else if (memberInfo instanceof ConstantNumericInfo ||
+                memberInfo instanceof ConstantStringInfo) {
+            generateConstantMethod(cw, method, memberInfo);
         }
     }
 
@@ -172,5 +178,64 @@ class HeaderImplGenerator extends BinderClassGenerator {
         }
 
         addMethodFromHandle(cw, methodName, kind.getMethodType(c), false, target);
+    }
+
+    private void generateConstantMethod(BinderClassWriter cw, Method method, MemberInfo info) {
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(), Type.getMethodDescriptor(method), null, null);
+        if (info instanceof ConstantNumericInfo) {
+            long value = ((ConstantNumericInfo) info).numericConstant;
+            String desc = Type.getDescriptor(method.getReturnType());
+            switch (desc) {
+                case "Z": {
+                    mv.visitLdcInsn(value != 0);
+                    break;
+                }
+                case "C": {
+                    mv.visitLdcInsn((int)value);
+                    mv.visitInsn(I2C);
+                    break;
+                }
+                case "B": {
+                    mv.visitLdcInsn((int) value);
+                    mv.visitInsn(I2B);
+                    break;
+                }
+                case "S": {
+                    mv.visitLdcInsn((int) value);
+                    mv.visitInsn(I2S);
+                    break;
+                }
+                case "I": {
+                    mv.visitLdcInsn((int) value);
+                    break;
+                }
+                case "J": {
+                    mv.visitLdcInsn(value);
+                    break;
+                }
+                case "F": {
+                    mv.visitLdcInsn((float)Double.longBitsToDouble(value));
+                    break;
+                }
+                case "D": {
+                    mv.visitLdcInsn(Double.longBitsToDouble(value));
+                    break;
+                }
+                case "Ljava/foreign/memory/Pointer;": {
+                    Pointer<?> ptr = BoundedPointer.createNativeVoidPointer(libScope, value);
+                    mv.visitLdcInsn(cw.makeConstantPoolPatch(ptr));
+                    mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Pointer.class));
+                    break;
+                }
+            }
+        } else {
+            String value = ((ConstantStringInfo)info).stringConstant;
+            Pointer<?> ptrStr = libScope.allocateCString(value);
+            mv.visitLdcInsn(cw.makeConstantPoolPatch(ptrStr));
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Pointer.class));
+        }
+        mv.visitInsn(returnInsn(method.getReturnType()));
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
     }
 }

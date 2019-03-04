@@ -29,12 +29,12 @@ import java.lang.annotation.Target;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Target(ElementType.METHOD)
-@Retention(RUNTIME)
 /**
  * Annotation for every native getter in a given header interface (see {@link NativeHeader}), or struct interface
  * (see {@link NativeStruct}). In the latter case, the descriptor is typically omitted.
  */
+@Target(ElementType.METHOD)
+@Retention(RUNTIME)
 public @interface NativeGetter {
     String value();
 }

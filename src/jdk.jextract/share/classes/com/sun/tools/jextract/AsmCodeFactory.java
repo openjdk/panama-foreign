@@ -26,6 +26,7 @@ import java.foreign.layout.Layout;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.sun.tools.jextract.parser.MacroParser;
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
@@ -80,6 +82,8 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     private static final String NATIVE_GETTER = ANNOTATION_PKG_PREFIX + "NativeGetter;";
     private static final String NATIVE_SETTER = ANNOTATION_PKG_PREFIX + "NativeSetter;";
     private static final String NATIVE_ADDRESSOF = ANNOTATION_PKG_PREFIX + "NativeAddressof;";
+    private static final String NATIVE_NUM_CONST = ANNOTATION_PKG_PREFIX + "NativeNumericConstant;";
+    private static final String NATIVE_STR_CONT = ANNOTATION_PKG_PREFIX + "NativeStringConstant;";
 
     private final ClassWriter global_cw;
     private final Set<Layout> global_layouts = new LinkedHashSet<>();
@@ -235,30 +239,42 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         return addField(global_cw, varTree, null);
     }
 
-    private void addConstant(ClassWriter cw, FieldTree fieldTree) {
-        assert (fieldTree.isEnumConstant());
-        String name = fieldTree.name();
-        String desc = headerFile.dictionary().lookup(fieldTree.type()).getDescriptor();
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, name, "()" + desc, null, null);
-        mv.visitCode();
-        if (desc.length() != 1) {
-            throw new AssertionError("expected single char descriptor: " + desc);
+    private void addConstant(ClassWriter cw, SourceLocation src, String name, JType type, Object value) {
+        String desc = "()" + type.getDescriptor();
+        String sig = "()" + type.getSignature(false);
+        MethodVisitor mv = global_cw.visitMethod(ACC_ABSTRACT | ACC_PUBLIC, name, desc, sig, null);
+        type.visitInner(cw);
+
+        if (! noNativeLocations) {
+            AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
+            SourceLocation.Location loc = src.getFileLocation();
+            Path p = loc.path();
+            av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+            av.visit("line", loc.line());
+            av.visit("column", loc.column());
+            av.visitEnd();
         }
-        switch (desc.charAt(0)) {
-            case 'J':
-                long lvalue = fieldTree.enumConstant().get();
-                mv.visitLdcInsn(lvalue);
-                mv.visitInsn(LRETURN);
-                break;
-            case 'I':
-                int ivalue = fieldTree.enumConstant().get().intValue();
-                mv.visitLdcInsn(ivalue);
-                mv.visitInsn(IRETURN);
-                break;
-            default:
-                throw new AssertionError("should not reach here");
+
+        if (value instanceof String) {
+            AnnotationVisitor av = mv.visitAnnotation(NATIVE_STR_CONT, true);
+            av.visit("value", value);
+            av.visitEnd();
+        } else {
+            //numeric (int, long or double)
+            final long longValue;
+            if (value instanceof Integer) {
+                longValue = (Integer)value;
+            } else if (value instanceof Long) {
+                longValue = (Long)value;
+            } else if (value instanceof Double) {
+                longValue = Double.doubleToRawLongBits((Double)value);
+            } else {
+                throw new IllegalStateException("Unexpected constant: " + value);
+            }
+            AnnotationVisitor av = mv.visitAnnotation(NATIVE_NUM_CONST, true);
+            av.visit("value", longValue);
+            av.visitEnd();
         }
-        mv.visitMaxs(1, 1);
         mv.visitEnd();
     }
 
@@ -306,7 +322,11 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     @Override
     public Boolean visitEnum(EnumTree enumTree, JType jt) {
         // define enum constants in global_cw
-        enumTree.constants().forEach(constant -> addConstant(global_cw, constant));
+        enumTree.constants().forEach(constant -> addConstant(global_cw,
+                constant.location(),
+                constant.name(),
+                headerFile.dictionary().lookup(constant.type()),
+                constant.enumConstant().get()));
 
         if (enumTree.name().isEmpty()) {
             // We are done with anonymous enum
@@ -453,6 +473,8 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         return this;
     }
 
+    
+
     @Override
     public Boolean visitMacro(MacroTree macroTree, JType jt) {
         if (!macroTree.isConstant()) {
@@ -460,51 +482,11 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
             return false;
         }
         String name = macroTree.name();
-        Object value = macroTree.value().get();
+        MacroParser.Macro macro = macroTree.macro().get();
         log.print(Level.FINE, () -> "Adding macro " + name);
-        Class<?> macroType = Utils.unboxIfNeeded(value.getClass());
 
-        String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(macroType));
-        MethodVisitor mv = global_cw.visitMethod(ACC_PUBLIC, name, sig, sig, null);
-        // FIXME: we don't use "jt" here, we use macroType instead. We may have to do
-        // visitInner when we use "jt" and support other macro constants.
+        addConstant(global_cw, macroTree.location(), name, macro.type(), macro.value());
 
-        if (! noNativeLocations) {
-            AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
-            SourceLocation src = macroTree.location();
-            SourceLocation.Location loc = src.getFileLocation();
-            Path p = loc.path();
-            av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
-            av.visit("line", loc.line());
-            av.visit("column", loc.column());
-            av.visitEnd();
-        }
-
-        mv.visitCode();
-
-        mv.visitLdcInsn(value);
-        if (macroType.equals(boolean.class)) {
-            mv.visitInsn(I2B);
-            mv.visitInsn(IRETURN);
-        } else if (macroType.equals(char.class)) {
-            mv.visitInsn(I2C);
-            mv.visitInsn(IRETURN);
-        } else if (macroType.equals(short.class)) {
-            mv.visitInsn(I2S);
-            mv.visitInsn(IRETURN);
-        } else if (macroType.equals(int.class)) {
-            mv.visitInsn(IRETURN);
-        } else if (macroType.equals(float.class)) {
-            mv.visitInsn(FRETURN);
-        } else if (macroType.equals(long.class)) {
-            mv.visitInsn(LRETURN);
-        } else if (macroType.equals(double.class)) {
-            mv.visitInsn(DRETURN);
-        } else if (macroType.equals(String.class)) {
-            mv.visitInsn(ARETURN);
-        }
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
         return true;
     }
 }

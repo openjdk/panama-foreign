@@ -80,7 +80,7 @@ public class Parser {
             },
             supportMacros, args.toArray(new String[0]));
 
-        MacroParser macroParser = new MacroParser(tuCursor.getTranslationUnit());
+        MacroParser macroParser = new MacroParser(tuCursor.getTranslationUnit(), log);
         List<Tree> decls = new ArrayList<>();
         tuCursor.children().
             peek(c -> log.print(Level.FINEST,

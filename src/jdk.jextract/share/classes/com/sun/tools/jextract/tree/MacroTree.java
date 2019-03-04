@@ -23,27 +23,29 @@
 package com.sun.tools.jextract.tree;
 
 import java.util.Optional;
+
+import com.sun.tools.jextract.parser.MacroParser;
 import jdk.internal.clang.Cursor;
 
 public class MacroTree extends Tree {
-    private final Optional<Object> value;
+    private final Optional<MacroParser.Macro> macro;
 
-    MacroTree(Cursor c, Optional<Object> value) {
-        this(c, value, c.spelling());
+    MacroTree(Cursor c, Optional<MacroParser.Macro> macro) {
+        this(c, macro, c.spelling());
     }
 
-    private MacroTree(Cursor c, Optional<Object> value, String name) {
+    private MacroTree(Cursor c, Optional<MacroParser.Macro> macro, String name) {
         super(c, name);
-        this.value = value;
+        this.macro = macro;
     }
 
     @Override
     public MacroTree withName(String newName) {
-        return name().equals(newName)? this : new MacroTree(cursor(), value, newName);
+        return name().equals(newName)? this : new MacroTree(cursor(), macro, newName);
     }
 
-    public Optional<Object> value() {
-        return value;
+    public Optional<MacroParser.Macro> macro() {
+        return macro;
     }
 
     @Override
@@ -52,6 +54,6 @@ public class MacroTree extends Tree {
     }
 
     public boolean isConstant() {
-        return value().isPresent();
+        return macro().isPresent();
     }
 }

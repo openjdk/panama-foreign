@@ -32,6 +32,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
+
+import com.sun.tools.jextract.parser.MacroParser;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 
@@ -101,9 +103,9 @@ public class TreeMaker {
         return checkCache(c, FunctionTree.class, ()->new FunctionTree(c));
     }
 
-    public MacroTree createMacro(Cursor c, Optional<Object> value) {
+    public MacroTree createMacro(Cursor c, Optional<MacroParser.Macro> macro) {
         checkCursorAny(c, CursorKind.MacroDefinition);
-        return checkCache(c, MacroTree.class, ()->new MacroTree(c, value));
+        return checkCache(c, MacroTree.class, ()->new MacroTree(c, macro));
     }
 
     public HeaderTree createHeader(Cursor c, Path path, List<Tree> decls) {

@@ -34,7 +34,9 @@ import sun.security.action.GetPropertyAction;
 import java.foreign.annotations.NativeAddressof;
 import java.foreign.annotations.NativeFunction;
 import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeNumericConstant;
 import java.foreign.annotations.NativeSetter;
+import java.foreign.annotations.NativeStringConstant;
 import java.foreign.layout.Function;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -44,10 +46,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
-import java.foreign.layout.Layout;
 import java.foreign.memory.Pointer;
-import java.util.EnumMap;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -322,6 +321,12 @@ abstract class BinderClassGenerator {
             } else if (method.isAnnotationPresent(NativeAddressof.class)) {
                 NativeAddressof addressof = method.getAnnotation(NativeAddressof.class);
                 return new VarInfo(addressof.value(), BinderClassGenerator.AccessorKind.PTR);
+            } else if (method.isAnnotationPresent(NativeNumericConstant.class)) {
+                NativeNumericConstant numConstant = method.getAnnotation(NativeNumericConstant.class);
+                return new ConstantNumericInfo(numConstant.value());
+            } else if (method.isAnnotationPresent(NativeStringConstant.class)) {
+                NativeStringConstant strConstant = method.getAnnotation(NativeStringConstant.class);
+                return new ConstantStringInfo(strConstant.value());
             } else {
                 return null;
             }
@@ -344,6 +349,22 @@ abstract class BinderClassGenerator {
 
         FunctionInfo(Function descriptor) {
             this.descriptor = descriptor;
+        }
+    }
+
+    static class ConstantNumericInfo extends MemberInfo {
+        long numericConstant;
+
+        ConstantNumericInfo(long numericConstant) {
+            this.numericConstant = numericConstant;
+        }
+    }
+
+    static class ConstantStringInfo extends MemberInfo {
+        String stringConstant;
+
+        ConstantStringInfo(String stringConstant) {
+            this.stringConstant = stringConstant;
         }
     }
 

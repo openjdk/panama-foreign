@@ -25,6 +25,9 @@ package java.foreign.annotations;
 import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Annotation containing source information associated with given native symbol.
+ */
 @Retention(RUNTIME)
 public @interface NativeLocation {
     String file();
