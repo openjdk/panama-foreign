@@ -27,11 +27,11 @@ import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
 
-@Target(ElementType.TYPE)
-@Retention(RUNTIME)
 /**
  * Annotation for every native header file.
  */
+@Target(ElementType.TYPE)
+@Retention(RUNTIME)
 public @interface NativeHeader {
     // the header file corresponding to this native library interface
     String path() default "";

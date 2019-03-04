@@ -63,3 +63,6 @@
 //we should have tests for char and shorts, but these are likely to be platform dependent
 
 #define SUB SUP + 2 //dependency
+
+#define ZERO_PTR (void*)0;
+#define F_PTR (void*) 0xFFFFFFFFFFFFFFFFLL; // all 1s

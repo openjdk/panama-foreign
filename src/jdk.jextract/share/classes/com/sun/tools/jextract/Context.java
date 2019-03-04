@@ -49,7 +49,7 @@ public final class Context {
         );
     }
 
-    static Path getBuiltinHeadersDir() {
+    public static Path getBuiltinHeadersDir() {
         return Paths.get(System.getProperty("java.home"), "conf", "jextract");
     }
 }

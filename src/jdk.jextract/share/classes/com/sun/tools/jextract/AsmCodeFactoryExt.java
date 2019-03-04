@@ -28,12 +28,15 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import com.sun.tools.jextract.parser.MacroParser;
 import com.sun.tools.jextract.tree.Tree;
 import jdk.internal.org.objectweb.asm.FieldVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -76,6 +79,8 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     // field name for the header interface instance.
     private static final String STATICS_LIBRARY_FIELD_NAME = "_theLibrary";
 
+    private final List<Consumer<MethodVisitor>> constantInitializers = new ArrayList<>();
+
     AsmCodeFactoryExt(Context ctx, HeaderFile header) {
         super(ctx, header);
         log.print(Level.INFO, () -> "Instantiate StaticForwarderGenerator for " + header.path);
@@ -83,7 +88,6 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         this.cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
         this.cw.visit(V1_8, ACC_PUBLIC | ACC_FINAL, getClassName(),
             null, "java/lang/Object", null);
-        staticsInitializer();
         scopeAccessor();
     }
 
@@ -114,7 +118,9 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     @Override
     public Boolean visitEnum(EnumTree enumTree, JType jt) {
         if (super.visitEnum(enumTree, jt)) {
-            enumTree.constants().forEach(constant -> addEnumConstant(constant));
+            enumTree.constants().forEach(constant -> addConstant(constant.name(),
+                    headerFile.dictionary().lookup(constant.type()),
+                    constant.enumConstant().get()));
             return true;
         } else {
             return false;
@@ -139,15 +145,50 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     public Boolean visitMacro(MacroTree macroTree, JType jt) {
         if (super.visitMacro(macroTree, jt)) {
             String name = macroTree.name();
-            Object value = macroTree.value().get();
+            MacroParser.Macro macro = macroTree.macro().get();
             log.print(Level.FINE, () -> "Adding macro " + name);
-            Class<?> macroType = Utils.unboxIfNeeded(value.getClass());
-            String sig = Type.getType(macroType).getDescriptor();
-            FieldVisitor fv = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, sig, null, value);
-            fv.visitEnd();
+            addConstant(name, macro.type(), macro.value());
             return true;
         } else {
             return false;
+        }
+    }
+
+    void addConstant(String name, JType type, Object value) {
+        Object constantValue = makeConstantValue(type, value);
+        FieldVisitor fv = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, type.getDescriptor(),
+                type.getSignature(false), constantValue);
+        fv.visitEnd();
+        if (constantValue == null) {
+            constantInitializers.add(mv -> {
+                // load library interface (static) field
+                String desc = type.getDescriptor();
+                mv.visitFieldInsn(GETSTATIC, getClassName(),
+                        STATICS_LIBRARY_FIELD_NAME, headerClassNameDesc);
+                mv.visitMethodInsn(INVOKEINTERFACE, headerClassName, name, "()" + desc, true);
+                mv.visitFieldInsn(PUTSTATIC, getClassName(), name, desc);
+            });
+        }
+    }
+
+    Object makeConstantValue(JType type, Object value) {
+        switch (type.getDescriptor()) {
+            case "Z":
+                return ((long)value) != 0;
+            case "C":
+                return (char)(long)value;
+            case "B":
+                return (byte)(long)value;
+            case "S":
+                return (short)(long)value;
+            case "I":
+                return (int)(long)value;
+            case "F":
+                return (float)(double)value;
+            case "J": case "D":
+                return value;
+            default:
+                return null;
         }
     }
 
@@ -155,6 +196,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     public Map<String, byte[]> generateNativeHeader(List<Tree> decls) {
         Map<String, byte[]> results = new HashMap<>();
         results.putAll(super.generateNativeHeader(decls));
+        staticsInitializer();
         results.put(getClassName(), getClassBytes());
         return Collections.unmodifiableMap(results);
     }
@@ -169,30 +211,6 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     private byte[] getClassBytes() {
         cw.visitEnd();
         return cw.toByteArray();
-    }
-
-    // map each C enum constant as a static final field of the static forwarder class
-    private void addEnumConstant(FieldTree fieldTree) {
-        assert (fieldTree.isEnumConstant());
-        String name = fieldTree.name();
-        String desc = headerFile.dictionary().lookup(fieldTree.type()).getDescriptor();
-        if (desc.length() != 1) {
-            throw new AssertionError("expected single char descriptor: " + desc);
-        }
-        FieldVisitor fv = null;
-        switch (desc.charAt(0)) {
-            case 'J':
-                long lvalue = fieldTree.enumConstant().get();
-                fv = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, desc, null, lvalue);
-                break;
-            case 'I':
-                int ivalue = fieldTree.enumConstant().get().intValue();
-                fv = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, desc, null, ivalue);
-                break;
-            default:
-                throw new AssertionError("should not reach here");
-        }
-        fv.visitEnd();
     }
 
     // emit library interface static field and <clinit> initializer for that field
@@ -236,6 +254,8 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         mv.visitTypeInsn(CHECKCAST, headerClassName);
         mv.visitFieldInsn(PUTSTATIC, getClassName(),
             STATICS_LIBRARY_FIELD_NAME, headerClassNameDesc);
+
+        constantInitializers.forEach(init -> init.accept(mv));
 
         mv.visitInsn(RETURN);
         mv.visitMaxs(0, 0);
