@@ -61,36 +61,29 @@ public class Log {
     public static Log of(PrintWriter out, PrintWriter err, Level logLevel) {
         Logger logger = Logger.getAnonymousLogger();
         logger.setUseParentHandlers(false);
-        logger.addHandler(createHandler(err, logLevel)); // err only for now
+        logger.addHandler(createHandler(err)); // err only for now
         logger.setLevel(logLevel);
 
         return new Log(out, err, logger);
     }
 
-    private static Handler createHandler(PrintWriter pw, Level logLevel) {
-        OutputStream stream = new OutputStream() {
+    private static Handler createHandler(PrintWriter pw) {
+        return new Handler() {
             @Override
-            public void write(int b) {
-                pw.write(b);
+            public void publish(LogRecord record) {
+                pw.println(record.getMessage());
             }
-        };
 
-        Formatter formatter = new Formatter() {
             @Override
-            public String format(LogRecord record) {
-                return record.getMessage() + "\n";
+            public void flush() {
+                pw.flush();
             }
-        };
 
-        Handler handler = new StreamHandler(stream, formatter) {
             @Override
-            public synchronized void publish(LogRecord record) {
-                super.publish(record);
-                flush();
+            public void close() throws SecurityException {
+                pw.close();
             }
         };
-        handler.setLevel(logLevel);
-        return handler;
     }
 
     public void printError(String messageID, Object... args) {
