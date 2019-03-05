@@ -239,6 +239,7 @@ public class MacroParser {
             this.macroUnit = macroIndex.parse(macro.toAbsolutePath().toString(),
                     d -> processDiagnostics(null, d),
                     false, //add serialization support (needed for macros)
+                    "-nostdinc", //disable standard includes (to get a stable reparse environment)
                     "-I", Context.getBuiltinHeadersDir().toString(),
                     "-include-pch", precompiled.toAbsolutePath().toString()).getTranslationUnit();
         }
