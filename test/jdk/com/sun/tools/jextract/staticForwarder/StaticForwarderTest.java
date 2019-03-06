@@ -39,9 +39,9 @@ public class StaticForwarderTest {
     public void test() {
         try (Scope sc = scope().fork()) {
             assertEquals(square(6), 36);
-            assertEquals(R, 10);
-            assertEquals(G, R + 1);
-            assertEquals(B, G + 1);
+            assertEquals(Color.R, 10);
+            assertEquals(Color.G, Color.R + 1);
+            assertEquals(Color.B, Color.G + 1);
             assertEquals(abc$get(), 53);
             assertEquals(square(abc$get()), 53*53);
             abc$set(25);
