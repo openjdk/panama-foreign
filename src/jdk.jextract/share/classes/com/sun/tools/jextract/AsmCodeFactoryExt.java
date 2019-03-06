@@ -48,7 +48,9 @@ import com.sun.tools.jextract.tree.FunctionTree;
 import com.sun.tools.jextract.tree.MacroTree;
 import com.sun.tools.jextract.tree.VarTree;
 
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_ABSTRACT;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_INTERFACE;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
@@ -80,6 +82,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     private static final String STATICS_LIBRARY_FIELD_NAME = "_theLibrary";
 
     private final List<Consumer<MethodVisitor>> constantInitializers = new ArrayList<>();
+    private final List<EnumFactory> enumFactories = new ArrayList<>();
 
     AsmCodeFactoryExt(Context ctx, HeaderFile header) {
         super(ctx, header);
@@ -89,6 +92,48 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         this.cw.visit(V1_8, ACC_PUBLIC | ACC_FINAL, getClassName(),
             null, "java/lang/Object", null);
         scopeAccessor();
+    }
+
+    private class EnumFactory {
+        private final EnumTree enumTree;
+        private final String enumClassName;
+
+        EnumFactory(EnumTree enumTree) {
+            log.print(Level.INFO, () -> "Instantiate EnumFactory for " + enumTree.name());
+            this.enumTree = enumTree;
+            this.enumClassName = AsmCodeFactoryExt.this.getClassName() + "$" + enumTree.name();
+
+        }
+
+        String getEnumName() {
+            return enumTree.name();
+        }
+
+        String getClassName() {
+            return enumClassName;
+        }
+
+        byte[] getClassBytes() {
+            return generate();
+        }
+
+        private byte[] generate() {
+            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+            cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE, enumClassName,
+                null, "java/lang/Object", null);
+            cw.visitInnerClass(enumClassName, AsmCodeFactoryExt.this.getClassName(), enumTree.name(), ACC_PUBLIC | ACC_FINAL);
+            enumTree.constants().forEach(constant -> {
+                String name = constant.name();
+                JType type = headerFile.dictionary().lookup(constant.type());
+                Object constantValue = makeConstantValue(type, constant.enumConstant().get());
+                FieldVisitor fv = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, type.getDescriptor(),
+                        type.getSignature(false), constantValue);
+                fv.visitEnd();
+            });
+
+            cw.visitEnd();
+            return cw.toByteArray();
+        }
     }
 
     @Override
@@ -118,9 +163,16 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     @Override
     public Boolean visitEnum(EnumTree enumTree, JType jt) {
         if (super.visitEnum(enumTree, jt)) {
-            enumTree.constants().forEach(constant -> addConstant(constant.name(),
+            if (enumTree.name().isEmpty()) {
+                enumTree.constants().forEach(constant -> addConstant(constant.name(),
                     headerFile.dictionary().lookup(constant.type()),
                     constant.enumConstant().get()));
+            } else {
+                EnumFactory ef = new EnumFactory(enumTree);
+                enumFactories.add(ef);
+                cw.visitInnerClass(ef.getClassName(), getClassName(), ef.getEnumName(),
+                    ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
+            }
             return true;
         } else {
             return false;
@@ -154,7 +206,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         }
     }
 
-    void addConstant(String name, JType type, Object value) {
+    private void addConstant(String name, JType type, Object value) {
         Object constantValue = makeConstantValue(type, value);
         FieldVisitor fv = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, type.getDescriptor(),
                 type.getSignature(false), constantValue);
@@ -171,7 +223,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         }
     }
 
-    Object makeConstantValue(JType type, Object value) {
+    private Object makeConstantValue(JType type, Object value) {
         switch (type.getDescriptor()) {
             case "Z":
                 return ((long)value) != 0;
@@ -198,6 +250,9 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         results.putAll(super.generateNativeHeader(decls));
         staticsInitializer();
         results.put(getClassName(), getClassBytes());
+        for (EnumFactory ef : enumFactories) {
+            results.put(ef.getClassName(), ef.getClassBytes());
+        }
         return Collections.unmodifiableMap(results);
     }
 
