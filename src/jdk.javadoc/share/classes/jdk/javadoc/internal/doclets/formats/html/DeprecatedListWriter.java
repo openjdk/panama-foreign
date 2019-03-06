@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ import javax.lang.model.element.PackageElement;
 
 import com.sun.source.doctree.DocTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
@@ -308,7 +307,8 @@ public class DeprecatedListWriter extends SubWriterHolderWriter {
         htmlTree.addContent(navBar.getContent(false));
         addBottom(htmlTree);
         body.addContent(htmlTree);
-        printHtmlDocument(null, true, body);
+        String description = "deprecated elements";
+        printHtmlDocument(null, description, body);
     }
 
     /**
@@ -335,11 +335,11 @@ public class DeprecatedListWriter extends SubWriterHolderWriter {
      */
     public Content getContentsList(DeprecatedAPIListBuilder deprapi) {
         Content headContent = contents.deprecatedAPI;
-        Content heading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, true,
+        Content heading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING, true,
                 HtmlStyle.title, headContent);
         Content div = HtmlTree.DIV(HtmlStyle.header, heading);
         Content headingContent = contents.contentsHeading;
-        div.addContent(HtmlTree.HEADING(HtmlConstants.CONTENT_HEADING, true,
+        div.addContent(HtmlTree.HEADING(Headings.CONTENT_HEADING, true,
                 headingContent));
         Content ul = new HtmlTree(HtmlTag.UL);
         for (DeprElementKind kind : DeprElementKind.values()) {

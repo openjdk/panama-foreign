@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
@@ -152,11 +151,11 @@ public class ConstantsSummaryWriterImpl extends HtmlDocletWriter implements Cons
     @Override
     public void addContentsList(Content contentTree, Content contentListTree) {
         Content titleContent = contents.constantsSummaryTitle;
-        Content pHeading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, true,
+        Content pHeading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING, true,
                 HtmlStyle.title, titleContent);
         Content div = HtmlTree.DIV(HtmlStyle.header, pHeading);
         Content headingContent = contents.contentsHeading;
-        Content heading = HtmlTree.HEADING(HtmlConstants.CONTENT_HEADING, true,
+        Content heading = HtmlTree.HEADING(Headings.CONTENT_HEADING, true,
                 headingContent);
         HtmlTree section = HtmlTree.SECTION(heading);
         section.addContent(contentListTree);
@@ -192,7 +191,7 @@ public class ConstantsSummaryWriterImpl extends HtmlDocletWriter implements Cons
             pkgNameContent = getPackageLabel(parsedPackageName);
         }
         Content headingContent = new StringContent(".*");
-        Content heading = HtmlTree.HEADING(HtmlConstants.PACKAGE_HEADING, true,
+        Content heading = HtmlTree.HEADING(Headings.ConstantsSummary.PACKAGE_HEADING, true,
                 pkgNameContent);
         heading.addContent(headingContent);
         summaryTree = HtmlTree.SECTION(heading);
@@ -328,6 +327,6 @@ public class ConstantsSummaryWriterImpl extends HtmlDocletWriter implements Cons
      */
     @Override
     public void printDocument(Content contentTree) throws DocFileIOException {
-        printHtmlDocument(null, true, contentTree);
+        printHtmlDocument(null, "summary of constants", contentTree);
     }
 }

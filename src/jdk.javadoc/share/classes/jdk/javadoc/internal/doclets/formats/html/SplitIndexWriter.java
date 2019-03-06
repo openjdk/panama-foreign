@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -126,6 +126,10 @@ public class SplitIndexWriter extends AbstractIndexWriter {
         navBar.setUserHeader(getUserHeaderFooter(true));
         header.addContent(navBar.getContent(true));
         body.addContent(header);
+        HtmlTree main = HtmlTree.MAIN();
+        main.addContent(HtmlTree.DIV(HtmlStyle.header,
+                HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING,
+                        contents.getContent("doclet.Index"))));
         HtmlTree divTree = new HtmlTree(HtmlTag.DIV);
         divTree.setStyle(HtmlStyle.contentContainer);
         addLinksForIndexes(divTree);
@@ -138,13 +142,15 @@ public class SplitIndexWriter extends AbstractIndexWriter {
                     configuration.tagSearchIndexMap.get(unicode), divTree);
         }
         addLinksForIndexes(divTree);
-        body.addContent(HtmlTree.MAIN(divTree));
+        main.addContent(divTree);
+        body.addContent(main);
         HtmlTree footer = HtmlTree.FOOTER();
         navBar.setUserFooter(getUserHeaderFooter(false));
         footer.addContent(navBar.getContent(false));
         addBottom(footer);
         body.addContent(footer);
-        printHtmlDocument(null, true, body);
+        String description = "index: " + unicode;
+        printHtmlDocument(null, description, body);
     }
 
     /**
