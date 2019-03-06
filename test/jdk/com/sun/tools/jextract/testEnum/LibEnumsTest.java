@@ -67,13 +67,13 @@ public class LibEnumsTest {
     public void testSwitchOnEnum() {
         for (int c: List.of(0xFF0000, 0x00FF00, 0x0000FF)) {
             switch (c) {
-                case R:
+                case Color.R:
                     assertEquals(c, libEnums.R());
                     break;
-                case G:
+                case Color.G:
                     assertEquals(c, libEnums.G());
                     break;
-                case B:
+                case Color.B:
                     assertEquals(c, libEnums.B());
                     break;
             }
