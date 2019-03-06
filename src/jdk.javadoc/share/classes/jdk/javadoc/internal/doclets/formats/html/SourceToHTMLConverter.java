@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import javax.tools.FileObject;
 
 import jdk.javadoc.doclet.DocletEnvironment;
 import jdk.javadoc.internal.doclets.formats.html.markup.DocType;
+import jdk.javadoc.internal.doclets.formats.html.markup.HtmlAttr;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlDocument;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
@@ -196,7 +197,7 @@ public class SourceToHTMLConverter {
             addBlankLines(pre);
             Content div = HtmlTree.DIV(HtmlStyle.sourceContainer, pre);
             body.addContent(HtmlTree.MAIN(div));
-            writeToFile(body, outputdir.resolve(configuration.docPaths.forClass(te)));
+            writeToFile(body, outputdir.resolve(configuration.docPaths.forClass(te)), te);
         } catch (IOException e) {
             String message = resources.getText("doclet.exception.read.file", fo.getName());
             throw new SimpleDocletException(message, e);
@@ -209,11 +210,13 @@ public class SourceToHTMLConverter {
      * @param body the documentation content to be written to the file.
      * @param path the path for the file.
      */
-    private void writeToFile(Content body, DocPath path) throws DocFileIOException {
+    private void writeToFile(Content body, DocPath path, TypeElement te) throws DocFileIOException {
         Head head = new Head(path, configuration.docletVersion)
 //                .setTimestamp(!configuration.notimestamp) // temporary: compatibility!
                 .setTitle(resources.getText("doclet.Window_Source_title"))
 //                .setCharset(configuration.charset) // temporary: compatibility!
+                .setDescription(HtmlDocletWriter.getDescription("source", te))
+                .setGenerator(HtmlDocletWriter.getGenerator(getClass()))
                 .addDefaultScript(false)
                 .setStylesheets(configuration.getMainStylesheet(), configuration.getAdditionalStylesheets());
         Content htmlTree = HtmlTree.HTML(configuration.getLocale().getLanguage(),
@@ -262,7 +265,7 @@ public class SourceToHTMLConverter {
      * @return the header content for the HTML file
      */
     private static Content getHeader() {
-        return new HtmlTree(HtmlTag.BODY);
+        return new HtmlTree(HtmlTag.BODY).addAttr(HtmlAttr.CLASS, "source");
     }
 
     /**

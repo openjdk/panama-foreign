@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlAttr;
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
@@ -57,6 +56,12 @@ import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
  * @author Bhavesh Patel
  */
 public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
+    /**
+     * The heading (h1 or h2) to use for the module list,
+     * set by addNavigationBarHeader depending on whether or not there
+     * is an additional initial heading.
+     */
+    private HtmlTag moduleListHeading;
 
     /**
      * Construct the ModuleIndexFrameWriter object.
@@ -77,14 +82,15 @@ public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
     public static void generate(HtmlConfiguration configuration) throws DocFileIOException {
         DocPath filename = DocPaths.MODULE_OVERVIEW_FRAME;
         ModuleIndexFrameWriter modulegen = new ModuleIndexFrameWriter(configuration, filename);
-        modulegen.buildModuleIndexFile("doclet.Window_Overview", false);
+        modulegen.buildModuleIndexFile("doclet.Window_Overview", "module overview (frame)", false);
     }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     protected void addModulesList(Content main) {
-        Content heading = HtmlTree.HEADING(HtmlConstants.MODULE_HEADING, true,
+        Content heading = HtmlTree.HEADING(moduleListHeading, true,
                 contents.modulesLabel);
         HtmlTree htmlTree = HtmlTree.DIV(HtmlStyle.indexContainer, heading);
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
@@ -125,15 +131,16 @@ public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
      * {@inheritDoc}
      */
     protected void addNavigationBarHeader(Content header) {
-        Content headerContent;
-        if (configuration.packagesheader.length() > 0) {
-            headerContent = new RawHtml(replaceDocRootDir(configuration.packagesheader));
+        String headerContent = !configuration.packagesheader.isEmpty() ? configuration.packagesheader
+                : configuration.header;
+        if (!headerContent.isEmpty()) {
+            Content heading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING, true,
+                    HtmlStyle.bar, new RawHtml(replaceDocRootDir(headerContent)));
+            header.addContent(heading);
+            moduleListHeading = Headings.IndexFrames.MODULE_HEADING;
         } else {
-            headerContent = new RawHtml(replaceDocRootDir(configuration.header));
+            moduleListHeading = Headings.PAGE_TITLE_HEADING;
         }
-        Content heading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, true,
-                HtmlStyle.bar, headerContent);
-        header.addContent(heading);
     }
 
     /**

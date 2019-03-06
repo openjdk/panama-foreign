@@ -38,6 +38,7 @@
 #include "memory/filemap.hpp"
 #include "oops/oop.inline.hpp"
 #include "os_linux.inline.hpp"
+#include "os_posix.inline.hpp"
 #include "os_share_linux.hpp"
 #include "osContainer_linux.hpp"
 #include "prims/jniFastGetField.hpp"
@@ -131,6 +132,7 @@
 
 enum CoredumpFilterBit {
   FILE_BACKED_PVT_BIT = 1 << 2,
+  FILE_BACKED_SHARED_BIT = 1 << 3,
   LARGEPAGES_BIT = 1 << 6,
   DAX_SHARED_BIT = 1 << 8
 };
@@ -1357,11 +1359,9 @@ void os::shutdown() {
 void os::abort(bool dump_core, void* siginfo, const void* context) {
   os::shutdown();
   if (dump_core) {
-#if INCLUDE_CDS
-    if (UseSharedSpaces && DumpPrivateMappingsInCore) {
+    if (DumpPrivateMappingsInCore) {
       ClassLoader::close_jrt_image();
     }
-#endif
 #ifndef PRODUCT
     fdStream out(defaultStream::output_fd());
     out.print_raw("Current thread is ");
@@ -1856,10 +1856,9 @@ static bool _print_ascii_file(const char* filename, outputStream* st, const char
   return true;
 }
 
-#if defined(S390)
+#if defined(S390) || defined(PPC64)
 // keywords_to_match - NULL terminated array of keywords
-static bool print_matching_lines_from_sysinfo_file(outputStream* st, const char* keywords_to_match[]) {
-  const char* filename = "/proc/sysinfo";
+static bool print_matching_lines_from_file(const char* filename, outputStream* st, const char* keywords_to_match[]) {
   char* line = NULL;
   size_t length = 0;
   FILE* fp = fopen(filename, "r");
@@ -2191,9 +2190,29 @@ void os::Linux::print_virtualization_info(outputStream* st) {
   // - whole "Box" (CPUs )
   // - z/VM / KVM (VM<nn>); this is not available in an LPAR-only setup
   const char* kw[] = { "LPAR", "CPUs", "VM", NULL };
+  const char* info_file = "/proc/sysinfo";
 
-  if (! print_matching_lines_from_sysinfo_file(st, kw)) {
-    st->print_cr("  </proc/sysinfo Not Available>");
+  if (!print_matching_lines_from_file(info_file, st, kw)) {
+    st->print_cr("  <%s Not Available>", info_file);
+  }
+#elif defined(PPC64)
+  const char* info_file = "/proc/ppc64/lparcfg";
+  const char* kw[] = { "system_type=", // qemu indicates PowerKVM
+                       "partition_entitled_capacity=", // entitled processor capacity percentage
+                       "partition_max_entitled_capacity=",
+                       "capacity_weight=", // partition CPU weight
+                       "partition_active_processors=",
+                       "partition_potential_processors=",
+                       "entitled_proc_capacity_available=",
+                       "capped=", // 0 - uncapped, 1 - vcpus capped at entitled processor capacity percentage
+                       "shared_processor_mode=", // (non)dedicated partition
+                       "system_potential_processors=",
+                       "pool=", // CPU-pool number
+                       "pool_capacity=",
+                       "NumLpars=", // on non-KVM machines, NumLpars is not found for full partition mode machines
+                       NULL };
+  if (!print_matching_lines_from_file(info_file, st, kw)) {
+    st->print_cr("  <%s Not Available>", info_file);
   }
 #endif
 }
@@ -3432,8 +3451,6 @@ bool os::Linux::hugetlbfs_sanity_check(bool warn, size_t page_size) {
   return result;
 }
 
-// Set the coredump_filter bits to include largepages in core dump (bit 6)
-//
 // From the coredump_filter documentation:
 //
 // - (bit 0) anonymous private memory
@@ -5131,11 +5148,13 @@ jint os::init_2(void) {
     set_coredump_filter(DAX_SHARED_BIT);
   }
 
-#if INCLUDE_CDS
-  if (UseSharedSpaces && DumpPrivateMappingsInCore) {
+  if (DumpPrivateMappingsInCore) {
     set_coredump_filter(FILE_BACKED_PVT_BIT);
   }
-#endif
+
+  if (DumpSharedMappingsInCore) {
+    set_coredump_filter(FILE_BACKED_SHARED_BIT);
+  }
 
   return JNI_OK;
 }
