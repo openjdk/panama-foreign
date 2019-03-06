@@ -157,7 +157,6 @@ vmTestbase/nsk/monitoring/MemoryPoolMBean/isUsageThresholdExceeded/isexceeded004
 vmTestbase/nsk/monitoring/MemoryPoolMBean/isUsageThresholdExceeded/isexceeded005/TestDescription.java 8153598 generic-all
 vmTestbase/nsk/monitoring/ThreadMXBean/ThreadInfo/Deadlock/JavaDeadlock001/TestDescription.java 8060733 generic-all
 
-vmTestbase/nsk/jdi/ThreadReference/isSuspended/issuspended002/TestDescription.java 4903717 generic-all
 vmTestbase/nsk/jdi/ThreadReference/resume/resume001/TestDescription.java 8072701 generic-all
 vmTestbase/nsk/jdi/ThreadReference/stop/stop001/TestDescription.java 7034630 generic-all
 vmTestbase/nsk/jdi/BScenarios/hotswap/tc10x001/TestDescription.java 8013728 generic-all
@@ -189,7 +188,6 @@ vmTestbase/vm/mlvm/meth/stress/compiler/sequences/Test.java 8058176 generic-all
 vmTestbase/vm/mlvm/meth/stress/gc/callSequencesDuringGC/Test.java 8058176 generic-all
 vmTestbase/vm/mlvm/meth/stress/java/sequences/Test.java 8058176 generic-all
 vmTestbase/vm/mlvm/meth/stress/jdi/breakpointInCompiledCode/Test.java 8058176 generic-all
-vmTestbase/vm/mlvm/mixed/stress/java/findDeadlock/TestDescription.java 8208278 macosx-all
 vmTestbase/vm/mlvm/indy/func/jvmti/mergeCP_indy2none_a/TestDescription.java 8013267 generic-all
 vmTestbase/vm/mlvm/indy/func/jvmti/mergeCP_indy2manyDiff_b/TestDescription.java 8013267 generic-all
 vmTestbase/vm/mlvm/indy/func/jvmti/mergeCP_indy2manySame_b/TestDescription.java 8013267 generic-all

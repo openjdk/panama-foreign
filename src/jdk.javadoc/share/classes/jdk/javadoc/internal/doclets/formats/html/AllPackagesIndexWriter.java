@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ package jdk.javadoc.internal.doclets.formats.html;
 import javax.lang.model.element.PackageElement;
 
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
@@ -94,7 +93,7 @@ public class AllPackagesIndexWriter extends HtmlDocletWriter {
         div.setStyle(HtmlStyle.allPackagesContainer);
         addPackages(div);
         Content titleContent = contents.allPackagesLabel;
-        Content pHeading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, true,
+        Content pHeading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING, true,
                 HtmlStyle.title, titleContent);
         Content headerDiv = HtmlTree.DIV(HtmlStyle.header, pHeading);
         mainTree.addContent(headerDiv);
@@ -105,7 +104,7 @@ public class AllPackagesIndexWriter extends HtmlDocletWriter {
         footer.addContent(navBar.getContent(false));
         addBottom(footer);
         bodyTree.addContent(footer);
-        printHtmlDocument(null, true, bodyTree);
+        printHtmlDocument(null, "package index", bodyTree);
     }
 
     /**
