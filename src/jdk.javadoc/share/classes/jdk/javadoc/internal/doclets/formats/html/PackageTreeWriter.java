@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ package jdk.javadoc.internal.doclets.formats.html;
 
 import javax.lang.model.element.PackageElement;
 
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
@@ -101,7 +100,7 @@ public class PackageTreeWriter extends AbstractTreeWriter {
         HtmlTree mainTree = HtmlTree.MAIN();
         Content headContent = contents.getContent("doclet.Hierarchy_For_Package",
                 utils.getPackageName(packageElement));
-        Content heading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, false,
+        Content heading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING, false,
                 HtmlStyle.title, headContent);
         Content div = HtmlTree.DIV(HtmlStyle.header, heading);
         if (configuration.packages.size() > 1) {
@@ -121,7 +120,7 @@ public class PackageTreeWriter extends AbstractTreeWriter {
         footer.addContent(navBar.getContent(false));
         addBottom(footer);
         body.addContent(footer);
-        printHtmlDocument(null, true, body);
+        printHtmlDocument(null, getDescription("tree", packageElement), body);
     }
 
     /**
