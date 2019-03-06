@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,11 +32,9 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
 
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
-import jdk.javadoc.internal.doclets.formats.html.markup.Links;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
@@ -102,7 +100,7 @@ public class ModuleFrameWriter extends HtmlDocletWriter {
         DocPath moduleSummary = configuration.useModuleDirectories
                 ? DocPaths.DOT_DOT.resolve(configuration.docPaths.moduleSummary(moduleElement))
                 : configuration.docPaths.moduleSummary(moduleElement);
-        Content heading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, HtmlStyle.bar,
+        Content heading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING, HtmlStyle.bar,
                 mdlgen.links.createLink(moduleSummary, mdlLabel, "", "classFrame"));
         htmlTree.addContent(heading);
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
@@ -111,7 +109,9 @@ public class ModuleFrameWriter extends HtmlDocletWriter {
         htmlTree.addContent(div);
         body.addContent(htmlTree);
         mdlgen.printHtmlDocument(
-                configuration.metakeywords.getMetaKeywordsForModule(moduleElement), false, body);
+                configuration.metakeywords.getMetaKeywordsForModule(moduleElement),
+                "module summary (frame)",
+                body);
     }
 
     /**
@@ -170,7 +170,7 @@ public class ModuleFrameWriter extends HtmlDocletWriter {
                     continue;
                 }
                 if (!printedHeader) {
-                    Content heading = HtmlTree.HEADING(HtmlConstants.CONTENT_HEADING,
+                    Content heading = HtmlTree.HEADING(Headings.CONTENT_HEADING,
                             true, labelContent);
                     htmlTree.addContent(heading);
                     printedHeader = true;
