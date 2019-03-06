@@ -2071,6 +2071,8 @@ private:
   void shlxq(Register dst, Register src1, Register src2);
 
   //====================VECTOR ARITHMETIC=====================================
+  void evpmovd2m(KRegister kdst, XMMRegister src, int vector_len);
+  void evpmovq2m(KRegister kdst, XMMRegister src, int vector_len);
 
   // Add Packed Floating-Point Values
   void addpd(XMMRegister dst, XMMRegister src);
