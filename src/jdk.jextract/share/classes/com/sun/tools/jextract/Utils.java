@@ -131,10 +131,6 @@ public class Utils {
         return LayoutUtils.getName(type);
     }
 
-    public static Layout getLayout(Type type) {
-        return LayoutUtils.getLayout(type);
-    }
-
     public static Function getFunction(Type type) {
         return LayoutUtils.getFunction(type);
     }

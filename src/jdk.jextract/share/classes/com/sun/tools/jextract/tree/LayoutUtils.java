@@ -109,17 +109,22 @@ public final class LayoutUtils {
         final int argSize = t.numberOfArgs();
         Layout[] args = new Layout[argSize];
         for (int i = 0; i < argSize; i++) {
-            Layout l = getLayout(t.argType(i));
+            Layout l = getLayout(t.argType(i), false);
             args[i] = l instanceof Sequence? Address.ofLayout(64, ((Sequence)l).element()) : l;
         }
         if (t.resultType().kind() == TypeKind.Void) {
             return Function.ofVoid(t.isVariadic(), args);
         } else {
-            return Function.of(getLayout(t.resultType()), t.isVariadic(), args);
+            return Function.of(getLayout(t.resultType(), false), t.isVariadic(), args);
         }
     }
 
     public static Layout getLayout(Type t) {
+        return getLayout(t, true);
+    }
+
+    public static Layout getLayout(Type t, boolean localize) {
+        Layout layout;
         switch(t.kind()) {
             case SChar:
             case Short:
@@ -128,7 +133,8 @@ public final class LayoutUtils {
             case LongLong:
             case Int128:
             case Enum:
-                return Value.ofSignedInt(t.size() * 8);
+                layout = Value.ofSignedInt(t.size() * 8);
+                break;
             case Bool:
             case UInt:
             case UInt128:
@@ -138,42 +144,48 @@ public final class LayoutUtils {
             case Char_S:
             case Char_U:
             case UChar:
-                return Value.ofUnsignedInt(t.size() * 8);
+                layout = Value.ofUnsignedInt(t.size() * 8);
+                break;
             case Float:
             case Double:
             case LongDouble:
-                return Value.ofFloatingPoint(t.size() * 8);
+                layout = Value.ofFloatingPoint(t.size() * 8);
+                break;
             case Record:
                 return getRecordReferenceLayout(t);
             case ConstantArray:
-                return Sequence.of(t.getNumberOfElements(), getLayout(t.getElementType()));
+                return Sequence.of(t.getNumberOfElements(), getLayout(t.getElementType(), localize));
             case IncompleteArray:
-                return Sequence.of(0L, getLayout(t.getElementType()));
+                return Sequence.of(0L, getLayout(t.getElementType(), localize));
             case Unexposed:
             case Typedef:
             case Elaborated:
-                return getLayout(t.canonicalType());
+                return getLayout(t.canonicalType(), localize);
             case Pointer:
             case BlockPointer:
-                return parsePointerInternal(t.getPointeeType());
+                layout = parsePointerInternal(t.getPointeeType());
+                break;
             case FunctionProto:
-                return Address.ofFunction(64, parseFunctionInternal(t));
+                layout = Address.ofFunction(64, parseFunctionInternal(t));
+                break;
             case Complex:
                 TypeKind ek = t.getElementType().kind();
                 if (ek == TypeKind.Float) {
-                    return LayoutType.ofStruct(FloatComplex.class).layout();
+                    layout = LayoutType.ofStruct(FloatComplex.class).layout();
                 } else if (ek == TypeKind.Double) {
-                    return LayoutType.ofStruct(DoubleComplex.class).layout();
+                    layout = LayoutType.ofStruct(DoubleComplex.class).layout();
                 } else if (ek == TypeKind.LongDouble) {
-                    return LayoutType.ofStruct(LongDoubleComplex.class).layout();
+                    layout = LayoutType.ofStruct(LongDoubleComplex.class).layout();
                 } else {
                     throw new IllegalArgumentException(
                         "Unsupported _Complex kind: " + ek);
                 }
+                break;
             default:
                 throw new IllegalArgumentException(
                         "Unsupported type kind: " + t.kind()  + ", for type: " + t.spelling());
         }
+        return localize ? layout.withEndianness(Value.Endianness.hostEndian()) : layout;
     }
 
     private static Address parsePointerInternal(Type pointeeType) {
@@ -188,7 +200,7 @@ public final class LayoutUtils {
             case Void:
                 return Address.ofVoid(64);
             default:
-                return Address.ofLayout(64, getLayout(pointeeType));
+                return Address.ofLayout(64, getLayout(pointeeType, true));
         }
     }
 

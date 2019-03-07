@@ -35,18 +35,18 @@ import java.foreign.memory.Struct;
 public interface pad {
     @NativeStruct(
             "[" +
-                "u8(c1)" +
+                "<u8(c1)" +
                 "x56" +
                 "[" +
-                    "i64(l)|" +
+                    "<i64(l)|" +
                     "[" +
-                        "u8(x1)" +
+                        "<u8(x1)" +
                         "x56" +
-                        "f64(y1)" +
+                        "<f64(y1)" +
                     "](anon$pad_h$1123)|" +
                     "${anon$pad_h$1195}(p2)" +
                 "](anon$pad_h$1086)" +
-                "f32(f1)" +
+                "<f32(f1)" +
                 "x32" +
             "](PaddyStruct)")
     interface PaddyStruct extends Struct<PaddyStruct> {
@@ -90,9 +90,9 @@ public interface pad {
 
     @NativeStruct(
             "[" +
-                "f64(x2)" +
-                "f32(y2)" +
-                "u8(z2)" +
+                "<f64(x2)" +
+                "<f32(y2)" +
+                "<u8(z2)" +
                 "x24" +
             "](anon$pad_h$1195)")
     interface anon$pad_h$1195 extends java.foreign.memory.Struct<anon$pad_h$1195> {
