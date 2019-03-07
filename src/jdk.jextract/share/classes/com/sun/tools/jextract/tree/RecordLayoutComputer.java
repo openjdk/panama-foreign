@@ -125,7 +125,8 @@ abstract class RecordLayoutComputer {
     }
 
     Value bitfield(Value v, List<Layout> sublayouts) {
-        return v.withContents(Group.struct(sublayouts.toArray(new Layout[0])));
+        return v.withContents(Group.struct(sublayouts.toArray(new Layout[0])))
+                .withEndianness(Value.Endianness.hostEndian());
     }
 
     long offsetOf(Type parent, Cursor c) {

@@ -48,13 +48,13 @@ public interface bitfields { // platform dependent
 
 
     @NativeStruct("[" +
-                    "u64=[" +
+                    "<u64=[" +
                         "i2(x)" +
                         "x62]" +
-                    "u64=[" +
+                    "<u64=[" +
                         "i15(y)" +
                         "x49]" +
-                    "u64=[" +
+                    "<u64=[" +
                         "i20(z)" +
                         "x12" +
                         "i13(w)" +
@@ -93,7 +93,7 @@ public interface bitfields { // platform dependent
      */
 
     @NativeStruct("[" +
-                    "u64=[" +
+                    "<u64=[" +
                         "u3(c)" +
                         "u3(c2)" +
                         "x2" +
@@ -101,7 +101,7 @@ public interface bitfields { // platform dependent
                         "x17" + // includes 2 byte alignment member
                         "i4(i)" +
                         "x28]" +
-                    "u64=[" +
+                    "<u64=[" +
                         "i21(l)" +
                         "i42(ll)" +
                         "x1]" +
@@ -147,18 +147,18 @@ public interface bitfields { // platform dependent
      */
 
     @NativeStruct("[" +
-                    "u32=[" +
+                    "<u32=[" +
                         "u4(c1)" +
                         "x28]" + // includes 3 byte alignment member
-                    "u32=[" +
+                    "<u32=[" +
                         "i20(i)" +
                         "x12]" +
-                    "u32=[" +
+                    "<u32=[" +
                         "u8(c2)" +
                         "x24]" + // 3 byte alignment member
-                    "u32=[" +
+                    "<u32=[" +
                         "i32(l1)]" +
-                    "u32=[" +
+                    "<u32=[" +
                         "i32(l2)]" +
                   "](bitfields3)")
     interface bitfields3 extends Struct<bitfields3> {  // platform dependent
@@ -185,8 +185,8 @@ public interface bitfields { // platform dependent
     }
 
     @NativeStruct("[" +
-                    "i64(l)" +
-                    "u64=[" +
+                    "<i64(l)" +
+                    "<u64=[" +
                         "u4(c)" +
                         "x60]" +
                   "](bitfields4)")
@@ -204,10 +204,10 @@ public interface bitfields { // platform dependent
     }
 
     @NativeStruct("[" +
-                    "u64=[" +
+                    "<u64=[" +
                         "u7(c)" +
                         "x57]" +
-                    "u64=[" +
+                    "<u64=[" +
                         "i63(l)" +
                         "x1]" +
                   "](bitfields5)")
@@ -223,9 +223,9 @@ public interface bitfields { // platform dependent
     }
 
     @NativeStruct("[" +
-                    "u8=[" +
+                    "<u8=[" +
                         "u4(c1)]|" +
-                    "i32=[" +
+                    "<i32=[" +
                         "i20(i)]" +
                   "](bitfields6)")
     interface bitfields6 extends Struct<bitfields6> {
@@ -240,8 +240,8 @@ public interface bitfields { // platform dependent
     }
 
     @NativeStruct("[" +
-                     "u32(x)" +
-                     "u32=[u15(a)u17(pad)]" +
+                     "<u32(x)" +
+                     "<u32=[u15(a)u17(pad)]" +
                    "](bitfields7)")
     public interface bitfields7 extends Struct<bitfields7> {
          @NativeGetter("x")
@@ -261,8 +261,8 @@ public interface bitfields { // platform dependent
     }
 
     @NativeStruct("[" +
-                  "i32(i)" +
-                  "i32(j)" +
+                  "<i32(i)" +
+                  "<i32(j)" +
                   "](Point)")
     public interface Point extends Struct<Point> {
          @NativeGetter("i")
@@ -281,7 +281,7 @@ public interface bitfields { // platform dependent
 
     @NativeStruct("[" +
                       "${Point}(p)" +
-                      "u32=[i12(x)i2(y)x18]" +
+                      "<u32=[i12(x)i2(y)x18]" +
                    "](bitfields8)")
     public interface bitfields8 extends Struct<bitfields8> {
          @NativeGetter("p")
@@ -300,8 +300,8 @@ public interface bitfields { // platform dependent
     }
 
     @NativeStruct("[" +
-                "u32=[u1(x)x7u8(y)x16]" +
-                "i32(z)" +
+                "<u32=[u1(x)x7u8(y)x16]" +
+                "<i32(z)" +
             "](bitfields9)")
     public interface bitfields9 extends Struct<bitfields9> {
         @NativeGetter("x")
@@ -322,7 +322,7 @@ public interface bitfields { // platform dependent
         Pointer<Integer> z$ptr();
     }
 
-    @NativeStruct("[u32=[u1(x)]|x64](bitfields10)")
+    @NativeStruct("[<u32=[u1(x)]|x64](bitfields10)")
     public interface bitfields10 extends Struct<bitfields.bitfields10> {
         @NativeGetter("x")
         int x$get();
