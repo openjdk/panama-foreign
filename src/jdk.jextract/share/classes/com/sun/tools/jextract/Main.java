@@ -217,7 +217,7 @@ public final class Main {
     }
 
     private void runInternal(String[] args) {
-        OptionParser parser = new OptionParser();
+        OptionParser parser = new OptionParser(false);
         parser.accepts("C", Log.format("help.C")).withRequiredArg();
         parser.accepts("I", Log.format("help.I")).withRequiredArg();
         parser.acceptsAll(List.of("L", "library-path"), Log.format("help.L")).withRequiredArg();
