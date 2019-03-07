@@ -1264,7 +1264,7 @@ final class ByteMaxVector extends ByteVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, ByteMaxMask.class, byte.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, ByteMaxMask.class, byte.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((ByteMaxMask)m).getBits()));
         }
@@ -1272,7 +1272,7 @@ final class ByteMaxVector extends ByteVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, ByteMaxMask.class, byte.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, ByteMaxMask.class, byte.class, LENGTH,
                                          this, ByteVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((ByteMaxMask)m).getBits()));
         }

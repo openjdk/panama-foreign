@@ -1407,7 +1407,7 @@ final class DoubleMaxVector extends DoubleVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, DoubleMaxMask.class, long.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, DoubleMaxMask.class, long.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((DoubleMaxMask)m).getBits()));
         }
@@ -1415,7 +1415,7 @@ final class DoubleMaxVector extends DoubleVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, DoubleMaxMask.class, long.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, DoubleMaxMask.class, long.class, LENGTH,
                                          this, DoubleVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((DoubleMaxMask)m).getBits()));
         }

@@ -1849,7 +1849,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, $masktype$.class, $bitstype$.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, $masktype$.class, $bitstype$.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper((($masktype$)m).getBits()));
         }
@@ -1857,7 +1857,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, $masktype$.class, $bitstype$.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, $masktype$.class, $bitstype$.class, LENGTH,
                                          this, $abstractvectortype$.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper((($masktype$)m).getBits()));
         }

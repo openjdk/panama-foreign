@@ -1342,7 +1342,7 @@ final class Long128Vector extends LongVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, Long128Mask.class, long.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, Long128Mask.class, long.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((Long128Mask)m).getBits()));
         }
@@ -1350,7 +1350,7 @@ final class Long128Vector extends LongVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, Long128Mask.class, long.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, Long128Mask.class, long.class, LENGTH,
                                          this, LongVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((Long128Mask)m).getBits()));
         }

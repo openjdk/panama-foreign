@@ -1393,7 +1393,7 @@ final class Double64Vector extends DoubleVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, Double64Mask.class, long.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, Double64Mask.class, long.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((Double64Mask)m).getBits()));
         }
@@ -1401,7 +1401,7 @@ final class Double64Vector extends DoubleVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, Double64Mask.class, long.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, Double64Mask.class, long.class, LENGTH,
                                          this, DoubleVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((Double64Mask)m).getBits()));
         }

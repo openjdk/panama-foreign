@@ -1264,7 +1264,7 @@ final class Byte512Vector extends ByteVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, Byte512Mask.class, byte.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, Byte512Mask.class, byte.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((Byte512Mask)m).getBits()));
         }
@@ -1272,7 +1272,7 @@ final class Byte512Vector extends ByteVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, Byte512Mask.class, byte.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, Byte512Mask.class, byte.class, LENGTH,
                                          this, ByteVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((Byte512Mask)m).getBits()));
         }

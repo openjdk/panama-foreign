@@ -1265,7 +1265,7 @@ final class ShortMaxVector extends ShortVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, ShortMaxMask.class, short.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, ShortMaxMask.class, short.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((ShortMaxMask)m).getBits()));
         }
@@ -1273,7 +1273,7 @@ final class ShortMaxVector extends ShortVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, ShortMaxMask.class, short.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, ShortMaxMask.class, short.class, LENGTH,
                                          this, ShortVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((ShortMaxMask)m).getBits()));
         }

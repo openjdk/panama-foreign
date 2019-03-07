@@ -75,30 +75,6 @@ import jdk.incubator.vector.Vector;
     static final int VECTOR_OP_EXPM1 = 117;
     static final int VECTOR_OP_HYPOT = 118;
 
-    // Copied from open/src/hotspot/cpu/x86/assembler_x86.hpp
-    // enum Condition { // The x86 condition codes used for conditional jumps/moves.
-    static final int COND_zero          = 0x4;
-    static final int COND_notZero       = 0x5;
-    static final int COND_equal         = 0x4;
-    static final int COND_notEqual      = 0x5;
-    static final int COND_less          = 0xc;
-    static final int COND_lessEqual     = 0xe;
-    static final int COND_greater       = 0xf;
-    static final int COND_greaterEqual  = 0xd;
-    static final int COND_below         = 0x2;
-    static final int COND_belowEqual    = 0x6;
-    static final int COND_above         = 0x7;
-    static final int COND_aboveEqual    = 0x3;
-    static final int COND_overflow      = 0x0;
-    static final int COND_noOverflow    = 0x1;
-    static final int COND_carrySet      = 0x2;
-    static final int COND_carryClear    = 0x3;
-    static final int COND_negative      = 0x8;
-    static final int COND_positive      = 0x9;
-    static final int COND_parity        = 0xa;
-    static final int COND_noParity      = 0xb;
-
-
     // enum BoolTest
     static final int BT_eq = 0;
     static final int BT_ne = 4;
