@@ -24,15 +24,15 @@
 #ifndef _WIN64
 #include "libcomplex_aux.h"
 
-float complex ff(float complex arg, float complex (*cb)(float complex)) {
+float _Complex ff(float _Complex arg, float _Complex (*cb)(float _Complex)) {
    return cb(arg);
 }
 
-double complex f(double complex arg, double complex (*cb)(double complex)) {
+double _Complex f(double _Complex arg, double _Complex (*cb)(double _Complex)) {
    return cb(arg);
 }
 
-long double complex fl(long double complex arg, long double complex (*cb)(long double complex)) {
+long double _Complex fl(long double _Complex arg, long double _Complex (*cb)(long double _Complex)) {
    return cb(arg);
 }
 

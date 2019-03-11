@@ -22,12 +22,11 @@
  */
 
 #ifndef _WIN64
-#include <complex.h>
 
-float complex ff(float complex arg, float complex (*cb)(float complex));
+float _Complex ff(float _Complex arg, float _Complex (*cb)(float _Complex));
 
-double complex f(double complex arg, double complex (*cb)(double complex));
+double _Complex f(double _Complex arg, double _Complex (*cb)(double _Complex));
 
-long double complex fl(long double complex arg, long double complex (*cb)(long double complex));
+long double _Complex fl(long double _Complex arg, long double _Complex (*cb)(long double _Complex));
 
 #endif
