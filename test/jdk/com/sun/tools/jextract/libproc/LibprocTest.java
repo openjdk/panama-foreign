@@ -41,8 +41,8 @@ import static org.testng.Assert.assertTrue;
 /*
  * @test
  * @library ..
- * @requires (os.family == "mac")
- * @run driver JtregJextract -t test.jextract.lp -lproc --record-library-path -L /usr/lib -- /usr/include/libproc.h /usr/include/sys/proc_info.h
+ * @ignore convert to jextract independent test
+ * @run driver JtregJextractUnsafe -t test.jextract.lp -lproc --record-library-path -L /usr/lib -- /usr/include/libproc.h /usr/include/sys/proc_info.h
  * @run testng LibprocTest
  */
 public class LibprocTest {
