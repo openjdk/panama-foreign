@@ -33,31 +33,30 @@
  *     declaration!
  */
 
-#ifndef _WIN64
-#include <complex.h>
+ #ifndef _WIN64
 
-extern float complex cexpf(float complex);
-extern double complex cexp(double complex);
-extern long double complex cexpl(long double complex);
+extern float _Complex cexpf(float _Complex);
+extern double _Complex cexp(double _Complex);
+extern long double _Complex cexpl(long double _Complex);
 
-extern float cabsf(float complex);
-extern double cabs(double complex);
-extern long double cabsl(long double complex);
+extern float cabsf(float _Complex);
+extern double cabs(double _Complex);
+extern long double cabsl(long double _Complex);
 
-extern float cargf(float complex);
-extern double carg(double complex);
-extern long double cargl(long double complex);
+extern float cargf(float _Complex);
+extern double carg(double _Complex);
+extern long double cargl(long double _Complex);
 
-extern float cimagf(float complex);
-extern double cimag(double complex);
-extern long double cimagl(long double complex);
+extern float cimagf(float _Complex);
+extern double cimag(double _Complex);
+extern long double cimagl(long double _Complex);
 
-extern float complex conjf(float complex);
-extern double complex conj(double complex);
-extern long double complex conjl(long double complex);
+extern float _Complex conjf(float _Complex);
+extern double _Complex conj(double _Complex);
+extern long double _Complex conjl(long double _Complex);
 
-extern float crealf(float complex);
-extern double creal(double complex);
-extern long double creall(long double complex);
+extern float crealf(float _Complex);
+extern double creal(double _Complex);
+extern long double creall(long double _Complex);
 
 #endif

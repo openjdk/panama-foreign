@@ -106,7 +106,9 @@ class JextractToolRunner {
     protected static JextractResult run(String... options) {
         StringWriter writer = new StringWriter();
         PrintWriter pw = new PrintWriter(writer);
-
+        String[] args = new String[options.length + 1];
+        System.arraycopy(options, 0, args, 1, options.length);
+        args[0] = "-C-nostdinc";
         int result = JEXTRACT_TOOL.run(pw, pw, options);
         String output = writer.toString();
         System.err.println(output);

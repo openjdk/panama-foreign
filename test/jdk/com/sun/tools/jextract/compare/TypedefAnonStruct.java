@@ -38,8 +38,8 @@ public interface TypedefAnonStruct {
       file="TypedefAnonStruct.h", line=24, column=9
     )
     @NativeStruct("[" +
-            "i32(i)" +
-            "i32(j)" +
+            "<i32(i)" +
+            "<i32(j)" +
             "](Point)")
     public static interface Point extends Struct<Point> {
         @NativeLocation(
@@ -66,8 +66,8 @@ public interface TypedefAnonStruct {
       file="TypedefAnonStruct.h", line=28, column=9
     )
     @NativeStruct("[" +
-            "f32(x)" +
-            "f32(y)" +
+            "<f32(x)" +
+            "<f32(y)" +
             "](FPoint)")
     public static interface FPoint extends Struct<FPoint> {
         @NativeLocation(

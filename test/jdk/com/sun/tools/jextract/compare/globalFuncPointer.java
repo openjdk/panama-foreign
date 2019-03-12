@@ -33,7 +33,7 @@ import java.foreign.memory.Pointer;
 
 @NativeHeader(
     path="globalFuncPointer.h",
-    globals={"u64(fp):(*)v"}
+    globals={"<u64(fp):(*)v"}
 )
 public interface globalFuncPointer {
     @NativeGetter("fp")
