@@ -257,8 +257,8 @@ public abstract class FloatVector extends Vector<Float> {
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        return VectorIntrinsics.loadWithMap((Class<FloatVector>) species.boxType(), float.class, species.length(), species.vectorType(),
-                                            a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vix,
+        return VectorIntrinsics.loadWithMap((Class<FloatVector>) species.boxType(), float.class, species.length(),
+                                            species.indexSpecies().vectorType(), a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
                                            (c, idx, iMap, idy, s) -> ((FloatSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }

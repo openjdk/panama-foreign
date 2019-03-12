@@ -260,8 +260,8 @@ public abstract class LongVector extends Vector<Long> {
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        return VectorIntrinsics.loadWithMap((Class<LongVector>) species.boxType(), long.class, species.length(), species.vectorType(),
-                                            a, Unsafe.ARRAY_LONG_BASE_OFFSET, vix,
+        return VectorIntrinsics.loadWithMap((Class<LongVector>) species.boxType(), long.class, species.length(),
+                                            species.indexSpecies().vectorType(), a, Unsafe.ARRAY_LONG_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
                                            (c, idx, iMap, idy, s) -> ((LongSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }

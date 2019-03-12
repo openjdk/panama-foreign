@@ -257,8 +257,8 @@ public abstract class IntVector extends Vector<Integer> {
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        return VectorIntrinsics.loadWithMap((Class<IntVector>) species.boxType(), int.class, species.length(), species.vectorType(),
-                                            a, Unsafe.ARRAY_INT_BASE_OFFSET, vix,
+        return VectorIntrinsics.loadWithMap((Class<IntVector>) species.boxType(), int.class, species.length(),
+                                            species.indexSpecies().vectorType(), a, Unsafe.ARRAY_INT_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
                                            (c, idx, iMap, idy, s) -> ((IntSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }

@@ -269,8 +269,8 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        return VectorIntrinsics.loadWithMap((Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(), species.vectorType(),
-                                            a, Unsafe.ARRAY_$TYPE$_BASE_OFFSET, vix,
+        return VectorIntrinsics.loadWithMap((Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
+                                            species.indexSpecies().vectorType(), a, Unsafe.ARRAY_$TYPE$_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
                                            (c, idx, iMap, idy, s) -> (($Type$Species)s).op(n -> c[idx + iMap[idy+n]]));
         }
