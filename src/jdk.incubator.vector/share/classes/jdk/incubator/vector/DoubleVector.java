@@ -260,8 +260,8 @@ public abstract class DoubleVector extends Vector<Double> {
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        return VectorIntrinsics.loadWithMap((Class<DoubleVector>) species.boxType(), double.class, species.length(), species.vectorType(),
-                                            a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vix,
+        return VectorIntrinsics.loadWithMap((Class<DoubleVector>) species.boxType(), double.class, species.length(),
+                                            species.indexSpecies().vectorType(), a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
                                            (c, idx, iMap, idy, s) -> ((DoubleSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }
