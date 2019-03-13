@@ -1342,7 +1342,7 @@ final class Int256Vector extends IntVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, Int256Mask.class, int.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, Int256Mask.class, int.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((Int256Mask)m).getBits()));
         }
@@ -1350,7 +1350,7 @@ final class Int256Vector extends IntVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, Int256Mask.class, int.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, Int256Mask.class, int.class, LENGTH,
                                          this, IntVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((Int256Mask)m).getBits()));
         }

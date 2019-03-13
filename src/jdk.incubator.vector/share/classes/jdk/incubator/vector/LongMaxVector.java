@@ -1342,7 +1342,7 @@ final class LongMaxVector extends LongVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, LongMaxMask.class, long.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, LongMaxMask.class, long.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((LongMaxMask)m).getBits()));
         }
@@ -1350,7 +1350,7 @@ final class LongMaxVector extends LongVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, LongMaxMask.class, long.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, LongMaxMask.class, long.class, LENGTH,
                                          this, LongVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((LongMaxMask)m).getBits()));
         }

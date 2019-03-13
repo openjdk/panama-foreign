@@ -1407,7 +1407,7 @@ final class FloatMaxVector extends FloatVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, FloatMaxMask.class, int.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, FloatMaxMask.class, int.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((FloatMaxMask)m).getBits()));
         }
@@ -1415,7 +1415,7 @@ final class FloatMaxVector extends FloatVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, FloatMaxMask.class, int.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, FloatMaxMask.class, int.class, LENGTH,
                                          this, FloatVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((FloatMaxMask)m).getBits()));
         }

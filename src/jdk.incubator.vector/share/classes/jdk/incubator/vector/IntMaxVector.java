@@ -1342,7 +1342,7 @@ final class IntMaxVector extends IntVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, IntMaxMask.class, int.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, IntMaxMask.class, int.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((IntMaxMask)m).getBits()));
         }
@@ -1350,7 +1350,7 @@ final class IntMaxVector extends IntVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, IntMaxMask.class, int.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, IntMaxMask.class, int.class, LENGTH,
                                          this, IntVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((IntMaxMask)m).getBits()));
         }

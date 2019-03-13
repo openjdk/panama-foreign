@@ -7349,7 +7349,7 @@ bool LibraryCallKit::inline_vector_test() {
   }
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
-  Assembler::Condition booltest = (Assembler::Condition)cond->get_con();
+  BoolTest::mask booltest = (BoolTest::mask)cond->get_con();
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 

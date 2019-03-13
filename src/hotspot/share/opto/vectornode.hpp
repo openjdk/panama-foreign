@@ -1276,13 +1276,13 @@ public:
 
 class VectorTestNode : public Node {
  private:
-  Assembler::Condition _predicate;
+  BoolTest::mask _predicate;
 
  protected:
   uint size_of() const { return sizeof(*this); }
 
  public:
-  VectorTestNode( Node *in1, Node *in2, Assembler::Condition predicate) : Node(NULL, in1, in2), _predicate(predicate) {
+  VectorTestNode( Node *in1, Node *in2, BoolTest::mask predicate) : Node(NULL, in1, in2), _predicate(predicate) {
     assert(in1->is_Vector() || in1->is_LoadVector(), "must be vector");
     assert(in2->is_Vector() || in2->is_LoadVector(), "must be vector");
     assert(in1->bottom_type()->is_vect()->element_basic_type() == in2->bottom_type()->is_vect()->element_basic_type(),
@@ -1298,7 +1298,7 @@ class VectorTestNode : public Node {
   virtual const Type *bottom_type() const { return TypeInt::BOOL; }
   virtual uint ideal_reg() const { return Op_RegI; }  // TODO Should be RegFlags but due to missing comparison flags for BoolTest
                                                       // in middle-end, we make it boolean result directly.
-  Assembler::Condition get_predicate() const { return _predicate; }
+  BoolTest::mask get_predicate() const { return _predicate; }
 };
 
 class VectorBlendNode : public VectorNode {

@@ -1407,7 +1407,7 @@ final class Double256Vector extends DoubleVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, Double256Mask.class, long.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, Double256Mask.class, long.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((Double256Mask)m).getBits()));
         }
@@ -1415,7 +1415,7 @@ final class Double256Vector extends DoubleVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, Double256Mask.class, long.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, Double256Mask.class, long.class, LENGTH,
                                          this, DoubleVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((Double256Mask)m).getBits()));
         }

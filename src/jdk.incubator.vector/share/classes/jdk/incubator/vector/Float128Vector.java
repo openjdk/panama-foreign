@@ -1407,7 +1407,7 @@ final class Float128Vector extends FloatVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(COND_notZero, Float128Mask.class, int.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, Float128Mask.class, int.class, LENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((Float128Mask)m).getBits()));
         }
@@ -1415,7 +1415,7 @@ final class Float128Vector extends FloatVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(COND_carrySet, Float128Mask.class, int.class, LENGTH,
+            return VectorIntrinsics.test(BT_overflow, Float128Mask.class, int.class, LENGTH,
                                          this, FloatVector.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((Float128Mask)m).getBits()));
         }
