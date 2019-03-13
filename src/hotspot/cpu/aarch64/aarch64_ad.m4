@@ -686,4 +686,96 @@ REDUCE_LOGIC_OP_2L(and, And, andr)
 REDUCE_LOGIC_OP_2L(orr, Or,  orr )
 REDUCE_LOGIC_OP_2L(eor, Xor, eor )
 dnl
+
+// ------------------------------ Vector insert ---------------------------------
+define(`VECTOR_INSERT_I', `
+instruct insert$1`'(vec$2 dst, vec$2 src, iReg$3`'ORL2I($3) val, immI idx)
+%{
+  predicate(n->bottom_type()->is_vect()->element_basic_type() == T_$4);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  ins_cost(INSN_COST);
+  format %{ "orr    $dst, T$5, $src, $src\n\t"
+            "mov    $dst, T$6, $idx, $val\t# insert into vector($1)" %}
+  ins_encode %{
+    if (as_FloatRegister($dst$$reg) != as_FloatRegister($src$$reg)) {
+      __ orr(as_FloatRegister($dst$$reg), __ T$5,
+             as_FloatRegister($src$$reg), as_FloatRegister($src$$reg));
+    }
+    __ mov(as_FloatRegister($dst$$reg), __ T$6, $idx$$constant, $val$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}')dnl
+dnl             $1   $2 $3  $4    $5   $6
+VECTOR_INSERT_I(8B,  D, I, BYTE,  8B,  8B)
+VECTOR_INSERT_I(16B, X, I, BYTE,  16B, 16B)
+VECTOR_INSERT_I(4S,  D, I, SHORT, 8B,  4H)
+VECTOR_INSERT_I(8S,  X, I, SHORT, 16B, 8H)
+VECTOR_INSERT_I(2I,  D, I, INT,   8B,  2S)
+VECTOR_INSERT_I(4I,  X, I, INT,   16B, 4S)
+VECTOR_INSERT_I(2L,  X, L, LONG,  16B, 2D)
+dnl
+define(`VECTOR_INSERT_F', `
+instruct insert$1`'(vec$2 dst, vec$2 src, vReg$3 val, immI idx)
+%{
+  predicate(n->bottom_type()->is_vect()->element_basic_type() == T_$4);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  ins_cost(INSN_COST);
+  format %{ "orr    $dst, T$5, $src, $src\n\t"
+            "ins    $dst, $6, $val, $idx, 0\t# insert into vector($1)" %}
+  ins_encode %{
+    if (as_FloatRegister($dst$$reg) != as_FloatRegister($src$$reg)) {
+      __ orr(as_FloatRegister($dst$$reg), __ T$5,
+             as_FloatRegister($src$$reg), as_FloatRegister($src$$reg));
+    }
+    __ ins(as_FloatRegister($dst$$reg), __ $6,
+           as_FloatRegister($val$$reg), $idx$$constant, 0);
+  %}
+  ins_pipe(pipe_class_default);
+%}')dnl
+dnl             $1  $2 $3  $4     $5   $6
+VECTOR_INSERT_F(2F, D, F, FLOAT,  8B,  S)
+VECTOR_INSERT_F(4F, X, F, FLOAT,  16B, S)
+VECTOR_INSERT_F(2D, X, D, DOUBLE, 16B, D)
+dnl
+
+// ------------------------------ Vector extract ---------------------------------
+define(`VECTOR_EXTRACT_I', `
+instruct extract$1$2`'(iReg$3NoSp dst, vec$4 src, immI idx)
+%{
+  predicate(n->in(1)->bottom_type()->is_vect()->length() == $1);
+  match(Set dst (Extract$2 src idx));
+  ins_cost(INSN_COST);
+  format %{ "$5mov    $dst, $src, $6, $idx\t# extract from vector($1$2)" %}
+  ins_encode %{
+    __ $5mov($dst$$Register, as_FloatRegister($src$$reg), __ $6, $idx$$constant);
+  %}
+  ins_pipe(pipe_class_default);
+%}')dnl
+dnl             $1   $2 $3 $4 $5 $6
+VECTOR_EXTRACT_I(8,  B, I, D, s, B)
+VECTOR_EXTRACT_I(16, B, I, X, s, B)
+VECTOR_EXTRACT_I(4,  S, I, D, s, H)
+VECTOR_EXTRACT_I(8,  S, I, X, s, H)
+VECTOR_EXTRACT_I(2,  I, I, D, u, S)
+VECTOR_EXTRACT_I(4,  I, I, X, u, S)
+VECTOR_EXTRACT_I(2,  L, L, X, u, D)
+dnl
+define(`VECTOR_EXTRACT_F', `
+instruct extract$1$2`'(vReg$2 dst, vec$3 src, immI idx)
+%{
+  predicate(n->in(1)->bottom_type()->is_vect()->length() == $1);
+  match(Set dst (Extract$2 src idx));
+  ins_cost(INSN_COST);
+  format %{ "ins   $dst, $4, $src, 0, $idx\t# extract from vector($1$2)" %}
+  ins_encode %{
+    __ ins(as_FloatRegister($dst$$reg), __ $4,
+           as_FloatRegister($src$$reg), 0, $idx$$constant);
+  %}
+  ins_pipe(pipe_class_default);
+%}')dnl
+dnl             $1  $2 $3 $4
+VECTOR_EXTRACT_F(2, F, D, S)
+VECTOR_EXTRACT_F(4, F, X, S)
+VECTOR_EXTRACT_F(2, D, X, D)
+dnl
 // END This section of the file is automatically generated. Do not edit --------------
