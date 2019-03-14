@@ -354,6 +354,8 @@ jextract -L /usr/lib/atlas-base -I /usr/include/atlas/ \
 import blas.cblas;
 
 import static blas.cblas_h.*;
+import static blas.cblas_h.CBLAS_ORDER.*;
+import static blas.cblas_h.CBLAS_TRANSPOSE.*;
 
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
@@ -1009,6 +1011,7 @@ import org.tensorflow.panama.c_api.TF_Status;
 import org.tensorflow.panama.c_api.TF_Tensor;
 
 import static org.tensorflow.panama.c_api_h.*;
+import static org.tensorflow.panama.c_api_h.TF_DataType.*;
 
 public class TensorFlowExample {
     static Pointer<TF_Operation> PlaceHolder(Pointer<TF_Graph> graph, Pointer<TF_Status> status,
