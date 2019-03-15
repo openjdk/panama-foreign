@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
 /**
  * Annotation for every native header file.
  */
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Retention(RUNTIME)
 public @interface NativeNumericConstant {
     long value();
