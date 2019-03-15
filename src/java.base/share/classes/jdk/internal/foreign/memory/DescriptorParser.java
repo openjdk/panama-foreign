@@ -25,23 +25,13 @@
 
 package jdk.internal.foreign.memory;
 
-import java.foreign.layout.Address;
-import java.foreign.layout.Descriptor;
-import java.foreign.layout.Function;
-import java.foreign.layout.Group;
-import java.foreign.layout.Layout;
-import java.foreign.layout.Padding;
-import java.foreign.layout.Sequence;
-import java.foreign.layout.Unresolved;
-import java.foreign.layout.Value;
-import java.foreign.layout.Value.Endianness;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Predicate;
 import jdk.internal.foreign.memory.DescriptorParser.DescriptorScanner.Token;
+
+import java.foreign.layout.*;
+import java.foreign.layout.Value.Endianness;
+
+import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Parse a layout string into a descriptor type {@see Type}.
@@ -111,8 +101,6 @@ public class DescriptorParser {
                 return parsePadding();
             case VALUE:
                 return parseValue();
-            case BYTE_SWAP_OP:
-                return parseByteSwappedLayout();
             default:
                 throw scanner.error("Unexpected token: " + token);
         }
@@ -143,24 +131,25 @@ public class DescriptorParser {
     }
 
     /**
-     * value = valueTag number [annotations] [ '=' group ] [ addressRest ]
-     * valueTag = 'u' / 'i' / 'f'
+     * value = [ 'u' ] valueTag number [annotations] [ '=' group ] [ addressRest ]
+     * valueTag = 'u' / 'U' / 'i' / 'I' / 'f' / 'F'
      */
     private Value parseValue() {
         Value.Kind kind = lastKind();
+        Endianness endianness = lastEndianness();
         nextToken(Token.VALUE);
         int size = parseSize();
         nextToken(Token.NUMERIC); //NUMERIC
         Value value;
         switch (kind) {
             case INTEGRAL_UNSIGNED:
-                value = Value.ofUnsignedInt(size);
+                value = Value.ofUnsignedInt(endianness, size);
                 break;
             case INTEGRAL_SIGNED:
-                value = Value.ofSignedInt(size);
+                value = Value.ofSignedInt(endianness, size);
                 break;
             case FLOATING_POINT:
-                value = Value.ofFloatingPoint(size);
+                value = Value.ofFloatingPoint(endianness, size);
                 break;
             default:
                 throw scanner.error("unexpected value tag: " + kind);
@@ -181,44 +170,18 @@ public class DescriptorParser {
         return annotatedOpt(Padding.of(size));
     }
 
-    private Endianness parseEnaidnness() {
-        char byteOp = scanner.lastChar();
-        nextToken(Token.BYTE_SWAP_OP);
-        switch (byteOp) {
-            case '>':
-                return Endianness.BIG_ENDIAN;
-            case '<':
-                return Endianness.LITTLE_ENDIAN;
-        }
-        throw new IllegalStateException("Invalid byte swap operator " + byteOp);
-    }
-
-    /**
-     * byteSwappedLayout = byteSwapOp value / group
-     * byteSwapOp = '<' / '>'
-     */
-    private Layout parseByteSwappedLayout() {
-        Layout layout;
-        Endianness endian = parseEnaidnness();
-        switch (token) {
-            case LBRACKET:
-                layout = parseGroup();
-                break;
-            case VALUE:
-                layout = parseValue();
-                break;
-            default:
-                throw scanner.error("Unexpected token: " + token);
-        }
-        return layout.withEndianness(endian);
+    Endianness lastEndianness() {
+        char tag = scanner.lastChar();
+        return Character.isUpperCase(tag) ?
+                Endianness.BIG_ENDIAN: Endianness.LITTLE_ENDIAN;
     }
 
     Value.Kind lastKind() {
         char tag = scanner.lastChar();
         switch (tag) {
-            case 'u': return Value.Kind.INTEGRAL_UNSIGNED;
-            case 'i': return Value.Kind.INTEGRAL_SIGNED;
-            case 'f': return Value.Kind.FLOATING_POINT;
+            case 'u': case 'U': return Value.Kind.INTEGRAL_UNSIGNED;
+            case 'i': case 'I': return Value.Kind.INTEGRAL_SIGNED;
+            case 'f': case 'F': return Value.Kind.FLOATING_POINT;
             default:
                 throw new IllegalStateException("Cannot get here!");
         }
@@ -444,8 +407,7 @@ public class DescriptorParser {
             UNKNOWN,
             VOID,
             VARARGS,
-            END,
-            BYTE_SWAP_OP;
+            END;
         }
 
         private int cp;
@@ -483,8 +445,9 @@ public class DescriptorParser {
                         case '$':
                             res = Token.UNRESOLVED;
                             break outer;
-                        case 'u':
+                        case 'u': case 'U':
                         case 'f': case 'i':
+                        case 'F': case 'I':
                             res = Token.VALUE;
                             break outer;
                         case 'x':
@@ -522,10 +485,6 @@ public class DescriptorParser {
                             break outer;
                         case '|':
                             res = Token.UNION;
-                            break outer;
-                        case '>':
-                        case '<':
-                            res = Token.BYTE_SWAP_OP;
                             break outer;
                         default:
                             res = Token.UNKNOWN;

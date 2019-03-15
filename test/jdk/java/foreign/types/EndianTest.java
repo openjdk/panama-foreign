@@ -67,7 +67,7 @@ public class EndianTest {
     private static final int[] HI = isHostLE ? LEI : BEI;
     private static final short[] HS = isHostLE ? LES : BES;
 
-    @NativeStruct(">[[u16(hs)|u32(hl)|u64(hll)]u16(ns)x16u32(nl)u64(nll)]")
+    @NativeStruct("[[U16(hs)|U32(hl)|U64(hll)]U16(ns)x16U32(nl)U64(nll)]")
     interface HostNetworkValuesBE extends Struct<EndianTest.HostNetworkValuesBE> {
         @NativeGetter("hs")
         short hs$get();
@@ -112,7 +112,7 @@ public class EndianTest {
         Pointer<Short> nll$ptr();
     }
 
-    @NativeStruct("[<[u16(hs)|u32(hl)|u64(hll)]>u16(ns)x16>u32(nl)>u64(nll)]")
+    @NativeStruct("[[u16(hs)|u32(hl)|u64(hll)]U16(ns)x16U32(nl)U64(nll)]")
     interface HostNetworkValuesLE extends Struct<EndianTest.HostNetworkValuesLE> {
         @NativeGetter("hs")
         short hs$get();
@@ -138,51 +138,6 @@ public class EndianTest {
         @NativeGetter("ns")
         short ns$get();
         @NativeSetter("ns")
-        void ns$set(short s);
-        @NativeAddressof("ns")
-        Pointer<Short> ns$ptr();
-
-        @NativeGetter("nl")
-        int nl$get();
-        @NativeSetter("nl")
-        void nl$set(int i);
-        @NativeAddressof("nl")
-        Pointer<Short> nl$ptr();
-
-        @NativeGetter("nll")
-        long nll$get();
-        @NativeSetter("nll")
-        void nll$set(long l);
-        @NativeAddressof("nll")
-        Pointer<Short> nll$ptr();
-    }
-
-    @NativeStruct("[[u16(hs)|u32(hl)|u64(hll)]>u16(ns)x16>u32(nl)>u64(nll)]")
-    interface HostNetworkValues extends Struct<EndianTest.HostNetworkValues> {
-        @NativeGetter("hs")
-        short hs$get();
-        @NativeSetter("hs")
-        void hs$set(short s);
-        @NativeAddressof("hs")
-        Pointer<Short> hs$ptr();
-
-        @NativeGetter("hl")
-        int hl$get();
-        @NativeSetter("hl")
-        void hl$set(int i);
-        @NativeAddressof("hl")
-        Pointer<Integer> hl$ptr();
-
-        @NativeGetter("hll")
-        long hll$get();
-        @NativeSetter("hll")
-        void hll$set(long l);
-        @NativeAddressof("hll")
-        Pointer<Long> hll$ptr();
-
-        @NativeGetter("ns")
-        short ns$get();
-        @NativeSetter("nl")
         void ns$set(short s);
         @NativeAddressof("ns")
         Pointer<Short> ns$ptr();
@@ -231,27 +186,27 @@ public class EndianTest {
 
             // Read as little endian
             for (int i = 0; i < LES.length; i++) {
-                assertEquals((short) p.cast(NativeTypes.LE_INT16).offset(i).get(), LES[i]);
-                assertEquals((short) p.cast(NativeTypes.LE_UINT16).offset(i).get(), LES[i]);
+                assertEquals((short) p.cast(NativeTypes.LittleEndian.INT16).offset(i).get(), LES[i]);
+                assertEquals((short) p.cast(NativeTypes.LittleEndian.UINT16).offset(i).get(), LES[i]);
             }
             for (int i = 0; i < LEI.length; i++) {
-                assertEquals((int) p.cast(NativeTypes.LE_INT32).offset(i).get(), LEI[i]);
-                assertEquals((int) p.cast(NativeTypes.LE_UINT32).offset(i).get(), LEI[i]);
+                assertEquals((int) p.cast(NativeTypes.LittleEndian.INT32).offset(i).get(), LEI[i]);
+                assertEquals((int) p.cast(NativeTypes.LittleEndian.UINT32).offset(i).get(), LEI[i]);
             }
-            assertEquals((long) p.cast(NativeTypes.LE_INT64).get(), LEL);
-            assertEquals((long) p.cast(NativeTypes.LE_UINT64).get(), LEL);
+            assertEquals((long) p.cast(NativeTypes.LittleEndian.INT64).get(), LEL);
+            assertEquals((long) p.cast(NativeTypes.LittleEndian.UINT64).get(), LEL);
 
             // Read as big endian
             for (int i = 0; i < BES.length; i++) {
-                assertEquals((short) p.cast(NativeTypes.BE_INT16).offset(i).get(), BES[i]);
-                assertEquals((short) p.cast(NativeTypes.BE_UINT16).offset(i).get(), BES[i]);
+                assertEquals((short) p.cast(NativeTypes.BigEndian.INT16).offset(i).get(), BES[i]);
+                assertEquals((short) p.cast(NativeTypes.BigEndian.UINT16).offset(i).get(), BES[i]);
             }
             for (int i = 0; i < BEI.length; i++) {
-                assertEquals((int) p.cast(NativeTypes.BE_INT32).offset(i).get(), BEI[i]);
-                assertEquals((int) p.cast(NativeTypes.BE_UINT32).offset(i).get(), BEI[i]);
+                assertEquals((int) p.cast(NativeTypes.BigEndian.INT32).offset(i).get(), BEI[i]);
+                assertEquals((int) p.cast(NativeTypes.BigEndian.UINT32).offset(i).get(), BEI[i]);
             }
-            assertEquals((long) p.cast(NativeTypes.BE_INT64).get(), BEL);
-            assertEquals((long) p.cast(NativeTypes.BE_UINT64).get(), BEL);
+            assertEquals((long) p.cast(NativeTypes.BigEndian.INT64).get(), BEL);
+            assertEquals((long) p.cast(NativeTypes.BigEndian.UINT64).get(), BEL);
         }
     }
 
@@ -261,30 +216,30 @@ public class EndianTest {
             Pointer<Void> p = s.allocate(NativeTypes.INT64).cast(NativeTypes.VOID);
             Pointer<Byte> pb = p.cast(NativeTypes.UINT8);
 
-            p.cast(NativeTypes.BE_INT64).set(BEL);
+            p.cast(NativeTypes.BigEndian.INT64).set(BEL);
             for (int i = 0; i < DATA.length; i++) {
                 assertEquals((byte) pb.offset(i).get(), DATA[i]);
             }
-            assertEquals((int) p.cast(NativeTypes.LE_UINT32).offset(1).get(), LEI[1]);
-            assertEquals((short) p.cast(NativeTypes.BE_UINT16).offset(1).get(), BES[1]);
+            assertEquals((int) p.cast(NativeTypes.LittleEndian.UINT32).offset(1).get(), LEI[1]);
+            assertEquals((short) p.cast(NativeTypes.BigEndian.UINT16).offset(1).get(), BES[1]);
 
-            p.cast(NativeTypes.LE_INT64).set(LEL);
-            assertEquals((long) p.cast(NativeTypes.BE_INT64).get(), BEL);
+            p.cast(NativeTypes.LittleEndian.INT64).set(LEL);
+            assertEquals((long) p.cast(NativeTypes.BigEndian.INT64).get(), BEL);
             assertEquals((long) p.cast(NativeTypes.INT64).get(), HL);
 
             p.cast(NativeTypes.INT64).set(HL);
             assertEquals((long) p.cast(NativeTypes.UINT64).get(), HL);
-            assertEquals((long) p.cast(NativeTypes.BE_INT64).get(), BEL);
+            assertEquals((long) p.cast(NativeTypes.BigEndian.INT64).get(), BEL);
             assertEquals((int) p.cast(NativeTypes.INT32).get(), HI[0]);
 
-            p.cast(NativeTypes.BE_INT16).set((short) 0xDEAD);
+            p.cast(NativeTypes.BigEndian.INT16).set((short) 0xDEAD);
             p.cast(NativeTypes.INT16).offset(1).set(isHostLE ? (short) 0xEFBE : (short) 0xBEEF);
-            p.cast(NativeTypes.BE_INT32).offset(1).set(0xCAFEBABE);
-            assertEquals((long) p.cast(NativeTypes.BE_UINT64).get(), 0xDEADBEEFCAFEBABEL);
+            p.cast(NativeTypes.BigEndian.INT32).offset(1).set(0xCAFEBABE);
+            assertEquals((long) p.cast(NativeTypes.BigEndian.UINT64).get(), 0xDEADBEEFCAFEBABEL);
             p.cast(NativeTypes.INT32).set(isHostLE ? 0x12345678 : 0x78563412);
-            p.cast(NativeTypes.BE_UINT16).offset(2).set((short) 0xBABE);
-            p.cast(NativeTypes.LE_UINT16).offset(3).set((short) 0xDEC0);
-            assertEquals((long) p.cast(NativeTypes.BE_INT64).get(), 0x78563412BABEC0DEL);
+            p.cast(NativeTypes.BigEndian.UINT16).offset(2).set((short) 0xBABE);
+            p.cast(NativeTypes.LittleEndian.UINT16).offset(3).set((short) 0xDEC0);
+            assertEquals((long) p.cast(NativeTypes.BigEndian.INT64).get(), 0x78563412BABEC0DEL);
         }
     }
 
@@ -293,7 +248,7 @@ public class EndianTest {
         LayoutType<?> arg1 = isHostLE ?
                 LayoutType.ofStruct(HostNetworkValuesLE.class).pointer() :
                 LayoutType.ofStruct(HostNetworkValuesBE.class).pointer();
-        LayoutType<Long> arg2 = seedArgBE ? NativeTypes.BE_INT64 : NativeTypes.INT64;
+        LayoutType<Long> arg2 = seedArgBE ? NativeTypes.BigEndian.INT64 : NativeTypes.INT64;
 
         NativeMethodType nmt = NativeMethodType.of(NativeTypes.INT64, arg1, arg2);
         return SystemABI.getInstance().downcallHandle(initFn, nmt);
@@ -371,19 +326,10 @@ public class EndianTest {
 
     @Test
     public void verifyLayout() {
-        final String layoutLE = "[[<u16(hs)|<u32(hl)|<u64(hll)]>u16(ns)x16>u32(nl)>u64(nll)]";
-        final String layoutBE = "[[>u16(hs)|>u32(hl)|>u64(hll)]>u16(ns)x16>u32(nl)>u64(nll)]";
-        final String layoutNE = "[[u16(hs)|u32(hl)|u64(hll)]>u16(ns)x16>u32(nl)>u64(nll)]";
+        final String layoutLE = "[[u16(hs)|u32(hl)|u64(hll)]U16(ns)x16U32(nl)U64(nll)]";
+        final String layoutBE = "[[U16(hs)|U32(hl)|U64(hll)]U16(ns)x16U32(nl)U64(nll)]";
 
         assertEquals(LayoutType.ofStruct(HostNetworkValuesBE.class).layout().toString(), layoutBE);
         assertEquals(LayoutType.ofStruct(HostNetworkValuesLE.class).layout().toString(), layoutLE);
-
-        Group NE = (Group) LayoutType.ofStruct(HostNetworkValues.class).layout();
-        Class hnv = isHostLE ? HostNetworkValuesLE.class : HostNetworkValuesBE.class;
-        assertEquals(NE.toString(), layoutNE);
-        assertEquals(NE.withEndianness(Value.Endianness.hostEndian()).toString(),
-                LayoutType.ofStruct(hnv).layout().toString());
-        assertEquals(NE.withEndianness(Value.Endianness.BIG_ENDIAN).toString(), layoutBE);
-        assertEquals(NE.withEndianness(Value.Endianness.LITTLE_ENDIAN).toString(), layoutLE);
     }
 }

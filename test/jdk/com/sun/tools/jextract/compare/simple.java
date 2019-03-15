@@ -40,9 +40,9 @@ import java.foreign.memory.Struct;
  * Current value is based on x64 with __LP64__.
  */
 @NativeHeader(path="simple.h", globals = {
-        "<i32(global)",
+        "i32(global)",
         "${anonymous}(basics)",
-        "<u64(unsigned_int):${_unsigned}" }
+        "u64(unsigned_int)" }
 )
 public interface simple {
     @NativeLocation(file="simple.h", line=26, column=5)
@@ -55,17 +55,17 @@ public interface simple {
 
     @NativeLocation(file="simple.h", line=32, column=8)
     @NativeStruct("[" +
-            "<u8(ch)" +
-            "<i8(sch)" +
-            "<i16(s)" +
-            "<i32(n)" +
-            "<i64(l)" +
-            "<i64(ll)" +
-            "<f32(f)" +
+            "u8(ch)" +
+            "i8(sch)" +
+            "i16(s)" +
+            "i32(n)" +
+            "i64(l)" +
+            "i64(ll)" +
+            "f32(f)" +
             "x32" +
-            "<f64(d)" +
+            "f64(d)" +
             "x64" +
-            "<f128(ld)" +
+            "f128(ld)" +
             "](anonymous)")
     public static interface anonymous extends Struct<anonymous> {
         @NativeLocation(file="simple.h", line=33, column=10)
@@ -151,12 +151,12 @@ public interface simple {
 
     @NativeLocation(file = "simple.h", line = 45, column = 8)
     @NativeStruct("[" +
-            "<u8(b)" +
-            "<u8(ch)" +
-            "<u16(s)" +
-            "<u32(n)" +
-            "<u64(l)" +
-            "<u64(ll)" +
+            "u8(b)" +
+            "u8(ch)" +
+            "u16(s)" +
+            "u32(n)" +
+            "u64(l)" +
+            "u64(ll)" +
             "](_unsigned)")
     public static interface _unsigned extends Struct<_unsigned> {
         @NativeLocation(file="simple.h", line=46, column=11)
@@ -217,6 +217,6 @@ public interface simple {
     public Pointer<Pointer<_unsigned>> unsigned_int$ptr();
 
     @NativeLocation(file = "simple.h", line = 54, column = 6)
-    @NativeFunction("(${anonymous}u64:<u8)v")
+    @NativeFunction("(${anonymous}u64:u8)v")
     public void func(anonymous s, Pointer<Byte> str);
 }

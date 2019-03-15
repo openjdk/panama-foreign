@@ -103,16 +103,16 @@ public class ScopeTest {
         try (Scope scope = Scope.globalScope().fork()) {
             Array<Byte> nar = scope.allocateArray(NativeTypes.INT8, ar);
 
-            Pointer<Integer> pInt = nar.elementPointer().cast(NativeTypes.VOID).cast(NativeTypes.INT);
+            Pointer<Integer> pInt = nar.elementPointer().cast(NativeTypes.VOID).cast(NativeTypes.INT32);
             int limit = ar.length / Integer.BYTES;
             assertEquals(limit, 4);
 
-            Array<Integer> arInt = nar.cast(NativeTypes.VOID).cast(NativeTypes.INT);
+            Array<Integer> arInt = nar.cast(NativeTypes.VOID).cast(NativeTypes.INT32);
             // Cast doesn't recalculate the size :(
             // This can be really bad for upcast like this
             assertEquals(arInt.length(), nar.length());
 
-            arInt = nar.cast(NativeTypes.VOID).cast(NativeTypes.INT, limit);
+            arInt = nar.cast(NativeTypes.VOID).cast(NativeTypes.INT32, limit);
             assertEquals(arInt.length(), limit);
 
             for (int i = 0; i < limit; i++) {
@@ -127,7 +127,7 @@ public class ScopeTest {
         int[] data = new int[] { 0xDEAFBEEF, 0xBABEFACE, 0xBEEFCAFE, 0xDEAFFACE };
 
         try (Scope scope = Scope.globalScope().fork()) {
-            Array<Integer> nar = scope.allocateArray(NativeTypes.INT, data);
+            Array<Integer> nar = scope.allocateArray(NativeTypes.INT32, data);
 
             assertEquals(nar.length(), data.length);
             int byteCounts = Integer.BYTES * data.length;
