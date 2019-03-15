@@ -79,7 +79,7 @@ public class StandardCallTest {
         // Fill registers and spill over with 2 args on stack
         LayoutType<?> args[] = new LayoutType<?>[Constants.MAX_VECTOR_ARGUMENT_REGISTERS + 2];
         for (int i = 0; i < Constants.MAX_VECTOR_ARGUMENT_REGISTERS + 2; i++) {
-            args[i] = NativeTypes.FLOAT;
+            args[i] = NativeTypes.IEEE_FLOAT32;
         }
 
         CallingSequence recipe = sc.arrangeCall(null,
@@ -113,7 +113,7 @@ public class StandardCallTest {
 
         // Fill SSE registers + 2 on stack
         for (int i = 0; i < Constants.MAX_VECTOR_ARGUMENT_REGISTERS + 2; i++) {
-            args.add(NativeTypes.FLOAT);
+            args.add(NativeTypes.IEEE_FLOAT32);
         }
 
         CallingSequence recipe = sc.arrangeCall(null,

@@ -37,34 +37,6 @@ import java.util.Collection;
  * This class models a system application binary interface (ABI).
  */
 public interface SystemABI {
-    /**
-     * This enum represents the set of basic (C) types that should be supported
-     * by the system ABI.
-     */
-    enum CType {
-        Bool,
-        Char,
-        SignedChar,
-        Short,
-        Int,
-        Long,
-        LongLong,
-        UnsignedChar,
-        UnsignedShort,
-        UnsignedInt,
-        UnsignedLong,
-        UnsignedLongLong,
-        Pointer,
-        Float,
-        Double,
-        LongDouble
-    }
-
-    /**
-     * Query the ABI-specific layout of given basic type. Information such as size
-     * and alignment can be obtained by inspecting the result layout (including its layout annotations).
-     */
-    Layout layoutOf(CType type);
 
     /**
      * Obtain a method handle which can be used to call a given native function,

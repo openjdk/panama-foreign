@@ -42,7 +42,7 @@ import java.foreign.memory.Struct;
 public interface recursive {
 
     @NativeLocation(file="recursive.h", line=26, column=8)
-    @NativeStruct("[<u64(p):${Bar}](Foo)")
+    @NativeStruct("[u64(p):${Bar}](Foo)")
     public interface Foo extends Struct<Foo> {
         @NativeLocation(file="recursive.h", line=27, column=17)
         @NativeGetter("p")
@@ -54,7 +54,7 @@ public interface recursive {
     }
 
     @NativeLocation(file = "recursive.h", line=30, column=8)
-    @NativeStruct("[<u64(q):${Foo}](Bar)")
+    @NativeStruct("[u64(q):${Foo}](Bar)")
     public interface Bar extends Struct<Bar> {
         @NativeLocation(file="recursive.h", line=31, column=17)
         @NativeGetter("q")

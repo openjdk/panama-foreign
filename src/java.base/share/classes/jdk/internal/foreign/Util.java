@@ -249,14 +249,14 @@ public final class Util {
         } else if (carrier == double.class) {
             return LayoutType.ofDouble(layout);
         } else if (carrier == Pointer.class) {
-            return NativeTypes.VOID.pointer();
+            return NativeTypes.VOID.pointer((Address)layout);
         } else if (Pointer.class.isAssignableFrom(erasure(carrier))) {
             Type targ = extractTypeArgument(carrier);
             Address addr = (Address)layout;
             if (targ == null || addr.layout().isEmpty()) {
-                return NativeTypes.VOID.pointer();
+                return NativeTypes.VOID.pointer(addr);
             } else {
-                return makeType(targ, addr.layout().get()).pointer();
+                return makeType(targ, addr.layout().get()).pointer(addr);
             }
         } else if (Array.class.isAssignableFrom(erasure(carrier))) {
             Type targ = extractTypeArgument(carrier);
@@ -447,8 +447,8 @@ public final class Util {
 
     public static Layout requireNoEndianLayout(Layout layout) {
         if (layout instanceof Value) {
-            if (((Value) layout).endianness().isPresent()) {
-                throw new IllegalArgumentException("Method argument is not allowed to have endianness");
+            if (!((Value)layout).isNativeByteOrder()) {
+                throw new IllegalArgumentException("Non-platform endianess not allowed in method argument/return value");
             }
         }
         return layout;

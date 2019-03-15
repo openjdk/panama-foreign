@@ -27,6 +27,7 @@ package jdk.internal.foreign.memory;
 
 import jdk.internal.foreign.abi.SystemABI;
 
+import java.foreign.NativeTypes;
 import java.foreign.memory.Callback;
 import java.lang.invoke.MethodHandle;
 import java.foreign.layout.Address;
@@ -38,6 +39,8 @@ import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.util.Objects;
 
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 import jdk.internal.foreign.memory.References.Reference;
 
 public class LayoutTypeImpl<X> implements LayoutType<X> {
@@ -48,7 +51,22 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
     private final Reference reference;
     private final Layout layout;
 
-    private static long PTR_SIZE = SystemABI.getInstance().layoutOf(SystemABI.CType.Pointer).bitsSize();
+    private static long PTR_SIZE = -1;
+
+    //lazy init because of cyclic dependency from NativeTypes
+    static long pointerSize() {
+        if (PTR_SIZE == -1) {
+            SystemABI abi = SystemABI.getInstance();
+            if (abi instanceof SysVx64ABI) {
+                PTR_SIZE = NativeTypes.LittleEndian.SysVABI.POINTER.bytesSize() * 8;
+            } else if (abi instanceof Windowsx64ABI) {
+                PTR_SIZE = NativeTypes.LittleEndian.WinABI.POINTER.bytesSize() * 8;
+            } else {
+                throw new UnsupportedOperationException("Unsupported ABI");
+            }
+        }
+        return PTR_SIZE;
+    }
 
     LayoutTypeImpl(Class<?> carrier, Layout layout, Reference reference) {
         this.carrier = carrier;
@@ -122,9 +140,16 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public LayoutType<Pointer<X>> pointer() {
-        return new LayoutTypeImpl<>((Class)Pointer.class, Address.ofLayout(PTR_SIZE, layout), References.ofPointer) {
+        return pointer(Value.ofUnsignedInt(Value.Endianness.hostEndian(), pointerSize()));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public LayoutType<Pointer<X>> pointer(Value addr) {
+        return new LayoutTypeImpl<>((Class)Pointer.class,
+                Address.ofLayout(addr.bitsSize(), layout, addr.kind(), addr.endianness()),
+                References.ofPointer) {
             @Override
             public LayoutType<?> pointeeType() {
                 return LayoutTypeImpl.this;

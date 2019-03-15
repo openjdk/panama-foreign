@@ -53,17 +53,17 @@ public interface simple {
 
     @NativeLocation(file="simple.h", line=32, column=8)
     @NativeStruct("[" +
-            "<u8(ch)" +
-            "<i8(sch)" +
-            "<i16(s)" +
-            "<i32(n)" +
-            "<i32(l)" +  // platform dependent
+            "u8(ch)" +
+            "i8(sch)" +
+            "i16(s)" +
+            "i32(n)" +
+            "i32(l)" +  // platform dependent
             "x32" +
-            "<i64(ll)" +
-            "<f32(f)" +
+            "i64(ll)" +
+            "f32(f)" +
             "x32" +
-            "<f64(d)" +
-            "<f64(ld)" +  // platform dependent
+            "f64(d)" +
+            "f64(ld)" +  // platform dependent
             "](anonymous)")
     public static interface anonymous extends Struct<anonymous> {
         @NativeLocation(file="simple.h", line=33, column=10)
@@ -149,13 +149,13 @@ public interface simple {
 
     @NativeLocation(file = "simple.h", line = 45, column = 8)
     @NativeStruct("[" +
-            "<u8(b)" +
-            "<u8(ch)" +
-            "<u16(s)" +
-            "<u32(n)" +
-            "<u32(l)" +  // platform dependent
+            "u8(b)" +
+            "u8(ch)" +
+            "u16(s)" +
+            "u32(n)" +
+            "u32(l)" +  // platform dependent
             "x32" +
-            "<u64(ll)" +
+            "u64(ll)" +
             "](_unsigned)")
     public static interface _unsigned extends Struct<_unsigned> {
         @NativeLocation(file="simple.h", line=46, column=11)
@@ -216,6 +216,6 @@ public interface simple {
     public Pointer<Pointer<_unsigned>> unsigned_int$ptr();
 
     @NativeLocation(file = "simple.h", line = 54, column = 6)
-    @NativeFunction("(${anonymous}u64:<u8)v")
+    @NativeFunction("(${anonymous}u64:u8)v")
     public void func(anonymous s, Pointer<Byte> str);
 }

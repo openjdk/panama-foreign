@@ -81,41 +81,6 @@ public class Windowsx64ABI implements SystemABI {
     }
 
     @Override
-    public Layout layoutOf(CType type) {
-        switch (type) {
-            case Char:
-            case SignedChar:
-                return Value.ofSignedInt(8);
-            case Bool:
-            case UnsignedChar:
-                return Value.ofUnsignedInt(8);
-            case Short:
-                return Value.ofSignedInt(16);
-            case UnsignedShort:
-                return Value.ofUnsignedInt(16);
-            case Long:
-            case Int:
-                return Value.ofSignedInt(32);
-            case UnsignedInt:
-            case UnsignedLong:
-                return Value.ofUnsignedInt(32);
-            case LongLong:
-                return Value.ofSignedInt(64);
-            case Pointer:
-            case UnsignedLongLong:
-                return Value.ofUnsignedInt(64);
-            case Float:
-                return Value.ofFloatingPoint(32);
-            case Double:
-            case LongDouble:
-                return Value.ofFloatingPoint(64);
-            default:
-                throw new IllegalArgumentException("Unknown layout " + type);
-
-        }
-    }
-
-    @Override
     public MethodHandle downcallHandle(CallingConvention cc, Library.Symbol symbol, NativeMethodType nmt) {
         Util.checkNoArrays(nmt.methodType());
         if (nmt.isVarArgs()) {
