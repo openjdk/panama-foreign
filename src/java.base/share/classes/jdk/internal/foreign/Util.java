@@ -66,16 +66,11 @@ public final class Util {
 
     public static final long BYTE_BUFFER_BASE;
     public static final long BUFFER_ADDRESS;
-    public static final long LONG_ARRAY_BASE;
-    public static final long LONG_ARRAY_SCALE;
 
     static {
         try {
             BYTE_BUFFER_BASE = UNSAFE.objectFieldOffset(ByteBuffer.class.getDeclaredField("hb"));
             BUFFER_ADDRESS = UNSAFE.objectFieldOffset(Buffer.class.getDeclaredField("address"));
-
-            LONG_ARRAY_BASE = UNSAFE.arrayBaseOffset(long[].class);
-            LONG_ARRAY_SCALE = UNSAFE.arrayIndexScale(long[].class);
         }
         catch (Exception e) {
             throw new InternalError(e);
@@ -457,5 +452,27 @@ public final class Util {
             }
         }
         return layout;
+    }
+
+    public static long unsafeArrayBase(Class<?> arrayClass) {
+        return UNSAFE.arrayBaseOffset(arrayClass);
+    }
+
+    public static long unsafeArrayScale(Class<?> arrayClass) {
+        return UNSAFE.arrayIndexScale(arrayClass);
+    }
+
+    public static int sizeof(Class<?> carrier) {
+        if (carrier == byte.class || carrier == boolean.class) {
+            return 8;
+        } else if (carrier == char.class || carrier == short.class) {
+            return 16;
+        } else if (carrier == int.class || carrier == float.class) {
+            return 32;
+        } else if (carrier == long.class || carrier == double.class) {
+            return 64;
+        } else {
+            throw new IllegalStateException("Unexpected carrier: " + carrier.getName());
+        }
     }
 }
