@@ -242,9 +242,12 @@ public class BoundedPointer<X> implements Pointer<X> {
                 MemoryBoundInfo.EVERYTHING, offset);
     }
 
-    public static <Z> BoundedPointer<Z> fromLongArray(LayoutType<Z> type, long[] values) {
+    public static <Z> BoundedPointer<Z> fromArray(LayoutType<Z> type, Object array) {
+        int size = java.lang.reflect.Array.getLength(array);
+        long base = Util.unsafeArrayBase(array.getClass());
+        long scale = Util.unsafeArrayScale(array.getClass());
         return new BoundedPointer<>(type, ScopeImpl.UNCHECKED, AccessMode.READ_WRITE,
-                        MemoryBoundInfo.ofHeap(values, Util.LONG_ARRAY_BASE, values.length * Util.LONG_ARRAY_SCALE));
+                        MemoryBoundInfo.ofHeap(array, base, size * scale));
     }
 
     public Scope scope() {

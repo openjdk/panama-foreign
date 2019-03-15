@@ -85,7 +85,7 @@ public abstract class UniversalNativeInvoker {
         int nValues = shuffleRecipe.getNoofArgumentPulls();
         long[] values = new long[nValues];
         Pointer<Long> argsPtr = nValues > 0 ?
-                BoundedPointer.fromLongArray(NativeTypes.UINT64, values) :
+                BoundedPointer.fromArray(NativeTypes.UINT64, values) :
                 Pointer.ofNull();
 
         for (int i = 0; i < args.length; i++) {
@@ -104,7 +104,7 @@ public abstract class UniversalNativeInvoker {
             unboxValue(retPtr, NativeTypes.UINT64.pointer(), b -> argsPtr.offset(callingSequence.argumentStorageOffset(b)),
                     callingSequence.getReturnBindings());
         } else if (!isVoid && returnValues.length != 0) {
-            retPtr = BoundedPointer.fromLongArray(NativeTypes.UINT64, returnValues);
+            retPtr = BoundedPointer.fromArray(NativeTypes.UINT64, returnValues);
         } else {
             retPtr = Pointer.ofNull();
         }

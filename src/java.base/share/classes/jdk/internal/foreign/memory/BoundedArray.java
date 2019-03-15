@@ -64,27 +64,48 @@ public class BoundedArray<X> implements Array<X> {
     }
 
     public static void copyFrom(Array<?> nativeArray, Object javaArray, int size) {
-        MethodHandle getter = MethodHandles.arrayElementGetter(javaArray.getClass());
-        MethodHandle copier = MethodHandles.collectArguments(nativeArray.elementType().setter(), 1, getter);
-        for (int i = 0 ; i < size ; i++) {
-            try {
-                copier.invoke(nativeArray.elementPointer().offset(i), javaArray, i);
-            } catch (Throwable ex) {
-                throw new IllegalArgumentException(ex);
+        LayoutType<?> elemType = nativeArray.elementType();
+        Class<?> elemCarrier = javaArray.getClass().getComponentType();
+        if (elemCarrier.isPrimitive() &&
+                elemType.carrier() == elemCarrier &&
+                elemType.layout().bitsSize() == Util.sizeof(elemCarrier)) {
+            //fast path - bulk copy
+            Pointer.copy(BoundedPointer.fromArray(nativeArray.elementType().array(size), javaArray),
+                    ((BoundedArray<?>)nativeArray).ptr());
+        } else {
+            //slow path - element-wise copy
+            MethodHandle getter = MethodHandles.arrayElementGetter(javaArray.getClass());
+            MethodHandle copier = MethodHandles.collectArguments(nativeArray.elementType().setter(), 1, getter);
+            for (int i = 0 ; i < size ; i++) {
+                try {
+                    copier.invoke(nativeArray.elementPointer().offset(i), javaArray, i);
+                } catch (Throwable ex) {
+                    throw new IllegalArgumentException(ex);
+                }
             }
         }
     }
 
     public static void copyTo(Array<?> nativeArray, Object javaArray, int size) {
-        MethodHandle setter = MethodHandles.arrayElementSetter(javaArray.getClass());
-        MethodHandle copier = MethodHandles.filterArguments(setter, 2, nativeArray.elementType().getter());
-        for (int i = 0 ; i < size ; i++) {
-            try {
-                copier.invoke(javaArray, i, nativeArray.elementPointer().offset(i));
-            } catch (Throwable ex) {
-                throw new IllegalArgumentException(ex);
+        LayoutType<?> elemType = nativeArray.elementType();
+        Class<?> elemCarrier = javaArray.getClass().getComponentType();
+        if (elemCarrier.isPrimitive() &&
+                elemType.carrier() == elemCarrier &&
+                elemType.layout().bitsSize() == Util.sizeof(elemCarrier)) {
+            //fast path - bulk copy
+            Pointer.copy(((BoundedArray<?>)nativeArray).ptr(),
+                BoundedPointer.fromArray(nativeArray.elementType().array(size), javaArray));
+        } else {
+            //slow path - element-wise copy
+            MethodHandle setter = MethodHandles.arrayElementSetter(javaArray.getClass());
+            MethodHandle copier = MethodHandles.filterArguments(setter, 2, nativeArray.elementType().getter());
+            for (int i = 0 ; i < size ; i++) {
+                try {
+                    copier.invoke(javaArray, i, nativeArray.elementPointer().offset(i));
+                } catch (Throwable ex) {
+                    throw new IllegalArgumentException(ex);
+                }
             }
         }
     }
-
 }
