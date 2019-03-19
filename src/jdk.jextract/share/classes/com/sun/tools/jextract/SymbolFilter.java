@@ -24,11 +24,12 @@
 package com.sun.tools.jextract;
 
 import com.sun.tools.jextract.tree.FunctionTree;
+import com.sun.tools.jextract.tree.MacroTree;
 import com.sun.tools.jextract.tree.Tree;
+import com.sun.tools.jextract.tree.VarTree;
 
 import java.foreign.Libraries;
 import java.foreign.Library;
-import java.io.PrintWriter;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,123 +37,35 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
+/**
+ * Filters functions, global variable and macros based on whether
+ * 1. they appear in a root header,
+ * 2. they pass the symbol filter patterns.
+ */
 public class SymbolFilter extends TreeFilter {
-    private Predicate<String> symChecker;
-    private Predicate<String> includeSymFilter;
-    private Predicate<String> excludeSymFilter;
-    private final Log log;
-    private final List<String> libraryNames;
-    private final MissingSymbolAction missingSymbolAction;
+    private final Filters filters;
 
     public SymbolFilter(Context ctx) {
-        this.log = ctx.log;
-        this.libraryNames = ctx.options.libraryNames;
-        this.missingSymbolAction = ctx.options.missingSymbolAction;
-        initSymFilters(ctx.options.includeSymbols, ctx.options.excludeSymbols);
-        initSymChecker(ctx.options.libraryPaths);
+        this.filters = ctx.filters;
     }
 
-    /*
-     * Load the specified shared libraries from the specified paths.
-     *
-     * @param lookup Lookup object of the caller.
-     * @param pathStrs array of paths to load the shared libraries from.
-     * @param names array of shared library names.
-     */
-    // used by jextract tool to load libraries for symbol checks.
-    public static Library[] loadLibraries(MethodHandles.Lookup lookup, String[] pathStrs, String[] names) {
-        if (pathStrs == null || pathStrs.length == 0) {
-            return Arrays.stream(names).map(
-                    name -> Libraries.loadLibrary(lookup, name)).toArray(Library[]::new);
-        } else {
-            Path[] paths = Arrays.stream(pathStrs).map(Paths::get).toArray(Path[]::new);
-            return Arrays.stream(names).map(libName -> {
-                Optional<Path> absPath = Utils.findLibraryPath(paths, libName);
-                return absPath.isPresent() ?
-                        Libraries.load(lookup, absPath.get().toString()) :
-                        Libraries.loadLibrary(lookup, libName);
-            }).toArray(Library[]::new);
-        }
-    }
-
-    private void initSymChecker(List<String> linkCheckPaths) {
-        if (!libraryNames.isEmpty() && !linkCheckPaths.isEmpty()) {
-            try {
-                Library[] libs = loadLibraries(MethodHandles.lookup(),
-                        linkCheckPaths.toArray(new String[0]),
-                        libraryNames.toArray(new String[0]));
-                // check if the given symbol is found in any of the libraries or not.
-                // If not found, warn the user for the missing symbol.
-                symChecker = name -> {
-                    log.printNote("note.searching.symbol", name);
-                    return (Arrays.stream(libs).anyMatch(lib -> {
-                        try {
-                            lib.lookup(name);
-                            log.printNote("note.symbol.found", name);
-                            return true;
-                        } catch (NoSuchMethodException nsme) {
-                            return false;
-                        }
-                    }));
-                };
-            } catch (UnsatisfiedLinkError ex) {
-                log.printWarning("warn.lib.not.found");
-                symChecker = null;
-            }
-        } else {
-            symChecker = null;
-        }
-    }
-
-    private boolean isSymbolFound(String name) {
-        return symChecker == null || symChecker.test(name);
-    }
-
-    private void initSymFilters(List<Pattern> includeSymbols, List<Pattern> excludeSymbols) {
-        if (!includeSymbols.isEmpty()) {
-            Pattern[] pats = includeSymbols.toArray(new Pattern[0]);
-            includeSymFilter = name ->
-                Arrays.stream(pats).anyMatch(pat -> pat.matcher(name).matches());
-        } else {
-            includeSymFilter = null;
-        }
-
-        if (!excludeSymbols.isEmpty()) {
-            Pattern[] pats = excludeSymbols.toArray(new Pattern[0]);
-            excludeSymFilter = name ->
-                Arrays.stream(pats).anyMatch(pat -> pat.matcher(name).matches());
-        } else {
-            excludeSymFilter = null;
-        }
-    }
-
-    private boolean isSymbolIncluded(String name) {
-        return includeSymFilter == null || includeSymFilter.test(name);
-    }
-
-    private boolean isSymbolExcluded(String name) {
-        return excludeSymFilter != null && excludeSymFilter.test(name);
-    }
-
-
-    @Override
-    boolean filter(Tree tree) {
-        String name = tree.name();
-        return isSymbolIncluded(name) && !isSymbolExcluded(name);
+    private boolean filter(Tree tree) {
+        return filters.isInRootHeader(tree) && filters.filterSymbol(tree);
     }
 
     @Override
-    public Tree visitFunction(FunctionTree ft, Void v) {
-        String name = ft.name();
-        if (missingSymbolAction != MissingSymbolAction.IGNORE) {
-            // check for function symbols in libraries & apply action for missing symbols
-            if (!isSymbolFound(name) && missingSymbolAction.handle(log, name)) {
-                return null;
-            }
-        }
+    public Boolean visitVar(VarTree vt, Void v) {
+        return filter(vt);
+    }
 
-        return super.visitFunction(ft, null);
+    @Override
+    public Boolean visitFunction(FunctionTree ft, Void v) {
+        return filter(ft);
+    }
+
+    @Override
+    public Boolean visitMacro(MacroTree mt, Void v) {
+        return filter(mt);
     }
 }

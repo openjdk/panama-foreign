@@ -104,7 +104,7 @@ public class Tree {
 
     @Override
     public final int hashCode() {
-        return name.hashCode() ^ location().hashCode();
+        return Objects.hash(name, location());
     }
 
     @Override
