@@ -600,16 +600,6 @@ public class LongScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public long subAll() {
-        long[] as = fa.apply(size);
-        long r = 0;
-        for (int i = 0; i < as.length; i++) {
-            r -= as[i];
-        }
-        return r;
-    }
-
-    @Benchmark
     public long mulAll() {
         long[] as = fa.apply(size);
         long r = 1;

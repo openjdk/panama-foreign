@@ -285,16 +285,6 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public double subAll() {
-        double[] as = fa.apply(size);
-        double r = 0;
-        for (int i = 0; i < as.length; i++) {
-            r -= as[i];
-        }
-        return r;
-    }
-
-    @Benchmark
     public double mulAll() {
         double[] as = fa.apply(size);
         double r = 1;

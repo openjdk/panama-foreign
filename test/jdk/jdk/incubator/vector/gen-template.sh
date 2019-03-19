@@ -279,7 +279,6 @@ gen_reduction_op "andAll" "\&" $unit_output $perf_output $perf_scalar_output "BI
 gen_reduction_op "orAll" "|" $unit_output $perf_output $perf_scalar_output "BITWISE" "0"
 gen_reduction_op "xorAll" "^" $unit_output $perf_output $perf_scalar_output "BITWISE" "0"
 gen_reduction_op "addAll" "+" $unit_output $perf_output $perf_scalar_output "" "0"
-gen_reduction_op "subAll" "-" $unit_output $perf_output $perf_scalar_output "" "0"
 gen_reduction_op "mulAll" "*" $unit_output $perf_output $perf_scalar_output "" "1"
 gen_reduction_op_min "minAll" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.MAX_VALUE"
 gen_reduction_op_max "maxAll" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.MIN_VALUE"

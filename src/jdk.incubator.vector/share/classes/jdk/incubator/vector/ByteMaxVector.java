@@ -761,15 +761,6 @@ final class ByteMaxVector extends ByteVector {
 
     @Override
     @ForceInline
-    public byte subAll() {
-        return (byte) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_SUB, ByteMaxVector.class, byte.class, LENGTH,
-            this,
-            v -> (long) v.rOp((byte) 0, (i, a, b) -> (byte) (a - b)));
-    }
-
-    @Override
-    @ForceInline
     public byte orAll() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_OR, ByteMaxVector.class, byte.class, LENGTH,
@@ -803,12 +794,6 @@ final class ByteMaxVector extends ByteVector {
     @ForceInline
     public byte addAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 0), m).addAll();
-    }
-
-    @Override
-    @ForceInline
-    public byte subAll(Mask<Byte> m) {
-        return blend(SPECIES.broadcast((byte) 0), m).subAll();
     }
 
     @Override

@@ -285,16 +285,6 @@ public class FloatScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public float subAll() {
-        float[] as = fa.apply(size);
-        float r = 0;
-        for (int i = 0; i < as.length; i++) {
-            r -= as[i];
-        }
-        return r;
-    }
-
-    @Benchmark
     public float mulAll() {
         float[] as = fa.apply(size);
         float r = 1;

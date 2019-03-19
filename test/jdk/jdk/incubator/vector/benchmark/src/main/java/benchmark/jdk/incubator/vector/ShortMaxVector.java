@@ -587,31 +587,6 @@ public class ShortMaxVector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void subAll(Blackhole bh) {
-        short[] a = fa.apply(SPECIES.length());
-        short[] r = fr.apply(SPECIES.length());
-        short ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                r[i] = av.subAll();
-            }
-        }
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra -= av.subAll();
-            }
-        }
-
-        bh.consume(ra);
-        bh.consume(r);
-    }
-
-    @Benchmark
     public void mulAll(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());

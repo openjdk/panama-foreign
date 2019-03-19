@@ -600,16 +600,6 @@ public class IntScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public int subAll() {
-        int[] as = fa.apply(size);
-        int r = 0;
-        for (int i = 0; i < as.length; i++) {
-            r -= as[i];
-        }
-        return r;
-    }
-
-    @Benchmark
     public int mulAll() {
         int[] as = fa.apply(size);
         int r = 1;

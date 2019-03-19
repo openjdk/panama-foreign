@@ -325,31 +325,6 @@ public class Double512Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void subAll(Blackhole bh) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] r = fr.apply(SPECIES.length());
-        double ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                r[i] = av.subAll();
-            }
-        }
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                ra -= av.subAll();
-            }
-        }
-
-        bh.consume(ra);
-        bh.consume(r);
-    }
-
-    @Benchmark
     public void mulAll(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());

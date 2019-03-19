@@ -89,16 +89,6 @@ do
     mv temp $abstractvectortype.java
   fi
 
-  rm -f ${abstractvectortype}Helper.java
-  java $SPP -nel $args \
-     -iX-VectorHelper.java.template \
-     -o${abstractvectortype}Helper.java
-
-  if [[ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]]; then
-    tr -d '\r' < ${abstractvectortype}Helper.java > temp
-    mv temp ${abstractvectortype}Helper.java
-  fi
-
   old_args="$args"
   for bits in 64 128 256 512 Max
   do

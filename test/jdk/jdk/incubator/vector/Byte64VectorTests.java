@@ -1026,50 +1026,6 @@ public class Byte64VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, ra, Byte64VectorTests::addAll, Byte64VectorTests::addAll);
     }
-    static byte subAll(byte[] a, int idx) {
-        byte res = 0;
-        for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res -= a[i];
-        }
-
-        return res;
-    }
-
-    static byte subAll(byte[] a) {
-        byte res = 0;
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            byte tmp = 0;
-            for (int j = 0; j < SPECIES.length(); j++) {
-                tmp -= a[i + j];
-            }
-            res -= tmp;
-        }
-
-        return res;
-    }
-    @Test(dataProvider = "byteUnaryOpProvider")
-    static void subAllByte64VectorTests(IntFunction<byte[]> fa) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] r = fr.apply(SPECIES.length());
-        byte ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
-                r[i] = av.subAll();
-            }
-        }
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
-                ra -= av.subAll();
-            }
-        }
-
-        assertReductionArraysEquals(a, r, ra, Byte64VectorTests::subAll, Byte64VectorTests::subAll);
-    }
     static byte mulAll(byte[] a, int idx) {
         byte res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

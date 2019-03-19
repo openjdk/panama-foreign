@@ -1194,15 +1194,6 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ subAll() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_SUB, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a - b)));
-    }
-
-    @Override
-    @ForceInline
     public $type$ orAll() {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_OR, $vectortype$.class, $type$.class, LENGTH,
@@ -1241,19 +1232,6 @@ final class $vectortype$ extends $abstractvectortype$ {
                                 this,
                                 v -> {
                                     $type$ r = v.rOp(($type$) 0, (i, a, b) -> ($type$) (a + b));
-                                    return (long)$Type$.$type$To$Bitstype$Bits(r);
-                                });
-        return $Type$.$bitstype$BitsTo$Fptype$(bits);
-    }
-
-    @Override
-    @ForceInline
-    public $type$ subAll() {
-        $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
-                                VECTOR_OP_SUB, $vectortype$.class, $type$.class, LENGTH,
-                                this,
-                                v -> {
-                                    $type$ r = v.rOp(($type$) 0, (i, a, b) -> ($type$) (a - b));
                                     return (long)$Type$.$type$To$Bitstype$Bits(r);
                                 });
         return $Type$.$bitstype$BitsTo$Fptype$(bits);
@@ -1304,12 +1282,6 @@ final class $vectortype$ extends $abstractvectortype$ {
     @ForceInline
     public $type$ addAll(Mask<$Boxtype$> m) {
         return blend(SPECIES.broadcast(($type$) 0), m).addAll();
-    }
-
-    @Override
-    @ForceInline
-    public $type$ subAll(Mask<$Boxtype$> m) {
-        return blend(SPECIES.broadcast(($type$) 0), m).subAll();
     }
 
     @Override
