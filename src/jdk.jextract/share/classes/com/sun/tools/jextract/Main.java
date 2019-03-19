@@ -36,7 +36,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.spi.ToolProvider;
 
@@ -121,22 +123,6 @@ public final class Main {
         }
         builder.setGenStaticForwarder(staticForwarder && options.has("l"));
 
-        if (options.has("include-symbols")) {
-            try {
-                options.valuesOf("include-symbols").forEach(sym -> builder.addIncludeSymbols((String) sym));
-            } catch (PatternSyntaxException pse) {
-                throw new FatalError(OPTION_ERROR, Log.format("include.symbols.pattern.error", pse.getMessage()));
-            }
-        }
-
-        if (options.has("exclude-symbols")) {
-            try {
-                options.valuesOf("exclude-symbols").forEach(sym -> builder.addExcludeSymbols((String) sym));
-            } catch (PatternSyntaxException pse) {
-                throw new FatalError(OPTION_ERROR, Log.format("exclude.symbols.pattern.error", pse.getMessage()));
-            }
-        }
-
         boolean recordLibraryPath = options.has("record-library-path");
         if (recordLibraryPath) {
             // "record-library-path" with no "l"
@@ -202,6 +188,26 @@ public final class Main {
         return builder.build();
     }
 
+    private void tryAddPatterns(OptionSet options, String command, Consumer<String> adder) {
+        try {
+            options.valuesOf(command).forEach(sym -> adder.accept((String) sym));
+        } catch (PatternSyntaxException pse) {
+            throw new FatalError(OPTION_ERROR, Log.format("pattern.error", command, pse.getMessage()));
+        }
+    }
+
+    private Filters createFilters(OptionSet options) {
+        PatternFilter.Builder headers = PatternFilter.builder();
+        tryAddPatterns(options, "include-headers", headers::addInclude);
+        tryAddPatterns(options, "exclude-headers", headers::addExclude);
+
+        PatternFilter.Builder symbols = PatternFilter.builder();
+        tryAddPatterns(options, "include-symbols", symbols::addInclude);
+        tryAddPatterns(options, "exclude-symbols", symbols::addExclude);
+
+        return new Filters(headers.build(), symbols.build());
+    }
+
     private int run(String[] args) {
         try {
             runInternal(args);
@@ -223,8 +229,10 @@ public final class Main {
         parser.acceptsAll(List.of("L", "library-path"), Log.format("help.L")).withRequiredArg();
         parser.accepts("d", Log.format("help.d")).withRequiredArg();
         parser.accepts("dry-run", Log.format("help.dry_run"));
-        parser.accepts("exclude-symbols", Log.format("help.exclude_symbols")).withRequiredArg();
-        parser.accepts("include-symbols", Log.format("help.include_symbols")).withRequiredArg();
+        parser.accepts("exclude-symbols", Log.format("help.exclude", "symbols")).withRequiredArg();
+        parser.accepts("include-symbols", Log.format("help.include", "symbols")).withRequiredArg();
+        parser.accepts("exclude-headers", Log.format("help.exclude", "headers")).withRequiredArg();
+        parser.accepts("include-headers", Log.format("help.include", "headers")).withRequiredArg();
         // option is expected to specify paths to load shared libraries
         parser.accepts("l", Log.format("help.l")).withRequiredArg();
         parser.accepts("log", Log.format("help.log")).withRequiredArg();
@@ -277,7 +285,9 @@ public final class Main {
         }
         sources = Collections.unmodifiableList(sources);
 
-        Context ctx = new Context(sources, options, log);
+        Filters filters = createFilters(optionSet);
+
+        Context ctx = new Context(sources, options, log, filters);
 
         Writer writer;
         try {

@@ -247,7 +247,9 @@ class JextractToolRunner {
             try {
                 return Class.forName(className, false, loader);
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
+                // return null so caller can check if class loading
+                // was successful with assertNotNull/assertNull
+                return null;
             }
         }
 

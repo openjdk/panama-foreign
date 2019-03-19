@@ -28,13 +28,10 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import com.sun.tools.jextract.parser.Parser;
-import com.sun.tools.jextract.tree.FunctionTree;
 import com.sun.tools.jextract.tree.HeaderTree;
-import com.sun.tools.jextract.tree.MacroTree;
 import com.sun.tools.jextract.tree.SimpleTreeVisitor;
 import com.sun.tools.jextract.tree.Tree;
 import com.sun.tools.jextract.tree.TreePhase;
-import com.sun.tools.jextract.tree.VarTree;
 import com.sun.tools.jextract.tree.TreeMaker;
 import com.sun.tools.jextract.tree.TreePrinter;
 
@@ -42,49 +39,26 @@ import com.sun.tools.jextract.tree.TreePrinter;
  * This visitor filters variable, function, macro trees
  * based on a Tree Predicate initialized.
  */
-abstract class TreeFilter extends SimpleTreeVisitor<Tree, Void>
+abstract class TreeFilter extends SimpleTreeVisitor<Boolean, Void>
         implements TreePhase {
     private final TreeMaker treeMaker = new TreeMaker();
 
-    private Tree filterTree(Tree tree) {
-        return filter(tree)? tree : null;
-    }
-
     @Override
     public HeaderTree transform(HeaderTree ht) {
-        return (HeaderTree)ht.accept(this, null);
-    }
-
-    @Override
-    public Tree defaultAction(Tree tree, Void v) {
-        return tree;
-    }
-
-    @Override
-    public Tree visitFunction(FunctionTree ft, Void v) {
-        return filterTree(ft);
-    }
-
-    @Override
-    public Tree visitMacro(MacroTree mt, Void v) {
-        return filterTree(mt);
-    }
-
-    @Override
-    public Tree visitHeader(HeaderTree ht, Void v) {
-        List<Tree> decls =  ht.declarations().stream().
-            map(decl -> decl.accept(this, null)).
-            filter(decl -> decl != null).
-            collect(Collectors.toList());
+        List<Tree> decls =  ht.declarations().stream()
+                .filter(decl -> decl.accept(this, null))
+                .collect(Collectors.toList());
         return treeMaker.createHeader(ht.cursor(), ht.path(), decls);
     }
 
     @Override
-    public Tree visitVar(VarTree vt, Void v) {
-        return filterTree(vt);
+    protected Boolean defaultAction(Tree t, Void v) {
+        return defaultFilter(t);
     }
 
-    abstract boolean filter(Tree tree);
+    boolean defaultFilter(Tree tree) {
+        return true;
+    }
 
     // test main to manually check this visitor
     // Usage: <header-file> [<regex-for-symbols-to-include>]
@@ -103,7 +77,7 @@ abstract class TreeFilter extends SimpleTreeVisitor<Tree, Void>
         Predicate<Tree> nameFilter =  args.length > 1? t->t.name().matches(args[1]) : t->true;
         TreeFilter filter = new TreeFilter() {
             @Override
-            boolean filter(Tree tree) {
+            boolean defaultFilter(Tree tree) {
                 return nameFilter.test(tree);
             }
         };

@@ -34,18 +34,21 @@ public final class Context {
 
     public final Options options;
     public final Log log;
+    public final Filters filters;
 
-    public Context(List<Path> sources, Options options, Log log) {
+    public Context(List<Path> sources, Options options, Log log, Filters filters) {
         this.sources = sources;
         this.options = options;
         this.log = log;
+        this.filters = filters;
     }
 
     public static Context createDefault() {
         return new Context(
                 List.of(),
                 Options.createDefault(),
-                Log.createDefault()
+                Log.createDefault(),
+                Filters.createDefault()
         );
     }
 
