@@ -762,15 +762,6 @@ final class Short256Vector extends ShortVector {
 
     @Override
     @ForceInline
-    public short subAll() {
-        return (short) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_SUB, Short256Vector.class, short.class, LENGTH,
-            this,
-            v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a - b)));
-    }
-
-    @Override
-    @ForceInline
     public short orAll() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_OR, Short256Vector.class, short.class, LENGTH,
@@ -804,12 +795,6 @@ final class Short256Vector extends ShortVector {
     @ForceInline
     public short addAll(Mask<Short> m) {
         return blend(SPECIES.broadcast((short) 0), m).addAll();
-    }
-
-    @Override
-    @ForceInline
-    public short subAll(Mask<Short> m) {
-        return blend(SPECIES.broadcast((short) 0), m).subAll();
     }
 
     @Override

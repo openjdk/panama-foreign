@@ -325,31 +325,6 @@ public class Float128Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void subAll(Blackhole bh) {
-        float[] a = fa.apply(SPECIES.length());
-        float[] r = fr.apply(SPECIES.length());
-        float ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.subAll();
-            }
-        }
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra -= av.subAll();
-            }
-        }
-
-        bh.consume(ra);
-        bh.consume(r);
-    }
-
-    @Benchmark
     public void mulAll(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());

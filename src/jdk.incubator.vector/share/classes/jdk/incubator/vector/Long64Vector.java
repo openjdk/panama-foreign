@@ -803,15 +803,6 @@ final class Long64Vector extends LongVector {
 
     @Override
     @ForceInline
-    public long subAll() {
-        return (long) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_SUB, Long64Vector.class, long.class, LENGTH,
-            this,
-            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a - b)));
-    }
-
-    @Override
-    @ForceInline
     public long orAll() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_OR, Long64Vector.class, long.class, LENGTH,
@@ -845,12 +836,6 @@ final class Long64Vector extends LongVector {
     @ForceInline
     public long addAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 0), m).addAll();
-    }
-
-    @Override
-    @ForceInline
-    public long subAll(Mask<Long> m) {
-        return blend(SPECIES.broadcast((long) 0), m).subAll();
     }
 
     @Override

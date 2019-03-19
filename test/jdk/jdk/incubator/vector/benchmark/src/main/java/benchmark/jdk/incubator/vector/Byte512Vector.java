@@ -587,31 +587,6 @@ public class Byte512Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void subAll(Blackhole bh) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] r = fr.apply(SPECIES.length());
-        byte ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
-                r[i] = av.subAll();
-            }
-        }
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
-                ra -= av.subAll();
-            }
-        }
-
-        bh.consume(ra);
-        bh.consume(r);
-    }
-
-    @Benchmark
     public void mulAll(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());

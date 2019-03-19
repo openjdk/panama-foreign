@@ -823,50 +823,6 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, ra, FloatMaxVectorTests::addAll, FloatMaxVectorTests::addAll);
     }
-    static float subAll(float[] a, int idx) {
-        float res = 0;
-        for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res -= a[i];
-        }
-
-        return res;
-    }
-
-    static float subAll(float[] a) {
-        float res = 0;
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            float tmp = 0;
-            for (int j = 0; j < SPECIES.length(); j++) {
-                tmp -= a[i + j];
-            }
-            res -= tmp;
-        }
-
-        return res;
-    }
-    @Test(dataProvider = "floatUnaryOpProvider")
-    static void subAllFloatMaxVectorTests(IntFunction<float[]> fa) {
-        float[] a = fa.apply(SPECIES.length());
-        float[] r = fr.apply(SPECIES.length());
-        float ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.subAll();
-            }
-        }
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra -= av.subAll();
-            }
-        }
-
-        assertReductionArraysEquals(a, r, ra, FloatMaxVectorTests::subAll, FloatMaxVectorTests::subAll);
-    }
     static float mulAll(float[] a, int idx) {
         float res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

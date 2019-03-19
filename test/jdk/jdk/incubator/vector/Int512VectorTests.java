@@ -1176,50 +1176,6 @@ public class Int512VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, ra, Int512VectorTests::addAll, Int512VectorTests::addAll);
     }
-    static int subAll(int[] a, int idx) {
-        int res = 0;
-        for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res -= a[i];
-        }
-
-        return res;
-    }
-
-    static int subAll(int[] a) {
-        int res = 0;
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            int tmp = 0;
-            for (int j = 0; j < SPECIES.length(); j++) {
-                tmp -= a[i + j];
-            }
-            res -= tmp;
-        }
-
-        return res;
-    }
-    @Test(dataProvider = "intUnaryOpProvider")
-    static void subAllInt512VectorTests(IntFunction<int[]> fa) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-        int ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                r[i] = av.subAll();
-            }
-        }
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra -= av.subAll();
-            }
-        }
-
-        assertReductionArraysEquals(a, r, ra, Int512VectorTests::subAll, Int512VectorTests::subAll);
-    }
     static int mulAll(int[] a, int idx) {
         int res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

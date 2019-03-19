@@ -105,7 +105,8 @@ public abstract class IntVector extends Vector<Integer> {
      * Returns a vector where all lane elements are set to the default
      * primitive value.
      *
-     * @return a zero vector
+     * @param species species of desired vector
+     * @return a zero vector of given species
      */
     @ForceInline
     @SuppressWarnings("unchecked")
@@ -126,6 +127,7 @@ public abstract class IntVector extends Vector<Integer> {
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
      *
+     * @param species species of desired vector
      * @param a the byte array
      * @param ix the offset into the array
      * @return a vector loaded from a byte array
@@ -161,6 +163,7 @@ public abstract class IntVector extends Vector<Integer> {
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
      *
+     * @param species species of desired vector
      * @param a the byte array
      * @param ix the offset into the array
      * @param m the mask
@@ -185,6 +188,7 @@ public abstract class IntVector extends Vector<Integer> {
      * array element at index {@code i + N} is placed into the
      * resulting vector at lane index {@code N}.
      *
+     * @param species species of desired vector
      * @param a the array
      * @param i the offset into the array
      * @return the vector loaded from an array
@@ -212,6 +216,7 @@ public abstract class IntVector extends Vector<Integer> {
      * {@code N}, otherwise the default element value is placed into the
      * resulting vector at lane index {@code N}.
      *
+     * @param species species of desired vector
      * @param a the array
      * @param i the offset into the array
      * @param m the mask
@@ -233,6 +238,7 @@ public abstract class IntVector extends Vector<Integer> {
      * array element at index {@code i + indexMap[j + N]} is placed into the
      * resulting vector at lane index {@code N}.
      *
+     * @param species species of desired vector
      * @param a the array
      * @param i the offset into the array, may be negative if relative
      * indexes in the index map compensate to produce a value within the
@@ -272,10 +278,12 @@ public abstract class IntVector extends Vector<Integer> {
      * index {@code i + indexMap[j + N]} is placed into the resulting vector
      * at lane index {@code N}.
      *
+     * @param species species of desired vector
      * @param a the array
      * @param i the offset into the array, may be negative if relative
      * indexes in the index map compensate to produce a value within the
      * array bounds
+     * @param m the mask
      * @param indexMap the index map
      * @param j the offset into the index map
      * @return the vector loaded from an array
@@ -307,6 +315,7 @@ public abstract class IntVector extends Vector<Integer> {
      *   return this.fromByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
      *
+     * @param species species of desired vector
      * @param bb the byte buffer
      * @param ix the offset into the byte buffer
      * @return a vector loaded from a byte buffer
@@ -358,8 +367,10 @@ public abstract class IntVector extends Vector<Integer> {
      * Vector<E> r = ((ESpecies<S>)this).fromArray(es, 0, m);
      * }</pre>
      *
+     * @param species species of desired vector
      * @param bb the byte buffer
      * @param ix the offset into the byte buffer
+     * @param m the mask
      * @return a vector loaded from a byte buffer
      * @throws IndexOutOfBoundsException if the offset is {@code < 0},
      * or {@code > b.limit()},
@@ -372,6 +383,19 @@ public abstract class IntVector extends Vector<Integer> {
         return zero(species).blend(fromByteBuffer(species, bb, ix), m);
     }
 
+    /**
+     * Returns a mask where each lane is set or unset according to given
+     * {@code boolean} values
+     * <p>
+     * For each mask lane, where {@code N} is the mask lane index,
+     * if the given {@code boolean} value at index {@code N} is {@code true}
+     * then the mask lane at index {@code N} is set, otherwise it is unset.
+     *
+     * @param species mask species
+     * @param bits the given {@code boolean} values
+     * @return a mask where each lane is set or unset according to the given {@code boolean} value
+     * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
+     */
     @ForceInline
     public static Mask<Integer> maskFromValues(IntSpecies species, boolean... bits) {
         if (species.boxType() == IntMaxVector.class)
@@ -410,6 +434,20 @@ public abstract class IntVector extends Vector<Integer> {
         }
     }
 
+    /**
+     * Loads a mask from a {@code boolean} array starting at an offset.
+     * <p>
+     * For each mask lane, where {@code N} is the mask lane index,
+     * if the array element at index {@code ix + N} is {@code true} then the
+     * mask lane at index {@code N} is set, otherwise it is unset.
+     *
+     * @param species mask species
+     * @param bits the {@code boolean} array
+     * @param ix the offset into the array
+     * @return the mask loaded from a {@code boolean} array
+     * @throws IndexOutOfBoundsException if {@code ix < 0}, or
+     * {@code ix > bits.length - species.length()}
+     */
     @ForceInline
     @SuppressWarnings("unchecked")
     public static Mask<Integer> maskFromArray(IntSpecies species, boolean[] bits, int ix) {
@@ -421,6 +459,12 @@ public abstract class IntVector extends Vector<Integer> {
                                      (c, idx, s) -> (Mask<Integer>) ((IntSpecies)s).opm(n -> c[idx + n]));
     }
 
+    /**
+     * Returns a mask where all lanes are set.
+     *
+     * @param species mask species
+     * @return a mask where all lanes are set
+     */
     @ForceInline
     @SuppressWarnings("unchecked")
     public static Mask<Integer> maskAllTrue(IntSpecies species) {
@@ -429,6 +473,12 @@ public abstract class IntVector extends Vector<Integer> {
                                                  ((z, s) -> trueMask((IntSpecies)s)));
     }
 
+    /**
+     * Returns a mask where all lanes are unset.
+     *
+     * @param species mask species
+     * @return a mask where all lanes are unset
+     */
     @ForceInline
     @SuppressWarnings("unchecked")
     public static Mask<Integer> maskAllFalse(IntSpecies species) {
@@ -437,6 +487,30 @@ public abstract class IntVector extends Vector<Integer> {
                                                  ((z, s) -> falseMask((IntSpecies)s)));
     }
 
+    /**
+     * Returns a shuffle of mapped indexes where each lane element is
+     * the result of applying a mapping function to the corresponding lane
+     * index.
+     * <p>
+     * Care should be taken to ensure Shuffle values produced from this
+     * method are consumed as constants to ensure optimal generation of
+     * code.  For example, values held in static final fields or values
+     * held in loop constant local variables.
+     * <p>
+     * This method behaves as if a shuffle is created from an array of
+     * mapped indexes as follows:
+     * <pre>{@code
+     *   int[] a = new int[species.length()];
+     *   for (int i = 0; i < a.length; i++) {
+     *       a[i] = f.applyAsInt(i);
+     *   }
+     *   return this.shuffleFromValues(a);
+     * }</pre>
+     *
+     * @param species shuffle species
+     * @param f the lane index mapping function
+     * @return a shuffle of mapped indexes
+     */
     @ForceInline
     public static Shuffle<Integer> shuffle(IntSpecies species, IntUnaryOperator f) {
         if (species.boxType() == IntMaxVector.class)
@@ -450,6 +524,19 @@ public abstract class IntVector extends Vector<Integer> {
         }
     }
 
+    /**
+     * Returns a shuffle where each lane element is the value of its
+     * corresponding lane index.
+     * <p>
+     * This method behaves as if a shuffle is created from an identity
+     * index mapping function as follows:
+     * <pre>{@code
+     *   return this.shuffle(i -> i);
+     * }</pre>
+     *
+     * @param species shuffle species
+     * @return a shuffle of lane indexes
+     */
     @ForceInline
     public static Shuffle<Integer> shuffleIota(IntSpecies species) {
         if (species.boxType() == IntMaxVector.class)
@@ -463,6 +550,22 @@ public abstract class IntVector extends Vector<Integer> {
         }
     }
 
+    /**
+     * Returns a shuffle where each lane element is set to a given
+     * {@code int} value logically AND'ed by the species length minus one.
+     * <p>
+     * For each shuffle lane, where {@code N} is the shuffle lane index, the
+     * the {@code int} value at index {@code N} logically AND'ed by
+     * {@code species.length() - 1} is placed into the resulting shuffle at
+     * lane index {@code N}.
+     *
+     * @param species shuffle species
+     * @param ixs the given {@code int} values
+     * @return a shuffle where each lane element is set to a given
+     * {@code int} value
+     * @throws IndexOutOfBoundsException if the number of int values is
+     * {@code < species.length()}
+     */
     @ForceInline
     public static Shuffle<Integer> shuffleFromValues(IntSpecies species, int... ixs) {
         if (species.boxType() == IntMaxVector.class)
@@ -476,6 +579,21 @@ public abstract class IntVector extends Vector<Integer> {
         }
     }
 
+    /**
+     * Loads a shuffle from an {@code int} array starting at an offset.
+     * <p>
+     * For each shuffle lane, where {@code N} is the shuffle lane index, the
+     * array element at index {@code i + N} logically AND'ed by
+     * {@code species.length() - 1} is placed into the resulting shuffle at lane
+     * index {@code N}.
+     *
+     * @param species shuffle species
+     * @param ixs the {@code int} array
+     * @param i the offset into the array
+     * @return a shuffle loaded from the {@code int} array
+     * @throws IndexOutOfBoundsException if {@code i < 0}, or
+     * {@code i > a.length - species.length()}
+     */
     @ForceInline
     public static Shuffle<Integer> shuffleFromArray(IntSpecies species, int[] ixs, int i) {
         if (species.boxType() == IntMaxVector.class)
@@ -1018,6 +1136,7 @@ public abstract class IntVector extends Vector<Integer> {
      * operation ({@code >>>}) is applied to lane elements.
      *
      * @param s the input scalar; the number of the bits to right shift
+     * @param m the mask controlling lane selection
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
@@ -1199,7 +1318,6 @@ public abstract class IntVector extends Vector<Integer> {
 
 
     // Type specific horizontal reductions
-
     /**
      * Adds all lane elements of this vector.
      * <p>
@@ -1220,33 +1338,9 @@ public abstract class IntVector extends Vector<Integer> {
      * and the identity value is {@code 0}.
      *
      * @param m the mask controlling lane selection
-     * @return the addition of all the lane elements of this vector
+     * @return the addition of the selected lane elements of this vector
      */
     public abstract int addAll(Mask<Integer> m);
-
-    /**
-     * Subtracts all lane elements of this vector.
-     * <p>
-     * This is an associative vector reduction operation where the subtraction
-     * operation ({@code -}) is applied to lane elements,
-     * and the identity value is {@code 0}.
-     *
-     * @return the subtraction of all the lane elements of this vector
-     */
-    public abstract int subAll();
-
-    /**
-     * Subtracts all lane elements of this vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is an associative vector reduction operation where the subtraction
-     * operation ({@code -}) is applied to lane elements,
-     * and the identity value is {@code 0}.
-     *
-     * @param m the mask controlling lane selection
-     * @return the subtraction of all the lane elements of this vector
-     */
-    public abstract int subAll(Mask<Integer> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1277,7 +1371,8 @@ public abstract class IntVector extends Vector<Integer> {
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> Math.min(a, b)} is applied to lane elements,
-     * and the identity value is {@link Integer#MAX_VALUE}.
+     * and the identity value is
+     * {@link Integer#MAX_VALUE}.
      *
      * @return the minimum lane element of this vector
      */
@@ -1289,7 +1384,8 @@ public abstract class IntVector extends Vector<Integer> {
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> Math.min(a, b)} is applied to lane elements,
-     * and the identity value is {@link Integer#MAX_VALUE}.
+     * and the identity value is
+     * {@link Integer#MAX_VALUE}.
      *
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
@@ -1301,7 +1397,8 @@ public abstract class IntVector extends Vector<Integer> {
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> Math.max(a, b)} is applied to lane elements,
-     * and the identity value is {@link Integer#MIN_VALUE}.
+     * and the identity value is
+     * {@link Integer#MIN_VALUE}.
      *
      * @return the maximum lane element of this vector
      */
@@ -1313,7 +1410,8 @@ public abstract class IntVector extends Vector<Integer> {
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> Math.max(a, b)} is applied to lane elements,
-     * and the identity value is {@link Integer#MIN_VALUE}.
+     * and the identity value is
+     * {@link Integer#MIN_VALUE}.
      *
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
@@ -1524,9 +1622,7 @@ public abstract class IntVector extends Vector<Integer> {
     public abstract IntSpecies species();
 
     /**
-     * A specialized factory for creating {@link IntVector} value of the same
-     * shape, and a {@link Mask} and {@link Shuffle} values of the same shape
-     * and {@code int} element type.
+     * Class representing {@link IntVector}'s of the same {@link Vector.Shape Shape}.
      */
     public static abstract class IntSpecies extends Vector.Species<Integer> {
         interface FOp {
@@ -1580,7 +1676,7 @@ public abstract class IntVector extends Vector<Integer> {
          * generated primitive value.
          *
          * The semantics are equivalent to calling
-         * {@link (int)ThreadLocalRandom#nextInt() }
+         * {@code (int)ThreadLocalRandom#nextInt()}.
          *
          * @return a vector where each lane elements is set to a randomly
          * generated primitive value

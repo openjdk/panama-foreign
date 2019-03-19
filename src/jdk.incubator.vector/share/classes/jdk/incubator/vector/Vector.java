@@ -830,6 +830,7 @@ public abstract class Vector<E> {
      *
      * @param a the byte array
      * @param i the offset into the array
+     * @param m the mask controlling lane selection
      * @throws IndexOutOfBoundsException if the offset is {@code < 0},
      * or {@code > a.length},
      * for any vector lane index {@code N} where the mask at lane {@code N}
@@ -901,14 +902,19 @@ public abstract class Vector<E> {
 
     /**
      * A {@code Shape} governs the total size, in bits, of a
-     * {@link Vector}, {@link Mask}, or {@code Shuffle}.  The shape in
+     * {@link Vector}, {@link Mask}, or {@link Shuffle}.  The shape in
      * combination with the element type together govern the number of lanes.
      */
     public enum Shape {
+        /** Shape of length 64 bits */
         S_64_BIT(64),
+        /** Shape of length 128 bits */
         S_128_BIT(128),
+        /** Shape of length 256 bits */
         S_256_BIT(256),
+        /** Shape of length 512 bits */
         S_512_BIT(512),
+        /** Shape of maximum length supported on the platform */
         S_Max_BIT(Unsafe.getUnsafe().getMaxVectorSize(byte.class) * 8);
 
         final int bitSize;
@@ -966,8 +972,7 @@ public abstract class Vector<E> {
 
 
     /**
-     * A factory for creating {@link Vector}, {@link Mask} and {@link Shuffle}
-     * values of the same element type and shape.
+     * Class representing vectors of same element type, {@code E} and {@link Vector.Shape Shape}.
      *
      * @param <E> the boxed element type of this species
      */
@@ -1192,6 +1197,7 @@ public abstract class Vector<E> {
      * Mask<E> r = a.species().maskFromArray(ar, 0);
      * }</pre>
      *
+     * </ul>
      * @param <E> the boxed element type of this mask
      */
     public static abstract class Mask<E> {
@@ -1219,7 +1225,7 @@ public abstract class Vector<E> {
          * {@code N} of the resulting mask is set, otherwise that mask lane is
          * not set.
          *
-         * @param s the species of the desired mask
+         * @param species the species of the desired mask
          * @param <F> the boxed element type of the species
          * @return a mask converted by shape and element type
          * @throws IllegalArgumentException if this mask length and the species

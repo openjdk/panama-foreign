@@ -492,16 +492,6 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public byte subAll() {
-        byte[] as = fa.apply(size);
-        byte r = 0;
-        for (int i = 0; i < as.length; i++) {
-            r -= as[i];
-        }
-        return r;
-    }
-
-    @Benchmark
     public byte mulAll() {
         byte[] as = fa.apply(size);
         byte r = 1;

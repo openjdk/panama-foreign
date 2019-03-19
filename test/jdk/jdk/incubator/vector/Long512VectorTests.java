@@ -1176,50 +1176,6 @@ public class Long512VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, ra, Long512VectorTests::addAll, Long512VectorTests::addAll);
     }
-    static long subAll(long[] a, int idx) {
-        long res = 0;
-        for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res -= a[i];
-        }
-
-        return res;
-    }
-
-    static long subAll(long[] a) {
-        long res = 0;
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            long tmp = 0;
-            for (int j = 0; j < SPECIES.length(); j++) {
-                tmp -= a[i + j];
-            }
-            res -= tmp;
-        }
-
-        return res;
-    }
-    @Test(dataProvider = "longUnaryOpProvider")
-    static void subAllLong512VectorTests(IntFunction<long[]> fa) {
-        long[] a = fa.apply(SPECIES.length());
-        long[] r = fr.apply(SPECIES.length());
-        long ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector av = LongVector.fromArray(SPECIES, a, i);
-                r[i] = av.subAll();
-            }
-        }
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector av = LongVector.fromArray(SPECIES, a, i);
-                ra -= av.subAll();
-            }
-        }
-
-        assertReductionArraysEquals(a, r, ra, Long512VectorTests::subAll, Long512VectorTests::subAll);
-    }
     static long mulAll(long[] a, int idx) {
         long res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

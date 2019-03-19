@@ -105,7 +105,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Returns a vector where all lane elements are set to the default
      * primitive value.
      *
-     * @return a zero vector
+     * @param species species of desired vector
+     * @return a zero vector of given species
      */
     @ForceInline
     @SuppressWarnings("unchecked")
@@ -126,6 +127,7 @@ public abstract class FloatVector extends Vector<Float> {
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
      *
+     * @param species species of desired vector
      * @param a the byte array
      * @param ix the offset into the array
      * @return a vector loaded from a byte array
@@ -161,6 +163,7 @@ public abstract class FloatVector extends Vector<Float> {
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
      *
+     * @param species species of desired vector
      * @param a the byte array
      * @param ix the offset into the array
      * @param m the mask
@@ -185,6 +188,7 @@ public abstract class FloatVector extends Vector<Float> {
      * array element at index {@code i + N} is placed into the
      * resulting vector at lane index {@code N}.
      *
+     * @param species species of desired vector
      * @param a the array
      * @param i the offset into the array
      * @return the vector loaded from an array
@@ -212,6 +216,7 @@ public abstract class FloatVector extends Vector<Float> {
      * {@code N}, otherwise the default element value is placed into the
      * resulting vector at lane index {@code N}.
      *
+     * @param species species of desired vector
      * @param a the array
      * @param i the offset into the array
      * @param m the mask
@@ -233,6 +238,7 @@ public abstract class FloatVector extends Vector<Float> {
      * array element at index {@code i + indexMap[j + N]} is placed into the
      * resulting vector at lane index {@code N}.
      *
+     * @param species species of desired vector
      * @param a the array
      * @param i the offset into the array, may be negative if relative
      * indexes in the index map compensate to produce a value within the
@@ -272,10 +278,12 @@ public abstract class FloatVector extends Vector<Float> {
      * index {@code i + indexMap[j + N]} is placed into the resulting vector
      * at lane index {@code N}.
      *
+     * @param species species of desired vector
      * @param a the array
      * @param i the offset into the array, may be negative if relative
      * indexes in the index map compensate to produce a value within the
      * array bounds
+     * @param m the mask
      * @param indexMap the index map
      * @param j the offset into the index map
      * @return the vector loaded from an array
@@ -307,6 +315,7 @@ public abstract class FloatVector extends Vector<Float> {
      *   return this.fromByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
      *
+     * @param species species of desired vector
      * @param bb the byte buffer
      * @param ix the offset into the byte buffer
      * @return a vector loaded from a byte buffer
@@ -358,8 +367,10 @@ public abstract class FloatVector extends Vector<Float> {
      * Vector<E> r = ((ESpecies<S>)this).fromArray(es, 0, m);
      * }</pre>
      *
+     * @param species species of desired vector
      * @param bb the byte buffer
      * @param ix the offset into the byte buffer
+     * @param m the mask
      * @return a vector loaded from a byte buffer
      * @throws IndexOutOfBoundsException if the offset is {@code < 0},
      * or {@code > b.limit()},
@@ -372,6 +383,19 @@ public abstract class FloatVector extends Vector<Float> {
         return zero(species).blend(fromByteBuffer(species, bb, ix), m);
     }
 
+    /**
+     * Returns a mask where each lane is set or unset according to given
+     * {@code boolean} values
+     * <p>
+     * For each mask lane, where {@code N} is the mask lane index,
+     * if the given {@code boolean} value at index {@code N} is {@code true}
+     * then the mask lane at index {@code N} is set, otherwise it is unset.
+     *
+     * @param species mask species
+     * @param bits the given {@code boolean} values
+     * @return a mask where each lane is set or unset according to the given {@code boolean} value
+     * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
+     */
     @ForceInline
     public static Mask<Float> maskFromValues(FloatSpecies species, boolean... bits) {
         if (species.boxType() == FloatMaxVector.class)
@@ -410,6 +434,20 @@ public abstract class FloatVector extends Vector<Float> {
         }
     }
 
+    /**
+     * Loads a mask from a {@code boolean} array starting at an offset.
+     * <p>
+     * For each mask lane, where {@code N} is the mask lane index,
+     * if the array element at index {@code ix + N} is {@code true} then the
+     * mask lane at index {@code N} is set, otherwise it is unset.
+     *
+     * @param species mask species
+     * @param bits the {@code boolean} array
+     * @param ix the offset into the array
+     * @return the mask loaded from a {@code boolean} array
+     * @throws IndexOutOfBoundsException if {@code ix < 0}, or
+     * {@code ix > bits.length - species.length()}
+     */
     @ForceInline
     @SuppressWarnings("unchecked")
     public static Mask<Float> maskFromArray(FloatSpecies species, boolean[] bits, int ix) {
@@ -421,6 +459,12 @@ public abstract class FloatVector extends Vector<Float> {
                                      (c, idx, s) -> (Mask<Float>) ((FloatSpecies)s).opm(n -> c[idx + n]));
     }
 
+    /**
+     * Returns a mask where all lanes are set.
+     *
+     * @param species mask species
+     * @return a mask where all lanes are set
+     */
     @ForceInline
     @SuppressWarnings("unchecked")
     public static Mask<Float> maskAllTrue(FloatSpecies species) {
@@ -429,6 +473,12 @@ public abstract class FloatVector extends Vector<Float> {
                                                  ((z, s) -> trueMask((FloatSpecies)s)));
     }
 
+    /**
+     * Returns a mask where all lanes are unset.
+     *
+     * @param species mask species
+     * @return a mask where all lanes are unset
+     */
     @ForceInline
     @SuppressWarnings("unchecked")
     public static Mask<Float> maskAllFalse(FloatSpecies species) {
@@ -437,6 +487,30 @@ public abstract class FloatVector extends Vector<Float> {
                                                  ((z, s) -> falseMask((FloatSpecies)s)));
     }
 
+    /**
+     * Returns a shuffle of mapped indexes where each lane element is
+     * the result of applying a mapping function to the corresponding lane
+     * index.
+     * <p>
+     * Care should be taken to ensure Shuffle values produced from this
+     * method are consumed as constants to ensure optimal generation of
+     * code.  For example, values held in static final fields or values
+     * held in loop constant local variables.
+     * <p>
+     * This method behaves as if a shuffle is created from an array of
+     * mapped indexes as follows:
+     * <pre>{@code
+     *   int[] a = new int[species.length()];
+     *   for (int i = 0; i < a.length; i++) {
+     *       a[i] = f.applyAsInt(i);
+     *   }
+     *   return this.shuffleFromValues(a);
+     * }</pre>
+     *
+     * @param species shuffle species
+     * @param f the lane index mapping function
+     * @return a shuffle of mapped indexes
+     */
     @ForceInline
     public static Shuffle<Float> shuffle(FloatSpecies species, IntUnaryOperator f) {
         if (species.boxType() == FloatMaxVector.class)
@@ -450,6 +524,19 @@ public abstract class FloatVector extends Vector<Float> {
         }
     }
 
+    /**
+     * Returns a shuffle where each lane element is the value of its
+     * corresponding lane index.
+     * <p>
+     * This method behaves as if a shuffle is created from an identity
+     * index mapping function as follows:
+     * <pre>{@code
+     *   return this.shuffle(i -> i);
+     * }</pre>
+     *
+     * @param species shuffle species
+     * @return a shuffle of lane indexes
+     */
     @ForceInline
     public static Shuffle<Float> shuffleIota(FloatSpecies species) {
         if (species.boxType() == FloatMaxVector.class)
@@ -463,6 +550,22 @@ public abstract class FloatVector extends Vector<Float> {
         }
     }
 
+    /**
+     * Returns a shuffle where each lane element is set to a given
+     * {@code int} value logically AND'ed by the species length minus one.
+     * <p>
+     * For each shuffle lane, where {@code N} is the shuffle lane index, the
+     * the {@code int} value at index {@code N} logically AND'ed by
+     * {@code species.length() - 1} is placed into the resulting shuffle at
+     * lane index {@code N}.
+     *
+     * @param species shuffle species
+     * @param ixs the given {@code int} values
+     * @return a shuffle where each lane element is set to a given
+     * {@code int} value
+     * @throws IndexOutOfBoundsException if the number of int values is
+     * {@code < species.length()}
+     */
     @ForceInline
     public static Shuffle<Float> shuffleFromValues(FloatSpecies species, int... ixs) {
         if (species.boxType() == FloatMaxVector.class)
@@ -476,6 +579,21 @@ public abstract class FloatVector extends Vector<Float> {
         }
     }
 
+    /**
+     * Loads a shuffle from an {@code int} array starting at an offset.
+     * <p>
+     * For each shuffle lane, where {@code N} is the shuffle lane index, the
+     * array element at index {@code i + N} logically AND'ed by
+     * {@code species.length() - 1} is placed into the resulting shuffle at lane
+     * index {@code N}.
+     *
+     * @param species shuffle species
+     * @param ixs the {@code int} array
+     * @param i the offset into the array
+     * @return a shuffle loaded from the {@code int} array
+     * @throws IndexOutOfBoundsException if {@code i < 0}, or
+     * {@code i > a.length - species.length()}
+     */
     @ForceInline
     public static Shuffle<Float> shuffleFromArray(FloatSpecies species, int[] ixs, int i) {
         if (species.boxType() == FloatMaxVector.class)
@@ -1637,13 +1755,21 @@ public abstract class FloatVector extends Vector<Float> {
 
 
     // Type specific horizontal reductions
-
     /**
      * Adds all lane elements of this vector.
      * <p>
-     * This is an associative vector reduction operation where the addition
+     * This is a vector reduction operation where the addition
      * operation ({@code +}) is applied to lane elements,
-     * and the identity value is {@code 0}.
+     * and the identity value is {@code 0.0}.
+     *
+     * <p>The value of a floating-point sum is a function both of the input values as well
+     * as the order of addition operations. The order of addition operations of this method
+     * is intentionally not defined to allow for JVM to generate optimal machine
+     * code for the underlying platform at runtime. If the platform supports a vector
+     * instruction to add all values in the vector, or if there is some other efficient machine
+     * code sequence, then the JVM has the option of generating this machine code. Otherwise,
+     * the default implementation of adding vectors sequentially from left to right is used.
+     * For this reason, the output of this method may vary for the same input values.
      *
      * @return the addition of all the lane elements of this vector
      */
@@ -1653,45 +1779,38 @@ public abstract class FloatVector extends Vector<Float> {
      * Adds all lane elements of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is an associative vector reduction operation where the addition
+     * This is a vector reduction operation where the addition
      * operation ({@code +}) is applied to lane elements,
-     * and the identity value is {@code 0}.
+     * and the identity value is {@code 0.0}.
+     *
+     * <p>The value of a floating-point sum is a function both of the input values as well
+     * as the order of addition operations. The order of addition operations of this method
+     * is intentionally not defined to allow for JVM to generate optimal machine
+     * code for the underlying platform at runtime. If the platform supports a vector
+     * instruction to add all values in the vector, or if there is some other efficient machine
+     * code sequence, then the JVM has the option of generating this machine code. Otherwise,
+     * the default implementation of adding vectors sequentially from left to right is used.
+     * For this reason, the output of this method may vary on the same input values.
      *
      * @param m the mask controlling lane selection
-     * @return the addition of all the lane elements of this vector
+     * @return the addition of the selected lane elements of this vector
      */
     public abstract float addAll(Mask<Float> m);
 
     /**
-     * Subtracts all lane elements of this vector.
-     * <p>
-     * This is an associative vector reduction operation where the subtraction
-     * operation ({@code -}) is applied to lane elements,
-     * and the identity value is {@code 0}.
-     *
-     * @return the subtraction of all the lane elements of this vector
-     */
-    public abstract float subAll();
-
-    /**
-     * Subtracts all lane elements of this vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is an associative vector reduction operation where the subtraction
-     * operation ({@code -}) is applied to lane elements,
-     * and the identity value is {@code 0}.
-     *
-     * @param m the mask controlling lane selection
-     * @return the subtraction of all the lane elements of this vector
-     */
-    public abstract float subAll(Mask<Float> m);
-
-    /**
      * Multiplies all lane elements of this vector.
      * <p>
-     * This is an associative vector reduction operation where the
+     * This is a vector reduction operation where the
      * multiplication operation ({@code *}) is applied to lane elements,
-     * and the identity value is {@code 1}.
+     * and the identity value is {@code 1.0}.
+     *
+     * <p>The order of multiplication operations of this method
+     * is intentionally not defined to allow for JVM to generate optimal machine
+     * code for the underlying platform at runtime. If the platform supports a vector
+     * instruction to multiply all values in the vector, or if there is some other efficient machine
+     * code sequence, then the JVM has the option of generating this machine code. Otherwise,
+     * the default implementation of multiplying vectors sequentially from left to right is used.
+     * For this reason, the output of this method may vary on the same input values.
      *
      * @return the multiplication of all the lane elements of this vector
      */
@@ -1701,9 +1820,17 @@ public abstract class FloatVector extends Vector<Float> {
      * Multiplies all lane elements of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is an associative vector reduction operation where the
+     * This is a vector reduction operation where the
      * multiplication operation ({@code *}) is applied to lane elements,
-     * and the identity value is {@code 1}.
+     * and the identity value is {@code 1.0}.
+     *
+     * <p>The order of multiplication operations of this method
+     * is intentionally not defined to allow for JVM to generate optimal machine
+     * code for the underlying platform at runtime. If the platform supports a vector
+     * instruction to multiply all values in the vector, or if there is some other efficient machine
+     * code sequence, then the JVM has the option of generating this machine code. Otherwise,
+     * the default implementation of multiplying vectors sequentially from left to right is used.
+     * For this reason, the output of this method may vary on the same input values.
      *
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
@@ -1715,7 +1842,8 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> Math.min(a, b)} is applied to lane elements,
-     * and the identity value is {@link Float#MAX_VALUE}.
+     * and the identity value is
+     * {@link Float#POSITIVE_INFINITY}.
      *
      * @return the minimum lane element of this vector
      */
@@ -1727,7 +1855,8 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> Math.min(a, b)} is applied to lane elements,
-     * and the identity value is {@link Float#MAX_VALUE}.
+     * and the identity value is
+     * {@link Float#POSITIVE_INFINITY}.
      *
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
@@ -1739,7 +1868,8 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> Math.max(a, b)} is applied to lane elements,
-     * and the identity value is {@link Float#MIN_VALUE}.
+     * and the identity value is
+     * {@link Float#NEGATIVE_INFINITY}.
      *
      * @return the maximum lane element of this vector
      */
@@ -1751,7 +1881,8 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> Math.max(a, b)} is applied to lane elements,
-     * and the identity value is {@link Float#MIN_VALUE}.
+     * and the identity value is
+     * {@link Float#NEGATIVE_INFINITY}.
      *
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
@@ -1891,9 +2022,7 @@ public abstract class FloatVector extends Vector<Float> {
     public abstract FloatSpecies species();
 
     /**
-     * A specialized factory for creating {@link FloatVector} value of the same
-     * shape, and a {@link Mask} and {@link Shuffle} values of the same shape
-     * and {@code int} element type.
+     * Class representing {@link FloatVector}'s of the same {@link Vector.Shape Shape}.
      */
     public static abstract class FloatSpecies extends Vector.Species<Float> {
         interface FOp {
@@ -1947,7 +2076,7 @@ public abstract class FloatVector extends Vector<Float> {
          * generated primitive value.
          *
          * The semantics are equivalent to calling
-         * {@link ThreadLocalRandom#nextFloat }
+         * {@code ThreadLocalRandom#nextFloat}.
          *
          * @return a vector where each lane elements is set to a randomly
          * generated primitive value

@@ -817,50 +817,6 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, ra, Double256VectorTests::addAll, Double256VectorTests::addAll);
     }
-    static double subAll(double[] a, int idx) {
-        double res = 0;
-        for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res -= a[i];
-        }
-
-        return res;
-    }
-
-    static double subAll(double[] a) {
-        double res = 0;
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            double tmp = 0;
-            for (int j = 0; j < SPECIES.length(); j++) {
-                tmp -= a[i + j];
-            }
-            res -= tmp;
-        }
-
-        return res;
-    }
-    @Test(dataProvider = "doubleUnaryOpProvider")
-    static void subAllDouble256VectorTests(IntFunction<double[]> fa) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] r = fr.apply(SPECIES.length());
-        double ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                r[i] = av.subAll();
-            }
-        }
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                ra -= av.subAll();
-            }
-        }
-
-        assertReductionArraysEquals(a, r, ra, Double256VectorTests::subAll, Double256VectorTests::subAll);
-    }
     static double mulAll(double[] a, int idx) {
         double res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

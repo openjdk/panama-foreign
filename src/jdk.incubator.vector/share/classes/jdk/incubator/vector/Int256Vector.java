@@ -805,15 +805,6 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public int subAll() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_SUB, Int256Vector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a - b)));
-    }
-
-    @Override
-    @ForceInline
     public int orAll() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_OR, Int256Vector.class, int.class, LENGTH,
@@ -847,12 +838,6 @@ final class Int256Vector extends IntVector {
     @ForceInline
     public int addAll(Mask<Integer> m) {
         return blend(SPECIES.broadcast((int) 0), m).addAll();
-    }
-
-    @Override
-    @ForceInline
-    public int subAll(Mask<Integer> m) {
-        return blend(SPECIES.broadcast((int) 0), m).subAll();
     }
 
     @Override

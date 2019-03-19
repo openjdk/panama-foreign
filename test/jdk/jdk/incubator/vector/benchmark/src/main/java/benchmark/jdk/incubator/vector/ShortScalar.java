@@ -492,16 +492,6 @@ public class ShortScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public short subAll() {
-        short[] as = fa.apply(size);
-        short r = 0;
-        for (int i = 0; i < as.length; i++) {
-            r -= as[i];
-        }
-        return r;
-    }
-
-    @Benchmark
     public short mulAll() {
         short[] as = fa.apply(size);
         short r = 1;
