@@ -84,6 +84,11 @@ public class JextractTool {
     private void generateHeader(HeaderFile hf, List<Tree> decls, Map<String, byte[]> results) {
         TypeEnter enter = new TypeEnter(hf.dictionary());
         decls.forEach(t -> t.accept(enter, null));
+        if (ctx.options.srcDumpDir != null) {
+            JavaSourceFactory jsb = ctx.options.genStaticForwarder ?
+                new JavaSourceFactoryExt(ctx, hf) : new JavaSourceFactory(ctx, hf);
+            jsb.generate(decls);
+        }
         AsmCodeFactory cf = codeFactory.apply(hf);
         results.putAll(cf.generateNativeHeader(decls));
     }

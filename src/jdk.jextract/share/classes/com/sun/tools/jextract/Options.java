@@ -51,11 +51,13 @@ public class Options {
     public final String targetPackage;
     // package mappings
     public final Map<Path, String> pkgMappings;
+    // output src dump dir
+    public final String srcDumpDir;
 
     private Options(List<String> clangArgs, List<String> libraryNames, List<String> libraryPaths,
                     boolean recordLibraryPath, MissingSymbolAction missingSymbolAction,
                     boolean noNativeLocations, boolean genStaticForwarder,
-                    String targetPackage, Map<Path, String> pkgMappings) {
+                    String targetPackage, Map<Path, String> pkgMappings, String srcDumpDir) {
         this.clangArgs = clangArgs;
         this.libraryNames = libraryNames;
         this.libraryPaths = libraryPaths;
@@ -65,6 +67,7 @@ public class Options {
         this.genStaticForwarder = genStaticForwarder;
         this.targetPackage = targetPackage;
         this.pkgMappings = pkgMappings;
+        this.srcDumpDir = srcDumpDir;
     }
 
     public static Builder builder() {
@@ -85,6 +88,7 @@ public class Options {
         private boolean genStaticForwarder;
         private String targetPackage;
         private final Map<Path, String> pkgMappings;
+        private String srcDumpDir;
 
         public Builder() {
             this.clangArgs = new ArrayList<>();
@@ -96,6 +100,7 @@ public class Options {
             this.genStaticForwarder = false;
             this.targetPackage = null;
             this.pkgMappings = new LinkedHashMap<>();
+            this.srcDumpDir = null;
         }
 
         public Options build() {
@@ -108,7 +113,8 @@ public class Options {
                     noNativeLocations,
                     genStaticForwarder,
                     targetPackage,
-                    Collections.unmodifiableMap(pkgMappings)
+                    Collections.unmodifiableMap(pkgMappings),
+                    srcDumpDir
             );
         }
 
@@ -148,5 +154,8 @@ public class Options {
             pkgMappings.put(path, pkg);
         }
 
+        public void setSrcDumpDir(String dir) {
+            this.srcDumpDir = dir;
+        }
     }
 }
