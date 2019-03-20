@@ -83,7 +83,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     private static final String NATIVE_SETTER = ANNOTATION_PKG_PREFIX + "NativeSetter;";
     private static final String NATIVE_ADDRESSOF = ANNOTATION_PKG_PREFIX + "NativeAddressof;";
     private static final String NATIVE_NUM_CONST = ANNOTATION_PKG_PREFIX + "NativeNumericConstant;";
-    private static final String NATIVE_STR_CONT = ANNOTATION_PKG_PREFIX + "NativeStringConstant;";
+    private static final String NATIVE_STR_CONST = ANNOTATION_PKG_PREFIX + "NativeStringConstant;";
 
     private final ClassWriter global_cw;
     private final Set<Layout> global_layouts = new LinkedHashSet<>();
@@ -256,7 +256,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         }
 
         if (value instanceof String) {
-            AnnotationVisitor av = mv.visitAnnotation(NATIVE_STR_CONT, true);
+            AnnotationVisitor av = mv.visitAnnotation(NATIVE_STR_CONST, true);
             av.visit("value", value);
             av.visitEnd();
         } else {
@@ -472,8 +472,6 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         }
         return this;
     }
-
-    
 
     @Override
     public Boolean visitMacro(MacroTree macroTree, JType jt) {

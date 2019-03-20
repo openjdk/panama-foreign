@@ -185,6 +185,9 @@ public final class Main {
         }
         builder.setTargetPackage(targetPackage);
 
+        String srcDumpDir = options.has("src-dump-dir")? (String) options.valueOf("src-dump-dir") : null;
+        builder.setSrcDumpDir(srcDumpDir);
+
         return builder.build();
     }
 
@@ -241,6 +244,7 @@ public final class Main {
         parser.accepts("no-locations", Log.format("help.no.locations"));
         parser.accepts("o", Log.format("help.o")).withRequiredArg();
         parser.accepts("record-library-path", Log.format("help.record_library_path"));
+        parser.accepts("src-dump-dir", Log.format("help.src_dump_dir")).withRequiredArg();
         parser.accepts("static-forwarder", Log.format("help.static_forwarder")).
                 withRequiredArg().ofType(boolean.class);
         parser.acceptsAll(List.of("t", "target-package"), Log.format("help.t")).withRequiredArg();
