@@ -208,7 +208,7 @@ public final class Main {
         tryAddPatterns(options, "include-symbols", symbols::addInclude);
         tryAddPatterns(options, "exclude-symbols", symbols::addExclude);
 
-        return new Filters(headers.build(), symbols.build());
+        return new Filters(headers.buildPathMatcher(), symbols.buildRegexMatcher());
     }
 
     private int run(String[] args) {

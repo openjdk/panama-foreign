@@ -27,10 +27,10 @@ import com.sun.tools.jextract.tree.Tree;
 import java.nio.file.Path;
 
 public class Filters {
-    private final PatternFilter headers;
-    private final PatternFilter symbols;
+    private final PatternFilter<Path> headers;
+    private final PatternFilter<String> symbols;
 
-    public Filters(PatternFilter headers, PatternFilter symbols) {
+    public Filters(PatternFilter<Path> headers, PatternFilter<String> symbols) {
         this.headers = headers;
         this.symbols = symbols;
     }
@@ -45,6 +45,6 @@ public class Filters {
 
     public boolean isInRootHeader(Tree tree) {
         Path path = tree.cursor().getSourceLocation().getFileLocation().path();
-        return headers.filter(path.toString());
+        return headers.filter(path);
     }
 }

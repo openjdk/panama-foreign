@@ -22,43 +22,64 @@
  */
 package com.sun.tools.jextract;
 
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-class PatternFilter {
-    private static final PatternFilter EMPTY = builder().build();
+class PatternFilter<T> {
+    private static final PatternFilter<?> EMPTY = new PatternFilter<>(List.of(), List.of());
 
-    private final List<Predicate<String>> includes;
-    private final List<Predicate<String>> excludes;
+    private final List<Predicate<T>> includes;
+    private final List<Predicate<T>> excludes;
 
-    private PatternFilter(List<String> includes, List<String> excludes) {
-        this.includes = asPredicates(includes);
-        this.excludes = asPredicates(excludes);
+    private PatternFilter(List<Predicate<T>> includes, List<Predicate<T>> excludes) {
+        this.includes = includes;
+        this.excludes = excludes;
     }
 
-    public static PatternFilter empty() {
-        return EMPTY;
+    public static PatternFilter<String> ofRegexPattern(List<String> includes, List<String> excludes) {
+        return new PatternFilter<>(asRegexPredicates(includes), asRegexPredicates(excludes));
     }
 
-    private List<Predicate<String>> asPredicates(List<String> patterns) {
+    public static PatternFilter<Path> ofPathmatchPattern(List<String> includes, List<String> excludes) {
+        return new PatternFilter<>(asPathPredicates(includes), asPathPredicates(excludes));
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> PatternFilter<T> empty() {
+        return (PatternFilter<T>) EMPTY;
+    }
+
+    private static List<Predicate<String>> asRegexPredicates(List<String> patterns) {
         return patterns.stream()
-            .map(Pattern::compile)
-            .map(Pattern::asMatchPredicate)
-            .collect(Collectors.toList());
+                .map(Pattern::compile)
+                .map(Pattern::asMatchPredicate)
+                .collect(Collectors.toList());
+    }
+
+    private static List<Predicate<Path>> asPathPredicates(List<String> patterns) {
+        FileSystem fs = FileSystems.getDefault();
+        return patterns.stream()
+                .map(s -> "regex:" + s) // regex syntax
+                .map(fs::getPathMatcher)
+                .map(pm -> (Predicate<Path>) pm::matches)
+                .collect(Collectors.toList());
     }
 
     protected boolean hasIncludes() {
         return !includes.isEmpty();
     }
 
-    protected boolean isIncluded(String name) {
+    protected boolean isIncluded(T name) {
         return includes.stream().anyMatch(p -> p.test(name));
     }
 
-    protected boolean isExcluded(String name) {
+    protected boolean isExcluded(T name) {
         return excludes.stream().anyMatch(p -> p.test(name));
     }
 
@@ -66,15 +87,20 @@ class PatternFilter {
         return new Builder();
     }
 
-    public boolean filter(String name) {
+    public boolean filter(T name) {
         return (!hasIncludes() || isIncluded(name)) && !isExcluded(name);
     }
 
     public static class Builder {
         private final List<String> includes = new ArrayList<>();
         private final List<String> excludes = new ArrayList<>();
-        public PatternFilter build() {
-            return new PatternFilter(includes, excludes);
+
+        public PatternFilter<String> buildRegexMatcher() {
+            return PatternFilter.ofRegexPattern(includes, excludes);
+        }
+
+        public PatternFilter<Path> buildPathMatcher() {
+            return PatternFilter.ofPathmatchPattern(includes, excludes);
         }
 
         public void addInclude(String pattern) {
