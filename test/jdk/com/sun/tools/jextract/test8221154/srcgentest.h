@@ -36,7 +36,7 @@ enum {
 };
 
 enum Color {
-    REG, GREE, BLUE
+    RED, GREEN, BLUE
 };
 
 struct Point {
@@ -47,6 +47,7 @@ EXPORT int num;
 
 EXPORT int x_coord(struct Point* p);
 EXPORT int y_coord(struct Point* p);
+EXPORT int sum(int i, ...);
 
 #ifdef __cplusplus
 }

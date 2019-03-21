@@ -32,3 +32,7 @@ EXPORT int x_coord(struct Point* p) {
 EXPORT int y_coord(struct Point* p) {
     return p->y;
 }
+
+EXPORT int sum(int i, ...) {
+    return i;
+}

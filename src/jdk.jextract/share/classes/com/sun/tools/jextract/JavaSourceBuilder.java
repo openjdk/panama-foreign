@@ -211,7 +211,7 @@ class JavaSourceBuilder {
         decrAlign();
     }
 
-    private void fillArgTypes(JType.Function fn, String[] argTypes) {
+    protected void fillArgTypes(JType.Function fn, String[] argTypes) {
         for (int i = 0; i < fn.args.length; i++) {
             argTypes[i] = fn.args[i].getSourceSignature(true);
         }
@@ -220,7 +220,7 @@ class JavaSourceBuilder {
         }
     }
 
-    private void fillArgNames(JType.Function fn, FunctionTree funcTree, String[] argNames) {
+    protected void fillArgNames(JType.Function fn, FunctionTree funcTree, String[] argNames) {
         for (int i = 0; i < fn.args.length; i++) {
             String name = funcTree != null? funcTree.paramName(i) : null;
             argNames[i] = (name == null || name.isEmpty())? ("$arg" + i) : name;

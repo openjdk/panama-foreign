@@ -21,11 +21,15 @@
  * questions.
  */
 
+import java.foreign.memory.Pointer;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.spi.ToolProvider;
 import org.testng.annotations.Test;
@@ -35,9 +39,10 @@ import static org.testng.Assert.assertTrue;
  * @test
  * @bug 8221154
  * @summary jextract should generate java source files
+ * @library ..
  * @run testng SrcGenTest
  */
-public class SrcGenTest {
+public class SrcGenTest extends JextractToolRunner {
     private static final ToolProvider JEXTRACT = ToolProvider.findFirst("jextract")
             .orElseThrow(() ->
                     new RuntimeException("jextract tool not found")
@@ -98,5 +103,53 @@ public class SrcGenTest {
         assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest$Color.class")));
         assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest_h.class")));
         assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest_h$Color.class")));
+
+        checkClasses(outputDir, pkgName);
+    }
+
+    private void checkClasses(Path outputDir, String pkgName) {
+        Loader loader = classLoader(outputDir);
+        Class<?> forwarderCls = loader.loadClass(pkgName + ".srcgentest_h");
+        assertTrue(forwarderCls != null);
+
+        // check "sum" method
+        Method sumMethod = findFirstMethod(forwarderCls, "sum");
+        assertTrue(sumMethod.getReturnType() == int.class);
+        Class<?>[] sumParamTypes = sumMethod.getParameterTypes();
+        assertTrue(sumParamTypes.length == 2);
+        assertTrue(sumParamTypes[0] == int.class);
+        assertTrue(sumParamTypes[1] == Object[].class);
+        assertTrue(Modifier.isStatic(sumMethod.getModifiers()));
+
+        // check "x_coord" method
+        Method xCoordMethod = findFirstMethod(forwarderCls, "x_coord");
+        assertTrue(xCoordMethod.getReturnType() == int.class);
+        Class<?>[] xCoordParamTypes = xCoordMethod.getParameterTypes();
+        assertTrue(xCoordParamTypes.length == 1);
+        assertTrue(xCoordParamTypes[0] == Pointer.class);
+
+        // check "y_coord" method
+        Method yCoordMethod = findFirstMethod(forwarderCls, "y_coord");
+        assertTrue(yCoordMethod.getReturnType() == int.class);
+        Class<?>[] yCoordParamTypes = yCoordMethod.getParameterTypes();
+        assertTrue(yCoordParamTypes.length == 1);
+        assertTrue(yCoordParamTypes[0] == Pointer.class);
+
+        // global variable "num" getter
+        Method numGet = findGlobalVariableGet(forwarderCls, "num");
+        assertTrue(numGet != null);
+
+        // anonymous enum fields
+        assertTrue(findField(forwarderCls, "R") != null);
+        assertTrue(findField(forwarderCls, "G") != null);
+        assertTrue(findField(forwarderCls, "B") != null);
+
+        // enum interface class
+        Class<?> colorCls = Arrays.stream(forwarderCls.getClasses())
+            .filter(c -> c.getSimpleName().equals("Color")).findFirst().get();
+        assertTrue(Modifier.isInterface(colorCls.getModifiers()));
+        checkIntField(colorCls, "RED", 0);
+        checkIntField(colorCls, "GREEN", 1);
+        checkIntField(colorCls, "BLUE", 2);
     }
 }
