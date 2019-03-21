@@ -35,5 +35,5 @@ EXPORT char* str1;
 EXPORT char* str2;
 
 #ifdef __cplusplus
-extern "C" {
+}
 #endif // __cplusplus

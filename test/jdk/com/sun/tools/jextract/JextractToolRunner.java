@@ -43,7 +43,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-class JextractToolRunner {
+public class JextractToolRunner {
     private static final ToolProvider JEXTRACT_TOOL = ToolProvider.findFirst("jextract")
             .orElseThrow(() ->
                     new RuntimeException("jextract tool not found")

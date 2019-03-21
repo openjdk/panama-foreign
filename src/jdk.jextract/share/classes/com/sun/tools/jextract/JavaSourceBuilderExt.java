@@ -205,6 +205,13 @@ final class JavaSourceBuilderExt extends JavaSourceBuilder {
     // emit static forwarder method of a function
     protected void emitStaticForwarder(FunctionTree funcTree, JType.Function fn, String libraryField) {
         check();
+
+        final int numArgs = fn.isVarArgs? fn.args.length + 1 : fn.args.length;
+        final String[] argTypes = new String[numArgs];
+        final String[] argNames = new String[numArgs];
+        fillArgTypes(fn, argTypes);
+        fillArgNames(fn, funcTree, argNames);
+
         incrAlign();
         indent();
         sb.append("public static ");
@@ -212,27 +219,14 @@ final class JavaSourceBuilderExt extends JavaSourceBuilder {
         sb.append(' ');
         sb.append(funcTree.name());
         sb.append('(');
-        final int arg_cnt = funcTree.numParams();
-        final List<String> argNames = new ArrayList<>();
-        for (int i = 0; i < fn.args.length; i++) {
-            sb.append(fn.args[i].getSourceSignature(false));
+        for (int i = 0; i < numArgs; i++) {
+            sb.append(argTypes[i]);
             sb.append(' ');
-            String pname = funcTree.paramName(i);
-            pname = pname == null || pname.isEmpty()? ("$arg" + i) : pname;
-            argNames.add(pname);
-            sb.append(pname);
-            if (fn.isVarArgs || i != arg_cnt - 1) {
+            sb.append(argNames[i]);
+            if (i != numArgs - 1) {
                 sb.append(", ");
             }
         }
-        if (fn.isVarArgs) {
-            sb.append("Object... ");
-            String pname = funcTree.paramName(arg_cnt - 1);
-            pname = pname == null || pname.isEmpty()? "$args" : pname;
-            argNames.add(pname);
-            sb.append(pname);
-        }
-
         sb.append(") {\n");
         incrAlign();
         indent();
@@ -243,12 +237,11 @@ final class JavaSourceBuilderExt extends JavaSourceBuilder {
         sb.append('.');
         sb.append(funcTree.name());
         sb.append('(');
-        int size = argNames.size();
-        int j = 0;
-        for (String an : argNames) {
-            sb.append(an);
-            if (j != size - 1) sb.append(", ");
-            j++;
+        for (int j = 0; j < numArgs; j++) {
+            sb.append(argNames[j]);
+            if (j != numArgs - 1) {
+                sb.append(", ");
+            }
         }
         sb.append(");\n");
         decrAlign();
