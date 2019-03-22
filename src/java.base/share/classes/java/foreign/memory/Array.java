@@ -150,10 +150,11 @@ public interface Array<X> {
      * @param <Z> the Java array type.
      * @return a new instance of a Java array.
      * @throws IllegalArgumentException if the array created by the provided factory is not compatible with the required type.
+     * @throws IndexOutOfBoundsException if this native array has a size that exceeds the maximum Java arrays size.
      */
     default <Z> Z toArray(IntFunction<Z> arrFactory) {
         if (length() > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Native array is too big to fit into a Java array");
+            throw new IndexOutOfBoundsException("Native array is too big");
         }
         int size = (int)length();
         Z arr = arrFactory.apply((int)length());
@@ -170,5 +171,35 @@ public interface Array<X> {
      */
     static <Z> void assign(Array<Z> src, Array<Z> dst) {
         Pointer.copy(((BoundedArray<?>) src).ptr(), ((BoundedArray<?>) dst).ptr());
+    }
+
+    /**
+     * Copy contents of source native array into destination Java array.
+     * @param src source native array.
+     * @param arr destination Java array.
+     * @param <Z> the array carrier type.
+     * @throws IndexOutOfBoundsException if the source array size exceeds that of the target.
+     */
+    static <Z> void assign(Array<Z> src, Object arr) {
+        long len = src.length();
+        if (len > java.lang.reflect.Array.getLength(arr)) {
+            throw new IndexOutOfBoundsException("destination array too small");
+        }
+        BoundedArray.copyTo(src, arr, (int)len);
+    }
+
+    /**
+     * Copy contents of source Java array into destination native array.
+     * @param arr source Java array.
+     * @param dst destination native array.
+     * @param <Z> the array carrier type.
+     * @throws IndexOutOfBoundsException if the source array size exceeds that of the target.
+     */
+    static <Z> void assign(Object arr, Array<Z> dst) {
+        int len = java.lang.reflect.Array.getLength(arr);
+        if (java.lang.reflect.Array.getLength(arr) > dst.length()) {
+            throw new IndexOutOfBoundsException("destination array too small");
+        }
+        BoundedArray.copyFrom(dst, arr, len);
     }
 }

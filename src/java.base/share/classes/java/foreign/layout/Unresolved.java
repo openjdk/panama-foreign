@@ -90,7 +90,4 @@ public class Unresolved extends AbstractDescriptor<Unresolved> implements Layout
     Unresolved withAnnotations(Map<String, String> annotations) {
         return new Unresolved(layoutExpression, annotations);
     }
-
-    @Override
-    public Unresolved withEndianness(Value.Endianness newEndian) { return this; }
 }

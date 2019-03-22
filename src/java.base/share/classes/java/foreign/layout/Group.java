@@ -148,14 +148,4 @@ public class Group extends AbstractDescriptor<Group> implements Layout {
     Group withAnnotations(Map<String, String> annotations) {
         return new Group(kind, elements, annotations);
     }
-
-    /**
-     * Specify endianness for elements in the group that does not have endianness specified.
-     * @return Value layout with new specified endianness.
-     */
-    public Group withEndianness(Value.Endianness newEndian) {
-        return new Group(kind,
-                elements.stream().map(l -> l.withEndianness(newEndian)).collect(Collectors.toList()),
-                annotations());
-    }
 }

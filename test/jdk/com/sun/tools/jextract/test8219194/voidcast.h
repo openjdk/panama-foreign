@@ -34,5 +34,5 @@ extern "C" {
 EXPORT void* x_ptr();
 
 #ifdef __cplusplus
-extern "C" {
+}
 #endif // __cplusplus

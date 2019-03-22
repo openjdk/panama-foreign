@@ -46,6 +46,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+import com.sun.tools.jextract.Filters;
 import com.sun.tools.jextract.JextractTool;
 import com.sun.tools.jextract.JarWriter;
 import com.sun.tools.jextract.Log;
@@ -100,7 +101,8 @@ public class Runner {
         nativeSrc = nativeSrc.toAbsolutePath();
         Options.Builder options = Options.builder();
         options.setTargetPackage(pkg);
-        return new Context(List.of(nativeSrc.toAbsolutePath()), options.build(), Log.createDefault());
+        return new Context(List.of(nativeSrc.toAbsolutePath()),
+                options.build(), Log.createDefault(), Filters.createDefault());
     }
 
     private Writer extract() throws IOException {

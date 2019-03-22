@@ -111,11 +111,4 @@ public final class Sequence extends Group {
     public Sequence withAnnotation(String name, String value) {
         return (Sequence) super.withAnnotation(name, value);
     }
-
-    @Override
-    public Sequence withEndianness(Value.Endianness newEndian) {
-        return new Sequence(elementsSize(),
-                elementLayout.withEndianness(Value.Endianness.hostEndian()),
-                annotations());
-    }
 }

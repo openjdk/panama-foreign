@@ -349,7 +349,7 @@ public class DirectSignatureShuffler {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static Struct<?> longToStruct(Class carrier, long value) {
-        Pointer<? extends Struct<?>> ptr = BoundedPointer.fromLongArray(LayoutType.ofStruct(carrier), new long[] { value });
+        Pointer<? extends Struct<?>> ptr = BoundedPointer.fromArray(LayoutType.ofStruct(carrier), new long[] { value });
         return ptr.get();
     }
 

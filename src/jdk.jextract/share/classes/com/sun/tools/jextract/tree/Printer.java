@@ -23,6 +23,7 @@
 package com.sun.tools.jextract.tree;
 
 import jdk.internal.clang.Cursor;
+import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.EvalResult;
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
@@ -77,30 +78,33 @@ public final class Printer {
         } catch (NoSuchElementException ex) {
             println("Type kind unknown: " + t.kind0());
         }
-        Cursor c = t.getDeclarationCursor();
-        println("Declared by cursor: " + c.spelling() + " of kind " + c.kind());
-        showCursorLocation(c);
-        if (!c.isInvalid()) {
-            println("Declaring cursor is definition? " + c.isDefinition());
-            if (!c.isDefinition()) {
-                Cursor dc = c.getDefinition();
-                println("Definition cursor is " + dc.spelling() + " of kind " + dc.kind());
-                showCursorLocation(dc);
+
+        if(t.kind() != TypeKind.Invalid) {
+            Cursor c = t.getDeclarationCursor();
+            println("Declared by cursor: " + c.spelling() + " of kind " + c.kind());
+            showCursorLocation(c);
+            if (!c.isInvalid()) {
+                println("Declaring cursor is definition? " + c.isDefinition());
+                if (!c.isDefinition()) {
+                    Cursor dc = c.getDefinition();
+                    println("Definition cursor is " + dc.spelling() + " of kind " + dc.kind());
+                    showCursorLocation(dc);
+                }
             }
-        }
-        println("Size: " + t.size() + " bytes");
-        if (t.kind() == TypeKind.Typedef || t.kind() == TypeKind.Unexposed) {
-            Type canonicalType = t.canonicalType();
-            println("Canonical Type: " + canonicalType.spelling());
-            println("CType Kind: " + canonicalType.kind().name());
-            println("== Canonical Type ==");
-            dumpType(canonicalType, true);
-        } else if (t.kind() == TypeKind.ConstantArray || t.kind() == TypeKind.IncompleteArray) {
-            Type etype = t.getElementType();
-            println("Element Type: " + etype.spelling());
-            println("Element Type Kind: " + etype.kind().name());
-            println("== Element Type ==");
-            dumpType(etype, true);
+            println("Size: " + t.size() + " bytes");
+            if (t.kind() == TypeKind.Typedef || t.kind() == TypeKind.Unexposed) {
+                Type canonicalType = t.canonicalType();
+                println("Canonical Type: " + canonicalType.spelling());
+                println("CType Kind: " + canonicalType.kind().name());
+                println("== Canonical Type ==");
+                dumpType(canonicalType, true);
+            } else if (t.kind() == TypeKind.ConstantArray || t.kind() == TypeKind.IncompleteArray) {
+                Type etype = t.getElementType();
+                println("Element Type: " + etype.spelling());
+                println("Element Type Kind: " + etype.kind().name());
+                println("== Element Type ==");
+                dumpType(etype, true);
+            }
         }
     }
 
@@ -125,19 +129,24 @@ public final class Printer {
         } catch (NoSuchElementException ex) {
             println("Cursor kind unknown: " + c.kind0());
         }
-        try (EvalResult res = c.eval()) {
-            switch (res.getKind()) {
-                case Integral:
-                    println("Constant value: " + res.getAsInt());
-                    break;
-                case FloatingPoint:
-                    println("Constant value: " + res.getAsFloat());
-                    break;
-                case StrLiteral:
-                    println("Constant value: " + res.getAsString());
-                    break;
+
+        // FIXME libclang crashes on some cursors. Limiting eval calls as workaround
+        if(c.kind() == CursorKind.VarDecl) {
+            try (EvalResult res = c.eval()) {
+                switch (res.getKind()) {
+                    case Integral:
+                        println("Constant value: " + res.getAsInt());
+                        break;
+                    case FloatingPoint:
+                        println("Constant value: " + res.getAsFloat());
+                        break;
+                    case StrLiteral:
+                        println("Constant value: " + res.getAsString());
+                        break;
+                }
             }
         }
+
         if (! c.isInvalid()) {
             SourceLocation src = c.getSourceLocation();
             if (null != src) {

@@ -47,12 +47,4 @@ public interface Layout extends Descriptor {
     static Layout of(String s) {
         return new DescriptorParser(s).parseLayout();
     }
-
-    /**
-     * Get a layout with endianness if it's not specified already.
-     *
-     * @return a layout where any contents without endianness explicitly
-     *         specified yet will have the specified endianness.
-     */
-    Layout withEndianness(Value.Endianness newEndian);
 }

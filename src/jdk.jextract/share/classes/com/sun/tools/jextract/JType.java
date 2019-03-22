@@ -48,15 +48,17 @@ public abstract class JType {
 
     public String getSignature(boolean isArgument) { return getDescriptor(); }
 
-    public final static JType Void = new PrimitiveType("V", of(Void.class));
-    public final static JType Byte = new PrimitiveType("B", of(Byte.class));
-    public final static JType Bool = new PrimitiveType("Z", of(Boolean.class));
-    public final static JType Char = new PrimitiveType("C", of(Character.class));
-    public final static JType Short = new PrimitiveType("S", of(Short.class));
-    public final static JType Int = new PrimitiveType("I", of(Integer.class));
-    public final static JType Long = new PrimitiveType("J", of(Long.class));
-    public final static JType Float = new PrimitiveType("F", of(Float.class));
-    public final static JType Double = new PrimitiveType("D", of(Double.class));
+    public abstract String getSourceSignature(boolean isArgument);
+
+    public final static JType Void = new PrimitiveType("V", of(Void.class), "void");
+    public final static JType Byte = new PrimitiveType("B", of(Byte.class), "byte");
+    public final static JType Bool = new PrimitiveType("Z", of(Boolean.class), "boolean");
+    public final static JType Char = new PrimitiveType("C", of(Character.class), "char");
+    public final static JType Short = new PrimitiveType("S", of(Short.class), "short");
+    public final static JType Int = new PrimitiveType("I", of(Integer.class), "int");
+    public final static JType Long = new PrimitiveType("J", of(Long.class), "long");
+    public final static JType Float = new PrimitiveType("F", of(Float.class), "float");
+    public final static JType Double = new PrimitiveType("D", of(Double.class), "double");
     public final static JType Object = of(java.lang.Object.class);
 
     public static JType of(final Class<?> cls) {
@@ -105,12 +107,14 @@ public abstract class JType {
     }
 
     public static class PrimitiveType extends JType {
-        String desc;
-        JType boxed;
+        final String desc;
+        final JType boxed;
+        final String name;
 
-        PrimitiveType(String desc, JType boxed) {
+        PrimitiveType(String desc, JType boxed, String name) {
             this.desc = desc;
             this.boxed = boxed;
+            this.name = name;
         }
 
         @Override
@@ -122,6 +126,11 @@ public abstract class JType {
         public String getDescriptor() {
             return desc;
         }
+
+        @Override
+        public String getSourceSignature(boolean isArgument) {
+            return name;
+        }
     }
 
     public static class ClassType extends JType {
@@ -131,22 +140,36 @@ public abstract class JType {
         final String enclosingName;
         final String simpleName;
         final String clsName;
+        final String externalName;
 
         ClassType(String clsName) {
             this.enclosingName = null;
             this.simpleName = null;
             this.clsName = Objects.requireNonNull(clsName);
+            this.externalName = clsName.replace('/', '.');
         }
 
         ClassType(String enclosingName, String simpleName) {
             this.enclosingName = Objects.requireNonNull(enclosingName);
             this.simpleName = Objects.requireNonNull(simpleName);
             this.clsName = enclosingName + "$" + simpleName;
+            this.externalName = enclosingName.replace('/', '.') + "." + simpleName;
         }
 
         @Override
         public String getDescriptor() {
             return "L" + clsName + ";";
+        }
+
+        @Override
+        public String getSourceSignature(boolean isArgument) {
+            // java.foreign.* is imported
+            if (externalName.startsWith("java.lang.") ||
+                externalName.startsWith("java.foreign.")) {
+                return externalName.substring(externalName.lastIndexOf(".") + 1);
+            } else {
+                return externalName;
+            }
         }
 
         public String getSimpleName() {
@@ -199,6 +222,17 @@ public abstract class JType {
             return sb.toString();
         }
 
+        @Override
+        public String getSourceSignature(boolean isArgument) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Array"); // java.foreign.memory.* will be imported
+            sb.append("<");
+            JType pt = elementType;
+            sb.append(pt.box().getSourceSignature(isArgument));
+            sb.append(">");
+            return sb.toString();
+        }
+
         public JType getElementType() {
             return elementType;
         }
@@ -240,6 +274,11 @@ public abstract class JType {
             sb.append(')');
             sb.append(returnType.getDescriptor());
             return sb.toString();
+        }
+
+        @Override
+        public String getSourceSignature(boolean isArgument) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -317,6 +356,23 @@ public abstract class JType {
                 sb.append(targ.box().getSignature(isArgument));
             }
             sb.append(">;");
+            return sb.toString();
+        }
+
+        @Override
+        public String getSourceSignature(boolean isArgument) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(super.getSourceSignature(isArgument));
+            sb.append("<");
+            if (targ == JType.Void && isArgument) {
+                sb.append('?');
+            } else {
+                if (targ instanceof GenericType && isArgument) {
+                    sb.append("? extends ");
+                }
+                sb.append(targ.box().getSourceSignature(isArgument));
+            }
+            sb.append(">");
             return sb.toString();
         }
 

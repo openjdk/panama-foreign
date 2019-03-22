@@ -33,6 +33,7 @@ import jdk.internal.foreign.memory.References;
 import java.foreign.annotations.NativeCallback;
 import java.foreign.layout.Address;
 import java.foreign.layout.Layout;
+import java.foreign.layout.Value;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
@@ -107,6 +108,13 @@ public interface LayoutType<X> {
      * @return the pointer {@code LayoutType}.
      */
     LayoutType<Pointer<X>> pointer();
+
+    /**
+     * Create a pointer {@code LayoutType} from this instance with given layout.
+     * @param value the pointer desired layout.
+     * @return the pointer {@code LayoutType}.
+     */
+    LayoutType<Pointer<X>> pointer(Value value);
 
     /**
      * Create a {@code LayoutType} from the {@code boolean} Java primitive carrier and given layout.

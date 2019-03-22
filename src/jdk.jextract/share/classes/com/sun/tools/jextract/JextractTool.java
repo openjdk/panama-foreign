@@ -28,21 +28,21 @@ import com.sun.tools.jextract.tree.FlexibleArrayWarningVisitor;
 import com.sun.tools.jextract.tree.Tree;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JextractTool {
     private final HeaderResolver headerResolver;
-    private final SymbolFilter symbolFilter;
     private final Parser parser;
     private final Function<HeaderFile, AsmCodeFactory> codeFactory;
     private final Collection<String> clangArgs;
@@ -52,7 +52,6 @@ public class JextractTool {
     public JextractTool(Context ctx) {
         this.headerResolver = new HeaderResolver(ctx);
         this.parser = new Parser(ctx, Options.INCLUDE_MACROS);
-        this.symbolFilter = new SymbolFilter(ctx);
         this.codeFactory = ctx.options.genStaticForwarder ?
                 hf -> new AsmCodeFactoryExt(ctx, hf) :
                 hf -> new AsmCodeFactory(ctx, hf);
@@ -66,7 +65,9 @@ public class JextractTool {
     public Writer processHeaders() {
         Path source = sources.size() > 1? generateTmpSource() : sources.iterator().next();
         Map<HeaderFile, List<Tree>> headerMap = Stream.of(parser.parse(source, clangArgs))
-                .map(symbolFilter)
+                .map(new SymbolFilter(ctx))
+                .map(new LibraryLookupFilter(ctx))
+                .map(new DependencyFilter(ctx))
                 .map(new TypedefHandler(ctx))
                 .map(new EmptyNameHandler())
                 .map(new DuplicateDeclarationHandler())
@@ -83,6 +84,11 @@ public class JextractTool {
     private void generateHeader(HeaderFile hf, List<Tree> decls, Map<String, byte[]> results) {
         TypeEnter enter = new TypeEnter(hf.dictionary());
         decls.forEach(t -> t.accept(enter, null));
+        if (ctx.options.srcDumpDir != null) {
+            JavaSourceFactory jsb = ctx.options.genStaticForwarder ?
+                new JavaSourceFactoryExt(ctx, hf) : new JavaSourceFactory(ctx, hf);
+            jsb.generate(decls);
+        }
         AsmCodeFactory cf = codeFactory.apply(hf);
         results.putAll(cf.generateNativeHeader(decls));
     }

@@ -33,7 +33,6 @@ import java.util.regex.Pattern;
 public class Options {
     // FIXME: Remove this if/when the macros support is deemed stable
     public static boolean INCLUDE_MACROS = Boolean.parseBoolean(System.getProperty("jextract.INCLUDE_MACROS", "true"));
-
     // The args for parsing C
     public final List<String> clangArgs;
     // The list of library names
@@ -42,10 +41,6 @@ public class Options {
     public final List<String> libraryPaths;
     // whether library paths are recorded in .class files or not?
     public final boolean recordLibraryPath;
-    // Symbol patterns to be included
-    public final List<Pattern> includeSymbols;
-    // Symbol patterns to be excluded
-    public final List<Pattern> excludeSymbols;
     // Action to take when encountering missing symbol
     public final MissingSymbolAction missingSymbolAction;
     // no NativeLocation info
@@ -56,22 +51,23 @@ public class Options {
     public final String targetPackage;
     // package mappings
     public final Map<Path, String> pkgMappings;
+    // output src dump dir
+    public final String srcDumpDir;
 
     private Options(List<String> clangArgs, List<String> libraryNames, List<String> libraryPaths,
-                   boolean recordLibraryPath, List<Pattern> includeSymbols, List<Pattern> excludeSymbols,
-                   MissingSymbolAction missingSymbolAction, boolean noNativeLocations, boolean genStaticForwarder,
-                   String targetPackage, Map<Path, String> pkgMappings) {
+                    boolean recordLibraryPath, MissingSymbolAction missingSymbolAction,
+                    boolean noNativeLocations, boolean genStaticForwarder,
+                    String targetPackage, Map<Path, String> pkgMappings, String srcDumpDir) {
         this.clangArgs = clangArgs;
         this.libraryNames = libraryNames;
         this.libraryPaths = libraryPaths;
         this.recordLibraryPath = recordLibraryPath;
-        this.includeSymbols = includeSymbols;
-        this.excludeSymbols = excludeSymbols;
         this.missingSymbolAction = missingSymbolAction;
         this.noNativeLocations = noNativeLocations;
         this.genStaticForwarder = genStaticForwarder;
         this.targetPackage = targetPackage;
         this.pkgMappings = pkgMappings;
+        this.srcDumpDir = srcDumpDir;
     }
 
     public static Builder builder() {
@@ -87,26 +83,24 @@ public class Options {
         private final List<String> libraryNames;
         private final List<String> libraryPaths;
         private boolean recordLibraryPath;
-        private final List<Pattern> includeSymbols;
-        private final List<Pattern> excludeSymbols;
         private MissingSymbolAction missingSymbolAction;
         private boolean noNativeLocations;
         private boolean genStaticForwarder;
         private String targetPackage;
         private final Map<Path, String> pkgMappings;
+        private String srcDumpDir;
 
         public Builder() {
             this.clangArgs = new ArrayList<>();
             this.libraryNames = new ArrayList<>();
             this.libraryPaths = new ArrayList<>();
             this.recordLibraryPath = false;
-            this.includeSymbols = new ArrayList<>();
-            this.excludeSymbols = new ArrayList<>();
             this.missingSymbolAction = MissingSymbolAction.EXCLUDE;
             this.noNativeLocations = false;
             this.genStaticForwarder = false;
             this.targetPackage = null;
             this.pkgMappings = new LinkedHashMap<>();
+            this.srcDumpDir = null;
         }
 
         public Options build() {
@@ -115,13 +109,12 @@ public class Options {
                     Collections.unmodifiableList(libraryNames),
                     Collections.unmodifiableList(libraryPaths),
                     recordLibraryPath,
-                    Collections.unmodifiableList(includeSymbols),
-                    Collections.unmodifiableList(excludeSymbols),
                     missingSymbolAction,
                     noNativeLocations,
                     genStaticForwarder,
                     targetPackage,
-                    Collections.unmodifiableMap(pkgMappings)
+                    Collections.unmodifiableMap(pkgMappings),
+                    srcDumpDir
             );
         }
 
@@ -149,14 +142,6 @@ public class Options {
             recordLibraryPath = true;
         }
 
-        public void addIncludeSymbols(String pattern) {
-            includeSymbols.add(Pattern.compile(pattern));
-        }
-
-        public void addExcludeSymbols(String pattern) {
-            excludeSymbols.add(Pattern.compile(pattern));
-        }
-
         public void setGenStaticForwarder(boolean flag) {
             this.genStaticForwarder = flag;
         }
@@ -169,5 +154,8 @@ public class Options {
             pkgMappings.put(path, pkg);
         }
 
+        public void setSrcDumpDir(String dir) {
+            this.srcDumpDir = dir;
+        }
     }
 }
