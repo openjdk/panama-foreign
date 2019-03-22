@@ -2251,8 +2251,8 @@ public:
   void NAME(FloatRegister Vd, SIMD_Arrangement T, FloatRegister Vn) {                  \
     starti;                                                                            \
     assert(T == T4S, "arrangement must be T4S");                                       \
-    f(0b01101110, 31, 24), f(opc, 23), f(0b0110000111110, 22, 10);                     \
-    rf(Vn, 5), rf(Vd, 0);                                                              \
+    f(0, 31), f((int)T & 1, 30), f(0b101110, 29, 24), f(opc, 23),                      \
+    f(T == T4S ? 0 : 1, 22), f(0b110000111110, 21, 10); rf(Vn, 5), rf(Vd, 0);          \
   }
 
   INSN(fmaxv, 0);

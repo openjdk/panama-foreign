@@ -510,13 +510,19 @@ void Matcher::init_first_stack_mask() {
   if (Matcher::vector_size_supported(T_BYTE,4)) {
     *idealreg2spillmask[Op_VecS] = *idealreg2regmask[Op_VecS];
      idealreg2spillmask[Op_VecS]->OR(C->FIRST_STACK_mask());
+  } else {
+    *idealreg2spillmask[Op_VecS] = RegMask::Empty;
   }
+
   if (Matcher::vector_size_supported(T_FLOAT,2)) {
     // For VecD we need dual alignment and 8 bytes (2 slots) for spills.
     // RA guarantees such alignment since it is needed for Double and Long values.
     *idealreg2spillmask[Op_VecD] = *idealreg2regmask[Op_VecD];
      idealreg2spillmask[Op_VecD]->OR(aligned_stack_mask);
+  } else {
+    *idealreg2spillmask[Op_VecD] = RegMask::Empty;
   }
+
   if (Matcher::vector_size_supported(T_FLOAT,4)) {
     // For VecX we need quadro alignment and 16 bytes (4 slots) for spills.
     //
@@ -534,7 +540,10 @@ void Matcher::init_first_stack_mask() {
      assert(aligned_stack_mask.is_AllStack(), "should be infinite stack");
     *idealreg2spillmask[Op_VecX] = *idealreg2regmask[Op_VecX];
      idealreg2spillmask[Op_VecX]->OR(aligned_stack_mask);
+  } else {
+    *idealreg2spillmask[Op_VecX] = RegMask::Empty;
   }
+
   if (Matcher::vector_size_supported(T_FLOAT,8)) {
     // For VecY we need octo alignment and 32 bytes (8 slots) for spills.
     OptoReg::Name in = OptoReg::add(_in_arg_limit, -1);
@@ -546,7 +555,10 @@ void Matcher::init_first_stack_mask() {
      assert(aligned_stack_mask.is_AllStack(), "should be infinite stack");
     *idealreg2spillmask[Op_VecY] = *idealreg2regmask[Op_VecY];
      idealreg2spillmask[Op_VecY]->OR(aligned_stack_mask);
+  } else {
+    *idealreg2spillmask[Op_VecY] = RegMask::Empty;
   }
+
   if (Matcher::vector_size_supported(T_FLOAT,16)) {
     // For VecZ we need enough alignment and 64 bytes (16 slots) for spills.
     OptoReg::Name in = OptoReg::add(_in_arg_limit, -1);
@@ -558,7 +570,10 @@ void Matcher::init_first_stack_mask() {
      assert(aligned_stack_mask.is_AllStack(), "should be infinite stack");
     *idealreg2spillmask[Op_VecZ] = *idealreg2regmask[Op_VecZ];
      idealreg2spillmask[Op_VecZ]->OR(aligned_stack_mask);
+  } else {
+    *idealreg2spillmask[Op_VecZ] = RegMask::Empty;
   }
+
    if (UseFPUForSpilling) {
      // This mask logic assumes that the spill operations are
      // symmetric and that the registers involved are the same size.
