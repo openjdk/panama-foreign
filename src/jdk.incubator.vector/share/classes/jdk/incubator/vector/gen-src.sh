@@ -118,7 +118,7 @@ do
        -iX-VectorBits.java.template \
        -o$vectortype.java
 
-    if [[ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]]; then
+    if [ VAR_OS_ENV==windows.cygwin ]; then
       tr -d  '\r' < $vectortype.java > temp
       mv temp $vectortype.java
     fi

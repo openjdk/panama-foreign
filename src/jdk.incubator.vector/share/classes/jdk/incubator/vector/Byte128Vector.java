@@ -729,7 +729,7 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public byte andAll(Mask<Byte> m) {
-        return blend(SPECIES.broadcast((byte) -1), m).andAll();
+        return SPECIES.broadcast((byte) -1).blend(this, m).andAll();
     }
 
     @Override
@@ -771,7 +771,7 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public byte orAll(Mask<Byte> m) {
-        return blend(SPECIES.broadcast((byte) 0), m).orAll();
+        return SPECIES.broadcast((byte) 0).blend(this, m).orAll();
     }
 
     @Override
@@ -786,32 +786,33 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public byte xorAll(Mask<Byte> m) {
-        return blend(SPECIES.broadcast((byte) 0), m).xorAll();
+        return SPECIES.broadcast((byte) 0).blend(this, m).xorAll();
     }
 
 
     @Override
     @ForceInline
     public byte addAll(Mask<Byte> m) {
-        return blend(SPECIES.broadcast((byte) 0), m).addAll();
+        return SPECIES.broadcast((byte) 0).blend(this, m).addAll();
     }
+
 
     @Override
     @ForceInline
     public byte mulAll(Mask<Byte> m) {
-        return blend(SPECIES.broadcast((byte) 1), m).mulAll();
+        return SPECIES.broadcast((byte) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public byte minAll(Mask<Byte> m) {
-        return blend(SPECIES.broadcast(Byte.MAX_VALUE), m).minAll();
+        return SPECIES.broadcast(Byte.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public byte maxAll(Mask<Byte> m) {
-        return blend(SPECIES.broadcast(Byte.MIN_VALUE), m).maxAll();
+        return SPECIES.broadcast(Byte.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override

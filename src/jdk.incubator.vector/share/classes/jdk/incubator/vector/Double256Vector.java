@@ -897,25 +897,26 @@ final class Double256Vector extends DoubleVector {
     @Override
     @ForceInline
     public double addAll(Mask<Double> m) {
-        return blend(SPECIES.broadcast((double) 0), m).addAll();
+        return SPECIES.broadcast((double) 0).blend(this, m).addAll();
     }
+
 
     @Override
     @ForceInline
     public double mulAll(Mask<Double> m) {
-        return blend(SPECIES.broadcast((double) 1), m).mulAll();
+        return SPECIES.broadcast((double) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public double minAll(Mask<Double> m) {
-        return blend(SPECIES.broadcast(Double.MAX_VALUE), m).minAll();
+        return SPECIES.broadcast(Double.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public double maxAll(Mask<Double> m) {
-        return blend(SPECIES.broadcast(Double.MIN_VALUE), m).maxAll();
+        return SPECIES.broadcast(Double.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override

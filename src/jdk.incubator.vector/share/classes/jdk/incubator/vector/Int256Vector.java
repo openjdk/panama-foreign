@@ -773,7 +773,7 @@ final class Int256Vector extends IntVector {
     @Override
     @ForceInline
     public int andAll(Mask<Integer> m) {
-        return blend(SPECIES.broadcast((int) -1), m).andAll();
+        return SPECIES.broadcast((int) -1).blend(this, m).andAll();
     }
 
     @Override
@@ -815,7 +815,7 @@ final class Int256Vector extends IntVector {
     @Override
     @ForceInline
     public int orAll(Mask<Integer> m) {
-        return blend(SPECIES.broadcast((int) 0), m).orAll();
+        return SPECIES.broadcast((int) 0).blend(this, m).orAll();
     }
 
     @Override
@@ -830,32 +830,33 @@ final class Int256Vector extends IntVector {
     @Override
     @ForceInline
     public int xorAll(Mask<Integer> m) {
-        return blend(SPECIES.broadcast((int) 0), m).xorAll();
+        return SPECIES.broadcast((int) 0).blend(this, m).xorAll();
     }
 
 
     @Override
     @ForceInline
     public int addAll(Mask<Integer> m) {
-        return blend(SPECIES.broadcast((int) 0), m).addAll();
+        return SPECIES.broadcast((int) 0).blend(this, m).addAll();
     }
+
 
     @Override
     @ForceInline
     public int mulAll(Mask<Integer> m) {
-        return blend(SPECIES.broadcast((int) 1), m).mulAll();
+        return SPECIES.broadcast((int) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public int minAll(Mask<Integer> m) {
-        return blend(SPECIES.broadcast(Integer.MAX_VALUE), m).minAll();
+        return SPECIES.broadcast(Integer.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public int maxAll(Mask<Integer> m) {
-        return blend(SPECIES.broadcast(Integer.MIN_VALUE), m).maxAll();
+        return SPECIES.broadcast(Integer.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override

@@ -773,7 +773,7 @@ final class Long512Vector extends LongVector {
     @Override
     @ForceInline
     public long andAll(Mask<Long> m) {
-        return blend(SPECIES.broadcast((long) -1), m).andAll();
+        return SPECIES.broadcast((long) -1).blend(this, m).andAll();
     }
 
     @Override
@@ -815,7 +815,7 @@ final class Long512Vector extends LongVector {
     @Override
     @ForceInline
     public long orAll(Mask<Long> m) {
-        return blend(SPECIES.broadcast((long) 0), m).orAll();
+        return SPECIES.broadcast((long) 0).blend(this, m).orAll();
     }
 
     @Override
@@ -830,32 +830,33 @@ final class Long512Vector extends LongVector {
     @Override
     @ForceInline
     public long xorAll(Mask<Long> m) {
-        return blend(SPECIES.broadcast((long) 0), m).xorAll();
+        return SPECIES.broadcast((long) 0).blend(this, m).xorAll();
     }
 
 
     @Override
     @ForceInline
     public long addAll(Mask<Long> m) {
-        return blend(SPECIES.broadcast((long) 0), m).addAll();
+        return SPECIES.broadcast((long) 0).blend(this, m).addAll();
     }
+
 
     @Override
     @ForceInline
     public long mulAll(Mask<Long> m) {
-        return blend(SPECIES.broadcast((long) 1), m).mulAll();
+        return SPECIES.broadcast((long) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public long minAll(Mask<Long> m) {
-        return blend(SPECIES.broadcast(Long.MAX_VALUE), m).minAll();
+        return SPECIES.broadcast(Long.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public long maxAll(Mask<Long> m) {
-        return blend(SPECIES.broadcast(Long.MIN_VALUE), m).maxAll();
+        return SPECIES.broadcast(Long.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override
