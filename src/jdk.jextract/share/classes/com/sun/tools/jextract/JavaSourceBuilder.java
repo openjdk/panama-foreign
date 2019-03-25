@@ -69,10 +69,19 @@ class JavaSourceBuilder {
     }
 
     protected void interfaceBegin(String name, boolean isStatic) {
-        interfaceBegin(name, isStatic, false);
+        interfaceBegin(name, isStatic, null);
+    }
+
+    protected void interfaceBegin(String name, boolean isStatic, String superName) {
+        interfaceBegin(name, isStatic, false, superName);
     }
 
     protected void interfaceBegin(String name, boolean isStatic, boolean isAnnotation) {
+        interfaceBegin(name, isStatic, isAnnotation, null);
+    }
+
+    protected void interfaceBegin(String name, boolean isStatic,
+            boolean isAnnotation, String superName) {
         check();
         indent();
         sb.append("public ");
@@ -84,6 +93,10 @@ class JavaSourceBuilder {
         }
         sb.append("interface ");
         sb.append(name);
+        if (superName != null) {
+            sb.append(" extends ");
+            sb.append(superName);
+        }
         sb.append(" {\n\n");
     }
 
