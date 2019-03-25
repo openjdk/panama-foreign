@@ -92,6 +92,8 @@ public class SrcGenTest extends JextractToolRunner {
         javacOpts.add(outputDir.toString());
         javacOpts.add(pkgDir + File.separator + "srcgentest.java");
         javacOpts.add(pkgDir + File.separator + "srcgentest_h.java");
+        javacOpts.add(pkgDir.resolve("sub").resolve("dupname.java").toString());
+        javacOpts.add(pkgDir.resolve("sub").resolve("dupname_h.java").toString());
         result = JAVAC.run(System.out, System.err, javacOpts.toArray(String[]::new));
         if (result != 0) {
             throw new RuntimeException(JAVAC.name() + " returns non-zero value");
@@ -103,6 +105,9 @@ public class SrcGenTest extends JextractToolRunner {
         assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest$Color.class")));
         assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest_h.class")));
         assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest_h$Color.class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve("sub").resolve("dupname_h.class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve("sub").resolve("dupname.class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve("sub").resolve("dupname$dupnameNot.class")));
 
         checkClasses(outputDir, pkgName);
     }
@@ -111,6 +116,9 @@ public class SrcGenTest extends JextractToolRunner {
         Loader loader = classLoader(outputDir);
         Class<?> forwarderCls = loader.loadClass(pkgName + ".srcgentest_h");
         assertTrue(forwarderCls != null);
+
+        Class<?> dupname = loader.loadClass(pkgName + ".sub.dupname");
+        assertTrue(dupname != null);
 
         // check "sum" method
         Method sumMethod = findFirstMethod(forwarderCls, "sum");
