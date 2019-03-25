@@ -115,18 +115,35 @@ final class JavaSourceBuilderExt extends JavaSourceBuilder {
         sb.append(name);
         sb.append(" = ");
         if (value != null) {
-            boolean isChar = value instanceof Character;
-            if (isChar) {
+            if (value instanceof Character) {
                 sb.append('\'');
-            }
-            sb.append(value);
-            if (isChar) {
+                sb.append(value);
                 sb.append('\'');
-            }
-            if (value instanceof Long) {
+            } else if (value instanceof Long) {
+                sb.append(value);
                 sb.append('L');
+            } else if (value instanceof Float) {
+                Float f = (Float)value;
+                if (f.isNaN()) {
+                    sb.append("Float.NaN");
+                } else if (f.isInfinite()) {
+                    sb.append(f > 0? "Float.POSITIVE_INFINITY" : "Float.NEGATIVE_INFINITY");
+                } else {
+                    sb.append(value);
+                    sb.append('F');
+                }
             } else if (value instanceof Double) {
-                sb.append('D');
+                Double d = (Double)value;
+                if (d.isNaN()) {
+                    sb.append("Double.NaN");
+                } else if (d.isInfinite()) {
+                    sb.append(d > 0? "Double.POSITIVE_INFINITY" : "Double.NEGATIVE_INFINITY");
+                } else {
+                    sb.append(value);
+                    sb.append('D');
+                }
+            } else {
+                sb.append(value);
             }
         } else {
             sb.append(libraryField);

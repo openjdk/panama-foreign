@@ -51,6 +51,11 @@ EXPORT int x_coord(struct Point* p);
 EXPORT int y_coord(struct Point* p);
 EXPORT int sum(int i, ...);
 
+#define INFINITY 1.0/0.0
+#define NAN 0.0/0.0
+
+EXPORT int (*funcPtr)(int);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
