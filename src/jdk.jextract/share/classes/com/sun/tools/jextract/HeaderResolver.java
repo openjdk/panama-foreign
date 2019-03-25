@@ -30,7 +30,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class HeaderResolver {
 
@@ -102,10 +101,10 @@ public class HeaderResolver {
         if (path != null) {
             pkg = pkgMap.get(path);
             if (path.getNameCount() != origin.getNameCount()) {
-                String sep = pkg.isEmpty() ? "" : "/";
+                String sep = pkg.isEmpty() ? "" : ".";
                 for (int i = path.getNameCount() ; i < origin.getNameCount() ; i++) {
                     pkg += sep + Utils.toJavaIdentifier(origin.getName(i).toString());
-                    sep = "/";
+                    sep = ".";
                 }
                 usePackageForFolder(origin, pkg);
             }
@@ -115,7 +114,7 @@ public class HeaderResolver {
             for (Path p : origin) {
                 parts.add(Utils.toJavaIdentifier(p.toString()));
             }
-            pkg = String.join("/", parts);
+            pkg = String.join(".", parts);
             usePackageForFolder(origin, pkg);
         }
 
