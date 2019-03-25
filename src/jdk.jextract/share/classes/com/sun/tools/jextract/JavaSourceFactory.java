@@ -259,7 +259,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
 
         JavaSourceBuilder jsb = new JavaSourceBuilder(global_jsb.align() + 1);
         jsb.addAnnotation(false, NATIVE_STRUCT, Map.of("value", structTree.layout().toString()));
-        jsb.interfaceBegin(intf, true);
+        jsb.interfaceBegin(intf, true, "Struct<" + intf + ">");
         // fields
         structTree.fields().forEach(fieldTree -> addField(jsb, fieldTree, type));
         jsb.interfaceEnd();
