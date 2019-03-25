@@ -25,6 +25,8 @@
 
 EXPORT int num = 42;
 
+EXPORT int (*funcPtr)(int);
+
 EXPORT int x_coord(struct Point* p) {
     return p->x;
 }

@@ -313,8 +313,8 @@ public abstract class JType {
     final static class FunctionalInterfaceType extends ClassType {
         final Function fn;
 
-        FunctionalInterfaceType(String name, Function fn) {
-            super(name);
+        FunctionalInterfaceType(String enclosingName, String name, Function fn) {
+            super(enclosingName, name);
             this.fn = fn;
         }
 

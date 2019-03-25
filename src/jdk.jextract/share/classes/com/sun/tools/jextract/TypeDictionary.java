@@ -219,8 +219,7 @@ public final class TypeDictionary {
     //where
     private JType enterFunctionIfNeeded(JType.Function f) {
         return functionalTypes.computeIfAbsent(f.getNativeDescriptor(), _unused ->
-            new JType.FunctionalInterfaceType(headerClass() +
-                    "$FI" + serialNo(), f));
+            new JType.FunctionalInterfaceType(headerClass(), "FI" + serialNo(), f));
     }
 
     public JType lookup(Type t) {
