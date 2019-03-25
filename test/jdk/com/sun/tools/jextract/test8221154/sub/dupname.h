@@ -21,36 +21,7 @@
  * questions.
  */
 
-#include "sub/dupname.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
-#ifdef _WIN64
-#define EXPORT __declspec(dllexport)
-#else
-#define EXPORT
-#endif
-
-enum {
-    R, G, B
+struct dupnameNot {
+    int x;
+    int y;
 };
-
-enum Color {
-    RED, GREEN, BLUE
-};
-
-struct Point {
-    int x, y;
-};
-
-EXPORT int num;
-
-EXPORT int x_coord(struct Point* p);
-EXPORT int y_coord(struct Point* p);
-EXPORT int sum(int i, ...);
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
