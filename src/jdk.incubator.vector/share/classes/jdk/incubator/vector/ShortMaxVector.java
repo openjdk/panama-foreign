@@ -730,7 +730,7 @@ final class ShortMaxVector extends ShortVector {
     @Override
     @ForceInline
     public short andAll(Mask<Short> m) {
-        return blend(SPECIES.broadcast((short) -1), m).andAll();
+        return SPECIES.broadcast((short) -1).blend(this, m).andAll();
     }
 
     @Override
@@ -772,7 +772,7 @@ final class ShortMaxVector extends ShortVector {
     @Override
     @ForceInline
     public short orAll(Mask<Short> m) {
-        return blend(SPECIES.broadcast((short) 0), m).orAll();
+        return SPECIES.broadcast((short) 0).blend(this, m).orAll();
     }
 
     @Override
@@ -787,32 +787,33 @@ final class ShortMaxVector extends ShortVector {
     @Override
     @ForceInline
     public short xorAll(Mask<Short> m) {
-        return blend(SPECIES.broadcast((short) 0), m).xorAll();
+        return SPECIES.broadcast((short) 0).blend(this, m).xorAll();
     }
 
 
     @Override
     @ForceInline
     public short addAll(Mask<Short> m) {
-        return blend(SPECIES.broadcast((short) 0), m).addAll();
+        return SPECIES.broadcast((short) 0).blend(this, m).addAll();
     }
+
 
     @Override
     @ForceInline
     public short mulAll(Mask<Short> m) {
-        return blend(SPECIES.broadcast((short) 1), m).mulAll();
+        return SPECIES.broadcast((short) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public short minAll(Mask<Short> m) {
-        return blend(SPECIES.broadcast(Short.MAX_VALUE), m).minAll();
+        return SPECIES.broadcast(Short.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public short maxAll(Mask<Short> m) {
-        return blend(SPECIES.broadcast(Short.MIN_VALUE), m).maxAll();
+        return SPECIES.broadcast(Short.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override

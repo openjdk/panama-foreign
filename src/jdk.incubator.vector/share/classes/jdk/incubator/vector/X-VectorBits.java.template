@@ -1162,7 +1162,7 @@ final class $vectortype$ extends $abstractvectortype$ {
     @Override
     @ForceInline
     public $type$ andAll(Mask<$Boxtype$> m) {
-        return blend(SPECIES.broadcast(($type$) -1), m).andAll();
+        return SPECIES.broadcast(($type$) -1).blend(this, m).andAll();
     }
 
     @Override
@@ -1204,7 +1204,7 @@ final class $vectortype$ extends $abstractvectortype$ {
     @Override
     @ForceInline
     public $type$ orAll(Mask<$Boxtype$> m) {
-        return blend(SPECIES.broadcast(($type$) 0), m).orAll();
+        return SPECIES.broadcast(($type$) 0).blend(this, m).orAll();
     }
 
     @Override
@@ -1219,7 +1219,7 @@ final class $vectortype$ extends $abstractvectortype$ {
     @Override
     @ForceInline
     public $type$ xorAll(Mask<$Boxtype$> m) {
-        return blend(SPECIES.broadcast(($type$) 0), m).xorAll();
+        return SPECIES.broadcast(($type$) 0).blend(this, m).xorAll();
     }
 #end[BITWISE]
 
@@ -1281,25 +1281,26 @@ final class $vectortype$ extends $abstractvectortype$ {
     @Override
     @ForceInline
     public $type$ addAll(Mask<$Boxtype$> m) {
-        return blend(SPECIES.broadcast(($type$) 0), m).addAll();
+        return SPECIES.broadcast(($type$) 0).blend(this, m).addAll();
     }
+
 
     @Override
     @ForceInline
     public $type$ mulAll(Mask<$Boxtype$> m) {
-        return blend(SPECIES.broadcast(($type$) 1), m).mulAll();
+        return SPECIES.broadcast(($type$) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public $type$ minAll(Mask<$Boxtype$> m) {
-        return blend(SPECIES.broadcast($Boxtype$.MAX_VALUE), m).minAll();
+        return SPECIES.broadcast($Boxtype$.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public $type$ maxAll(Mask<$Boxtype$> m) {
-        return blend(SPECIES.broadcast($Boxtype$.MIN_VALUE), m).maxAll();
+        return SPECIES.broadcast($Boxtype$.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override

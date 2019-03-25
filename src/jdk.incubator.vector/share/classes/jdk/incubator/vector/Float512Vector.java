@@ -897,25 +897,26 @@ final class Float512Vector extends FloatVector {
     @Override
     @ForceInline
     public float addAll(Mask<Float> m) {
-        return blend(SPECIES.broadcast((float) 0), m).addAll();
+        return SPECIES.broadcast((float) 0).blend(this, m).addAll();
     }
+
 
     @Override
     @ForceInline
     public float mulAll(Mask<Float> m) {
-        return blend(SPECIES.broadcast((float) 1), m).mulAll();
+        return SPECIES.broadcast((float) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public float minAll(Mask<Float> m) {
-        return blend(SPECIES.broadcast(Float.MAX_VALUE), m).minAll();
+        return SPECIES.broadcast(Float.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public float maxAll(Mask<Float> m) {
-        return blend(SPECIES.broadcast(Float.MIN_VALUE), m).maxAll();
+        return SPECIES.broadcast(Float.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override
