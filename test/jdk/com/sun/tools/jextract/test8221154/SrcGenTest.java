@@ -114,6 +114,14 @@ public class SrcGenTest extends JextractToolRunner {
 
     private void checkClasses(Path outputDir, String pkgName) {
         Loader loader = classLoader(outputDir);
+        Class<?> headerCls = loader.loadClass(pkgName + ".srcgentest");
+        assertTrue(headerCls != null);
+        Class<?> pointCls = Arrays.stream(headerCls.getClasses())
+            .filter(c -> c.getSimpleName().equals("Point")).findFirst().get();
+        assertTrue(Modifier.isInterface(pointCls.getModifiers()));
+        Class<?> pointSuper = pointCls.getInterfaces()[0];
+        assertTrue(pointSuper.getName().equals("java.foreign.memory.Struct"));
+
         Class<?> forwarderCls = loader.loadClass(pkgName + ".srcgentest_h");
         assertTrue(forwarderCls != null);
 
