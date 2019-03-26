@@ -21,6 +21,11 @@
  * questions.
  */
 
+import java.foreign.annotations.NativeAddressof;
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeSetter;
+import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Pointer;
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +42,7 @@ import static org.testng.Assert.assertTrue;
 
 /*
  * @test
- * @bug 8221154
+ * @bug 8221154 8221228 8221336 8221419 8221443
  * @summary jextract should generate java source files
  * @library ..
  * @run testng SrcGenTest
@@ -114,19 +119,75 @@ public class SrcGenTest extends JextractToolRunner {
 
     private void checkClasses(Path outputDir, String pkgName) {
         Loader loader = classLoader(outputDir);
+        checkSubdirClass(loader, pkgName);
+        checkHeaderClass(loader, pkgName);
+        checkForwarderClass(loader, pkgName);
+    }
+
+    private void checkSubdirClass(Loader loader, String pkgName) {
+        Class<?> dupname = loader.loadClass(pkgName + ".sub.dupname");
+        assertTrue(dupname != null);
+    }
+
+    private void checkHeaderClass(Loader loader, String pkgName) {
         Class<?> headerCls = loader.loadClass(pkgName + ".srcgentest");
         assertTrue(headerCls != null);
+        assertTrue(headerCls.getAnnotation(NativeHeader.class) != null);
+
+        // global 'num' getter, pointer getter
+        Method numGetter = findGlobalVariableGet(headerCls, "num");
+        assertTrue(numGetter != null);
+        assertTrue(numGetter.getAnnotation(NativeGetter.class) != null);
+
+        Method numPtrGetter = findGlobalVariablePointerGet(headerCls, "num");
+        assertTrue(numPtrGetter != null);
+        assertTrue(numPtrGetter.getAnnotation(NativeAddressof.class) != null);
+
+        // global 'num' setter
+        Method numSetter = findGlobalVariableSet(headerCls, "num", int.class);
+        assertTrue(numSetter != null);
+        assertTrue(numSetter.getAnnotation(NativeSetter.class) != null);
+
+        // struct Point
         Class<?> pointCls = Arrays.stream(headerCls.getClasses())
             .filter(c -> c.getSimpleName().equals("Point")).findFirst().get();
         assertTrue(Modifier.isInterface(pointCls.getModifiers()));
+        assertTrue(pointCls.getAnnotation(NativeStruct.class) != null);
+
+        // Point extends Struct
         Class<?> pointSuper = pointCls.getInterfaces()[0];
         assertTrue(pointSuper.getName().equals("java.foreign.memory.Struct"));
 
+        // x, y getters, pointer getters
+        Method xGetter = findStructFieldGet(pointCls, "x");
+        assertTrue(xGetter != null);
+        assertTrue(xGetter.getAnnotation(NativeGetter.class) != null);
+
+        Method yGetter = findStructFieldGet(pointCls, "y");
+        assertTrue(yGetter != null);
+        assertTrue(yGetter.getAnnotation(NativeGetter.class) != null);
+
+        Method xPtrGetter = findStructFieldPointerGet(pointCls, "x");
+        assertTrue(xPtrGetter != null);
+        assertTrue(xPtrGetter.getAnnotation(NativeAddressof.class) != null);
+
+        Method yPtrGetter = findStructFieldPointerGet(pointCls, "y");
+        assertTrue(yPtrGetter != null);
+        assertTrue(yPtrGetter.getAnnotation(NativeAddressof.class) != null);
+
+        // x, y setters
+        Method xSetter = findStructFieldSet(pointCls, "x", int.class);
+        assertTrue(xSetter != null);
+        assertTrue(xSetter.getAnnotation(NativeSetter.class) != null);
+
+        Method ySetter = findStructFieldSet(pointCls, "y", int.class);
+        assertTrue(ySetter != null);
+        assertTrue(ySetter.getAnnotation(NativeSetter.class) != null);
+    }
+
+    private void checkForwarderClass(Loader loader, String pkgName) {
         Class<?> forwarderCls = loader.loadClass(pkgName + ".srcgentest_h");
         assertTrue(forwarderCls != null);
-
-        Class<?> dupname = loader.loadClass(pkgName + ".sub.dupname");
-        assertTrue(dupname != null);
 
         // check "sum" method
         Method sumMethod = findFirstMethod(forwarderCls, "sum");

@@ -180,8 +180,24 @@ public class JextractToolRunner {
         return findMethod(cls, name + "$get");
     }
 
+    protected static Method findStructFieldSet(Class<?> cls, String name, Class<?> type) {
+        return findMethod(cls, name + "$set", type);
+    }
+
+    protected static Method findStructFieldPointerGet(Class<?> cls, String name) {
+        return findMethod(cls, name + "$ptr");
+    }
+
     protected static Method findGlobalVariableGet(Class<?> cls, String name) {
         return findMethod(cls, name + "$get");
+    }
+
+    protected static Method findGlobalVariableSet(Class<?> cls, String name, Class<?> type) {
+        return findMethod(cls, name + "$set", type);
+    }
+
+    protected static Method findGlobalVariablePointerGet(Class<?> cls, String name) {
+        return findMethod(cls, name + "$ptr");
     }
 
     protected static Method findEnumConstGet(Class<?> cls, String name) {
