@@ -199,7 +199,10 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         assert (jt != null);
 
         addNativeLocation(jsb, tree);
+        jsb.addAnnotation(NATIVE_GETTER, Map.of("value", fieldName));
         jsb.addGetter(fieldName + "$get", jt);
+
+        jsb.addAnnotation(NATIVE_SETTER, Map.of("value", fieldName));
         jsb.addSetter(fieldName + "$set", jt);
 
         if (tree instanceof VarTree || !isBitField(tree)) {
