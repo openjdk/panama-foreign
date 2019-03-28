@@ -69,8 +69,8 @@ public class SimpleFuncParamTest extends JextractToolRunner {
         Path hPath = getInputFilePath("funcParam.h");
         run("-o", jarPath.toString(), hPath.toString()).checkSuccess();
         try(Loader loader = classLoader(jarPath)) {
-            Class<?> cbClass = loader.loadClass("funcParam$FI1");
-            Class<?> funcClass = loader.loadClass("funcParam");
+            Class<?> cbClass = loader.loadClass(callbackInterfaceName("funcParam.h", "FI1"));
+            Class<?> funcClass = loader.loadClass(headerInterfaceName("funcParam.h"));
             try (Scope scope = Scope.globalScope().fork()) {
                 Lookup l = MethodHandles.lookup();
                 Callback<?> cb = scope.allocateCallback((Class) cbClass, MethodHandleProxies.asInterfaceInstance(cbClass, MH_testCB.bindTo(this)));

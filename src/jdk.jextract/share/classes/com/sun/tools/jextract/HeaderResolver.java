@@ -48,6 +48,16 @@ public class HeaderResolver {
         ctx.options.pkgMappings.forEach(this::usePackageForFolder);
     }
 
+    public String headerInterfaceName(String filename) {
+        int ext = filename.lastIndexOf('.');
+        String name = ext != -1 ? filename.substring(0, ext) : filename;
+        return Utils.toClassName(name);
+    }
+
+    public String staticForwarderName(String filename) {
+        return headerInterfaceName(filename) + "_h";
+    }
+
     private void usePackageForFolder(Path folder, String pkg) {
         folder = folder.normalize().toAbsolutePath();
         String existing = pkgMap.putIfAbsent(folder, pkg);
@@ -64,11 +74,13 @@ public class HeaderResolver {
 
     static class HeaderPath {
         final String pkg;
-        final String cls;
+        final String headerCls;
+        final String forwarderCls;
 
-        HeaderPath(String pkg, String cls) {
+        HeaderPath(String pkg, String headerCls, String forwarderCls) {
             this.pkg = pkg;
-            this.cls = cls;
+            this.headerCls = headerCls;
+            this.forwarderCls = forwarderCls;
         }
     }
 
@@ -118,11 +130,7 @@ public class HeaderResolver {
             usePackageForFolder(origin, pkg);
         }
 
-        int ext = filename.lastIndexOf('.');
-        String cls = (ext != -1) ?
-                filename.substring(0, ext) :
-                filename;
-        return new HeaderPath(pkg, Utils.toClassName(cls));
+        return new HeaderPath(pkg, headerInterfaceName(filename), staticForwarderName(filename));
     }
 
     private HeaderFile getHeaderFile(Path header) {
@@ -132,7 +140,7 @@ public class HeaderResolver {
         }
 
         final HeaderPath hp = resolveHeaderPath(header);
-        return new HeaderFile(this, header, hp.pkg, hp.cls);
+        return new HeaderFile(this, header, hp.pkg, hp.headerCls, hp.forwarderCls);
     }
 
     public HeaderFile headerFor(Path path) {

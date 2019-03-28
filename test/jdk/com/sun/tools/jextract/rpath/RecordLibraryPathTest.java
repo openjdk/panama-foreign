@@ -45,8 +45,8 @@ public class RecordLibraryPathTest extends JextractToolRunner {
                 "-l", "b", "--record-library-path", "-L", "foo/bar",
                 getInputFilePath("foo.h").toString()).checkSuccess();
         try(Loader loader = classLoader(clzPath)) {
-            for (String name : new String[] { "foo", "bar"}) {
-                Class<?> headerCls = loader.loadClass(name);
+            for (String name : new String[] { "foo.h", "bar.h"}) {
+                Class<?> headerCls = loader.loadClass(headerInterfaceName(name));
                 NativeHeader nativeHeader = headerCls.getAnnotation(NativeHeader.class);
                 assertNotNull(nativeHeader);
                 assertTrue(nativeHeader.libraryPaths().length == 1);

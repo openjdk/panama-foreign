@@ -49,7 +49,7 @@ public class TestForwardRef extends JextractToolRunner {
                 .checkMatchesOutput("^$")
                 .checkSuccess();
         try (Loader loader = classLoader(forwardRefJar)) {
-            Class<?> cls = loader.loadClass("forwardRef");
+            Class<?> cls = loader.loadClass(headerInterfaceName("forwardRef.h"));
             Method getterS = findGlobalVariableGet(cls, "s"); //check that we can load the globals's type correctly
             Class<?> structS = getterS.getReturnType();
             assertEquals(structS.getDeclaredClasses().length, 0); //check no spurious decl in forward ref
