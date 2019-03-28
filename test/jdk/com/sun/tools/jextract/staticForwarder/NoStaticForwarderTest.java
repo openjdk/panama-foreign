@@ -33,8 +33,9 @@ import static org.testng.Assert.assertTrue;
 public class NoStaticForwarderTest {
     @Test
     public void test() {
-        assertTrue(loadClass("test.jextract.utils.utils") != null);
-        assertTrue(loadClass("test.jextract.utils.utils_h") == null);
+        String pkgPrefix = "test.jextract.utils.";
+        assertTrue(loadClass(pkgPrefix + JextractToolRunner.headerInterfaceName("utils.h")) != null);
+        assertTrue(loadClass(pkgPrefix + JextractToolRunner.staticForwarderName("utils.h")) == null);
     }
 
     private Class<?> loadClass(String name) {

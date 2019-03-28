@@ -67,7 +67,7 @@ public final class TypeDictionary {
             //try resolve globally
             Path p = t.getDeclarationCursor().getSourceLocation().getFileLocation().path();
             HeaderFile hf = resolver.headerFor(p);
-            return Utils.toInternalName(hf.pkgName, hf.clsName);
+            return Utils.toInternalName(hf.pkgName, hf.headerClsName);
         } catch (Throwable ex) {
             //fallback: resolve locally. This can happen for two reasons: (i) the symbol to be resolved is a builtin
             //symbol (e.g. no header file has its definition), or (ii) when the declaration cursor points to an header file
@@ -77,7 +77,7 @@ public final class TypeDictionary {
     }
 
     private String headerClass() {
-        return Utils.toInternalName(headerFile.pkgName, headerFile.clsName);
+        return Utils.toInternalName(headerFile.pkgName, headerFile.headerClsName);
     }
 
     public Stream<JType> functionalInterfaces() {

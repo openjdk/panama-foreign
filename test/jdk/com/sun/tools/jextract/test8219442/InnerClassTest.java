@@ -50,13 +50,25 @@ public class InnerClassTest extends JextractToolRunner {
         Path testH = getInputFilePath("test.h");
         run("-o", testJar.toString(),
             "-t", "test8219442", testH.toString()).checkSuccess();
-        try {
-            String text = getInnerClasses(testJar.toString(), "test8219442.test");
-            assertTrue(text.indexOf("// Point=class test8219442/point$Point of class test8219442/point") != -1);
 
-            text = getInnerClasses(testJar.toString(), "test8219442.point.Point3D");
-            assertTrue(text.indexOf("// Point=class test8219442/point$Point of class test8219442/point") != -1);
-            assertTrue(text.indexOf("// Point3D=class test8219442/point$Point3D of class test8219442/point") != -1);
+        String pkgPrefix = "test8219442.";
+        String testIfaceName = pkgPrefix + headerInterfaceName("test.h");
+        String testIfaceNameInternal = testIfaceName.replace('.', '/');
+        String pointIfaceName = pkgPrefix + headerInterfaceName("point.h");
+        String pointIfaceNameInternal = pointIfaceName.replace('.', '/');
+        String point3DName = pkgPrefix + structInterfaceName("point.h", "Point3D");
+        String point3DNameInternal = point3DName.replace('.', '/');
+        String pointName = pkgPrefix + structInterfaceName("point.h", "Point");
+        String pointNameInternal = pointName.replace('.', '/');
+
+        try {
+            String text = getInnerClasses(testJar.toString(), testIfaceName);
+
+            assertTrue(text.indexOf("// Point=class " + pointNameInternal + " of class " + pointIfaceNameInternal) != -1);
+
+            text = getInnerClasses(testJar.toString(), point3DName);
+            assertTrue(text.indexOf("// Point=class " + pointNameInternal + " of class " + pointIfaceNameInternal) != -1);
+            assertTrue(text.indexOf("// Point3D=class " + point3DNameInternal + " of class " + pointIfaceNameInternal) != -1);
         } finally {
             deleteFile(testJar);
         }

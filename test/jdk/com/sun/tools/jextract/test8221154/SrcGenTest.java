@@ -91,28 +91,38 @@ public class SrcGenTest extends JextractToolRunner {
         Files.delete(jarPath);
 
         Path pkgDir = outputDir.resolve(pkgName);
+
+        String srcgentestIfaceName = headerInterfaceName("srcgentest.h");
+        String srcgentestForwarderName = staticForwarderName("srcgentest.h");
+        String dupnameIfaceName = headerInterfaceName("dupname.h");
+        String dupnameDupnameNotName = structInterfaceName("dupname.h", "dupnameNot");
+        String dupnameForwarderName = staticForwarderName("dupname.h");
+        String srcgentestPointName = structInterfaceName("srcgentest.h", "Point");
+        String srcgentestColorName = enumInterfaceName("srcgentest.h", "Color");
+        String srcgentestForwarderEnumName = enumForwarderInterfaceName("srcgentest.h", "Color");
+
         // compile jextract generated java sources
         ArrayList<String> javacOpts = new ArrayList<>();
         javacOpts.add("-d");
         javacOpts.add(outputDir.toString());
-        javacOpts.add(pkgDir + File.separator + "srcgentest.java");
-        javacOpts.add(pkgDir + File.separator + "srcgentest_h.java");
-        javacOpts.add(pkgDir.resolve("sub").resolve("dupname.java").toString());
-        javacOpts.add(pkgDir.resolve("sub").resolve("dupname_h.java").toString());
+        javacOpts.add(pkgDir.resolve(srcgentestIfaceName + ".java").toString());
+        javacOpts.add(pkgDir.resolve(srcgentestForwarderName + ".java").toString());
+        javacOpts.add(pkgDir.resolve("sub").resolve(dupnameIfaceName + ".java").toString());
+        javacOpts.add(pkgDir.resolve("sub").resolve(dupnameForwarderName + ".java").toString());
         result = JAVAC.run(System.out, System.err, javacOpts.toArray(String[]::new));
         if (result != 0) {
             throw new RuntimeException(JAVAC.name() + " returns non-zero value");
         }
 
         // sanity checks for .class file existence
-        assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest.class")));
-        assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest$Point.class")));
-        assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest$Color.class")));
-        assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest_h.class")));
-        assertTrue(Files.isRegularFile(pkgDir.resolve("srcgentest_h$Color.class")));
-        assertTrue(Files.isRegularFile(pkgDir.resolve("sub").resolve("dupname_h.class")));
-        assertTrue(Files.isRegularFile(pkgDir.resolve("sub").resolve("dupname.class")));
-        assertTrue(Files.isRegularFile(pkgDir.resolve("sub").resolve("dupname$dupnameNot.class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve(srcgentestIfaceName + ".class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve(srcgentestPointName + ".class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve(srcgentestColorName + ".class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve(srcgentestForwarderName + ".class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve(srcgentestForwarderEnumName + ".class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve("sub").resolve(dupnameForwarderName + ".class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve("sub").resolve(dupnameIfaceName + ".class")));
+        assertTrue(Files.isRegularFile(pkgDir.resolve("sub").resolve(dupnameDupnameNotName + ".class")));
 
         checkClasses(outputDir, pkgName);
     }
@@ -125,12 +135,12 @@ public class SrcGenTest extends JextractToolRunner {
     }
 
     private void checkSubdirClass(Loader loader, String pkgName) {
-        Class<?> dupname = loader.loadClass(pkgName + ".sub.dupname");
+        Class<?> dupname = loader.loadClass(pkgName + ".sub." + headerInterfaceName("dupname.h"));
         assertTrue(dupname != null);
     }
 
     private void checkHeaderClass(Loader loader, String pkgName) {
-        Class<?> headerCls = loader.loadClass(pkgName + ".srcgentest");
+        Class<?> headerCls = loader.loadClass(pkgName + "." + headerInterfaceName("srcgentest.h"));
         assertTrue(headerCls != null);
         assertTrue(headerCls.getAnnotation(NativeHeader.class) != null);
 
@@ -186,7 +196,7 @@ public class SrcGenTest extends JextractToolRunner {
     }
 
     private void checkForwarderClass(Loader loader, String pkgName) {
-        Class<?> forwarderCls = loader.loadClass(pkgName + ".srcgentest_h");
+        Class<?> forwarderCls = loader.loadClass(pkgName + "." + staticForwarderName("srcgentest.h"));
         assertTrue(forwarderCls != null);
 
         // check "sum" method

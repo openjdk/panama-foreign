@@ -84,7 +84,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         this.log = ctx.log;
         log.print(Level.INFO, () -> "Instantiate JavaSourceFactory for " + header.path);
         this.headerFile = header;
-        this.headerClassName = headerFile.pkgName + "." + headerFile.clsName;
+        this.headerClassName = headerFile.pkgName + "." + headerFile.headerClsName;
         this.types = new HashMap<>();
         this.libraryNames = ctx.options.libraryNames;
         this.libraryPaths = ctx.options.recordLibraryPath? ctx.options.libraryPaths : null;
@@ -126,7 +126,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         }
 
         global_jsb.addAnnotation(false, NATIVE_HEADER, header);
-        String clsName = headerFile.clsName;
+        String clsName = headerFile.headerClsName;
         global_jsb.interfaceBegin(clsName, false);
 
         //generate all decls
@@ -151,7 +151,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
     }
 
     protected void handleException(Exception ex) {
-        log.printError("cannot.write.class.file", headerFile.pkgName + "." + headerFile.clsName, ex);
+        log.printError("cannot.write.class.file", headerFile.pkgName + "." + headerFile.headerClsName, ex);
         log.printStackTrace(ex);
     }
 

@@ -45,8 +45,6 @@ import com.sun.tools.jextract.tree.VarTree;
  * looks more or less like C code. Libraries.bind and header interface usage is hidden.
  */
 final class JavaSourceFactoryExt extends JavaSourceFactory {
-    // suffix for static forwarder class name
-    private static final String STATICS_CLASS_NAME_SUFFIX = "_h";
     // field name for the header interface instance.
     private static final String STATICS_LIBRARY_FIELD_NAME = "_theLibrary";
     private final JavaSourceBuilderExt header_jsb;
@@ -62,9 +60,9 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
     @Override
     public void generate(List<Tree> decls) {
         header_jsb.addPackagePrefix(headerFile.pkgName);
-        String ifaceClsName = headerFile.clsName;
-        String clsName = ifaceClsName + STATICS_CLASS_NAME_SUFFIX;
-        header_jsb.classBegin(clsName, false);
+        String ifaceClsName = headerFile.headerClsName;
+        String forwarderName = headerFile.staticForwarderClsName;
+        header_jsb.classBegin(forwarderName, false);
 
         header_jsb.addLibraryField(ifaceClsName, STATICS_LIBRARY_FIELD_NAME);
         header_jsb.emitScopeAccessor(STATICS_LIBRARY_FIELD_NAME);
@@ -75,7 +73,7 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
         header_jsb.classEnd();
         String src = header_jsb.build();
         try {
-            Path srcPath = srcDir.resolve(clsName + ".java");
+            Path srcPath = srcDir.resolve(forwarderName + ".java");
             Files.write(srcPath, List.of(src));
         } catch (Exception ex) {
             handleException(ex);

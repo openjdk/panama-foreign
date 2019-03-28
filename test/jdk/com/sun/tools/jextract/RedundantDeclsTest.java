@@ -45,15 +45,15 @@ public class RedundantDeclsTest extends JextractToolRunner {
         run("-o", clzPath.toString(),
                 getInputFilePath("redundantDecls.h").toString()).checkSuccess();
         try(Loader loader = classLoader(clzPath)) {
-            Class<?> headerCls = loader.loadClass("redundantDecls");
+            Class<?> headerCls = loader.loadClass(headerInterfaceName("redundantDecls.h"));
             Class<?>[] inners = headerCls.getDeclaredClasses();
             assertEquals(inners.length, 4);
 
-            Class<?> pointStruct = findClass(inners, "Point");
+            Class<?> pointStruct = loader.loadClass(structInterfaceName("redundantDecls.h", "Point"));
             assertNotNull(findStructFieldGet(pointStruct, "i"));
             assertNotNull(findStructFieldGet(pointStruct, "j"));
 
-            Class<?> point3DStruct = findClass(inners, "Point3D");
+            Class<?> point3DStruct = loader.loadClass(structInterfaceName("redundantDecls.h", "Point3D"));
             assertNotNull(findStructFieldGet(point3DStruct, "i"));
             assertNotNull(findStructFieldGet(point3DStruct, "j"));
             assertNotNull(findStructFieldGet(point3DStruct, "k"));
@@ -66,11 +66,11 @@ public class RedundantDeclsTest extends JextractToolRunner {
             assertNotNull(findEnumConstGet(headerCls, "M"));
             assertNotNull(findEnumConstGet(headerCls, "Y"));
 
-            Class<?> rgbColor = findClass(inners, "RGBColor");
+            Class<?> rgbColor = loader.loadClass(enumInterfaceName("redundantDecls.h", "RGBColor"));
             assertNotNull(rgbColor);
             assertTrue(rgbColor.isAnnotation());
 
-            Class<?> cmyColor = findClass(inners, "CMYColor");
+            Class<?> cmyColor = loader.loadClass(enumInterfaceName("redundantDecls.h", "CMYColor"));
             assertNotNull(cmyColor);
             assertTrue(cmyColor.isAnnotation());
         } finally {
@@ -84,7 +84,7 @@ public class RedundantDeclsTest extends JextractToolRunner {
         try(Loader loader = classLoader(clzPath)) {
             run("-o", clzPath.toString(),
                 getInputFilePath("repeatedDecls.h").toString()).checkSuccess();
-            Class<?> headerCls = loader.loadClass("repeatedDecls");
+            Class<?> headerCls = loader.loadClass(headerInterfaceName("repeatedDecls.h"));
             Class<?>[] inners = headerCls.getDeclaredClasses();
             assertEquals(inners.length, 1);
             Method funcMethod = findMethod(headerCls, "func", int.class);

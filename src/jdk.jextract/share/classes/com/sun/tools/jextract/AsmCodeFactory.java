@@ -100,7 +100,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         this.log = ctx.log;
         log.print(Level.INFO, () -> "Instantiate AsmCodeFactory for " + header.path);
         this.headerFile = header;
-        this.headerClassName = Utils.toInternalName(headerFile.pkgName, headerFile.clsName);
+        this.headerClassName = Utils.toInternalName(headerFile.pkgName, headerFile.headerClsName);
         this.global_cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         this.types = new HashMap<>();
         this.libraryNames = ctx.options.libraryNames;
@@ -151,7 +151,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     }
 
     private void handleException(Exception ex) {
-        log.printError("cannot.write.class.file", headerFile.pkgName + "." + headerFile.clsName, ex);
+        log.printError("cannot.write.class.file", headerFile.pkgName + "." + headerFile.headerClsName, ex);
         log.printStackTrace(ex);
     }
 

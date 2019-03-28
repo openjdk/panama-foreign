@@ -66,104 +66,104 @@ public class FilterTest extends JextractToolRunner {
 
     @Test
     public void testMainHeaderGen() {
-        Class<?> filter = loader.loadClass("filter");
+        Class<?> filter = loader.loadClass(headerInterfaceName("filter.h"));
         assertNotNull(filter);
     }
 
     @Test
     public void testDroppedHeader() {
-        Class<?> filterDep = loader.loadClass("filterDep1");
+        Class<?> filterDep = loader.loadClass(headerInterfaceName("filterDep1.h"));
         assertNull(filterDep);
     }
 
     @Test
     public void testIncludedDependency() {
-        Class<?> filterDep = loader.loadClass("filterDep2");
+        Class<?> filterDep = loader.loadClass(headerInterfaceName("filterDep2.h"));
         assertNotNull(filterDep);
-        Class<?> widget = loader.loadClass("filterDep2$Widget1");
+        Class<?> widget = loader.loadClass(structInterfaceName("filterDep2.h", "Widget1"));
         assertNotNull(widget);
 
-        Class<?> junk = loader.loadClass("filterDep2$Junk1");
+        Class<?> junk = loader.loadClass(structInterfaceName("filterDep2.h", "Junk1"));
         assertNull(junk);
     }
 
     @Test
     public void testManullyIncludedHeader() {
-        Class<?> filterDep = loader.loadClass("filterDep3");
+        Class<?> filterDep = loader.loadClass(headerInterfaceName("filterDep3.h"));
         assertNotNull(filterDep);
-        Class<?> baz = loader.loadClass("filterDep3$Baz");
+        Class<?> baz = loader.loadClass(structInterfaceName("filterDep3.h", "Baz"));
         assertNotNull(baz);
     }
 
     @Test
     public void testArrayElementChase() {
-        Class<?> filterDep = loader.loadClass("filterDep4");
+        Class<?> filterDep = loader.loadClass(headerInterfaceName("filterDep4.h"));
         assertNotNull(filterDep);
-        Class<?> widget = loader.loadClass("filterDep4$Widget2");
+        Class<?> widget = loader.loadClass(structInterfaceName("filterDep4.h", "Widget2"));
         assertNotNull(widget);
 
-        Class<?> junk = loader.loadClass("filterDep4$Junk2");
+        Class<?> junk = loader.loadClass(structInterfaceName("filterDep4.h", "Junk2"));
         assertNull(junk);
     }
 
     @Test
     public void testPointeeTypeChase() {
-        Class<?> filterDep = loader.loadClass("filterDep5");
+        Class<?> filterDep = loader.loadClass(headerInterfaceName("filterDep5.h"));
         assertNotNull(filterDep);
-        Class<?> widget = loader.loadClass("filterDep5$Widget3");
+        Class<?> widget = loader.loadClass(structInterfaceName("filterDep5.h", "Widget3"));
         assertNotNull(widget);
 
-        Class<?> junk = loader.loadClass("filterDep5$Junk3");
+        Class<?> junk = loader.loadClass(structInterfaceName("filterDep5.h", "Junk3"));
         assertNull(junk);
     }
 
     @Test
     public void testIndirectTypedef() {
-        Class<?> filterDep = loader.loadClass("filterDep6");
+        Class<?> filterDep = loader.loadClass(headerInterfaceName("filterDep6.h"));
         assertNotNull(filterDep);
-        Class<?> _Widget4 = loader.loadClass("filterDep6$_Widget4");
+        Class<?> _Widget4 = loader.loadClass(structInterfaceName("filterDep6.h", "_Widget4"));
         assertNotNull(_Widget4);
-        Class<?> intermediateWidget = loader.loadClass("filterDep6$IntermediateWidget");
+        Class<?> intermediateWidget = loader.loadClass(structInterfaceName("filterDep6.h", "IntermediateWidget"));
         assertNull(intermediateWidget);
-        Class<?> widget = loader.loadClass("filterDep6$Widget4");
+        Class<?> widget = loader.loadClass(structInterfaceName("filterDep6.h", "Widget4"));
         assertNotNull(widget);
 
-        Class<?> junk = loader.loadClass("filterDep6$Junk4");
+        Class<?> junk = loader.loadClass(structInterfaceName("filterDep6.h", "Junk4"));
         assertNull(junk);
     }
 
     @Test
     public void testNonFunctionDep() {
-        Class<?> filterDep = loader.loadClass("filterDep7");
+        Class<?> filterDep = loader.loadClass(headerInterfaceName("filterDep7.h"));
         assertNotNull(filterDep);
-        Class<?> widget = loader.loadClass("filterDep7$Widget6");
+        Class<?> widget = loader.loadClass(structInterfaceName("filterDep7.h", "Widget6"));
         assertNotNull(widget);
 
-        Class<?> junk = loader.loadClass("filterDep6$Junk5");
+        Class<?> junk = loader.loadClass(structInterfaceName("filterDep7.h", "Junk5"));
         assertNull(junk);
     }
 
     @Test
     public void testPatternFilter() {
         // pre-condition
-        Class<?> filter = loader.loadClass("filter");
+        Class<?> filter = loader.loadClass(headerInterfaceName("filter.h"));
         assertNull(findFirstMethod(filter, "foo6"));
 
-        Class<?> filterDep = loader.loadClass("filterDep8");
+        Class<?> filterDep = loader.loadClass(headerInterfaceName("filterDep8.h"));
         assertNull(filterDep);
-        Class<?> junk = loader.loadClass("filterDep8$Junk6");
+        Class<?> junk = loader.loadClass(structInterfaceName("filterDep8.h", "Junk6"));
         assertNull(junk);
     }
 
     @Test
     public void testLibraryFilter() {
         // pre-condition
-        Class<?> filter = loader.loadClass("filter");
+        Class<?> filter = loader.loadClass(headerInterfaceName("filter.h"));
         assertNull(findFirstMethod(filter, "foo7"));
 
-        Class<?> filterDep = loader.loadClass("filterDep9");
+        Class<?> filterDep = loader.loadClass(headerInterfaceName("filterDep9.h"));
         assertNull(filterDep);
-        Class<?> junk = loader.loadClass("filterDep9$Junk7");
+        Class<?> junk = loader.loadClass(structInterfaceName("filterDep9.h", "Junk7"));
         assertNull(junk);
     }
 }

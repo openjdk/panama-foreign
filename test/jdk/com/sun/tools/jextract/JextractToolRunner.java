@@ -44,6 +44,33 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 public class JextractToolRunner {
+    // utilities to avoid hard-coding generated class, interface names everywhere
+    public static String headerInterfaceName(String filename) {
+        int ext = filename.lastIndexOf('.');
+        return ext != -1 ? filename.substring(0, ext) : filename;
+    }
+
+    public static String staticForwarderName(String filename) {
+        return headerInterfaceName(filename) + "_h";
+    }
+
+    // struct, enum and callback interfaces are nested types of header interface
+    public static String structInterfaceName(String headerFileName, String structName) {
+        return headerInterfaceName(headerFileName) + "$" + structName;
+    }
+
+    public static String enumInterfaceName(String headerFileName, String enumName) {
+        return headerInterfaceName(headerFileName) + "$" + enumName;
+    }
+
+    public static String callbackInterfaceName(String headerFileName, String fiName) {
+        return headerInterfaceName(headerFileName) + "$" + fiName;
+    }
+
+    public static String enumForwarderInterfaceName(String headerFileName, String enumName) {
+        return staticForwarderName(headerFileName) + "$" + enumName;
+    }
+
     private static final ToolProvider JEXTRACT_TOOL = ToolProvider.findFirst("jextract")
             .orElseThrow(() ->
                     new RuntimeException("jextract tool not found")

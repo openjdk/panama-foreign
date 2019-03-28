@@ -44,13 +44,13 @@ public class ArrayTest extends JextractToolRunner {
         run("-o", clzPath.toString(),
                 getInputFilePath("arrayTest.h").toString()).checkSuccess();
         try(Loader loader = classLoader(clzPath)) {
-            Class<?> cls = loader.loadClass("arrayTest");
+            Class<?> cls = loader.loadClass(headerInterfaceName("arrayTest.h"));
 
             Class<?>[] inners = cls.getDeclaredClasses();
             // FIXME: should really be two without duplicate callback
             assertEquals(inners.length, 3);
 
-            Class<?> struct = findClass(inners, "EndWithArray");
+            Class<?> struct = loader.loadClass(structInterfaceName("arrayTest.h", "EndWithArray"));
             NativeStruct ns = struct.getAnnotation(NativeStruct.class);
             assertNotNull(ns);
 
