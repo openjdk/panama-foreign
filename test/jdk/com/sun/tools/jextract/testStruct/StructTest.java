@@ -257,7 +257,7 @@ public class StructTest extends JextractToolRunner {
                 "-o", clzPath.toString(),
                 getInputFilePath("struct.h").toString()).checkSuccess();
         try(Loader loader = classLoader(clzPath)) {
-            Class<?> cls = loader.loadClass("struct");
+            Class<?> cls = loader.loadClass(headerInterfaceName("struct.h"));
             verifyAsCpp(cls);
         } finally {
             deleteFile(clzPath);
@@ -270,7 +270,7 @@ public class StructTest extends JextractToolRunner {
         run("-o", clzPath.toString(),
                 getInputFilePath("struct.h").toString()).checkSuccess();
         try(Loader loader = classLoader(clzPath)) {
-            Class<?> cls = loader.loadClass("struct");
+            Class<?> cls = loader.loadClass(headerInterfaceName("struct.h"));
             verifyAsC(cls);
         } finally {
             deleteFile(clzPath);

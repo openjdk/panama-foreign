@@ -99,7 +99,7 @@ public class TestDowncall extends JextractToolRunner {
                     "--exclude-symbols", filterFor(i),
                     getInputFilePath("libTestDowncall.h").toString()).checkSuccess();
             Loader loader = classLoader(clzPath);
-            Class<?> headerCls = loader.loadClass("libTestDowncall");
+            Class<?> headerCls = loader.loadClass(headerInterfaceName("libTestDowncall.h"));
             Object lib = Libraries.bind(headerCls, Libraries.loadLibrary(MethodHandles.lookup(), "TestDowncall"));
             res.add(new DowncallTest(headerCls, lib));
             cleanups.add(() -> {

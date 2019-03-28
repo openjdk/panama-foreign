@@ -30,13 +30,16 @@ import java.nio.file.Path;
 public final class HeaderFile {
     final Path path;
     final String pkgName;
-    final String clsName;
+    final String headerClsName;
+    final String staticForwarderClsName;
     private final TypeDictionary dict;
 
-    HeaderFile(HeaderResolver resolver, Path path, String pkgName, String clsName) {
+    HeaderFile(HeaderResolver resolver, Path path, String pkgName,
+            String headerClsName, String staticForwarderClsName) {
         this.path = path;
         this.pkgName = pkgName;
-        this.clsName = clsName;
+        this.headerClsName = headerClsName;
+        this.staticForwarderClsName = staticForwarderClsName;
         this.dict = new TypeDictionary(resolver, this);
     }
 

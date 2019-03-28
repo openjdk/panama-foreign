@@ -75,9 +75,9 @@ import static jdk.internal.org.objectweb.asm.Opcodes.V1_8;
  */
 final class AsmCodeFactoryExt extends AsmCodeFactory {
     private final String headerClassNameDesc;
+    private final String forwarderClassName;
     private final ClassWriter cw;
     // suffix for static forwarder class name
-    private static final String STATICS_CLASS_NAME_SUFFIX = "_h";
     // field name for the header interface instance.
     private static final String STATICS_LIBRARY_FIELD_NAME = "_theLibrary";
 
@@ -88,6 +88,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         super(ctx, header);
         log.print(Level.INFO, () -> "Instantiate StaticForwarderGenerator for " + header.path);
         this.headerClassNameDesc = "L" + headerClassName + ";";
+        this.forwarderClassName = Utils.toInternalName(header.pkgName, header.staticForwarderClsName);
         this.cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
         this.cw.visit(V1_8, ACC_PUBLIC | ACC_FINAL, getClassName(),
             null, "java/lang/Object", null);
@@ -259,7 +260,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     // Internals only below this point
 
     private String getClassName() {
-        return headerClassName + STATICS_CLASS_NAME_SUFFIX;
+        return forwarderClassName;
     }
 
     // return the generated static forwarder class bytes

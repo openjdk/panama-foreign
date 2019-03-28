@@ -55,7 +55,7 @@ public class ConstantsTest extends JextractToolRunner {
         run("-o", clzPath.toString(), "-d", dirPath.toString(),
                 getInputFilePath("constants.h").toString()).checkSuccess();
         loader = classLoader(clzPath);
-        Class<?> cls = loader.loadClass("constants");
+        Class<?> cls = loader.loadClass(headerInterfaceName("constants.h"));
         constants = Libraries.bind(MethodHandles.lookup(), cls);
     }
 

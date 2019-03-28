@@ -50,7 +50,7 @@ public class IncompleteArrayTest extends JextractToolRunner {
                         " with flexible array member\\. Emitting undefined layout reference\\..*");
         try (Loader loader = classLoader(jar)) {
             // check if we can still load the class without NoClassDefFound
-            assertNotNull(loader.loadClass("incompleteArray1"));
+            assertNotNull(loader.loadClass(headerInterfaceName("incompleteArray1.h")));
         } finally {
             deleteFile(jar);
         }
@@ -66,7 +66,7 @@ public class IncompleteArrayTest extends JextractToolRunner {
                 .checkMatchesOutput(".*WARNING: can not compute layout for type .+" +
                         " with flexible array member\\. Emitting undefined layout reference\\..*");
         try (Loader loader = classLoader(jar)) {
-            assertNotNull(loader.loadClass("incompleteArray2"));
+            assertNotNull(loader.loadClass(headerInterfaceName("incompleteArray2.h")));
         } finally {
             deleteFile(jar);
         }
@@ -83,7 +83,7 @@ public class IncompleteArrayTest extends JextractToolRunner {
                     .checkMatchesOutput(".*WARNING: can not compute layout for type .+" +
                             " with flexible array member\\. Emitting undefined layout reference\\..*");
             try (Loader loader = classLoader(jar)) {
-                assertNotNull(loader.loadClass("incompleteArray3"));
+                assertNotNull(loader.loadClass(headerInterfaceName("incompleteArray3i.h")));
             } finally {
                 deleteFile(jar);
             }

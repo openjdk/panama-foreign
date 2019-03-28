@@ -65,12 +65,12 @@ public class TestUpcall extends JextractToolRunner {
 
         private final Class<?> headerCls;
         private final Object lib;
-    
+
         public UpcallTest(Class<?> headerCls, Object lib) {
             this.headerCls = headerCls;
             this.lib = lib;
         }
-    
+
         @Test(dataProvider = "getArgs")
         public void testUpCall(String mName, @NoInjection Method m)  throws ReflectiveOperationException {
             System.err.print("Calling " + mName + "...");
@@ -83,14 +83,14 @@ public class TestUpcall extends JextractToolRunner {
             }
             System.err.println("...done");
         }
-    
+
         @DataProvider
         public Object[][] getArgs() {
             return Stream.of(headerCls.getDeclaredMethods())
                     .map(m -> new Object[]{ m.getName(), m })
                     .toArray(Object[][]::new);
         }
-    
+
     }
 
     @Factory
@@ -102,7 +102,7 @@ public class TestUpcall extends JextractToolRunner {
                     "--exclude-symbols", filterFor(i),
                     getInputFilePath("libTestUpcall.h").toString()).checkSuccess();
             Loader loader = classLoader(clzPath);
-            Class<?> headerCls = loader.loadClass("libTestUpcall");
+            Class<?> headerCls = loader.loadClass(headerInterfaceName("libTestUpcall.h"));
             Object lib = Libraries.bind(headerCls, Libraries.loadLibrary(MethodHandles.lookup(), "TestUpcall"));
             res.add(new UpcallTest(headerCls, lib));
             cleanups.add(() -> {

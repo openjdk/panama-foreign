@@ -46,11 +46,11 @@ public class EmptyStructTest extends JextractToolRunner {
         run("-o", clzPath.toString(),
                 getInputFilePath("emptyStruct.h").toString()).checkSuccess();
         try(Loader loader = classLoader(clzPath)) {
-            Class<?> cls = loader.loadClass("emptyStruct");
+            Class<?> cls = loader.loadClass(headerInterfaceName("emptyStruct.h"));
             Class<?>[] inners = cls.getDeclaredClasses();
             assertEquals(inners.length, 3);
-            Class<?> emptyStruct = findClass(inners, "EmptyStruct");
-            Class<?> nothing = findClass(inners, "Nothing");
+            Class<?> emptyStruct = loader.loadClass(structInterfaceName("emptyStruct.h", "EmptyStruct"));
+            Class<?> nothing = loader.loadClass(structInterfaceName("emptyStruct.h", "Nothing"));
             assertTrue(nothing.isAnnotation());
             NativeStruct ns = emptyStruct.getAnnotation(NativeStruct.class);
             assertNotNull(ns);
