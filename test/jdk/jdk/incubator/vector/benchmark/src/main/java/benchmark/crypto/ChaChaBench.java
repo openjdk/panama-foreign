@@ -334,10 +334,10 @@ public class ChaChaBench {
 
                 // xor keystream with input
                 int inOff = stateLenBytes * j;
-                IntVector ina = intSpecies.fromByteArray(in, inOff);
-                IntVector inb = intSpecies.fromByteArray(in, inOff + 4 * len);
-                IntVector inc = intSpecies.fromByteArray(in, inOff + 8 * len);
-                IntVector ind = intSpecies.fromByteArray(in, inOff + 12 * len);
+                IntVector ina = IntVector.fromByteArray(intSpecies, in, inOff);
+                IntVector inb = IntVector.fromByteArray(intSpecies, in, inOff + 4 * len);
+                IntVector inc = IntVector.fromByteArray(intSpecies, in, inOff + 8 * len);
+                IntVector ind = IntVector.fromByteArray(intSpecies, in, inOff + 12 * len);
 
                 ina.xor(a).intoByteArray(out, inOff);
                 inb.xor(b).intoByteArray(out, inOff + 4 * len);
