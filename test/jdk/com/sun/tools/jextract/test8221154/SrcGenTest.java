@@ -24,6 +24,7 @@
 import java.foreign.annotations.NativeAddressof;
 import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeLocation;
 import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Pointer;
@@ -148,6 +149,7 @@ public class SrcGenTest extends JextractToolRunner {
         Method numGetter = findGlobalVariableGet(headerCls, "num");
         assertTrue(numGetter != null);
         assertTrue(numGetter.getAnnotation(NativeGetter.class) != null);
+        assertTrue(numGetter.getAnnotation(NativeLocation.class) != null);
 
         Method numPtrGetter = findGlobalVariablePointerGet(headerCls, "num");
         assertTrue(numPtrGetter != null);
@@ -158,11 +160,40 @@ public class SrcGenTest extends JextractToolRunner {
         assertTrue(numSetter != null);
         assertTrue(numSetter.getAnnotation(NativeSetter.class) != null);
 
+        // check "x_coord" method
+        Method xCoordMethod = findFirstMethod(headerCls, "x_coord");
+        assertTrue(xCoordMethod.getReturnType() == int.class);
+        Class<?>[] xCoordParamTypes = xCoordMethod.getParameterTypes();
+        assertTrue(xCoordParamTypes.length == 1);
+        assertTrue(xCoordParamTypes[0] == Pointer.class);
+        assertTrue(xCoordMethod.getAnnotation(NativeLocation.class) != null);
+        assertTrue(!Modifier.isStatic(xCoordMethod.getModifiers()));
+
+        // check "y_coord" method
+        Method yCoordMethod = findFirstMethod(headerCls, "y_coord");
+        assertTrue(yCoordMethod.getReturnType() == int.class);
+        Class<?>[] yCoordParamTypes = yCoordMethod.getParameterTypes();
+        assertTrue(yCoordParamTypes.length == 1);
+        assertTrue(yCoordParamTypes[0] == Pointer.class);
+        assertTrue(yCoordMethod.getAnnotation(NativeLocation.class) != null);
+        assertTrue(!Modifier.isStatic(yCoordMethod.getModifiers()));
+
+        // check "sum" method
+        Method sumMethod = findFirstMethod(headerCls, "sum");
+        assertTrue(sumMethod.getReturnType() == int.class);
+        Class<?>[] sumParamTypes = sumMethod.getParameterTypes();
+        assertTrue(sumParamTypes.length == 2);
+        assertTrue(sumParamTypes[0] == int.class);
+        assertTrue(sumParamTypes[1] == Object[].class);
+        assertTrue(sumMethod.getAnnotation(NativeLocation.class) != null);
+        assertTrue(!Modifier.isStatic(sumMethod.getModifiers()));
+
         // struct Point
         Class<?> pointCls = Arrays.stream(headerCls.getClasses())
             .filter(c -> c.getSimpleName().equals("Point")).findFirst().get();
         assertTrue(Modifier.isInterface(pointCls.getModifiers()));
         assertTrue(pointCls.getAnnotation(NativeStruct.class) != null);
+        assertTrue(pointCls.getAnnotation(NativeLocation.class) != null);
 
         // Point extends Struct
         Class<?> pointSuper = pointCls.getInterfaces()[0];
@@ -172,10 +203,12 @@ public class SrcGenTest extends JextractToolRunner {
         Method xGetter = findStructFieldGet(pointCls, "x");
         assertTrue(xGetter != null);
         assertTrue(xGetter.getAnnotation(NativeGetter.class) != null);
+        assertTrue(xGetter.getAnnotation(NativeLocation.class) != null);
 
         Method yGetter = findStructFieldGet(pointCls, "y");
         assertTrue(yGetter != null);
         assertTrue(yGetter.getAnnotation(NativeGetter.class) != null);
+        assertTrue(yGetter.getAnnotation(NativeLocation.class) != null);
 
         Method xPtrGetter = findStructFieldPointerGet(pointCls, "x");
         assertTrue(xPtrGetter != null);
@@ -214,6 +247,7 @@ public class SrcGenTest extends JextractToolRunner {
         Class<?>[] xCoordParamTypes = xCoordMethod.getParameterTypes();
         assertTrue(xCoordParamTypes.length == 1);
         assertTrue(xCoordParamTypes[0] == Pointer.class);
+        assertTrue(Modifier.isStatic(xCoordMethod.getModifiers()));
 
         // check "y_coord" method
         Method yCoordMethod = findFirstMethod(forwarderCls, "y_coord");
@@ -221,6 +255,7 @@ public class SrcGenTest extends JextractToolRunner {
         Class<?>[] yCoordParamTypes = yCoordMethod.getParameterTypes();
         assertTrue(yCoordParamTypes.length == 1);
         assertTrue(yCoordParamTypes[0] == Pointer.class);
+        assertTrue(Modifier.isStatic(xCoordMethod.getModifiers()));
 
         // global variable "num" getter
         Method numGet = findGlobalVariableGet(forwarderCls, "num");
