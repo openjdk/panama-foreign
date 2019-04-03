@@ -261,6 +261,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         log.print(Level.FINE, () -> "Define class " + name + " for native type " + nativeName);
 
         JavaSourceBuilder jsb = new JavaSourceBuilder(global_jsb.align() + 1);
+        addNativeLocation(false, jsb, structTree.location());
         jsb.addAnnotation(false, NATIVE_STRUCT, Map.of("value", structTree.layout().toString()));
         jsb.interfaceBegin(intf, true, "Struct<" + intf + ">");
         // fields
