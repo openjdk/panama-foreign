@@ -874,7 +874,7 @@ final class FloatMaxVector extends FloatVector {
                                 VECTOR_OP_MIN, FloatMaxVector.class, float.class, LENGTH,
                                 this,
                                 v -> {
-                                    float r = v.rOp(Float.MAX_VALUE , (i, a, b) -> (float) Math.min(a, b));
+                                    float r = v.rOp(Float.POSITIVE_INFINITY , (i, a, b) -> (float) Math.min(a, b));
                                     return (long)Float.floatToIntBits(r);
                                 });
         return Float.intBitsToFloat(bits);
@@ -887,7 +887,7 @@ final class FloatMaxVector extends FloatVector {
                                 VECTOR_OP_MAX, FloatMaxVector.class, float.class, LENGTH,
                                 this,
                                 v -> {
-                                    float r = v.rOp(Float.MIN_VALUE , (i, a, b) -> (float) Math.max(a, b));
+                                    float r = v.rOp(Float.NEGATIVE_INFINITY, (i, a, b) -> (float) Math.max(a, b));
                                     return (long)Float.floatToIntBits(r);
                                 });
         return Float.intBitsToFloat(bits);

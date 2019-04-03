@@ -874,7 +874,7 @@ final class Double256Vector extends DoubleVector {
                                 VECTOR_OP_MIN, Double256Vector.class, double.class, LENGTH,
                                 this,
                                 v -> {
-                                    double r = v.rOp(Double.MAX_VALUE , (i, a, b) -> (double) Math.min(a, b));
+                                    double r = v.rOp(Double.POSITIVE_INFINITY , (i, a, b) -> (double) Math.min(a, b));
                                     return (long)Double.doubleToLongBits(r);
                                 });
         return Double.longBitsToDouble(bits);
@@ -887,7 +887,7 @@ final class Double256Vector extends DoubleVector {
                                 VECTOR_OP_MAX, Double256Vector.class, double.class, LENGTH,
                                 this,
                                 v -> {
-                                    double r = v.rOp(Double.MIN_VALUE , (i, a, b) -> (double) Math.max(a, b));
+                                    double r = v.rOp(Double.NEGATIVE_INFINITY, (i, a, b) -> (double) Math.max(a, b));
                                     return (long)Double.doubleToLongBits(r);
                                 });
         return Double.longBitsToDouble(bits);

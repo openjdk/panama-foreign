@@ -280,8 +280,9 @@ gen_reduction_op "orAll" "|" $unit_output $perf_output $perf_scalar_output "BITW
 gen_reduction_op "xorAll" "^" $unit_output $perf_output $perf_scalar_output "BITWISE" "0"
 gen_reduction_op "addAll" "+" $unit_output $perf_output $perf_scalar_output "" "0"
 gen_reduction_op "mulAll" "*" $unit_output $perf_output $perf_scalar_output "" "1"
-gen_reduction_op_min "minAll" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.MAX_VALUE"
-gen_reduction_op_max "maxAll" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.MIN_VALUE"
+gen_reduction_op_min "minAll" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.\$MaxValue\$"
+gen_reduction_op_max "maxAll" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.\$MinValue\$"
+
 
 # Boolean reductions.
 gen_bool_reduction_op "anyTrue" "|" $unit_output $perf_output $perf_scalar_output "BITWISE" "false"

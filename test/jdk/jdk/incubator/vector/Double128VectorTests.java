@@ -862,7 +862,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         assertReductionArraysEquals(a, r, ra, Double128VectorTests::mulAll, Double128VectorTests::mulAll);
     }
     static double minAll(double[] a, int idx) {
-        double res = Double.MAX_VALUE;
+        double res = Double.POSITIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (double)Math.min(res, a[i]);
         }
@@ -871,7 +871,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     }
 
     static double minAll(double[] a) {
-        double res = Double.MAX_VALUE;
+        double res = Double.POSITIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (double)Math.min(res, a[i]);
         }
@@ -882,7 +882,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     static void minAllDouble128VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
-        double ra = Double.MAX_VALUE;
+        double ra = Double.POSITIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -892,7 +892,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Double.MAX_VALUE;
+            ra = Double.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 ra = (double)Math.min(ra, av.minAll());
@@ -902,7 +902,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         assertReductionArraysEquals(a, r, ra, Double128VectorTests::minAll, Double128VectorTests::minAll);
     }
     static double maxAll(double[] a, int idx) {
-        double res = Double.MIN_VALUE;
+        double res = Double.NEGATIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (double)Math.max(res, a[i]);
         }
@@ -911,7 +911,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     }
 
     static double maxAll(double[] a) {
-        double res = Double.MIN_VALUE;
+        double res = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (double)Math.max(res, a[i]);
         }
@@ -922,7 +922,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     static void maxAllDouble128VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
-        double ra = Double.MIN_VALUE;
+        double ra = Double.NEGATIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -932,7 +932,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Double.MIN_VALUE;
+            ra = Double.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 ra = (double)Math.max(ra, av.maxAll());

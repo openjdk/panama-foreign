@@ -969,9 +969,9 @@ Node* ReductionNode::make_reduction_input(PhaseGVN& gvn, int opc, BasicType bt) 
         case T_LONG:
           return gvn.makecon(TypeLong::MAX);
         case T_FLOAT:
-          return gvn.makecon(TypeF::MAX);
+          return gvn.makecon(TypeF::POS_INF);
         case T_DOUBLE:
-          return gvn.makecon(TypeD::MAX);
+          return gvn.makecon(TypeD::POS_INF);
           default: Unimplemented(); return NULL;
       }
       break;
@@ -984,9 +984,9 @@ Node* ReductionNode::make_reduction_input(PhaseGVN& gvn, int opc, BasicType bt) 
         case T_LONG:
           return gvn.makecon(TypeLong::MIN);
         case T_FLOAT:
-          return gvn.makecon(TypeF::MIN);
+          return gvn.makecon(TypeF::NEG_INF);
         case T_DOUBLE:
-          return gvn.makecon(TypeD::MIN);
+          return gvn.makecon(TypeD::NEG_INF);
           default: Unimplemented(); return NULL;
       }
       break;

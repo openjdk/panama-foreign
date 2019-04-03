@@ -2899,6 +2899,7 @@ void Assembler::evmovdqul(Address dst, KRegister mask, XMMRegister src, bool mer
 
 void Assembler::evmovdquq(XMMRegister dst, XMMRegister src, int vector_len) {
   // Unmasked instruction
+  if (dst->encoding() == src->encoding()) return;
   evmovdquq(dst, k0, src, /*merge*/ false, vector_len);
 }
 
@@ -3775,17 +3776,27 @@ void Assembler::vperm2f128(XMMRegister dst, XMMRegister nds, XMMRegister src, in
 }
 
 void Assembler::vpermilps(XMMRegister dst, XMMRegister src, int imm8, int vector_len) {
-  assert(VM_Version::supports_avx(), "");
-  InstructionAttr attributes(vector_len, /* rex_w */ false, /* legacy_mode */ true, /* no_mask_reg */ true, /* uses_vl */ false);
+  assert(vector_len <= AVX_256bit ? VM_Version::supports_avx() : VM_Version::supports_evex(), "");
+  InstructionAttr attributes(vector_len, /* rex_w */ false, /* legacy_mode */ false, /* no_mask_reg */ true, /* uses_vl */ false);
   int encode = vex_prefix_and_encode(dst->encoding(), 0, src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_3A, &attributes);
   emit_int8(0x04);
   emit_int8((unsigned char)(0xC0 | encode));
   emit_int8(imm8);
 }
 
+void Assembler::vpermilpd(XMMRegister dst, XMMRegister src, int imm8, int vector_len) {
+  assert(vector_len <= AVX_256bit ? VM_Version::supports_avx() : VM_Version::supports_evex(), "");
+  InstructionAttr attributes(vector_len, /* rex_w */ VM_Version::supports_evex(),/* legacy_mode */ false,/* no_mask_reg */ true, /* uses_vl */ false);
+  attributes.set_rex_vex_w_reverted();
+  int encode = vex_prefix_and_encode(dst->encoding(), 0, src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_3A, &attributes);
+  emit_int8(0x05);
+  emit_int8((unsigned char)(0xC0 | encode));
+  emit_int8(imm8);
+}
+
 void Assembler::vpermpd(XMMRegister dst, XMMRegister src, int imm8, int vector_len) {
   assert(vector_len <= AVX_256bit ? VM_Version::supports_avx2() : VM_Version::supports_evex(), "");
-  InstructionAttr attributes(vector_len, /* rex_w */ true, /* legacy_mode */ true, /* no_mask_reg */ true, /* uses_vl */ false);
+  InstructionAttr attributes(vector_len, /* rex_w */ true, /* legacy_mode */false, /* no_mask_reg */ true, /* uses_vl */ false);
   int encode = vex_prefix_and_encode(dst->encoding(), 0, src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_3A, &attributes);
   emit_int8(0x01);
   emit_int8((unsigned char)(0xC0 | encode));

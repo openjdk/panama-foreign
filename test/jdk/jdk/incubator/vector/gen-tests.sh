@@ -46,6 +46,8 @@ do
 
   Boxtype=$Type
   Wideboxtype=$Boxtype
+  MaxValue=MAX_VALUE
+  MinValue=MIN_VALUE
 
   kind=BITWISE
 
@@ -86,16 +88,22 @@ do
       bitstype=int
       Bitstype=Int
       Boxbitstype=Integer
+      Wideboxtype=Float
+      MaxValue=POSITIVE_INFINITY
+      MinValue=NEGATIVE_INFINITY
       ;;
     double)
       kind=FP
       bitstype=long
       Bitstype=Long
       Boxbitstype=Long
+      Wideboxtype=Double
+      MaxValue=POSITIVE_INFINITY
+      MinValue=NEGATIVE_INFINITY
       ;;
   esac
 
-  args="$args -K$kind -K$Type -DBoxtype=$Boxtype -DWideboxtype=$Wideboxtype"
+  args="$args -K$kind -K$Type -DBoxtype=$Boxtype -DWideboxtype=$Wideboxtype -DMaxValue=$MaxValue -DMinValue=$MinValue"
   args="$args -Dbitstype=$bitstype -DBitstype=$Bitstype -DBoxbitstype=$Boxbitstype"
   args="$args -Dfptype=$fptype -DFptype=$Fptype -DBoxfptype=$Boxfptype"
 

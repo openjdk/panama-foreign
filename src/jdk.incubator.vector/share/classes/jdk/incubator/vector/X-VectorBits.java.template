@@ -1257,7 +1257,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                                 VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
                                 this,
                                 v -> {
-                                    $type$ r = v.rOp($Boxtype$.MAX_VALUE , (i, a, b) -> ($type$) Math.min(a, b));
+                                    $type$ r = v.rOp($Boxtype$.POSITIVE_INFINITY , (i, a, b) -> ($type$) Math.min(a, b));
                                     return (long)$Type$.$type$To$Bitstype$Bits(r);
                                 });
         return $Type$.$bitstype$BitsTo$Fptype$(bits);
@@ -1270,7 +1270,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                                 VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
                                 this,
                                 v -> {
-                                    $type$ r = v.rOp($Boxtype$.MIN_VALUE , (i, a, b) -> ($type$) Math.max(a, b));
+                                    $type$ r = v.rOp($Boxtype$.NEGATIVE_INFINITY, (i, a, b) -> ($type$) Math.max(a, b));
                                     return (long)$Type$.$type$To$Bitstype$Bits(r);
                                 });
         return $Type$.$bitstype$BitsTo$Fptype$(bits);

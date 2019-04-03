@@ -353,7 +353,7 @@ public class Float256Vector extends AbstractVectorBenchmark {
     public void minAll(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
-        float ra = Float.MAX_VALUE;
+        float ra = Float.POSITIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -363,7 +363,7 @@ public class Float256Vector extends AbstractVectorBenchmark {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Float.MAX_VALUE;
+            ra = Float.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra = (float)Math.min(ra, av.minAll());
@@ -378,7 +378,7 @@ public class Float256Vector extends AbstractVectorBenchmark {
     public void maxAll(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
-        float ra = Float.MIN_VALUE;
+        float ra = Float.NEGATIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -388,7 +388,7 @@ public class Float256Vector extends AbstractVectorBenchmark {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Float.MIN_VALUE;
+            ra = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra = (float)Math.max(ra, av.maxAll());

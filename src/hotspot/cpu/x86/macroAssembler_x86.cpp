@@ -114,6 +114,7 @@ void MacroAssembler::cmpklass(Address src1, Metadata* obj) {
   cmp_literal32(src1, (int32_t)obj, metadata_Relocation::spec_for_immediate());
 }
 
+
 void MacroAssembler::cmpklass(Register src1, Metadata* obj) {
   cmp_literal32(src1, (int32_t)obj, metadata_Relocation::spec_for_immediate());
 }
@@ -511,6 +512,71 @@ void MacroAssembler::print_state() {
 }
 
 #else // _LP64
+
+void MacroAssembler::vmin_max_macro_evex(XMMRegister dst, XMMRegister a, XMMRegister b,
+                                         KRegister ktmp, XMMRegister atmp, XMMRegister btmp,
+                                         bool is_single, bool is_min, int vector_len) {
+  if (is_single && is_min) {
+    evpmovd2m(ktmp, a, vector_len);
+    evblendmps(atmp, ktmp, a, b, true, vector_len);
+    evblendmps(btmp, ktmp, b, a, true, vector_len);
+    vminps(dst, atmp, btmp, vector_len);
+    evcmpps(ktmp, k0, atmp, atmp, Assembler::UNORD_Q, vector_len);
+    evmovdqul(dst, ktmp, atmp, true, vector_len);
+  } else if (is_single && !is_min) {
+    evpmovd2m(ktmp, b, vector_len);
+    evblendmps(atmp, ktmp, a, b, true, vector_len);
+    evblendmps(btmp, ktmp, b, a, true, vector_len);
+    vmaxps(dst, atmp, btmp, vector_len);
+    evcmpps(ktmp, k0, atmp, atmp, Assembler::UNORD_Q, vector_len);
+    evmovdqul(dst, ktmp, atmp, true, vector_len);
+  } else if (!is_single && is_min) {
+    evpmovq2m(ktmp, a, vector_len);
+    evblendmpd(atmp, ktmp, a, b, true, vector_len);
+    evblendmpd(btmp, ktmp, b, a, true, vector_len);
+    vminpd(dst, atmp, btmp, vector_len);
+    evcmppd(ktmp, k0, atmp, atmp, Assembler::UNORD_Q, vector_len);
+    evmovdquq(dst, ktmp, atmp, true, vector_len);
+  } else {
+    evpmovq2m(ktmp, b, vector_len);
+    evblendmpd(atmp, ktmp, a, b, true, vector_len);
+    evblendmpd(btmp, ktmp, b, a, true, vector_len);
+    vmaxpd(dst, atmp, btmp, vector_len);
+    evcmppd(ktmp, k0, atmp, atmp, Assembler::UNORD_Q, vector_len);
+    evmovdquq(dst, ktmp, atmp, true, vector_len);
+  }
+}
+
+void MacroAssembler::vmin_max_macro(XMMRegister dst, XMMRegister a, XMMRegister b,
+                                    XMMRegister tmp, XMMRegister atmp, XMMRegister btmp,
+                                    bool is_single, bool is_min, int vector_len) {
+  if (is_single && is_min) {
+    vblendvps(atmp, a, b, a, vector_len);
+    vblendvps(btmp, b, a, a, vector_len);
+    vminps(tmp, atmp, btmp, vector_len);
+    vcmpps(btmp, atmp, atmp, Assembler::UNORD_Q, vector_len);
+    vblendvps(dst, tmp, atmp, btmp, vector_len);
+  } else if (is_single && !is_min) {
+    vblendvps(btmp, b, a, b, vector_len);
+    vblendvps(atmp, a, b, b, vector_len);
+    vmaxps(tmp, atmp, btmp, vector_len);
+    vcmpps(btmp, atmp, atmp, Assembler::UNORD_Q, vector_len);
+    vblendvps(dst, tmp, atmp, btmp, vector_len);
+  } else if (!is_single && is_min) {
+    vblendvpd(atmp, a, b, a, vector_len);
+    vblendvpd(btmp, b, a, a, vector_len);
+    vminpd(tmp, atmp, btmp, vector_len);
+    vcmppd(btmp, atmp, atmp, Assembler::UNORD_Q, vector_len);
+    vblendvpd(dst, tmp, atmp, btmp, vector_len);
+  } else {
+    vblendvpd(btmp, b, a, b, vector_len);
+    vblendvpd(atmp, a, b, b, vector_len);
+    vmaxpd(tmp, atmp, btmp, vector_len);
+    vcmppd(btmp, atmp, atmp, Assembler::UNORD_Q, vector_len);
+    vblendvpd(dst, tmp, atmp, btmp, vector_len);
+  }
+}
+
 
 // 64 bit versions
 
@@ -3313,6 +3379,7 @@ void MacroAssembler::movdqu(XMMRegister dst, Address src) {
 
 void MacroAssembler::movdqu(XMMRegister dst, XMMRegister src) {
     assert(((dst->encoding() < 16  && src->encoding() < 16) || VM_Version::supports_avx512vl()),"XMM register should be 0-15");
+    if (dst->encoding() == src->encoding()) return;
     Assembler::movdqu(dst, src);
 }
 
@@ -3337,6 +3404,7 @@ void MacroAssembler::vmovdqu(XMMRegister dst, Address src) {
 
 void MacroAssembler::vmovdqu(XMMRegister dst, XMMRegister src) {
     assert(((dst->encoding() < 16  && src->encoding() < 16) || VM_Version::supports_avx512vl()),"XMM register should be 0-15");
+    if (dst->encoding() == src->encoding()) return;
     Assembler::vmovdqu(dst, src);
 }
 
