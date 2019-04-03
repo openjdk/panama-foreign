@@ -32,7 +32,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import com.sun.tools.jextract.parser.Parser;
 import com.sun.tools.jextract.tree.HeaderTree;
 import com.sun.tools.jextract.tree.SimpleTreeVisitor;
@@ -60,8 +59,8 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
     private List<Tree> decls = new ArrayList<>();
 
     // Tree instances that are to be replaced from "decls" list are
-    // saved in the following Map.
-    private final Map<Cursor, Tree> replacements = new HashMap<>();
+    // saved in the following Map. One or more Trees can replace a Tree.
+    private final Map<Cursor, List<Tree>> replacements = new HashMap<>();
 
     private final Log log;
 
@@ -79,13 +78,14 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
         // Replace trees from this.decls with Trees found in this.replacements.
         // We need this two step process so that named StructTree instances
         // will replace with original unnamed StructTree instances.
-        List<Tree> newDecls = decls.stream().map(tx -> {
+        List<Tree> newDecls = new ArrayList<>();
+        decls.stream().forEach(tx -> {
             if (replacements.containsKey(tx.cursor())) {
-                return replacements.get(tx.cursor());
+                newDecls.addAll(replacements.get(tx.cursor()));
             } else {
-                return tx;
+                newDecls.add(tx);
             }
-        }).collect(Collectors.toList());
+        });
 
         return treeMaker.createHeader(ht.cursor(), ht.path(), newDecls);
     }
@@ -115,7 +115,19 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
                  * and second one for typedef decl. We map it as a single named struct
                  * declaration.
                  */
-                replacements.put(defTree.cursor(), ((StructTree)defTree).withName(tt.name()));
+                Cursor dc = defTree.cursor();
+
+                /*
+                 * There may be more than one typedef on underlying anonymous struct/union.
+                 * Example:
+                 *
+                 * typedef struct { int x; int y; } Point;
+                 * typedef Point Vector;
+                 */
+                List<Tree> trees = replacements.containsKey(dc)?
+                    replacements.get(defTree.cursor()) : new ArrayList<>();
+                trees.add(((StructTree)defTree).withName(tt.name()));
+                replacements.put(dc, trees);
                 log.print(Level.FINE, () -> "Typedef " + defTree.type().spelling() + " as " + tt.name());
                 return null;
             } else if (defTree.name().equals(tt.name())) {
