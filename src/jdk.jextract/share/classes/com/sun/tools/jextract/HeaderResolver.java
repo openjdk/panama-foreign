@@ -38,10 +38,12 @@ public class HeaderResolver {
     // The header file parsed
     private final Map<Path, HeaderFile> headerMap = new LinkedHashMap<>();
     private final Log log;
+    private final Path builtinHeader;
 
     public HeaderResolver(Context ctx) {
         this.log = ctx.log;
         usePackageForFolder(Context.getBuiltinHeadersDir(), "clang_support");
+        this.builtinHeader = Context.getBuiltinHeaderFile();
         ctx.sources.stream()
                 .map(Path::getParent)
                 .forEach(p -> usePackageForFolder(p, ctx.options.targetPackage));
@@ -144,6 +146,10 @@ public class HeaderResolver {
     }
 
     public HeaderFile headerFor(Path path) {
+        if (path == null) {
+            path = builtinHeader;
+        }
+
         return headerMap.computeIfAbsent(path.normalize().toAbsolutePath(), this::getHeaderFile);
     }
 }

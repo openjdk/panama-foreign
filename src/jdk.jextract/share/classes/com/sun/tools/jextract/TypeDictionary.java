@@ -66,6 +66,9 @@ public final class TypeDictionary {
         try {
             //try resolve globally
             Path p = t.getDeclarationCursor().getSourceLocation().getFileLocation().path();
+            if (p == null) {
+                p = Context.getBuiltinHeaderFile();
+            }
             HeaderFile hf = resolver.headerFor(p);
             return Utils.toInternalName(hf.pkgName, hf.headerClsName);
         } catch (Throwable ex) {

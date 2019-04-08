@@ -55,4 +55,8 @@ public final class Context {
     public static Path getBuiltinHeadersDir() {
         return Paths.get(System.getProperty("java.home"), "conf", "jextract");
     }
+
+    public static Path getBuiltinHeaderFile() {
+        return getBuiltinHeadersDir().resolve("builtin$.h");
+    }
 }
