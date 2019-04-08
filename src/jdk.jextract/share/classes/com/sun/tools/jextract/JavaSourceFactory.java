@@ -168,7 +168,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
             SourceLocation.Location loc = src.getFileLocation();
             Path p = loc.path();
             Map<String, Object> fields = new HashMap<>();
-            fields.put("file", p == null ? "builtin" :  p.toAbsolutePath().toString().replace("\\", "\\\\"));
+            fields.put("file", p == null ? "<builtin>" :  p.toAbsolutePath().toString().replace("\\", "\\\\"));
             fields.put("line", loc.line());
             fields.put("column", loc.column());
             jsb.addAnnotation(align, NATIVE_LOCATION, fields);

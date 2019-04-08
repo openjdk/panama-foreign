@@ -27,6 +27,7 @@ import java.foreign.layout.Function;
 import java.foreign.layout.Layout;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +37,7 @@ import javax.lang.model.SourceVersion;
 
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
+import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
 import com.sun.tools.jextract.tree.LayoutUtils;
 import jdk.internal.clang.TypeKind;
@@ -181,6 +183,57 @@ public class Utils {
                 return lastChild(c).map(Utils::hasIncompleteArray).orElse(false);
             default:
                 throw new IllegalStateException("Unhandled cursor kind: " + c.kind());
+        }
+    }
+
+    // return builtin Record types accessible from the given Type
+    public static Stream<Cursor> getBuiltinRecordTypes(Type type) {
+        List<Cursor> recordTypes = new ArrayList<>();
+        fillBuiltinRecordTypes(type, recordTypes);
+        return recordTypes.stream().distinct();
+    }
+
+    private static void fillBuiltinRecordTypes(Type type, List<Cursor> recordTypes) {
+        type = type.canonicalType();
+        switch (type.kind()) {
+            case ConstantArray:
+            case IncompleteArray:
+                fillBuiltinRecordTypes(type.getElementType(), recordTypes);
+                break;
+
+            case FunctionProto:
+            case FunctionNoProto: {
+                final int numArgs = type.numberOfArgs();
+                for (int i = 0; i < numArgs; i++) {
+                    fillBuiltinRecordTypes(type.argType(i), recordTypes);
+                }
+                fillBuiltinRecordTypes(type.resultType(), recordTypes);
+            }
+            break;
+
+            case Record: {
+                Cursor c = type.getDeclarationCursor();
+                if (c.isDefinition()) {
+                    SourceLocation sloc = c.getSourceLocation();
+                    if (sloc != null && sloc.getFileLocation().path() == null) {
+                        recordTypes.add(c);
+                    }
+                }
+            }
+            break;
+
+            case BlockPointer:
+            case Pointer:
+                fillBuiltinRecordTypes(type.getPointeeType(), recordTypes);
+                break;
+
+            case Unexposed:
+            case Elaborated:
+            case Typedef:
+                fillBuiltinRecordTypes(type, recordTypes);
+                break;
+
+            default: // nothing to do
         }
     }
 

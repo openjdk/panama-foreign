@@ -161,7 +161,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
             SourceLocation src = tree.location();
             SourceLocation.Location loc = src.getFileLocation();
             Path p = loc.path();
-            av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+            av.visit("file", p == null ? "<builtin>" : p.toAbsolutePath().toString());
             av.visit("line", loc.line());
             av.visit("column", loc.column());
             av.visitEnd();
@@ -199,7 +199,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
             SourceLocation src = tree.location();
             SourceLocation.Location loc = src.getFileLocation();
             Path p = loc.path();
-            av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+            av.visit("file", p == null ? "<builtin>" : p.toAbsolutePath().toString());
             av.visit("line", loc.line());
             av.visit("column", loc.column());
             av.visitEnd();
@@ -249,7 +249,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
             AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
             SourceLocation.Location loc = src.getFileLocation();
             Path p = loc.path();
-            av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+            av.visit("file", p == null ? "<builtin>" : p.toAbsolutePath().toString());
             av.visit("line", loc.line());
             av.visit("column", loc.column());
             av.visitEnd();
@@ -444,7 +444,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
             SourceLocation src = funcTree.location();
             SourceLocation.Location loc = src.getFileLocation();
             Path p = loc.path();
-            av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+            av.visit("file", p == null ? "<builtin>" : p.toAbsolutePath().toString());
             av.visit("line", loc.line());
             av.visit("column", loc.column());
             av.visitEnd();
