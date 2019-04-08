@@ -27,11 +27,18 @@ include CopyCommon.gmk
 
 ################################################################################
 
-$(eval $(call SetupCopyFiles, COPY_JEXTRACT_HEADERS, \
+$(eval $(call SetupCopyFiles, COPY_CLANG_HEADERS, \
     DEST := $(CONF_DST_DIR)/jextract, \
     FILES := $(wildcard $(CLANG_INCLUDE_AUX_PATH)/*.h), \
 ))
 
-TARGETS := $(COPY_JEXTRACT_HEADERS)
+JEXTRACT_HEADERS_SRC := $(TOPDIR)/src/jdk.jextract/share/conf
+
+$(eval $(call SetupCopyFiles, COPY_JEXTRACT_HEADERS, \
+    DEST := $(CONF_DST_DIR)/jextract, \
+    FILES := $(wildcard $(JEXTRACT_HEADERS_SRC)/*.h), \
+))
+
+TARGETS := $(COPY_CLANG_HEADERS) $(COPY_JEXTRACT_HEADERS)
 
 ################################################################################

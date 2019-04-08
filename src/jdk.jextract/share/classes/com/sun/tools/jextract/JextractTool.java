@@ -68,6 +68,7 @@ public class JextractTool {
                 .map(new SymbolFilter(ctx))
                 .map(new LibraryLookupFilter(ctx))
                 .map(new DependencyFilter(ctx))
+                .map(new BuiltinTypesHandler(ctx))
                 .map(new TypedefHandler(ctx))
                 .map(new EmptyNameHandler())
                 .map(new DuplicateDeclarationHandler())
