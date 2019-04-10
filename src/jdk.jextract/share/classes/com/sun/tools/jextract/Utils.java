@@ -99,14 +99,22 @@ public class Utils {
         return sb.toString();
     }
 
-    public static String toClassName(String cname) {
-        StringBuilder sb = new StringBuilder(cname.length());
-        cname = toJavaIdentifier(cname);
-        sb.append(cname);
-        if (SourceVersion.isKeyword(cname)) {
+    private static String toSafeName(String name) {
+        StringBuilder sb = new StringBuilder(name.length());
+        name = toJavaIdentifier(name);
+        sb.append(name);
+        if (SourceVersion.isKeyword(name)) {
             sb.append("$");
         }
         return sb.toString();
+    }
+
+    public static String toClassName(String cname) {
+        return toSafeName(cname);
+    }
+
+    public static String toMacroName(String mname) {
+        return toSafeName(mname);
     }
 
     public static String toInternalName(String pkg, String name, String... nested) {

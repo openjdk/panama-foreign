@@ -483,7 +483,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         MacroParser.Macro macro = macroTree.macro().get();
         log.print(Level.FINE, () -> "Adding macro " + name);
 
-        addConstant(global_cw, macroTree.location(), name, macro.type(), macro.value());
+        addConstant(global_cw, macroTree.location(), Utils.toMacroName(name), macro.type(), macro.value());
 
         return true;
     }

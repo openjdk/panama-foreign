@@ -130,7 +130,7 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
             String name = macroTree.name();
             MacroParser.Macro macro = macroTree.macro().get();
             log.print(Level.FINE, () -> "Adding macro " + name);
-            addConstant(header_jsb, name, macro.type(), macro.value());
+            addConstant(header_jsb, Utils.toMacroName(name), macro.type(), macro.value());
             return true;
         } else {
             return false;
