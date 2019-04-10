@@ -57,8 +57,8 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
         int sum = scalar();
         assertEquals(vectorInt(),   sum);
         assertEquals(vectorShort(), sum);
-        assertEquals(vectorByte(),  sum);
-        assertEquals(vectorSAD(),   sum);
+        //assertEquals(vectorByte(),  sum);
+        //assertEquals(vectorSAD(),   sum);
     }
 
     @Benchmark
@@ -73,7 +73,7 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
     // 1. 32-bit accumulators
     @Benchmark
     public int vectorInt() {
-        final var lobyte_mask = I256.broadcast(0x000000FF);
+        final var lobyte_mask = IntVector.broadcast(I256, 0x000000FF);
 
         var acc = IntVector.zero(I256);
         for (int i = 0; i < data.length; i += B256.length()) {
@@ -90,7 +90,7 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
     // 2. 16-bit accumulators
     @Benchmark
     public int vectorShort() {
-        final var lobyte_mask = S256.broadcast((short) 0x00FF);
+        final var lobyte_mask = ShortVector.broadcast(S256, (short) 0x00FF);
 
         // FIXME: overflow
         var acc = ShortVector.zero(S256);
@@ -109,6 +109,7 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
         return accLo.addAll() + accHi.addAll();
     }
 
+    /*
     // 3. 8-bit halves (MISSING: _mm_adds_epu8)
     @Benchmark
     public int vectorByte() {
@@ -144,10 +145,10 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
             acc = acc.add(sad);
         }
         return acc.addAll();
-    }
+    } */
 
     // Helpers
-
+    /*
     static ByteVector addSaturated(ByteVector va, ByteVector vb) {
         return ByteVectorHelper.map(va, vb, (i, a, b) -> {
             if ((a & 0xFF) + (b & 0xFF) < 0xFF) {
@@ -167,5 +168,5 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
             }
         });
         return sum(vc);
-    }
+    } */
 }

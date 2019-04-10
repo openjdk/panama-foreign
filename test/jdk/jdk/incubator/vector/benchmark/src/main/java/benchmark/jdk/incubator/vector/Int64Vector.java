@@ -25,6 +25,7 @@ package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.IntVector;
 
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Measurement(iterations = 5, time = 1)
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class Int64Vector extends AbstractVectorBenchmark {
-    static final IntVector.IntSpecies SPECIES = IntVector.species(Shape.S_64_BIT);
+    static final Species<Integer> SPECIES = IntVector.SPECIES_64;
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 

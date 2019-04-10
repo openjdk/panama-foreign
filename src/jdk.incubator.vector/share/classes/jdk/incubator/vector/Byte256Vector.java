@@ -37,7 +37,7 @@ import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Byte256Vector extends ByteVector {
-    static final Byte256Species SPECIES = new Byte256Species();
+    private static final Species<Byte> SPECIES = ByteVector.SPECIES_256;
 
     static final Byte256Vector ZERO = new Byte256Vector();
 
@@ -154,7 +154,7 @@ final class Byte256Vector extends ByteVector {
         return VectorIntrinsics.cast(
             Byte256Vector.class,
             byte.class, LENGTH,
-            s.vectorType(),
+            s.boxType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -172,37 +172,37 @@ final class Byte256Vector extends ByteVector {
             for (int i = 0; i < limit; i++) {
                 a[i] = (byte) this.get(i);
             }
-            return (Vector) ByteVector.fromArray((ByteVector.ByteSpecies) s, a, 0);
+            return (Vector) ByteVector.fromArray((Species<Byte>) s, a, 0);
         } else if (stype == short.class) {
             short[] a = new short[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (short) this.get(i);
             }
-            return (Vector) ShortVector.fromArray((ShortVector.ShortSpecies) s, a, 0);
+            return (Vector) ShortVector.fromArray((Species<Short>) s, a, 0);
         } else if (stype == int.class) {
             int[] a = new int[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (int) this.get(i);
             }
-            return (Vector) IntVector.fromArray((IntVector.IntSpecies) s, a, 0);
+            return (Vector) IntVector.fromArray((Species<Integer>) s, a, 0);
         } else if (stype == long.class) {
             long[] a = new long[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (long) this.get(i);
             }
-            return (Vector) LongVector.fromArray((LongVector.LongSpecies) s, a, 0);
+            return (Vector) LongVector.fromArray((Species<Long>) s, a, 0);
         } else if (stype == float.class) {
             float[] a = new float[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (float) this.get(i);
             }
-            return (Vector) FloatVector.fromArray((FloatVector.FloatSpecies) s, a, 0);
+            return (Vector) FloatVector.fromArray((Species<Float>) s, a, 0);
         } else if (stype == double.class) {
             double[] a = new double[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (double) this.get(i);
             }
-            return (Vector) DoubleVector.fromArray((DoubleVector.DoubleSpecies) s, a, 0);
+            return (Vector) DoubleVector.fromArray((Species<Double>) s, a, 0);
         } else {
             throw new UnsupportedOperationException("Bad lane type for casting.");
         }
@@ -292,55 +292,50 @@ final class Byte256Vector extends ByteVector {
     @ForceInline
     public ByteVector reshape(Species<Byte> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s instanceof Byte64Vector.Byte64Species)) {
-            Byte64Vector.Byte64Species ts = (Byte64Vector.Byte64Species)s;
+        if (s.bitSize() == 64 && (s.boxType() == Byte64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Byte256Vector.class,
                 byte.class, LENGTH,
                 Byte64Vector.class,
                 byte.class, Byte64Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (ByteVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s instanceof Byte128Vector.Byte128Species)) {
-            Byte128Vector.Byte128Species ts = (Byte128Vector.Byte128Species)s;
+        } else if (s.bitSize() == 128 && (s.boxType() == Byte128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Byte256Vector.class,
                 byte.class, LENGTH,
                 Byte128Vector.class,
                 byte.class, Byte128Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (ByteVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s instanceof Byte256Vector.Byte256Species)) {
-            Byte256Vector.Byte256Species ts = (Byte256Vector.Byte256Species)s;
+        } else if (s.bitSize() == 256 && (s.boxType() == Byte256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Byte256Vector.class,
                 byte.class, LENGTH,
                 Byte256Vector.class,
                 byte.class, Byte256Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (ByteVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s instanceof Byte512Vector.Byte512Species)) {
-            Byte512Vector.Byte512Species ts = (Byte512Vector.Byte512Species)s;
+        } else if (s.bitSize() == 512 && (s.boxType() == Byte512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Byte256Vector.class,
                 byte.class, LENGTH,
                 Byte512Vector.class,
                 byte.class, Byte512Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (ByteVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s instanceof ByteMaxVector.ByteMaxSpecies)) {
-            ByteMaxVector.ByteMaxSpecies ts = (ByteMaxVector.ByteMaxSpecies)s;
+                && (s.bitSize() % 128 == 0) && (s.boxType() == ByteMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 Byte256Vector.class,
                 byte.class, LENGTH,
                 ByteMaxVector.class,
                 byte.class, ByteMaxVector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (ByteVector) vector.defaultReinterpret(species)
             );
         } else {
@@ -353,128 +348,128 @@ final class Byte256Vector extends ByteVector {
     @Override
     @ForceInline
     public ByteVector add(byte o) {
-        return add(SPECIES.broadcast(o));
+        return add((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ByteVector add(byte o, Mask<Byte> m) {
-        return add(SPECIES.broadcast(o), m);
+        return add((Byte256Vector)ByteVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public ByteVector sub(byte o) {
-        return sub(SPECIES.broadcast(o));
+        return sub((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ByteVector sub(byte o, Mask<Byte> m) {
-        return sub(SPECIES.broadcast(o), m);
+        return sub((Byte256Vector)ByteVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public ByteVector mul(byte o) {
-        return mul(SPECIES.broadcast(o));
+        return mul((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ByteVector mul(byte o, Mask<Byte> m) {
-        return mul(SPECIES.broadcast(o), m);
+        return mul((Byte256Vector)ByteVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public ByteVector min(byte o) {
-        return min(SPECIES.broadcast(o));
+        return min((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ByteVector max(byte o) {
-        return max(SPECIES.broadcast(o));
+        return max((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Byte> equal(byte o) {
-        return equal(SPECIES.broadcast(o));
+        return equal((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Byte> notEqual(byte o) {
-        return notEqual(SPECIES.broadcast(o));
+        return notEqual((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Byte> lessThan(byte o) {
-        return lessThan(SPECIES.broadcast(o));
+        return lessThan((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Byte> lessThanEq(byte o) {
-        return lessThanEq(SPECIES.broadcast(o));
+        return lessThanEq((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Byte> greaterThan(byte o) {
-        return greaterThan(SPECIES.broadcast(o));
+        return greaterThan((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Byte> greaterThanEq(byte o) {
-        return greaterThanEq(SPECIES.broadcast(o));
+        return greaterThanEq((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ByteVector blend(byte o, Mask<Byte> m) {
-        return blend(SPECIES.broadcast(o), m);
+        return blend((Byte256Vector)ByteVector.broadcast(SPECIES, o), m);
     }
 
 
     @Override
     @ForceInline
     public ByteVector and(byte o) {
-        return and(SPECIES.broadcast(o));
+        return and((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ByteVector and(byte o, Mask<Byte> m) {
-        return and(SPECIES.broadcast(o), m);
+        return and((Byte256Vector)ByteVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public ByteVector or(byte o) {
-        return or(SPECIES.broadcast(o));
+        return or((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ByteVector or(byte o, Mask<Byte> m) {
-        return or(SPECIES.broadcast(o), m);
+        return or((Byte256Vector)ByteVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public ByteVector xor(byte o) {
-        return xor(SPECIES.broadcast(o));
+        return xor((Byte256Vector)ByteVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ByteVector xor(byte o, Mask<Byte> m) {
-        return xor(SPECIES.broadcast(o), m);
+        return xor((Byte256Vector)ByteVector.broadcast(SPECIES, o), m);
     }
 
     @Override
@@ -729,7 +724,7 @@ final class Byte256Vector extends ByteVector {
     @Override
     @ForceInline
     public byte andAll(Mask<Byte> m) {
-        return SPECIES.broadcast((byte) -1).blend(this, m).andAll();
+        return blend((Byte256Vector)ByteVector.broadcast(SPECIES, (byte) -1), m).andAll();
     }
 
     @Override
@@ -771,7 +766,7 @@ final class Byte256Vector extends ByteVector {
     @Override
     @ForceInline
     public byte orAll(Mask<Byte> m) {
-        return SPECIES.broadcast((byte) 0).blend(this, m).orAll();
+        return blend((Byte256Vector)ByteVector.broadcast(SPECIES, (byte) 0), m).orAll();
     }
 
     @Override
@@ -786,33 +781,33 @@ final class Byte256Vector extends ByteVector {
     @Override
     @ForceInline
     public byte xorAll(Mask<Byte> m) {
-        return SPECIES.broadcast((byte) 0).blend(this, m).xorAll();
+        return blend((Byte256Vector)ByteVector.broadcast(SPECIES, (byte) 0), m).xorAll();
     }
 
 
     @Override
     @ForceInline
     public byte addAll(Mask<Byte> m) {
-        return SPECIES.broadcast((byte) 0).blend(this, m).addAll();
+        return blend((Byte256Vector)ByteVector.broadcast(SPECIES, (byte) 0), m).addAll();
     }
 
 
     @Override
     @ForceInline
     public byte mulAll(Mask<Byte> m) {
-        return SPECIES.broadcast((byte) 1).blend(this, m).mulAll();
+        return blend((Byte256Vector)ByteVector.broadcast(SPECIES, (byte) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
     public byte minAll(Mask<Byte> m) {
-        return SPECIES.broadcast(Byte.MAX_VALUE).blend(this, m).minAll();
+        return blend((Byte256Vector)ByteVector.broadcast(SPECIES, Byte.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
     public byte maxAll(Mask<Byte> m) {
-        return SPECIES.broadcast(Byte.MIN_VALUE).blend(this, m).maxAll();
+        return blend((Byte256Vector)ByteVector.broadcast(SPECIES, Byte.MIN_VALUE), m).maxAll();
     }
 
     @Override
@@ -1196,7 +1191,7 @@ final class Byte256Vector extends ByteVector {
         }
 
         @Override
-        public Byte256Species species() {
+        public Species<Byte> species() {
             return SPECIES;
         }
 
@@ -1210,6 +1205,31 @@ final class Byte256Vector extends ByteVector {
                 res[i] = (byte) (bits[i] ? -1 : 0);
             }
             return new Byte256Vector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <E> Mask<E> cast(Species<E> species) {
+            if (length() != species.length())
+                throw new IllegalArgumentException("Mask length and species length differ");
+            Class<?> stype = species.elementType();
+            boolean [] maskArray = toArray();
+            if (stype == byte.class) {
+                return (Mask <E>) new Byte256Vector.Byte256Mask(maskArray);
+            } else if (stype == short.class) {
+                return (Mask <E>) new Short256Vector.Short256Mask(maskArray);
+            } else if (stype == int.class) {
+                return (Mask <E>) new Int256Vector.Int256Mask(maskArray);
+            } else if (stype == long.class) {
+                return (Mask <E>) new Long256Vector.Long256Mask(maskArray);
+            } else if (stype == float.class) {
+                return (Mask <E>) new Float256Vector.Float256Mask(maskArray);
+            } else if (stype == double.class) {
+                return (Mask <E>) new Double256Vector.Double256Mask(maskArray);
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
         }
 
         // Unary operations
@@ -1284,7 +1304,7 @@ final class Byte256Vector extends ByteVector {
         }
 
         @Override
-        public Byte256Species species() {
+        public Species<Byte> species() {
             return SPECIES;
         }
 
@@ -1295,6 +1315,31 @@ final class Byte256Vector extends ByteVector {
               va[i] = (byte) getElement(i);
             }
             return ByteVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <F> Shuffle<F> cast(Species<F> species) {
+            if (length() != species.length())
+                throw new IllegalArgumentException("Shuffle length and species length differ");
+            Class<?> stype = species.elementType();
+            int [] shuffleArray = toArray();
+            if (stype == byte.class) {
+                return (Shuffle<F>) new Byte256Vector.Byte256Shuffle(shuffleArray);
+            } else if (stype == short.class) {
+                return (Shuffle<F>) new Short256Vector.Short256Shuffle(shuffleArray);
+            } else if (stype == int.class) {
+                return (Shuffle<F>) new Int256Vector.Int256Shuffle(shuffleArray);
+            } else if (stype == long.class) {
+                return (Shuffle<F>) new Long256Vector.Long256Shuffle(shuffleArray);
+            } else if (stype == float.class) {
+                return (Shuffle<F>) new Float256Vector.Float256Shuffle(shuffleArray);
+            } else if (stype == double.class) {
+                return (Shuffle<F>) new Double256Vector.Double256Shuffle(shuffleArray);
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
         }
 
         @Override
@@ -1311,148 +1356,7 @@ final class Byte256Vector extends ByteVector {
     // Species
 
     @Override
-    public Byte256Species species() {
+    public Species<Byte> species() {
         return SPECIES;
-    }
-
-    static final class Byte256Species extends ByteSpecies {
-        static final int BIT_SIZE = Shape.S_256_BIT.bitSize();
-
-        static final int LENGTH = BIT_SIZE / Byte.SIZE;
-
-        @Override
-        public String toString() {
-           StringBuilder sb = new StringBuilder("Shape[");
-           sb.append(bitSize()).append(" bits, ");
-           sb.append(length()).append(" ").append(byte.class.getSimpleName()).append("s x ");
-           sb.append(elementSize()).append(" bits");
-           sb.append("]");
-           return sb.toString();
-        }
-
-        @Override
-        @ForceInline
-        public int bitSize() {
-            return BIT_SIZE;
-        }
-
-        @Override
-        @ForceInline
-        public int length() {
-            return LENGTH;
-        }
-
-        @Override
-        @ForceInline
-        public Class<Byte> elementType() {
-            return byte.class;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> boxType() {
-            return Byte256Vector.class;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> maskType() {
-            return Byte256Mask.class;
-        }
-
-        @Override
-        @ForceInline
-        public int elementSize() {
-            return Byte.SIZE;
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        Class<?> vectorType() {
-            return Byte256Vector.class;
-        }
-
-        @Override
-        @ForceInline
-        public Shape shape() {
-            return Shape.S_256_BIT;
-        }
-
-        @Override
-        Byte256Vector op(FOp f) {
-            byte[] res = new byte[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = f.apply(i);
-            }
-            return new Byte256Vector(res);
-        }
-
-        @Override
-        Byte256Vector op(Mask<Byte> o, FOp f) {
-            byte[] res = new byte[length()];
-            boolean[] mbits = ((Byte256Mask)o).getBits();
-            for (int i = 0; i < length(); i++) {
-                if (mbits[i]) {
-                    res[i] = f.apply(i);
-                }
-            }
-            return new Byte256Vector(res);
-        }
-
-        @Override
-        Byte256Mask opm(FOpm f) {
-            boolean[] res = new boolean[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = (boolean)f.apply(i);
-            }
-            return new Byte256Mask(res);
-        }
-
-        // Factories
-
-        @Override
-        @ForceInline
-        public Byte256Vector zero() {
-            return VectorIntrinsics.broadcastCoerced(Byte256Vector.class, byte.class, LENGTH,
-                                                     0, SPECIES,
-                                                     ((bits, s) -> ((Byte256Species)s).op(i -> (byte)bits)));
-        }
-
-        @Override
-        @ForceInline
-        public Byte256Vector broadcast(byte e) {
-            return VectorIntrinsics.broadcastCoerced(
-                Byte256Vector.class, byte.class, LENGTH,
-                e, SPECIES,
-                ((bits, s) -> ((Byte256Species)s).op(i -> (byte)bits)));
-        }
-
-        @Override
-        @ForceInline
-        public Byte256Vector scalars(byte... es) {
-            Objects.requireNonNull(es);
-            int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
-            return VectorIntrinsics.load(Byte256Vector.class, byte.class, LENGTH,
-                                         es, Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                                         es, ix, SPECIES,
-                                         (c, idx, s) -> ((Byte256Species)s).op(n -> c[idx + n]));
-        }
-
-        @Override
-        @ForceInline
-        public <E> Byte256Mask cast(Mask<E> m) {
-            if (m.length() != LENGTH)
-                throw new IllegalArgumentException("Mask length this species length differ");
-            return new Byte256Mask(m.toArray());
-        }
-
-        @Override
-        @ForceInline
-        public <E> Byte256Shuffle cast(Shuffle<E> s) {
-            if (s.length() != LENGTH)
-                throw new IllegalArgumentException("Shuffle length this species length differ");
-            return new Byte256Shuffle(s.toArray());
-        }
     }
 }

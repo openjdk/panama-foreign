@@ -29,6 +29,7 @@ import java.nio.DoubleBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Function;
 import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
@@ -110,8 +111,10 @@ public abstract class DoubleVector extends Vector<Double> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static DoubleVector zero(DoubleSpecies species) {
-        return species.zero();
+    public static DoubleVector zero(Species<Double> species) {
+        return VectorIntrinsics.broadcastCoerced((Class<DoubleVector>) species.boxType(), double.class, species.length(),
+                                                 Double.doubleToLongBits(0.0f), species,
+                                                 ((bits, s) -> ((DoubleSpecies)s).op(i -> Double.longBitsToDouble((long)bits))));
     }
 
     /**
@@ -122,7 +125,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(DoubleSpecies, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<Double>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
@@ -136,7 +139,7 @@ public abstract class DoubleVector extends Vector<Double> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static DoubleVector fromByteArray(DoubleSpecies species, byte[] a, int ix) {
+    public static DoubleVector fromByteArray(Species<Double> species, byte[] a, int ix) {
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
         return VectorIntrinsics.load((Class<DoubleVector>) species.boxType(), double.class, species.length(),
@@ -158,7 +161,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(DoubleSpecies, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<Double>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
@@ -177,7 +180,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static DoubleVector fromByteArray(DoubleSpecies species, byte[] a, int ix, Mask<Double> m) {
+    public static DoubleVector fromByteArray(Species<Double> species, byte[] a, int ix, Mask<Double> m) {
         return zero(species).blend(fromByteArray(species, a, ix), m);
     }
 
@@ -197,7 +200,7 @@ public abstract class DoubleVector extends Vector<Double> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static DoubleVector fromArray(DoubleSpecies species, double[] a, int i){
+    public static DoubleVector fromArray(Species<Double> species, double[] a, int i){
         Objects.requireNonNull(a);
         i = VectorIntrinsics.checkIndex(i, a.length, species.length());
         return VectorIntrinsics.load((Class<DoubleVector>) species.boxType(), double.class, species.length(),
@@ -226,7 +229,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * is set {@code i > a.length - N}
      */
     @ForceInline
-    public static DoubleVector fromArray(DoubleSpecies species, double[] a, int i, Mask<Double> m) {
+    public static DoubleVector fromArray(Species<Double> species, double[] a, int i, Mask<Double> m) {
         return zero(species).blend(fromArray(species, a, i), m);
     }
 
@@ -253,7 +256,7 @@ public abstract class DoubleVector extends Vector<Double> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static DoubleVector fromArray(DoubleSpecies species, double[] a, int i, int[] indexMap, int j) {
+    public static DoubleVector fromArray(Species<Double> species, double[] a, int i, int[] indexMap, int j) {
         Objects.requireNonNull(a);
         Objects.requireNonNull(indexMap);
 
@@ -261,15 +264,16 @@ public abstract class DoubleVector extends Vector<Double> {
           return DoubleVector.fromArray(species, a, i + indexMap[j]);
         }
 
-        // Index vector: vix[0:n] = k -> i + indexMap[j + i]
-        IntVector vix = IntVector.fromArray(species.indexSpecies(), indexMap, j).add(i);
+        // Index vector: vix[0:n] = k -> i + indexMap[j + k]
+        IntVector vix = IntVector.fromArray(IntVector.species(species.indexShape()), indexMap, j).add(i);
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
         return VectorIntrinsics.loadWithMap((Class<DoubleVector>) species.boxType(), double.class, species.length(),
-                                            species.indexSpecies().vectorType(), a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vix,
+                                            IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
-                                           (c, idx, iMap, idy, s) -> ((DoubleSpecies)s).op(n -> c[idx + iMap[idy+n]]));
+                                            (double[] c, int idx, int[] iMap, int idy, Species<Double> s) ->
+                                                ((DoubleSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }
 
     /**
@@ -298,7 +302,7 @@ public abstract class DoubleVector extends Vector<Double> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static DoubleVector fromArray(DoubleSpecies species, double[] a, int i, Mask<Double> m, int[] indexMap, int j) {
+    public static DoubleVector fromArray(Species<Double> species, double[] a, int i, Mask<Double> m, int[] indexMap, int j) {
         // @@@ This can result in out of bounds errors for unset mask lanes
         return zero(species).blend(fromArray(species, a, i, indexMap, j), m);
     }
@@ -313,7 +317,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(DoubleSpecies, ByteBuffer, int, Mask)} method} as follows:
+     * {@link #fromByteBuffer(Species<Double>, ByteBuffer, int, Mask)} method} as follows:
      * <pre>{@code
      *   return this.fromByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
@@ -330,7 +334,7 @@ public abstract class DoubleVector extends Vector<Double> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static DoubleVector fromByteBuffer(DoubleSpecies species, ByteBuffer bb, int ix) {
+    public static DoubleVector fromByteBuffer(Species<Double> species, ByteBuffer bb, int ix) {
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -382,8 +386,82 @@ public abstract class DoubleVector extends Vector<Double> {
      * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static DoubleVector fromByteBuffer(DoubleSpecies species, ByteBuffer bb, int ix, Mask<Double> m) {
+    public static DoubleVector fromByteBuffer(Species<Double> species, ByteBuffer bb, int ix, Mask<Double> m) {
         return zero(species).blend(fromByteBuffer(species, bb, ix), m);
+    }
+
+    /**
+     * Returns a vector where all lane elements are set to the primitive
+     * value {@code e}.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector of vector where all lane elements are set to
+     * the primitive value {@code e}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static DoubleVector broadcast(Species<Double> s, double e) {
+        return VectorIntrinsics.broadcastCoerced(
+            (Class<DoubleVector>) s.boxType(), double.class, s.length(),
+            Double.doubleToLongBits(e), s,
+            ((bits, sp) -> ((DoubleSpecies)sp).op(i -> Double.longBitsToDouble((long)bits))));
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a given
+     * primitive value.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * the primitive value at index {@code N} is placed into the resulting
+     * vector at lane index {@code N}.
+     *
+     * @param s species of the desired vector
+     * @param es the given primitive values
+     * @return a vector where each lane element is set to a given primitive
+     * value
+     * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static DoubleVector scalars(Species<Double> s, double... es) {
+        Objects.requireNonNull(es);
+        int ix = VectorIntrinsics.checkIndex(0, es.length, s.length());
+        return VectorIntrinsics.load((Class<DoubleVector>) s.boxType(), double.class, s.length(),
+                                     es, Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
+                                     es, ix, s,
+                                     (c, idx, sp) -> ((DoubleSpecies)sp).op(n -> c[idx + n]));
+    }
+
+    /**
+     * Returns a vector where the first lane element is set to the primtive
+     * value {@code e}, all other lane elements are set to the default
+     * value.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector where the first lane element is set to the primitive
+     * value {@code e}
+     */
+    @ForceInline
+    public static final DoubleVector single(Species<Double> s, double e) {
+        return zero(s).with(0, e);
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a randomly
+     * generated primitive value.
+     *
+     * The semantics are equivalent to calling
+     * {@link ThreadLocalRandom#nextDouble()}
+     *
+     * @param s species of the desired vector
+     * @return a vector where each lane elements is set to a randomly
+     * generated primitive value
+     */
+    public static DoubleVector random(Species<Double> s) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return ((DoubleSpecies)s).op(i -> r.nextDouble());
     }
 
     /**
@@ -400,7 +478,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
      */
     @ForceInline
-    public static Mask<Double> maskFromValues(DoubleSpecies species, boolean... bits) {
+    public static Mask<Double> maskFromValues(Species<Double> species, boolean... bits) {
         if (species.boxType() == DoubleMaxVector.class)
             return new DoubleMaxVector.DoubleMaxMask(bits);
         switch (species.bitSize()) {
@@ -413,7 +491,7 @@ public abstract class DoubleVector extends Vector<Double> {
     }
 
     // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
-    static Mask<Double> trueMask(DoubleSpecies species) {
+    static Mask<Double> trueMask(Species<Double> species) {
         if (species.boxType() == DoubleMaxVector.class)
             return DoubleMaxVector.DoubleMaxMask.TRUE_MASK;
         switch (species.bitSize()) {
@@ -425,7 +503,7 @@ public abstract class DoubleVector extends Vector<Double> {
         }
     }
 
-    static Mask<Double> falseMask(DoubleSpecies species) {
+    static Mask<Double> falseMask(Species<Double> species) {
         if (species.boxType() == DoubleMaxVector.class)
             return DoubleMaxVector.DoubleMaxMask.FALSE_MASK;
         switch (species.bitSize()) {
@@ -453,7 +531,7 @@ public abstract class DoubleVector extends Vector<Double> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Double> maskFromArray(DoubleSpecies species, boolean[] bits, int ix) {
+    public static Mask<Double> maskFromArray(Species<Double> species, boolean[] bits, int ix) {
         Objects.requireNonNull(bits);
         ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
         return VectorIntrinsics.load((Class<Mask<Double>>) species.maskType(), long.class, species.length(),
@@ -470,10 +548,10 @@ public abstract class DoubleVector extends Vector<Double> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Double> maskAllTrue(DoubleSpecies species) {
+    public static Mask<Double> maskAllTrue(Species<Double> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<Double>>) species.maskType(), long.class, species.length(),
                                                  (long)-1,  species,
-                                                 ((z, s) -> trueMask((DoubleSpecies)s)));
+                                                 ((z, s) -> trueMask(s)));
     }
 
     /**
@@ -484,10 +562,10 @@ public abstract class DoubleVector extends Vector<Double> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Double> maskAllFalse(DoubleSpecies species) {
+    public static Mask<Double> maskAllFalse(Species<Double> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<Double>>) species.maskType(), long.class, species.length(),
                                                  0, species, 
-                                                 ((z, s) -> falseMask((DoubleSpecies)s)));
+                                                 ((z, s) -> falseMask(s)));
     }
 
     /**
@@ -515,7 +593,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * @return a shuffle of mapped indexes
      */
     @ForceInline
-    public static Shuffle<Double> shuffle(DoubleSpecies species, IntUnaryOperator f) {
+    public static Shuffle<Double> shuffle(Species<Double> species, IntUnaryOperator f) {
         if (species.boxType() == DoubleMaxVector.class)
             return new DoubleMaxVector.DoubleMaxShuffle(f);
         switch (species.bitSize()) {
@@ -541,7 +619,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * @return a shuffle of lane indexes
      */
     @ForceInline
-    public static Shuffle<Double> shuffleIota(DoubleSpecies species) {
+    public static Shuffle<Double> shuffleIota(Species<Double> species) {
         if (species.boxType() == DoubleMaxVector.class)
             return new DoubleMaxVector.DoubleMaxShuffle(AbstractShuffle.IDENTITY);
         switch (species.bitSize()) {
@@ -570,7 +648,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * {@code < species.length()}
      */
     @ForceInline
-    public static Shuffle<Double> shuffleFromValues(DoubleSpecies species, int... ixs) {
+    public static Shuffle<Double> shuffleFromValues(Species<Double> species, int... ixs) {
         if (species.boxType() == DoubleMaxVector.class)
             return new DoubleMaxVector.DoubleMaxShuffle(ixs);
         switch (species.bitSize()) {
@@ -598,7 +676,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * {@code i > a.length - species.length()}
      */
     @ForceInline
-    public static Shuffle<Double> shuffleFromArray(DoubleSpecies species, int[] ixs, int i) {
+    public static Shuffle<Double> shuffleFromArray(Species<Double> species, int[] ixs, int i) {
         if (species.boxType() == DoubleMaxVector.class)
             return new DoubleMaxVector.DoubleMaxShuffle(ixs, i);
         switch (species.bitSize()) {
@@ -609,7 +687,6 @@ public abstract class DoubleVector extends Vector<Double> {
             default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
         }
     }
-
 
     // Ops
 
@@ -2022,87 +2099,59 @@ public abstract class DoubleVector extends Vector<Double> {
     // Species
 
     @Override
-    public abstract DoubleSpecies species();
+    public abstract Species<Double> species();
 
     /**
      * Class representing {@link DoubleVector}'s of the same {@link Vector.Shape Shape}.
      */
-    public static abstract class DoubleSpecies extends Vector.Species<Double> {
+    static final class DoubleSpecies extends Vector.AbstractSpecies<Double> {
+        final Function<double[], DoubleVector> vectorFactory;
+        final Function<boolean[], Vector.Mask<Double>> maskFactory;
+
+        private DoubleSpecies(Vector.Shape shape,
+                          Class<?> boxType,
+                          Class<?> maskType,
+                          Function<double[], DoubleVector> vectorFactory,
+                          Function<boolean[], Vector.Mask<Double>> maskFactory) {
+            super(shape, double.class, Double.SIZE, boxType, maskType);
+            this.vectorFactory = vectorFactory;
+            this.maskFactory = maskFactory;
+        }
+
         interface FOp {
             double apply(int i);
         }
-
-        abstract DoubleVector op(FOp f);
-
-        abstract DoubleVector op(Mask<Double> m, FOp f);
 
         interface FOpm {
             boolean apply(int i);
         }
 
-        abstract Mask<Double> opm(FOpm f);
-
-        abstract IntVector.IntSpecies indexSpecies();
-
-
-        // Factories
-
-        @Override
-        public abstract DoubleVector zero();
-
-        /**
-         * Returns a vector where all lane elements are set to the primitive
-         * value {@code e}.
-         *
-         * @param e the value
-         * @return a vector of vector where all lane elements are set to
-         * the primitive value {@code e}
-         */
-        public abstract DoubleVector broadcast(double e);
-
-        /**
-         * Returns a vector where the first lane element is set to the primtive
-         * value {@code e}, all other lane elements are set to the default
-         * value.
-         *
-         * @param e the value
-         * @return a vector where the first lane element is set to the primitive
-         * value {@code e}
-         */
-        @ForceInline
-        public final DoubleVector single(double e) {
-            return zero().with(0, e);
+        DoubleVector op(FOp f) {
+            double[] res = new double[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = f.apply(i);
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a randomly
-         * generated primitive value.
-         *
-         * The semantics are equivalent to calling
-         * {@code ThreadLocalRandom#nextDouble}.
-         *
-         * @return a vector where each lane elements is set to a randomly
-         * generated primitive value
-         */
-        public DoubleVector random() {
-            ThreadLocalRandom r = ThreadLocalRandom.current();
-            return op(i -> r.nextDouble());
+        DoubleVector op(Vector.Mask<Double> o, FOp f) {
+            double[] res = new double[length()];
+            boolean[] mbits = ((AbstractMask<Double>)o).getBits();
+            for (int i = 0; i < length(); i++) {
+                if (mbits[i]) {
+                    res[i] = f.apply(i);
+                }
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a given
-         * primitive value.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * the primitive value at index {@code N} is placed into the resulting
-         * vector at lane index {@code N}.
-         *
-         * @param es the given primitive values
-         * @return a vector where each lane element is set to a given primitive
-         * value
-         * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
-         */
-        public abstract DoubleVector scalars(double... es);
+        Vector.Mask<Double> opm(IntVector.IntSpecies.FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return maskFactory.apply(res);
+        }
     }
 
     /**
@@ -2115,8 +2164,7 @@ public abstract class DoubleVector extends Vector<Double> {
      *
      * @return the preferred species for an element type of {@code double}
      */
-    @SuppressWarnings("unchecked")
-    public static DoubleSpecies preferredSpecies() {
+    private static DoubleSpecies preferredSpecies() {
         return (DoubleSpecies) Species.ofPreferred(double.class);
     }
 
@@ -2127,16 +2175,41 @@ public abstract class DoubleVector extends Vector<Double> {
      * @return a species for an element type of {@code double} and shape
      * @throws IllegalArgumentException if no such species exists for the shape
      */
-    @SuppressWarnings("unchecked")
-    public static DoubleSpecies species(Vector.Shape s) {
+    static DoubleSpecies species(Vector.Shape s) {
         Objects.requireNonNull(s);
         switch (s) {
-            case S_64_BIT: return Double64Vector.SPECIES;
-            case S_128_BIT: return Double128Vector.SPECIES;
-            case S_256_BIT: return Double256Vector.SPECIES;
-            case S_512_BIT: return Double512Vector.SPECIES;
-            case S_Max_BIT: return DoubleMaxVector.SPECIES;
+            case S_64_BIT: return (DoubleSpecies) SPECIES_64;
+            case S_128_BIT: return (DoubleSpecies) SPECIES_128;
+            case S_256_BIT: return (DoubleSpecies) SPECIES_256;
+            case S_512_BIT: return (DoubleSpecies) SPECIES_512;
+            case S_Max_BIT: return (DoubleSpecies) SPECIES_MAX;
             default: throw new IllegalArgumentException("Bad shape: " + s);
         }
     }
+
+    /** Species representing {@link DoubleVector}s of {@link Vector.Shape#S_64_BIT Shape.S_64_BIT}. */
+    public static final Species<Double> SPECIES_64 = new DoubleSpecies(Shape.S_64_BIT, Double64Vector.class, Double64Vector.Double64Mask.class,
+                                                                     Double64Vector::new, Double64Vector.Double64Mask::new);
+
+    /** Species representing {@link DoubleVector}s of {@link Vector.Shape#S_128_BIT Shape.S_128_BIT}. */
+    public static final Species<Double> SPECIES_128 = new DoubleSpecies(Shape.S_128_BIT, Double128Vector.class, Double128Vector.Double128Mask.class,
+                                                                      Double128Vector::new, Double128Vector.Double128Mask::new);
+
+    /** Species representing {@link DoubleVector}s of {@link Vector.Shape#S_256_BIT Shape.S_256_BIT}. */
+    public static final Species<Double> SPECIES_256 = new DoubleSpecies(Shape.S_256_BIT, Double256Vector.class, Double256Vector.Double256Mask.class,
+                                                                      Double256Vector::new, Double256Vector.Double256Mask::new);
+
+    /** Species representing {@link DoubleVector}s of {@link Vector.Shape#S_512_BIT Shape.S_512_BIT}. */
+    public static final Species<Double> SPECIES_512 = new DoubleSpecies(Shape.S_512_BIT, Double512Vector.class, Double512Vector.Double512Mask.class,
+                                                                      Double512Vector::new, Double512Vector.Double512Mask::new);
+
+    /** Species representing {@link DoubleVector}s of {@link Vector.Shape#S_Max_BIT Shape.S_Max_BIT}. */
+    public static final Species<Double> SPECIES_MAX = new DoubleSpecies(Shape.S_Max_BIT, DoubleMaxVector.class, DoubleMaxVector.DoubleMaxMask.class,
+                                                                      DoubleMaxVector::new, DoubleMaxVector.DoubleMaxMask::new);
+
+    /**
+     * Preferred species for {@link DoubleVector}s.
+     * A preferred species is a species of maximal bit size for the platform.
+     */
+    public static final Species<Double> SPECIES_PREFERRED = (Species<Double>) preferredSpecies();
 }

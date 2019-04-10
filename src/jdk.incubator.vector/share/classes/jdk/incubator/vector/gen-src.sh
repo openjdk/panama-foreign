@@ -104,13 +104,20 @@ do
         vectorindextype="Int${vectorindexbits}Vector.class"
     fi;
 
+    BITS=$bits
+    case $bits in
+      Max)
+        BITS=MAX
+        ;;
+    esac
+
     shape=S${bits}Bit
     Shape=S_${bits}_BIT
     args="$old_args"
     if [[ "${vectortype}" == "Long64Vector" || "${vectortype}" == "Double64Vector" ]]; then
       args="$args -KlongOrDouble64"
     fi
-    bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dmasktype=$masktype -Dshuffletype=$shuffletype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dvectorindextype=$vectorindextype -Dshape=$shape -DShape=$Shape"
+    bitargs="$args -Dbits=$bits -DBITS=$BITS -Dvectortype=$vectortype -Dmasktype=$masktype -Dshuffletype=$shuffletype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dvectorindextype=$vectorindextype -Dshape=$shape -DShape=$Shape"
 
     echo $bitargs
     rm -f $vectortype.java

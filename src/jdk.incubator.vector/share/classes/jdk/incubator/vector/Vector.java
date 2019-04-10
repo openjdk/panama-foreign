@@ -26,6 +26,7 @@ package jdk.incubator.vector;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -917,6 +918,7 @@ public abstract class Vector<E> {
         /** Shape of maximum length supported on the platform */
         S_Max_BIT(Unsafe.getUnsafe().getMaxVectorSize(byte.class) * 8);
 
+        @Stable
         final int bitSize;
 
         Shape(int bitSize) {
@@ -1009,8 +1011,6 @@ public abstract class Vector<E> {
          */
         public abstract int elementSize();
 
-        abstract Class<?> vectorType();
-
         /**
          * Returns the shape of masks, shuffles, and vectors produced by this
          * species.
@@ -1018,6 +1018,13 @@ public abstract class Vector<E> {
          * @return the primitive element type
          */
         public abstract Shape shape();
+
+        /**
+         * Returns the shape of the corresponding index species
+         * @return the shape
+         */
+        @ForceInline
+        public abstract Shape indexShape();
 
         /**
          * Returns the mask, shuffe, or vector lanes produced by this species.
@@ -1085,7 +1092,6 @@ public abstract class Vector<E> {
          * @throws IllegalArgumentException if no such species exists for the
          * element type
          */
-        @SuppressWarnings("unchecked")
         public static <E> Vector.Species<E> ofPreferred(Class<E> c) {
             Unsafe u = Unsafe.getUnsafe();
 
@@ -1094,51 +1100,93 @@ public abstract class Vector<E> {
             Shape s = Shape.forBitSize(vectorBitSize);
             return Species.of(c, s);
         }
+    }
 
-        /**
-         * Returns a vector where all lane elements are set to the default
-         * primitive value.
-         *
-         * @return a zero vector
-         */
-        public abstract Vector<E> zero();
+    abstract static class AbstractSpecies<E> extends Vector.Species<E> {
+        @Stable
+        protected final Vector.Shape shape;
+        @Stable
+        protected final Class<E> elementType;
+        @Stable
+        protected final int elementSize;
+        @Stable
+        protected final Class<?> boxType;
+        @Stable
+        protected final Class<?> maskType;
+        @Stable
+        protected final Shape indexShape;
 
-        /**
-         * Converts a given mask of shape {@code T} and element type
-         * {@code F} to a mask of this species shape {@code S} and element
-         * type {@code E}.
-         * <p>
-         * For each mask lane, where {@code N} is the mask lane index, if the
-         * mask lane at index {@code N} is set, then the mask lane at index
-         * {@code N} of the resulting mask is set, otherwise that mask lane is
-         * not set.
-         *
-         * @param m the mask
-         * @param <F> the boxed element type of the mask
-         * @return a mask, converted by shape and element type, from a given
-         * mask.
-         * @throws IllegalArgumentException if the mask length and this species
-         * length differ
-         */
-        public abstract <F> Mask<E> cast(Mask<F> m);
+        AbstractSpecies(Vector.Shape shape, Class<E> elementType, int elementSize, Class<?> boxType, Class<?> maskType) {
+            this.shape = shape;
+            this.elementType = elementType;
+            this.elementSize = elementSize;
+            this.boxType = boxType;
+            this.maskType = maskType;
 
-        /**
-         * Converts a given shuffle of shape {@code T} and element type
-         * {@code F} to a shuffle of this species shape {@code S} and element
-         * type {@code E}.
-         * <p>
-         * For each shuffle lane, where {@code N} is the mask lane index, the
-         * shuffle element at index {@code N} is placed, unmodified, into the
-         * resulting shuffle at index {@code N}.
-         *
-         * @param s the shuffle
-         * @param <F> the boxed element type of the mask
-         * @return a shuffle, converted by shape and element type, from a given
-         * shuffle.
-         * @throws IllegalArgumentException if the shuffle length and this
-         * species length differ
-         */
-        public abstract <F> Shuffle<E> cast(Shuffle<F> s);
+            if (boxType == Long64Vector.class || boxType == Double64Vector.class) {
+                indexShape = Vector.Shape.S_64_BIT;
+            }
+            else {
+                int bitSize = Vector.bitSizeForVectorLength(int.class, shape.bitSize() / elementSize);
+                indexShape = Vector.Shape.forBitSize(bitSize);
+            }
+        }
+
+        @Override
+        @ForceInline
+        public int bitSize() {
+            return shape.bitSize();
+        }
+
+        @Override
+        @ForceInline
+        public int length() {
+            return shape.bitSize() / elementSize;
+        }
+
+        @Override
+        @ForceInline
+        public Class<E> elementType() {
+            return elementType;
+        }
+
+        @Override
+        @ForceInline
+        public Class<?> boxType() {
+            return boxType;
+        }
+
+        @Override
+        @ForceInline
+        public Class<?> maskType() {
+            return maskType;
+        }
+
+        @Override
+        @ForceInline
+        public int elementSize() {
+            return elementSize;
+        }
+
+        @Override
+        @ForceInline
+        public Vector.Shape shape() {
+            return shape;
+        }
+
+        @Override
+        @ForceInline
+        public Vector.Shape indexShape() { return indexShape; }
+
+        @Override
+        public String toString() {
+            return new StringBuilder("Shape[")
+                    .append(bitSize()).append(" bits, ")
+                    .append(length()).append(" ").append(elementType.getSimpleName()).append("s x ")
+                    .append(elementSize()).append(" bits")
+                    .append("]")
+                    .toString();
+        }
     }
 
     /**
@@ -1225,16 +1273,13 @@ public abstract class Vector<E> {
          * {@code N} of the resulting mask is set, otherwise that mask lane is
          * not set.
          *
-         * @param species the species of the desired mask
+         * @param s the species of the desired mask
          * @param <F> the boxed element type of the species
          * @return a mask converted by shape and element type
          * @throws IllegalArgumentException if this mask length and the species
          * length differ
          */
-        @ForceInline
-        public <F> Mask<F> cast(Species<F> species) {
-            return species.cast(this);
-        }
+        public abstract <F> Mask<F> cast(Species<F> s);
 
         /**
          * Returns the lane elements of this mask packed into a {@code long}
@@ -1423,10 +1468,7 @@ public abstract class Vector<E> {
          * @throws IllegalArgumentException if this shuffle length and the
          * species length differ
          */
-        @ForceInline
-        public <F> Shuffle<F> cast(Species<F> species) {
-            return species.cast(this);
-        }
+        public abstract <F> Shuffle<F> cast(Species<F> species);
 
         /**
          * Returns an {@code int} array containing the lane elements of this

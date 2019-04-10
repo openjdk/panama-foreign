@@ -28,6 +28,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.FloatVector;
@@ -47,10 +48,8 @@ import java.util.stream.Stream;
 @Test
 public class FloatMaxVectorTests extends AbstractVectorTest {
 
-    static final Shape S_Max_BIT = getMaxBit();
-
-    static final FloatVector.FloatSpecies SPECIES =
-                FloatVector.species(S_Max_BIT);
+    static final Species<Float> SPECIES =
+                FloatVector.SPECIES_MAX;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
 

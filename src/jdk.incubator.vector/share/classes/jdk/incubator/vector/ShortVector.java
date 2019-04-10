@@ -29,6 +29,7 @@ import java.nio.ShortBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Function;
 import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
@@ -110,8 +111,10 @@ public abstract class ShortVector extends Vector<Short> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static ShortVector zero(ShortSpecies species) {
-        return species.zero();
+    public static ShortVector zero(Species<Short> species) {
+        return VectorIntrinsics.broadcastCoerced((Class<ShortVector>) species.boxType(), short.class, species.length(),
+                                                 0, species,
+                                                 ((bits, s) -> ((ShortSpecies)s).op(i -> (short)bits)));
     }
 
     /**
@@ -122,7 +125,7 @@ public abstract class ShortVector extends Vector<Short> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(ShortSpecies, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<Short>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
@@ -136,7 +139,7 @@ public abstract class ShortVector extends Vector<Short> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static ShortVector fromByteArray(ShortSpecies species, byte[] a, int ix) {
+    public static ShortVector fromByteArray(Species<Short> species, byte[] a, int ix) {
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
         return VectorIntrinsics.load((Class<ShortVector>) species.boxType(), short.class, species.length(),
@@ -158,7 +161,7 @@ public abstract class ShortVector extends Vector<Short> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(ShortSpecies, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<Short>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
@@ -177,7 +180,7 @@ public abstract class ShortVector extends Vector<Short> {
      * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static ShortVector fromByteArray(ShortSpecies species, byte[] a, int ix, Mask<Short> m) {
+    public static ShortVector fromByteArray(Species<Short> species, byte[] a, int ix, Mask<Short> m) {
         return zero(species).blend(fromByteArray(species, a, ix), m);
     }
 
@@ -197,7 +200,7 @@ public abstract class ShortVector extends Vector<Short> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static ShortVector fromArray(ShortSpecies species, short[] a, int i){
+    public static ShortVector fromArray(Species<Short> species, short[] a, int i){
         Objects.requireNonNull(a);
         i = VectorIntrinsics.checkIndex(i, a.length, species.length());
         return VectorIntrinsics.load((Class<ShortVector>) species.boxType(), short.class, species.length(),
@@ -226,7 +229,7 @@ public abstract class ShortVector extends Vector<Short> {
      * is set {@code i > a.length - N}
      */
     @ForceInline
-    public static ShortVector fromArray(ShortSpecies species, short[] a, int i, Mask<Short> m) {
+    public static ShortVector fromArray(Species<Short> species, short[] a, int i, Mask<Short> m) {
         return zero(species).blend(fromArray(species, a, i), m);
     }
 
@@ -251,8 +254,8 @@ public abstract class ShortVector extends Vector<Short> {
      * or for any vector lane index {@code N} the result of
      * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
      */
-    public static ShortVector fromArray(ShortSpecies species, short[] a, int i, int[] indexMap, int j) {
-        return species.op(n -> a[i + indexMap[j + n]]);
+    public static ShortVector fromArray(Species<Short> species, short[] a, int i, int[] indexMap, int j) {
+        return ((ShortSpecies)species).op(n -> a[i + indexMap[j + n]]);
     }
     /**
      * Loads a vector from an array using indexes obtained from an index
@@ -278,8 +281,8 @@ public abstract class ShortVector extends Vector<Short> {
      * {@code N} is set the result of {@code i + indexMap[j + N]} is
      * {@code < 0} or {@code >= a.length}
      */
-    public static ShortVector fromArray(ShortSpecies species, short[] a, int i, Mask<Short> m, int[] indexMap, int j) {
-        return species.op(m, n -> a[i + indexMap[j + n]]);
+    public static ShortVector fromArray(Species<Short> species, short[] a, int i, Mask<Short> m, int[] indexMap, int j) {
+        return ((ShortSpecies)species).op(m, n -> a[i + indexMap[j + n]]);
     }
 
     /**
@@ -291,7 +294,7 @@ public abstract class ShortVector extends Vector<Short> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(ShortSpecies, ByteBuffer, int, Mask)} method} as follows:
+     * {@link #fromByteBuffer(Species<Short>, ByteBuffer, int, Mask)} method} as follows:
      * <pre>{@code
      *   return this.fromByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
@@ -308,7 +311,7 @@ public abstract class ShortVector extends Vector<Short> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static ShortVector fromByteBuffer(ShortSpecies species, ByteBuffer bb, int ix) {
+    public static ShortVector fromByteBuffer(Species<Short> species, ByteBuffer bb, int ix) {
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -360,8 +363,82 @@ public abstract class ShortVector extends Vector<Short> {
      * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static ShortVector fromByteBuffer(ShortSpecies species, ByteBuffer bb, int ix, Mask<Short> m) {
+    public static ShortVector fromByteBuffer(Species<Short> species, ByteBuffer bb, int ix, Mask<Short> m) {
         return zero(species).blend(fromByteBuffer(species, bb, ix), m);
+    }
+
+    /**
+     * Returns a vector where all lane elements are set to the primitive
+     * value {@code e}.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector of vector where all lane elements are set to
+     * the primitive value {@code e}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static ShortVector broadcast(Species<Short> s, short e) {
+        return VectorIntrinsics.broadcastCoerced(
+            (Class<ShortVector>) s.boxType(), short.class, s.length(),
+            e, s,
+            ((bits, sp) -> ((ShortSpecies)sp).op(i -> (short)bits)));
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a given
+     * primitive value.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * the primitive value at index {@code N} is placed into the resulting
+     * vector at lane index {@code N}.
+     *
+     * @param s species of the desired vector
+     * @param es the given primitive values
+     * @return a vector where each lane element is set to a given primitive
+     * value
+     * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static ShortVector scalars(Species<Short> s, short... es) {
+        Objects.requireNonNull(es);
+        int ix = VectorIntrinsics.checkIndex(0, es.length, s.length());
+        return VectorIntrinsics.load((Class<ShortVector>) s.boxType(), short.class, s.length(),
+                                     es, Unsafe.ARRAY_SHORT_BASE_OFFSET,
+                                     es, ix, s,
+                                     (c, idx, sp) -> ((ShortSpecies)sp).op(n -> c[idx + n]));
+    }
+
+    /**
+     * Returns a vector where the first lane element is set to the primtive
+     * value {@code e}, all other lane elements are set to the default
+     * value.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector where the first lane element is set to the primitive
+     * value {@code e}
+     */
+    @ForceInline
+    public static final ShortVector single(Species<Short> s, short e) {
+        return zero(s).with(0, e);
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a randomly
+     * generated primitive value.
+     *
+     * The semantics are equivalent to calling
+     * (short){@link ThreadLocalRandom#nextInt()}
+     *
+     * @param s species of the desired vector
+     * @return a vector where each lane elements is set to a randomly
+     * generated primitive value
+     */
+    public static ShortVector random(Species<Short> s) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return ((ShortSpecies)s).op(i -> (short) r.nextInt());
     }
 
     /**
@@ -378,7 +455,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
      */
     @ForceInline
-    public static Mask<Short> maskFromValues(ShortSpecies species, boolean... bits) {
+    public static Mask<Short> maskFromValues(Species<Short> species, boolean... bits) {
         if (species.boxType() == ShortMaxVector.class)
             return new ShortMaxVector.ShortMaxMask(bits);
         switch (species.bitSize()) {
@@ -391,7 +468,7 @@ public abstract class ShortVector extends Vector<Short> {
     }
 
     // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
-    static Mask<Short> trueMask(ShortSpecies species) {
+    static Mask<Short> trueMask(Species<Short> species) {
         if (species.boxType() == ShortMaxVector.class)
             return ShortMaxVector.ShortMaxMask.TRUE_MASK;
         switch (species.bitSize()) {
@@ -403,7 +480,7 @@ public abstract class ShortVector extends Vector<Short> {
         }
     }
 
-    static Mask<Short> falseMask(ShortSpecies species) {
+    static Mask<Short> falseMask(Species<Short> species) {
         if (species.boxType() == ShortMaxVector.class)
             return ShortMaxVector.ShortMaxMask.FALSE_MASK;
         switch (species.bitSize()) {
@@ -431,7 +508,7 @@ public abstract class ShortVector extends Vector<Short> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Short> maskFromArray(ShortSpecies species, boolean[] bits, int ix) {
+    public static Mask<Short> maskFromArray(Species<Short> species, boolean[] bits, int ix) {
         Objects.requireNonNull(bits);
         ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
         return VectorIntrinsics.load((Class<Mask<Short>>) species.maskType(), short.class, species.length(),
@@ -448,10 +525,10 @@ public abstract class ShortVector extends Vector<Short> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Short> maskAllTrue(ShortSpecies species) {
+    public static Mask<Short> maskAllTrue(Species<Short> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<Short>>) species.maskType(), short.class, species.length(),
                                                  (short)-1,  species,
-                                                 ((z, s) -> trueMask((ShortSpecies)s)));
+                                                 ((z, s) -> trueMask(s)));
     }
 
     /**
@@ -462,10 +539,10 @@ public abstract class ShortVector extends Vector<Short> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Short> maskAllFalse(ShortSpecies species) {
+    public static Mask<Short> maskAllFalse(Species<Short> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<Short>>) species.maskType(), short.class, species.length(),
                                                  0, species, 
-                                                 ((z, s) -> falseMask((ShortSpecies)s)));
+                                                 ((z, s) -> falseMask(s)));
     }
 
     /**
@@ -493,7 +570,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @return a shuffle of mapped indexes
      */
     @ForceInline
-    public static Shuffle<Short> shuffle(ShortSpecies species, IntUnaryOperator f) {
+    public static Shuffle<Short> shuffle(Species<Short> species, IntUnaryOperator f) {
         if (species.boxType() == ShortMaxVector.class)
             return new ShortMaxVector.ShortMaxShuffle(f);
         switch (species.bitSize()) {
@@ -519,7 +596,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @return a shuffle of lane indexes
      */
     @ForceInline
-    public static Shuffle<Short> shuffleIota(ShortSpecies species) {
+    public static Shuffle<Short> shuffleIota(Species<Short> species) {
         if (species.boxType() == ShortMaxVector.class)
             return new ShortMaxVector.ShortMaxShuffle(AbstractShuffle.IDENTITY);
         switch (species.bitSize()) {
@@ -548,7 +625,7 @@ public abstract class ShortVector extends Vector<Short> {
      * {@code < species.length()}
      */
     @ForceInline
-    public static Shuffle<Short> shuffleFromValues(ShortSpecies species, int... ixs) {
+    public static Shuffle<Short> shuffleFromValues(Species<Short> species, int... ixs) {
         if (species.boxType() == ShortMaxVector.class)
             return new ShortMaxVector.ShortMaxShuffle(ixs);
         switch (species.bitSize()) {
@@ -576,7 +653,7 @@ public abstract class ShortVector extends Vector<Short> {
      * {@code i > a.length - species.length()}
      */
     @ForceInline
-    public static Shuffle<Short> shuffleFromArray(ShortSpecies species, int[] ixs, int i) {
+    public static Shuffle<Short> shuffleFromArray(Species<Short> species, int[] ixs, int i) {
         if (species.boxType() == ShortMaxVector.class)
             return new ShortMaxVector.ShortMaxShuffle(ixs, i);
         switch (species.bitSize()) {
@@ -587,7 +664,6 @@ public abstract class ShortVector extends Vector<Short> {
             default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
         }
     }
-
 
     // Ops
 
@@ -1469,86 +1545,59 @@ public abstract class ShortVector extends Vector<Short> {
     // Species
 
     @Override
-    public abstract ShortSpecies species();
+    public abstract Species<Short> species();
 
     /**
      * Class representing {@link ShortVector}'s of the same {@link Vector.Shape Shape}.
      */
-    public static abstract class ShortSpecies extends Vector.Species<Short> {
+    static final class ShortSpecies extends Vector.AbstractSpecies<Short> {
+        final Function<short[], ShortVector> vectorFactory;
+        final Function<boolean[], Vector.Mask<Short>> maskFactory;
+
+        private ShortSpecies(Vector.Shape shape,
+                          Class<?> boxType,
+                          Class<?> maskType,
+                          Function<short[], ShortVector> vectorFactory,
+                          Function<boolean[], Vector.Mask<Short>> maskFactory) {
+            super(shape, short.class, Short.SIZE, boxType, maskType);
+            this.vectorFactory = vectorFactory;
+            this.maskFactory = maskFactory;
+        }
+
         interface FOp {
             short apply(int i);
         }
-
-        abstract ShortVector op(FOp f);
-
-        abstract ShortVector op(Mask<Short> m, FOp f);
 
         interface FOpm {
             boolean apply(int i);
         }
 
-        abstract Mask<Short> opm(FOpm f);
-
-
-
-        // Factories
-
-        @Override
-        public abstract ShortVector zero();
-
-        /**
-         * Returns a vector where all lane elements are set to the primitive
-         * value {@code e}.
-         *
-         * @param e the value
-         * @return a vector of vector where all lane elements are set to
-         * the primitive value {@code e}
-         */
-        public abstract ShortVector broadcast(short e);
-
-        /**
-         * Returns a vector where the first lane element is set to the primtive
-         * value {@code e}, all other lane elements are set to the default
-         * value.
-         *
-         * @param e the value
-         * @return a vector where the first lane element is set to the primitive
-         * value {@code e}
-         */
-        @ForceInline
-        public final ShortVector single(short e) {
-            return zero().with(0, e);
+        ShortVector op(FOp f) {
+            short[] res = new short[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = f.apply(i);
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a randomly
-         * generated primitive value.
-         *
-         * The semantics are equivalent to calling
-         * {@code (short)ThreadLocalRandom#nextInt()}.
-         *
-         * @return a vector where each lane elements is set to a randomly
-         * generated primitive value
-         */
-        public ShortVector random() {
-            ThreadLocalRandom r = ThreadLocalRandom.current();
-            return op(i -> (short) r.nextInt());
+        ShortVector op(Vector.Mask<Short> o, FOp f) {
+            short[] res = new short[length()];
+            boolean[] mbits = ((AbstractMask<Short>)o).getBits();
+            for (int i = 0; i < length(); i++) {
+                if (mbits[i]) {
+                    res[i] = f.apply(i);
+                }
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a given
-         * primitive value.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * the primitive value at index {@code N} is placed into the resulting
-         * vector at lane index {@code N}.
-         *
-         * @param es the given primitive values
-         * @return a vector where each lane element is set to a given primitive
-         * value
-         * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
-         */
-        public abstract ShortVector scalars(short... es);
+        Vector.Mask<Short> opm(IntVector.IntSpecies.FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return maskFactory.apply(res);
+        }
     }
 
     /**
@@ -1561,8 +1610,7 @@ public abstract class ShortVector extends Vector<Short> {
      *
      * @return the preferred species for an element type of {@code short}
      */
-    @SuppressWarnings("unchecked")
-    public static ShortSpecies preferredSpecies() {
+    private static ShortSpecies preferredSpecies() {
         return (ShortSpecies) Species.ofPreferred(short.class);
     }
 
@@ -1573,16 +1621,41 @@ public abstract class ShortVector extends Vector<Short> {
      * @return a species for an element type of {@code short} and shape
      * @throws IllegalArgumentException if no such species exists for the shape
      */
-    @SuppressWarnings("unchecked")
-    public static ShortSpecies species(Vector.Shape s) {
+    static ShortSpecies species(Vector.Shape s) {
         Objects.requireNonNull(s);
         switch (s) {
-            case S_64_BIT: return Short64Vector.SPECIES;
-            case S_128_BIT: return Short128Vector.SPECIES;
-            case S_256_BIT: return Short256Vector.SPECIES;
-            case S_512_BIT: return Short512Vector.SPECIES;
-            case S_Max_BIT: return ShortMaxVector.SPECIES;
+            case S_64_BIT: return (ShortSpecies) SPECIES_64;
+            case S_128_BIT: return (ShortSpecies) SPECIES_128;
+            case S_256_BIT: return (ShortSpecies) SPECIES_256;
+            case S_512_BIT: return (ShortSpecies) SPECIES_512;
+            case S_Max_BIT: return (ShortSpecies) SPECIES_MAX;
             default: throw new IllegalArgumentException("Bad shape: " + s);
         }
     }
+
+    /** Species representing {@link ShortVector}s of {@link Vector.Shape#S_64_BIT Shape.S_64_BIT}. */
+    public static final Species<Short> SPECIES_64 = new ShortSpecies(Shape.S_64_BIT, Short64Vector.class, Short64Vector.Short64Mask.class,
+                                                                     Short64Vector::new, Short64Vector.Short64Mask::new);
+
+    /** Species representing {@link ShortVector}s of {@link Vector.Shape#S_128_BIT Shape.S_128_BIT}. */
+    public static final Species<Short> SPECIES_128 = new ShortSpecies(Shape.S_128_BIT, Short128Vector.class, Short128Vector.Short128Mask.class,
+                                                                      Short128Vector::new, Short128Vector.Short128Mask::new);
+
+    /** Species representing {@link ShortVector}s of {@link Vector.Shape#S_256_BIT Shape.S_256_BIT}. */
+    public static final Species<Short> SPECIES_256 = new ShortSpecies(Shape.S_256_BIT, Short256Vector.class, Short256Vector.Short256Mask.class,
+                                                                      Short256Vector::new, Short256Vector.Short256Mask::new);
+
+    /** Species representing {@link ShortVector}s of {@link Vector.Shape#S_512_BIT Shape.S_512_BIT}. */
+    public static final Species<Short> SPECIES_512 = new ShortSpecies(Shape.S_512_BIT, Short512Vector.class, Short512Vector.Short512Mask.class,
+                                                                      Short512Vector::new, Short512Vector.Short512Mask::new);
+
+    /** Species representing {@link ShortVector}s of {@link Vector.Shape#S_Max_BIT Shape.S_Max_BIT}. */
+    public static final Species<Short> SPECIES_MAX = new ShortSpecies(Shape.S_Max_BIT, ShortMaxVector.class, ShortMaxVector.ShortMaxMask.class,
+                                                                      ShortMaxVector::new, ShortMaxVector.ShortMaxMask::new);
+
+    /**
+     * Preferred species for {@link ShortVector}s.
+     * A preferred species is a species of maximal bit size for the platform.
+     */
+    public static final Species<Short> SPECIES_PREFERRED = (Species<Short>) preferredSpecies();
 }

@@ -29,6 +29,7 @@ import java.nio.FloatBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Function;
 import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
@@ -110,8 +111,10 @@ public abstract class FloatVector extends Vector<Float> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector zero(FloatSpecies species) {
-        return species.zero();
+    public static FloatVector zero(Species<Float> species) {
+        return VectorIntrinsics.broadcastCoerced((Class<FloatVector>) species.boxType(), float.class, species.length(),
+                                                 Float.floatToIntBits(0.0f), species,
+                                                 ((bits, s) -> ((FloatSpecies)s).op(i -> Float.intBitsToFloat((int)bits))));
     }
 
     /**
@@ -122,7 +125,7 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(FloatSpecies, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<Float>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
@@ -136,7 +139,7 @@ public abstract class FloatVector extends Vector<Float> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector fromByteArray(FloatSpecies species, byte[] a, int ix) {
+    public static FloatVector fromByteArray(Species<Float> species, byte[] a, int ix) {
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
         return VectorIntrinsics.load((Class<FloatVector>) species.boxType(), float.class, species.length(),
@@ -158,7 +161,7 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(FloatSpecies, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<Float>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
@@ -177,7 +180,7 @@ public abstract class FloatVector extends Vector<Float> {
      * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static FloatVector fromByteArray(FloatSpecies species, byte[] a, int ix, Mask<Float> m) {
+    public static FloatVector fromByteArray(Species<Float> species, byte[] a, int ix, Mask<Float> m) {
         return zero(species).blend(fromByteArray(species, a, ix), m);
     }
 
@@ -197,7 +200,7 @@ public abstract class FloatVector extends Vector<Float> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector fromArray(FloatSpecies species, float[] a, int i){
+    public static FloatVector fromArray(Species<Float> species, float[] a, int i){
         Objects.requireNonNull(a);
         i = VectorIntrinsics.checkIndex(i, a.length, species.length());
         return VectorIntrinsics.load((Class<FloatVector>) species.boxType(), float.class, species.length(),
@@ -226,7 +229,7 @@ public abstract class FloatVector extends Vector<Float> {
      * is set {@code i > a.length - N}
      */
     @ForceInline
-    public static FloatVector fromArray(FloatSpecies species, float[] a, int i, Mask<Float> m) {
+    public static FloatVector fromArray(Species<Float> species, float[] a, int i, Mask<Float> m) {
         return zero(species).blend(fromArray(species, a, i), m);
     }
 
@@ -253,20 +256,21 @@ public abstract class FloatVector extends Vector<Float> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector fromArray(FloatSpecies species, float[] a, int i, int[] indexMap, int j) {
+    public static FloatVector fromArray(Species<Float> species, float[] a, int i, int[] indexMap, int j) {
         Objects.requireNonNull(a);
         Objects.requireNonNull(indexMap);
 
 
-        // Index vector: vix[0:n] = k -> i + indexMap[j + i]
-        IntVector vix = IntVector.fromArray(species.indexSpecies(), indexMap, j).add(i);
+        // Index vector: vix[0:n] = k -> i + indexMap[j + k]
+        IntVector vix = IntVector.fromArray(IntVector.species(species.indexShape()), indexMap, j).add(i);
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
         return VectorIntrinsics.loadWithMap((Class<FloatVector>) species.boxType(), float.class, species.length(),
-                                            species.indexSpecies().vectorType(), a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vix,
+                                            IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
-                                           (c, idx, iMap, idy, s) -> ((FloatSpecies)s).op(n -> c[idx + iMap[idy+n]]));
+                                            (float[] c, int idx, int[] iMap, int idy, Species<Float> s) ->
+                                                ((FloatSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }
 
     /**
@@ -295,7 +299,7 @@ public abstract class FloatVector extends Vector<Float> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector fromArray(FloatSpecies species, float[] a, int i, Mask<Float> m, int[] indexMap, int j) {
+    public static FloatVector fromArray(Species<Float> species, float[] a, int i, Mask<Float> m, int[] indexMap, int j) {
         // @@@ This can result in out of bounds errors for unset mask lanes
         return zero(species).blend(fromArray(species, a, i, indexMap, j), m);
     }
@@ -310,7 +314,7 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(FloatSpecies, ByteBuffer, int, Mask)} method} as follows:
+     * {@link #fromByteBuffer(Species<Float>, ByteBuffer, int, Mask)} method} as follows:
      * <pre>{@code
      *   return this.fromByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
@@ -327,7 +331,7 @@ public abstract class FloatVector extends Vector<Float> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector fromByteBuffer(FloatSpecies species, ByteBuffer bb, int ix) {
+    public static FloatVector fromByteBuffer(Species<Float> species, ByteBuffer bb, int ix) {
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -379,8 +383,82 @@ public abstract class FloatVector extends Vector<Float> {
      * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static FloatVector fromByteBuffer(FloatSpecies species, ByteBuffer bb, int ix, Mask<Float> m) {
+    public static FloatVector fromByteBuffer(Species<Float> species, ByteBuffer bb, int ix, Mask<Float> m) {
         return zero(species).blend(fromByteBuffer(species, bb, ix), m);
+    }
+
+    /**
+     * Returns a vector where all lane elements are set to the primitive
+     * value {@code e}.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector of vector where all lane elements are set to
+     * the primitive value {@code e}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static FloatVector broadcast(Species<Float> s, float e) {
+        return VectorIntrinsics.broadcastCoerced(
+            (Class<FloatVector>) s.boxType(), float.class, s.length(),
+            Float.floatToIntBits(e), s,
+            ((bits, sp) -> ((FloatSpecies)sp).op(i -> Float.intBitsToFloat((int)bits))));
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a given
+     * primitive value.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * the primitive value at index {@code N} is placed into the resulting
+     * vector at lane index {@code N}.
+     *
+     * @param s species of the desired vector
+     * @param es the given primitive values
+     * @return a vector where each lane element is set to a given primitive
+     * value
+     * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static FloatVector scalars(Species<Float> s, float... es) {
+        Objects.requireNonNull(es);
+        int ix = VectorIntrinsics.checkIndex(0, es.length, s.length());
+        return VectorIntrinsics.load((Class<FloatVector>) s.boxType(), float.class, s.length(),
+                                     es, Unsafe.ARRAY_FLOAT_BASE_OFFSET,
+                                     es, ix, s,
+                                     (c, idx, sp) -> ((FloatSpecies)sp).op(n -> c[idx + n]));
+    }
+
+    /**
+     * Returns a vector where the first lane element is set to the primtive
+     * value {@code e}, all other lane elements are set to the default
+     * value.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector where the first lane element is set to the primitive
+     * value {@code e}
+     */
+    @ForceInline
+    public static final FloatVector single(Species<Float> s, float e) {
+        return zero(s).with(0, e);
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a randomly
+     * generated primitive value.
+     *
+     * The semantics are equivalent to calling
+     * {@link ThreadLocalRandom#nextFloat()}
+     *
+     * @param s species of the desired vector
+     * @return a vector where each lane elements is set to a randomly
+     * generated primitive value
+     */
+    public static FloatVector random(Species<Float> s) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return ((FloatSpecies)s).op(i -> r.nextFloat());
     }
 
     /**
@@ -397,7 +475,7 @@ public abstract class FloatVector extends Vector<Float> {
      * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
      */
     @ForceInline
-    public static Mask<Float> maskFromValues(FloatSpecies species, boolean... bits) {
+    public static Mask<Float> maskFromValues(Species<Float> species, boolean... bits) {
         if (species.boxType() == FloatMaxVector.class)
             return new FloatMaxVector.FloatMaxMask(bits);
         switch (species.bitSize()) {
@@ -410,7 +488,7 @@ public abstract class FloatVector extends Vector<Float> {
     }
 
     // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
-    static Mask<Float> trueMask(FloatSpecies species) {
+    static Mask<Float> trueMask(Species<Float> species) {
         if (species.boxType() == FloatMaxVector.class)
             return FloatMaxVector.FloatMaxMask.TRUE_MASK;
         switch (species.bitSize()) {
@@ -422,7 +500,7 @@ public abstract class FloatVector extends Vector<Float> {
         }
     }
 
-    static Mask<Float> falseMask(FloatSpecies species) {
+    static Mask<Float> falseMask(Species<Float> species) {
         if (species.boxType() == FloatMaxVector.class)
             return FloatMaxVector.FloatMaxMask.FALSE_MASK;
         switch (species.bitSize()) {
@@ -450,7 +528,7 @@ public abstract class FloatVector extends Vector<Float> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Float> maskFromArray(FloatSpecies species, boolean[] bits, int ix) {
+    public static Mask<Float> maskFromArray(Species<Float> species, boolean[] bits, int ix) {
         Objects.requireNonNull(bits);
         ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
         return VectorIntrinsics.load((Class<Mask<Float>>) species.maskType(), int.class, species.length(),
@@ -467,10 +545,10 @@ public abstract class FloatVector extends Vector<Float> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Float> maskAllTrue(FloatSpecies species) {
+    public static Mask<Float> maskAllTrue(Species<Float> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<Float>>) species.maskType(), int.class, species.length(),
                                                  (int)-1,  species,
-                                                 ((z, s) -> trueMask((FloatSpecies)s)));
+                                                 ((z, s) -> trueMask(s)));
     }
 
     /**
@@ -481,10 +559,10 @@ public abstract class FloatVector extends Vector<Float> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Float> maskAllFalse(FloatSpecies species) {
+    public static Mask<Float> maskAllFalse(Species<Float> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<Float>>) species.maskType(), int.class, species.length(),
                                                  0, species, 
-                                                 ((z, s) -> falseMask((FloatSpecies)s)));
+                                                 ((z, s) -> falseMask(s)));
     }
 
     /**
@@ -512,7 +590,7 @@ public abstract class FloatVector extends Vector<Float> {
      * @return a shuffle of mapped indexes
      */
     @ForceInline
-    public static Shuffle<Float> shuffle(FloatSpecies species, IntUnaryOperator f) {
+    public static Shuffle<Float> shuffle(Species<Float> species, IntUnaryOperator f) {
         if (species.boxType() == FloatMaxVector.class)
             return new FloatMaxVector.FloatMaxShuffle(f);
         switch (species.bitSize()) {
@@ -538,7 +616,7 @@ public abstract class FloatVector extends Vector<Float> {
      * @return a shuffle of lane indexes
      */
     @ForceInline
-    public static Shuffle<Float> shuffleIota(FloatSpecies species) {
+    public static Shuffle<Float> shuffleIota(Species<Float> species) {
         if (species.boxType() == FloatMaxVector.class)
             return new FloatMaxVector.FloatMaxShuffle(AbstractShuffle.IDENTITY);
         switch (species.bitSize()) {
@@ -567,7 +645,7 @@ public abstract class FloatVector extends Vector<Float> {
      * {@code < species.length()}
      */
     @ForceInline
-    public static Shuffle<Float> shuffleFromValues(FloatSpecies species, int... ixs) {
+    public static Shuffle<Float> shuffleFromValues(Species<Float> species, int... ixs) {
         if (species.boxType() == FloatMaxVector.class)
             return new FloatMaxVector.FloatMaxShuffle(ixs);
         switch (species.bitSize()) {
@@ -595,7 +673,7 @@ public abstract class FloatVector extends Vector<Float> {
      * {@code i > a.length - species.length()}
      */
     @ForceInline
-    public static Shuffle<Float> shuffleFromArray(FloatSpecies species, int[] ixs, int i) {
+    public static Shuffle<Float> shuffleFromArray(Species<Float> species, int[] ixs, int i) {
         if (species.boxType() == FloatMaxVector.class)
             return new FloatMaxVector.FloatMaxShuffle(ixs, i);
         switch (species.bitSize()) {
@@ -606,7 +684,6 @@ public abstract class FloatVector extends Vector<Float> {
             default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
         }
     }
-
 
     // Ops
 
@@ -2019,87 +2096,59 @@ public abstract class FloatVector extends Vector<Float> {
     // Species
 
     @Override
-    public abstract FloatSpecies species();
+    public abstract Species<Float> species();
 
     /**
      * Class representing {@link FloatVector}'s of the same {@link Vector.Shape Shape}.
      */
-    public static abstract class FloatSpecies extends Vector.Species<Float> {
+    static final class FloatSpecies extends Vector.AbstractSpecies<Float> {
+        final Function<float[], FloatVector> vectorFactory;
+        final Function<boolean[], Vector.Mask<Float>> maskFactory;
+
+        private FloatSpecies(Vector.Shape shape,
+                          Class<?> boxType,
+                          Class<?> maskType,
+                          Function<float[], FloatVector> vectorFactory,
+                          Function<boolean[], Vector.Mask<Float>> maskFactory) {
+            super(shape, float.class, Float.SIZE, boxType, maskType);
+            this.vectorFactory = vectorFactory;
+            this.maskFactory = maskFactory;
+        }
+
         interface FOp {
             float apply(int i);
         }
-
-        abstract FloatVector op(FOp f);
-
-        abstract FloatVector op(Mask<Float> m, FOp f);
 
         interface FOpm {
             boolean apply(int i);
         }
 
-        abstract Mask<Float> opm(FOpm f);
-
-        abstract IntVector.IntSpecies indexSpecies();
-
-
-        // Factories
-
-        @Override
-        public abstract FloatVector zero();
-
-        /**
-         * Returns a vector where all lane elements are set to the primitive
-         * value {@code e}.
-         *
-         * @param e the value
-         * @return a vector of vector where all lane elements are set to
-         * the primitive value {@code e}
-         */
-        public abstract FloatVector broadcast(float e);
-
-        /**
-         * Returns a vector where the first lane element is set to the primtive
-         * value {@code e}, all other lane elements are set to the default
-         * value.
-         *
-         * @param e the value
-         * @return a vector where the first lane element is set to the primitive
-         * value {@code e}
-         */
-        @ForceInline
-        public final FloatVector single(float e) {
-            return zero().with(0, e);
+        FloatVector op(FOp f) {
+            float[] res = new float[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = f.apply(i);
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a randomly
-         * generated primitive value.
-         *
-         * The semantics are equivalent to calling
-         * {@code ThreadLocalRandom#nextFloat}.
-         *
-         * @return a vector where each lane elements is set to a randomly
-         * generated primitive value
-         */
-        public FloatVector random() {
-            ThreadLocalRandom r = ThreadLocalRandom.current();
-            return op(i -> r.nextFloat());
+        FloatVector op(Vector.Mask<Float> o, FOp f) {
+            float[] res = new float[length()];
+            boolean[] mbits = ((AbstractMask<Float>)o).getBits();
+            for (int i = 0; i < length(); i++) {
+                if (mbits[i]) {
+                    res[i] = f.apply(i);
+                }
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a given
-         * primitive value.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * the primitive value at index {@code N} is placed into the resulting
-         * vector at lane index {@code N}.
-         *
-         * @param es the given primitive values
-         * @return a vector where each lane element is set to a given primitive
-         * value
-         * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
-         */
-        public abstract FloatVector scalars(float... es);
+        Vector.Mask<Float> opm(IntVector.IntSpecies.FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return maskFactory.apply(res);
+        }
     }
 
     /**
@@ -2112,8 +2161,7 @@ public abstract class FloatVector extends Vector<Float> {
      *
      * @return the preferred species for an element type of {@code float}
      */
-    @SuppressWarnings("unchecked")
-    public static FloatSpecies preferredSpecies() {
+    private static FloatSpecies preferredSpecies() {
         return (FloatSpecies) Species.ofPreferred(float.class);
     }
 
@@ -2124,16 +2172,41 @@ public abstract class FloatVector extends Vector<Float> {
      * @return a species for an element type of {@code float} and shape
      * @throws IllegalArgumentException if no such species exists for the shape
      */
-    @SuppressWarnings("unchecked")
-    public static FloatSpecies species(Vector.Shape s) {
+    static FloatSpecies species(Vector.Shape s) {
         Objects.requireNonNull(s);
         switch (s) {
-            case S_64_BIT: return Float64Vector.SPECIES;
-            case S_128_BIT: return Float128Vector.SPECIES;
-            case S_256_BIT: return Float256Vector.SPECIES;
-            case S_512_BIT: return Float512Vector.SPECIES;
-            case S_Max_BIT: return FloatMaxVector.SPECIES;
+            case S_64_BIT: return (FloatSpecies) SPECIES_64;
+            case S_128_BIT: return (FloatSpecies) SPECIES_128;
+            case S_256_BIT: return (FloatSpecies) SPECIES_256;
+            case S_512_BIT: return (FloatSpecies) SPECIES_512;
+            case S_Max_BIT: return (FloatSpecies) SPECIES_MAX;
             default: throw new IllegalArgumentException("Bad shape: " + s);
         }
     }
+
+    /** Species representing {@link FloatVector}s of {@link Vector.Shape#S_64_BIT Shape.S_64_BIT}. */
+    public static final Species<Float> SPECIES_64 = new FloatSpecies(Shape.S_64_BIT, Float64Vector.class, Float64Vector.Float64Mask.class,
+                                                                     Float64Vector::new, Float64Vector.Float64Mask::new);
+
+    /** Species representing {@link FloatVector}s of {@link Vector.Shape#S_128_BIT Shape.S_128_BIT}. */
+    public static final Species<Float> SPECIES_128 = new FloatSpecies(Shape.S_128_BIT, Float128Vector.class, Float128Vector.Float128Mask.class,
+                                                                      Float128Vector::new, Float128Vector.Float128Mask::new);
+
+    /** Species representing {@link FloatVector}s of {@link Vector.Shape#S_256_BIT Shape.S_256_BIT}. */
+    public static final Species<Float> SPECIES_256 = new FloatSpecies(Shape.S_256_BIT, Float256Vector.class, Float256Vector.Float256Mask.class,
+                                                                      Float256Vector::new, Float256Vector.Float256Mask::new);
+
+    /** Species representing {@link FloatVector}s of {@link Vector.Shape#S_512_BIT Shape.S_512_BIT}. */
+    public static final Species<Float> SPECIES_512 = new FloatSpecies(Shape.S_512_BIT, Float512Vector.class, Float512Vector.Float512Mask.class,
+                                                                      Float512Vector::new, Float512Vector.Float512Mask::new);
+
+    /** Species representing {@link FloatVector}s of {@link Vector.Shape#S_Max_BIT Shape.S_Max_BIT}. */
+    public static final Species<Float> SPECIES_MAX = new FloatSpecies(Shape.S_Max_BIT, FloatMaxVector.class, FloatMaxVector.FloatMaxMask.class,
+                                                                      FloatMaxVector::new, FloatMaxVector.FloatMaxMask::new);
+
+    /**
+     * Preferred species for {@link FloatVector}s.
+     * A preferred species is a species of maximal bit size for the platform.
+     */
+    public static final Species<Float> SPECIES_PREFERRED = (Species<Float>) preferredSpecies();
 }

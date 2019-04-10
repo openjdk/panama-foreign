@@ -24,13 +24,9 @@
 package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.ByteVector;
-import jdk.incubator.vector.ByteVector.ByteSpecies;
 import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.IntVector.IntSpecies;
 import jdk.incubator.vector.ShortVector;
-import jdk.incubator.vector.ShortVector.ShortSpecies;
 import jdk.incubator.vector.LongVector;
-import jdk.incubator.vector.LongVector.LongSpecies;
 import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector.Species;
@@ -41,25 +37,25 @@ import java.util.function.IntFunction;
 public class AbstractVectorBenchmark {
     static final Random RANDOM = new Random(Integer.getInteger("jdk.incubator.vector.random-seed", 1337));
 
-    static final ByteSpecies B64  = ByteVector.species(Shape.S_64_BIT);
-    static final ByteSpecies B128 = ByteVector.species(Shape.S_128_BIT);
-    static final ByteSpecies B256 = ByteVector.species(Shape.S_256_BIT);
-    static final ByteSpecies B512 = ByteVector.species(Shape.S_512_BIT);
+    static final Species<Byte> B64  = ByteVector.SPECIES_64;
+    static final Species<Byte> B128 = ByteVector.SPECIES_128;
+    static final Species<Byte> B256 = ByteVector.SPECIES_256;
+    static final Species<Byte> B512 = ByteVector.SPECIES_512;
 
-    static final ShortSpecies S64  = ShortVector.species(Shape.S_64_BIT);
-    static final ShortSpecies S128 = ShortVector.species(Shape.S_128_BIT);
-    static final ShortSpecies S256 = ShortVector.species(Shape.S_256_BIT);
-    static final ShortSpecies S512 = ShortVector.species(Shape.S_512_BIT);
+    static final Species<Short> S64  = ShortVector.SPECIES_64;
+    static final Species<Short> S128 = ShortVector.SPECIES_128;
+    static final Species<Short> S256 = ShortVector.SPECIES_256;
+    static final Species<Short> S512 = ShortVector.SPECIES_512;
 
-    static final IntSpecies I64  = IntVector.species(Vector.Shape.S_64_BIT);
-    static final IntSpecies I128 = IntVector.species(Vector.Shape.S_128_BIT);
-    static final IntSpecies I256 = IntVector.species(Vector.Shape.S_256_BIT);
-    static final IntSpecies I512 = IntVector.species(Vector.Shape.S_512_BIT);
+    static final Species<Integer> I64  = IntVector.SPECIES_64;
+    static final Species<Integer> I128 = IntVector.SPECIES_128;
+    static final Species<Integer> I256 = IntVector.SPECIES_256;
+    static final Species<Integer> I512 = IntVector.SPECIES_512;
 
-    static final LongSpecies L64  = LongVector.species(Vector.Shape.S_64_BIT);
-    static final LongSpecies L128 = LongVector.species(Vector.Shape.S_128_BIT);
-    static final LongSpecies L256 = LongVector.species(Vector.Shape.S_256_BIT);
-    static final LongSpecies L512 = LongVector.species(Vector.Shape.S_512_BIT);
+    static final Species<Long> L64  = LongVector.SPECIES_64;
+    static final Species<Long> L128 = LongVector.SPECIES_128;
+    static final Species<Long> L256 = LongVector.SPECIES_256;
+    static final Species<Long> L512 = LongVector.SPECIES_512;
 
     static Shape widen(Shape s) {
         switch (s) {
@@ -87,7 +83,7 @@ public class AbstractVectorBenchmark {
         return Vector.Species.of(s.elementType(), narrow(s.shape()));
     }
 
-    static IntVector join(IntVector.IntSpecies from, IntVector.IntSpecies to, IntVector lo, IntVector hi) {
+    static IntVector join(Species<Integer> from, Species<Integer> to, IntVector lo, IntVector hi) {
         assert 2 * from.length() == to.length();
 
         int vlen = from.length();
@@ -99,16 +95,16 @@ public class AbstractVectorBenchmark {
         return r;
     }
 
-    static Vector.Mask<Integer> mask(IntVector.IntSpecies from, IntVector.IntSpecies to, int i) {
+    static Vector.Mask<Integer> mask(Species<Integer> from, Species<Integer> to, int i) {
         int vlen = from.length();
-        var v1 = from.broadcast(1);    //                         [1 1 ... 1]
-        var v2 = v1.reshape(to);        // [0 0 ... 0 |   ...     | 1 1 ... 1]
-        var v3 = v2.shiftER(i * vlen); // [0 0 ... 0 | 1 1 ... 1 | 0 0 ... 0]
-        return v3.notEqual(0);         // [F F ... F | T T ... T | F F ... F]
+        var v1 = IntVector.broadcast(from, 1);    //                         [1 1 ... 1]
+        var v2 = v1.reshape(to);                  // [0 0 ... 0 |   ...     | 1 1 ... 1]
+        var v3 = v2.shiftER(i * vlen);            // [0 0 ... 0 | 1 1 ... 1 | 0 0 ... 0]
+        return v3.notEqual(0);                    // [F F ... F | T T ... T | F F ... F]
     }
 
     static <E> IntVector sum(ByteVector va) {
-        IntSpecies species = IntVector.species(va.shape());
+        Species<Integer> species = Species.of(Integer.class, va.shape());
         var acc = IntVector.zero(species);
         int limit = va.length() / species.length();
         for (int k = 0; k < limit; k++) {

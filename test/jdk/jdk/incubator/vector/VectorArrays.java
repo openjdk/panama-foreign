@@ -23,6 +23,7 @@
 
 import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.Vector.Species;
 
 public class VectorArrays {
     static boolean equals(byte[] a, byte[] b) {
@@ -54,12 +55,11 @@ public class VectorArrays {
     }
 
     static int mismatch(byte[] a, byte[] b) {
-        ByteVector.ByteSpecies species =
-                ByteVector.species(Vector.Shape.S_256_BIT);
+        Species<Byte> species = ByteVector.SPECIES_256;
         return mismatch(a, b, species);
     }
 
-    static int mismatch(byte[] a, byte[] b, ByteVector.ByteSpecies species) {
+    static int mismatch(byte[] a, byte[] b, Species<Byte> species) {
         int length = Math.min(a.length, b.length);
         if (a == b)
             return -1;

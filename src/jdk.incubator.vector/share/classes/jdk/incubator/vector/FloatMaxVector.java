@@ -38,19 +38,20 @@ import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class FloatMaxVector extends FloatVector {
-    static final FloatMaxSpecies SPECIES = new FloatMaxSpecies();
+    private static final Species<Float> SPECIES = FloatVector.SPECIES_MAX;
 
     static final FloatMaxVector ZERO = new FloatMaxVector();
 
     static final int LENGTH = SPECIES.length();
 
     // Index vector species
-    private static final IntVector.IntSpecies INDEX_SPEC;
+    private static final IntVector.IntSpecies INDEX_SPECIES;
+
     static {
         int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
-        Vector.Shape shape = Shape.forBitSize(bitSize);
-        INDEX_SPEC = (IntVector.IntSpecies) Species.of(int.class, shape);
+        INDEX_SPECIES = (IntVector.IntSpecies) IntVector.species(Shape.forBitSize(bitSize));
     }
+
     private final float[] vec; // Don't access directly, use getElements() instead.
 
     private float[] getElements() {
@@ -162,7 +163,7 @@ final class FloatMaxVector extends FloatVector {
         return VectorIntrinsics.cast(
             FloatMaxVector.class,
             float.class, LENGTH,
-            s.vectorType(),
+            s.boxType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -180,37 +181,37 @@ final class FloatMaxVector extends FloatVector {
             for (int i = 0; i < limit; i++) {
                 a[i] = (byte) this.get(i);
             }
-            return (Vector) ByteVector.fromArray((ByteVector.ByteSpecies) s, a, 0);
+            return (Vector) ByteVector.fromArray((Species<Byte>) s, a, 0);
         } else if (stype == short.class) {
             short[] a = new short[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (short) this.get(i);
             }
-            return (Vector) ShortVector.fromArray((ShortVector.ShortSpecies) s, a, 0);
+            return (Vector) ShortVector.fromArray((Species<Short>) s, a, 0);
         } else if (stype == int.class) {
             int[] a = new int[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (int) this.get(i);
             }
-            return (Vector) IntVector.fromArray((IntVector.IntSpecies) s, a, 0);
+            return (Vector) IntVector.fromArray((Species<Integer>) s, a, 0);
         } else if (stype == long.class) {
             long[] a = new long[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (long) this.get(i);
             }
-            return (Vector) LongVector.fromArray((LongVector.LongSpecies) s, a, 0);
+            return (Vector) LongVector.fromArray((Species<Long>) s, a, 0);
         } else if (stype == float.class) {
             float[] a = new float[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (float) this.get(i);
             }
-            return (Vector) FloatVector.fromArray((FloatVector.FloatSpecies) s, a, 0);
+            return (Vector) FloatVector.fromArray((Species<Float>) s, a, 0);
         } else if (stype == double.class) {
             double[] a = new double[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (double) this.get(i);
             }
-            return (Vector) DoubleVector.fromArray((DoubleVector.DoubleSpecies) s, a, 0);
+            return (Vector) DoubleVector.fromArray((Species<Double>) s, a, 0);
         } else {
             throw new UnsupportedOperationException("Bad lane type for casting.");
         }
@@ -300,55 +301,50 @@ final class FloatMaxVector extends FloatVector {
     @ForceInline
     public FloatVector reshape(Species<Float> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s instanceof Float64Vector.Float64Species)) {
-            Float64Vector.Float64Species ts = (Float64Vector.Float64Species)s;
+        if (s.bitSize() == 64 && (s.boxType() == Float64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 FloatMaxVector.class,
                 float.class, LENGTH,
                 Float64Vector.class,
                 float.class, Float64Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (FloatVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s instanceof Float128Vector.Float128Species)) {
-            Float128Vector.Float128Species ts = (Float128Vector.Float128Species)s;
+        } else if (s.bitSize() == 128 && (s.boxType() == Float128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 FloatMaxVector.class,
                 float.class, LENGTH,
                 Float128Vector.class,
                 float.class, Float128Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (FloatVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s instanceof Float256Vector.Float256Species)) {
-            Float256Vector.Float256Species ts = (Float256Vector.Float256Species)s;
+        } else if (s.bitSize() == 256 && (s.boxType() == Float256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 FloatMaxVector.class,
                 float.class, LENGTH,
                 Float256Vector.class,
                 float.class, Float256Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (FloatVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s instanceof Float512Vector.Float512Species)) {
-            Float512Vector.Float512Species ts = (Float512Vector.Float512Species)s;
+        } else if (s.bitSize() == 512 && (s.boxType() == Float512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 FloatMaxVector.class,
                 float.class, LENGTH,
                 Float512Vector.class,
                 float.class, Float512Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (FloatVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s instanceof FloatMaxVector.FloatMaxSpecies)) {
-            FloatMaxVector.FloatMaxSpecies ts = (FloatMaxVector.FloatMaxSpecies)s;
+                && (s.bitSize() % 128 == 0) && (s.boxType() == FloatMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 FloatMaxVector.class,
                 float.class, LENGTH,
                 FloatMaxVector.class,
                 float.class, FloatMaxVector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (FloatVector) vector.defaultReinterpret(species)
             );
         } else {
@@ -361,103 +357,103 @@ final class FloatMaxVector extends FloatVector {
     @Override
     @ForceInline
     public FloatVector add(float o) {
-        return add(SPECIES.broadcast(o));
+        return add((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public FloatVector add(float o, Mask<Float> m) {
-        return add(SPECIES.broadcast(o), m);
+        return add((FloatMaxVector)FloatVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public FloatVector sub(float o) {
-        return sub(SPECIES.broadcast(o));
+        return sub((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public FloatVector sub(float o, Mask<Float> m) {
-        return sub(SPECIES.broadcast(o), m);
+        return sub((FloatMaxVector)FloatVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public FloatVector mul(float o) {
-        return mul(SPECIES.broadcast(o));
+        return mul((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public FloatVector mul(float o, Mask<Float> m) {
-        return mul(SPECIES.broadcast(o), m);
+        return mul((FloatMaxVector)FloatVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public FloatVector min(float o) {
-        return min(SPECIES.broadcast(o));
+        return min((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public FloatVector max(float o) {
-        return max(SPECIES.broadcast(o));
+        return max((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Float> equal(float o) {
-        return equal(SPECIES.broadcast(o));
+        return equal((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Float> notEqual(float o) {
-        return notEqual(SPECIES.broadcast(o));
+        return notEqual((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Float> lessThan(float o) {
-        return lessThan(SPECIES.broadcast(o));
+        return lessThan((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Float> lessThanEq(float o) {
-        return lessThanEq(SPECIES.broadcast(o));
+        return lessThanEq((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Float> greaterThan(float o) {
-        return greaterThan(SPECIES.broadcast(o));
+        return greaterThan((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Float> greaterThanEq(float o) {
-        return greaterThanEq(SPECIES.broadcast(o));
+        return greaterThanEq((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public FloatVector blend(float o, Mask<Float> m) {
-        return blend(SPECIES.broadcast(o), m);
+        return blend((FloatMaxVector)FloatVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public FloatVector div(float o) {
-        return div(SPECIES.broadcast(o));
+        return div((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public FloatVector div(float o, Mask<Float> m) {
-        return div(SPECIES.broadcast(o), m);
+        return div((FloatMaxVector)FloatVector.broadcast(SPECIES, o), m);
     }
 
     @Override
@@ -469,49 +465,49 @@ final class FloatMaxVector extends FloatVector {
     @Override
     @ForceInline
     public FloatVector atan2(float o) {
-        return atan2(SPECIES.broadcast(o));
+        return atan2((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public FloatVector atan2(float o, Mask<Float> m) {
-        return atan2(SPECIES.broadcast(o), m);
+        return atan2((FloatMaxVector)FloatVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public FloatVector pow(float o) {
-        return pow(SPECIES.broadcast(o));
+        return pow((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public FloatVector pow(float o, Mask<Float> m) {
-        return pow(SPECIES.broadcast(o), m);
+        return pow((FloatMaxVector)FloatVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public FloatVector fma(float o1, float o2) {
-        return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2));
+        return fma((FloatMaxVector)FloatVector.broadcast(SPECIES, o1), (FloatMaxVector)FloatVector.broadcast(SPECIES, o2));
     }
 
     @Override
     @ForceInline
     public FloatVector fma(float o1, float o2, Mask<Float> m) {
-        return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2), m);
+        return fma((FloatMaxVector)FloatVector.broadcast(SPECIES, o1), (FloatMaxVector)FloatVector.broadcast(SPECIES, o2), m);
     }
 
     @Override
     @ForceInline
     public FloatVector hypot(float o) {
-        return hypot(SPECIES.broadcast(o));
+        return hypot((FloatMaxVector)FloatVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public FloatVector hypot(float o, Mask<Float> m) {
-        return hypot(SPECIES.broadcast(o), m);
+        return hypot((FloatMaxVector)FloatVector.broadcast(SPECIES, o), m);
     }
 
 
@@ -897,26 +893,26 @@ final class FloatMaxVector extends FloatVector {
     @Override
     @ForceInline
     public float addAll(Mask<Float> m) {
-        return SPECIES.broadcast((float) 0).blend(this, m).addAll();
+        return blend((FloatMaxVector)FloatVector.broadcast(SPECIES, (float) 0), m).addAll();
     }
 
 
     @Override
     @ForceInline
     public float mulAll(Mask<Float> m) {
-        return SPECIES.broadcast((float) 1).blend(this, m).mulAll();
+        return blend((FloatMaxVector)FloatVector.broadcast(SPECIES, (float) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
     public float minAll(Mask<Float> m) {
-        return SPECIES.broadcast(Float.MAX_VALUE).blend(this, m).minAll();
+        return blend((FloatMaxVector)FloatVector.broadcast(SPECIES, Float.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
     public float maxAll(Mask<Float> m) {
-        return SPECIES.broadcast(Float.MIN_VALUE).blend(this, m).maxAll();
+        return blend((FloatMaxVector)FloatVector.broadcast(SPECIES, Float.MIN_VALUE), m).maxAll();
     }
 
     @Override
@@ -961,7 +957,7 @@ final class FloatMaxVector extends FloatVector {
         Objects.requireNonNull(b);
 
         // Index vector: vix[0:n] = i -> ix + indexMap[iy + i]
-        IntVector vix = IntVector.fromArray(INDEX_SPEC, b, iy).add(ix);
+        IntVector vix = IntVector.fromArray(INDEX_SPECIES, b, iy).add(ix);
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
@@ -1335,7 +1331,7 @@ final class FloatMaxVector extends FloatVector {
         }
 
         @Override
-        public FloatMaxSpecies species() {
+        public Species<Float> species() {
             return SPECIES;
         }
 
@@ -1349,6 +1345,31 @@ final class FloatMaxVector extends FloatVector {
                 res[i] = (float) (bits[i] ? -1 : 0);
             }
             return new FloatMaxVector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <E> Mask<E> cast(Species<E> species) {
+            if (length() != species.length())
+                throw new IllegalArgumentException("Mask length and species length differ");
+            Class<?> stype = species.elementType();
+            boolean [] maskArray = toArray();
+            if (stype == byte.class) {
+                return (Mask <E>) new ByteMaxVector.ByteMaxMask(maskArray);
+            } else if (stype == short.class) {
+                return (Mask <E>) new ShortMaxVector.ShortMaxMask(maskArray);
+            } else if (stype == int.class) {
+                return (Mask <E>) new IntMaxVector.IntMaxMask(maskArray);
+            } else if (stype == long.class) {
+                return (Mask <E>) new LongMaxVector.LongMaxMask(maskArray);
+            } else if (stype == float.class) {
+                return (Mask <E>) new FloatMaxVector.FloatMaxMask(maskArray);
+            } else if (stype == double.class) {
+                return (Mask <E>) new DoubleMaxVector.DoubleMaxMask(maskArray);
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
         }
 
         // Unary operations
@@ -1423,7 +1444,7 @@ final class FloatMaxVector extends FloatVector {
         }
 
         @Override
-        public FloatMaxSpecies species() {
+        public Species<Float> species() {
             return SPECIES;
         }
 
@@ -1434,6 +1455,31 @@ final class FloatMaxVector extends FloatVector {
               va[i] = (float) getElement(i);
             }
             return FloatVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <F> Shuffle<F> cast(Species<F> species) {
+            if (length() != species.length())
+                throw new IllegalArgumentException("Shuffle length and species length differ");
+            Class<?> stype = species.elementType();
+            int [] shuffleArray = toArray();
+            if (stype == byte.class) {
+                return (Shuffle<F>) new ByteMaxVector.ByteMaxShuffle(shuffleArray);
+            } else if (stype == short.class) {
+                return (Shuffle<F>) new ShortMaxVector.ShortMaxShuffle(shuffleArray);
+            } else if (stype == int.class) {
+                return (Shuffle<F>) new IntMaxVector.IntMaxShuffle(shuffleArray);
+            } else if (stype == long.class) {
+                return (Shuffle<F>) new LongMaxVector.LongMaxShuffle(shuffleArray);
+            } else if (stype == float.class) {
+                return (Shuffle<F>) new FloatMaxVector.FloatMaxShuffle(shuffleArray);
+            } else if (stype == double.class) {
+                return (Shuffle<F>) new DoubleMaxVector.DoubleMaxShuffle(shuffleArray);
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
         }
 
         @Override
@@ -1450,153 +1496,7 @@ final class FloatMaxVector extends FloatVector {
     // Species
 
     @Override
-    public FloatMaxSpecies species() {
+    public Species<Float> species() {
         return SPECIES;
-    }
-
-    static final class FloatMaxSpecies extends FloatSpecies {
-        static final int BIT_SIZE = Shape.S_Max_BIT.bitSize();
-
-        static final int LENGTH = BIT_SIZE / Float.SIZE;
-
-        @Override
-        public String toString() {
-           StringBuilder sb = new StringBuilder("Shape[");
-           sb.append(bitSize()).append(" bits, ");
-           sb.append(length()).append(" ").append(float.class.getSimpleName()).append("s x ");
-           sb.append(elementSize()).append(" bits");
-           sb.append("]");
-           return sb.toString();
-        }
-
-        @Override
-        @ForceInline
-        public int bitSize() {
-            return BIT_SIZE;
-        }
-
-        @Override
-        @ForceInline
-        public int length() {
-            return LENGTH;
-        }
-
-        @Override
-        @ForceInline
-        public Class<Float> elementType() {
-            return float.class;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> boxType() {
-            return FloatMaxVector.class;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> maskType() {
-            return FloatMaxMask.class;
-        }
-
-        @Override
-        @ForceInline
-        public int elementSize() {
-            return Float.SIZE;
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        Class<?> vectorType() {
-            return FloatMaxVector.class;
-        }
-
-        @Override
-        @ForceInline
-        public Shape shape() {
-            return Shape.S_Max_BIT;
-        }
-
-       @Override
-       IntVector.IntSpecies indexSpecies() {
-          return INDEX_SPEC;
-       }
-
-        @Override
-        FloatMaxVector op(FOp f) {
-            float[] res = new float[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = f.apply(i);
-            }
-            return new FloatMaxVector(res);
-        }
-
-        @Override
-        FloatMaxVector op(Mask<Float> o, FOp f) {
-            float[] res = new float[length()];
-            boolean[] mbits = ((FloatMaxMask)o).getBits();
-            for (int i = 0; i < length(); i++) {
-                if (mbits[i]) {
-                    res[i] = f.apply(i);
-                }
-            }
-            return new FloatMaxVector(res);
-        }
-
-        @Override
-        FloatMaxMask opm(FOpm f) {
-            boolean[] res = new boolean[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = (boolean)f.apply(i);
-            }
-            return new FloatMaxMask(res);
-        }
-
-        // Factories
-
-        @Override
-        @ForceInline
-        public FloatMaxVector zero() {
-            return VectorIntrinsics.broadcastCoerced(FloatMaxVector.class, float.class, LENGTH,
-                                                     Float.floatToIntBits(0.0f), SPECIES, 
-                                                     ((bits, s) -> ((FloatMaxSpecies)s).op(i -> Float.intBitsToFloat((int)bits))));
-        }
-
-        @Override
-        @ForceInline
-        public FloatMaxVector broadcast(float e) {
-            return VectorIntrinsics.broadcastCoerced(
-                FloatMaxVector.class, float.class, LENGTH,
-                Float.floatToIntBits(e), SPECIES,
-                ((bits, s) -> ((FloatMaxSpecies)s).op(i -> Float.intBitsToFloat((int)bits))));
-        }
-
-        @Override
-        @ForceInline
-        public FloatMaxVector scalars(float... es) {
-            Objects.requireNonNull(es);
-            int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
-            return VectorIntrinsics.load(FloatMaxVector.class, float.class, LENGTH,
-                                         es, Unsafe.ARRAY_FLOAT_BASE_OFFSET,
-                                         es, ix, SPECIES,
-                                         (c, idx, s) -> ((FloatMaxSpecies)s).op(n -> c[idx + n]));
-        }
-
-        @Override
-        @ForceInline
-        public <E> FloatMaxMask cast(Mask<E> m) {
-            if (m.length() != LENGTH)
-                throw new IllegalArgumentException("Mask length this species length differ");
-            return new FloatMaxMask(m.toArray());
-        }
-
-        @Override
-        @ForceInline
-        public <E> FloatMaxShuffle cast(Shuffle<E> s) {
-            if (s.length() != LENGTH)
-                throw new IllegalArgumentException("Shuffle length this species length differ");
-            return new FloatMaxShuffle(s.toArray());
-        }
     }
 }

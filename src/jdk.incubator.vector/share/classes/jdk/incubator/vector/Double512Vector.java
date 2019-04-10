@@ -38,19 +38,20 @@ import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Double512Vector extends DoubleVector {
-    static final Double512Species SPECIES = new Double512Species();
+    private static final Species<Double> SPECIES = DoubleVector.SPECIES_512;
 
     static final Double512Vector ZERO = new Double512Vector();
 
     static final int LENGTH = SPECIES.length();
 
     // Index vector species
-    private static final IntVector.IntSpecies INDEX_SPEC;
+    private static final IntVector.IntSpecies INDEX_SPECIES;
+
     static {
         int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
-        Vector.Shape shape = Shape.forBitSize(bitSize);
-        INDEX_SPEC = (IntVector.IntSpecies) Species.of(int.class, shape);
+        INDEX_SPECIES = (IntVector.IntSpecies) IntVector.species(Shape.forBitSize(bitSize));
     }
+
     private final double[] vec; // Don't access directly, use getElements() instead.
 
     private double[] getElements() {
@@ -162,7 +163,7 @@ final class Double512Vector extends DoubleVector {
         return VectorIntrinsics.cast(
             Double512Vector.class,
             double.class, LENGTH,
-            s.vectorType(),
+            s.boxType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -180,37 +181,37 @@ final class Double512Vector extends DoubleVector {
             for (int i = 0; i < limit; i++) {
                 a[i] = (byte) this.get(i);
             }
-            return (Vector) ByteVector.fromArray((ByteVector.ByteSpecies) s, a, 0);
+            return (Vector) ByteVector.fromArray((Species<Byte>) s, a, 0);
         } else if (stype == short.class) {
             short[] a = new short[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (short) this.get(i);
             }
-            return (Vector) ShortVector.fromArray((ShortVector.ShortSpecies) s, a, 0);
+            return (Vector) ShortVector.fromArray((Species<Short>) s, a, 0);
         } else if (stype == int.class) {
             int[] a = new int[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (int) this.get(i);
             }
-            return (Vector) IntVector.fromArray((IntVector.IntSpecies) s, a, 0);
+            return (Vector) IntVector.fromArray((Species<Integer>) s, a, 0);
         } else if (stype == long.class) {
             long[] a = new long[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (long) this.get(i);
             }
-            return (Vector) LongVector.fromArray((LongVector.LongSpecies) s, a, 0);
+            return (Vector) LongVector.fromArray((Species<Long>) s, a, 0);
         } else if (stype == float.class) {
             float[] a = new float[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (float) this.get(i);
             }
-            return (Vector) FloatVector.fromArray((FloatVector.FloatSpecies) s, a, 0);
+            return (Vector) FloatVector.fromArray((Species<Float>) s, a, 0);
         } else if (stype == double.class) {
             double[] a = new double[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (double) this.get(i);
             }
-            return (Vector) DoubleVector.fromArray((DoubleVector.DoubleSpecies) s, a, 0);
+            return (Vector) DoubleVector.fromArray((Species<Double>) s, a, 0);
         } else {
             throw new UnsupportedOperationException("Bad lane type for casting.");
         }
@@ -300,55 +301,50 @@ final class Double512Vector extends DoubleVector {
     @ForceInline
     public DoubleVector reshape(Species<Double> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s instanceof Double64Vector.Double64Species)) {
-            Double64Vector.Double64Species ts = (Double64Vector.Double64Species)s;
+        if (s.bitSize() == 64 && (s.boxType() == Double64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Double512Vector.class,
                 double.class, LENGTH,
                 Double64Vector.class,
                 double.class, Double64Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (DoubleVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s instanceof Double128Vector.Double128Species)) {
-            Double128Vector.Double128Species ts = (Double128Vector.Double128Species)s;
+        } else if (s.bitSize() == 128 && (s.boxType() == Double128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Double512Vector.class,
                 double.class, LENGTH,
                 Double128Vector.class,
                 double.class, Double128Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (DoubleVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s instanceof Double256Vector.Double256Species)) {
-            Double256Vector.Double256Species ts = (Double256Vector.Double256Species)s;
+        } else if (s.bitSize() == 256 && (s.boxType() == Double256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Double512Vector.class,
                 double.class, LENGTH,
                 Double256Vector.class,
                 double.class, Double256Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (DoubleVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s instanceof Double512Vector.Double512Species)) {
-            Double512Vector.Double512Species ts = (Double512Vector.Double512Species)s;
+        } else if (s.bitSize() == 512 && (s.boxType() == Double512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Double512Vector.class,
                 double.class, LENGTH,
                 Double512Vector.class,
                 double.class, Double512Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (DoubleVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s instanceof DoubleMaxVector.DoubleMaxSpecies)) {
-            DoubleMaxVector.DoubleMaxSpecies ts = (DoubleMaxVector.DoubleMaxSpecies)s;
+                && (s.bitSize() % 128 == 0) && (s.boxType() == DoubleMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 Double512Vector.class,
                 double.class, LENGTH,
                 DoubleMaxVector.class,
                 double.class, DoubleMaxVector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (DoubleVector) vector.defaultReinterpret(species)
             );
         } else {
@@ -361,103 +357,103 @@ final class Double512Vector extends DoubleVector {
     @Override
     @ForceInline
     public DoubleVector add(double o) {
-        return add(SPECIES.broadcast(o));
+        return add((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public DoubleVector add(double o, Mask<Double> m) {
-        return add(SPECIES.broadcast(o), m);
+        return add((Double512Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public DoubleVector sub(double o) {
-        return sub(SPECIES.broadcast(o));
+        return sub((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public DoubleVector sub(double o, Mask<Double> m) {
-        return sub(SPECIES.broadcast(o), m);
+        return sub((Double512Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public DoubleVector mul(double o) {
-        return mul(SPECIES.broadcast(o));
+        return mul((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public DoubleVector mul(double o, Mask<Double> m) {
-        return mul(SPECIES.broadcast(o), m);
+        return mul((Double512Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public DoubleVector min(double o) {
-        return min(SPECIES.broadcast(o));
+        return min((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public DoubleVector max(double o) {
-        return max(SPECIES.broadcast(o));
+        return max((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Double> equal(double o) {
-        return equal(SPECIES.broadcast(o));
+        return equal((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Double> notEqual(double o) {
-        return notEqual(SPECIES.broadcast(o));
+        return notEqual((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Double> lessThan(double o) {
-        return lessThan(SPECIES.broadcast(o));
+        return lessThan((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Double> lessThanEq(double o) {
-        return lessThanEq(SPECIES.broadcast(o));
+        return lessThanEq((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Double> greaterThan(double o) {
-        return greaterThan(SPECIES.broadcast(o));
+        return greaterThan((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Double> greaterThanEq(double o) {
-        return greaterThanEq(SPECIES.broadcast(o));
+        return greaterThanEq((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public DoubleVector blend(double o, Mask<Double> m) {
-        return blend(SPECIES.broadcast(o), m);
+        return blend((Double512Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public DoubleVector div(double o) {
-        return div(SPECIES.broadcast(o));
+        return div((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public DoubleVector div(double o, Mask<Double> m) {
-        return div(SPECIES.broadcast(o), m);
+        return div((Double512Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
     @Override
@@ -469,49 +465,49 @@ final class Double512Vector extends DoubleVector {
     @Override
     @ForceInline
     public DoubleVector atan2(double o) {
-        return atan2(SPECIES.broadcast(o));
+        return atan2((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public DoubleVector atan2(double o, Mask<Double> m) {
-        return atan2(SPECIES.broadcast(o), m);
+        return atan2((Double512Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public DoubleVector pow(double o) {
-        return pow(SPECIES.broadcast(o));
+        return pow((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public DoubleVector pow(double o, Mask<Double> m) {
-        return pow(SPECIES.broadcast(o), m);
+        return pow((Double512Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public DoubleVector fma(double o1, double o2) {
-        return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2));
+        return fma((Double512Vector)DoubleVector.broadcast(SPECIES, o1), (Double512Vector)DoubleVector.broadcast(SPECIES, o2));
     }
 
     @Override
     @ForceInline
     public DoubleVector fma(double o1, double o2, Mask<Double> m) {
-        return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2), m);
+        return fma((Double512Vector)DoubleVector.broadcast(SPECIES, o1), (Double512Vector)DoubleVector.broadcast(SPECIES, o2), m);
     }
 
     @Override
     @ForceInline
     public DoubleVector hypot(double o) {
-        return hypot(SPECIES.broadcast(o));
+        return hypot((Double512Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public DoubleVector hypot(double o, Mask<Double> m) {
-        return hypot(SPECIES.broadcast(o), m);
+        return hypot((Double512Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
 
@@ -897,26 +893,26 @@ final class Double512Vector extends DoubleVector {
     @Override
     @ForceInline
     public double addAll(Mask<Double> m) {
-        return SPECIES.broadcast((double) 0).blend(this, m).addAll();
+        return blend((Double512Vector)DoubleVector.broadcast(SPECIES, (double) 0), m).addAll();
     }
 
 
     @Override
     @ForceInline
     public double mulAll(Mask<Double> m) {
-        return SPECIES.broadcast((double) 1).blend(this, m).mulAll();
+        return blend((Double512Vector)DoubleVector.broadcast(SPECIES, (double) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
     public double minAll(Mask<Double> m) {
-        return SPECIES.broadcast(Double.MAX_VALUE).blend(this, m).minAll();
+        return blend((Double512Vector)DoubleVector.broadcast(SPECIES, Double.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
     public double maxAll(Mask<Double> m) {
-        return SPECIES.broadcast(Double.MIN_VALUE).blend(this, m).maxAll();
+        return blend((Double512Vector)DoubleVector.broadcast(SPECIES, Double.MIN_VALUE), m).maxAll();
     }
 
     @Override
@@ -961,7 +957,7 @@ final class Double512Vector extends DoubleVector {
         Objects.requireNonNull(b);
 
         // Index vector: vix[0:n] = i -> ix + indexMap[iy + i]
-        IntVector vix = IntVector.fromArray(INDEX_SPEC, b, iy).add(ix);
+        IntVector vix = IntVector.fromArray(INDEX_SPECIES, b, iy).add(ix);
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
@@ -1335,7 +1331,7 @@ final class Double512Vector extends DoubleVector {
         }
 
         @Override
-        public Double512Species species() {
+        public Species<Double> species() {
             return SPECIES;
         }
 
@@ -1349,6 +1345,31 @@ final class Double512Vector extends DoubleVector {
                 res[i] = (double) (bits[i] ? -1 : 0);
             }
             return new Double512Vector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <E> Mask<E> cast(Species<E> species) {
+            if (length() != species.length())
+                throw new IllegalArgumentException("Mask length and species length differ");
+            Class<?> stype = species.elementType();
+            boolean [] maskArray = toArray();
+            if (stype == byte.class) {
+                return (Mask <E>) new Byte512Vector.Byte512Mask(maskArray);
+            } else if (stype == short.class) {
+                return (Mask <E>) new Short512Vector.Short512Mask(maskArray);
+            } else if (stype == int.class) {
+                return (Mask <E>) new Int512Vector.Int512Mask(maskArray);
+            } else if (stype == long.class) {
+                return (Mask <E>) new Long512Vector.Long512Mask(maskArray);
+            } else if (stype == float.class) {
+                return (Mask <E>) new Float512Vector.Float512Mask(maskArray);
+            } else if (stype == double.class) {
+                return (Mask <E>) new Double512Vector.Double512Mask(maskArray);
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
         }
 
         // Unary operations
@@ -1423,7 +1444,7 @@ final class Double512Vector extends DoubleVector {
         }
 
         @Override
-        public Double512Species species() {
+        public Species<Double> species() {
             return SPECIES;
         }
 
@@ -1434,6 +1455,31 @@ final class Double512Vector extends DoubleVector {
               va[i] = (double) getElement(i);
             }
             return DoubleVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <F> Shuffle<F> cast(Species<F> species) {
+            if (length() != species.length())
+                throw new IllegalArgumentException("Shuffle length and species length differ");
+            Class<?> stype = species.elementType();
+            int [] shuffleArray = toArray();
+            if (stype == byte.class) {
+                return (Shuffle<F>) new Byte512Vector.Byte512Shuffle(shuffleArray);
+            } else if (stype == short.class) {
+                return (Shuffle<F>) new Short512Vector.Short512Shuffle(shuffleArray);
+            } else if (stype == int.class) {
+                return (Shuffle<F>) new Int512Vector.Int512Shuffle(shuffleArray);
+            } else if (stype == long.class) {
+                return (Shuffle<F>) new Long512Vector.Long512Shuffle(shuffleArray);
+            } else if (stype == float.class) {
+                return (Shuffle<F>) new Float512Vector.Float512Shuffle(shuffleArray);
+            } else if (stype == double.class) {
+                return (Shuffle<F>) new Double512Vector.Double512Shuffle(shuffleArray);
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
         }
 
         @Override
@@ -1450,153 +1496,7 @@ final class Double512Vector extends DoubleVector {
     // Species
 
     @Override
-    public Double512Species species() {
+    public Species<Double> species() {
         return SPECIES;
-    }
-
-    static final class Double512Species extends DoubleSpecies {
-        static final int BIT_SIZE = Shape.S_512_BIT.bitSize();
-
-        static final int LENGTH = BIT_SIZE / Double.SIZE;
-
-        @Override
-        public String toString() {
-           StringBuilder sb = new StringBuilder("Shape[");
-           sb.append(bitSize()).append(" bits, ");
-           sb.append(length()).append(" ").append(double.class.getSimpleName()).append("s x ");
-           sb.append(elementSize()).append(" bits");
-           sb.append("]");
-           return sb.toString();
-        }
-
-        @Override
-        @ForceInline
-        public int bitSize() {
-            return BIT_SIZE;
-        }
-
-        @Override
-        @ForceInline
-        public int length() {
-            return LENGTH;
-        }
-
-        @Override
-        @ForceInline
-        public Class<Double> elementType() {
-            return double.class;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> boxType() {
-            return Double512Vector.class;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> maskType() {
-            return Double512Mask.class;
-        }
-
-        @Override
-        @ForceInline
-        public int elementSize() {
-            return Double.SIZE;
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        Class<?> vectorType() {
-            return Double512Vector.class;
-        }
-
-        @Override
-        @ForceInline
-        public Shape shape() {
-            return Shape.S_512_BIT;
-        }
-
-       @Override
-       IntVector.IntSpecies indexSpecies() {
-          return INDEX_SPEC;
-       }
-
-        @Override
-        Double512Vector op(FOp f) {
-            double[] res = new double[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = f.apply(i);
-            }
-            return new Double512Vector(res);
-        }
-
-        @Override
-        Double512Vector op(Mask<Double> o, FOp f) {
-            double[] res = new double[length()];
-            boolean[] mbits = ((Double512Mask)o).getBits();
-            for (int i = 0; i < length(); i++) {
-                if (mbits[i]) {
-                    res[i] = f.apply(i);
-                }
-            }
-            return new Double512Vector(res);
-        }
-
-        @Override
-        Double512Mask opm(FOpm f) {
-            boolean[] res = new boolean[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = (boolean)f.apply(i);
-            }
-            return new Double512Mask(res);
-        }
-
-        // Factories
-
-        @Override
-        @ForceInline
-        public Double512Vector zero() {
-            return VectorIntrinsics.broadcastCoerced(Double512Vector.class, double.class, LENGTH,
-                                                     Double.doubleToLongBits(0.0f), SPECIES, 
-                                                     ((bits, s) -> ((Double512Species)s).op(i -> Double.longBitsToDouble((long)bits))));
-        }
-
-        @Override
-        @ForceInline
-        public Double512Vector broadcast(double e) {
-            return VectorIntrinsics.broadcastCoerced(
-                Double512Vector.class, double.class, LENGTH,
-                Double.doubleToLongBits(e), SPECIES,
-                ((bits, s) -> ((Double512Species)s).op(i -> Double.longBitsToDouble((long)bits))));
-        }
-
-        @Override
-        @ForceInline
-        public Double512Vector scalars(double... es) {
-            Objects.requireNonNull(es);
-            int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
-            return VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
-                                         es, Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
-                                         es, ix, SPECIES,
-                                         (c, idx, s) -> ((Double512Species)s).op(n -> c[idx + n]));
-        }
-
-        @Override
-        @ForceInline
-        public <E> Double512Mask cast(Mask<E> m) {
-            if (m.length() != LENGTH)
-                throw new IllegalArgumentException("Mask length this species length differ");
-            return new Double512Mask(m.toArray());
-        }
-
-        @Override
-        @ForceInline
-        public <E> Double512Shuffle cast(Shuffle<E> s) {
-            if (s.length() != LENGTH)
-                throw new IllegalArgumentException("Shuffle length this species length differ");
-            return new Double512Shuffle(s.toArray());
-        }
     }
 }

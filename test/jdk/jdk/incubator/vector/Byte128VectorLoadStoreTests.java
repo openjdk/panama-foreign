@@ -29,6 +29,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.ByteVector;
@@ -44,8 +45,8 @@ import java.util.function.IntFunction;
 
 @Test
 public class Byte128VectorLoadStoreTests extends AbstractVectorTest {
-    static final ByteVector.ByteSpecies SPECIES =
-                ByteVector.species(Shape.S_128_BIT);
+    static final Species<Byte> SPECIES =
+                ByteVector.SPECIES_128;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 

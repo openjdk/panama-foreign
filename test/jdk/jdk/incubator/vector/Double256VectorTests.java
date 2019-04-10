@@ -28,6 +28,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.DoubleVector;
@@ -47,8 +48,8 @@ import java.util.stream.Stream;
 @Test
 public class Double256VectorTests extends AbstractVectorTest {
 
-    static final DoubleVector.DoubleSpecies SPECIES =
-                DoubleVector.species(Shape.S_256_BIT);
+    static final Species<Double> SPECIES =
+                DoubleVector.SPECIES_256;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
 

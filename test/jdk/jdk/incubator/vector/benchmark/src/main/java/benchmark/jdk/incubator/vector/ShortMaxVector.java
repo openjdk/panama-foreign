@@ -25,6 +25,7 @@ package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.ShortVector;
 
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Measurement(iterations = 5, time = 1)
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class ShortMaxVector extends AbstractVectorBenchmark {
-    static final ShortVector.ShortSpecies SPECIES = ShortVector.species(Shape.S_Max_BIT);
+    static final Species<Short> SPECIES = ShortVector.SPECIES_MAX;
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 

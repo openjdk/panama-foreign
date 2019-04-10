@@ -28,6 +28,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.ShortVector;
@@ -46,8 +47,8 @@ import java.util.stream.Stream;
 @Test
 public class Short64VectorTests extends AbstractVectorTest {
 
-    static final ShortVector.ShortSpecies SPECIES =
-                ShortVector.species(Shape.S_64_BIT);
+    static final Species<Short> SPECIES =
+                ShortVector.SPECIES_64;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
 

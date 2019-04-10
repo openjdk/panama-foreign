@@ -29,6 +29,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.FloatVector;
@@ -45,8 +46,8 @@ import java.util.function.IntFunction;
 
 @Test
 public class Float128VectorLoadStoreTests extends AbstractVectorTest {
-    static final FloatVector.FloatSpecies SPECIES =
-                FloatVector.species(Shape.S_128_BIT);
+    static final Species<Float> SPECIES =
+                FloatVector.SPECIES_128;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
