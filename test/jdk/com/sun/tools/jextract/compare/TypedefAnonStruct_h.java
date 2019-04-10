@@ -33,7 +33,7 @@ import java.foreign.memory.Struct;
 import java.foreign.memory.Pointer;
 
 @NativeHeader(path="TypedefAnonStruct.h")
-public interface TypedefAnonStruct {
+public interface TypedefAnonStruct_h {
     @NativeLocation(
       file="TypedefAnonStruct.h", line=24, column=9
     )

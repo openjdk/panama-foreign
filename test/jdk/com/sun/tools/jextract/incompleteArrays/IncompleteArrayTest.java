@@ -83,7 +83,7 @@ public class IncompleteArrayTest extends JextractToolRunner {
                     .checkMatchesOutput(".*WARNING: can not compute layout for type .+" +
                             " with flexible array member\\. Emitting undefined layout reference\\..*");
             try (Loader loader = classLoader(jar)) {
-                assertNotNull(loader.loadClass(headerInterfaceName("incompleteArray3i.h")));
+                assertNotNull(loader.loadClass(headerInterfaceName("incompleteArray3.h")));
             } finally {
                 deleteFile(jar);
             }

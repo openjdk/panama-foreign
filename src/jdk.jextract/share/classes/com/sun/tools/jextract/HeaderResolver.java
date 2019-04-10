@@ -50,14 +50,18 @@ public class HeaderResolver {
         ctx.options.pkgMappings.forEach(this::usePackageForFolder);
     }
 
-    public String headerInterfaceName(String filename) {
+    private static String safeFileName(String filename) {
         int ext = filename.lastIndexOf('.');
         String name = ext != -1 ? filename.substring(0, ext) : filename;
         return Utils.toClassName(name);
     }
 
-    public String staticForwarderName(String filename) {
-        return headerInterfaceName(filename) + "_h";
+    public static String headerInterfaceName(String filename) {
+        return safeFileName(filename) + "_h";
+    }
+
+    public static String staticForwarderName(String filename) {
+        return safeFileName(filename) + "_lib";
     }
 
     private void usePackageForFolder(Path folder, String pkg) {

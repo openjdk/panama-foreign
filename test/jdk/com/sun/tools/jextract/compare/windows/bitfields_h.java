@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,19 +34,31 @@ import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 
 @NativeHeader(path="bitfields.h")
-public interface bitfields {
+public interface bitfields_h { // platform dependent
+
+    /*
+    class bitfields1	size(24):
+        +---
+     0.	| x (bitstart=0,nbits=2)
+     8.	| y (bitstart=0,nbits=15)
+    16.	| z (bitstart=0,nbits=20)
+    20.	| w (bitstart=0,nbits=13)
+        +---
+     */
+
 
     @NativeStruct("[" +
                     "u64=[" +
                         "i2(x)" +
-                        "x6" +
-                        "i15(y)" +
-                        "x9" +
-                        "i20(z)" +
-                        "x12]" +
+                        "x62]" +
                     "u64=[" +
+                        "i15(y)" +
+                        "x49]" +
+                    "u64=[" +
+                        "i20(z)" +
+                        "x12" +
                         "i13(w)" +
-                        "x51]" +
+                        "x19]" +
                   "](bitfields1)")
     interface bitfields1 extends Struct<bitfields1> {
         @NativeGetter("x")
@@ -67,20 +79,34 @@ public interface bitfields {
         void w$set(int value);
     }
 
+    /*
+    class bitfields2	size(16):
+        +---
+     0.	| c (bitstart=0,nbits=3)
+     0.	| c2 (bitstart=3,nbits=3)
+     1.	| c3 (bitstart=0,nbits=7)
+        | <alignment member> (size=2)
+     4.	| i (bitstart=0,nbits=4)
+     8.	| l (bitstart=0,nbits=21)
+     8.	| ll (bitstart=21,nbits=42)
+        +---
+     */
+
     @NativeStruct("[" +
                     "u64=[" +
                         "u3(c)" +
                         "u3(c2)" +
                         "x2" +
                         "u7(c3)" +
+                        "x17" + // includes 2 byte alignment member
                         "i4(i)" +
-                        "i21(l)" +
-                        "x24]" +
+                        "x28]" +
                     "u64=[" +
+                        "i21(l)" +
                         "i42(ll)" +
-                        "x22]" +
+                        "x1]" +
                   "](bitfields2)")
-    interface bitfields2 extends Struct<bitfields2> {
+    interface bitfields2 extends Struct<bitfields2> {  // platform dependent
         @NativeGetter("c")
         byte c$get();
         @NativeSetter("c")
@@ -107,17 +133,35 @@ public interface bitfields {
         void ll$set(long value);
     }
 
+    /*
+    class bitfields3	size(20):
+        +---
+     0.	| c1 (bitstart=0,nbits=4)
+        | <alignment member> (size=3)
+     4.	| i (bitstart=0,nbits=20)
+     8.	| c2 (bitstart=0,nbits=8)
+        | <alignment member> (size=3)
+    12.	| l1 (bitstart=0,nbits=32)
+    16.	| l2 (bitstart=0,nbits=32)
+        +---
+     */
+
     @NativeStruct("[" +
                     "u32=[" +
                         "u4(c1)" +
+                        "x28]" + // includes 3 byte alignment member
+                    "u32=[" +
                         "i20(i)" +
-                        "u8(c2)]" +
+                        "x12]" +
+                    "u32=[" +
+                        "u8(c2)" +
+                        "x24]" + // 3 byte alignment member
                     "u32=[" +
                         "i32(l1)]" +
                     "u32=[" +
                         "i32(l2)]" +
                   "](bitfields3)")
-    interface bitfields3 extends Struct<bitfields3> {
+    interface bitfields3 extends Struct<bitfields3> {  // platform dependent
         @NativeGetter("c1")
         byte c1$get();
         @NativeSetter("c1")
@@ -279,7 +323,7 @@ public interface bitfields {
     }
 
     @NativeStruct("[u32=[u1(x)]|x64](bitfields10)")
-    public interface bitfields10 extends Struct<bitfields.bitfields10> {
+    public interface bitfields10 extends Struct<bitfields10> {
         @NativeGetter("x")
         int x$get();
 

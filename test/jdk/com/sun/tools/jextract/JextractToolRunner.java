@@ -44,14 +44,18 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 public class JextractToolRunner {
-    // utilities to avoid hard-coding generated class, interface names everywhere
-    public static String headerInterfaceName(String filename) {
+    private static String safeFileName(String filename) {
         int ext = filename.lastIndexOf('.');
         return ext != -1 ? filename.substring(0, ext) : filename;
     }
 
+    // utilities to avoid hard-coding generated class, interface names everywhere
+    public static String headerInterfaceName(String filename) {
+        return safeFileName(filename) + "_h";
+    }
+
     public static String staticForwarderName(String filename) {
-        return headerInterfaceName(filename) + "_h";
+        return safeFileName(filename) + "_lib";
     }
 
     // struct, enum and callback interfaces are nested types of header interface
