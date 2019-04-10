@@ -33,6 +33,11 @@ extern "C" {
 #define EXPORT
 #endif
 
+// make sure that 'true', 'false' macros do not
+// generate non-compilable source!
+
+#include <stdbool.h>
+
 enum {
     R, G, B
 };

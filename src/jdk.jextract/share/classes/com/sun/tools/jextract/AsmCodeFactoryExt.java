@@ -200,7 +200,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
             String name = macroTree.name();
             MacroParser.Macro macro = macroTree.macro().get();
             log.print(Level.FINE, () -> "Adding macro " + name);
-            addConstant(name, macro.type(), macro.value());
+            addConstant(Utils.toMacroName(name), macro.type(), macro.value());
             return true;
         } else {
             return false;
