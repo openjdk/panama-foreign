@@ -23,14 +23,14 @@
 
 import java.foreign.memory.Pointer;
 import org.testng.annotations.Test;
-import static test8221838.structtypedefs_h.*;
+import static test8221838.structtypedefs_lib.*;
 
 /*
  * @test
  * @bug 8221838
  * @summary jextract generates non-existent type reference for typedef on typedef
  * @library ..
- * @run driver JtregJextract -t test8221838 -l structtypedefs -- structtypedefs.h
+ * @run driver JtregJextract -t test8221838 -l Structtypedefs -- structtypedefs.h
  * @run testng StructTypedefsTest
  */
 public class StructTypedefsTest {

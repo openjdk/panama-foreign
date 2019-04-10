@@ -48,13 +48,13 @@ import java.foreign.Scope;
 import java.foreign.memory.Pointer;
 
 // import jextracted python 'header' classes
-import static org.python.Python_h.*;
-import static org.python.pythonrun_h.*;
+import static org.python.Python_lib.*;
+import static org.python.pythonrun_lib.*;
 
 public class PythonMain {
     public static void main(String[] args) {
         Py_Initialize();
-        try (Scope s = org.python.Python_h.scope().fork()) {
+        try (Scope s = org.python.Python_lib.scope().fork()) {
             PyRun_SimpleStringFlags(s.allocateCString(
                 "print(sum([33, 55, 66])); print('Hello from Python!')\n"),
                 Pointer.ofNull());
@@ -168,8 +168,8 @@ jextract  /usr/include/sqlite3.h -t org.sqlite -lsqlite3 \
 import java.lang.invoke.*;
 import java.foreign.*;
 import java.foreign.memory.*;
-import org.sqlite.sqlite3.*;
-import static org.sqlite.sqlite3_h.*;
+import org.sqlite.sqlite3_h.*;
+import static org.sqlite.sqlite3_lib.*;
 
 public class SqliteMain {
    public static void main(String[] args) throws Exception {
@@ -353,9 +353,9 @@ jextract -L /usr/lib/atlas-base -I /usr/include/atlas/ \
 
 import blas.cblas;
 
-import static blas.cblas_h.*;
-import static blas.cblas_h.CBLAS_ORDER.*;
-import static blas.cblas_h.CBLAS_TRANSPOSE.*;
+import static blas.cblas_lib.*;
+import static blas.cblas_lib.CBLAS_ORDER.*;
+import static blas.cblas_lib.CBLAS_TRANSPOSE.*;
 
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
@@ -363,8 +363,8 @@ import java.foreign.memory.Array;
 
 public class TestBlas {
    public static void main(String[] args) {
-       @cblas.CBLAS_ORDER int Layout;
-       @cblas.CBLAS_TRANSPOSE int transa;
+       @blas.cblas_h.CBLAS_ORDER int Layout;
+       @blas.cblas_h.CBLAS_TRANSPOSE int transa;
 
        double alpha, beta;
        int m, n, lda, incx, incy, i;
@@ -457,14 +457,14 @@ import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.Array;
 
-import static lapack.clapack_h.*;
-import static lapack.cblas_h.*;
+import static lapack.clapack_lib.*;
+import static lapack.cblas_lib.*;
 
 public class TestLapack {
     public static void main(String[] args) {
 
         /* Locals */
-        try (Scope sc = lapack.clapack_h.scope().fork()) {
+        try (Scope sc = lapack.clapack_lib.scope().fork()) {
             Array<Double> A = sc.allocateArray(NativeTypes.DOUBLE, new double[]{
                     1, 2, 3, 4, 5, 1, 3, 5, 2, 4, 1, 4, 2, 5, 3
             });
@@ -540,7 +540,7 @@ import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.Array;
 
-import static lapack.lapacke_h.*;
+import static lapack.lapacke_lib.*;
 
 public class TestLapack {
     public static void main(String[] args) {
@@ -615,7 +615,7 @@ jextract -t org.unix -lproc -L /usr/lib --record-library-path -o libproc.jar /us
 
 import java.foreign.*;
 import java.foreign.memory.*;
-import static org.unix.libproc_h.*;
+import static org.unix.libproc_lib.*;
 
 public class LibprocMain {
     private static final int NAME_BUF_MAX = 256;
@@ -676,7 +676,7 @@ jextract -l readline -L /usr/local/opt/readline/lib/ --record-library-path \
 
 import java.foreign.*;
 import java.foreign.memory.*;
-import static org.unix.readline_h.*;
+import static org.unix.readline_lib.*;
 
 public class Readline {
     public static void main(String[] args) {
@@ -725,14 +725,13 @@ jextract -t org.unix -L /usr/lib -lcurl --record-library-path /usr/include/curl/
 import java.lang.invoke.*;
 import java.foreign.*;
 import java.foreign.memory.*;
-import org.unix.curl.*;
-import org.unix.curl_h;
-import static org.unix.curl_h.*;
-import static org.unix.easy_h.*;
+import org.unix.curl_lib;
+import static org.unix.curl_lib.*;
+import static org.unix.easy_lib.*;
 
 public class CurlMain {
    public static void main(String[] args) {
-       try (Scope s = curl_h.scope().fork()) { 
+       try (Scope s = curl_lib.scope().fork()) { 
            curl_global_init(CURL_GLOBAL_DEFAULT);
            Pointer<Void> curl = curl_easy_init();
            if(!curl.isNull()) {
@@ -775,13 +774,13 @@ jextract /usr/include/unistd.h -t org.unix -o unistd.jar
 
 import java.foreign.*;
 import java.lang.invoke.*;
-import org.unix.unistd;
+import org.unix.unistd_h;
 
 
 public class Getpid {
     public static void main(String[] args) {
         // bind unistd interface
-        var u = Libraries.bind(MethodHandles.lookup(), unistd.class);
+        var u = Libraries.bind(MethodHandles.lookup(), unistd_h.class);
         // call getpid from the unistd.h
         System.out.println(u.getpid());
         // check process id from Java API!
@@ -840,8 +839,8 @@ import java.foreign.Scope;
 import java.foreign.memory.Array;
 import java.foreign.memory.Pointer;
 
-import static opengl.gl_h.*;
-import static opengl.freeglut_std_h.*;
+import static opengl.gl_lib.*;
+import static opengl.freeglut_std_lib.*;
 
 public class Teapot {
 
@@ -884,7 +883,7 @@ public class Teapot {
     }
 
     public static void main(String[] args) {
-        try (Scope sc = opengl.gl_h.scope().fork()) {
+        try (Scope sc = opengl.gl_lib.scope().fork()) {
             Pointer<Integer> argc = sc.allocate(NativeTypes.INT32);
             argc.set(0);
             glutInit(argc, Pointer.ofNull());
@@ -1000,18 +999,18 @@ import java.foreign.Scope;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
-import org.tensorflow.panama.c_api.TF_DataType;
-import org.tensorflow.panama.c_api.TF_Graph;
-import org.tensorflow.panama.c_api.TF_Operation;
-import org.tensorflow.panama.c_api.TF_OperationDescription;
-import org.tensorflow.panama.c_api.TF_Output;
-import org.tensorflow.panama.c_api.TF_Session;
-import org.tensorflow.panama.c_api.TF_SessionOptions;
-import org.tensorflow.panama.c_api.TF_Status;
-import org.tensorflow.panama.c_api.TF_Tensor;
+import org.tensorflow.panama.c_api_h.TF_DataType;
+import org.tensorflow.panama.c_api_h.TF_Graph;
+import org.tensorflow.panama.c_api_h.TF_Operation;
+import org.tensorflow.panama.c_api_h.TF_OperationDescription;
+import org.tensorflow.panama.c_api_h.TF_Output;
+import org.tensorflow.panama.c_api_h.TF_Session;
+import org.tensorflow.panama.c_api_h.TF_SessionOptions;
+import org.tensorflow.panama.c_api_h.TF_Status;
+import org.tensorflow.panama.c_api_h.TF_Tensor;
 
-import static org.tensorflow.panama.c_api_h.*;
-import static org.tensorflow.panama.c_api_h.TF_DataType.*;
+import static org.tensorflow.panama.c_api_lib.*;
+import static org.tensorflow.panama.c_api_lib.TF_DataType.*;
 
 public class TensorFlowExample {
     static Pointer<TF_Operation> PlaceHolder(Pointer<TF_Graph> graph, Pointer<TF_Status> status,

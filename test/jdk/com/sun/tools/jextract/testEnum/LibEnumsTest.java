@@ -26,10 +26,10 @@ import java.foreign.Library;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import org.testng.annotations.Test;
-import test.jextract.enums.enums;
+import test.jextract.enums.enums_h;
 
 import static org.testng.Assert.assertEquals;
-import static test.jextract.enums.enums_h.*;
+import static test.jextract.enums.enums_lib.*;
 
 /*
  * @test
@@ -40,11 +40,11 @@ import static test.jextract.enums.enums_h.*;
  * @run testng LibEnumsTest
  */
 public class LibEnumsTest {
-    static final enums libEnums;
+    static final enums_h libEnums;
 
     static {
         Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "Enums");
-        libEnums = Libraries.bind(enums.class, lib);
+        libEnums = Libraries.bind(enums_h.class, lib);
     }
 
     @Test

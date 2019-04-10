@@ -23,12 +23,9 @@
 
 package jdk.internal.clang;
 
-import clang.*;
-import clang.Index;
-
-import static clang.Index.CXCursor;
-import static clang.Index.CXSourceLocation;
-import static clang.Index.CXSourceRange;
+import static clang.Index_h.CXCursor;
+import static clang.Index_h.CXSourceLocation;
+import static clang.Index_h.CXSourceRange;
 
 import java.foreign.memory.Pointer;
 import java.foreign.Scope;

@@ -32,7 +32,7 @@ import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Struct;
 
 @NativeHeader(path="pad.h")
-public interface pad {
+public interface pad_h {
     @NativeStruct(
             "[" +
                 "u8(c1)" +

@@ -30,8 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import clang.Index.CXTranslationUnitImpl;
-import clang.Index.CXDiagnostic;
+import clang.Index_h.CXTranslationUnitImpl;
+import clang.Index_h.CXDiagnostic;
 
 public class Index {
     // Pointer to CXIndex
@@ -45,7 +45,7 @@ public class Index {
     }
 
     public TranslationUnit parseTU(String file, String... args) {
-        final clang.Index lclang = LibClang.lib;
+        final clang.Index_h lclang = LibClang.lib;
 
         try (Scope scope = Scope.globalScope().fork()) {
             Pointer<Byte> src = scope.allocateCString(file);
@@ -58,7 +58,7 @@ public class Index {
     }
 
     public Cursor parse(String file, Consumer<Diagnostic> eh, boolean detailedPreprocessorRecord, String... args) {
-        final clang.Index lclang = LibClang.lib;
+        final clang.Index_h lclang = LibClang.lib;
 
         try (Scope scope = Scope.globalScope().fork()) {
             Pointer<Byte> src = scope.allocateCString(file);

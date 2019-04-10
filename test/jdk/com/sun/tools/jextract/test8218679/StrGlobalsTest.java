@@ -26,7 +26,7 @@ import java.foreign.Library;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandles;
 import org.testng.annotations.Test;
-import test.jextract.strglobals.strglobals;
+import test.jextract.strglobals.strglobals_h;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -40,11 +40,11 @@ import static org.testng.Assert.fail;
  * @run testng StrGlobalsTest
  */
 public class StrGlobalsTest {
-    static final strglobals libGlobals;
+    static final strglobals_h libGlobals;
 
     static {
         Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "Strglobals");
-        libGlobals = Libraries.bind(strglobals.class, lib);
+        libGlobals = Libraries.bind(strglobals_h.class, lib);
     }
 
     @Test

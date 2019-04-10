@@ -31,8 +31,8 @@ import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-import test.arrayparam.funcArrayParam;
-import test.arrayparam.funcArrayParam.FPPtrFieldStruct;
+import test.arrayparam.funcArrayParam_h;
+import test.arrayparam.funcArrayParam_h.FPPtrFieldStruct;
 
 import static org.testng.Assert.assertEquals;
 
@@ -44,12 +44,12 @@ import static org.testng.Assert.assertEquals;
  * @run testng FuncArrayParamTest
  */
 public class FuncArrayParamTest {
-    private funcArrayParam fap;
+    private funcArrayParam_h fap;
 
     @BeforeTest
     public void init() {
         Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "FuncArrayParam");
-        fap = Libraries.bind(funcArrayParam.class, lib);
+        fap = Libraries.bind(funcArrayParam_h.class, lib);
     }
 
     private static int[] jarr = new int[] { 34, 66, 23, 53, 345 };

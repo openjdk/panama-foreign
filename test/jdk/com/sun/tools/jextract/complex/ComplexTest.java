@@ -31,8 +31,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-import org.c99.libcomplex_aux;
-import org.c99.mycomplex;
+import org.c99.libcomplex_aux_h;
+import org.c99.mycomplex_h;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -56,14 +56,14 @@ public class ComplexTest {
     private static final double TOLERANCE = 0.0001;
     private static final float TOLERANCEF = 0.0001f;
 
-    private mycomplex comlib;
-    private libcomplex_aux auxlib;
+    private mycomplex_h comlib;
+    private libcomplex_aux_h auxlib;
 
     @BeforeTest
     public void init() {
-        comlib = Libraries.bind(MethodHandles.lookup(), mycomplex.class);
+        comlib = Libraries.bind(MethodHandles.lookup(), mycomplex_h.class);
         Library l = Libraries.loadLibrary(MethodHandles.lookup(), "complex_aux");
-        auxlib = Libraries.bind(libcomplex_aux.class, l);
+        auxlib = Libraries.bind(libcomplex_aux_h.class, l);
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,12 +39,10 @@ import java.foreign.memory.Struct;
  * This test is platform dependent, as the C type size may vary on platform.
  * Current value is based on x64 with __LP64__.
  */
-@NativeHeader(path="simple.h", globals = {
-        "i32(global)",
-        "${anonymous}(basics)",
-        "u64(unsigned_int)" }
+@NativeHeader(path="simple.h", globals =
+        {"i32(global)", "${anonymous}(basics)", "u64(unsigned_int):${_unsigned}"}
 )
-public interface simple {
+public interface simple_h {
     @NativeLocation(file="simple.h", line=26, column=5)
     @NativeGetter("global")
     public int global$get();
@@ -59,13 +57,13 @@ public interface simple {
             "i8(sch)" +
             "i16(s)" +
             "i32(n)" +
-            "i64(l)" +
+            "i32(l)" +  // platform dependent
+            "x32" +
             "i64(ll)" +
             "f32(f)" +
             "x32" +
             "f64(d)" +
-            "x64" +
-            "f128(ld)" +
+            "f64(ld)" +  // platform dependent
             "](anonymous)")
     public static interface anonymous extends Struct<anonymous> {
         @NativeLocation(file="simple.h", line=33, column=10)
@@ -102,11 +100,11 @@ public interface simple {
 
         @NativeLocation(file="simple.h", line=37, column=10)
         @NativeGetter("l")
-        public long l$get();
+        public int l$get();
         @NativeSetter("l")
-        public void l$set(long arg);
+        public void l$set(int arg);
         @NativeAddressof("l")
-        public Pointer<Long> l$ptr();
+        public Pointer<Integer> l$ptr();
 
         @NativeLocation(file="simple.h", line=38, column=15)
         @NativeGetter("ll")
@@ -155,7 +153,8 @@ public interface simple {
             "u8(ch)" +
             "u16(s)" +
             "u32(n)" +
-            "u64(l)" +
+            "u32(l)" +  // platform dependent
+            "x32" +
             "u64(ll)" +
             "](_unsigned)")
     public static interface _unsigned extends Struct<_unsigned> {
@@ -193,11 +192,11 @@ public interface simple {
 
         @NativeLocation(file="simple.h", line=50, column=19)
         @NativeGetter("l")
-        public long l$get();
+        public int l$get();
         @NativeSetter("l")
-        public void l$set(long l);
+        public void l$set(int l);
         @NativeAddressof("l")
-        public Pointer<Long> l$ptr();
+        public Pointer<Integer> l$ptr();
 
         @NativeLocation(file="simple.h", line=51, column=24)
         @NativeGetter("ll")

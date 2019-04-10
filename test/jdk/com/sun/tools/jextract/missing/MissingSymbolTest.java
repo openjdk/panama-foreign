@@ -26,10 +26,9 @@ import java.foreign.Library;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import org.testng.annotations.Test;
-import test.jextract.missing.missing;
+import test.jextract.missing.missing_h;
 
 import static org.testng.Assert.assertTrue;
-import static test.jextract.missing.missing.*;
 
 /*
  * @test
@@ -42,12 +41,12 @@ public class MissingSymbolTest {
     public void testBind() {
         // make sure that we can bind even though "cube" method is missing!
         Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "Missing");
-        missing libMissing = Libraries.bind(missing.class, lib);
+        missing_h libMissing = Libraries.bind(missing_h.class, lib);
 
         // make sure cube method is not present
         boolean noCubeMethod = false;
         try {
-            Method cube = missing.class.getMethod("cube", int.class);
+            Method cube = missing_h.class.getMethod("cube", int.class);
         } catch (NoSuchMethodException nsme) {
             System.err.println(nsme);
             noCubeMethod = true;

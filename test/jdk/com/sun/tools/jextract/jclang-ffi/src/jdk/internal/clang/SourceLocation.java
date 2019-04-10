@@ -29,8 +29,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
-import static clang.CXString.CXString;
-import static clang.Index.CXSourceLocation;
+import static clang.CXString_h.CXString;
+import static clang.Index_h.CXSourceLocation;
 
 public class SourceLocation {
 

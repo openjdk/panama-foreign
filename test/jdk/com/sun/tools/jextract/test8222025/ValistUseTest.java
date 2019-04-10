@@ -32,6 +32,7 @@ import static org.testng.Assert.assertTrue;
  * @bug 8222025
  * @summary jextract generates reference to underfined type for va_list
  * @library ..
+ * @requires os.family != "windows"
  * @run testng ValistUseTest
  */
 public class ValistUseTest extends JextractToolRunner {
@@ -44,7 +45,7 @@ public class ValistUseTest extends JextractToolRunner {
             va_list_use_H.toString()).checkSuccess();
         try {
             Loader loader = classLoader(vaListUseJar);
-            Class<?> vaListTag = loader.loadClass("clang_support.builtin$$__va_list_tag");
+            Class<?> vaListTag = loader.loadClass("clang_support.builtin$_h$__va_list_tag");
             assertTrue(vaListTag != null);
         } finally {
             deleteFile(vaListUseJar);
