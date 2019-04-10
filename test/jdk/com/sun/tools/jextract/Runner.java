@@ -339,12 +339,12 @@ public class Runner {
     @DataProvider(name = "cases")
     public static Object[][] cases() {
         return new Object[][] {
-            { "simple.h", "com.acme", new String[] { "simple.java" }, true},
-            { "recursive.h", "com.acme", new String[] { "recursive.java" }, false},
-            { "TypedefAnonStruct.h", "com.acme", new String[] { "TypedefAnonStruct.java" }, false},
-            { "pad.h", "com.acme", new String[] { "pad.java" }, false},
-            { "bitfields.h", "com.acme", new String[] { "bitfields.java" }, true},
-            { "globalFuncPointer.h", "com.acme", new String[] { "globalFuncPointer.java" }, false}
+            { "simple.h", "com.acme", new String[] { "simple_h.java" }, true},
+            { "recursive.h", "com.acme", new String[] { "recursive_h.java" }, false},
+            { "TypedefAnonStruct.h", "com.acme", new String[] { "TypedefAnonStruct_h.java" }, false},
+            { "pad.h", "com.acme", new String[] { "pad_h.java" }, false},
+            { "bitfields.h", "com.acme", new String[] { "bitfields_h.java" }, true},
+            { "globalFuncPointer.h", "com.acme", new String[] { "globalFuncPointer_h.java" }, false}
         };
     }
 }

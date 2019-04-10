@@ -27,7 +27,7 @@ import java.foreign.NativeTypes;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandles;
 import org.testng.annotations.Test;
-import test.jextract.voidcast.voidcast;
+import test.jextract.voidcast.voidcast_h;
 
 import static org.testng.Assert.assertTrue;
 
@@ -40,11 +40,11 @@ import static org.testng.Assert.assertTrue;
  * @run testng VoidCastTest
  */
 public class VoidCastTest {
-    static final voidcast libCast;
+    static final voidcast_h libCast;
 
     static {
         Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "Voidcast");
-        libCast = Libraries.bind(voidcast.class, lib);
+        libCast = Libraries.bind(voidcast_h.class, lib);
     }
 
     @Test

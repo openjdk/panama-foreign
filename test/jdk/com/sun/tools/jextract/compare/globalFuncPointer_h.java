@@ -35,7 +35,7 @@ import java.foreign.memory.Pointer;
     path="globalFuncPointer.h",
     globals={"u64(fp):(*)v"}
 )
-public interface globalFuncPointer {
+public interface globalFuncPointer_h {
     @NativeGetter("fp")
     Callback<FI1> fp$get();
     @NativeSetter("fp")

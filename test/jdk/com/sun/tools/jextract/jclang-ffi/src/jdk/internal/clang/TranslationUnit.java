@@ -32,11 +32,11 @@ import java.foreign.memory.Pointer;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import clang.CXString.CXString;
-import clang.Index.CXDiagnostic;
-import clang.Index.CXToken;
-import clang.Index.CXTokenKind;
-import clang.Index.CXTranslationUnitImpl;
+import clang.CXString_h.CXString;
+import clang.Index_h.CXDiagnostic;
+import clang.Index_h.CXToken;
+import clang.Index_h.CXTokenKind;
+import clang.Index_h.CXTranslationUnitImpl;
 
 public class TranslationUnit {
     private final Pointer<CXTranslationUnitImpl> tu;
@@ -51,7 +51,7 @@ public class TranslationUnit {
     }
 
     public Diagnostic[] getDiagnostics() {
-        final clang.Index lclang = LibClang.lib;
+        final clang.Index_h lclang = LibClang.lib;
 
         int cntDiags = lclang.clang_getNumDiagnostics(tu);
         if (cntDiags == 0) {

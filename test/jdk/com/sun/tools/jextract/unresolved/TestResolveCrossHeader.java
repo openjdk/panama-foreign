@@ -24,8 +24,8 @@
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
-import org.a.Foo;
-import org.b.Bar;
+import org.a_h.Foo;
+import org.b_h.Bar;
 
 import java.foreign.Scope;
 

@@ -29,11 +29,11 @@ import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandles;
 import org.testng.annotations.Test;
-import test.jextract.struct.struct;
+import test.jextract.struct.struct_h;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
-import static test.jextract.struct.struct.*;
+import static test.jextract.struct.struct_h.*;
 
 /*
  * @test
@@ -42,11 +42,11 @@ import static test.jextract.struct.struct.*;
  * @run testng LibStructTest
  */
 public class LibStructTest {
-    static final struct libStruct;
+    static final struct_h libStruct;
 
     static {
         Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "Struct");
-        libStruct = Libraries.bind(struct.class, lib);
+        libStruct = Libraries.bind(struct_h.class, lib);
     }
 
     @Test

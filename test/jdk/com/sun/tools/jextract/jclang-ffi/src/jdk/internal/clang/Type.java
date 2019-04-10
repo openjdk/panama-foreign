@@ -23,7 +23,7 @@
 
 package jdk.internal.clang;
 
-import clang.Index.CXType;
+import clang.Index_h.CXType;
 import java.foreign.Scope;
 import java.foreign.memory.Pointer;
 

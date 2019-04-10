@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 import java.foreign.Scope;
 
 import static org.testng.Assert.assertEquals;
-import static test.jextract.utils.utils_h.*;
+import static test.jextract.utils.utils_lib.*;
 
 /*
  * @test

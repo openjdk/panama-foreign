@@ -39,7 +39,7 @@ import java.foreign.memory.Struct;
  * Current value is based on x64 with __LP64__.
  */
 @NativeHeader(path="recursive.h")
-public interface recursive {
+public interface recursive_h {
 
     @NativeLocation(file="recursive.h", line=26, column=8)
     @NativeStruct("[u64(p):${Bar}](Foo)")
