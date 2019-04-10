@@ -43,7 +43,7 @@ import static org.testng.Assert.assertTrue;
 
 /*
  * @test
- * @bug 8221154 8221228 8221336 8221419 8221443
+ * @bug 8221154 8221228 8221336 8221419 8221443 8222274
  * @summary jextract should generate java source files
  * @library ..
  * @run testng SrcGenTest
@@ -106,6 +106,7 @@ public class SrcGenTest extends JextractToolRunner {
         ArrayList<String> javacOpts = new ArrayList<>();
         javacOpts.add("-d");
         javacOpts.add(outputDir.toString());
+        javacOpts.add(outputDir.resolve("clang_support").resolve("stdbool_h.java").toString());
         javacOpts.add(pkgDir.resolve(srcgentestIfaceName + ".java").toString());
         javacOpts.add(pkgDir.resolve(srcgentestForwarderName + ".java").toString());
         javacOpts.add(pkgDir.resolve("sub").resolve(dupnameIfaceName + ".java").toString());
@@ -116,6 +117,7 @@ public class SrcGenTest extends JextractToolRunner {
         }
 
         // sanity checks for .class file existence
+        assertTrue(Files.isRegularFile(outputDir.resolve("clang_support").resolve("stdbool_h.class")));
         assertTrue(Files.isRegularFile(pkgDir.resolve(srcgentestIfaceName + ".class")));
         assertTrue(Files.isRegularFile(pkgDir.resolve(srcgentestPointName + ".class")));
         assertTrue(Files.isRegularFile(pkgDir.resolve(srcgentestColorName + ".class")));
