@@ -365,7 +365,8 @@ var getJibProfilesCommon = function (input, data) {
         };
     };
 
-    common.boot_jdk_version = "11";
+    common.boot_jdk_version = "12";
+    common.boot_jdk_build_number = "33";
     common.boot_jdk_home = input.get("boot_jdk", "install_path") + "/jdk-"
         + common.boot_jdk_version
         + (input.build_os == "macosx" ? ".jdk/Contents/Home" : "");
@@ -939,20 +940,26 @@ var getJibProfilesProfiles = function (input, common, data) {
 var getJibProfilesDependencies = function (input, common) {
 
     var devkit_platform_revisions = {
-        linux_x64: "gcc7.3.0-OEL6.4+1.2",
+        linux_x64: "gcc8.2.0-OL6.4+1.0",
         macosx_x64: "Xcode10.1-MacOSX10.14+1.0",
         solaris_x64: "SS12u4-Solaris11u1+1.0",
         solaris_sparcv9: "SS12u6-Solaris11u3+1.0",
         windows_x64: "VS2017-15.9.6+1.0",
-        linux_aarch64: "gcc7.3.0-Fedora27+1.2",
-        linux_arm: "gcc7.3.0-Fedora27+1.2",
-        linux_ppc64le: "gcc7.3.0-Fedora27+1.0",
-        linux_s390x: "gcc7.3.0-Fedora27+1.0"
+        linux_aarch64: "gcc8.2.0-Fedora27+1.0",
+        linux_arm: "gcc8.2.0-Fedora27+1.0",
+        linux_ppc64le: "gcc8.2.0-Fedora27+1.0",
+        linux_s390x: "gcc8.2.0-Fedora27+1.0"
     };
 
     var devkit_platform = (input.target_cpu == "x86"
         ? input.target_os + "_x64"
         : input.target_platform);
+
+    var devkit_cross_prefix = "";
+    if (input.build_platform != input.target_platform
+       && input.build_platform != devkit_platform) {
+        devkit_cross_prefix = input.build_platform + "-to-";
+    }
 
     var boot_jdk_platform = (input.build_os == "macosx" ? "osx" : input.build_os)
         + "-" + input.build_cpu;
@@ -974,7 +981,7 @@ var getJibProfilesDependencies = function (input, common) {
             server: "jpg",
             product: "jdk",
             version: common.boot_jdk_version,
-            build_number: "28",
+            build_number: common.boot_jdk_build_number,
             file: "bundles/" + boot_jdk_platform + "/jdk-" + common.boot_jdk_version + "_"
                 + boot_jdk_platform + "_bin" + boot_jdk_ext,
             configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
@@ -984,7 +991,7 @@ var getJibProfilesDependencies = function (input, common) {
         devkit: {
             organization: common.organization,
             ext: "tar.gz",
-            module: "devkit-" + devkit_platform,
+            module: "devkit-" + devkit_cross_prefix + devkit_platform,
             revision: devkit_platform_revisions[devkit_platform],
             environment: {
                 "DEVKIT_HOME": input.get("devkit", "home_path"),
