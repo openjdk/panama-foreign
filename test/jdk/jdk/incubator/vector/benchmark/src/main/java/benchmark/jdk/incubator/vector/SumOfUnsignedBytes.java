@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
 
-    @Param({"64", "1024", "65536"})
+    @Param({"64", "1024", "4096"})
     int size;
 
     private byte[] data;
@@ -150,23 +150,25 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
     // Helpers
     /*
     static ByteVector addSaturated(ByteVector va, ByteVector vb) {
-        return ByteVectorHelper.map(va, vb, (i, a, b) -> {
-            if ((a & 0xFF) + (b & 0xFF) < 0xFF) {
-                return (byte) (a + b);
+        var vc = ByteVector.zero(B256);
+        for (int i = 0; i < B256.length(); i++) {
+            if ((va.get(i) & 0xFF) + (vb.get(i) & 0xFF) < 0xFF) {
+                vc = vc.with(i, (byte)(va.get(i) + vb.get(i)));
             } else {
-                return (byte)0xFF;
+                vc = vc.with(i, (byte)0xFF);
             }
-        });
+        }
+        return vc;
     }
-
     IntVector sumOfAbsoluteDifferences(ByteVector va, ByteVector vb) {
-        var vc = ByteVectorHelper.map(va, vb, (i, a, b) -> {
-            if ((a & 0xFF) > (b & 0xFF)) {
-                return (byte)(a - b);
+        var vc = ByteVector.zero(B256);
+        for (int i = 0; i < B256.length(); i++) {
+            if ((va.get(i) & 0xFF) > (vb.get(i) & 0xFF)) {
+                vc = vc.with(i, (byte)(va.get(i) - vb.get(i)));
             } else {
-                return (byte)(b - a);
+                vc = vc.with(i, (byte)(vb.get(i) - va.get(i)));
             }
-        });
+        }
         return sum(vc);
     } */
 }
