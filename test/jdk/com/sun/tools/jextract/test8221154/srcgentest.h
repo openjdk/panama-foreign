@@ -38,6 +38,14 @@ extern "C" {
 
 #include <stdbool.h>
 
+// The following macro is inspired from a macro from
+// /usr/include/net/route.h. Make sure that jextract
+// generates proper String literal
+
+#define PROBLEM_STRING \
+    "\020\1UP\2GATEWAY\3HOST\4REJECT\5DYNAMIC\6MODIFIED\7DONE" \
+    "\10DELCLONE\11CLONING\12XRESOLVE\13LLINFO\14STATIC\15BLACKHOLE"
+
 enum {
     R, G, B
 };

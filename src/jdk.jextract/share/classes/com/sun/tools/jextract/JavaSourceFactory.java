@@ -99,7 +99,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         global_jsb.addPackagePrefix(headerFile.pkgName);
 
         Map<String, Object> header = new HashMap<>();
-        header.put("path", headerFile.path.toAbsolutePath().toString().replace("\\", "\\\\"));
+        header.put("path", headerFile.path.toAbsolutePath().toString());
         if (!libraryNames.isEmpty()) {
             header.put("libraries", libraryNames.toArray(new String[0]));
             if (libraryPaths != null && !libraryPaths.isEmpty()) {
@@ -168,7 +168,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
             SourceLocation.Location loc = src.getFileLocation();
             Path p = loc.path();
             Map<String, Object> fields = new HashMap<>();
-            fields.put("file", p == null ? "<builtin>" :  p.toAbsolutePath().toString().replace("\\", "\\\\"));
+            fields.put("file", p == null ? "<builtin>" :  p.toAbsolutePath().toString());
             fields.put("line", loc.line());
             fields.put("column", loc.column());
             jsb.addAnnotation(align, NATIVE_LOCATION, fields);

@@ -146,7 +146,7 @@ class JavaSourceBuilder {
             Object value = fields.get(key);
             if (value instanceof String) {
                 sb.append('"');
-                sb.append(value.toString());
+                sb.append(Utils.quote(value.toString()));
                 sb.append('"');
             } else if (value instanceof Enum) {
                 sb.append(value.getClass().getSimpleName());
@@ -160,7 +160,7 @@ class JavaSourceBuilder {
                 String[] strs = (String[])value;
                 for (int i = 0; i < strs.length; i++) {
                     sb.append('"');
-                    sb.append(strs[i]);
+                    sb.append(Utils.quote(strs[i]));
                     sb.append('"');
                     if (i != strs.length - 1) {
                         sb.append(", ");

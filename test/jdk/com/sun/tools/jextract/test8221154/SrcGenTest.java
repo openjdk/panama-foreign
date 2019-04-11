@@ -43,7 +43,7 @@ import static org.testng.Assert.assertTrue;
 
 /*
  * @test
- * @bug 8221154 8221228 8221336 8221419 8221443 8222274
+ * @bug 8221154 8221228 8221336 8221419 8221443 8222274 8222288
  * @summary jextract should generate java source files
  * @library ..
  * @run testng SrcGenTest
