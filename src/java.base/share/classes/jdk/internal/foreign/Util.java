@@ -395,7 +395,11 @@ public final class Util {
 
     public static MethodHandle getCallbackMH(Method m) {
         try {
-            MethodHandle mh = MethodHandles.publicLookup().unreflect(m);
+            //Note: we need the call to setAccessible because the method to unreflect might belong to a module
+            //that java.base does not read. However, this poses no security threat, given that the reflective method
+            //we update here is not leaked outside (and is created insider the binder itself).
+            m.setAccessible(true);
+            MethodHandle mh = MethodHandles.lookup().unreflect(m);
             Util.checkNoArrays(mh.type());
             return mh;
         } catch (Throwable ex) {
