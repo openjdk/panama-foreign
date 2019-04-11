@@ -28,6 +28,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.IntVector;
@@ -47,8 +48,8 @@ import java.util.stream.Stream;
 @Test
 public class Int128VectorTests extends AbstractVectorTest {
 
-    static final IntVector.IntSpecies SPECIES =
-                IntVector.species(Shape.S_128_BIT);
+    static final Species<Integer> SPECIES =
+                IntVector.SPECIES_128;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
 

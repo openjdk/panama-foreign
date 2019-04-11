@@ -29,6 +29,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.LongVector;
@@ -45,8 +46,8 @@ import java.util.function.IntFunction;
 
 @Test
 public class Long64VectorLoadStoreTests extends AbstractVectorTest {
-    static final LongVector.LongSpecies SPECIES =
-                LongVector.species(Shape.S_64_BIT);
+    static final Species<Long> SPECIES =
+                LongVector.SPECIES_64;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 

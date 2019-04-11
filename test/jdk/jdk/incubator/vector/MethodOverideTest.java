@@ -61,29 +61,12 @@ public class MethodOverideTest {
                 toArray(Object[][]::new);
     }
 
-    @DataProvider
-    public static Object[][] speciesClassesProvider() {
-        return Stream.of(
-                ByteVector.ByteSpecies.class,
-                ShortVector.ShortSpecies.class,
-                IntVector.IntSpecies.class,
-                FloatVector.FloatSpecies.class,
-                DoubleVector.DoubleSpecies.class).
-                map(c -> new Object[]{c}).
-                toArray(Object[][]::new);
-    }
-
     static List<Object> getConcreteSpeciesInstances(Class<?> primitiveVectorClass) {
         try {
-            Method species = primitiveVectorClass.getMethod("species", Shape.class);
-
             List<Object> csis = new ArrayList<>();
-            for (Field sf : Shape.class.getFields()) {
-                if (Shape.class.isAssignableFrom(sf.getType())) {
-                    Shape s = (Shape) sf.get(null);
-                    Object speciesInstance = species.invoke(null, s);
-
-                    csis.add(speciesInstance);
+            for (Field sf : primitiveVectorClass.getFields()) {
+                if (Vector.Species.class.isAssignableFrom(sf.getType())) {
+                    csis.add(sf.get(null));
                 }
             }
             return csis;
@@ -93,18 +76,12 @@ public class MethodOverideTest {
         }
     }
 
-    static List<Class<?>> getConcreteSpeciesClasses(Class<?> primitiveSpeciesClass) {
-        return getConcreteSpeciesInstances(primitiveSpeciesClass.getEnclosingClass()).stream().
-                map(Object::getClass).
-                collect(Collectors.toList());
-    }
-
     static List<Class<?>> getConcreteVectorClasses(Class<?> primitiveVectorClass) {
         try {
             List<Class<?>> cvcs = new ArrayList<>();
             for (Object speciesInstance : getConcreteSpeciesInstances(primitiveVectorClass)) {
-                    Method zero = speciesInstance.getClass().getSuperclass().getMethod("zero");
-                    Object vectorInstance = zero.invoke(speciesInstance);
+                    Method zero = primitiveVectorClass.getMethod("zero", Vector.Species.class);
+                    Object vectorInstance = zero.invoke(null, speciesInstance);
 
                     cvcs.add(vectorInstance.getClass());
             }
@@ -164,12 +141,4 @@ public class MethodOverideTest {
 
 //        Assert.assertEquals(nonIntrinsicMethods, 0);
     }
-
-    @Test(dataProvider = "speciesClassesProvider")
-    public void checkMethodsOnPrimitiveSpecies(Class<?> primitiveSpecies) {
-        int nonIntrinsicMethods = checkMethods(primitiveSpecies, getConcreteSpeciesClasses(primitiveSpecies));
-
-//        Assert.assertEquals(nonIntrinsicMethods, 0);
-    }
-
 }

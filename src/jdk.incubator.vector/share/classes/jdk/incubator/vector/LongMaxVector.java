@@ -38,19 +38,20 @@ import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class LongMaxVector extends LongVector {
-    static final LongMaxSpecies SPECIES = new LongMaxSpecies();
+    private static final Species<Long> SPECIES = LongVector.SPECIES_MAX;
 
     static final LongMaxVector ZERO = new LongMaxVector();
 
     static final int LENGTH = SPECIES.length();
 
     // Index vector species
-    private static final IntVector.IntSpecies INDEX_SPEC;
+    private static final IntVector.IntSpecies INDEX_SPECIES;
+
     static {
         int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
-        Vector.Shape shape = Shape.forBitSize(bitSize);
-        INDEX_SPEC = (IntVector.IntSpecies) Species.of(int.class, shape);
+        INDEX_SPECIES = (IntVector.IntSpecies) IntVector.species(Shape.forBitSize(bitSize));
     }
+
     private final long[] vec; // Don't access directly, use getElements() instead.
 
     private long[] getElements() {
@@ -162,7 +163,7 @@ final class LongMaxVector extends LongVector {
         return VectorIntrinsics.cast(
             LongMaxVector.class,
             long.class, LENGTH,
-            s.vectorType(),
+            s.boxType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -180,37 +181,37 @@ final class LongMaxVector extends LongVector {
             for (int i = 0; i < limit; i++) {
                 a[i] = (byte) this.get(i);
             }
-            return (Vector) ByteVector.fromArray((ByteVector.ByteSpecies) s, a, 0);
+            return (Vector) ByteVector.fromArray((Species<Byte>) s, a, 0);
         } else if (stype == short.class) {
             short[] a = new short[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (short) this.get(i);
             }
-            return (Vector) ShortVector.fromArray((ShortVector.ShortSpecies) s, a, 0);
+            return (Vector) ShortVector.fromArray((Species<Short>) s, a, 0);
         } else if (stype == int.class) {
             int[] a = new int[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (int) this.get(i);
             }
-            return (Vector) IntVector.fromArray((IntVector.IntSpecies) s, a, 0);
+            return (Vector) IntVector.fromArray((Species<Integer>) s, a, 0);
         } else if (stype == long.class) {
             long[] a = new long[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (long) this.get(i);
             }
-            return (Vector) LongVector.fromArray((LongVector.LongSpecies) s, a, 0);
+            return (Vector) LongVector.fromArray((Species<Long>) s, a, 0);
         } else if (stype == float.class) {
             float[] a = new float[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (float) this.get(i);
             }
-            return (Vector) FloatVector.fromArray((FloatVector.FloatSpecies) s, a, 0);
+            return (Vector) FloatVector.fromArray((Species<Float>) s, a, 0);
         } else if (stype == double.class) {
             double[] a = new double[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (double) this.get(i);
             }
-            return (Vector) DoubleVector.fromArray((DoubleVector.DoubleSpecies) s, a, 0);
+            return (Vector) DoubleVector.fromArray((Species<Double>) s, a, 0);
         } else {
             throw new UnsupportedOperationException("Bad lane type for casting.");
         }
@@ -300,55 +301,50 @@ final class LongMaxVector extends LongVector {
     @ForceInline
     public LongVector reshape(Species<Long> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s instanceof Long64Vector.Long64Species)) {
-            Long64Vector.Long64Species ts = (Long64Vector.Long64Species)s;
+        if (s.bitSize() == 64 && (s.boxType() == Long64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 LongMaxVector.class,
                 long.class, LENGTH,
                 Long64Vector.class,
                 long.class, Long64Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (LongVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s instanceof Long128Vector.Long128Species)) {
-            Long128Vector.Long128Species ts = (Long128Vector.Long128Species)s;
+        } else if (s.bitSize() == 128 && (s.boxType() == Long128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 LongMaxVector.class,
                 long.class, LENGTH,
                 Long128Vector.class,
                 long.class, Long128Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (LongVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s instanceof Long256Vector.Long256Species)) {
-            Long256Vector.Long256Species ts = (Long256Vector.Long256Species)s;
+        } else if (s.bitSize() == 256 && (s.boxType() == Long256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 LongMaxVector.class,
                 long.class, LENGTH,
                 Long256Vector.class,
                 long.class, Long256Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (LongVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s instanceof Long512Vector.Long512Species)) {
-            Long512Vector.Long512Species ts = (Long512Vector.Long512Species)s;
+        } else if (s.bitSize() == 512 && (s.boxType() == Long512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 LongMaxVector.class,
                 long.class, LENGTH,
                 Long512Vector.class,
                 long.class, Long512Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (LongVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s instanceof LongMaxVector.LongMaxSpecies)) {
-            LongMaxVector.LongMaxSpecies ts = (LongMaxVector.LongMaxSpecies)s;
+                && (s.bitSize() % 128 == 0) && (s.boxType() == LongMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 LongMaxVector.class,
                 long.class, LENGTH,
                 LongMaxVector.class,
                 long.class, LongMaxVector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (LongVector) vector.defaultReinterpret(species)
             );
         } else {
@@ -361,128 +357,128 @@ final class LongMaxVector extends LongVector {
     @Override
     @ForceInline
     public LongVector add(long o) {
-        return add(SPECIES.broadcast(o));
+        return add((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public LongVector add(long o, Mask<Long> m) {
-        return add(SPECIES.broadcast(o), m);
+        return add((LongMaxVector)LongVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public LongVector sub(long o) {
-        return sub(SPECIES.broadcast(o));
+        return sub((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public LongVector sub(long o, Mask<Long> m) {
-        return sub(SPECIES.broadcast(o), m);
+        return sub((LongMaxVector)LongVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public LongVector mul(long o) {
-        return mul(SPECIES.broadcast(o));
+        return mul((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public LongVector mul(long o, Mask<Long> m) {
-        return mul(SPECIES.broadcast(o), m);
+        return mul((LongMaxVector)LongVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public LongVector min(long o) {
-        return min(SPECIES.broadcast(o));
+        return min((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public LongVector max(long o) {
-        return max(SPECIES.broadcast(o));
+        return max((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Long> equal(long o) {
-        return equal(SPECIES.broadcast(o));
+        return equal((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Long> notEqual(long o) {
-        return notEqual(SPECIES.broadcast(o));
+        return notEqual((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Long> lessThan(long o) {
-        return lessThan(SPECIES.broadcast(o));
+        return lessThan((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Long> lessThanEq(long o) {
-        return lessThanEq(SPECIES.broadcast(o));
+        return lessThanEq((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Long> greaterThan(long o) {
-        return greaterThan(SPECIES.broadcast(o));
+        return greaterThan((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Long> greaterThanEq(long o) {
-        return greaterThanEq(SPECIES.broadcast(o));
+        return greaterThanEq((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public LongVector blend(long o, Mask<Long> m) {
-        return blend(SPECIES.broadcast(o), m);
+        return blend((LongMaxVector)LongVector.broadcast(SPECIES, o), m);
     }
 
 
     @Override
     @ForceInline
     public LongVector and(long o) {
-        return and(SPECIES.broadcast(o));
+        return and((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public LongVector and(long o, Mask<Long> m) {
-        return and(SPECIES.broadcast(o), m);
+        return and((LongMaxVector)LongVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public LongVector or(long o) {
-        return or(SPECIES.broadcast(o));
+        return or((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public LongVector or(long o, Mask<Long> m) {
-        return or(SPECIES.broadcast(o), m);
+        return or((LongMaxVector)LongVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public LongVector xor(long o) {
-        return xor(SPECIES.broadcast(o));
+        return xor((LongMaxVector)LongVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public LongVector xor(long o, Mask<Long> m) {
-        return xor(SPECIES.broadcast(o), m);
+        return xor((LongMaxVector)LongVector.broadcast(SPECIES, o), m);
     }
 
     @Override
@@ -717,7 +713,7 @@ final class LongMaxVector extends LongVector {
     public LongMaxVector shiftL(Vector<Long> s) {
         LongMaxVector shiftv = (LongMaxVector)s;
         // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(species().broadcast(0x3f));
+        shiftv = shiftv.and(LongVector.broadcast(SPECIES, 0x3f));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_LSHIFT, LongMaxVector.class, long.class, LENGTH,
             this, shiftv,
@@ -729,7 +725,7 @@ final class LongMaxVector extends LongVector {
     public LongMaxVector shiftR(Vector<Long> s) {
         LongMaxVector shiftv = (LongMaxVector)s;
         // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(species().broadcast(0x3f));
+        shiftv = shiftv.and(LongVector.broadcast(SPECIES, 0x3f));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_URSHIFT, LongMaxVector.class, long.class, LENGTH,
             this, shiftv,
@@ -741,7 +737,7 @@ final class LongMaxVector extends LongVector {
     public LongMaxVector aShiftR(Vector<Long> s) {
         LongMaxVector shiftv = (LongMaxVector)s;
         // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(species().broadcast(0x3f));
+        shiftv = shiftv.and(LongVector.broadcast(SPECIES, 0x3f));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_RSHIFT, LongMaxVector.class, long.class, LENGTH,
             this, shiftv,
@@ -773,7 +769,7 @@ final class LongMaxVector extends LongVector {
     @Override
     @ForceInline
     public long andAll(Mask<Long> m) {
-        return SPECIES.broadcast((long) -1).blend(this, m).andAll();
+        return blend((LongMaxVector)LongVector.broadcast(SPECIES, (long) -1), m).andAll();
     }
 
     @Override
@@ -815,7 +811,7 @@ final class LongMaxVector extends LongVector {
     @Override
     @ForceInline
     public long orAll(Mask<Long> m) {
-        return SPECIES.broadcast((long) 0).blend(this, m).orAll();
+        return blend((LongMaxVector)LongVector.broadcast(SPECIES, (long) 0), m).orAll();
     }
 
     @Override
@@ -830,33 +826,33 @@ final class LongMaxVector extends LongVector {
     @Override
     @ForceInline
     public long xorAll(Mask<Long> m) {
-        return SPECIES.broadcast((long) 0).blend(this, m).xorAll();
+        return blend((LongMaxVector)LongVector.broadcast(SPECIES, (long) 0), m).xorAll();
     }
 
 
     @Override
     @ForceInline
     public long addAll(Mask<Long> m) {
-        return SPECIES.broadcast((long) 0).blend(this, m).addAll();
+        return blend((LongMaxVector)LongVector.broadcast(SPECIES, (long) 0), m).addAll();
     }
 
 
     @Override
     @ForceInline
     public long mulAll(Mask<Long> m) {
-        return SPECIES.broadcast((long) 1).blend(this, m).mulAll();
+        return blend((LongMaxVector)LongVector.broadcast(SPECIES, (long) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
     public long minAll(Mask<Long> m) {
-        return SPECIES.broadcast(Long.MAX_VALUE).blend(this, m).minAll();
+        return blend((LongMaxVector)LongVector.broadcast(SPECIES, Long.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
     public long maxAll(Mask<Long> m) {
-        return SPECIES.broadcast(Long.MIN_VALUE).blend(this, m).maxAll();
+        return blend((LongMaxVector)LongVector.broadcast(SPECIES, Long.MIN_VALUE), m).maxAll();
     }
 
     @Override
@@ -901,7 +897,7 @@ final class LongMaxVector extends LongVector {
         Objects.requireNonNull(b);
 
         // Index vector: vix[0:n] = i -> ix + indexMap[iy + i]
-        IntVector vix = IntVector.fromArray(INDEX_SPEC, b, iy).add(ix);
+        IntVector vix = IntVector.fromArray(INDEX_SPECIES, b, iy).add(ix);
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
@@ -1274,7 +1270,7 @@ final class LongMaxVector extends LongVector {
         }
 
         @Override
-        public LongMaxSpecies species() {
+        public Species<Long> species() {
             return SPECIES;
         }
 
@@ -1288,6 +1284,31 @@ final class LongMaxVector extends LongVector {
                 res[i] = (long) (bits[i] ? -1 : 0);
             }
             return new LongMaxVector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <E> Mask<E> cast(Species<E> species) {
+            if (length() != species.length())
+                throw new IllegalArgumentException("Mask length and species length differ");
+            Class<?> stype = species.elementType();
+            boolean [] maskArray = toArray();
+            if (stype == byte.class) {
+                return (Mask <E>) new ByteMaxVector.ByteMaxMask(maskArray);
+            } else if (stype == short.class) {
+                return (Mask <E>) new ShortMaxVector.ShortMaxMask(maskArray);
+            } else if (stype == int.class) {
+                return (Mask <E>) new IntMaxVector.IntMaxMask(maskArray);
+            } else if (stype == long.class) {
+                return (Mask <E>) new LongMaxVector.LongMaxMask(maskArray);
+            } else if (stype == float.class) {
+                return (Mask <E>) new FloatMaxVector.FloatMaxMask(maskArray);
+            } else if (stype == double.class) {
+                return (Mask <E>) new DoubleMaxVector.DoubleMaxMask(maskArray);
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
         }
 
         // Unary operations
@@ -1362,7 +1383,7 @@ final class LongMaxVector extends LongVector {
         }
 
         @Override
-        public LongMaxSpecies species() {
+        public Species<Long> species() {
             return SPECIES;
         }
 
@@ -1373,6 +1394,31 @@ final class LongMaxVector extends LongVector {
               va[i] = (long) getElement(i);
             }
             return LongVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <F> Shuffle<F> cast(Species<F> species) {
+            if (length() != species.length())
+                throw new IllegalArgumentException("Shuffle length and species length differ");
+            Class<?> stype = species.elementType();
+            int [] shuffleArray = toArray();
+            if (stype == byte.class) {
+                return (Shuffle<F>) new ByteMaxVector.ByteMaxShuffle(shuffleArray);
+            } else if (stype == short.class) {
+                return (Shuffle<F>) new ShortMaxVector.ShortMaxShuffle(shuffleArray);
+            } else if (stype == int.class) {
+                return (Shuffle<F>) new IntMaxVector.IntMaxShuffle(shuffleArray);
+            } else if (stype == long.class) {
+                return (Shuffle<F>) new LongMaxVector.LongMaxShuffle(shuffleArray);
+            } else if (stype == float.class) {
+                return (Shuffle<F>) new FloatMaxVector.FloatMaxShuffle(shuffleArray);
+            } else if (stype == double.class) {
+                return (Shuffle<F>) new DoubleMaxVector.DoubleMaxShuffle(shuffleArray);
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
         }
 
         @Override
@@ -1389,153 +1435,7 @@ final class LongMaxVector extends LongVector {
     // Species
 
     @Override
-    public LongMaxSpecies species() {
+    public Species<Long> species() {
         return SPECIES;
-    }
-
-    static final class LongMaxSpecies extends LongSpecies {
-        static final int BIT_SIZE = Shape.S_Max_BIT.bitSize();
-
-        static final int LENGTH = BIT_SIZE / Long.SIZE;
-
-        @Override
-        public String toString() {
-           StringBuilder sb = new StringBuilder("Shape[");
-           sb.append(bitSize()).append(" bits, ");
-           sb.append(length()).append(" ").append(long.class.getSimpleName()).append("s x ");
-           sb.append(elementSize()).append(" bits");
-           sb.append("]");
-           return sb.toString();
-        }
-
-        @Override
-        @ForceInline
-        public int bitSize() {
-            return BIT_SIZE;
-        }
-
-        @Override
-        @ForceInline
-        public int length() {
-            return LENGTH;
-        }
-
-        @Override
-        @ForceInline
-        public Class<Long> elementType() {
-            return long.class;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> boxType() {
-            return LongMaxVector.class;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> maskType() {
-            return LongMaxMask.class;
-        }
-
-        @Override
-        @ForceInline
-        public int elementSize() {
-            return Long.SIZE;
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        Class<?> vectorType() {
-            return LongMaxVector.class;
-        }
-
-        @Override
-        @ForceInline
-        public Shape shape() {
-            return Shape.S_Max_BIT;
-        }
-
-       @Override
-       IntVector.IntSpecies indexSpecies() {
-          return INDEX_SPEC;
-       }
-
-        @Override
-        LongMaxVector op(FOp f) {
-            long[] res = new long[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = f.apply(i);
-            }
-            return new LongMaxVector(res);
-        }
-
-        @Override
-        LongMaxVector op(Mask<Long> o, FOp f) {
-            long[] res = new long[length()];
-            boolean[] mbits = ((LongMaxMask)o).getBits();
-            for (int i = 0; i < length(); i++) {
-                if (mbits[i]) {
-                    res[i] = f.apply(i);
-                }
-            }
-            return new LongMaxVector(res);
-        }
-
-        @Override
-        LongMaxMask opm(FOpm f) {
-            boolean[] res = new boolean[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = (boolean)f.apply(i);
-            }
-            return new LongMaxMask(res);
-        }
-
-        // Factories
-
-        @Override
-        @ForceInline
-        public LongMaxVector zero() {
-            return VectorIntrinsics.broadcastCoerced(LongMaxVector.class, long.class, LENGTH,
-                                                     0, SPECIES,
-                                                     ((bits, s) -> ((LongMaxSpecies)s).op(i -> (long)bits)));
-        }
-
-        @Override
-        @ForceInline
-        public LongMaxVector broadcast(long e) {
-            return VectorIntrinsics.broadcastCoerced(
-                LongMaxVector.class, long.class, LENGTH,
-                e, SPECIES,
-                ((bits, s) -> ((LongMaxSpecies)s).op(i -> (long)bits)));
-        }
-
-        @Override
-        @ForceInline
-        public LongMaxVector scalars(long... es) {
-            Objects.requireNonNull(es);
-            int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
-            return VectorIntrinsics.load(LongMaxVector.class, long.class, LENGTH,
-                                         es, Unsafe.ARRAY_LONG_BASE_OFFSET,
-                                         es, ix, SPECIES,
-                                         (c, idx, s) -> ((LongMaxSpecies)s).op(n -> c[idx + n]));
-        }
-
-        @Override
-        @ForceInline
-        public <E> LongMaxMask cast(Mask<E> m) {
-            if (m.length() != LENGTH)
-                throw new IllegalArgumentException("Mask length this species length differ");
-            return new LongMaxMask(m.toArray());
-        }
-
-        @Override
-        @ForceInline
-        public <E> LongMaxShuffle cast(Shuffle<E> s) {
-            if (s.length() != LENGTH)
-                throw new IllegalArgumentException("Shuffle length this species length differ");
-            return new LongMaxShuffle(s.toArray());
-        }
     }
 }

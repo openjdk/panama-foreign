@@ -31,6 +31,7 @@ import java.nio.$Type$Buffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Function;
 import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
@@ -112,8 +113,16 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static $abstractvectortype$ zero($Type$Species species) {
-        return species.zero();
+    public static $abstractvectortype$ zero(Species<$Boxtype$> species) {
+#if[FP]
+        return VectorIntrinsics.broadcastCoerced((Class<$Type$Vector>) species.boxType(), $type$.class, species.length(),
+                                                 $Type$.$type$To$Bitstype$Bits(0.0f), species,
+                                                 ((bits, s) -> (($Type$Species)s).op(i -> $Type$.$bitstype$BitsTo$Type$(($bitstype$)bits))));
+#else[FP]
+        return VectorIntrinsics.broadcastCoerced((Class<$Type$Vector>) species.boxType(), $type$.class, species.length(),
+                                                 0, species,
+                                                 ((bits, s) -> (($Type$Species)s).op(i -> ($type$)bits)));
+#end[FP]
     }
 
     /**
@@ -124,7 +133,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer($Type$Species, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<$Boxtype$>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
@@ -138,7 +147,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static $abstractvectortype$ fromByteArray($Type$Species species, byte[] a, int ix) {
+    public static $abstractvectortype$ fromByteArray(Species<$Boxtype$> species, byte[] a, int ix) {
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
         return VectorIntrinsics.load((Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
@@ -160,7 +169,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer($Type$Species, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<$Boxtype$>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
@@ -179,7 +188,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static $abstractvectortype$ fromByteArray($Type$Species species, byte[] a, int ix, Mask<$Boxtype$> m) {
+    public static $abstractvectortype$ fromByteArray(Species<$Boxtype$> species, byte[] a, int ix, Mask<$Boxtype$> m) {
         return zero(species).blend(fromByteArray(species, a, ix), m);
     }
 
@@ -199,7 +208,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static $abstractvectortype$ fromArray($Type$Species species, $type$[] a, int i){
+    public static $abstractvectortype$ fromArray(Species<$Boxtype$> species, $type$[] a, int i){
         Objects.requireNonNull(a);
         i = VectorIntrinsics.checkIndex(i, a.length, species.length());
         return VectorIntrinsics.load((Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
@@ -228,7 +237,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * is set {@code i > a.length - N}
      */
     @ForceInline
-    public static $abstractvectortype$ fromArray($Type$Species species, $type$[] a, int i, Mask<$Boxtype$> m) {
+    public static $abstractvectortype$ fromArray(Species<$Boxtype$> species, $type$[] a, int i, Mask<$Boxtype$> m) {
         return zero(species).blend(fromArray(species, a, i), m);
     }
 
@@ -254,13 +263,13 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
      */
 #if[byteOrShort]
-    public static $abstractvectortype$ fromArray($Type$Species species, $type$[] a, int i, int[] indexMap, int j) {
-        return species.op(n -> a[i + indexMap[j + n]]);
+    public static $abstractvectortype$ fromArray(Species<$Boxtype$> species, $type$[] a, int i, int[] indexMap, int j) {
+        return (($Type$Species)species).op(n -> a[i + indexMap[j + n]]);
     }
 #else[byteOrShort]
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static $abstractvectortype$ fromArray($Type$Species species, $type$[] a, int i, int[] indexMap, int j) {
+    public static $abstractvectortype$ fromArray(Species<$Boxtype$> species, $type$[] a, int i, int[] indexMap, int j) {
         Objects.requireNonNull(a);
         Objects.requireNonNull(indexMap);
 
@@ -270,15 +279,16 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
         }
 #end[longOrDouble]
 
-        // Index vector: vix[0:n] = k -> i + indexMap[j + i]
-        IntVector vix = IntVector.fromArray(species.indexSpecies(), indexMap, j).add(i);
+        // Index vector: vix[0:n] = k -> i + indexMap[j + k]
+        IntVector vix = IntVector.fromArray(IntVector.species(species.indexShape()), indexMap, j).add(i);
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
         return VectorIntrinsics.loadWithMap((Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
-                                            species.indexSpecies().vectorType(), a, Unsafe.ARRAY_$TYPE$_BASE_OFFSET, vix,
+                                            IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_$TYPE$_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
-                                           (c, idx, iMap, idy, s) -> (($Type$Species)s).op(n -> c[idx + iMap[idy+n]]));
+                                            ($type$[] c, int idx, int[] iMap, int idy, Species<$Boxtype$> s) ->
+                                                (($Type$Species)s).op(n -> c[idx + iMap[idy+n]]));
         }
 
 #end[byteOrShort]
@@ -307,13 +317,13 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * {@code < 0} or {@code >= a.length}
      */
 #if[byteOrShort]
-    public static $abstractvectortype$ fromArray($Type$Species species, $type$[] a, int i, Mask<$Boxtype$> m, int[] indexMap, int j) {
-        return species.op(m, n -> a[i + indexMap[j + n]]);
+    public static $abstractvectortype$ fromArray(Species<$Boxtype$> species, $type$[] a, int i, Mask<$Boxtype$> m, int[] indexMap, int j) {
+        return (($Type$Species)species).op(m, n -> a[i + indexMap[j + n]]);
     }
 #else[byteOrShort]
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static $abstractvectortype$ fromArray($Type$Species species, $type$[] a, int i, Mask<$Boxtype$> m, int[] indexMap, int j) {
+    public static $abstractvectortype$ fromArray(Species<$Boxtype$> species, $type$[] a, int i, Mask<$Boxtype$> m, int[] indexMap, int j) {
         // @@@ This can result in out of bounds errors for unset mask lanes
         return zero(species).blend(fromArray(species, a, i, indexMap, j), m);
     }
@@ -329,7 +339,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer($Type$Species, ByteBuffer, int, Mask)} method} as follows:
+     * {@link #fromByteBuffer(Species<$Boxtype$>, ByteBuffer, int, Mask)} method} as follows:
      * <pre>{@code
      *   return this.fromByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
@@ -346,7 +356,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static $abstractvectortype$ fromByteBuffer($Type$Species species, ByteBuffer bb, int ix) {
+    public static $abstractvectortype$ fromByteBuffer(Species<$Boxtype$> species, ByteBuffer bb, int ix) {
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -398,9 +408,112 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static $abstractvectortype$ fromByteBuffer($Type$Species species, ByteBuffer bb, int ix, Mask<$Boxtype$> m) {
+    public static $abstractvectortype$ fromByteBuffer(Species<$Boxtype$> species, ByteBuffer bb, int ix, Mask<$Boxtype$> m) {
         return zero(species).blend(fromByteBuffer(species, bb, ix), m);
     }
+
+    /**
+     * Returns a vector where all lane elements are set to the primitive
+     * value {@code e}.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector of vector where all lane elements are set to
+     * the primitive value {@code e}
+     */
+#if[FP]
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static $abstractvectortype$ broadcast(Species<$Boxtype$> s, $type$ e) {
+        return VectorIntrinsics.broadcastCoerced(
+            (Class<$abstractvectortype$>) s.boxType(), $type$.class, s.length(),
+            $Type$.$type$To$Bitstype$Bits(e), s,
+            ((bits, sp) -> (($Type$Species)sp).op(i -> $Type$.$bitstype$BitsTo$Type$(($bitstype$)bits))));
+    }
+#else[FP]
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static $abstractvectortype$ broadcast(Species<$Boxtype$> s, $type$ e) {
+        return VectorIntrinsics.broadcastCoerced(
+            (Class<$abstractvectortype$>) s.boxType(), $type$.class, s.length(),
+            e, s,
+            ((bits, sp) -> (($Type$Species)sp).op(i -> ($type$)bits)));
+    }
+#end[FP]
+
+    /**
+     * Returns a vector where each lane element is set to a given
+     * primitive value.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * the primitive value at index {@code N} is placed into the resulting
+     * vector at lane index {@code N}.
+     *
+     * @param s species of the desired vector
+     * @param es the given primitive values
+     * @return a vector where each lane element is set to a given primitive
+     * value
+     * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static $abstractvectortype$ scalars(Species<$Boxtype$> s, $type$... es) {
+        Objects.requireNonNull(es);
+        int ix = VectorIntrinsics.checkIndex(0, es.length, s.length());
+        return VectorIntrinsics.load((Class<$abstractvectortype$>) s.boxType(), $type$.class, s.length(),
+                                     es, Unsafe.ARRAY_$TYPE$_BASE_OFFSET,
+                                     es, ix, s,
+                                     (c, idx, sp) -> (($Type$Species)sp).op(n -> c[idx + n]));
+    }
+
+    /**
+     * Returns a vector where the first lane element is set to the primtive
+     * value {@code e}, all other lane elements are set to the default
+     * value.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector where the first lane element is set to the primitive
+     * value {@code e}
+     */
+    @ForceInline
+    public static final $abstractvectortype$ single(Species<$Boxtype$> s, $type$ e) {
+        return zero(s).with(0, e);
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a randomly
+     * generated primitive value.
+     *
+     * The semantics are equivalent to calling
+#if[byteOrShort]
+     * ($type$){@link ThreadLocalRandom#nextInt()}
+#else[byteOrShort]
+     * {@link ThreadLocalRandom#next$Type$()}
+#end[byteOrShort]
+     *
+     * @param s species of the desired vector
+     * @return a vector where each lane elements is set to a randomly
+     * generated primitive value
+     */
+#if[intOrLong]
+    public static $abstractvectortype$ random(Species<$Boxtype$> s) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return (($Type$Species)s).op(i -> r.next$Type$());
+    }
+#else[intOrLong]
+#if[FP]
+    public static $abstractvectortype$ random(Species<$Boxtype$> s) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return (($Type$Species)s).op(i -> r.next$Type$());
+    }
+#else[FP]
+    public static $abstractvectortype$ random(Species<$Boxtype$> s) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return (($Type$Species)s).op(i -> ($type$) r.nextInt());
+    }
+#end[FP]
+#end[intOrLong]
 
     /**
      * Returns a mask where each lane is set or unset according to given
@@ -416,7 +529,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
      */
     @ForceInline
-    public static Mask<$Boxtype$> maskFromValues($Type$Species species, boolean... bits) {
+    public static Mask<$Boxtype$> maskFromValues(Species<$Boxtype$> species, boolean... bits) {
         if (species.boxType() == $Type$MaxVector.class)
             return new $Type$MaxVector.$Type$MaxMask(bits);
         switch (species.bitSize()) {
@@ -429,7 +542,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
     }
 
     // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
-    static Mask<$Boxtype$> trueMask($Type$Species species) {
+    static Mask<$Boxtype$> trueMask(Species<$Boxtype$> species) {
         if (species.boxType() == $Type$MaxVector.class)
             return $Type$MaxVector.$Type$MaxMask.TRUE_MASK;
         switch (species.bitSize()) {
@@ -441,7 +554,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
         }
     }
 
-    static Mask<$Boxtype$> falseMask($Type$Species species) {
+    static Mask<$Boxtype$> falseMask(Species<$Boxtype$> species) {
         if (species.boxType() == $Type$MaxVector.class)
             return $Type$MaxVector.$Type$MaxMask.FALSE_MASK;
         switch (species.bitSize()) {
@@ -469,7 +582,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<$Boxtype$> maskFromArray($Type$Species species, boolean[] bits, int ix) {
+    public static Mask<$Boxtype$> maskFromArray(Species<$Boxtype$> species, boolean[] bits, int ix) {
         Objects.requireNonNull(bits);
         ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
         return VectorIntrinsics.load((Class<Mask<$Boxtype$>>) species.maskType(), $bitstype$.class, species.length(),
@@ -486,10 +599,10 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<$Boxtype$> maskAllTrue($Type$Species species) {
+    public static Mask<$Boxtype$> maskAllTrue(Species<$Boxtype$> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<$Boxtype$>>) species.maskType(), $bitstype$.class, species.length(),
                                                  ($bitstype$)-1,  species,
-                                                 ((z, s) -> trueMask(($Type$Species)s)));
+                                                 ((z, s) -> trueMask(s)));
     }
 
     /**
@@ -500,10 +613,10 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<$Boxtype$> maskAllFalse($Type$Species species) {
+    public static Mask<$Boxtype$> maskAllFalse(Species<$Boxtype$> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<$Boxtype$>>) species.maskType(), $bitstype$.class, species.length(),
                                                  0, species, 
-                                                 ((z, s) -> falseMask(($Type$Species)s)));
+                                                 ((z, s) -> falseMask(s)));
     }
 
     /**
@@ -531,7 +644,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @return a shuffle of mapped indexes
      */
     @ForceInline
-    public static Shuffle<$Boxtype$> shuffle($Type$Species species, IntUnaryOperator f) {
+    public static Shuffle<$Boxtype$> shuffle(Species<$Boxtype$> species, IntUnaryOperator f) {
         if (species.boxType() == $Type$MaxVector.class)
             return new $Type$MaxVector.$Type$MaxShuffle(f);
         switch (species.bitSize()) {
@@ -557,7 +670,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @return a shuffle of lane indexes
      */
     @ForceInline
-    public static Shuffle<$Boxtype$> shuffleIota($Type$Species species) {
+    public static Shuffle<$Boxtype$> shuffleIota(Species<$Boxtype$> species) {
         if (species.boxType() == $Type$MaxVector.class)
             return new $Type$MaxVector.$Type$MaxShuffle(AbstractShuffle.IDENTITY);
         switch (species.bitSize()) {
@@ -586,7 +699,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * {@code < species.length()}
      */
     @ForceInline
-    public static Shuffle<$Boxtype$> shuffleFromValues($Type$Species species, int... ixs) {
+    public static Shuffle<$Boxtype$> shuffleFromValues(Species<$Boxtype$> species, int... ixs) {
         if (species.boxType() == $Type$MaxVector.class)
             return new $Type$MaxVector.$Type$MaxShuffle(ixs);
         switch (species.bitSize()) {
@@ -614,7 +727,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * {@code i > a.length - species.length()}
      */
     @ForceInline
-    public static Shuffle<$Boxtype$> shuffleFromArray($Type$Species species, int[] ixs, int i) {
+    public static Shuffle<$Boxtype$> shuffleFromArray(Species<$Boxtype$> species, int[] ixs, int i) {
         if (species.boxType() == $Type$MaxVector.class)
             return new $Type$MaxVector.$Type$MaxShuffle(ixs, i);
         switch (species.bitSize()) {
@@ -625,7 +738,6 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
             default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
         }
     }
-
 
     // Ops
 
@@ -2814,107 +2926,59 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
     // Species
 
     @Override
-    public abstract $Type$Species species();
+    public abstract Species<$Boxtype$> species();
 
     /**
      * Class representing {@link $abstractvectortype$}'s of the same {@link Vector.Shape Shape}.
      */
-    public static abstract class $Type$Species extends Vector.Species<$Boxtype$> {
+    static final class $Type$Species extends Vector.AbstractSpecies<$Boxtype$> {
+        final Function<$type$[], $Type$Vector> vectorFactory;
+        final Function<boolean[], Vector.Mask<$Boxtype$>> maskFactory;
+
+        private $Type$Species(Vector.Shape shape,
+                          Class<?> boxType,
+                          Class<?> maskType,
+                          Function<$type$[], $Type$Vector> vectorFactory,
+                          Function<boolean[], Vector.Mask<$Boxtype$>> maskFactory) {
+            super(shape, $type$.class, $Boxtype$.SIZE, boxType, maskType);
+            this.vectorFactory = vectorFactory;
+            this.maskFactory = maskFactory;
+        }
+
         interface FOp {
             $type$ apply(int i);
         }
-
-        abstract $abstractvectortype$ op(FOp f);
-
-        abstract $abstractvectortype$ op(Mask<$Boxtype$> m, FOp f);
 
         interface FOpm {
             boolean apply(int i);
         }
 
-        abstract Mask<$Boxtype$> opm(FOpm f);
-
-#if[!byteOrShort]
-        abstract IntVector.IntSpecies indexSpecies();
-#end[!byteOrShort]
-
-
-        // Factories
-
-        @Override
-        public abstract $abstractvectortype$ zero();
-
-        /**
-         * Returns a vector where all lane elements are set to the primitive
-         * value {@code e}.
-         *
-         * @param e the value
-         * @return a vector of vector where all lane elements are set to
-         * the primitive value {@code e}
-         */
-        public abstract $abstractvectortype$ broadcast($type$ e);
-
-        /**
-         * Returns a vector where the first lane element is set to the primtive
-         * value {@code e}, all other lane elements are set to the default
-         * value.
-         *
-         * @param e the value
-         * @return a vector where the first lane element is set to the primitive
-         * value {@code e}
-         */
-        @ForceInline
-        public final $abstractvectortype$ single($type$ e) {
-            return zero().with(0, e);
+        $Type$Vector op(FOp f) {
+            $type$[] res = new $type$[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = f.apply(i);
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a randomly
-         * generated primitive value.
-         *
-         * The semantics are equivalent to calling
-#if[FP]
-         * {@code ThreadLocalRandom#next$Type$}.
-#else[FP]
-         * {@code ($type$)ThreadLocalRandom#nextInt()}.
-#end[FP]
-         *
-         * @return a vector where each lane elements is set to a randomly
-         * generated primitive value
-         */
-#if[intOrLong]
-        public $abstractvectortype$ random() {
-            ThreadLocalRandom r = ThreadLocalRandom.current();
-            return op(i -> r.next$Type$());
+        $Type$Vector op(Vector.Mask<$Boxtype$> o, FOp f) {
+            $type$[] res = new $type$[length()];
+            boolean[] mbits = ((AbstractMask<$Boxtype$>)o).getBits();
+            for (int i = 0; i < length(); i++) {
+                if (mbits[i]) {
+                    res[i] = f.apply(i);
+                }
+            }
+            return vectorFactory.apply(res);
         }
-#else[intOrLong]
-#if[FP]
-        public $abstractvectortype$ random() {
-            ThreadLocalRandom r = ThreadLocalRandom.current();
-            return op(i -> r.next$Type$());
-        }
-#else[FP]
-        public $abstractvectortype$ random() {
-            ThreadLocalRandom r = ThreadLocalRandom.current();
-            return op(i -> ($type$) r.nextInt());
-        }
-#end[FP]
-#end[intOrLong]
 
-        /**
-         * Returns a vector where each lane element is set to a given
-         * primitive value.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * the primitive value at index {@code N} is placed into the resulting
-         * vector at lane index {@code N}.
-         *
-         * @param es the given primitive values
-         * @return a vector where each lane element is set to a given primitive
-         * value
-         * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
-         */
-        public abstract $abstractvectortype$ scalars($type$... es);
+        Vector.Mask<$Boxtype$> opm(IntVector.IntSpecies.FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return maskFactory.apply(res);
+        }
     }
 
     /**
@@ -2927,8 +2991,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      *
      * @return the preferred species for an element type of {@code $type$}
      */
-    @SuppressWarnings("unchecked")
-    public static $Type$Species preferredSpecies() {
+    private static $Type$Species preferredSpecies() {
         return ($Type$Species) Species.ofPreferred($type$.class);
     }
 
@@ -2939,16 +3002,41 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @return a species for an element type of {@code $type$} and shape
      * @throws IllegalArgumentException if no such species exists for the shape
      */
-    @SuppressWarnings("unchecked")
-    public static $Type$Species species(Vector.Shape s) {
+    static $Type$Species species(Vector.Shape s) {
         Objects.requireNonNull(s);
         switch (s) {
-            case S_64_BIT: return $Type$64Vector.SPECIES;
-            case S_128_BIT: return $Type$128Vector.SPECIES;
-            case S_256_BIT: return $Type$256Vector.SPECIES;
-            case S_512_BIT: return $Type$512Vector.SPECIES;
-            case S_Max_BIT: return $Type$MaxVector.SPECIES;
+            case S_64_BIT: return ($Type$Species) SPECIES_64;
+            case S_128_BIT: return ($Type$Species) SPECIES_128;
+            case S_256_BIT: return ($Type$Species) SPECIES_256;
+            case S_512_BIT: return ($Type$Species) SPECIES_512;
+            case S_Max_BIT: return ($Type$Species) SPECIES_MAX;
             default: throw new IllegalArgumentException("Bad shape: " + s);
         }
     }
+
+    /** Species representing {@link $Type$Vector}s of {@link Vector.Shape#S_64_BIT Shape.S_64_BIT}. */
+    public static final Species<$Boxtype$> SPECIES_64 = new $Type$Species(Shape.S_64_BIT, $Type$64Vector.class, $Type$64Vector.$Type$64Mask.class,
+                                                                     $Type$64Vector::new, $Type$64Vector.$Type$64Mask::new);
+
+    /** Species representing {@link $Type$Vector}s of {@link Vector.Shape#S_128_BIT Shape.S_128_BIT}. */
+    public static final Species<$Boxtype$> SPECIES_128 = new $Type$Species(Shape.S_128_BIT, $Type$128Vector.class, $Type$128Vector.$Type$128Mask.class,
+                                                                      $Type$128Vector::new, $Type$128Vector.$Type$128Mask::new);
+
+    /** Species representing {@link $Type$Vector}s of {@link Vector.Shape#S_256_BIT Shape.S_256_BIT}. */
+    public static final Species<$Boxtype$> SPECIES_256 = new $Type$Species(Shape.S_256_BIT, $Type$256Vector.class, $Type$256Vector.$Type$256Mask.class,
+                                                                      $Type$256Vector::new, $Type$256Vector.$Type$256Mask::new);
+
+    /** Species representing {@link $Type$Vector}s of {@link Vector.Shape#S_512_BIT Shape.S_512_BIT}. */
+    public static final Species<$Boxtype$> SPECIES_512 = new $Type$Species(Shape.S_512_BIT, $Type$512Vector.class, $Type$512Vector.$Type$512Mask.class,
+                                                                      $Type$512Vector::new, $Type$512Vector.$Type$512Mask::new);
+
+    /** Species representing {@link $Type$Vector}s of {@link Vector.Shape#S_Max_BIT Shape.S_Max_BIT}. */
+    public static final Species<$Boxtype$> SPECIES_MAX = new $Type$Species(Shape.S_Max_BIT, $Type$MaxVector.class, $Type$MaxVector.$Type$MaxMask.class,
+                                                                      $Type$MaxVector::new, $Type$MaxVector.$Type$MaxMask::new);
+
+    /**
+     * Preferred species for {@link $Type$Vector}s.
+     * A preferred species is a species of maximal bit size for the platform.
+     */
+    public static final Species<$Boxtype$> SPECIES_PREFERRED = (Species<$Boxtype$>) preferredSpecies();
 }

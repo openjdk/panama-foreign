@@ -29,6 +29,7 @@
 import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import java.nio.charset.StandardCharsets;
@@ -156,8 +157,8 @@ public class VectorHash {
 
     static int hashCodeVectorGenericShift(
             byte[] a,
-            ByteVector.ByteSpecies bytesForIntsSpecies,
-            ByteVector.ByteSpecies byteSpecies, IntVector.IntSpecies intSpecies,
+            Species<Byte> bytesForIntsSpecies,
+            Species<Byte> byteSpecies, Species<Integer> intSpecies,
             int top_h_coeff,
             IntVector v_h_coeff) {
         assert bytesForIntsSpecies.length() == intSpecies.length();
@@ -183,19 +184,14 @@ public class VectorHash {
         return h;
     }
 
-    static final IntVector.IntSpecies INT_512_SPECIES =
-            IntVector.species(Shape.S_512_BIT);
-    static final IntVector.IntSpecies INT_256_SPECIES =
-            IntVector.species(Shape.S_256_BIT);
+    static final Species<Integer> INT_512_SPECIES = IntVector.SPECIES_512;
+    static final Species<Integer> INT_256_SPECIES = IntVector.SPECIES_256;
     static final int COEFF_31_TO_16;
     static final IntVector H_COEFF_16;
 
-    static final ByteVector.ByteSpecies BYTE_512_SPECIES =
-            ByteVector.species(Shape.S_512_BIT);
-    static final ByteVector.ByteSpecies BYTE_128_SPECIES =
-            ByteVector.species(Shape.S_128_BIT);
-    static final ByteVector.ByteSpecies BYTE_64_SPECIES =
-            ByteVector.species(Shape.S_64_BIT);
+    static final Species<Byte> BYTE_512_SPECIES = ByteVector.SPECIES_512;
+    static final Species<Byte> BYTE_128_SPECIES = ByteVector.SPECIES_128;
+    static final Species<Byte> BYTE_64_SPECIES = ByteVector.SPECIES_64;
     static final int COEFF_31_TO_8;
     static final IntVector H_COEFF_8;
 

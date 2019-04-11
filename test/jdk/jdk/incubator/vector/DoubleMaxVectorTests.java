@@ -28,6 +28,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.DoubleVector;
@@ -47,10 +48,8 @@ import java.util.stream.Stream;
 @Test
 public class DoubleMaxVectorTests extends AbstractVectorTest {
 
-    static final Shape S_Max_BIT = getMaxBit();
-
-    static final DoubleVector.DoubleSpecies SPECIES =
-                DoubleVector.species(S_Max_BIT);
+    static final Species<Double> SPECIES =
+                DoubleVector.SPECIES_MAX;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
 
@@ -868,7 +867,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         assertReductionArraysEquals(a, r, ra, DoubleMaxVectorTests::mulAll, DoubleMaxVectorTests::mulAll);
     }
     static double minAll(double[] a, int idx) {
-        double res = Double.MAX_VALUE;
+        double res = Double.POSITIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (double)Math.min(res, a[i]);
         }
@@ -877,7 +876,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     static double minAll(double[] a) {
-        double res = Double.MAX_VALUE;
+        double res = Double.POSITIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (double)Math.min(res, a[i]);
         }
@@ -888,7 +887,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void minAllDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
-        double ra = Double.MAX_VALUE;
+        double ra = Double.POSITIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -898,7 +897,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Double.MAX_VALUE;
+            ra = Double.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 ra = (double)Math.min(ra, av.minAll());
@@ -908,7 +907,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         assertReductionArraysEquals(a, r, ra, DoubleMaxVectorTests::minAll, DoubleMaxVectorTests::minAll);
     }
     static double maxAll(double[] a, int idx) {
-        double res = Double.MIN_VALUE;
+        double res = Double.NEGATIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (double)Math.max(res, a[i]);
         }
@@ -917,7 +916,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     static double maxAll(double[] a) {
-        double res = Double.MIN_VALUE;
+        double res = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (double)Math.max(res, a[i]);
         }
@@ -928,7 +927,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void maxAllDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
-        double ra = Double.MIN_VALUE;
+        double ra = Double.NEGATIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -938,7 +937,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Double.MIN_VALUE;
+            ra = Double.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 ra = (double)Math.max(ra, av.maxAll());

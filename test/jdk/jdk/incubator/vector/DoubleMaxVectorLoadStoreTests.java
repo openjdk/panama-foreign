@@ -30,6 +30,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.DoubleVector;
@@ -48,10 +49,8 @@ import java.util.function.IntFunction;
 
 @Test
 public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
-    static final Shape S_Max_BIT = getMaxBit();
-
-    static final DoubleVector.DoubleSpecies SPECIES =
-                DoubleVector.species(S_Max_BIT);
+    static final Species<Double> SPECIES =
+                DoubleVector.SPECIES_MAX;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 

@@ -25,6 +25,7 @@ package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.FloatVector;
 
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Measurement(iterations = 5, time = 1)
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class Float512Vector extends AbstractVectorBenchmark {
-    static final FloatVector.FloatSpecies SPECIES = FloatVector.species(Shape.S_512_BIT);
+    static final Species<Float> SPECIES = FloatVector.SPECIES_512;
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 
@@ -353,7 +354,7 @@ public class Float512Vector extends AbstractVectorBenchmark {
     public void minAll(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
-        float ra = Float.MAX_VALUE;
+        float ra = Float.POSITIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -363,7 +364,7 @@ public class Float512Vector extends AbstractVectorBenchmark {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Float.MAX_VALUE;
+            ra = Float.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra = (float)Math.min(ra, av.minAll());
@@ -378,7 +379,7 @@ public class Float512Vector extends AbstractVectorBenchmark {
     public void maxAll(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
-        float ra = Float.MIN_VALUE;
+        float ra = Float.NEGATIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -388,7 +389,7 @@ public class Float512Vector extends AbstractVectorBenchmark {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Float.MIN_VALUE;
+            ra = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra = (float)Math.max(ra, av.maxAll());

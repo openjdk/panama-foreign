@@ -104,7 +104,6 @@ jdk_lang = \
     jdk/internal/jimage \
     jdk/internal/math \
     jdk/modules \
-    vm \
     :jdk_foreign
 
 # All of the java.util package

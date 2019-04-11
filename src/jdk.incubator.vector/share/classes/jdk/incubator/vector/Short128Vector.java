@@ -38,7 +38,7 @@ import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Short128Vector extends ShortVector {
-    static final Short128Species SPECIES = new Short128Species();
+    private static final Species<Short> SPECIES = ShortVector.SPECIES_128;
 
     static final Short128Vector ZERO = new Short128Vector();
 
@@ -155,7 +155,7 @@ final class Short128Vector extends ShortVector {
         return VectorIntrinsics.cast(
             Short128Vector.class,
             short.class, LENGTH,
-            s.vectorType(),
+            s.boxType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -173,37 +173,37 @@ final class Short128Vector extends ShortVector {
             for (int i = 0; i < limit; i++) {
                 a[i] = (byte) this.get(i);
             }
-            return (Vector) ByteVector.fromArray((ByteVector.ByteSpecies) s, a, 0);
+            return (Vector) ByteVector.fromArray((Species<Byte>) s, a, 0);
         } else if (stype == short.class) {
             short[] a = new short[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (short) this.get(i);
             }
-            return (Vector) ShortVector.fromArray((ShortVector.ShortSpecies) s, a, 0);
+            return (Vector) ShortVector.fromArray((Species<Short>) s, a, 0);
         } else if (stype == int.class) {
             int[] a = new int[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (int) this.get(i);
             }
-            return (Vector) IntVector.fromArray((IntVector.IntSpecies) s, a, 0);
+            return (Vector) IntVector.fromArray((Species<Integer>) s, a, 0);
         } else if (stype == long.class) {
             long[] a = new long[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (long) this.get(i);
             }
-            return (Vector) LongVector.fromArray((LongVector.LongSpecies) s, a, 0);
+            return (Vector) LongVector.fromArray((Species<Long>) s, a, 0);
         } else if (stype == float.class) {
             float[] a = new float[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (float) this.get(i);
             }
-            return (Vector) FloatVector.fromArray((FloatVector.FloatSpecies) s, a, 0);
+            return (Vector) FloatVector.fromArray((Species<Float>) s, a, 0);
         } else if (stype == double.class) {
             double[] a = new double[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (double) this.get(i);
             }
-            return (Vector) DoubleVector.fromArray((DoubleVector.DoubleSpecies) s, a, 0);
+            return (Vector) DoubleVector.fromArray((Species<Double>) s, a, 0);
         } else {
             throw new UnsupportedOperationException("Bad lane type for casting.");
         }
@@ -293,55 +293,50 @@ final class Short128Vector extends ShortVector {
     @ForceInline
     public ShortVector reshape(Species<Short> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s instanceof Short64Vector.Short64Species)) {
-            Short64Vector.Short64Species ts = (Short64Vector.Short64Species)s;
+        if (s.bitSize() == 64 && (s.boxType() == Short64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Short128Vector.class,
                 short.class, LENGTH,
                 Short64Vector.class,
                 short.class, Short64Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s instanceof Short128Vector.Short128Species)) {
-            Short128Vector.Short128Species ts = (Short128Vector.Short128Species)s;
+        } else if (s.bitSize() == 128 && (s.boxType() == Short128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Short128Vector.class,
                 short.class, LENGTH,
                 Short128Vector.class,
                 short.class, Short128Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s instanceof Short256Vector.Short256Species)) {
-            Short256Vector.Short256Species ts = (Short256Vector.Short256Species)s;
+        } else if (s.bitSize() == 256 && (s.boxType() == Short256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Short128Vector.class,
                 short.class, LENGTH,
                 Short256Vector.class,
                 short.class, Short256Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s instanceof Short512Vector.Short512Species)) {
-            Short512Vector.Short512Species ts = (Short512Vector.Short512Species)s;
+        } else if (s.bitSize() == 512 && (s.boxType() == Short512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Short128Vector.class,
                 short.class, LENGTH,
                 Short512Vector.class,
                 short.class, Short512Vector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s instanceof ShortMaxVector.ShortMaxSpecies)) {
-            ShortMaxVector.ShortMaxSpecies ts = (ShortMaxVector.ShortMaxSpecies)s;
+                && (s.bitSize() % 128 == 0) && (s.boxType() == ShortMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 Short128Vector.class,
                 short.class, LENGTH,
                 ShortMaxVector.class,
                 short.class, ShortMaxVector.LENGTH,
-                this, ts,
+                this, s,
                 (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
             );
         } else {
@@ -354,128 +349,128 @@ final class Short128Vector extends ShortVector {
     @Override
     @ForceInline
     public ShortVector add(short o) {
-        return add(SPECIES.broadcast(o));
+        return add((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ShortVector add(short o, Mask<Short> m) {
-        return add(SPECIES.broadcast(o), m);
+        return add((Short128Vector)ShortVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public ShortVector sub(short o) {
-        return sub(SPECIES.broadcast(o));
+        return sub((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ShortVector sub(short o, Mask<Short> m) {
-        return sub(SPECIES.broadcast(o), m);
+        return sub((Short128Vector)ShortVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public ShortVector mul(short o) {
-        return mul(SPECIES.broadcast(o));
+        return mul((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ShortVector mul(short o, Mask<Short> m) {
-        return mul(SPECIES.broadcast(o), m);
+        return mul((Short128Vector)ShortVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public ShortVector min(short o) {
-        return min(SPECIES.broadcast(o));
+        return min((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ShortVector max(short o) {
-        return max(SPECIES.broadcast(o));
+        return max((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Short> equal(short o) {
-        return equal(SPECIES.broadcast(o));
+        return equal((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Short> notEqual(short o) {
-        return notEqual(SPECIES.broadcast(o));
+        return notEqual((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Short> lessThan(short o) {
-        return lessThan(SPECIES.broadcast(o));
+        return lessThan((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Short> lessThanEq(short o) {
-        return lessThanEq(SPECIES.broadcast(o));
+        return lessThanEq((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Short> greaterThan(short o) {
-        return greaterThan(SPECIES.broadcast(o));
+        return greaterThan((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public Mask<Short> greaterThanEq(short o) {
-        return greaterThanEq(SPECIES.broadcast(o));
+        return greaterThanEq((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ShortVector blend(short o, Mask<Short> m) {
-        return blend(SPECIES.broadcast(o), m);
+        return blend((Short128Vector)ShortVector.broadcast(SPECIES, o), m);
     }
 
 
     @Override
     @ForceInline
     public ShortVector and(short o) {
-        return and(SPECIES.broadcast(o));
+        return and((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ShortVector and(short o, Mask<Short> m) {
-        return and(SPECIES.broadcast(o), m);
+        return and((Short128Vector)ShortVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public ShortVector or(short o) {
-        return or(SPECIES.broadcast(o));
+        return or((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ShortVector or(short o, Mask<Short> m) {
-        return or(SPECIES.broadcast(o), m);
+        return or((Short128Vector)ShortVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
     public ShortVector xor(short o) {
-        return xor(SPECIES.broadcast(o));
+        return xor((Short128Vector)ShortVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
     public ShortVector xor(short o, Mask<Short> m) {
-        return xor(SPECIES.broadcast(o), m);
+        return xor((Short128Vector)ShortVector.broadcast(SPECIES, o), m);
     }
 
     @Override
@@ -730,7 +725,7 @@ final class Short128Vector extends ShortVector {
     @Override
     @ForceInline
     public short andAll(Mask<Short> m) {
-        return SPECIES.broadcast((short) -1).blend(this, m).andAll();
+        return blend((Short128Vector)ShortVector.broadcast(SPECIES, (short) -1), m).andAll();
     }
 
     @Override
@@ -772,7 +767,7 @@ final class Short128Vector extends ShortVector {
     @Override
     @ForceInline
     public short orAll(Mask<Short> m) {
-        return SPECIES.broadcast((short) 0).blend(this, m).orAll();
+        return blend((Short128Vector)ShortVector.broadcast(SPECIES, (short) 0), m).orAll();
     }
 
     @Override
@@ -787,33 +782,33 @@ final class Short128Vector extends ShortVector {
     @Override
     @ForceInline
     public short xorAll(Mask<Short> m) {
-        return SPECIES.broadcast((short) 0).blend(this, m).xorAll();
+        return blend((Short128Vector)ShortVector.broadcast(SPECIES, (short) 0), m).xorAll();
     }
 
 
     @Override
     @ForceInline
     public short addAll(Mask<Short> m) {
-        return SPECIES.broadcast((short) 0).blend(this, m).addAll();
+        return blend((Short128Vector)ShortVector.broadcast(SPECIES, (short) 0), m).addAll();
     }
 
 
     @Override
     @ForceInline
     public short mulAll(Mask<Short> m) {
-        return SPECIES.broadcast((short) 1).blend(this, m).mulAll();
+        return blend((Short128Vector)ShortVector.broadcast(SPECIES, (short) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
     public short minAll(Mask<Short> m) {
-        return SPECIES.broadcast(Short.MAX_VALUE).blend(this, m).minAll();
+        return blend((Short128Vector)ShortVector.broadcast(SPECIES, Short.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
     public short maxAll(Mask<Short> m) {
-        return SPECIES.broadcast(Short.MIN_VALUE).blend(this, m).maxAll();
+        return blend((Short128Vector)ShortVector.broadcast(SPECIES, Short.MIN_VALUE), m).maxAll();
     }
 
     @Override
@@ -1197,7 +1192,7 @@ final class Short128Vector extends ShortVector {
         }
 
         @Override
-        public Short128Species species() {
+        public Species<Short> species() {
             return SPECIES;
         }
 
@@ -1211,6 +1206,31 @@ final class Short128Vector extends ShortVector {
                 res[i] = (short) (bits[i] ? -1 : 0);
             }
             return new Short128Vector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <E> Mask<E> cast(Species<E> species) {
+            if (length() != species.length())
+                throw new IllegalArgumentException("Mask length and species length differ");
+            Class<?> stype = species.elementType();
+            boolean [] maskArray = toArray();
+            if (stype == byte.class) {
+                return (Mask <E>) new Byte128Vector.Byte128Mask(maskArray);
+            } else if (stype == short.class) {
+                return (Mask <E>) new Short128Vector.Short128Mask(maskArray);
+            } else if (stype == int.class) {
+                return (Mask <E>) new Int128Vector.Int128Mask(maskArray);
+            } else if (stype == long.class) {
+                return (Mask <E>) new Long128Vector.Long128Mask(maskArray);
+            } else if (stype == float.class) {
+                return (Mask <E>) new Float128Vector.Float128Mask(maskArray);
+            } else if (stype == double.class) {
+                return (Mask <E>) new Double128Vector.Double128Mask(maskArray);
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
         }
 
         // Unary operations
@@ -1285,7 +1305,7 @@ final class Short128Vector extends ShortVector {
         }
 
         @Override
-        public Short128Species species() {
+        public Species<Short> species() {
             return SPECIES;
         }
 
@@ -1296,6 +1316,31 @@ final class Short128Vector extends ShortVector {
               va[i] = (short) getElement(i);
             }
             return ShortVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <F> Shuffle<F> cast(Species<F> species) {
+            if (length() != species.length())
+                throw new IllegalArgumentException("Shuffle length and species length differ");
+            Class<?> stype = species.elementType();
+            int [] shuffleArray = toArray();
+            if (stype == byte.class) {
+                return (Shuffle<F>) new Byte128Vector.Byte128Shuffle(shuffleArray);
+            } else if (stype == short.class) {
+                return (Shuffle<F>) new Short128Vector.Short128Shuffle(shuffleArray);
+            } else if (stype == int.class) {
+                return (Shuffle<F>) new Int128Vector.Int128Shuffle(shuffleArray);
+            } else if (stype == long.class) {
+                return (Shuffle<F>) new Long128Vector.Long128Shuffle(shuffleArray);
+            } else if (stype == float.class) {
+                return (Shuffle<F>) new Float128Vector.Float128Shuffle(shuffleArray);
+            } else if (stype == double.class) {
+                return (Shuffle<F>) new Double128Vector.Double128Shuffle(shuffleArray);
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
         }
 
         @Override
@@ -1312,148 +1357,7 @@ final class Short128Vector extends ShortVector {
     // Species
 
     @Override
-    public Short128Species species() {
+    public Species<Short> species() {
         return SPECIES;
-    }
-
-    static final class Short128Species extends ShortSpecies {
-        static final int BIT_SIZE = Shape.S_128_BIT.bitSize();
-
-        static final int LENGTH = BIT_SIZE / Short.SIZE;
-
-        @Override
-        public String toString() {
-           StringBuilder sb = new StringBuilder("Shape[");
-           sb.append(bitSize()).append(" bits, ");
-           sb.append(length()).append(" ").append(short.class.getSimpleName()).append("s x ");
-           sb.append(elementSize()).append(" bits");
-           sb.append("]");
-           return sb.toString();
-        }
-
-        @Override
-        @ForceInline
-        public int bitSize() {
-            return BIT_SIZE;
-        }
-
-        @Override
-        @ForceInline
-        public int length() {
-            return LENGTH;
-        }
-
-        @Override
-        @ForceInline
-        public Class<Short> elementType() {
-            return short.class;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> boxType() {
-            return Short128Vector.class;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> maskType() {
-            return Short128Mask.class;
-        }
-
-        @Override
-        @ForceInline
-        public int elementSize() {
-            return Short.SIZE;
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        Class<?> vectorType() {
-            return Short128Vector.class;
-        }
-
-        @Override
-        @ForceInline
-        public Shape shape() {
-            return Shape.S_128_BIT;
-        }
-
-        @Override
-        Short128Vector op(FOp f) {
-            short[] res = new short[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = f.apply(i);
-            }
-            return new Short128Vector(res);
-        }
-
-        @Override
-        Short128Vector op(Mask<Short> o, FOp f) {
-            short[] res = new short[length()];
-            boolean[] mbits = ((Short128Mask)o).getBits();
-            for (int i = 0; i < length(); i++) {
-                if (mbits[i]) {
-                    res[i] = f.apply(i);
-                }
-            }
-            return new Short128Vector(res);
-        }
-
-        @Override
-        Short128Mask opm(FOpm f) {
-            boolean[] res = new boolean[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = (boolean)f.apply(i);
-            }
-            return new Short128Mask(res);
-        }
-
-        // Factories
-
-        @Override
-        @ForceInline
-        public Short128Vector zero() {
-            return VectorIntrinsics.broadcastCoerced(Short128Vector.class, short.class, LENGTH,
-                                                     0, SPECIES,
-                                                     ((bits, s) -> ((Short128Species)s).op(i -> (short)bits)));
-        }
-
-        @Override
-        @ForceInline
-        public Short128Vector broadcast(short e) {
-            return VectorIntrinsics.broadcastCoerced(
-                Short128Vector.class, short.class, LENGTH,
-                e, SPECIES,
-                ((bits, s) -> ((Short128Species)s).op(i -> (short)bits)));
-        }
-
-        @Override
-        @ForceInline
-        public Short128Vector scalars(short... es) {
-            Objects.requireNonNull(es);
-            int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
-            return VectorIntrinsics.load(Short128Vector.class, short.class, LENGTH,
-                                         es, Unsafe.ARRAY_SHORT_BASE_OFFSET,
-                                         es, ix, SPECIES,
-                                         (c, idx, s) -> ((Short128Species)s).op(n -> c[idx + n]));
-        }
-
-        @Override
-        @ForceInline
-        public <E> Short128Mask cast(Mask<E> m) {
-            if (m.length() != LENGTH)
-                throw new IllegalArgumentException("Mask length this species length differ");
-            return new Short128Mask(m.toArray());
-        }
-
-        @Override
-        @ForceInline
-        public <E> Short128Shuffle cast(Shuffle<E> s) {
-            if (s.length() != LENGTH)
-                throw new IllegalArgumentException("Shuffle length this species length differ");
-            return new Short128Shuffle(s.toArray());
-        }
     }
 }

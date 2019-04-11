@@ -25,7 +25,7 @@
 package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.*;
-import jdk.incubator.vector.IntVector.IntSpecies;
+import jdk.incubator.vector.Vector.Species;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;
@@ -85,7 +85,7 @@ public class Merge extends AbstractVectorBenchmark {
         merge(I64, I256);
     }
 
-    IntVector merge(IntSpecies from, IntSpecies to, int idx) {
+    IntVector merge(Species<Integer> from, Species<Integer> to, int idx) {
         assert from.length() <= to.length();
 
         int vlenFrom = from.length();
@@ -94,7 +94,7 @@ public class Merge extends AbstractVectorBenchmark {
         if (vlenFrom == vlenTo) {
             return IntVector.fromArray(from, in, idx);
         } else {
-            var stepDown = (IntSpecies) narrow(to);
+            var stepDown = narrow(to);
             int mid = stepDown.length();
             var lo = merge(from, stepDown, idx);
             var hi = merge(from, stepDown, idx + mid);
@@ -103,7 +103,7 @@ public class Merge extends AbstractVectorBenchmark {
     }
 
 
-    void merge(IntSpecies from, IntSpecies to) {
+    void merge(Species<Integer> from, Species<Integer> to) {
         int vlenTo = to.length();
         for (int i = 0; i < in.length; i += vlenTo) {
             var r = merge(from, to, i);

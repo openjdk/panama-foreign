@@ -34,6 +34,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.$Type$Vector;
@@ -57,13 +58,11 @@ import java.util.function.IntFunction;
 @Test
 public class $vectorteststype$ extends AbstractVectorTest {
 #if[MaxBit]
-    static final Shape S_Max_BIT = getMaxBit();
-
-    static final $abstractvectortype$.$Type$Species SPECIES =
-                $Type$Vector.species(S_Max_BIT);
+    static final Species<$Wideboxtype$> SPECIES =
+                $Type$Vector.SPECIES_MAX;
 #else[MaxBit]
-    static final $abstractvectortype$.$Type$Species SPECIES =
-                $Type$Vector.species(Shape.S_$bits$_BIT);
+    static final Species<$Wideboxtype$> SPECIES =
+                $Type$Vector.SPECIES_$bits$;
 #end[MaxBit]
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);

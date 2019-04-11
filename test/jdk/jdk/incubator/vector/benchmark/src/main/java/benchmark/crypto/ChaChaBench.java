@@ -81,7 +81,7 @@ public class ChaChaBench {
         private static final int[] STATE_CONSTANTS =
             new int[]{0x61707865, 0x3320646e, 0x79622d32, 0x6b206574};
 
-        private final IntVector.IntSpecies intSpecies;
+        private final Vector.Species<Integer> intSpecies;
         private final int numBlocks;
 
         private final Vector.Shuffle<Integer> rot1;
@@ -103,7 +103,7 @@ public class ChaChaBench {
         private final int[] state;
 
         public ChaChaVector(Vector.Shape shape) {
-            this.intSpecies = IntVector.species(shape);
+            this.intSpecies = Vector.Species.of(Integer.class, shape);
             this.numBlocks = intSpecies.length() / 4;
 
             this.rot1 = makeRotate(1);

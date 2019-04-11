@@ -59,13 +59,7 @@ public class CovarOverrideTest {
                 ShortVector.class,
                 IntVector.class,
                 FloatVector.class,
-                DoubleVector.class,
-
-                ByteVector.ByteSpecies.class,
-                ShortVector.ShortSpecies.class,
-                IntVector.IntSpecies.class,
-                FloatVector.FloatSpecies.class,
-                DoubleVector.DoubleSpecies.class).
+                DoubleVector.class).
                 stream().
                 map(c -> new Object[]{c}).
                 toArray(Object[][]::new);

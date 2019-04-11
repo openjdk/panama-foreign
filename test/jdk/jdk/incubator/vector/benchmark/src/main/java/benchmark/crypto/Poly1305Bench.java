@@ -78,8 +78,8 @@ public class Poly1305Bench {
         private static final int KEY_LENGTH = 32;
         private static final int RS_LENGTH = KEY_LENGTH / 2;
 
-        private final LongVector.LongSpecies longSpecies;
-        private final IntVector.IntSpecies intSpecies;
+        private final Vector.Species<Long> longSpecies;
+        private final Vector.Species<Integer> intSpecies;
         private final int vectorWidth;
         private final int parBlockCount;
 
@@ -89,10 +89,10 @@ public class Poly1305Bench {
 
         public Poly1305Vector(Vector.Shape shape) {
 
-            this.longSpecies = LongVector.species(shape);
+            this.longSpecies = Vector.Species.of(long.class, shape);
             int intSize = shape.bitSize() / 2;
             Vector.Shape intShape = Vector.Shape.forBitSize(intSize);
-            this.intSpecies = IntVector.species(intShape);
+            this.intSpecies = Vector.Species.of(int.class, intShape);
             this.vectorWidth = longSpecies.length();
             this.parBlockCount = vectorWidth * 16;
 
@@ -275,11 +275,11 @@ public class Poly1305Bench {
             }
 
             int rUpIndex = vectorWidth - 1;
-            IntVector rUp0_int = intSpecies.broadcast(r[rUpIndex][0]);
-            IntVector rUp1_int = intSpecies.broadcast(r[rUpIndex][1]);
-            IntVector rUp2_int = intSpecies.broadcast(r[rUpIndex][2]);
-            IntVector rUp3_int = intSpecies.broadcast(r[rUpIndex][3]);
-            IntVector rUp4_int = intSpecies.broadcast(r[rUpIndex][4]);
+            IntVector rUp0_int = IntVector.broadcast(intSpecies, r[rUpIndex][0]);
+            IntVector rUp1_int = IntVector.broadcast(intSpecies, r[rUpIndex][1]);
+            IntVector rUp2_int = IntVector.broadcast(intSpecies, r[rUpIndex][2]);
+            IntVector rUp3_int = IntVector.broadcast(intSpecies, r[rUpIndex][3]);
+            IntVector rUp4_int = IntVector.broadcast(intSpecies, r[rUpIndex][4]);
 
             IntVector r5Up1_int = rUp1_int.mul(5);
             IntVector r5Up2_int = rUp2_int.mul(5);

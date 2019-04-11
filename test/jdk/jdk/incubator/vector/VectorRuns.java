@@ -23,6 +23,7 @@
 
 import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import java.util.stream.IntStream;
@@ -64,7 +65,7 @@ public class VectorRuns {
 
 
     static int countRunAscendingVector(int[] a) {
-        IntVector.IntSpecies species = IntVector.species(Shape.S_256_BIT);
+        Species<Integer> species = IntVector.SPECIES_256;
 
         int r = 1;
         if (r >= a.length)

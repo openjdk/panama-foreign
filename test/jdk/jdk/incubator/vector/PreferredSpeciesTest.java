@@ -21,7 +21,7 @@
  * questions.
  */
 
-import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.*;
 import jdk.internal.misc.Unsafe;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -50,8 +50,22 @@ public class PreferredSpeciesTest {
 
     @Test(dataProvider = "classesProvider")
     void testVectorLength(Class<?> c) {
-        Vector.Species<?> species =
-                Vector.Species.ofPreferred(c);
+        Vector.Species<?> species = null;
+        if (c == byte.class) {
+            species = ByteVector.SPECIES_PREFERRED;
+        } else if (c == short.class) {
+            species = ShortVector.SPECIES_PREFERRED;
+        } else if (c == int.class) {
+            species = IntVector.SPECIES_PREFERRED;
+        } else if (c == long.class) {
+            species = LongVector.SPECIES_PREFERRED;
+        } else if (c == float.class) {
+            species = FloatVector.SPECIES_PREFERRED;
+        } else if (c == double.class) {
+            species = DoubleVector.SPECIES_PREFERRED;
+        } else {
+            throw new IllegalArgumentException("Bad vector element type: " + c.getName());
+        }
 
         Assert.assertEquals(species.length(), U.getMaxVectorSize(c));
     }

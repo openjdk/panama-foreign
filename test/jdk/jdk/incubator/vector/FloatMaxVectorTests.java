@@ -28,6 +28,7 @@
  */
 
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.FloatVector;
@@ -47,10 +48,8 @@ import java.util.stream.Stream;
 @Test
 public class FloatMaxVectorTests extends AbstractVectorTest {
 
-    static final Shape S_Max_BIT = getMaxBit();
-
-    static final FloatVector.FloatSpecies SPECIES =
-                FloatVector.species(S_Max_BIT);
+    static final Species<Float> SPECIES =
+                FloatVector.SPECIES_MAX;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
 
@@ -868,7 +867,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         assertReductionArraysEquals(a, r, ra, FloatMaxVectorTests::mulAll, FloatMaxVectorTests::mulAll);
     }
     static float minAll(float[] a, int idx) {
-        float res = Float.MAX_VALUE;
+        float res = Float.POSITIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (float)Math.min(res, a[i]);
         }
@@ -877,7 +876,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     }
 
     static float minAll(float[] a) {
-        float res = Float.MAX_VALUE;
+        float res = Float.POSITIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (float)Math.min(res, a[i]);
         }
@@ -888,7 +887,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void minAllFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
-        float ra = Float.MAX_VALUE;
+        float ra = Float.POSITIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -898,7 +897,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Float.MAX_VALUE;
+            ra = Float.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra = (float)Math.min(ra, av.minAll());
@@ -908,7 +907,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         assertReductionArraysEquals(a, r, ra, FloatMaxVectorTests::minAll, FloatMaxVectorTests::minAll);
     }
     static float maxAll(float[] a, int idx) {
-        float res = Float.MIN_VALUE;
+        float res = Float.NEGATIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (float)Math.max(res, a[i]);
         }
@@ -917,7 +916,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     }
 
     static float maxAll(float[] a) {
-        float res = Float.MIN_VALUE;
+        float res = Float.NEGATIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (float)Math.max(res, a[i]);
         }
@@ -928,7 +927,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void maxAllFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
-        float ra = Float.MIN_VALUE;
+        float ra = Float.NEGATIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -938,7 +937,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Float.MIN_VALUE;
+            ra = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 ra = (float)Math.max(ra, av.maxAll());

@@ -173,7 +173,6 @@ import jdk.incubator.vector.Vector;
         V apply(V v1, V v2, V v3);
     }
 
-    @SuppressWarnings("unchecked")
     @HotSpotIntrinsicCandidate
     static
     <VM>

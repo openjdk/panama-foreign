@@ -29,6 +29,7 @@ import java.nio.LongBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Function;
 import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
@@ -110,8 +111,10 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector zero(LongSpecies species) {
-        return species.zero();
+    public static LongVector zero(Species<Long> species) {
+        return VectorIntrinsics.broadcastCoerced((Class<LongVector>) species.boxType(), long.class, species.length(),
+                                                 0, species,
+                                                 ((bits, s) -> ((LongSpecies)s).op(i -> (long)bits)));
     }
 
     /**
@@ -122,7 +125,7 @@ public abstract class LongVector extends Vector<Long> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(LongSpecies, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<Long>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
@@ -136,7 +139,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector fromByteArray(LongSpecies species, byte[] a, int ix) {
+    public static LongVector fromByteArray(Species<Long> species, byte[] a, int ix) {
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
         return VectorIntrinsics.load((Class<LongVector>) species.boxType(), long.class, species.length(),
@@ -158,7 +161,7 @@ public abstract class LongVector extends Vector<Long> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(LongSpecies, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<Long>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
@@ -177,7 +180,7 @@ public abstract class LongVector extends Vector<Long> {
      * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static LongVector fromByteArray(LongSpecies species, byte[] a, int ix, Mask<Long> m) {
+    public static LongVector fromByteArray(Species<Long> species, byte[] a, int ix, Mask<Long> m) {
         return zero(species).blend(fromByteArray(species, a, ix), m);
     }
 
@@ -197,7 +200,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector fromArray(LongSpecies species, long[] a, int i){
+    public static LongVector fromArray(Species<Long> species, long[] a, int i){
         Objects.requireNonNull(a);
         i = VectorIntrinsics.checkIndex(i, a.length, species.length());
         return VectorIntrinsics.load((Class<LongVector>) species.boxType(), long.class, species.length(),
@@ -226,7 +229,7 @@ public abstract class LongVector extends Vector<Long> {
      * is set {@code i > a.length - N}
      */
     @ForceInline
-    public static LongVector fromArray(LongSpecies species, long[] a, int i, Mask<Long> m) {
+    public static LongVector fromArray(Species<Long> species, long[] a, int i, Mask<Long> m) {
         return zero(species).blend(fromArray(species, a, i), m);
     }
 
@@ -253,7 +256,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector fromArray(LongSpecies species, long[] a, int i, int[] indexMap, int j) {
+    public static LongVector fromArray(Species<Long> species, long[] a, int i, int[] indexMap, int j) {
         Objects.requireNonNull(a);
         Objects.requireNonNull(indexMap);
 
@@ -261,15 +264,16 @@ public abstract class LongVector extends Vector<Long> {
           return LongVector.fromArray(species, a, i + indexMap[j]);
         }
 
-        // Index vector: vix[0:n] = k -> i + indexMap[j + i]
-        IntVector vix = IntVector.fromArray(species.indexSpecies(), indexMap, j).add(i);
+        // Index vector: vix[0:n] = k -> i + indexMap[j + k]
+        IntVector vix = IntVector.fromArray(IntVector.species(species.indexShape()), indexMap, j).add(i);
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
         return VectorIntrinsics.loadWithMap((Class<LongVector>) species.boxType(), long.class, species.length(),
-                                            species.indexSpecies().vectorType(), a, Unsafe.ARRAY_LONG_BASE_OFFSET, vix,
+                                            IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_LONG_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
-                                           (c, idx, iMap, idy, s) -> ((LongSpecies)s).op(n -> c[idx + iMap[idy+n]]));
+                                            (long[] c, int idx, int[] iMap, int idy, Species<Long> s) ->
+                                                ((LongSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }
 
     /**
@@ -298,7 +302,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector fromArray(LongSpecies species, long[] a, int i, Mask<Long> m, int[] indexMap, int j) {
+    public static LongVector fromArray(Species<Long> species, long[] a, int i, Mask<Long> m, int[] indexMap, int j) {
         // @@@ This can result in out of bounds errors for unset mask lanes
         return zero(species).blend(fromArray(species, a, i, indexMap, j), m);
     }
@@ -313,7 +317,7 @@ public abstract class LongVector extends Vector<Long> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(LongSpecies, ByteBuffer, int, Mask)} method} as follows:
+     * {@link #fromByteBuffer(Species<Long>, ByteBuffer, int, Mask)} method} as follows:
      * <pre>{@code
      *   return this.fromByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
@@ -330,7 +334,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector fromByteBuffer(LongSpecies species, ByteBuffer bb, int ix) {
+    public static LongVector fromByteBuffer(Species<Long> species, ByteBuffer bb, int ix) {
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -382,8 +386,82 @@ public abstract class LongVector extends Vector<Long> {
      * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static LongVector fromByteBuffer(LongSpecies species, ByteBuffer bb, int ix, Mask<Long> m) {
+    public static LongVector fromByteBuffer(Species<Long> species, ByteBuffer bb, int ix, Mask<Long> m) {
         return zero(species).blend(fromByteBuffer(species, bb, ix), m);
+    }
+
+    /**
+     * Returns a vector where all lane elements are set to the primitive
+     * value {@code e}.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector of vector where all lane elements are set to
+     * the primitive value {@code e}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static LongVector broadcast(Species<Long> s, long e) {
+        return VectorIntrinsics.broadcastCoerced(
+            (Class<LongVector>) s.boxType(), long.class, s.length(),
+            e, s,
+            ((bits, sp) -> ((LongSpecies)sp).op(i -> (long)bits)));
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a given
+     * primitive value.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * the primitive value at index {@code N} is placed into the resulting
+     * vector at lane index {@code N}.
+     *
+     * @param s species of the desired vector
+     * @param es the given primitive values
+     * @return a vector where each lane element is set to a given primitive
+     * value
+     * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static LongVector scalars(Species<Long> s, long... es) {
+        Objects.requireNonNull(es);
+        int ix = VectorIntrinsics.checkIndex(0, es.length, s.length());
+        return VectorIntrinsics.load((Class<LongVector>) s.boxType(), long.class, s.length(),
+                                     es, Unsafe.ARRAY_LONG_BASE_OFFSET,
+                                     es, ix, s,
+                                     (c, idx, sp) -> ((LongSpecies)sp).op(n -> c[idx + n]));
+    }
+
+    /**
+     * Returns a vector where the first lane element is set to the primtive
+     * value {@code e}, all other lane elements are set to the default
+     * value.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector where the first lane element is set to the primitive
+     * value {@code e}
+     */
+    @ForceInline
+    public static final LongVector single(Species<Long> s, long e) {
+        return zero(s).with(0, e);
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a randomly
+     * generated primitive value.
+     *
+     * The semantics are equivalent to calling
+     * {@link ThreadLocalRandom#nextLong()}
+     *
+     * @param s species of the desired vector
+     * @return a vector where each lane elements is set to a randomly
+     * generated primitive value
+     */
+    public static LongVector random(Species<Long> s) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return ((LongSpecies)s).op(i -> r.nextLong());
     }
 
     /**
@@ -400,7 +478,7 @@ public abstract class LongVector extends Vector<Long> {
      * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
      */
     @ForceInline
-    public static Mask<Long> maskFromValues(LongSpecies species, boolean... bits) {
+    public static Mask<Long> maskFromValues(Species<Long> species, boolean... bits) {
         if (species.boxType() == LongMaxVector.class)
             return new LongMaxVector.LongMaxMask(bits);
         switch (species.bitSize()) {
@@ -413,7 +491,7 @@ public abstract class LongVector extends Vector<Long> {
     }
 
     // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
-    static Mask<Long> trueMask(LongSpecies species) {
+    static Mask<Long> trueMask(Species<Long> species) {
         if (species.boxType() == LongMaxVector.class)
             return LongMaxVector.LongMaxMask.TRUE_MASK;
         switch (species.bitSize()) {
@@ -425,7 +503,7 @@ public abstract class LongVector extends Vector<Long> {
         }
     }
 
-    static Mask<Long> falseMask(LongSpecies species) {
+    static Mask<Long> falseMask(Species<Long> species) {
         if (species.boxType() == LongMaxVector.class)
             return LongMaxVector.LongMaxMask.FALSE_MASK;
         switch (species.bitSize()) {
@@ -453,7 +531,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Long> maskFromArray(LongSpecies species, boolean[] bits, int ix) {
+    public static Mask<Long> maskFromArray(Species<Long> species, boolean[] bits, int ix) {
         Objects.requireNonNull(bits);
         ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
         return VectorIntrinsics.load((Class<Mask<Long>>) species.maskType(), long.class, species.length(),
@@ -470,10 +548,10 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Long> maskAllTrue(LongSpecies species) {
+    public static Mask<Long> maskAllTrue(Species<Long> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<Long>>) species.maskType(), long.class, species.length(),
                                                  (long)-1,  species,
-                                                 ((z, s) -> trueMask((LongSpecies)s)));
+                                                 ((z, s) -> trueMask(s)));
     }
 
     /**
@@ -484,10 +562,10 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Long> maskAllFalse(LongSpecies species) {
+    public static Mask<Long> maskAllFalse(Species<Long> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<Long>>) species.maskType(), long.class, species.length(),
                                                  0, species, 
-                                                 ((z, s) -> falseMask((LongSpecies)s)));
+                                                 ((z, s) -> falseMask(s)));
     }
 
     /**
@@ -515,7 +593,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return a shuffle of mapped indexes
      */
     @ForceInline
-    public static Shuffle<Long> shuffle(LongSpecies species, IntUnaryOperator f) {
+    public static Shuffle<Long> shuffle(Species<Long> species, IntUnaryOperator f) {
         if (species.boxType() == LongMaxVector.class)
             return new LongMaxVector.LongMaxShuffle(f);
         switch (species.bitSize()) {
@@ -541,7 +619,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return a shuffle of lane indexes
      */
     @ForceInline
-    public static Shuffle<Long> shuffleIota(LongSpecies species) {
+    public static Shuffle<Long> shuffleIota(Species<Long> species) {
         if (species.boxType() == LongMaxVector.class)
             return new LongMaxVector.LongMaxShuffle(AbstractShuffle.IDENTITY);
         switch (species.bitSize()) {
@@ -570,7 +648,7 @@ public abstract class LongVector extends Vector<Long> {
      * {@code < species.length()}
      */
     @ForceInline
-    public static Shuffle<Long> shuffleFromValues(LongSpecies species, int... ixs) {
+    public static Shuffle<Long> shuffleFromValues(Species<Long> species, int... ixs) {
         if (species.boxType() == LongMaxVector.class)
             return new LongMaxVector.LongMaxShuffle(ixs);
         switch (species.bitSize()) {
@@ -598,7 +676,7 @@ public abstract class LongVector extends Vector<Long> {
      * {@code i > a.length - species.length()}
      */
     @ForceInline
-    public static Shuffle<Long> shuffleFromArray(LongSpecies species, int[] ixs, int i) {
+    public static Shuffle<Long> shuffleFromArray(Species<Long> species, int[] ixs, int i) {
         if (species.boxType() == LongMaxVector.class)
             return new LongMaxVector.LongMaxShuffle(ixs, i);
         switch (species.bitSize()) {
@@ -609,7 +687,6 @@ public abstract class LongVector extends Vector<Long> {
             default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
         }
     }
-
 
     // Ops
 
@@ -1622,87 +1699,59 @@ public abstract class LongVector extends Vector<Long> {
     // Species
 
     @Override
-    public abstract LongSpecies species();
+    public abstract Species<Long> species();
 
     /**
      * Class representing {@link LongVector}'s of the same {@link Vector.Shape Shape}.
      */
-    public static abstract class LongSpecies extends Vector.Species<Long> {
+    static final class LongSpecies extends Vector.AbstractSpecies<Long> {
+        final Function<long[], LongVector> vectorFactory;
+        final Function<boolean[], Vector.Mask<Long>> maskFactory;
+
+        private LongSpecies(Vector.Shape shape,
+                          Class<?> boxType,
+                          Class<?> maskType,
+                          Function<long[], LongVector> vectorFactory,
+                          Function<boolean[], Vector.Mask<Long>> maskFactory) {
+            super(shape, long.class, Long.SIZE, boxType, maskType);
+            this.vectorFactory = vectorFactory;
+            this.maskFactory = maskFactory;
+        }
+
         interface FOp {
             long apply(int i);
         }
-
-        abstract LongVector op(FOp f);
-
-        abstract LongVector op(Mask<Long> m, FOp f);
 
         interface FOpm {
             boolean apply(int i);
         }
 
-        abstract Mask<Long> opm(FOpm f);
-
-        abstract IntVector.IntSpecies indexSpecies();
-
-
-        // Factories
-
-        @Override
-        public abstract LongVector zero();
-
-        /**
-         * Returns a vector where all lane elements are set to the primitive
-         * value {@code e}.
-         *
-         * @param e the value
-         * @return a vector of vector where all lane elements are set to
-         * the primitive value {@code e}
-         */
-        public abstract LongVector broadcast(long e);
-
-        /**
-         * Returns a vector where the first lane element is set to the primtive
-         * value {@code e}, all other lane elements are set to the default
-         * value.
-         *
-         * @param e the value
-         * @return a vector where the first lane element is set to the primitive
-         * value {@code e}
-         */
-        @ForceInline
-        public final LongVector single(long e) {
-            return zero().with(0, e);
+        LongVector op(FOp f) {
+            long[] res = new long[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = f.apply(i);
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a randomly
-         * generated primitive value.
-         *
-         * The semantics are equivalent to calling
-         * {@code (long)ThreadLocalRandom#nextInt()}.
-         *
-         * @return a vector where each lane elements is set to a randomly
-         * generated primitive value
-         */
-        public LongVector random() {
-            ThreadLocalRandom r = ThreadLocalRandom.current();
-            return op(i -> r.nextLong());
+        LongVector op(Vector.Mask<Long> o, FOp f) {
+            long[] res = new long[length()];
+            boolean[] mbits = ((AbstractMask<Long>)o).getBits();
+            for (int i = 0; i < length(); i++) {
+                if (mbits[i]) {
+                    res[i] = f.apply(i);
+                }
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a given
-         * primitive value.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * the primitive value at index {@code N} is placed into the resulting
-         * vector at lane index {@code N}.
-         *
-         * @param es the given primitive values
-         * @return a vector where each lane element is set to a given primitive
-         * value
-         * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
-         */
-        public abstract LongVector scalars(long... es);
+        Vector.Mask<Long> opm(IntVector.IntSpecies.FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return maskFactory.apply(res);
+        }
     }
 
     /**
@@ -1715,8 +1764,7 @@ public abstract class LongVector extends Vector<Long> {
      *
      * @return the preferred species for an element type of {@code long}
      */
-    @SuppressWarnings("unchecked")
-    public static LongSpecies preferredSpecies() {
+    private static LongSpecies preferredSpecies() {
         return (LongSpecies) Species.ofPreferred(long.class);
     }
 
@@ -1727,16 +1775,41 @@ public abstract class LongVector extends Vector<Long> {
      * @return a species for an element type of {@code long} and shape
      * @throws IllegalArgumentException if no such species exists for the shape
      */
-    @SuppressWarnings("unchecked")
-    public static LongSpecies species(Vector.Shape s) {
+    static LongSpecies species(Vector.Shape s) {
         Objects.requireNonNull(s);
         switch (s) {
-            case S_64_BIT: return Long64Vector.SPECIES;
-            case S_128_BIT: return Long128Vector.SPECIES;
-            case S_256_BIT: return Long256Vector.SPECIES;
-            case S_512_BIT: return Long512Vector.SPECIES;
-            case S_Max_BIT: return LongMaxVector.SPECIES;
+            case S_64_BIT: return (LongSpecies) SPECIES_64;
+            case S_128_BIT: return (LongSpecies) SPECIES_128;
+            case S_256_BIT: return (LongSpecies) SPECIES_256;
+            case S_512_BIT: return (LongSpecies) SPECIES_512;
+            case S_Max_BIT: return (LongSpecies) SPECIES_MAX;
             default: throw new IllegalArgumentException("Bad shape: " + s);
         }
     }
+
+    /** Species representing {@link LongVector}s of {@link Vector.Shape#S_64_BIT Shape.S_64_BIT}. */
+    public static final Species<Long> SPECIES_64 = new LongSpecies(Shape.S_64_BIT, Long64Vector.class, Long64Vector.Long64Mask.class,
+                                                                     Long64Vector::new, Long64Vector.Long64Mask::new);
+
+    /** Species representing {@link LongVector}s of {@link Vector.Shape#S_128_BIT Shape.S_128_BIT}. */
+    public static final Species<Long> SPECIES_128 = new LongSpecies(Shape.S_128_BIT, Long128Vector.class, Long128Vector.Long128Mask.class,
+                                                                      Long128Vector::new, Long128Vector.Long128Mask::new);
+
+    /** Species representing {@link LongVector}s of {@link Vector.Shape#S_256_BIT Shape.S_256_BIT}. */
+    public static final Species<Long> SPECIES_256 = new LongSpecies(Shape.S_256_BIT, Long256Vector.class, Long256Vector.Long256Mask.class,
+                                                                      Long256Vector::new, Long256Vector.Long256Mask::new);
+
+    /** Species representing {@link LongVector}s of {@link Vector.Shape#S_512_BIT Shape.S_512_BIT}. */
+    public static final Species<Long> SPECIES_512 = new LongSpecies(Shape.S_512_BIT, Long512Vector.class, Long512Vector.Long512Mask.class,
+                                                                      Long512Vector::new, Long512Vector.Long512Mask::new);
+
+    /** Species representing {@link LongVector}s of {@link Vector.Shape#S_Max_BIT Shape.S_Max_BIT}. */
+    public static final Species<Long> SPECIES_MAX = new LongSpecies(Shape.S_Max_BIT, LongMaxVector.class, LongMaxVector.LongMaxMask.class,
+                                                                      LongMaxVector::new, LongMaxVector.LongMaxMask::new);
+
+    /**
+     * Preferred species for {@link LongVector}s.
+     * A preferred species is a species of maximal bit size for the platform.
+     */
+    public static final Species<Long> SPECIES_PREFERRED = (Species<Long>) preferredSpecies();
 }

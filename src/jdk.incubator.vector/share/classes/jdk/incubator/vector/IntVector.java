@@ -29,6 +29,7 @@ import java.nio.IntBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Function;
 import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
@@ -110,8 +111,10 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector zero(IntSpecies species) {
-        return species.zero();
+    public static IntVector zero(Species<Integer> species) {
+        return VectorIntrinsics.broadcastCoerced((Class<IntVector>) species.boxType(), int.class, species.length(),
+                                                 0, species,
+                                                 ((bits, s) -> ((IntSpecies)s).op(i -> (int)bits)));
     }
 
     /**
@@ -122,7 +125,7 @@ public abstract class IntVector extends Vector<Integer> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(IntSpecies, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<Integer>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
@@ -136,7 +139,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector fromByteArray(IntSpecies species, byte[] a, int ix) {
+    public static IntVector fromByteArray(Species<Integer> species, byte[] a, int ix) {
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
         return VectorIntrinsics.load((Class<IntVector>) species.boxType(), int.class, species.length(),
@@ -158,7 +161,7 @@ public abstract class IntVector extends Vector<Integer> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(IntSpecies, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(Species<Integer>, ByteBuffer, int, Mask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
@@ -177,7 +180,7 @@ public abstract class IntVector extends Vector<Integer> {
      * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static IntVector fromByteArray(IntSpecies species, byte[] a, int ix, Mask<Integer> m) {
+    public static IntVector fromByteArray(Species<Integer> species, byte[] a, int ix, Mask<Integer> m) {
         return zero(species).blend(fromByteArray(species, a, ix), m);
     }
 
@@ -197,7 +200,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector fromArray(IntSpecies species, int[] a, int i){
+    public static IntVector fromArray(Species<Integer> species, int[] a, int i){
         Objects.requireNonNull(a);
         i = VectorIntrinsics.checkIndex(i, a.length, species.length());
         return VectorIntrinsics.load((Class<IntVector>) species.boxType(), int.class, species.length(),
@@ -226,7 +229,7 @@ public abstract class IntVector extends Vector<Integer> {
      * is set {@code i > a.length - N}
      */
     @ForceInline
-    public static IntVector fromArray(IntSpecies species, int[] a, int i, Mask<Integer> m) {
+    public static IntVector fromArray(Species<Integer> species, int[] a, int i, Mask<Integer> m) {
         return zero(species).blend(fromArray(species, a, i), m);
     }
 
@@ -253,20 +256,21 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector fromArray(IntSpecies species, int[] a, int i, int[] indexMap, int j) {
+    public static IntVector fromArray(Species<Integer> species, int[] a, int i, int[] indexMap, int j) {
         Objects.requireNonNull(a);
         Objects.requireNonNull(indexMap);
 
 
-        // Index vector: vix[0:n] = k -> i + indexMap[j + i]
-        IntVector vix = IntVector.fromArray(species.indexSpecies(), indexMap, j).add(i);
+        // Index vector: vix[0:n] = k -> i + indexMap[j + k]
+        IntVector vix = IntVector.fromArray(IntVector.species(species.indexShape()), indexMap, j).add(i);
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
         return VectorIntrinsics.loadWithMap((Class<IntVector>) species.boxType(), int.class, species.length(),
-                                            species.indexSpecies().vectorType(), a, Unsafe.ARRAY_INT_BASE_OFFSET, vix,
+                                            IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_INT_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
-                                           (c, idx, iMap, idy, s) -> ((IntSpecies)s).op(n -> c[idx + iMap[idy+n]]));
+                                            (int[] c, int idx, int[] iMap, int idy, Species<Integer> s) ->
+                                                ((IntSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }
 
     /**
@@ -295,7 +299,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector fromArray(IntSpecies species, int[] a, int i, Mask<Integer> m, int[] indexMap, int j) {
+    public static IntVector fromArray(Species<Integer> species, int[] a, int i, Mask<Integer> m, int[] indexMap, int j) {
         // @@@ This can result in out of bounds errors for unset mask lanes
         return zero(species).blend(fromArray(species, a, i, indexMap, j), m);
     }
@@ -310,7 +314,7 @@ public abstract class IntVector extends Vector<Integer> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(IntSpecies, ByteBuffer, int, Mask)} method} as follows:
+     * {@link #fromByteBuffer(Species<Integer>, ByteBuffer, int, Mask)} method} as follows:
      * <pre>{@code
      *   return this.fromByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
@@ -327,7 +331,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector fromByteBuffer(IntSpecies species, ByteBuffer bb, int ix) {
+    public static IntVector fromByteBuffer(Species<Integer> species, ByteBuffer bb, int ix) {
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -379,8 +383,82 @@ public abstract class IntVector extends Vector<Integer> {
      * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static IntVector fromByteBuffer(IntSpecies species, ByteBuffer bb, int ix, Mask<Integer> m) {
+    public static IntVector fromByteBuffer(Species<Integer> species, ByteBuffer bb, int ix, Mask<Integer> m) {
         return zero(species).blend(fromByteBuffer(species, bb, ix), m);
+    }
+
+    /**
+     * Returns a vector where all lane elements are set to the primitive
+     * value {@code e}.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector of vector where all lane elements are set to
+     * the primitive value {@code e}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static IntVector broadcast(Species<Integer> s, int e) {
+        return VectorIntrinsics.broadcastCoerced(
+            (Class<IntVector>) s.boxType(), int.class, s.length(),
+            e, s,
+            ((bits, sp) -> ((IntSpecies)sp).op(i -> (int)bits)));
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a given
+     * primitive value.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * the primitive value at index {@code N} is placed into the resulting
+     * vector at lane index {@code N}.
+     *
+     * @param s species of the desired vector
+     * @param es the given primitive values
+     * @return a vector where each lane element is set to a given primitive
+     * value
+     * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
+     */
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public static IntVector scalars(Species<Integer> s, int... es) {
+        Objects.requireNonNull(es);
+        int ix = VectorIntrinsics.checkIndex(0, es.length, s.length());
+        return VectorIntrinsics.load((Class<IntVector>) s.boxType(), int.class, s.length(),
+                                     es, Unsafe.ARRAY_INT_BASE_OFFSET,
+                                     es, ix, s,
+                                     (c, idx, sp) -> ((IntSpecies)sp).op(n -> c[idx + n]));
+    }
+
+    /**
+     * Returns a vector where the first lane element is set to the primtive
+     * value {@code e}, all other lane elements are set to the default
+     * value.
+     *
+     * @param s species of the desired vector
+     * @param e the value
+     * @return a vector where the first lane element is set to the primitive
+     * value {@code e}
+     */
+    @ForceInline
+    public static final IntVector single(Species<Integer> s, int e) {
+        return zero(s).with(0, e);
+    }
+
+    /**
+     * Returns a vector where each lane element is set to a randomly
+     * generated primitive value.
+     *
+     * The semantics are equivalent to calling
+     * {@link ThreadLocalRandom#nextInt()}
+     *
+     * @param s species of the desired vector
+     * @return a vector where each lane elements is set to a randomly
+     * generated primitive value
+     */
+    public static IntVector random(Species<Integer> s) {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return ((IntSpecies)s).op(i -> r.nextInt());
     }
 
     /**
@@ -397,7 +475,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
      */
     @ForceInline
-    public static Mask<Integer> maskFromValues(IntSpecies species, boolean... bits) {
+    public static Mask<Integer> maskFromValues(Species<Integer> species, boolean... bits) {
         if (species.boxType() == IntMaxVector.class)
             return new IntMaxVector.IntMaxMask(bits);
         switch (species.bitSize()) {
@@ -410,7 +488,7 @@ public abstract class IntVector extends Vector<Integer> {
     }
 
     // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
-    static Mask<Integer> trueMask(IntSpecies species) {
+    static Mask<Integer> trueMask(Species<Integer> species) {
         if (species.boxType() == IntMaxVector.class)
             return IntMaxVector.IntMaxMask.TRUE_MASK;
         switch (species.bitSize()) {
@@ -422,7 +500,7 @@ public abstract class IntVector extends Vector<Integer> {
         }
     }
 
-    static Mask<Integer> falseMask(IntSpecies species) {
+    static Mask<Integer> falseMask(Species<Integer> species) {
         if (species.boxType() == IntMaxVector.class)
             return IntMaxVector.IntMaxMask.FALSE_MASK;
         switch (species.bitSize()) {
@@ -450,7 +528,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Integer> maskFromArray(IntSpecies species, boolean[] bits, int ix) {
+    public static Mask<Integer> maskFromArray(Species<Integer> species, boolean[] bits, int ix) {
         Objects.requireNonNull(bits);
         ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
         return VectorIntrinsics.load((Class<Mask<Integer>>) species.maskType(), int.class, species.length(),
@@ -467,10 +545,10 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Integer> maskAllTrue(IntSpecies species) {
+    public static Mask<Integer> maskAllTrue(Species<Integer> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<Integer>>) species.maskType(), int.class, species.length(),
                                                  (int)-1,  species,
-                                                 ((z, s) -> trueMask((IntSpecies)s)));
+                                                 ((z, s) -> trueMask(s)));
     }
 
     /**
@@ -481,10 +559,10 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static Mask<Integer> maskAllFalse(IntSpecies species) {
+    public static Mask<Integer> maskAllFalse(Species<Integer> species) {
         return VectorIntrinsics.broadcastCoerced((Class<Mask<Integer>>) species.maskType(), int.class, species.length(),
                                                  0, species, 
-                                                 ((z, s) -> falseMask((IntSpecies)s)));
+                                                 ((z, s) -> falseMask(s)));
     }
 
     /**
@@ -512,7 +590,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return a shuffle of mapped indexes
      */
     @ForceInline
-    public static Shuffle<Integer> shuffle(IntSpecies species, IntUnaryOperator f) {
+    public static Shuffle<Integer> shuffle(Species<Integer> species, IntUnaryOperator f) {
         if (species.boxType() == IntMaxVector.class)
             return new IntMaxVector.IntMaxShuffle(f);
         switch (species.bitSize()) {
@@ -538,7 +616,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return a shuffle of lane indexes
      */
     @ForceInline
-    public static Shuffle<Integer> shuffleIota(IntSpecies species) {
+    public static Shuffle<Integer> shuffleIota(Species<Integer> species) {
         if (species.boxType() == IntMaxVector.class)
             return new IntMaxVector.IntMaxShuffle(AbstractShuffle.IDENTITY);
         switch (species.bitSize()) {
@@ -567,7 +645,7 @@ public abstract class IntVector extends Vector<Integer> {
      * {@code < species.length()}
      */
     @ForceInline
-    public static Shuffle<Integer> shuffleFromValues(IntSpecies species, int... ixs) {
+    public static Shuffle<Integer> shuffleFromValues(Species<Integer> species, int... ixs) {
         if (species.boxType() == IntMaxVector.class)
             return new IntMaxVector.IntMaxShuffle(ixs);
         switch (species.bitSize()) {
@@ -595,7 +673,7 @@ public abstract class IntVector extends Vector<Integer> {
      * {@code i > a.length - species.length()}
      */
     @ForceInline
-    public static Shuffle<Integer> shuffleFromArray(IntSpecies species, int[] ixs, int i) {
+    public static Shuffle<Integer> shuffleFromArray(Species<Integer> species, int[] ixs, int i) {
         if (species.boxType() == IntMaxVector.class)
             return new IntMaxVector.IntMaxShuffle(ixs, i);
         switch (species.bitSize()) {
@@ -606,7 +684,6 @@ public abstract class IntVector extends Vector<Integer> {
             default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
         }
     }
-
 
     // Ops
 
@@ -1619,87 +1696,59 @@ public abstract class IntVector extends Vector<Integer> {
     // Species
 
     @Override
-    public abstract IntSpecies species();
+    public abstract Species<Integer> species();
 
     /**
      * Class representing {@link IntVector}'s of the same {@link Vector.Shape Shape}.
      */
-    public static abstract class IntSpecies extends Vector.Species<Integer> {
+    static final class IntSpecies extends Vector.AbstractSpecies<Integer> {
+        final Function<int[], IntVector> vectorFactory;
+        final Function<boolean[], Vector.Mask<Integer>> maskFactory;
+
+        private IntSpecies(Vector.Shape shape,
+                          Class<?> boxType,
+                          Class<?> maskType,
+                          Function<int[], IntVector> vectorFactory,
+                          Function<boolean[], Vector.Mask<Integer>> maskFactory) {
+            super(shape, int.class, Integer.SIZE, boxType, maskType);
+            this.vectorFactory = vectorFactory;
+            this.maskFactory = maskFactory;
+        }
+
         interface FOp {
             int apply(int i);
         }
-
-        abstract IntVector op(FOp f);
-
-        abstract IntVector op(Mask<Integer> m, FOp f);
 
         interface FOpm {
             boolean apply(int i);
         }
 
-        abstract Mask<Integer> opm(FOpm f);
-
-        abstract IntVector.IntSpecies indexSpecies();
-
-
-        // Factories
-
-        @Override
-        public abstract IntVector zero();
-
-        /**
-         * Returns a vector where all lane elements are set to the primitive
-         * value {@code e}.
-         *
-         * @param e the value
-         * @return a vector of vector where all lane elements are set to
-         * the primitive value {@code e}
-         */
-        public abstract IntVector broadcast(int e);
-
-        /**
-         * Returns a vector where the first lane element is set to the primtive
-         * value {@code e}, all other lane elements are set to the default
-         * value.
-         *
-         * @param e the value
-         * @return a vector where the first lane element is set to the primitive
-         * value {@code e}
-         */
-        @ForceInline
-        public final IntVector single(int e) {
-            return zero().with(0, e);
+        IntVector op(FOp f) {
+            int[] res = new int[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = f.apply(i);
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a randomly
-         * generated primitive value.
-         *
-         * The semantics are equivalent to calling
-         * {@code (int)ThreadLocalRandom#nextInt()}.
-         *
-         * @return a vector where each lane elements is set to a randomly
-         * generated primitive value
-         */
-        public IntVector random() {
-            ThreadLocalRandom r = ThreadLocalRandom.current();
-            return op(i -> r.nextInt());
+        IntVector op(Vector.Mask<Integer> o, FOp f) {
+            int[] res = new int[length()];
+            boolean[] mbits = ((AbstractMask<Integer>)o).getBits();
+            for (int i = 0; i < length(); i++) {
+                if (mbits[i]) {
+                    res[i] = f.apply(i);
+                }
+            }
+            return vectorFactory.apply(res);
         }
 
-        /**
-         * Returns a vector where each lane element is set to a given
-         * primitive value.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * the primitive value at index {@code N} is placed into the resulting
-         * vector at lane index {@code N}.
-         *
-         * @param es the given primitive values
-         * @return a vector where each lane element is set to a given primitive
-         * value
-         * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
-         */
-        public abstract IntVector scalars(int... es);
+        Vector.Mask<Integer> opm(IntVector.IntSpecies.FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return maskFactory.apply(res);
+        }
     }
 
     /**
@@ -1712,8 +1761,7 @@ public abstract class IntVector extends Vector<Integer> {
      *
      * @return the preferred species for an element type of {@code int}
      */
-    @SuppressWarnings("unchecked")
-    public static IntSpecies preferredSpecies() {
+    private static IntSpecies preferredSpecies() {
         return (IntSpecies) Species.ofPreferred(int.class);
     }
 
@@ -1724,16 +1772,41 @@ public abstract class IntVector extends Vector<Integer> {
      * @return a species for an element type of {@code int} and shape
      * @throws IllegalArgumentException if no such species exists for the shape
      */
-    @SuppressWarnings("unchecked")
-    public static IntSpecies species(Vector.Shape s) {
+    static IntSpecies species(Vector.Shape s) {
         Objects.requireNonNull(s);
         switch (s) {
-            case S_64_BIT: return Int64Vector.SPECIES;
-            case S_128_BIT: return Int128Vector.SPECIES;
-            case S_256_BIT: return Int256Vector.SPECIES;
-            case S_512_BIT: return Int512Vector.SPECIES;
-            case S_Max_BIT: return IntMaxVector.SPECIES;
+            case S_64_BIT: return (IntSpecies) SPECIES_64;
+            case S_128_BIT: return (IntSpecies) SPECIES_128;
+            case S_256_BIT: return (IntSpecies) SPECIES_256;
+            case S_512_BIT: return (IntSpecies) SPECIES_512;
+            case S_Max_BIT: return (IntSpecies) SPECIES_MAX;
             default: throw new IllegalArgumentException("Bad shape: " + s);
         }
     }
+
+    /** Species representing {@link IntVector}s of {@link Vector.Shape#S_64_BIT Shape.S_64_BIT}. */
+    public static final Species<Integer> SPECIES_64 = new IntSpecies(Shape.S_64_BIT, Int64Vector.class, Int64Vector.Int64Mask.class,
+                                                                     Int64Vector::new, Int64Vector.Int64Mask::new);
+
+    /** Species representing {@link IntVector}s of {@link Vector.Shape#S_128_BIT Shape.S_128_BIT}. */
+    public static final Species<Integer> SPECIES_128 = new IntSpecies(Shape.S_128_BIT, Int128Vector.class, Int128Vector.Int128Mask.class,
+                                                                      Int128Vector::new, Int128Vector.Int128Mask::new);
+
+    /** Species representing {@link IntVector}s of {@link Vector.Shape#S_256_BIT Shape.S_256_BIT}. */
+    public static final Species<Integer> SPECIES_256 = new IntSpecies(Shape.S_256_BIT, Int256Vector.class, Int256Vector.Int256Mask.class,
+                                                                      Int256Vector::new, Int256Vector.Int256Mask::new);
+
+    /** Species representing {@link IntVector}s of {@link Vector.Shape#S_512_BIT Shape.S_512_BIT}. */
+    public static final Species<Integer> SPECIES_512 = new IntSpecies(Shape.S_512_BIT, Int512Vector.class, Int512Vector.Int512Mask.class,
+                                                                      Int512Vector::new, Int512Vector.Int512Mask::new);
+
+    /** Species representing {@link IntVector}s of {@link Vector.Shape#S_Max_BIT Shape.S_Max_BIT}. */
+    public static final Species<Integer> SPECIES_MAX = new IntSpecies(Shape.S_Max_BIT, IntMaxVector.class, IntMaxVector.IntMaxMask.class,
+                                                                      IntMaxVector::new, IntMaxVector.IntMaxMask::new);
+
+    /**
+     * Preferred species for {@link IntVector}s.
+     * A preferred species is a species of maximal bit size for the platform.
+     */
+    public static final Species<Integer> SPECIES_PREFERRED = (Species<Integer>) preferredSpecies();
 }

@@ -26,11 +26,9 @@ package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.ShortVector;
-import jdk.incubator.vector.ShortVector.ShortSpecies;
 import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.IntVector.IntSpecies;
 import jdk.incubator.vector.LongVector;
-import jdk.incubator.vector.LongVector.LongSpecies;
+import jdk.incubator.vector.Vector.Species;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;
@@ -342,14 +340,14 @@ public class PopulationCount extends AbstractVectorBenchmark {
     // FIGURE 9. A C function using SSE intrinsics implementing Mula’s algorithm to compute sixteen population counts,
     // corresponding to sixteen input bytes.
 
-    static final ByteVector MULA128_LOOKUP = (ByteVector)(I128.scalars(0x02_01_01_00, // 0, 1, 1, 2,
+    static final ByteVector MULA128_LOOKUP = (ByteVector)(IntVector.scalars(I128, 0x02_01_01_00, // 0, 1, 1, 2,
                                                           0x03_02_02_01, // 1, 2, 2, 3,
                                                           0x03_02_02_01, // 1, 2, 2, 3,
                                                           0x04_03_03_02  // 2, 3, 3, 4
                                                           ).reinterpret(B128));
 
     ByteVector popcntB128(ByteVector v) {
-        var low_mask = B128.broadcast((byte)0x0f);
+        var low_mask = ByteVector.broadcast(B128, (byte)0x0f);
 
         var lo = v          .and(low_mask);
         var hi = v.shiftR(4).and(low_mask);
@@ -389,7 +387,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
             (ByteVector)(join(I128, I256, (IntVector)(MULA128_LOOKUP.reinterpret(I128)), (IntVector)(MULA128_LOOKUP.reinterpret(I128))).reinterpret(B256));
 
     ByteVector popcntB256(ByteVector v) {
-        var low_mask = B256.broadcast((byte)0x0F);
+        var low_mask = ByteVector.broadcast(B256, (byte)0x0F);
 
         var lo = v          .and(low_mask);
         var hi = v.shiftR(4).and(low_mask);
@@ -410,13 +408,13 @@ public class PopulationCount extends AbstractVectorBenchmark {
     }
 
     LongVector sumUnsignedBytesShapes(ByteVector vb) {
-        ShortSpecies shortSpecies = ShortVector.species(vb.shape());
-        IntSpecies intSpecies = IntVector.species(vb.shape());
-        LongSpecies longSpecies = LongVector.species(vb.shape());
+        Species<Short> shortSpecies = Species.of(short.class, vb.shape());
+        Species<Integer> intSpecies = Species.of(int.class, vb.shape());
+        Species<Long> longSpecies = Species.of(long.class, vb.shape());
 
-        var low_short_mask = shortSpecies.broadcast((short) 0xFF);
-        var low_int_mask = intSpecies.broadcast(0xFFFF);
-        var low_long_mask = longSpecies.broadcast(0xFFFFFFFFL);
+        var low_short_mask = ShortVector.broadcast(shortSpecies, (short) 0xFF);
+        var low_int_mask = IntVector.broadcast(intSpecies, 0xFFFF);
+        var low_long_mask = LongVector.broadcast(longSpecies, 0xFFFFFFFFL);
 
         var vs = (ShortVector)vb.reinterpret(shortSpecies); // 16-bit
         var vs0 = vs.and(low_short_mask);
@@ -437,9 +435,9 @@ public class PopulationCount extends AbstractVectorBenchmark {
     }
 
     LongVector sumUnsignedBytesShifts(ByteVector vb) {
-        LongSpecies to = LongVector.species(vb.shape());
+        Species<Long> to = Species.of(long.class, vb.shape());
 
-        var low_mask = to.broadcast(0xFF);
+        var low_mask = LongVector.broadcast(to, 0xFF);
 
         var vl = (LongVector)vb.reinterpret(to);
 
@@ -512,7 +510,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
     @Benchmark
     public long HarleySeal256() {
         LongVector ones, twos, fours, eights, sixteens, vtotal, twosA, twosB, foursA, foursB, eightsA, eightsB;
-        ones = twos = fours = eights = sixteens = twosA = twosB = foursA = foursB = eightsA = eights = vtotal = L256.broadcast(0);
+        ones = twos = fours = eights = sixteens = twosA = twosB = foursA = foursB = eightsA = eights = vtotal = LongVector.broadcast(L256, 0);
 
         var vlen = L256.length();
         int step = 16 * vlen;

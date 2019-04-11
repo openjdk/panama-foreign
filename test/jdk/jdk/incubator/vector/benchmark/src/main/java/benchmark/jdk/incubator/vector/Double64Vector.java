@@ -25,6 +25,7 @@ package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
 import jdk.incubator.vector.DoubleVector;
 
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Measurement(iterations = 5, time = 1)
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class Double64Vector extends AbstractVectorBenchmark {
-    static final DoubleVector.DoubleSpecies SPECIES = DoubleVector.species(Shape.S_64_BIT);
+    static final Species<Double> SPECIES = DoubleVector.SPECIES_64;
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 
@@ -353,7 +354,7 @@ public class Double64Vector extends AbstractVectorBenchmark {
     public void minAll(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
-        double ra = Double.MAX_VALUE;
+        double ra = Double.POSITIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -363,7 +364,7 @@ public class Double64Vector extends AbstractVectorBenchmark {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Double.MAX_VALUE;
+            ra = Double.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 ra = (double)Math.min(ra, av.minAll());
@@ -378,7 +379,7 @@ public class Double64Vector extends AbstractVectorBenchmark {
     public void maxAll(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
-        double ra = Double.MIN_VALUE;
+        double ra = Double.NEGATIVE_INFINITY;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -388,7 +389,7 @@ public class Double64Vector extends AbstractVectorBenchmark {
         }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = Double.MIN_VALUE;
+            ra = Double.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 ra = (double)Math.max(ra, av.maxAll());
