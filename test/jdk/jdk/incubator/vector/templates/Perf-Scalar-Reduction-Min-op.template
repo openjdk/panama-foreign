@@ -1,10 +1,13 @@
 
     @Benchmark
-    public $type$ [[TEST]][[TEST_TYPE]][[OP_NAME]]() {
+    public void [[TEST]][[TEST_TYPE]][[OP_NAME]](Blackhole bh) {
         $type$[] as = fa.apply(size);
         $type$ r = [[TEST_INIT]];
-        for (int i = 0; i < as.length; i++) {
-            r = ($type$)Math.min(r, as[i]);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = [[TEST_INIT]];
+            for (int i = 0; i < as.length; i++) {
+                r = ($type$)Math.min(r, as[i]);
+            }
         }
-        return r;
+        bh.consume(r);
     }

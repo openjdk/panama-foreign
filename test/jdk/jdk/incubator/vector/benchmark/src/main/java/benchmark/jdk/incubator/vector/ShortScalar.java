@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
 
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -35,6 +36,8 @@ import org.openjdk.jmh.annotations.*;
 @Measurement(iterations = 5, time = 1)
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class ShortScalar extends AbstractVectorBenchmark {
+    static final int INVOC_COUNT = 1; // To align with vector benchmarks.
+
     @Param("1024")
     int size;
 
@@ -72,617 +75,706 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object add() {
+    public void add(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)(a + b);
-        }
-
-        return rs;
-    }
-
-    @Benchmark
-    public Object addMasked() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            if (ms[i % ms.length]) {
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
                 rs[i] = (short)(a + b);
-            } else {
-                rs[i] = a;
             }
         }
-        return rs;
+
+        bh.consume(rs);
     }
 
     @Benchmark
-    public Object sub() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)(a - b);
-        }
-
-        return rs;
-    }
-
-    @Benchmark
-    public Object subMasked() {
+    public void addMasked(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            if (ms[i % ms.length]) {
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)(a + b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void sub(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
                 rs[i] = (short)(a - b);
-            } else {
-                rs[i] = a;
             }
         }
-        return rs;
-    }
 
-
-
-    @Benchmark
-    public Object mul() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)(a * b);
-        }
-
-        return rs;
+        bh.consume(rs);
     }
 
     @Benchmark
-    public Object mulMasked() {
+    public void subMasked(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            if (ms[i % ms.length]) {
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)(a - b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void mul(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
                 rs[i] = (short)(a * b);
-            } else {
-                rs[i] = a;
             }
         }
-        return rs;
+
+        bh.consume(rs);
     }
 
-
     @Benchmark
-    public Object and() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)(a & b);
-        }
-
-        return rs;
-    }
-
-
-
-    @Benchmark
-    public Object andMasked() {
+    public void mulMasked(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            if (ms[i % ms.length]) {
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)(a * b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+    @Benchmark
+    public void and(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
                 rs[i] = (short)(a & b);
-            } else {
-                rs[i] = a;
             }
         }
-        return rs;
+
+        bh.consume(rs);
     }
 
 
 
     @Benchmark
-    public Object or() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)(a | b);
-        }
-
-        return rs;
-    }
-
-
-
-    @Benchmark
-    public Object orMasked() {
+    public void andMasked(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            if (ms[i % ms.length]) {
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)(a & b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void or(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
                 rs[i] = (short)(a | b);
-            } else {
-                rs[i] = a;
             }
         }
-        return rs;
+
+        bh.consume(rs);
     }
 
 
 
     @Benchmark
-    public Object xor() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)(a ^ b);
-        }
-
-        return rs;
-    }
-
-
-
-    @Benchmark
-    public Object xorMasked() {
+    public void orMasked(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            if (ms[i % ms.length]) {
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)(a | b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void xor(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
                 rs[i] = (short)(a ^ b);
-            } else {
-                rs[i] = a;
             }
         }
-        return rs;
-    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    @Benchmark
-    public Object aShiftRShift() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)((a >> (b & 15)));
-        }
-
-        return rs;
+        bh.consume(rs);
     }
 
 
 
     @Benchmark
-    public Object aShiftRMaskedShift() {
+    public void xorMasked(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            boolean m = ms[i % ms.length];
-            rs[i] = (m ? (short)((a >> (b & 15))) : a);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)(a ^ b);
+                } else {
+                    rs[i] = a;
+                }
+            }
         }
-
-        return rs;
+        bh.consume(rs);
     }
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
-    public Object shiftLShift() {
+    public void aShiftRShift(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)((a << (b & 15)));
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)((a >> (b & 15)));
+            }
         }
 
-        return rs;
+        bh.consume(rs);
     }
 
 
 
     @Benchmark
-    public Object shiftLMaskedShift() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            boolean m = ms[i % ms.length];
-            rs[i] = (m ? (short)((a << (b & 15))) : a);
-        }
-
-        return rs;
-    }
-
-
-
-    @Benchmark
-    public Object shiftRShift() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)(((a & 0xFFFF) >>> (b & 15)));
-        }
-
-        return rs;
-    }
-
-
-
-    @Benchmark
-    public Object shiftRMaskedShift() {
+    public void aShiftRMaskedShift(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            boolean m = ms[i % ms.length];
-            rs[i] = (m ? (short)(((a & 0xFFFF) >>> (b & 15))) : a);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                boolean m = ms[i % ms.length];
+                rs[i] = (m ? (short)((a >> (b & 15))) : a);
+            }
         }
 
-        return rs;
+        bh.consume(rs);
     }
 
 
+
     @Benchmark
-    public Object max() {
+    public void shiftLShift(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)(Math.max(a, b));
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)((a << (b & 15)));
+            }
         }
 
-        return rs;
+        bh.consume(rs);
     }
 
+
+
     @Benchmark
-    public Object min() {
+    public void shiftLMaskedShift(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                boolean m = ms[i % ms.length];
+                rs[i] = (m ? (short)((a << (b & 15))) : a);
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void shiftRShift(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)(Math.min(a, b));
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)(((a & 0xFFFF) >>> (b & 15)));
+            }
         }
 
-        return rs;
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void shiftRMaskedShift(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                boolean m = ms[i % ms.length];
+                rs[i] = (m ? (short)(((a & 0xFFFF) >>> (b & 15))) : a);
+            }
+        }
+
+        bh.consume(rs);
     }
 
 
     @Benchmark
-    public short andAll() {
+    public void max(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)(Math.max(a, b));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void min(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)(Math.min(a, b));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+    @Benchmark
+    public void andAll(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = -1;
-        for (int i = 0; i < as.length; i++) {
-            r &= as[i];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = -1;
+            for (int i = 0; i < as.length; i++) {
+                r &= as[i];
+            }
         }
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public short orAll() {
+    public void orAll(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = 0;
-        for (int i = 0; i < as.length; i++) {
-            r |= as[i];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                r |= as[i];
+            }
         }
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public short xorAll() {
+    public void xorAll(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = 0;
-        for (int i = 0; i < as.length; i++) {
-            r ^= as[i];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                r ^= as[i];
+            }
         }
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public short addAll() {
+    public void addAll(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = 0;
-        for (int i = 0; i < as.length; i++) {
-            r += as[i];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                r += as[i];
+            }
         }
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public short mulAll() {
+    public void mulAll(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = 1;
-        for (int i = 0; i < as.length; i++) {
-            r *= as[i];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 1;
+            for (int i = 0; i < as.length; i++) {
+                r *= as[i];
+            }
         }
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public short minAll() {
+    public void minAll(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = Short.MAX_VALUE;
-        for (int i = 0; i < as.length; i++) {
-            r = (short)Math.min(r, as[i]);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = Short.MAX_VALUE;
+            for (int i = 0; i < as.length; i++) {
+                r = (short)Math.min(r, as[i]);
+            }
         }
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public short maxAll() {
+    public void maxAll(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = Short.MIN_VALUE;
-        for (int i = 0; i < as.length; i++) {
-            r = (short)Math.max(r, as[i]);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = Short.MIN_VALUE;
+            for (int i = 0; i < as.length; i++) {
+                r = (short)Math.max(r, as[i]);
+            }
         }
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public boolean anyTrue() {
+    public void anyTrue(Blackhole bh) {
         boolean[] ms = fm.apply(size);
         boolean r = false;
-        for (int i = 0; i < ms.length; i++) {
-            r |= ms[i];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < ms.length; i++) {
+                r |= ms[i];
+            }
         }
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public boolean allTrue() {
+    public void allTrue(Blackhole bh) {
         boolean[] ms = fm.apply(size);
         boolean r = true;
-        for (int i = 0; i < ms.length; i++) {
-            r &= ms[i];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = true;
+            for (int i = 0; i < ms.length; i++) {
+                r &= ms[i];
+            }
         }
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public boolean lessThan() {
+    public void lessThan(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
 
         boolean r = false;
-        for (int i = 0; i < as.length; i++) {
-            boolean m = (as[i] < bs[i]);
-            r |= m; // accumulate so JIT can't eliminate the computation
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                boolean m = (as[i] < bs[i]);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public boolean greaterThan() {
+    public void greaterThan(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
 
         boolean r = false;
-        for (int i = 0; i < as.length; i++) {
-            boolean m = (as[i] > bs[i]);
-            r |= m; // accumulate so JIT can't eliminate the computation
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                boolean m = (as[i] > bs[i]);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public boolean equal() {
+    public void equal(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
 
         boolean r = false;
-        for (int i = 0; i < as.length; i++) {
-            boolean m = (as[i] == bs[i]);
-            r |= m; // accumulate so JIT can't eliminate the computation
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                boolean m = (as[i] == bs[i]);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public boolean notEqual() {
+    public void notEqual(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
 
         boolean r = false;
-        for (int i = 0; i < as.length; i++) {
-            boolean m = (as[i] != bs[i]);
-            r |= m; // accumulate so JIT can't eliminate the computation
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                boolean m = (as[i] != bs[i]);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public boolean lessThanEq() {
+    public void lessThanEq(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
 
         boolean r = false;
-        for (int i = 0; i < as.length; i++) {
-            boolean m = (as[i] <= bs[i]);
-            r |= m; // accumulate so JIT can't eliminate the computation
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                boolean m = (as[i] <= bs[i]);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public boolean greaterThanEq() {
+    public void greaterThanEq(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
 
         boolean r = false;
-        for (int i = 0; i < as.length; i++) {
-            boolean m = (as[i] >= bs[i]);
-            r |= m; // accumulate so JIT can't eliminate the computation
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                boolean m = (as[i] >= bs[i]);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object blend() {
+    public void blend(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            boolean m = ms[i % ms.length];
-            rs[i] = (m ? b : a);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                boolean m = ms[i % ms.length];
+                rs[i] = (m ? b : a);
+            }
         }
 
-        return rs;
+        bh.consume(rs);
     }
-    Object rearrangeShared(int window) {
+    void rearrangeShared(int window, Blackhole bh) {
         short[] as = fa.apply(size);
         int[] order = fs.apply(size);
         short[] rs = fr.apply(size);
 
-        for (int i = 0; i < as.length; i += window) {
-            for (int j = 0; j < window; j++) {
-                short a = as[i+j];
-                int pos = order[j];
-                rs[i + pos] = a;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i += window) {
+                for (int j = 0; j < window; j++) {
+                    short a = as[i+j];
+                    int pos = order[j];
+                    rs[i + pos] = a;
+                }
             }
         }
 
-        return rs;
+        bh.consume(rs);
     }
 
     @Benchmark
-    public Object rearrange064() {
+    public void rearrange064(Blackhole bh) {
         int window = 64 / Short.SIZE;
-        return rearrangeShared(window);
+        rearrangeShared(window, bh);
     }
 
     @Benchmark
-    public Object rearrange128() {
+    public void rearrange128(Blackhole bh) {
         int window = 128 / Short.SIZE;
-        return rearrangeShared(window);
+        rearrangeShared(window, bh);
     }
 
     @Benchmark
-    public Object rearrange256() {
+    public void rearrange256(Blackhole bh) {
         int window = 256 / Short.SIZE;
-        return rearrangeShared(window);
+        rearrangeShared(window, bh);
     }
 
     @Benchmark
-    public Object rearrange512() {
+    public void rearrange512(Blackhole bh) {
         int window = 512 / Short.SIZE;
-        return rearrangeShared(window);
+        rearrangeShared(window, bh);
     }
 
 
@@ -706,90 +798,102 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object neg() {
+    public void neg(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] rs = fr.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            rs[i] = (short)(-((short)a));
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                rs[i] = (short)(-((short)a));
+            }
         }
 
-        return rs;
+        bh.consume(rs);
     }
 
     @Benchmark
-    public Object negMasked() {
-        short[] as = fa.apply(size);
-        short[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            boolean m = ms[i % ms.length];
-            rs[i] = (m ? (short)(-((short)a)) : a);
-        }
-
-        return rs;
-    }
-
-    @Benchmark
-    public Object abs() {
-        short[] as = fa.apply(size);
-        short[] rs = fr.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            rs[i] = (short)(Math.abs((short)a));
-        }
-
-        return rs;
-    }
-
-    @Benchmark
-    public Object absMasked() {
+    public void negMasked(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            boolean m = ms[i % ms.length];
-            rs[i] = (m ? (short)(Math.abs((short)a)) : a);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                boolean m = ms[i % ms.length];
+                rs[i] = (m ? (short)(-((short)a)) : a);
+            }
         }
 
-        return rs;
+        bh.consume(rs);
     }
 
-
     @Benchmark
-    public Object not() {
+    public void abs(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] rs = fr.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            rs[i] = (short)(~((short)a));
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                rs[i] = (short)(Math.abs((short)a));
+            }
         }
 
-        return rs;
+        bh.consume(rs);
     }
 
-
-
     @Benchmark
-    public Object notMasked() {
+    public void absMasked(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
 
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            boolean m = ms[i % ms.length];
-            rs[i] = (m ? (short)(~((short)a)) : a);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                boolean m = ms[i % ms.length];
+                rs[i] = (m ? (short)(Math.abs((short)a)) : a);
+            }
         }
 
-        return rs;
+        bh.consume(rs);
+    }
+
+
+    @Benchmark
+    public void not(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                rs[i] = (short)(~((short)a));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void notMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                boolean m = ms[i % ms.length];
+                rs[i] = (m ? (short)(~((short)a)) : a);
+            }
+        }
+
+        bh.consume(rs);
     }
 
 
