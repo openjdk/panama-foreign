@@ -70,9 +70,6 @@ protected:
  public: // FIXME
   oop get_oop() const;
 
- protected:
-  void init_flags_from(oop x);
-
   // Virtual behavior of the print() method.
   virtual void print_impl(outputStream* st) {}
 
@@ -88,21 +85,8 @@ public:
   // A hash value for the convenience of compilers.
   int hash();
 
-  // Tells if this oop has an encoding as a constant.
-  // True if is_perm is true.
-  // Also true if ScavengeRootsInCode is non-zero.
-  // If it does not have an encoding, the compiler is responsible for
-  // making other arrangements for dealing with the oop.
-  // See ciEnv::make_array
-  bool can_be_constant();
-
   // Tells if this oop should be made a constant.
-  // True if is_perm is true or ScavengeRootsInCode > 1.
   bool should_be_constant();
-
-  // Might this object possibly move during a scavenge operation?
-  // If the answer is true and ScavengeRootsInCode==0, the oop cannot be embedded in code.
-  bool is_scavengable() { return (_ident & SCAVENGABLE_FLAG) != 0; }
 
   // The address which the compiler should embed into the
   // generated code to represent this oop.  This address
@@ -116,17 +100,17 @@ public:
   virtual bool is_object() const            { return true; }
 
   // What kind of ciObject is this?
-  virtual bool is_null_object()          const { return false; }
-  virtual bool is_call_site()            const { return false; }
-  virtual bool is_instance()                   { return false; }
-  virtual bool is_member_name()          const { return false; }
+  virtual bool is_null_object()       const { return false; }
+  virtual bool is_call_site()         const { return false; }
+  virtual bool is_instance()                { return false; }
+  virtual bool is_member_name()       const { return false; }
+  virtual bool is_method_handle()     const { return false; }
+  virtual bool is_method_type()       const { return false; }
+  virtual bool is_array()                   { return false; }
+  virtual bool is_obj_array()               { return false; }
+  virtual bool is_type_array()              { return false; }
   virtual bool is_native_entry_point()   const { return false; }
   virtual bool is_machine_code_snippet() const { return false; }
-  virtual bool is_method_handle()        const { return false; }
-  virtual bool is_method_type()          const { return false; }
-  virtual bool is_array()                      { return false; }
-  virtual bool is_obj_array()                  { return false; }
-  virtual bool is_type_array()                 { return false; }
 
   // Is this a type or value which has no associated class?
   // It is true of primitive types and null objects.
