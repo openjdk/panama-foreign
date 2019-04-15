@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -303,15 +303,7 @@ public class Float512Vector extends AbstractVectorBenchmark {
     @Benchmark
     public void addAll(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = fr.apply(SPECIES.length());
         float ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.addAll();
-            }
-        }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
@@ -320,23 +312,13 @@ public class Float512Vector extends AbstractVectorBenchmark {
                 ra += av.addAll();
             }
         }
-
         bh.consume(ra);
-        bh.consume(r);
     }
 
     @Benchmark
     public void mulAll(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = fr.apply(SPECIES.length());
         float ra = 1;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.mulAll();
-            }
-        }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 1;
@@ -345,23 +327,13 @@ public class Float512Vector extends AbstractVectorBenchmark {
                 ra *= av.mulAll();
             }
         }
-
         bh.consume(ra);
-        bh.consume(r);
     }
 
     @Benchmark
     public void minAll(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = fr.apply(SPECIES.length());
         float ra = Float.POSITIVE_INFINITY;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.minAll();
-            }
-        }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = Float.POSITIVE_INFINITY;
@@ -370,23 +342,13 @@ public class Float512Vector extends AbstractVectorBenchmark {
                 ra = (float)Math.min(ra, av.minAll());
             }
         }
-
         bh.consume(ra);
-        bh.consume(r);
     }
 
     @Benchmark
     public void maxAll(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = fr.apply(SPECIES.length());
         float ra = Float.NEGATIVE_INFINITY;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.maxAll();
-            }
-        }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = Float.NEGATIVE_INFINITY;
@@ -395,9 +357,7 @@ public class Float512Vector extends AbstractVectorBenchmark {
                 ra = (float)Math.max(ra, av.maxAll());
             }
         }
-
         bh.consume(ra);
-        bh.consume(r);
     }
 
 

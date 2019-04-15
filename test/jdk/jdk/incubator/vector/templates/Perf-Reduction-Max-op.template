@@ -1,7 +1,15 @@
 
     @Benchmark
     public void [[TEST]][[TEST_TYPE]][[OP_NAME]](Blackhole bh) {
-[[KERNEL]]
+        $type$[] a = fa.apply(SPECIES.length());
+        $type$ ra = [[TEST_INIT]];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = [[TEST_INIT]];
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                $abstractvectortype$ av = $abstractvectortype$.fromArray(SPECIES, a, i);
+                ra = ($type$)Math.max(ra, av.[[TEST]]());
+            }
+        }
         bh.consume(ra);
-        bh.consume(r);
     }

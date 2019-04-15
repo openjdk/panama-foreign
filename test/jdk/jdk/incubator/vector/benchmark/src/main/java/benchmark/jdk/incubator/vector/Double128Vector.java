@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -303,15 +303,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
     @Benchmark
     public void addAll(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = fr.apply(SPECIES.length());
         double ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                r[i] = av.addAll();
-            }
-        }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 0;
@@ -320,23 +312,13 @@ public class Double128Vector extends AbstractVectorBenchmark {
                 ra += av.addAll();
             }
         }
-
         bh.consume(ra);
-        bh.consume(r);
     }
 
     @Benchmark
     public void mulAll(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = fr.apply(SPECIES.length());
         double ra = 1;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                r[i] = av.mulAll();
-            }
-        }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = 1;
@@ -345,23 +327,13 @@ public class Double128Vector extends AbstractVectorBenchmark {
                 ra *= av.mulAll();
             }
         }
-
         bh.consume(ra);
-        bh.consume(r);
     }
 
     @Benchmark
     public void minAll(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = fr.apply(SPECIES.length());
         double ra = Double.POSITIVE_INFINITY;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                r[i] = av.minAll();
-            }
-        }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = Double.POSITIVE_INFINITY;
@@ -370,23 +342,13 @@ public class Double128Vector extends AbstractVectorBenchmark {
                 ra = (double)Math.min(ra, av.minAll());
             }
         }
-
         bh.consume(ra);
-        bh.consume(r);
     }
 
     @Benchmark
     public void maxAll(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = fr.apply(SPECIES.length());
         double ra = Double.NEGATIVE_INFINITY;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                r[i] = av.maxAll();
-            }
-        }
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = Double.NEGATIVE_INFINITY;
@@ -395,9 +357,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
                 ra = (double)Math.max(ra, av.maxAll());
             }
         }
-
         bh.consume(ra);
-        bh.consume(r);
     }
 
 

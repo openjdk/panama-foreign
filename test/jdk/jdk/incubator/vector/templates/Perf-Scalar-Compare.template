@@ -1,14 +1,17 @@
 
     @Benchmark
-    public boolean [[TEST]][[TEST_TYPE]][[OP_NAME]]() {
+    public void [[TEST]][[TEST_TYPE]][[OP_NAME]](Blackhole bh) {
         $type$[] as = fa.apply(size);
         $type$[] bs = fb.apply(size);
 
         boolean r = false;
-        for (int i = 0; i < as.length; i++) {
-            boolean m = (as[i] [[TEST_OP]] bs[i]);
-            r |= m; // accumulate so JIT can't eliminate the computation
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                boolean m = (as[i] [[TEST_OP]] bs[i]);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
         }
 
-        return r;
+        bh.consume(r);
     }
