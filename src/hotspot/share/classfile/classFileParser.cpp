@@ -32,6 +32,7 @@
 #include "classfile/dictionary.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/moduleEntry.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/verificationType.hpp"
@@ -77,6 +78,8 @@
 #include "utilities/macros.hpp"
 #include "utilities/ostream.hpp"
 #include "utilities/resourceHash.hpp"
+#include "utilities/utf8.hpp"
+
 #if INCLUDE_CDS
 #include "classfile/systemDictionaryShared.hpp"
 #endif
@@ -312,7 +315,7 @@ void ClassFileParser::parse_constant_pool_entries(const ClassFileStream* const s
           const char* const str = java_lang_String::as_utf8_string(patch());
           // (could use java_lang_String::as_symbol instead, but might as well batch them)
           utf8_buffer = (const u1*) str;
-          utf8_length = (int) strlen(str);
+          utf8_length = (u2) strlen(str);
         }
 
         unsigned int hash;
@@ -5972,9 +5975,9 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
   _minor_version = stream->get_u2_fast();
   _major_version = stream->get_u2_fast();
 
-  if (DumpSharedSpaces && _major_version < JAVA_1_5_VERSION) {
+  if (DumpSharedSpaces && _major_version < JAVA_6_VERSION) {
     ResourceMark rm;
-    warning("Pre JDK 1.5 class not supported by CDS: %u.%u %s",
+    warning("Pre JDK 6 class not supported by CDS: %u.%u %s",
             _major_version,  _minor_version, _class_name->as_C_string());
     Exceptions::fthrow(
       THREAD_AND_LOCATION,

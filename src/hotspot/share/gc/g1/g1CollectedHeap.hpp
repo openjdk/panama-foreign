@@ -143,9 +143,8 @@ class G1CollectedHeap : public CollectedHeap {
   // Closures used in implementation.
   friend class G1ParScanThreadState;
   friend class G1ParScanThreadStateSet;
-  friend class G1ParTask;
+  friend class G1EvacuateRegionsTask;
   friend class G1PLABAllocator;
-  friend class G1PrepareCompactClosure;
 
   // Other related classes.
   friend class HeapRegionClaimer;
@@ -206,7 +205,7 @@ private:
 
   // Outside of GC pauses, the number of bytes used in all regions other
   // than the current allocation region(s).
-  size_t _summary_bytes_used;
+  volatile size_t _summary_bytes_used;
 
   void increase_used(size_t bytes);
   void decrease_used(size_t bytes);
@@ -519,6 +518,10 @@ public:
 
   WorkGang* workers() const { return _workers; }
 
+  // Runs the given AbstractGangTask with the current active workers, returning the
+  // total time taken.
+  Tickspan run_task(AbstractGangTask* task);
+
   G1Allocator* allocator() {
     return _allocator;
   }
@@ -738,11 +741,14 @@ private:
 
   void calculate_collection_set(G1EvacuationInfo& evacuation_info, double target_pause_time_ms);
 
-  // Actually do the work of evacuating the collection set.
-  void evacuate_collection_set(G1ParScanThreadStateSet* per_thread_states);
+  // Actually do the work of evacuating the parts of the collection set.
+  void evacuate_initial_collection_set(G1ParScanThreadStateSet* per_thread_states);
   void evacuate_optional_collection_set(G1ParScanThreadStateSet* per_thread_states);
-  void evacuate_optional_regions(G1ParScanThreadStateSet* per_thread_states, G1OptionalCSet* ocset);
+private:
+  // Evacuate the next set of optional regions.
+  void evacuate_next_optional_regions(G1ParScanThreadStateSet* per_thread_states);
 
+public:
   void pre_evacuate_collection_set(G1EvacuationInfo& evacuation_info);
   void post_evacuate_collection_set(G1EvacuationInfo& evacuation_info, G1ParScanThreadStateSet* pss);
 
@@ -1119,8 +1125,6 @@ public:
     return _hrm->reserved();
   }
 
-  virtual bool is_in_closed_subset(const void* p) const;
-
   G1HotCardCache* g1_hot_card_cache() const { return _hot_card_cache; }
 
   G1CardTable* card_table() const {
@@ -1167,14 +1171,14 @@ public:
   void heap_region_par_iterate_from_start(HeapRegionClosure* cl,
                                           HeapRegionClaimer* hrclaimer) const;
 
-  // Iterate over the regions (if any) in the current collection set.
-  void collection_set_iterate(HeapRegionClosure* blk);
+  // Iterate over all regions currently in the current collection set.
+  void collection_set_iterate_all(HeapRegionClosure* blk);
 
-  // Iterate over the regions (if any) in the current collection set. Starts the
-  // iteration over the entire collection set so that the start regions of a given
-  // worker id over the set active_workers are evenly spread across the set of
-  // collection set regions.
-  void collection_set_iterate_from(HeapRegionClosure *blk, uint worker_id);
+  // Iterate over the regions in the current increment of the collection set.
+  // Starts the iteration so that the start regions of a given worker id over the
+  // set active_workers are evenly spread across the set of collection set regions
+  // to be iterated.
+  void collection_set_iterate_increment_from(HeapRegionClosure *blk, uint worker_id);
 
   // Returns the HeapRegion that contains addr. addr must not be NULL.
   template <class T>
@@ -1254,6 +1258,8 @@ public:
 
   uint eden_regions_count() const { return _eden.length(); }
   uint survivor_regions_count() const { return _survivor.length(); }
+  size_t eden_regions_used_bytes() const { return _eden.used_bytes(); }
+  size_t survivor_regions_used_bytes() const { return _survivor.used_bytes(); }
   uint young_regions_count() const { return _eden.length() + _survivor.length(); }
   uint old_regions_count() const { return _old_set.length(); }
   uint archive_regions_count() const { return _archive_set.length(); }
@@ -1321,6 +1327,12 @@ public:
 
   // Unregister the given nmethod from the G1 heap.
   virtual void unregister_nmethod(nmethod* nm);
+
+  // No nmethod flushing needed.
+  virtual void flush_nmethod(nmethod* nm) {}
+
+  // No nmethod verification implemented.
+  virtual void verify_nmethod(nmethod* nm) {}
 
   // Free up superfluous code root memory.
   void purge_code_root_memory();
@@ -1416,7 +1428,7 @@ private:
   size_t _term_attempts;
 
   void start_term_time() { _term_attempts++; _start_term = os::elapsedTime(); }
-  void end_term_time() { _term_time += os::elapsedTime() - _start_term; }
+  void end_term_time() { _term_time += (os::elapsedTime() - _start_term); }
 protected:
   G1CollectedHeap*              _g1h;
   G1ParScanThreadState*         _par_scan_state;
