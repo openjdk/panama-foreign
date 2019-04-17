@@ -1766,17 +1766,17 @@ class G1RemarkThreadsClosure : public ThreadClosure {
   G1CMSATBBufferClosure _cm_satb_cl;
   G1CMOopClosure _cm_cl;
   MarkingCodeBlobClosure _code_cl;
-  int _thread_parity;
+  uintx _claim_token;
 
  public:
   G1RemarkThreadsClosure(G1CollectedHeap* g1h, G1CMTask* task) :
     _cm_satb_cl(task, g1h),
     _cm_cl(g1h, task),
     _code_cl(&_cm_cl, !CodeBlobToOopClosure::FixRelocations),
-    _thread_parity(Threads::thread_claim_parity()) {}
+    _claim_token(Threads::thread_claim_token()) {}
 
   void do_thread(Thread* thread) {
-    if (thread->claim_oops_do(true, _thread_parity)) {
+    if (thread->claim_threads_do(true, _claim_token)) {
       SATBMarkQueue& queue = G1ThreadLocalData::satb_mark_queue(thread);
       queue.apply_closure_and_empty(&_cm_satb_cl);
       if (thread->is_Java_thread()) {
@@ -1940,9 +1940,10 @@ public:
     guarantee(oopDesc::is_oop(task_entry.obj()),
               "Non-oop " PTR_FORMAT ", phase: %s, info: %d",
               p2i(task_entry.obj()), _phase, _info);
-    guarantee(!_g1h->is_in_cset(task_entry.obj()),
-              "obj: " PTR_FORMAT " in CSet, phase: %s, info: %d",
-              p2i(task_entry.obj()), _phase, _info);
+    HeapRegion* r = _g1h->heap_region_containing(task_entry.obj());
+    guarantee(!(r->in_collection_set() || r->has_index_in_opt_cset()),
+              "obj " PTR_FORMAT " from %s (%d) in region %u in (optional) collection set",
+              p2i(task_entry.obj()), _phase, _info, r->hrm_index());
   }
 };
 
@@ -1979,11 +1980,11 @@ void G1ConcurrentMark::verify_no_collection_set_oops() {
     HeapWord* task_finger = task->finger();
     if (task_finger != NULL && task_finger < _heap.end()) {
       // See above note on the global finger verification.
-      HeapRegion* task_hr = _g1h->heap_region_containing(task_finger);
-      guarantee(task_hr == NULL || task_finger == task_hr->bottom() ||
-                !task_hr->in_collection_set(),
+      HeapRegion* r = _g1h->heap_region_containing(task_finger);
+      guarantee(r == NULL || task_finger == r->bottom() ||
+                !r->in_collection_set() || !r->has_index_in_opt_cset(),
                 "task finger: " PTR_FORMAT " region: " HR_FORMAT,
-                p2i(task_finger), HR_FORMAT_PARAMS(task_hr));
+                p2i(task_finger), HR_FORMAT_PARAMS(r));
     }
   }
 }

@@ -25,7 +25,6 @@
 #ifndef SHARE_CLASSFILE_VMSYMBOLS_HPP
 #define SHARE_CLASSFILE_VMSYMBOLS_HPP
 
-#include "classfile/moduleEntry.hpp"
 #include "jfr/support/jfrIntrinsics.hpp"
 #include "jvmci/vmSymbols_jvmci.hpp"
 #include "memory/iterator.hpp"
@@ -52,7 +51,7 @@
 
 #define VM_SYMBOLS_DO(template, do_alias)                                                         \
   /* commonly used class, package, module names */                                                \
-  template(java_base,                                 JAVA_BASE_NAME)                             \
+  template(java_base,                                 "java.base")                                \
   template(java_lang_System,                          "java/lang/System")                         \
   template(java_lang_Object,                          "java/lang/Object")                         \
   template(java_lang_Class,                           "java/lang/Class")                          \
@@ -447,6 +446,10 @@
   template(module_entry_name,                         "module_entry")                             \
   template(resolved_references_name,                  "<resolved_references>")                    \
   template(init_lock_name,                            "<init_lock>")                              \
+  template(address_size_name,                         "ADDRESS_SIZE0")                            \
+  template(page_size_name,                            "PAGE_SIZE")                                \
+  template(big_endian_name,                           "BIG_ENDIAN")                               \
+  template(use_unaligned_access_name,                 "UNALIGNED_ACCESS")                         \
                                                                                                   \
   /* name symbols needed by intrinsics */                                                         \
   VM_INTRINSICS_DO(VM_INTRINSIC_IGNORE, VM_SYMBOL_IGNORE, template, VM_SYMBOL_IGNORE, VM_ALIAS_IGNORE) \
@@ -1070,6 +1073,9 @@
   do_intrinsic(_updateBytesAdler32,       java_util_zip_Adler32,  updateBytes_C_name,  updateBytes_signature,  F_SN)    \
   do_intrinsic(_updateByteBufferAdler32,  java_util_zip_Adler32,  updateByteBuffer_A_name,  updateByteBuffer_signature,  F_SN) \
    do_name(     updateByteBuffer_A_name,                          "updateByteBuffer")                                   \
+                                                                                                                        \
+  /* support for UnsafeConstants */                                                                                     \
+  do_class(jdk_internal_misc_UnsafeConstants,      "jdk/internal/misc/UnsafeConstants")                                 \
                                                                                                                         \
   /* support for Unsafe */                                                                                              \
   do_class(jdk_internal_misc_Unsafe,               "jdk/internal/misc/Unsafe")                                          \

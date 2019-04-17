@@ -25,11 +25,12 @@
 #ifndef SHARE_CLASSFILE_SYSTEMDICTIONARY_HPP
 #define SHARE_CLASSFILE_SYSTEMDICTIONARY_HPP
 
-#include "classfile/classLoader.hpp"
+#include "classfile/classLoaderData.hpp"
 #include "jvmci/systemDictionary_jvmci.hpp"
 #include "oops/objArrayOop.hpp"
 #include "oops/symbol.hpp"
 #include "runtime/java.hpp"
+#include "runtime/mutexLocker.hpp"
 #include "runtime/reflectionUtils.hpp"
 #include "runtime/signature.hpp"
 #include "utilities/hashtable.hpp"
@@ -176,6 +177,7 @@ class OopStorage;
   do_klass(AssertionStatusDirectives_klass,             java_lang_AssertionStatusDirectives                   ) \
   do_klass(StringBuffer_klass,                          java_lang_StringBuffer                                ) \
   do_klass(StringBuilder_klass,                         java_lang_StringBuilder                               ) \
+  do_klass(UnsafeConstants_klass,                       jdk_internal_misc_UnsafeConstants                     ) \
   do_klass(internal_Unsafe_klass,                       jdk_internal_misc_Unsafe                              ) \
   do_klass(module_Modules_klass,                        jdk_internal_module_Modules                           ) \
                                                                                                                 \

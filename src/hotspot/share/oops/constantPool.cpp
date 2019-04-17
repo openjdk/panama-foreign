@@ -280,9 +280,7 @@ void ConstantPool::archive_resolved_references(Thread* THREAD) {
       rr->obj_at_put(i, NULL);
       if (p != NULL && i < ref_map_len) {
         int index = object_to_cp_index(i);
-        // Skip the entry if the string hash code is 0 since the string
-        // is not included in the shared string_table, see StringTable::copy_shared_string.
-        if (tag_at(index).is_string() && java_lang_String::hash_code(p) != 0) {
+        if (tag_at(index).is_string()) {
           oop op = StringTable::create_archived_string(p, THREAD);
           // If the String object is not archived (possibly too large),
           // NULL is returned. Also set it in the array, so we won't
@@ -1002,14 +1000,17 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp,
       if ((callee->is_interface() && m_tag.is_method()) ||
           ((!callee->is_interface() && m_tag.is_interface_method()))) {
         ResourceMark rm(THREAD);
-        char buf[400];
-        jio_snprintf(buf, sizeof(buf),
-          "Inconsistent constant pool data in classfile for class %s. "
-          "Method %s%s at index %d is %s and should be %s",
-          callee->name()->as_C_string(), name->as_C_string(), signature->as_C_string(), index,
-          callee->is_interface() ? "CONSTANT_MethodRef" : "CONSTANT_InterfaceMethodRef",
-          callee->is_interface() ? "CONSTANT_InterfaceMethodRef" : "CONSTANT_MethodRef");
-        THROW_MSG_NULL(vmSymbols::java_lang_IncompatibleClassChangeError(), buf);
+        stringStream ss;
+        ss.print("Inconsistent constant pool data in classfile for class %s. "
+                 "Method '", callee->name()->as_C_string());
+        signature->print_as_signature_external_return_type(&ss);
+        ss.print(" %s(", name->as_C_string());
+        signature->print_as_signature_external_parameters(&ss);
+        ss.print(")' at index %d is %s and should be %s",
+                 index,
+                 callee->is_interface() ? "CONSTANT_MethodRef" : "CONSTANT_InterfaceMethodRef",
+                 callee->is_interface() ? "CONSTANT_InterfaceMethodRef" : "CONSTANT_MethodRef");
+        THROW_MSG_NULL(vmSymbols::java_lang_IncompatibleClassChangeError(), ss.as_string());
       }
 
       Klass* klass = this_cp->pool_holder();
