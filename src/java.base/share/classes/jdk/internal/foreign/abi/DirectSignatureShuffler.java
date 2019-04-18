@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,9 +91,9 @@ public class DirectSignatureShuffler {
         checkCallingSequence(callingSequence);
         this.direction = direction;
         this.javaMethodType = nmt.methodType();
-        processType(RET_POS, nmt.returnType(), callingSequence.getReturnBindings(), direction.flip());
+        processType(RET_POS, nmt.returnType(), callingSequence.returnBindings(), direction.flip());
         for (int i = 0 ; i < javaMethodType.parameterCount() ; i++) {
-            processType(i, nmt.parameterType(i), callingSequence.getArgumentBindings(i), direction);
+            processType(i, nmt.parameterType(i), callingSequence.argumentBindings(i), direction);
         }
     }
 
@@ -142,7 +142,7 @@ public class DirectSignatureShuffler {
 
     private static void checkCallingSequence(CallingSequence callingSequence) {
         if (callingSequence.returnsInMemory() ||
-                !callingSequence.getBindings(StorageClass.STACK_ARGUMENT_SLOT).isEmpty()) {
+                !callingSequence.bindings(StorageClass.STACK_ARGUMENT_SLOT).isEmpty()) {
             throw new IllegalArgumentException("Unsupported non-scalarized calling sequence!");
         }
     }
@@ -175,7 +175,7 @@ public class DirectSignatureShuffler {
         } else if (Util.isCStruct(carrier)) {
             if (bindings.size() == 1) {
                 ArgumentBinding binding = bindings.get(0);
-                switch (binding.getStorage().getStorageClass()) {
+                switch (binding.storage().getStorageClass()) {
                     case INTEGER_ARGUMENT_REGISTER:
                     case INTEGER_RETURN_REGISTER:
                         updateNativeMethodType(sigPos, long.class);
@@ -389,26 +389,25 @@ public class DirectSignatureShuffler {
     }
 
     private static boolean accept(NativeMethodType nmt, CallingSequence callingSequence, ShuffleDirection direction) {
-        if (nmt.parameterCount() > direction.maxArity) return false;
+        if (nmt.isVarArgs() ||
+                callingSequence.returnsInMemory() ||
+                nmt.parameterCount() > direction.maxArity) return false;
+
         for (int i = 0 ; i < nmt.parameterCount(); i++) {
-            List<ArgumentBinding> argumentBindings = callingSequence.getArgumentBindings(i);
+            List<ArgumentBinding> argumentBindings = callingSequence.argumentBindings(i);
             if (argumentBindings.size() != 1 ||
                     !isDirectBinding(argumentBindings.get(0))) {
                 return false;
             }
         }
 
-        List<ArgumentBinding> returnBindings = callingSequence.getReturnBindings();
-        if (returnBindings.isEmpty()) {
-            return true;
-        } else {
-            return !callingSequence.returnsInMemory() &&
-                    returnBindings.size() == 1 && isDirectBinding(returnBindings.get(0));
-        }
+        List<ArgumentBinding> returnBindings = callingSequence.returnBindings();
+        return returnBindings.isEmpty() ||
+                (returnBindings.size() == 1 && isDirectBinding(returnBindings.get(0)));
     }
 
     private static boolean isDirectBinding(ArgumentBinding binding) {
-        switch (binding.getStorage().getStorageClass()) {
+        switch (binding.storage().getStorageClass()) {
             case X87_RETURN_REGISTER:
             case STACK_ARGUMENT_SLOT:
                 //arguments passed in memory not supported
@@ -416,7 +415,7 @@ public class DirectSignatureShuffler {
             case VECTOR_ARGUMENT_REGISTER:
             case VECTOR_RETURN_REGISTER:
                 //avoid passing around floats as doubles as that leads to trouble
-                return (binding.getMember().getType().bitsSize() / 8) == binding.getStorage().getSize();
+                return (binding.argument().layout().bitsSize() / 8) == binding.storage().getSize();
             default:
                 return true;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,85 +22,54 @@
  */
 package jdk.internal.foreign.abi;
 
-import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CallingSequence {
-    private final List<ArgumentBinding>[] bindings;
+    private final EnumMap<StorageClass, List<ArgumentBinding>> bindings;
     private final boolean returnsInMemory;
-    private final List<ArgumentBinding>[] argBindings;
-    private final List<ArgumentBinding> retBindings = new ArrayList<>();
-    private final int[] argsOffsets = new int[StorageClass.ARGUMENT_STORAGE_CLASSES.length];
-    private final int[] retOffsets = new int[StorageClass.values().length];
+    private final Map<Integer, List<ArgumentBinding>> bindingsByIndex;
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public CallingSequence(int argSize, ArrayList<ArgumentBinding>[] bindings, boolean returnsInMemory) {
-        this.bindings = bindings;
+    public CallingSequence(boolean returnsInMemory, EnumMap<StorageClass, List<ArgumentBinding>> bindings) {
+        this.bindings = new EnumMap<>(bindings);
         this.returnsInMemory = returnsInMemory;
-        argBindings = new List[argSize];
-        classifyBindings();
+        this.bindingsByIndex = Stream.of(StorageClass.values())
+                .flatMap(sc -> bindings(sc).stream())
+                .collect(Collectors.groupingBy(b -> b.argument().argumentIndex()));
     }
 
-    public List<ArgumentBinding> getBindings(StorageClass storageClass) {
-        return bindings[storageClass.ordinal()];
+    public List<ArgumentBinding> bindings(StorageClass storageClass) {
+        return bindings.getOrDefault(storageClass, List.of());
     }
 
     public boolean returnsInMemory() {
         return returnsInMemory;
     }
 
-    private void classifyBindings() {
-        for (StorageClass storageClass : StorageClass.values()) {
-            for (ArgumentBinding binding : getBindings(storageClass)) {
-                if (storageClass.isArgumentClass()) {
-                    //update offsets
-                    for (int i = storageClass.ordinal() + 1 ; i < argsOffsets.length ; i++) {
-                        argsOffsets[i]++;
-                    }
-                    //classify arguments
-                    if (storageClass == StorageClass.INTEGER_ARGUMENT_REGISTER &&
-                            returnsInMemory() && binding.getStorage().getStorageIndex() == 0) {
-                        retBindings.add(binding);
-                    } else {
-                        int index = binding.getMember().getArgumentIndex();
-                        List<ArgumentBinding> args = argBindings[index];
-                        if (args == null) {
-                            argBindings[index] = args = new ArrayList<>();
-                        }
-                        args.add(binding);
-                    }
-                } else {
-                    if (!returnsInMemory()) {
-                        //update offsets
-                        for (int i = storageClass.ordinal() + 1 ; i < retOffsets.length ; i++) {
-                            retOffsets[i]++;
-                        }
-                        //classify returns
-                        retBindings.add(binding);
-                    }
-                }
-            }
+    public List<ArgumentBinding> argumentBindings(int i) {
+        return bindingsByIndex.getOrDefault(i, List.of());
+    }
+
+    public List<ArgumentBinding> returnBindings() {
+        if (returnsInMemory) {
+            throw new IllegalStateException("Attempting to obtain return bindings for in-memory return!");
         }
+        return bindingsByIndex.getOrDefault(-1, List.of());
     }
 
-    public List<ArgumentBinding> getArgumentBindings(int i) {
-        return argBindings[i] == null ? List.of() : argBindings[i];
-    }
-
-    public List<ArgumentBinding> getReturnBindings() {
-        return retBindings == null ? List.of() : retBindings;
-    }
-
-    public long argumentStorageOffset(ArgumentBinding b) {
-        return argsOffsets[b.getStorage().getStorageClass().ordinal()] +
-            bindings[b.getStorage().getStorageClass().ordinal()].indexOf(b)
-            * b.getStorage().getSize() / 8;
-    }
-
-    public long returnStorageOffset(ArgumentBinding b) {
-        return retOffsets[b.getStorage().getStorageClass().ordinal()] +
-            bindings[b.getStorage().getStorageClass().ordinal()].indexOf(b)
-            * b.getStorage().getSize() / 8;
+    public ArgumentBinding returnInMemoryBinding() {
+        if (!returnsInMemory) {
+            throw new IllegalStateException("Attempting to obtain in-memory binding for regular return");
+        }
+        //if returns in memory, we have two bindings with position -1, the argument and the return.
+        //The code below filters out the return binding.
+        return bindingsByIndex.getOrDefault(-1, List.of()).stream()
+                .filter(b -> b.storage().getStorageClass() == StorageClass.INTEGER_ARGUMENT_REGISTER)
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
     }
 
     public String asString() {
@@ -111,7 +80,7 @@ public class CallingSequence {
         sb.append("  Classes:\n");
         for (StorageClass c : StorageClass.values()) {
             sb.append("    ").append(c).append("\n");
-            for (ArgumentBinding binding : getBindings(c)) {
+            for (ArgumentBinding binding : bindings(c)) {
                 if (binding != null) {
                     sb.append("      ").append(binding.toString()).append("\n");
                 }

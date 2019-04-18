@@ -26,11 +26,17 @@ public class Storage {
     private final StorageClass storageClass;
     private final long storageIndex;
     private final long size;
+    private final long maxSize;
 
     public Storage(StorageClass storageClass, long storageIndex, long size) {
+        this(storageClass, storageIndex, size, size);
+    }
+
+    public Storage(StorageClass storageClass, long storageIndex, long size, long maxSize) {
         this.storageClass = storageClass;
         this.storageIndex = storageIndex;
         this.size = size;
+        this.maxSize = maxSize;
     }
 
     public StorageClass getStorageClass() {
@@ -43,6 +49,10 @@ public class Storage {
 
     public long getSize() {
         return size;
+    }
+
+    public long getMaxSize() {
+        return maxSize;
     }
 
     @Override

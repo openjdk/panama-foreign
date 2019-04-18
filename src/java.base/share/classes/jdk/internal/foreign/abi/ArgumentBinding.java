@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,37 +24,39 @@ package jdk.internal.foreign.abi;
 
 public class ArgumentBinding {
     private final Storage storage;
-    private final Argument member;
+    private final Argument argument;
     private final long offset;
 
-    public ArgumentBinding(Storage storage, Argument member, long offset) {
+    public ArgumentBinding(Storage storage, Argument argument, long offset) {
         this.storage = storage;
-        this.member = member;
+        this.argument = argument;
         this.offset = offset;
     }
 
-    public ArgumentBinding(Storage storage, Argument member) {
-        this(storage, member, 0);
+    public ArgumentBinding(Storage storage, Argument argument) {
+        this(storage, argument, 0);
     }
 
-    public Storage getStorage() {
+    public Storage storage() {
         return storage;
     }
 
-    public Argument getMember() {
-        return member;
+    public Argument argument() {
+        return argument;
     }
 
-    public long getOffset() {
+    public long offset() {
         return offset;
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-
-        sb.append(storage).append(" : ").append(member.getName()).append(" @ 0x").append(Long.toHexString(offset));
-
+        sb.append(storage)
+                .append(" : ")
+                .append(argument.name())
+                .append(" @ 0x")
+                .append(Long.toHexString(offset));
         return sb.toString();
     }
 }

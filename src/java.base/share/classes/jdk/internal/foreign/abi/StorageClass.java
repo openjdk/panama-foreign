@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,26 +24,12 @@ package jdk.internal.foreign.abi;
 
 public enum StorageClass {
 
-    //Note: The order of the argument/return register classes is subtly relevant, as that is the order in which the
-    //binding words will be laid out in the input/output long arrays by the universal invoker.
     STACK_ARGUMENT_SLOT(true, false),
     VECTOR_ARGUMENT_REGISTER(true, false),
     INTEGER_ARGUMENT_REGISTER(true, false),
     VECTOR_RETURN_REGISTER(false, true),
     INTEGER_RETURN_REGISTER(false, true),
     X87_RETURN_REGISTER(false, true);
-
-    public static final StorageClass[] ARGUMENT_STORAGE_CLASSES = {
-            StorageClass.STACK_ARGUMENT_SLOT,
-            StorageClass.VECTOR_ARGUMENT_REGISTER,
-            StorageClass.INTEGER_ARGUMENT_REGISTER
-    };
-
-    public static final StorageClass[] RETURN_STORAGE_CLASSES = {
-            StorageClass.VECTOR_RETURN_REGISTER,
-            StorageClass.INTEGER_RETURN_REGISTER,
-            StorageClass.X87_RETURN_REGISTER
-    };
 
     final boolean isArgumentClass;
     final boolean isReturnClass;

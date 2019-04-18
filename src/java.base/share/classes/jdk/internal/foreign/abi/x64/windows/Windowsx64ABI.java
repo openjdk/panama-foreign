@@ -28,15 +28,12 @@ import jdk.internal.foreign.ScopeImpl;
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.abi.*;
 import jdk.internal.foreign.memory.LayoutTypeImpl;
-import jdk.internal.foreign.memory.Types;
 
 import java.foreign.Library;
 import java.foreign.NativeMethodType;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.layout.Function;
-import java.foreign.layout.Layout;
-import java.foreign.layout.Value;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
@@ -50,6 +47,13 @@ import java.util.List;
  */
 public class Windowsx64ABI implements SystemABI {
 
+    public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 4;
+    public static final int MAX_INTEGER_RETURN_REGISTERS = 1;
+    public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 4;
+    public static final int MAX_VECTOR_RETURN_REGISTERS = 1;
+    public static final int MAX_REGISTER_ARGUMENTS = 4;
+    public static final int MAX_REGISTER_RETURNS = 1;
+
     private static Windowsx64ABI instance;
 
     public static Windowsx64ABI getInstance() {
@@ -60,21 +64,10 @@ public class Windowsx64ABI implements SystemABI {
     }
 
     static CallingSequence arrangeCall(NativeMethodType nmt) {
-        return arrangeCall(nmt, Integer.MAX_VALUE);
-    }
-
-    static CallingSequence arrangeCall(NativeMethodType nmt, int varArgsStart) {
         Function f = nmt.function();
-        CallingSequenceBuilderImpl builder = new CallingSequenceBuilderImpl(
-                f.returnLayout().map(x -> new Argument(-1, x, "__retval")).orElse(null));
-        for (int i = 0; i < f.argumentLayouts().size(); i++) {
-            Layout type = f.argumentLayouts().get(i);
-            builder.addArgument(type, i >= varArgsStart, "arg" + i);
-        }
-        if (f.isVariadic()) {
-            builder.addArgument(Types.POINTER, false, null);
-        }
-
+        CallingSequenceBuilder builder = new CallingSequenceBuilderImpl(
+                f.returnLayout().orElse(null));
+        f.argumentLayouts().forEach(builder::addArgument);
         return builder.build();
     }
 
@@ -82,10 +75,14 @@ public class Windowsx64ABI implements SystemABI {
     public MethodHandle downcallHandle(CallingConvention cc, Library.Symbol symbol, NativeMethodType nmt) {
         Util.checkNoArrays(nmt.methodType());
         if (nmt.isVarArgs()) {
-            return VarargsInvokerImpl.make(symbol, nmt);
+            return VarargsInvoker.make(symbol, nmt, CallingSequenceBuilderImpl::new, adapter);
         }
 
-        return UniversalNativeInvokerImpl.make(symbol, arrangeCall(nmt), nmt).getBoundMethodHandle();
+        try {
+            return new UniversalNativeInvoker(symbol, arrangeCall(nmt), nmt, adapter).getBoundMethodHandle();
+        } catch (IllegalAccessException ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
     @Override
@@ -95,7 +92,7 @@ public class Windowsx64ABI implements SystemABI {
             throw new WrongMethodTypeException("Native method type has wrong type: " + nmt.methodType());
         }
 
-        return UpcallStubs.registerUpcallStub(new UniversalUpcallHandlerImpl(target, arrangeCall(nmt), nmt));
+        return UpcallStubs.registerUpcallStub(new UniversalUpcallHandler(target, arrangeCall(nmt), nmt, adapter));
     }
 
     @Override
@@ -113,63 +110,66 @@ public class Windowsx64ABI implements SystemABI {
         return null;
     }
 
-    static void unboxValue(Object o, LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> dstPtrFunc,
+    UniversalAdapter adapter = new UniversalAdapter() {
+        @Override
+        public void unboxValue(Object o, LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> dstPtrFunc,
                            List<ArgumentBinding> bindings) throws Throwable {
-        if (o instanceof Struct) {
-            assert (bindings.size() == 1); // always for structs on windows
+            if (o instanceof Struct) {
+                assert (bindings.size() == 1); // always for structs on windows
 
-            Pointer<?> structPtr = ((Struct<?>) o).ptr();
-            LayoutType<?> structType = structPtr.type();
-            Pointer<Long> src = Util.unsafeCast(structPtr, NativeTypes.UINT64);
+                Pointer<?> structPtr = ((Struct<?>) o).ptr();
+                LayoutType<?> structType = structPtr.type();
+                Pointer<Long> src = Util.unsafeCast(structPtr, NativeTypes.UINT64);
+                ArgumentBinding binding = bindings.get(0);
+
+                if (CallingSequenceBuilderImpl.isRegisterAggregate(binding.argument().layout())) { // pass value
+                    Pointer.copy(src, dstPtrFunc.apply(binding), structType.bytesSize());
+                } else { // pass a pointer
+                    /*
+                     * Leak memory for now
+                     */
+                    Scope scope = Scope.globalScope().fork();
+                    Pointer<?> copy = scope.allocate(structType);
+                    Pointer.copy(src, copy, structType.bytesSize());
+
+                    Pointer<?> dst = dstPtrFunc.apply(binding);
+                    Util.unsafeCast(dst, NativeTypes.UINT64).type().setter().invoke(dst, copy.addr());
+                }
+            } else {
+                assert bindings.size() <= 2;
+                Pointer<?> dst = Util.unsafeCast(dstPtrFunc.apply(bindings.get(0)), type);
+                dst.type().setter().invoke(dst, o);
+            }
+        }
+
+        @Override
+        public Object boxValue(LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> srcPtrFunc,
+                               List<ArgumentBinding> bindings) throws IllegalAccessException {
+            assert (bindings.size() == 1); // always on windows
             ArgumentBinding binding = bindings.get(0);
+            Class<?> carrier = ((LayoutTypeImpl<?>) type).carrier();
+            if (Util.isCStruct(carrier)) {
 
-            if (CallingSequenceBuilderImpl.isRegisterAggregate(binding.getMember().getType())) { // pass value
-                Pointer.copy(src, dstPtrFunc.apply(binding), structType.bytesSize());
-            } else { // pass a pointer
                 /*
                  * Leak memory for now
                  */
                 Scope scope = Scope.globalScope().fork();
-                Pointer<?> copy = scope.allocate(structType);
-                Pointer.copy(src, copy, structType.bytesSize());
 
-                Pointer<?> dst = dstPtrFunc.apply(binding);
-                Util.unsafeCast(dst, NativeTypes.UINT64).type().setter().invoke(dst, copy.addr());
+                @SuppressWarnings({"rawtypes", "unchecked"})
+                Pointer<?> rtmp = ((ScopeImpl) scope).allocate(type, 8);
+
+                if (CallingSequenceBuilderImpl.isRegisterAggregate(type.layout())) {
+                    Pointer<Long> dst = Util.unsafeCast(rtmp, NativeTypes.UINT64).offset(binding.offset() / NativeTypes.UINT64.bytesSize());
+                    Pointer.copy(srcPtrFunc.apply(binding), dst, binding.storage().getSize());
+                } else {
+                    Pointer<?> local = Util.unsafeCast(srcPtrFunc.apply(binding), type.pointer()).get();
+                    // need defensive copy since Structs don't have value semantics on the Java side.
+                    Pointer.copy(local, rtmp, type.bytesSize());
+                }
+
+                return rtmp.get();
             }
-        } else {
-            assert bindings.size() <= 2;
-            Pointer<?> dst = Util.unsafeCast(dstPtrFunc.apply(bindings.get(0)), type);
-            dst.type().setter().invoke(dst, o);
+            return Util.unsafeCast(srcPtrFunc.apply(binding), type).get();
         }
-    }
-
-    static Object boxValue(LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> srcPtrFunc,
-                           List<ArgumentBinding> bindings) throws IllegalAccessException {
-        assert (bindings.size() == 1); // always on windows
-        ArgumentBinding binding = bindings.get(0);
-        Class<?> carrier = ((LayoutTypeImpl<?>) type).carrier();
-        if (Util.isCStruct(carrier)) {
-
-            /*
-             * Leak memory for now
-             */
-            Scope scope = Scope.globalScope().fork();
-
-            @SuppressWarnings({"rawtypes", "unchecked"})
-            Pointer<?> rtmp = ((ScopeImpl) scope).allocate(type, 8);
-
-            if (CallingSequenceBuilderImpl.isRegisterAggregate(type.layout())) {
-                Pointer<Long> dst = Util.unsafeCast(rtmp, NativeTypes.UINT64).offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
-                Pointer.copy(srcPtrFunc.apply(binding), dst, binding.getStorage().getSize());
-            } else {
-                Pointer<?> local = Util.unsafeCast(srcPtrFunc.apply(binding), type.pointer()).get();
-                // need defensive copy since Structs don't have value semantics on the Java side.
-                Pointer.copy(local, rtmp, type.bytesSize());
-            }
-
-            return rtmp.get();
-        }
-        return Util.unsafeCast(srcPtrFunc.apply(binding), type).get();
-    }
-
+    };
 }
