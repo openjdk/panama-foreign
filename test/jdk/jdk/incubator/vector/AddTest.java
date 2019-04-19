@@ -27,15 +27,15 @@
  */
 
 import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.Vector.Shape;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorShape;
+import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.Vector;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class AddTest {
-    static final Species<Float> SPECIES =
+    static final VectorSpecies<Float> SPECIES =
             FloatVector.SPECIES_256;
 
     static final int SIZE = 1024;

@@ -9,8 +9,8 @@ import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntFunction;
-import jdk.incubator.vector.Vector.Shape;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorShape;
+import jdk.incubator.vector.VectorSpecies;
 
 /**
  * @test
@@ -25,45 +25,45 @@ public class VectorReshapeTests {
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
     static final int NUM_ITER = 200 * INVOC_COUNT;
 
-    static final Shape S_Max_BIT = getMaxBit();
+    static final VectorShape S_Max_BIT = getMaxBit();
 
-    static final Species<Integer> ispec64 = IntVector.SPECIES_64;
-    static final Species<Float> fspec64 = FloatVector.SPECIES_64;
-    static final Species<Long> lspec64 = LongVector.SPECIES_64;
-    static final Species<Double> dspec64 = DoubleVector.SPECIES_64;
-    static final Species<Byte> bspec64 = ByteVector.SPECIES_64;
-    static final Species<Short> sspec64 = ShortVector.SPECIES_64;
+    static final VectorSpecies<Integer> ispec64 = IntVector.SPECIES_64;
+    static final VectorSpecies<Float> fspec64 = FloatVector.SPECIES_64;
+    static final VectorSpecies<Long> lspec64 = LongVector.SPECIES_64;
+    static final VectorSpecies<Double> dspec64 = DoubleVector.SPECIES_64;
+    static final VectorSpecies<Byte> bspec64 = ByteVector.SPECIES_64;
+    static final VectorSpecies<Short> sspec64 = ShortVector.SPECIES_64;
 
-    static final Species<Integer> ispec128 = IntVector.SPECIES_128;
-    static final Species<Float> fspec128 = FloatVector.SPECIES_128;
-    static final Species<Long> lspec128 = LongVector.SPECIES_128;
-    static final Species<Double> dspec128 = DoubleVector.SPECIES_128;
-    static final Species<Byte> bspec128 = ByteVector.SPECIES_128;
-    static final Species<Short> sspec128 = ShortVector.SPECIES_128;
+    static final VectorSpecies<Integer> ispec128 = IntVector.SPECIES_128;
+    static final VectorSpecies<Float> fspec128 = FloatVector.SPECIES_128;
+    static final VectorSpecies<Long> lspec128 = LongVector.SPECIES_128;
+    static final VectorSpecies<Double> dspec128 = DoubleVector.SPECIES_128;
+    static final VectorSpecies<Byte> bspec128 = ByteVector.SPECIES_128;
+    static final VectorSpecies<Short> sspec128 = ShortVector.SPECIES_128;
 
-    static final Species<Integer> ispec256 = IntVector.SPECIES_256;
-    static final Species<Float> fspec256 = FloatVector.SPECIES_256;
-    static final Species<Long> lspec256 = LongVector.SPECIES_256;
-    static final Species<Double> dspec256 = DoubleVector.SPECIES_256;
-    static final Species<Byte> bspec256 = ByteVector.SPECIES_256;
-    static final Species<Short> sspec256 = ShortVector.SPECIES_256;
+    static final VectorSpecies<Integer> ispec256 = IntVector.SPECIES_256;
+    static final VectorSpecies<Float> fspec256 = FloatVector.SPECIES_256;
+    static final VectorSpecies<Long> lspec256 = LongVector.SPECIES_256;
+    static final VectorSpecies<Double> dspec256 = DoubleVector.SPECIES_256;
+    static final VectorSpecies<Byte> bspec256 = ByteVector.SPECIES_256;
+    static final VectorSpecies<Short> sspec256 = ShortVector.SPECIES_256;
 
-    static final Species<Integer> ispec512 = IntVector.SPECIES_512;
-    static final Species<Float> fspec512 = FloatVector.SPECIES_512;
-    static final Species<Long> lspec512 = LongVector.SPECIES_512;
-    static final Species<Double> dspec512 = DoubleVector.SPECIES_512;
-    static final Species<Byte> bspec512 = ByteVector.SPECIES_512;
-    static final Species<Short> sspec512 = ShortVector.SPECIES_512;
+    static final VectorSpecies<Integer> ispec512 = IntVector.SPECIES_512;
+    static final VectorSpecies<Float> fspec512 = FloatVector.SPECIES_512;
+    static final VectorSpecies<Long> lspec512 = LongVector.SPECIES_512;
+    static final VectorSpecies<Double> dspec512 = DoubleVector.SPECIES_512;
+    static final VectorSpecies<Byte> bspec512 = ByteVector.SPECIES_512;
+    static final VectorSpecies<Short> sspec512 = ShortVector.SPECIES_512;
 
-    static final Species<Integer> ispecMax = IntVector.SPECIES_MAX;
-    static final Species<Float> fspecMax = FloatVector.SPECIES_MAX;
-    static final Species<Long> lspecMax = LongVector.SPECIES_MAX;
-    static final Species<Double> dspecMax = DoubleVector.SPECIES_MAX;
-    static final Species<Byte> bspecMax = ByteVector.SPECIES_MAX;
-    static final Species<Short> sspecMax = ShortVector.SPECIES_MAX;
+    static final VectorSpecies<Integer> ispecMax = IntVector.SPECIES_MAX;
+    static final VectorSpecies<Float> fspecMax = FloatVector.SPECIES_MAX;
+    static final VectorSpecies<Long> lspecMax = LongVector.SPECIES_MAX;
+    static final VectorSpecies<Double> dspecMax = DoubleVector.SPECIES_MAX;
+    static final VectorSpecies<Byte> bspecMax = ByteVector.SPECIES_MAX;
+    static final VectorSpecies<Short> sspecMax = ShortVector.SPECIES_MAX;
 
-    static Shape getMaxBit() {
-        return Shape.S_Max_BIT;
+    static VectorShape getMaxBit() {
+        return VectorShape.S_Max_BIT;
     }
 
     static <T> IntFunction<T> withToString(String s, IntFunction<T> f) {
@@ -278,21 +278,21 @@ public class VectorReshapeTests {
 
     @ForceInline
     static <E>
-    void testVectorReshape(Vector.Species<E> a, Vector.Species<E> b, byte[] input, byte[] output) {
+    void testVectorReshape(VectorSpecies<E> a, VectorSpecies<E> b, byte[] input, byte[] output) {
         Vector<E> av;
         Class<?> stype = a.elementType();
         if (stype == byte.class) {
-           av =  (Vector) ByteVector.fromByteArray((Species<Byte>)a, input, 0);
+           av =  (Vector) ByteVector.fromByteArray((VectorSpecies<Byte>)a, input, 0);
         } else if (stype == short.class) {
-           av =  (Vector) ShortVector.fromByteArray((Species<Short>)a, input, 0);
+           av =  (Vector) ShortVector.fromByteArray((VectorSpecies<Short>)a, input, 0);
         } else if (stype == int.class) {
-           av =  (Vector) IntVector.fromByteArray((Species<Integer>)a, input, 0);
+           av =  (Vector) IntVector.fromByteArray((VectorSpecies<Integer>)a, input, 0);
         } else if (stype == long.class) {
-           av =  (Vector) LongVector.fromByteArray((Species<Long>)a, input, 0);
+           av =  (Vector) LongVector.fromByteArray((VectorSpecies<Long>)a, input, 0);
         } else if (stype == float.class) {
-           av =  (Vector) FloatVector.fromByteArray((Species<Float>)a, input, 0);
+           av =  (Vector) FloatVector.fromByteArray((VectorSpecies<Float>)a, input, 0);
         } else if (stype == double.class) {
-           av =  (Vector) DoubleVector.fromByteArray((Species<Double>)a, input, 0);
+           av =  (Vector) DoubleVector.fromByteArray((VectorSpecies<Double>)a, input, 0);
         } else {
             throw new UnsupportedOperationException("Bad lane type");
         } 
@@ -583,23 +583,23 @@ public class VectorReshapeTests {
 
     @ForceInline
     static <E,F>
-    void testVectorRebracket(Vector.Species<E> a, Vector.Species<F> b, byte[] input, byte[] output) {
+    void testVectorRebracket(VectorSpecies<E> a, VectorSpecies<F> b, byte[] input, byte[] output) {
         assert(input.length == output.length);
         Vector<E> av;
 
         Class<?> stype = a.elementType();
         if (stype == byte.class) {
-           av =  (Vector) ByteVector.fromByteArray((Species<Byte>)a, input, 0);
+           av =  (Vector) ByteVector.fromByteArray((VectorSpecies<Byte>)a, input, 0);
         } else if (stype == short.class) {
-           av =  (Vector) ShortVector.fromByteArray((Species<Short>)a, input, 0);
+           av =  (Vector) ShortVector.fromByteArray((VectorSpecies<Short>)a, input, 0);
         } else if (stype == int.class) {
-           av =  (Vector) IntVector.fromByteArray((Species<Integer>)a, input, 0);
+           av =  (Vector) IntVector.fromByteArray((VectorSpecies<Integer>)a, input, 0);
         } else if (stype == long.class) {
-           av =  (Vector) LongVector.fromByteArray((Species<Long>)a, input, 0);
+           av =  (Vector) LongVector.fromByteArray((VectorSpecies<Long>)a, input, 0);
         } else if (stype == float.class) {
-           av =  (Vector) FloatVector.fromByteArray((Species<Float>)a, input, 0);
+           av =  (Vector) FloatVector.fromByteArray((VectorSpecies<Float>)a, input, 0);
         } else if (stype == double.class) {
-           av =  (Vector) DoubleVector.fromByteArray((Species<Double>)a, input, 0);
+           av =  (Vector) DoubleVector.fromByteArray((VectorSpecies<Double>)a, input, 0);
         } else {
             throw new UnsupportedOperationException("Bad lane type");
         } 
@@ -856,7 +856,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToFloat(Species<Byte> a, Species<Float> b, byte[] input, float[] output) {
+    void testVectorCastByteToFloat(VectorSpecies<Byte> a, VectorSpecies<Float> b, byte[] input, float[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -874,7 +874,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToFloatFail(Species<Byte> a, Species<Float> b, byte[] input) {
+    void testVectorCastByteToFloatFail(VectorSpecies<Byte> a, VectorSpecies<Float> b, byte[] input) {
         assert(input.length == a.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
@@ -889,7 +889,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToFloat(Species<Short> a, Species<Float> b, short[] input, float[] output) {
+    void testVectorCastShortToFloat(VectorSpecies<Short> a, VectorSpecies<Float> b, short[] input, float[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -907,7 +907,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToFloatFail(Species<Short> a, Species<Float> b, short[] input) {
+    void testVectorCastShortToFloatFail(VectorSpecies<Short> a, VectorSpecies<Float> b, short[] input) {
         assert(input.length == a.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
@@ -922,7 +922,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToFloat(Species<Integer> a, Species<Float> b, int[] input, float[] output) {
+    void testVectorCastIntToFloat(VectorSpecies<Integer> a, VectorSpecies<Float> b, int[] input, float[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -940,7 +940,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToFloatFail(Species<Integer> a, Species<Float> b, int[] input) {
+    void testVectorCastIntToFloatFail(VectorSpecies<Integer> a, VectorSpecies<Float> b, int[] input) {
         assert(input.length == a.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
@@ -955,7 +955,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToFloat(Species<Long> a, Species<Float> b, long[] input, float[] output) {
+    void testVectorCastLongToFloat(VectorSpecies<Long> a, VectorSpecies<Float> b, long[] input, float[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -973,7 +973,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToFloatFail(Species<Long> a, Species<Float> b, long[] input) {
+    void testVectorCastLongToFloatFail(VectorSpecies<Long> a, VectorSpecies<Float> b, long[] input) {
         assert(input.length == a.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
@@ -988,7 +988,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToFloat(Species<Float> a, Species<Float> b, float[] input, float[] output) {
+    void testVectorCastFloatToFloat(VectorSpecies<Float> a, VectorSpecies<Float> b, float[] input, float[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1006,7 +1006,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToFloatFail(Species<Float> a, Species<Float> b, float[] input) {
+    void testVectorCastFloatToFloatFail(VectorSpecies<Float> a, VectorSpecies<Float> b, float[] input) {
         assert(input.length == a.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
@@ -1021,7 +1021,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToFloat(Species<Double> a, Species<Float> b, double[] input, float[] output) {
+    void testVectorCastDoubleToFloat(VectorSpecies<Double> a, VectorSpecies<Float> b, double[] input, float[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1039,7 +1039,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToFloatFail(Species<Double> a, Species<Float> b, double[] input) {
+    void testVectorCastDoubleToFloatFail(VectorSpecies<Double> a, VectorSpecies<Float> b, double[] input) {
         assert(input.length == a.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
@@ -1054,7 +1054,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToByte(Species<Byte> a, Species<Byte> b, byte[] input, byte[] output) {
+    void testVectorCastByteToByte(VectorSpecies<Byte> a, VectorSpecies<Byte> b, byte[] input, byte[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1072,7 +1072,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToByteFail(Species<Byte> a, Species<Byte> b, byte[] input) {
+    void testVectorCastByteToByteFail(VectorSpecies<Byte> a, VectorSpecies<Byte> b, byte[] input) {
         assert(input.length == a.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
@@ -1087,7 +1087,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToByte(Species<Short> a, Species<Byte> b, short[] input, byte[] output) {
+    void testVectorCastShortToByte(VectorSpecies<Short> a, VectorSpecies<Byte> b, short[] input, byte[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1105,7 +1105,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToByteFail(Species<Short> a, Species<Byte> b, short[] input) {
+    void testVectorCastShortToByteFail(VectorSpecies<Short> a, VectorSpecies<Byte> b, short[] input) {
         assert(input.length == a.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
@@ -1120,7 +1120,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToByte(Species<Integer> a, Species<Byte> b, int[] input, byte[] output) {
+    void testVectorCastIntToByte(VectorSpecies<Integer> a, VectorSpecies<Byte> b, int[] input, byte[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1138,7 +1138,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToByteFail(Species<Integer> a, Species<Byte> b, int[] input) {
+    void testVectorCastIntToByteFail(VectorSpecies<Integer> a, VectorSpecies<Byte> b, int[] input) {
         assert(input.length == a.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
@@ -1153,7 +1153,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToByte(Species<Long> a, Species<Byte> b, long[] input, byte[] output) {
+    void testVectorCastLongToByte(VectorSpecies<Long> a, VectorSpecies<Byte> b, long[] input, byte[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1171,7 +1171,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToByteFail(Species<Long> a, Species<Byte> b, long[] input) {
+    void testVectorCastLongToByteFail(VectorSpecies<Long> a, VectorSpecies<Byte> b, long[] input) {
         assert(input.length == a.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
@@ -1186,7 +1186,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToByte(Species<Float> a, Species<Byte> b, float[] input, byte[] output) {
+    void testVectorCastFloatToByte(VectorSpecies<Float> a, VectorSpecies<Byte> b, float[] input, byte[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1204,7 +1204,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToByteFail(Species<Float> a, Species<Byte> b, float[] input) {
+    void testVectorCastFloatToByteFail(VectorSpecies<Float> a, VectorSpecies<Byte> b, float[] input) {
         assert(input.length == a.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
@@ -1219,7 +1219,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToByte(Species<Double> a, Species<Byte> b, double[] input, byte[] output) {
+    void testVectorCastDoubleToByte(VectorSpecies<Double> a, VectorSpecies<Byte> b, double[] input, byte[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1237,7 +1237,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToByteFail(Species<Double> a, Species<Byte> b, double[] input) {
+    void testVectorCastDoubleToByteFail(VectorSpecies<Double> a, VectorSpecies<Byte> b, double[] input) {
         assert(input.length == a.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
@@ -1252,7 +1252,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToShort(Species<Byte> a, Species<Short> b, byte[] input, short[] output) {
+    void testVectorCastByteToShort(VectorSpecies<Byte> a, VectorSpecies<Short> b, byte[] input, short[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1270,7 +1270,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToShortFail(Species<Byte> a, Species<Short> b, byte[] input) {
+    void testVectorCastByteToShortFail(VectorSpecies<Byte> a, VectorSpecies<Short> b, byte[] input) {
         assert(input.length == a.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
@@ -1285,7 +1285,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToShort(Species<Short> a, Species<Short> b, short[] input, short[] output) {
+    void testVectorCastShortToShort(VectorSpecies<Short> a, VectorSpecies<Short> b, short[] input, short[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1303,7 +1303,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToShortFail(Species<Short> a, Species<Short> b, short[] input) {
+    void testVectorCastShortToShortFail(VectorSpecies<Short> a, VectorSpecies<Short> b, short[] input) {
         assert(input.length == a.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
@@ -1318,7 +1318,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToShort(Species<Integer> a, Species<Short> b, int[] input, short[] output) {
+    void testVectorCastIntToShort(VectorSpecies<Integer> a, VectorSpecies<Short> b, int[] input, short[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1336,7 +1336,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToShortFail(Species<Integer> a, Species<Short> b, int[] input) {
+    void testVectorCastIntToShortFail(VectorSpecies<Integer> a, VectorSpecies<Short> b, int[] input) {
         assert(input.length == a.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
@@ -1351,7 +1351,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToShort(Species<Long> a, Species<Short> b, long[] input, short[] output) {
+    void testVectorCastLongToShort(VectorSpecies<Long> a, VectorSpecies<Short> b, long[] input, short[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1369,7 +1369,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToShortFail(Species<Long> a, Species<Short> b, long[] input) {
+    void testVectorCastLongToShortFail(VectorSpecies<Long> a, VectorSpecies<Short> b, long[] input) {
         assert(input.length == a.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
@@ -1384,7 +1384,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToShort(Species<Float> a, Species<Short> b, float[] input, short[] output) {
+    void testVectorCastFloatToShort(VectorSpecies<Float> a, VectorSpecies<Short> b, float[] input, short[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1402,7 +1402,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToShortFail(Species<Float> a, Species<Short> b, float[] input) {
+    void testVectorCastFloatToShortFail(VectorSpecies<Float> a, VectorSpecies<Short> b, float[] input) {
         assert(input.length == a.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
@@ -1417,7 +1417,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToShort(Species<Double> a, Species<Short> b, double[] input, short[] output) {
+    void testVectorCastDoubleToShort(VectorSpecies<Double> a, VectorSpecies<Short> b, double[] input, short[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1435,7 +1435,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToShortFail(Species<Double> a, Species<Short> b, double[] input) {
+    void testVectorCastDoubleToShortFail(VectorSpecies<Double> a, VectorSpecies<Short> b, double[] input) {
         assert(input.length == a.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
@@ -1450,7 +1450,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToInt(Species<Byte> a, Species<Integer> b, byte[] input, int[] output) {
+    void testVectorCastByteToInt(VectorSpecies<Byte> a, VectorSpecies<Integer> b, byte[] input, int[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1468,7 +1468,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToIntFail(Species<Byte> a, Species<Integer> b, byte[] input) {
+    void testVectorCastByteToIntFail(VectorSpecies<Byte> a, VectorSpecies<Integer> b, byte[] input) {
         assert(input.length == a.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
@@ -1483,7 +1483,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToInt(Species<Short> a, Species<Integer> b, short[] input, int[] output) {
+    void testVectorCastShortToInt(VectorSpecies<Short> a, VectorSpecies<Integer> b, short[] input, int[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1501,7 +1501,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToIntFail(Species<Short> a, Species<Integer> b, short[] input) {
+    void testVectorCastShortToIntFail(VectorSpecies<Short> a, VectorSpecies<Integer> b, short[] input) {
         assert(input.length == a.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
@@ -1516,7 +1516,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToInt(Species<Integer> a, Species<Integer> b, int[] input, int[] output) {
+    void testVectorCastIntToInt(VectorSpecies<Integer> a, VectorSpecies<Integer> b, int[] input, int[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1534,7 +1534,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToIntFail(Species<Integer> a, Species<Integer> b, int[] input) {
+    void testVectorCastIntToIntFail(VectorSpecies<Integer> a, VectorSpecies<Integer> b, int[] input) {
         assert(input.length == a.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
@@ -1549,7 +1549,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToInt(Species<Long> a, Species<Integer> b, long[] input, int[] output) {
+    void testVectorCastLongToInt(VectorSpecies<Long> a, VectorSpecies<Integer> b, long[] input, int[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1567,7 +1567,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToIntFail(Species<Long> a, Species<Integer> b, long[] input) {
+    void testVectorCastLongToIntFail(VectorSpecies<Long> a, VectorSpecies<Integer> b, long[] input) {
         assert(input.length == a.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
@@ -1582,7 +1582,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToInt(Species<Float> a, Species<Integer> b, float[] input, int[] output) {
+    void testVectorCastFloatToInt(VectorSpecies<Float> a, VectorSpecies<Integer> b, float[] input, int[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1600,7 +1600,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToIntFail(Species<Float> a, Species<Integer> b, float[] input) {
+    void testVectorCastFloatToIntFail(VectorSpecies<Float> a, VectorSpecies<Integer> b, float[] input) {
         assert(input.length == a.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
@@ -1615,7 +1615,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToInt(Species<Double> a, Species<Integer> b, double[] input, int[] output) {
+    void testVectorCastDoubleToInt(VectorSpecies<Double> a, VectorSpecies<Integer> b, double[] input, int[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1633,7 +1633,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToIntFail(Species<Double> a, Species<Integer> b, double[] input) {
+    void testVectorCastDoubleToIntFail(VectorSpecies<Double> a, VectorSpecies<Integer> b, double[] input) {
         assert(input.length == a.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
@@ -1648,7 +1648,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToLong(Species<Byte> a, Species<Long> b, byte[] input, long[] output) {
+    void testVectorCastByteToLong(VectorSpecies<Byte> a, VectorSpecies<Long> b, byte[] input, long[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1666,7 +1666,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToLongFail(Species<Byte> a, Species<Long> b, byte[] input) {
+    void testVectorCastByteToLongFail(VectorSpecies<Byte> a, VectorSpecies<Long> b, byte[] input) {
         assert(input.length == a.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
@@ -1681,7 +1681,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToLong(Species<Short> a, Species<Long> b, short[] input, long[] output) {
+    void testVectorCastShortToLong(VectorSpecies<Short> a, VectorSpecies<Long> b, short[] input, long[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1699,7 +1699,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToLongFail(Species<Short> a, Species<Long> b, short[] input) {
+    void testVectorCastShortToLongFail(VectorSpecies<Short> a, VectorSpecies<Long> b, short[] input) {
         assert(input.length == a.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
@@ -1714,7 +1714,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToLong(Species<Integer> a, Species<Long> b, int[] input, long[] output) {
+    void testVectorCastIntToLong(VectorSpecies<Integer> a, VectorSpecies<Long> b, int[] input, long[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1732,7 +1732,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToLongFail(Species<Integer> a, Species<Long> b, int[] input) {
+    void testVectorCastIntToLongFail(VectorSpecies<Integer> a, VectorSpecies<Long> b, int[] input) {
         assert(input.length == a.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
@@ -1747,7 +1747,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToLong(Species<Long> a, Species<Long> b, long[] input, long[] output) {
+    void testVectorCastLongToLong(VectorSpecies<Long> a, VectorSpecies<Long> b, long[] input, long[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1765,7 +1765,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToLongFail(Species<Long> a, Species<Long> b, long[] input) {
+    void testVectorCastLongToLongFail(VectorSpecies<Long> a, VectorSpecies<Long> b, long[] input) {
         assert(input.length == a.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
@@ -1780,7 +1780,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToLong(Species<Float> a, Species<Long> b, float[] input, long[] output) {
+    void testVectorCastFloatToLong(VectorSpecies<Float> a, VectorSpecies<Long> b, float[] input, long[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1798,7 +1798,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToLongFail(Species<Float> a, Species<Long> b, float[] input) {
+    void testVectorCastFloatToLongFail(VectorSpecies<Float> a, VectorSpecies<Long> b, float[] input) {
         assert(input.length == a.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
@@ -1813,7 +1813,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToLong(Species<Double> a, Species<Long> b, double[] input, long[] output) {
+    void testVectorCastDoubleToLong(VectorSpecies<Double> a, VectorSpecies<Long> b, double[] input, long[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1831,7 +1831,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToLongFail(Species<Double> a, Species<Long> b, double[] input) {
+    void testVectorCastDoubleToLongFail(VectorSpecies<Double> a, VectorSpecies<Long> b, double[] input) {
         assert(input.length == a.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
@@ -1846,7 +1846,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToDouble(Species<Byte> a, Species<Double> b, byte[] input, double[] output) {
+    void testVectorCastByteToDouble(VectorSpecies<Byte> a, VectorSpecies<Double> b, byte[] input, double[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1864,7 +1864,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastByteToDoubleFail(Species<Byte> a, Species<Double> b, byte[] input) {
+    void testVectorCastByteToDoubleFail(VectorSpecies<Byte> a, VectorSpecies<Double> b, byte[] input) {
         assert(input.length == a.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
@@ -1879,7 +1879,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToDouble(Species<Short> a, Species<Double> b, short[] input, double[] output) {
+    void testVectorCastShortToDouble(VectorSpecies<Short> a, VectorSpecies<Double> b, short[] input, double[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1897,7 +1897,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastShortToDoubleFail(Species<Short> a, Species<Double> b, short[] input) {
+    void testVectorCastShortToDoubleFail(VectorSpecies<Short> a, VectorSpecies<Double> b, short[] input) {
         assert(input.length == a.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
@@ -1912,7 +1912,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToDouble(Species<Integer> a, Species<Double> b, int[] input, double[] output) {
+    void testVectorCastIntToDouble(VectorSpecies<Integer> a, VectorSpecies<Double> b, int[] input, double[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1930,7 +1930,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastIntToDoubleFail(Species<Integer> a, Species<Double> b, int[] input) {
+    void testVectorCastIntToDoubleFail(VectorSpecies<Integer> a, VectorSpecies<Double> b, int[] input) {
         assert(input.length == a.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
@@ -1945,7 +1945,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToDouble(Species<Long> a, Species<Double> b, long[] input, double[] output) {
+    void testVectorCastLongToDouble(VectorSpecies<Long> a, VectorSpecies<Double> b, long[] input, double[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1963,7 +1963,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastLongToDoubleFail(Species<Long> a, Species<Double> b, long[] input) {
+    void testVectorCastLongToDoubleFail(VectorSpecies<Long> a, VectorSpecies<Double> b, long[] input) {
         assert(input.length == a.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
@@ -1978,7 +1978,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToDouble(Species<Float> a, Species<Double> b, float[] input, double[] output) {
+    void testVectorCastFloatToDouble(VectorSpecies<Float> a, VectorSpecies<Double> b, float[] input, double[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -1996,7 +1996,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastFloatToDoubleFail(Species<Float> a, Species<Double> b, float[] input) {
+    void testVectorCastFloatToDoubleFail(VectorSpecies<Float> a, VectorSpecies<Double> b, float[] input) {
         assert(input.length == a.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
@@ -2011,7 +2011,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToDouble(Species<Double> a, Species<Double> b, double[] input, double[] output) {
+    void testVectorCastDoubleToDouble(VectorSpecies<Double> a, VectorSpecies<Double> b, double[] input, double[] output) {
         assert(input.length == a.length());
         assert(output.length == b.length());
 
@@ -2029,7 +2029,7 @@ public class VectorReshapeTests {
 
     @ForceInline
     static 
-    void testVectorCastDoubleToDoubleFail(Species<Double> a, Species<Double> b, double[] input) {
+    void testVectorCastDoubleToDoubleFail(VectorSpecies<Double> a, VectorSpecies<Double> b, double[] input) {
         assert(input.length == a.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
@@ -3057,7 +3057,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastByteMaxToByte(Species<Byte> a, Species<Byte> b,
+    void testVectorCastByteMaxToByte(VectorSpecies<Byte> a, VectorSpecies<Byte> b,
                                           byte[] input, byte[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToByte(a, b, input, output);
@@ -3067,7 +3067,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastByteMaxToShort(Species<Byte> a, Species<Short> b,
+    void testVectorCastByteMaxToShort(VectorSpecies<Byte> a, VectorSpecies<Short> b,
                                            byte[] input, short[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToShort(a, b, input, output);
@@ -3077,7 +3077,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastByteMaxToInt(Species<Byte> a, Species<Integer> b,
+    void testVectorCastByteMaxToInt(VectorSpecies<Byte> a, VectorSpecies<Integer> b,
                                          byte[] input, int[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToInt(a, b, input, output);
@@ -3087,7 +3087,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastByteMaxToLong(Species<Byte> a, Species<Long> b,
+    void testVectorCastByteMaxToLong(VectorSpecies<Byte> a, VectorSpecies<Long> b,
                                           byte[] input, long[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToLong(a, b, input, output);
@@ -3097,7 +3097,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastByteMaxToFloat(Species<Byte> a, Species<Float> b,
+    void testVectorCastByteMaxToFloat(VectorSpecies<Byte> a, VectorSpecies<Float> b,
                                            byte[] input, float[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToFloat(a, b, input, output);
@@ -3107,7 +3107,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastByteMaxToDouble(Species<Byte> a, Species<Double> b,
+    void testVectorCastByteMaxToDouble(VectorSpecies<Byte> a, VectorSpecies<Double> b,
                                             byte[] input, double[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToDouble(a, b, input, output);
@@ -3117,7 +3117,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastShortMaxToByte(Species<Short> a, Species<Byte> b,
+    void testVectorCastShortMaxToByte(VectorSpecies<Short> a, VectorSpecies<Byte> b,
                                            short[] input, byte[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToByte(a, b, input, output);
@@ -3127,7 +3127,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastShortMaxToShort(Species<Short> a, Species<Short> b,
+    void testVectorCastShortMaxToShort(VectorSpecies<Short> a, VectorSpecies<Short> b,
                                             short[] input, short[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToShort(a, b, input, output);
@@ -3137,7 +3137,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastShortMaxToInt(Species<Short> a, Species<Integer> b,
+    void testVectorCastShortMaxToInt(VectorSpecies<Short> a, VectorSpecies<Integer> b,
                                           short[] input, int[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToInt(a, b, input, output);
@@ -3147,7 +3147,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastShortMaxToLong(Species<Short> a, Species<Long> b,
+    void testVectorCastShortMaxToLong(VectorSpecies<Short> a, VectorSpecies<Long> b,
                                            short[] input, long[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToLong(a, b, input, output);
@@ -3157,7 +3157,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastShortMaxToFloat(Species<Short> a, Species<Float> b,
+    void testVectorCastShortMaxToFloat(VectorSpecies<Short> a, VectorSpecies<Float> b,
                                             short[] input, float[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToFloat(a, b, input, output);
@@ -3167,7 +3167,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastShortMaxToDouble(Species<Short> a, Species<Double> b,
+    void testVectorCastShortMaxToDouble(VectorSpecies<Short> a, VectorSpecies<Double> b,
                                              short[] input, double[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToDouble(a, b, input, output);
@@ -3177,7 +3177,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastIntMaxToByte(Species<Integer> a, Species<Byte> b,
+    void testVectorCastIntMaxToByte(VectorSpecies<Integer> a, VectorSpecies<Byte> b,
                                          int[] input, byte[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToByte(a, b, input, output);
@@ -3187,7 +3187,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastIntMaxToShort(Species<Integer> a, Species<Short> b,
+    void testVectorCastIntMaxToShort(VectorSpecies<Integer> a, VectorSpecies<Short> b,
                                           int[] input, short[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToShort(a, b, input, output);
@@ -3197,7 +3197,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastIntMaxToInt(Species<Integer> a, Species<Integer> b,
+    void testVectorCastIntMaxToInt(VectorSpecies<Integer> a, VectorSpecies<Integer> b,
                                         int[] input, int[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToInt(a, b, input, output);
@@ -3207,7 +3207,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastIntMaxToLong(Species<Integer> a, Species<Long> b,
+    void testVectorCastIntMaxToLong(VectorSpecies<Integer> a, VectorSpecies<Long> b,
                                          int[] input, long[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToLong(a, b, input, output);
@@ -3217,7 +3217,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastIntMaxToFloat(Species<Integer> a, Species<Float> b,
+    void testVectorCastIntMaxToFloat(VectorSpecies<Integer> a, VectorSpecies<Float> b,
                                           int[] input, float[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToFloat(a, b, input, output);
@@ -3227,7 +3227,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastIntMaxToDouble(Species<Integer> a, Species<Double> b,
+    void testVectorCastIntMaxToDouble(VectorSpecies<Integer> a, VectorSpecies<Double> b,
                                            int[] input, double[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToDouble(a, b, input, output);
@@ -3237,7 +3237,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastLongMaxToByte(Species<Long> a, Species<Byte> b,
+    void testVectorCastLongMaxToByte(VectorSpecies<Long> a, VectorSpecies<Byte> b,
                                           long[] input, byte[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToByte(a, b, input, output);
@@ -3247,7 +3247,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastLongMaxToShort(Species<Long> a, Species<Short> b,
+    void testVectorCastLongMaxToShort(VectorSpecies<Long> a, VectorSpecies<Short> b,
                                            long[] input, short[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToShort(a, b, input, output);
@@ -3257,7 +3257,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastLongMaxToInt(Species<Long> a, Species<Integer> b,
+    void testVectorCastLongMaxToInt(VectorSpecies<Long> a, VectorSpecies<Integer> b,
                                          long[] input, int[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToInt(a, b, input, output);
@@ -3267,7 +3267,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastLongMaxToLong(Species<Long> a, Species<Long> b,
+    void testVectorCastLongMaxToLong(VectorSpecies<Long> a, VectorSpecies<Long> b,
                                           long[] input, long[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToLong(a, b, input, output);
@@ -3277,7 +3277,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastLongMaxToFloat(Species<Long> a, Species<Float> b,
+    void testVectorCastLongMaxToFloat(VectorSpecies<Long> a, VectorSpecies<Float> b,
                                            long[] input, float[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToFloat(a, b, input, output);
@@ -3287,7 +3287,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastLongMaxToDouble(Species<Long> a, Species<Double> b,
+    void testVectorCastLongMaxToDouble(VectorSpecies<Long> a, VectorSpecies<Double> b,
                                             long[] input, double[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToDouble(a, b, input, output);
@@ -3297,7 +3297,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastFloatMaxToByte(Species<Float> a, Species<Byte> b,
+    void testVectorCastFloatMaxToByte(VectorSpecies<Float> a, VectorSpecies<Byte> b,
                                            float[] input, byte[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToByte(a, b, input, output);
@@ -3307,7 +3307,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastFloatMaxToShort(Species<Float> a, Species<Short> b,
+    void testVectorCastFloatMaxToShort(VectorSpecies<Float> a, VectorSpecies<Short> b,
                                             float[] input, short[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToShort(a, b, input, output);
@@ -3317,7 +3317,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastFloatMaxToInt(Species<Float> a, Species<Integer> b,
+    void testVectorCastFloatMaxToInt(VectorSpecies<Float> a, VectorSpecies<Integer> b,
                                           float[] input, int[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToInt(a, b, input, output);
@@ -3327,7 +3327,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastFloatMaxToLong(Species<Float> a, Species<Long> b,
+    void testVectorCastFloatMaxToLong(VectorSpecies<Float> a, VectorSpecies<Long> b,
                                            float[] input, long[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToLong(a, b, input, output);
@@ -3337,7 +3337,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastFloatMaxToFloat(Species<Float> a, Species<Float> b,
+    void testVectorCastFloatMaxToFloat(VectorSpecies<Float> a, VectorSpecies<Float> b,
                                             float[] input, float[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToFloat(a, b, input, output);
@@ -3347,7 +3347,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastFloatMaxToDouble(Species<Float> a, Species<Double> b,
+    void testVectorCastFloatMaxToDouble(VectorSpecies<Float> a, VectorSpecies<Double> b,
                                              float[] input, double[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToDouble(a, b, input, output);
@@ -3357,7 +3357,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastDoubleMaxToByte(Species<Double> a, Species<Byte> b,
+    void testVectorCastDoubleMaxToByte(VectorSpecies<Double> a, VectorSpecies<Byte> b,
                                             double[] input, byte[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToByte(a, b, input, output);
@@ -3367,7 +3367,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastDoubleMaxToShort(Species<Double> a, Species<Short> b,
+    void testVectorCastDoubleMaxToShort(VectorSpecies<Double> a, VectorSpecies<Short> b,
                                              double[] input, short[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToShort(a, b, input, output);
@@ -3377,7 +3377,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastDoubleMaxToInt(Species<Double> a, Species<Integer> b,
+    void testVectorCastDoubleMaxToInt(VectorSpecies<Double> a, VectorSpecies<Integer> b,
                                            double[] input, int[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToInt(a, b, input, output);
@@ -3387,7 +3387,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastDoubleMaxToLong(Species<Double> a, Species<Long> b,
+    void testVectorCastDoubleMaxToLong(VectorSpecies<Double> a, VectorSpecies<Long> b,
                                             double[] input, long[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToLong(a, b, input, output);
@@ -3397,7 +3397,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastDoubleMaxToFloat(Species<Double> a, Species<Float> b,
+    void testVectorCastDoubleMaxToFloat(VectorSpecies<Double> a, VectorSpecies<Float> b,
                                              double[] input, float[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToFloat(a, b, input, output);
@@ -3407,7 +3407,7 @@ public class VectorReshapeTests {
     }
 
     static 
-    void testVectorCastDoubleMaxToDouble(Species<Double> a, Species<Double> b,
+    void testVectorCastDoubleMaxToDouble(VectorSpecies<Double> a, VectorSpecies<Double> b,
                                               double[] input, double[] output) {
         if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToDouble(a, b, input, output);

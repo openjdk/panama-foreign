@@ -28,8 +28,9 @@
  *
  */
 
-import jdk.incubator.vector.Vector.Shape;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorShape;
+import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.LongVector;
@@ -46,7 +47,7 @@ import java.util.function.IntFunction;
 
 @Test
 public class Long128VectorLoadStoreTests extends AbstractVectorTest {
-    static final Species<Long> SPECIES =
+    static final VectorSpecies<Long> SPECIES =
                 LongVector.SPECIES_128;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
@@ -199,7 +200,7 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
         long[] a = fa.apply(SPECIES.length());
         long[] r = new long[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long> vmask = LongVector.maskFromValues(SPECIES, mask);
+        VectorMask<Long> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -273,7 +274,7 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long> vmask = LongVector.maskFromValues(SPECIES, mask);
+        VectorMask<Long> vmask = VectorMask.fromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
@@ -313,7 +314,7 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long> vmask = LongVector.maskFromValues(SPECIES, mask);
+        VectorMask<Long> vmask = VectorMask.fromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;

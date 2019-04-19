@@ -24,8 +24,9 @@
 package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.Vector;
-import jdk.incubator.vector.Vector.Shape;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorShape;
+import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.VectorShuffle;
 import jdk.incubator.vector.$Type$Vector;
 
 import java.util.concurrent.TimeUnit;
@@ -43,9 +44,9 @@ import org.openjdk.jmh.infra.Blackhole;
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class $vectorbenchtype$ extends AbstractVectorBenchmark {
 #if[MaxBit]
-    static final Species<$Wideboxtype$> SPECIES = $Type$Vector.SPECIES_MAX;
+    static final VectorSpecies<$Wideboxtype$> SPECIES = $Type$Vector.SPECIES_MAX;
 #else[MaxBit]
-    static final Species<$Wideboxtype$> SPECIES = $Type$Vector.SPECIES_$bits$;
+    static final VectorSpecies<$Wideboxtype$> SPECIES = $Type$Vector.SPECIES_$bits$;
 #end[MaxBit]
 
     static final int INVOC_COUNT = 1; // get rid of outer loop

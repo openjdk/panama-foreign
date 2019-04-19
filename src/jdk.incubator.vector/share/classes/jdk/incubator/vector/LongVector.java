@@ -56,7 +56,7 @@ public abstract class LongVector extends Vector<Long> {
 
     abstract LongVector uOp(FUnOp f);
 
-    abstract LongVector uOp(Mask<Long> m, FUnOp f);
+    abstract LongVector uOp(VectorMask<Long> m, FUnOp f);
 
     // Binary operator
 
@@ -66,7 +66,7 @@ public abstract class LongVector extends Vector<Long> {
 
     abstract LongVector bOp(Vector<Long> v, FBinOp f);
 
-    abstract LongVector bOp(Vector<Long> v, Mask<Long> m, FBinOp f);
+    abstract LongVector bOp(Vector<Long> v, VectorMask<Long> m, FBinOp f);
 
     // Trinary operator
 
@@ -76,7 +76,7 @@ public abstract class LongVector extends Vector<Long> {
 
     abstract LongVector tOp(Vector<Long> v1, Vector<Long> v2, FTriOp f);
 
-    abstract LongVector tOp(Vector<Long> v1, Vector<Long> v2, Mask<Long> m, FTriOp f);
+    abstract LongVector tOp(Vector<Long> v1, Vector<Long> v2, VectorMask<Long> m, FTriOp f);
 
     // Reduction operator
 
@@ -88,7 +88,7 @@ public abstract class LongVector extends Vector<Long> {
         boolean apply(int i, long a, long b);
     }
 
-    abstract Mask<Long> bTest(Vector<Long> v, FBinTest f);
+    abstract VectorMask<Long> bTest(Vector<Long> v, FBinTest f);
 
     // Foreach
 
@@ -98,7 +98,7 @@ public abstract class LongVector extends Vector<Long> {
 
     abstract void forEach(FUnCon f);
 
-    abstract void forEach(Mask<Long> m, FUnCon f);
+    abstract void forEach(VectorMask<Long> m, FUnCon f);
 
     // Static factories
 
@@ -111,7 +111,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector zero(Species<Long> species) {
+    public static LongVector zero(VectorSpecies<Long> species) {
         return VectorIntrinsics.broadcastCoerced((Class<LongVector>) species.boxType(), long.class, species.length(),
                                                  0, species,
                                                  ((bits, s) -> ((LongSpecies)s).op(i -> (long)bits)));
@@ -125,7 +125,7 @@ public abstract class LongVector extends Vector<Long> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(Species<Long>, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(VectorSpecies<Long>, ByteBuffer, int, VectorMask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
@@ -139,7 +139,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector fromByteArray(Species<Long> species, byte[] a, int ix) {
+    public static LongVector fromByteArray(VectorSpecies<Long> species, byte[] a, int ix) {
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
         return VectorIntrinsics.load((Class<LongVector>) species.boxType(), long.class, species.length(),
@@ -161,7 +161,7 @@ public abstract class LongVector extends Vector<Long> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(Species<Long>, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(VectorSpecies<Long>, ByteBuffer, int, VectorMask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
@@ -180,7 +180,7 @@ public abstract class LongVector extends Vector<Long> {
      * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static LongVector fromByteArray(Species<Long> species, byte[] a, int ix, Mask<Long> m) {
+    public static LongVector fromByteArray(VectorSpecies<Long> species, byte[] a, int ix, VectorMask<Long> m) {
         return zero(species).blend(fromByteArray(species, a, ix), m);
     }
 
@@ -200,7 +200,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector fromArray(Species<Long> species, long[] a, int i){
+    public static LongVector fromArray(VectorSpecies<Long> species, long[] a, int i){
         Objects.requireNonNull(a);
         i = VectorIntrinsics.checkIndex(i, a.length, species.length());
         return VectorIntrinsics.load((Class<LongVector>) species.boxType(), long.class, species.length(),
@@ -229,7 +229,7 @@ public abstract class LongVector extends Vector<Long> {
      * is set {@code i > a.length - N}
      */
     @ForceInline
-    public static LongVector fromArray(Species<Long> species, long[] a, int i, Mask<Long> m) {
+    public static LongVector fromArray(VectorSpecies<Long> species, long[] a, int i, VectorMask<Long> m) {
         return zero(species).blend(fromArray(species, a, i), m);
     }
 
@@ -256,7 +256,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector fromArray(Species<Long> species, long[] a, int i, int[] indexMap, int j) {
+    public static LongVector fromArray(VectorSpecies<Long> species, long[] a, int i, int[] indexMap, int j) {
         Objects.requireNonNull(a);
         Objects.requireNonNull(indexMap);
 
@@ -272,7 +272,7 @@ public abstract class LongVector extends Vector<Long> {
         return VectorIntrinsics.loadWithMap((Class<LongVector>) species.boxType(), long.class, species.length(),
                                             IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_LONG_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
-                                            (long[] c, int idx, int[] iMap, int idy, Species<Long> s) ->
+                                            (long[] c, int idx, int[] iMap, int idy, VectorSpecies<Long> s) ->
                                                 ((LongSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }
 
@@ -302,7 +302,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector fromArray(Species<Long> species, long[] a, int i, Mask<Long> m, int[] indexMap, int j) {
+    public static LongVector fromArray(VectorSpecies<Long> species, long[] a, int i, VectorMask<Long> m, int[] indexMap, int j) {
         // @@@ This can result in out of bounds errors for unset mask lanes
         return zero(species).blend(fromArray(species, a, i, indexMap, j), m);
     }
@@ -317,7 +317,7 @@ public abstract class LongVector extends Vector<Long> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(Species<Long>, ByteBuffer, int, Mask)} method} as follows:
+     * {@link #fromByteBuffer(VectorSpecies<Long>, ByteBuffer, int, VectorMask)} method} as follows:
      * <pre>{@code
      *   return this.fromByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
@@ -334,7 +334,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector fromByteBuffer(Species<Long> species, ByteBuffer bb, int ix) {
+    public static LongVector fromByteBuffer(VectorSpecies<Long> species, ByteBuffer bb, int ix) {
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -386,7 +386,7 @@ public abstract class LongVector extends Vector<Long> {
      * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static LongVector fromByteBuffer(Species<Long> species, ByteBuffer bb, int ix, Mask<Long> m) {
+    public static LongVector fromByteBuffer(VectorSpecies<Long> species, ByteBuffer bb, int ix, VectorMask<Long> m) {
         return zero(species).blend(fromByteBuffer(species, bb, ix), m);
     }
 
@@ -401,7 +401,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector broadcast(Species<Long> s, long e) {
+    public static LongVector broadcast(VectorSpecies<Long> s, long e) {
         return VectorIntrinsics.broadcastCoerced(
             (Class<LongVector>) s.boxType(), long.class, s.length(),
             e, s,
@@ -424,7 +424,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static LongVector scalars(Species<Long> s, long... es) {
+    public static LongVector scalars(VectorSpecies<Long> s, long... es) {
         Objects.requireNonNull(es);
         int ix = VectorIntrinsics.checkIndex(0, es.length, s.length());
         return VectorIntrinsics.load((Class<LongVector>) s.boxType(), long.class, s.length(),
@@ -444,7 +444,7 @@ public abstract class LongVector extends Vector<Long> {
      * value {@code e}
      */
     @ForceInline
-    public static final LongVector single(Species<Long> s, long e) {
+    public static final LongVector single(VectorSpecies<Long> s, long e) {
         return zero(s).with(0, e);
     }
 
@@ -459,233 +459,9 @@ public abstract class LongVector extends Vector<Long> {
      * @return a vector where each lane elements is set to a randomly
      * generated primitive value
      */
-    public static LongVector random(Species<Long> s) {
+    public static LongVector random(VectorSpecies<Long> s) {
         ThreadLocalRandom r = ThreadLocalRandom.current();
         return ((LongSpecies)s).op(i -> r.nextLong());
-    }
-
-    /**
-     * Returns a mask where each lane is set or unset according to given
-     * {@code boolean} values
-     * <p>
-     * For each mask lane, where {@code N} is the mask lane index,
-     * if the given {@code boolean} value at index {@code N} is {@code true}
-     * then the mask lane at index {@code N} is set, otherwise it is unset.
-     *
-     * @param species mask species
-     * @param bits the given {@code boolean} values
-     * @return a mask where each lane is set or unset according to the given {@code boolean} value
-     * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
-     */
-    @ForceInline
-    public static Mask<Long> maskFromValues(Species<Long> species, boolean... bits) {
-        if (species.boxType() == LongMaxVector.class)
-            return new LongMaxVector.LongMaxMask(bits);
-        switch (species.bitSize()) {
-            case 64: return new Long64Vector.Long64Mask(bits);
-            case 128: return new Long128Vector.Long128Mask(bits);
-            case 256: return new Long256Vector.Long256Mask(bits);
-            case 512: return new Long512Vector.Long512Mask(bits);
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
-    static Mask<Long> trueMask(Species<Long> species) {
-        if (species.boxType() == LongMaxVector.class)
-            return LongMaxVector.LongMaxMask.TRUE_MASK;
-        switch (species.bitSize()) {
-            case 64: return Long64Vector.Long64Mask.TRUE_MASK;
-            case 128: return Long128Vector.Long128Mask.TRUE_MASK;
-            case 256: return Long256Vector.Long256Mask.TRUE_MASK;
-            case 512: return Long512Vector.Long512Mask.TRUE_MASK;
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    static Mask<Long> falseMask(Species<Long> species) {
-        if (species.boxType() == LongMaxVector.class)
-            return LongMaxVector.LongMaxMask.FALSE_MASK;
-        switch (species.bitSize()) {
-            case 64: return Long64Vector.Long64Mask.FALSE_MASK;
-            case 128: return Long128Vector.Long128Mask.FALSE_MASK;
-            case 256: return Long256Vector.Long256Mask.FALSE_MASK;
-            case 512: return Long512Vector.Long512Mask.FALSE_MASK;
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    /**
-     * Loads a mask from a {@code boolean} array starting at an offset.
-     * <p>
-     * For each mask lane, where {@code N} is the mask lane index,
-     * if the array element at index {@code ix + N} is {@code true} then the
-     * mask lane at index {@code N} is set, otherwise it is unset.
-     *
-     * @param species mask species
-     * @param bits the {@code boolean} array
-     * @param ix the offset into the array
-     * @return the mask loaded from a {@code boolean} array
-     * @throws IndexOutOfBoundsException if {@code ix < 0}, or
-     * {@code ix > bits.length - species.length()}
-     */
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public static Mask<Long> maskFromArray(Species<Long> species, boolean[] bits, int ix) {
-        Objects.requireNonNull(bits);
-        ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
-        return VectorIntrinsics.load((Class<Mask<Long>>) species.maskType(), long.class, species.length(),
-                                     bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
-                                     bits, ix, species,
-                                     (c, idx, s) -> (Mask<Long>) ((LongSpecies)s).opm(n -> c[idx + n]));
-    }
-
-    /**
-     * Returns a mask where all lanes are set.
-     *
-     * @param species mask species
-     * @return a mask where all lanes are set
-     */
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public static Mask<Long> maskAllTrue(Species<Long> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<Mask<Long>>) species.maskType(), long.class, species.length(),
-                                                 (long)-1,  species,
-                                                 ((z, s) -> trueMask(s)));
-    }
-
-    /**
-     * Returns a mask where all lanes are unset.
-     *
-     * @param species mask species
-     * @return a mask where all lanes are unset
-     */
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public static Mask<Long> maskAllFalse(Species<Long> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<Mask<Long>>) species.maskType(), long.class, species.length(),
-                                                 0, species, 
-                                                 ((z, s) -> falseMask(s)));
-    }
-
-    /**
-     * Returns a shuffle of mapped indexes where each lane element is
-     * the result of applying a mapping function to the corresponding lane
-     * index.
-     * <p>
-     * Care should be taken to ensure Shuffle values produced from this
-     * method are consumed as constants to ensure optimal generation of
-     * code.  For example, values held in static final fields or values
-     * held in loop constant local variables.
-     * <p>
-     * This method behaves as if a shuffle is created from an array of
-     * mapped indexes as follows:
-     * <pre>{@code
-     *   int[] a = new int[species.length()];
-     *   for (int i = 0; i < a.length; i++) {
-     *       a[i] = f.applyAsInt(i);
-     *   }
-     *   return this.shuffleFromValues(a);
-     * }</pre>
-     *
-     * @param species shuffle species
-     * @param f the lane index mapping function
-     * @return a shuffle of mapped indexes
-     */
-    @ForceInline
-    public static Shuffle<Long> shuffle(Species<Long> species, IntUnaryOperator f) {
-        if (species.boxType() == LongMaxVector.class)
-            return new LongMaxVector.LongMaxShuffle(f);
-        switch (species.bitSize()) {
-            case 64: return new Long64Vector.Long64Shuffle(f);
-            case 128: return new Long128Vector.Long128Shuffle(f);
-            case 256: return new Long256Vector.Long256Shuffle(f);
-            case 512: return new Long512Vector.Long512Shuffle(f);
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    /**
-     * Returns a shuffle where each lane element is the value of its
-     * corresponding lane index.
-     * <p>
-     * This method behaves as if a shuffle is created from an identity
-     * index mapping function as follows:
-     * <pre>{@code
-     *   return this.shuffle(i -> i);
-     * }</pre>
-     *
-     * @param species shuffle species
-     * @return a shuffle of lane indexes
-     */
-    @ForceInline
-    public static Shuffle<Long> shuffleIota(Species<Long> species) {
-        if (species.boxType() == LongMaxVector.class)
-            return new LongMaxVector.LongMaxShuffle(AbstractShuffle.IDENTITY);
-        switch (species.bitSize()) {
-            case 64: return new Long64Vector.Long64Shuffle(AbstractShuffle.IDENTITY);
-            case 128: return new Long128Vector.Long128Shuffle(AbstractShuffle.IDENTITY);
-            case 256: return new Long256Vector.Long256Shuffle(AbstractShuffle.IDENTITY);
-            case 512: return new Long512Vector.Long512Shuffle(AbstractShuffle.IDENTITY);
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    /**
-     * Returns a shuffle where each lane element is set to a given
-     * {@code int} value logically AND'ed by the species length minus one.
-     * <p>
-     * For each shuffle lane, where {@code N} is the shuffle lane index, the
-     * the {@code int} value at index {@code N} logically AND'ed by
-     * {@code species.length() - 1} is placed into the resulting shuffle at
-     * lane index {@code N}.
-     *
-     * @param species shuffle species
-     * @param ixs the given {@code int} values
-     * @return a shuffle where each lane element is set to a given
-     * {@code int} value
-     * @throws IndexOutOfBoundsException if the number of int values is
-     * {@code < species.length()}
-     */
-    @ForceInline
-    public static Shuffle<Long> shuffleFromValues(Species<Long> species, int... ixs) {
-        if (species.boxType() == LongMaxVector.class)
-            return new LongMaxVector.LongMaxShuffle(ixs);
-        switch (species.bitSize()) {
-            case 64: return new Long64Vector.Long64Shuffle(ixs);
-            case 128: return new Long128Vector.Long128Shuffle(ixs);
-            case 256: return new Long256Vector.Long256Shuffle(ixs);
-            case 512: return new Long512Vector.Long512Shuffle(ixs);
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    /**
-     * Loads a shuffle from an {@code int} array starting at an offset.
-     * <p>
-     * For each shuffle lane, where {@code N} is the shuffle lane index, the
-     * array element at index {@code i + N} logically AND'ed by
-     * {@code species.length() - 1} is placed into the resulting shuffle at lane
-     * index {@code N}.
-     *
-     * @param species shuffle species
-     * @param ixs the {@code int} array
-     * @param i the offset into the array
-     * @return a shuffle loaded from the {@code int} array
-     * @throws IndexOutOfBoundsException if {@code i < 0}, or
-     * {@code i > a.length - species.length()}
-     */
-    @ForceInline
-    public static Shuffle<Long> shuffleFromArray(Species<Long> species, int[] ixs, int i) {
-        if (species.boxType() == LongMaxVector.class)
-            return new LongMaxVector.LongMaxShuffle(ixs, i);
-        switch (species.bitSize()) {
-            case 64: return new Long64Vector.Long64Shuffle(ixs, i);
-            case 128: return new Long128Vector.Long128Shuffle(ixs, i);
-            case 256: return new Long256Vector.Long256Shuffle(ixs, i);
-            case 512: return new Long512Vector.Long512Shuffle(ixs, i);
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
     }
 
     // Ops
@@ -706,7 +482,7 @@ public abstract class LongVector extends Vector<Long> {
     public abstract LongVector add(long s);
 
     @Override
-    public abstract LongVector add(Vector<Long> v, Mask<Long> m);
+    public abstract LongVector add(Vector<Long> v, VectorMask<Long> m);
 
     /**
      * Adds this vector to broadcast of an input scalar,
@@ -720,7 +496,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract LongVector add(long s, Mask<Long> m);
+    public abstract LongVector add(long s, VectorMask<Long> m);
 
     @Override
     public abstract LongVector sub(Vector<Long> v);
@@ -738,7 +514,7 @@ public abstract class LongVector extends Vector<Long> {
     public abstract LongVector sub(long s);
 
     @Override
-    public abstract LongVector sub(Vector<Long> v, Mask<Long> m);
+    public abstract LongVector sub(Vector<Long> v, VectorMask<Long> m);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector, selecting
@@ -752,7 +528,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract LongVector sub(long s, Mask<Long> m);
+    public abstract LongVector sub(long s, VectorMask<Long> m);
 
     @Override
     public abstract LongVector mul(Vector<Long> v);
@@ -770,7 +546,7 @@ public abstract class LongVector extends Vector<Long> {
     public abstract LongVector mul(long s);
 
     @Override
-    public abstract LongVector mul(Vector<Long> v, Mask<Long> m);
+    public abstract LongVector mul(Vector<Long> v, VectorMask<Long> m);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar, selecting
@@ -784,25 +560,25 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract LongVector mul(long s, Mask<Long> m);
+    public abstract LongVector mul(long s, VectorMask<Long> m);
 
     @Override
     public abstract LongVector neg();
 
     @Override
-    public abstract LongVector neg(Mask<Long> m);
+    public abstract LongVector neg(VectorMask<Long> m);
 
     @Override
     public abstract LongVector abs();
 
     @Override
-    public abstract LongVector abs(Mask<Long> m);
+    public abstract LongVector abs(VectorMask<Long> m);
 
     @Override
     public abstract LongVector min(Vector<Long> v);
 
     @Override
-    public abstract LongVector min(Vector<Long> v, Mask<Long> m);
+    public abstract LongVector min(Vector<Long> v, VectorMask<Long> m);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
@@ -819,7 +595,7 @@ public abstract class LongVector extends Vector<Long> {
     public abstract LongVector max(Vector<Long> v);
 
     @Override
-    public abstract LongVector max(Vector<Long> v, Mask<Long> m);
+    public abstract LongVector max(Vector<Long> v, VectorMask<Long> m);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -833,7 +609,7 @@ public abstract class LongVector extends Vector<Long> {
     public abstract LongVector max(long s);
 
     @Override
-    public abstract Mask<Long> equal(Vector<Long> v);
+    public abstract VectorMask<Long> equal(Vector<Long> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
@@ -845,10 +621,10 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result mask of testing if this vector is equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Long> equal(long s);
+    public abstract VectorMask<Long> equal(long s);
 
     @Override
-    public abstract Mask<Long> notEqual(Vector<Long> v);
+    public abstract VectorMask<Long> notEqual(Vector<Long> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
@@ -860,10 +636,10 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result mask of testing if this vector is not equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Long> notEqual(long s);
+    public abstract VectorMask<Long> notEqual(long s);
 
     @Override
-    public abstract Mask<Long> lessThan(Vector<Long> v);
+    public abstract VectorMask<Long> lessThan(Vector<Long> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
@@ -875,10 +651,10 @@ public abstract class LongVector extends Vector<Long> {
      * @return the mask result of testing if this vector is less than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Long> lessThan(long s);
+    public abstract VectorMask<Long> lessThan(long s);
 
     @Override
-    public abstract Mask<Long> lessThanEq(Vector<Long> v);
+    public abstract VectorMask<Long> lessThanEq(Vector<Long> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
@@ -890,10 +666,10 @@ public abstract class LongVector extends Vector<Long> {
      * @return the mask result of testing if this vector is less than or equal
      * to the broadcast of an input scalar
      */
-    public abstract Mask<Long> lessThanEq(long s);
+    public abstract VectorMask<Long> lessThanEq(long s);
 
     @Override
-    public abstract Mask<Long> greaterThan(Vector<Long> v);
+    public abstract VectorMask<Long> greaterThan(Vector<Long> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
@@ -905,10 +681,10 @@ public abstract class LongVector extends Vector<Long> {
      * @return the mask result of testing if this vector is greater than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Long> greaterThan(long s);
+    public abstract VectorMask<Long> greaterThan(long s);
 
     @Override
-    public abstract Mask<Long> greaterThanEq(Vector<Long> v);
+    public abstract VectorMask<Long> greaterThanEq(Vector<Long> v);
 
     /**
      * Tests if this vector is greater than or equal to the broadcast of an
@@ -921,10 +697,10 @@ public abstract class LongVector extends Vector<Long> {
      * @return the mask result of testing if this vector is greater than or
      * equal to the broadcast of an input scalar
      */
-    public abstract Mask<Long> greaterThanEq(long s);
+    public abstract VectorMask<Long> greaterThanEq(long s);
 
     @Override
-    public abstract LongVector blend(Vector<Long> v, Mask<Long> m);
+    public abstract LongVector blend(Vector<Long> v, VectorMask<Long> m);
 
     /**
      * Blends the lane elements of this vector with those of the broadcast of an
@@ -941,17 +717,17 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of blending the lane elements of this vector with
      * those of the broadcast of an input scalar
      */
-    public abstract LongVector blend(long s, Mask<Long> m);
+    public abstract LongVector blend(long s, VectorMask<Long> m);
 
     @Override
     public abstract LongVector rearrange(Vector<Long> v,
-                                                      Shuffle<Long> s, Mask<Long> m);
+                                                      VectorShuffle<Long> s, VectorMask<Long> m);
 
     @Override
-    public abstract LongVector rearrange(Shuffle<Long> m);
+    public abstract LongVector rearrange(VectorShuffle<Long> m);
 
     @Override
-    public abstract LongVector reshape(Species<Long> s);
+    public abstract LongVector reshape(VectorSpecies<Long> s);
 
     @Override
     public abstract LongVector rotateEL(int i);
@@ -1001,7 +777,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the bitwise AND of this vector with the input vector
      */
-    public abstract LongVector and(Vector<Long> v, Mask<Long> m);
+    public abstract LongVector and(Vector<Long> v, VectorMask<Long> m);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
@@ -1015,7 +791,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the bitwise AND of this vector with the broadcast of an input
      * scalar
      */
-    public abstract LongVector and(long s, Mask<Long> m);
+    public abstract LongVector and(long s, VectorMask<Long> m);
 
     /**
      * Bitwise ORs this vector with an input vector.
@@ -1051,7 +827,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the bitwise OR of this vector with the input vector
      */
-    public abstract LongVector or(Vector<Long> v, Mask<Long> m);
+    public abstract LongVector or(Vector<Long> v, VectorMask<Long> m);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar, selecting
@@ -1065,7 +841,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the bitwise OR of this vector with the broadcast of an input
      * scalar
      */
-    public abstract LongVector or(long s, Mask<Long> m);
+    public abstract LongVector or(long s, VectorMask<Long> m);
 
     /**
      * Bitwise XORs this vector with an input vector.
@@ -1101,7 +877,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the bitwise XOR of this vector with the input vector
      */
-    public abstract LongVector xor(Vector<Long> v, Mask<Long> m);
+    public abstract LongVector xor(Vector<Long> v, VectorMask<Long> m);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar, selecting
@@ -1115,7 +891,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the bitwise XOR of this vector with the broadcast of an input
      * scalar
      */
-    public abstract LongVector xor(long s, Mask<Long> m);
+    public abstract LongVector xor(long s, VectorMask<Long> m);
 
     /**
      * Bitwise NOTs this vector.
@@ -1136,7 +912,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the bitwise NOT of this vector
      */
-    public abstract LongVector not(Mask<Long> m);
+    public abstract LongVector not(VectorMask<Long> m);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar.
@@ -1162,7 +938,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract LongVector shiftL(int s, Mask<Long> m);
+    public abstract LongVector shiftL(int s, VectorMask<Long> m);
 
     /**
      * Logically left shifts this vector by an input vector.
@@ -1188,7 +964,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public LongVector shiftL(Vector<Long> v, Mask<Long> m) {
+    public LongVector shiftL(Vector<Long> v, VectorMask<Long> m) {
         return bOp(v, m, (i, a, b) -> (long) (a << b));
     }
 
@@ -1220,7 +996,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract LongVector shiftR(int s, Mask<Long> m);
+    public abstract LongVector shiftR(int s, VectorMask<Long> m);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
@@ -1247,7 +1023,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public LongVector shiftR(Vector<Long> v, Mask<Long> m) {
+    public LongVector shiftR(Vector<Long> v, VectorMask<Long> m) {
         return bOp(v, m, (i, a, b) -> (long) (a >>> b));
     }
 
@@ -1277,7 +1053,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract LongVector aShiftR(int s, Mask<Long> m);
+    public abstract LongVector aShiftR(int s, VectorMask<Long> m);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
@@ -1304,7 +1080,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public LongVector aShiftR(Vector<Long> v, Mask<Long> m) {
+    public LongVector aShiftR(Vector<Long> v, VectorMask<Long> m) {
         return bOp(v, m, (i, a, b) -> (long) (a >> b));
     }
 
@@ -1342,7 +1118,7 @@ public abstract class LongVector extends Vector<Long> {
      * input scalar
      */
     @ForceInline
-    public final LongVector rotateL(int s, Mask<Long> m) {
+    public final LongVector rotateL(int s, VectorMask<Long> m) {
         return shiftL(s, m).or(shiftR(-s, m), m);
     }
 
@@ -1380,7 +1156,7 @@ public abstract class LongVector extends Vector<Long> {
      * input scalar
      */
     @ForceInline
-    public final LongVector rotateR(int s, Mask<Long> m) {
+    public final LongVector rotateR(int s, VectorMask<Long> m) {
         return shiftR(s, m).or(shiftL(-s, m), m);
     }
 
@@ -1388,13 +1164,13 @@ public abstract class LongVector extends Vector<Long> {
     public abstract void intoByteArray(byte[] a, int ix);
 
     @Override
-    public abstract void intoByteArray(byte[] a, int ix, Mask<Long> m);
+    public abstract void intoByteArray(byte[] a, int ix, VectorMask<Long> m);
 
     @Override
     public abstract void intoByteBuffer(ByteBuffer bb, int ix);
 
     @Override
-    public abstract void intoByteBuffer(ByteBuffer bb, int ix, Mask<Long> m);
+    public abstract void intoByteBuffer(ByteBuffer bb, int ix, VectorMask<Long> m);
 
 
     // Type specific horizontal reductions
@@ -1420,7 +1196,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the addition of the selected lane elements of this vector
      */
-    public abstract long addAll(Mask<Long> m);
+    public abstract long addAll(VectorMask<Long> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1444,7 +1220,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract long mulAll(Mask<Long> m);
+    public abstract long mulAll(VectorMask<Long> m);
 
     /**
      * Returns the minimum lane element of this vector.
@@ -1470,7 +1246,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
      */
-    public abstract long minAll(Mask<Long> m);
+    public abstract long minAll(VectorMask<Long> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -1496,7 +1272,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
      */
-    public abstract long maxAll(Mask<Long> m);
+    public abstract long maxAll(VectorMask<Long> m);
 
     /**
      * Logically ORs all lane elements of this vector.
@@ -1520,7 +1296,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract long orAll(Mask<Long> m);
+    public abstract long orAll(VectorMask<Long> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -1544,7 +1320,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract long andAll(Mask<Long> m);
+    public abstract long andAll(VectorMask<Long> m);
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -1568,7 +1344,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract long xorAll(Mask<Long> m);
+    public abstract long xorAll(VectorMask<Long> m);
 
     // Type specific accessors
 
@@ -1650,7 +1426,7 @@ public abstract class LongVector extends Vector<Long> {
      * for any vector lane index {@code N} where the mask at lane {@code N}
      * is set {@code i >= a.length - N}
      */
-    public abstract void intoArray(long[] a, int i, Mask<Long> m);
+    public abstract void intoArray(long[] a, int i, VectorMask<Long> m);
 
     /**
      * Stores this vector into an array using indexes obtained from an index
@@ -1695,35 +1471,32 @@ public abstract class LongVector extends Vector<Long> {
      * {@code N} is set the result of {@code i + indexMap[j + N]} is
      * {@code < 0} or {@code >= a.length}
      */
-    public abstract void intoArray(long[] a, int i, Mask<Long> m, int[] indexMap, int j);
+    public abstract void intoArray(long[] a, int i, VectorMask<Long> m, int[] indexMap, int j);
     // Species
 
     @Override
-    public abstract Species<Long> species();
+    public abstract VectorSpecies<Long> species();
 
     /**
-     * Class representing {@link LongVector}'s of the same {@link Vector.Shape Shape}.
+     * Class representing {@link LongVector}'s of the same {@link VectorShape VectorShape}.
      */
-    static final class LongSpecies extends Vector.AbstractSpecies<Long> {
+    static final class LongSpecies extends AbstractSpecies<Long> {
         final Function<long[], LongVector> vectorFactory;
-        final Function<boolean[], Vector.Mask<Long>> maskFactory;
 
-        private LongSpecies(Vector.Shape shape,
+        private LongSpecies(VectorShape shape,
                           Class<?> boxType,
                           Class<?> maskType,
                           Function<long[], LongVector> vectorFactory,
-                          Function<boolean[], Vector.Mask<Long>> maskFactory) {
-            super(shape, long.class, Long.SIZE, boxType, maskType);
+                          Function<boolean[], VectorMask<Long>> maskFactory,
+                          Function<IntUnaryOperator, VectorShuffle<Long>> shuffleFromArrayFactory,
+                          fShuffleFromArray<Long> shuffleFromOpFactory) {
+            super(shape, long.class, Long.SIZE, boxType, maskType, maskFactory,
+                  shuffleFromArrayFactory, shuffleFromOpFactory);
             this.vectorFactory = vectorFactory;
-            this.maskFactory = maskFactory;
         }
 
         interface FOp {
             long apply(int i);
-        }
-
-        interface FOpm {
-            boolean apply(int i);
         }
 
         LongVector op(FOp f) {
@@ -1734,7 +1507,7 @@ public abstract class LongVector extends Vector<Long> {
             return vectorFactory.apply(res);
         }
 
-        LongVector op(Vector.Mask<Long> o, FOp f) {
+        LongVector op(VectorMask<Long> o, FOp f) {
             long[] res = new long[length()];
             boolean[] mbits = ((AbstractMask<Long>)o).getBits();
             for (int i = 0; i < length(); i++) {
@@ -1743,14 +1516,6 @@ public abstract class LongVector extends Vector<Long> {
                 }
             }
             return vectorFactory.apply(res);
-        }
-
-        Vector.Mask<Long> opm(IntVector.IntSpecies.FOpm f) {
-            boolean[] res = new boolean[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = (boolean)f.apply(i);
-            }
-            return maskFactory.apply(res);
         }
     }
 
@@ -1765,7 +1530,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the preferred species for an element type of {@code long}
      */
     private static LongSpecies preferredSpecies() {
-        return (LongSpecies) Species.ofPreferred(long.class);
+        return (LongSpecies) VectorSpecies.ofPreferred(long.class);
     }
 
     /**
@@ -1775,7 +1540,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return a species for an element type of {@code long} and shape
      * @throws IllegalArgumentException if no such species exists for the shape
      */
-    static LongSpecies species(Vector.Shape s) {
+    static LongSpecies species(VectorShape s) {
         Objects.requireNonNull(s);
         switch (s) {
             case S_64_BIT: return (LongSpecies) SPECIES_64;
@@ -1787,29 +1552,34 @@ public abstract class LongVector extends Vector<Long> {
         }
     }
 
-    /** Species representing {@link LongVector}s of {@link Vector.Shape#S_64_BIT Shape.S_64_BIT}. */
-    public static final Species<Long> SPECIES_64 = new LongSpecies(Shape.S_64_BIT, Long64Vector.class, Long64Vector.Long64Mask.class,
-                                                                     Long64Vector::new, Long64Vector.Long64Mask::new);
+    /** Species representing {@link LongVector}s of {@link VectorShape#S_64_BIT VectorShape.S_64_BIT}. */
+    public static final VectorSpecies<Long> SPECIES_64 = new LongSpecies(VectorShape.S_64_BIT, Long64Vector.class, Long64Vector.Long64Mask.class,
+                                                                     Long64Vector::new, Long64Vector.Long64Mask::new,
+                                                                     Long64Vector.Long64Shuffle::new, Long64Vector.Long64Shuffle::new);
 
-    /** Species representing {@link LongVector}s of {@link Vector.Shape#S_128_BIT Shape.S_128_BIT}. */
-    public static final Species<Long> SPECIES_128 = new LongSpecies(Shape.S_128_BIT, Long128Vector.class, Long128Vector.Long128Mask.class,
-                                                                      Long128Vector::new, Long128Vector.Long128Mask::new);
+    /** Species representing {@link LongVector}s of {@link VectorShape#S_128_BIT VectorShape.S_128_BIT}. */
+    public static final VectorSpecies<Long> SPECIES_128 = new LongSpecies(VectorShape.S_128_BIT, Long128Vector.class, Long128Vector.Long128Mask.class,
+                                                                      Long128Vector::new, Long128Vector.Long128Mask::new,
+                                                                      Long128Vector.Long128Shuffle::new, Long128Vector.Long128Shuffle::new);
 
-    /** Species representing {@link LongVector}s of {@link Vector.Shape#S_256_BIT Shape.S_256_BIT}. */
-    public static final Species<Long> SPECIES_256 = new LongSpecies(Shape.S_256_BIT, Long256Vector.class, Long256Vector.Long256Mask.class,
-                                                                      Long256Vector::new, Long256Vector.Long256Mask::new);
+    /** Species representing {@link LongVector}s of {@link VectorShape#S_256_BIT VectorShape.S_256_BIT}. */
+    public static final VectorSpecies<Long> SPECIES_256 = new LongSpecies(VectorShape.S_256_BIT, Long256Vector.class, Long256Vector.Long256Mask.class,
+                                                                      Long256Vector::new, Long256Vector.Long256Mask::new,
+                                                                      Long256Vector.Long256Shuffle::new, Long256Vector.Long256Shuffle::new);
 
-    /** Species representing {@link LongVector}s of {@link Vector.Shape#S_512_BIT Shape.S_512_BIT}. */
-    public static final Species<Long> SPECIES_512 = new LongSpecies(Shape.S_512_BIT, Long512Vector.class, Long512Vector.Long512Mask.class,
-                                                                      Long512Vector::new, Long512Vector.Long512Mask::new);
+    /** Species representing {@link LongVector}s of {@link VectorShape#S_512_BIT VectorShape.S_512_BIT}. */
+    public static final VectorSpecies<Long> SPECIES_512 = new LongSpecies(VectorShape.S_512_BIT, Long512Vector.class, Long512Vector.Long512Mask.class,
+                                                                      Long512Vector::new, Long512Vector.Long512Mask::new,
+                                                                      Long512Vector.Long512Shuffle::new, Long512Vector.Long512Shuffle::new);
 
-    /** Species representing {@link LongVector}s of {@link Vector.Shape#S_Max_BIT Shape.S_Max_BIT}. */
-    public static final Species<Long> SPECIES_MAX = new LongSpecies(Shape.S_Max_BIT, LongMaxVector.class, LongMaxVector.LongMaxMask.class,
-                                                                      LongMaxVector::new, LongMaxVector.LongMaxMask::new);
+    /** Species representing {@link LongVector}s of {@link VectorShape#S_Max_BIT VectorShape.S_Max_BIT}. */
+    public static final VectorSpecies<Long> SPECIES_MAX = new LongSpecies(VectorShape.S_Max_BIT, LongMaxVector.class, LongMaxVector.LongMaxMask.class,
+                                                                      LongMaxVector::new, LongMaxVector.LongMaxMask::new,
+                                                                      LongMaxVector.LongMaxShuffle::new, LongMaxVector.LongMaxShuffle::new);
 
     /**
      * Preferred species for {@link LongVector}s.
      * A preferred species is a species of maximal bit size for the platform.
      */
-    public static final Species<Long> SPECIES_PREFERRED = (Species<Long>) preferredSpecies();
+    public static final VectorSpecies<Long> SPECIES_PREFERRED = (VectorSpecies<Long>) preferredSpecies();
 }

@@ -50,7 +50,7 @@ public class PreferredSpeciesTest {
 
     @Test(dataProvider = "classesProvider")
     void testVectorLength(Class<?> c) {
-        Vector.Species<?> species = null;
+        VectorSpecies<?> species = null;
         if (c == byte.class) {
             species = ByteVector.SPECIES_PREFERRED;
         } else if (c == short.class) {

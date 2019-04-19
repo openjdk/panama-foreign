@@ -27,8 +27,10 @@
  * @run testng/othervm -ea -esa Double64VectorTests
  */
 
-import jdk.incubator.vector.Vector.Shape;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorShape;
+import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.VectorShuffle;
+import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.DoubleVector;
@@ -48,7 +50,7 @@ import java.util.stream.Stream;
 @Test
 public class Double64VectorTests extends AbstractVectorTest {
 
-    static final Species<Double> SPECIES =
+    static final VectorSpecies<Double> SPECIES =
                 DoubleVector.SPECIES_64;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
@@ -562,7 +564,7 @@ public class Double64VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double> vmask = DoubleVector.maskFromValues(SPECIES, mask);
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -602,7 +604,7 @@ public class Double64VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double> vmask = DoubleVector.maskFromValues(SPECIES, mask);
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -645,7 +647,7 @@ public class Double64VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double> vmask = DoubleVector.maskFromValues(SPECIES, mask);
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -686,7 +688,7 @@ public class Double64VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double> vmask = DoubleVector.maskFromValues(SPECIES, mask);
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -971,7 +973,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                Vector.Mask<Double> mv = av.lessThan(bv);
+                VectorMask<Double> mv = av.lessThan(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -991,7 +993,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                Vector.Mask<Double> mv = av.greaterThan(bv);
+                VectorMask<Double> mv = av.greaterThan(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1011,7 +1013,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                Vector.Mask<Double> mv = av.equal(bv);
+                VectorMask<Double> mv = av.equal(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1031,7 +1033,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                Vector.Mask<Double> mv = av.notEqual(bv);
+                VectorMask<Double> mv = av.notEqual(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1051,7 +1053,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                Vector.Mask<Double> mv = av.lessThanEq(bv);
+                VectorMask<Double> mv = av.lessThanEq(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1071,7 +1073,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                Vector.Mask<Double> mv = av.greaterThanEq(bv);
+                VectorMask<Double> mv = av.greaterThanEq(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1093,7 +1095,7 @@ public class Double64VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double> vmask = DoubleVector.maskFromValues(SPECIES, mask);
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1116,7 +1118,7 @@ public class Double64VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                av.rearrange(DoubleVector.shuffleFromArray(SPECIES, order, i)).intoArray(r, i);
+                av.rearrange(VectorShuffle.fromArray(SPECIES, order, i)).intoArray(r, i);
             }
         }
 
@@ -1756,7 +1758,7 @@ public class Double64VectorTests extends AbstractVectorTest {
         double[] c = fc.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double> vmask = DoubleVector.maskFromValues(SPECIES, mask);
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1796,7 +1798,7 @@ public class Double64VectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double> vmask = DoubleVector.maskFromValues(SPECIES, mask);
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1833,7 +1835,7 @@ public class Double64VectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double> vmask = DoubleVector.maskFromValues(SPECIES, mask);
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1878,7 +1880,7 @@ public class Double64VectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double> vmask = DoubleVector.maskFromValues(SPECIES, mask);
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

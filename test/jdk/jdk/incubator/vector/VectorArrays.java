@@ -23,7 +23,8 @@
 
 import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.Vector;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.VectorMask;
 
 public class VectorArrays {
     static boolean equals(byte[] a, byte[] b) {
@@ -55,11 +56,11 @@ public class VectorArrays {
     }
 
     static int mismatch(byte[] a, byte[] b) {
-        Species<Byte> species = ByteVector.SPECIES_256;
+        VectorSpecies<Byte> species = ByteVector.SPECIES_256;
         return mismatch(a, b, species);
     }
 
-    static int mismatch(byte[] a, byte[] b, Species<Byte> species) {
+    static int mismatch(byte[] a, byte[] b, VectorSpecies<Byte> species) {
         int length = Math.min(a.length, b.length);
         if (a == b)
             return -1;
@@ -69,7 +70,7 @@ public class VectorArrays {
         for (; i < (length & ~(species.length() - 1)); i += species.length()) {
             Vector<Byte> va = ByteVector.fromArray(species, a, i);
             Vector<Byte> vb = ByteVector.fromArray(species, b, i);
-            Vector.Mask<Byte> m = va.notEqual(vb);
+            VectorMask<Byte> m = va.notEqual(vb);
             // @@@ count number of leading zeros with explicit method
             if (m.anyTrue()) {
                 break; // mismatch found
