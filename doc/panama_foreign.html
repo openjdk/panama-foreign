@@ -214,13 +214,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb2-5" data-line-number="5"><span class="kw">import</span><span class="im"> java.foreign.memory.Pointer;</span></a>
 <a class="sourceLine" id="cb2-6" data-line-number="6"></a>
 <a class="sourceLine" id="cb2-7" data-line-number="7"><span class="co">// import jextracted python &#39;header&#39; classes</span></a>
-<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="kw">import static</span><span class="im"> org.python.Python_h.*;</span></a>
-<a class="sourceLine" id="cb2-9" data-line-number="9"><span class="kw">import static</span><span class="im"> org.python.pythonrun_h.*;</span></a>
+<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="kw">import static</span><span class="im"> org.python.Python_lib.*;</span></a>
+<a class="sourceLine" id="cb2-9" data-line-number="9"><span class="kw">import static</span><span class="im"> org.python.pythonrun_lib.*;</span></a>
 <a class="sourceLine" id="cb2-10" data-line-number="10"></a>
 <a class="sourceLine" id="cb2-11" data-line-number="11"><span class="kw">public</span> <span class="kw">class</span> PythonMain {</a>
 <a class="sourceLine" id="cb2-12" data-line-number="12">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
 <a class="sourceLine" id="cb2-13" data-line-number="13">        <span class="fu">Py_Initialize</span>();</a>
-<a class="sourceLine" id="cb2-14" data-line-number="14">        <span class="kw">try</span> (Scope s = org.<span class="fu">python</span>.<span class="fu">Python_h</span>.<span class="fu">scope</span>().<span class="fu">fork</span>()) {</a>
+<a class="sourceLine" id="cb2-14" data-line-number="14">        <span class="kw">try</span> (Scope s = org.<span class="fu">python</span>.<span class="fu">Python_lib</span>.<span class="fu">scope</span>().<span class="fu">fork</span>()) {</a>
 <a class="sourceLine" id="cb2-15" data-line-number="15">            <span class="fu">PyRun_SimpleStringFlags</span>(s.<span class="fu">allocateCString</span>(</a>
 <a class="sourceLine" id="cb2-16" data-line-number="16">                <span class="st">&quot;print(sum([33, 55, 66])); print(&#39;Hello from Python!&#39;)</span><span class="sc">\n</span><span class="st">&quot;</span>),</a>
 <a class="sourceLine" id="cb2-17" data-line-number="17">                Pointer.<span class="fu">ofNull</span>());</a>
@@ -282,8 +282,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb11-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.lang.invoke.*;</span></a>
 <a class="sourceLine" id="cb11-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
 <a class="sourceLine" id="cb11-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.memory.*;</span></a>
-<a class="sourceLine" id="cb11-5" data-line-number="5"><span class="kw">import</span><span class="im"> org.sqlite.sqlite3.*;</span></a>
-<a class="sourceLine" id="cb11-6" data-line-number="6"><span class="kw">import static</span><span class="im"> org.sqlite.sqlite3_h.*;</span></a>
+<a class="sourceLine" id="cb11-5" data-line-number="5"><span class="kw">import</span><span class="im"> org.sqlite.sqlite3_h.*;</span></a>
+<a class="sourceLine" id="cb11-6" data-line-number="6"><span class="kw">import static</span><span class="im"> org.sqlite.sqlite3_lib.*;</span></a>
 <a class="sourceLine" id="cb11-7" data-line-number="7"></a>
 <a class="sourceLine" id="cb11-8" data-line-number="8"><span class="kw">public</span> <span class="kw">class</span> SqliteMain {</a>
 <a class="sourceLine" id="cb11-9" data-line-number="9">   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) <span class="kw">throws</span> <span class="bu">Exception</span> {</a>
@@ -395,7 +395,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>The following command can be used to extract cblas.h on MacOs</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb17-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb17-2" data-line-number="2"><span class="ex">jextract</span> -C <span class="st">&quot;-D FORCE_OPENBLAS_COMPLEX_STRUCT&quot;</span> \</a>
-<a class="sourceLine" id="cb17-3" data-line-number="3">  -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \</a>
+<a class="sourceLine" id="cb17-3" data-line-number="3">  -L /usr/local/opt/openblas/lib \</a>
 <a class="sourceLine" id="cb17-4" data-line-number="4">  -l openblas -t blas --record-library-path /usr/local/opt/openblas/include/cblas.h \</a>
 <a class="sourceLine" id="cb17-5" data-line-number="5">  -o cblas.jar</a></code></pre></div>
 <p>The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not yet handle C99 <code>_Complex</code> types. The rest of the options are standard ones.</p>
@@ -407,77 +407,76 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb18-4" data-line-number="4">   /usr/include/atlas/cblas.h -o cblas.jar</a></code></pre></div>
 <h3 id="java-sample-code-that-uses-cblas-library">Java sample code that uses cblas library</h3>
 <div class="sourceCode" id="cb19"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb19-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="kw">import</span><span class="im"> blas.cblas;</span></a>
-<a class="sourceLine" id="cb19-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb19-4" data-line-number="4"><span class="kw">import static</span><span class="im"> blas.cblas_h.*;</span></a>
-<a class="sourceLine" id="cb19-5" data-line-number="5"><span class="kw">import static</span><span class="im"> blas.cblas_h.CBLAS_ORDER.*;</span></a>
-<a class="sourceLine" id="cb19-6" data-line-number="6"><span class="kw">import static</span><span class="im"> blas.cblas_h.CBLAS_TRANSPOSE.*;</span></a>
-<a class="sourceLine" id="cb19-7" data-line-number="7"></a>
-<a class="sourceLine" id="cb19-8" data-line-number="8"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
-<a class="sourceLine" id="cb19-9" data-line-number="9"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
-<a class="sourceLine" id="cb19-10" data-line-number="10"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
-<a class="sourceLine" id="cb19-11" data-line-number="11"></a>
-<a class="sourceLine" id="cb19-12" data-line-number="12"><span class="kw">public</span> <span class="kw">class</span> TestBlas {</a>
-<a class="sourceLine" id="cb19-13" data-line-number="13">   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
-<a class="sourceLine" id="cb19-14" data-line-number="14">       <span class="at">@cblas</span>.<span class="fu">CBLAS_ORDER</span> <span class="dt">int</span> Layout;</a>
-<a class="sourceLine" id="cb19-15" data-line-number="15">       <span class="at">@cblas</span>.<span class="fu">CBLAS_TRANSPOSE</span> <span class="dt">int</span> transa;</a>
-<a class="sourceLine" id="cb19-16" data-line-number="16"></a>
-<a class="sourceLine" id="cb19-17" data-line-number="17">       <span class="dt">double</span> alpha, beta;</a>
-<a class="sourceLine" id="cb19-18" data-line-number="18">       <span class="dt">int</span> m, n, lda, incx, incy, i;</a>
-<a class="sourceLine" id="cb19-19" data-line-number="19"></a>
-<a class="sourceLine" id="cb19-20" data-line-number="20">       Layout = CblasColMajor;</a>
-<a class="sourceLine" id="cb19-21" data-line-number="21">       transa = CblasNoTrans;</a>
-<a class="sourceLine" id="cb19-22" data-line-number="22"></a>
-<a class="sourceLine" id="cb19-23" data-line-number="23">       m = <span class="dv">4</span>; <span class="co">/* Size of Column ( the number of rows ) */</span></a>
-<a class="sourceLine" id="cb19-24" data-line-number="24">       n = <span class="dv">4</span>; <span class="co">/* Size of Row ( the number of columns ) */</span></a>
-<a class="sourceLine" id="cb19-25" data-line-number="25">       lda = <span class="dv">4</span>; <span class="co">/* Leading dimension of 5 * 4 matrix is 5 */</span></a>
-<a class="sourceLine" id="cb19-26" data-line-number="26">       incx = <span class="dv">1</span>;</a>
-<a class="sourceLine" id="cb19-27" data-line-number="27">       incy = <span class="dv">1</span>;</a>
-<a class="sourceLine" id="cb19-28" data-line-number="28">       alpha = <span class="dv">1</span>;</a>
-<a class="sourceLine" id="cb19-29" data-line-number="29">       beta = <span class="dv">0</span>;</a>
-<a class="sourceLine" id="cb19-30" data-line-number="30"></a>
-<a class="sourceLine" id="cb19-31" data-line-number="31">       <span class="kw">try</span> (Scope sc = <span class="fu">scope</span>().<span class="fu">fork</span>()){</a>
-<a class="sourceLine" id="cb19-32" data-line-number="32">           <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; a = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, m * n);</a>
-<a class="sourceLine" id="cb19-33" data-line-number="33">           <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; x = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, n);</a>
-<a class="sourceLine" id="cb19-34" data-line-number="34">           <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; y = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, n);</a>
-<a class="sourceLine" id="cb19-35" data-line-number="35">           <span class="co">/* The elements of the first column */</span></a>
-<a class="sourceLine" id="cb19-36" data-line-number="36">           a.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">1.0</span>);</a>
-<a class="sourceLine" id="cb19-37" data-line-number="37">           a.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">2.0</span>);</a>
-<a class="sourceLine" id="cb19-38" data-line-number="38">           a.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">3.0</span>);</a>
-<a class="sourceLine" id="cb19-39" data-line-number="39">           a.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">4.0</span>);</a>
-<a class="sourceLine" id="cb19-40" data-line-number="40">           <span class="co">/* The elements of the second column */</span></a>
-<a class="sourceLine" id="cb19-41" data-line-number="41">           a.<span class="fu">set</span>(m, <span class="fl">1.0</span>);</a>
-<a class="sourceLine" id="cb19-42" data-line-number="42">           a.<span class="fu">set</span>(m + <span class="dv">1</span>, <span class="fl">1.0</span>);</a>
-<a class="sourceLine" id="cb19-43" data-line-number="43">           a.<span class="fu">set</span>(m + <span class="dv">2</span>, <span class="fl">1.0</span>);</a>
-<a class="sourceLine" id="cb19-44" data-line-number="44">           a.<span class="fu">set</span>(m + <span class="dv">3</span>, <span class="fl">1.0</span>);</a>
-<a class="sourceLine" id="cb19-45" data-line-number="45">           <span class="co">/* The elements of the third column */</span></a>
-<a class="sourceLine" id="cb19-46" data-line-number="46">           a.<span class="fu">set</span>(m * <span class="dv">2</span>, <span class="fl">3.0</span>);</a>
-<a class="sourceLine" id="cb19-47" data-line-number="47">           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">1</span>, <span class="fl">4.0</span>);</a>
-<a class="sourceLine" id="cb19-48" data-line-number="48">           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">2</span>, <span class="fl">5.0</span>);</a>
-<a class="sourceLine" id="cb19-49" data-line-number="49">           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">3</span>, <span class="fl">6.0</span>);</a>
-<a class="sourceLine" id="cb19-50" data-line-number="50">           <span class="co">/* The elements of the fourth column */</span></a>
-<a class="sourceLine" id="cb19-51" data-line-number="51">           a.<span class="fu">set</span>(m * <span class="dv">3</span>, <span class="fl">5.0</span>);</a>
-<a class="sourceLine" id="cb19-52" data-line-number="52">           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">1</span>, <span class="fl">6.0</span>);</a>
-<a class="sourceLine" id="cb19-53" data-line-number="53">           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">2</span>, <span class="fl">7.0</span>);</a>
-<a class="sourceLine" id="cb19-54" data-line-number="54">           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">3</span>, <span class="fl">8.0</span>);</a>
-<a class="sourceLine" id="cb19-55" data-line-number="55">           <span class="co">/* The elemetns of x and y */</span></a>
-<a class="sourceLine" id="cb19-56" data-line-number="56">           x.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">1.0</span>);</a>
-<a class="sourceLine" id="cb19-57" data-line-number="57">           x.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">2.0</span>);</a>
-<a class="sourceLine" id="cb19-58" data-line-number="58">           x.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">1.0</span>);</a>
-<a class="sourceLine" id="cb19-59" data-line-number="59">           x.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">1.0</span>);</a>
-<a class="sourceLine" id="cb19-60" data-line-number="60">           y.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">0.0</span>);</a>
-<a class="sourceLine" id="cb19-61" data-line-number="61">           y.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">0.0</span>);</a>
-<a class="sourceLine" id="cb19-62" data-line-number="62">           y.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">0.0</span>);</a>
-<a class="sourceLine" id="cb19-63" data-line-number="63">           y.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">0.0</span>);</a>
-<a class="sourceLine" id="cb19-64" data-line-number="64"></a>
-<a class="sourceLine" id="cb19-65" data-line-number="65">           <span class="fu">cblas_dgemv</span>(Layout, transa, m, n, alpha, a.<span class="fu">elementPointer</span>(), lda, x.<span class="fu">elementPointer</span>(), incx, beta,</a>
-<a class="sourceLine" id="cb19-66" data-line-number="66">                   y.<span class="fu">elementPointer</span>(), incy);</a>
-<a class="sourceLine" id="cb19-67" data-line-number="67">           <span class="co">/* Print y */</span></a>
-<a class="sourceLine" id="cb19-68" data-line-number="68">           <span class="kw">for</span> (i = <span class="dv">0</span>; i &lt; n; i++)</a>
-<a class="sourceLine" id="cb19-69" data-line-number="69">               <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">print</span>(<span class="bu">String</span><span class="fu">.format</span>(<span class="st">&quot; y</span><span class="sc">%d</span><span class="st"> = </span><span class="sc">%f\n</span><span class="st">&quot;</span>, i, y.<span class="fu">get</span>(i)));</a>
-<a class="sourceLine" id="cb19-70" data-line-number="70">       }</a>
-<a class="sourceLine" id="cb19-71" data-line-number="71">   }</a>
-<a class="sourceLine" id="cb19-72" data-line-number="72">}</a></code></pre></div>
+<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="kw">import</span><span class="im"> blas.cblas_h;</span></a>
+<a class="sourceLine" id="cb19-3" data-line-number="3"><span class="kw">import static</span><span class="im"> blas.cblas_lib.*;</span></a>
+<a class="sourceLine" id="cb19-4" data-line-number="4"><span class="kw">import static</span><span class="im"> blas.cblas_lib.CBLAS_ORDER.*;</span></a>
+<a class="sourceLine" id="cb19-5" data-line-number="5"><span class="kw">import static</span><span class="im"> blas.cblas_lib.CBLAS_TRANSPOSE.*;</span></a>
+<a class="sourceLine" id="cb19-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb19-7" data-line-number="7"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
+<a class="sourceLine" id="cb19-8" data-line-number="8"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
+<a class="sourceLine" id="cb19-9" data-line-number="9"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
+<a class="sourceLine" id="cb19-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb19-11" data-line-number="11"><span class="kw">public</span> <span class="kw">class</span> TestBlas {</a>
+<a class="sourceLine" id="cb19-12" data-line-number="12">   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb19-13" data-line-number="13">       <span class="at">@cblas_h</span>.<span class="fu">CBLAS_ORDER</span> <span class="dt">int</span> Layout;</a>
+<a class="sourceLine" id="cb19-14" data-line-number="14">       <span class="at">@cblas_h</span>.<span class="fu">CBLAS_TRANSPOSE</span> <span class="dt">int</span> transa;</a>
+<a class="sourceLine" id="cb19-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb19-16" data-line-number="16">       <span class="dt">double</span> alpha, beta;</a>
+<a class="sourceLine" id="cb19-17" data-line-number="17">       <span class="dt">int</span> m, n, lda, incx, incy, i;</a>
+<a class="sourceLine" id="cb19-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb19-19" data-line-number="19">       Layout = CblasColMajor;</a>
+<a class="sourceLine" id="cb19-20" data-line-number="20">       transa = CblasNoTrans;</a>
+<a class="sourceLine" id="cb19-21" data-line-number="21"></a>
+<a class="sourceLine" id="cb19-22" data-line-number="22">       m = <span class="dv">4</span>; <span class="co">/* Size of Column ( the number of rows ) */</span></a>
+<a class="sourceLine" id="cb19-23" data-line-number="23">       n = <span class="dv">4</span>; <span class="co">/* Size of Row ( the number of columns ) */</span></a>
+<a class="sourceLine" id="cb19-24" data-line-number="24">       lda = <span class="dv">4</span>; <span class="co">/* Leading dimension of 5 * 4 matrix is 5 */</span></a>
+<a class="sourceLine" id="cb19-25" data-line-number="25">       incx = <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb19-26" data-line-number="26">       incy = <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb19-27" data-line-number="27">       alpha = <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb19-28" data-line-number="28">       beta = <span class="dv">0</span>;</a>
+<a class="sourceLine" id="cb19-29" data-line-number="29"></a>
+<a class="sourceLine" id="cb19-30" data-line-number="30">       <span class="kw">try</span> (Scope sc = <span class="fu">scope</span>().<span class="fu">fork</span>()){</a>
+<a class="sourceLine" id="cb19-31" data-line-number="31">           <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; a = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, m * n);</a>
+<a class="sourceLine" id="cb19-32" data-line-number="32">           <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; x = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, n);</a>
+<a class="sourceLine" id="cb19-33" data-line-number="33">           <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; y = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, n);</a>
+<a class="sourceLine" id="cb19-34" data-line-number="34">           <span class="co">/* The elements of the first column */</span></a>
+<a class="sourceLine" id="cb19-35" data-line-number="35">           a.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb19-36" data-line-number="36">           a.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">2.0</span>);</a>
+<a class="sourceLine" id="cb19-37" data-line-number="37">           a.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">3.0</span>);</a>
+<a class="sourceLine" id="cb19-38" data-line-number="38">           a.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">4.0</span>);</a>
+<a class="sourceLine" id="cb19-39" data-line-number="39">           <span class="co">/* The elements of the second column */</span></a>
+<a class="sourceLine" id="cb19-40" data-line-number="40">           a.<span class="fu">set</span>(m, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb19-41" data-line-number="41">           a.<span class="fu">set</span>(m + <span class="dv">1</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb19-42" data-line-number="42">           a.<span class="fu">set</span>(m + <span class="dv">2</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb19-43" data-line-number="43">           a.<span class="fu">set</span>(m + <span class="dv">3</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb19-44" data-line-number="44">           <span class="co">/* The elements of the third column */</span></a>
+<a class="sourceLine" id="cb19-45" data-line-number="45">           a.<span class="fu">set</span>(m * <span class="dv">2</span>, <span class="fl">3.0</span>);</a>
+<a class="sourceLine" id="cb19-46" data-line-number="46">           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">1</span>, <span class="fl">4.0</span>);</a>
+<a class="sourceLine" id="cb19-47" data-line-number="47">           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">2</span>, <span class="fl">5.0</span>);</a>
+<a class="sourceLine" id="cb19-48" data-line-number="48">           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">3</span>, <span class="fl">6.0</span>);</a>
+<a class="sourceLine" id="cb19-49" data-line-number="49">           <span class="co">/* The elements of the fourth column */</span></a>
+<a class="sourceLine" id="cb19-50" data-line-number="50">           a.<span class="fu">set</span>(m * <span class="dv">3</span>, <span class="fl">5.0</span>);</a>
+<a class="sourceLine" id="cb19-51" data-line-number="51">           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">1</span>, <span class="fl">6.0</span>);</a>
+<a class="sourceLine" id="cb19-52" data-line-number="52">           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">2</span>, <span class="fl">7.0</span>);</a>
+<a class="sourceLine" id="cb19-53" data-line-number="53">           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">3</span>, <span class="fl">8.0</span>);</a>
+<a class="sourceLine" id="cb19-54" data-line-number="54">           <span class="co">/* The elemetns of x and y */</span></a>
+<a class="sourceLine" id="cb19-55" data-line-number="55">           x.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb19-56" data-line-number="56">           x.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">2.0</span>);</a>
+<a class="sourceLine" id="cb19-57" data-line-number="57">           x.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb19-58" data-line-number="58">           x.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb19-59" data-line-number="59">           y.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">0.0</span>);</a>
+<a class="sourceLine" id="cb19-60" data-line-number="60">           y.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">0.0</span>);</a>
+<a class="sourceLine" id="cb19-61" data-line-number="61">           y.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">0.0</span>);</a>
+<a class="sourceLine" id="cb19-62" data-line-number="62">           y.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">0.0</span>);</a>
+<a class="sourceLine" id="cb19-63" data-line-number="63"></a>
+<a class="sourceLine" id="cb19-64" data-line-number="64">           <span class="fu">cblas_dgemv</span>(Layout, transa, m, n, alpha, a.<span class="fu">elementPointer</span>(), lda, x.<span class="fu">elementPointer</span>(), incx, beta,</a>
+<a class="sourceLine" id="cb19-65" data-line-number="65">                   y.<span class="fu">elementPointer</span>(), incy);</a>
+<a class="sourceLine" id="cb19-66" data-line-number="66">           <span class="co">/* Print y */</span></a>
+<a class="sourceLine" id="cb19-67" data-line-number="67">           <span class="kw">for</span> (i = <span class="dv">0</span>; i &lt; n; i++)</a>
+<a class="sourceLine" id="cb19-68" data-line-number="68">               <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">print</span>(<span class="bu">String</span><span class="fu">.format</span>(<span class="st">&quot; y</span><span class="sc">%d</span><span class="st"> = </span><span class="sc">%f\n</span><span class="st">&quot;</span>, i, y.<span class="fu">get</span>(i)));</a>
+<a class="sourceLine" id="cb19-69" data-line-number="69">       }</a>
+<a class="sourceLine" id="cb19-70" data-line-number="70">   }</a>
+<a class="sourceLine" id="cb19-71" data-line-number="71">}</a></code></pre></div>
 <h3 id="compiling-and-running-the-above-cblas-samples">Compiling and running the above cblas samples</h3>
 <div class="sourceCode" id="cb20"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb20-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb20-2" data-line-number="2"><span class="ex">javac</span> -cp cblas.jar TestBlas.java</a>
@@ -495,14 +494,14 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb22-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
 <a class="sourceLine" id="cb22-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
 <a class="sourceLine" id="cb22-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb22-5" data-line-number="5"><span class="kw">import static</span><span class="im"> lapack.clapack_h.*;</span></a>
-<a class="sourceLine" id="cb22-6" data-line-number="6"><span class="kw">import static</span><span class="im"> lapack.cblas_h.*;</span></a>
+<a class="sourceLine" id="cb22-5" data-line-number="5"><span class="kw">import static</span><span class="im"> lapack.clapack_lib.*;</span></a>
+<a class="sourceLine" id="cb22-6" data-line-number="6"><span class="kw">import static</span><span class="im"> lapack.cblas_lib.*;</span></a>
 <a class="sourceLine" id="cb22-7" data-line-number="7"></a>
 <a class="sourceLine" id="cb22-8" data-line-number="8"><span class="kw">public</span> <span class="kw">class</span> TestLapack {</a>
 <a class="sourceLine" id="cb22-9" data-line-number="9">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
 <a class="sourceLine" id="cb22-10" data-line-number="10"></a>
 <a class="sourceLine" id="cb22-11" data-line-number="11">        <span class="co">/* Locals */</span></a>
-<a class="sourceLine" id="cb22-12" data-line-number="12">        <span class="kw">try</span> (Scope sc = lapack.<span class="fu">clapack_h</span>.<span class="fu">scope</span>().<span class="fu">fork</span>()) {</a>
+<a class="sourceLine" id="cb22-12" data-line-number="12">        <span class="kw">try</span> (Scope sc = lapack.<span class="fu">clapack_lib</span>.<span class="fu">scope</span>().<span class="fu">fork</span>()) {</a>
 <a class="sourceLine" id="cb22-13" data-line-number="13">            <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; A = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, <span class="kw">new</span> <span class="dt">double</span>[]{</a>
 <a class="sourceLine" id="cb22-14" data-line-number="14">                    <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">3</span></a>
 <a class="sourceLine" id="cb22-15" data-line-number="15">            });</a>
@@ -555,15 +554,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>On Mac OS, lapack is installed under /usr/local/opt/lapack directory.</p>
 <h3 id="jextracting-lapacke.h">jextracting lapacke.h</h3>
 <div class="sourceCode" id="cb24"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb24-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb24-2" data-line-number="2"><span class="ex">jextract</span> -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \</a>
-<a class="sourceLine" id="cb24-3" data-line-number="3">  -l lapacke -t lapack --record-library-path /usr/local/opt/lapack/include/lapacke.h -o clapack.jar</a></code></pre></div>
+<a class="sourceLine" id="cb24-2" data-line-number="2"><span class="ex">jextract</span> -L /usr/local/opt/lapack/lib \</a>
+<a class="sourceLine" id="cb24-3" data-line-number="3">  -l lapacke -t lapack --record-library-path \</a>
+<a class="sourceLine" id="cb24-4" data-line-number="4">  /usr/local/opt/lapack/include/lapacke.h -o clapack.jar</a></code></pre></div>
 <h3 id="java-sample-code-that-uses-lapack-library-1">Java sample code that uses LAPACK library</h3>
 <div class="sourceCode" id="cb25"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb25-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb25-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
 <a class="sourceLine" id="cb25-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
 <a class="sourceLine" id="cb25-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
 <a class="sourceLine" id="cb25-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb25-6" data-line-number="6"><span class="kw">import static</span><span class="im"> lapack.lapacke_h.*;</span></a>
+<a class="sourceLine" id="cb25-6" data-line-number="6"><span class="kw">import static</span><span class="im"> lapack.lapacke_lib.*;</span></a>
 <a class="sourceLine" id="cb25-7" data-line-number="7"></a>
 <a class="sourceLine" id="cb25-8" data-line-number="8"><span class="kw">public</span> <span class="kw">class</span> TestLapack {</a>
 <a class="sourceLine" id="cb25-9" data-line-number="9">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
@@ -625,7 +625,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb27"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb27-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb27-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
 <a class="sourceLine" id="cb27-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.memory.*;</span></a>
-<a class="sourceLine" id="cb27-4" data-line-number="4"><span class="kw">import static</span><span class="im"> org.unix.libproc_h.*;</span></a>
+<a class="sourceLine" id="cb27-4" data-line-number="4"><span class="kw">import static</span><span class="im"> org.unix.libproc_lib.*;</span></a>
 <a class="sourceLine" id="cb27-5" data-line-number="5"></a>
 <a class="sourceLine" id="cb27-6" data-line-number="6"><span class="kw">public</span> <span class="kw">class</span> LibprocMain {</a>
 <a class="sourceLine" id="cb27-7" data-line-number="7">    <span class="kw">private</span> <span class="dt">static</span> <span class="dt">final</span> <span class="dt">int</span> NAME_BUF_MAX = <span class="dv">256</span>;</a>
@@ -665,12 +665,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb29-2" data-line-number="2"><span class="ex">jextract</span> -l readline -L /usr/local/opt/readline/lib/ --record-library-path \</a>
 <a class="sourceLine" id="cb29-3" data-line-number="3">    -t org.unix \</a>
 <a class="sourceLine" id="cb29-4" data-line-number="4">    /usr/include/readline/readline.h \</a>
-<a class="sourceLine" id="cb29-5" data-line-number="5">    --exclude-symbol readline_echoing_p -o readline.jar</a></code></pre></div>
+<a class="sourceLine" id="cb29-5" data-line-number="5">    --exclude-symbols readline_echoing_p -o readline.jar</a></code></pre></div>
 <h3 id="java-code-that-uses-readline">Java code that uses readline</h3>
 <div class="sourceCode" id="cb30"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb30-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb30-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
 <a class="sourceLine" id="cb30-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.memory.*;</span></a>
-<a class="sourceLine" id="cb30-4" data-line-number="4"><span class="kw">import static</span><span class="im"> org.unix.readline_h.*;</span></a>
+<a class="sourceLine" id="cb30-4" data-line-number="4"><span class="kw">import static</span><span class="im"> org.unix.readline_lib.*;</span></a>
 <a class="sourceLine" id="cb30-5" data-line-number="5"></a>
 <a class="sourceLine" id="cb30-6" data-line-number="6"><span class="kw">public</span> <span class="kw">class</span> Readline {</a>
 <a class="sourceLine" id="cb30-7" data-line-number="7">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
@@ -704,28 +704,27 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb33-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.lang.invoke.*;</span></a>
 <a class="sourceLine" id="cb33-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
 <a class="sourceLine" id="cb33-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.memory.*;</span></a>
-<a class="sourceLine" id="cb33-5" data-line-number="5"><span class="kw">import</span><span class="im"> org.unix.curl.*;</span></a>
-<a class="sourceLine" id="cb33-6" data-line-number="6"><span class="kw">import</span><span class="im"> org.unix.curl_h;</span></a>
-<a class="sourceLine" id="cb33-7" data-line-number="7"><span class="kw">import static</span><span class="im"> org.unix.curl_h.*;</span></a>
-<a class="sourceLine" id="cb33-8" data-line-number="8"><span class="kw">import static</span><span class="im"> org.unix.easy_h.*;</span></a>
-<a class="sourceLine" id="cb33-9" data-line-number="9"></a>
-<a class="sourceLine" id="cb33-10" data-line-number="10"><span class="kw">public</span> <span class="kw">class</span> CurlMain {</a>
-<a class="sourceLine" id="cb33-11" data-line-number="11">   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
-<a class="sourceLine" id="cb33-12" data-line-number="12">       <span class="kw">try</span> (Scope s = curl_h.<span class="fu">scope</span>().<span class="fu">fork</span>()) { </a>
-<a class="sourceLine" id="cb33-13" data-line-number="13">           <span class="fu">curl_global_init</span>(CURL_GLOBAL_DEFAULT);</a>
-<a class="sourceLine" id="cb33-14" data-line-number="14">           Pointer&lt;<span class="bu">Void</span>&gt; curl = <span class="fu">curl_easy_init</span>();</a>
-<a class="sourceLine" id="cb33-15" data-line-number="15">           <span class="kw">if</span>(!curl.<span class="fu">isNull</span>()) {</a>
-<a class="sourceLine" id="cb33-16" data-line-number="16">               Pointer&lt;<span class="bu">Byte</span>&gt; url = s.<span class="fu">allocateCString</span>(args[<span class="dv">0</span>]);</a>
-<a class="sourceLine" id="cb33-17" data-line-number="17">               <span class="fu">curl_easy_setopt</span>(curl, CURLOPT_URL, url);</a>
-<a class="sourceLine" id="cb33-18" data-line-number="18">               <span class="dt">int</span> res = <span class="fu">curl_easy_perform</span>(curl);</a>
-<a class="sourceLine" id="cb33-19" data-line-number="19">               <span class="kw">if</span> (res != CURLE_OK) {</a>
-<a class="sourceLine" id="cb33-20" data-line-number="20">                   <span class="fu">curl_easy_cleanup</span>(curl);</a>
-<a class="sourceLine" id="cb33-21" data-line-number="21">               }</a>
-<a class="sourceLine" id="cb33-22" data-line-number="22">           }</a>
-<a class="sourceLine" id="cb33-23" data-line-number="23">           <span class="fu">curl_global_cleanup</span>();</a>
-<a class="sourceLine" id="cb33-24" data-line-number="24">       }</a>
-<a class="sourceLine" id="cb33-25" data-line-number="25">    }</a>
-<a class="sourceLine" id="cb33-26" data-line-number="26">}</a></code></pre></div>
+<a class="sourceLine" id="cb33-5" data-line-number="5"><span class="kw">import</span><span class="im"> org.unix.curl_lib;</span></a>
+<a class="sourceLine" id="cb33-6" data-line-number="6"><span class="kw">import static</span><span class="im"> org.unix.curl_lib.*;</span></a>
+<a class="sourceLine" id="cb33-7" data-line-number="7"><span class="kw">import static</span><span class="im"> org.unix.easy_lib.*;</span></a>
+<a class="sourceLine" id="cb33-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb33-9" data-line-number="9"><span class="kw">public</span> <span class="kw">class</span> CurlMain {</a>
+<a class="sourceLine" id="cb33-10" data-line-number="10">   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb33-11" data-line-number="11">       <span class="kw">try</span> (Scope s = curl_lib.<span class="fu">scope</span>().<span class="fu">fork</span>()) { </a>
+<a class="sourceLine" id="cb33-12" data-line-number="12">           <span class="fu">curl_global_init</span>(CURL_GLOBAL_DEFAULT);</a>
+<a class="sourceLine" id="cb33-13" data-line-number="13">           Pointer&lt;<span class="bu">Void</span>&gt; curl = <span class="fu">curl_easy_init</span>();</a>
+<a class="sourceLine" id="cb33-14" data-line-number="14">           <span class="kw">if</span>(!curl.<span class="fu">isNull</span>()) {</a>
+<a class="sourceLine" id="cb33-15" data-line-number="15">               Pointer&lt;<span class="bu">Byte</span>&gt; url = s.<span class="fu">allocateCString</span>(args[<span class="dv">0</span>]);</a>
+<a class="sourceLine" id="cb33-16" data-line-number="16">               <span class="fu">curl_easy_setopt</span>(curl, CURLOPT_URL, url);</a>
+<a class="sourceLine" id="cb33-17" data-line-number="17">               <span class="dt">int</span> res = <span class="fu">curl_easy_perform</span>(curl);</a>
+<a class="sourceLine" id="cb33-18" data-line-number="18">               <span class="kw">if</span> (res != CURLE_OK) {</a>
+<a class="sourceLine" id="cb33-19" data-line-number="19">                   <span class="fu">curl_easy_cleanup</span>(curl);</a>
+<a class="sourceLine" id="cb33-20" data-line-number="20">               }</a>
+<a class="sourceLine" id="cb33-21" data-line-number="21">           }</a>
+<a class="sourceLine" id="cb33-22" data-line-number="22">           <span class="fu">curl_global_cleanup</span>();</a>
+<a class="sourceLine" id="cb33-23" data-line-number="23">       }</a>
+<a class="sourceLine" id="cb33-24" data-line-number="24">    }</a>
+<a class="sourceLine" id="cb33-25" data-line-number="25">}</a></code></pre></div>
 <h3 id="running-the-java-code-that-uses-libcurl">Running the java code that uses libcurl</h3>
 <div class="sourceCode" id="cb34"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb34-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb34-2" data-line-number="2"><span class="ex">javac</span> -cp curl.jar CurlMain.java</a>
@@ -738,13 +737,13 @@ java -cp readline.jar:. Readline
 <div class="sourceCode" id="cb36"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb36-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb36-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
 <a class="sourceLine" id="cb36-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.lang.invoke.*;</span></a>
-<a class="sourceLine" id="cb36-4" data-line-number="4"><span class="kw">import</span><span class="im"> org.unix.unistd;</span></a>
+<a class="sourceLine" id="cb36-4" data-line-number="4"><span class="kw">import</span><span class="im"> org.unix.unistd_h;</span></a>
 <a class="sourceLine" id="cb36-5" data-line-number="5"></a>
 <a class="sourceLine" id="cb36-6" data-line-number="6"></a>
 <a class="sourceLine" id="cb36-7" data-line-number="7"><span class="kw">public</span> <span class="kw">class</span> Getpid {</a>
 <a class="sourceLine" id="cb36-8" data-line-number="8">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
 <a class="sourceLine" id="cb36-9" data-line-number="9">        <span class="co">// bind unistd interface</span></a>
-<a class="sourceLine" id="cb36-10" data-line-number="10">        var u = Libraries.<span class="fu">bind</span>(MethodHandles.<span class="fu">lookup</span>(), unistd.<span class="fu">class</span>);</a>
+<a class="sourceLine" id="cb36-10" data-line-number="10">        var u = Libraries.<span class="fu">bind</span>(MethodHandles.<span class="fu">lookup</span>(), unistd_h.<span class="fu">class</span>);</a>
 <a class="sourceLine" id="cb36-11" data-line-number="11">        <span class="co">// call getpid from the unistd.h</span></a>
 <a class="sourceLine" id="cb36-12" data-line-number="12">        <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(u.<span class="fu">getpid</span>());</a>
 <a class="sourceLine" id="cb36-13" data-line-number="13">        <span class="co">// check process id from Java API!</span></a>
@@ -775,8 +774,8 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb40-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
 <a class="sourceLine" id="cb40-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.memory.Pointer;</span></a>
 <a class="sourceLine" id="cb40-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb40-6" data-line-number="6"><span class="kw">import static</span><span class="im"> opengl.gl_h.*;</span></a>
-<a class="sourceLine" id="cb40-7" data-line-number="7"><span class="kw">import static</span><span class="im"> opengl.freeglut_std_h.*;</span></a>
+<a class="sourceLine" id="cb40-6" data-line-number="6"><span class="kw">import static</span><span class="im"> opengl.gl_lib.*;</span></a>
+<a class="sourceLine" id="cb40-7" data-line-number="7"><span class="kw">import static</span><span class="im"> opengl.freeglut_std_lib.*;</span></a>
 <a class="sourceLine" id="cb40-8" data-line-number="8"></a>
 <a class="sourceLine" id="cb40-9" data-line-number="9"><span class="kw">public</span> <span class="kw">class</span> Teapot {</a>
 <a class="sourceLine" id="cb40-10" data-line-number="10"></a>
@@ -819,7 +818,7 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb40-47" data-line-number="47">    }</a>
 <a class="sourceLine" id="cb40-48" data-line-number="48"></a>
 <a class="sourceLine" id="cb40-49" data-line-number="49">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
-<a class="sourceLine" id="cb40-50" data-line-number="50">        <span class="kw">try</span> (Scope sc = opengl.<span class="fu">gl_h</span>.<span class="fu">scope</span>().<span class="fu">fork</span>()) {</a>
+<a class="sourceLine" id="cb40-50" data-line-number="50">        <span class="kw">try</span> (Scope sc = opengl.<span class="fu">gl_lib</span>.<span class="fu">scope</span>().<span class="fu">fork</span>()) {</a>
 <a class="sourceLine" id="cb40-51" data-line-number="51">            Pointer&lt;<span class="bu">Integer</span>&gt; argc = sc.<span class="fu">allocate</span>(NativeTypes.<span class="fu">INT32</span>);</a>
 <a class="sourceLine" id="cb40-52" data-line-number="52">            argc.<span class="fu">set</span>(<span class="dv">0</span>);</a>
 <a class="sourceLine" id="cb40-53" data-line-number="53">            <span class="fu">glutInit</span>(argc, Pointer.<span class="fu">ofNull</span>());</a>
@@ -879,18 +878,18 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb47-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
 <a class="sourceLine" id="cb47-5" data-line-number="5"><span class="kw">import</span><span class="im"> java.foreign.memory.LayoutType;</span></a>
 <a class="sourceLine" id="cb47-6" data-line-number="6"><span class="kw">import</span><span class="im"> java.foreign.memory.Pointer;</span></a>
-<a class="sourceLine" id="cb47-7" data-line-number="7"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_DataType;</span></a>
-<a class="sourceLine" id="cb47-8" data-line-number="8"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Graph;</span></a>
-<a class="sourceLine" id="cb47-9" data-line-number="9"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Operation;</span></a>
-<a class="sourceLine" id="cb47-10" data-line-number="10"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_OperationDescription;</span></a>
-<a class="sourceLine" id="cb47-11" data-line-number="11"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Output;</span></a>
-<a class="sourceLine" id="cb47-12" data-line-number="12"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Session;</span></a>
-<a class="sourceLine" id="cb47-13" data-line-number="13"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_SessionOptions;</span></a>
-<a class="sourceLine" id="cb47-14" data-line-number="14"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Status;</span></a>
-<a class="sourceLine" id="cb47-15" data-line-number="15"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Tensor;</span></a>
+<a class="sourceLine" id="cb47-7" data-line-number="7"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api_h.TF_DataType;</span></a>
+<a class="sourceLine" id="cb47-8" data-line-number="8"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api_h.TF_Graph;</span></a>
+<a class="sourceLine" id="cb47-9" data-line-number="9"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api_h.TF_Operation;</span></a>
+<a class="sourceLine" id="cb47-10" data-line-number="10"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api_h.TF_OperationDescription;</span></a>
+<a class="sourceLine" id="cb47-11" data-line-number="11"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api_h.TF_Output;</span></a>
+<a class="sourceLine" id="cb47-12" data-line-number="12"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api_h.TF_Session;</span></a>
+<a class="sourceLine" id="cb47-13" data-line-number="13"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api_h.TF_SessionOptions;</span></a>
+<a class="sourceLine" id="cb47-14" data-line-number="14"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api_h.TF_Status;</span></a>
+<a class="sourceLine" id="cb47-15" data-line-number="15"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api_h.TF_Tensor;</span></a>
 <a class="sourceLine" id="cb47-16" data-line-number="16"></a>
-<a class="sourceLine" id="cb47-17" data-line-number="17"><span class="kw">import static</span><span class="im"> org.tensorflow.panama.c_api_h.*;</span></a>
-<a class="sourceLine" id="cb47-18" data-line-number="18"><span class="kw">import static</span><span class="im"> org.tensorflow.panama.c_api_h.TF_DataType.*;</span></a>
+<a class="sourceLine" id="cb47-17" data-line-number="17"><span class="kw">import static</span><span class="im"> org.tensorflow.panama.c_api_lib.*;</span></a>
+<a class="sourceLine" id="cb47-18" data-line-number="18"><span class="kw">import static</span><span class="im"> org.tensorflow.panama.c_api_lib.TF_DataType.*;</span></a>
 <a class="sourceLine" id="cb47-19" data-line-number="19"></a>
 <a class="sourceLine" id="cb47-20" data-line-number="20"><span class="kw">public</span> <span class="kw">class</span> TensorFlowExample {</a>
 <a class="sourceLine" id="cb47-21" data-line-number="21">    <span class="dt">static</span> Pointer&lt;TF_Operation&gt; <span class="fu">PlaceHolder</span>(Pointer&lt;TF_Graph&gt; graph, Pointer&lt;TF_Status&gt; status,</a>

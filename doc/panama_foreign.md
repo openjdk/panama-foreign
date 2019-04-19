@@ -326,7 +326,7 @@ The following command can be used to extract cblas.h on MacOs
 ```sh
 
 jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
-  -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \
+  -L /usr/local/opt/openblas/lib \
   -l openblas -t blas --record-library-path /usr/local/opt/openblas/include/cblas.h \
   -o cblas.jar
 
@@ -351,8 +351,7 @@ jextract -L /usr/lib/atlas-base -I /usr/include/atlas/ \
 
 ```java
 
-import blas.cblas;
-
+import blas.cblas_h;
 import static blas.cblas_lib.*;
 import static blas.cblas_lib.CBLAS_ORDER.*;
 import static blas.cblas_lib.CBLAS_TRANSPOSE.*;
@@ -363,8 +362,8 @@ import java.foreign.memory.Array;
 
 public class TestBlas {
    public static void main(String[] args) {
-       @blas.cblas_h.CBLAS_ORDER int Layout;
-       @blas.cblas_h.CBLAS_TRANSPOSE int transa;
+       @cblas_h.CBLAS_ORDER int Layout;
+       @cblas_h.CBLAS_TRANSPOSE int transa;
 
        double alpha, beta;
        int m, n, lda, incx, incy, i;
@@ -528,8 +527,9 @@ On Mac OS, lapack is installed under /usr/local/opt/lapack directory.
 
 ```sh
 
-jextract -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \
-  -l lapacke -t lapack --record-library-path /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
+jextract -L /usr/local/opt/lapack/lib \
+  -l lapacke -t lapack --record-library-path \
+  /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
 
 ```
 ### Java sample code that uses LAPACK library
@@ -666,7 +666,7 @@ java -cp libproc.jar:. LibprocMain
 jextract -l readline -L /usr/local/opt/readline/lib/ --record-library-path \
     -t org.unix \
     /usr/include/readline/readline.h \
-    --exclude-symbol readline_echoing_p -o readline.jar
+    --exclude-symbols readline_echoing_p -o readline.jar
 
 ```
 
