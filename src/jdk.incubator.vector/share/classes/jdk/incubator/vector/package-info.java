@@ -57,13 +57,13 @@
  *
  * In addition to element type, vectors are parameterized by their <em>shape</em>,
  * which is their length.  The supported shapes are
- * represented by the enum {@link jdk.incubator.vector.Vector.Shape}.
+ * represented by the enum {@link jdk.incubator.vector.VectorShape}.
  * The combination of element type and shape determines a <em>vector species</em>,
- * represented by {@link jdk.incubator.vector.Vector.Species}.  The various typed
+ * represented by {@link jdk.incubator.vector.VectorSpecies}.  The various typed
  * vector classes expose static constants corresponding to the supported species,
  * and static methods on these types generally take a species as a parameter.
  * For example,
- * {@link jdk.incubator.vector.FloatVector#fromArray(Species<Float>, float[], int) FloatVector.fromArray()}
+ * {@link jdk.incubator.vector.FloatVector#fromArray(VectorSpecies, float[], int) FloatVector.fromArray()}
  * creates and returns a float vector of the specified species, with elements
  * loaded from the specified float array.
  *
@@ -71,20 +71,20 @@
  * The species instance for a specific combination of element type and shape
  * can be obtained by reading the appropriate static field, as follows:
  * <p>
- * {@code Vector.Species<Float> s = FloatVector.SPECIES_256;
+ * {@code VectorSpecies<Float> s = FloatVector.SPECIES_256};
  * <p>
  *
  * Code that is agnostic to species can request the "preferred" species for a
  * given element type, where the optimal size is selected for the current platform:
  * <p>
- * {@code Vector.Species<Float> s = FloatVector.SPECIES_PREFERRED;
+ * {@code VectorSpecies<Float> s = FloatVector.SPECIES_PREFERRED};
  * <p>
  *
  * <p>
  * Here is an example of multiplying elements of two float arrays {@code a and b} using vector computation
  * and storing result in array {@code c}.
  * <pre>{@code
- * static final Vector.Species<Float> SPECIES = FloatVector.SPECIES_512;
+ * static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_512;
  *
  * void vectorMultiply(float[] a, float[] b, float[] c) {
  *   int i = 0;
@@ -110,18 +110,18 @@
  * species as shown below, to make the code dynamically adapt to optimal shape for the platform on which it runs.
  *
  * <pre>{@code
- * static final Vector.Species<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
+ * static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
  * }</pre>
  *
  * <h2>Vector operations</h2>
  * We use the term <em>lanes</em> when defining operations on vectors. The number of lanes
  * in a vector is the number of scalar elements it holds. For example, a vector of
- * type {@code Float} and shape {@code Shape.S_256_BIT} has eight lanes.
+ * type {@code Float} and shape {@code VectorShape.S_256_BIT} has eight lanes.
  * Vector operations can be grouped into various categories and their behavior
  * generally specified as follows:
  * <ul>
  * <li>
- * A vector unary operation operates on one input vector to produce a
+ * A lane-wise unary operation operates on one input vector and produce a
  * result vector.
  * For each lane of the input vector the
  * lane element is operated on using the specified scalar unary operation and
@@ -143,7 +143,7 @@
  * element type and shape.
  *
  * <li>
- * A vector binary operation operates on two input
+ * A lane-wise binary operation operates on two input
  * vectors to produce a result vector.
  * For each lane of the two input vectors,
  * a and b say, the corresponding lane elements from a and b are operated on
@@ -165,7 +165,7 @@
  * same element type and shape.
  *
  * <li>
- * Generalizing from unary and binary operations, a vector n-ary
+ * Generalizing from unary and binary operations, a lane-wise n-ary
  * operation operates on n input vectors to produce a
  * result vector.
  * N lane elements from each input vector are operated on
@@ -197,7 +197,7 @@
  * the same.
  *
  * <li>
- * A vector binary test operation operates on two input vectors to produce a
+ * A lane-wise binary test operation operates on two input vectors to produce a
  * result mask.  For each lane of the two input vectors, a and b say, the
  * the corresponding lane elements from a and b are operated on using the
  * specified scalar binary test operation and the boolean result is placed
@@ -210,7 +210,7 @@
  * for (int i = 0; i < a.length(); i++) {
  *     ar[i] = scalar_binary_test_op(a.get(i), b.get(i));
  * }
- * Mask<E> r = EVector.maskFromArray(a.species(), ar, 0);
+ * VectorMask<E> r = VectorMask.fromArray(a.species(), ar, 0);
  * }</pre>
  *
  * Unless otherwise specified the two input vectors and result mask will have
@@ -224,14 +224,11 @@
  * A further category of operation is a cross-lane vector operation where lane
  * access is defined by the arguments to the operation.  Cross-lane operations
  * generally rearrange lane elements, for example by permutation (commonly
- * controlled by a {@link jdk.incubator.vector.Vector.Shuffle}) or by blending (commonly controlled by a
- * {@link jdk.incubator.vector.Vector.Mask}). Such an operation explicitly specifies how it rearranges lane
+ * controlled by a {@link jdk.incubator.vector.VectorShuffle}) or by blending (commonly controlled by a
+ * {@link jdk.incubator.vector.VectorMask}). Such an operation explicitly specifies how it rearranges lane
  * elements.
  * </ul>
  *
- * Some vector operations are specified as instance methods (such as adding
- * one vector to another); others are specified as static methods (such as
- * loading vector values from an array.)
  * <p>
  * If a vector operation does not belong to one of the above categories then
  * the operation explicitly specifies how it processes the lane elements of
@@ -239,7 +236,7 @@
  * pseudocode.
  *
  * <p>
- * Many vector operations provide an additional {@link jdk.incubator.vector.Vector.Mask mask}-accepting
+ * Many vector operations provide an additional {@link jdk.incubator.vector.VectorMask mask}-accepting
  * variant.
  * The mask controls which lanes are selected for application of the scalar
  * operation.  Masks are a key component for the support of control flow in
@@ -249,19 +246,18 @@
  * in generic terms.  If a lane of the mask is set then the scalar operation is
  * applied to corresponding lane elements, otherwise if a lane of a mask is not
  * set then a default scalar operation is applied and its result is placed into
- * the vector result at the same lane. The default operation is specified for
- * the following operation categories:
+ * the vector result at the same lane. The default operation is specified as follows:
  * <ul>
  * <li>
- * For a vector n-ary operation the default operation is a function that returns
- * it's first argument, specifically a lane element of the first input vector.
+ * For a lane-wise n-ary operation the default operation is a function that returns
+ * it's first argument, specifically the lane element of the first input vector.
  * <li>
  * For an associative vector reduction operation the default operation is a
  * function that returns the identity value.
  * <li>
- * For vector binary test operation the default operation is a function that
+ * For lane-wise binary test operation the default operation is a function that
  * returns false.
- *</ul>
+ * </ul>
  * Otherwise, the mask accepting variant of the operation explicitly specifies
  * how it processes the lane elements of input vectors, and where appropriate
  * expresses the behavior using pseudocode.

@@ -42,8 +42,8 @@ import jdk.incubator.vector.*;
  * by a runtime compiler, on supported hardware, to Single Instruction Multiple
  * Data (SIMD) computations leveraging vector hardware registers and vector
  * hardware instructions.  Such SIMD computations exploit data parallelism to
- * perform the same operation on multiple data points simultaneously in a
- * faster time it would ordinarily take to perform the same operation
+ * perform the same operation on multiple data points simultaneously in
+ * less time than it would ordinarily take to perform the same operation
  * sequentially on each data point.
  * <p>
  * A Vector represents an ordered immutable sequence of values of the same
@@ -52,9 +52,10 @@ import jdk.incubator.vector.*;
  * {@code double}).  The type variable {@code E} corresponds to the boxed
  * element type, specifically the class that wraps a value of {@code e} in an
  * object (such the {@code Integer} class that wraps a value of {@code int}}.
- * A Vector has a {@link #shape() shape} {@code S}, extending type
- * {@link VectorShape}, that governs the total {@link #bitSize() size} in bits
- * of the sequence of values.
+ * A Vector has a {@link #shape() shape} {@code S}, extending type {@link VectorShape},
+ * that governs the total {@link #bitSize() size} in bits of the sequence of values.
+ * The combination of element type and shape determines a <em>vector species</em>,
+ * represented by {@link jdk.incubator.vector.VectorSpecies}.
  * <p>
  * The number of values in the sequence is referred to as the Vector
  * {@link #length() length}.  The length also corresponds to the number of
@@ -72,73 +73,71 @@ import jdk.incubator.vector.*;
  * element type (such as access to element values in lanes, logical operations
  * on values of integral elements types, or transcendental operations on values
  * of floating point element types).
- * There are six sub-classes of Vector corresponding to the supported set
+ * There are six abstract sub-classes of Vector corresponding to the supported set
  * of element types, {@link ByteVector}, {@link ShortVector},
  * {@link IntVector} {@link LongVector}, {@link FloatVector}, and
- * {@link DoubleVector}.
+ * {@link DoubleVector}. Along with type-specific operations these classes
+ * support creation of vector values (instances of Vector).
+ * They expose static constants corresponding to the supported species,
+ * and static methods on these types generally take a species as a parameter.
+ * For example,
+ * {@link jdk.incubator.vector.FloatVector#fromArray(VectorSpecies, float[], int) FloatVector.fromArray()}
+ * creates and returns a float vector of the specified species, with elements
+ * loaded from the specified float array.
  * <p>
- * Vector values, instances of Vector, are created from a special kind of
- * factory called a {@link VectorSpecies}.  A VectorSpecies has an
- * element type and shape and creates Vector values of the same element type
- * and shape.
- * A species can be {@link VectorSpecies#of(Class, VectorShape)} obtained} given an element
- * type and shape, or a preferred species can be
- * {@link VectorSpecies#ofPreferred(Class)}  obtained} given just an element type where the most
- * optimal shape is selected for the current platform.  It is recommended that
- * VectorSpecies instances be held in {@code static final} fields for optimal creation
- * and usage of Vector values by the runtime compiler.
+ * It is recommended that Species instances be held in {@code static final}
+ * fields for optimal creation and usage of Vector values by the runtime compiler.
  * <p>
- * Vector operations can be grouped into various categories and their behaviour
+ * Vector operations can be grouped into various categories and their behavior
  * generally specified as follows:
  * <ul>
  * <li>
- * A vector unary operation (1-ary) operates on one input vector to produce a
+ * A lane-wise unary operation operates on one input vector and produces a
  * result vector.
  * For each lane of the input vector the
  * lane element is operated on using the specified scalar unary operation and
  * the element result is placed into the vector result at the same lane.
- * The following pseudocode expresses the behaviour of this operation category,
+ * The following pseudocode expresses the behavior of this operation category,
  * where {@code e} is the element type and {@code EVector} corresponds to the
  * primitive Vector type:
  *
  * <pre>{@code
- * EVector<S> a = ...;
+ * EVector a = ...;
  * e[] ar = new e[a.length()];
  * for (int i = 0; i < a.length(); i++) {
  *     ar[i] = scalar_unary_op(a.get(i));
  * }
- * EVector<S> r = a.species().fromArray(ar, 0);
+ * EVector r = EVector.fromArray(a.species(), ar, 0);
  * }</pre>
  *
  * Unless otherwise specified the input and result vectors will have the same
  * element type and shape.
  *
  * <li>
- * A vector binary operation (2-ary) operates on two input
- * vectors to produce a result vector.
- * For each lane of the two input vectors,
- * a and b say, the corresponding lane elements from a and b are operated on
+ * A lane-wise binary operation operates on two input
+ * vectors and produces a result vector.
+ * For each lane of the two input vectors a and b,
+ * the corresponding lane elements from a and b are operated on
  * using the specified scalar binary operation and the element result is placed
  * into the vector result at the same lane.
- * The following pseudocode expresses the behaviour of this operation category:
+ * The following pseudocode expresses the behavior of this operation category:
  *
  * <pre>{@code
- * EVector<S> a = ...;
- * EVector<S> b = ...;
+ * EVector a = ...;
+ * EVector b = ...;
  * e[] ar = new e[a.length()];
  * for (int i = 0; i < a.length(); i++) {
  *     ar[i] = scalar_binary_op(a.get(i), b.get(i));
  * }
- * EVector<S> r = a.species().fromArray(ar, 0);
+ * EVector r = EVector.fromArray(a.species(), ar, 0);
  * }</pre>
  *
  * Unless otherwise specified the two input and result vectors will have the
  * same element type and shape.
  *
  * <li>
- * Generalizing from unary (1-ary) and binary (2-ary) operations, a vector n-ary
- * operation operates in n input vectors to produce a
- * result vector.
+ * Generalizing from unary and binary operations, a lane-wise n-ary
+ * operation operates on n input vectors and produces a result vector.
  * N lane elements from each input vector are operated on
  * using the specified n-ary scalar operation and the element result is placed
  * into the vector result at the same lane.
@@ -146,18 +145,18 @@ import jdk.incubator.vector.*;
  * element type and shape.
  *
  * <li>
- * A vector reduction operation operates on all the lane
+ * A cross-lane vector reduction operation operates on all the lane
  * elements of an input vector.
  * An accumulation function is applied to all the
  * lane elements to produce a scalar result.
  * If the reduction operation is associative then the result may be accumulated
  * by operating on the lane elements in any order using a specified associative
  * scalar binary operation and identity value.  Otherwise, the reduction
- * operation specifies the behaviour of the accumulation function.
- * The following pseudocode expresses the behaviour of this operation category
+ * operation specifies the behavior of the accumulation function.
+ * The following pseudocode expresses the behavior of this operation category
  * if it is associative:
  * <pre>{@code
- * EVector<S> a = ...;
+ * EVector a = ...;
  * e r = <identity value>;
  * for (int i = 0; i < a.length(); i++) {
  *     r = assoc_scalar_binary_op(r, a.get(i));
@@ -168,20 +167,20 @@ import jdk.incubator.vector.*;
  * the same.
  *
  * <li>
- * A vector binary test operation operates on two input vectors to produce a
+ * A lane-wise binary test operation operates on two input vectors and produces a
  * result mask.  For each lane of the two input vectors, a and b say, the
  * the corresponding lane elements from a and b are operated on using the
  * specified scalar binary test operation and the boolean result is placed
  * into the mask at the same lane.
- * The following pseudocode expresses the behaviour of this operation category:
+ * The following pseudocode expresses the behavior of this operation category:
  * <pre>{@code
- * EVector<S> a = ...;
- * EVector<S> b = ...;
+ * EVector a = ...;
+ * EVector b = ...;
  * boolean[] ar = new boolean[a.length()];
  * for (int i = 0; i < a.length(); i++) {
  *     ar[i] = scalar_binary_test_op(a.get(i), b.get(i));
  * }
- * VectorMask<E> r = a.species().maskFromArray(ar, 0);
+ * VectorMask r = VectorMask.fromArray(a.species(), ar, 0);
  * }</pre>
  *
  * Unless otherwise specified the two input vectors and result mask will have
@@ -195,19 +194,15 @@ import jdk.incubator.vector.*;
  * A further category of operation is a cross-lane vector operation where lane
  * access is defined by the arguments to the operation.  Cross-lane operations
  * generally rearrange lane elements, for example by permutation (commonly
- * controlled by a {@link VectorShuffle}) or by blending (commonly controlled by a
- * {@link VectorMask}).  Such an operation explicitly specifies how it rearranges lane
+ * controlled by a {@link jdk.incubator.vector.VectorShuffle}) or by blending (commonly controlled by a
+ * {@link jdk.incubator.vector.VectorMask}). Such an operation explicitly specifies how it rearranges lane
  * elements.
  * </ul>
  *
- * If a vector operation is represented as an instance method then first input
- * vector corresponds to {@code this} vector and subsequent input vectors are
- * arguments of the method.  Otherwise, if the an operation is represented as a
- * static method then all input vectors are arguments of the method.
  * <p>
  * If a vector operation does not belong to one of the above categories then
  * the operation explicitly specifies how it processes the lane elements of
- * input vectors, and where appropriate expresses the behaviour using
+ * input vectors, and where appropriate expresses the behavior using
  * pseudocode.
  *
  * <p>
@@ -217,35 +212,40 @@ import jdk.incubator.vector.*;
  * operation.  Masks are a key component for the support of control flow in
  * vector computations.
  * <p>
+ * Many vector operations provide an additional {@link jdk.incubator.vector.VectorMask mask}-accepting
+ * variant.
+ * The mask controls which lanes are selected for application of the scalar
+ * operation.  Masks are a key component for the support of control flow in
+ * vector computations.
+ * <p>
  * For certain operation categories the mask accepting variants can be specified
  * in generic terms.  If a lane of the mask is set then the scalar operation is
  * applied to corresponding lane elements, otherwise if a lane of a mask is not
  * set then a default scalar operation is applied and its result is placed into
- * the vector result at the same lane. The default operation is specified for
- * the following operation categories:
+ * the vector result at the same lane. The default operation is specified as follows:
  * <ul>
  * <li>
- * For a vector n-ary operation the default operation is a function that returns
- * it's first argument, specifically a lane element of the first input vector.
+ * For a lane-wise n-ary operation the default operation is a function that returns
+ * it's first argument, specifically the lane element of the first input vector.
  * <li>
  * For an associative vector reduction operation the default operation is a
  * function that returns the identity value.
  * <li>
- * For vector binary test operation the default operation is a function that
+ * For lane-wise binary test operation the default operation is a function that
  * returns false.
- *</ul>
+ * </ul>
  * Otherwise, the mask accepting variant of the operation explicitly specifies
  * how it processes the lane elements of input vectors, and where appropriate
- * expresses the behaviour using pseudocode.
+ * expresses the behavior using pseudocode.
  *
  * <p>
- * For convenience many vector operations, of arity greater than one, provide
- * an additional scalar accepting variant.  This variant accepts compatible
+ * For convenience, many vector operations of arity greater than one provide
+ * an additional scalar-accepting variant (such as adding a constant scalar
+ * value to all lanes of a vector).  This variant accepts compatible
  * scalar values instead of vectors for the second and subsequent input vectors,
  * if any.
  * Unless otherwise specified the scalar variant behaves as if each scalar value
- * is transformed to a vector using the vector species
- * {@code broadcast} operation, and
+ * is transformed to a vector using the appropriate vector {@code broadcast} operation, and
  * then the vector accepting vector operation is applied using the transformed
  * values.
  *
@@ -308,8 +308,8 @@ public abstract class Vector<E> {
     /**
      * Adds this vector to an input vector.
      * <p>
-     * This is a vector binary operation where the primitive addition operation
-     * ({@code +}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive addition operation
+     * ({@code +}) to each lane.
      *
      * @param v the input vector
      * @return the result of adding this vector to the input vector
@@ -320,8 +320,8 @@ public abstract class Vector<E> {
      * Adds this vector to an input vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector binary operation where the primitive addition operation
-     * ({@code +}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive addition operation
+     * ({@code +}) to each lane.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -332,8 +332,8 @@ public abstract class Vector<E> {
     /**
      * Subtracts an input vector from this vector.
      * <p>
-     * This is a vector binary operation where the primitive subtraction
-     * operation ({@code -}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive subtraction
+     * operation ({@code -}) to each lane.
      *
      * @param v the input vector
      * @return the result of subtracting the input vector from this vector
@@ -344,8 +344,8 @@ public abstract class Vector<E> {
      * Subtracts an input vector from this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector binary operation where the primitive subtraction
-     * operation ({@code -}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive subtraction
+     * operation ({@code -}) to each lane.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -356,8 +356,8 @@ public abstract class Vector<E> {
     /**
      * Multiplies this vector with an input vector.
      * <p>
-     * This is a vector binary operation where the primitive multiplication
-     * operation ({@code *}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive multiplication
+     * operation ({@code *}) to each lane.
      *
      * @param v the input vector
      * @return the result of multiplying this vector with the input vector
@@ -368,8 +368,8 @@ public abstract class Vector<E> {
      * Multiplies this vector with an input vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector binary operation where the primitive multiplication
-     * operation ({@code *}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive multiplication
+     * operation ({@code *}) to each lane.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -380,8 +380,8 @@ public abstract class Vector<E> {
     /**
      * Negates this vector.
      * <p>
-     * This is a vector unary operation where the primitive negation operation
-     * ({@code -}) is applied to lane elements.
+     * This is a lane-wise unary operation which applies the primitive negation operation
+     * ({@code -}) to each lane.
      *
      * @return the negation this vector
      */
@@ -390,8 +390,8 @@ public abstract class Vector<E> {
     /**
      * Negates this vector, selecting lane elements controlled by a mask.
      * <p>
-     * This is a vector unary operation where the primitive negation operation
-     * ({@code -})is applied to lane elements.
+     * This is a lane-wise unary operation which applies the primitive negation operation
+     * ({@code -})to each lane.
      *
      * @param m the mask controlling lane selection
      * @return the negation this vector
@@ -403,8 +403,8 @@ public abstract class Vector<E> {
     /**
      * Returns the modulus of this vector.
      * <p>
-     * This is a vector unary operation where the operation
-     * {@code (a) -> (a < 0) ? -a : a} is applied to lane elements.
+     * This is a lane-wise unary operation which applies the operation
+     * {@code (a) -> (a < 0) ? -a : a} to each lane.
      *
      * @return the modulus this vector
      */
@@ -414,8 +414,8 @@ public abstract class Vector<E> {
      * Returns the modulus of this vector, selecting lane elements controlled by
      * a mask.
      * <p>
-     * This is a vector unary operation where the operation
-     * {@code (a) -> (a < 0) ? -a : a} is applied to lane elements.
+     * This is a lane-wise unary operation which applies the operation
+     * {@code (a) -> (a < 0) ? -a : a} to each lane.
      *
      * @param m the mask controlling lane selection
      * @return the modulus this vector
@@ -425,8 +425,8 @@ public abstract class Vector<E> {
     /**
      * Returns the minimum of this vector and an input vector.
      * <p>
-     * This is a vector binary operation where the operation
-     * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
+     * This is a lane-wise binary operation which applies the operation
+     * {@code (a, b) -> a < b ? a : b}  to each lane.
      *
      * @param v the input vector
      * @return the minimum of this vector and the input vector
@@ -437,8 +437,8 @@ public abstract class Vector<E> {
      * Returns the minimum of this vector and an input vector,
      * selecting lane elements controlled by a mask.
      * <p>
-     * This is a vector binary operation where the operation
-     * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
+     * This is a lane-wise binary operation which applies the operation
+     * {@code (a, b) -> a < b ? a : b}  to each lane.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -449,8 +449,8 @@ public abstract class Vector<E> {
     /**
      * Returns the maximum of this vector and an input vector.
      * <p>
-     * This is a vector binary operation where the operation
-     * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
+     * This is a lane-wise binary operation which applies the operation
+     * {@code (a, b) -> a > b ? a : b}  to each lane.
      *
      * @param v the input vector
      * @return the maximum of this vector and the input vector
@@ -461,8 +461,8 @@ public abstract class Vector<E> {
      * Returns the maximum of this vector and an input vector,
      * selecting lane elements controlled by a mask.
      * <p>
-     * This is a vector binary operation where the operation
-     * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
+     * This is a lane-wise binary operation which applies the operation
+     * {@code (a, b) -> a > b ? a : b}  to each lane.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -475,8 +475,8 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is equal to an input vector.
      * <p>
-     * This is a vector binary test operation where the primitive equals
-     * operation ({@code ==}) is applied to lane elements.
+     * This is a lane-wise binary test operation where the primitive equals
+     * operation ({@code ==}) to each lane.
      *
      * @param v the input vector
      * @return the result mask of testing if this vector is equal to the input
@@ -487,8 +487,8 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is not equal to an input vector.
      * <p>
-     * This is a vector binary test operation where the primitive not equals
-     * operation ({@code !=}) is applied to lane elements.
+     * This is a lane-wise binary test operation where the primitive not equals
+     * operation ({@code !=}) to each lane.
      *
      * @param v the input vector
      * @return the result mask of testing if this vector is not equal to the
@@ -499,8 +499,8 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is less than an input vector.
      * <p>
-     * This is a vector binary test operation where the primitive less than
-     * operation ({@code <}) is applied to lane elements.
+     * This is a lane-wise binary test operation where the primitive less than
+     * operation ({@code <}) to each lane.
      *
      * @param v the input vector
      * @return the mask result of testing if this vector is less than the input
@@ -511,8 +511,8 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is less or equal to an input vector.
      * <p>
-     * This is a vector binary test operation where the primitive less than
-     * or equal to operation ({@code <=}) is applied to lane elements.
+     * This is a lane-wise binary test operation where the primitive less than
+     * or equal to operation ({@code <=}) to each lane.
      *
      * @param v the input vector
      * @return the mask result of testing if this vector is less than or equal
@@ -523,8 +523,8 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is greater than an input vector.
      * <p>
-     * This is a vector binary test operation where the primitive greater than
-     * operation ({@code >}) is applied to lane elements.
+     * This is a lane-wise binary test operation where the primitive greater than
+     * operation ({@code >}) to each lane.
      *
      * @param v the input vector
      * @return the mask result of testing if this vector is greater than the
@@ -535,8 +535,8 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is greater than or equal to an input vector.
      * <p>
-     * This is a vector binary test operation where the primitive greater than
-     * or equal to operation ({@code >=}) is applied to lane elements.
+     * This is a lane-wise binary test operation where the primitive greater than
+     * or equal to operation ({@code >=}) to each lane.
      *
      * @param v the input vector
      * @return the mask result of testing if this vector is greater than or
@@ -553,8 +553,8 @@ public abstract class Vector<E> {
      * This is a cross-lane operation that permutes the lane elements of this
      * vector.
      * For each lane of the input vector, at lane index {@code N}, the lane
-     * element is placed into to the result vector at lane index
-     * {@code (i + N) % this.length()}.
+     * element is placed into the result vector at lane index
+     * {@code (N + i) % length()}.
      *
      * @param i the number of lanes to rotate left
      * @return the result of rotating left lane elements of this vector by the
@@ -567,8 +567,10 @@ public abstract class Vector<E> {
      * lanes, {@code i}, modulus the vector length.
      * <p>
      * This is a cross-lane operation that permutes the lane elements of this
-     * vector and behaves as if rotating left the lane elements by
-     * {@code this.length() - (i % this.length())} lanes.
+     * vector.
+     * For each lane of the input vector, at lane index {@code N}, the lane
+     * element is placed into the result vector at lane index
+     * {@code (N + length() - (i % length())) % length()}
      *
      * @param i the number of lanes to rotate left
      * @return the result of rotating right lane elements of this vector by the
@@ -583,7 +585,7 @@ public abstract class Vector<E> {
      * This is a cross-lane operation that permutes the lane elements of this
      * vector and behaves as if rotating left the lane elements by {@code i},
      * and then the zero value is placed into the result vector at lane indexes
-     * less than {@code i % this.length()}.
+     * less than {@code i % length()}.
      *
      * @param i the number of lanes to shift left
      * @return the result of shifting left lane elements of this vector by the
@@ -599,10 +601,10 @@ public abstract class Vector<E> {
      * This is a cross-lane operation that permutes the lane elements of this
      * vector and behaves as if rotating right the lane elements by {@code i},
      * and then the zero value is placed into the result vector at lane indexes
-     * greater or equal to {@code this.length() - (i % this.length())}.
+     * greater or equal to {@code length() - (i % length())}.
      *
-     * @param i the number of lanes to shift left
-     * @return the result of shifting left lane elements of this vector by the
+     * @param i the number of lanes to shift right
+     * @return the result of shifting right lane elements of this vector by the
      * given number of lanes
      * @throws IllegalArgumentException if {@code i} is {@code < 0}.
      */
@@ -615,7 +617,7 @@ public abstract class Vector<E> {
      * For each lane of the mask, at lane index {@code N}, if the mask lane
      * is set then the lane element at {@code N} from the input vector is
      * selected and placed into the resulting vector at {@code N},
-     * otherwise the the lane element at {@code N} from this input vector is
+     * otherwise the lane element at {@code N} from this vector is
      * selected and placed into the resulting vector at {@code N}.
      *
      * @param v the input vector
@@ -712,7 +714,7 @@ public abstract class Vector<E> {
      * On a system with ByteOrder.BIG_ENDIAN, the value is instead 66051 because
      * bytes are composed in order 0x0 0x1 0x2 0x3.
      * <p>
-     * The following pseudocode expresses the behaviour:
+     * The following pseudocode expresses the behavior:
      * <pre>{@code
      * int blen = Math.max(this.bitSize(), s.bitSize()) / Byte.SIZE;
      * ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
@@ -763,7 +765,7 @@ public abstract class Vector<E> {
      * <p>
      * The method behaves as if this vector is stored into a byte array
      * and then the returned vector is loaded from the byte array.
-     * The following pseudocode expresses the behaviour:
+     * The following pseudocode expresses the behavior:
      * <pre>{@code
      * int alen = Math.max(this.bitSize(), s.bitSize()) / Byte.SIZE;
      * byte[] a = new byte[alen];
@@ -877,15 +879,15 @@ public abstract class Vector<E> {
      * according to the native byte order of the underlying platform, and
      * the lane elements of this vector are put into the buffer if the
      * corresponding mask lane is set.
-     * The following pseudocode expresses the behaviour, where
+     * The following pseudocode expresses the behavior, where
      * {@coce EBuffer} is the primitive buffer type, {@code e} is the
-     * primitive element type, and {@code EVector<S>} is the primitive
+     * primitive element type, and {@code EVector} is the primitive
      * vector type for this vector:
      * <pre>{@code
      * EBuffer eb = b.duplicate().
      *     order(ByteOrder.nativeOrder()).position(i).
      *     asEBuffer();
-     * e[] es = ((EVector<S>)this).toArray();
+     * e[] es = ((EVector)this).toArray();
      * for (int n = 0; n < t.length; n++) {
      *     if (m.isSet(n)) {
      *         eb.put(n, es[n]);

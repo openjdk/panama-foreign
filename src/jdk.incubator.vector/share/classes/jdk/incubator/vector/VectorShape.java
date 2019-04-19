@@ -25,6 +25,7 @@
 package jdk.incubator.vector;
 
 import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
 
 /**
@@ -56,6 +57,7 @@ public enum VectorShape {
      *
      * @return the size, in bits, of this shape.
      */
+    @ForceInline
     public int bitSize() {
         return bitSize;
     }

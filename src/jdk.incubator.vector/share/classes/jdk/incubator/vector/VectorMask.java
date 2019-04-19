@@ -31,7 +31,7 @@ import java.util.Objects;
 
 /**
  * A {@code VectorMask} represents an ordered immutable sequence of {@code boolean}
- * values.  A VectorMask can be used with a mask accepting vector operation to
+ * values.  Some vector operations accept masks to
  * control the selection and operation of lane elements of input vectors.
  * <p>
  * The number of values in the sequence is referred to as the VectorMask
@@ -46,34 +46,33 @@ import java.util.Objects;
  * otherwise a lane is said to be <em>unset</em> if the lane element is
  * {@code false}.
  * <p>
- * VectorMask declares a limited set of unary, binary and reductive mask
- * operations.
+ * VectorMask declares a limited set of unary, binary and reduction operations.
  * <ul>
  * <li>
- * A mask unary operation (1-ary) operates on one input mask to produce a
+ * A lane-wise unary operation operates on one input mask and produces a
  * result mask.
  * For each lane of the input mask the
  * lane element is operated on using the specified scalar unary operation and
  * the boolean result is placed into the mask result at the same lane.
- * The following pseudocode expresses the behaviour of this operation category:
+ * The following pseudocode expresses the behavior of this operation category:
  *
  * <pre>{@code
  * VectorMask<E> a = ...;
  * boolean[] ar = new boolean[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = boolean_unary_op(a.isSet(i));
+ *     ar[i] = scalar_unary_op(a.isSet(i));
  * }
- * VectorMask<E> r = VectorMask.fromArray(ar, 0);
+ * VectorMask<E> r = VectorMask.fromArray(a.species(), ar, 0);
  * }</pre>
  *
  * <li>
- * A mask binary operation (2-ary) operates on two input
+ * A lane-wise binary operation operates on two input
  * masks to produce a result mask.
- * For each lane of the two input masks,
- * a and b say, the corresponding lane elements from a and b are operated on
+ * For each lane of the two input masks a and b,
+ * the corresponding lane elements from a and b are operated on
  * using the specified scalar binary operation and the boolean result is placed
  * into the mask result at the same lane.
- * The following pseudocode expresses the behaviour of this operation category:
+ * The following pseudocode expresses the behavior of this operation category:
  *
  * <pre>{@code
  * VectorMask<E> a = ...;
@@ -82,7 +81,22 @@ import java.util.Objects;
  * for (int i = 0; i < a.length(); i++) {
  *     ar[i] = scalar_binary_op(a.isSet(i), b.isSet(i));
  * }
- * VectorMask<E> r = VectorMask.fromArray(ar, 0);
+ * VectorMask<E> r = VectorMask.fromArray(a.species(), ar, 0);
+ * }</pre>
+ *
+ * <li>
+ * A cross-lane reduction operation accepts an input mask and produces a scalar result.
+ * For each lane of the input mask the lane element is operated on, together with a scalar accumulation value,
+ * using the specified scalar binary operation.  The scalar result is the final value of the accumulator. The
+ * following pseudocode expresses the behaviour of this operation category:
+ *
+ * <pre>{@code
+ * Mask<E> a = ...;
+ * int acc = zero_for_scalar_binary_op;  // 0, or 1 for &
+ * for (int i = 0; i < a.length(); i++) {
+ *      acc = scalar_binary_op(acc, a.isSet(i) ? 1 : 0);  // & | +
+ * }
+ * return acc;  // maybe boolean (acc != 0)
  * }</pre>
  *
  * </ul>
@@ -132,19 +146,19 @@ public abstract class VectorMask<E> {
      *
      * @param species mask species
      * @param bits the {@code boolean} array
-     * @param ix the offset into the array
+     * @param offset the offset into the array
      * @return the mask loaded from a {@code boolean} array
-     * @throws IndexOutOfBoundsException if {@code ix < 0}, or
-     * {@code ix > bits.length - species.length()}
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
+     * {@code offset > bits.length - species.length()}
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static <E> VectorMask<E> fromArray(VectorSpecies<E> species, boolean[] bits, int ix) {
+    public static <E> VectorMask<E> fromArray(VectorSpecies<E> species, boolean[] bits, int offset) {
         Objects.requireNonNull(bits);
-        ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
+        offset = VectorIntrinsics.checkIndex(offset, bits.length, species.length());
         return VectorIntrinsics.load((Class<VectorMask<E>>) species.maskType(), species.elementType(), species.length(),
-                bits, (long) ix + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
-                bits, ix, species,
+                bits, (long) offset + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                bits, offset, species,
                 (boolean[] c, int idx, VectorSpecies<E> s) -> ((AbstractSpecies<E>)s).opm(n -> c[idx + n]));
     }
 
@@ -233,11 +247,11 @@ public abstract class VectorMask<E> {
      * {@code i + N}.
      *
      * @param a the array
-     * @param i the offset into the array
-     * @throws IndexOutOfBoundsException if {@code i < 0}, or
-     * {@code i > a.length - this.length()}
+     * @param offset the offset into the array
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
+     * {@code offset > a.length - this.length()}
      */
-    public abstract void intoArray(boolean[] a, int i);
+    public abstract void intoArray(boolean[] a, int offset);
 
     /**
      * Returns {@code true} if any of the mask lanes are set.
@@ -265,8 +279,8 @@ public abstract class VectorMask<E> {
     /**
      * Logically ands this mask with an input mask.
      * <p>
-     * This is a mask binary operation where the logical and operation
-     * ({@code &&} is applied to lane elements.
+     * This is a lane-wise binary operation which applies the logical and operation
+     * ({@code &&}) to each lane.
      *
      * @param o the input mask
      * @return the result of logically and'ing this mask with an input mask
@@ -276,8 +290,8 @@ public abstract class VectorMask<E> {
     /**
      * Logically ors this mask with an input mask.
      * <p>
-     * This is a mask binary operation where the logical or operation
-     * ({@code ||} is applied to lane elements.
+     * This is a lane-wise binary operation which applies the logical or operation
+     * ({@code ||}) to each lane.
      *
      * @param o the input mask
      * @return the result of logically or'ing this mask with an input mask
@@ -287,8 +301,8 @@ public abstract class VectorMask<E> {
     /**
      * Logically negates this mask.
      * <p>
-     * This is a mask unary operation where the logical not operation
-     * ({@code !} is applied to lane elements.
+     * This is a lane-wise unary operation which applies the logical not operation
+     * ({@code !}) to each lane.
      *
      * @return the result of logically negating this mask.
      */
@@ -313,15 +327,15 @@ public abstract class VectorMask<E> {
      *
      * @return true if the lane at index {@code i} is set, otherwise false
      */
-    public abstract boolean getElement(int i);
+    public abstract boolean lane(int i);
 
     /**
      * Tests if the lane at index {@code i} is set
      * @param i the lane index
      * @return true if the lane at index {@code i} is set, otherwise false
-     * @see #getElement
+     * @see #lane
      */
     public boolean isSet(int i) {
-        return getElement(i);
+        return lane(i);
     }
 }
