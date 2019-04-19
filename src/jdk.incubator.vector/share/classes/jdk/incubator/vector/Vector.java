@@ -30,7 +30,11 @@ import jdk.internal.vm.annotation.Stable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
+import java.util.function.UnaryOperator;
+
 import jdk.incubator.vector.*;
 
 /**
@@ -49,7 +53,7 @@ import jdk.incubator.vector.*;
  * element type, specifically the class that wraps a value of {@code e} in an
  * object (such the {@code Integer} class that wraps a value of {@code int}}.
  * A Vector has a {@link #shape() shape} {@code S}, extending type
- * {@link Shape}, that governs the total {@link #bitSize() size} in bits
+ * {@link VectorShape}, that governs the total {@link #bitSize() size} in bits
  * of the sequence of values.
  * <p>
  * The number of values in the sequence is referred to as the Vector
@@ -74,14 +78,14 @@ import jdk.incubator.vector.*;
  * {@link DoubleVector}.
  * <p>
  * Vector values, instances of Vector, are created from a special kind of
- * factory called a {@link Species}.  A Species has an
+ * factory called a {@link VectorSpecies}.  A VectorSpecies has an
  * element type and shape and creates Vector values of the same element type
  * and shape.
- * A species can be {@link Species#of(Class, Shape)} obtained} given an element
+ * A species can be {@link VectorSpecies#of(Class, VectorShape)} obtained} given an element
  * type and shape, or a preferred species can be
- * {@link Species#ofPreferred(Class)}  obtained} given just an element type where the most
+ * {@link VectorSpecies#ofPreferred(Class)}  obtained} given just an element type where the most
  * optimal shape is selected for the current platform.  It is recommended that
- * Species instances be held in {@code static final} fields for optimal creation
+ * VectorSpecies instances be held in {@code static final} fields for optimal creation
  * and usage of Vector values by the runtime compiler.
  * <p>
  * Vector operations can be grouped into various categories and their behaviour
@@ -177,7 +181,7 @@ import jdk.incubator.vector.*;
  * for (int i = 0; i < a.length(); i++) {
  *     ar[i] = scalar_binary_test_op(a.get(i), b.get(i));
  * }
- * Mask<E> r = a.species().maskFromArray(ar, 0);
+ * VectorMask<E> r = a.species().maskFromArray(ar, 0);
  * }</pre>
  *
  * Unless otherwise specified the two input vectors and result mask will have
@@ -191,8 +195,8 @@ import jdk.incubator.vector.*;
  * A further category of operation is a cross-lane vector operation where lane
  * access is defined by the arguments to the operation.  Cross-lane operations
  * generally rearrange lane elements, for example by permutation (commonly
- * controlled by a {@link Shuffle}) or by blending (commonly controlled by a
- * {@link Mask}).  Such an operation explicitly specifies how it rearranges lane
+ * controlled by a {@link VectorShuffle}) or by blending (commonly controlled by a
+ * {@link VectorMask}).  Such an operation explicitly specifies how it rearranges lane
  * elements.
  * </ul>
  *
@@ -207,7 +211,7 @@ import jdk.incubator.vector.*;
  * pseudocode.
  *
  * <p>
- * Many vector operations provide an additional {@link Mask mask} accepting
+ * Many vector operations provide an additional {@link VectorMask mask} accepting
  * variant.
  * The mask controls which lanes are selected for application of the scalar
  * operation.  Masks are a key component for the support of control flow in
@@ -240,7 +244,7 @@ import jdk.incubator.vector.*;
  * scalar values instead of vectors for the second and subsequent input vectors,
  * if any.
  * Unless otherwise specified the scalar variant behaves as if each scalar value
- * is transformed to a vector using the vector Species
+ * is transformed to a vector using the vector species
  * {@code broadcast} operation, and
  * then the vector accepting vector operation is applied using the transformed
  * values.
@@ -262,7 +266,7 @@ public abstract class Vector<E> {
      *
      * @return the species of this vector
      */
-    public abstract Species<E> species();
+    public abstract VectorSpecies<E> species();
 
     /**
      * Returns the primitive element type of this vector.
@@ -283,7 +287,7 @@ public abstract class Vector<E> {
      *
      * @return the shape of this vector
      */
-    public Shape shape() { return species().shape(); }
+    public VectorShape shape() { return species().shape(); }
 
     /**
      * Returns the number of vector lanes (the length).
@@ -323,7 +327,7 @@ public abstract class Vector<E> {
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the given vector
      */
-    public abstract Vector<E> add(Vector<E> v, Mask<E> m);
+    public abstract Vector<E> add(Vector<E> v, VectorMask<E> m);
 
     /**
      * Subtracts an input vector from this vector.
@@ -347,7 +351,7 @@ public abstract class Vector<E> {
      * @param m the mask controlling lane selection
      * @return the result of subtracting the input vector from this vector
      */
-    public abstract Vector<E> sub(Vector<E> v, Mask<E> m);
+    public abstract Vector<E> sub(Vector<E> v, VectorMask<E> m);
 
     /**
      * Multiplies this vector with an input vector.
@@ -371,7 +375,7 @@ public abstract class Vector<E> {
      * @param m the mask controlling lane selection
      * @return the result of multiplying this vector with the input vector
      */
-    public abstract Vector<E> mul(Vector<E> v, Mask<E> m);
+    public abstract Vector<E> mul(Vector<E> v, VectorMask<E> m);
 
     /**
      * Negates this vector.
@@ -392,7 +396,7 @@ public abstract class Vector<E> {
      * @param m the mask controlling lane selection
      * @return the negation this vector
      */
-    public abstract Vector<E> neg(Mask<E> m);
+    public abstract Vector<E> neg(VectorMask<E> m);
 
     // Maths from java.math
 
@@ -416,7 +420,7 @@ public abstract class Vector<E> {
      * @param m the mask controlling lane selection
      * @return the modulus this vector
      */
-    public abstract Vector<E> abs(Mask<E> m);
+    public abstract Vector<E> abs(VectorMask<E> m);
 
     /**
      * Returns the minimum of this vector and an input vector.
@@ -440,7 +444,7 @@ public abstract class Vector<E> {
      * @param m the mask controlling lane selection
      * @return the minimum of this vector and the input vector
      */
-    public abstract Vector<E> min(Vector<E> v, Mask<E> m);
+    public abstract Vector<E> min(Vector<E> v, VectorMask<E> m);
 
     /**
      * Returns the maximum of this vector and an input vector.
@@ -464,7 +468,7 @@ public abstract class Vector<E> {
      * @param m the mask controlling lane selection
      * @return the maximum of this vector and the input vector
      */
-    public abstract Vector<E> max(Vector<E> v, Mask<E> m);
+    public abstract Vector<E> max(Vector<E> v, VectorMask<E> m);
 
     // Comparisons
 
@@ -478,7 +482,7 @@ public abstract class Vector<E> {
      * @return the result mask of testing if this vector is equal to the input
      * vector
      */
-    public abstract Mask<E> equal(Vector<E> v);
+    public abstract VectorMask<E> equal(Vector<E> v);
 
     /**
      * Tests if this vector is not equal to an input vector.
@@ -490,7 +494,7 @@ public abstract class Vector<E> {
      * @return the result mask of testing if this vector is not equal to the
      * input vector
      */
-    public abstract Mask<E> notEqual(Vector<E> v);
+    public abstract VectorMask<E> notEqual(Vector<E> v);
 
     /**
      * Tests if this vector is less than an input vector.
@@ -502,7 +506,7 @@ public abstract class Vector<E> {
      * @return the mask result of testing if this vector is less than the input
      * vector
      */
-    public abstract Mask<E> lessThan(Vector<E> v);
+    public abstract VectorMask<E> lessThan(Vector<E> v);
 
     /**
      * Tests if this vector is less or equal to an input vector.
@@ -514,7 +518,7 @@ public abstract class Vector<E> {
      * @return the mask result of testing if this vector is less than or equal
      * to the input vector
      */
-    public abstract Mask<E> lessThanEq(Vector<E> v);
+    public abstract VectorMask<E> lessThanEq(Vector<E> v);
 
     /**
      * Tests if this vector is greater than an input vector.
@@ -526,7 +530,7 @@ public abstract class Vector<E> {
      * @return the mask result of testing if this vector is greater than the
      * input vector
      */
-    public abstract Mask<E> greaterThan(Vector<E> v);
+    public abstract VectorMask<E> greaterThan(Vector<E> v);
 
     /**
      * Tests if this vector is greater than or equal to an input vector.
@@ -538,7 +542,7 @@ public abstract class Vector<E> {
      * @return the mask result of testing if this vector is greater than or
      * equal to the given vector
      */
-    public abstract Mask<E> greaterThanEq(Vector<E> v);
+    public abstract VectorMask<E> greaterThanEq(Vector<E> v);
 
     // Elemental shifting
 
@@ -619,7 +623,7 @@ public abstract class Vector<E> {
      * @return the result of blending the lane elements of this vector with
      * those of an input vector
      */
-    public abstract Vector<E> blend(Vector<E> v, Mask<E> m);
+    public abstract Vector<E> blend(Vector<E> v, VectorMask<E> m);
 
     /**
      * Rearranges the lane elements of this vector and those of an input vector,
@@ -644,7 +648,7 @@ public abstract class Vector<E> {
     @ForceInline
     // rearrange
     public abstract Vector<E> rearrange(Vector<E> v,
-                                           Shuffle<E> s, Mask<E> m);
+                                           VectorShuffle<E> s, VectorMask<E> m);
 
     /**
      * Rearranges the lane elements of this vector selecting lane indexes
@@ -660,7 +664,7 @@ public abstract class Vector<E> {
      * @return the rearrangement of the lane elements of this vector
      */
     // rearrange
-    public abstract Vector<E> rearrange(Shuffle<E> s);
+    public abstract Vector<E> rearrange(VectorShuffle<E> s);
 
 
     // Conversions
@@ -683,7 +687,7 @@ public abstract class Vector<E> {
      *
      * @return a shuffle representation of this vector
      */
-    public abstract Shuffle<E> toShuffle();
+    public abstract VectorShuffle<E> toShuffle();
 
     // Bitwise preserving
 
@@ -713,7 +717,7 @@ public abstract class Vector<E> {
      * int blen = Math.max(this.bitSize(), s.bitSize()) / Byte.SIZE;
      * ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
      * this.intoByteBuffer(bb, 0);
-     * return s.fromByteBuffer(bb, 0);
+     * return $type$Vector.fromByteBuffer(s, bb, 0);
      * }</pre>
      *
      * @param s species of desired vector
@@ -721,11 +725,11 @@ public abstract class Vector<E> {
      * @return a vector transformed, by shape and element type, from this vector
      */
     @ForceInline
-    public abstract <F> Vector<F> reinterpret(Species<F> s);
+    public abstract <F> Vector<F> reinterpret(VectorSpecies<F> s);
 
     @ForceInline
     @SuppressWarnings("unchecked")
-    <F> Vector<F> defaultReinterpret(Species<F> s) {
+    <F> Vector<F> defaultReinterpret(VectorSpecies<F> s) {
         int blen = Math.max(s.bitSize(), this.species().bitSize()) / Byte.SIZE;
         ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
         this.intoByteBuffer(bb, 0);
@@ -764,13 +768,13 @@ public abstract class Vector<E> {
      * int alen = Math.max(this.bitSize(), s.bitSize()) / Byte.SIZE;
      * byte[] a = new byte[alen];
      * this.intoByteArray(a, 0);
-     * return s.fromByteArray(a, 0);
+     * return $type$Vector.fromByteArray(s, a, 0);
      * }</pre>
      *
      * @param s species of the desired vector
      * @return a vector transformed, by shape, from this vector
      */
-    public abstract Vector<E> reshape(Species<E> s);
+    public abstract Vector<E> reshape(VectorSpecies<E> s);
 
     // Cast
 
@@ -791,7 +795,7 @@ public abstract class Vector<E> {
      * @param <F> the boxed element type of the species
      * @return a vector converted by shape and element type from this vector
      */
-    public abstract <F> Vector<F> cast(Species<F> s);
+    public abstract <F> Vector<F> cast(VectorSpecies<F> s);
 
     //Array stores
 
@@ -803,7 +807,7 @@ public abstract class Vector<E> {
      * <p>
      * This method behaves as it calls the
      * byte buffer, offset, and mask accepting
-     * {@link #intoByteBuffer(ByteBuffer, int, Mask) method} as follows:
+     * {@link #intoByteBuffer(ByteBuffer, int, VectorMask) method} as follows:
      * <pre>{@code
      * return this.intoByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
@@ -824,7 +828,7 @@ public abstract class Vector<E> {
      * <p>
      * This method behaves as it calls the
      * byte buffer, offset, and mask accepting
-     * {@link #intoByteBuffer(ByteBuffer, int, Mask) method} as follows:
+     * {@link #intoByteBuffer(ByteBuffer, int, VectorMask) method} as follows:
      * <pre>{@code
      * return this.intoByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
@@ -838,7 +842,7 @@ public abstract class Vector<E> {
      * is set
      * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
      */
-    public abstract void intoByteArray(byte[] a, int i, Mask<E> m);
+    public abstract void intoByteArray(byte[] a, int i, VectorMask<E> m);
 
     /**
      * Stores this vector into a {@link ByteBuffer byte buffer} starting at an
@@ -849,7 +853,7 @@ public abstract class Vector<E> {
      * <p>
      * This method behaves as if it calls the byte buffer, offset, and mask
      * accepting
-     * {@link #intoByteBuffer(ByteBuffer, int, Mask)} method} as follows:
+     * {@link #intoByteBuffer(ByteBuffer, int, VectorMask)} method} as follows:
      * <pre>{@code
      *   this.intoByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
@@ -898,650 +902,7 @@ public abstract class Vector<E> {
      * is set
      * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)} bytes
      */
-    public abstract void intoByteBuffer(ByteBuffer b, int i, Mask<E> m);
-
-
-    /**
-     * A {@code Shape} governs the total size, in bits, of a
-     * {@link Vector}, {@link Mask}, or {@link Shuffle}.  The shape in
-     * combination with the element type together govern the number of lanes.
-     */
-    public enum Shape {
-        /** Shape of length 64 bits */
-        S_64_BIT(64),
-        /** Shape of length 128 bits */
-        S_128_BIT(128),
-        /** Shape of length 256 bits */
-        S_256_BIT(256),
-        /** Shape of length 512 bits */
-        S_512_BIT(512),
-        /** Shape of maximum length supported on the platform */
-        S_Max_BIT(Unsafe.getUnsafe().getMaxVectorSize(byte.class) * 8);
-
-        @Stable
-        final int bitSize;
-
-        Shape(int bitSize) {
-            this.bitSize = bitSize;
-        }
-
-        /**
-         * Returns the size, in bits, of this shape.
-         *
-         * @return the size, in bits, of this shape.
-         */
-        public int bitSize() {
-            return bitSize;
-        }
-
-        /**
-         * Return the number of lanes of a vector of this shape and whose element
-         * type is of the provided species
-         *
-         * @param s the species describing the element type
-         * @return the number of lanes
-         */
-        int length(Species<?> s) {
-            return bitSize() / s.elementSize();
-        }
-
-        /**
-         * Finds appropriate shape depending on bitsize.
-         *
-         * @param bitSize the size in bits
-         * @return the shape corresponding to bitsize
-         * @see #bitSize
-         */
-        public static Shape forBitSize(int bitSize) {
-            switch (bitSize) {
-                case 64:
-                    return Shape.S_64_BIT;
-                case 128:
-                    return Shape.S_128_BIT;
-                case 256:
-                    return Shape.S_256_BIT;
-                case 512:
-                    return Shape.S_512_BIT;
-                default:
-                    if ((bitSize > 0) && (bitSize <= 2048) && (bitSize % 128 == 0)) {
-                        return Shape.S_Max_BIT;
-                    } else {
-                        throw new IllegalArgumentException("Bad vector bit size: " + bitSize);
-                    }
-            }
-        }
-    }
-
-
-    /**
-     * Class representing vectors of same element type, {@code E} and {@link Vector.Shape Shape}.
-     *
-     * @param <E> the boxed element type of this species
-     */
-    public static abstract class Species<E> {
-        Species() {}
-
-        /**
-         * Returns the primitive element type of vectors produced by this
-         * species.
-         *
-         * @return the primitive element type
-         */
-        public abstract Class<E> elementType();
-
-        /**
-         * Returns the vector box type for this species
-         *
-         * @return the box type
-         */
-        abstract Class<?> boxType();
-
-        /**
-         * Returns the vector mask type for this species
-         *
-         * @return the box type
-         */
-        abstract Class<?> maskType();
-
-        /**
-         * Returns the element size, in bits, of vectors produced by this
-         * species.
-         *
-         * @return the element size, in bits
-         */
-        public abstract int elementSize();
-
-        /**
-         * Returns the shape of masks, shuffles, and vectors produced by this
-         * species.
-         *
-         * @return the primitive element type
-         */
-        public abstract Shape shape();
-
-        /**
-         * Returns the shape of the corresponding index species
-         * @return the shape
-         */
-        @ForceInline
-        public abstract Shape indexShape();
-
-        /**
-         * Returns the mask, shuffe, or vector lanes produced by this species.
-         *
-         * @return the the number of lanes
-         */
-        public int length() { return shape().length(this); }
-
-        /**
-         * Returns the total vector size, in bits, of vectors produced by this
-         * species.
-         *
-         * @return the total vector size, in bits
-         */
-        public int bitSize() { return shape().bitSize(); }
-
-        // Factory
-
-        /**
-         * Finds a species for an element type and shape.
-         *
-         * @param c the element type
-         * @param s the shape
-         * @param <E> the boxed element type
-         * @return a species for an element type and shape
-         * @throws IllegalArgumentException if no such species exists for the
-         * element type and/or shape
-         */
-        @SuppressWarnings("unchecked")
-        public static <E> Vector.Species<E> of(Class<E> c, Shape s) {
-            if (c == float.class) {
-                return (Vector.Species<E>) FloatVector.species(s);
-            }
-            else if (c == double.class) {
-                return (Vector.Species<E>) DoubleVector.species(s);
-            }
-            else if (c == byte.class) {
-                return (Vector.Species<E>) ByteVector.species(s);
-            }
-            else if (c == short.class) {
-                return (Vector.Species<E>) ShortVector.species(s);
-            }
-            else if (c == int.class) {
-                return (Vector.Species<E>) IntVector.species(s);
-            }
-            else if (c == long.class) {
-                return (Vector.Species<E>) LongVector.species(s);
-            }
-            else {
-                throw new IllegalArgumentException("Bad vector element type: " + c.getName());
-            }
-        }
-
-        /**
-         * Finds a preferred species for an element type.
-         * <p>
-         * A preferred species is a species chosen by the platform that has a
-         * shape of maximal bit size.  A preferred species for different element
-         * types will have the same shape, and therefore vectors created from
-         * such species will be shape compatible.
-         *
-         * @param c the element type
-         * @param <E> the boxed element type
-         * @return a preferred species for an element type
-         * @throws IllegalArgumentException if no such species exists for the
-         * element type
-         */
-        public static <E> Vector.Species<E> ofPreferred(Class<E> c) {
-            Unsafe u = Unsafe.getUnsafe();
-
-            int vectorLength = u.getMaxVectorSize(c);
-            int vectorBitSize = bitSizeForVectorLength(c, vectorLength);
-            Shape s = Shape.forBitSize(vectorBitSize);
-            return Species.of(c, s);
-        }
-    }
-
-    abstract static class AbstractSpecies<E> extends Vector.Species<E> {
-        @Stable
-        protected final Vector.Shape shape;
-        @Stable
-        protected final Class<E> elementType;
-        @Stable
-        protected final int elementSize;
-        @Stable
-        protected final Class<?> boxType;
-        @Stable
-        protected final Class<?> maskType;
-        @Stable
-        protected final Shape indexShape;
-
-        AbstractSpecies(Vector.Shape shape, Class<E> elementType, int elementSize, Class<?> boxType, Class<?> maskType) {
-            this.shape = shape;
-            this.elementType = elementType;
-            this.elementSize = elementSize;
-            this.boxType = boxType;
-            this.maskType = maskType;
-
-            if (boxType == Long64Vector.class || boxType == Double64Vector.class) {
-                indexShape = Vector.Shape.S_64_BIT;
-            }
-            else {
-                int bitSize = Vector.bitSizeForVectorLength(int.class, shape.bitSize() / elementSize);
-                indexShape = Vector.Shape.forBitSize(bitSize);
-            }
-        }
-
-        @Override
-        @ForceInline
-        public int bitSize() {
-            return shape.bitSize();
-        }
-
-        @Override
-        @ForceInline
-        public int length() {
-            return shape.bitSize() / elementSize;
-        }
-
-        @Override
-        @ForceInline
-        public Class<E> elementType() {
-            return elementType;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> boxType() {
-            return boxType;
-        }
-
-        @Override
-        @ForceInline
-        public Class<?> maskType() {
-            return maskType;
-        }
-
-        @Override
-        @ForceInline
-        public int elementSize() {
-            return elementSize;
-        }
-
-        @Override
-        @ForceInline
-        public Vector.Shape shape() {
-            return shape;
-        }
-
-        @Override
-        @ForceInline
-        public Vector.Shape indexShape() { return indexShape; }
-
-        @Override
-        public String toString() {
-            return new StringBuilder("Shape[")
-                    .append(bitSize()).append(" bits, ")
-                    .append(length()).append(" ").append(elementType.getSimpleName()).append("s x ")
-                    .append(elementSize()).append(" bits")
-                    .append("]")
-                    .toString();
-        }
-    }
-
-    /**
-     * A {@code Mask} represents an ordered immutable sequence of {@code boolean}
-     * values.  A Mask can be used with a mask accepting vector operation to
-     * control the selection and operation of lane elements of input vectors.
-     * <p>
-     * The number of values in the sequence is referred to as the Mask
-     * {@link #length() length}.  The length also corresponds to the number of
-     * Mask lanes.  The lane element at lane index {@code N} (from {@code 0},
-     * inclusive, to length, exclusive) corresponds to the {@code N + 1}'th
-     * value in the sequence.
-     * A Mask and Vector of the same element type and shape have the same number
-     * of lanes.
-     * <p>
-     * A lane is said to be <em>set</em> if the lane element is {@code true},
-     * otherwise a lane is said to be <em>unset</em> if the lane element is
-     * {@code false}.
-     * <p>
-     * Mask declares a limited set of unary, binary and reductive mask
-     * operations.
-     * <ul>
-     * <li>
-     * A mask unary operation (1-ary) operates on one input mask to produce a
-     * result mask.
-     * For each lane of the input mask the
-     * lane element is operated on using the specified scalar unary operation and
-     * the boolean result is placed into the mask result at the same lane.
-     * The following pseudocode expresses the behaviour of this operation category:
-     *
-     * <pre>{@code
-     * Mask<E> a = ...;
-     * boolean[] ar = new boolean[a.length()];
-     * for (int i = 0; i < a.length(); i++) {
-     *     ar[i] = boolean_unary_op(a.isSet(i));
-     * }
-     * Mask<E> r = a.species().maskFromArray(ar, 0);
-     * }</pre>
-     *
-     * <li>
-     * A mask binary operation (2-ary) operates on two input
-     * masks to produce a result mask.
-     * For each lane of the two input masks,
-     * a and b say, the corresponding lane elements from a and b are operated on
-     * using the specified scalar binary operation and the boolean result is placed
-     * into the mask result at the same lane.
-     * The following pseudocode expresses the behaviour of this operation category:
-     *
-     * <pre>{@code
-     * Mask<E> a = ...;
-     * Mask<E> b = ...;
-     * boolean[] ar = new boolean[a.length()];
-     * for (int i = 0; i < a.length(); i++) {
-     *     ar[i] = scalar_binary_op(a.isSet(i), b.isSet(i));
-     * }
-     * Mask<E> r = a.species().maskFromArray(ar, 0);
-     * }</pre>
-     *
-     * </ul>
-     * @param <E> the boxed element type of this mask
-     */
-    public static abstract class Mask<E> {
-        Mask() {}
-
-        /**
-         * Returns the species of this mask.
-         *
-         * @return the species of this mask
-         */
-        public abstract Species<E> species();
-
-        /**
-         * Returns the number of mask lanes (the length).
-         *
-         * @return the number of mask lanes
-         */
-        public int length() { return species().length(); }
-
-        /**
-         * Converts this mask to a mask of the given species shape of element type {@code F}.
-         * <p>
-         * For each mask lane, where {@code N} is the lane index, if the
-         * mask lane at index {@code N} is set, then the mask lane at index
-         * {@code N} of the resulting mask is set, otherwise that mask lane is
-         * not set.
-         *
-         * @param s the species of the desired mask
-         * @param <F> the boxed element type of the species
-         * @return a mask converted by shape and element type
-         * @throws IllegalArgumentException if this mask length and the species
-         * length differ
-         */
-        public abstract <F> Mask<F> cast(Species<F> s);
-
-        /**
-         * Returns the lane elements of this mask packed into a {@code long}
-         * value for at most the first 64 lane elements.
-         * <p>
-         * The lane elements are packed in the order of least significant bit
-         * to most significant bit.
-         * For each mask lane where {@code N} is the mask lane index, if the
-         * mask lane is set then the {@code N}'th bit is set to one in the
-         * resulting {@code long} value, otherwise the {@code N}'th bit is set
-         * to zero.
-         *
-         * @return the lane elements of this mask packed into a {@code long}
-         * value.
-         */
-        public abstract long toLong();
-
-        /**
-         * Returns an {@code boolean} array containing the lane elements of this
-         * mask.
-         * <p>
-         * This method behaves as if it {@link #intoArray(boolean[], int)} stores}
-         * this mask into an allocated array and returns that array as
-         * follows:
-         * <pre>{@code
-         * boolean[] a = new boolean[this.length()];
-         * this.intoArray(a, 0);
-         * return a;
-         * }</pre>
-         *
-         * @return an array containing the the lane elements of this vector
-         */
-        public abstract boolean[] toArray();
-
-        /**
-         * Stores this mask into a {@code boolean} array starting at offset.
-         * <p>
-         * For each mask lane, where {@code N} is the mask lane index,
-         * the lane element at index {@code N} is stored into the array at index
-         * {@code i + N}.
-         *
-         * @param a the array
-         * @param i the offset into the array
-         * @throws IndexOutOfBoundsException if {@code i < 0}, or
-         * {@code i > a.length - this.length()}
-         */
-        public abstract void intoArray(boolean[] a, int i);
-
-        /**
-         * Returns {@code true} if any of the mask lanes are set.
-         *
-         * @return {@code true} if any of the mask lanes are set, otherwise
-         * {@code false}.
-         */
-        public abstract boolean anyTrue();
-
-        /**
-         * Returns {@code true} if all of the mask lanes are set.
-         *
-         * @return {@code true} if all of the mask lanes are set, otherwise
-         * {@code false}.
-         */
-        public abstract boolean allTrue();
-
-        /**
-         * Returns the number of mask lanes that are set.
-         *
-         * @return the number of mask lanes that are set.
-         */
-        public abstract int trueCount();
-
-        /**
-         * Logically ands this mask with an input mask.
-         * <p>
-         * This is a mask binary operation where the logical and operation
-         * ({@code &&} is applied to lane elements.
-         *
-         * @param o the input mask
-         * @return the result of logically and'ing this mask with an input mask
-         */
-        public abstract Mask<E> and(Mask<E> o);
-
-        /**
-         * Logically ors this mask with an input mask.
-         * <p>
-         * This is a mask binary operation where the logical or operation
-         * ({@code ||} is applied to lane elements.
-         *
-         * @param o the input mask
-         * @return the result of logically or'ing this mask with an input mask
-         */
-        public abstract Mask<E> or(Mask<E> o);
-
-        /**
-         * Logically negates this mask.
-         * <p>
-         * This is a mask unary operation where the logical not operation
-         * ({@code !} is applied to lane elements.
-         *
-         * @return the result of logically negating this mask.
-         */
-        public abstract Mask<E> not();
-
-        /**
-         * Returns a vector representation of this mask.
-         * <p>
-         * For each mask lane, where {@code N} is the mask lane index,
-         * if the mask lane is set then an element value whose most significant
-         * bit is set is placed into the resulting vector at lane index
-         * {@code N}, otherwise the default element value is placed into the
-         * resulting vector at lane index {@code N}.
-         *
-         * @return a vector representation of this mask.
-         */
-        public abstract Vector<E> toVector();
-
-        /**
-         * Tests if the lane at index {@code i} is set
-         * @param i the lane index
-         *
-         * @return true if the lane at index {@code i} is set, otherwise false
-         */
-        public abstract boolean getElement(int i);
-
-        /**
-         * Tests if the lane at index {@code i} is set
-         * @param i the lane index
-         * @return true if the lane at index {@code i} is set, otherwise false
-         * @see #getElement
-         */
-        public boolean isSet(int i) {
-            return getElement(i);
-        }
-    }
-
-    /**
-     * A {@code Shuffle} represents an ordered immutable sequence of
-     * {@code int} values.  A Shuffle can be used with a shuffle accepting
-     * vector operation to control the rearrangement of lane elements of input
-     * vectors
-     * <p>
-     * The number of values in the sequence is referred to as the Shuffle
-     * {@link #length() length}.  The length also corresponds to the number of
-     * Shuffle lanes.  The lane element at lane index {@code N} (from {@code 0},
-     * inclusive, to length, exclusive) corresponds to the {@code N + 1}'th
-     * value in the sequence.
-     * A Shuffle and Vector of the same element type and shape have the same
-     * number of lanes.
-     * <p>
-     * A Shuffle describes how a lane element of a vector may cross lanes from
-     * its lane index, {@code i} say, to another lane index whose value is the
-     * Shuffle's lane element at lane index {@code i}.  Shuffle lane elements
-     * will be in the range of {@code 0} (inclusive) to the shuffle length
-     * (exclusive), and therefore cannot induce out of bounds errors when
-     * used with vectors operations and vectors of the same length.
-     *
-     * @param <E> the boxed element type of this mask
-     */
-    public static abstract class Shuffle<E> {
-        Shuffle() {}
-
-        /**
-         * Returns the species of this shuffle.
-         *
-         * @return the species of this shuffle
-         */
-        public abstract Species<E> species();
-
-        /**
-         * Returns the number of shuffle lanes (the length).
-         *
-         * @return the number of shuffle lanes
-         */
-        public int length() { return species().length(); }
-
-        /**
-         * Converts this shuffle to a shuffle of the given species of element type {@code F}.
-         * <p>
-         * For each shuffle lane, where {@code N} is the lane index, the
-         * shuffle element at index {@code N} is placed, unmodified, into the
-         * resulting shuffle at index {@code N}.
-         *
-         * @param species species of desired shuffle
-         * @param <F> the boxed element type of the species
-         * @return a shuffle converted by shape and element type
-         * @throws IllegalArgumentException if this shuffle length and the
-         * species length differ
-         */
-        public abstract <F> Shuffle<F> cast(Species<F> species);
-
-        /**
-         * Returns an {@code int} array containing the lane elements of this
-         * shuffle.
-         * <p>
-         * This method behaves as if it {@link #intoArray(int[], int)} stores}
-         * this shuffle into an allocated array and returns that array as
-         * follows:
-         * <pre>{@code
-         *   int[] a = new int[this.length()];
-         *   this.intoArray(a, 0);
-         *   return a;
-         * }</pre>
-         *
-         * @return an array containing the the lane elements of this vector
-         */
-        public abstract int[] toArray();
-
-        /**
-         * Stores this shuffle into an {@code int} array starting at offset.
-         * <p>
-         * For each shuffle lane, where {@code N} is the shuffle lane index,
-         * the lane element at index {@code N} is stored into the array at index
-         * {@code i + N}.
-         *
-         * @param a the array
-         * @param i the offset into the array
-         * @throws IndexOutOfBoundsException if {@code i < 0}, or
-         * {@code i > a.length - this.length()}
-         */
-        public abstract void intoArray(int[] a, int i);
-
-        /**
-         * Converts this shuffle into a vector, creating a vector from shuffle
-         * lane elements (int values) cast to the vector element type.
-         * <p>
-         * This method behaves as if it returns the result of creating a
-         * vector given an {@code int} array obtained from this shuffle's
-         * lane elements, as follows:
-         * <pre>{@code
-         *   int[] sa = this.toArray();
-         *   $type$[] va = new $type$[a.length];
-         *   for (int i = 0; i < a.length; i++) {
-         *       va[i] = ($type$) sa[i];
-         *   }
-         *   return this.species().fromArray(va, 0);
-         * }</pre>
-         *
-         * @return a vector representation of this shuffle
-         */
-        public abstract Vector<E> toVector();
-
-        /**
-         * Gets the {@code int} lane element at lane index {@code i}
-         *
-         * @param i the lane index
-         * @return the {@code int} lane element at lane index {@code i}
-         */
-        public int getElement(int i) { return toArray()[i]; }
-
-        /**
-         * Rearranges the lane elements of this shuffle selecting lane indexes
-         * controlled by another shuffle.
-         * <p>
-         * For each lane of the shuffle, at lane index {@code N} with lane
-         * element {@code I}, the lane element at {@code I} from this shuffle is
-         * selected and placed into the resulting shuffle at {@code N}.
-         *
-         * @param s the shuffle controlling lane index selection
-         * @return the rearrangement of the lane elements of this shuffle
-         */
-        public abstract Shuffle<E> rearrange(Shuffle<E> s);
-    }
+    public abstract void intoByteBuffer(ByteBuffer b, int i, VectorMask<E> m);
 
     /**
      * Find bit size based on element type and number of elements.

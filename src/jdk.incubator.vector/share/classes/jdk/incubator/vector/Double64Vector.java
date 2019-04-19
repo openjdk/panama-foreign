@@ -38,7 +38,7 @@ import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Double64Vector extends DoubleVector {
-    private static final Species<Double> SPECIES = DoubleVector.SPECIES_64;
+    private static final VectorSpecies<Double> SPECIES = DoubleVector.SPECIES_64;
 
     static final Double64Vector ZERO = new Double64Vector();
 
@@ -48,7 +48,7 @@ final class Double64Vector extends DoubleVector {
     private static final IntVector.IntSpecies INDEX_SPECIES;
 
     static {
-        INDEX_SPECIES = (IntVector.IntSpecies) IntVector.species(Shape.S_64_BIT);
+        INDEX_SPECIES = (IntVector.IntSpecies) IntVector.species(VectorShape.S_64_BIT);
     }
 
     private final double[] vec; // Don't access directly, use getElements() instead.
@@ -81,7 +81,7 @@ final class Double64Vector extends DoubleVector {
     }
 
     @Override
-    Double64Vector uOp(Mask<Double> o, FUnOp f) {
+    Double64Vector uOp(VectorMask<Double> o, FUnOp f) {
         double[] vec = getElements();
         double[] res = new double[length()];
         boolean[] mbits = ((Double64Mask)o).getBits();
@@ -105,7 +105,7 @@ final class Double64Vector extends DoubleVector {
     }
 
     @Override
-    Double64Vector bOp(Vector<Double> o1, Mask<Double> o2, FBinOp f) {
+    Double64Vector bOp(Vector<Double> o1, VectorMask<Double> o2, FBinOp f) {
         double[] res = new double[length()];
         double[] vec1 = this.getElements();
         double[] vec2 = ((Double64Vector)o1).getElements();
@@ -131,7 +131,7 @@ final class Double64Vector extends DoubleVector {
     }
 
     @Override
-    Double64Vector tOp(Vector<Double> o1, Vector<Double> o2, Mask<Double> o3, FTriOp f) {
+    Double64Vector tOp(Vector<Double> o1, Vector<Double> o2, VectorMask<Double> o3, FTriOp f) {
         double[] res = new double[length()];
         double[] vec1 = getElements();
         double[] vec2 = ((Double64Vector)o1).getElements();
@@ -154,7 +154,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public <F> Vector<F> cast(Species<F> s) {
+    public <F> Vector<F> cast(VectorSpecies<F> s) {
         Objects.requireNonNull(s);
         if (s.length() != LENGTH)
             throw new IllegalArgumentException("Vector length this species length differ");
@@ -171,7 +171,7 @@ final class Double64Vector extends DoubleVector {
 
     @SuppressWarnings("unchecked")
     @ForceInline
-    private <F> Vector<F> castDefault(Species<F> s) {
+    private <F> Vector<F> castDefault(VectorSpecies<F> s) {
         int limit = s.length();
 
         Class<?> stype = s.elementType();
@@ -180,37 +180,37 @@ final class Double64Vector extends DoubleVector {
             for (int i = 0; i < limit; i++) {
                 a[i] = (byte) this.get(i);
             }
-            return (Vector) ByteVector.fromArray((Species<Byte>) s, a, 0);
+            return (Vector) ByteVector.fromArray((VectorSpecies<Byte>) s, a, 0);
         } else if (stype == short.class) {
             short[] a = new short[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (short) this.get(i);
             }
-            return (Vector) ShortVector.fromArray((Species<Short>) s, a, 0);
+            return (Vector) ShortVector.fromArray((VectorSpecies<Short>) s, a, 0);
         } else if (stype == int.class) {
             int[] a = new int[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (int) this.get(i);
             }
-            return (Vector) IntVector.fromArray((Species<Integer>) s, a, 0);
+            return (Vector) IntVector.fromArray((VectorSpecies<Integer>) s, a, 0);
         } else if (stype == long.class) {
             long[] a = new long[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (long) this.get(i);
             }
-            return (Vector) LongVector.fromArray((Species<Long>) s, a, 0);
+            return (Vector) LongVector.fromArray((VectorSpecies<Long>) s, a, 0);
         } else if (stype == float.class) {
             float[] a = new float[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (float) this.get(i);
             }
-            return (Vector) FloatVector.fromArray((Species<Float>) s, a, 0);
+            return (Vector) FloatVector.fromArray((VectorSpecies<Float>) s, a, 0);
         } else if (stype == double.class) {
             double[] a = new double[limit];
             for (int i = 0; i < limit; i++) {
                 a[i] = (double) this.get(i);
             }
-            return (Vector) DoubleVector.fromArray((Species<Double>) s, a, 0);
+            return (Vector) DoubleVector.fromArray((VectorSpecies<Double>) s, a, 0);
         } else {
             throw new UnsupportedOperationException("Bad lane type for casting.");
         }
@@ -219,11 +219,11 @@ final class Double64Vector extends DoubleVector {
     @Override
     @ForceInline
     @SuppressWarnings("unchecked")
-    public <F> Vector<F> reinterpret(Species<F> s) {
+    public <F> Vector<F> reinterpret(VectorSpecies<F> s) {
         Objects.requireNonNull(s);
 
         if(s.elementType().equals(double.class)) {
-            return (Vector<F>) reshape((Species<Double>)s);
+            return (Vector<F>) reshape((VectorSpecies<Double>)s);
         }
         if(s.bitSize() == bitSize()) {
             return reinterpretType(s);
@@ -233,7 +233,7 @@ final class Double64Vector extends DoubleVector {
     }
 
     @ForceInline
-    private <F> Vector<F> reinterpretType(Species<F> s) {
+    private <F> Vector<F> reinterpretType(VectorSpecies<F> s) {
         Objects.requireNonNull(s);
 
         Class<?> stype = s.elementType();
@@ -298,7 +298,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public DoubleVector reshape(Species<Double> s) {
+    public DoubleVector reshape(VectorSpecies<Double> s) {
         Objects.requireNonNull(s);
         if (s.bitSize() == 64 && (s.boxType() == Double64Vector.class)) {
             return VectorIntrinsics.reinterpret(
@@ -361,7 +361,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public DoubleVector add(double o, Mask<Double> m) {
+    public DoubleVector add(double o, VectorMask<Double> m) {
         return add((Double64Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
@@ -373,7 +373,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public DoubleVector sub(double o, Mask<Double> m) {
+    public DoubleVector sub(double o, VectorMask<Double> m) {
         return sub((Double64Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
@@ -385,7 +385,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public DoubleVector mul(double o, Mask<Double> m) {
+    public DoubleVector mul(double o, VectorMask<Double> m) {
         return mul((Double64Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
@@ -403,43 +403,43 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public Mask<Double> equal(double o) {
+    public VectorMask<Double> equal(double o) {
         return equal((Double64Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
-    public Mask<Double> notEqual(double o) {
+    public VectorMask<Double> notEqual(double o) {
         return notEqual((Double64Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
-    public Mask<Double> lessThan(double o) {
+    public VectorMask<Double> lessThan(double o) {
         return lessThan((Double64Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
-    public Mask<Double> lessThanEq(double o) {
+    public VectorMask<Double> lessThanEq(double o) {
         return lessThanEq((Double64Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
-    public Mask<Double> greaterThan(double o) {
+    public VectorMask<Double> greaterThan(double o) {
         return greaterThan((Double64Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
-    public Mask<Double> greaterThanEq(double o) {
+    public VectorMask<Double> greaterThanEq(double o) {
         return greaterThanEq((Double64Vector)DoubleVector.broadcast(SPECIES, o));
     }
 
     @Override
     @ForceInline
-    public DoubleVector blend(double o, Mask<Double> m) {
+    public DoubleVector blend(double o, VectorMask<Double> m) {
         return blend((Double64Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
@@ -451,13 +451,13 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public DoubleVector div(double o, Mask<Double> m) {
+    public DoubleVector div(double o, VectorMask<Double> m) {
         return div((Double64Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
     @Override
     @ForceInline
-    public Double64Vector div(Vector<Double> v, Mask<Double> m) {
+    public Double64Vector div(Vector<Double> v, VectorMask<Double> m) {
         return blend(div(v), m);
     }
 
@@ -469,7 +469,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public DoubleVector atan2(double o, Mask<Double> m) {
+    public DoubleVector atan2(double o, VectorMask<Double> m) {
         return atan2((Double64Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
@@ -481,7 +481,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public DoubleVector pow(double o, Mask<Double> m) {
+    public DoubleVector pow(double o, VectorMask<Double> m) {
         return pow((Double64Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
@@ -493,7 +493,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public DoubleVector fma(double o1, double o2, Mask<Double> m) {
+    public DoubleVector fma(double o1, double o2, VectorMask<Double> m) {
         return fma((Double64Vector)DoubleVector.broadcast(SPECIES, o1), (Double64Vector)DoubleVector.broadcast(SPECIES, o2), m);
     }
 
@@ -505,7 +505,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public DoubleVector hypot(double o, Mask<Double> m) {
+    public DoubleVector hypot(double o, VectorMask<Double> m) {
         return hypot((Double64Vector)DoubleVector.broadcast(SPECIES, o), m);
     }
 
@@ -514,7 +514,7 @@ final class Double64Vector extends DoubleVector {
 
     @ForceInline
     @Override
-    public Double64Vector neg(Mask<Double> m) {
+    public Double64Vector neg(VectorMask<Double> m) {
         return blend(neg(), m);
     }
 
@@ -529,7 +529,7 @@ final class Double64Vector extends DoubleVector {
 
     @ForceInline
     @Override
-    public Double64Vector abs(Mask<Double> m) {
+    public Double64Vector abs(VectorMask<Double> m) {
         return blend(abs(), m);
     }
 
@@ -746,7 +746,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public Double64Vector add(Vector<Double> v, Mask<Double> m) {
+    public Double64Vector add(Vector<Double> v, VectorMask<Double> m) {
         return blend(add(v), m);
     }
 
@@ -763,7 +763,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public Double64Vector sub(Vector<Double> v, Mask<Double> m) {
+    public Double64Vector sub(Vector<Double> v, VectorMask<Double> m) {
         return blend(sub(v), m);
     }
 
@@ -780,7 +780,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public Double64Vector mul(Vector<Double> v, Mask<Double> m) {
+    public Double64Vector mul(Vector<Double> v, VectorMask<Double> m) {
         return blend(mul(v), m);
     }
 
@@ -797,7 +797,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public Double64Vector min(Vector<Double> v, Mask<Double> m) {
+    public Double64Vector min(Vector<Double> v, VectorMask<Double> m) {
         return blend(min(v), m);
     }
 
@@ -814,7 +814,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public Double64Vector max(Vector<Double> v, Mask<Double> m) {
+    public Double64Vector max(Vector<Double> v, VectorMask<Double> m) {
         return blend(max(v), m);
     }
 
@@ -891,38 +891,38 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public double addAll(Mask<Double> m) {
+    public double addAll(VectorMask<Double> m) {
         return blend((Double64Vector)DoubleVector.broadcast(SPECIES, (double) 0), m).addAll();
     }
 
 
     @Override
     @ForceInline
-    public double mulAll(Mask<Double> m) {
+    public double mulAll(VectorMask<Double> m) {
         return blend((Double64Vector)DoubleVector.broadcast(SPECIES, (double) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
-    public double minAll(Mask<Double> m) {
+    public double minAll(VectorMask<Double> m) {
         return blend((Double64Vector)DoubleVector.broadcast(SPECIES, Double.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
-    public double maxAll(Mask<Double> m) {
+    public double maxAll(VectorMask<Double> m) {
         return blend((Double64Vector)DoubleVector.broadcast(SPECIES, Double.MIN_VALUE), m).maxAll();
     }
 
     @Override
     @ForceInline
-    public Shuffle<Double> toShuffle() {
+    public VectorShuffle<Double> toShuffle() {
         double[] a = toArray();
         int[] sa = new int[a.length];
         for (int i = 0; i < a.length; i++) {
             sa[i] = (int) a[i];
         }
-        return DoubleVector.shuffleFromArray(SPECIES, sa, 0);
+        return VectorShuffle.fromArray(SPECIES, sa, 0);
     }
 
     // Memory operations
@@ -944,7 +944,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public final void intoArray(double[] a, int ax, Mask<Double> m) {
+    public final void intoArray(double[] a, int ax, VectorMask<Double> m) {
         DoubleVector oldVal = DoubleVector.fromArray(SPECIES, a, ax);
         DoubleVector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -957,7 +957,7 @@ final class Double64Vector extends DoubleVector {
 
      @Override
      @ForceInline
-     public final void intoArray(double[] a, int ax, Mask<Double> m, int[] b, int iy) {
+     public final void intoArray(double[] a, int ax, VectorMask<Double> m, int[] b, int iy) {
          // @@@ This can result in out of bounds errors for unset mask lanes
          DoubleVector oldVal = DoubleVector.fromArray(SPECIES, a, ax, b, iy);
          DoubleVector newVal = oldVal.blend(this, m);
@@ -982,7 +982,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, Mask<Double> m) {
+    public final void intoByteArray(byte[] a, int ix, VectorMask<Double> m) {
         Double64Vector oldVal = (Double64Vector) DoubleVector.fromByteArray(SPECIES, a, ix);
         Double64Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -1011,7 +1011,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Double> m) {
+    public void intoByteBuffer(ByteBuffer bb, int ix, VectorMask<Double> m) {
         Double64Vector oldVal = (Double64Vector) DoubleVector.fromByteBuffer(SPECIES, bb, ix);
         Double64Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -1136,7 +1136,7 @@ final class Double64Vector extends DoubleVector {
     }
 
     @Override
-    void forEach(Mask<Double> o, FUnCon f) {
+    void forEach(VectorMask<Double> o, FUnCon f) {
         boolean[] mbits = ((Double64Mask)o).getBits();
         forEach((i, a) -> {
             if (mbits[i]) { f.apply(i, a); }
@@ -1201,13 +1201,13 @@ final class Double64Vector extends DoubleVector {
     @Override
     @ForceInline
     public Double64Vector rearrange(Vector<Double> v,
-                                  Shuffle<Double> s, Mask<Double> m) {
+                                  VectorShuffle<Double> s, VectorMask<Double> m) {
         return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
     @ForceInline
-    public Double64Vector rearrange(Shuffle<Double> o1) {
+    public Double64Vector rearrange(VectorShuffle<Double> o1) {
         Objects.requireNonNull(o1);
         Double64Shuffle s =  (Double64Shuffle)o1;
 
@@ -1222,7 +1222,7 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public Double64Vector blend(Vector<Double> o1, Mask<Double> o2) {
+    public Double64Vector blend(Vector<Double> o1, VectorMask<Double> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         Double64Vector v = (Double64Vector)o1;
@@ -1307,7 +1307,7 @@ final class Double64Vector extends DoubleVector {
         }
 
         @Override
-        Double64Mask bOp(Mask<Double> o, MBinOp f) {
+        Double64Mask bOp(VectorMask<Double> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
             boolean[] bits = getBits();
             boolean[] mbits = ((Double64Mask)o).getBits();
@@ -1318,7 +1318,7 @@ final class Double64Vector extends DoubleVector {
         }
 
         @Override
-        public Species<Double> species() {
+        public VectorSpecies<Double> species() {
             return SPECIES;
         }
 
@@ -1337,23 +1337,23 @@ final class Double64Vector extends DoubleVector {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <E> Mask<E> cast(Species<E> species) {
+        public <E> VectorMask<E> cast(VectorSpecies<E> species) {
             if (length() != species.length())
-                throw new IllegalArgumentException("Mask length and species length differ");
+                throw new IllegalArgumentException("VectorMask length and species length differ");
             Class<?> stype = species.elementType();
             boolean [] maskArray = toArray();
             if (stype == byte.class) {
-                return (Mask <E>) new Byte64Vector.Byte64Mask(maskArray);
+                return (VectorMask <E>) new Byte64Vector.Byte64Mask(maskArray);
             } else if (stype == short.class) {
-                return (Mask <E>) new Short64Vector.Short64Mask(maskArray);
+                return (VectorMask <E>) new Short64Vector.Short64Mask(maskArray);
             } else if (stype == int.class) {
-                return (Mask <E>) new Int64Vector.Int64Mask(maskArray);
+                return (VectorMask <E>) new Int64Vector.Int64Mask(maskArray);
             } else if (stype == long.class) {
-                return (Mask <E>) new Long64Vector.Long64Mask(maskArray);
+                return (VectorMask <E>) new Long64Vector.Long64Mask(maskArray);
             } else if (stype == float.class) {
-                return (Mask <E>) new Float64Vector.Float64Mask(maskArray);
+                return (VectorMask <E>) new Float64Vector.Float64Mask(maskArray);
             } else if (stype == double.class) {
-                return (Mask <E>) new Double64Vector.Double64Mask(maskArray);
+                return (VectorMask <E>) new Double64Vector.Double64Mask(maskArray);
             } else {
                 throw new UnsupportedOperationException("Bad lane type for casting.");
             }
@@ -1374,7 +1374,7 @@ final class Double64Vector extends DoubleVector {
 
         @Override
         @ForceInline
-        public Double64Mask and(Mask<Double> o) {
+        public Double64Mask and(VectorMask<Double> o) {
             Objects.requireNonNull(o);
             Double64Mask m = (Double64Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Double64Mask.class, long.class, LENGTH,
@@ -1384,7 +1384,7 @@ final class Double64Vector extends DoubleVector {
 
         @Override
         @ForceInline
-        public Double64Mask or(Mask<Double> o) {
+        public Double64Mask or(VectorMask<Double> o) {
             Objects.requireNonNull(o);
             Double64Mask m = (Double64Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Double64Mask.class, long.class, LENGTH,
@@ -1406,7 +1406,7 @@ final class Double64Vector extends DoubleVector {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(BT_overflow, Double64Mask.class, long.class, LENGTH,
-                                         this, DoubleVector.maskAllTrue(species()),
+                                         this, VectorMask.maskAllTrue(species()),
                                          (m, __) -> allTrueHelper(((Double64Mask)m).getBits()));
         }
     }
@@ -1431,7 +1431,7 @@ final class Double64Vector extends DoubleVector {
         }
 
         @Override
-        public Species<Double> species() {
+        public VectorSpecies<Double> species() {
             return SPECIES;
         }
 
@@ -1447,30 +1447,30 @@ final class Double64Vector extends DoubleVector {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F> Shuffle<F> cast(Species<F> species) {
+        public <F> VectorShuffle<F> cast(VectorSpecies<F> species) {
             if (length() != species.length())
                 throw new IllegalArgumentException("Shuffle length and species length differ");
             Class<?> stype = species.elementType();
             int [] shuffleArray = toArray();
             if (stype == byte.class) {
-                return (Shuffle<F>) new Byte64Vector.Byte64Shuffle(shuffleArray);
+                return (VectorShuffle<F>) new Byte64Vector.Byte64Shuffle(shuffleArray);
             } else if (stype == short.class) {
-                return (Shuffle<F>) new Short64Vector.Short64Shuffle(shuffleArray);
+                return (VectorShuffle<F>) new Short64Vector.Short64Shuffle(shuffleArray);
             } else if (stype == int.class) {
-                return (Shuffle<F>) new Int64Vector.Int64Shuffle(shuffleArray);
+                return (VectorShuffle<F>) new Int64Vector.Int64Shuffle(shuffleArray);
             } else if (stype == long.class) {
-                return (Shuffle<F>) new Long64Vector.Long64Shuffle(shuffleArray);
+                return (VectorShuffle<F>) new Long64Vector.Long64Shuffle(shuffleArray);
             } else if (stype == float.class) {
-                return (Shuffle<F>) new Float64Vector.Float64Shuffle(shuffleArray);
+                return (VectorShuffle<F>) new Float64Vector.Float64Shuffle(shuffleArray);
             } else if (stype == double.class) {
-                return (Shuffle<F>) new Double64Vector.Double64Shuffle(shuffleArray);
+                return (VectorShuffle<F>) new Double64Vector.Double64Shuffle(shuffleArray);
             } else {
                 throw new UnsupportedOperationException("Bad lane type for casting.");
             }
         }
 
         @Override
-        public Double64Shuffle rearrange(Vector.Shuffle<Double> o) {
+        public Double64Shuffle rearrange(VectorShuffle<Double> o) {
             Double64Shuffle s = (Double64Shuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
@@ -1480,10 +1480,10 @@ final class Double64Vector extends DoubleVector {
         }
     }
 
-    // Species
+    // VectorSpecies
 
     @Override
-    public Species<Double> species() {
+    public VectorSpecies<Double> species() {
         return SPECIES;
     }
 }

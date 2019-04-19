@@ -3,7 +3,7 @@
         $type$[] c = fc.apply(SPECIES.length());
         $type$[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Wideboxtype$> vmask = $abstractvectortype$.maskFromValues(SPECIES, mask);
+        VectorMask<$Wideboxtype$> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

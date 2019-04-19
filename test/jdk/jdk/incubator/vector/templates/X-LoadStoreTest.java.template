@@ -33,8 +33,9 @@
  *
  */
 
-import jdk.incubator.vector.Vector.Shape;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorShape;
+import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.$Type$Vector;
@@ -58,18 +59,18 @@ import java.util.function.IntFunction;
 @Test
 public class $vectorteststype$ extends AbstractVectorTest {
 #if[MaxBit]
-    static final Species<$Wideboxtype$> SPECIES =
+    static final VectorSpecies<$Wideboxtype$> SPECIES =
                 $Type$Vector.SPECIES_MAX;
 #else[MaxBit]
-    static final Species<$Wideboxtype$> SPECIES =
+    static final VectorSpecies<$Wideboxtype$> SPECIES =
                 $Type$Vector.SPECIES_$bits$;
 #end[MaxBit]
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
 #if[MaxBit]
-    static Shape getMaxBit() {
-        return Shape.S_Max_BIT;
+    static VectorShape getMaxBit() {
+        return VectorShape.S_Max_BIT;
     }
 
 #end[MaxBit]
@@ -221,7 +222,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         $type$[] a = fa.apply(SPECIES.length());
         $type$[] r = new $type$[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Boxtype$> vmask = $abstractvectortype$.maskFromValues(SPECIES, mask);
+        VectorMask<$Boxtype$> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -295,7 +296,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Boxtype$> vmask = $abstractvectortype$.maskFromValues(SPECIES, mask);
+        VectorMask<$Boxtype$> vmask = VectorMask.fromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
@@ -335,7 +336,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Boxtype$> vmask = $abstractvectortype$.maskFromValues(SPECIES, mask);
+        VectorMask<$Boxtype$> vmask = VectorMask.fromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;

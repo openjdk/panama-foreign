@@ -84,8 +84,8 @@
   template(java_lang_Long_LongCache,                  "java/lang/Long$LongCache")                 \
   template(jdk_incubator_vector_VectorIntrinsics,        "jdk/incubator/vector/VectorIntrinsics")         \
   template(jdk_incubator_vector_Vector,                  "jdk/incubator/vector/Vector")                   \
-  template(jdk_incubator_vector_VectorSpecies,           "jdk/incubator/vector/Vector$Species")           \
-  template(jdk_incubator_vector_VectorMask,              "jdk/incubator/vector/Vector$Mask")              \
+  template(jdk_incubator_vector_VectorSpecies,           "jdk/incubator/vector/VectorSpecies")            \
+  template(jdk_incubator_vector_VectorMask,              "jdk/incubator/vector/VectorMask")               \
   template(jdk_incubator_vector_VectorAbstractMask,      "jdk/incubator/vector/AbstractMask")             \
   template(jdk_incubator_vector_FloatVector,             "jdk/incubator/vector/FloatVector")              \
   template(jdk_incubator_vector_FloatVector_FloatSpecies,"jdk/incubator/vector/FloatVector$FloatSpecies") \
@@ -1524,11 +1524,11 @@
    do_name(vector_ternary_op_name,     "ternaryOp")                                                                                            \
                                                                                                                                                \
   do_intrinsic(_VectorBroadcastCoerced, jdk_incubator_vector_VectorIntrinsics, vector_broadcast_coerced_name, vector_broadcast_coerced_sig, F_S) \
-   do_signature(vector_broadcast_coerced_sig, "(Ljava/lang/Class;Ljava/lang/Class;IJLjdk/incubator/vector/Vector$Species;Ljdk/incubator/vector/VectorIntrinsics$BroadcastOperation;)Ljava/lang/Object;")     \
+   do_signature(vector_broadcast_coerced_sig, "(Ljava/lang/Class;Ljava/lang/Class;IJLjdk/incubator/vector/VectorSpecies;Ljdk/incubator/vector/VectorIntrinsics$BroadcastOperation;)Ljava/lang/Object;")     \
    do_name(vector_broadcast_coerced_name, "broadcastCoerced")                                                                                  \
                                                                                                                                                \
   do_intrinsic(_VectorLoadOp, jdk_incubator_vector_VectorIntrinsics, vector_load_op_name, vector_load_op_sig, F_S)                             \
-   do_signature(vector_load_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;ILjdk/incubator/vector/Vector$Species;Ljdk/incubator/vector/VectorIntrinsics$LoadOperation;)Ljava/lang/Object;") \
+   do_signature(vector_load_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;ILjdk/incubator/vector/VectorSpecies;Ljdk/incubator/vector/VectorIntrinsics$LoadOperation;)Ljava/lang/Object;") \
    do_name(vector_load_op_name,     "load")                                                                                                    \
   do_intrinsic(_VectorStoreOp, jdk_incubator_vector_VectorIntrinsics, vector_store_op_name, vector_store_op_sig, F_S)                          \
    do_signature(vector_store_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjdk/incubator/vector/Vector;Ljava/lang/Object;ILjdk/incubator/vector/VectorIntrinsics$StoreVectorOperation;)V") \
@@ -1544,19 +1544,19 @@
                                                                                                                                                \
   do_intrinsic(_VectorBlend, jdk_incubator_vector_VectorIntrinsics, vector_blend_name, vector_blend_sig, F_S)                                  \
    do_signature(vector_blend_sig, "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;I"                                                      \
-                                   "Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;"              \
+                                   "Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/VectorMask;"               \
                                    "Ljdk/incubator/vector/VectorIntrinsics$VectorBlendOp;)Ljdk/incubator/vector/Vector;")                      \
    do_name(vector_blend_name, "blend")                                                                                                         \
                                                                                                                                                \
   do_intrinsic(_VectorCompare, jdk_incubator_vector_VectorIntrinsics, vector_compare_name, vector_compare_sig, F_S)                            \
    do_signature(vector_compare_sig, "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;I"                                                   \
                                     "Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector;"                                               \
-                                    "Ljdk/incubator/vector/VectorIntrinsics$VectorCompareOp;)Ljdk/incubator/vector/Vector$Mask;")              \
+                                    "Ljdk/incubator/vector/VectorIntrinsics$VectorCompareOp;)Ljdk/incubator/vector/VectorMask;")               \
    do_name(vector_compare_name, "compare")                                                                                                     \
                                                                                                                                                \
   do_intrinsic(_VectorRearrange, jdk_incubator_vector_VectorIntrinsics, vector_rearrange_name, vector_rearrange_sig, F_S)                      \
    do_signature(vector_rearrange_sig, "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;I"                                                  \
-                                      "Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Shuffle;"                                     \
+                                      "Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/VectorShuffle;"                                     \
                                       "Ljdk/incubator/vector/VectorIntrinsics$VectorRearrangeOp;)Ljdk/incubator/vector/Vector;")               \
    do_name(vector_rearrange_name, "rearrangeOp")                                                                                               \
                                                                                                                                                \
@@ -1592,9 +1592,9 @@
    do_intrinsic(_VectorGatherOp, jdk_incubator_vector_VectorIntrinsics, vector_gather_name, vector_gather_sig, F_S)                            \
     do_signature(vector_gather_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Class;"                                                    \
                                    "Ljava/lang/Object;J"                                                                                       \
-                                   "Ljdk/incubator/vector/IntVector;"                                                                             \
+                                   "Ljdk/incubator/vector/IntVector;"                                                                          \
                                    "Ljava/lang/Object;I[II"                                                                                    \
-                                   "Ljdk/incubator/vector/Vector$Species;"                                       \
+                                   "Ljdk/incubator/vector/VectorSpecies;"                                                                      \
                                    "Ljdk/incubator/vector/VectorIntrinsics$LoadVectorOperationWithMap;)"                                       \
                                    "Ljdk/incubator/vector/Vector;")                                                                            \
     do_name(vector_gather_name, "loadWithMap")                                                                                                 \

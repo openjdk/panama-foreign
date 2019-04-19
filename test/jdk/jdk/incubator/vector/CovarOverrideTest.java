@@ -33,6 +33,7 @@ import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.ShortVector;
+import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.Vector;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -70,7 +71,7 @@ public class CovarOverrideTest {
         Class<?> superClass = c.getSuperclass();
 
         Class<?> vectorClass = c;
-        if (superClass == Vector.Species.class) {
+        if (superClass == VectorSpecies.class) {
             vectorClass = c.getDeclaringClass();
         }
 

@@ -32,7 +32,8 @@ import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.VectorShape;
+import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.ShortVector;
 import jdk.incubator.vector.Vector;
 import org.testng.Assert;
@@ -65,7 +66,7 @@ public class MethodOverideTest {
         try {
             List<Object> csis = new ArrayList<>();
             for (Field sf : primitiveVectorClass.getFields()) {
-                if (Vector.Species.class.isAssignableFrom(sf.getType())) {
+                if (VectorSpecies.class.isAssignableFrom(sf.getType())) {
                     csis.add(sf.get(null));
                 }
             }
@@ -80,7 +81,7 @@ public class MethodOverideTest {
         try {
             List<Class<?>> cvcs = new ArrayList<>();
             for (Object speciesInstance : getConcreteSpeciesInstances(primitiveVectorClass)) {
-                    Method zero = primitiveVectorClass.getMethod("zero", Vector.Species.class);
+                    Method zero = primitiveVectorClass.getMethod("zero", VectorSpecies.class);
                     Object vectorInstance = zero.invoke(null, speciesInstance);
 
                     cvcs.add(vectorInstance.getClass());

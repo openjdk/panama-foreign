@@ -87,14 +87,14 @@ import jdk.incubator.vector.Vector;
 
     /* ============================================================================ */
     interface BroadcastOperation<V, E> {
-        V broadcast(long l, Vector.Species<E> s);
+        V broadcast(long l, VectorSpecies<E> s);
     }
 
     @HotSpotIntrinsicCandidate
     static
     <VM, E>
     VM broadcastCoerced(Class<VM> vmClass, Class<?> E, int length,
-                                  long bits, Vector.Species<E> s,
+                                  long bits, VectorSpecies<E> s,
                                   BroadcastOperation<VM, E> defaultImpl) {
         assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.broadcast(bits, s);
@@ -149,7 +149,7 @@ import jdk.incubator.vector.Vector;
     static
     <VM>
     VM unaryOp(int oprId, Class<VM> vmClass, Class<?> elementType, int length,
-               VM vm, /*Vector.Mask<E,S> m,*/
+               VM vm,
                Function<VM, VM> defaultImpl) {
         assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(vm);
@@ -161,7 +161,7 @@ import jdk.incubator.vector.Vector;
     static
     <VM>
     VM binaryOp(int oprId, Class<? extends VM> vmClass, Class<?> elementType, int length,
-                VM vm1, VM vm2, /*Vector.Mask<E,S> m,*/
+                VM vm1, VM vm2,
                 BiFunction<VM, VM, VM> defaultImpl) {
         assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(vm1, vm2);
@@ -177,7 +177,7 @@ import jdk.incubator.vector.Vector;
     static
     <VM>
     VM ternaryOp(int oprId, Class<VM> vmClass, Class<?> elementType, int length,
-                 VM vm1, VM vm2, VM vm3, /*Vector.Mask<E,S> m,*/
+                 VM vm1, VM vm2, VM vm3,
                  TernaryOperation<VM> defaultImpl) {
         assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(vm1, vm2, vm3);
@@ -188,7 +188,7 @@ import jdk.incubator.vector.Vector;
     // Memory operations
 
     interface LoadOperation<C, V, E> {
-        V load(C container, int index, Vector.Species<E> s);
+        V load(C container, int index, VectorSpecies<E> s);
     }
 
     @HotSpotIntrinsicCandidate
@@ -196,8 +196,7 @@ import jdk.incubator.vector.Vector;
     <C, VM, E>
     VM load(Class<VM> vmClass, Class<?> E, int length,
            Object base, long offset,    // Unsafe addressing
-           // Vector.Mask<E,S> m,
-           C container, int index, Vector.Species<E> s,     // Arguments for default implementation
+           C container, int index, VectorSpecies<E> s,     // Arguments for default implementation
            LoadOperation<C, VM, E> defaultImpl) {
         assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.load(container, index, s);
@@ -206,7 +205,7 @@ import jdk.incubator.vector.Vector;
     /* ============================================================================ */
 
     interface LoadVectorOperationWithMap<C, V extends Vector<?>, E> {
-        V loadWithMap(C container, int index, int[] indexMap, int indexM, Vector.Species<E> s);
+        V loadWithMap(C container, int index, int[] indexMap, int indexM, VectorSpecies<E> s);
     }
 
     @HotSpotIntrinsicCandidate
@@ -215,7 +214,7 @@ import jdk.incubator.vector.Vector;
     V loadWithMap(Class<?> vectorClass, Class<?> E, int length, Class<?> vectorIndexClass,
                   Object base, long offset, // Unsafe addressing
                   W index_vector,
-                  C container, int index, int[] indexMap, int indexM, Vector.Species<E> s, // Arguments for default implementation
+                  C container, int index, int[] indexMap, int indexM, VectorSpecies<E> s, // Arguments for default implementation
                   LoadVectorOperationWithMap<C, V, E> defaultImpl) {
         assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.loadWithMap(container, index, indexMap, indexM, s);
@@ -233,7 +232,6 @@ import jdk.incubator.vector.Vector;
     void store(Class<?> vectorClass, Class<?> elementType, int length,
                Object base, long offset,    // Unsafe addressing
                V v,
-               // Vector.Mask<E,S> m,
                C container, int index,      // Arguments for default implementation
                StoreVectorOperation<C, V> defaultImpl) {
         assert isNonCapturingLambda(defaultImpl) : defaultImpl;
@@ -278,7 +276,7 @@ import jdk.incubator.vector.Vector;
 
     @HotSpotIntrinsicCandidate
     static <V extends Vector<E>,
-            M extends Vector.Mask<E>,
+            M extends VectorMask<E>,
             E>
     M compare(int cond, Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int length,
               V v1, V v2,
@@ -290,7 +288,7 @@ import jdk.incubator.vector.Vector;
     /* ============================================================================ */
 
     interface VectorRearrangeOp<V extends Vector<E>,
-            Sh extends Vector.Shuffle<E>,
+            Sh extends VectorShuffle<E>,
             E> {
         V apply(V v1, Sh shuffle);
     }
@@ -298,7 +296,7 @@ import jdk.incubator.vector.Vector;
     @HotSpotIntrinsicCandidate
     static
     <V extends Vector<E>,
-            Sh extends Vector.Shuffle<E>,
+            Sh extends VectorShuffle<E>,
             E>
     V rearrangeOp(Class<V> vectorClass, Class<Sh> shuffleClass, Class<?> elementType, int vlen,
             V v1, Sh sh,
@@ -310,7 +308,7 @@ import jdk.incubator.vector.Vector;
     /* ============================================================================ */
 
     interface VectorBlendOp<V extends Vector<E>,
-            M extends Vector.Mask<E>,
+            M extends VectorMask<E>,
             E> {
         V apply(V v1, V v2, M mask);
     }
@@ -318,7 +316,7 @@ import jdk.incubator.vector.Vector;
     @HotSpotIntrinsicCandidate
     static
     <V extends Vector<E>,
-     M extends Vector.Mask<E>,
+     M extends VectorMask<E>,
      E>
     V blend(Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int length,
             V v1, V v2, M m,

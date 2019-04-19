@@ -56,7 +56,7 @@ public abstract class IntVector extends Vector<Integer> {
 
     abstract IntVector uOp(FUnOp f);
 
-    abstract IntVector uOp(Mask<Integer> m, FUnOp f);
+    abstract IntVector uOp(VectorMask<Integer> m, FUnOp f);
 
     // Binary operator
 
@@ -66,7 +66,7 @@ public abstract class IntVector extends Vector<Integer> {
 
     abstract IntVector bOp(Vector<Integer> v, FBinOp f);
 
-    abstract IntVector bOp(Vector<Integer> v, Mask<Integer> m, FBinOp f);
+    abstract IntVector bOp(Vector<Integer> v, VectorMask<Integer> m, FBinOp f);
 
     // Trinary operator
 
@@ -76,7 +76,7 @@ public abstract class IntVector extends Vector<Integer> {
 
     abstract IntVector tOp(Vector<Integer> v1, Vector<Integer> v2, FTriOp f);
 
-    abstract IntVector tOp(Vector<Integer> v1, Vector<Integer> v2, Mask<Integer> m, FTriOp f);
+    abstract IntVector tOp(Vector<Integer> v1, Vector<Integer> v2, VectorMask<Integer> m, FTriOp f);
 
     // Reduction operator
 
@@ -88,7 +88,7 @@ public abstract class IntVector extends Vector<Integer> {
         boolean apply(int i, int a, int b);
     }
 
-    abstract Mask<Integer> bTest(Vector<Integer> v, FBinTest f);
+    abstract VectorMask<Integer> bTest(Vector<Integer> v, FBinTest f);
 
     // Foreach
 
@@ -98,7 +98,7 @@ public abstract class IntVector extends Vector<Integer> {
 
     abstract void forEach(FUnCon f);
 
-    abstract void forEach(Mask<Integer> m, FUnCon f);
+    abstract void forEach(VectorMask<Integer> m, FUnCon f);
 
     // Static factories
 
@@ -111,7 +111,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector zero(Species<Integer> species) {
+    public static IntVector zero(VectorSpecies<Integer> species) {
         return VectorIntrinsics.broadcastCoerced((Class<IntVector>) species.boxType(), int.class, species.length(),
                                                  0, species,
                                                  ((bits, s) -> ((IntSpecies)s).op(i -> (int)bits)));
@@ -125,7 +125,7 @@ public abstract class IntVector extends Vector<Integer> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(Species<Integer>, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(VectorSpecies<Integer>, ByteBuffer, int, VectorMask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
      * }</pre>
@@ -139,7 +139,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector fromByteArray(Species<Integer> species, byte[] a, int ix) {
+    public static IntVector fromByteArray(VectorSpecies<Integer> species, byte[] a, int ix) {
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
         return VectorIntrinsics.load((Class<IntVector>) species.boxType(), int.class, species.length(),
@@ -161,7 +161,7 @@ public abstract class IntVector extends Vector<Integer> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(Species<Integer>, ByteBuffer, int, Mask) method} as follows:
+     * {@link #fromByteBuffer(VectorSpecies<Integer>, ByteBuffer, int, VectorMask) method} as follows:
      * <pre>{@code
      * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
      * }</pre>
@@ -180,7 +180,7 @@ public abstract class IntVector extends Vector<Integer> {
      * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static IntVector fromByteArray(Species<Integer> species, byte[] a, int ix, Mask<Integer> m) {
+    public static IntVector fromByteArray(VectorSpecies<Integer> species, byte[] a, int ix, VectorMask<Integer> m) {
         return zero(species).blend(fromByteArray(species, a, ix), m);
     }
 
@@ -200,7 +200,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector fromArray(Species<Integer> species, int[] a, int i){
+    public static IntVector fromArray(VectorSpecies<Integer> species, int[] a, int i){
         Objects.requireNonNull(a);
         i = VectorIntrinsics.checkIndex(i, a.length, species.length());
         return VectorIntrinsics.load((Class<IntVector>) species.boxType(), int.class, species.length(),
@@ -229,7 +229,7 @@ public abstract class IntVector extends Vector<Integer> {
      * is set {@code i > a.length - N}
      */
     @ForceInline
-    public static IntVector fromArray(Species<Integer> species, int[] a, int i, Mask<Integer> m) {
+    public static IntVector fromArray(VectorSpecies<Integer> species, int[] a, int i, VectorMask<Integer> m) {
         return zero(species).blend(fromArray(species, a, i), m);
     }
 
@@ -256,7 +256,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector fromArray(Species<Integer> species, int[] a, int i, int[] indexMap, int j) {
+    public static IntVector fromArray(VectorSpecies<Integer> species, int[] a, int i, int[] indexMap, int j) {
         Objects.requireNonNull(a);
         Objects.requireNonNull(indexMap);
 
@@ -269,7 +269,7 @@ public abstract class IntVector extends Vector<Integer> {
         return VectorIntrinsics.loadWithMap((Class<IntVector>) species.boxType(), int.class, species.length(),
                                             IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_INT_BASE_OFFSET, vix,
                                             a, i, indexMap, j, species,
-                                            (int[] c, int idx, int[] iMap, int idy, Species<Integer> s) ->
+                                            (int[] c, int idx, int[] iMap, int idy, VectorSpecies<Integer> s) ->
                                                 ((IntSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }
 
@@ -299,7 +299,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector fromArray(Species<Integer> species, int[] a, int i, Mask<Integer> m, int[] indexMap, int j) {
+    public static IntVector fromArray(VectorSpecies<Integer> species, int[] a, int i, VectorMask<Integer> m, int[] indexMap, int j) {
         // @@@ This can result in out of bounds errors for unset mask lanes
         return zero(species).blend(fromArray(species, a, i, indexMap, j), m);
     }
@@ -314,7 +314,7 @@ public abstract class IntVector extends Vector<Integer> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(Species<Integer>, ByteBuffer, int, Mask)} method} as follows:
+     * {@link #fromByteBuffer(VectorSpecies<Integer>, ByteBuffer, int, VectorMask)} method} as follows:
      * <pre>{@code
      *   return this.fromByteBuffer(b, i, this.maskAllTrue())
      * }</pre>
@@ -331,7 +331,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector fromByteBuffer(Species<Integer> species, ByteBuffer bb, int ix) {
+    public static IntVector fromByteBuffer(VectorSpecies<Integer> species, ByteBuffer bb, int ix) {
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -383,7 +383,7 @@ public abstract class IntVector extends Vector<Integer> {
      * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static IntVector fromByteBuffer(Species<Integer> species, ByteBuffer bb, int ix, Mask<Integer> m) {
+    public static IntVector fromByteBuffer(VectorSpecies<Integer> species, ByteBuffer bb, int ix, VectorMask<Integer> m) {
         return zero(species).blend(fromByteBuffer(species, bb, ix), m);
     }
 
@@ -398,7 +398,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector broadcast(Species<Integer> s, int e) {
+    public static IntVector broadcast(VectorSpecies<Integer> s, int e) {
         return VectorIntrinsics.broadcastCoerced(
             (Class<IntVector>) s.boxType(), int.class, s.length(),
             e, s,
@@ -421,7 +421,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static IntVector scalars(Species<Integer> s, int... es) {
+    public static IntVector scalars(VectorSpecies<Integer> s, int... es) {
         Objects.requireNonNull(es);
         int ix = VectorIntrinsics.checkIndex(0, es.length, s.length());
         return VectorIntrinsics.load((Class<IntVector>) s.boxType(), int.class, s.length(),
@@ -441,7 +441,7 @@ public abstract class IntVector extends Vector<Integer> {
      * value {@code e}
      */
     @ForceInline
-    public static final IntVector single(Species<Integer> s, int e) {
+    public static final IntVector single(VectorSpecies<Integer> s, int e) {
         return zero(s).with(0, e);
     }
 
@@ -456,233 +456,9 @@ public abstract class IntVector extends Vector<Integer> {
      * @return a vector where each lane elements is set to a randomly
      * generated primitive value
      */
-    public static IntVector random(Species<Integer> s) {
+    public static IntVector random(VectorSpecies<Integer> s) {
         ThreadLocalRandom r = ThreadLocalRandom.current();
         return ((IntSpecies)s).op(i -> r.nextInt());
-    }
-
-    /**
-     * Returns a mask where each lane is set or unset according to given
-     * {@code boolean} values
-     * <p>
-     * For each mask lane, where {@code N} is the mask lane index,
-     * if the given {@code boolean} value at index {@code N} is {@code true}
-     * then the mask lane at index {@code N} is set, otherwise it is unset.
-     *
-     * @param species mask species
-     * @param bits the given {@code boolean} values
-     * @return a mask where each lane is set or unset according to the given {@code boolean} value
-     * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
-     */
-    @ForceInline
-    public static Mask<Integer> maskFromValues(Species<Integer> species, boolean... bits) {
-        if (species.boxType() == IntMaxVector.class)
-            return new IntMaxVector.IntMaxMask(bits);
-        switch (species.bitSize()) {
-            case 64: return new Int64Vector.Int64Mask(bits);
-            case 128: return new Int128Vector.Int128Mask(bits);
-            case 256: return new Int256Vector.Int256Mask(bits);
-            case 512: return new Int512Vector.Int512Mask(bits);
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
-    static Mask<Integer> trueMask(Species<Integer> species) {
-        if (species.boxType() == IntMaxVector.class)
-            return IntMaxVector.IntMaxMask.TRUE_MASK;
-        switch (species.bitSize()) {
-            case 64: return Int64Vector.Int64Mask.TRUE_MASK;
-            case 128: return Int128Vector.Int128Mask.TRUE_MASK;
-            case 256: return Int256Vector.Int256Mask.TRUE_MASK;
-            case 512: return Int512Vector.Int512Mask.TRUE_MASK;
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    static Mask<Integer> falseMask(Species<Integer> species) {
-        if (species.boxType() == IntMaxVector.class)
-            return IntMaxVector.IntMaxMask.FALSE_MASK;
-        switch (species.bitSize()) {
-            case 64: return Int64Vector.Int64Mask.FALSE_MASK;
-            case 128: return Int128Vector.Int128Mask.FALSE_MASK;
-            case 256: return Int256Vector.Int256Mask.FALSE_MASK;
-            case 512: return Int512Vector.Int512Mask.FALSE_MASK;
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    /**
-     * Loads a mask from a {@code boolean} array starting at an offset.
-     * <p>
-     * For each mask lane, where {@code N} is the mask lane index,
-     * if the array element at index {@code ix + N} is {@code true} then the
-     * mask lane at index {@code N} is set, otherwise it is unset.
-     *
-     * @param species mask species
-     * @param bits the {@code boolean} array
-     * @param ix the offset into the array
-     * @return the mask loaded from a {@code boolean} array
-     * @throws IndexOutOfBoundsException if {@code ix < 0}, or
-     * {@code ix > bits.length - species.length()}
-     */
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public static Mask<Integer> maskFromArray(Species<Integer> species, boolean[] bits, int ix) {
-        Objects.requireNonNull(bits);
-        ix = VectorIntrinsics.checkIndex(ix, bits.length, species.length());
-        return VectorIntrinsics.load((Class<Mask<Integer>>) species.maskType(), int.class, species.length(),
-                                     bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
-                                     bits, ix, species,
-                                     (c, idx, s) -> (Mask<Integer>) ((IntSpecies)s).opm(n -> c[idx + n]));
-    }
-
-    /**
-     * Returns a mask where all lanes are set.
-     *
-     * @param species mask species
-     * @return a mask where all lanes are set
-     */
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public static Mask<Integer> maskAllTrue(Species<Integer> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<Mask<Integer>>) species.maskType(), int.class, species.length(),
-                                                 (int)-1,  species,
-                                                 ((z, s) -> trueMask(s)));
-    }
-
-    /**
-     * Returns a mask where all lanes are unset.
-     *
-     * @param species mask species
-     * @return a mask where all lanes are unset
-     */
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public static Mask<Integer> maskAllFalse(Species<Integer> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<Mask<Integer>>) species.maskType(), int.class, species.length(),
-                                                 0, species, 
-                                                 ((z, s) -> falseMask(s)));
-    }
-
-    /**
-     * Returns a shuffle of mapped indexes where each lane element is
-     * the result of applying a mapping function to the corresponding lane
-     * index.
-     * <p>
-     * Care should be taken to ensure Shuffle values produced from this
-     * method are consumed as constants to ensure optimal generation of
-     * code.  For example, values held in static final fields or values
-     * held in loop constant local variables.
-     * <p>
-     * This method behaves as if a shuffle is created from an array of
-     * mapped indexes as follows:
-     * <pre>{@code
-     *   int[] a = new int[species.length()];
-     *   for (int i = 0; i < a.length; i++) {
-     *       a[i] = f.applyAsInt(i);
-     *   }
-     *   return this.shuffleFromValues(a);
-     * }</pre>
-     *
-     * @param species shuffle species
-     * @param f the lane index mapping function
-     * @return a shuffle of mapped indexes
-     */
-    @ForceInline
-    public static Shuffle<Integer> shuffle(Species<Integer> species, IntUnaryOperator f) {
-        if (species.boxType() == IntMaxVector.class)
-            return new IntMaxVector.IntMaxShuffle(f);
-        switch (species.bitSize()) {
-            case 64: return new Int64Vector.Int64Shuffle(f);
-            case 128: return new Int128Vector.Int128Shuffle(f);
-            case 256: return new Int256Vector.Int256Shuffle(f);
-            case 512: return new Int512Vector.Int512Shuffle(f);
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    /**
-     * Returns a shuffle where each lane element is the value of its
-     * corresponding lane index.
-     * <p>
-     * This method behaves as if a shuffle is created from an identity
-     * index mapping function as follows:
-     * <pre>{@code
-     *   return this.shuffle(i -> i);
-     * }</pre>
-     *
-     * @param species shuffle species
-     * @return a shuffle of lane indexes
-     */
-    @ForceInline
-    public static Shuffle<Integer> shuffleIota(Species<Integer> species) {
-        if (species.boxType() == IntMaxVector.class)
-            return new IntMaxVector.IntMaxShuffle(AbstractShuffle.IDENTITY);
-        switch (species.bitSize()) {
-            case 64: return new Int64Vector.Int64Shuffle(AbstractShuffle.IDENTITY);
-            case 128: return new Int128Vector.Int128Shuffle(AbstractShuffle.IDENTITY);
-            case 256: return new Int256Vector.Int256Shuffle(AbstractShuffle.IDENTITY);
-            case 512: return new Int512Vector.Int512Shuffle(AbstractShuffle.IDENTITY);
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    /**
-     * Returns a shuffle where each lane element is set to a given
-     * {@code int} value logically AND'ed by the species length minus one.
-     * <p>
-     * For each shuffle lane, where {@code N} is the shuffle lane index, the
-     * the {@code int} value at index {@code N} logically AND'ed by
-     * {@code species.length() - 1} is placed into the resulting shuffle at
-     * lane index {@code N}.
-     *
-     * @param species shuffle species
-     * @param ixs the given {@code int} values
-     * @return a shuffle where each lane element is set to a given
-     * {@code int} value
-     * @throws IndexOutOfBoundsException if the number of int values is
-     * {@code < species.length()}
-     */
-    @ForceInline
-    public static Shuffle<Integer> shuffleFromValues(Species<Integer> species, int... ixs) {
-        if (species.boxType() == IntMaxVector.class)
-            return new IntMaxVector.IntMaxShuffle(ixs);
-        switch (species.bitSize()) {
-            case 64: return new Int64Vector.Int64Shuffle(ixs);
-            case 128: return new Int128Vector.Int128Shuffle(ixs);
-            case 256: return new Int256Vector.Int256Shuffle(ixs);
-            case 512: return new Int512Vector.Int512Shuffle(ixs);
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
-    }
-
-    /**
-     * Loads a shuffle from an {@code int} array starting at an offset.
-     * <p>
-     * For each shuffle lane, where {@code N} is the shuffle lane index, the
-     * array element at index {@code i + N} logically AND'ed by
-     * {@code species.length() - 1} is placed into the resulting shuffle at lane
-     * index {@code N}.
-     *
-     * @param species shuffle species
-     * @param ixs the {@code int} array
-     * @param i the offset into the array
-     * @return a shuffle loaded from the {@code int} array
-     * @throws IndexOutOfBoundsException if {@code i < 0}, or
-     * {@code i > a.length - species.length()}
-     */
-    @ForceInline
-    public static Shuffle<Integer> shuffleFromArray(Species<Integer> species, int[] ixs, int i) {
-        if (species.boxType() == IntMaxVector.class)
-            return new IntMaxVector.IntMaxShuffle(ixs, i);
-        switch (species.bitSize()) {
-            case 64: return new Int64Vector.Int64Shuffle(ixs, i);
-            case 128: return new Int128Vector.Int128Shuffle(ixs, i);
-            case 256: return new Int256Vector.Int256Shuffle(ixs, i);
-            case 512: return new Int512Vector.Int512Shuffle(ixs, i);
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
     }
 
     // Ops
@@ -703,7 +479,7 @@ public abstract class IntVector extends Vector<Integer> {
     public abstract IntVector add(int s);
 
     @Override
-    public abstract IntVector add(Vector<Integer> v, Mask<Integer> m);
+    public abstract IntVector add(Vector<Integer> v, VectorMask<Integer> m);
 
     /**
      * Adds this vector to broadcast of an input scalar,
@@ -717,7 +493,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract IntVector add(int s, Mask<Integer> m);
+    public abstract IntVector add(int s, VectorMask<Integer> m);
 
     @Override
     public abstract IntVector sub(Vector<Integer> v);
@@ -735,7 +511,7 @@ public abstract class IntVector extends Vector<Integer> {
     public abstract IntVector sub(int s);
 
     @Override
-    public abstract IntVector sub(Vector<Integer> v, Mask<Integer> m);
+    public abstract IntVector sub(Vector<Integer> v, VectorMask<Integer> m);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector, selecting
@@ -749,7 +525,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract IntVector sub(int s, Mask<Integer> m);
+    public abstract IntVector sub(int s, VectorMask<Integer> m);
 
     @Override
     public abstract IntVector mul(Vector<Integer> v);
@@ -767,7 +543,7 @@ public abstract class IntVector extends Vector<Integer> {
     public abstract IntVector mul(int s);
 
     @Override
-    public abstract IntVector mul(Vector<Integer> v, Mask<Integer> m);
+    public abstract IntVector mul(Vector<Integer> v, VectorMask<Integer> m);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar, selecting
@@ -781,25 +557,25 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract IntVector mul(int s, Mask<Integer> m);
+    public abstract IntVector mul(int s, VectorMask<Integer> m);
 
     @Override
     public abstract IntVector neg();
 
     @Override
-    public abstract IntVector neg(Mask<Integer> m);
+    public abstract IntVector neg(VectorMask<Integer> m);
 
     @Override
     public abstract IntVector abs();
 
     @Override
-    public abstract IntVector abs(Mask<Integer> m);
+    public abstract IntVector abs(VectorMask<Integer> m);
 
     @Override
     public abstract IntVector min(Vector<Integer> v);
 
     @Override
-    public abstract IntVector min(Vector<Integer> v, Mask<Integer> m);
+    public abstract IntVector min(Vector<Integer> v, VectorMask<Integer> m);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
@@ -816,7 +592,7 @@ public abstract class IntVector extends Vector<Integer> {
     public abstract IntVector max(Vector<Integer> v);
 
     @Override
-    public abstract IntVector max(Vector<Integer> v, Mask<Integer> m);
+    public abstract IntVector max(Vector<Integer> v, VectorMask<Integer> m);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -830,7 +606,7 @@ public abstract class IntVector extends Vector<Integer> {
     public abstract IntVector max(int s);
 
     @Override
-    public abstract Mask<Integer> equal(Vector<Integer> v);
+    public abstract VectorMask<Integer> equal(Vector<Integer> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
@@ -842,10 +618,10 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result mask of testing if this vector is equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer> equal(int s);
+    public abstract VectorMask<Integer> equal(int s);
 
     @Override
-    public abstract Mask<Integer> notEqual(Vector<Integer> v);
+    public abstract VectorMask<Integer> notEqual(Vector<Integer> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
@@ -857,10 +633,10 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result mask of testing if this vector is not equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer> notEqual(int s);
+    public abstract VectorMask<Integer> notEqual(int s);
 
     @Override
-    public abstract Mask<Integer> lessThan(Vector<Integer> v);
+    public abstract VectorMask<Integer> lessThan(Vector<Integer> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
@@ -872,10 +648,10 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the mask result of testing if this vector is less than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer> lessThan(int s);
+    public abstract VectorMask<Integer> lessThan(int s);
 
     @Override
-    public abstract Mask<Integer> lessThanEq(Vector<Integer> v);
+    public abstract VectorMask<Integer> lessThanEq(Vector<Integer> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
@@ -887,10 +663,10 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the mask result of testing if this vector is less than or equal
      * to the broadcast of an input scalar
      */
-    public abstract Mask<Integer> lessThanEq(int s);
+    public abstract VectorMask<Integer> lessThanEq(int s);
 
     @Override
-    public abstract Mask<Integer> greaterThan(Vector<Integer> v);
+    public abstract VectorMask<Integer> greaterThan(Vector<Integer> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
@@ -902,10 +678,10 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the mask result of testing if this vector is greater than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer> greaterThan(int s);
+    public abstract VectorMask<Integer> greaterThan(int s);
 
     @Override
-    public abstract Mask<Integer> greaterThanEq(Vector<Integer> v);
+    public abstract VectorMask<Integer> greaterThanEq(Vector<Integer> v);
 
     /**
      * Tests if this vector is greater than or equal to the broadcast of an
@@ -918,10 +694,10 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the mask result of testing if this vector is greater than or
      * equal to the broadcast of an input scalar
      */
-    public abstract Mask<Integer> greaterThanEq(int s);
+    public abstract VectorMask<Integer> greaterThanEq(int s);
 
     @Override
-    public abstract IntVector blend(Vector<Integer> v, Mask<Integer> m);
+    public abstract IntVector blend(Vector<Integer> v, VectorMask<Integer> m);
 
     /**
      * Blends the lane elements of this vector with those of the broadcast of an
@@ -938,17 +714,17 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of blending the lane elements of this vector with
      * those of the broadcast of an input scalar
      */
-    public abstract IntVector blend(int s, Mask<Integer> m);
+    public abstract IntVector blend(int s, VectorMask<Integer> m);
 
     @Override
     public abstract IntVector rearrange(Vector<Integer> v,
-                                                      Shuffle<Integer> s, Mask<Integer> m);
+                                                      VectorShuffle<Integer> s, VectorMask<Integer> m);
 
     @Override
-    public abstract IntVector rearrange(Shuffle<Integer> m);
+    public abstract IntVector rearrange(VectorShuffle<Integer> m);
 
     @Override
-    public abstract IntVector reshape(Species<Integer> s);
+    public abstract IntVector reshape(VectorSpecies<Integer> s);
 
     @Override
     public abstract IntVector rotateEL(int i);
@@ -998,7 +774,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the bitwise AND of this vector with the input vector
      */
-    public abstract IntVector and(Vector<Integer> v, Mask<Integer> m);
+    public abstract IntVector and(Vector<Integer> v, VectorMask<Integer> m);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
@@ -1012,7 +788,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the bitwise AND of this vector with the broadcast of an input
      * scalar
      */
-    public abstract IntVector and(int s, Mask<Integer> m);
+    public abstract IntVector and(int s, VectorMask<Integer> m);
 
     /**
      * Bitwise ORs this vector with an input vector.
@@ -1048,7 +824,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the bitwise OR of this vector with the input vector
      */
-    public abstract IntVector or(Vector<Integer> v, Mask<Integer> m);
+    public abstract IntVector or(Vector<Integer> v, VectorMask<Integer> m);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar, selecting
@@ -1062,7 +838,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the bitwise OR of this vector with the broadcast of an input
      * scalar
      */
-    public abstract IntVector or(int s, Mask<Integer> m);
+    public abstract IntVector or(int s, VectorMask<Integer> m);
 
     /**
      * Bitwise XORs this vector with an input vector.
@@ -1098,7 +874,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the bitwise XOR of this vector with the input vector
      */
-    public abstract IntVector xor(Vector<Integer> v, Mask<Integer> m);
+    public abstract IntVector xor(Vector<Integer> v, VectorMask<Integer> m);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar, selecting
@@ -1112,7 +888,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the bitwise XOR of this vector with the broadcast of an input
      * scalar
      */
-    public abstract IntVector xor(int s, Mask<Integer> m);
+    public abstract IntVector xor(int s, VectorMask<Integer> m);
 
     /**
      * Bitwise NOTs this vector.
@@ -1133,7 +909,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the bitwise NOT of this vector
      */
-    public abstract IntVector not(Mask<Integer> m);
+    public abstract IntVector not(VectorMask<Integer> m);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar.
@@ -1159,7 +935,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector shiftL(int s, Mask<Integer> m);
+    public abstract IntVector shiftL(int s, VectorMask<Integer> m);
 
     /**
      * Logically left shifts this vector by an input vector.
@@ -1185,7 +961,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public IntVector shiftL(Vector<Integer> v, Mask<Integer> m) {
+    public IntVector shiftL(Vector<Integer> v, VectorMask<Integer> m) {
         return bOp(v, m, (i, a, b) -> (int) (a << b));
     }
 
@@ -1217,7 +993,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector shiftR(int s, Mask<Integer> m);
+    public abstract IntVector shiftR(int s, VectorMask<Integer> m);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
@@ -1244,7 +1020,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public IntVector shiftR(Vector<Integer> v, Mask<Integer> m) {
+    public IntVector shiftR(Vector<Integer> v, VectorMask<Integer> m) {
         return bOp(v, m, (i, a, b) -> (int) (a >>> b));
     }
 
@@ -1274,7 +1050,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector aShiftR(int s, Mask<Integer> m);
+    public abstract IntVector aShiftR(int s, VectorMask<Integer> m);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
@@ -1301,7 +1077,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public IntVector aShiftR(Vector<Integer> v, Mask<Integer> m) {
+    public IntVector aShiftR(Vector<Integer> v, VectorMask<Integer> m) {
         return bOp(v, m, (i, a, b) -> (int) (a >> b));
     }
 
@@ -1339,7 +1115,7 @@ public abstract class IntVector extends Vector<Integer> {
      * input scalar
      */
     @ForceInline
-    public final IntVector rotateL(int s, Mask<Integer> m) {
+    public final IntVector rotateL(int s, VectorMask<Integer> m) {
         return shiftL(s, m).or(shiftR(-s, m), m);
     }
 
@@ -1377,7 +1153,7 @@ public abstract class IntVector extends Vector<Integer> {
      * input scalar
      */
     @ForceInline
-    public final IntVector rotateR(int s, Mask<Integer> m) {
+    public final IntVector rotateR(int s, VectorMask<Integer> m) {
         return shiftR(s, m).or(shiftL(-s, m), m);
     }
 
@@ -1385,13 +1161,13 @@ public abstract class IntVector extends Vector<Integer> {
     public abstract void intoByteArray(byte[] a, int ix);
 
     @Override
-    public abstract void intoByteArray(byte[] a, int ix, Mask<Integer> m);
+    public abstract void intoByteArray(byte[] a, int ix, VectorMask<Integer> m);
 
     @Override
     public abstract void intoByteBuffer(ByteBuffer bb, int ix);
 
     @Override
-    public abstract void intoByteBuffer(ByteBuffer bb, int ix, Mask<Integer> m);
+    public abstract void intoByteBuffer(ByteBuffer bb, int ix, VectorMask<Integer> m);
 
 
     // Type specific horizontal reductions
@@ -1417,7 +1193,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the addition of the selected lane elements of this vector
      */
-    public abstract int addAll(Mask<Integer> m);
+    public abstract int addAll(VectorMask<Integer> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1441,7 +1217,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract int mulAll(Mask<Integer> m);
+    public abstract int mulAll(VectorMask<Integer> m);
 
     /**
      * Returns the minimum lane element of this vector.
@@ -1467,7 +1243,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
      */
-    public abstract int minAll(Mask<Integer> m);
+    public abstract int minAll(VectorMask<Integer> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -1493,7 +1269,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
      */
-    public abstract int maxAll(Mask<Integer> m);
+    public abstract int maxAll(VectorMask<Integer> m);
 
     /**
      * Logically ORs all lane elements of this vector.
@@ -1517,7 +1293,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract int orAll(Mask<Integer> m);
+    public abstract int orAll(VectorMask<Integer> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -1541,7 +1317,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract int andAll(Mask<Integer> m);
+    public abstract int andAll(VectorMask<Integer> m);
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -1565,7 +1341,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract int xorAll(Mask<Integer> m);
+    public abstract int xorAll(VectorMask<Integer> m);
 
     // Type specific accessors
 
@@ -1647,7 +1423,7 @@ public abstract class IntVector extends Vector<Integer> {
      * for any vector lane index {@code N} where the mask at lane {@code N}
      * is set {@code i >= a.length - N}
      */
-    public abstract void intoArray(int[] a, int i, Mask<Integer> m);
+    public abstract void intoArray(int[] a, int i, VectorMask<Integer> m);
 
     /**
      * Stores this vector into an array using indexes obtained from an index
@@ -1692,35 +1468,32 @@ public abstract class IntVector extends Vector<Integer> {
      * {@code N} is set the result of {@code i + indexMap[j + N]} is
      * {@code < 0} or {@code >= a.length}
      */
-    public abstract void intoArray(int[] a, int i, Mask<Integer> m, int[] indexMap, int j);
+    public abstract void intoArray(int[] a, int i, VectorMask<Integer> m, int[] indexMap, int j);
     // Species
 
     @Override
-    public abstract Species<Integer> species();
+    public abstract VectorSpecies<Integer> species();
 
     /**
-     * Class representing {@link IntVector}'s of the same {@link Vector.Shape Shape}.
+     * Class representing {@link IntVector}'s of the same {@link VectorShape VectorShape}.
      */
-    static final class IntSpecies extends Vector.AbstractSpecies<Integer> {
+    static final class IntSpecies extends AbstractSpecies<Integer> {
         final Function<int[], IntVector> vectorFactory;
-        final Function<boolean[], Vector.Mask<Integer>> maskFactory;
 
-        private IntSpecies(Vector.Shape shape,
+        private IntSpecies(VectorShape shape,
                           Class<?> boxType,
                           Class<?> maskType,
                           Function<int[], IntVector> vectorFactory,
-                          Function<boolean[], Vector.Mask<Integer>> maskFactory) {
-            super(shape, int.class, Integer.SIZE, boxType, maskType);
+                          Function<boolean[], VectorMask<Integer>> maskFactory,
+                          Function<IntUnaryOperator, VectorShuffle<Integer>> shuffleFromArrayFactory,
+                          fShuffleFromArray<Integer> shuffleFromOpFactory) {
+            super(shape, int.class, Integer.SIZE, boxType, maskType, maskFactory,
+                  shuffleFromArrayFactory, shuffleFromOpFactory);
             this.vectorFactory = vectorFactory;
-            this.maskFactory = maskFactory;
         }
 
         interface FOp {
             int apply(int i);
-        }
-
-        interface FOpm {
-            boolean apply(int i);
         }
 
         IntVector op(FOp f) {
@@ -1731,7 +1504,7 @@ public abstract class IntVector extends Vector<Integer> {
             return vectorFactory.apply(res);
         }
 
-        IntVector op(Vector.Mask<Integer> o, FOp f) {
+        IntVector op(VectorMask<Integer> o, FOp f) {
             int[] res = new int[length()];
             boolean[] mbits = ((AbstractMask<Integer>)o).getBits();
             for (int i = 0; i < length(); i++) {
@@ -1740,14 +1513,6 @@ public abstract class IntVector extends Vector<Integer> {
                 }
             }
             return vectorFactory.apply(res);
-        }
-
-        Vector.Mask<Integer> opm(IntVector.IntSpecies.FOpm f) {
-            boolean[] res = new boolean[length()];
-            for (int i = 0; i < length(); i++) {
-                res[i] = (boolean)f.apply(i);
-            }
-            return maskFactory.apply(res);
         }
     }
 
@@ -1762,7 +1527,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the preferred species for an element type of {@code int}
      */
     private static IntSpecies preferredSpecies() {
-        return (IntSpecies) Species.ofPreferred(int.class);
+        return (IntSpecies) VectorSpecies.ofPreferred(int.class);
     }
 
     /**
@@ -1772,7 +1537,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return a species for an element type of {@code int} and shape
      * @throws IllegalArgumentException if no such species exists for the shape
      */
-    static IntSpecies species(Vector.Shape s) {
+    static IntSpecies species(VectorShape s) {
         Objects.requireNonNull(s);
         switch (s) {
             case S_64_BIT: return (IntSpecies) SPECIES_64;
@@ -1784,29 +1549,34 @@ public abstract class IntVector extends Vector<Integer> {
         }
     }
 
-    /** Species representing {@link IntVector}s of {@link Vector.Shape#S_64_BIT Shape.S_64_BIT}. */
-    public static final Species<Integer> SPECIES_64 = new IntSpecies(Shape.S_64_BIT, Int64Vector.class, Int64Vector.Int64Mask.class,
-                                                                     Int64Vector::new, Int64Vector.Int64Mask::new);
+    /** Species representing {@link IntVector}s of {@link VectorShape#S_64_BIT VectorShape.S_64_BIT}. */
+    public static final VectorSpecies<Integer> SPECIES_64 = new IntSpecies(VectorShape.S_64_BIT, Int64Vector.class, Int64Vector.Int64Mask.class,
+                                                                     Int64Vector::new, Int64Vector.Int64Mask::new,
+                                                                     Int64Vector.Int64Shuffle::new, Int64Vector.Int64Shuffle::new);
 
-    /** Species representing {@link IntVector}s of {@link Vector.Shape#S_128_BIT Shape.S_128_BIT}. */
-    public static final Species<Integer> SPECIES_128 = new IntSpecies(Shape.S_128_BIT, Int128Vector.class, Int128Vector.Int128Mask.class,
-                                                                      Int128Vector::new, Int128Vector.Int128Mask::new);
+    /** Species representing {@link IntVector}s of {@link VectorShape#S_128_BIT VectorShape.S_128_BIT}. */
+    public static final VectorSpecies<Integer> SPECIES_128 = new IntSpecies(VectorShape.S_128_BIT, Int128Vector.class, Int128Vector.Int128Mask.class,
+                                                                      Int128Vector::new, Int128Vector.Int128Mask::new,
+                                                                      Int128Vector.Int128Shuffle::new, Int128Vector.Int128Shuffle::new);
 
-    /** Species representing {@link IntVector}s of {@link Vector.Shape#S_256_BIT Shape.S_256_BIT}. */
-    public static final Species<Integer> SPECIES_256 = new IntSpecies(Shape.S_256_BIT, Int256Vector.class, Int256Vector.Int256Mask.class,
-                                                                      Int256Vector::new, Int256Vector.Int256Mask::new);
+    /** Species representing {@link IntVector}s of {@link VectorShape#S_256_BIT VectorShape.S_256_BIT}. */
+    public static final VectorSpecies<Integer> SPECIES_256 = new IntSpecies(VectorShape.S_256_BIT, Int256Vector.class, Int256Vector.Int256Mask.class,
+                                                                      Int256Vector::new, Int256Vector.Int256Mask::new,
+                                                                      Int256Vector.Int256Shuffle::new, Int256Vector.Int256Shuffle::new);
 
-    /** Species representing {@link IntVector}s of {@link Vector.Shape#S_512_BIT Shape.S_512_BIT}. */
-    public static final Species<Integer> SPECIES_512 = new IntSpecies(Shape.S_512_BIT, Int512Vector.class, Int512Vector.Int512Mask.class,
-                                                                      Int512Vector::new, Int512Vector.Int512Mask::new);
+    /** Species representing {@link IntVector}s of {@link VectorShape#S_512_BIT VectorShape.S_512_BIT}. */
+    public static final VectorSpecies<Integer> SPECIES_512 = new IntSpecies(VectorShape.S_512_BIT, Int512Vector.class, Int512Vector.Int512Mask.class,
+                                                                      Int512Vector::new, Int512Vector.Int512Mask::new,
+                                                                      Int512Vector.Int512Shuffle::new, Int512Vector.Int512Shuffle::new);
 
-    /** Species representing {@link IntVector}s of {@link Vector.Shape#S_Max_BIT Shape.S_Max_BIT}. */
-    public static final Species<Integer> SPECIES_MAX = new IntSpecies(Shape.S_Max_BIT, IntMaxVector.class, IntMaxVector.IntMaxMask.class,
-                                                                      IntMaxVector::new, IntMaxVector.IntMaxMask::new);
+    /** Species representing {@link IntVector}s of {@link VectorShape#S_Max_BIT VectorShape.S_Max_BIT}. */
+    public static final VectorSpecies<Integer> SPECIES_MAX = new IntSpecies(VectorShape.S_Max_BIT, IntMaxVector.class, IntMaxVector.IntMaxMask.class,
+                                                                      IntMaxVector::new, IntMaxVector.IntMaxMask::new,
+                                                                      IntMaxVector.IntMaxShuffle::new, IntMaxVector.IntMaxShuffle::new);
 
     /**
      * Preferred species for {@link IntVector}s.
      * A preferred species is a species of maximal bit size for the platform.
      */
-    public static final Species<Integer> SPECIES_PREFERRED = (Species<Integer>) preferredSpecies();
+    public static final VectorSpecies<Integer> SPECIES_PREFERRED = (VectorSpecies<Integer>) preferredSpecies();
 }

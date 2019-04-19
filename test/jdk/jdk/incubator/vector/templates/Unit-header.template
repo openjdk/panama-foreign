@@ -27,8 +27,10 @@
  * @run testng/othervm -ea -esa $vectorteststype$
  */
 
-import jdk.incubator.vector.Vector.Shape;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorShape;
+import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.VectorShuffle;
+import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.Vector;
 
 #if[Byte]
@@ -68,18 +70,18 @@ import java.util.stream.Stream;
 public class $vectorteststype$ extends AbstractVectorTest {
 
 #if[MaxBit]
-    static final Species<$Wideboxtype$> SPECIES =
+    static final VectorSpecies<$Wideboxtype$> SPECIES =
                 $Type$Vector.SPECIES_MAX;
 #else[MaxBit]
-    static final Species<$Wideboxtype$> SPECIES =
+    static final VectorSpecies<$Wideboxtype$> SPECIES =
                 $Type$Vector.SPECIES_$bits$;
 #end[MaxBit]
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
 
 #if[MaxBit]
-    static Shape getMaxBit() {
-        return Shape.S_Max_BIT;
+    static VectorShape getMaxBit() {
+        return VectorShape.S_Max_BIT;
     }
 
 #end[MaxBit]

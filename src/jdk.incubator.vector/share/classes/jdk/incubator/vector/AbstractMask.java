@@ -26,7 +26,7 @@ package jdk.incubator.vector;
 
 import java.util.Arrays;
 
-abstract class AbstractMask<E> extends Vector.Mask<E> {
+abstract class AbstractMask<E> extends VectorMask<E> {
 
     /*package-private*/
     abstract boolean[] getBits();
@@ -45,7 +45,7 @@ abstract class AbstractMask<E> extends Vector.Mask<E> {
         boolean apply(int i, boolean a, boolean b);
     }
 
-    abstract AbstractMask<E> bOp(Vector.Mask<E> o, MBinOp f);
+    abstract AbstractMask<E> bOp(VectorMask<E> o, MBinOp f);
 
     @Override
     public String toString() {
@@ -89,12 +89,12 @@ abstract class AbstractMask<E> extends Vector.Mask<E> {
     }
 
     @Override
-    public AbstractMask<E> and(Vector.Mask<E> o) {
+    public AbstractMask<E> and(VectorMask<E> o) {
         return bOp(o, (i, a, b) -> a && b);
     }
 
     @Override
-    public AbstractMask<E> or(Vector.Mask<E> o) {
+    public AbstractMask<E> or(VectorMask<E> o) {
         return bOp(o, (i, a, b) -> a || b);
     }
 
@@ -117,5 +117,145 @@ abstract class AbstractMask<E> extends Vector.Mask<E> {
             if (!i) return false;
         }
         return true;
+    }
+
+    // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
+    @SuppressWarnings("unchecked")
+    static <E> VectorMask<E> trueMask(VectorSpecies<E> species) {
+        Class<?> eType = species.elementType();
+
+        if (eType == byte.class) {
+            if (species.boxType() == ByteMaxVector.class)
+                return (VectorMask<E>) ByteMaxVector.ByteMaxMask.TRUE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Byte64Vector.Byte64Mask.TRUE_MASK;
+                case 128: return (VectorMask<E>) Byte128Vector.Byte128Mask.TRUE_MASK;
+                case 256: return (VectorMask<E>) Byte256Vector.Byte256Mask.TRUE_MASK;
+                case 512: return (VectorMask<E>) Byte512Vector.Byte512Mask.TRUE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else if (eType == short.class) {
+            if (species.boxType() == ShortMaxVector.class)
+                return (VectorMask<E>) ShortMaxVector.ShortMaxMask.TRUE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Short64Vector.Short64Mask.TRUE_MASK;
+                case 128: return (VectorMask<E>) Short128Vector.Short128Mask.TRUE_MASK;
+                case 256: return (VectorMask<E>) Short256Vector.Short256Mask.TRUE_MASK;
+                case 512: return (VectorMask<E>) Short512Vector.Short512Mask.TRUE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else if (eType == int.class) {
+            if (species.boxType() == IntMaxVector.class)
+                return (VectorMask<E>) IntMaxVector.IntMaxMask.TRUE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Int64Vector.Int64Mask.TRUE_MASK;
+                case 128: return (VectorMask<E>) Int128Vector.Int128Mask.TRUE_MASK;
+                case 256: return (VectorMask<E>) Int256Vector.Int256Mask.TRUE_MASK;
+                case 512: return (VectorMask<E>) Int512Vector.Int512Mask.TRUE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else if (eType == long.class) {
+            if (species.boxType() == LongMaxVector.class)
+                return (VectorMask<E>) LongMaxVector.LongMaxMask.TRUE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Long64Vector.Long64Mask.TRUE_MASK;
+                case 128: return (VectorMask<E>) Long128Vector.Long128Mask.TRUE_MASK;
+                case 256: return (VectorMask<E>) Long256Vector.Long256Mask.TRUE_MASK;
+                case 512: return (VectorMask<E>) Long512Vector.Long512Mask.TRUE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else if (eType == float.class) {
+            if (species.boxType() == FloatMaxVector.class)
+                return (VectorMask<E>) FloatMaxVector.FloatMaxMask.TRUE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Float64Vector.Float64Mask.TRUE_MASK;
+                case 128: return (VectorMask<E>) Float128Vector.Float128Mask.TRUE_MASK;
+                case 256: return (VectorMask<E>) Float256Vector.Float256Mask.TRUE_MASK;
+                case 512: return (VectorMask<E>) Float512Vector.Float512Mask.TRUE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else if (eType == double.class) {
+            if (species.boxType() == DoubleMaxVector.class)
+                return (VectorMask<E>) DoubleMaxVector.DoubleMaxMask.TRUE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Double64Vector.Double64Mask.TRUE_MASK;
+                case 128: return (VectorMask<E>) Double128Vector.Double128Mask.TRUE_MASK;
+                case 256: return (VectorMask<E>) Double256Vector.Double256Mask.TRUE_MASK;
+                case 512: return (VectorMask<E>) Double512Vector.Double512Mask.TRUE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else {
+            throw new IllegalArgumentException("Bad element type of species");
+        }
+    }
+
+    // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
+    @SuppressWarnings("unchecked")
+    static <E> VectorMask<E> falseMask(VectorSpecies<E> species) {
+        Class<?> eType = species.elementType();
+
+        if (eType == byte.class) {
+            if (species.boxType() == ByteMaxVector.class)
+                return (VectorMask<E>) ByteMaxVector.ByteMaxMask.FALSE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Byte64Vector.Byte64Mask.FALSE_MASK;
+                case 128: return (VectorMask<E>) Byte128Vector.Byte128Mask.FALSE_MASK;
+                case 256: return (VectorMask<E>) Byte256Vector.Byte256Mask.FALSE_MASK;
+                case 512: return (VectorMask<E>) Byte512Vector.Byte512Mask.FALSE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else if (eType == short.class) {
+            if (species.boxType() == ShortMaxVector.class)
+                return (VectorMask<E>) ShortMaxVector.ShortMaxMask.FALSE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Short64Vector.Short64Mask.FALSE_MASK;
+                case 128: return (VectorMask<E>) Short128Vector.Short128Mask.FALSE_MASK;
+                case 256: return (VectorMask<E>) Short256Vector.Short256Mask.FALSE_MASK;
+                case 512: return (VectorMask<E>) Short512Vector.Short512Mask.FALSE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else if (eType == int.class) {
+            if (species.boxType() == IntMaxVector.class)
+                return (VectorMask<E>) IntMaxVector.IntMaxMask.FALSE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Int64Vector.Int64Mask.FALSE_MASK;
+                case 128: return (VectorMask<E>) Int128Vector.Int128Mask.FALSE_MASK;
+                case 256: return (VectorMask<E>) Int256Vector.Int256Mask.FALSE_MASK;
+                case 512: return (VectorMask<E>) Int512Vector.Int512Mask.FALSE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else if (eType == long.class) {
+            if (species.boxType() == LongMaxVector.class)
+                return (VectorMask<E>) LongMaxVector.LongMaxMask.FALSE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Long64Vector.Long64Mask.FALSE_MASK;
+                case 128: return (VectorMask<E>) Long128Vector.Long128Mask.FALSE_MASK;
+                case 256: return (VectorMask<E>) Long256Vector.Long256Mask.FALSE_MASK;
+                case 512: return (VectorMask<E>) Long512Vector.Long512Mask.FALSE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else if (eType == float.class) {
+            if (species.boxType() == FloatMaxVector.class)
+                return (VectorMask<E>) FloatMaxVector.FloatMaxMask.FALSE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Float64Vector.Float64Mask.FALSE_MASK;
+                case 128: return (VectorMask<E>) Float128Vector.Float128Mask.FALSE_MASK;
+                case 256: return (VectorMask<E>) Float256Vector.Float256Mask.FALSE_MASK;
+                case 512: return (VectorMask<E>) Float512Vector.Float512Mask.FALSE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else if (eType == double.class) {
+            if (species.boxType() == DoubleMaxVector.class)
+                return (VectorMask<E>) DoubleMaxVector.DoubleMaxMask.FALSE_MASK;
+            switch (species.bitSize()) {
+                case 64: return (VectorMask<E>) Double64Vector.Double64Mask.FALSE_MASK;
+                case 128: return (VectorMask<E>) Double128Vector.Double128Mask.FALSE_MASK;
+                case 256: return (VectorMask<E>) Double256Vector.Double256Mask.FALSE_MASK;
+                case 512: return (VectorMask<E>) Double512Vector.Double512Mask.FALSE_MASK;
+                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+            }
+        } else {
+            throw new IllegalArgumentException("Bad element type of species");
+        }
     }
 }

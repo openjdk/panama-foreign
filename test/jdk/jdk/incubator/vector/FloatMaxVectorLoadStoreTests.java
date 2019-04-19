@@ -29,8 +29,9 @@
  *
  */
 
-import jdk.incubator.vector.Vector.Shape;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorShape;
+import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.FloatVector;
@@ -49,13 +50,13 @@ import java.util.function.IntFunction;
 
 @Test
 public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
-    static final Species<Float> SPECIES =
+    static final VectorSpecies<Float> SPECIES =
                 FloatVector.SPECIES_MAX;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
-    static Shape getMaxBit() {
-        return Shape.S_Max_BIT;
+    static VectorShape getMaxBit() {
+        return VectorShape.S_Max_BIT;
     }
 
     static void assertArraysEquals(float[] a, float[] r, boolean[] mask) {
@@ -206,7 +207,7 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
         float[] a = fa.apply(SPECIES.length());
         float[] r = new float[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -280,7 +281,7 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
@@ -320,7 +321,7 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float> vmask = FloatVector.maskFromValues(SPECIES, mask);
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
