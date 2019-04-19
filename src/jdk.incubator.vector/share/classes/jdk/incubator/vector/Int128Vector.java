@@ -179,37 +179,37 @@ final class Int128Vector extends IntVector {
         if (stype == byte.class) {
             byte[] a = new byte[limit];
             for (int i = 0; i < limit; i++) {
-                a[i] = (byte) this.get(i);
+                a[i] = (byte) this.lane(i);
             }
             return (Vector) ByteVector.fromArray((VectorSpecies<Byte>) s, a, 0);
         } else if (stype == short.class) {
             short[] a = new short[limit];
             for (int i = 0; i < limit; i++) {
-                a[i] = (short) this.get(i);
+                a[i] = (short) this.lane(i);
             }
             return (Vector) ShortVector.fromArray((VectorSpecies<Short>) s, a, 0);
         } else if (stype == int.class) {
             int[] a = new int[limit];
             for (int i = 0; i < limit; i++) {
-                a[i] = (int) this.get(i);
+                a[i] = (int) this.lane(i);
             }
             return (Vector) IntVector.fromArray((VectorSpecies<Integer>) s, a, 0);
         } else if (stype == long.class) {
             long[] a = new long[limit];
             for (int i = 0; i < limit; i++) {
-                a[i] = (long) this.get(i);
+                a[i] = (long) this.lane(i);
             }
             return (Vector) LongVector.fromArray((VectorSpecies<Long>) s, a, 0);
         } else if (stype == float.class) {
             float[] a = new float[limit];
             for (int i = 0; i < limit; i++) {
-                a[i] = (float) this.get(i);
+                a[i] = (float) this.lane(i);
             }
             return (Vector) FloatVector.fromArray((VectorSpecies<Float>) s, a, 0);
         } else if (stype == double.class) {
             double[] a = new double[limit];
             for (int i = 0; i < limit; i++) {
-                a[i] = (double) this.get(i);
+                a[i] = (double) this.lane(i);
             }
             return (Vector) DoubleVector.fromArray((VectorSpecies<Double>) s, a, 0);
         } else {
@@ -1168,8 +1168,8 @@ final class Int128Vector extends IntVector {
             Int128Vector.class, Int128Shuffle.class, int.class, LENGTH,
             this, s,
             (v1, s_) -> v1.uOp((i, a) -> {
-                int ei = s_.getElement(i);
-                return v1.get(ei);
+                int ei = s_.lane(i);
+                return v1.lane(ei);
             }));
     }
 
@@ -1184,13 +1184,13 @@ final class Int128Vector extends IntVector {
         return VectorIntrinsics.blend(
             Int128Vector.class, Int128Mask.class, int.class, LENGTH,
             this, v, m,
-            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
+            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.lane(i) ? b : a));
     }
 
     // Accessors
 
     @Override
-    public int get(int i) {
+    public int lane(int i) {
         if (i < 0 || i >= LENGTH) {
             throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
         }
@@ -1391,7 +1391,7 @@ final class Int128Vector extends IntVector {
         public IntVector toVector() {
             int[] va = new int[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
-              va[i] = (int) getElement(i);
+              va[i] = (int) lane(i);
             }
             return IntVector.fromArray(SPECIES, va, 0);
         }

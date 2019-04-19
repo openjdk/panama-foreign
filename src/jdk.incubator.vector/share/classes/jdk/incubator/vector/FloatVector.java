@@ -125,26 +125,26 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(VectorSpecies<Float>, ByteBuffer, int, VectorMask) method} as follows:
+     * {@link #fromByteBuffer(VectorSpecies, ByteBuffer, int, VectorMask) method} as follows:
      * <pre>{@code
-     * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
+     * return fromByteBuffer(species, ByteBuffer.wrap(a), offset, VectorMask.allTrue());
      * }</pre>
      *
      * @param species species of desired vector
      * @param a the byte array
-     * @param ix the offset into the array
+     * @param offset the offset into the array
      * @return a vector loaded from a byte array
      * @throws IndexOutOfBoundsException if {@code i < 0} or
-     * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
+     * {@code offset > a.length - (species.length() * species.elementSize() / Byte.SIZE)}
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector fromByteArray(VectorSpecies<Float> species, byte[] a, int ix) {
+    public static FloatVector fromByteArray(VectorSpecies<Float> species, byte[] a, int offset) {
         Objects.requireNonNull(a);
-        ix = VectorIntrinsics.checkIndex(ix, a.length, species.bitSize() / Byte.SIZE);
+        offset = VectorIntrinsics.checkIndex(offset, a.length, species.bitSize() / Byte.SIZE);
         return VectorIntrinsics.load((Class<FloatVector>) species.boxType(), float.class, species.length(),
-                                     a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                                     a, ix, species,
+                                     a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
+                                     a, offset, species,
                                      (c, idx, s) -> {
                                          ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
                                          FloatBuffer tb = bbc.asFloatBuffer();
@@ -161,51 +161,48 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(VectorSpecies<Float>, ByteBuffer, int, VectorMask) method} as follows:
+     * {@link #fromByteBuffer(VectorSpecies, ByteBuffer, int, VectorMask) method} as follows:
      * <pre>{@code
-     * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
+     * return fromByteBuffer(species, ByteBuffer.wrap(a), offset, m);
      * }</pre>
      *
      * @param species species of desired vector
      * @param a the byte array
-     * @param ix the offset into the array
+     * @param offset the offset into the array
      * @param m the mask
      * @return a vector loaded from a byte array
-     * @throws IndexOutOfBoundsException if {@code i < 0} or
-     * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
-     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
-     * or {@code > a.length},
+     * @throws IndexOutOfBoundsException if {@code offset < 0} or
      * for any vector lane index {@code N} where the mask at lane {@code N}
      * is set
-     * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
+     * {@code offset >= a.length - (N * species.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static FloatVector fromByteArray(VectorSpecies<Float> species, byte[] a, int ix, VectorMask<Float> m) {
-        return zero(species).blend(fromByteArray(species, a, ix), m);
+    public static FloatVector fromByteArray(VectorSpecies<Float> species, byte[] a, int offset, VectorMask<Float> m) {
+        return zero(species).blend(fromByteArray(species, a, offset), m);
     }
 
     /**
      * Loads a vector from an array starting at offset.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index, the
-     * array element at index {@code i + N} is placed into the
+     * array element at index {@code offset + N} is placed into the
      * resulting vector at lane index {@code N}.
      *
      * @param species species of desired vector
      * @param a the array
-     * @param i the offset into the array
+     * @param offset the offset into the array
      * @return the vector loaded from an array
-     * @throws IndexOutOfBoundsException if {@code i < 0}, or
-     * {@code i > a.length - this.length()}
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
+     * {@code offset > a.length - species.length()}
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector fromArray(VectorSpecies<Float> species, float[] a, int i){
+    public static FloatVector fromArray(VectorSpecies<Float> species, float[] a, int offset){
         Objects.requireNonNull(a);
-        i = VectorIntrinsics.checkIndex(i, a.length, species.length());
+        offset = VectorIntrinsics.checkIndex(offset, a.length, species.length());
         return VectorIntrinsics.load((Class<FloatVector>) species.boxType(), float.class, species.length(),
-                                     a, (((long) i) << ARRAY_SHIFT) + Unsafe.ARRAY_FLOAT_BASE_OFFSET,
-                                     a, i, species,
+                                     a, (((long) offset) << ARRAY_SHIFT) + Unsafe.ARRAY_FLOAT_BASE_OFFSET,
+                                     a, offset, species,
                                      (c, idx, s) -> ((FloatSpecies)s).op(n -> c[idx + n]));
     }
 
@@ -215,22 +212,22 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then the array element at
-     * index {@code i + N} is placed into the resulting vector at lane index
+     * index {@code offset + N} is placed into the resulting vector at lane index
      * {@code N}, otherwise the default element value is placed into the
      * resulting vector at lane index {@code N}.
      *
      * @param species species of desired vector
      * @param a the array
-     * @param i the offset into the array
+     * @param offset the offset into the array
      * @param m the mask
      * @return the vector loaded from an array
-     * @throws IndexOutOfBoundsException if {@code i < 0}, or
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
      * for any vector lane index {@code N} where the mask at lane {@code N}
-     * is set {@code i > a.length - N}
+     * is set {@code offset > a.length - N}
      */
     @ForceInline
-    public static FloatVector fromArray(VectorSpecies<Float> species, float[] a, int i, VectorMask<Float> m) {
-        return zero(species).blend(fromArray(species, a, i), m);
+    public static FloatVector fromArray(VectorSpecies<Float> species, float[] a, int offset, VectorMask<Float> m) {
+        return zero(species).blend(fromArray(species, a, offset), m);
     }
 
     /**
@@ -238,37 +235,37 @@ public abstract class FloatVector extends Vector<Float> {
      * map.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index, the
-     * array element at index {@code i + indexMap[j + N]} is placed into the
+     * array element at index {@code a_offset + indexMap[i_offset + N]} is placed into the
      * resulting vector at lane index {@code N}.
      *
      * @param species species of desired vector
      * @param a the array
-     * @param i the offset into the array, may be negative if relative
+     * @param a_offset the offset into the array, may be negative if relative
      * indexes in the index map compensate to produce a value within the
      * array bounds
      * @param indexMap the index map
-     * @param j the offset into the index map
+     * @param i_offset the offset into the index map
      * @return the vector loaded from an array
-     * @throws IndexOutOfBoundsException if {@code j < 0}, or
-     * {@code j > indexMap.length - this.length()},
+     * @throws IndexOutOfBoundsException if {@code i_offset < 0}, or
+     * {@code i_offset > indexMap.length - species.length()},
      * or for any vector lane index {@code N} the result of
-     * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
+     * {@code a_offset + indexMap[i_offset + N]} is {@code < 0} or {@code >= a.length}
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector fromArray(VectorSpecies<Float> species, float[] a, int i, int[] indexMap, int j) {
+    public static FloatVector fromArray(VectorSpecies<Float> species, float[] a, int a_offset, int[] indexMap, int i_offset) {
         Objects.requireNonNull(a);
         Objects.requireNonNull(indexMap);
 
 
-        // Index vector: vix[0:n] = k -> i + indexMap[j + k]
-        IntVector vix = IntVector.fromArray(IntVector.species(species.indexShape()), indexMap, j).add(i);
+        // Index vector: vix[0:n] = k -> a_offset + indexMap[i_offset + k]
+        IntVector vix = IntVector.fromArray(IntVector.species(species.indexShape()), indexMap, i_offset).add(a_offset);
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
         return VectorIntrinsics.loadWithMap((Class<FloatVector>) species.boxType(), float.class, species.length(),
                                             IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vix,
-                                            a, i, indexMap, j, species,
+                                            a, a_offset, indexMap, i_offset, species,
                                             (float[] c, int idx, int[] iMap, int idy, VectorSpecies<Float> s) ->
                                                 ((FloatSpecies)s).op(n -> c[idx + iMap[idy+n]]));
         }
@@ -279,29 +276,29 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then the array element at
-     * index {@code i + indexMap[j + N]} is placed into the resulting vector
+     * index {@code a_offset + indexMap[i_offset + N]} is placed into the resulting vector
      * at lane index {@code N}.
      *
      * @param species species of desired vector
      * @param a the array
-     * @param i the offset into the array, may be negative if relative
+     * @param a_offset the offset into the array, may be negative if relative
      * indexes in the index map compensate to produce a value within the
      * array bounds
      * @param m the mask
      * @param indexMap the index map
-     * @param j the offset into the index map
+     * @param i_offset the offset into the index map
      * @return the vector loaded from an array
-     * @throws IndexOutOfBoundsException if {@code j < 0}, or
-     * {@code j > indexMap.length - this.length()},
+     * @throws IndexOutOfBoundsException if {@code i_offset < 0}, or
+     * {@code i_offset > indexMap.length - species.length()},
      * or for any vector lane index {@code N} where the mask at lane
-     * {@code N} is set the result of {@code i + indexMap[j + N]} is
+     * {@code N} is set the result of {@code a_offset + indexMap[i_offset + N]} is
      * {@code < 0} or {@code >= a.length}
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector fromArray(VectorSpecies<Float> species, float[] a, int i, VectorMask<Float> m, int[] indexMap, int j) {
+    public static FloatVector fromArray(VectorSpecies<Float> species, float[] a, int a_offset, VectorMask<Float> m, int[] indexMap, int i_offset) {
         // @@@ This can result in out of bounds errors for unset mask lanes
-        return zero(species).blend(fromArray(species, a, i, indexMap, j), m);
+        return zero(species).blend(fromArray(species, a, a_offset, indexMap, i_offset), m);
     }
 
 
@@ -314,31 +311,31 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * This method behaves as if it returns the result of calling the
      * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(VectorSpecies<Float>, ByteBuffer, int, VectorMask)} method} as follows:
+     * {@link #fromByteBuffer(VectorSpecies, ByteBuffer, int, VectorMask)} method} as follows:
      * <pre>{@code
-     *   return this.fromByteBuffer(b, i, this.maskAllTrue())
+     *   return fromByteBuffer(b, offset, VectorMask.allTrue())
      * }</pre>
      *
      * @param species species of desired vector
      * @param bb the byte buffer
-     * @param ix the offset into the byte buffer
+     * @param offset the offset into the byte buffer
      * @return a vector loaded from a byte buffer
      * @throws IndexOutOfBoundsException if the offset is {@code < 0},
      * or {@code > b.limit()},
      * or if there are fewer than
-     * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
+     * {@code species.length() * species.elementSize() / Byte.SIZE} bytes
      * remaining in the byte buffer from the given offset
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector fromByteBuffer(VectorSpecies<Float> species, ByteBuffer bb, int ix) {
+    public static FloatVector fromByteBuffer(VectorSpecies<Float> species, ByteBuffer bb, int offset) {
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
-        ix = VectorIntrinsics.checkIndex(ix, bb.limit(), species.bitSize() / Byte.SIZE);
+        offset = VectorIntrinsics.checkIndex(offset, bb.limit(), species.bitSize() / Byte.SIZE);
         return VectorIntrinsics.load((Class<FloatVector>) species.boxType(), float.class, species.length(),
-                                     U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
-                                     bb, ix, species,
+                                     U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + offset,
+                                     bb, offset, species,
                                      (c, idx, s) -> {
                                          ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
                                          FloatBuffer tb = bbc.asFloatBuffer();
@@ -356,77 +353,77 @@ public abstract class FloatVector extends Vector<Float> {
      * the returned vector is loaded with a mask from a primitive array
      * obtained from the primitive buffer.
      * The following pseudocode expresses the behaviour, where
-     * {@coce EBuffer} is the primitive buffer type, {@code e} is the
-     * primitive element type, and {@code ESpecies<S>} is the primitive
+     * {@code EBuffer} is the primitive buffer type, {@code e} is the
+     * primitive element type, and {@code ESpecies} is the primitive
      * species for {@code e}:
      * <pre>{@code
      * EBuffer eb = b.duplicate().
-     *     order(ByteOrder.nativeOrder()).position(i).
+     *     order(ByteOrder.nativeOrder()).position(offset).
      *     asEBuffer();
-     * e[] es = new e[this.length()];
+     * e[] es = new e[species.length()];
      * for (int n = 0; n < t.length; n++) {
      *     if (m.isSet(n))
      *         es[n] = eb.get(n);
      * }
-     * Vector<E> r = ((ESpecies<S>)this).fromArray(es, 0, m);
+     * EVector r = EVector.fromArray(es, 0, m);
      * }</pre>
      *
      * @param species species of desired vector
      * @param bb the byte buffer
-     * @param ix the offset into the byte buffer
+     * @param offset the offset into the byte buffer
      * @param m the mask
      * @return a vector loaded from a byte buffer
      * @throws IndexOutOfBoundsException if the offset is {@code < 0},
      * or {@code > b.limit()},
      * for any vector lane index {@code N} where the mask at lane {@code N}
      * is set
-     * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
+     * {@code offset >= b.limit() - (N * species.elementSize() / Byte.SIZE)}
      */
     @ForceInline
-    public static FloatVector fromByteBuffer(VectorSpecies<Float> species, ByteBuffer bb, int ix, VectorMask<Float> m) {
-        return zero(species).blend(fromByteBuffer(species, bb, ix), m);
+    public static FloatVector fromByteBuffer(VectorSpecies<Float> species, ByteBuffer bb, int offset, VectorMask<Float> m) {
+        return zero(species).blend(fromByteBuffer(species, bb, offset), m);
     }
 
     /**
      * Returns a vector where all lane elements are set to the primitive
      * value {@code e}.
      *
-     * @param s species of the desired vector
+     * @param species species of the desired vector
      * @param e the value
      * @return a vector of vector where all lane elements are set to
      * the primitive value {@code e}
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector broadcast(VectorSpecies<Float> s, float e) {
+    public static FloatVector broadcast(VectorSpecies<Float> species, float e) {
         return VectorIntrinsics.broadcastCoerced(
-            (Class<FloatVector>) s.boxType(), float.class, s.length(),
-            Float.floatToIntBits(e), s,
+            (Class<FloatVector>) species.boxType(), float.class, species.length(),
+            Float.floatToIntBits(e), species,
             ((bits, sp) -> ((FloatSpecies)sp).op(i -> Float.intBitsToFloat((int)bits))));
     }
 
     /**
-     * Returns a vector where each lane element is set to a given
-     * primitive value.
+     * Returns a vector where each lane element is set to given
+     * primitive values.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index, the
      * the primitive value at index {@code N} is placed into the resulting
      * vector at lane index {@code N}.
      *
-     * @param s species of the desired vector
+     * @param species species of the desired vector
      * @param es the given primitive values
-     * @return a vector where each lane element is set to a given primitive
-     * value
-     * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
+     * @return a vector where each lane element is set to given primitive
+     * values
+     * @throws IndexOutOfBoundsException if {@code es.length < species.length()}
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static FloatVector scalars(VectorSpecies<Float> s, float... es) {
+    public static FloatVector scalars(VectorSpecies<Float> species, float... es) {
         Objects.requireNonNull(es);
-        int ix = VectorIntrinsics.checkIndex(0, es.length, s.length());
-        return VectorIntrinsics.load((Class<FloatVector>) s.boxType(), float.class, s.length(),
+        int ix = VectorIntrinsics.checkIndex(0, es.length, species.length());
+        return VectorIntrinsics.load((Class<FloatVector>) species.boxType(), float.class, species.length(),
                                      es, Unsafe.ARRAY_FLOAT_BASE_OFFSET,
-                                     es, ix, s,
+                                     es, ix, species,
                                      (c, idx, sp) -> ((FloatSpecies)sp).op(n -> c[idx + n]));
     }
 
@@ -435,14 +432,14 @@ public abstract class FloatVector extends Vector<Float> {
      * value {@code e}, all other lane elements are set to the default
      * value.
      *
-     * @param s species of the desired vector
+     * @param species species of the desired vector
      * @param e the value
      * @return a vector where the first lane element is set to the primitive
      * value {@code e}
      */
     @ForceInline
-    public static final FloatVector single(VectorSpecies<Float> s, float e) {
-        return zero(s).with(0, e);
+    public static final FloatVector single(VectorSpecies<Float> species, float e) {
+        return zero(species).with(0, e);
     }
 
     /**
@@ -452,25 +449,28 @@ public abstract class FloatVector extends Vector<Float> {
      * The semantics are equivalent to calling
      * {@link ThreadLocalRandom#nextFloat()}
      *
-     * @param s species of the desired vector
+     * @param species species of the desired vector
      * @return a vector where each lane elements is set to a randomly
      * generated primitive value
      */
-    public static FloatVector random(VectorSpecies<Float> s) {
+    public static FloatVector random(VectorSpecies<Float> species) {
         ThreadLocalRandom r = ThreadLocalRandom.current();
-        return ((FloatSpecies)s).op(i -> r.nextFloat());
+        return ((FloatSpecies)species).op(i -> r.nextFloat());
     }
 
     // Ops
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector add(Vector<Float> v);
 
     /**
      * Adds this vector to the broadcast of an input scalar.
      * <p>
-     * This is a vector binary operation where the primitive addition operation
-     * ({@code +}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive addition operation
+     * ({@code +}) to each lane.
      *
      * @param s the input scalar
      * @return the result of adding this vector to the broadcast of an input
@@ -478,6 +478,9 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract FloatVector add(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector add(Vector<Float> v, VectorMask<Float> m);
 
@@ -485,8 +488,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Adds this vector to broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      * <p>
-     * This is a vector binary operation where the primitive addition operation
-     * ({@code +}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive addition operation
+     * ({@code +}) to each lane.
      *
      * @param s the input scalar
      * @param m the mask controlling lane selection
@@ -495,14 +498,17 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract FloatVector add(float s, VectorMask<Float> m);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector sub(Vector<Float> v);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector.
      * <p>
-     * This is a vector binary operation where the primitive subtraction
-     * operation ({@code -}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive subtraction
+     * operation ({@code -}) to each lane.
      *
      * @param s the input scalar
      * @return the result of subtracting the broadcast of an input
@@ -510,6 +516,9 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract FloatVector sub(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector sub(Vector<Float> v, VectorMask<Float> m);
 
@@ -517,8 +526,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Subtracts the broadcast of an input scalar from this vector, selecting
      * lane elements controlled by a mask.
      * <p>
-     * This is a vector binary operation where the primitive subtraction
-     * operation ({@code -}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive subtraction
+     * operation ({@code -}) to each lane.
      *
      * @param s the input scalar
      * @param m the mask controlling lane selection
@@ -527,14 +536,17 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract FloatVector sub(float s, VectorMask<Float> m);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector mul(Vector<Float> v);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar.
      * <p>
-     * This is a vector binary operation where the primitive multiplication
-     * operation ({@code *}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive multiplication
+     * operation ({@code *}) to each lane.
      *
      * @param s the input scalar
      * @return the result of multiplying this vector with the broadcast of an
@@ -542,6 +554,9 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract FloatVector mul(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector mul(Vector<Float> v, VectorMask<Float> m);
 
@@ -549,8 +564,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Multiplies this vector with the broadcast of an input scalar, selecting
      * lane elements controlled by a mask.
      * <p>
-     * This is a vector binary operation where the primitive multiplication
-     * operation ({@code *}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive multiplication
+     * operation ({@code *}) to each lane.
      *
      * @param s the input scalar
      * @param m the mask controlling lane selection
@@ -559,60 +574,87 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract FloatVector mul(float s, VectorMask<Float> m);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector neg();
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector neg(VectorMask<Float> m);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector abs();
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector abs(VectorMask<Float> m);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector min(Vector<Float> v);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector min(Vector<Float> v, VectorMask<Float> m);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
      * <p>
-     * This is a vector binary operation where the operation
-     * {@code (a, b) -> Math.min(a, b)} is applied to lane elements.
+     * This is a lane-wise binary operation which applies the operation
+     * {@code (a, b) -> Math.min(a, b)} to each lane.
      *
      * @param s the input scalar
      * @return the minimum of this vector and the broadcast of an input scalar
      */
     public abstract FloatVector min(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector max(Vector<Float> v);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector max(Vector<Float> v, VectorMask<Float> m);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
      * <p>
-     * This is a vector binary operation where the operation
-     * {@code (a, b) -> Math.max(a, b)} is applied to lane elements.
+     * This is a lane-wise binary operation which applies the operation
+     * {@code (a, b) -> Math.max(a, b)} to each lane.
      *
      * @param s the input scalar
      * @return the maximum of this vector and the broadcast of an input scalar
      */
     public abstract FloatVector max(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract VectorMask<Float> equal(Vector<Float> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
      * <p>
-     * This is a vector binary test operation where the primitive equals
-     * operation ({@code ==}) is applied to lane elements.
+     * This is a lane-wise binary test operation which applies the primitive equals
+     * operation ({@code ==}) each lane.
      *
      * @param s the input scalar
      * @return the result mask of testing if this vector is equal to the
@@ -620,14 +662,17 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract VectorMask<Float> equal(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract VectorMask<Float> notEqual(Vector<Float> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
      * <p>
-     * This is a vector binary test operation where the primitive not equals
-     * operation ({@code !=}) is applied to lane elements.
+     * This is a lane-wise binary test operation which applies the primitive not equals
+     * operation ({@code !=}) to each lane.
      *
      * @param s the input scalar
      * @return the result mask of testing if this vector is not equal to the
@@ -635,14 +680,17 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract VectorMask<Float> notEqual(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract VectorMask<Float> lessThan(Vector<Float> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
      * <p>
-     * This is a vector binary test operation where the primitive less than
-     * operation ({@code <}) is applied to lane elements.
+     * This is a lane-wise binary test operation which applies the primitive less than
+     * operation ({@code <}) to each lane.
      *
      * @param s the input scalar
      * @return the mask result of testing if this vector is less than the
@@ -650,14 +698,17 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract VectorMask<Float> lessThan(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract VectorMask<Float> lessThanEq(Vector<Float> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
      * <p>
-     * This is a vector binary test operation where the primitive less than
-     * or equal to operation ({@code <=}) is applied to lane elements.
+     * This is a lane-wise binary test operation which applies the primitive less than
+     * or equal to operation ({@code <=}) to each lane.
      *
      * @param s the input scalar
      * @return the mask result of testing if this vector is less than or equal
@@ -665,14 +716,17 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract VectorMask<Float> lessThanEq(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract VectorMask<Float> greaterThan(Vector<Float> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
      * <p>
-     * This is a vector binary test operation where the primitive greater than
-     * operation ({@code >}) is applied to lane elements.
+     * This is a lane-wise binary test operation which applies the primitive greater than
+     * operation ({@code >}) to each lane.
      *
      * @param s the input scalar
      * @return the mask result of testing if this vector is greater than the
@@ -680,6 +734,9 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract VectorMask<Float> greaterThan(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract VectorMask<Float> greaterThanEq(Vector<Float> v);
 
@@ -687,8 +744,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Tests if this vector is greater than or equal to the broadcast of an
      * input scalar.
      * <p>
-     * This is a vector binary test operation where the primitive greater than
-     * or equal to operation ({@code >=}) is applied to lane elements.
+     * This is a lane-wise binary test operation which applies the primitive greater than
+     * or equal to operation ({@code >=}) to each lane.
      *
      * @param s the input scalar
      * @return the mask result of testing if this vector is greater than or
@@ -696,6 +753,9 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract VectorMask<Float> greaterThanEq(float s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector blend(Vector<Float> v, VectorMask<Float> m);
 
@@ -716,33 +776,54 @@ public abstract class FloatVector extends Vector<Float> {
      */
     public abstract FloatVector blend(float s, VectorMask<Float> m);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector rearrange(Vector<Float> v,
                                                       VectorShuffle<Float> s, VectorMask<Float> m);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector rearrange(VectorShuffle<Float> m);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector reshape(VectorSpecies<Float> s);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector rotateEL(int i);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector rotateER(int i);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector shiftEL(int i);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract FloatVector shiftER(int i);
 
     /**
      * Divides this vector by an input vector.
      * <p>
-     * This is a vector binary operation where the primitive division
-     * operation ({@code /}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive division
+     * operation ({@code /}) to each lane.
      *
      * @param v the input vector
      * @return the result of dividing this vector by the input vector
@@ -752,8 +833,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Divides this vector by the broadcast of an input scalar.
      * <p>
-     * This is a vector binary operation where the primitive division
-     * operation ({@code /}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive division
+     * operation ({@code /}) to each lane.
      *
      * @param s the input scalar
      * @return the result of dividing this vector by the broadcast of an input
@@ -765,8 +846,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Divides this vector by an input vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector binary operation where the primitive division
-     * operation ({@code /}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive division
+     * operation ({@code /}) to each lane.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -778,8 +859,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Divides this vector by the broadcast of an input scalar, selecting lane
      * elements controlled by a mask.
      * <p>
-     * This is a vector binary operation where the primitive division
-     * operation ({@code /}) is applied to lane elements.
+     * This is a lane-wise binary operation which applies the primitive division
+     * operation ({@code /}) to each lane.
      *
      * @param s the input scalar
      * @param m the mask controlling lane selection
@@ -791,8 +872,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the square root of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#sqrt} operation
-     * is applied to lane elements.
+     * This is a lane-wise unary operation which applies the {@link Math#sqrt} operation
+     * to each lane.
      *
      * @return the square root of this vector
      */
@@ -802,8 +883,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Calculates the square root of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#sqrt} operation
-     * is applied to lane elements.
+     * This is a lane-wise unary operation which applies the {@link Math#sqrt} operation
+     * to each lane.
      *
      * @param m the mask controlling lane selection
      * @return the square root of this vector
@@ -815,8 +896,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the trigonometric tangent of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#tan} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#tan} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#tan}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#tan}
@@ -846,8 +927,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the hyperbolic tangent of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#tanh} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#tanh} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#tanh}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#tanh}
@@ -877,8 +958,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the trigonometric sine of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#sin} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#sin} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#sin}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#sin}
@@ -908,8 +989,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the hyperbolic sine of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#sinh} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#sinh} operation applied to each lane.
      * The implementation is not required to return same
      * results as  {@link Math#sinh}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#sinh}
@@ -939,8 +1020,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the trigonometric cosine of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#cos} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#cos} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#cos}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#cos}
@@ -970,8 +1051,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the hyperbolic cosine of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#cosh} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#cosh} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#cosh}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#cosh}
@@ -1001,8 +1082,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the arc sine of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#asin} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#asin} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#asin}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#asin}
@@ -1032,8 +1113,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the arc cosine of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#acos} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#acos} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#acos}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#acos}
@@ -1063,8 +1144,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the arc tangent of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#atan} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#atan} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#atan}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#atan}
@@ -1094,8 +1175,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the arc tangent of this vector divided by an input vector.
      * <p>
-     * This is a vector binary operation with same semantic definition as
-     * {@link Math#atan2} operation applied to lane elements.
+     * This is a lane-wise binary operation with same semantic definition as
+     * {@link Math#atan2} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#atan2}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#atan2}
@@ -1113,8 +1194,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Calculates the arc tangent of this vector divided by the broadcast of an
      * an input scalar.
      * <p>
-     * This is a vector binary operation with same semantic definition as
-     * {@link Math#atan2} operation applied to lane elements.
+     * This is a lane-wise binary operation with same semantic definition as
+     * {@link Math#atan2} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#atan2}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#atan2}
@@ -1157,8 +1238,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the cube root of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#cbrt} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#cbrt} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#cbrt}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#cbrt}
@@ -1188,8 +1269,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the natural logarithm of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#log} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#log} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#log}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#log}
@@ -1219,8 +1300,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates the base 10 logarithm of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#log10} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#log10} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#log10}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#log10}
@@ -1251,8 +1332,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Calculates the natural logarithm of the sum of this vector and the
      * broadcast of {@code 1}.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#log1p} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#log1p} operation applied to each lane.
      * The implementation is not required to return same
      * results as  {@link Math#log1p}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#log1p}
@@ -1284,8 +1365,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Calculates this vector raised to the power of an input vector.
      * <p>
-     * This is a vector binary operation with same semantic definition as
-     * {@link Math#pow} operation applied to lane elements.
+     * This is a lane-wise binary operation with same semantic definition as
+     * {@link Math#pow} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#pow}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#pow}
@@ -1303,8 +1384,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Calculates this vector raised to the power of the broadcast of an input
      * scalar.
      * <p>
-     * This is a vector binary operation with same semantic definition as
-     * {@link Math#pow} operation applied to lane elements.
+     * This is a lane-wise binary operation with same semantic definition as
+     * {@link Math#pow} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#pow}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#pow}
@@ -1350,8 +1431,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Calculates the broadcast of Euler's number {@code e} raised to the power
      * of this vector.
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#exp} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#exp} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#exp}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#exp}
@@ -1386,11 +1467,11 @@ public abstract class FloatVector extends Vector<Float> {
      * More specifically as if the following (ignoring any differences in
      * numerical accuracy):
      * <pre>{@code
-     *   this.exp().sub(this.species().broadcast(1))
+     *   this.exp().sub(EVector.broadcast(this.species(), 1))
      * }</pre>
      * <p>
-     * This is a vector unary operation with same semantic definition as
-     * {@link Math#expm1} operation applied to lane elements.
+     * This is a lane-wise unary operation with same semantic definition as
+     * {@link Math#expm1} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#expm1}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#expm1}
@@ -1411,7 +1492,7 @@ public abstract class FloatVector extends Vector<Float> {
      * More specifically as if the following (ignoring any differences in
      * numerical accuracy):
      * <pre>{@code
-     *   this.exp(m).sub(this.species().broadcast(1), m)
+     *   this.exp(m).sub(EVector.broadcast(this.species(), 1), m)
      * }</pre>
      * <p>
      * Semantics for rounding, monotonicity, and special cases are
@@ -1434,8 +1515,8 @@ public abstract class FloatVector extends Vector<Float> {
      *   this.mul(v1).add(v2)
      * }</pre>
      * <p>
-     * This is a vector ternary operation where the {@link Math#fma} operation
-     * is applied to lane elements.
+     * This is a lane-wise ternary operation which applies the {@link Math#fma} operation
+     * to each lane.
      *
      * @param v1 the first input vector
      * @param v2 the second input vector
@@ -1449,11 +1530,11 @@ public abstract class FloatVector extends Vector<Float> {
      * scalar summed with the broadcast of a second input scalar.
      * More specifically as if the following:
      * <pre>{@code
-     *   this.fma(this.species().broadcast(s1), this.species().broadcast(s2))
+     *   this.fma(EVector.broadcast(this.species(), s1), EVector.broadcast(this.species(), s2))
      * }</pre>
      * <p>
-     * This is a vector ternary operation where the {@link Math#fma} operation
-     * is applied to lane elements.
+     * This is a lane-wise ternary operation which applies the {@link Math#fma} operation
+     * to each lane.
      *
      * @param s1 the first input scalar
      * @param s2 the second input scalar
@@ -1471,8 +1552,8 @@ public abstract class FloatVector extends Vector<Float> {
      *   this.mul(v1, m).add(v2, m)
      * }</pre>
      * <p>
-     * This is a vector ternary operation where the {@link Math#fma} operation
-     * is applied to lane elements.
+     * This is a lane-wise ternary operation which applies the {@link Math#fma} operation
+     * to each lane.
      *
      * @param v1 the first input vector
      * @param v2 the second input vector
@@ -1490,11 +1571,11 @@ public abstract class FloatVector extends Vector<Float> {
      * elements controlled by a mask
      * More specifically as if the following:
      * <pre>{@code
-     *   this.fma(this.species().broadcast(s1), this.species().broadcast(s2), m)
+     *   this.fma(EVector.broadcast(this.species(), s1), EVector.broadcast(this.species(), s2), m)
      * }</pre>
      * <p>
-     * This is a vector ternary operation where the {@link Math#fma} operation
-     * is applied to lane elements.
+     * This is a lane-wise ternary operation which applies the {@link Math#fma} operation
+     * to each lane.
      *
      * @param s1 the first input scalar
      * @param s2 the second input scalar
@@ -1513,8 +1594,8 @@ public abstract class FloatVector extends Vector<Float> {
      *   this.mul(this).add(v.mul(v)).sqrt()
      * }</pre>
      * <p>
-     * This is a vector binary operation with same semantic definition as
-     * {@link Math#hypot} operation applied to lane elements.
+     * This is a lane-wise binary operation with same semantic definition as
+     * {@link Math#hypot} operation applied to each lane.
      * The implementation is not required to return same
      * results as {@link Math#hypot}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#hypot}
@@ -1535,11 +1616,11 @@ public abstract class FloatVector extends Vector<Float> {
      * More specifically as if the following (ignoring any differences in
      * numerical accuracy):
      * <pre>{@code
-     *   this.mul(this).add(this.species().broadcast(v * v)).sqrt()
+     *   this.mul(this).add(EVector.broadcast(this.species(), s * s)).sqrt()
      * }</pre>
      * <p>
-     * This is a vector binary operation with same semantic definition as
-     * {@link Math#hypot} operation applied to lane elements.
+     * This is a lane-wise binary operation with same semantic definition as
+     * {@link Math#hypot} operation applied to each.
      * The implementation is not required to return same
      * results as {@link Math#hypot}, but adheres to rounding, monotonicity,
      * and special case semantics as defined in the {@link Math#hypot}
@@ -1580,7 +1661,7 @@ public abstract class FloatVector extends Vector<Float> {
      * More specifically as if the following (ignoring any differences in
      * numerical accuracy):
      * <pre>{@code
-     *   this.mul(this, m).add(this.species().broadcast(v * v), m).sqrt(m)
+     *   this.mul(this, m).add(EVector.broadcast(this.species(), s * s), m).sqrt(m)
      * }</pre>
      * <p>
      * Semantics for rounding, monotonicity, and special cases are
@@ -1594,15 +1675,27 @@ public abstract class FloatVector extends Vector<Float> {
     public abstract FloatVector hypot(float s, VectorMask<Float> m);
 
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract void intoByteArray(byte[] a, int ix);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract void intoByteArray(byte[] a, int ix, VectorMask<Float> m);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract void intoByteBuffer(ByteBuffer bb, int ix);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract void intoByteBuffer(ByteBuffer bb, int ix, VectorMask<Float> m);
 
@@ -1611,8 +1704,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Adds all lane elements of this vector.
      * <p>
-     * This is a vector reduction operation where the addition
-     * operation ({@code +}) is applied to lane elements,
+     * This is a cross-lane reduction operation which applies the addition
+     * operation ({@code +}) to lane elements,
      * and the identity value is {@code 0.0}.
      *
      * <p>The value of a floating-point sum is a function both of the input values as well
@@ -1632,8 +1725,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Adds all lane elements of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector reduction operation where the addition
-     * operation ({@code +}) is applied to lane elements,
+     * This is a cross-lane reduction operation which applies the addition
+     * operation ({@code +}) to lane elements,
      * and the identity value is {@code 0.0}.
      *
      * <p>The value of a floating-point sum is a function both of the input values as well
@@ -1653,8 +1746,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Multiplies all lane elements of this vector.
      * <p>
-     * This is a vector reduction operation where the
-     * multiplication operation ({@code *}) is applied to lane elements,
+     * This is a cross-lane reduction operation which applies the
+     * multiplication operation ({@code *}) to lane elements,
      * and the identity value is {@code 1.0}.
      *
      * <p>The order of multiplication operations of this method
@@ -1673,8 +1766,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Multiplies all lane elements of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector reduction operation where the
-     * multiplication operation ({@code *}) is applied to lane elements,
+     * This is a cross-lane reduction operation which applies the
+     * multiplication operation ({@code *}) to lane elements,
      * and the identity value is {@code 1.0}.
      *
      * <p>The order of multiplication operations of this method
@@ -1693,8 +1786,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Returns the minimum lane element of this vector.
      * <p>
-     * This is an associative vector reduction operation where the operation
-     * {@code (a, b) -> Math.min(a, b)} is applied to lane elements,
+     * This is an associative cross-lane reduction operation which applies the operation
+     * {@code (a, b) -> Math.min(a, b)} to lane elements,
      * and the identity value is
      * {@link Float#POSITIVE_INFINITY}.
      *
@@ -1706,8 +1799,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Returns the minimum lane element of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is an associative vector reduction operation where the operation
-     * {@code (a, b) -> Math.min(a, b)} is applied to lane elements,
+     * This is an associative cross-lane reduction operation which applies the operation
+     * {@code (a, b) -> Math.min(a, b)} to lane elements,
      * and the identity value is
      * {@link Float#POSITIVE_INFINITY}.
      *
@@ -1719,8 +1812,8 @@ public abstract class FloatVector extends Vector<Float> {
     /**
      * Returns the maximum lane element of this vector.
      * <p>
-     * This is an associative vector reduction operation where the operation
-     * {@code (a, b) -> Math.max(a, b)} is applied to lane elements,
+     * This is an associative cross-lane reduction operation which applies the operation
+     * {@code (a, b) -> Math.max(a, b)} to lane elements,
      * and the identity value is
      * {@link Float#NEGATIVE_INFINITY}.
      *
@@ -1732,8 +1825,8 @@ public abstract class FloatVector extends Vector<Float> {
      * Returns the maximum lane element of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is an associative vector reduction operation where the operation
-     * {@code (a, b) -> Math.max(a, b)} is applied to lane elements,
+     * This is an associative cross-lane reduction operation which applies the operation
+     * {@code (a, b) -> Math.max(a, b)} to lane elements,
      * and the identity value is
      * {@link Float#NEGATIVE_INFINITY}.
      *
@@ -1753,7 +1846,7 @@ public abstract class FloatVector extends Vector<Float> {
      * @throws IllegalArgumentException if the index is is out of range
      * ({@code < 0 || >= length()})
      */
-    public abstract float get(int i);
+    public abstract float lane(int i);
 
     /**
      * Replaces the lane element of this vector at lane index {@code i} with
@@ -1800,30 +1893,30 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
      * the lane element at index {@code N} is stored into the array at index
-     * {@code i + N}.
+     * {@code offset + N}.
      *
      * @param a the array
-     * @param i the offset into the array
-     * @throws IndexOutOfBoundsException if {@code i < 0}, or
-     * {@code i > a.length - this.length()}
+     * @param offset the offset into the array
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
+     * {@code offset > a.length - this.length()}
      */
-    public abstract void intoArray(float[] a, int i);
+    public abstract void intoArray(float[] a, int offset);
 
     /**
      * Stores this vector into an array starting at offset and using a mask.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then the lane element at
-     * index {@code N} is stored into the array index {@code i + N}.
+     * index {@code N} is stored into the array index {@code offset + N}.
      *
      * @param a the array
-     * @param i the offset into the array
+     * @param offset the offset into the array
      * @param m the mask
-     * @throws IndexOutOfBoundsException if {@code i < 0}, or
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
      * for any vector lane index {@code N} where the mask at lane {@code N}
-     * is set {@code i >= a.length - N}
+     * is set {@code offset >= a.length - N}
      */
-    public abstract void intoArray(float[] a, int i, VectorMask<Float> m);
+    public abstract void intoArray(float[] a, int offset, VectorMask<Float> m);
 
     /**
      * Stores this vector into an array using indexes obtained from an index
@@ -1831,20 +1924,20 @@ public abstract class FloatVector extends Vector<Float> {
      * <p>
      * For each vector lane, where {@code N} is the vector lane index, the
      * lane element at index {@code N} is stored into the array at index
-     * {@code i + indexMap[j + N]}.
+     * {@code a_offset + indexMap[i_offset + N]}.
      *
      * @param a the array
-     * @param i the offset into the array, may be negative if relative
+     * @param a_offset the offset into the array, may be negative if relative
      * indexes in the index map compensate to produce a value within the
      * array bounds
      * @param indexMap the index map
-     * @param j the offset into the index map
-     * @throws IndexOutOfBoundsException if {@code j < 0}, or
-     * {@code j > indexMap.length - this.length()},
+     * @param i_offset the offset into the index map
+     * @throws IndexOutOfBoundsException if {@code i_offset < 0}, or
+     * {@code i_offset > indexMap.length - this.length()},
      * or for any vector lane index {@code N} the result of
-     * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
+     * {@code a_offset + indexMap[i_offset + N]} is {@code < 0} or {@code >= a.length}
      */
-    public abstract void intoArray(float[] a, int i, int[] indexMap, int j);
+    public abstract void intoArray(float[] a, int a_offset, int[] indexMap, int i_offset);
 
     /**
      * Stores this vector into an array using indexes obtained from an index
@@ -1853,24 +1946,27 @@ public abstract class FloatVector extends Vector<Float> {
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then the lane element at
      * index {@code N} is stored into the array at index
-     * {@code i + indexMap[j + N]}.
+     * {@code a_offset + indexMap[i_offset + N]}.
      *
      * @param a the array
-     * @param i the offset into the array, may be negative if relative
+     * @param a_offset the offset into the array, may be negative if relative
      * indexes in the index map compensate to produce a value within the
      * array bounds
      * @param m the mask
      * @param indexMap the index map
-     * @param j the offset into the index map
+     * @param i_offset the offset into the index map
      * @throws IndexOutOfBoundsException if {@code j < 0}, or
-     * {@code j > indexMap.length - this.length()},
+     * {@code i_offset > indexMap.length - this.length()},
      * or for any vector lane index {@code N} where the mask at lane
-     * {@code N} is set the result of {@code i + indexMap[j + N]} is
+     * {@code N} is set the result of {@code a_offset + indexMap[i_offset + N]} is
      * {@code < 0} or {@code >= a.length}
      */
-    public abstract void intoArray(float[] a, int i, VectorMask<Float> m, int[] indexMap, int j);
+    public abstract void intoArray(float[] a, int a_offset, VectorMask<Float> m, int[] indexMap, int i_offset);
     // Species
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public abstract VectorSpecies<Float> species();
 

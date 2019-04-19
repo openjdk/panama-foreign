@@ -130,6 +130,43 @@ public abstract class VectorShuffle<E> {
     }
 
     /**
+     * Returns a shuffle with lane elements set to sequential {@code int} values starting from {@code start}.
+     * <p>
+     * This method behaves as if a shuffle is created from an identity
+     * index mapping function as follows:
+     * <pre>{@code
+     *   return VectorShuffle.shuffle(i -> i + start);
+     * }</pre>
+     *
+     * @param species shuffle species
+     * @param start starting value of sequence
+     * @return a shuffle of lane indexes
+     */
+    @ForceInline
+    public static <E> VectorShuffle<E> shuffleIota(VectorSpecies<E> species, int start) {
+        return ((AbstractSpecies<E>) species).shuffleFromOpFactory.apply(i -> i + start);
+    }
+
+    /**
+     * Returns a shuffle with lane elements set to sequential {@code int} values starting from {@code start}
+     * and looping around species length.
+     * <p>
+     * This method behaves as if a shuffle is created from an identity
+     * index mapping function as follows:
+     * <pre>{@code
+     *   return VectorShuffle.shuffle(i -> (i + start) & (species.length() - 1));
+     * }</pre>
+     *
+     * @param species shuffle species
+     * @param start starting value of sequence
+     * @return a shuffle of lane indexes
+     */
+    @ForceInline
+    public static <E> VectorShuffle<E> shuffleOffset(VectorSpecies<E> species, int start) {
+        return ((AbstractSpecies<E>) species).shuffleFromOpFactory.apply(i -> (i + start) & (species.length() - 1));
+    }
+
+    /**
      * Returns a shuffle where each lane element is set to a given
      * {@code int} value logically AND'ed by the species length minus one.
      * <p>
@@ -160,14 +197,14 @@ public abstract class VectorShuffle<E> {
      *
      * @param species shuffle species
      * @param ixs the {@code int} array
-     * @param i the offset into the array
+     * @param offset the offset into the array
      * @return a shuffle loaded from the {@code int} array
-     * @throws IndexOutOfBoundsException if {@code i < 0}, or
-     * {@code i > a.length - species.length()}
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
+     * {@code offset > a.length - species.length()}
      */
     @ForceInline
-    public static <E> VectorShuffle<E> fromArray(VectorSpecies<E> species, int[] ixs, int i) {
-        return ((AbstractSpecies<E>) species).shuffleFromArrayFactory.apply(ixs, i);
+    public static <E> VectorShuffle<E> fromArray(VectorSpecies<E> species, int[] ixs, int offset) {
+        return ((AbstractSpecies<E>) species).shuffleFromArrayFactory.apply(ixs, offset);
     }
 
     /**
@@ -195,11 +232,11 @@ public abstract class VectorShuffle<E> {
      * {@code i + N}.
      *
      * @param a the array
-     * @param i the offset into the array
+     * @param offset the offset into the array
      * @throws IndexOutOfBoundsException if {@code i < 0}, or
-     * {@code i > a.length - this.length()}
+     * {@code offset > a.length - this.length()}
      */
-    public abstract void intoArray(int[] a, int i);
+    public abstract void intoArray(int[] a, int offset);
 
     /**
      * Converts this shuffle into a vector, creating a vector from shuffle
@@ -227,7 +264,7 @@ public abstract class VectorShuffle<E> {
      * @param i the lane index
      * @return the {@code int} lane element at lane index {@code i}
      */
-    public int getElement(int i) { return toArray()[i]; }
+    public int lane(int i) { return toArray()[i]; }
 
     /**
      * Rearranges the lane elements of this shuffle selecting lane indexes

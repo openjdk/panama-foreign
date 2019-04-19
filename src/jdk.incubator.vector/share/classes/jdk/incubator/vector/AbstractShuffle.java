@@ -72,7 +72,7 @@ abstract class AbstractShuffle<E> extends VectorShuffle<E> {
     }
 
     @Override
-    public int getElement(int i) {
+    public int lane(int i) {
         return reorder[i];
     }
 

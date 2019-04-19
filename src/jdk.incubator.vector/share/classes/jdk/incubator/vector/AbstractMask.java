@@ -53,7 +53,7 @@ abstract class AbstractMask<E> extends VectorMask<E> {
     }
 
     @Override
-    public boolean getElement(int i) {
+    public boolean lane(int i) {
         return getBits()[i];
     }
 
