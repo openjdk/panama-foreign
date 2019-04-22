@@ -768,7 +768,7 @@ final class Long64Vector extends LongVector {
     @Override
     @ForceInline
     public long andAll(VectorMask<Long> m) {
-        return blend((Long64Vector)LongVector.broadcast(SPECIES, (long) -1), m).andAll();
+        return LongVector.broadcast(SPECIES, (long) -1).blend(this, m).andAll();
     }
 
     @Override
@@ -810,7 +810,7 @@ final class Long64Vector extends LongVector {
     @Override
     @ForceInline
     public long orAll(VectorMask<Long> m) {
-        return blend((Long64Vector)LongVector.broadcast(SPECIES, (long) 0), m).orAll();
+        return LongVector.broadcast(SPECIES, (long) 0).blend(this, m).orAll();
     }
 
     @Override
@@ -825,33 +825,33 @@ final class Long64Vector extends LongVector {
     @Override
     @ForceInline
     public long xorAll(VectorMask<Long> m) {
-        return blend((Long64Vector)LongVector.broadcast(SPECIES, (long) 0), m).xorAll();
+        return LongVector.broadcast(SPECIES, (long) 0).blend(this, m).xorAll();
     }
 
 
     @Override
     @ForceInline
     public long addAll(VectorMask<Long> m) {
-        return blend((Long64Vector)LongVector.broadcast(SPECIES, (long) 0), m).addAll();
+        return LongVector.broadcast(SPECIES, (long) 0).blend(this, m).addAll();
     }
 
 
     @Override
     @ForceInline
     public long mulAll(VectorMask<Long> m) {
-        return blend((Long64Vector)LongVector.broadcast(SPECIES, (long) 1), m).mulAll();
+        return LongVector.broadcast(SPECIES, (long) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public long minAll(VectorMask<Long> m) {
-        return blend((Long64Vector)LongVector.broadcast(SPECIES, Long.MAX_VALUE), m).minAll();
+        return LongVector.broadcast(SPECIES, Long.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public long maxAll(VectorMask<Long> m) {
-        return blend((Long64Vector)LongVector.broadcast(SPECIES, Long.MIN_VALUE), m).maxAll();
+        return LongVector.broadcast(SPECIES, Long.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override

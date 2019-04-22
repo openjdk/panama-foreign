@@ -724,7 +724,7 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public byte andAll(VectorMask<Byte> m) {
-        return blend((Byte128Vector)ByteVector.broadcast(SPECIES, (byte) -1), m).andAll();
+        return ByteVector.broadcast(SPECIES, (byte) -1).blend(this, m).andAll();
     }
 
     @Override
@@ -766,7 +766,7 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public byte orAll(VectorMask<Byte> m) {
-        return blend((Byte128Vector)ByteVector.broadcast(SPECIES, (byte) 0), m).orAll();
+        return ByteVector.broadcast(SPECIES, (byte) 0).blend(this, m).orAll();
     }
 
     @Override
@@ -781,33 +781,33 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public byte xorAll(VectorMask<Byte> m) {
-        return blend((Byte128Vector)ByteVector.broadcast(SPECIES, (byte) 0), m).xorAll();
+        return ByteVector.broadcast(SPECIES, (byte) 0).blend(this, m).xorAll();
     }
 
 
     @Override
     @ForceInline
     public byte addAll(VectorMask<Byte> m) {
-        return blend((Byte128Vector)ByteVector.broadcast(SPECIES, (byte) 0), m).addAll();
+        return ByteVector.broadcast(SPECIES, (byte) 0).blend(this, m).addAll();
     }
 
 
     @Override
     @ForceInline
     public byte mulAll(VectorMask<Byte> m) {
-        return blend((Byte128Vector)ByteVector.broadcast(SPECIES, (byte) 1), m).mulAll();
+        return ByteVector.broadcast(SPECIES, (byte) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public byte minAll(VectorMask<Byte> m) {
-        return blend((Byte128Vector)ByteVector.broadcast(SPECIES, Byte.MAX_VALUE), m).minAll();
+        return ByteVector.broadcast(SPECIES, Byte.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public byte maxAll(VectorMask<Byte> m) {
-        return blend((Byte128Vector)ByteVector.broadcast(SPECIES, Byte.MIN_VALUE), m).maxAll();
+        return ByteVector.broadcast(SPECIES, Byte.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override

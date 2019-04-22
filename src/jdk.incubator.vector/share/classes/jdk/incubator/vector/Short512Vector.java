@@ -725,7 +725,7 @@ final class Short512Vector extends ShortVector {
     @Override
     @ForceInline
     public short andAll(VectorMask<Short> m) {
-        return blend((Short512Vector)ShortVector.broadcast(SPECIES, (short) -1), m).andAll();
+        return ShortVector.broadcast(SPECIES, (short) -1).blend(this, m).andAll();
     }
 
     @Override
@@ -767,7 +767,7 @@ final class Short512Vector extends ShortVector {
     @Override
     @ForceInline
     public short orAll(VectorMask<Short> m) {
-        return blend((Short512Vector)ShortVector.broadcast(SPECIES, (short) 0), m).orAll();
+        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).orAll();
     }
 
     @Override
@@ -782,33 +782,33 @@ final class Short512Vector extends ShortVector {
     @Override
     @ForceInline
     public short xorAll(VectorMask<Short> m) {
-        return blend((Short512Vector)ShortVector.broadcast(SPECIES, (short) 0), m).xorAll();
+        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).xorAll();
     }
 
 
     @Override
     @ForceInline
     public short addAll(VectorMask<Short> m) {
-        return blend((Short512Vector)ShortVector.broadcast(SPECIES, (short) 0), m).addAll();
+        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).addAll();
     }
 
 
     @Override
     @ForceInline
     public short mulAll(VectorMask<Short> m) {
-        return blend((Short512Vector)ShortVector.broadcast(SPECIES, (short) 1), m).mulAll();
+        return ShortVector.broadcast(SPECIES, (short) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public short minAll(VectorMask<Short> m) {
-        return blend((Short512Vector)ShortVector.broadcast(SPECIES, Short.MAX_VALUE), m).minAll();
+        return ShortVector.broadcast(SPECIES, Short.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public short maxAll(VectorMask<Short> m) {
-        return blend((Short512Vector)ShortVector.broadcast(SPECIES, Short.MIN_VALUE), m).maxAll();
+        return ShortVector.broadcast(SPECIES, Short.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override

@@ -1,2 +1,2 @@
-Summary: VectorAPI SSE Fixes
-Contributed-by: sandhya.viswanathan@intel.com
+JDK-8221176: Masked reductions are broken
+Summary: This patch fixes the reverted fix for broken masked reductions from JDK-8222290: [vector] Implement Species flattening 
