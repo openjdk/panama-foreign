@@ -893,26 +893,26 @@ final class Float256Vector extends FloatVector {
     @Override
     @ForceInline
     public float addAll(VectorMask<Float> m) {
-        return blend((Float256Vector)FloatVector.broadcast(SPECIES, (float) 0), m).addAll();
+        return FloatVector.broadcast(SPECIES, (float) 0).blend(this, m).addAll();
     }
 
 
     @Override
     @ForceInline
     public float mulAll(VectorMask<Float> m) {
-        return blend((Float256Vector)FloatVector.broadcast(SPECIES, (float) 1), m).mulAll();
+        return FloatVector.broadcast(SPECIES, (float) 1).blend(this, m).mulAll();
     }
 
     @Override
     @ForceInline
     public float minAll(VectorMask<Float> m) {
-        return blend((Float256Vector)FloatVector.broadcast(SPECIES, Float.MAX_VALUE), m).minAll();
+        return FloatVector.broadcast(SPECIES, Float.MAX_VALUE).blend(this, m).minAll();
     }
 
     @Override
     @ForceInline
     public float maxAll(VectorMask<Float> m) {
-        return blend((Float256Vector)FloatVector.broadcast(SPECIES, Float.MIN_VALUE), m).maxAll();
+        return FloatVector.broadcast(SPECIES, Float.MIN_VALUE).blend(this, m).maxAll();
     }
 
     @Override
