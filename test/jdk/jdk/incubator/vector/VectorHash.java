@@ -100,14 +100,14 @@ public class VectorHash {
         int i = 0;
         for (; i < (a.length & ~(8 - 1)); i += 8) {
             h = h * COEFF_31_TO_8 +
-                a[i + 0] * H_COEFF_8.get(0) +
-                a[i + 1] * H_COEFF_8.get(1) +
-                a[i + 2] * H_COEFF_8.get(2) +
-                a[i + 3] * H_COEFF_8.get(3) +
-                a[i + 4] * H_COEFF_8.get(4) +
-                a[i + 5] * H_COEFF_8.get(5) +
-                a[i + 6] * H_COEFF_8.get(6) +
-                a[i + 7] * H_COEFF_8.get(7);
+                a[i + 0] * H_COEFF_8.lane(0) +
+                a[i + 1] * H_COEFF_8.lane(1) +
+                a[i + 2] * H_COEFF_8.lane(2) +
+                a[i + 3] * H_COEFF_8.lane(3) +
+                a[i + 4] * H_COEFF_8.lane(4) +
+                a[i + 5] * H_COEFF_8.lane(5) +
+                a[i + 6] * H_COEFF_8.lane(6) +
+                a[i + 7] * H_COEFF_8.lane(7);
         }
 
         for (; i < a.length; i++) {
