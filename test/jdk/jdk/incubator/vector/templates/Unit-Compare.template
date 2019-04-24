@@ -12,7 +12,7 @@
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
-                    Assert.assertEquals(mv.getElement(j), a[i + j] [[TEST_OP]] b[i + j]);
+                    Assert.assertEquals(mv.lane(j), a[i + j] [[TEST_OP]] b[i + j]);
                 }
             }
         }
