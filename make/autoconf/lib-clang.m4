@@ -58,7 +58,9 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
       CLANG_LIB_PATH="$with_libclang/lib"
       CLANG_BIN_PATH="$with_libclang/bin"
       CLANG_INCLUDE_PATH="$with_libclang/include"
-      VER=`ls $with_libclang/lib/clang/`
+      # There may be more than one version of clang installed.
+      # Pick the last one if there are more than one versions.
+      VER=`ls $with_libclang/lib/clang/ | tail -n1`
       CLANG_INCLUDE_AUX_PATH="$with_libclang/lib/clang/$VER/include"
     fi
 
