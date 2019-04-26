@@ -26,8 +26,9 @@ package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.Vector;
-import jdk.incubator.vector.Vector.Mask;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorMask;
+import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.VectorShuffle;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;
@@ -76,8 +77,8 @@ public class SortVector extends AbstractVectorBenchmark {
     }
 
 
-    void sort(Species<Integer> spec) {
-        var iota = (IntVector) IntVector.shuffleIota(spec).toVector(); // [ 0 1 ... n ]
+    void sort(VectorSpecies<Integer> spec) {
+        var iota = (IntVector) VectorShuffle.shuffleIota(spec).toVector(); // [ 0 1 ... n ]
 
         var result = IntVector.broadcast(spec, 0);
         var index = IntVector.broadcast(spec, 0);

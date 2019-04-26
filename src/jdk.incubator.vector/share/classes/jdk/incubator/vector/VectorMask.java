@@ -121,7 +121,7 @@ public abstract class VectorMask<E> {
 
     /**
      * Returns a mask where each lane is set or unset according to given
-     * {@code boolean} values
+     * {@code boolean} values.
      * <p>
      * For each mask lane, where {@code N} is the mask lane index,
      * if the given {@code boolean} value at index {@code N} is {@code true}
@@ -131,6 +131,7 @@ public abstract class VectorMask<E> {
      * @param bits the given {@code boolean} values
      * @return a mask where each lane is set or unset according to the given {@code boolean} value
      * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
+     * @see Vector#maskFromValues(boolean...)
      */
     @ForceInline
     public static <E> VectorMask<E> fromValues(VectorSpecies<E> species, boolean... bits) {
@@ -150,6 +151,7 @@ public abstract class VectorMask<E> {
      * @return the mask loaded from a {@code boolean} array
      * @throws IndexOutOfBoundsException if {@code offset < 0}, or
      * {@code offset > bits.length - species.length()}
+     * @see Vector#maskFromArray(boolean[], int)
      */
     @ForceInline
     @SuppressWarnings("unchecked")
@@ -167,6 +169,7 @@ public abstract class VectorMask<E> {
      *
      * @param species mask species
      * @return a mask where all lanes are set
+     * @see Vector#maskAllTrue()
      */
     @ForceInline
     @SuppressWarnings("unchecked")
@@ -181,6 +184,7 @@ public abstract class VectorMask<E> {
      *
      * @param species mask species
      * @return a mask where all lanes are unset
+     * @see Vector#maskAllFalse()
      */
     @ForceInline
     @SuppressWarnings("unchecked")

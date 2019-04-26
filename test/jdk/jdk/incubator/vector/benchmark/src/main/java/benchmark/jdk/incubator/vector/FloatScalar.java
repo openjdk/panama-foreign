@@ -260,6 +260,18 @@ public class FloatScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public void max(Blackhole bh) {
         float[] as = fa.apply(size);
@@ -298,7 +310,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void addAll(Blackhole bh) {
+    public void addLanes(Blackhole bh) {
         float[] as = fa.apply(size);
         float r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -311,7 +323,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void mulAll(Blackhole bh) {
+    public void mulLanes(Blackhole bh) {
         float[] as = fa.apply(size);
         float r = 1;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -324,7 +336,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void minAll(Blackhole bh) {
+    public void minLanes(Blackhole bh) {
         float[] as = fa.apply(size);
         float r = Float.POSITIVE_INFINITY;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -337,7 +349,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void maxAll(Blackhole bh) {
+    public void maxLanes(Blackhole bh) {
         float[] as = fa.apply(size);
         float r = Float.NEGATIVE_INFINITY;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {

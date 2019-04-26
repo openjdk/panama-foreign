@@ -80,11 +80,11 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
             var vb = ByteVector.fromArray(B256, data, i);
             var vi = (IntVector)vb.reinterpret(I256);
             for (int j = 0; j < 4; j++) {
-                var tj = vi.shiftR(j * 8).and(lobyte_mask);
+                var tj = vi.shiftRight(j * 8).and(lobyte_mask);
                 acc = acc.add(tj);
             }
         }
-        return (int)Integer.toUnsignedLong(acc.addAll());
+        return (int)Integer.toUnsignedLong(acc.addLanes());
     }
 
     // 2. 16-bit accumulators
@@ -98,15 +98,15 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
             var vb = ByteVector.fromArray(B256, data, i);
             var vs = (ShortVector)vb.reinterpret(S256);
             for (int j = 0; j < 2; j++) {
-                var tj = vs.shiftR(j * 8).and(lobyte_mask);
+                var tj = vs.shiftRight(j * 8).and(lobyte_mask);
                 acc = acc.add(tj);
             }
         }
 
         int mid = S128.length();
         var accLo = ((IntVector)(acc             .reshape(S128).cast(I256))).and(0xFFFF); // low half as ints
-        var accHi = ((IntVector)(acc.shiftEL(mid).reshape(S128).cast(I256))).and(0xFFFF); // high half as ints
-        return accLo.addAll() + accHi.addAll();
+        var accHi = ((IntVector)(acc.shiftLanesLeft(mid).reshape(S128).cast(I256))).and(0xFFFF); // high half as ints
+        return accLo.addLanes() + accHi.addLanes();
     }
 
     /*

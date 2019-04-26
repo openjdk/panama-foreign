@@ -257,31 +257,37 @@ gen_binary_alu_op "or" "a | b" $unit_output $perf_output $perf_scalar_output "BI
 gen_binary_alu_op "xor" "a ^ b" $unit_output $perf_output $perf_scalar_output "BITWISE"
 
 # Shifts
-gen_binary_alu_op "shiftR" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_binary_alu_op "shiftL" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_binary_alu_op "aShiftR" "(a >> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_shift_cst_op "aShiftR" "(a >> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_shift_cst_op "shiftR" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_shift_cst_op "shiftL" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_shift_cst_op "aShiftR" "(a >> (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
-gen_shift_cst_op "shiftL" "(a << (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
-gen_shift_cst_op "shiftR" "((a \& 0xFF) >>> (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
-gen_shift_cst_op "aShiftR" "(a >> (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
-gen_shift_cst_op "shiftL" "(a << (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
-gen_shift_cst_op "shiftR" "((a \& 0xFFFF) >>> (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
+gen_binary_alu_op "shiftLeft" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_binary_alu_op "shiftLeft" "(a << (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_binary_alu_op "shiftLeft" "(a << (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
+gen_binary_alu_op "shiftRight" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_binary_alu_op "shiftRight" "(a >>> (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_binary_alu_op "shiftRight" "(a >>> (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
+gen_binary_alu_op "shiftArithmeticRight" "(a >> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_binary_alu_op "shiftArithmeticRight" "(a >> (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_binary_alu_op "shiftArithmeticRight" "(a >> (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
+gen_shift_cst_op "shiftLeft" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_shift_cst_op "shiftLeft" "(a << (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_shift_cst_op "shiftLeft" "(a << (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
+gen_shift_cst_op "shiftRight" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_shift_cst_op "shiftRight" "((a \& 0xFF) >>> (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_shift_cst_op "shiftRight" "((a \& 0xFFFF) >>> (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
+gen_shift_cst_op "shiftArithmeticRight" "(a >> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_shift_cst_op "shiftArithmeticRight" "(a >> (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_shift_cst_op "shiftArithmeticRight" "(a >> (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
 
 # Masked reductions.
 gen_binary_op "max" "Math.max(a, b)" $unit_output $perf_output $perf_scalar_output
 gen_binary_op "min" "Math.min(a, b)" $unit_output $perf_output $perf_scalar_output
 
 # Reductions.
-gen_reduction_op "andAll" "\&" $unit_output $perf_output $perf_scalar_output "BITWISE" "-1"
-gen_reduction_op "orAll" "|" $unit_output $perf_output $perf_scalar_output "BITWISE" "0"
-gen_reduction_op "xorAll" "^" $unit_output $perf_output $perf_scalar_output "BITWISE" "0"
-gen_reduction_op "addAll" "+" $unit_output $perf_output $perf_scalar_output "" "0"
-gen_reduction_op "mulAll" "*" $unit_output $perf_output $perf_scalar_output "" "1"
-gen_reduction_op_min "minAll" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.\$MaxValue\$"
-gen_reduction_op_max "maxAll" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.\$MinValue\$"
+gen_reduction_op "andLanes" "\&" $unit_output $perf_output $perf_scalar_output "BITWISE" "-1"
+gen_reduction_op "orLanes" "|" $unit_output $perf_output $perf_scalar_output "BITWISE" "0"
+gen_reduction_op "xorLanes" "^" $unit_output $perf_output $perf_scalar_output "BITWISE" "0"
+gen_reduction_op "addLanes" "+" $unit_output $perf_output $perf_scalar_output "" "0"
+gen_reduction_op "mulLanes" "*" $unit_output $perf_output $perf_scalar_output "" "1"
+gen_reduction_op_min "minLanes" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.\$MaxValue\$"
+gen_reduction_op_max "maxLanes" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.\$MinValue\$"
 
 
 # Boolean reductions.

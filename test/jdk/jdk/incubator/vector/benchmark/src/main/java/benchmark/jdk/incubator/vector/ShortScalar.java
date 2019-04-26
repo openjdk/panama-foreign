@@ -321,22 +321,8 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @Benchmark
-    public void aShiftRShift(Blackhole bh) {
+    public void shiftLeft(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
@@ -345,7 +331,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 short a = as[i];
                 short b = bs[i];
-                rs[i] = (short)((a >> (b & 15)));
+                rs[i] = (short)((a << (b & 0xF)));
             }
         }
 
@@ -355,7 +341,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void aShiftRMaskedShift(Blackhole bh) {
+    public void shiftLeftMasked(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
@@ -365,8 +351,33 @@ public class ShortScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 short a = as[i];
                 short b = bs[i];
-                boolean m = ms[i % ms.length];
-                rs[i] = (m ? (short)((a >> (b & 15))) : a);
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)((a << (b & 0xF)));
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+
+
+
+
+
+    @Benchmark
+    public void shiftRight(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)((a >>> (b & 0xF)));
             }
         }
 
@@ -376,7 +387,80 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftLShift(Blackhole bh) {
+    public void shiftRightMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)((a >>> (b & 0xF)));
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+
+
+
+
+
+    @Benchmark
+    public void shiftArithmeticRight(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)((a >> (b & 0xF)));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void shiftArithmeticRightMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)((a >> (b & 0xF)));
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+
+
+
+
+
+    @Benchmark
+    public void shiftLeftShift(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
@@ -395,7 +479,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftLMaskedShift(Blackhole bh) {
+    public void shiftLeftMaskedShift(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
@@ -415,8 +499,12 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
     @Benchmark
-    public void shiftRShift(Blackhole bh) {
+    public void shiftRightShift(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
@@ -435,7 +523,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftRMaskedShift(Blackhole bh) {
+    public void shiftRightMaskedShift(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
         short[] rs = fr.apply(size);
@@ -447,6 +535,50 @@ public class ShortScalar extends AbstractVectorBenchmark {
                 short b = bs[i];
                 boolean m = ms[i % ms.length];
                 rs[i] = (m ? (short)(((a & 0xFFFF) >>> (b & 15))) : a);
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+
+
+
+
+    @Benchmark
+    public void shiftArithmeticRightShift(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)((a >> (b & 15)));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void shiftArithmeticRightMaskedShift(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                boolean m = ms[i % ms.length];
+                rs[i] = (m ? (short)((a >> (b & 15))) : a);
             }
         }
 
@@ -490,7 +622,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void andAll(Blackhole bh) {
+    public void andLanes(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = -1;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -505,7 +637,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void orAll(Blackhole bh) {
+    public void orLanes(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -520,7 +652,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void xorAll(Blackhole bh) {
+    public void xorLanes(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -534,7 +666,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void addAll(Blackhole bh) {
+    public void addLanes(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -547,7 +679,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void mulAll(Blackhole bh) {
+    public void mulLanes(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = 1;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -560,7 +692,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void minAll(Blackhole bh) {
+    public void minLanes(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = Short.MAX_VALUE;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -573,7 +705,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void maxAll(Blackhole bh) {
+    public void maxLanes(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = Short.MIN_VALUE;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {

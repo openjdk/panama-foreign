@@ -163,7 +163,7 @@ final class Double128Vector extends DoubleVector {
         return VectorIntrinsics.cast(
             Double128Vector.class,
             double.class, LENGTH,
-            s.boxType(),
+            s.vectorType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -301,7 +301,7 @@ final class Double128Vector extends DoubleVector {
     @ForceInline
     public DoubleVector reshape(VectorSpecies<Double> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.boxType() == Double64Vector.class)) {
+        if (s.bitSize() == 64 && (s.vectorType() == Double64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Double128Vector.class,
                 double.class, LENGTH,
@@ -310,7 +310,7 @@ final class Double128Vector extends DoubleVector {
                 this, s,
                 (species, vector) -> (DoubleVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s.boxType() == Double128Vector.class)) {
+        } else if (s.bitSize() == 128 && (s.vectorType() == Double128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Double128Vector.class,
                 double.class, LENGTH,
@@ -319,7 +319,7 @@ final class Double128Vector extends DoubleVector {
                 this, s,
                 (species, vector) -> (DoubleVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s.boxType() == Double256Vector.class)) {
+        } else if (s.bitSize() == 256 && (s.vectorType() == Double256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Double128Vector.class,
                 double.class, LENGTH,
@@ -328,7 +328,7 @@ final class Double128Vector extends DoubleVector {
                 this, s,
                 (species, vector) -> (DoubleVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s.boxType() == Double512Vector.class)) {
+        } else if (s.bitSize() == 512 && (s.vectorType() == Double512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Double128Vector.class,
                 double.class, LENGTH,
@@ -338,7 +338,7 @@ final class Double128Vector extends DoubleVector {
                 (species, vector) -> (DoubleVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.boxType() == DoubleMaxVector.class)) {
+                && (s.bitSize() % 128 == 0) && (s.vectorType() == DoubleMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 Double128Vector.class,
                 double.class, LENGTH,
@@ -839,7 +839,7 @@ final class Double128Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public double addAll() {
+    public double addLanes() {
         long bits = (long) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_ADD, Double128Vector.class, double.class, LENGTH,
                                 this,
@@ -852,7 +852,7 @@ final class Double128Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public double mulAll() {
+    public double mulLanes() {
         long bits = (long) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MUL, Double128Vector.class, double.class, LENGTH,
                                 this,
@@ -865,7 +865,7 @@ final class Double128Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public double minAll() {
+    public double minLanes() {
         long bits = (long) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MIN, Double128Vector.class, double.class, LENGTH,
                                 this,
@@ -878,7 +878,7 @@ final class Double128Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public double maxAll() {
+    public double maxLanes() {
         long bits = (long) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MAX, Double128Vector.class, double.class, LENGTH,
                                 this,
@@ -892,27 +892,27 @@ final class Double128Vector extends DoubleVector {
 
     @Override
     @ForceInline
-    public double addAll(VectorMask<Double> m) {
-        return DoubleVector.broadcast(SPECIES, (double) 0).blend(this, m).addAll();
+    public double addLanes(VectorMask<Double> m) {
+        return DoubleVector.broadcast(SPECIES, (double) 0).blend(this, m).addLanes();
     }
 
 
     @Override
     @ForceInline
-    public double mulAll(VectorMask<Double> m) {
-        return DoubleVector.broadcast(SPECIES, (double) 1).blend(this, m).mulAll();
+    public double mulLanes(VectorMask<Double> m) {
+        return DoubleVector.broadcast(SPECIES, (double) 1).blend(this, m).mulLanes();
     }
 
     @Override
     @ForceInline
-    public double minAll(VectorMask<Double> m) {
-        return DoubleVector.broadcast(SPECIES, Double.MAX_VALUE).blend(this, m).minAll();
+    public double minLanes(VectorMask<Double> m) {
+        return DoubleVector.broadcast(SPECIES, Double.MAX_VALUE).blend(this, m).minLanes();
     }
 
     @Override
     @ForceInline
-    public double maxAll(VectorMask<Double> m) {
-        return DoubleVector.broadcast(SPECIES, Double.MIN_VALUE).blend(this, m).maxAll();
+    public double maxLanes(VectorMask<Double> m) {
+        return DoubleVector.broadcast(SPECIES, Double.MIN_VALUE).blend(this, m).maxLanes();
     }
 
     @Override
@@ -1167,7 +1167,7 @@ final class Double128Vector extends DoubleVector {
 
 
     @Override
-    public Double128Vector rotateEL(int j) {
+    public Double128Vector rotateLanesLeft(int j) {
         double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length(); i++){
@@ -1177,7 +1177,7 @@ final class Double128Vector extends DoubleVector {
     }
 
     @Override
-    public Double128Vector rotateER(int j) {
+    public Double128Vector rotateLanesRight(int j) {
         double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length(); i++){
@@ -1192,7 +1192,7 @@ final class Double128Vector extends DoubleVector {
     }
 
     @Override
-    public Double128Vector shiftEL(int j) {
+    public Double128Vector shiftLanesLeft(int j) {
         double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length() - j; i++) {
@@ -1202,7 +1202,7 @@ final class Double128Vector extends DoubleVector {
     }
 
     @Override
-    public Double128Vector shiftER(int j) {
+    public Double128Vector shiftLanesRight(int j) {
         double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length() - j; i++){

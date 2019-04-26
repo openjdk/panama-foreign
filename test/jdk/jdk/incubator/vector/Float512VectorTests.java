@@ -730,6 +730,18 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     static float max(float a, float b) {
         return (float)(Math.max(a, b));
     }
@@ -776,7 +788,7 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
 
-    static float addAll(float[] a, int idx) {
+    static float addLanes(float[] a, int idx) {
         float res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res += a[i];
@@ -785,7 +797,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float addAll(float[] a) {
+    static float addLanes(float[] a) {
         float res = 0;
         for (int i = 0; i < a.length; i += SPECIES.length()) {
             float tmp = 0;
@@ -798,7 +810,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void addAllFloat512VectorTests(IntFunction<float[]> fa) {
+    static void addLanesFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         float ra = 0;
@@ -806,7 +818,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.addAll();
+                r[i] = av.addLanes();
             }
         }
 
@@ -814,13 +826,13 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra += av.addAll();
+                ra += av.addLanes();
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Float512VectorTests::addAll, Float512VectorTests::addAll);
+        assertReductionArraysEquals(a, r, ra, Float512VectorTests::addLanes, Float512VectorTests::addLanes);
     }
-    static float mulAll(float[] a, int idx) {
+    static float mulLanes(float[] a, int idx) {
         float res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res *= a[i];
@@ -829,7 +841,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float mulAll(float[] a) {
+    static float mulLanes(float[] a) {
         float res = 1;
         for (int i = 0; i < a.length; i += SPECIES.length()) {
             float tmp = 1;
@@ -842,7 +854,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void mulAllFloat512VectorTests(IntFunction<float[]> fa) {
+    static void mulLanesFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         float ra = 1;
@@ -850,7 +862,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.mulAll();
+                r[i] = av.mulLanes();
             }
         }
 
@@ -858,13 +870,13 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra *= av.mulAll();
+                ra *= av.mulLanes();
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Float512VectorTests::mulAll, Float512VectorTests::mulAll);
+        assertReductionArraysEquals(a, r, ra, Float512VectorTests::mulLanes, Float512VectorTests::mulLanes);
     }
-    static float minAll(float[] a, int idx) {
+    static float minLanes(float[] a, int idx) {
         float res = Float.POSITIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (float)Math.min(res, a[i]);
@@ -873,7 +885,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float minAll(float[] a) {
+    static float minLanes(float[] a) {
         float res = Float.POSITIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (float)Math.min(res, a[i]);
@@ -882,7 +894,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void minAllFloat512VectorTests(IntFunction<float[]> fa) {
+    static void minLanesFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         float ra = Float.POSITIVE_INFINITY;
@@ -890,7 +902,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.minAll();
+                r[i] = av.minLanes();
             }
         }
 
@@ -898,13 +910,13 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = Float.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.min(ra, av.minAll());
+                ra = (float)Math.min(ra, av.minLanes());
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Float512VectorTests::minAll, Float512VectorTests::minAll);
+        assertReductionArraysEquals(a, r, ra, Float512VectorTests::minLanes, Float512VectorTests::minLanes);
     }
-    static float maxAll(float[] a, int idx) {
+    static float maxLanes(float[] a, int idx) {
         float res = Float.NEGATIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (float)Math.max(res, a[i]);
@@ -913,7 +925,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float maxAll(float[] a) {
+    static float maxLanes(float[] a) {
         float res = Float.NEGATIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (float)Math.max(res, a[i]);
@@ -922,7 +934,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void maxAllFloat512VectorTests(IntFunction<float[]> fa) {
+    static void maxLanesFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         float ra = Float.NEGATIVE_INFINITY;
@@ -930,7 +942,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.maxAll();
+                r[i] = av.maxLanes();
             }
         }
 
@@ -938,11 +950,11 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.max(ra, av.maxAll());
+                ra = (float)Math.max(ra, av.maxLanes());
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Float512VectorTests::maxAll, Float512VectorTests::maxAll);
+        assertReductionArraysEquals(a, r, ra, Float512VectorTests::maxLanes, Float512VectorTests::maxLanes);
     }
 
 

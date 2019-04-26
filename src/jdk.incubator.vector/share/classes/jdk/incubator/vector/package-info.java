@@ -104,7 +104,9 @@
  * }</pre>
  *
  * The scalar computation after the vector computation is required to process the tail of
- * elements, the length of which is smaller than the species length.
+ * elements, the length of which is smaller than the species length. {@code VectorSpecies} also defines a
+ * {@link jdk.incubator.vector.VectorSpecies#loopBound(int) loopBound()} helper method which can be used in place of
+ * {@code (a.length & ~(SPECIES.length() - 1))} in the above code to determine the terminating condition.
  *
  * The example above uses vectors hardcoded to a concrete shape (512-bit). Instead, we could use preferred
  * species as shown below, to make the code dynamically adapt to optimal shape for the platform on which it runs.
@@ -134,7 +136,7 @@
  * EVector a = ...;
  * e[] ar = new e[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_unary_op(a.get(i));
+ *     ar[i] = scalar_unary_op(a.lane(i));
  * }
  * EVector r = EVector.fromArray(a.species(), ar, 0);
  * }</pre>
@@ -156,7 +158,7 @@
  * EVector b = ...;
  * e[] ar = new e[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_binary_op(a.get(i), b.get(i));
+ *     ar[i] = scalar_binary_op(a.lane(i), b.lane(i));
  * }
  * EVector r = EVector.fromArray(a.species(), ar, 0);
  * }</pre>
@@ -189,7 +191,7 @@
  * EVector a = ...;
  * e r = <identity value>;
  * for (int i = 0; i < a.length(); i++) {
- *     r = assoc_scalar_binary_op(r, a.get(i));
+ *     r = assoc_scalar_binary_op(r, a.lane(i));
  * }
  * }</pre>
  *
@@ -208,7 +210,7 @@
  * EVector b = ...;
  * boolean[] ar = new boolean[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_binary_test_op(a.get(i), b.get(i));
+ *     ar[i] = scalar_binary_test_op(a.lane(i), b.lane(i));
  * }
  * VectorMask<E> r = VectorMask.fromArray(a.species(), ar, 0);
  * }</pre>

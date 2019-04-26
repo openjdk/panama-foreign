@@ -112,7 +112,7 @@ public abstract class DoubleVector extends Vector<Double> {
     @ForceInline
     @SuppressWarnings("unchecked")
     public static DoubleVector zero(VectorSpecies<Double> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<DoubleVector>) species.boxType(), double.class, species.length(),
+        return VectorIntrinsics.broadcastCoerced((Class<DoubleVector>) species.vectorType(), double.class, species.length(),
                                                  Double.doubleToLongBits(0.0f), species,
                                                  ((bits, s) -> ((DoubleSpecies)s).op(i -> Double.longBitsToDouble((long)bits))));
     }
@@ -142,7 +142,7 @@ public abstract class DoubleVector extends Vector<Double> {
     public static DoubleVector fromByteArray(VectorSpecies<Double> species, byte[] a, int offset) {
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<DoubleVector>) species.boxType(), double.class, species.length(),
+        return VectorIntrinsics.load((Class<DoubleVector>) species.vectorType(), double.class, species.length(),
                                      a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> {
@@ -200,7 +200,7 @@ public abstract class DoubleVector extends Vector<Double> {
     public static DoubleVector fromArray(VectorSpecies<Double> species, double[] a, int offset){
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.length());
-        return VectorIntrinsics.load((Class<DoubleVector>) species.boxType(), double.class, species.length(),
+        return VectorIntrinsics.load((Class<DoubleVector>) species.vectorType(), double.class, species.length(),
                                      a, (((long) offset) << ARRAY_SHIFT) + Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> ((DoubleSpecies)s).op(n -> c[idx + n]));
@@ -266,8 +266,8 @@ public abstract class DoubleVector extends Vector<Double> {
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        return VectorIntrinsics.loadWithMap((Class<DoubleVector>) species.boxType(), double.class, species.length(),
-                                            IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vix,
+        return VectorIntrinsics.loadWithMap((Class<DoubleVector>) species.vectorType(), double.class, species.length(),
+                                            IntVector.species(species.indexShape()).vectorType(), a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vix,
                                             a, a_offset, indexMap, i_offset, species,
                                             (double[] c, int idx, int[] iMap, int idy, VectorSpecies<Double> s) ->
                                                 ((DoubleSpecies)s).op(n -> c[idx + iMap[idy+n]]));
@@ -336,7 +336,7 @@ public abstract class DoubleVector extends Vector<Double> {
             throw new IllegalArgumentException();
         }
         offset = VectorIntrinsics.checkIndex(offset, bb.limit(), species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<DoubleVector>) species.boxType(), double.class, species.length(),
+        return VectorIntrinsics.load((Class<DoubleVector>) species.vectorType(), double.class, species.length(),
                                      U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + offset,
                                      bb, offset, species,
                                      (c, idx, s) -> {
@@ -392,7 +392,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * value {@code e}.
      *
      * @param species species of the desired vector
-     * @param e the value
+     * @param e the value to be broadcasted
      * @return a vector of vector where all lane elements are set to
      * the primitive value {@code e}
      */
@@ -400,7 +400,7 @@ public abstract class DoubleVector extends Vector<Double> {
     @SuppressWarnings("unchecked")
     public static DoubleVector broadcast(VectorSpecies<Double> species, double e) {
         return VectorIntrinsics.broadcastCoerced(
-            (Class<DoubleVector>) species.boxType(), double.class, species.length(),
+            (Class<DoubleVector>) species.vectorType(), double.class, species.length(),
             Double.doubleToLongBits(e), species,
             ((bits, sp) -> ((DoubleSpecies)sp).op(i -> Double.longBitsToDouble((long)bits))));
     }
@@ -424,7 +424,7 @@ public abstract class DoubleVector extends Vector<Double> {
     public static DoubleVector scalars(VectorSpecies<Double> species, double... es) {
         Objects.requireNonNull(es);
         int ix = VectorIntrinsics.checkIndex(0, es.length, species.length());
-        return VectorIntrinsics.load((Class<DoubleVector>) species.boxType(), double.class, species.length(),
+        return VectorIntrinsics.load((Class<DoubleVector>) species.vectorType(), double.class, species.length(),
                                      es, Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
                                      es, ix, species,
                                      (c, idx, sp) -> ((DoubleSpecies)sp).op(n -> c[idx + n]));
@@ -802,25 +802,25 @@ public abstract class DoubleVector extends Vector<Double> {
      * {@inheritDoc}
      */
     @Override
-    public abstract DoubleVector rotateEL(int i);
+    public abstract DoubleVector rotateLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract DoubleVector rotateER(int i);
+    public abstract DoubleVector rotateLanesRight(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract DoubleVector shiftEL(int i);
+    public abstract DoubleVector shiftLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract DoubleVector shiftER(int i);
+    public abstract DoubleVector shiftLanesRight(int i);
 
     /**
      * Divides this vector by an input vector.
@@ -1722,7 +1722,7 @@ public abstract class DoubleVector extends Vector<Double> {
      *
      * @return the addition of all the lane elements of this vector
      */
-    public abstract double addAll();
+    public abstract double addLanes();
 
     /**
      * Adds all lane elements of this vector, selecting lane elements
@@ -1744,7 +1744,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * @param m the mask controlling lane selection
      * @return the addition of the selected lane elements of this vector
      */
-    public abstract double addAll(VectorMask<Double> m);
+    public abstract double addLanes(VectorMask<Double> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1763,7 +1763,7 @@ public abstract class DoubleVector extends Vector<Double> {
      *
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract double mulAll();
+    public abstract double mulLanes();
 
     /**
      * Multiplies all lane elements of this vector, selecting lane elements
@@ -1784,7 +1784,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract double mulAll(VectorMask<Double> m);
+    public abstract double mulLanes(VectorMask<Double> m);
 
     /**
      * Returns the minimum lane element of this vector.
@@ -1796,7 +1796,7 @@ public abstract class DoubleVector extends Vector<Double> {
      *
      * @return the minimum lane element of this vector
      */
-    public abstract double minAll();
+    public abstract double minLanes();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -1810,7 +1810,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
      */
-    public abstract double minAll(VectorMask<Double> m);
+    public abstract double minLanes(VectorMask<Double> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -1822,7 +1822,7 @@ public abstract class DoubleVector extends Vector<Double> {
      *
      * @return the maximum lane element of this vector
      */
-    public abstract double maxAll();
+    public abstract double maxLanes();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements
@@ -1836,7 +1836,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
      */
-    public abstract double maxAll(VectorMask<Double> m);
+    public abstract double maxLanes(VectorMask<Double> m);
 
 
     // Type specific accessors
@@ -1980,13 +1980,13 @@ public abstract class DoubleVector extends Vector<Double> {
         final Function<double[], DoubleVector> vectorFactory;
 
         private DoubleSpecies(VectorShape shape,
-                          Class<?> boxType,
+                          Class<?> vectorType,
                           Class<?> maskType,
                           Function<double[], DoubleVector> vectorFactory,
                           Function<boolean[], VectorMask<Double>> maskFactory,
                           Function<IntUnaryOperator, VectorShuffle<Double>> shuffleFromArrayFactory,
                           fShuffleFromArray<Double> shuffleFromOpFactory) {
-            super(shape, double.class, Double.SIZE, boxType, maskType, maskFactory,
+            super(shape, double.class, Double.SIZE, vectorType, maskType, maskFactory,
                   shuffleFromArrayFactory, shuffleFromOpFactory);
             this.vectorFactory = vectorFactory;
         }

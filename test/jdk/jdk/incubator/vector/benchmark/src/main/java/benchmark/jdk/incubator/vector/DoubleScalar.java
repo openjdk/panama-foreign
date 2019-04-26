@@ -260,6 +260,18 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public void max(Blackhole bh) {
         double[] as = fa.apply(size);
@@ -298,7 +310,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void addAll(Blackhole bh) {
+    public void addLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         double r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -311,7 +323,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void mulAll(Blackhole bh) {
+    public void mulLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         double r = 1;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -324,7 +336,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void minAll(Blackhole bh) {
+    public void minLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         double r = Double.POSITIVE_INFINITY;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -337,7 +349,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void maxAll(Blackhole bh) {
+    public void maxLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         double r = Double.NEGATIVE_INFINITY;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {

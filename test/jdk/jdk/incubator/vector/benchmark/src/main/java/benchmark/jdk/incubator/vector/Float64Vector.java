@@ -24,6 +24,7 @@
 package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.VectorShape;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorShuffle;
@@ -264,6 +265,18 @@ public class Float64Vector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public void max(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
@@ -302,7 +315,7 @@ public class Float64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void addAll(Blackhole bh) {
+    public void addLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float ra = 0;
 
@@ -310,14 +323,14 @@ public class Float64Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra += av.addAll();
+                ra += av.addLanes();
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void mulAll(Blackhole bh) {
+    public void mulLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float ra = 1;
 
@@ -325,14 +338,14 @@ public class Float64Vector extends AbstractVectorBenchmark {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra *= av.mulAll();
+                ra *= av.mulLanes();
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void minAll(Blackhole bh) {
+    public void minLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float ra = Float.POSITIVE_INFINITY;
 
@@ -340,14 +353,14 @@ public class Float64Vector extends AbstractVectorBenchmark {
             ra = Float.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.min(ra, av.minAll());
+                ra = (float)Math.min(ra, av.minLanes());
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void maxAll(Blackhole bh) {
+    public void maxLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float ra = Float.NEGATIVE_INFINITY;
 
@@ -355,7 +368,7 @@ public class Float64Vector extends AbstractVectorBenchmark {
             ra = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.max(ra, av.maxAll());
+                ra = (float)Math.max(ra, av.maxLanes());
             }
         }
         bh.consume(ra);
@@ -383,7 +396,7 @@ public class Float64Vector extends AbstractVectorBenchmark {
         float[] a = fa.apply(size);
         float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Float> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Float> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -403,7 +416,7 @@ public class Float64Vector extends AbstractVectorBenchmark {
         float[] a = fa.apply(size);
         float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Float> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Float> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -423,7 +436,7 @@ public class Float64Vector extends AbstractVectorBenchmark {
         float[] a = fa.apply(size);
         float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Float> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Float> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -443,7 +456,7 @@ public class Float64Vector extends AbstractVectorBenchmark {
         float[] a = fa.apply(size);
         float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Float> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Float> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -463,7 +476,7 @@ public class Float64Vector extends AbstractVectorBenchmark {
         float[] a = fa.apply(size);
         float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Float> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Float> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -483,7 +496,7 @@ public class Float64Vector extends AbstractVectorBenchmark {
         float[] a = fa.apply(size);
         float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Float> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Float> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

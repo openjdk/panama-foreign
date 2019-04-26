@@ -37,15 +37,15 @@ public class Poly1305Bench {
     @Param({"16384", "65536"})
     private int dataSize;
 
-    private Poly1305Vector poly1305_S128 = makePoly1305(Vector.Shape.S_128_BIT);
-    private Poly1305Vector poly1305_S256 = makePoly1305(Vector.Shape.S_256_BIT);
-    private Poly1305Vector poly1305_S512 = makePoly1305(Vector.Shape.S_512_BIT);
+    private Poly1305Vector poly1305_S128 = makePoly1305(VectorShape.S_128_BIT);
+    private Poly1305Vector poly1305_S256 = makePoly1305(VectorShape.S_256_BIT);
+    private Poly1305Vector poly1305_S512 = makePoly1305(VectorShape.S_512_BIT);
 
     private byte[] in;
     private byte[] out = new byte[16];
     private byte[] key = new byte[32];
 
-    private static Poly1305Vector makePoly1305(Vector.Shape shape) {
+    private static Poly1305Vector makePoly1305(VectorShape shape) {
         Poly1305Vector poly = new Poly1305Vector(shape);
         runKAT(poly);
         return poly;
@@ -78,21 +78,21 @@ public class Poly1305Bench {
         private static final int KEY_LENGTH = 32;
         private static final int RS_LENGTH = KEY_LENGTH / 2;
 
-        private final Vector.Species<Long> longSpecies;
-        private final Vector.Species<Integer> intSpecies;
+        private final VectorSpecies<Long> longSpecies;
+        private final VectorSpecies<Integer> intSpecies;
         private final int vectorWidth;
         private final int parBlockCount;
 
-        private final LongVector.Shuffle<Long> inShuffle0;
-        private final LongVector.Shuffle<Long> inShuffle1;
-        private final IntVector.Mask<Long> inMask;
+        private final VectorShuffle<Long> inShuffle0;
+        private final VectorShuffle<Long> inShuffle1;
+        private final VectorMask<Long> inMask;
 
-        public Poly1305Vector(Vector.Shape shape) {
+        public Poly1305Vector(VectorShape shape) {
 
-            this.longSpecies = Vector.Species.of(long.class, shape);
+            this.longSpecies = VectorSpecies.of(long.class, shape);
             int intSize = shape.bitSize() / 2;
-            Vector.Shape intShape = Vector.Shape.forBitSize(intSize);
-            this.intSpecies = Vector.Species.of(int.class, intShape);
+            VectorShape intShape = VectorShape.forBitSize(intSize);
+            this.intSpecies = VectorSpecies.of(int.class, intShape);
             this.vectorWidth = longSpecies.length();
             this.parBlockCount = vectorWidth * 16;
 
@@ -101,26 +101,26 @@ public class Poly1305Bench {
             this.inMask = makeInMask();
         }
 
-        private LongVector.Shuffle<Long> makeInShuffle0() {
+        private VectorShuffle<Long> makeInShuffle0() {
             int[] indexArr = new int[vectorWidth];
             for (int i = 0; i < indexArr.length; i++) {
                 indexArr[i] = (2 * i) % vectorWidth;
             }
-            return LongVector.shuffleFromArray(longSpecies, indexArr, 0);
+            return VectorShuffle.fromArray(longSpecies, indexArr, 0);
         }
-        private LongVector.Shuffle<Long> makeInShuffle1() {
+        private VectorShuffle<Long> makeInShuffle1() {
             int[] indexArr = new int[vectorWidth];
             for (int i = 0; i < indexArr.length; i++) {
                 indexArr[i] = ((2 * i) % vectorWidth) + 1;
             }
-            return LongVector.shuffleFromArray(longSpecies, indexArr, 0);
+            return VectorShuffle.fromArray(longSpecies, indexArr, 0);
         }
-        private LongVector.Mask<Long> makeInMask() {
+        private VectorMask<Long> makeInMask() {
             boolean[] maskArr = new boolean[vectorWidth];
             for (int i = vectorWidth / 2; i < vectorWidth; i++) {
                 maskArr[i] = true;
             }
-            return LongVector.maskFromArray(longSpecies, maskArr, 0);
+            return VectorMask.fromArray(longSpecies, maskArr, 0);
         }
 
         private static int[] fromByteArray(byte[] buf) {
@@ -298,14 +298,14 @@ public class Poly1305Bench {
             IntVector a0 = (IntVector)
                 inAlign0.and(LIMB_MASK).cast(intSpecies);
             IntVector a1 = (IntVector)
-                inAlign0.shiftR(26).and(LIMB_MASK).cast(intSpecies);
+                inAlign0.shiftRight(26).and(LIMB_MASK).cast(intSpecies);
             IntVector a2 = (IntVector)
-                inAlign0.shiftR(52).and(0xFFF).cast(intSpecies);
-            a2 = a2.or(inAlign1.and(0x3FFF).shiftL(12).cast(intSpecies));
+                inAlign0.shiftRight(52).and(0xFFF).cast(intSpecies);
+            a2 = a2.or(inAlign1.and(0x3FFF).shiftLeft(12).cast(intSpecies));
             IntVector a3 = (IntVector)
-                inAlign1.shiftR(14).and(LIMB_MASK).cast(intSpecies);
+                inAlign1.shiftRight(14).and(LIMB_MASK).cast(intSpecies);
             IntVector a4 = (IntVector)
-                inAlign1.shiftR(40).and(0xFFFFFF).cast(intSpecies);
+                inAlign1.shiftRight(40).and(0xFFFFFF).cast(intSpecies);
             a4 = a4.or(1 << 24);
 
             int numParBlocks = msg.length / parBlockCount - 1;
@@ -349,17 +349,17 @@ public class Poly1305Bench {
 
                 // carry/reduce
                 // Note: this carry/reduce sequence might not be correct
-                c4 = c4.add(c3.shiftR(BITS_PER_LIMB));
+                c4 = c4.add(c3.shiftRight(BITS_PER_LIMB));
                 c3 = c3.and(LIMB_MASK);
-                c0 = c0.add(c4.shiftR(BITS_PER_LIMB).mul(5));
+                c0 = c0.add(c4.shiftRight(BITS_PER_LIMB).mul(5));
                 c4 = c4.and(LIMB_MASK);
-                c1 = c1.add(c0.shiftR(BITS_PER_LIMB));
+                c1 = c1.add(c0.shiftRight(BITS_PER_LIMB));
                 c0 = c0.and(LIMB_MASK);
-                c2 = c2.add(c1.shiftR(BITS_PER_LIMB));
+                c2 = c2.add(c1.shiftRight(BITS_PER_LIMB));
                 c1 = c1.and(LIMB_MASK);
-                c3 = c3.add(c2.shiftR(BITS_PER_LIMB));
+                c3 = c3.add(c2.shiftRight(BITS_PER_LIMB));
                 c2 = c2.and(LIMB_MASK);
-                c4 = c4.add(c3.shiftR(BITS_PER_LIMB));
+                c4 = c4.add(c3.shiftRight(BITS_PER_LIMB));
                 c3 = c3.and(LIMB_MASK);
 
                 a0 = (IntVector) c0.cast(intSpecies);
@@ -381,14 +381,14 @@ public class Poly1305Bench {
                 IntVector in0 = (IntVector)
                     inAlign0.and(LIMB_MASK).cast(intSpecies);
                 IntVector in1 = (IntVector)
-                    inAlign0.shiftR(26).and(LIMB_MASK).cast(intSpecies);
+                    inAlign0.shiftRight(26).and(LIMB_MASK).cast(intSpecies);
                 IntVector in2 = (IntVector)
-                    inAlign0.shiftR(52).and(0xFFF).cast(intSpecies);
-                in2 = in2.or(inAlign1.and(0x3FFF).shiftL(12).cast(intSpecies));
+                    inAlign0.shiftRight(52).and(0xFFF).cast(intSpecies);
+                in2 = in2.or(inAlign1.and(0x3FFF).shiftLeft(12).cast(intSpecies));
                 IntVector in3 = (IntVector)
-                    inAlign1.shiftR(14).and(LIMB_MASK).cast(intSpecies);
+                    inAlign1.shiftRight(14).and(LIMB_MASK).cast(intSpecies);
                 IntVector in4 = (IntVector)
-                    inAlign1.shiftR(40).and(0xFFFFFF).cast(intSpecies);
+                    inAlign1.shiftRight(40).and(0xFFFFFF).cast(intSpecies);
                 in4 = in4.or(1 << 24);
 
                 a0 = a0.add(in0);
@@ -437,17 +437,17 @@ public class Poly1305Bench {
                 .add(a3.cast(longSpecies).mul(rFin1))
                 .add(a4.cast(longSpecies).mul(rFin0));
 
-            c4 = c4.add(c3.shiftR(BITS_PER_LIMB));
+            c4 = c4.add(c3.shiftRight(BITS_PER_LIMB));
             c3 = c3.and(LIMB_MASK);
-            c0 = c0.add(c4.shiftR(BITS_PER_LIMB).mul(5));
+            c0 = c0.add(c4.shiftRight(BITS_PER_LIMB).mul(5));
             c4 = c4.and(LIMB_MASK);
-            c1 = c1.add(c0.shiftR(BITS_PER_LIMB));
+            c1 = c1.add(c0.shiftRight(BITS_PER_LIMB));
             c0 = c0.and(LIMB_MASK);
-            c2 = c2.add(c1.shiftR(BITS_PER_LIMB));
+            c2 = c2.add(c1.shiftRight(BITS_PER_LIMB));
             c1 = c1.and(LIMB_MASK);
-            c3 = c3.add(c2.shiftR(BITS_PER_LIMB));
+            c3 = c3.add(c2.shiftRight(BITS_PER_LIMB));
             c2 = c2.and(LIMB_MASK);
-            c4 = c4.add(c3.shiftR(BITS_PER_LIMB));
+            c4 = c4.add(c3.shiftRight(BITS_PER_LIMB));
             c3 = c3.and(LIMB_MASK);
 
             a0 = (IntVector) c0.cast(intSpecies);
@@ -457,11 +457,11 @@ public class Poly1305Bench {
             a4 = (IntVector) c4.cast(intSpecies);
 
             // collect lanes and calculate tag
-            long a0Fin = a0.addAll();
-            long a1Fin = a1.addAll();
-            long a2Fin = a2.addAll();
-            long a3Fin = a3.addAll();
-            long a4Fin = a4.addAll();
+            long a0Fin = a0.addLanes();
+            long a1Fin = a1.addLanes();
+            long a2Fin = a2.addLanes();
+            long a3Fin = a3.addLanes();
+            long a4Fin = a4.addLanes();
 
             // carry/reduce the result
             a4Fin = a4Fin + (a3Fin >>> BITS_PER_LIMB);

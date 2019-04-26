@@ -105,6 +105,7 @@ public abstract class VectorShuffle<E> {
      * @param species shuffle species
      * @param f the lane index mapping function
      * @return a shuffle of mapped indexes
+     * @see Vector#shuffle(IntUnaryOperator)
      */
     @ForceInline
     public static <E> VectorShuffle<E> shuffle(VectorSpecies<E> species, IntUnaryOperator f) {
@@ -123,6 +124,7 @@ public abstract class VectorShuffle<E> {
      *
      * @param species shuffle species
      * @return a shuffle of lane indexes
+     * @see Vector#shuffleIota()
      */
     @ForceInline
     public static <E> VectorShuffle<E> shuffleIota(VectorSpecies<E> species) {
@@ -141,6 +143,7 @@ public abstract class VectorShuffle<E> {
      * @param species shuffle species
      * @param start starting value of sequence
      * @return a shuffle of lane indexes
+     * @see Vector#shuffleIota(int)
      */
     @ForceInline
     public static <E> VectorShuffle<E> shuffleIota(VectorSpecies<E> species, int start) {
@@ -160,6 +163,7 @@ public abstract class VectorShuffle<E> {
      * @param species shuffle species
      * @param start starting value of sequence
      * @return a shuffle of lane indexes
+     * @see Vector#shuffleOffset(int)
      */
     @ForceInline
     public static <E> VectorShuffle<E> shuffleOffset(VectorSpecies<E> species, int start) {
@@ -181,6 +185,7 @@ public abstract class VectorShuffle<E> {
      * {@code int} value
      * @throws IndexOutOfBoundsException if the number of int values is
      * {@code < species.length()}
+     * @see Vector#shuffleFromValues(int...)
      */
     @ForceInline
     public static <E> VectorShuffle<E> fromValues(VectorSpecies<E> species, int... ixs) {
@@ -200,7 +205,8 @@ public abstract class VectorShuffle<E> {
      * @param offset the offset into the array
      * @return a shuffle loaded from the {@code int} array
      * @throws IndexOutOfBoundsException if {@code offset < 0}, or
-     * {@code offset > a.length - species.length()}
+     * {@code offset > ixs.length - species.length()}
+     * @see Vector#shuffleFromArray(int[], int)
      */
     @ForceInline
     public static <E> VectorShuffle<E> fromArray(VectorSpecies<E> species, int[] ixs, int offset) {

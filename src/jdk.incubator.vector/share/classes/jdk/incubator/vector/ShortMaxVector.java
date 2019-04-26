@@ -155,7 +155,7 @@ final class ShortMaxVector extends ShortVector {
         return VectorIntrinsics.cast(
             ShortMaxVector.class,
             short.class, LENGTH,
-            s.boxType(),
+            s.vectorType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -293,7 +293,7 @@ final class ShortMaxVector extends ShortVector {
     @ForceInline
     public ShortVector reshape(VectorSpecies<Short> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.boxType() == Short64Vector.class)) {
+        if (s.bitSize() == 64 && (s.vectorType() == Short64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 ShortMaxVector.class,
                 short.class, LENGTH,
@@ -302,7 +302,7 @@ final class ShortMaxVector extends ShortVector {
                 this, s,
                 (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s.boxType() == Short128Vector.class)) {
+        } else if (s.bitSize() == 128 && (s.vectorType() == Short128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 ShortMaxVector.class,
                 short.class, LENGTH,
@@ -311,7 +311,7 @@ final class ShortMaxVector extends ShortVector {
                 this, s,
                 (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s.boxType() == Short256Vector.class)) {
+        } else if (s.bitSize() == 256 && (s.vectorType() == Short256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 ShortMaxVector.class,
                 short.class, LENGTH,
@@ -320,7 +320,7 @@ final class ShortMaxVector extends ShortVector {
                 this, s,
                 (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s.boxType() == Short512Vector.class)) {
+        } else if (s.bitSize() == 512 && (s.vectorType() == Short512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 ShortMaxVector.class,
                 short.class, LENGTH,
@@ -330,7 +330,7 @@ final class ShortMaxVector extends ShortVector {
                 (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.boxType() == ShortMaxVector.class)) {
+                && (s.bitSize() % 128 == 0) && (s.vectorType() == ShortMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 ShortMaxVector.class,
                 short.class, LENGTH,
@@ -657,47 +657,74 @@ final class ShortMaxVector extends ShortVector {
 
     @Override
     @ForceInline
-    public ShortMaxVector shiftL(int s) {
+    public ShortMaxVector shiftLeft(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_LSHIFT, ShortMaxVector.class, short.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a << (i & 15))));
+            (v, i) -> v.uOp((__, a) -> (short) (a << (i & 0xF))));
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector shiftL(int s, VectorMask<Short> m) {
-        return blend(shiftL(s), m);
+    public ShortMaxVector shiftLeft(int s, VectorMask<Short> m) {
+        return blend(shiftLeft(s), m);
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector shiftR(int s) {
+    public ShortMaxVector shiftLeft(Vector<Short> s) {
+        ShortMaxVector shiftv = (ShortMaxVector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(ShortVector.broadcast(SPECIES, (short) 0xF));
+        return this.bOp(shiftv, (i, a, b) -> (short) (a << (b & 0xF)));
+    }
+
+    @Override
+    @ForceInline
+    public ShortMaxVector shiftRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, ShortMaxVector.class, short.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> (short) ((a & 0xFFFF) >>> (i & 15))));
+            (v, i) -> v.uOp((__, a) -> (short) ((a & 0xFFFF) >>> (i & 0xF))));
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector shiftR(int s, VectorMask<Short> m) {
-        return blend(shiftR(s), m);
+    public ShortMaxVector shiftRight(int s, VectorMask<Short> m) {
+        return blend(shiftRight(s), m);
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector aShiftR(int s) {
+    public ShortMaxVector shiftRight(Vector<Short> s) {
+        ShortMaxVector shiftv = (ShortMaxVector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(ShortVector.broadcast(SPECIES, (short) 0xF));
+        return this.bOp(shiftv, (i, a, b) -> (short) (a >>> (b & 0xF)));
+    }
+
+    @Override
+    @ForceInline
+    public ShortMaxVector shiftArithmeticRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, ShortMaxVector.class, short.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >> (i & 15))));
+            (v, i) -> v.uOp((__, a) -> (short) (a >> (i & 0xF))));
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector aShiftR(int s, VectorMask<Short> m) {
-        return blend(aShiftR(s), m);
+    public ShortMaxVector shiftArithmeticRight(int s, VectorMask<Short> m) {
+        return blend(shiftArithmeticRight(s), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortMaxVector shiftArithmeticRight(Vector<Short> s) {
+        ShortMaxVector shiftv = (ShortMaxVector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(ShortVector.broadcast(SPECIES, (short) 0xF));
+        return this.bOp(shiftv, (i, a, b) -> (short) (a >> (b & 0xF)));
     }
     // Ternary operations
 
@@ -706,7 +733,7 @@ final class ShortMaxVector extends ShortVector {
 
     @Override
     @ForceInline
-    public short addAll() {
+    public short addLanes() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_ADD, ShortMaxVector.class, short.class, LENGTH,
             this,
@@ -715,7 +742,7 @@ final class ShortMaxVector extends ShortVector {
 
     @Override
     @ForceInline
-    public short andAll() {
+    public short andLanes() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_AND, ShortMaxVector.class, short.class, LENGTH,
             this,
@@ -724,13 +751,13 @@ final class ShortMaxVector extends ShortVector {
 
     @Override
     @ForceInline
-    public short andAll(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, (short) -1).blend(this, m).andAll();
+    public short andLanes(VectorMask<Short> m) {
+        return ShortVector.broadcast(SPECIES, (short) -1).blend(this, m).andLanes();
     }
 
     @Override
     @ForceInline
-    public short minAll() {
+    public short minLanes() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, ShortMaxVector.class, short.class, LENGTH,
             this,
@@ -739,7 +766,7 @@ final class ShortMaxVector extends ShortVector {
 
     @Override
     @ForceInline
-    public short maxAll() {
+    public short maxLanes() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, ShortMaxVector.class, short.class, LENGTH,
             this,
@@ -748,7 +775,7 @@ final class ShortMaxVector extends ShortVector {
 
     @Override
     @ForceInline
-    public short mulAll() {
+    public short mulLanes() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, ShortMaxVector.class, short.class, LENGTH,
             this,
@@ -757,7 +784,7 @@ final class ShortMaxVector extends ShortVector {
 
     @Override
     @ForceInline
-    public short orAll() {
+    public short orLanes() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_OR, ShortMaxVector.class, short.class, LENGTH,
             this,
@@ -766,13 +793,13 @@ final class ShortMaxVector extends ShortVector {
 
     @Override
     @ForceInline
-    public short orAll(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).orAll();
+    public short orLanes(VectorMask<Short> m) {
+        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).orLanes();
     }
 
     @Override
     @ForceInline
-    public short xorAll() {
+    public short xorLanes() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_XOR, ShortMaxVector.class, short.class, LENGTH,
             this,
@@ -781,34 +808,34 @@ final class ShortMaxVector extends ShortVector {
 
     @Override
     @ForceInline
-    public short xorAll(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).xorAll();
+    public short xorLanes(VectorMask<Short> m) {
+        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).xorLanes();
     }
 
 
     @Override
     @ForceInline
-    public short addAll(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).addAll();
+    public short addLanes(VectorMask<Short> m) {
+        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).addLanes();
     }
 
 
     @Override
     @ForceInline
-    public short mulAll(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, (short) 1).blend(this, m).mulAll();
+    public short mulLanes(VectorMask<Short> m) {
+        return ShortVector.broadcast(SPECIES, (short) 1).blend(this, m).mulLanes();
     }
 
     @Override
     @ForceInline
-    public short minAll(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, Short.MAX_VALUE).blend(this, m).minAll();
+    public short minLanes(VectorMask<Short> m) {
+        return ShortVector.broadcast(SPECIES, Short.MAX_VALUE).blend(this, m).minLanes();
     }
 
     @Override
     @ForceInline
-    public short maxAll(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, Short.MIN_VALUE).blend(this, m).maxAll();
+    public short maxLanes(VectorMask<Short> m) {
+        return ShortVector.broadcast(SPECIES, Short.MIN_VALUE).blend(this, m).maxLanes();
     }
 
     @Override
@@ -1029,7 +1056,7 @@ final class ShortMaxVector extends ShortVector {
 
 
     @Override
-    public ShortMaxVector rotateEL(int j) {
+    public ShortMaxVector rotateLanesLeft(int j) {
         short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length(); i++){
@@ -1039,7 +1066,7 @@ final class ShortMaxVector extends ShortVector {
     }
 
     @Override
-    public ShortMaxVector rotateER(int j) {
+    public ShortMaxVector rotateLanesRight(int j) {
         short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length(); i++){
@@ -1054,7 +1081,7 @@ final class ShortMaxVector extends ShortVector {
     }
 
     @Override
-    public ShortMaxVector shiftEL(int j) {
+    public ShortMaxVector shiftLanesLeft(int j) {
         short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length() - j; i++) {
@@ -1064,7 +1091,7 @@ final class ShortMaxVector extends ShortVector {
     }
 
     @Override
-    public ShortMaxVector shiftER(int j) {
+    public ShortMaxVector shiftLanesRight(int j) {
         short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length() - j; i++){

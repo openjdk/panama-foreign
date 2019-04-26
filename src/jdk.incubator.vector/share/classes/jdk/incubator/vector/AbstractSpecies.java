@@ -46,14 +46,14 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
     @Stable
     protected final int elementSize;
     @Stable
-    protected final Class<?> boxType;
+    protected final Class<?> vectorType;
     @Stable
     protected final Class<?> maskType;
     @Stable
     protected final VectorShape indexShape;
 
     AbstractSpecies(VectorShape shape, Class<E> elementType, int elementSize,
-                    Class<?> boxType, Class<?> maskType, Function<boolean[], VectorMask<E>> maskFactory,
+                    Class<?> vectorType, Class<?> maskType, Function<boolean[], VectorMask<E>> maskFactory,
                     Function<IntUnaryOperator, VectorShuffle<E>> shuffleFromOpFactory,
                     fShuffleFromArray<E> shuffleFromArrayFactory) {
 
@@ -64,13 +64,12 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
         this.shape = shape;
         this.elementType = elementType;
         this.elementSize = elementSize;
-        this.boxType = boxType;
+        this.vectorType = vectorType;
         this.maskType = maskType;
 
-        if (boxType == Long64Vector.class || boxType == Double64Vector.class) {
+        if (vectorType == Long64Vector.class || vectorType == Double64Vector.class) {
             indexShape = VectorShape.S_64_BIT;
-        }
-        else {
+        } else {
             int bitSize = Vector.bitSizeForVectorLength(int.class, shape.bitSize() / elementSize);
             indexShape = VectorShape.forBitSize(bitSize);
         }
@@ -96,8 +95,8 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
 
     @Override
     @ForceInline
-    public Class<?> boxType() {
-        return boxType;
+    public Class<?> vectorType() {
+        return vectorType;
     }
 
     @Override

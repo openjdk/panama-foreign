@@ -112,7 +112,7 @@ public abstract class ShortVector extends Vector<Short> {
     @ForceInline
     @SuppressWarnings("unchecked")
     public static ShortVector zero(VectorSpecies<Short> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<ShortVector>) species.boxType(), short.class, species.length(),
+        return VectorIntrinsics.broadcastCoerced((Class<ShortVector>) species.vectorType(), short.class, species.length(),
                                                  0, species,
                                                  ((bits, s) -> ((ShortSpecies)s).op(i -> (short)bits)));
     }
@@ -142,7 +142,7 @@ public abstract class ShortVector extends Vector<Short> {
     public static ShortVector fromByteArray(VectorSpecies<Short> species, byte[] a, int offset) {
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<ShortVector>) species.boxType(), short.class, species.length(),
+        return VectorIntrinsics.load((Class<ShortVector>) species.vectorType(), short.class, species.length(),
                                      a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> {
@@ -200,7 +200,7 @@ public abstract class ShortVector extends Vector<Short> {
     public static ShortVector fromArray(VectorSpecies<Short> species, short[] a, int offset){
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.length());
-        return VectorIntrinsics.load((Class<ShortVector>) species.boxType(), short.class, species.length(),
+        return VectorIntrinsics.load((Class<ShortVector>) species.vectorType(), short.class, species.length(),
                                      a, (((long) offset) << ARRAY_SHIFT) + Unsafe.ARRAY_SHORT_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> ((ShortSpecies)s).op(n -> c[idx + n]));
@@ -313,7 +313,7 @@ public abstract class ShortVector extends Vector<Short> {
             throw new IllegalArgumentException();
         }
         offset = VectorIntrinsics.checkIndex(offset, bb.limit(), species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<ShortVector>) species.boxType(), short.class, species.length(),
+        return VectorIntrinsics.load((Class<ShortVector>) species.vectorType(), short.class, species.length(),
                                      U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + offset,
                                      bb, offset, species,
                                      (c, idx, s) -> {
@@ -369,7 +369,7 @@ public abstract class ShortVector extends Vector<Short> {
      * value {@code e}.
      *
      * @param species species of the desired vector
-     * @param e the value
+     * @param e the value to be broadcasted
      * @return a vector of vector where all lane elements are set to
      * the primitive value {@code e}
      */
@@ -377,7 +377,7 @@ public abstract class ShortVector extends Vector<Short> {
     @SuppressWarnings("unchecked")
     public static ShortVector broadcast(VectorSpecies<Short> species, short e) {
         return VectorIntrinsics.broadcastCoerced(
-            (Class<ShortVector>) species.boxType(), short.class, species.length(),
+            (Class<ShortVector>) species.vectorType(), short.class, species.length(),
             e, species,
             ((bits, sp) -> ((ShortSpecies)sp).op(i -> (short)bits)));
     }
@@ -401,7 +401,7 @@ public abstract class ShortVector extends Vector<Short> {
     public static ShortVector scalars(VectorSpecies<Short> species, short... es) {
         Objects.requireNonNull(es);
         int ix = VectorIntrinsics.checkIndex(0, es.length, species.length());
-        return VectorIntrinsics.load((Class<ShortVector>) species.boxType(), short.class, species.length(),
+        return VectorIntrinsics.load((Class<ShortVector>) species.vectorType(), short.class, species.length(),
                                      es, Unsafe.ARRAY_SHORT_BASE_OFFSET,
                                      es, ix, species,
                                      (c, idx, sp) -> ((ShortSpecies)sp).op(n -> c[idx + n]));
@@ -779,25 +779,25 @@ public abstract class ShortVector extends Vector<Short> {
      * {@inheritDoc}
      */
     @Override
-    public abstract ShortVector rotateEL(int i);
+    public abstract ShortVector rotateLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract ShortVector rotateER(int i);
+    public abstract ShortVector rotateLanesRight(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract ShortVector shiftEL(int i);
+    public abstract ShortVector shiftLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract ShortVector shiftER(int i);
+    public abstract ShortVector shiftLanesRight(int i);
 
 
 
@@ -977,16 +977,16 @@ public abstract class ShortVector extends Vector<Short> {
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
      * operation ({@code <<}) to each lane to left shift the
-     * element by shift value as specified by the input scalar. Only the 4
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
      * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
      *
      * @param s the input scalar; the number of the bits to left shift
-     * @return the result of logically left shifting left this vector by the
+     * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ShortVector shiftL(int s);
+    public abstract ShortVector shiftLeft(int s);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
@@ -994,18 +994,53 @@ public abstract class ShortVector extends Vector<Short> {
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
      * operation ({@code <<}) to each lane to left shift the
-     * element by shift value as specified by the input scalar. Only the 4
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
      * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
      *
      * @param s the input scalar; the number of the bits to left shift
      * @param m the mask controlling lane selection
-     * @return the result of logically left shifting left this vector by the
+     * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ShortVector shiftL(int s, VectorMask<Short> m);
+    public abstract ShortVector shiftLeft(int s, VectorMask<Short> m);
 
+    /**
+     * Logically left shifts this vector by an input vector.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive logical left shift
+     * operation ({@code <<}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param v the input vector
+     * @return the result of logically left shifting this vector by the input
+     * vector
+     */
+    public abstract ShortVector shiftLeft(Vector<Short> v);
+
+    /**
+     * Logically left shifts this vector by an input vector, selecting lane
+     * elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive logical left shift
+     * operation ({@code <<}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting this vector by the input
+     * vector
+     */
+    public ShortVector shiftLeft(Vector<Short> v, VectorMask<Short> m) {
+        return blend(shiftLeft(v), m);
+    }
 
     // logical, or unsigned, shift right
 
@@ -1015,8 +1050,8 @@ public abstract class ShortVector extends Vector<Short> {
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
      * operation ({@code >>>}) to each lane to logically right shift the
-     * element by shift value as specified by the input scalar. Only the 4
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
      * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
      *
@@ -1024,7 +1059,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ShortVector shiftR(int s);
+    public abstract ShortVector shiftRight(int s);
 
      /**
      * Logically right shifts (or unsigned right shifts) this vector by the
@@ -1032,9 +1067,9 @@ public abstract class ShortVector extends Vector<Short> {
      * mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane to logically right shift the
-     * element by shift value as specified by the input scalar. Only the 4
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * operation ({@code >>}) to each lane to logically right shift the
+     * element by shift value as specified by the input scalar.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
      * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
      *
@@ -1043,8 +1078,44 @@ public abstract class ShortVector extends Vector<Short> {
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ShortVector shiftR(int s, VectorMask<Short> m);
+    public abstract ShortVector shiftRight(int s, VectorMask<Short> m);
 
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by an
+     * input vector.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive logical right shift
+     * operation ({@code >>>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param v the input vector
+     * @return the result of logically right shifting this vector by the
+     * input vector
+     */
+    public abstract ShortVector shiftRight(Vector<Short> v);
+
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by an
+     * input vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive logical right shift
+     * operation ({@code >>>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of logically right shifting this vector by the
+     * input vector
+     */
+    public ShortVector shiftRight(Vector<Short> v, VectorMask<Short> m) {
+        return blend(shiftRight(v), m);
+    }
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -1061,7 +1132,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ShortVector aShiftR(int s);
+    public abstract ShortVector shiftArithmeticRight(int s);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -1080,8 +1151,120 @@ public abstract class ShortVector extends Vector<Short> {
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ShortVector aShiftR(int s, VectorMask<Short> m);
+    public abstract ShortVector shiftArithmeticRight(int s, VectorMask<Short> m);
 
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by an
+     * input vector.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive arithmetic right
+     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param v the input vector
+     * @return the result of arithmetically right shifting this vector by the
+     * input vector
+     */
+    public abstract ShortVector shiftArithmeticRight(Vector<Short> v);
+
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by an
+     * input vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive arithmetic right
+     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * input vector
+     */
+    public ShortVector shiftArithmeticRight(Vector<Short> v, VectorMask<Short> m) {
+        return blend(shiftArithmeticRight(v), m);
+    }
+
+    /**
+     * Rotates left this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a lane-wise binary operation which produces the result of rotating left the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 16 is a no-op, so only the 4 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0xF.
+     *
+     * @param s the input scalar; the number of the bits to rotate left
+     * @return the result of rotating left this vector by the broadcast of an
+     * input scalar
+     */
+    @ForceInline
+    public final ShortVector rotateLeft(int s) {
+        return shiftLeft(s).or(shiftRight(-s));
+    }
+
+    /**
+     * Rotates left this vector by the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which produces the result of rotating left the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 16 is a no-op, so only the 4 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0xF.
+     *
+     * @param s the input scalar; the number of the bits to rotate left
+     * @param m the mask controlling lane selection
+     * @return the result of rotating left this vector by the broadcast of an
+     * input scalar
+     */
+    @ForceInline
+    public final ShortVector rotateLeft(int s, VectorMask<Short> m) {
+        return shiftLeft(s, m).or(shiftRight(-s, m), m);
+    }
+
+    /**
+     * Rotates right this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a lane-wise binary operation which produces the result of rotating right the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 16 is a no-op, so only the 4 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0xF.
+     *
+     * @param s the input scalar; the number of the bits to rotate right
+     * @return the result of rotating right this vector by the broadcast of an
+     * input scalar
+     */
+    @ForceInline
+    public final ShortVector rotateRight(int s) {
+        return shiftRight(s).or(shiftLeft(-s));
+    }
+
+    /**
+     * Rotates right this vector by the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which produces the result of rotating right the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 16 is a no-op, so only the 4 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0xF.
+     *
+     * @param s the input scalar; the number of the bits to rotate right
+     * @param m the mask controlling lane selection
+     * @return the result of rotating right this vector by the broadcast of an
+     * input scalar
+     */
+    @ForceInline
+    public final ShortVector rotateRight(int s, VectorMask<Short> m) {
+        return shiftRight(s, m).or(shiftLeft(-s, m), m);
+    }
 
     /**
      * {@inheritDoc}
@@ -1118,7 +1301,7 @@ public abstract class ShortVector extends Vector<Short> {
      *
      * @return the addition of all the lane elements of this vector
      */
-    public abstract short addAll();
+    public abstract short addLanes();
 
     /**
      * Adds all lane elements of this vector, selecting lane elements
@@ -1131,7 +1314,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @param m the mask controlling lane selection
      * @return the addition of the selected lane elements of this vector
      */
-    public abstract short addAll(VectorMask<Short> m);
+    public abstract short addLanes(VectorMask<Short> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1142,7 +1325,7 @@ public abstract class ShortVector extends Vector<Short> {
      *
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract short mulAll();
+    public abstract short mulLanes();
 
     /**
      * Multiplies all lane elements of this vector, selecting lane elements
@@ -1155,7 +1338,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract short mulAll(VectorMask<Short> m);
+    public abstract short mulLanes(VectorMask<Short> m);
 
     /**
      * Returns the minimum lane element of this vector.
@@ -1167,7 +1350,7 @@ public abstract class ShortVector extends Vector<Short> {
      *
      * @return the minimum lane element of this vector
      */
-    public abstract short minAll();
+    public abstract short minLanes();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -1181,7 +1364,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
      */
-    public abstract short minAll(VectorMask<Short> m);
+    public abstract short minLanes(VectorMask<Short> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -1193,7 +1376,7 @@ public abstract class ShortVector extends Vector<Short> {
      *
      * @return the maximum lane element of this vector
      */
-    public abstract short maxAll();
+    public abstract short maxLanes();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements
@@ -1207,7 +1390,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
      */
-    public abstract short maxAll(VectorMask<Short> m);
+    public abstract short maxLanes(VectorMask<Short> m);
 
     /**
      * Logically ORs all lane elements of this vector.
@@ -1218,7 +1401,7 @@ public abstract class ShortVector extends Vector<Short> {
      *
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract short orAll();
+    public abstract short orLanes();
 
     /**
      * Logically ORs all lane elements of this vector, selecting lane elements
@@ -1231,7 +1414,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @param m the mask controlling lane selection
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract short orAll(VectorMask<Short> m);
+    public abstract short orLanes(VectorMask<Short> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -1242,7 +1425,7 @@ public abstract class ShortVector extends Vector<Short> {
      *
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract short andAll();
+    public abstract short andLanes();
 
     /**
      * Logically ANDs all lane elements of this vector, selecting lane elements
@@ -1255,7 +1438,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @param m the mask controlling lane selection
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract short andAll(VectorMask<Short> m);
+    public abstract short andLanes(VectorMask<Short> m);
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -1266,7 +1449,7 @@ public abstract class ShortVector extends Vector<Short> {
      *
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract short xorAll();
+    public abstract short xorLanes();
 
     /**
      * Logically XORs all lane elements of this vector, selecting lane elements
@@ -1279,7 +1462,7 @@ public abstract class ShortVector extends Vector<Short> {
      * @param m the mask controlling lane selection
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract short xorAll(VectorMask<Short> m);
+    public abstract short xorLanes(VectorMask<Short> m);
 
     // Type specific accessors
 
@@ -1426,13 +1609,13 @@ public abstract class ShortVector extends Vector<Short> {
         final Function<short[], ShortVector> vectorFactory;
 
         private ShortSpecies(VectorShape shape,
-                          Class<?> boxType,
+                          Class<?> vectorType,
                           Class<?> maskType,
                           Function<short[], ShortVector> vectorFactory,
                           Function<boolean[], VectorMask<Short>> maskFactory,
                           Function<IntUnaryOperator, VectorShuffle<Short>> shuffleFromArrayFactory,
                           fShuffleFromArray<Short> shuffleFromOpFactory) {
-            super(shape, short.class, Short.SIZE, boxType, maskType, maskFactory,
+            super(shape, short.class, Short.SIZE, vectorType, maskType, maskFactory,
                   shuffleFromArrayFactory, shuffleFromOpFactory);
             this.vectorFactory = vectorFactory;
         }

@@ -105,7 +105,7 @@ import jdk.incubator.vector.*;
  * EVector a = ...;
  * e[] ar = new e[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_unary_op(a.get(i));
+ *     ar[i] = scalar_unary_op(a.lane(i));
  * }
  * EVector r = EVector.fromArray(a.species(), ar, 0);
  * }</pre>
@@ -127,7 +127,7 @@ import jdk.incubator.vector.*;
  * EVector b = ...;
  * e[] ar = new e[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_binary_op(a.get(i), b.get(i));
+ *     ar[i] = scalar_binary_op(a.lane(i), b.lane(i));
  * }
  * EVector r = EVector.fromArray(a.species(), ar, 0);
  * }</pre>
@@ -159,7 +159,7 @@ import jdk.incubator.vector.*;
  * EVector a = ...;
  * e r = <identity value>;
  * for (int i = 0; i < a.length(); i++) {
- *     r = assoc_scalar_binary_op(r, a.get(i));
+ *     r = assoc_scalar_binary_op(r, a.lane(i));
  * }
  * }</pre>
  *
@@ -178,7 +178,7 @@ import jdk.incubator.vector.*;
  * EVector b = ...;
  * boolean[] ar = new boolean[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_binary_test_op(a.get(i), b.get(i));
+ *     ar[i] = scalar_binary_test_op(a.lane(i), b.lane(i));
  * }
  * VectorMask r = VectorMask.fromArray(a.species(), ar, 0);
  * }</pre>
@@ -278,7 +278,7 @@ public abstract class Vector<E> {
     /**
      * Returns the element size, in bits, of this vector.
      *
-     * @return the element size, in bits
+     * @return the element size, in bits, of this vector
      */
     public int elementSize() { return species().elementSize(); }
 
@@ -297,9 +297,9 @@ public abstract class Vector<E> {
     public int length() { return species().length(); }
 
     /**
-     * Returns the total vector size, in bits.
+     * Returns the total size, in bits, of this vector.
      *
-     * @return the total vector size, in bits
+     * @return the total size, in bits, of this vector
      */
     public int bitSize() { return species().bitSize(); }
 
@@ -391,7 +391,7 @@ public abstract class Vector<E> {
      * Negates this vector, selecting lane elements controlled by a mask.
      * <p>
      * This is a lane-wise unary operation which applies the primitive negation operation
-     * ({@code -})to each lane.
+     * ({@code -}) to each lane.
      *
      * @param m the mask controlling lane selection
      * @return the negation this vector
@@ -475,7 +475,7 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is equal to an input vector.
      * <p>
-     * This is a lane-wise binary test operation where the primitive equals
+     * This is a lane-wise binary test operation which applies the primitive equals
      * operation ({@code ==}) to each lane.
      *
      * @param v the input vector
@@ -487,7 +487,7 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is not equal to an input vector.
      * <p>
-     * This is a lane-wise binary test operation where the primitive not equals
+     * This is a lane-wise binary test operation which applies the primitive not equals
      * operation ({@code !=}) to each lane.
      *
      * @param v the input vector
@@ -499,7 +499,7 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is less than an input vector.
      * <p>
-     * This is a lane-wise binary test operation where the primitive less than
+     * This is a lane-wise binary test operation which applies the primitive less than
      * operation ({@code <}) to each lane.
      *
      * @param v the input vector
@@ -511,7 +511,7 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is less or equal to an input vector.
      * <p>
-     * This is a lane-wise binary test operation where the primitive less than
+     * This is a lane-wise binary test operation which applies the primitive less than
      * or equal to operation ({@code <=}) to each lane.
      *
      * @param v the input vector
@@ -523,7 +523,7 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is greater than an input vector.
      * <p>
-     * This is a lane-wise binary test operation where the primitive greater than
+     * This is a lane-wise binary test operation which applies the primitive greater than
      * operation ({@code >}) to each lane.
      *
      * @param v the input vector
@@ -535,7 +535,7 @@ public abstract class Vector<E> {
     /**
      * Tests if this vector is greater than or equal to an input vector.
      * <p>
-     * This is a lane-wise binary test operation where the primitive greater than
+     * This is a lane-wise binary test operation which applies the primitive greater than
      * or equal to operation ({@code >=}) to each lane.
      *
      * @param v the input vector
@@ -560,7 +560,7 @@ public abstract class Vector<E> {
      * @return the result of rotating left lane elements of this vector by the
      * given number of lanes
      */
-    public abstract Vector<E> rotateEL(int i);
+    public abstract Vector<E> rotateLanesLeft(int i);
 
     /**
      * Rotates right the lane elements of this vector by the given number of
@@ -572,11 +572,11 @@ public abstract class Vector<E> {
      * element is placed into the result vector at lane index
      * {@code (N + length() - (i % length())) % length()}
      *
-     * @param i the number of lanes to rotate left
+     * @param i the number of lanes to rotate right
      * @return the result of rotating right lane elements of this vector by the
      * given number of lanes
      */
-    public abstract Vector<E> rotateER(int i);
+    public abstract Vector<E> rotateLanesRight(int i);
 
     /**
      * Shift left the lane elements of this vector by the given number of
@@ -592,7 +592,7 @@ public abstract class Vector<E> {
      * given number of lanes
      * @throws IllegalArgumentException if {@code i} is {@code < 0}.
      */
-    public abstract Vector<E> shiftEL(int i);
+    public abstract Vector<E> shiftLanesLeft(int i);
 
     /**
      * Shift right the lane elements of this vector by the given number of
@@ -608,7 +608,7 @@ public abstract class Vector<E> {
      * given number of lanes
      * @throws IllegalArgumentException if {@code i} is {@code < 0}.
      */
-    public abstract Vector<E> shiftER(int i);
+    public abstract Vector<E> shiftLanesRight(int i);
 
     /**
      * Blends the lane elements of this vector with those of an input vector,
@@ -626,6 +626,21 @@ public abstract class Vector<E> {
      * those of an input vector
      */
     public abstract Vector<E> blend(Vector<E> v, VectorMask<E> m);
+
+    /**
+     * Rearranges the lane elements of this vector selecting lane indexes
+     * controlled by a shuffle.
+     * <p>
+     * This is a cross-lane operation that rearranges the lane elements of this
+     * vector.
+     * For each lane of the shuffle, at lane index {@code N} with lane
+     * element {@code I}, the lane element at {@code I} from this vector is
+     * selected and placed into the resulting vector at {@code N}.
+     *
+     * @param s the shuffle controlling lane index selection
+     * @return the rearrangement of the lane elements of this vector
+     */
+    public abstract Vector<E> rearrange(VectorShuffle<E> s);
 
     /**
      * Rearranges the lane elements of this vector and those of an input vector,
@@ -647,26 +662,9 @@ public abstract class Vector<E> {
      * @return the rearrangement of lane elements of this vector and
      * those of an input vector
      */
-    @ForceInline
-    // rearrange
     public abstract Vector<E> rearrange(Vector<E> v,
                                            VectorShuffle<E> s, VectorMask<E> m);
 
-    /**
-     * Rearranges the lane elements of this vector selecting lane indexes
-     * controlled by a shuffle.
-     * <p>
-     * This is a cross-lane operation that rearranges the lane elements of this
-     * vector.
-     * For each lane of the shuffle, at lane index {@code N} with lane
-     * element {@code I}, the lane element at {@code I} from this vector is
-     * selected and placed into the resulting vector at {@code N}.
-     *
-     * @param s the shuffle controlling lane index selection
-     * @return the rearrangement of the lane elements of this vector
-     */
-    // rearrange
-    public abstract Vector<E> rearrange(VectorShuffle<E> s);
 
 
     // Conversions
@@ -716,8 +714,8 @@ public abstract class Vector<E> {
      * <p>
      * The following pseudocode expresses the behavior:
      * <pre>{@code
-     * int blen = Math.max(this.bitSize(), s.bitSize()) / Byte.SIZE;
-     * ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+     * int bufferLen = Math.max(this.bitSize(), s.bitSize()) / Byte.SIZE;
+     * ByteBuffer bb = ByteBuffer.allocate(bufferLen).order(ByteOrder.nativeOrder());
      * this.intoByteBuffer(bb, 0);
      * return $type$Vector.fromByteBuffer(s, bb, 0);
      * }</pre>
@@ -725,8 +723,9 @@ public abstract class Vector<E> {
      * @param s species of desired vector
      * @param <F> the boxed element type of the species
      * @return a vector transformed, by shape and element type, from this vector
+     * @see Vector#reshape(VectorSpecies)
+     * @see Vector#cast(VectorSpecies)
      */
-    @ForceInline
     public abstract <F> Vector<F> reinterpret(VectorSpecies<F> s);
 
     @ForceInline
@@ -775,6 +774,8 @@ public abstract class Vector<E> {
      *
      * @param s species of the desired vector
      * @return a vector transformed, by shape, from this vector
+     * @see Vector#reinterpret(VectorSpecies)
+     * @see Vector#cast(VectorSpecies)
      */
     public abstract Vector<E> reshape(VectorSpecies<E> s);
 
@@ -796,6 +797,8 @@ public abstract class Vector<E> {
      * @param s species of the desired vector
      * @param <F> the boxed element type of the species
      * @return a vector converted by shape and element type from this vector
+     * @see Vector#reshape(VectorSpecies)
+     * @see Vector#reinterpret(VectorSpecies)
      */
     public abstract <F> Vector<F> cast(VectorSpecies<F> s);
 
@@ -935,5 +938,187 @@ public abstract class Vector<E> {
         else {
             throw new IllegalArgumentException("Bad vector type: " + c.getName());
         }
+    }
+
+    /**
+     * Returns a mask of same species as {@code this} vector and where each lane is set or unset according to given
+     * {@code boolean} values.
+     * <p>
+     * This method behaves as if it returns the result of calling the static {@link VectorMask#fromValues(VectorSpecies, boolean...) fromValues()}
+     * method in VectorMask as follows:
+     * <pre> {@code
+     *     return VectorMask.fromValues(this.species(), bits);
+     * } </pre>
+     *
+     * @param bits the given {@code boolean} values
+     * @return a mask where each lane is set or unset according to the given {@code boolean} value
+     * @throws IndexOutOfBoundsException if {@code bits.length < this.species().length()}
+     * @see VectorMask#fromValues(VectorSpecies, boolean...)
+     */
+    @ForceInline
+    public final VectorMask<E> maskFromValues(boolean... bits) {
+        return VectorMask.fromValues(this.species(), bits);
+    }
+
+    /**
+     * Loads a mask of same species as {@code this} vector from a {@code boolean} array starting at an offset.
+     * <p>
+     * This method behaves as if it returns the result of calling the static {@link VectorMask#fromArray(VectorSpecies, boolean[], int) fromArray()}
+     * method in VectorMask as follows:
+     * <pre> {@code
+     *     return VectorMask.fromArray(this.species(), bits, offset);
+     * } </pre>
+     *
+     * @param bits the {@code boolean} array
+     * @param offset the offset into the array
+     * @return the mask loaded from a {@code boolean} array
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
+     * {@code offset > bits.length - species.length()}
+     * @see VectorMask#fromArray(VectorSpecies, boolean[], int)
+     */
+    @ForceInline
+    public final VectorMask<E> maskFromArray(boolean[] bits, int offset) {
+        return VectorMask.fromArray(this.species(), bits, offset);
+    }
+
+    /**
+     * Returns a mask of same species as {@code this} vector and where all lanes are set.
+     *
+     * @return a mask where all lanes are set
+     * @see VectorMask#maskAllTrue(VectorSpecies)
+     */
+    @ForceInline
+    public final VectorMask<E> maskAllTrue() {
+        return VectorMask.maskAllTrue(this.species());
+    }
+
+    /**
+     * Returns a mask of same species as {@code this} vector and where all lanes are unset.
+     *
+     * @return a mask where all lanes are unset
+     * @see VectorMask#maskAllFalse(VectorSpecies)
+     */
+    @ForceInline
+    public final VectorMask<E> maskAllFalse() {
+        return VectorMask.maskAllFalse(this.species());
+    }
+
+    /**
+     * Returns a shuffle of same species as {@code this} vector and where each lane element is set to a given
+     * {@code int} value logically AND'ed by the species length minus one.
+     * <p>
+     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#fromValues(VectorSpecies, int...) fromValues()}
+     * method in VectorShuffle as follows:
+     * <pre> {@code
+     *     return VectorShuffle.fromValues(this.species(), ixs);
+     * } </pre>
+     *
+     * @param ixs the given {@code int} values
+     * @return a shuffle where each lane element is set to a given
+     * {@code int} value
+     * @throws IndexOutOfBoundsException if the number of int values is
+     * {@code < this.species().length()}
+     * @see AbstractShuffle#fromValues(VectorSpecies, int...)
+     */
+    @ForceInline
+    public final VectorShuffle<E> shuffleFromValues(int... ixs) {
+        return VectorShuffle.fromValues(this.species(), ixs);
+    }
+
+    /**
+     * Loads a shuffle of same species as {@code this} vector from an {@code int} array starting at an offset.
+     * <p>
+     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#fromArray(VectorSpecies, int[], int) fromArray()}
+     * method in VectorShuffle as follows:
+     * <pre> {@code
+     *     return VectorShuffle.fromArray(this.species(), ixs, offset);
+     * } </pre>
+     *
+     * @param ixs the {@code int} array
+     * @param offset the offset into the array
+     * @return a shuffle loaded from the {@code int} array
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
+     * {@code offset > ixs.length - this.species().length()}
+     * @see AbstractShuffle#fromArray(VectorSpecies, int[], int)
+     */
+    @ForceInline
+    public final VectorShuffle<E> shuffleFromArray(int[] ixs, int offset) {
+        return VectorShuffle.fromArray(this.species(), ixs, offset);
+    }
+
+    /**
+     * Returns a shuffle of same species as {@code this} vector of mapped indexes where each lane element is
+     * the result of applying a mapping function to the corresponding lane
+     * index.
+     * <p>
+     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#shuffle(VectorSpecies, IntUnaryOperator) shuffle()}
+     * method in VectorShuffle as follows:
+     * <pre> {@code
+     *     return AbstractShuffle.shuffle(this.species(), f);
+     * } </pre>
+     *
+     * @param f the lane index mapping function
+     * @return a shuffle of mapped indexes
+     * @see AbstractShuffle#shuffle(VectorSpecies, IntUnaryOperator)
+     */
+    @ForceInline
+    public final VectorShuffle<E> shuffle(IntUnaryOperator f) {
+        return AbstractShuffle.shuffle(this.species(), f);
+    }
+
+    /**
+     * Returns a shuffle of same species as {@code this} vector and where each lane element is the value of its
+     * corresponding lane index.
+     * <p>
+     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#shuffleIota(VectorSpecies) shuffleIota()}
+     * method in VectorShuffle as follows:
+     * <pre> {@code
+     *     return VectorShuffle.shuffleIota(this.species());
+     * } </pre>
+     *
+     * @return a shuffle of lane indexes
+     * @see AbstractShuffle#shuffleIota(VectorSpecies)
+     */
+    @ForceInline
+    public final VectorShuffle<E> shuffleIota() {
+        return VectorShuffle.shuffleIota(this.species());
+    }
+
+    /**
+     * Returns a shuffle of same species as {@code this} vector and with lane elements set to sequential {@code int}
+     * values starting from {@code start}.
+     * <p>
+     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#shuffleIota(VectorSpecies, int) shuffleIota()}
+     * method in VectorShuffle as follows:
+     * <pre> {@code
+     *     return VectorShuffle.shuffleIota(this.species(), start);
+     * } </pre>
+     *
+     * @param start starting value of sequence
+     * @return a shuffle of lane indexes
+     * @see AbstractShuffle#shuffleIota(VectorSpecies, int)
+     */
+    @ForceInline
+    public final VectorShuffle<E> shuffleIota(int start) {
+        return VectorShuffle.shuffleIota(this.species(), start);
+    }
+
+    /**
+     * Returns a shuffle of same species as {@code this} vector and with lane elements set to sequential {@code int}
+     * values starting from {@code start} and looping around species length.
+     * <p>
+     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#shuffleOffset(VectorSpecies, int) shuffleOffset()}
+     * method in VectorShuffle as follows:
+     * <pre> {@code
+     *     return VectorShuffle.shuffleOffset(this.species(), start);
+     * } </pre>
+     *
+     * @param start starting value of sequence
+     * @return a shuffle of lane indexes
+     * @see AbstractShuffle#shuffleOffset(VectorSpecies, int)
+     */
+    @ForceInline
+    public final VectorShuffle<E> shuffleOffset(int start) {
+        return VectorShuffle.shuffleOffset(this.species(), start);
     }
 }

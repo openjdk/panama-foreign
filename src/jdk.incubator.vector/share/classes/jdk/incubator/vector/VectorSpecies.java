@@ -44,16 +44,16 @@ public interface VectorSpecies<E> {
     public abstract Class<E> elementType();
 
     /**
-     * Returns the vector box type for this species
+     * Returns the vector type corresponding to this species
      *
-     * @return the box type
+     * @return the vector type corresponding to this species
      */
-    abstract Class<?> boxType();
+    abstract Class<?> vectorType();
 
     /**
      * Returns the vector mask type for this species
      *
-     * @return the box type
+     * @return the mask type
      */
     abstract Class<?> maskType();
 
@@ -69,19 +69,18 @@ public interface VectorSpecies<E> {
      * Returns the shape of masks, shuffles, and vectors produced by this
      * species.
      *
-     * @return the primitive element type
+     * @return the shape
      */
     public abstract VectorShape shape();
 
     /**
      * Returns the shape of the corresponding index species
-     * @return the shape
+     * @return the shape of index species
      */
-    @ForceInline
     public abstract VectorShape indexShape();
 
     /**
-     * Returns the mask, shuffe, or vector lanes produced by this species.
+     * Returns the mask, shuffle, or vector lanes produced by this species.
      *
      * @return the the number of lanes
      */
@@ -94,6 +93,16 @@ public interface VectorSpecies<E> {
      * @return the total vector size, in bits
      */
     default public int bitSize() { return shape().bitSize(); }
+
+    /**
+     * Helper function to calculate the loop terminating condition when iterating over an array of given length.
+     * Returns the result of {@code (length & ~(this.length() - 1))}
+     *
+     * @return the result of {@code (length & ~(this.length() - 1))}
+     */
+    default public int loopBound(int length) {
+        return length & ~(this.length() - 1);
+    }
 
     // Factory
 
