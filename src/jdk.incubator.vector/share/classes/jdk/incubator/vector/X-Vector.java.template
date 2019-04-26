@@ -115,11 +115,11 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
     @SuppressWarnings("unchecked")
     public static $abstractvectortype$ zero(VectorSpecies<$Boxtype$> species) {
 #if[FP]
-        return VectorIntrinsics.broadcastCoerced((Class<$Type$Vector>) species.boxType(), $type$.class, species.length(),
+        return VectorIntrinsics.broadcastCoerced((Class<$Type$Vector>) species.vectorType(), $type$.class, species.length(),
                                                  $Type$.$type$To$Bitstype$Bits(0.0f), species,
                                                  ((bits, s) -> (($Type$Species)s).op(i -> $Type$.$bitstype$BitsTo$Type$(($bitstype$)bits))));
 #else[FP]
-        return VectorIntrinsics.broadcastCoerced((Class<$Type$Vector>) species.boxType(), $type$.class, species.length(),
+        return VectorIntrinsics.broadcastCoerced((Class<$Type$Vector>) species.vectorType(), $type$.class, species.length(),
                                                  0, species,
                                                  ((bits, s) -> (($Type$Species)s).op(i -> ($type$)bits)));
 #end[FP]
@@ -150,7 +150,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
     public static $abstractvectortype$ fromByteArray(VectorSpecies<$Boxtype$> species, byte[] a, int offset) {
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
+        return VectorIntrinsics.load((Class<$abstractvectortype$>) species.vectorType(), $type$.class, species.length(),
                                      a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> {
@@ -208,7 +208,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
     public static $abstractvectortype$ fromArray(VectorSpecies<$Boxtype$> species, $type$[] a, int offset){
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.length());
-        return VectorIntrinsics.load((Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
+        return VectorIntrinsics.load((Class<$abstractvectortype$>) species.vectorType(), $type$.class, species.length(),
                                      a, (((long) offset) << ARRAY_SHIFT) + Unsafe.ARRAY_$TYPE$_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> (($Type$Species)s).op(n -> c[idx + n]));
@@ -281,8 +281,8 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        return VectorIntrinsics.loadWithMap((Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
-                                            IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_$TYPE$_BASE_OFFSET, vix,
+        return VectorIntrinsics.loadWithMap((Class<$abstractvectortype$>) species.vectorType(), $type$.class, species.length(),
+                                            IntVector.species(species.indexShape()).vectorType(), a, Unsafe.ARRAY_$TYPE$_BASE_OFFSET, vix,
                                             a, a_offset, indexMap, i_offset, species,
                                             ($type$[] c, int idx, int[] iMap, int idy, VectorSpecies<$Boxtype$> s) ->
                                                 (($Type$Species)s).op(n -> c[idx + iMap[idy+n]]));
@@ -358,7 +358,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
             throw new IllegalArgumentException();
         }
         offset = VectorIntrinsics.checkIndex(offset, bb.limit(), species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
+        return VectorIntrinsics.load((Class<$abstractvectortype$>) species.vectorType(), $type$.class, species.length(),
                                      U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + offset,
                                      bb, offset, species,
                                      (c, idx, s) -> {
@@ -414,7 +414,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * value {@code e}.
      *
      * @param species species of the desired vector
-     * @param e the value
+     * @param e the value to be broadcasted
      * @return a vector of vector where all lane elements are set to
      * the primitive value {@code e}
      */
@@ -423,7 +423,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
     @SuppressWarnings("unchecked")
     public static $abstractvectortype$ broadcast(VectorSpecies<$Boxtype$> species, $type$ e) {
         return VectorIntrinsics.broadcastCoerced(
-            (Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
+            (Class<$abstractvectortype$>) species.vectorType(), $type$.class, species.length(),
             $Type$.$type$To$Bitstype$Bits(e), species,
             ((bits, sp) -> (($Type$Species)sp).op(i -> $Type$.$bitstype$BitsTo$Type$(($bitstype$)bits))));
     }
@@ -432,7 +432,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
     @SuppressWarnings("unchecked")
     public static $abstractvectortype$ broadcast(VectorSpecies<$Boxtype$> species, $type$ e) {
         return VectorIntrinsics.broadcastCoerced(
-            (Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
+            (Class<$abstractvectortype$>) species.vectorType(), $type$.class, species.length(),
             e, species,
             ((bits, sp) -> (($Type$Species)sp).op(i -> ($type$)bits)));
     }
@@ -457,7 +457,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
     public static $abstractvectortype$ scalars(VectorSpecies<$Boxtype$> species, $type$... es) {
         Objects.requireNonNull(es);
         int ix = VectorIntrinsics.checkIndex(0, es.length, species.length());
-        return VectorIntrinsics.load((Class<$abstractvectortype$>) species.boxType(), $type$.class, species.length(),
+        return VectorIntrinsics.load((Class<$abstractvectortype$>) species.vectorType(), $type$.class, species.length(),
                                      es, Unsafe.ARRAY_$TYPE$_BASE_OFFSET,
                                      es, ix, species,
                                      (c, idx, sp) -> (($Type$Species)sp).op(n -> c[idx + n]));
@@ -853,25 +853,25 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * {@inheritDoc}
      */
     @Override
-    public abstract $abstractvectortype$ rotateEL(int i);
+    public abstract $abstractvectortype$ rotateLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract $abstractvectortype$ rotateER(int i);
+    public abstract $abstractvectortype$ rotateLanesRight(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract $abstractvectortype$ shiftEL(int i);
+    public abstract $abstractvectortype$ shiftLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract $abstractvectortype$ shiftER(int i);
+    public abstract $abstractvectortype$ shiftLanesRight(int i);
 
 #if[FP]
     /**
@@ -1903,186 +1903,130 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      */
     public abstract $abstractvectortype$ not(VectorMask<$Boxtype$> m);
 
-#if[byte]
     /**
      * Logically left shifts this vector by the broadcast of an input scalar.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
      * operation ({@code <<}) to each lane to left shift the
-     * element by shift value as specified by the input scalar. Only the 3
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+#if[byte]
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
      * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to left shift
-     * @return the result of logically left shifting left this vector by the
-     * broadcast of an input scalar
-     */
 #end[byte]
 #if[short]
-    /**
-     * Logically left shifts this vector by the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane to left shift the
-     * element by shift value as specified by the input scalar. Only the 4
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
      * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to left shift
-     * @return the result of logically left shifting left this vector by the
-     * broadcast of an input scalar
-     */
 #end[short]
-#if[intOrLong]
-    /**
-     * Logically left shifts this vector by the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
      *
      * @param s the input scalar; the number of the bits to left shift
-     * @return the result of logically left shifting left this vector by the
+     * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-#end[intOrLong]
-    public abstract $abstractvectortype$ shiftL(int s);
+    public abstract $abstractvectortype$ shiftLeft(int s);
 
-#if[byte]
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
      * operation ({@code <<}) to each lane to left shift the
-     * element by shift value as specified by the input scalar. Only the 3
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+#if[byte]
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
      * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to left shift
-     * @param m the mask controlling lane selection
-     * @return the result of logically left shifting left this vector by the
-     * broadcast of an input scalar
-     */
 #end[byte]
 #if[short]
-    /**
-     * Logically left shifts this vector by the broadcast of an input scalar,
-     * selecting lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane to left shift the
-     * element by shift value as specified by the input scalar. Only the 4
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
      * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to left shift
-     * @param m the mask controlling lane selection
-     * @return the result of logically left shifting left this vector by the
-     * broadcast of an input scalar
-     */
 #end[short]
-#if[intOrLong]
-    /**
-     * Logically left shifts this vector by the broadcast of an input scalar,
-     * selecting lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
      *
      * @param s the input scalar; the number of the bits to left shift
      * @param m the mask controlling lane selection
      * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-#end[intOrLong]
-    public abstract $abstractvectortype$ shiftL(int s, VectorMask<$Boxtype$> m);
+    public abstract $abstractvectortype$ shiftLeft(int s, VectorMask<$Boxtype$> m);
 
-#if[intOrLong]
     /**
      * Logically left shifts this vector by an input vector.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
+     * operation ({@code <<}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+#if[byte]
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+#end[byte]
+#if[short]
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+#end[short]
      *
      * @param v the input vector
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public abstract $abstractvectortype$ shiftL(Vector<$Boxtype$> v);
+    public abstract $abstractvectortype$ shiftLeft(Vector<$Boxtype$> v);
 
     /**
      * Logically left shifts this vector by an input vector, selecting lane
      * elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
+     * operation ({@code <<}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+#if[byte]
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+#end[byte]
+#if[short]
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+#end[short]
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public $abstractvectortype$ shiftL(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) (a << b));
+    public $abstractvectortype$ shiftLeft(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
+        return blend(shiftLeft(v), m);
     }
-#end[intOrLong]
 
     // logical, or unsigned, shift right
 
-#if[byte]
      /**
      * Logically right shifts (or unsigned right shifts) this vector by the
      * broadcast of an input scalar.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
      * operation ({@code >>>}) to each lane to logically right shift the
-     * element by shift value as specified by the input scalar. Only the 3
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+#if[byte]
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
      * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @return the result of logically right shifting this vector by the
-     * broadcast of an input scalar
-     */
 #end[byte]
 #if[short]
-     /**
-     * Logically right shifts (or unsigned right shifts) this vector by the
-     * broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane to logically right shift the
-     * element by shift value as specified by the input scalar. Only the 4
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
      * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @return the result of logically right shifting this vector by the
-     * broadcast of an input scalar
-     */
 #end[short]
-#if[intOrLong]
-    /**
-     * Logically right shifts (or unsigned right shifts) this vector by the
-     * broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-#end[intOrLong]
-    public abstract $abstractvectortype$ shiftR(int s);
+    public abstract $abstractvectortype$ shiftRight(int s);
 
-#if[byte]
      /**
      * Logically right shifts (or unsigned right shifts) this vector by the
      * broadcast of an input scalar, selecting lane elements controlled by a
@@ -2090,85 +2034,76 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
      * operation ({@code >>}) to each lane to logically right shift the
-     * element by shift value as specified by the input scalar. Only the 3
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+#if[byte]
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
      * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @param m the mask controlling lane selection
-     * @return the result of logically right shifting this vector by the
-     * broadcast of an input scalar
-     */
 #end[byte]
 #if[short]
-     /**
-     * Logically right shifts (or unsigned right shifts) this vector by the
-     * broadcast of an input scalar, selecting lane elements controlled by a
-     * mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane to logically right shift the
-     * element by shift value as specified by the input scalar. Only the 4
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
      * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @param m the mask controlling lane selection
-     * @return the result of logically right shifting this vector by the
-     * broadcast of an input scalar
-     */
 #end[short]
-#if[intOrLong]
-    /**
-     * Logically right shifts (or unsigned right shifts) this vector by the
-     * broadcast of an input scalar, selecting lane elements controlled by a
-     * mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @param m the mask controlling lane selection
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-#end[intOrLong]
-    public abstract $abstractvectortype$ shiftR(int s, VectorMask<$Boxtype$> m);
+    public abstract $abstractvectortype$ shiftRight(int s, VectorMask<$Boxtype$> m);
 
-#if[intOrLong]
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
      * input vector.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
+     * operation ({@code >>>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+#if[byte]
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+#end[byte]
+#if[short]
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+#end[short]
      *
      * @param v the input vector
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public abstract $abstractvectortype$ shiftR(Vector<$Boxtype$> v);
+    public abstract $abstractvectortype$ shiftRight(Vector<$Boxtype$> v);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
      * input vector, selecting lane elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
+     * operation ({@code >>>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+#if[byte]
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+#end[byte]
+#if[short]
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+#end[short]
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public $abstractvectortype$ shiftR(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) (a >>> b));
+    public $abstractvectortype$ shiftRight(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
+        return blend(shiftRight(v), m);
     }
-#end[intOrLong]
 
-#if[byte]
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
      * broadcast of an input scalar.
@@ -2176,48 +2111,23 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * This is a lane-wise binary operation which applies the primitive arithmetic right
      * shift operation ({@code >>}) to each lane to arithmetically
      * right shift the element by shift value as specified by the input scalar.
+#if[byte]
      * Only the 3 lowest-order bits of shift value are used. It is as if the shift
      * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
      * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @return the result of arithmetically right shifting this vector by the
-     * broadcast of an input scalar
-     */
 #end[byte]
 #if[short]
-    /**
-     * Arithmetically right shifts (or signed right shifts) this vector by the
-     * broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane to arithmetically
-     * right shift the element by shift value as specified by the input scalar.
      * Only the 4 lowest-order bits of shift value are used. It is as if the shift
      * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
      * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @return the result of arithmetically right shifting this vector by the
-     * broadcast of an input scalar
-     */
 #end[short]
-#if[intOrLong]
-    /**
-     * Arithmetically right shifts (or signed right shifts) this vector by the
-     * broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-#end[intOrLong]
-    public abstract $abstractvectortype$ aShiftR(int s);
+    public abstract $abstractvectortype$ shiftArithmeticRight(int s);
 
-#if[byte]
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
      * broadcast of an input scalar, selecting lane elements controlled by a
@@ -2226,109 +2136,134 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * This is a lane-wise binary operation which applies the primitive arithmetic right
      * shift operation ({@code >>}) to each lane to arithmetically
      * right shift the element by shift value as specified by the input scalar.
+#if[byte]
      * Only the 3 lowest-order bits of shift value are used. It is as if the shift
      * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
      * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @param m the mask controlling lane selection
-     * @return the result of arithmetically right shifting this vector by the
-     * broadcast of an input scalar
-     */
 #end[byte]
 #if[short]
-    /**
-     * Arithmetically right shifts (or signed right shifts) this vector by the
-     * broadcast of an input scalar, selecting lane elements controlled by a
-     * mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane to arithmetically
-     * right shift the element by shift value as specified by the input scalar.
      * Only the 4 lowest-order bits of shift value are used. It is as if the shift
      * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
      * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @param m the mask controlling lane selection
-     * @return the result of arithmetically right shifting this vector by the
-     * broadcast of an input scalar
-     */
 #end[short]
-#if[intOrLong]
-    /**
-     * Arithmetically right shifts (or signed right shifts) this vector by the
-     * broadcast of an input scalar, selecting lane elements controlled by a
-     * mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @param m the mask controlling lane selection
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-#end[intOrLong]
-    public abstract $abstractvectortype$ aShiftR(int s, VectorMask<$Boxtype$> m);
+    public abstract $abstractvectortype$ shiftArithmeticRight(int s, VectorMask<$Boxtype$> m);
 
-#if[intOrLong]
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
      * input vector.
      * <p>
      * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
+     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+#if[byte]
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+#end[byte]
+#if[short]
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+#end[short]
      *
      * @param v the input vector
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public abstract $abstractvectortype$ aShiftR(Vector<$Boxtype$> v);
+    public abstract $abstractvectortype$ shiftArithmeticRight(Vector<$Boxtype$> v);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
      * input vector, selecting lane elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
+     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+#if[byte]
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+#end[byte]
+#if[short]
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+#end[short]
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public $abstractvectortype$ aShiftR(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) (a >> b));
+    public $abstractvectortype$ shiftArithmeticRight(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
+        return blend(shiftArithmeticRight(v), m);
     }
 
     /**
      * Rotates left this vector by the broadcast of an input scalar.
      * <p>
+#if[intOrLong]
      * This is a lane-wise binary operation which applies the operation
      * {@link $Wideboxtype$#rotateLeft} to each lane and where
      * lane elements of this vector apply to the first argument, and lane
      * elements of the broadcast vector apply to the second argument (the
      * rotation distance).
+#end[intOrLong]
+#if[byte]
+     * This is a lane-wise binary operation which produces the result of rotating left the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0x7.
+#end[byte]
+#if[short]
+     * This is a lane-wise binary operation which produces the result of rotating left the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 16 is a no-op, so only the 4 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0xF.
+#end[short]
      *
      * @param s the input scalar; the number of the bits to rotate left
      * @return the result of rotating left this vector by the broadcast of an
      * input scalar
      */
     @ForceInline
-    public final $abstractvectortype$ rotateL(int s) {
-        return shiftL(s).or(shiftR(-s));
+    public final $abstractvectortype$ rotateLeft(int s) {
+        return shiftLeft(s).or(shiftRight(-s));
     }
 
     /**
      * Rotates left this vector by the broadcast of an input scalar, selecting
      * lane elements controlled by a mask.
      * <p>
+#if[intOrLong]
      * This is a lane-wise binary operation which applies the operation
      * {@link $Wideboxtype$#rotateLeft} to each lane and where
      * lane elements of this vector apply to the first argument, and lane
      * elements of the broadcast vector apply to the second argument (the
      * rotation distance).
+#end[intOrLong]
+#if[byte]
+     * This is a lane-wise binary operation which produces the result of rotating left the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0x7.
+#end[byte]
+#if[short]
+     * This is a lane-wise binary operation which produces the result of rotating left the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 16 is a no-op, so only the 4 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0xF.
+#end[short]
      *
      * @param s the input scalar; the number of the bits to rotate left
      * @param m the mask controlling lane selection
@@ -2336,37 +2271,69 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * input scalar
      */
     @ForceInline
-    public final $abstractvectortype$ rotateL(int s, VectorMask<$Boxtype$> m) {
-        return shiftL(s, m).or(shiftR(-s, m), m);
+    public final $abstractvectortype$ rotateLeft(int s, VectorMask<$Boxtype$> m) {
+        return shiftLeft(s, m).or(shiftRight(-s, m), m);
     }
 
     /**
      * Rotates right this vector by the broadcast of an input scalar.
      * <p>
+#if[intOrLong]
      * This is a lane-wise binary operation which applies the operation
      * {@link $Wideboxtype$#rotateRight} to each lane and where
      * lane elements of this vector apply to the first argument, and lane
      * elements of the broadcast vector apply to the second argument (the
      * rotation distance).
+#end[intOrLong]
+#if[byte]
+     * This is a lane-wise binary operation which produces the result of rotating right the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0x7.
+#end[byte]
+#if[short]
+     * This is a lane-wise binary operation which produces the result of rotating right the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 16 is a no-op, so only the 4 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0xF.
+#end[short]
      *
      * @param s the input scalar; the number of the bits to rotate right
      * @return the result of rotating right this vector by the broadcast of an
      * input scalar
      */
     @ForceInline
-    public final $abstractvectortype$ rotateR(int s) {
-        return shiftR(s).or(shiftL(-s));
+    public final $abstractvectortype$ rotateRight(int s) {
+        return shiftRight(s).or(shiftLeft(-s));
     }
 
     /**
      * Rotates right this vector by the broadcast of an input scalar, selecting
      * lane elements controlled by a mask.
      * <p>
+#if[intOrLong]
      * This is a lane-wise binary operation which applies the operation
      * {@link $Wideboxtype$#rotateRight} to each lane and where
      * lane elements of this vector apply to the first argument, and lane
      * elements of the broadcast vector apply to the second argument (the
      * rotation distance).
+#end[intOrLong]
+#if[byte]
+     * This is a lane-wise binary operation which produces the result of rotating right the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0x7.
+#end[byte]
+#if[short]
+     * This is a lane-wise binary operation which produces the result of rotating right the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 16 is a no-op, so only the 4 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0xF.
+#end[short]
      *
      * @param s the input scalar; the number of the bits to rotate right
      * @param m the mask controlling lane selection
@@ -2374,10 +2341,9 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * input scalar
      */
     @ForceInline
-    public final $abstractvectortype$ rotateR(int s, VectorMask<$Boxtype$> m) {
-        return shiftR(s, m).or(shiftL(-s, m), m);
+    public final $abstractvectortype$ rotateRight(int s, VectorMask<$Boxtype$> m) {
+        return shiftRight(s, m).or(shiftLeft(-s, m), m);
     }
-#end[intOrLong]
 #end[BITWISE]
 
     /**
@@ -2430,7 +2396,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      *
      * @return the addition of all the lane elements of this vector
      */
-    public abstract $type$ addAll();
+    public abstract $type$ addLanes();
 
     /**
      * Adds all lane elements of this vector, selecting lane elements
@@ -2458,7 +2424,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @param m the mask controlling lane selection
      * @return the addition of the selected lane elements of this vector
      */
-    public abstract $type$ addAll(VectorMask<$Boxtype$> m);
+    public abstract $type$ addLanes(VectorMask<$Boxtype$> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -2483,7 +2449,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      *
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract $type$ mulAll();
+    public abstract $type$ mulLanes();
 
     /**
      * Multiplies all lane elements of this vector, selecting lane elements
@@ -2510,7 +2476,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract $type$ mulAll(VectorMask<$Boxtype$> m);
+    public abstract $type$ mulLanes(VectorMask<$Boxtype$> m);
 
     /**
      * Returns the minimum lane element of this vector.
@@ -2526,7 +2492,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      *
      * @return the minimum lane element of this vector
      */
-    public abstract $type$ minAll();
+    public abstract $type$ minLanes();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -2544,7 +2510,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
      */
-    public abstract $type$ minAll(VectorMask<$Boxtype$> m);
+    public abstract $type$ minLanes(VectorMask<$Boxtype$> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -2560,7 +2526,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      *
      * @return the maximum lane element of this vector
      */
-    public abstract $type$ maxAll();
+    public abstract $type$ maxLanes();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements
@@ -2578,7 +2544,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
      */
-    public abstract $type$ maxAll(VectorMask<$Boxtype$> m);
+    public abstract $type$ maxLanes(VectorMask<$Boxtype$> m);
 
 #if[BITWISE]
     /**
@@ -2590,7 +2556,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      *
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract $type$ orAll();
+    public abstract $type$ orLanes();
 
     /**
      * Logically ORs all lane elements of this vector, selecting lane elements
@@ -2603,7 +2569,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @param m the mask controlling lane selection
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract $type$ orAll(VectorMask<$Boxtype$> m);
+    public abstract $type$ orLanes(VectorMask<$Boxtype$> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -2614,7 +2580,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      *
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract $type$ andAll();
+    public abstract $type$ andLanes();
 
     /**
      * Logically ANDs all lane elements of this vector, selecting lane elements
@@ -2627,7 +2593,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @param m the mask controlling lane selection
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract $type$ andAll(VectorMask<$Boxtype$> m);
+    public abstract $type$ andLanes(VectorMask<$Boxtype$> m);
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -2638,7 +2604,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      *
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract $type$ xorAll();
+    public abstract $type$ xorLanes();
 
     /**
      * Logically XORs all lane elements of this vector, selecting lane elements
@@ -2651,7 +2617,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @param m the mask controlling lane selection
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract $type$ xorAll(VectorMask<$Boxtype$> m);
+    public abstract $type$ xorLanes(VectorMask<$Boxtype$> m);
 #end[BITWISE]
 
     // Type specific accessors
@@ -2807,13 +2773,13 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
         final Function<$type$[], $Type$Vector> vectorFactory;
 
         private $Type$Species(VectorShape shape,
-                          Class<?> boxType,
+                          Class<?> vectorType,
                           Class<?> maskType,
                           Function<$type$[], $Type$Vector> vectorFactory,
                           Function<boolean[], VectorMask<$Boxtype$>> maskFactory,
                           Function<IntUnaryOperator, VectorShuffle<$Boxtype$>> shuffleFromArrayFactory,
                           fShuffleFromArray<$Boxtype$> shuffleFromOpFactory) {
-            super(shape, $type$.class, $Boxtype$.SIZE, boxType, maskType, maskFactory,
+            super(shape, $type$.class, $Boxtype$.SIZE, vectorType, maskType, maskFactory,
                   shuffleFromArrayFactory, shuffleFromOpFactory);
             this.vectorFactory = vectorFactory;
         }

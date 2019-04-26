@@ -28,7 +28,7 @@ import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.ShortVector;
 import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.LongVector;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorSpecies;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;
@@ -350,7 +350,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
         var low_mask = ByteVector.broadcast(B128, (byte)0x0f);
 
         var lo = v          .and(low_mask);
-        var hi = v.shiftR(4).and(low_mask);
+        var hi = v.shiftRight(4).and(low_mask);
 
         var cnt1 = MULA128_LOOKUP.rearrange(lo.toShuffle());
         var cnt2 = MULA128_LOOKUP.rearrange(hi.toShuffle());
@@ -373,7 +373,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
             }
             acc = acc.add(sumUnsignedBytes(bacc));
         }
-        var r = acc.addAll() + tail(upper);
+        var r = acc.addLanes() + tail(upper);
         return r;
     }
 
@@ -390,7 +390,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
         var low_mask = ByteVector.broadcast(B256, (byte)0x0F);
 
         var lo = v          .and(low_mask);
-        var hi = v.shiftR(4).and(low_mask);
+        var hi = v.shiftRight(4).and(low_mask);
 
         var cnt1 = MULA256_LOOKUP.rearrange(lo.toShuffle());
         var cnt2 = MULA256_LOOKUP.rearrange(hi.toShuffle());
@@ -408,9 +408,9 @@ public class PopulationCount extends AbstractVectorBenchmark {
     }
 
     LongVector sumUnsignedBytesShapes(ByteVector vb) {
-        Species<Short> shortSpecies = Species.of(short.class, vb.shape());
-        Species<Integer> intSpecies = Species.of(int.class, vb.shape());
-        Species<Long> longSpecies = Species.of(long.class, vb.shape());
+        VectorSpecies<Short> shortSpecies = VectorSpecies.of(short.class, vb.shape());
+        VectorSpecies<Integer> intSpecies = VectorSpecies.of(int.class, vb.shape());
+        VectorSpecies<Long> longSpecies = VectorSpecies.of(long.class, vb.shape());
 
         var low_short_mask = ShortVector.broadcast(shortSpecies, (short) 0xFF);
         var low_int_mask = IntVector.broadcast(intSpecies, 0xFFFF);
@@ -418,37 +418,37 @@ public class PopulationCount extends AbstractVectorBenchmark {
 
         var vs = (ShortVector)vb.reinterpret(shortSpecies); // 16-bit
         var vs0 = vs.and(low_short_mask);
-        var vs1 = vs.shiftR(8).and(low_short_mask);
+        var vs1 = vs.shiftRight(8).and(low_short_mask);
         var vs01 = vs0.add(vs1);
 
         var vi = (IntVector)vs01.reinterpret(intSpecies); // 32-bit
         var vi0 = vi.and(low_int_mask);
-        var vi1 = vi.shiftR(16).and(low_int_mask);
+        var vi1 = vi.shiftRight(16).and(low_int_mask);
         var vi01 = vi0.add(vi1);
 
         var vl = (LongVector)vi01.reinterpret(longSpecies); // 64-bit
         var vl0 = vl.and(low_long_mask);
-        var vl1 = vl.shiftR(32).and(low_long_mask);
+        var vl1 = vl.shiftRight(32).and(low_long_mask);
         var vl01 = vl0.add(vl1);
 
         return vl01;
     }
 
     LongVector sumUnsignedBytesShifts(ByteVector vb) {
-        Species<Long> to = Species.of(long.class, vb.shape());
+        VectorSpecies<Long> to = VectorSpecies.of(long.class, vb.shape());
 
         var low_mask = LongVector.broadcast(to, 0xFF);
 
         var vl = (LongVector)vb.reinterpret(to);
 
         var v0 = vl           .and(low_mask); // 8-bit
-        var v1 = vl.shiftR( 8).and(low_mask); // 8-bit
-        var v2 = vl.shiftR(16).and(low_mask); // 8-bit
-        var v3 = vl.shiftR(24).and(low_mask); // 8-bit
-        var v4 = vl.shiftR(32).and(low_mask); // 8-bit
-        var v5 = vl.shiftR(40).and(low_mask); // 8-bit
-        var v6 = vl.shiftR(48).and(low_mask); // 8-bit
-        var v7 = vl.shiftR(56).and(low_mask); // 8-bit
+        var v1 = vl.shiftRight( 8).and(low_mask); // 8-bit
+        var v2 = vl.shiftRight(16).and(low_mask); // 8-bit
+        var v3 = vl.shiftRight(24).and(low_mask); // 8-bit
+        var v4 = vl.shiftRight(32).and(low_mask); // 8-bit
+        var v5 = vl.shiftRight(40).and(low_mask); // 8-bit
+        var v6 = vl.shiftRight(48).and(low_mask); // 8-bit
+        var v7 = vl.shiftRight(56).and(low_mask); // 8-bit
 
         var v01 = v0.add(v1);
         var v23 = v2.add(v3);
@@ -476,7 +476,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
             }
             acc = acc.add(sumUnsignedBytes(bacc));
         }
-        return acc.addAll() + tail(upper);
+        return acc.addLanes() + tail(upper);
     }
 
 
@@ -614,7 +614,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
         vtotal = vtotal.add(popcntL256(twos).mul(2));   // << 1
         vtotal = vtotal.add(popcntL256(ones));          // << 0
 
-        var total = vtotal.addAll();
+        var total = vtotal.addLanes();
 
         return total + tail(upper);
     }

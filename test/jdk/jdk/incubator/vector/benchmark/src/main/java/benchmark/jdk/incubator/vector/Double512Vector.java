@@ -24,6 +24,7 @@
 package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.VectorShape;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorShuffle;
@@ -264,6 +265,18 @@ public class Double512Vector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public void max(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
@@ -302,7 +315,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void addAll(Blackhole bh) {
+    public void addLanes(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double ra = 0;
 
@@ -310,14 +323,14 @@ public class Double512Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                ra += av.addAll();
+                ra += av.addLanes();
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void mulAll(Blackhole bh) {
+    public void mulLanes(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double ra = 1;
 
@@ -325,14 +338,14 @@ public class Double512Vector extends AbstractVectorBenchmark {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                ra *= av.mulAll();
+                ra *= av.mulLanes();
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void minAll(Blackhole bh) {
+    public void minLanes(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double ra = Double.POSITIVE_INFINITY;
 
@@ -340,14 +353,14 @@ public class Double512Vector extends AbstractVectorBenchmark {
             ra = Double.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                ra = (double)Math.min(ra, av.minAll());
+                ra = (double)Math.min(ra, av.minLanes());
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void maxAll(Blackhole bh) {
+    public void maxLanes(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double ra = Double.NEGATIVE_INFINITY;
 
@@ -355,7 +368,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
             ra = Double.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                ra = (double)Math.max(ra, av.maxAll());
+                ra = (double)Math.max(ra, av.maxLanes());
             }
         }
         bh.consume(ra);
@@ -383,7 +396,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Double> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -403,7 +416,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Double> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -423,7 +436,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Double> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -443,7 +456,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Double> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -463,7 +476,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Double> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -483,7 +496,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        VectorMask<Double> m = VectorMask.maskFromArray(SPECIES, ms, 0);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

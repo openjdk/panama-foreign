@@ -163,7 +163,7 @@ final class Long512Vector extends LongVector {
         return VectorIntrinsics.cast(
             Long512Vector.class,
             long.class, LENGTH,
-            s.boxType(),
+            s.vectorType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -301,7 +301,7 @@ final class Long512Vector extends LongVector {
     @ForceInline
     public LongVector reshape(VectorSpecies<Long> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.boxType() == Long64Vector.class)) {
+        if (s.bitSize() == 64 && (s.vectorType() == Long64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Long512Vector.class,
                 long.class, LENGTH,
@@ -310,7 +310,7 @@ final class Long512Vector extends LongVector {
                 this, s,
                 (species, vector) -> (LongVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s.boxType() == Long128Vector.class)) {
+        } else if (s.bitSize() == 128 && (s.vectorType() == Long128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Long512Vector.class,
                 long.class, LENGTH,
@@ -319,7 +319,7 @@ final class Long512Vector extends LongVector {
                 this, s,
                 (species, vector) -> (LongVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s.boxType() == Long256Vector.class)) {
+        } else if (s.bitSize() == 256 && (s.vectorType() == Long256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Long512Vector.class,
                 long.class, LENGTH,
@@ -328,7 +328,7 @@ final class Long512Vector extends LongVector {
                 this, s,
                 (species, vector) -> (LongVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s.boxType() == Long512Vector.class)) {
+        } else if (s.bitSize() == 512 && (s.vectorType() == Long512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Long512Vector.class,
                 long.class, LENGTH,
@@ -338,7 +338,7 @@ final class Long512Vector extends LongVector {
                 (species, vector) -> (LongVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.boxType() == LongMaxVector.class)) {
+                && (s.bitSize() % 128 == 0) && (s.vectorType() == LongMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 Long512Vector.class,
                 long.class, LENGTH,
@@ -665,7 +665,7 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public Long512Vector shiftL(int s) {
+    public Long512Vector shiftLeft(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_LSHIFT, Long512Vector.class, long.class, LENGTH,
             this, s,
@@ -674,13 +674,13 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public Long512Vector shiftL(int s, VectorMask<Long> m) {
-        return blend(shiftL(s), m);
+    public Long512Vector shiftLeft(int s, VectorMask<Long> m) {
+        return blend(shiftLeft(s), m);
     }
 
     @Override
     @ForceInline
-    public Long512Vector shiftR(int s) {
+    public Long512Vector shiftRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, Long512Vector.class, long.class, LENGTH,
             this, s,
@@ -689,13 +689,13 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public Long512Vector shiftR(int s, VectorMask<Long> m) {
-        return blend(shiftR(s), m);
+    public Long512Vector shiftRight(int s, VectorMask<Long> m) {
+        return blend(shiftRight(s), m);
     }
 
     @Override
     @ForceInline
-    public Long512Vector aShiftR(int s) {
+    public Long512Vector shiftArithmeticRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, Long512Vector.class, long.class, LENGTH,
             this, s,
@@ -704,13 +704,13 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public Long512Vector aShiftR(int s, VectorMask<Long> m) {
-        return blend(aShiftR(s), m);
+    public Long512Vector shiftArithmeticRight(int s, VectorMask<Long> m) {
+        return blend(shiftArithmeticRight(s), m);
     }
 
     @Override
     @ForceInline
-    public Long512Vector shiftL(Vector<Long> s) {
+    public Long512Vector shiftLeft(Vector<Long> s) {
         Long512Vector shiftv = (Long512Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(LongVector.broadcast(SPECIES, 0x3f));
@@ -722,7 +722,7 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public Long512Vector shiftR(Vector<Long> s) {
+    public Long512Vector shiftRight(Vector<Long> s) {
         Long512Vector shiftv = (Long512Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(LongVector.broadcast(SPECIES, 0x3f));
@@ -734,7 +734,7 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public Long512Vector aShiftR(Vector<Long> s) {
+    public Long512Vector shiftArithmeticRight(Vector<Long> s) {
         Long512Vector shiftv = (Long512Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(LongVector.broadcast(SPECIES, 0x3f));
@@ -750,7 +750,7 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public long addAll() {
+    public long addLanes() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_ADD, Long512Vector.class, long.class, LENGTH,
             this,
@@ -759,7 +759,7 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public long andAll() {
+    public long andLanes() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_AND, Long512Vector.class, long.class, LENGTH,
             this,
@@ -768,13 +768,13 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public long andAll(VectorMask<Long> m) {
-        return LongVector.broadcast(SPECIES, (long) -1).blend(this, m).andAll();
+    public long andLanes(VectorMask<Long> m) {
+        return LongVector.broadcast(SPECIES, (long) -1).blend(this, m).andLanes();
     }
 
     @Override
     @ForceInline
-    public long minAll() {
+    public long minLanes() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, Long512Vector.class, long.class, LENGTH,
             this,
@@ -783,7 +783,7 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public long maxAll() {
+    public long maxLanes() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, Long512Vector.class, long.class, LENGTH,
             this,
@@ -792,7 +792,7 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public long mulAll() {
+    public long mulLanes() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Long512Vector.class, long.class, LENGTH,
             this,
@@ -801,7 +801,7 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public long orAll() {
+    public long orLanes() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_OR, Long512Vector.class, long.class, LENGTH,
             this,
@@ -810,13 +810,13 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public long orAll(VectorMask<Long> m) {
-        return LongVector.broadcast(SPECIES, (long) 0).blend(this, m).orAll();
+    public long orLanes(VectorMask<Long> m) {
+        return LongVector.broadcast(SPECIES, (long) 0).blend(this, m).orLanes();
     }
 
     @Override
     @ForceInline
-    public long xorAll() {
+    public long xorLanes() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_XOR, Long512Vector.class, long.class, LENGTH,
             this,
@@ -825,34 +825,34 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
-    public long xorAll(VectorMask<Long> m) {
-        return LongVector.broadcast(SPECIES, (long) 0).blend(this, m).xorAll();
+    public long xorLanes(VectorMask<Long> m) {
+        return LongVector.broadcast(SPECIES, (long) 0).blend(this, m).xorLanes();
     }
 
 
     @Override
     @ForceInline
-    public long addAll(VectorMask<Long> m) {
-        return LongVector.broadcast(SPECIES, (long) 0).blend(this, m).addAll();
+    public long addLanes(VectorMask<Long> m) {
+        return LongVector.broadcast(SPECIES, (long) 0).blend(this, m).addLanes();
     }
 
 
     @Override
     @ForceInline
-    public long mulAll(VectorMask<Long> m) {
-        return LongVector.broadcast(SPECIES, (long) 1).blend(this, m).mulAll();
+    public long mulLanes(VectorMask<Long> m) {
+        return LongVector.broadcast(SPECIES, (long) 1).blend(this, m).mulLanes();
     }
 
     @Override
     @ForceInline
-    public long minAll(VectorMask<Long> m) {
-        return LongVector.broadcast(SPECIES, Long.MAX_VALUE).blend(this, m).minAll();
+    public long minLanes(VectorMask<Long> m) {
+        return LongVector.broadcast(SPECIES, Long.MAX_VALUE).blend(this, m).minLanes();
     }
 
     @Override
     @ForceInline
-    public long maxAll(VectorMask<Long> m) {
-        return LongVector.broadcast(SPECIES, Long.MIN_VALUE).blend(this, m).maxAll();
+    public long maxLanes(VectorMask<Long> m) {
+        return LongVector.broadcast(SPECIES, Long.MIN_VALUE).blend(this, m).maxLanes();
     }
 
     @Override
@@ -1107,7 +1107,7 @@ final class Long512Vector extends LongVector {
     }
 
     @Override
-    public Long512Vector rotateEL(int j) {
+    public Long512Vector rotateLanesLeft(int j) {
         long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length(); i++){
@@ -1117,7 +1117,7 @@ final class Long512Vector extends LongVector {
     }
 
     @Override
-    public Long512Vector rotateER(int j) {
+    public Long512Vector rotateLanesRight(int j) {
         long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length(); i++){
@@ -1132,7 +1132,7 @@ final class Long512Vector extends LongVector {
     }
 
     @Override
-    public Long512Vector shiftEL(int j) {
+    public Long512Vector shiftLanesLeft(int j) {
         long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length() - j; i++) {
@@ -1142,7 +1142,7 @@ final class Long512Vector extends LongVector {
     }
 
     @Override
-    public Long512Vector shiftER(int j) {
+    public Long512Vector shiftLanesRight(int j) {
         long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length() - j; i++){

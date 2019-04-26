@@ -163,7 +163,7 @@ final class Int256Vector extends IntVector {
         return VectorIntrinsics.cast(
             Int256Vector.class,
             int.class, LENGTH,
-            s.boxType(),
+            s.vectorType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -301,7 +301,7 @@ final class Int256Vector extends IntVector {
     @ForceInline
     public IntVector reshape(VectorSpecies<Integer> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.boxType() == Int64Vector.class)) {
+        if (s.bitSize() == 64 && (s.vectorType() == Int64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Int256Vector.class,
                 int.class, LENGTH,
@@ -310,7 +310,7 @@ final class Int256Vector extends IntVector {
                 this, s,
                 (species, vector) -> (IntVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s.boxType() == Int128Vector.class)) {
+        } else if (s.bitSize() == 128 && (s.vectorType() == Int128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Int256Vector.class,
                 int.class, LENGTH,
@@ -319,7 +319,7 @@ final class Int256Vector extends IntVector {
                 this, s,
                 (species, vector) -> (IntVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s.boxType() == Int256Vector.class)) {
+        } else if (s.bitSize() == 256 && (s.vectorType() == Int256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Int256Vector.class,
                 int.class, LENGTH,
@@ -328,7 +328,7 @@ final class Int256Vector extends IntVector {
                 this, s,
                 (species, vector) -> (IntVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s.boxType() == Int512Vector.class)) {
+        } else if (s.bitSize() == 512 && (s.vectorType() == Int512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Int256Vector.class,
                 int.class, LENGTH,
@@ -338,7 +338,7 @@ final class Int256Vector extends IntVector {
                 (species, vector) -> (IntVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.boxType() == IntMaxVector.class)) {
+                && (s.bitSize() % 128 == 0) && (s.vectorType() == IntMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 Int256Vector.class,
                 int.class, LENGTH,
@@ -665,7 +665,7 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public Int256Vector shiftL(int s) {
+    public Int256Vector shiftLeft(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_LSHIFT, Int256Vector.class, int.class, LENGTH,
             this, s,
@@ -674,13 +674,13 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public Int256Vector shiftL(int s, VectorMask<Integer> m) {
-        return blend(shiftL(s), m);
+    public Int256Vector shiftLeft(int s, VectorMask<Integer> m) {
+        return blend(shiftLeft(s), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector shiftR(int s) {
+    public Int256Vector shiftRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, Int256Vector.class, int.class, LENGTH,
             this, s,
@@ -689,13 +689,13 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public Int256Vector shiftR(int s, VectorMask<Integer> m) {
-        return blend(shiftR(s), m);
+    public Int256Vector shiftRight(int s, VectorMask<Integer> m) {
+        return blend(shiftRight(s), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector aShiftR(int s) {
+    public Int256Vector shiftArithmeticRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, Int256Vector.class, int.class, LENGTH,
             this, s,
@@ -704,13 +704,13 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public Int256Vector aShiftR(int s, VectorMask<Integer> m) {
-        return blend(aShiftR(s), m);
+    public Int256Vector shiftArithmeticRight(int s, VectorMask<Integer> m) {
+        return blend(shiftArithmeticRight(s), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector shiftL(Vector<Integer> s) {
+    public Int256Vector shiftLeft(Vector<Integer> s) {
         Int256Vector shiftv = (Int256Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(IntVector.broadcast(SPECIES, 0x1f));
@@ -722,7 +722,7 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public Int256Vector shiftR(Vector<Integer> s) {
+    public Int256Vector shiftRight(Vector<Integer> s) {
         Int256Vector shiftv = (Int256Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(IntVector.broadcast(SPECIES, 0x1f));
@@ -734,7 +734,7 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public Int256Vector aShiftR(Vector<Integer> s) {
+    public Int256Vector shiftArithmeticRight(Vector<Integer> s) {
         Int256Vector shiftv = (Int256Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(IntVector.broadcast(SPECIES, 0x1f));
@@ -750,7 +750,7 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public int addAll() {
+    public int addLanes() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_ADD, Int256Vector.class, int.class, LENGTH,
             this,
@@ -759,7 +759,7 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public int andAll() {
+    public int andLanes() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_AND, Int256Vector.class, int.class, LENGTH,
             this,
@@ -768,13 +768,13 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public int andAll(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) -1).blend(this, m).andAll();
+    public int andLanes(VectorMask<Integer> m) {
+        return IntVector.broadcast(SPECIES, (int) -1).blend(this, m).andLanes();
     }
 
     @Override
     @ForceInline
-    public int minAll() {
+    public int minLanes() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, Int256Vector.class, int.class, LENGTH,
             this,
@@ -783,7 +783,7 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public int maxAll() {
+    public int maxLanes() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, Int256Vector.class, int.class, LENGTH,
             this,
@@ -792,7 +792,7 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public int mulAll() {
+    public int mulLanes() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Int256Vector.class, int.class, LENGTH,
             this,
@@ -801,7 +801,7 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public int orAll() {
+    public int orLanes() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_OR, Int256Vector.class, int.class, LENGTH,
             this,
@@ -810,13 +810,13 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public int orAll(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).orAll();
+    public int orLanes(VectorMask<Integer> m) {
+        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).orLanes();
     }
 
     @Override
     @ForceInline
-    public int xorAll() {
+    public int xorLanes() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_XOR, Int256Vector.class, int.class, LENGTH,
             this,
@@ -825,34 +825,34 @@ final class Int256Vector extends IntVector {
 
     @Override
     @ForceInline
-    public int xorAll(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).xorAll();
+    public int xorLanes(VectorMask<Integer> m) {
+        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).xorLanes();
     }
 
 
     @Override
     @ForceInline
-    public int addAll(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).addAll();
+    public int addLanes(VectorMask<Integer> m) {
+        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).addLanes();
     }
 
 
     @Override
     @ForceInline
-    public int mulAll(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 1).blend(this, m).mulAll();
+    public int mulLanes(VectorMask<Integer> m) {
+        return IntVector.broadcast(SPECIES, (int) 1).blend(this, m).mulLanes();
     }
 
     @Override
     @ForceInline
-    public int minAll(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, Integer.MAX_VALUE).blend(this, m).minAll();
+    public int minLanes(VectorMask<Integer> m) {
+        return IntVector.broadcast(SPECIES, Integer.MAX_VALUE).blend(this, m).minLanes();
     }
 
     @Override
     @ForceInline
-    public int maxAll(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, Integer.MIN_VALUE).blend(this, m).maxAll();
+    public int maxLanes(VectorMask<Integer> m) {
+        return IntVector.broadcast(SPECIES, Integer.MIN_VALUE).blend(this, m).maxLanes();
     }
 
     @Override
@@ -1107,7 +1107,7 @@ final class Int256Vector extends IntVector {
     }
 
     @Override
-    public Int256Vector rotateEL(int j) {
+    public Int256Vector rotateLanesLeft(int j) {
         int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < length(); i++){
@@ -1117,7 +1117,7 @@ final class Int256Vector extends IntVector {
     }
 
     @Override
-    public Int256Vector rotateER(int j) {
+    public Int256Vector rotateLanesRight(int j) {
         int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < length(); i++){
@@ -1132,7 +1132,7 @@ final class Int256Vector extends IntVector {
     }
 
     @Override
-    public Int256Vector shiftEL(int j) {
+    public Int256Vector shiftLanesLeft(int j) {
         int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < length() - j; i++) {
@@ -1142,7 +1142,7 @@ final class Int256Vector extends IntVector {
     }
 
     @Override
-    public Int256Vector shiftER(int j) {
+    public Int256Vector shiftLanesRight(int j) {
         int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < length() - j; i++){

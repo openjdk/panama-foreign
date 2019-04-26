@@ -112,7 +112,7 @@ public abstract class IntVector extends Vector<Integer> {
     @ForceInline
     @SuppressWarnings("unchecked")
     public static IntVector zero(VectorSpecies<Integer> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<IntVector>) species.boxType(), int.class, species.length(),
+        return VectorIntrinsics.broadcastCoerced((Class<IntVector>) species.vectorType(), int.class, species.length(),
                                                  0, species,
                                                  ((bits, s) -> ((IntSpecies)s).op(i -> (int)bits)));
     }
@@ -142,7 +142,7 @@ public abstract class IntVector extends Vector<Integer> {
     public static IntVector fromByteArray(VectorSpecies<Integer> species, byte[] a, int offset) {
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<IntVector>) species.boxType(), int.class, species.length(),
+        return VectorIntrinsics.load((Class<IntVector>) species.vectorType(), int.class, species.length(),
                                      a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> {
@@ -200,7 +200,7 @@ public abstract class IntVector extends Vector<Integer> {
     public static IntVector fromArray(VectorSpecies<Integer> species, int[] a, int offset){
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.length());
-        return VectorIntrinsics.load((Class<IntVector>) species.boxType(), int.class, species.length(),
+        return VectorIntrinsics.load((Class<IntVector>) species.vectorType(), int.class, species.length(),
                                      a, (((long) offset) << ARRAY_SHIFT) + Unsafe.ARRAY_INT_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> ((IntSpecies)s).op(n -> c[idx + n]));
@@ -263,8 +263,8 @@ public abstract class IntVector extends Vector<Integer> {
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        return VectorIntrinsics.loadWithMap((Class<IntVector>) species.boxType(), int.class, species.length(),
-                                            IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_INT_BASE_OFFSET, vix,
+        return VectorIntrinsics.loadWithMap((Class<IntVector>) species.vectorType(), int.class, species.length(),
+                                            IntVector.species(species.indexShape()).vectorType(), a, Unsafe.ARRAY_INT_BASE_OFFSET, vix,
                                             a, a_offset, indexMap, i_offset, species,
                                             (int[] c, int idx, int[] iMap, int idy, VectorSpecies<Integer> s) ->
                                                 ((IntSpecies)s).op(n -> c[idx + iMap[idy+n]]));
@@ -333,7 +333,7 @@ public abstract class IntVector extends Vector<Integer> {
             throw new IllegalArgumentException();
         }
         offset = VectorIntrinsics.checkIndex(offset, bb.limit(), species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<IntVector>) species.boxType(), int.class, species.length(),
+        return VectorIntrinsics.load((Class<IntVector>) species.vectorType(), int.class, species.length(),
                                      U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + offset,
                                      bb, offset, species,
                                      (c, idx, s) -> {
@@ -389,7 +389,7 @@ public abstract class IntVector extends Vector<Integer> {
      * value {@code e}.
      *
      * @param species species of the desired vector
-     * @param e the value
+     * @param e the value to be broadcasted
      * @return a vector of vector where all lane elements are set to
      * the primitive value {@code e}
      */
@@ -397,7 +397,7 @@ public abstract class IntVector extends Vector<Integer> {
     @SuppressWarnings("unchecked")
     public static IntVector broadcast(VectorSpecies<Integer> species, int e) {
         return VectorIntrinsics.broadcastCoerced(
-            (Class<IntVector>) species.boxType(), int.class, species.length(),
+            (Class<IntVector>) species.vectorType(), int.class, species.length(),
             e, species,
             ((bits, sp) -> ((IntSpecies)sp).op(i -> (int)bits)));
     }
@@ -421,7 +421,7 @@ public abstract class IntVector extends Vector<Integer> {
     public static IntVector scalars(VectorSpecies<Integer> species, int... es) {
         Objects.requireNonNull(es);
         int ix = VectorIntrinsics.checkIndex(0, es.length, species.length());
-        return VectorIntrinsics.load((Class<IntVector>) species.boxType(), int.class, species.length(),
+        return VectorIntrinsics.load((Class<IntVector>) species.vectorType(), int.class, species.length(),
                                      es, Unsafe.ARRAY_INT_BASE_OFFSET,
                                      es, ix, species,
                                      (c, idx, sp) -> ((IntSpecies)sp).op(n -> c[idx + n]));
@@ -799,25 +799,25 @@ public abstract class IntVector extends Vector<Integer> {
      * {@inheritDoc}
      */
     @Override
-    public abstract IntVector rotateEL(int i);
+    public abstract IntVector rotateLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract IntVector rotateER(int i);
+    public abstract IntVector rotateLanesRight(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract IntVector shiftEL(int i);
+    public abstract IntVector shiftLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract IntVector shiftER(int i);
+    public abstract IntVector shiftLanesRight(int i);
 
 
 
@@ -996,113 +996,121 @@ public abstract class IntVector extends Vector<Integer> {
      * Logically left shifts this vector by the broadcast of an input scalar.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
+     * operation ({@code <<}) to each lane to left shift the
+     * element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to left shift
-     * @return the result of logically left shifting left this vector by the
+     * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector shiftL(int s);
+    public abstract IntVector shiftLeft(int s);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
+     * operation ({@code <<}) to each lane to left shift the
+     * element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to left shift
      * @param m the mask controlling lane selection
      * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector shiftL(int s, VectorMask<Integer> m);
+    public abstract IntVector shiftLeft(int s, VectorMask<Integer> m);
 
     /**
      * Logically left shifts this vector by an input vector.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
+     * operation ({@code <<}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public abstract IntVector shiftL(Vector<Integer> v);
+    public abstract IntVector shiftLeft(Vector<Integer> v);
 
     /**
      * Logically left shifts this vector by an input vector, selecting lane
      * elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
+     * operation ({@code <<}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public IntVector shiftL(Vector<Integer> v, VectorMask<Integer> m) {
-        return bOp(v, m, (i, a, b) -> (int) (a << b));
+    public IntVector shiftLeft(Vector<Integer> v, VectorMask<Integer> m) {
+        return blend(shiftLeft(v), m);
     }
 
     // logical, or unsigned, shift right
 
-    /**
+     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
      * broadcast of an input scalar.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
+     * operation ({@code >>>}) to each lane to logically right shift the
+     * element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector shiftR(int s);
+    public abstract IntVector shiftRight(int s);
 
-    /**
+     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
      * broadcast of an input scalar, selecting lane elements controlled by a
      * mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
+     * operation ({@code >>}) to each lane to logically right shift the
+     * element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @param m the mask controlling lane selection
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector shiftR(int s, VectorMask<Integer> m);
+    public abstract IntVector shiftRight(int s, VectorMask<Integer> m);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
      * input vector.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
+     * operation ({@code >>>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public abstract IntVector shiftR(Vector<Integer> v);
+    public abstract IntVector shiftRight(Vector<Integer> v);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
      * input vector, selecting lane elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
+     * operation ({@code >>>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public IntVector shiftR(Vector<Integer> v, VectorMask<Integer> m) {
-        return bOp(v, m, (i, a, b) -> (int) (a >>> b));
+    public IntVector shiftRight(Vector<Integer> v, VectorMask<Integer> m) {
+        return blend(shiftRight(v), m);
     }
 
     /**
@@ -1110,13 +1118,14 @@ public abstract class IntVector extends Vector<Integer> {
      * broadcast of an input scalar.
      * <p>
      * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
+     * shift operation ({@code >>}) to each lane to arithmetically
+     * right shift the element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector aShiftR(int s);
+    public abstract IntVector shiftArithmeticRight(int s);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -1124,42 +1133,45 @@ public abstract class IntVector extends Vector<Integer> {
      * mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
+     * shift operation ({@code >>}) to each lane to arithmetically
+     * right shift the element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @param m the mask controlling lane selection
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector aShiftR(int s, VectorMask<Integer> m);
+    public abstract IntVector shiftArithmeticRight(int s, VectorMask<Integer> m);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
      * input vector.
      * <p>
      * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
+     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public abstract IntVector aShiftR(Vector<Integer> v);
+    public abstract IntVector shiftArithmeticRight(Vector<Integer> v);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
      * input vector, selecting lane elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
+     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public IntVector aShiftR(Vector<Integer> v, VectorMask<Integer> m) {
-        return bOp(v, m, (i, a, b) -> (int) (a >> b));
+    public IntVector shiftArithmeticRight(Vector<Integer> v, VectorMask<Integer> m) {
+        return blend(shiftArithmeticRight(v), m);
     }
 
     /**
@@ -1176,8 +1188,8 @@ public abstract class IntVector extends Vector<Integer> {
      * input scalar
      */
     @ForceInline
-    public final IntVector rotateL(int s) {
-        return shiftL(s).or(shiftR(-s));
+    public final IntVector rotateLeft(int s) {
+        return shiftLeft(s).or(shiftRight(-s));
     }
 
     /**
@@ -1196,8 +1208,8 @@ public abstract class IntVector extends Vector<Integer> {
      * input scalar
      */
     @ForceInline
-    public final IntVector rotateL(int s, VectorMask<Integer> m) {
-        return shiftL(s, m).or(shiftR(-s, m), m);
+    public final IntVector rotateLeft(int s, VectorMask<Integer> m) {
+        return shiftLeft(s, m).or(shiftRight(-s, m), m);
     }
 
     /**
@@ -1214,8 +1226,8 @@ public abstract class IntVector extends Vector<Integer> {
      * input scalar
      */
     @ForceInline
-    public final IntVector rotateR(int s) {
-        return shiftR(s).or(shiftL(-s));
+    public final IntVector rotateRight(int s) {
+        return shiftRight(s).or(shiftLeft(-s));
     }
 
     /**
@@ -1234,8 +1246,8 @@ public abstract class IntVector extends Vector<Integer> {
      * input scalar
      */
     @ForceInline
-    public final IntVector rotateR(int s, VectorMask<Integer> m) {
-        return shiftR(s, m).or(shiftL(-s, m), m);
+    public final IntVector rotateRight(int s, VectorMask<Integer> m) {
+        return shiftRight(s, m).or(shiftLeft(-s, m), m);
     }
 
     /**
@@ -1273,7 +1285,7 @@ public abstract class IntVector extends Vector<Integer> {
      *
      * @return the addition of all the lane elements of this vector
      */
-    public abstract int addAll();
+    public abstract int addLanes();
 
     /**
      * Adds all lane elements of this vector, selecting lane elements
@@ -1286,7 +1298,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the addition of the selected lane elements of this vector
      */
-    public abstract int addAll(VectorMask<Integer> m);
+    public abstract int addLanes(VectorMask<Integer> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1297,7 +1309,7 @@ public abstract class IntVector extends Vector<Integer> {
      *
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract int mulAll();
+    public abstract int mulLanes();
 
     /**
      * Multiplies all lane elements of this vector, selecting lane elements
@@ -1310,7 +1322,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract int mulAll(VectorMask<Integer> m);
+    public abstract int mulLanes(VectorMask<Integer> m);
 
     /**
      * Returns the minimum lane element of this vector.
@@ -1322,7 +1334,7 @@ public abstract class IntVector extends Vector<Integer> {
      *
      * @return the minimum lane element of this vector
      */
-    public abstract int minAll();
+    public abstract int minLanes();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -1336,7 +1348,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
      */
-    public abstract int minAll(VectorMask<Integer> m);
+    public abstract int minLanes(VectorMask<Integer> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -1348,7 +1360,7 @@ public abstract class IntVector extends Vector<Integer> {
      *
      * @return the maximum lane element of this vector
      */
-    public abstract int maxAll();
+    public abstract int maxLanes();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements
@@ -1362,7 +1374,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
      */
-    public abstract int maxAll(VectorMask<Integer> m);
+    public abstract int maxLanes(VectorMask<Integer> m);
 
     /**
      * Logically ORs all lane elements of this vector.
@@ -1373,7 +1385,7 @@ public abstract class IntVector extends Vector<Integer> {
      *
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract int orAll();
+    public abstract int orLanes();
 
     /**
      * Logically ORs all lane elements of this vector, selecting lane elements
@@ -1386,7 +1398,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract int orAll(VectorMask<Integer> m);
+    public abstract int orLanes(VectorMask<Integer> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -1397,7 +1409,7 @@ public abstract class IntVector extends Vector<Integer> {
      *
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract int andAll();
+    public abstract int andLanes();
 
     /**
      * Logically ANDs all lane elements of this vector, selecting lane elements
@@ -1410,7 +1422,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract int andAll(VectorMask<Integer> m);
+    public abstract int andLanes(VectorMask<Integer> m);
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -1421,7 +1433,7 @@ public abstract class IntVector extends Vector<Integer> {
      *
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract int xorAll();
+    public abstract int xorLanes();
 
     /**
      * Logically XORs all lane elements of this vector, selecting lane elements
@@ -1434,7 +1446,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @param m the mask controlling lane selection
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract int xorAll(VectorMask<Integer> m);
+    public abstract int xorLanes(VectorMask<Integer> m);
 
     // Type specific accessors
 
@@ -1577,13 +1589,13 @@ public abstract class IntVector extends Vector<Integer> {
         final Function<int[], IntVector> vectorFactory;
 
         private IntSpecies(VectorShape shape,
-                          Class<?> boxType,
+                          Class<?> vectorType,
                           Class<?> maskType,
                           Function<int[], IntVector> vectorFactory,
                           Function<boolean[], VectorMask<Integer>> maskFactory,
                           Function<IntUnaryOperator, VectorShuffle<Integer>> shuffleFromArrayFactory,
                           fShuffleFromArray<Integer> shuffleFromOpFactory) {
-            super(shape, int.class, Integer.SIZE, boxType, maskType, maskFactory,
+            super(shape, int.class, Integer.SIZE, vectorType, maskType, maskFactory,
                   shuffleFromArrayFactory, shuffleFromOpFactory);
             this.vectorFactory = vectorFactory;
         }

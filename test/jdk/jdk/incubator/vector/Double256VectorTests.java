@@ -730,6 +730,18 @@ public class Double256VectorTests extends AbstractVectorTest {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     static double max(double a, double b) {
         return (double)(Math.max(a, b));
     }
@@ -776,7 +788,7 @@ public class Double256VectorTests extends AbstractVectorTest {
 
 
 
-    static double addAll(double[] a, int idx) {
+    static double addLanes(double[] a, int idx) {
         double res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res += a[i];
@@ -785,7 +797,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static double addAll(double[] a) {
+    static double addLanes(double[] a) {
         double res = 0;
         for (int i = 0; i < a.length; i += SPECIES.length()) {
             double tmp = 0;
@@ -798,7 +810,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "doubleUnaryOpProvider")
-    static void addAllDouble256VectorTests(IntFunction<double[]> fa) {
+    static void addLanesDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         double ra = 0;
@@ -806,7 +818,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                r[i] = av.addAll();
+                r[i] = av.addLanes();
             }
         }
 
@@ -814,13 +826,13 @@ public class Double256VectorTests extends AbstractVectorTest {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                ra += av.addAll();
+                ra += av.addLanes();
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Double256VectorTests::addAll, Double256VectorTests::addAll);
+        assertReductionArraysEquals(a, r, ra, Double256VectorTests::addLanes, Double256VectorTests::addLanes);
     }
-    static double mulAll(double[] a, int idx) {
+    static double mulLanes(double[] a, int idx) {
         double res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res *= a[i];
@@ -829,7 +841,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static double mulAll(double[] a) {
+    static double mulLanes(double[] a) {
         double res = 1;
         for (int i = 0; i < a.length; i += SPECIES.length()) {
             double tmp = 1;
@@ -842,7 +854,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "doubleUnaryOpProvider")
-    static void mulAllDouble256VectorTests(IntFunction<double[]> fa) {
+    static void mulLanesDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         double ra = 1;
@@ -850,7 +862,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                r[i] = av.mulAll();
+                r[i] = av.mulLanes();
             }
         }
 
@@ -858,13 +870,13 @@ public class Double256VectorTests extends AbstractVectorTest {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                ra *= av.mulAll();
+                ra *= av.mulLanes();
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Double256VectorTests::mulAll, Double256VectorTests::mulAll);
+        assertReductionArraysEquals(a, r, ra, Double256VectorTests::mulLanes, Double256VectorTests::mulLanes);
     }
-    static double minAll(double[] a, int idx) {
+    static double minLanes(double[] a, int idx) {
         double res = Double.POSITIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (double)Math.min(res, a[i]);
@@ -873,7 +885,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static double minAll(double[] a) {
+    static double minLanes(double[] a) {
         double res = Double.POSITIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (double)Math.min(res, a[i]);
@@ -882,7 +894,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "doubleUnaryOpProvider")
-    static void minAllDouble256VectorTests(IntFunction<double[]> fa) {
+    static void minLanesDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         double ra = Double.POSITIVE_INFINITY;
@@ -890,7 +902,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                r[i] = av.minAll();
+                r[i] = av.minLanes();
             }
         }
 
@@ -898,13 +910,13 @@ public class Double256VectorTests extends AbstractVectorTest {
             ra = Double.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                ra = (double)Math.min(ra, av.minAll());
+                ra = (double)Math.min(ra, av.minLanes());
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Double256VectorTests::minAll, Double256VectorTests::minAll);
+        assertReductionArraysEquals(a, r, ra, Double256VectorTests::minLanes, Double256VectorTests::minLanes);
     }
-    static double maxAll(double[] a, int idx) {
+    static double maxLanes(double[] a, int idx) {
         double res = Double.NEGATIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (double)Math.max(res, a[i]);
@@ -913,7 +925,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static double maxAll(double[] a) {
+    static double maxLanes(double[] a) {
         double res = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (double)Math.max(res, a[i]);
@@ -922,7 +934,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "doubleUnaryOpProvider")
-    static void maxAllDouble256VectorTests(IntFunction<double[]> fa) {
+    static void maxLanesDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         double ra = Double.NEGATIVE_INFINITY;
@@ -930,7 +942,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                r[i] = av.maxAll();
+                r[i] = av.maxLanes();
             }
         }
 
@@ -938,11 +950,11 @@ public class Double256VectorTests extends AbstractVectorTest {
             ra = Double.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                ra = (double)Math.max(ra, av.maxAll());
+                ra = (double)Math.max(ra, av.maxLanes());
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Double256VectorTests::maxAll, Double256VectorTests::maxAll);
+        assertReductionArraysEquals(a, r, ra, Double256VectorTests::maxLanes, Double256VectorTests::maxLanes);
     }
 
 

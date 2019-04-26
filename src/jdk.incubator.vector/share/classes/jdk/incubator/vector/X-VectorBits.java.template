@@ -171,7 +171,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         return VectorIntrinsics.cast(
             $vectortype$.class,
             $type$.class, LENGTH,
-            s.boxType(),
+            s.vectorType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -309,7 +309,7 @@ final class $vectortype$ extends $abstractvectortype$ {
     @ForceInline
     public $abstractvectortype$ reshape(VectorSpecies<$Boxtype$> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.boxType() == $Type$64Vector.class)) {
+        if (s.bitSize() == 64 && (s.vectorType() == $Type$64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 $vectortype$.class,
                 $type$.class, LENGTH,
@@ -318,7 +318,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                 this, s,
                 (species, vector) -> ($abstractvectortype$) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s.boxType() == $Type$128Vector.class)) {
+        } else if (s.bitSize() == 128 && (s.vectorType() == $Type$128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 $vectortype$.class,
                 $type$.class, LENGTH,
@@ -327,7 +327,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                 this, s,
                 (species, vector) -> ($abstractvectortype$) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s.boxType() == $Type$256Vector.class)) {
+        } else if (s.bitSize() == 256 && (s.vectorType() == $Type$256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 $vectortype$.class,
                 $type$.class, LENGTH,
@@ -336,7 +336,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                 this, s,
                 (species, vector) -> ($abstractvectortype$) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s.boxType() == $Type$512Vector.class)) {
+        } else if (s.bitSize() == 512 && (s.vectorType() == $Type$512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 $vectortype$.class,
                 $type$.class, LENGTH,
@@ -346,7 +346,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                 (species, vector) -> ($abstractvectortype$) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.boxType() == $Type$MaxVector.class)) {
+                && (s.bitSize() % 128 == 0) && (s.vectorType() == $Type$MaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 $vectortype$.class,
                 $type$.class, LENGTH,
@@ -946,99 +946,154 @@ final class $vectortype$ extends $abstractvectortype$ {
 #if[byte]
     @Override
     @ForceInline
-    public $vectortype$ shiftL(int s) {
+    public $vectortype$ shiftLeft(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a << (i & 7))));
+            (v, i) -> v.uOp((__, a) -> ($type$) (a << (i & 0x7))));
     }
 
     @Override
     @ForceInline
-    public $vectortype$ shiftL(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftL(s), m);
+    public $vectortype$ shiftLeft(int s, VectorMask<$Boxtype$> m) {
+        return blend(shiftLeft(s), m);
     }
 
     @Override
     @ForceInline
-    public $vectortype$ shiftR(int s) {
+    public $vectortype$ shiftLeft(Vector<$Boxtype$> s) {
+        $vectortype$ shiftv = ($vectortype$)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0x7));
+        return this.bOp(shiftv, (i, a, b) -> ($type$) (a << (b & 0x7)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) ((a & 0xFF) >>> (i & 7))));
+            (v, i) -> v.uOp((__, a) -> ($type$) ((a & 0xFF) >>> (i & 0x7))));
     }
 
     @Override
     @ForceInline
-    public $vectortype$ shiftR(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftR(s), m);
+    public $vectortype$ shiftRight(int s, VectorMask<$Boxtype$> m) {
+        return blend(shiftRight(s), m);
     }
 
     @Override
     @ForceInline
-    public $vectortype$ aShiftR(int s) {
+    public $vectortype$ shiftRight(Vector<$Boxtype$> s) {
+        $vectortype$ shiftv = ($vectortype$)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0x7));
+        return this.bOp(shiftv, (i, a, b) -> ($type$) (a >>> (b & 0x7)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftArithmeticRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a >> (i & 7))));
+            (v, i) -> v.uOp((__, a) -> ($type$) (a >> (i & 0x7))));
     }
 
     @Override
     @ForceInline
-    public $vectortype$ aShiftR(int s, VectorMask<$Boxtype$> m) {
-        return blend(aShiftR(s), m);
+    public $vectortype$ shiftArithmeticRight(int s, VectorMask<$Boxtype$> m) {
+        return blend(shiftArithmeticRight(s), m);
     }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftArithmeticRight(Vector<$Boxtype$> s) {
+        $vectortype$ shiftv = ($vectortype$)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0x7));
+        return this.bOp(shiftv, (i, a, b) -> ($type$) (a >> (b & 0x7)));
+    }
+
 #end[byte]
 #if[short]
     @Override
     @ForceInline
-    public $vectortype$ shiftL(int s) {
+    public $vectortype$ shiftLeft(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a << (i & 15))));
+            (v, i) -> v.uOp((__, a) -> ($type$) (a << (i & 0xF))));
     }
 
     @Override
     @ForceInline
-    public $vectortype$ shiftL(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftL(s), m);
+    public $vectortype$ shiftLeft(int s, VectorMask<$Boxtype$> m) {
+        return blend(shiftLeft(s), m);
     }
 
     @Override
     @ForceInline
-    public $vectortype$ shiftR(int s) {
+    public $vectortype$ shiftLeft(Vector<$Boxtype$> s) {
+        $vectortype$ shiftv = ($vectortype$)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0xF));
+        return this.bOp(shiftv, (i, a, b) -> ($type$) (a << (b & 0xF)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) ((a & 0xFFFF) >>> (i & 15))));
+            (v, i) -> v.uOp((__, a) -> ($type$) ((a & 0xFFFF) >>> (i & 0xF))));
     }
 
     @Override
     @ForceInline
-    public $vectortype$ shiftR(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftR(s), m);
+    public $vectortype$ shiftRight(int s, VectorMask<$Boxtype$> m) {
+        return blend(shiftRight(s), m);
     }
 
     @Override
     @ForceInline
-    public $vectortype$ aShiftR(int s) {
+    public $vectortype$ shiftRight(Vector<$Boxtype$> s) {
+        $vectortype$ shiftv = ($vectortype$)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0xF));
+        return this.bOp(shiftv, (i, a, b) -> ($type$) (a >>> (b & 0xF)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftArithmeticRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a >> (i & 15))));
+            (v, i) -> v.uOp((__, a) -> ($type$) (a >> (i & 0xF))));
     }
 
     @Override
     @ForceInline
-    public $vectortype$ aShiftR(int s, VectorMask<$Boxtype$> m) {
-        return blend(aShiftR(s), m);
+    public $vectortype$ shiftArithmeticRight(int s, VectorMask<$Boxtype$> m) {
+        return blend(shiftArithmeticRight(s), m);
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftArithmeticRight(Vector<$Boxtype$> s) {
+        $vectortype$ shiftv = ($vectortype$)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0xF));
+        return this.bOp(shiftv, (i, a, b) -> ($type$) (a >> (b & 0xF)));
     }
 #end[short]
 #if[intOrLong]
     @Override
     @ForceInline
-    public $vectortype$ shiftL(int s) {
+    public $vectortype$ shiftLeft(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
@@ -1047,13 +1102,13 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $vectortype$ shiftL(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftL(s), m);
+    public $vectortype$ shiftLeft(int s, VectorMask<$Boxtype$> m) {
+        return blend(shiftLeft(s), m);
     }
 
     @Override
     @ForceInline
-    public $vectortype$ shiftR(int s) {
+    public $vectortype$ shiftRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
@@ -1062,13 +1117,13 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $vectortype$ shiftR(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftR(s), m);
+    public $vectortype$ shiftRight(int s, VectorMask<$Boxtype$> m) {
+        return blend(shiftRight(s), m);
     }
 
     @Override
     @ForceInline
-    public $vectortype$ aShiftR(int s) {
+    public $vectortype$ shiftArithmeticRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
@@ -1077,13 +1132,13 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $vectortype$ aShiftR(int s, VectorMask<$Boxtype$> m) {
-        return blend(aShiftR(s), m);
+    public $vectortype$ shiftArithmeticRight(int s, VectorMask<$Boxtype$> m) {
+        return blend(shiftArithmeticRight(s), m);
     }
 
     @Override
     @ForceInline
-    public $vectortype$ shiftL(Vector<$Boxtype$> s) {
+    public $vectortype$ shiftLeft(Vector<$Boxtype$> s) {
         $vectortype$ shiftv = ($vectortype$)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, {#if[int]?0x1f:0x3f}));
@@ -1095,7 +1150,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $vectortype$ shiftR(Vector<$Boxtype$> s) {
+    public $vectortype$ shiftRight(Vector<$Boxtype$> s) {
         $vectortype$ shiftv = ($vectortype$)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, {#if[int]?0x1f:0x3f}));
@@ -1107,7 +1162,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $vectortype$ aShiftR(Vector<$Boxtype$> s) {
+    public $vectortype$ shiftArithmeticRight(Vector<$Boxtype$> s) {
         $vectortype$ shiftv = ($vectortype$)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, {#if[int]?0x1f:0x3f}));
@@ -1139,7 +1194,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ addAll() {
+    public $type$ addLanes() {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_ADD, $vectortype$.class, $type$.class, LENGTH,
             this,
@@ -1148,7 +1203,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ andAll() {
+    public $type$ andLanes() {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_AND, $vectortype$.class, $type$.class, LENGTH,
             this,
@@ -1157,13 +1212,13 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ andAll(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, ($type$) -1).blend(this, m).andAll();
+    public $type$ andLanes(VectorMask<$Boxtype$> m) {
+        return $abstractvectortype$.broadcast(SPECIES, ($type$) -1).blend(this, m).andLanes();
     }
 
     @Override
     @ForceInline
-    public $type$ minAll() {
+    public $type$ minLanes() {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
             this,
@@ -1172,7 +1227,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ maxAll() {
+    public $type$ maxLanes() {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
             this,
@@ -1181,7 +1236,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ mulAll() {
+    public $type$ mulLanes() {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
             this,
@@ -1190,7 +1245,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ orAll() {
+    public $type$ orLanes() {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_OR, $vectortype$.class, $type$.class, LENGTH,
             this,
@@ -1199,13 +1254,13 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ orAll(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, ($type$) 0).blend(this, m).orAll();
+    public $type$ orLanes(VectorMask<$Boxtype$> m) {
+        return $abstractvectortype$.broadcast(SPECIES, ($type$) 0).blend(this, m).orLanes();
     }
 
     @Override
     @ForceInline
-    public $type$ xorAll() {
+    public $type$ xorLanes() {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_XOR, $vectortype$.class, $type$.class, LENGTH,
             this,
@@ -1214,15 +1269,15 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ xorAll(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, ($type$) 0).blend(this, m).xorAll();
+    public $type$ xorLanes(VectorMask<$Boxtype$> m) {
+        return $abstractvectortype$.broadcast(SPECIES, ($type$) 0).blend(this, m).xorLanes();
     }
 #end[BITWISE]
 
 #if[FP]
     @Override
     @ForceInline
-    public $type$ addAll() {
+    public $type$ addLanes() {
         $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_ADD, $vectortype$.class, $type$.class, LENGTH,
                                 this,
@@ -1235,7 +1290,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ mulAll() {
+    public $type$ mulLanes() {
         $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
                                 this,
@@ -1248,7 +1303,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ minAll() {
+    public $type$ minLanes() {
         $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
                                 this,
@@ -1261,7 +1316,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ maxAll() {
+    public $type$ maxLanes() {
         $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
                                 this,
@@ -1276,27 +1331,27 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
-    public $type$ addAll(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, ($type$) 0).blend(this, m).addAll();
+    public $type$ addLanes(VectorMask<$Boxtype$> m) {
+        return $abstractvectortype$.broadcast(SPECIES, ($type$) 0).blend(this, m).addLanes();
     }
 
 
     @Override
     @ForceInline
-    public $type$ mulAll(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, ($type$) 1).blend(this, m).mulAll();
+    public $type$ mulLanes(VectorMask<$Boxtype$> m) {
+        return $abstractvectortype$.broadcast(SPECIES, ($type$) 1).blend(this, m).mulLanes();
     }
 
     @Override
     @ForceInline
-    public $type$ minAll(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, $Boxtype$.MAX_VALUE).blend(this, m).minAll();
+    public $type$ minLanes(VectorMask<$Boxtype$> m) {
+        return $abstractvectortype$.broadcast(SPECIES, $Boxtype$.MAX_VALUE).blend(this, m).minLanes();
     }
 
     @Override
     @ForceInline
-    public $type$ maxAll(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, $Boxtype$.MIN_VALUE).blend(this, m).maxAll();
+    public $type$ maxLanes(VectorMask<$Boxtype$> m) {
+        return $abstractvectortype$.broadcast(SPECIES, $Boxtype$.MIN_VALUE).blend(this, m).maxLanes();
     }
 
     @Override
@@ -1569,7 +1624,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 #end[intOrLong]
 
     @Override
-    public $vectortype$ rotateEL(int j) {
+    public $vectortype$ rotateLanesLeft(int j) {
         $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < length(); i++){
@@ -1579,7 +1634,7 @@ final class $vectortype$ extends $abstractvectortype$ {
     }
 
     @Override
-    public $vectortype$ rotateER(int j) {
+    public $vectortype$ rotateLanesRight(int j) {
         $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < length(); i++){
@@ -1594,7 +1649,7 @@ final class $vectortype$ extends $abstractvectortype$ {
     }
 
     @Override
-    public $vectortype$ shiftEL(int j) {
+    public $vectortype$ shiftLanesLeft(int j) {
         $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < length() - j; i++) {
@@ -1604,7 +1659,7 @@ final class $vectortype$ extends $abstractvectortype$ {
     }
 
     @Override
-    public $vectortype$ shiftER(int j) {
+    public $vectortype$ shiftLanesRight(int j) {
         $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < length() - j; i++){

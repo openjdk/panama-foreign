@@ -122,7 +122,7 @@ public class VectorHash {
         for (; i < (a.length & ~(BYTE_64_SPECIES.length() - 1)); i += BYTE_64_SPECIES.length()) {
             ByteVector b = ByteVector.fromArray(BYTE_64_SPECIES, a, i);
             IntVector x = (IntVector) b.cast(INT_256_SPECIES);
-            h = h * COEFF_31_TO_8 + x.mul(H_COEFF_8).addAll();
+            h = h * COEFF_31_TO_8 + x.mul(H_COEFF_8).addLanes();
         }
 
         for (; i < a.length; i++) {
@@ -137,7 +137,7 @@ public class VectorHash {
         for (; i < (a.length & ~(BYTE_128_SPECIES.length() - 1)); i += BYTE_128_SPECIES.length()) {
             ByteVector b = ByteVector.fromArray(BYTE_128_SPECIES, a, i);
             IntVector x = (IntVector) b.cast(INT_512_SPECIES);
-            h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).addAll();
+            h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).addLanes();
         }
 
         for (; i < a.length; i++) {
@@ -172,9 +172,9 @@ public class VectorHash {
                 // Reduce the size of the byte vector and then cast to int
                 IntVector x = (IntVector)(b.reshape(bytesForIntsSpecies)).cast(intSpecies);
 
-                h = h * top_h_coeff + x.mul(v_h_coeff).addAll();
+                h = h * top_h_coeff + x.mul(v_h_coeff).addLanes();
 
-                b = b.shiftEL(intSpecies.length());
+                b = b.shiftLanesLeft(intSpecies.length());
             }
         }
 

@@ -112,7 +112,7 @@ public abstract class LongVector extends Vector<Long> {
     @ForceInline
     @SuppressWarnings("unchecked")
     public static LongVector zero(VectorSpecies<Long> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<LongVector>) species.boxType(), long.class, species.length(),
+        return VectorIntrinsics.broadcastCoerced((Class<LongVector>) species.vectorType(), long.class, species.length(),
                                                  0, species,
                                                  ((bits, s) -> ((LongSpecies)s).op(i -> (long)bits)));
     }
@@ -142,7 +142,7 @@ public abstract class LongVector extends Vector<Long> {
     public static LongVector fromByteArray(VectorSpecies<Long> species, byte[] a, int offset) {
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<LongVector>) species.boxType(), long.class, species.length(),
+        return VectorIntrinsics.load((Class<LongVector>) species.vectorType(), long.class, species.length(),
                                      a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> {
@@ -200,7 +200,7 @@ public abstract class LongVector extends Vector<Long> {
     public static LongVector fromArray(VectorSpecies<Long> species, long[] a, int offset){
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.length());
-        return VectorIntrinsics.load((Class<LongVector>) species.boxType(), long.class, species.length(),
+        return VectorIntrinsics.load((Class<LongVector>) species.vectorType(), long.class, species.length(),
                                      a, (((long) offset) << ARRAY_SHIFT) + Unsafe.ARRAY_LONG_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> ((LongSpecies)s).op(n -> c[idx + n]));
@@ -266,8 +266,8 @@ public abstract class LongVector extends Vector<Long> {
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        return VectorIntrinsics.loadWithMap((Class<LongVector>) species.boxType(), long.class, species.length(),
-                                            IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_LONG_BASE_OFFSET, vix,
+        return VectorIntrinsics.loadWithMap((Class<LongVector>) species.vectorType(), long.class, species.length(),
+                                            IntVector.species(species.indexShape()).vectorType(), a, Unsafe.ARRAY_LONG_BASE_OFFSET, vix,
                                             a, a_offset, indexMap, i_offset, species,
                                             (long[] c, int idx, int[] iMap, int idy, VectorSpecies<Long> s) ->
                                                 ((LongSpecies)s).op(n -> c[idx + iMap[idy+n]]));
@@ -336,7 +336,7 @@ public abstract class LongVector extends Vector<Long> {
             throw new IllegalArgumentException();
         }
         offset = VectorIntrinsics.checkIndex(offset, bb.limit(), species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<LongVector>) species.boxType(), long.class, species.length(),
+        return VectorIntrinsics.load((Class<LongVector>) species.vectorType(), long.class, species.length(),
                                      U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + offset,
                                      bb, offset, species,
                                      (c, idx, s) -> {
@@ -392,7 +392,7 @@ public abstract class LongVector extends Vector<Long> {
      * value {@code e}.
      *
      * @param species species of the desired vector
-     * @param e the value
+     * @param e the value to be broadcasted
      * @return a vector of vector where all lane elements are set to
      * the primitive value {@code e}
      */
@@ -400,7 +400,7 @@ public abstract class LongVector extends Vector<Long> {
     @SuppressWarnings("unchecked")
     public static LongVector broadcast(VectorSpecies<Long> species, long e) {
         return VectorIntrinsics.broadcastCoerced(
-            (Class<LongVector>) species.boxType(), long.class, species.length(),
+            (Class<LongVector>) species.vectorType(), long.class, species.length(),
             e, species,
             ((bits, sp) -> ((LongSpecies)sp).op(i -> (long)bits)));
     }
@@ -424,7 +424,7 @@ public abstract class LongVector extends Vector<Long> {
     public static LongVector scalars(VectorSpecies<Long> species, long... es) {
         Objects.requireNonNull(es);
         int ix = VectorIntrinsics.checkIndex(0, es.length, species.length());
-        return VectorIntrinsics.load((Class<LongVector>) species.boxType(), long.class, species.length(),
+        return VectorIntrinsics.load((Class<LongVector>) species.vectorType(), long.class, species.length(),
                                      es, Unsafe.ARRAY_LONG_BASE_OFFSET,
                                      es, ix, species,
                                      (c, idx, sp) -> ((LongSpecies)sp).op(n -> c[idx + n]));
@@ -802,25 +802,25 @@ public abstract class LongVector extends Vector<Long> {
      * {@inheritDoc}
      */
     @Override
-    public abstract LongVector rotateEL(int i);
+    public abstract LongVector rotateLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract LongVector rotateER(int i);
+    public abstract LongVector rotateLanesRight(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract LongVector shiftEL(int i);
+    public abstract LongVector shiftLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract LongVector shiftER(int i);
+    public abstract LongVector shiftLanesRight(int i);
 
 
 
@@ -999,113 +999,121 @@ public abstract class LongVector extends Vector<Long> {
      * Logically left shifts this vector by the broadcast of an input scalar.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
+     * operation ({@code <<}) to each lane to left shift the
+     * element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to left shift
-     * @return the result of logically left shifting left this vector by the
+     * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract LongVector shiftL(int s);
+    public abstract LongVector shiftLeft(int s);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
+     * operation ({@code <<}) to each lane to left shift the
+     * element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to left shift
      * @param m the mask controlling lane selection
      * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract LongVector shiftL(int s, VectorMask<Long> m);
+    public abstract LongVector shiftLeft(int s, VectorMask<Long> m);
 
     /**
      * Logically left shifts this vector by an input vector.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
+     * operation ({@code <<}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public abstract LongVector shiftL(Vector<Long> v);
+    public abstract LongVector shiftLeft(Vector<Long> v);
 
     /**
      * Logically left shifts this vector by an input vector, selecting lane
      * elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane.
+     * operation ({@code <<}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public LongVector shiftL(Vector<Long> v, VectorMask<Long> m) {
-        return bOp(v, m, (i, a, b) -> (long) (a << b));
+    public LongVector shiftLeft(Vector<Long> v, VectorMask<Long> m) {
+        return blend(shiftLeft(v), m);
     }
 
     // logical, or unsigned, shift right
 
-    /**
+     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
      * broadcast of an input scalar.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
+     * operation ({@code >>>}) to each lane to logically right shift the
+     * element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract LongVector shiftR(int s);
+    public abstract LongVector shiftRight(int s);
 
-    /**
+     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
      * broadcast of an input scalar, selecting lane elements controlled by a
      * mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
+     * operation ({@code >>}) to each lane to logically right shift the
+     * element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @param m the mask controlling lane selection
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract LongVector shiftR(int s, VectorMask<Long> m);
+    public abstract LongVector shiftRight(int s, VectorMask<Long> m);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
      * input vector.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
+     * operation ({@code >>>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public abstract LongVector shiftR(Vector<Long> v);
+    public abstract LongVector shiftRight(Vector<Long> v);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
      * input vector, selecting lane elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane.
+     * operation ({@code >>>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public LongVector shiftR(Vector<Long> v, VectorMask<Long> m) {
-        return bOp(v, m, (i, a, b) -> (long) (a >>> b));
+    public LongVector shiftRight(Vector<Long> v, VectorMask<Long> m) {
+        return blend(shiftRight(v), m);
     }
 
     /**
@@ -1113,13 +1121,14 @@ public abstract class LongVector extends Vector<Long> {
      * broadcast of an input scalar.
      * <p>
      * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
+     * shift operation ({@code >>}) to each lane to arithmetically
+     * right shift the element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract LongVector aShiftR(int s);
+    public abstract LongVector shiftArithmeticRight(int s);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -1127,42 +1136,45 @@ public abstract class LongVector extends Vector<Long> {
      * mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
+     * shift operation ({@code >>}) to each lane to arithmetically
+     * right shift the element by shift value as specified by the input scalar.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @param m the mask controlling lane selection
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract LongVector aShiftR(int s, VectorMask<Long> m);
+    public abstract LongVector shiftArithmeticRight(int s, VectorMask<Long> m);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
      * input vector.
      * <p>
      * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
+     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public abstract LongVector aShiftR(Vector<Long> v);
+    public abstract LongVector shiftArithmeticRight(Vector<Long> v);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
      * input vector, selecting lane elements controlled by a mask.
      * <p>
      * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane.
+     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public LongVector aShiftR(Vector<Long> v, VectorMask<Long> m) {
-        return bOp(v, m, (i, a, b) -> (long) (a >> b));
+    public LongVector shiftArithmeticRight(Vector<Long> v, VectorMask<Long> m) {
+        return blend(shiftArithmeticRight(v), m);
     }
 
     /**
@@ -1179,8 +1191,8 @@ public abstract class LongVector extends Vector<Long> {
      * input scalar
      */
     @ForceInline
-    public final LongVector rotateL(int s) {
-        return shiftL(s).or(shiftR(-s));
+    public final LongVector rotateLeft(int s) {
+        return shiftLeft(s).or(shiftRight(-s));
     }
 
     /**
@@ -1199,8 +1211,8 @@ public abstract class LongVector extends Vector<Long> {
      * input scalar
      */
     @ForceInline
-    public final LongVector rotateL(int s, VectorMask<Long> m) {
-        return shiftL(s, m).or(shiftR(-s, m), m);
+    public final LongVector rotateLeft(int s, VectorMask<Long> m) {
+        return shiftLeft(s, m).or(shiftRight(-s, m), m);
     }
 
     /**
@@ -1217,8 +1229,8 @@ public abstract class LongVector extends Vector<Long> {
      * input scalar
      */
     @ForceInline
-    public final LongVector rotateR(int s) {
-        return shiftR(s).or(shiftL(-s));
+    public final LongVector rotateRight(int s) {
+        return shiftRight(s).or(shiftLeft(-s));
     }
 
     /**
@@ -1237,8 +1249,8 @@ public abstract class LongVector extends Vector<Long> {
      * input scalar
      */
     @ForceInline
-    public final LongVector rotateR(int s, VectorMask<Long> m) {
-        return shiftR(s, m).or(shiftL(-s, m), m);
+    public final LongVector rotateRight(int s, VectorMask<Long> m) {
+        return shiftRight(s, m).or(shiftLeft(-s, m), m);
     }
 
     /**
@@ -1276,7 +1288,7 @@ public abstract class LongVector extends Vector<Long> {
      *
      * @return the addition of all the lane elements of this vector
      */
-    public abstract long addAll();
+    public abstract long addLanes();
 
     /**
      * Adds all lane elements of this vector, selecting lane elements
@@ -1289,7 +1301,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the addition of the selected lane elements of this vector
      */
-    public abstract long addAll(VectorMask<Long> m);
+    public abstract long addLanes(VectorMask<Long> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1300,7 +1312,7 @@ public abstract class LongVector extends Vector<Long> {
      *
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract long mulAll();
+    public abstract long mulLanes();
 
     /**
      * Multiplies all lane elements of this vector, selecting lane elements
@@ -1313,7 +1325,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract long mulAll(VectorMask<Long> m);
+    public abstract long mulLanes(VectorMask<Long> m);
 
     /**
      * Returns the minimum lane element of this vector.
@@ -1325,7 +1337,7 @@ public abstract class LongVector extends Vector<Long> {
      *
      * @return the minimum lane element of this vector
      */
-    public abstract long minAll();
+    public abstract long minLanes();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -1339,7 +1351,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
      */
-    public abstract long minAll(VectorMask<Long> m);
+    public abstract long minLanes(VectorMask<Long> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -1351,7 +1363,7 @@ public abstract class LongVector extends Vector<Long> {
      *
      * @return the maximum lane element of this vector
      */
-    public abstract long maxAll();
+    public abstract long maxLanes();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements
@@ -1365,7 +1377,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
      */
-    public abstract long maxAll(VectorMask<Long> m);
+    public abstract long maxLanes(VectorMask<Long> m);
 
     /**
      * Logically ORs all lane elements of this vector.
@@ -1376,7 +1388,7 @@ public abstract class LongVector extends Vector<Long> {
      *
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract long orAll();
+    public abstract long orLanes();
 
     /**
      * Logically ORs all lane elements of this vector, selecting lane elements
@@ -1389,7 +1401,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract long orAll(VectorMask<Long> m);
+    public abstract long orLanes(VectorMask<Long> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -1400,7 +1412,7 @@ public abstract class LongVector extends Vector<Long> {
      *
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract long andAll();
+    public abstract long andLanes();
 
     /**
      * Logically ANDs all lane elements of this vector, selecting lane elements
@@ -1413,7 +1425,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract long andAll(VectorMask<Long> m);
+    public abstract long andLanes(VectorMask<Long> m);
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -1424,7 +1436,7 @@ public abstract class LongVector extends Vector<Long> {
      *
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract long xorAll();
+    public abstract long xorLanes();
 
     /**
      * Logically XORs all lane elements of this vector, selecting lane elements
@@ -1437,7 +1449,7 @@ public abstract class LongVector extends Vector<Long> {
      * @param m the mask controlling lane selection
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract long xorAll(VectorMask<Long> m);
+    public abstract long xorLanes(VectorMask<Long> m);
 
     // Type specific accessors
 
@@ -1580,13 +1592,13 @@ public abstract class LongVector extends Vector<Long> {
         final Function<long[], LongVector> vectorFactory;
 
         private LongSpecies(VectorShape shape,
-                          Class<?> boxType,
+                          Class<?> vectorType,
                           Class<?> maskType,
                           Function<long[], LongVector> vectorFactory,
                           Function<boolean[], VectorMask<Long>> maskFactory,
                           Function<IntUnaryOperator, VectorShuffle<Long>> shuffleFromArrayFactory,
                           fShuffleFromArray<Long> shuffleFromOpFactory) {
-            super(shape, long.class, Long.SIZE, boxType, maskType, maskFactory,
+            super(shape, long.class, Long.SIZE, vectorType, maskType, maskFactory,
                   shuffleFromArrayFactory, shuffleFromOpFactory);
             this.vectorFactory = vectorFactory;
         }

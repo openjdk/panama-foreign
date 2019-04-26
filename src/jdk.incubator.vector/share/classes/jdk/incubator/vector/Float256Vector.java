@@ -163,7 +163,7 @@ final class Float256Vector extends FloatVector {
         return VectorIntrinsics.cast(
             Float256Vector.class,
             float.class, LENGTH,
-            s.boxType(),
+            s.vectorType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -301,7 +301,7 @@ final class Float256Vector extends FloatVector {
     @ForceInline
     public FloatVector reshape(VectorSpecies<Float> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.boxType() == Float64Vector.class)) {
+        if (s.bitSize() == 64 && (s.vectorType() == Float64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Float256Vector.class,
                 float.class, LENGTH,
@@ -310,7 +310,7 @@ final class Float256Vector extends FloatVector {
                 this, s,
                 (species, vector) -> (FloatVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s.boxType() == Float128Vector.class)) {
+        } else if (s.bitSize() == 128 && (s.vectorType() == Float128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Float256Vector.class,
                 float.class, LENGTH,
@@ -319,7 +319,7 @@ final class Float256Vector extends FloatVector {
                 this, s,
                 (species, vector) -> (FloatVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s.boxType() == Float256Vector.class)) {
+        } else if (s.bitSize() == 256 && (s.vectorType() == Float256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Float256Vector.class,
                 float.class, LENGTH,
@@ -328,7 +328,7 @@ final class Float256Vector extends FloatVector {
                 this, s,
                 (species, vector) -> (FloatVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s.boxType() == Float512Vector.class)) {
+        } else if (s.bitSize() == 512 && (s.vectorType() == Float512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Float256Vector.class,
                 float.class, LENGTH,
@@ -338,7 +338,7 @@ final class Float256Vector extends FloatVector {
                 (species, vector) -> (FloatVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.boxType() == FloatMaxVector.class)) {
+                && (s.bitSize() % 128 == 0) && (s.vectorType() == FloatMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 Float256Vector.class,
                 float.class, LENGTH,
@@ -839,7 +839,7 @@ final class Float256Vector extends FloatVector {
 
     @Override
     @ForceInline
-    public float addAll() {
+    public float addLanes() {
         int bits = (int) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_ADD, Float256Vector.class, float.class, LENGTH,
                                 this,
@@ -852,7 +852,7 @@ final class Float256Vector extends FloatVector {
 
     @Override
     @ForceInline
-    public float mulAll() {
+    public float mulLanes() {
         int bits = (int) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MUL, Float256Vector.class, float.class, LENGTH,
                                 this,
@@ -865,7 +865,7 @@ final class Float256Vector extends FloatVector {
 
     @Override
     @ForceInline
-    public float minAll() {
+    public float minLanes() {
         int bits = (int) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MIN, Float256Vector.class, float.class, LENGTH,
                                 this,
@@ -878,7 +878,7 @@ final class Float256Vector extends FloatVector {
 
     @Override
     @ForceInline
-    public float maxAll() {
+    public float maxLanes() {
         int bits = (int) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MAX, Float256Vector.class, float.class, LENGTH,
                                 this,
@@ -892,27 +892,27 @@ final class Float256Vector extends FloatVector {
 
     @Override
     @ForceInline
-    public float addAll(VectorMask<Float> m) {
-        return FloatVector.broadcast(SPECIES, (float) 0).blend(this, m).addAll();
+    public float addLanes(VectorMask<Float> m) {
+        return FloatVector.broadcast(SPECIES, (float) 0).blend(this, m).addLanes();
     }
 
 
     @Override
     @ForceInline
-    public float mulAll(VectorMask<Float> m) {
-        return FloatVector.broadcast(SPECIES, (float) 1).blend(this, m).mulAll();
+    public float mulLanes(VectorMask<Float> m) {
+        return FloatVector.broadcast(SPECIES, (float) 1).blend(this, m).mulLanes();
     }
 
     @Override
     @ForceInline
-    public float minAll(VectorMask<Float> m) {
-        return FloatVector.broadcast(SPECIES, Float.MAX_VALUE).blend(this, m).minAll();
+    public float minLanes(VectorMask<Float> m) {
+        return FloatVector.broadcast(SPECIES, Float.MAX_VALUE).blend(this, m).minLanes();
     }
 
     @Override
     @ForceInline
-    public float maxAll(VectorMask<Float> m) {
-        return FloatVector.broadcast(SPECIES, Float.MIN_VALUE).blend(this, m).maxAll();
+    public float maxLanes(VectorMask<Float> m) {
+        return FloatVector.broadcast(SPECIES, Float.MIN_VALUE).blend(this, m).maxLanes();
     }
 
     @Override
@@ -1167,7 +1167,7 @@ final class Float256Vector extends FloatVector {
 
 
     @Override
-    public Float256Vector rotateEL(int j) {
+    public Float256Vector rotateLanesLeft(int j) {
         float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length(); i++){
@@ -1177,7 +1177,7 @@ final class Float256Vector extends FloatVector {
     }
 
     @Override
-    public Float256Vector rotateER(int j) {
+    public Float256Vector rotateLanesRight(int j) {
         float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length(); i++){
@@ -1192,7 +1192,7 @@ final class Float256Vector extends FloatVector {
     }
 
     @Override
-    public Float256Vector shiftEL(int j) {
+    public Float256Vector shiftLanesLeft(int j) {
         float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length() - j; i++) {
@@ -1202,7 +1202,7 @@ final class Float256Vector extends FloatVector {
     }
 
     @Override
-    public Float256Vector shiftER(int j) {
+    public Float256Vector shiftLanesRight(int j) {
         float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length() - j; i++){

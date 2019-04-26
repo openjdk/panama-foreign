@@ -112,7 +112,7 @@ public abstract class FloatVector extends Vector<Float> {
     @ForceInline
     @SuppressWarnings("unchecked")
     public static FloatVector zero(VectorSpecies<Float> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<FloatVector>) species.boxType(), float.class, species.length(),
+        return VectorIntrinsics.broadcastCoerced((Class<FloatVector>) species.vectorType(), float.class, species.length(),
                                                  Float.floatToIntBits(0.0f), species,
                                                  ((bits, s) -> ((FloatSpecies)s).op(i -> Float.intBitsToFloat((int)bits))));
     }
@@ -142,7 +142,7 @@ public abstract class FloatVector extends Vector<Float> {
     public static FloatVector fromByteArray(VectorSpecies<Float> species, byte[] a, int offset) {
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<FloatVector>) species.boxType(), float.class, species.length(),
+        return VectorIntrinsics.load((Class<FloatVector>) species.vectorType(), float.class, species.length(),
                                      a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> {
@@ -200,7 +200,7 @@ public abstract class FloatVector extends Vector<Float> {
     public static FloatVector fromArray(VectorSpecies<Float> species, float[] a, int offset){
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.length());
-        return VectorIntrinsics.load((Class<FloatVector>) species.boxType(), float.class, species.length(),
+        return VectorIntrinsics.load((Class<FloatVector>) species.vectorType(), float.class, species.length(),
                                      a, (((long) offset) << ARRAY_SHIFT) + Unsafe.ARRAY_FLOAT_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> ((FloatSpecies)s).op(n -> c[idx + n]));
@@ -263,8 +263,8 @@ public abstract class FloatVector extends Vector<Float> {
 
         vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        return VectorIntrinsics.loadWithMap((Class<FloatVector>) species.boxType(), float.class, species.length(),
-                                            IntVector.species(species.indexShape()).boxType(), a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vix,
+        return VectorIntrinsics.loadWithMap((Class<FloatVector>) species.vectorType(), float.class, species.length(),
+                                            IntVector.species(species.indexShape()).vectorType(), a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vix,
                                             a, a_offset, indexMap, i_offset, species,
                                             (float[] c, int idx, int[] iMap, int idy, VectorSpecies<Float> s) ->
                                                 ((FloatSpecies)s).op(n -> c[idx + iMap[idy+n]]));
@@ -333,7 +333,7 @@ public abstract class FloatVector extends Vector<Float> {
             throw new IllegalArgumentException();
         }
         offset = VectorIntrinsics.checkIndex(offset, bb.limit(), species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<FloatVector>) species.boxType(), float.class, species.length(),
+        return VectorIntrinsics.load((Class<FloatVector>) species.vectorType(), float.class, species.length(),
                                      U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + offset,
                                      bb, offset, species,
                                      (c, idx, s) -> {
@@ -389,7 +389,7 @@ public abstract class FloatVector extends Vector<Float> {
      * value {@code e}.
      *
      * @param species species of the desired vector
-     * @param e the value
+     * @param e the value to be broadcasted
      * @return a vector of vector where all lane elements are set to
      * the primitive value {@code e}
      */
@@ -397,7 +397,7 @@ public abstract class FloatVector extends Vector<Float> {
     @SuppressWarnings("unchecked")
     public static FloatVector broadcast(VectorSpecies<Float> species, float e) {
         return VectorIntrinsics.broadcastCoerced(
-            (Class<FloatVector>) species.boxType(), float.class, species.length(),
+            (Class<FloatVector>) species.vectorType(), float.class, species.length(),
             Float.floatToIntBits(e), species,
             ((bits, sp) -> ((FloatSpecies)sp).op(i -> Float.intBitsToFloat((int)bits))));
     }
@@ -421,7 +421,7 @@ public abstract class FloatVector extends Vector<Float> {
     public static FloatVector scalars(VectorSpecies<Float> species, float... es) {
         Objects.requireNonNull(es);
         int ix = VectorIntrinsics.checkIndex(0, es.length, species.length());
-        return VectorIntrinsics.load((Class<FloatVector>) species.boxType(), float.class, species.length(),
+        return VectorIntrinsics.load((Class<FloatVector>) species.vectorType(), float.class, species.length(),
                                      es, Unsafe.ARRAY_FLOAT_BASE_OFFSET,
                                      es, ix, species,
                                      (c, idx, sp) -> ((FloatSpecies)sp).op(n -> c[idx + n]));
@@ -799,25 +799,25 @@ public abstract class FloatVector extends Vector<Float> {
      * {@inheritDoc}
      */
     @Override
-    public abstract FloatVector rotateEL(int i);
+    public abstract FloatVector rotateLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract FloatVector rotateER(int i);
+    public abstract FloatVector rotateLanesRight(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract FloatVector shiftEL(int i);
+    public abstract FloatVector shiftLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract FloatVector shiftER(int i);
+    public abstract FloatVector shiftLanesRight(int i);
 
     /**
      * Divides this vector by an input vector.
@@ -1719,7 +1719,7 @@ public abstract class FloatVector extends Vector<Float> {
      *
      * @return the addition of all the lane elements of this vector
      */
-    public abstract float addAll();
+    public abstract float addLanes();
 
     /**
      * Adds all lane elements of this vector, selecting lane elements
@@ -1741,7 +1741,7 @@ public abstract class FloatVector extends Vector<Float> {
      * @param m the mask controlling lane selection
      * @return the addition of the selected lane elements of this vector
      */
-    public abstract float addAll(VectorMask<Float> m);
+    public abstract float addLanes(VectorMask<Float> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1760,7 +1760,7 @@ public abstract class FloatVector extends Vector<Float> {
      *
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract float mulAll();
+    public abstract float mulLanes();
 
     /**
      * Multiplies all lane elements of this vector, selecting lane elements
@@ -1781,7 +1781,7 @@ public abstract class FloatVector extends Vector<Float> {
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract float mulAll(VectorMask<Float> m);
+    public abstract float mulLanes(VectorMask<Float> m);
 
     /**
      * Returns the minimum lane element of this vector.
@@ -1793,7 +1793,7 @@ public abstract class FloatVector extends Vector<Float> {
      *
      * @return the minimum lane element of this vector
      */
-    public abstract float minAll();
+    public abstract float minLanes();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -1807,7 +1807,7 @@ public abstract class FloatVector extends Vector<Float> {
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
      */
-    public abstract float minAll(VectorMask<Float> m);
+    public abstract float minLanes(VectorMask<Float> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -1819,7 +1819,7 @@ public abstract class FloatVector extends Vector<Float> {
      *
      * @return the maximum lane element of this vector
      */
-    public abstract float maxAll();
+    public abstract float maxLanes();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements
@@ -1833,7 +1833,7 @@ public abstract class FloatVector extends Vector<Float> {
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
      */
-    public abstract float maxAll(VectorMask<Float> m);
+    public abstract float maxLanes(VectorMask<Float> m);
 
 
     // Type specific accessors
@@ -1977,13 +1977,13 @@ public abstract class FloatVector extends Vector<Float> {
         final Function<float[], FloatVector> vectorFactory;
 
         private FloatSpecies(VectorShape shape,
-                          Class<?> boxType,
+                          Class<?> vectorType,
                           Class<?> maskType,
                           Function<float[], FloatVector> vectorFactory,
                           Function<boolean[], VectorMask<Float>> maskFactory,
                           Function<IntUnaryOperator, VectorShuffle<Float>> shuffleFromArrayFactory,
                           fShuffleFromArray<Float> shuffleFromOpFactory) {
-            super(shape, float.class, Float.SIZE, boxType, maskType, maskFactory,
+            super(shape, float.class, Float.SIZE, vectorType, maskType, maskFactory,
                   shuffleFromArrayFactory, shuffleFromOpFactory);
             this.vectorFactory = vectorFactory;
         }

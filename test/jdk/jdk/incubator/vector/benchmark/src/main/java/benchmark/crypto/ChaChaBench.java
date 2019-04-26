@@ -37,9 +37,9 @@ public class ChaChaBench {
     @Param({"16384", "65536"})
     private int dataSize;
     
-    private ChaChaVector cc20_S128 = makeCC20(Vector.Shape.S_128_BIT);
-    private ChaChaVector cc20_S256 = makeCC20(Vector.Shape.S_256_BIT);
-    private ChaChaVector cc20_S512 = makeCC20(Vector.Shape.S_512_BIT);
+    private ChaChaVector cc20_S128 = makeCC20(VectorShape.S_128_BIT);
+    private ChaChaVector cc20_S256 = makeCC20(VectorShape.S_256_BIT);
+    private ChaChaVector cc20_S512 = makeCC20(VectorShape.S_512_BIT);
  
     private byte[] in;
     private byte[] out;
@@ -48,7 +48,7 @@ public class ChaChaBench {
     private byte[] nonce = new byte[12];
     private long counter = 0;
 
-    private static ChaChaVector makeCC20(Vector.Shape shape) {
+    private static ChaChaVector makeCC20(VectorShape shape) {
         ChaChaVector cc20 = new ChaChaVector(shape);
         runKAT(cc20);
         return cc20;
@@ -81,29 +81,29 @@ public class ChaChaBench {
         private static final int[] STATE_CONSTANTS =
             new int[]{0x61707865, 0x3320646e, 0x79622d32, 0x6b206574};
 
-        private final Vector.Species<Integer> intSpecies;
+        private final VectorSpecies<Integer> intSpecies;
         private final int numBlocks;
 
-        private final Vector.Shuffle<Integer> rot1;
-        private final Vector.Shuffle<Integer> rot2;
-        private final Vector.Shuffle<Integer> rot3;
+        private final VectorShuffle<Integer> rot1;
+        private final VectorShuffle<Integer> rot2;
+        private final VectorShuffle<Integer> rot3;
 
         private final IntVector counterAdd;
 
-        private final Vector.Shuffle<Integer> shuf0;
-        private final Vector.Shuffle<Integer> shuf1;
-        private final Vector.Shuffle<Integer> shuf2;
-        private final Vector.Shuffle<Integer> shuf3;
+        private final VectorShuffle<Integer> shuf0;
+        private final VectorShuffle<Integer> shuf1;
+        private final VectorShuffle<Integer> shuf2;
+        private final VectorShuffle<Integer> shuf3;
 
-        private final Vector.Mask<Integer> mask0;
-        private final Vector.Mask<Integer> mask1;
-        private final Vector.Mask<Integer> mask2;
-        private final Vector.Mask<Integer> mask3;
+        private final VectorMask<Integer> mask0;
+        private final VectorMask<Integer> mask1;
+        private final VectorMask<Integer> mask2;
+        private final VectorMask<Integer> mask3;
 
         private final int[] state;
 
-        public ChaChaVector(Vector.Shape shape) {
-            this.intSpecies = Vector.Species.of(Integer.class, shape);
+        public ChaChaVector(VectorShape shape) {
+            this.intSpecies = VectorSpecies.of(Integer.class, shape);
             this.numBlocks = intSpecies.length() / 4;
 
             this.rot1 = makeRotate(1);
@@ -125,7 +125,7 @@ public class ChaChaBench {
             this.state = new int[numBlocks * 16];
         }
 
-        private Vector.Shuffle<Integer>  makeRotate(int amount) {
+        private VectorShuffle<Integer>  makeRotate(int amount) {
             int[] shuffleArr = new int[intSpecies.length()];
 
             for (int i = 0; i < intSpecies.length(); i ++) {
@@ -133,7 +133,7 @@ public class ChaChaBench {
                 shuffleArr[i] = offset + ((i + amount) % 4);
             }
 
-            return IntVector.shuffleFromValues(intSpecies, shuffleArr);
+            return VectorShuffle.fromValues(intSpecies, shuffleArr);
         }
 
         private IntVector makeCounterAdd() {
@@ -144,16 +144,16 @@ public class ChaChaBench {
             return IntVector.fromArray(intSpecies, addArr, 0);
         }
 
-        private Vector.Shuffle<Integer>  makeRearrangeShuffle(int order) {
+        private VectorShuffle<Integer>  makeRearrangeShuffle(int order) {
             int[] shuffleArr = new int[intSpecies.length()];
             int start = order * 4;
             for (int i = 0; i < shuffleArr.length; i++) {
                 shuffleArr[i] = (i % 4) + start;
             }
-            return IntVector.shuffleFromArray(intSpecies, shuffleArr, 0);
+            return VectorShuffle.fromArray(intSpecies, shuffleArr, 0);
         }
 
-        private Vector.Mask<Integer> makeRearrangeMask(int order) {
+        private VectorMask<Integer> makeRearrangeMask(int order) {
             boolean[] maskArr = new boolean[intSpecies.length()];
             int start = order * 4;
             if (start < maskArr.length) {
@@ -162,7 +162,7 @@ public class ChaChaBench {
                 }
             }
 
-            return IntVector.maskFromValues(intSpecies, maskArr);
+            return VectorMask.fromValues(intSpecies, maskArr);
         }
 
         public void makeState(byte[] key, byte[] nonce, long counter,
@@ -243,19 +243,19 @@ public class ChaChaBench {
                     // first round
                     a = a.add(b);
                     d = d.xor(a);
-                    d = d.rotateL(16);
+                    d = d.rotateLeft(16);
 
                     c = c.add(d);
                     b = b.xor(c);
-                    b = b.rotateL(12);
+                    b = b.rotateLeft(12);
 
                     a = a.add(b);
                     d = d.xor(a);
-                    d = d.rotateL(8);
+                    d = d.rotateLeft(8);
 
                     c = c.add(d);
                     b = b.xor(c);
-                    b = b.rotateL(7);
+                    b = b.rotateLeft(7);
 
                     // makeRotate
                     b = b.rearrange(rot1);
@@ -265,19 +265,19 @@ public class ChaChaBench {
                     // second round
                     a = a.add(b);
                     d = d.xor(a);
-                    d = d.rotateL(16);
+                    d = d.rotateLeft(16);
 
                     c = c.add(d);
                     b = b.xor(c);
-                    b = b.rotateL(12);
+                    b = b.rotateLeft(12);
 
                     a = a.add(b);
                     d = d.xor(a);
-                    d = d.rotateL(8);
+                    d = d.rotateLeft(8);
 
                     c = c.add(d);
                     b = b.xor(c);
-                    b = b.rotateL(7);
+                    b = b.rotateLeft(7);
 
                     // makeRotate
                     b = b.rearrange(rot3);

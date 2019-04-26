@@ -154,7 +154,7 @@ final class Byte512Vector extends ByteVector {
         return VectorIntrinsics.cast(
             Byte512Vector.class,
             byte.class, LENGTH,
-            s.boxType(),
+            s.vectorType(),
             s.elementType(), LENGTH,
             this, s,
             (species, vector) -> vector.castDefault(species)
@@ -292,7 +292,7 @@ final class Byte512Vector extends ByteVector {
     @ForceInline
     public ByteVector reshape(VectorSpecies<Byte> s) {
         Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.boxType() == Byte64Vector.class)) {
+        if (s.bitSize() == 64 && (s.vectorType() == Byte64Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Byte512Vector.class,
                 byte.class, LENGTH,
@@ -301,7 +301,7 @@ final class Byte512Vector extends ByteVector {
                 this, s,
                 (species, vector) -> (ByteVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 128 && (s.boxType() == Byte128Vector.class)) {
+        } else if (s.bitSize() == 128 && (s.vectorType() == Byte128Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Byte512Vector.class,
                 byte.class, LENGTH,
@@ -310,7 +310,7 @@ final class Byte512Vector extends ByteVector {
                 this, s,
                 (species, vector) -> (ByteVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 256 && (s.boxType() == Byte256Vector.class)) {
+        } else if (s.bitSize() == 256 && (s.vectorType() == Byte256Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Byte512Vector.class,
                 byte.class, LENGTH,
@@ -319,7 +319,7 @@ final class Byte512Vector extends ByteVector {
                 this, s,
                 (species, vector) -> (ByteVector) vector.defaultReinterpret(species)
             );
-        } else if (s.bitSize() == 512 && (s.boxType() == Byte512Vector.class)) {
+        } else if (s.bitSize() == 512 && (s.vectorType() == Byte512Vector.class)) {
             return VectorIntrinsics.reinterpret(
                 Byte512Vector.class,
                 byte.class, LENGTH,
@@ -329,7 +329,7 @@ final class Byte512Vector extends ByteVector {
                 (species, vector) -> (ByteVector) vector.defaultReinterpret(species)
             );
         } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.boxType() == ByteMaxVector.class)) {
+                && (s.bitSize() % 128 == 0) && (s.vectorType() == ByteMaxVector.class)) {
             return VectorIntrinsics.reinterpret(
                 Byte512Vector.class,
                 byte.class, LENGTH,
@@ -656,48 +656,76 @@ final class Byte512Vector extends ByteVector {
 
     @Override
     @ForceInline
-    public Byte512Vector shiftL(int s) {
+    public Byte512Vector shiftLeft(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_LSHIFT, Byte512Vector.class, byte.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a << (i & 7))));
+            (v, i) -> v.uOp((__, a) -> (byte) (a << (i & 0x7))));
     }
 
     @Override
     @ForceInline
-    public Byte512Vector shiftL(int s, VectorMask<Byte> m) {
-        return blend(shiftL(s), m);
+    public Byte512Vector shiftLeft(int s, VectorMask<Byte> m) {
+        return blend(shiftLeft(s), m);
     }
 
     @Override
     @ForceInline
-    public Byte512Vector shiftR(int s) {
+    public Byte512Vector shiftLeft(Vector<Byte> s) {
+        Byte512Vector shiftv = (Byte512Vector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(ByteVector.broadcast(SPECIES, (byte) 0x7));
+        return this.bOp(shiftv, (i, a, b) -> (byte) (a << (b & 0x7)));
+    }
+
+    @Override
+    @ForceInline
+    public Byte512Vector shiftRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, Byte512Vector.class, byte.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) ((a & 0xFF) >>> (i & 7))));
+            (v, i) -> v.uOp((__, a) -> (byte) ((a & 0xFF) >>> (i & 0x7))));
     }
 
     @Override
     @ForceInline
-    public Byte512Vector shiftR(int s, VectorMask<Byte> m) {
-        return blend(shiftR(s), m);
+    public Byte512Vector shiftRight(int s, VectorMask<Byte> m) {
+        return blend(shiftRight(s), m);
     }
 
     @Override
     @ForceInline
-    public Byte512Vector aShiftR(int s) {
+    public Byte512Vector shiftRight(Vector<Byte> s) {
+        Byte512Vector shiftv = (Byte512Vector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(ByteVector.broadcast(SPECIES, (byte) 0x7));
+        return this.bOp(shiftv, (i, a, b) -> (byte) (a >>> (b & 0x7)));
+    }
+
+    @Override
+    @ForceInline
+    public Byte512Vector shiftArithmeticRight(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, Byte512Vector.class, byte.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >> (i & 7))));
+            (v, i) -> v.uOp((__, a) -> (byte) (a >> (i & 0x7))));
     }
 
     @Override
     @ForceInline
-    public Byte512Vector aShiftR(int s, VectorMask<Byte> m) {
-        return blend(aShiftR(s), m);
+    public Byte512Vector shiftArithmeticRight(int s, VectorMask<Byte> m) {
+        return blend(shiftArithmeticRight(s), m);
     }
+
+    @Override
+    @ForceInline
+    public Byte512Vector shiftArithmeticRight(Vector<Byte> s) {
+        Byte512Vector shiftv = (Byte512Vector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(ByteVector.broadcast(SPECIES, (byte) 0x7));
+        return this.bOp(shiftv, (i, a, b) -> (byte) (a >> (b & 0x7)));
+    }
+
     // Ternary operations
 
 
@@ -705,7 +733,7 @@ final class Byte512Vector extends ByteVector {
 
     @Override
     @ForceInline
-    public byte addAll() {
+    public byte addLanes() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_ADD, Byte512Vector.class, byte.class, LENGTH,
             this,
@@ -714,7 +742,7 @@ final class Byte512Vector extends ByteVector {
 
     @Override
     @ForceInline
-    public byte andAll() {
+    public byte andLanes() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_AND, Byte512Vector.class, byte.class, LENGTH,
             this,
@@ -723,13 +751,13 @@ final class Byte512Vector extends ByteVector {
 
     @Override
     @ForceInline
-    public byte andAll(VectorMask<Byte> m) {
-        return ByteVector.broadcast(SPECIES, (byte) -1).blend(this, m).andAll();
+    public byte andLanes(VectorMask<Byte> m) {
+        return ByteVector.broadcast(SPECIES, (byte) -1).blend(this, m).andLanes();
     }
 
     @Override
     @ForceInline
-    public byte minAll() {
+    public byte minLanes() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, Byte512Vector.class, byte.class, LENGTH,
             this,
@@ -738,7 +766,7 @@ final class Byte512Vector extends ByteVector {
 
     @Override
     @ForceInline
-    public byte maxAll() {
+    public byte maxLanes() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, Byte512Vector.class, byte.class, LENGTH,
             this,
@@ -747,7 +775,7 @@ final class Byte512Vector extends ByteVector {
 
     @Override
     @ForceInline
-    public byte mulAll() {
+    public byte mulLanes() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Byte512Vector.class, byte.class, LENGTH,
             this,
@@ -756,7 +784,7 @@ final class Byte512Vector extends ByteVector {
 
     @Override
     @ForceInline
-    public byte orAll() {
+    public byte orLanes() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_OR, Byte512Vector.class, byte.class, LENGTH,
             this,
@@ -765,13 +793,13 @@ final class Byte512Vector extends ByteVector {
 
     @Override
     @ForceInline
-    public byte orAll(VectorMask<Byte> m) {
-        return ByteVector.broadcast(SPECIES, (byte) 0).blend(this, m).orAll();
+    public byte orLanes(VectorMask<Byte> m) {
+        return ByteVector.broadcast(SPECIES, (byte) 0).blend(this, m).orLanes();
     }
 
     @Override
     @ForceInline
-    public byte xorAll() {
+    public byte xorLanes() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_XOR, Byte512Vector.class, byte.class, LENGTH,
             this,
@@ -780,34 +808,34 @@ final class Byte512Vector extends ByteVector {
 
     @Override
     @ForceInline
-    public byte xorAll(VectorMask<Byte> m) {
-        return ByteVector.broadcast(SPECIES, (byte) 0).blend(this, m).xorAll();
+    public byte xorLanes(VectorMask<Byte> m) {
+        return ByteVector.broadcast(SPECIES, (byte) 0).blend(this, m).xorLanes();
     }
 
 
     @Override
     @ForceInline
-    public byte addAll(VectorMask<Byte> m) {
-        return ByteVector.broadcast(SPECIES, (byte) 0).blend(this, m).addAll();
+    public byte addLanes(VectorMask<Byte> m) {
+        return ByteVector.broadcast(SPECIES, (byte) 0).blend(this, m).addLanes();
     }
 
 
     @Override
     @ForceInline
-    public byte mulAll(VectorMask<Byte> m) {
-        return ByteVector.broadcast(SPECIES, (byte) 1).blend(this, m).mulAll();
+    public byte mulLanes(VectorMask<Byte> m) {
+        return ByteVector.broadcast(SPECIES, (byte) 1).blend(this, m).mulLanes();
     }
 
     @Override
     @ForceInline
-    public byte minAll(VectorMask<Byte> m) {
-        return ByteVector.broadcast(SPECIES, Byte.MAX_VALUE).blend(this, m).minAll();
+    public byte minLanes(VectorMask<Byte> m) {
+        return ByteVector.broadcast(SPECIES, Byte.MAX_VALUE).blend(this, m).minLanes();
     }
 
     @Override
     @ForceInline
-    public byte maxAll(VectorMask<Byte> m) {
-        return ByteVector.broadcast(SPECIES, Byte.MIN_VALUE).blend(this, m).maxAll();
+    public byte maxLanes(VectorMask<Byte> m) {
+        return ByteVector.broadcast(SPECIES, Byte.MIN_VALUE).blend(this, m).maxLanes();
     }
 
     @Override
@@ -1028,7 +1056,7 @@ final class Byte512Vector extends ByteVector {
 
 
     @Override
-    public Byte512Vector rotateEL(int j) {
+    public Byte512Vector rotateLanesLeft(int j) {
         byte[] vec = getElements();
         byte[] res = new byte[length()];
         for (int i = 0; i < length(); i++){
@@ -1038,7 +1066,7 @@ final class Byte512Vector extends ByteVector {
     }
 
     @Override
-    public Byte512Vector rotateER(int j) {
+    public Byte512Vector rotateLanesRight(int j) {
         byte[] vec = getElements();
         byte[] res = new byte[length()];
         for (int i = 0; i < length(); i++){
@@ -1053,7 +1081,7 @@ final class Byte512Vector extends ByteVector {
     }
 
     @Override
-    public Byte512Vector shiftEL(int j) {
+    public Byte512Vector shiftLanesLeft(int j) {
         byte[] vec = getElements();
         byte[] res = new byte[length()];
         for (int i = 0; i < length() - j; i++) {
@@ -1063,7 +1091,7 @@ final class Byte512Vector extends ByteVector {
     }
 
     @Override
-    public Byte512Vector shiftER(int j) {
+    public Byte512Vector shiftLanesRight(int j) {
         byte[] vec = getElements();
         byte[] res = new byte[length()];
         for (int i = 0; i < length() - j; i++){

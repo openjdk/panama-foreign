@@ -111,7 +111,7 @@ public abstract class ByteVector extends Vector<Byte> {
     @ForceInline
     @SuppressWarnings("unchecked")
     public static ByteVector zero(VectorSpecies<Byte> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<ByteVector>) species.boxType(), byte.class, species.length(),
+        return VectorIntrinsics.broadcastCoerced((Class<ByteVector>) species.vectorType(), byte.class, species.length(),
                                                  0, species,
                                                  ((bits, s) -> ((ByteSpecies)s).op(i -> (byte)bits)));
     }
@@ -141,7 +141,7 @@ public abstract class ByteVector extends Vector<Byte> {
     public static ByteVector fromByteArray(VectorSpecies<Byte> species, byte[] a, int offset) {
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<ByteVector>) species.boxType(), byte.class, species.length(),
+        return VectorIntrinsics.load((Class<ByteVector>) species.vectorType(), byte.class, species.length(),
                                      a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> {
@@ -199,7 +199,7 @@ public abstract class ByteVector extends Vector<Byte> {
     public static ByteVector fromArray(VectorSpecies<Byte> species, byte[] a, int offset){
         Objects.requireNonNull(a);
         offset = VectorIntrinsics.checkIndex(offset, a.length, species.length());
-        return VectorIntrinsics.load((Class<ByteVector>) species.boxType(), byte.class, species.length(),
+        return VectorIntrinsics.load((Class<ByteVector>) species.vectorType(), byte.class, species.length(),
                                      a, (((long) offset) << ARRAY_SHIFT) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> ((ByteSpecies)s).op(n -> c[idx + n]));
@@ -312,7 +312,7 @@ public abstract class ByteVector extends Vector<Byte> {
             throw new IllegalArgumentException();
         }
         offset = VectorIntrinsics.checkIndex(offset, bb.limit(), species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<ByteVector>) species.boxType(), byte.class, species.length(),
+        return VectorIntrinsics.load((Class<ByteVector>) species.vectorType(), byte.class, species.length(),
                                      U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + offset,
                                      bb, offset, species,
                                      (c, idx, s) -> {
@@ -368,7 +368,7 @@ public abstract class ByteVector extends Vector<Byte> {
      * value {@code e}.
      *
      * @param species species of the desired vector
-     * @param e the value
+     * @param e the value to be broadcasted
      * @return a vector of vector where all lane elements are set to
      * the primitive value {@code e}
      */
@@ -376,7 +376,7 @@ public abstract class ByteVector extends Vector<Byte> {
     @SuppressWarnings("unchecked")
     public static ByteVector broadcast(VectorSpecies<Byte> species, byte e) {
         return VectorIntrinsics.broadcastCoerced(
-            (Class<ByteVector>) species.boxType(), byte.class, species.length(),
+            (Class<ByteVector>) species.vectorType(), byte.class, species.length(),
             e, species,
             ((bits, sp) -> ((ByteSpecies)sp).op(i -> (byte)bits)));
     }
@@ -400,7 +400,7 @@ public abstract class ByteVector extends Vector<Byte> {
     public static ByteVector scalars(VectorSpecies<Byte> species, byte... es) {
         Objects.requireNonNull(es);
         int ix = VectorIntrinsics.checkIndex(0, es.length, species.length());
-        return VectorIntrinsics.load((Class<ByteVector>) species.boxType(), byte.class, species.length(),
+        return VectorIntrinsics.load((Class<ByteVector>) species.vectorType(), byte.class, species.length(),
                                      es, Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      es, ix, species,
                                      (c, idx, sp) -> ((ByteSpecies)sp).op(n -> c[idx + n]));
@@ -778,25 +778,25 @@ public abstract class ByteVector extends Vector<Byte> {
      * {@inheritDoc}
      */
     @Override
-    public abstract ByteVector rotateEL(int i);
+    public abstract ByteVector rotateLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract ByteVector rotateER(int i);
+    public abstract ByteVector rotateLanesRight(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract ByteVector shiftEL(int i);
+    public abstract ByteVector shiftLanesLeft(int i);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public abstract ByteVector shiftER(int i);
+    public abstract ByteVector shiftLanesRight(int i);
 
 
 
@@ -976,16 +976,16 @@ public abstract class ByteVector extends Vector<Byte> {
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
      * operation ({@code <<}) to each lane to left shift the
-     * element by shift value as specified by the input scalar. Only the 3
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
      * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
      *
      * @param s the input scalar; the number of the bits to left shift
-     * @return the result of logically left shifting left this vector by the
+     * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ByteVector shiftL(int s);
+    public abstract ByteVector shiftLeft(int s);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
@@ -993,18 +993,53 @@ public abstract class ByteVector extends Vector<Byte> {
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical left shift
      * operation ({@code <<}) to each lane to left shift the
-     * element by shift value as specified by the input scalar. Only the 3
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
      * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
      *
      * @param s the input scalar; the number of the bits to left shift
      * @param m the mask controlling lane selection
-     * @return the result of logically left shifting left this vector by the
+     * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ByteVector shiftL(int s, VectorMask<Byte> m);
+    public abstract ByteVector shiftLeft(int s, VectorMask<Byte> m);
 
+    /**
+     * Logically left shifts this vector by an input vector.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive logical left shift
+     * operation ({@code <<}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param v the input vector
+     * @return the result of logically left shifting this vector by the input
+     * vector
+     */
+    public abstract ByteVector shiftLeft(Vector<Byte> v);
+
+    /**
+     * Logically left shifts this vector by an input vector, selecting lane
+     * elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive logical left shift
+     * operation ({@code <<}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting this vector by the input
+     * vector
+     */
+    public ByteVector shiftLeft(Vector<Byte> v, VectorMask<Byte> m) {
+        return blend(shiftLeft(v), m);
+    }
 
     // logical, or unsigned, shift right
 
@@ -1014,8 +1049,8 @@ public abstract class ByteVector extends Vector<Byte> {
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
      * operation ({@code >>>}) to each lane to logically right shift the
-     * element by shift value as specified by the input scalar. Only the 3
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
      * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
      *
@@ -1023,7 +1058,7 @@ public abstract class ByteVector extends Vector<Byte> {
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ByteVector shiftR(int s);
+    public abstract ByteVector shiftRight(int s);
 
      /**
      * Logically right shifts (or unsigned right shifts) this vector by the
@@ -1032,8 +1067,8 @@ public abstract class ByteVector extends Vector<Byte> {
      * <p>
      * This is a lane-wise binary operation which applies the primitive logical right shift
      * operation ({@code >>}) to each lane to logically right shift the
-     * element by shift value as specified by the input scalar. Only the 3
-     * lowest-order bits of shift value are used. It is as if the shift value
+     * element by shift value as specified by the input scalar.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
      * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
      * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
      *
@@ -1042,8 +1077,44 @@ public abstract class ByteVector extends Vector<Byte> {
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ByteVector shiftR(int s, VectorMask<Byte> m);
+    public abstract ByteVector shiftRight(int s, VectorMask<Byte> m);
 
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by an
+     * input vector.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive logical right shift
+     * operation ({@code >>>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param v the input vector
+     * @return the result of logically right shifting this vector by the
+     * input vector
+     */
+    public abstract ByteVector shiftRight(Vector<Byte> v);
+
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by an
+     * input vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive logical right shift
+     * operation ({@code >>>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of logically right shifting this vector by the
+     * input vector
+     */
+    public ByteVector shiftRight(Vector<Byte> v, VectorMask<Byte> m) {
+        return blend(shiftRight(v), m);
+    }
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -1060,7 +1131,7 @@ public abstract class ByteVector extends Vector<Byte> {
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ByteVector aShiftR(int s);
+    public abstract ByteVector shiftArithmeticRight(int s);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -1079,8 +1150,120 @@ public abstract class ByteVector extends Vector<Byte> {
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract ByteVector aShiftR(int s, VectorMask<Byte> m);
+    public abstract ByteVector shiftArithmeticRight(int s, VectorMask<Byte> m);
 
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by an
+     * input vector.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive arithmetic right
+     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param v the input vector
+     * @return the result of arithmetically right shifting this vector by the
+     * input vector
+     */
+    public abstract ByteVector shiftArithmeticRight(Vector<Byte> v);
+
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by an
+     * input vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which applies the primitive arithmetic right
+     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
+     * shift value is the corresponding lane of input vector.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * input vector
+     */
+    public ByteVector shiftArithmeticRight(Vector<Byte> v, VectorMask<Byte> m) {
+        return blend(shiftArithmeticRight(v), m);
+    }
+
+    /**
+     * Rotates left this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a lane-wise binary operation which produces the result of rotating left the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0x7.
+     *
+     * @param s the input scalar; the number of the bits to rotate left
+     * @return the result of rotating left this vector by the broadcast of an
+     * input scalar
+     */
+    @ForceInline
+    public final ByteVector rotateLeft(int s) {
+        return shiftLeft(s).or(shiftRight(-s));
+    }
+
+    /**
+     * Rotates left this vector by the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which produces the result of rotating left the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0x7.
+     *
+     * @param s the input scalar; the number of the bits to rotate left
+     * @param m the mask controlling lane selection
+     * @return the result of rotating left this vector by the broadcast of an
+     * input scalar
+     */
+    @ForceInline
+    public final ByteVector rotateLeft(int s, VectorMask<Byte> m) {
+        return shiftLeft(s, m).or(shiftRight(-s, m), m);
+    }
+
+    /**
+     * Rotates right this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a lane-wise binary operation which produces the result of rotating right the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0x7.
+     *
+     * @param s the input scalar; the number of the bits to rotate right
+     * @return the result of rotating right this vector by the broadcast of an
+     * input scalar
+     */
+    @ForceInline
+    public final ByteVector rotateRight(int s) {
+        return shiftRight(s).or(shiftLeft(-s));
+    }
+
+    /**
+     * Rotates right this vector by the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which produces the result of rotating right the two's
+     * complement binary representation of each lane of first operand (this vector) by input scalar.
+     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
+     * It is as if the input value were subjected to a bitwise logical
+     * AND operator ({@code &}) with the mask value 0x7.
+     *
+     * @param s the input scalar; the number of the bits to rotate right
+     * @param m the mask controlling lane selection
+     * @return the result of rotating right this vector by the broadcast of an
+     * input scalar
+     */
+    @ForceInline
+    public final ByteVector rotateRight(int s, VectorMask<Byte> m) {
+        return shiftRight(s, m).or(shiftLeft(-s, m), m);
+    }
 
     /**
      * {@inheritDoc}
@@ -1117,7 +1300,7 @@ public abstract class ByteVector extends Vector<Byte> {
      *
      * @return the addition of all the lane elements of this vector
      */
-    public abstract byte addAll();
+    public abstract byte addLanes();
 
     /**
      * Adds all lane elements of this vector, selecting lane elements
@@ -1130,7 +1313,7 @@ public abstract class ByteVector extends Vector<Byte> {
      * @param m the mask controlling lane selection
      * @return the addition of the selected lane elements of this vector
      */
-    public abstract byte addAll(VectorMask<Byte> m);
+    public abstract byte addLanes(VectorMask<Byte> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1141,7 +1324,7 @@ public abstract class ByteVector extends Vector<Byte> {
      *
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract byte mulAll();
+    public abstract byte mulLanes();
 
     /**
      * Multiplies all lane elements of this vector, selecting lane elements
@@ -1154,7 +1337,7 @@ public abstract class ByteVector extends Vector<Byte> {
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract byte mulAll(VectorMask<Byte> m);
+    public abstract byte mulLanes(VectorMask<Byte> m);
 
     /**
      * Returns the minimum lane element of this vector.
@@ -1166,7 +1349,7 @@ public abstract class ByteVector extends Vector<Byte> {
      *
      * @return the minimum lane element of this vector
      */
-    public abstract byte minAll();
+    public abstract byte minLanes();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -1180,7 +1363,7 @@ public abstract class ByteVector extends Vector<Byte> {
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
      */
-    public abstract byte minAll(VectorMask<Byte> m);
+    public abstract byte minLanes(VectorMask<Byte> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -1192,7 +1375,7 @@ public abstract class ByteVector extends Vector<Byte> {
      *
      * @return the maximum lane element of this vector
      */
-    public abstract byte maxAll();
+    public abstract byte maxLanes();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements
@@ -1206,7 +1389,7 @@ public abstract class ByteVector extends Vector<Byte> {
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
      */
-    public abstract byte maxAll(VectorMask<Byte> m);
+    public abstract byte maxLanes(VectorMask<Byte> m);
 
     /**
      * Logically ORs all lane elements of this vector.
@@ -1217,7 +1400,7 @@ public abstract class ByteVector extends Vector<Byte> {
      *
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract byte orAll();
+    public abstract byte orLanes();
 
     /**
      * Logically ORs all lane elements of this vector, selecting lane elements
@@ -1230,7 +1413,7 @@ public abstract class ByteVector extends Vector<Byte> {
      * @param m the mask controlling lane selection
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract byte orAll(VectorMask<Byte> m);
+    public abstract byte orLanes(VectorMask<Byte> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -1241,7 +1424,7 @@ public abstract class ByteVector extends Vector<Byte> {
      *
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract byte andAll();
+    public abstract byte andLanes();
 
     /**
      * Logically ANDs all lane elements of this vector, selecting lane elements
@@ -1254,7 +1437,7 @@ public abstract class ByteVector extends Vector<Byte> {
      * @param m the mask controlling lane selection
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract byte andAll(VectorMask<Byte> m);
+    public abstract byte andLanes(VectorMask<Byte> m);
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -1265,7 +1448,7 @@ public abstract class ByteVector extends Vector<Byte> {
      *
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract byte xorAll();
+    public abstract byte xorLanes();
 
     /**
      * Logically XORs all lane elements of this vector, selecting lane elements
@@ -1278,7 +1461,7 @@ public abstract class ByteVector extends Vector<Byte> {
      * @param m the mask controlling lane selection
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract byte xorAll(VectorMask<Byte> m);
+    public abstract byte xorLanes(VectorMask<Byte> m);
 
     // Type specific accessors
 
@@ -1425,13 +1608,13 @@ public abstract class ByteVector extends Vector<Byte> {
         final Function<byte[], ByteVector> vectorFactory;
 
         private ByteSpecies(VectorShape shape,
-                          Class<?> boxType,
+                          Class<?> vectorType,
                           Class<?> maskType,
                           Function<byte[], ByteVector> vectorFactory,
                           Function<boolean[], VectorMask<Byte>> maskFactory,
                           Function<IntUnaryOperator, VectorShuffle<Byte>> shuffleFromArrayFactory,
                           fShuffleFromArray<Byte> shuffleFromOpFactory) {
-            super(shape, byte.class, Byte.SIZE, boxType, maskType, maskFactory,
+            super(shape, byte.class, Byte.SIZE, vectorType, maskType, maskFactory,
                   shuffleFromArrayFactory, shuffleFromOpFactory);
             this.vectorFactory = vectorFactory;
         }

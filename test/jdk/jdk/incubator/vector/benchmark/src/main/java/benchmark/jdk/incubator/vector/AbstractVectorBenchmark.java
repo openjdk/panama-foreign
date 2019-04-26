@@ -28,8 +28,9 @@ import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.ShortVector;
 import jdk.incubator.vector.LongVector;
 import jdk.incubator.vector.Vector;
-import jdk.incubator.vector.Vector.Shape;
-import jdk.incubator.vector.Vector.Species;
+import jdk.incubator.vector.VectorShape;
+import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.VectorMask;
 
 import java.util.Random;
 import java.util.function.IntFunction;
@@ -37,78 +38,78 @@ import java.util.function.IntFunction;
 public class AbstractVectorBenchmark {
     static final Random RANDOM = new Random(Integer.getInteger("jdk.incubator.vector.random-seed", 1337));
 
-    static final Species<Byte> B64  = ByteVector.SPECIES_64;
-    static final Species<Byte> B128 = ByteVector.SPECIES_128;
-    static final Species<Byte> B256 = ByteVector.SPECIES_256;
-    static final Species<Byte> B512 = ByteVector.SPECIES_512;
+    static final VectorSpecies<Byte> B64  = ByteVector.SPECIES_64;
+    static final VectorSpecies<Byte> B128 = ByteVector.SPECIES_128;
+    static final VectorSpecies<Byte> B256 = ByteVector.SPECIES_256;
+    static final VectorSpecies<Byte> B512 = ByteVector.SPECIES_512;
 
-    static final Species<Short> S64  = ShortVector.SPECIES_64;
-    static final Species<Short> S128 = ShortVector.SPECIES_128;
-    static final Species<Short> S256 = ShortVector.SPECIES_256;
-    static final Species<Short> S512 = ShortVector.SPECIES_512;
+    static final VectorSpecies<Short> S64  = ShortVector.SPECIES_64;
+    static final VectorSpecies<Short> S128 = ShortVector.SPECIES_128;
+    static final VectorSpecies<Short> S256 = ShortVector.SPECIES_256;
+    static final VectorSpecies<Short> S512 = ShortVector.SPECIES_512;
 
-    static final Species<Integer> I64  = IntVector.SPECIES_64;
-    static final Species<Integer> I128 = IntVector.SPECIES_128;
-    static final Species<Integer> I256 = IntVector.SPECIES_256;
-    static final Species<Integer> I512 = IntVector.SPECIES_512;
+    static final VectorSpecies<Integer> I64  = IntVector.SPECIES_64;
+    static final VectorSpecies<Integer> I128 = IntVector.SPECIES_128;
+    static final VectorSpecies<Integer> I256 = IntVector.SPECIES_256;
+    static final VectorSpecies<Integer> I512 = IntVector.SPECIES_512;
 
-    static final Species<Long> L64  = LongVector.SPECIES_64;
-    static final Species<Long> L128 = LongVector.SPECIES_128;
-    static final Species<Long> L256 = LongVector.SPECIES_256;
-    static final Species<Long> L512 = LongVector.SPECIES_512;
+    static final VectorSpecies<Long> L64  = LongVector.SPECIES_64;
+    static final VectorSpecies<Long> L128 = LongVector.SPECIES_128;
+    static final VectorSpecies<Long> L256 = LongVector.SPECIES_256;
+    static final VectorSpecies<Long> L512 = LongVector.SPECIES_512;
 
-    static Shape widen(Shape s) {
+    static VectorShape widen(VectorShape s) {
         switch (s) {
-            case S_64_BIT:  return Shape.S_128_BIT;
-            case S_128_BIT: return Shape.S_256_BIT;
-            case S_256_BIT: return Shape.S_512_BIT;
+            case S_64_BIT:  return VectorShape.S_128_BIT;
+            case S_128_BIT: return VectorShape.S_256_BIT;
+            case S_256_BIT: return VectorShape.S_512_BIT;
             default: throw new IllegalArgumentException("" + s);
         }
     }
 
-    static Shape narrow(Shape s) {
+    static VectorShape narrow(VectorShape s) {
         switch (s) {
-            case S_512_BIT: return Shape.S_256_BIT;
-            case S_256_BIT: return Shape.S_128_BIT;
-            case S_128_BIT: return Shape.S_64_BIT;
+            case S_512_BIT: return VectorShape.S_256_BIT;
+            case S_256_BIT: return VectorShape.S_128_BIT;
+            case S_128_BIT: return VectorShape.S_64_BIT;
             default: throw new IllegalArgumentException("" + s);
         }
     }
 
-    static <E> Species<E> widen(Species<E> s) {
-        return Vector.Species.of(s.elementType(), widen(s.shape()));
+    static <E> VectorSpecies<E> widen(VectorSpecies<E> s) {
+        return VectorSpecies.of(s.elementType(), widen(s.shape()));
     }
 
-    static <E> Species<E> narrow(Species<E> s) {
-        return Vector.Species.of(s.elementType(), narrow(s.shape()));
+    static <E> VectorSpecies<E> narrow(VectorSpecies<E> s) {
+        return VectorSpecies.of(s.elementType(), narrow(s.shape()));
     }
 
-    static IntVector join(Species<Integer> from, Species<Integer> to, IntVector lo, IntVector hi) {
+    static IntVector join(VectorSpecies<Integer> from, VectorSpecies<Integer> to, IntVector lo, IntVector hi) {
         assert 2 * from.length() == to.length();
 
         int vlen = from.length();
         var lo_mask = mask(from, to, 0);
 
         var v1 = lo.reshape(to);
-        var v2 = hi.reshape(to).shiftER(vlen);
+        var v2 = hi.reshape(to).shiftLanesRight(vlen);
         var r = v2.blend(v1, lo_mask);
         return r;
     }
 
-    static Vector.Mask<Integer> mask(Species<Integer> from, Species<Integer> to, int i) {
+    static VectorMask<Integer> mask(VectorSpecies<Integer> from, VectorSpecies<Integer> to, int i) {
         int vlen = from.length();
         var v1 = IntVector.broadcast(from, 1);    //                         [1 1 ... 1]
         var v2 = v1.reshape(to);                  // [0 0 ... 0 |   ...     | 1 1 ... 1]
-        var v3 = v2.shiftER(i * vlen);            // [0 0 ... 0 | 1 1 ... 1 | 0 0 ... 0]
+        var v3 = v2.shiftLanesRight(i * vlen);            // [0 0 ... 0 | 1 1 ... 1 | 0 0 ... 0]
         return v3.notEqual(0);                    // [F F ... F | T T ... T | F F ... F]
     }
 
     static <E> IntVector sum(ByteVector va) {
-        Species<Integer> species = Species.of(Integer.class, va.shape());
+        VectorSpecies<Integer> species = VectorSpecies.of(Integer.class, va.shape());
         var acc = IntVector.zero(species);
         int limit = va.length() / species.length();
         for (int k = 0; k < limit; k++) {
-            var vb = ((IntVector)(va.shiftEL(k * B64.length()).reshape(B64).cast(species))).and(0xFF);
+            var vb = ((IntVector)(va.shiftLanesLeft(k * B64.length()).reshape(B64).cast(species))).and(0xFF);
             acc = acc.add(vb);
         }
         return acc;
