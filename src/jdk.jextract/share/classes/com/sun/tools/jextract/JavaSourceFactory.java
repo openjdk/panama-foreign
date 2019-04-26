@@ -90,12 +90,13 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         this.libraryPaths = ctx.options.recordLibraryPath? ctx.options.libraryPaths : null;
         this.noNativeLocations = ctx.options.noNativeLocations;
         this.global_jsb = new JavaSourceBuilder();
-        this.srcDir = Paths.get(ctx.options.srcDumpDir)
-            .resolve(headerFile.pkgName.replace('.', File.separatorChar));
+        this.srcDir = ctx.options.srcDumpDir != null?
+            Paths.get(ctx.options.srcDumpDir).resolve(headerFile.pkgName.replace('.', File.separatorChar)) :
+            null;
     }
 
     // main entry point that generates & saves .java files for the header file
-    public void generate(List<Tree> decls) {
+    public Map<String, String> generate(List<Tree> decls) {
         global_jsb.addPackagePrefix(headerFile.pkgName);
 
         Map<String, Object> header = new HashMap<>();
@@ -141,13 +142,19 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
 
         global_jsb.interfaceEnd();
         String src = global_jsb.build();
-        try {
-            Files.createDirectories(srcDir);
-            Path srcPath = srcDir.resolve(clsName + ".java");
-            Files.write(srcPath, List.of(src));
-        } catch (Exception ex) {
-            handleException(ex);
+        if (srcDir != null) {
+            try {
+                Files.createDirectories(srcDir);
+                Path srcPath = srcDir.resolve(clsName + ".java");
+                Files.write(srcPath, List.of(src));
+            } catch (Exception ex) {
+                handleException(ex);
+            }
         }
+
+        Map<String, String> srcMap = new HashMap<>();
+        srcMap.put(headerClassName, src);
+        return srcMap;
     }
 
     protected void handleException(Exception ex) {
@@ -350,7 +357,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
     public Boolean visitFunction(FunctionTree funcTree, JType jt) {
         assert (jt instanceof JType.Function);
         JType.Function fn = (JType.Function)jt;
-        log.print(Level.FINE, () -> "Add method: " + fn.getSignature(false));
+        log.print(Level.FINE, () -> "Add method: " + fn.getSourceSignature(false));
 
         addNativeLocation(global_jsb, funcTree);
         Type type = funcTree.type();

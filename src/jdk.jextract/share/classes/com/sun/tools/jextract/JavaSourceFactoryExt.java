@@ -25,7 +25,9 @@ package com.sun.tools.jextract;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -58,7 +60,7 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
     }
 
     @Override
-    public void generate(List<Tree> decls) {
+    public Map<String, String> generate(List<Tree> decls) {
         header_jsb.addPackagePrefix(headerFile.pkgName);
         String ifaceClsName = headerFile.headerClsName;
         String forwarderName = headerFile.staticForwarderClsName;
@@ -67,17 +69,21 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
         header_jsb.addLibraryField(ifaceClsName, STATICS_LIBRARY_FIELD_NAME);
         header_jsb.emitScopeAccessor(STATICS_LIBRARY_FIELD_NAME);
 
-        super.generate(decls);
+        Map<String, String> srcMap = super.generate(decls);
         enums.forEach(header_jsb::addNestedType);
 
         header_jsb.classEnd();
         String src = header_jsb.build();
-        try {
-            Path srcPath = srcDir.resolve(forwarderName + ".java");
-            Files.write(srcPath, List.of(src));
-        } catch (Exception ex) {
-            handleException(ex);
+        if (srcDir != null) {
+            try {
+                Path srcPath = srcDir.resolve(forwarderName + ".java");
+                Files.write(srcPath, List.of(src));
+            } catch (Exception ex) {
+                handleException(ex);
+            }
         }
+        srcMap.put(headerFile.pkgName + "." + forwarderName, src);
+        return srcMap;
     }
 
     @Override

@@ -54,7 +54,7 @@ public final class JarWriter {
     public void writeJarFile(JarOutputStream jar, String[] args) {
         writer.results().forEach((cls, bytes) -> {
                 try {
-                    String path = cls.replace('.', File.separatorChar) + ".class";
+                    String path = cls.replace('.', '/') + ".class";
                     log.print(Level.FINE, () -> "Add " + path);
                     jar.putNextEntry(new ZipEntry(path));
                     jar.write(bytes);

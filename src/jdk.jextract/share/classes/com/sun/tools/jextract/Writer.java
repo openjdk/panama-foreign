@@ -41,7 +41,7 @@ public final class Writer {
         this.results = results;
     }
 
-    static final String JEXTRACT_MANIFEST = "META-INF" + File.separatorChar + "jextract.properties";
+    static final String JEXTRACT_MANIFEST = "META-INF/jextract.properties";
 
     public boolean isEmpty() {
         return results.isEmpty();
@@ -76,7 +76,7 @@ public final class Writer {
                 }
             });
 
-            Path propsPath = destDir.resolve(JEXTRACT_MANIFEST).normalize();
+            Path propsPath = destDir.resolve(JEXTRACT_MANIFEST.replace('/', File.separatorChar)).normalize();
             Files.createDirectories(propsPath.getParent());
             try (OutputStream fos = Files.newOutputStream(propsPath)) {
                 fos.write(getJextractProperties(args));

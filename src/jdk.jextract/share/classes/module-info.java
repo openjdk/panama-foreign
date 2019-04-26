@@ -24,7 +24,7 @@
  */
 
 module jdk.jextract {
-    requires java.compiler;
+    requires jdk.compiler;
     requires java.logging;
     requires jdk.internal.opt;
     requires jdk.internal.clang;
