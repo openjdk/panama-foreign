@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,17 @@
 /*
  * @test
  * @library ..
- * @modules java.base/jdk.internal.foreign.abi java.base/jdk.internal.foreign.memory java.base/jdk.internal.foreign.abi.x64.sysv
+ * @modules java.base/jdk.internal.foreign.abi java.base/jdk.internal.foreign.memory java.base/jdk.internal.foreign.abi.x64.windows
  * @run testng CallingSequenceTest
  */
 
-import java.foreign.layout.Group;
-import java.foreign.layout.Layout;
-
-import jdk.internal.foreign.abi.x64.sysv.CallingSequenceBuilderImpl;
-import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
+import jdk.internal.foreign.abi.x64.windows.CallingSequenceBuilderImpl;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 import jdk.internal.foreign.memory.Types;
 import org.testng.annotations.Test;
+
+import java.foreign.layout.Group;
+import java.foreign.layout.Layout;
 
 import static jdk.internal.foreign.abi.StorageClass.*;
 
@@ -42,76 +42,46 @@ public class CallingSequenceTest extends CallingSequenceTestBase {
 
     @Test
     public void testInteger() {
-        testInteger(CallingSequenceBuilderImpl::new, SysVx64ABI.MAX_INTEGER_ARGUMENT_REGISTERS);
+        testInteger(CallingSequenceBuilderImpl::new, Windowsx64ABI.MAX_INTEGER_ARGUMENT_REGISTERS);
     }
 
     @Test
     public void testSse() {
-        testSse(CallingSequenceBuilderImpl::new, SysVx64ABI.MAX_VECTOR_ARGUMENT_REGISTERS);
+        testSse(CallingSequenceBuilderImpl::new, Windowsx64ABI.MAX_VECTOR_ARGUMENT_REGISTERS);
     }
 
     @Test
     public void testMixed() {
         new Verifier(new CallingSequenceBuilderImpl(null))
-                .args(SysVx64ABI.MAX_INTEGER_ARGUMENT_REGISTERS, Types.INT64,
+                .args(2, Types.INT64,
                         binding(INTEGER_ARGUMENT_REGISTER, 0))
+                .args(2, Types.FLOAT,
+                        binding(VECTOR_ARGUMENT_REGISTER, 0))
                 .args(2, Types.INT64,
                         binding(STACK_ARGUMENT_SLOT, 0))
-                .args(SysVx64ABI.MAX_VECTOR_ARGUMENT_REGISTERS, Types.FLOAT,
-                        binding(VECTOR_ARGUMENT_REGISTER, 0))
                 .args(2, Types.FLOAT,
                         binding(STACK_ARGUMENT_SLOT, 0))
                 .check(false);
     }
 
-    /**
-     * This is the example from the System V ABI AMD64 document
-     *
-     * struct structparm {
-     *   int32_t a, int32_t b, double d;
-     * } s;
-     * int32_t e, f, g, h, i, j, k;
-     * long double ld;
-     * double m, n;
-     *
-     * void m(e, f, s, g, h, ld, m, n, i, j, k);
-     *
-     * m(s);
-     */
     @Test
     public void testAbiExample() {
         new Verifier(new CallingSequenceBuilderImpl(null))
                 .args(2, Types.INT32,
                         binding(INTEGER_ARGUMENT_REGISTER, 0))
                 .arg(Group.struct(Types.INT32, Types.INT32, Types.DOUBLE),
-                        binding(INTEGER_ARGUMENT_REGISTER, 0), // s.a, s.b
-                        binding(VECTOR_ARGUMENT_REGISTER, 8)) // s.d
-                .args(2, Types.INT32,
                         binding(INTEGER_ARGUMENT_REGISTER, 0))
-                .arg(Types.LONG_DOUBLE,
-                        binding(STACK_ARGUMENT_SLOT, 0),
-                        binding(STACK_ARGUMENT_SLOT, 8))
-                .args(2, Types.DOUBLE,
-                        binding(VECTOR_ARGUMENT_REGISTER, 0))
                 .arg(Types.INT32,
                         binding(INTEGER_ARGUMENT_REGISTER, 0))
-                .args(2, Types.INT32,
+                .arg(Types.INT32,
+                        binding(STACK_ARGUMENT_SLOT, 0))
+                .args(3, Types.DOUBLE,
+                        binding(STACK_ARGUMENT_SLOT, 0))
+                .args(3, Types.INT32,
                         binding(STACK_ARGUMENT_SLOT, 0))
                 .check(false);
     }
 
-    /**
-     * This is a varargs example from the System V ABI AMD64 document
-     *
-     * int a, b;
-     * long double ld;
-     * double m, n;
-     * __m256 u, y;
-     *
-     * extern void func (int a, double m, __m256 u, ...);
-     *
-     * func(a, m, u, b, ld, y, n);
-     */
     @Test
     public void testAbiExampleVarargs() {
         new Verifier(new CallingSequenceBuilderImpl(null))
@@ -119,13 +89,13 @@ public class CallingSequenceTest extends CallingSequenceTestBase {
                         binding(INTEGER_ARGUMENT_REGISTER, 0))
                 .arg(Types.DOUBLE,
                         binding(VECTOR_ARGUMENT_REGISTER, 0))
-                .arg(Types.INT,
+                .vararg(Types.INT,
                         binding(INTEGER_ARGUMENT_REGISTER, 0))
-                .arg(Types.LONG_DOUBLE,
-                        binding(STACK_ARGUMENT_SLOT, 0),
-                        binding(STACK_ARGUMENT_SLOT, 8))
-                .arg(Types.DOUBLE,
+                .vararg(Types.DOUBLE,
+                        binding(INTEGER_ARGUMENT_REGISTER, 0),
                         binding(VECTOR_ARGUMENT_REGISTER, 0))
+                .vararg(Types.DOUBLE,
+                        binding(STACK_ARGUMENT_SLOT, 0))
                 .check(false);
     }
 
@@ -160,8 +130,7 @@ public class CallingSequenceTest extends CallingSequenceTestBase {
     public void testStruct16() {
         new Verifier(new CallingSequenceBuilderImpl(null))
                 .arg(Group.struct(Types.UNSIGNED.INT64, Types.UNSIGNED.INT64),
-                        binding(INTEGER_ARGUMENT_REGISTER, 0),
-                        binding(INTEGER_ARGUMENT_REGISTER, 8))
+                        binding(INTEGER_ARGUMENT_REGISTER, 0))
                 .check(false);
     }
 
@@ -178,9 +147,7 @@ public class CallingSequenceTest extends CallingSequenceTestBase {
     public void testStruct24() {
         new Verifier(new CallingSequenceBuilderImpl(null))
                 .arg(Group.struct(Types.UNSIGNED.INT64, Types.UNSIGNED.INT64, Types.UNSIGNED.INT64),
-                        binding(STACK_ARGUMENT_SLOT, 0),
-                        binding(STACK_ARGUMENT_SLOT, 8),
-                        binding(STACK_ARGUMENT_SLOT, 16))
+                        binding(INTEGER_ARGUMENT_REGISTER, 0))
                 .check(false);
     }
 
@@ -197,10 +164,7 @@ public class CallingSequenceTest extends CallingSequenceTestBase {
     public void testStruct32() {
         new Verifier(new CallingSequenceBuilderImpl(null))
                 .arg(Layout.of("[u64u64u64u64]"),
-                        binding(STACK_ARGUMENT_SLOT, 0),
-                        binding(STACK_ARGUMENT_SLOT, 8),
-                        binding(STACK_ARGUMENT_SLOT, 16),
-                        binding(STACK_ARGUMENT_SLOT, 24))
+                        binding(INTEGER_ARGUMENT_REGISTER, 0))
                 .check(false);
     }
 
@@ -245,8 +209,7 @@ public class CallingSequenceTest extends CallingSequenceTestBase {
     public void testIntegerStruct() {
         new Verifier(new CallingSequenceBuilderImpl(null))
                 .arg(Layout.of("[i64i64]"),
-                        binding(INTEGER_ARGUMENT_REGISTER, 0),
-                        binding(INTEGER_ARGUMENT_REGISTER, 8))
+                        binding(INTEGER_ARGUMENT_REGISTER, 0))
                 .check(false);
     }
 

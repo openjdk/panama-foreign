@@ -34,7 +34,7 @@ import java.util.function.BiConsumer;
 
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
-class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
+public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
 
     private static final SharedUtils.StorageDebugHelper storageDbgHelper = new SharedUtils.StorageDebugHelper(
             new String[] { "rcx", "rdx", "r8", "r9" },
@@ -253,7 +253,7 @@ class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
 
                         if(width == 8 && storage.getStorageClass() == StorageClass.VECTOR_ARGUMENT_REGISTER && forVarargs) {
                             Storage extraStorage = new Storage(StorageClass.INTEGER_ARGUMENT_REGISTER, nRegs, SharedUtils.INTEGER_REGISTER_SIZE);
-                            bindingConsumer.accept(storage.getStorageClass(), new ArgumentBinding(extraStorage, info, i * 8));
+                            bindingConsumer.accept(extraStorage.getStorageClass(), new ArgumentBinding(extraStorage, info, i * 8));
 
                             if (DEBUG) {
                                 System.out.println("Argument " + info.name() + " will be passed in register " +
