@@ -140,7 +140,7 @@ public final class Util {
             throw new IllegalArgumentException("@NativeCallback expected: " + c);
         }
         NativeCallback nc = c.getAnnotation(NativeCallback.class);
-        return new DescriptorParser(nc.value()).parseFunction();
+        return DescriptorParser.parseFunction(nc.value());
     }
 
     static MethodType methodTypeFor(Method method) {
@@ -333,13 +333,11 @@ public final class Util {
         return ptr.cast(NativeTypes.VOID).cast(layoutType);
     }
 
-    public static MethodType checkNoArrays(MethodHandles.Lookup lookup, Class<?> fi) {
-        try {
-            return checkNoArrays(lookup.unreflect(findFunctionalInterfaceMethod(fi)).type());
-        } catch (ReflectiveOperationException ex) {
-            throw new IllegalStateException(ex);
-        }
+    public static MethodType checkNoArrays(Class<?> fi) {
+        // getCallbackMH will enforce the check
+        return getCallbackMH(findFunctionalInterfaceMethod(fi)).type();
     }
+
     public static MethodType checkNoArrays(MethodType mt) {
         if (Stream.concat(Stream.of(mt.returnType()), mt.parameterList().stream())
                 .anyMatch(c -> Array.class.isAssignableFrom(c))) {

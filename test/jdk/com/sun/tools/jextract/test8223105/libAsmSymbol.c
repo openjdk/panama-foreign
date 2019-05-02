@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.tools.jextract.tree;
 
-import java.foreign.layout.Layout;
-import java.util.Optional;
-import jdk.internal.clang.Cursor;
 
-public class VarTree extends Tree {
-    VarTree(Cursor c) { this(c, c.spelling()); }
+#define IMPL
+#include "libAsmSymbol.h"
 
-    private VarTree(Cursor c, String name) { super(c, name); }
+EXPORT int fooA = 1;
+EXPORT int funcA (int x, int y) {
+    return x + y;
+}
 
-    @Override
-    public VarTree withName(String newName) {
-        return name().equals(newName)? this : new VarTree(cursor(), newName);
-    }
-
-    @Override
-    public <R,D> R accept(TreeVisitor<R,D> visitor, D data) {
-        return visitor.visitVar(this, data);
-    }
-
-    public Layout layout() {
-        Layout layout = LayoutUtils.getLayout(type());
-        Optional<String> label = Tree.label(cursor());
-        return layout.withAnnotation(Layout.NAME, label.orElse(name()));
-    }
+EXPORT int fooB = 2;
+EXPORT int funcB (int x, int y) {
+    return x * y;
 }

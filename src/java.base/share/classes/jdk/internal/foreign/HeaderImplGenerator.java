@@ -23,6 +23,7 @@
 package jdk.internal.foreign;
 
 import java.foreign.Library;
+import java.foreign.NativeMethodType;
 import java.foreign.Scope;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.layout.Function;
@@ -36,34 +37,24 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.foreign.NativeMethodType;
 import java.util.stream.Stream;
-
 import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.foreign.memory.MemoryBoundInfo;
-import jdk.internal.org.objectweb.asm.FieldVisitor;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ALOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.ARETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
-import static jdk.internal.org.objectweb.asm.Opcodes.GETFIELD;
 import static jdk.internal.org.objectweb.asm.Opcodes.I2B;
 import static jdk.internal.org.objectweb.asm.Opcodes.I2C;
 import static jdk.internal.org.objectweb.asm.Opcodes.I2S;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
-import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
-import static jdk.internal.org.objectweb.asm.Opcodes.PUTFIELD;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
-import static jdk.internal.org.objectweb.asm.Opcodes.SWAP;
 
 class HeaderImplGenerator extends BinderClassGenerator {
 
@@ -129,7 +120,7 @@ class HeaderImplGenerator extends BinderClassGenerator {
         MethodType methodType = Util.methodTypeFor(method);
         Function function = info.descriptor;
         try {
-            String name = method.getName(); //FIXME: inferred only, for now
+            String name = function.name().orElse(method.getName());
             Library.Symbol symbol = lookup.lookup(name);
             NativeMethodType nmt = Util.nativeMethodType(layoutResolver.resolve(function), method);
             addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(),
@@ -150,7 +141,7 @@ class HeaderImplGenerator extends BinderClassGenerator {
 
         try {
             String name = info.name;
-            long addr = lookup.lookup(name.isEmpty() ? method.getName() : name).getAddress().addr();
+            long addr = lookup.lookup(name.isEmpty() ? methodName : name).getAddress().addr();
             p = new BoundedPointer<>(lt, libScope, AccessMode.READ_WRITE, MemoryBoundInfo.ofNative(addr, lt.bytesSize()));
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new IllegalStateException(e);

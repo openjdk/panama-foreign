@@ -55,7 +55,7 @@ final class DuplicateDeclarationHandler extends SimpleTreeVisitor<Void, Void>
 
     // Potential Tree instances that will go into transformed HeaderTree
     // are collected in this list.
-    private List<Tree> decls = new ArrayList<>();
+    private ArrayList<Tree> decls = new ArrayList<>();
 
     private boolean isFromSameHeader(Tree def, Tree decl) {
         SourceLocation locDef = def.location();
@@ -82,6 +82,9 @@ final class DuplicateDeclarationHandler extends SimpleTreeVisitor<Void, Void>
         Tree existing = globalsSeen.get(tree.name());
         if (existing == null || !isFromSameHeader(tree, existing)) {
             decls.add(tree);
+        } else {
+            int idx = decls.indexOf(existing);
+            decls.set(idx, tree);
         }
         globalsSeen.put(tree.name(), tree);
     }
@@ -163,8 +166,8 @@ final class DuplicateDeclarationHandler extends SimpleTreeVisitor<Void, Void>
 
     @Override
     public Void visitStruct(StructTree s, Void v) {
-        List<Tree> oldDecls = decls;
-        List<Tree> structDecls = new ArrayList<>();
+        ArrayList<Tree> oldDecls = decls;
+        ArrayList<Tree> structDecls = new ArrayList<>();
         try {
             decls = structDecls;
             s.declarations().forEach(t -> t.accept(this, null));
@@ -174,7 +177,7 @@ final class DuplicateDeclarationHandler extends SimpleTreeVisitor<Void, Void>
 
         /*
          * If we're seeing a forward/backward declaration of
-         * a struct which is definied elsewhere in this compilation
+         * a struct which is defined elsewhere in this compilation
          * unit, ignore it. If no definition is found, we want to
          * leave the declaration so that dummy definition will be
          * generated.

@@ -20,30 +20,54 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.tools.jextract;
 
-import com.sun.tools.jextract.tree.Tree;
-import java.nio.file.Path;
+#ifdef _WIN64
+  #ifdef IMPL
+    #define EXPORT __declspec(dllexport)
+  #else
+    #define EXPORT __declspec(dllimport)
+  #endif // IMPL
+#else
+#define EXPORT
+#endif //_WIN64
 
-public class Filters {
-    private final PatternFilter<Path> headers;
-    private final PatternFilter<String> symbols;
+#ifdef _WIN32
+// Windows doesn't really support asm symbol, this is similar approach for C code to
+// achieve similar, but this won't work with Panama until we support such Macro
+#ifdef ADD
+#define foo fooA
+#define func funcA
+#else
+#define foo fooB
+#define func funcB
+#endif //ADD
+#define ALIAS(sym)
 
-    public Filters(PatternFilter<Path> headers, PatternFilter<String> symbols) {
-        this.headers = headers;
-        this.symbols = symbols;
-    }
+#elif __APPLE__
+#define ALIAS(sym) __asm("_" #sym)
+#else
+#define ALIAS(sym) __asm__(#sym)
+#endif // _WIN32
 
-    public static Filters createDefault() {
-        return new Filters(PatternFilter.empty(), PatternFilter.empty());
-    }
+// We do 3 declarations to make sure we will pick up alias no matter the sequence of encounter
+// Without alias
+EXPORT extern int foo;
+EXPORT int func (int x, int y);
 
-    public boolean filterSymbol(Tree tree) {
-        return symbols.filter(tree.name());
-    }
+// With alias
+#ifdef ADD
 
-    public boolean isInRootHeader(Tree tree) {
-        Path path = tree.cursor().getSourceLocation().getFileLocation().path();
-        return headers.filter(path);
-    }
-}
+EXPORT extern int foo ALIAS(fooA);
+EXPORT int func (int x, int y) ALIAS(funcA);
+
+#else
+
+EXPORT extern int foo ALIAS(fooB);
+EXPORT int func (int x, int y) ALIAS(funcB);
+
+#endif // ADD
+
+// Without alias again
+EXPORT extern int foo;
+EXPORT int func (int x, int y);
+

@@ -104,12 +104,12 @@ public final class Function extends AbstractDescriptor<Function> {
 
     @Override
     public String toString() {
-        return String.format("(%s%s)%s",
+        return wrapWithAnnotations(String.format("(%s%s)",
                 Stream.of(argLayouts)
                         .map(Object::toString)
                         .collect(Collectors.joining()),
-                variadic ? "*" : "",
-                resLayout.map(Object::toString).orElse("v"));
+                variadic ? "*" : "")) +
+                resLayout.map(Object::toString).orElse("v");
     }
 
     @Override

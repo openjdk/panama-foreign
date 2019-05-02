@@ -23,9 +23,11 @@
 package com.sun.tools.jextract.tree;
 
 import java.foreign.layout.Function;
+import java.foreign.layout.Layout;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Optional;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
 
@@ -79,6 +81,8 @@ public class FunctionTree extends Tree {
     }
 
     public Function function() {
-        return LayoutUtils.getFunction(type());
+        Function fn = LayoutUtils.getFunction(type());
+        Optional<String> label = Tree.label(cursor());
+        return label.isPresent() ? fn.withAnnotation(Layout.NAME, label.get()) : fn;
     }
 }

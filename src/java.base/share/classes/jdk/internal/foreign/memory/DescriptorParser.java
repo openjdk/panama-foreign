@@ -83,7 +83,7 @@ public class DescriptorParser {
         } else {
             result = Function.of(parseLayout(), varargs, args.toArray(new Layout[0]));
         }
-        return annotationsOpt()
+        return annos
                 .map(a -> withAnnotations(result, a))
                 .orElse(result);
     }

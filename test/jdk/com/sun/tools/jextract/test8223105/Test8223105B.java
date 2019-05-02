@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.tools.jextract.tree;
 
-import java.foreign.layout.Layout;
-import java.util.Optional;
-import jdk.internal.clang.Cursor;
+import java.foreign.Libraries;
+import java.foreign.Library;
+import java.lang.invoke.MethodHandles;
+import org.testng.annotations.Test;
+import test.jextract.asmsymbol.libAsmSymbol_h;
 
-public class VarTree extends Tree {
-    VarTree(Cursor c) { this(c, c.spelling()); }
-
-    private VarTree(Cursor c, String name) { super(c, name); }
-
-    @Override
-    public VarTree withName(String newName) {
-        return name().equals(newName)? this : new VarTree(cursor(), newName);
+import static org.testng.Assert.assertEquals;
+/*
+ * @test
+ * @requires os.family != "windows"
+ * @library ..
+ * @run driver JtregJextract -t test.jextract.asmsymbol -- libAsmSymbol.h
+ * @run testng/othervm Test8223105B
+ */
+public class Test8223105B {
+    static final libAsmSymbol_h libAsmSymbol;
+    static {
+        Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "AsmSymbol");
+        libAsmSymbol = Libraries.bind(libAsmSymbol_h.class, lib);
     }
 
-    @Override
-    public <R,D> R accept(TreeVisitor<R,D> visitor, D data) {
-        return visitor.visitVar(this, data);
+    @Test
+    public void checkGlobalVar() {
+        assertEquals(2, libAsmSymbol.foo$get());
     }
 
-    public Layout layout() {
-        Layout layout = LayoutUtils.getLayout(type());
-        Optional<String> label = Tree.label(cursor());
-        return layout.withAnnotation(Layout.NAME, label.orElse(name()));
+    @Test
+    public void checkGlobalFunction() {
+        assertEquals(2, libAsmSymbol.func(1, 2));
     }
 }

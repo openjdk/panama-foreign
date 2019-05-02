@@ -25,17 +25,15 @@
 
 package java.foreign.memory;
 
-import jdk.internal.foreign.LayoutResolver;
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.memory.LayoutTypeImpl;
-import jdk.internal.foreign.memory.References;
-
 import java.foreign.annotations.NativeCallback;
 import java.foreign.layout.Address;
 import java.foreign.layout.Layout;
 import java.foreign.layout.Value;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
+import jdk.internal.foreign.LayoutResolver;
+import jdk.internal.foreign.Util;
+import jdk.internal.foreign.memory.LayoutTypeImpl;
+import jdk.internal.foreign.memory.References;
 
 /**
  * This class describes the relationship between a memory layout (usually described in bits) and a Java carrier
@@ -229,7 +227,7 @@ public interface LayoutType<X> {
         if (!Util.isCallback(funcIntf)) {
             throw new IllegalArgumentException("Not a callback type: " + funcIntf);
         }
-        Util.checkNoArrays(MethodHandles.publicLookup(), funcIntf);
+        Util.checkNoArrays(funcIntf);
         return LayoutTypeImpl.ofCallback(layout, References.ofFunction, funcIntf);
     }
 }
