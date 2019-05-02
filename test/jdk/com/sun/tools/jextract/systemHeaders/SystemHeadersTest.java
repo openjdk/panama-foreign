@@ -44,7 +44,7 @@ public class SystemHeadersTest extends JextractToolRunner {
     @Test
     public void testNoFollowSystemHeaders() throws IOException {
         Path clzPath = getOutputFilePath("out");
-        run("-d", clzPath.toString(),
+        run("--static-forwarder", "false", "-d", clzPath.toString(),
                 getInputFilePath("foo.h").toString()).checkSuccess();
         assertEquals(Files.list(clzPath).
                 filter(p -> p.toString().endsWith("class")).count(), 1);

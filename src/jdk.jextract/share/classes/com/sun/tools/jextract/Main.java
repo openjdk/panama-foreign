@@ -115,12 +115,13 @@ public final class Main {
             builder.setNoNativeLocations();
         }
 
-        // generate static forwarder class if user specified -l option
+        // generate static forwarder class by default. But user can avoid it
+        // specifying --static_forwarder=false
         boolean staticForwarder = true;
         if (options.has("static-forwarder")) {
             staticForwarder = (boolean)options.valueOf("static-forwarder");
         }
-        builder.setGenStaticForwarder(staticForwarder && options.has("l"));
+        builder.setGenStaticForwarder(staticForwarder);
 
         boolean recordLibraryPath = options.has("record-library-path");
         if (recordLibraryPath) {

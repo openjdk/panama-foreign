@@ -66,7 +66,8 @@ public class BadBitfieldTest extends JextractToolRunner {
 
     @Test
     public void testBadBitfield() {
-        run("-dry-run", getInputFilePath("badBitfields.h").toString())
+        run("--static-forwarder", "false",
+            "-dry-run", getInputFilePath("badBitfields.h").toString())
             .checkSuccess()
             .checkContainsOutput("Crossing storage unit boundaries");
     }

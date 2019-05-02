@@ -145,7 +145,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
     }
 
     protected void handleException(Exception ex) {
-        log.printError("cannot.write.class.file", headerFile.pkgName + "." + headerFile.headerClsName, ex);
+        log.printError("cannot.write.file", "source", headerFile.pkgName + "." + headerFile.headerClsName, ex);
         log.printStackTrace(ex);
     }
 
