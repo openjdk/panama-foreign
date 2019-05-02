@@ -27,24 +27,32 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
 public final class Writer {
 
-    private final Log log;
-    private final Map<String, byte[]> results;
+    private final Context ctx;
+    private final Map<String, ? extends CharSequence> sources;
+    private Map<String, byte[]> results;
 
-    Writer(Context ctx, Map<String, byte[]> results) {
-        this.log = ctx.log;
-        this.results = results;
+    Writer(Context ctx, Map<String, ? extends CharSequence> sources) {
+        this.ctx = ctx;
+        this.sources = sources;
+    }
+
+    private void ensureSourcesCompiled() {
+        if (results == null) {
+            results = !sources.isEmpty() ? InMemoryJavaCompiler.compile(sources) : Map.of();
+        }
     }
 
     static final String JEXTRACT_MANIFEST = "META-INF/jextract.properties";
 
     public boolean isEmpty() {
-        return results.isEmpty();
+        return sources.isEmpty();
     }
 
     @SuppressWarnings("deprecation")
@@ -60,36 +68,59 @@ public final class Writer {
     }
 
     void writeClassFiles(Path destDir, String[] args) throws IOException {
-        try {
-            results.forEach((cls, bytes) -> {
-                try {
-                    String path = cls.replace('.', File.separatorChar) + ".class";
-                    log.print(Level.FINE, () -> "Writing " + path);
-                    Path fullPath = destDir.resolve(path).normalize();
-                    Files.createDirectories(fullPath.getParent());
-                    try (OutputStream fos = Files.newOutputStream(fullPath)) {
-                        fos.write(bytes);
-                        fos.flush();
-                    }
-                } catch (IOException ioe) {
-                    throw new UncheckedIOException(ioe);
-                }
-            });
+        ensureSourcesCompiled();
+        destDir = createOutputDir(destDir);
+        for (var entry : results().entrySet()) {
+            String cls = entry.getKey();
+            byte[] bytes = entry.getValue();
 
-            Path propsPath = destDir.resolve(JEXTRACT_MANIFEST.replace('/', File.separatorChar)).normalize();
-            Files.createDirectories(propsPath.getParent());
-            try (OutputStream fos = Files.newOutputStream(propsPath)) {
-                fos.write(getJextractProperties(args));
-                fos.flush();
-            }
-        } catch (UncheckedIOException uioe) {
-            throw uioe.getCause();
+            String path = cls.replace('.', File.separatorChar) + ".class";
+            ctx.log.print(Level.FINE, () -> "Writing " + path);
+            Path fullPath = destDir.resolve(path).normalize();
+            Files.createDirectories(fullPath.getParent());
+            Files.write(fullPath, bytes);
         }
+
+        Path propsPath = destDir.resolve(JEXTRACT_MANIFEST).normalize();
+        Files.createDirectories(propsPath.getParent());
+        Files.write(propsPath, getJextractProperties(args));
+    }
+
+    void writeSourceFiles(Path destDir, String[] args) throws IOException {
+        destDir = createOutputDir(destDir);
+        for (var entry : sources.entrySet()) {
+            String srcPath = entry.getKey().replace('.', File.separatorChar) + ".java";
+            Path fullPath = destDir.resolve(srcPath).normalize();
+            Files.createDirectories(fullPath.getParent());
+            Files.write(fullPath, List.of(entry.getValue()));
+        }
+    }
+
+    void writeJMod(Path destDir, String[] args) throws IOException {
+        ensureSourcesCompiled();
+        new JModWriter(ctx, this).writeJModFile(destDir, args);
+    }
+
+    void writeJar(Path destDir, String[] args) throws IOException {
+        ensureSourcesCompiled();
+        new JarWriter(ctx, this).writeJarFile(destDir, args);
+    }
+
+    private Path createOutputDir(Path dest) throws IOException {
+        dest = dest.toAbsolutePath();
+        if (!Files.exists(dest)) {
+            Files.createDirectories(dest);
+        }
+        if (!Files.isDirectory(dest)) {
+            throw new IOException(Log.format("not.a.directory", dest));
+        }
+        return dest;
     }
 
     //These methods are used for testing (see Runner.java)
 
     public Map<String, byte[]> results() {
+        ensureSourcesCompiled();
         return results;
     }
 }

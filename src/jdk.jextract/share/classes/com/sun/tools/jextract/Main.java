@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.spi.ToolProvider;
 
@@ -185,9 +184,6 @@ public final class Main {
         }
         builder.setTargetPackage(targetPackage);
 
-        String srcDumpDir = options.has("src-dump-dir")? (String) options.valueOf("src-dump-dir") : null;
-        builder.setSrcDumpDir(srcDumpDir);
-
         return builder.build();
     }
 
@@ -310,20 +306,23 @@ public final class Main {
         }
 
         boolean hasOutput = false;
+        if (optionSet.has("src-dump-dir")) {
+            hasOutput = true;
+            Path dest = Paths.get((String) optionSet.valueOf("src-dump-dir"));
+            try {
+                writer.writeSourceFiles(dest, args);
+            } catch (IOException ex) {
+                throw new FatalError(OUTPUT_ERROR, Log.format("cannot.write.file", "source", dest, ex), ex);
+            }
+        }
+
         if (optionSet.has("d")) {
             hasOutput = true;
             Path dest = Paths.get((String) optionSet.valueOf("d"));
-            dest = dest.toAbsolutePath();
             try {
-                if (!Files.exists(dest)) {
-                    Files.createDirectories(dest);
-                }
-                if (!Files.isDirectory(dest)) {
-                    throw new FatalError(OUTPUT_ERROR, Log.format("not.a.directory", dest));
-                }
                 writer.writeClassFiles(dest, args);
             } catch (IOException ex) {
-                throw new FatalError(OPTION_ERROR, Log.format("cannot.write.class.file", dest, ex), ex);
+                throw new FatalError(OUTPUT_ERROR, Log.format("cannot.write.file", "class", dest, ex), ex);
             }
         }
 
@@ -339,16 +338,14 @@ public final class Main {
         boolean isJMod = outputName.endsWith("jmod");
         try {
             if (isJMod) {
-                new JModWriter(ctx, writer).writeJModFile(Paths.get(outputName), args);
+                writer.writeJMod(Paths.get(outputName), args);
             } else {
-                new JarWriter(ctx, writer).writeJarFile(Paths.get(outputName), args);
+                writer.writeJar(Paths.get(outputName), args);
             }
         } catch (IOException ex) {
             throw new FatalError(OUTPUT_ERROR,
-                    Log.format(isJMod ? "cannot.write.jmod.file" : "cannot.write.jar.file", outputName, ex), ex);
+                    Log.format("cannot.write.file", isJMod ? "jmod" : "jar", outputName, ex), ex);
         }
-
-        return;
     }
 
     public static void main(String... args) {

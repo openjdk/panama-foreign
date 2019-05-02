@@ -74,14 +74,6 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
 
         header_jsb.classEnd();
         String src = header_jsb.build();
-        if (srcDir != null) {
-            try {
-                Path srcPath = srcDir.resolve(forwarderName + ".java");
-                Files.write(srcPath, List.of(src));
-            } catch (Exception ex) {
-                handleException(ex);
-            }
-        }
         srcMap.put(headerFile.pkgName + "." + forwarderName, src);
         return srcMap;
     }

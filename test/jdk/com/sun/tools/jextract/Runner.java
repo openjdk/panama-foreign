@@ -25,7 +25,6 @@ import java.foreign.annotations.*;
 import java.nio.file.Files;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;

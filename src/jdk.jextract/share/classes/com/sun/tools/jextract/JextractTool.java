@@ -76,8 +76,7 @@ public class JextractTool {
         //generate classes
         Map<String, String> srcMap = new HashMap<>();
         headerMap.forEach((hf, decls) -> generateHeader(hf, decls,srcMap));
-        Map<String, byte[]> classMap = !srcMap.isEmpty()? InMemoryJavaCompiler.compile(srcMap) : Map.of();
-        return new Writer(ctx, classMap);
+        return new Writer(ctx, srcMap);
     }
 
     private void generateHeader(HeaderFile hf, List<Tree> decls, Map<String, String> srcMap) {
