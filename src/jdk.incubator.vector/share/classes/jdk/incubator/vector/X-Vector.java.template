@@ -154,7 +154,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
                                      a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> {
-                                         ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                         ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
                                          $Type$Buffer tb = bbc{#if[byte]?;:.as$Type$Buffer();}
                                          return (($Type$Species)s).op(i -> tb.get());
                                      });
