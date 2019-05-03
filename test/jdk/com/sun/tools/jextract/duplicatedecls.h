@@ -26,3 +26,17 @@ void func(int);
 
 extern int i;
 extern int i;
+
+enum {
+   Foo
+};
+
+#define Foo 344
+
+enum Color {
+   R, G, B
+};
+
+#define R 0xFF0000
+#define G 0x00FF00
+#define B 0x0000FF

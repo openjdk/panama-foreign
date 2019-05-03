@@ -40,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
 
     protected final String headerClassName;
     protected final HeaderFile headerFile;
+    private final Set<String> globalConstants;
     private final Map<String, JavaSourceBuilder> types;
     private final List<String> libraryNames;
     private final List<String> libraryPaths;
@@ -79,7 +81,8 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         this.log = ctx.log;
         log.print(Level.INFO, () -> "Instantiate JavaSourceFactory for " + header.path);
         this.headerFile = header;
-        this.headerClassName = headerFile.fullyQualifiedName();;
+        this.headerClassName = headerFile.fullyQualifiedName();
+        this.globalConstants = new HashSet<>();
         this.types = new HashMap<>();
         this.libraryNames = ctx.options.libraryNames;
         this.libraryPaths = ctx.options.recordLibraryPath? ctx.options.libraryPaths : null;
@@ -211,7 +214,18 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         return addField(global_jsb, varTree, null);
     }
 
-    private void addConstant(JavaSourceBuilder jsb, SourceLocation src, String name, JType type, Object value) {
+    private void addGlobalConstant(JavaSourceBuilder jsb, SourceLocation src,
+            String name, JType type, Object value) {
+        if (!globalConstants.add(name)) {
+            log.print(Level.WARNING, () -> "Ignoring duplicate symbol: " + name);
+            return;
+        }
+
+        addConstant(jsb, src, name, type, value);
+    }
+
+    private void addConstant(JavaSourceBuilder jsb, SourceLocation src,
+            String name, JType type, Object value) {
         addNativeLocation(jsb, src);
 
         if (value instanceof String) {
@@ -230,7 +244,6 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
             }
             jsb.addAnnotation(NATIVE_NUM_CONST, Map.of("value", longValue));
         }
-
         jsb.addGetter(name, type);
     }
 
@@ -267,11 +280,11 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
     @Override
     public Boolean visitEnum(EnumTree enumTree, JType jt) {
         // define enum constants in global_cw
-        enumTree.constants().forEach(constant -> addConstant(global_jsb,
-                constant.location(),
-                constant.name(),
+        enumTree.constants().forEach(constant -> {
+            addGlobalConstant(global_jsb, constant.location(), constant.name(),
                 headerFile.dictionary().lookup(constant.type()),
-                constant.enumConstant().get()));
+                constant.enumConstant().get());
+        });
 
         if (enumTree.name().isEmpty()) {
             // We are done with anonymous enum
@@ -373,7 +386,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         MacroParser.Macro macro = macroTree.macro().get();
         log.print(Level.FINE, () -> "Adding macro " + name);
 
-        addConstant(global_jsb, macroTree.location(), Utils.toMacroName(name), macro.type(), macro.value());
+        addGlobalConstant(global_jsb, macroTree.location(), Utils.toMacroName(name), macro.type(), macro.value());
 
         return true;
     }
