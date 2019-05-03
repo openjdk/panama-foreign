@@ -146,7 +146,7 @@ public abstract class ShortVector extends Vector<Short> {
                                      a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> {
-                                         ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                         ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
                                          ShortBuffer tb = bbc.asShortBuffer();
                                          return ((ShortSpecies)s).op(i -> tb.get());
                                      });

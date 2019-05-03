@@ -146,7 +146,7 @@ public abstract class FloatVector extends Vector<Float> {
                                      a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                      a, offset, species,
                                      (c, idx, s) -> {
-                                         ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                         ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
                                          FloatBuffer tb = bbc.asFloatBuffer();
                                          return ((FloatSpecies)s).op(i -> tb.get());
                                      });
