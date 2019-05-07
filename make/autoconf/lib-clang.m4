@@ -39,6 +39,8 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
       [Specify where to find libclang auxiliary header files, lib/clang/<clang-version>/include/stddef.h ])])
   AC_ARG_WITH([libclang-bin], [AS_HELP_STRING([--with-libclang-bin=<path>],
       [Specify where to find clang binary, libclang.dll ])])
+  AC_ARG_WITH([libclang-version], [AS_HELP_STRING([--with-libclang-version=<version>],
+      [Specify which libclang version to use ])])
 
   if test "x$with_libclang" = "xno"; then
     AC_MSG_CHECKING([if libclang should be enabled])
@@ -54,14 +56,38 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
     fi
     ENABLE_LIBCLANG="true"
 
+    AC_MSG_CHECKING([libclang version to be used])
+    if test "x$with_libclang_version" != "x"; then
+      LIBCLANG_VERSION="$with_libclang_version"
+      AC_MSG_RESULT([$LIBCLANG_VERSION (manually specified)])
+    else
+      LIBCLANG_VERSION="7"
+      AC_MSG_RESULT([$LIBCLANG_VERSION (default)])
+    fi
+
     if test "x$with_libclang" != "x" -a "x$with_libclang" != "xyes"; then
       CLANG_LIB_PATH="$with_libclang/lib"
       CLANG_BIN_PATH="$with_libclang/bin"
       CLANG_INCLUDE_PATH="$with_libclang/include"
-      # There may be more than one version of clang installed.
-      # Pick the last one if there are more than one versions.
-      VER=`ls $with_libclang/lib/clang/ | tail -n1`
-      CLANG_INCLUDE_AUX_PATH="$with_libclang/lib/clang/$VER/include"
+
+      AC_MSG_CHECKING([libclang auxiliary include path])
+      if test "x$with_libclang_include_aux" != "x"; then
+        CLANG_INCLUDE_AUX_PATH="$with_libclang_include_aux"
+        AC_MSG_RESULT([$CLANG_INCLUDE_AUX_PATH])
+        if test "x$with_libclang_version" != "x"; then
+          AC_MSG_WARN([--with-libclang-include-aux was specified. Manually specified value of --with-libclang-version was ignored])
+        fi        
+      else 
+        # There may be more than one version of clang matching the specifed version.
+        # Pick the last one if there are more than one versions.
+        VER=`$LS $with_libclang/lib/clang/ | $GREP "^$LIBCLANG_VERSION" | $TAIL -n1`
+        if test "x$VER" = "x"; then
+          AC_MSG_ERROR([Can not find libclang version matching the specified version: '$LIBCLANG_VERSION' in
+            $($FIND $with_libclang/lib/clang/ -mindepth 1 -maxdepth 1)])
+        fi        
+        CLANG_INCLUDE_AUX_PATH="$with_libclang/lib/clang/$VER/include"
+        AC_MSG_RESULT([$CLANG_INCLUDE_AUX_PATH])
+      fi      
     fi
 
     if test "x$with_libclang_lib" != "x"; then
@@ -73,10 +99,6 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
     if test "x$with_libclang_bin" != "x"; then
       CLANG_BIN_PATH="$with_libclang_bin"
     fi
-    if test "x$with_libclang_include_aux" != "x"; then
-      CLANG_INCLUDE_AUX_PATH="$with_libclang_include_aux"
-    fi
-
 
     dnl Only for Windows platform now, as we don't need bin yet for other platform
     if test "x$OPENJDK_TARGET_OS" = xwindows; then
