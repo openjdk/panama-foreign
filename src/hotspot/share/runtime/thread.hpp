@@ -338,9 +338,8 @@ class Thread: public ThreadShadow {
   // Point to the last handle mark
   HandleMark* _last_handle_mark;
 
-  // The parity of the last strong_roots iteration in which this thread was
-  // claimed as a task.
-  int _oops_do_parity;
+  // Claim value for parallel iteration over threads.
+  uintx _threads_do_token;
 
   // Support for GlobalCounter
  private:
@@ -647,26 +646,27 @@ class Thread: public ThreadShadow {
   // Apply "cf->do_code_blob" (if !NULL) to all code blobs active in frames
   virtual void oops_do(OopClosure* f, CodeBlobClosure* cf);
 
-  // Handles the parallel case for the method below.
+  // Handles the parallel case for claim_threads_do.
  private:
-  bool claim_oops_do_par_case(int collection_parity);
+  bool claim_par_threads_do(uintx claim_token);
  public:
-  // Requires that "collection_parity" is that of the current roots
-  // iteration.  If "is_par" is false, sets the parity of "this" to
-  // "collection_parity", and returns "true".  If "is_par" is true,
-  // uses an atomic instruction to set the current threads parity to
-  // "collection_parity", if it is not already.  Returns "true" iff the
+  // Requires that "claim_token" is that of the current iteration.
+  // If "is_par" is false, sets the token of "this" to
+  // "claim_token", and returns "true".  If "is_par" is true,
+  // uses an atomic instruction to set the current thread's token to
+  // "claim_token", if it is not already.  Returns "true" iff the
   // calling thread does the update, this indicates that the calling thread
-  // has claimed the thread's stack as a root group in the current
-  // collection.
-  bool claim_oops_do(bool is_par, int collection_parity) {
+  // has claimed the thread in the current iteration.
+  bool claim_threads_do(bool is_par, uintx claim_token) {
     if (!is_par) {
-      _oops_do_parity = collection_parity;
+      _threads_do_token = claim_token;
       return true;
     } else {
-      return claim_oops_do_par_case(collection_parity);
+      return claim_par_threads_do(claim_token);
     }
   }
+
+  uintx threads_do_token() const { return _threads_do_token; }
 
   // jvmtiRedefineClasses support
   void metadata_handles_do(void f(Metadata*));
@@ -750,7 +750,6 @@ protected:
   Monitor* owned_locks() const                   { return _owned_locks;          }
   bool owns_locks() const                        { return owned_locks() != NULL; }
   bool owns_locks_but_compiled_lock() const;
-  int oops_do_parity() const                     { return _oops_do_parity; }
 
   // Deadlock detection
   bool allow_allocation()                        { return _allow_allocation_count == 0; }
@@ -1243,7 +1242,7 @@ class JavaThread: public Thread {
   };
   void exit(bool destroy_vm, ExitType exit_type = normal_exit);
 
-  void cleanup_failed_attach_current_thread();
+  void cleanup_failed_attach_current_thread(bool is_daemon);
 
   // Testers
   virtual bool is_Java_thread() const            { return true;  }
@@ -1289,6 +1288,7 @@ class JavaThread: public Thread {
   // Safepoint support
   inline JavaThreadState thread_state() const;
   inline void set_thread_state(JavaThreadState s);
+  inline void set_thread_state_fence(JavaThreadState s);  // fence after setting thread state
   inline ThreadSafepointState* safepoint_state() const;
   inline void set_safepoint_state(ThreadSafepointState* state);
   inline bool is_at_poll_safepoint();
@@ -1415,7 +1415,7 @@ class JavaThread: public Thread {
   // Whenever a thread transitions from native to vm/java it must suspend
   // if external|deopt suspend is present.
   bool is_suspend_after_native() const {
-    return (_suspend_flags & (_external_suspend | _deopt_suspend)) != 0;
+    return (_suspend_flags & (_external_suspend | _deopt_suspend JFR_ONLY(| _trace_flag))) != 0;
   }
 
   // external suspend request is completed
@@ -2223,7 +2223,7 @@ class Threads: AllStatic {
   static int         _number_of_threads;
   static int         _number_of_non_daemon_threads;
   static int         _return_code;
-  static int         _thread_claim_parity;
+  static uintx       _thread_claim_token;
 #ifdef ASSERT
   static bool        _vm_complete;
 #endif
@@ -2236,7 +2236,7 @@ class Threads: AllStatic {
   // force_daemon is a concession to JNI, where we may need to add a
   // thread to the thread list before allocating its thread object
   static void add(JavaThread* p, bool force_daemon = false);
-  static void remove(JavaThread* p);
+  static void remove(JavaThread* p, bool is_daemon);
   static void non_java_threads_do(ThreadClosure* tc);
   static void java_threads_do(ThreadClosure* tc);
   static void java_threads_and_vm_thread_do(ThreadClosure* tc);
@@ -2256,21 +2256,23 @@ class Threads: AllStatic {
   // Does not include JNI_VERSION_1_1
   static jboolean is_supported_jni_version(jint version);
 
-  // The "thread claim parity" provides a way for threads to be claimed
+  // The "thread claim token" provides a way for threads to be claimed
   // by parallel worker tasks.
   //
-  // Each thread contains a "parity" field. A task will claim the
-  // thread only if its parity field is the same as the global parity,
-  // which is updated by calling change_thread_claim_parity().
+  // Each thread contains a "token" field. A task will claim the
+  // thread only if its token is different from the global token,
+  // which is updated by calling change_thread_claim_token().  When
+  // a thread is claimed, it's token is set to the global token value
+  // so other threads in the same iteration pass won't claim it.
   //
-  // For this to work change_thread_claim_parity() needs to be called
+  // For this to work change_thread_claim_token() needs to be called
   // exactly once in sequential code before starting parallel tasks
   // that should claim threads.
   //
-  // New threads get their parity set to 0 and change_thread_claim_parity()
-  // never sets the global parity to 0.
-  static int thread_claim_parity() { return _thread_claim_parity; }
-  static void change_thread_claim_parity();
+  // New threads get their token set to 0 and change_thread_claim_token()
+  // never sets the global token to 0.
+  static uintx thread_claim_token() { return _thread_claim_token; }
+  static void change_thread_claim_token();
   static void assert_all_threads_claimed() NOT_DEBUG_RETURN;
 
   // Apply "f->do_oop" to all root oops in all threads.
@@ -2324,6 +2326,8 @@ class Threads: AllStatic {
 
   // Deoptimizes all frames tied to marked nmethods
   static void deoptimized_wrt_marked_nmethods();
+
+  struct Test;                  // For private gtest access.
 };
 
 
