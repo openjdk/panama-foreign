@@ -76,6 +76,8 @@
  */
 module java.base {
 
+    exports java.foreign.memory;
+    exports java.foreign.layout;
     exports java.io;
     exports java.lang;
     exports java.lang.annotation;

@@ -40,6 +40,7 @@ import sun.invoke.util.ValueConversions;
 import sun.invoke.util.VerifyType;
 import sun.invoke.util.Wrapper;
 
+import java.foreign.layout.LayoutPath;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1799,6 +1800,10 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
                                 invokerMethodTypes, callSiteMethodTypes);
             }
 
+            @Override
+            public VarHandle memoryAddressViewVarHandle(Class<?> carrier, LayoutPath path) {
+                return VarHandles.makeMemoryAddressViewHandle(carrier, path);
+            }
         });
     }
 

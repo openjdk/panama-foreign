@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,29 +22,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package java.foreign.layout;
 
-package jdk.internal.access;
-
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-
-public interface JavaNioAccess {
+/**
+ * This interface models the layout of a group of bits in a memory region.
+ * Layouts can be annotated in order to embed domain specific knowledge, and they can be referenced by name
+ * (see {@link Unresolved}). A layout is always associated with a size (in bits).
+ */
+public interface Layout extends Descriptor {
     /**
-     * Provides access to information on buffer usage.
+     * Computes the layout size, in bits
+     * @return the layout size.
      */
-    interface BufferPool {
-        String getName();
-        long getCount();
-        long getTotalCapacity();
-        long getMemoryUsed();
-    }
-    BufferPool getDirectBufferPool();
+    long bitsSize();
 
-    /**
-     * Constructs a direct ByteBuffer referring to the block of memory starting
-     * at the given memory address and extending {@code cap} bytes.
-     * The {@code ob} parameter is an arbitrary object that is attached
-     * to the resulting buffer.
-     */
-    ByteBuffer newDirectByteBuffer(long addr, int cap, Object ob);
+    @Override
+    Layout withAnnotation(String name, String value);
+
+    @Override
+    Layout stripAnnotations();
+
+    @Override
+    Layout withName(String name);
 }

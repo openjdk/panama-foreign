@@ -25,12 +25,26 @@
 
 package java.lang.invoke;
 
+import jdk.internal.foreign.LayoutPathsImpl;
+
+import java.foreign.layout.Layout;
+import java.foreign.layout.LayoutPath;
+import java.foreign.layout.Value;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.invoke.MethodHandleStatics.UNSAFE;
 
 final class VarHandles {
+
+    static ClassValue<Map<Integer, MethodHandle>> addressFactories = new ClassValue<Map<Integer, MethodHandle>>() {
+        @Override
+        protected Map<Integer, MethodHandle> computeValue(Class<?> type) {
+            return new ConcurrentHashMap<>();
+        }
+    };
 
     static VarHandle makeFieldHandle(MemberName f, Class<?> refc, Class<?> type, boolean isWriteAllowedOnFinalFields) {
         if (!f.isStatic()) {
@@ -277,6 +291,37 @@ final class VarHandles {
         }
 
         throw new UnsupportedOperationException();
+    }
+
+    static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, LayoutPath path) {
+        if (!carrier.isPrimitive() || carrier == void.class) {
+            throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
+        }
+
+        Layout layout = path.layout();
+
+        if (!(layout instanceof Value)) {
+            throw new IllegalArgumentException("Not a value layout: " + layout);
+        }
+
+        long offset = path.offset() / 8;
+        long length = layout.bitsSize() / 8;
+        boolean be = ((Value)layout).endianness() == Value.Endianness.BIG_ENDIAN;
+
+        long[] strides = ((LayoutPathsImpl.LayoutPathImpl)path).enclosingSequences().stream()
+                .mapToLong(seq -> seq.element().bitsSize() / 8)
+                .toArray();
+
+        Map<Integer, MethodHandle> carrierFactory = addressFactories.get(carrier);
+        MethodHandle fac = carrierFactory.computeIfAbsent(strides.length,
+                dims -> new AddressVarHandleGenerator(carrier, dims)
+                            .generateHandleFactory());
+        
+        try {
+            return (VarHandle)fac.invoke(be, length, offset, strides);
+        } catch (Throwable ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
 //    /**

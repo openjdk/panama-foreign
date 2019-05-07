@@ -25,7 +25,9 @@
 
 package jdk.internal.access;
 
+import java.foreign.layout.LayoutPath;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.util.Map;
 
 public interface JavaLangInvokeAccess {
@@ -106,4 +108,8 @@ public interface JavaLangInvokeAccess {
             MethodType[] invokerMethodTypes,
             MethodType[] callSiteMethodTypes);
 
+    /**
+     * Returns a var handle view of a given memory address.
+     */
+    VarHandle memoryAddressViewVarHandle(Class<?> carrier, LayoutPath layout);
 }

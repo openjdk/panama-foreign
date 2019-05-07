@@ -103,7 +103,8 @@ jdk_lang = \
     jdk/internal/ref \
     jdk/internal/jimage \
     jdk/internal/math \
-    jdk/modules
+    jdk/modules \
+    :jdk_foreign
 
 # All of the java.util package
 jdk_util = \
@@ -332,6 +333,9 @@ jdk_svc = \
     :jdk_jdi \
     :jdk_jfr \
     :svc_tools
+
+jdk_foreign = \
+    java/foreign
 
 #############################
 

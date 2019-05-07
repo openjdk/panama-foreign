@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,28 +23,22 @@
  * questions.
  */
 
-package jdk.internal.access;
+package java.lang.invoke;
 
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
+import static java.lang.invoke.MethodHandleStatics.UNSAFE;
 
-public interface JavaNioAccess {
-    /**
-     * Provides access to information on buffer usage.
-     */
-    interface BufferPool {
-        String getName();
-        long getCount();
-        long getTotalCapacity();
-        long getMemoryUsed();
+/**
+ * Base class for memory address var handle implementations.
+ */
+abstract class VarHandleMemoryAddressBase extends VarHandle {
+    final boolean be;
+    final long length;
+    final long offset;
+
+    VarHandleMemoryAddressBase(VarForm form, boolean be, long length, long offset) {
+        super(form);
+        this.be = be;
+        this.length = length;
+        this.offset = offset;
     }
-    BufferPool getDirectBufferPool();
-
-    /**
-     * Constructs a direct ByteBuffer referring to the block of memory starting
-     * at the given memory address and extending {@code cap} bytes.
-     * The {@code ob} parameter is an arbitrary object that is attached
-     * to the resulting buffer.
-     */
-    ByteBuffer newDirectByteBuffer(long addr, int cap, Object ob);
 }
