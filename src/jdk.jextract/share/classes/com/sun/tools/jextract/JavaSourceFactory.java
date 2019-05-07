@@ -22,26 +22,7 @@
  */
 package com.sun.tools.jextract;
 
-import java.foreign.layout.Layout;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.RetentionPolicy;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.sun.tools.jextract.parser.MacroParser;
-import jdk.internal.clang.SourceLocation;
-import jdk.internal.clang.Type;
 import com.sun.tools.jextract.tree.EnumTree;
 import com.sun.tools.jextract.tree.FieldTree;
 import com.sun.tools.jextract.tree.FunctionTree;
@@ -51,6 +32,22 @@ import com.sun.tools.jextract.tree.StructTree;
 import com.sun.tools.jextract.tree.Tree;
 import com.sun.tools.jextract.tree.TypedefTree;
 import com.sun.tools.jextract.tree.VarTree;
+import java.foreign.layout.Layout;
+import java.io.File;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.RetentionPolicy;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import jdk.internal.clang.SourceLocation;
+import jdk.internal.clang.Type;
 
 /*
  * Scan a header file and generate Java source items for entities defined in that header
@@ -72,30 +69,29 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
 
     protected final String headerClassName;
     protected final HeaderFile headerFile;
+    private final Set<String> globalConstants;
     private final Map<String, JavaSourceBuilder> types;
     private final List<String> libraryNames;
     private final List<String> libraryPaths;
     private final boolean noNativeLocations;
     private final JavaSourceBuilder global_jsb;
-    protected final Path srcDir;
     protected final Log log;
 
     JavaSourceFactory(Context ctx, HeaderFile header) {
         this.log = ctx.log;
         log.print(Level.INFO, () -> "Instantiate JavaSourceFactory for " + header.path);
         this.headerFile = header;
-        this.headerClassName = headerFile.pkgName + "." + headerFile.headerClsName;
+        this.headerClassName = headerFile.fullyQualifiedName();
+        this.globalConstants = new HashSet<>();
         this.types = new HashMap<>();
         this.libraryNames = ctx.options.libraryNames;
         this.libraryPaths = ctx.options.recordLibraryPath? ctx.options.libraryPaths : null;
         this.noNativeLocations = ctx.options.noNativeLocations;
         this.global_jsb = new JavaSourceBuilder();
-        this.srcDir = Paths.get(ctx.options.srcDumpDir)
-            .resolve(headerFile.pkgName.replace('.', File.separatorChar));
     }
 
     // main entry point that generates & saves .java files for the header file
-    public void generate(List<Tree> decls) {
+    public Map<String, String> generate(List<Tree> decls) {
         global_jsb.addPackagePrefix(headerFile.pkgName);
 
         Map<String, Object> header = new HashMap<>();
@@ -117,7 +113,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         for (Tree tr : decls) {
             if (tr instanceof VarTree) {
                 VarTree varTree = (VarTree)tr;
-                global_layouts.add(varTree.layout().withAnnotation(Layout.NAME, varTree.name()));
+                global_layouts.add(varTree.layout());
             }
         }
         if (!global_layouts.isEmpty()) {
@@ -141,17 +137,14 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
 
         global_jsb.interfaceEnd();
         String src = global_jsb.build();
-        try {
-            Files.createDirectories(srcDir);
-            Path srcPath = srcDir.resolve(clsName + ".java");
-            Files.write(srcPath, List.of(src));
-        } catch (Exception ex) {
-            handleException(ex);
-        }
+
+        Map<String, String> srcMap = new HashMap<>();
+        srcMap.put(headerClassName, src);
+        return srcMap;
     }
 
     protected void handleException(Exception ex) {
-        log.printError("cannot.write.class.file", headerFile.pkgName + "." + headerFile.headerClsName, ex);
+        log.printError("cannot.write.file", "source", headerFile.pkgName + "." + headerFile.headerClsName, ex);
         log.printStackTrace(ex);
     }
 
@@ -193,21 +186,23 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
      */
     private boolean addField(JavaSourceBuilder jsb, Tree tree, Type parentType) {
         String fieldName = tree.name();
+        String symbol = (tree instanceof VarTree) ? ((VarTree) tree).layout().name().get() : fieldName;
+        assert !symbol.isEmpty();
         assert !fieldName.isEmpty();
         Type type = tree.type();
         JType jt = headerFile.dictionary().lookup(type);
         assert (jt != null);
 
         addNativeLocation(jsb, tree);
-        jsb.addAnnotation(NATIVE_GETTER, Map.of("value", fieldName));
+        jsb.addAnnotation(NATIVE_GETTER, Map.of("value", symbol));
         jsb.addGetter(fieldName + "$get", jt);
 
-        jsb.addAnnotation(NATIVE_SETTER, Map.of("value", fieldName));
+        jsb.addAnnotation(NATIVE_SETTER, Map.of("value", symbol));
         jsb.addSetter(fieldName + "$set", jt);
 
         if (tree instanceof VarTree || !isBitField(tree)) {
             JType ptrType = JType.GenericType.ofPointer(jt);
-            jsb.addAnnotation(NATIVE_ADDRESSOF, Map.of("value", fieldName));
+            jsb.addAnnotation(NATIVE_ADDRESSOF, Map.of("value", symbol));
             jsb.addGetter(fieldName + "$ptr", ptrType);
         }
 
@@ -219,7 +214,18 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         return addField(global_jsb, varTree, null);
     }
 
-    private void addConstant(JavaSourceBuilder jsb, SourceLocation src, String name, JType type, Object value) {
+    private void addGlobalConstant(JavaSourceBuilder jsb, SourceLocation src,
+            String name, JType type, Object value) {
+        if (!globalConstants.add(name)) {
+            log.print(Level.WARNING, () -> "Ignoring duplicate symbol: " + name);
+            return;
+        }
+
+        addConstant(jsb, src, name, type, value);
+    }
+
+    private void addConstant(JavaSourceBuilder jsb, SourceLocation src,
+            String name, JType type, Object value) {
         addNativeLocation(jsb, src);
 
         if (value instanceof String) {
@@ -238,7 +244,6 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
             }
             jsb.addAnnotation(NATIVE_NUM_CONST, Map.of("value", longValue));
         }
-
         jsb.addGetter(name, type);
     }
 
@@ -275,11 +280,11 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
     @Override
     public Boolean visitEnum(EnumTree enumTree, JType jt) {
         // define enum constants in global_cw
-        enumTree.constants().forEach(constant -> addConstant(global_jsb,
-                constant.location(),
-                constant.name(),
+        enumTree.constants().forEach(constant -> {
+            addGlobalConstant(global_jsb, constant.location(), constant.name(),
                 headerFile.dictionary().lookup(constant.type()),
-                constant.enumConstant().get()));
+                constant.enumConstant().get());
+        });
 
         if (enumTree.name().isEmpty()) {
             // We are done with anonymous enum
@@ -350,11 +355,10 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
     public Boolean visitFunction(FunctionTree funcTree, JType jt) {
         assert (jt instanceof JType.Function);
         JType.Function fn = (JType.Function)jt;
-        log.print(Level.FINE, () -> "Add method: " + fn.getSignature(false));
+        log.print(Level.FINE, () -> "Add method: " + fn.getSourceSignature(false));
 
         addNativeLocation(global_jsb, funcTree);
-        Type type = funcTree.type();
-        final String descStr = Utils.getFunction(type).toString();
+        final String descStr = funcTree.function().toString();
         global_jsb.addAnnotation(NATIVE_FUNCTION, Map.of("value", descStr));
         global_jsb.addMethod(funcTree, fn);
 
@@ -382,7 +386,7 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
         MacroParser.Macro macro = macroTree.macro().get();
         log.print(Level.FINE, () -> "Adding macro " + name);
 
-        addConstant(global_jsb, macroTree.location(), Utils.toMacroName(name), macro.type(), macro.value());
+        addGlobalConstant(global_jsb, macroTree.location(), Utils.toMacroName(name), macro.type(), macro.value());
 
         return true;
     }

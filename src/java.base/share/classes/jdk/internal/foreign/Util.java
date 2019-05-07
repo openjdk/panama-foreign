@@ -125,25 +125,6 @@ public final class Util {
         }
     }
 
-    public static Layout variadicLayout(Class<?> c) {
-        c = (Class<?>)unboxIfNeeded(c);
-        if (c == char.class || c == byte.class || c == short.class || c == int.class || c == long.class) {
-            //it is ok to approximate with a machine word here; numerics arguments in a prototype-less
-            //function call are always rounded up to a register size anyway.
-            return Types.INT64;
-        } else if (c == float.class || c == double.class) {
-            return Types.DOUBLE;
-        } else if (Pointer.class.isAssignableFrom(c)) {
-            return Types.POINTER;
-        } else if (isCallback(c)) {
-            return Types.POINTER;
-        } else if (isCStruct(c)) {
-            return layoutof(c);
-        } else {
-            throw new IllegalArgumentException("Unhandled variadic argument class: " + c);
-        }
-    }
-
     public static Layout layoutof(Class<?> c) {
         String layout;
         if (c.isAnnotationPresent(NativeStruct.class)) {
@@ -159,7 +140,7 @@ public final class Util {
             throw new IllegalArgumentException("@NativeCallback expected: " + c);
         }
         NativeCallback nc = c.getAnnotation(NativeCallback.class);
-        return new DescriptorParser(nc.value()).parseFunction();
+        return DescriptorParser.parseFunction(nc.value());
     }
 
     static MethodType methodTypeFor(Method method) {
@@ -352,13 +333,11 @@ public final class Util {
         return ptr.cast(NativeTypes.VOID).cast(layoutType);
     }
 
-    public static MethodType checkNoArrays(MethodHandles.Lookup lookup, Class<?> fi) {
-        try {
-            return checkNoArrays(lookup.unreflect(findFunctionalInterfaceMethod(fi)).type());
-        } catch (ReflectiveOperationException ex) {
-            throw new IllegalStateException(ex);
-        }
+    public static MethodType checkNoArrays(Class<?> fi) {
+        // getCallbackMH will enforce the check
+        return getCallbackMH(findFunctionalInterfaceMethod(fi)).type();
     }
+
     public static MethodType checkNoArrays(MethodType mt) {
         if (Stream.concat(Stream.of(mt.returnType()), mt.parameterList().stream())
                 .anyMatch(c -> Array.class.isAssignableFrom(c))) {

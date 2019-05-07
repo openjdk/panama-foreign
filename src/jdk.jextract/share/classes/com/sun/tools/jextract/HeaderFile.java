@@ -51,4 +51,10 @@ public final class HeaderFile {
     public String toString() {
         return "HeaderFile(path=" + path + ")";
     }
+
+    public String fullyQualifiedName() {
+        return pkgName.isEmpty()
+                ? headerClsName
+                : pkgName + "." + headerClsName;
+    }
 }

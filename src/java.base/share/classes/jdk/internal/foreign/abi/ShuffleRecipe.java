@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,9 @@
  */
 package jdk.internal.foreign.abi;
 
+import java.foreign.memory.Pointer;
+import java.util.Map;
+
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 public class ShuffleRecipe {
@@ -32,54 +35,43 @@ public class ShuffleRecipe {
     private final int nArgumentPulls;
     private final int nReturnPulls;
 
-    ShuffleRecipe(long[] recipe, int nArgumentPulls, int nReturnPulls) {
+    private final Map<ArgumentBinding, Long> offsets;
+
+    ShuffleRecipe(long[] recipe, int nArgumentPulls, int nReturnPulls, Map<ArgumentBinding, Long> offsets) {
         this.recipe = recipe;
         this.nArgumentPulls = nArgumentPulls;
         this.nReturnPulls = nReturnPulls;
+        this.offsets = offsets;
     }
 
     public static ShuffleRecipe make(CallingSequence callingSequence) {
         ShuffleRecipeBuilder builder = new ShuffleRecipeBuilder();
 
-        // Arguments
-        callingSequence.getBindings(StorageClass.STACK_ARGUMENT_SLOT).stream().forEach(binding -> {
-            if (binding == null) {
-                builder.getArgumentsCollector().add(ShuffleRecipeClass.STACK, ShuffleRecipeOperation.SKIP);
-            } else {
-                builder.getArgumentsCollector().addPull(ShuffleRecipeClass.STACK);
+        for (int i = 0 ; i < 2; i++) {
+            boolean args = i == 0;
+            long offset = 0L;
+            for (ShuffleRecipeClass recipeClass : ShuffleRecipeClass.values()) {
+                StorageClass storageClass = recipeClass.storageClass(args);
+                if (storageClass != null) {
+                    int indexInClass = 0;
+                    for (ArgumentBinding binding : callingSequence.bindings(storageClass)) {
+                        while (indexInClass < binding.storage().getStorageIndex()) {
+                            builder.addSkip();
+                            indexInClass++;
+                        }
+                        long size = binding.storage().getSize() / 8;
+                        builder.addPulls(!args, size);
+                        if (binding.storage().getSize() < binding.storage().getMaxSize()) {
+                            builder.addSkip();
+                        }
+                        builder.addOffset(binding, offset);
+                        offset += size;
+                        indexInClass++;
+                    }
+                }
+                builder.addStop();
             }
-        });
-
-        int indexInClass = 0;
-        for(ArgumentBinding binding : callingSequence.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER)) {
-            while(indexInClass < binding.getStorage().getStorageIndex()) {
-                builder.getArgumentsCollector().add(ShuffleRecipeClass.VECTOR, ShuffleRecipeOperation.SKIP);
-                indexInClass++;
-            }
-            builder.getArgumentsCollector().addPulls(ShuffleRecipeClass.VECTOR, binding.getStorage().getSize() / 8);
-            indexInClass++;
         }
-
-        indexInClass = 0;
-        for(ArgumentBinding binding : callingSequence.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER)) {
-            while(indexInClass < binding.getStorage().getStorageIndex()) {
-                builder.getArgumentsCollector().add(ShuffleRecipeClass.INTEGER, ShuffleRecipeOperation.SKIP);
-                indexInClass++;
-            }
-            builder.getArgumentsCollector().addPull(ShuffleRecipeClass.INTEGER);
-            indexInClass++;
-        }
-
-        // Returns
-        builder.getReturnsCollector().addPulls(ShuffleRecipeClass.INTEGER, callingSequence.getBindings(StorageClass.INTEGER_RETURN_REGISTER).size());
-
-        callingSequence.getBindings(StorageClass.VECTOR_RETURN_REGISTER).stream().forEach(binding -> {
-            builder.getReturnsCollector().addPulls(ShuffleRecipeClass.VECTOR, binding.getStorage().getSize() / 8);
-        });
-
-        callingSequence.getBindings(StorageClass.X87_RETURN_REGISTER).stream().forEach(binding -> {
-            builder.getReturnsCollector().addPulls(ShuffleRecipeClass.X87, binding.getStorage().getSize() / 8);
-        });
 
         if(DEBUG) {
             System.out.println("Translating CallingSequence:");
@@ -103,11 +95,19 @@ public class ShuffleRecipe {
         return nReturnPulls;
     }
 
+    public Pointer<?> offset(Pointer<?> ptr, ArgumentBinding binding) {
+        return ptr.offset(offsets.get(binding));
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("ShuffleRecipe { nArgumentPulls: ").append(nArgumentPulls).append(" nReturnPulls: ").append(nReturnPulls).append("}\n");
+        sb.append("ShuffleRecipe { nArgumentPulls: ")
+                .append(nArgumentPulls)
+                .append(" nReturnPulls: ")
+                .append(nReturnPulls)
+                .append("}\n");
 
         return sb.toString();
     }

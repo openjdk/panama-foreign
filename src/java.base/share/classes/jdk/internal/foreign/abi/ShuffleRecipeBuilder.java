@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,28 +24,42 @@ package jdk.internal.foreign.abi;
 
 import jdk.internal.foreign.Util;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 class ShuffleRecipeBuilder {
-    private final ShuffleRecipeOperationCollector arguments = new ShuffleRecipeOperationCollector();
-    private final ShuffleRecipeOperationCollector returns = new ShuffleRecipeOperationCollector();
 
-    ShuffleRecipeBuilder() {
+    List<ShuffleRecipeOperation> ops = new ArrayList<>();
+    Map<ArgumentBinding, Long> offsets = new HashMap<>();
+    int nArgPulls;
+    int nRetPulls;
+
+    void addSkip() {
+        ops.add(ShuffleRecipeOperation.SKIP);
     }
 
-    ShuffleRecipeOperationCollector getArgumentsCollector() {
-        return arguments;
+    void addStop() {
+        ops.add(ShuffleRecipeOperation.STOP);
     }
 
-    ShuffleRecipeOperationCollector getReturnsCollector() {
-        return returns;
+    void addPulls(boolean isReturn, long n) {
+        for (long i = 0; i < n; i++) {
+            ops.add(ShuffleRecipeOperation.PULL);
+            if (isReturn) {
+                nRetPulls++;
+            } else {
+                nArgPulls++;
+            }
+        }
     }
 
-    private int getTotalNumberOfOps() {
-        return arguments.getTotalNumberOfOps() + returns.getTotalNumberOfOps();
+    void addOffset(ArgumentBinding binding, long offset) {
+        offsets.put(binding, offset);
     }
 
     private long[] allocArray() {
-        long nOpBits = getTotalNumberOfOps() * ShuffleRecipeOperation.BITS_PER_OP;
+        long nOpBits = ops.size() * ShuffleRecipeOperation.BITS_PER_OP;
         long nOpWords = nOpBits / 64;
 
         long nBits = nOpBits + nOpWords; // MSB in each word is reserved
@@ -80,35 +94,24 @@ class ShuffleRecipeBuilder {
         }
 
         int i = 0;
-        for (ArrayList<ShuffleRecipeOperation> oparr : arguments.getOps()) {
-            for (ShuffleRecipeOperation op : oparr) {
-                encodeOp(arr, i++, op);
-            }
-            encodeOp(arr, i++, ShuffleRecipeOperation.STOP);
-        }
-        for (ArrayList<ShuffleRecipeOperation> oparr : returns.getOps()) {
-            for (ShuffleRecipeOperation op : oparr) {
-                encodeOp(arr, i++, op);
-            }
-            encodeOp(arr, i++, ShuffleRecipeOperation.STOP);
+
+        for (ShuffleRecipeOperation op : ops) {
+            encodeOp(arr, i++, op);
         }
 
         return arr;
     }
 
     ShuffleRecipe build() {
-        return new ShuffleRecipe(recipeToLongArray(), getArgumentsCollector().getNoofPulls(), getReturnsCollector().getNoofPulls());
+        return new ShuffleRecipe(recipeToLongArray(), nArgPulls, nRetPulls, offsets);
     }
 
     public String asString() {
         StringBuilder sb = new StringBuilder();
 
         sb.append("ShuffleRecipe: {\n");
-        sb.append("  Arguments: {\n");
-        sb.append(arguments.asString().indent(4));
-        sb.append("  }\n");
-        sb.append("  Returns: {\n");
-        sb.append(returns.asString().indent(4));
+        sb.append("  Operations: {\n");
+        sb.append(ops);
         sb.append("  }\n");
         sb.append("}\n");
 

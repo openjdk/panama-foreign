@@ -112,6 +112,11 @@ public class LibraryLookupFilter extends TreeFilter {
     private Boolean filterLibrarySymbol(Tree tree) {
         if (missingSymbolAction != MissingSymbolAction.IGNORE) {
             String name = tree.name();
+            if (tree instanceof FunctionTree) {
+                name = ((FunctionTree) tree).function().name().orElse(name);
+            } else if (tree instanceof VarTree) {
+                name = ((VarTree) tree).layout().name().orElse(name);
+            }
             // check for function symbols in libraries & apply action for missing symbols
             if (!isSymbolFound(name) && missingSymbolAction.handle(log, name)) {
                 return false;

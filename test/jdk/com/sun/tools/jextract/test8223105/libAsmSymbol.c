@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,32 +21,16 @@
  * questions.
  */
 
-/*
- * @test
- * @requires os.family != "windows"
- * @library ..
- * @modules jdk.jextract
- * @build SystemHeadersTest
- *
- * @run testng/othervm SystemHeadersTest
- */
 
-import org.testng.annotations.*;
+#define IMPL
+#include "libAsmSymbol.h"
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+EXPORT int fooA = 1;
+EXPORT int funcA (int x, int y) {
+    return x + y;
+}
 
-import static org.testng.Assert.*;
-
-public class SystemHeadersTest extends JextractToolRunner {
-
-    @Test
-    public void testNoFollowSystemHeaders() throws IOException {
-        Path clzPath = getOutputFilePath("out");
-        run("--static-forwarder", "false", "-d", clzPath.toString(),
-                getInputFilePath("foo.h").toString()).checkSuccess();
-        assertEquals(Files.list(clzPath).
-                filter(p -> p.toString().endsWith("class")).count(), 1);
-    }
+EXPORT int fooB = 2;
+EXPORT int funcB (int x, int y) {
+    return x * y;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,41 +24,33 @@ package jdk.internal.foreign.abi;
 
 import java.foreign.layout.Layout;
 
-public class Argument {
+public abstract class Argument {
     private final int argumentIndex; // index of argument (in argument list)
-    private final Layout type;
+    private final Layout layout;
+    private final String debugName; //optional debug name
 
-    // for testing/debugging, also serves as indicator that argument is named (as opposed to elipsis/varargs arg)
-    private final String name;
-
-    public Argument(int argumentIndex, Layout type, String name) {
+    protected Argument(Layout layout, int argumentIndex, String debugName) {
         this.argumentIndex = argumentIndex;
-        this.type = type;
-        this.name = name;
+        this.layout = layout;
+        this.debugName = debugName;
     }
 
-    public Argument(int index, Layout type) {
-        this(index, type, null);
-    }
-
-    public int getArgumentIndex() {
+    public int argumentIndex() {
         return argumentIndex;
     }
 
-    public Layout getType() {
-        return type;
+    public Layout layout() {
+        return layout;
     }
 
-    public String getName() {
-        return name != null ? name : "<anonymous>";
+    public String name() {
+        return debugName != null ? debugName : "<anonymous>";
     }
 
-    public boolean isNamed() {
-        return name != null;
-    }
+    public abstract boolean inMemory();
 
     @Override
     public String toString() {
-        return "[" + type.toString() + " " + getName() + "]";
+        return "[" + layout.toString() + " " + name() + "]";
     }
 }

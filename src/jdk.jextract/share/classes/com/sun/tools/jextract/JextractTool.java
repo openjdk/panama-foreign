@@ -32,6 +32,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,7 +45,6 @@ import java.util.stream.Stream;
 public class JextractTool {
     private final HeaderResolver headerResolver;
     private final Parser parser;
-    private final Function<HeaderFile, AsmCodeFactory> codeFactory;
     private final Collection<String> clangArgs;
     private final Collection<Path> sources;
     private final Context ctx;
@@ -52,9 +52,6 @@ public class JextractTool {
     public JextractTool(Context ctx) {
         this.headerResolver = new HeaderResolver(ctx);
         this.parser = new Parser(ctx, Options.INCLUDE_MACROS);
-        this.codeFactory = ctx.options.genStaticForwarder ?
-                hf -> new AsmCodeFactoryExt(ctx, hf) :
-                hf -> new AsmCodeFactory(ctx, hf);
         this.clangArgs = ctx.options.clangArgs;
         this.sources = ctx.sources;
         this.ctx = ctx;
@@ -77,21 +74,17 @@ public class JextractTool {
                 .collect(Collectors.groupingBy(this::headerFromDecl));
 
         //generate classes
-        Map<String, byte[]> results = new LinkedHashMap<>();
-        headerMap.forEach((hf, decls) -> generateHeader(hf, decls, results));
-        return new Writer(ctx, results);
+        Map<String, String> srcMap = new HashMap<>();
+        headerMap.forEach((hf, decls) -> generateHeader(hf, decls,srcMap));
+        return new Writer(ctx, srcMap);
     }
 
-    private void generateHeader(HeaderFile hf, List<Tree> decls, Map<String, byte[]> results) {
+    private void generateHeader(HeaderFile hf, List<Tree> decls, Map<String, String> srcMap) {
         TypeEnter enter = new TypeEnter(hf.dictionary());
         decls.forEach(t -> t.accept(enter, null));
-        if (ctx.options.srcDumpDir != null) {
-            JavaSourceFactory jsb = ctx.options.genStaticForwarder ?
-                new JavaSourceFactoryExt(ctx, hf) : new JavaSourceFactory(ctx, hf);
-            jsb.generate(decls);
-        }
-        AsmCodeFactory cf = codeFactory.apply(hf);
-        results.putAll(cf.generateNativeHeader(decls));
+        JavaSourceFactory jsb = ctx.options.genStaticForwarder ?
+            new JavaSourceFactoryExt(ctx, hf) : new JavaSourceFactory(ctx, hf);
+        srcMap.putAll(jsb.generate(decls));
     }
 
     private HeaderFile headerFromDecl(Tree tree) {

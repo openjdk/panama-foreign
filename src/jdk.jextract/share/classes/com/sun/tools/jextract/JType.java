@@ -22,15 +22,9 @@
  */
 package com.sun.tools.jextract;
 
-import jdk.internal.org.objectweb.asm.ClassVisitor;
 import java.foreign.memory.Callback;
 import java.foreign.memory.Pointer;
 import java.util.Objects;
-
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_ABSTRACT;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_INTERFACE;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
 
 /**
  * A Java Type descriptor
@@ -43,10 +37,6 @@ public abstract class JType {
      * @return The type descriptor as defined in JVMS 4.3
      */
     public abstract String getDescriptor();
-
-    public void visitInner(ClassVisitor cv) {}
-
-    public String getSignature(boolean isArgument) { return getDescriptor(); }
 
     public abstract String getSourceSignature(boolean isArgument);
 
@@ -183,14 +173,6 @@ public abstract class JType {
                 return clsName;
             }
         }
-
-        @Override
-        public void visitInner(ClassVisitor cv) {
-            if (enclosingName != null) {
-                cv.visitInnerClass(clsName, enclosingName, simpleName,
-                    ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
-            }
-        }
     }
 
     public final static class ArrayType extends JType {
@@ -203,23 +185,6 @@ public abstract class JType {
         @Override
         public String getDescriptor() {
             return JType.of(java.foreign.memory.Array.class).getDescriptor();
-        }
-
-        @Override
-        public void visitInner(ClassVisitor cv) {
-            elementType.visitInner(cv);
-        }
-
-        @Override
-        public String getSignature(boolean isArgument) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("L");
-            sb.append(java.foreign.memory.Array.class.getName().replace('.', '/'));
-            sb.append("<");
-            JType pt = elementType;
-            sb.append(pt.box().getSignature(isArgument));
-            sb.append(">;");
-            return sb.toString();
         }
 
         @Override
@@ -281,30 +246,6 @@ public abstract class JType {
             throw new UnsupportedOperationException();
         }
 
-        @Override
-        public void visitInner(ClassVisitor cv) {
-            returnType.visitInner(cv);
-            for (JType at : args) {
-                at.visitInner(cv);
-            }
-        }
-
-        @Override
-        public String getSignature(boolean isArgument) {
-            StringBuilder sb = new StringBuilder();
-            sb.append('(');
-            // ensure sequence
-            for (int i = 0; i < args.length; i++) {
-                sb.append(args[i].getSignature(true));
-            }
-            if (isVarArgs) {
-                sb.append("[Ljava/lang/Object;");
-            }
-            sb.append(')');
-            sb.append(returnType.getSignature(false));
-            return sb.toString();
-        }
-
         public String getNativeDescriptor() {
             return layout.toString();
         }
@@ -321,12 +262,6 @@ public abstract class JType {
         Function getFunction() {
             return fn;
         }
-
-        @Override
-        public void visitInner(ClassVisitor cv) {
-            fn.visitInner(cv);
-            super.visitInner(cv);
-        }
     }
 
     public static class GenericType extends ClassType {
@@ -339,24 +274,6 @@ public abstract class JType {
 
         public JType getTypeArgument() {
             return targ;
-        }
-
-        @Override
-        public String getSignature(boolean isArgument) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("L");
-            sb.append(clsName);
-            sb.append("<");
-            if (targ == JType.Void && isArgument) {
-                sb.append("*");
-            } else {
-                if (targ instanceof GenericType && isArgument) {
-                    sb.append("+");
-                }
-                sb.append(targ.box().getSignature(isArgument));
-            }
-            sb.append(">;");
-            return sb.toString();
         }
 
         @Override
@@ -382,12 +299,6 @@ public abstract class JType {
 
         public static GenericType ofCallback(JType targ) {
             return new GenericType(JType.binaryName(Callback.class), targ);
-        }
-
-        @Override
-        public void visitInner(ClassVisitor cv) {
-            targ.visitInner(cv);
-            super.visitInner(cv);
         }
     }
 }

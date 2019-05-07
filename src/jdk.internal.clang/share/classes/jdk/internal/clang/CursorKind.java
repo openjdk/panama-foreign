@@ -181,6 +181,9 @@ public enum CursorKind {
     CUDAGlobalAttr(414),
     CUDAHostAttr(415),
     CUDASharedAttr(416),
+    VisibilityAttr(417),
+    DLLExport(418),
+    DLLImport(419),
     PreprocessingDirective(500),
     MacroDefinition(501),
     MacroExpansion(502),
@@ -210,7 +213,7 @@ public enum CursorKind {
     public final static CursorKind valueOf(int value) {
         CursorKind x = lookup.get(value);
         if (null == x) {
-            throw new NoSuchElementException();
+            throw new NoSuchElementException("Invalid Cursor kind value: " + value);
         }
         return x;
     }

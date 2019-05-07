@@ -99,7 +99,7 @@ public class TreeMaker {
     }
 
     public FunctionTree createFunction(Cursor c) {
-        checkCursorAny(c, CursorKind.FunctionDecl);
+        checkCursor(c, CursorKind.FunctionDecl);
         return checkCache(c, FunctionTree.class, ()->new FunctionTree(c));
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,5 +23,21 @@
 package jdk.internal.foreign.abi;
 
 enum ShuffleRecipeClass {
-    BUFFER, STACK, VECTOR, INTEGER, X87
+    BUFFER(null, null),
+    STACK(StorageClass.STACK_ARGUMENT_SLOT, null),
+    VECTOR(StorageClass.VECTOR_ARGUMENT_REGISTER, StorageClass.VECTOR_RETURN_REGISTER),
+    INTEGER(StorageClass.INTEGER_ARGUMENT_REGISTER, StorageClass.INTEGER_RETURN_REGISTER),
+    X87(null, StorageClass.X87_RETURN_REGISTER);
+
+    private final StorageClass argumentStorageClass;
+    private final StorageClass returnStorageClass;
+
+    ShuffleRecipeClass(StorageClass argumentStorageClass, StorageClass returnStorageClass) {
+        this.argumentStorageClass = argumentStorageClass;
+        this.returnStorageClass = returnStorageClass;
+    }
+
+    public StorageClass storageClass(boolean args) {
+        return args ? argumentStorageClass : returnStorageClass;
+    }
 }

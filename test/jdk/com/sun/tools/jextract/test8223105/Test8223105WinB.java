@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,32 +21,34 @@
  * questions.
  */
 
+import java.foreign.Libraries;
+import java.foreign.Library;
+import java.lang.invoke.MethodHandles;
+import org.testng.annotations.Test;
+import test.jextract.asmsymbol.libAsmSymbol_h;
+
+import static org.testng.Assert.assertEquals;
 /*
  * @test
- * @requires os.family != "windows"
+ * @requires os.family == "windows"
  * @library ..
- * @modules jdk.jextract
- * @build SystemHeadersTest
- *
- * @run testng/othervm SystemHeadersTest
+ * @run driver JtregJextract -t test.jextract.asmsymbol -- libAsmSymbol.h
+ * @run testng Test8223105WinB
  */
-
-import org.testng.annotations.*;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import static org.testng.Assert.*;
-
-public class SystemHeadersTest extends JextractToolRunner {
+public class Test8223105WinB {
+    static final libAsmSymbol_h libAsmSymbol;
+    static {
+        Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "AsmSymbol");
+        libAsmSymbol = Libraries.bind(libAsmSymbol_h.class, lib);
+    }
 
     @Test
-    public void testNoFollowSystemHeaders() throws IOException {
-        Path clzPath = getOutputFilePath("out");
-        run("--static-forwarder", "false", "-d", clzPath.toString(),
-                getInputFilePath("foo.h").toString()).checkSuccess();
-        assertEquals(Files.list(clzPath).
-                filter(p -> p.toString().endsWith("class")).count(), 1);
+    public void checkGlobalVar() {
+        assertEquals(2, libAsmSymbol.fooB$get());
+    }
+
+    @Test
+    public void checkGlobalFunction() {
+        assertEquals(2, libAsmSymbol.funcB(1, 2));
     }
 }

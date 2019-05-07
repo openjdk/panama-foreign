@@ -23,7 +23,6 @@
 package com.sun.tools.jextract;
 
 import com.sun.tools.jextract.tree.Tree;
-
 import java.nio.file.Path;
 
 public class Filters {

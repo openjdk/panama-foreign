@@ -23,6 +23,81 @@ It is generally a good idea to give jextract a bunch of extra memory since a lot
 
 Commands are tested in PowerShell.
 
+## Hello World
+
+### Hello World C Header (helloworld.h)
+
+```C
+
+#ifndef helloworld_h
+#define helloworld_h
+
+extern void helloworld(void);
+
+#endif /* helloworld_h */
+
+
+```
+
+### Hello World C Source (helloworld.c)
+
+```C
+
+#include <stdio.h>
+
+#include "helloworld.h"
+
+void helloworld(void) {
+    printf("Hello World!\n");
+}
+
+```
+
+### Building Hello World
+
+```
+
+cc -shared -o helloworld.dylib helloworld.c
+
+```
+
+
+### jextract a Jar file for helloworld.h
+
+```sh
+
+jextract -t org.hello -L . -lhelloworld --record-library-path helloworld.h -o helloworld.jar
+
+```
+
+### Java program that uses extracted helloworld interface
+
+```java
+
+import org.hello.helloworld_lib;
+
+import static org.hello.helloworld_lib.*;
+
+public class HelloWorld {
+    public static void main(String[] args) {
+        try (Scope s = helloworld_lib.scope().fork()) {
+            helloworld();
+        }
+    }
+}
+
+```
+
+### Running the Java code that invokes helloworld
+
+```sh
+
+javac -cp helloworld.jar HelloWorld.java
+
+java -cp helloworld.jar:. HelloWorld
+
+```
+
 ## Embedding Python interpreter in your Java program (Mac OS)
 
 ### jextract a Jar file for Python.h
@@ -239,7 +314,7 @@ public class SqliteMain {
                 System.err.println("SQL error: " + Pointer.toString(errMsg.get()));
                 sqlite3_free(errMsg.get());
             }
- 
+
             sqlite3_close(db.get());
         }
    }
@@ -326,7 +401,7 @@ The following command can be used to extract cblas.h on MacOs
 ```sh
 
 jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
-  -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \
+  -L /usr/local/opt/openblas/lib \
   -l openblas -t blas --record-library-path /usr/local/opt/openblas/include/cblas.h \
   -o cblas.jar
 
@@ -351,8 +426,7 @@ jextract -L /usr/lib/atlas-base -I /usr/include/atlas/ \
 
 ```java
 
-import blas.cblas;
-
+import blas.cblas_h;
 import static blas.cblas_lib.*;
 import static blas.cblas_lib.CBLAS_ORDER.*;
 import static blas.cblas_lib.CBLAS_TRANSPOSE.*;
@@ -363,8 +437,8 @@ import java.foreign.memory.Array;
 
 public class TestBlas {
    public static void main(String[] args) {
-       @blas.cblas_h.CBLAS_ORDER int Layout;
-       @blas.cblas_h.CBLAS_TRANSPOSE int transa;
+       @cblas_h.CBLAS_ORDER int Layout;
+       @cblas_h.CBLAS_TRANSPOSE int transa;
 
        double alpha, beta;
        int m, n, lda, incx, incy, i;
@@ -528,8 +602,9 @@ On Mac OS, lapack is installed under /usr/local/opt/lapack directory.
 
 ```sh
 
-jextract -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \
-  -l lapacke -t lapack --record-library-path /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
+jextract -L /usr/local/opt/lapack/lib \
+  -l lapacke -t lapack --record-library-path \
+  /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
 
 ```
 ### Java sample code that uses LAPACK library
@@ -666,7 +741,7 @@ java -cp libproc.jar:. LibprocMain
 jextract -l readline -L /usr/local/opt/readline/lib/ --record-library-path \
     -t org.unix \
     /usr/include/readline/readline.h \
-    --exclude-symbol readline_echoing_p -o readline.jar
+    --exclude-symbols readline_echoing_p -o readline.jar
 
 ```
 
@@ -731,7 +806,7 @@ import static org.unix.easy_lib.*;
 
 public class CurlMain {
    public static void main(String[] args) {
-       try (Scope s = curl_lib.scope().fork()) { 
+       try (Scope s = curl_lib.scope().fork()) {
            curl_global_init(CURL_GLOBAL_DEFAULT);
            Pointer<Void> curl = curl_easy_init();
            if(!curl.isNull()) {
@@ -1145,9 +1220,9 @@ Extract the zip file.
 The problem outlined in the Mac OS instruction w.r.t. incorrect function prototypes still exists (though it has been solved in the Tensorflow github repository, this change has not yet made it into the binary distributions). On Windows there is however no jextract command that works around this, so the only way to extract the \include\tensorflow\c\c_api.h header successfully is to first manually fix the incorrect function prototypes:
 
 ```C
-TF_Version() -> TF_Version(void)  
-TF_NewGraph() -> TF_NewGraph(void)  
-TF_NewSessionOptions() -> TF_NewSessionOptions(void)  
+TF_Version() -> TF_Version(void)
+TF_NewGraph() -> TF_NewGraph(void)
+TF_NewSessionOptions() -> TF_NewSessionOptions(void)
 TF_NewStatus() -> TF_NewStatus(void)
 TF_NewBuffer() -> TF_NewBuffer(void)
 TF_NewImportGraphDefOptions() -> TF_NewImportGraphDefOptions(void)

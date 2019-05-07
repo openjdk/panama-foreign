@@ -23,16 +23,13 @@
 package com.sun.tools.jextract.tree;
 
 import java.foreign.layout.Layout;
+import java.util.Optional;
 import jdk.internal.clang.Cursor;
 
 public class VarTree extends Tree {
-    VarTree(Cursor c) {
-        this(c, c.spelling());
-    }
+    VarTree(Cursor c) { this(c, c.spelling()); }
 
-    private VarTree(Cursor c, String name) {
-        super(c, name);
-    }
+    private VarTree(Cursor c, String name) { super(c, name); }
 
     @Override
     public VarTree withName(String newName) {
@@ -45,6 +42,8 @@ public class VarTree extends Tree {
     }
 
     public Layout layout() {
-        return LayoutUtils.getLayout(type());
+        Layout layout = LayoutUtils.getLayout(type());
+        Optional<String> label = Tree.label(cursor());
+        return layout.withAnnotation(Layout.NAME, label.orElse(name()));
     }
 }

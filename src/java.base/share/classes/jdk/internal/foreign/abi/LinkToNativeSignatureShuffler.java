@@ -72,7 +72,7 @@ public class LinkToNativeSignatureShuffler extends DirectSignatureShuffler {
             return false;
         }
         ArgumentBinding binding = bindings.get(0);
-        switch (binding.getStorage().getStorageClass()) {
+        switch (binding.storage().getStorageClass()) {
             case INTEGER_ARGUMENT_REGISTER:
             case VECTOR_ARGUMENT_REGISTER:
             case STACK_ARGUMENT_SLOT:
@@ -90,27 +90,35 @@ public class LinkToNativeSignatureShuffler extends DirectSignatureShuffler {
         int arity = nmt.parameterCount();
         if (direction == ShuffleDirection.NATIVE_TO_JAVA) {
             for (int i = 0; i < nmt.parameterCount(); i++) {
-                List<ArgumentBinding> bindings = callingSequence.getArgumentBindings(i);
+                List<ArgumentBinding> bindings = callingSequence.argumentBindings(i);
                 if (!accept(bindings)) {
                     return false;
                 }
             }
-            List<ArgumentBinding> retBindings = callingSequence.getReturnBindings();
-            return accept(retBindings);
+            if (callingSequence.returnsInMemory()) {
+                return true;
+            } else {
+                List<ArgumentBinding> retBindings = callingSequence.returnBindings();
+                return accept(retBindings);
+            }
         }
         for (int i = 0 ; i < arity ; i++) {
-            List<ArgumentBinding> argumentBindings = callingSequence.getArgumentBindings(i);
+            List<ArgumentBinding> argumentBindings = callingSequence.argumentBindings(i);
             if (argumentBindings.size() != 1 ||
-                    argumentBindings.get(0).getStorage().getStorageClass() == StorageClass.STACK_ARGUMENT_SLOT) {
+                    argumentBindings.get(0).storage().getStorageClass() == StorageClass.STACK_ARGUMENT_SLOT) {
                 return false;
             }
         }
 
-        List<ArgumentBinding> returnBindings = callingSequence.getReturnBindings();
-        if (returnBindings.isEmpty()) {
+        if (callingSequence.returnsInMemory()) {
             return true;
         } else {
-            return returnBindings.size() == 1;
+            List<ArgumentBinding> returnBindings = callingSequence.returnBindings();
+            if (returnBindings.isEmpty()) {
+                return true;
+            } else {
+                return returnBindings.size() == 1;
+            }
         }
     }
 

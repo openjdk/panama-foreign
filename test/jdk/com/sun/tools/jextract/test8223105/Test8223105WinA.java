@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi;
 
-class ShuffleRecipeFieldHelper {
-    private final String fieldName;
-    private final ShuffleRecipe recipe;
+import java.foreign.Libraries;
+import java.foreign.Library;
+import java.lang.invoke.MethodHandles;
+import org.testng.annotations.Test;
+import test.jextract.asmsymbol.libAsmSymbol_h;
 
-    ShuffleRecipeFieldHelper(ShuffleRecipe recipe, int index) {
-        this.fieldName = "recipe_" + index;
-        this.recipe = recipe;
+import static org.testng.Assert.assertEquals;
+/*
+ * @test
+ * @requires os.family == "windows"
+ * @library ..
+ * @run driver JtregJextract -C -DADD -t test.jextract.asmsymbol -- libAsmSymbol.h
+ * @run testng Test8223105WinA
+ */
+public class Test8223105WinA {
+    static final libAsmSymbol_h libAsmSymbol;
+    static {
+        Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "AsmSymbol");
+        libAsmSymbol = Libraries.bind(libAsmSymbol_h.class, lib);
     }
 
-    String getFieldName() {
-        return fieldName;
+    @Test
+    public void checkGlobalVar() {
+        assertEquals(1, libAsmSymbol.fooA$get());
     }
 
-    ShuffleRecipe getRecipe() {
-        return recipe;
+    @Test
+    public void checkGlobalFunction() {
+        assertEquals(3, libAsmSymbol.funcA(1, 2));
     }
 }

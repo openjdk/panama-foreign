@@ -24,74 +24,73 @@ package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.abi.*;
-import jdk.internal.foreign.abi.x64.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.x64.ArgumentClass;
-import jdk.internal.foreign.abi.x64.SharedConstants;
+import jdk.internal.foreign.abi.x64.SharedUtils;
 
 import java.foreign.layout.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.function.BiConsumer;
 
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
-class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
-    private static final String[] INTEGER_ARGUMENT_REGISTER_NAMES = { "rcx", "rdx", "r8", "r9" };
-    private static final String[] INTEGER_RETURN_REGISTERS_NAMES = { "rax" };
-    private static final String[] X87_RETURN_REGISTERS_NAMES = { }; // TODO find out if Windows ABI actually uses these
+public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
+
+    private static final SharedUtils.StorageDebugHelper storageDbgHelper = new SharedUtils.StorageDebugHelper(
+            new String[] { "rcx", "rdx", "r8", "r9" },
+            new String[] { "rax" },
+            new String[0],
+            Windowsx64ABI.MAX_VECTOR_ARGUMENT_REGISTERS,
+            Windowsx64ABI.MAX_VECTOR_RETURN_REGISTERS
+    );
 
     private static final boolean DEBUG =
             privilegedGetProperty("jdk.internal.foreign.abi.windows.x64.DEBUG");
 
-    private int curArgIndex = 0;
-
-    private final Argument returned;
-    private final List<Argument> arguments = new ArrayList<>();;
-    private final Set<Argument> varargs = new HashSet<>();
-
-    public CallingSequenceBuilderImpl(Argument returned) {
-        super(INTEGER_ARGUMENT_REGISTER_NAMES, INTEGER_RETURN_REGISTERS_NAMES, X87_RETURN_REGISTERS_NAMES,
-                Constants.MAX_VECTOR_ARGUMENT_REGISTERS, Constants.MAX_VECTOR_RETURN_REGISTERS);
-        this.returned = returned;
+    public CallingSequenceBuilderImpl(Layout layout) {
+        this(layout, new StorageCalculator(false), new StorageCalculator(true));
     }
 
-    public void addArgument(Layout type, boolean isVarArg, String name) {
-        Argument arg = new Argument(curArgIndex++, type, name);
-        arguments.add(arg);
-        if(isVarArg) {
-            varargs.add(arg);
-        }
+    private CallingSequenceBuilderImpl(Layout layout, StorageCalculator retCalculator, StorageCalculator argCalculator) {
+        super(layout,
+                (a, c) -> retCalculator.addBindings(a, c, false),
+                (a, c) -> argCalculator.addBindings(a, c, false),
+                (a, c) -> argCalculator.addBindings(a, c, true));
     }
 
-    static class ArgumentInfo {
+    @Override
+    protected ArgumentInfo makeArgument(Layout layout, int pos, String name) {
+        return new ArgumentInfo(layout, pos, name);
+    }
+
+    static class ArgumentInfo extends Argument {
         private final List<ArgumentClass> classes;
-        private final int nRegs;
-        private final boolean inMemory;
-
-        public ArgumentInfo(List<ArgumentClass> classes, int nRegs) {
-            this.classes = classes;
-
-            this.inMemory = false;
-            this.nRegs = nRegs;
-        }
-
-        public ArgumentInfo(int n) {
-            this.classes = new ArrayList<>();
-            for (int i = 0; i < n; i++) {
-                classes.add(ArgumentClass.MEMORY);
-            }
-
-            this.inMemory = true;
-            this.nRegs = 0;
+        
+        ArgumentInfo(Layout layout, int argumentIndex, String debugName) {
+            super(layout, argumentIndex, debugName);
+            this.classes = classifyType(layout, argumentIndex == -1);
         }
 
         public int getRegs() {
-            return nRegs;
+            return (int)classes.stream()
+                    .filter(this::isRegisterClass)
+                    .count();
         }
 
+        @Override
         public boolean inMemory() {
-            return inMemory;
+            return classes.stream().allMatch(this::isMemoryClass);
+        }
+
+        private boolean isMemoryClass(ArgumentClass cl) {
+            return cl == ArgumentClass.MEMORY ||
+                    cl == ArgumentClass.X87 ||
+                    cl == ArgumentClass.X87UP;
+        }
+
+        private boolean isRegisterClass(ArgumentClass cl) {
+            return cl == ArgumentClass.INTEGER ||
+                    cl == ArgumentClass.SSE;
         }
 
         public List<ArgumentClass> getClasses() {
@@ -135,7 +134,7 @@ class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
             || size == 8;
     }
     
-    private List<ArgumentClass> createMemoryClassArray(long n) {
+    private static List<ArgumentClass> createMemoryClassArray(long n) {
         ArrayList<ArgumentClass> classes = new ArrayList<>();
         for (int i = 0; i < n; i++) {
             classes.add(ArgumentClass.MEMORY);
@@ -144,7 +143,7 @@ class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         return classes;
     }
 
-    private List<ArgumentClass> classifyStructType(Group type, boolean isReturn) {
+    private static List<ArgumentClass> classifyStructType(Group type, boolean isReturn) {
         ArrayList<ArgumentClass> classes = new ArrayList<>();
         
         if(isRegisterAggregate(type)) {
@@ -160,7 +159,7 @@ class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         return classes;
     }
 
-    private List<ArgumentClass> classifyType(Layout type, boolean isReturn) {
+    private static List<ArgumentClass> classifyType(Layout type, boolean isReturn) {
         if (type instanceof Value) {
             return classifyValueType((Value) type);
         } else if (type instanceof Address) {
@@ -178,75 +177,40 @@ class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         }
     }
 
-    private ArgumentInfo examineArgument(Layout type, boolean isReturn) {
-        List<ArgumentClass> classes = classifyType(type, isReturn);
-        if (classes.isEmpty()) {
-            return null;
-        }
-
-        int nRegs = 0;
-
-        for (ArgumentClass c : classes) {
-            switch (c) {
-            case INTEGER:
-            case SSE:
-                nRegs++;
-                break;
-            case X87:
-            case X87UP:
-                return new ArgumentInfo(classes.size());
-            default:
-                break;
-            }
-        }
-
-        if (nRegs != 0) {
-            return new ArgumentInfo(classes, nRegs);
-        } else {
-            return new ArgumentInfo(classes.size());
-        }
-    }
-
-    class StorageCalculator {
-        private final ArrayList<ArgumentBinding>[] bindings;
+    static class StorageCalculator {
         private final boolean forArguments;
 
         private int nRegs = 0;
         private long stackOffset = 0;
 
-        StorageCalculator(ArrayList<ArgumentBinding>[] bindings, boolean forArguments) {
-            this.bindings = bindings;
+        StorageCalculator(boolean forArguments) {
             this.forArguments = forArguments;
         }
 
-        void addBindings(Argument arg, ArgumentInfo info) {
+        void addBindings(Argument arg, BiConsumer<StorageClass, ArgumentBinding> bindingConsumer, boolean forVarargs) {
+            ArgumentInfo info = (ArgumentInfo)arg;
             if (info.inMemory() ||
-                nRegs + info.getRegs() > (forArguments ? Constants.MAX_REGISTER_ARGUMENTS : Constants.MAX_REGISTER_RETURNS)) {
+                nRegs + info.getRegs() > (forArguments ? Windowsx64ABI.MAX_REGISTER_ARGUMENTS : Windowsx64ABI.MAX_REGISTER_RETURNS)) {
                 // stack
 
-                long alignment = Math.max(alignment(arg.getType(), true), 8);
+                long alignment = Math.max(SharedUtils.alignment(info.layout(), true), 8);
 
                 long newStackOffset = Util.alignUp(stackOffset, alignment);
-
-                // fill holes on stack with nulls
-                for (int i = 0; i < (newStackOffset - stackOffset) / 8; i++) {
-                    bindings[StorageClass.STACK_ARGUMENT_SLOT.ordinal()].add(null);
-                }
                 stackOffset = newStackOffset;
 
                 long tmpStackOffset = stackOffset;
                 for (int i = 0; i < info.getClasses().size(); i++) {
                     Storage storage = new Storage(StorageClass.STACK_ARGUMENT_SLOT, tmpStackOffset / 8, 8);
-                    bindings[StorageClass.STACK_ARGUMENT_SLOT.ordinal()].add(new ArgumentBinding(storage, arg, i * 8));
+                    bindingConsumer.accept(StorageClass.STACK_ARGUMENT_SLOT, new ArgumentBinding(storage, info, i * 8));
 
                     if (DEBUG) {
-                        System.out.println("Argument " + arg.getName() + " will be passed on stack at offset " + tmpStackOffset);
+                        System.out.println("Argument " + info.name() + " will be passed on stack at offset " + tmpStackOffset);
                     }
 
                     tmpStackOffset += 8;
                 }
 
-                stackOffset += arg.getType().bitsSize() / 8;
+                stackOffset += info.layout().bitsSize() / 8;
             } else {
                 // regs
                 for (int i = 0; i < info.getClasses().size(); i++) {
@@ -256,11 +220,12 @@ class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
 
                     switch (c) {
                     case INTEGER:
-                        storage = new Storage(forArguments ? StorageClass.INTEGER_ARGUMENT_REGISTER : StorageClass.INTEGER_RETURN_REGISTER, nRegs++, SharedConstants.INTEGER_REGISTER_SIZE);
-                        bindings[storage.getStorageClass().ordinal()].add(new ArgumentBinding(storage, arg, i * 8));
+                        storage = new Storage(forArguments ? StorageClass.INTEGER_ARGUMENT_REGISTER : StorageClass.INTEGER_RETURN_REGISTER, nRegs++, SharedUtils.INTEGER_REGISTER_SIZE);
+                        bindingConsumer.accept(storage.getStorageClass(), new ArgumentBinding(storage, info, i * 8));
 
                         if (DEBUG) {
-                            System.out.println("Argument " + arg.getName() + " will be passed in register " + getStorageName(storage));
+                            System.out.println("Argument " + info.name() + " will be passed in register " +
+                                    storageDbgHelper.getStorageName(storage));
                         }
                         break;
 
@@ -277,19 +242,22 @@ class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                             throw new IllegalArgumentException((width * 8) + "-bit vector arguments not supported");
                         }
 
-                        storage = new Storage(forArguments ? StorageClass.VECTOR_ARGUMENT_REGISTER : StorageClass.VECTOR_RETURN_REGISTER, nRegs, width);
-                        bindings[storage.getStorageClass().ordinal()].add(new ArgumentBinding(storage, arg, i * 8));
+                        storage = new Storage(forArguments ? StorageClass.VECTOR_ARGUMENT_REGISTER : StorageClass.VECTOR_RETURN_REGISTER,
+                                nRegs, width, SharedUtils.VECTOR_REGISTER_SIZE);
+                        bindingConsumer.accept(storage.getStorageClass(), new ArgumentBinding(storage, info, i * 8));
 
                         if (DEBUG) {
-                            System.out.println("Argument " + arg.getName() + " will be passed in register " + getStorageName(storage));
+                            System.out.println("Argument " + info.name() + " will be passed in register " +
+                                    storageDbgHelper.getStorageName(storage));
                         }
 
-                        if(width == 8 && storage.getStorageClass() == StorageClass.VECTOR_ARGUMENT_REGISTER && varargs.contains(arg)) {
-                            Storage extraStorage = new Storage(StorageClass.INTEGER_ARGUMENT_REGISTER, nRegs, SharedConstants.INTEGER_REGISTER_SIZE);
-                            bindings[StorageClass.INTEGER_ARGUMENT_REGISTER.ordinal()].add(new ArgumentBinding(extraStorage, arg, i * 8));
+                        if(width == 8 && storage.getStorageClass() == StorageClass.VECTOR_ARGUMENT_REGISTER && forVarargs) {
+                            Storage extraStorage = new Storage(StorageClass.INTEGER_ARGUMENT_REGISTER, nRegs, SharedUtils.INTEGER_REGISTER_SIZE);
+                            bindingConsumer.accept(extraStorage.getStorageClass(), new ArgumentBinding(extraStorage, info, i * 8));
 
                             if (DEBUG) {
-                                System.out.println("Argument " + arg.getName() + " will be passed in register " + getStorageName(extraStorage));
+                                System.out.println("Argument " + info.name() + " will be passed in register " +
+                                        storageDbgHelper.getStorageName(extraStorage));
                             }
                         }
 
@@ -305,46 +273,5 @@ class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                 }
             }
         }
-    }
-
-    private void addBindings(List<Argument> members, StorageCalculator calculator, boolean isReturn) {
-        members.stream().forEach(arg -> calculator.addBindings(arg, examineArgument(arg.getType(), isReturn)));
-    }
-
-    public CallingSequence build() {
-        List<Argument> returns = new ArrayList<>();
-        List<Argument> args = this.arguments;
-        boolean returnsInMemory = false;
-
-        if (returned != null) {
-            Layout returnType = returned.getType();
-
-            returnsInMemory = examineArgument(returnType, true).inMemory();
-
-            // In some cases the return is passed in as first implicit pointer argument, and a corresponding pointer type is returned
-            if (returnsInMemory) {
-                args = new ArrayList<>();
-
-                Argument returnPointer = new Argument(-1, Address.ofLayout(64, returned.getType()), returned.getName());
-                args.add(returnPointer);
-                args.addAll(this.arguments);
-
-                returns.add(returnPointer);
-            } else {
-                returns.add(returned);
-            }
-        }
-
-        @SuppressWarnings("unchecked")
-        ArrayList<ArgumentBinding>[] bindings = (ArrayList<ArgumentBinding>[]) new ArrayList<?>[StorageClass.values().length];
-
-        for (int i = 0; i < StorageClass.values().length; i++) {
-            bindings[i] = new ArrayList<>();
-        }
-
-        addBindings(args, new StorageCalculator(bindings, true), false);
-        addBindings(returns, new StorageCalculator(bindings, false), true);
-
-        return new CallingSequence(this.arguments.size(), bindings, returnsInMemory);
     }
 }

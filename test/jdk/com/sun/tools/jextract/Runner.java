@@ -25,7 +25,6 @@ import java.foreign.annotations.*;
 import java.nio.file.Files;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
@@ -299,14 +298,13 @@ public class Runner {
         actualCL = new ClassLoader() {
             @Override
             protected Class<?> findClass(String name) throws ClassNotFoundException {
-                byte[] byteCode = actualClz.get(canonicalize(name));
+                byte[] byteCode = actualClz.get(name);
                 if (byteCode == null) throw new ClassNotFoundException(name);
                 return defineClass(name, byteCode, 0, byteCode.length);
             }
         };
         System.out.println("Done compile, ready for test");
         assertEquals(actualClz.keySet().stream()
-                        .map(Runner::normalize)
                         .collect(Collectors.toSet()),
                 mfm.listClasses());
         System.out.println("Compile result validated.");
@@ -314,10 +312,6 @@ public class Runner {
 
     private static String normalize(String classname) {
         return classname.replace('/', '.');
-    }
-
-    private static String canonicalize(String classname) {
-        return classname.replace('.', '/');
     }
 
     private static Path[] paths(String testDir, String[] files, boolean platformDependent) {

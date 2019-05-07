@@ -167,8 +167,7 @@ module java.base {
         jdk.jartool,
         jdk.jfr,
         jdk.jlink,
-        jdk.scripting.nashorn,
-        jdk.jextract;
+        jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jfr,
         jdk.jlink;

@@ -20,16 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi.x64.windows;
 
-class Constants {
-    public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 4;
-    public static final int MAX_INTEGER_RETURN_REGISTERS = 1;
+import java.foreign.Libraries;
+import java.foreign.Library;
+import java.lang.invoke.MethodHandles;
+import org.testng.annotations.Test;
+import test.jextract.asmsymbol.libAsmSymbol_h;
 
-    public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 4;
-    public static final int MAX_VECTOR_RETURN_REGISTERS = 1;
+import static org.testng.Assert.assertEquals;
+/*
+ * @test
+ * @requires os.family != "windows"
+ * @library ..
+ * @run driver JtregJextract -C -DADD -t test.jextract.asmsymbol -- libAsmSymbol.h
+ * @run testng/othervm Test8223105A
+ */
+public class Test8223105A {
+    static final libAsmSymbol_h libAsmSymbol;
+    static {
+        Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "AsmSymbol");
+        libAsmSymbol = Libraries.bind(libAsmSymbol_h.class, lib);
+    }
 
-    public static final int MAX_REGISTER_ARGUMENTS = 4;
-    public static final int MAX_REGISTER_RETURNS = 1;
+    @Test
+    public void checkGlobalVar() {
+        assertEquals(1, libAsmSymbol.foo$get());
+    }
 
+    @Test
+    public void checkGlobalFunction() {
+        assertEquals(3, libAsmSymbol.func(1, 2));
+    }
 }

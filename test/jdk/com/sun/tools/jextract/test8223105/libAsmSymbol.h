@@ -21,32 +21,53 @@
  * questions.
  */
 
-package jdk.internal.foreign.abi.x64.sysv;
+#ifdef _WIN64
+  #ifdef IMPL
+    #define EXPORT __declspec(dllexport)
+  #else
+    #define EXPORT __declspec(dllimport)
+  #endif // IMPL
+#else
+#define EXPORT
+#endif //_WIN64
 
-import jdk.internal.foreign.abi.SystemABI;
-import jdk.internal.foreign.abi.VarargsInvoker;
+#ifdef _WIN32
+// Windows doesn't really support asm symbol, this is similar approach for C code to
+// achieve similar, but this won't work with Panama until we support such Macro
+#ifdef ADD
+#define foo fooA
+#define func funcA
+#else
+#define foo fooB
+#define func funcB
+#endif //ADD
+#define ALIAS(sym)
 
-import java.foreign.Library;
-import java.foreign.NativeMethodType;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
+#elif __APPLE__
+#define ALIAS(sym) __asm("_" #sym)
+#else
+#define ALIAS(sym) __asm__(#sym)
+#endif // _WIN32
 
-class VarargsInvokerImpl extends VarargsInvoker {
+// We do 3 declarations to make sure we will pick up alias no matter the sequence of encounter
+// Without alias
+EXPORT extern int foo;
+EXPORT int func (int x, int y);
 
-    private VarargsInvokerImpl(Library.Symbol symbol, NativeMethodType nativeMethodType) {
-        super(symbol, nativeMethodType);
-    }
+// With alias
+#ifdef ADD
 
-    public static MethodHandle make(Library.Symbol symbol, NativeMethodType nativeMethodType) {
-        VarargsInvokerImpl invoker = new VarargsInvokerImpl(symbol, nativeMethodType);
-        MethodType methodType = nativeMethodType.methodType();
-        return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, methodType.parameterCount())
-                .asType(methodType);
-    }
+EXPORT extern int foo ALIAS(fooA);
+EXPORT int func (int x, int y) ALIAS(funcA);
 
-    @Override
-    protected MethodHandle specialize(NativeMethodType newNativeMethodType){
-        return SystemABI.getInstance().downcallHandle(symbol, newNativeMethodType);
-    }
+#else
 
-}
+EXPORT extern int foo ALIAS(fooB);
+EXPORT int func (int x, int y) ALIAS(funcB);
+
+#endif // ADD
+
+// Without alias again
+EXPORT extern int foo;
+EXPORT int func (int x, int y);
+

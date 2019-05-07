@@ -25,22 +25,31 @@ package jdk.internal.foreign.abi;
 
 import java.foreign.Library;
 import java.foreign.NativeMethodType;
+import java.foreign.layout.Layout;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.function.Function;
+
 import jdk.internal.foreign.Util;
+import jdk.internal.foreign.memory.Types;
 
-public abstract class VarargsInvoker {
+public class VarargsInvoker {
 
-    protected static final MethodHandle INVOKE_MH;
-    protected final NativeMethodType nativeMethodType;
-    protected final Library.Symbol symbol;
+    private static final MethodHandle INVOKE_MH;
+    private final NativeMethodType nativeMethodType;
+    private final Library.Symbol symbol;
+    private final Function<Layout, CallingSequenceBuilder> seqBuilderFactory;
+    private final UniversalAdapter adapter;
 
-    protected VarargsInvoker(Library.Symbol symbol, NativeMethodType nativeMethodType) {
+    private VarargsInvoker(Library.Symbol symbol, NativeMethodType nativeMethodType,
+                           Function<Layout, CallingSequenceBuilder> seqBuilderFactory, UniversalAdapter adapter) {
         this.symbol = symbol;
         this.nativeMethodType = nativeMethodType;
+        this.seqBuilderFactory = seqBuilderFactory;
+        this.adapter = adapter;
     }
 
     static {
@@ -51,6 +60,14 @@ public abstract class VarargsInvoker {
         }
     }
 
+    public static MethodHandle make(Library.Symbol symbol, NativeMethodType nativeMethodType,
+                                    Function<Layout, CallingSequenceBuilder> seqBuilder, UniversalAdapter adapter) {
+        VarargsInvoker invoker = new VarargsInvoker(symbol, nativeMethodType, seqBuilder, adapter);
+        MethodType methodType = nativeMethodType.methodType();
+        return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, methodType.parameterCount())
+                .asType(methodType);
+    }
+
     private Object invoke(Object[] args) throws Throwable {
         // one trailing Object[]
         int nNamedArgs = nativeMethodType.parameterArray().length;
@@ -58,25 +75,38 @@ public abstract class VarargsInvoker {
         // The last argument is the array of vararg collector
         Object[] unnamedArgs = (Object[]) args[args.length - 1];
 
+        CallingSequenceBuilder seqBuilder = seqBuilderFactory.apply(
+                nativeMethodType.function()
+                        .returnLayout()
+                        .orElse(null));
+
         LayoutType<?> retLayoutType = nativeMethodType.returnType();
         LayoutType<?>[] argLayoutTypes = new LayoutType<?>[nNamedArgs + unnamedArgs.length];
         System.arraycopy(nativeMethodType.parameterArray(), 0, argLayoutTypes, 0, nNamedArgs);
+
+        nativeMethodType.function().argumentLayouts().forEach(seqBuilder::addArgument);
+
         int pos = nNamedArgs;
         for (Object o: unnamedArgs) {
             Class<?> type = o.getClass();
-            argLayoutTypes[pos++] = Util.makeType(computeClass(type), Util.variadicLayout(type));
+            Layout layout = variadicLayout(type);
+            argLayoutTypes[pos++] = Util.makeType(computeClass(type), layout);
+            seqBuilder.addArgument(layout, true);
         }
-        MethodHandle delegate = specialize(NativeMethodType.of(retLayoutType, argLayoutTypes));
+
+        //build universal invoker used to dispatch the call
+        UniversalNativeInvoker delegate = new UniversalNativeInvoker(symbol,
+                seqBuilder.build(),
+                NativeMethodType.of(retLayoutType, argLayoutTypes),
+                adapter);
 
         // flatten argument list so that it can be passed to an asSpreader MH
         Object[] allArgs = new Object[nNamedArgs + unnamedArgs.length];
         System.arraycopy(args, 0, allArgs, 0, nNamedArgs);
         System.arraycopy(unnamedArgs, 0, allArgs, nNamedArgs, unnamedArgs.length);
 
-        return delegate.invokeWithArguments(allArgs);
+        return delegate.invoke(allArgs);
     }
-
-    protected abstract MethodHandle specialize(NativeMethodType nmt);
 
     private Class<?> computeClass(Class<?> c) {
         if (c.isPrimitive()) {
@@ -91,6 +121,25 @@ public abstract class VarargsInvoker {
             return Pointer.class;
         } else {
             throw new UnsupportedOperationException("Type unhandled: " + c.getName());
+        }
+    }
+
+    private Layout variadicLayout(Class<?> c) {
+        c = (Class<?>)Util.unboxIfNeeded(c);
+        if (c == char.class || c == byte.class || c == short.class || c == int.class || c == long.class) {
+            //it is ok to approximate with a machine word here; numerics arguments in a prototype-less
+            //function call are always rounded up to a register size anyway.
+            return Types.INT64;
+        } else if (c == float.class || c == double.class) {
+            return Types.DOUBLE;
+        } else if (Pointer.class.isAssignableFrom(c)) {
+            return Types.POINTER;
+        } else if (Util.isCallback(c)) {
+            return Types.POINTER;
+        } else if (Util.isCStruct(c)) {
+            return Util.layoutof(c);
+        } else {
+            throw new IllegalArgumentException("Unhandled variadic argument class: " + c);
         }
     }
 }

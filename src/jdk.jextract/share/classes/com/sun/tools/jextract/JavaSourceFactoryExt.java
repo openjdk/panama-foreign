@@ -25,7 +25,10 @@ package com.sun.tools.jextract;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -49,16 +52,18 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
     private static final String STATICS_LIBRARY_FIELD_NAME = "_theLibrary";
     private final JavaSourceBuilderExt header_jsb;
     private final List<JavaSourceBuilderExt> enums;
+    private final Set<String> globalConstants;
 
     JavaSourceFactoryExt(Context ctx, HeaderFile header) {
         super(ctx, header);
         log.print(Level.INFO, () -> "Instantiate StaticForwarderGenerator for " + header.path);
         header_jsb = new JavaSourceBuilderExt();
         enums = new ArrayList<>();
+        globalConstants = new HashSet<>();
     }
 
     @Override
-    public void generate(List<Tree> decls) {
+    public Map<String, String> generate(List<Tree> decls) {
         header_jsb.addPackagePrefix(headerFile.pkgName);
         String ifaceClsName = headerFile.headerClsName;
         String forwarderName = headerFile.staticForwarderClsName;
@@ -67,17 +72,13 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
         header_jsb.addLibraryField(ifaceClsName, STATICS_LIBRARY_FIELD_NAME);
         header_jsb.emitScopeAccessor(STATICS_LIBRARY_FIELD_NAME);
 
-        super.generate(decls);
+        Map<String, String> srcMap = super.generate(decls);
         enums.forEach(header_jsb::addNestedType);
 
         header_jsb.classEnd();
         String src = header_jsb.build();
-        try {
-            Path srcPath = srcDir.resolve(forwarderName + ".java");
-            Files.write(srcPath, List.of(src));
-        } catch (Exception ex) {
-            handleException(ex);
-        }
+        srcMap.put(headerFile.pkgName + "." + forwarderName, src);
+        return srcMap;
     }
 
     @Override
@@ -96,7 +97,7 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
     public Boolean visitEnum(EnumTree enumTree, JType jt) {
         if (super.visitEnum(enumTree, jt)) {
             if (enumTree.name().isEmpty()) {
-                enumTree.constants().forEach(constant -> addConstant(header_jsb, constant.name(),
+                enumTree.constants().forEach(constant -> addGlobalConstant(header_jsb, constant.name(),
                     headerFile.dictionary().lookup(constant.type()),
                     constant.enumConstant().get()));
             } else {
@@ -130,11 +131,19 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
             String name = macroTree.name();
             MacroParser.Macro macro = macroTree.macro().get();
             log.print(Level.FINE, () -> "Adding macro " + name);
-            addConstant(header_jsb, Utils.toMacroName(name), macro.type(), macro.value());
+            addGlobalConstant(header_jsb, Utils.toMacroName(name), macro.type(), macro.value());
             return true;
         } else {
             return false;
         }
+    }
+
+    private void addGlobalConstant(JavaSourceBuilderExt jsb, String name, JType type, Object value) {
+        if (!globalConstants.add(name)) {
+            log.print(Level.WARNING, () -> "Ignoring duplicate symbol: " + name);
+            return;
+        }
+        addConstant(jsb, name, type, value);
     }
 
     private void addConstant(JavaSourceBuilderExt jsb, String name, JType type, Object value) {

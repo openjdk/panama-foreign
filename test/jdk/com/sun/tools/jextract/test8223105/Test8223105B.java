@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,12 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi.x64;
 
-public class SharedConstants {
-    public static final int INTEGER_REGISTER_SIZE = 8;
-    public static final int VECTOR_REGISTER_SIZE = 64; // (maximum) vector size is 512 bits
-    public static final int X87_REGISTER_SIZE = 16; // x87 register is 128 bits
+import java.foreign.Libraries;
+import java.foreign.Library;
+import java.lang.invoke.MethodHandles;
+import org.testng.annotations.Test;
+import test.jextract.asmsymbol.libAsmSymbol_h;
 
-    public static final int STACK_SLOT_SIZE = 8;
+import static org.testng.Assert.assertEquals;
+/*
+ * @test
+ * @requires os.family != "windows"
+ * @library ..
+ * @run driver JtregJextract -t test.jextract.asmsymbol -- libAsmSymbol.h
+ * @run testng/othervm Test8223105B
+ */
+public class Test8223105B {
+    static final libAsmSymbol_h libAsmSymbol;
+    static {
+        Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "AsmSymbol");
+        libAsmSymbol = Libraries.bind(libAsmSymbol_h.class, lib);
+    }
+
+    @Test
+    public void checkGlobalVar() {
+        assertEquals(2, libAsmSymbol.foo$get());
+    }
+
+    @Test
+    public void checkGlobalFunction() {
+        assertEquals(2, libAsmSymbol.func(1, 2));
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,14 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi.x64.sysv;
 
-public class Constants {
-    public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
-    public static final int MAX_INTEGER_RETURN_REGISTERS = 2;
+struct unaligned {
+   long double x1; //unused
+   short i1;
+   short i2;
+   //padding here?
+};
 
-    public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
-    public static final int MAX_VECTOR_RETURN_REGISTERS = 2;
-    public static final int MAX_X87_RETURN_REGISTERS = 2;
+short unaligned_sum_i1(struct unaligned u1, struct unaligned u2) {
+   return u1.i1 + u2.i1;
+}
 
+short unaligned_sum_i2(struct unaligned u1, struct unaligned u2) {
+   return u1.i2 + u2.i2;
 }

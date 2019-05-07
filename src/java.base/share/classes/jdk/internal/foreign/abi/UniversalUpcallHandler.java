@@ -26,17 +26,14 @@ package jdk.internal.foreign.abi;
 import java.foreign.Library;
 import java.foreign.NativeMethodType;
 import java.foreign.NativeTypes;
-import java.foreign.Scope;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
 
 import jdk.internal.foreign.ScopeImpl;
 import jdk.internal.foreign.Util;
-import jdk.internal.foreign.abi.x64.SharedConstants;
+import jdk.internal.foreign.abi.x64.SharedUtils;
 import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.vm.annotation.Stable;
@@ -48,7 +45,7 @@ import static sun.security.action.GetBooleanAction.privilegedGetProperty;
  * takes an array of storage pointers, which describes the state of the CPU at the time of the upcall. This can be used
  * by the Java code to fetch the upcall arguments and to store the results to the desired location, as per system ABI.
  */
-public abstract class UniversalUpcallHandler implements Library.Symbol {
+public class UniversalUpcallHandler implements Library.Symbol {
 
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.UpcallHandler.DEBUG");
@@ -58,8 +55,11 @@ public abstract class UniversalUpcallHandler implements Library.Symbol {
     private final NativeMethodType nmt;
     private final CallingSequence callingSequence;
     private final Pointer<?> entryPoint;
+    private final UniversalAdapter adapter;
 
-    protected UniversalUpcallHandler(MethodHandle target, CallingSequence callingSequence, NativeMethodType nmt) {
+    public UniversalUpcallHandler(MethodHandle target, CallingSequence callingSequence, NativeMethodType nmt,
+                                     UniversalAdapter adapter) {
+        this.adapter = adapter;
         mh = target.asSpreader(Object[].class, nmt.parameterCount());
         this.nmt = nmt;
         this.callingSequence = callingSequence;
@@ -100,20 +100,20 @@ public abstract class UniversalUpcallHandler implements Library.Symbol {
         }
 
         Pointer<Long> getPtr(ArgumentBinding binding) {
-            Storage storage = binding.getStorage();
+            Storage storage = binding.storage();
             switch (storage.getStorageClass()) {
             case INTEGER_ARGUMENT_REGISTER:
                 return integers.offset(storage.getStorageIndex());
             case VECTOR_ARGUMENT_REGISTER:
-                return vectors.offset(storage.getStorageIndex() * SharedConstants.VECTOR_REGISTER_SIZE / 8);
+                return vectors.offset(storage.getStorageIndex() * SharedUtils.VECTOR_REGISTER_SIZE / 8);
             case STACK_ARGUMENT_SLOT:
                 return stack.offset(storage.getStorageIndex());
             case INTEGER_RETURN_REGISTER:
                 return integerReturns.offset(storage.getStorageIndex());
             case VECTOR_RETURN_REGISTER:
-                return vectorReturns.offset(storage.getStorageIndex() * SharedConstants.VECTOR_REGISTER_SIZE / 8);
+                return vectorReturns.offset(storage.getStorageIndex() * SharedUtils.VECTOR_REGISTER_SIZE / 8);
             case X87_RETURN_REGISTER:
-                return x87Returns.offset(storage.getStorageIndex() * SharedConstants.X87_REGISTER_SIZE / 8);
+                return x87Returns.offset(storage.getStorageIndex() * SharedUtils.X87_REGISTER_SIZE / 8);
             default:
                 throw new Error("Unhandled storage: " + storage);
             }
@@ -122,7 +122,7 @@ public abstract class UniversalUpcallHandler implements Library.Symbol {
         @SuppressWarnings("unchecked")
         Pointer<Object> inMemoryPtr() {
             assert callingSequence.returnsInMemory();
-            Pointer<Long> res = getPtr(callingSequence.getReturnBindings().get(0));
+            Pointer<Long> res = getPtr(callingSequence.returnInMemoryBinding());
             long structAddr = res.get();
             long size = Util.alignUp(nmt.returnType().bytesSize(), 8);
             return new BoundedPointer<Object>((LayoutType)nmt.returnType(), ScopeImpl.UNCHECKED, Pointer.AccessMode.READ_WRITE,
@@ -143,9 +143,9 @@ public abstract class UniversalUpcallHandler implements Library.Symbol {
             }
             for (StorageClass cls : StorageClass.values()) {
                 result.append((cls + "\n").indent(2));
-                for (ArgumentBinding binding : callingSequence.getBindings(cls)) {
+                for (ArgumentBinding binding : callingSequence.bindings(cls)) {
                     BoundedPointer<?> argPtr = (BoundedPointer<?>) getPtr(binding);
-                    result.append(argPtr.dump((int) binding.getStorage().getSize()).indent(4));
+                    result.append(argPtr.dump((int) binding.storage().getSize()).indent(4));
                 }
             }
             return result.toString();
@@ -163,7 +163,7 @@ public abstract class UniversalUpcallHandler implements Library.Symbol {
 
             Object[] args = new Object[nmt.parameterCount()];
             for (int i = 0 ; i < nmt.parameterCount() ; i++) {
-                args[i] = boxValue(nmt.parameterType(i), context::getPtr, callingSequence.getArgumentBindings(i));
+                args[i] = adapter.boxValue(nmt.parameterType(i), context::getPtr, callingSequence.argumentBindings(i));
             }
 
             if (DEBUG) {
@@ -180,8 +180,8 @@ public abstract class UniversalUpcallHandler implements Library.Symbol {
 
             if (mh.type().returnType() != void.class) {
                 if (!callingSequence.returnsInMemory()) {
-                    unboxValue(o, nmt.returnType(), context::getPtr,
-                            callingSequence.getReturnBindings());
+                    adapter.unboxValue(o, nmt.returnType(), context::getPtr,
+                            callingSequence.returnBindings());
                 } else {
                     Pointer<Object> inMemPtr = context.inMemoryPtr();
                     inMemPtr.set(o);
@@ -197,12 +197,6 @@ public abstract class UniversalUpcallHandler implements Library.Symbol {
             throw new IllegalStateException(t);
         }
     }
-
-    public abstract void unboxValue(Object o, LayoutType<?> type, Function<ArgumentBinding,
-                Pointer<?>> dstPtrFunc, List<ArgumentBinding> bindings) throws Throwable;
-
-    public abstract Object boxValue(LayoutType<?> type, Function<ArgumentBinding,
-            Pointer<?>> srcPtrFunc, List<ArgumentBinding> bindings) throws IllegalAccessException;
 
     public native long allocateUpcallStub();
 

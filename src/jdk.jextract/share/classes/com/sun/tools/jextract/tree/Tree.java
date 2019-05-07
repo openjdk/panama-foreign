@@ -23,11 +23,15 @@
 package com.sun.tools.jextract.tree;
 
 import java.util.Objects;
+import java.util.Optional;
 import jdk.internal.clang.Cursor;
+import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.SourceLocation;
 
 public class Tree {
+    private static final boolean isMacOS = System.getProperty("os.name", "").contains("OS X");
+
     private final Cursor c;
     private final String name;
 
@@ -114,5 +118,20 @@ public class Tree {
 
     public <R,D> R accept(TreeVisitor<R,D> visitor, D data) {
         return visitor.visitTree(this, data);
+    }
+
+    protected static Optional<String> label(Cursor cursor) {
+        Optional<Cursor> asmLabel = cursor.children()
+                .filter(c -> c.kind() == CursorKind.AsmLabelAttr)
+                .findFirst();
+        if (asmLabel.isEmpty()) {
+            return Optional.empty();
+        }
+        String label = asmLabel.get().spelling();
+        if (isMacOS) {
+            // Skip leading underscore
+            label = label.substring(1);
+        }
+        return Optional.of(label);
     }
 }
