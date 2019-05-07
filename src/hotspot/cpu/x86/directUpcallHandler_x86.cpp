@@ -162,7 +162,7 @@ static void restore_upcall_context(MacroAssembler* _masm, int upcall_context_off
 }
 
 void DirectUpcallHandler::save_java_frame_anchor(MacroAssembler* _masm, int upcall_context_offset, Register thread) {
-  int thread_base_offset = offsetof(JavaThread, _anchor);
+  int thread_base_offset = JavaThread::frame_anchor_offset();
   int upcall_base_offset = upcall_context_offset + offsetof(struct upcall_context, preserved.jfa);
 
   int last_Java_fp_offset = offsetof(JavaFrameAnchor, _last_Java_fp);
@@ -183,7 +183,7 @@ void DirectUpcallHandler::save_java_frame_anchor(MacroAssembler* _masm, int upca
 }
 
 void DirectUpcallHandler::restore_java_frame_anchor(MacroAssembler* _masm, int upcall_context_offset, Register thread) {
-  int thread_base_offset = offsetof(JavaThread, _anchor);
+  int thread_base_offset = JavaThread::frame_anchor_offset();
   int upcall_base_offset = upcall_context_offset + offsetof(struct upcall_context, preserved.jfa);
 
   int last_Java_fp_offset = offsetof(JavaFrameAnchor, _last_Java_fp);
@@ -191,7 +191,7 @@ void DirectUpcallHandler::restore_java_frame_anchor(MacroAssembler* _masm, int u
   int last_Java_sp_offset = offsetof(JavaFrameAnchor, _last_Java_sp);
 
   // thread->_last_Java_sp = NULL
-  __ movptr(Address(thread, thread_base_offset + last_Java_sp_offset), NULL);
+  __ movptr(Address(thread, thread_base_offset + last_Java_sp_offset), (intptr_t)NULL);
 
   // ThreadStateTransition::transition_from_java(_thread, _thread_in_vm);
   // __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native_trans);

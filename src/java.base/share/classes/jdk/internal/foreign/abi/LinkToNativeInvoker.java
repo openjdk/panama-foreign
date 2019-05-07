@@ -83,6 +83,6 @@ public class LinkToNativeInvoker {
 
 
     private static <T> Pointer<T> allocLeaky(LayoutType<T> type) {
-        return Scope.newNativeScope().allocate(type);
+        return Scope.globalScope().fork().allocate(type);
     }
 }
