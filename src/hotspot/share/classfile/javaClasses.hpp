@@ -82,7 +82,8 @@
   f(java_lang_StackFrameInfo) \
   f(java_lang_LiveStackFrameInfo) \
   f(java_util_concurrent_locks_AbstractOwnableSynchronizer) \
-  f(java_lang_invoke_NativeEntryPoint)
+  f(java_lang_invoke_NativeEntryPoint) \
+  f(jdk_internal_misc_UnsafeConstants) \
   //end
 
 #define BASIC_JAVA_CLASSES_DO(f) \
@@ -95,6 +96,7 @@ class java_lang_String : AllStatic {
  private:
   static int value_offset;
   static int hash_offset;
+  static int hashIsZero_offset;
   static int coder_offset;
 
   static bool initialized;
@@ -133,6 +135,10 @@ class java_lang_String : AllStatic {
     assert(initialized && (hash_offset > 0), "Must be initialized");
     return hash_offset;
   }
+  static int hashIsZero_offset_in_bytes()   {
+    assert(initialized && (hashIsZero_offset > 0), "Must be initialized");
+    return hashIsZero_offset;
+  }
   static int coder_offset_in_bytes()   {
     assert(initialized && (coder_offset > 0), "Must be initialized");
     return coder_offset;
@@ -140,12 +146,11 @@ class java_lang_String : AllStatic {
 
   static inline void set_value_raw(oop string, typeArrayOop buffer);
   static inline void set_value(oop string, typeArrayOop buffer);
-  static inline void set_hash(oop string, unsigned int hash);
 
   // Accessors
   static inline typeArrayOop value(oop java_string);
   static inline typeArrayOop value_no_keepalive(oop java_string);
-  static inline unsigned int hash(oop java_string);
+  static inline bool hash_is_set(oop string);
   static inline bool is_latin1(oop java_string);
   static inline int length(oop java_string);
   static inline int length(oop java_string, typeArrayOop string_value);
@@ -1101,6 +1106,8 @@ class java_lang_invoke_ResolvedMethodName : AllStatic {
   static Method* vmtarget(oop resolved_method);
   static void set_vmtarget(oop resolved_method, Method* method);
 
+  static void set_vmholder(oop resolved_method, oop holder);
+
   // find or create resolved member name
   static oop find_resolved_method(const methodHandle& m, TRAPS);
 
@@ -1524,6 +1531,15 @@ class java_util_concurrent_locks_AbstractOwnableSynchronizer : AllStatic {
   static void compute_offsets();
   static oop  get_owner_threadObj(oop obj);
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
+};
+
+ // Interface to jdk.internal.misc.UnsafeConsants
+
+class jdk_internal_misc_UnsafeConstants : AllStatic {
+ public:
+  static void set_unsafe_constants();
+  static void compute_offsets() { }
+  static void serialize_offsets(SerializeClosure* f) { }
 };
 
 // Use to declare fields that need to be injected into Java classes
