@@ -42,11 +42,13 @@ public class HeaderResolver {
 
     public HeaderResolver(Context ctx) {
         this.log = ctx.log;
-        usePackageForFolder(Context.getBuiltinHeadersDir(), "clang_support");
+        String targetPkg = ctx.options.targetPackage;
+        usePackageForFolder(Context.getBuiltinHeadersDir(),
+            targetPkg.isEmpty()? "clang_support" : targetPkg + ".clang_support");
         this.builtinHeader = Context.getBuiltinHeaderFile();
         ctx.sources.stream()
                 .map(Path::getParent)
-                .forEach(p -> usePackageForFolder(p, ctx.options.targetPackage));
+                .forEach(p -> usePackageForFolder(p, targetPkg));
         ctx.options.pkgMappings.forEach(this::usePackageForFolder);
     }
 
