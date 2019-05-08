@@ -21,6 +21,7 @@
  * questions.
  */
 
+import com.sun.tools.jextract.MissingSymbolAction;
 import java.foreign.annotations.*;
 import java.nio.file.Files;
 import java.io.ByteArrayInputStream;
@@ -100,6 +101,7 @@ public class Runner {
         nativeSrc = nativeSrc.toAbsolutePath();
         Options.Builder options = Options.builder();
         options.setTargetPackage(pkg);
+        options.setMissingSymbolAction(MissingSymbolAction.IGNORE);
         return new Context(List.of(nativeSrc.toAbsolutePath()),
                 options.build(), Log.createDefault(), Filters.createDefault());
     }

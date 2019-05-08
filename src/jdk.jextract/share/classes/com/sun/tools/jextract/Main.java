@@ -171,12 +171,10 @@ public final class Main {
                 throw new FatalError(OPTION_ERROR, Log.format("invalid.missing_symbols.option.value", ms));
             }
             builder.setMissingSymbolAction(msa);
-            if (!librariesSpecified) {
-                err.println(Log.format("warn.missing_symbols.without.l"));
-            }
         } else {
-            // default is to exclude missing symbols
-            builder.setMissingSymbolAction(MissingSymbolAction.EXCLUDE);
+            // default is to warning if no library specified, otherwise exclude
+            builder.setMissingSymbolAction(librariesSpecified ?
+                    MissingSymbolAction.EXCLUDE : MissingSymbolAction.WARN);
         }
 
         String targetPackage = options.has("t") ? (String) options.valueOf("t") : "";

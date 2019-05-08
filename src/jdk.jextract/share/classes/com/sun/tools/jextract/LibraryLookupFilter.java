@@ -46,6 +46,15 @@ public class LibraryLookupFilter extends TreeFilter {
     private final List<String> libraryNames;
     private final MissingSymbolAction missingSymbolAction;
 
+    private static final Predicate<String> DEFAULT_CHECKER = sym -> {
+        try {
+            Libraries.getDefaultLibrary().lookup(sym);
+            return true;
+        } catch (NoSuchMethodException nsme) {
+            return false;
+        }
+    };
+
     public LibraryLookupFilter(Context ctx) {
         this.log = ctx.log;
         this.libraryNames = ctx.options.libraryNames;
@@ -77,7 +86,8 @@ public class LibraryLookupFilter extends TreeFilter {
     }
 
     private void initSymChecker(List<String> linkCheckPaths) {
-        if (!libraryNames.isEmpty() && !linkCheckPaths.isEmpty()) {
+        if (!libraryNames.isEmpty()) {
+            assert !linkCheckPaths.isEmpty();
             try {
                 Library[] libs = loadLibraries(MethodHandles.lookup(),
                         linkCheckPaths.toArray(new String[0]),
@@ -101,7 +111,7 @@ public class LibraryLookupFilter extends TreeFilter {
                 symChecker = null;
             }
         } else {
-            symChecker = null;
+            symChecker = DEFAULT_CHECKER;
         }
     }
 

@@ -45,7 +45,7 @@ public class TestForwardRef extends JextractToolRunner {
         deleteFile(forwardRefJar);
         Path forwardRefH = getInputFilePath("forwardRef.h");
         //no duplicate warnings should be generated here!
-        run("-o", forwardRefJar.toString(), forwardRefH.toString())
+        run("--missing-symbols", "ignore", "-o", forwardRefJar.toString(), forwardRefH.toString())
                 .checkMatchesOutput("^$")
                 .checkSuccess();
         try (Loader loader = classLoader(forwardRefJar)) {
