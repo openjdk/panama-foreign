@@ -33,7 +33,7 @@ import static org.testng.Assert.assertEquals;
  * @requires os.family == "windows"
  * @library ..
  * @run driver JtregJextract -t test.jextract.asmsymbol -- libAsmSymbol.h
- * @run testng Test8223105WinB
+ * @run testng/othervm Test8223105WinB
  */
 public class Test8223105WinB {
     static final libAsmSymbol_h libAsmSymbol;

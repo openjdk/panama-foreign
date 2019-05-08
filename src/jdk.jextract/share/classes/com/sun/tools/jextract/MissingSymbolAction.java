@@ -34,7 +34,10 @@ public enum MissingSymbolAction {
     EXCLUDE((log, name) -> { log.printWarning("warn.symbol.excluded", name); return true; }),
 
     // ignore and generate the symbol ("I know what I am doing")
-    IGNORE((log, name) -> false);
+    IGNORE((log, name) -> false),
+
+    // issue warning but generate the symbol
+    WARN((log, name) -> { log.printWarning("warn.symbol.missing", name); return false; });
 
     private final BiPredicate<Log, String> action;
 
