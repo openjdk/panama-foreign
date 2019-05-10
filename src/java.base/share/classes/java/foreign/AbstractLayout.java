@@ -30,10 +30,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-abstract class AbstractDescriptor<L extends AbstractDescriptor<L>> implements Descriptor {
+abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
     private final Map<String, String> annotations;
 
-    public AbstractDescriptor(Map<String, String> annotations) {
+    public AbstractLayout(Map<String, String> annotations) {
         this.annotations = Collections.unmodifiableMap(annotations);
     }
 
@@ -85,11 +85,11 @@ abstract class AbstractDescriptor<L extends AbstractDescriptor<L>> implements De
             return true;
         }
 
-        if (!(other instanceof AbstractDescriptor)) {
+        if (!(other instanceof AbstractLayout)) {
             return false;
         }
 
-        return annotations.equals(((AbstractDescriptor)other).annotations);
+        return annotations.equals(((AbstractLayout)other).annotations);
     }
 
     static final Map<String, String> NO_ANNOS = Collections.unmodifiableMap(new HashMap<>());
