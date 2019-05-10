@@ -25,7 +25,7 @@
 
 package jdk.internal.access;
 
-import java.foreign.layout.LayoutPath;
+import java.foreign.LayoutPath;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.util.Map;

@@ -23,7 +23,7 @@
  * questions.
  */
 
-package java.foreign.layout;
+package java.foreign;
 
 import jdk.internal.foreign.LayoutPathsImpl;
 

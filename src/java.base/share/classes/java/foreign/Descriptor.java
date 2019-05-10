@@ -23,7 +23,7 @@
  * questions.
  */
 
-package java.foreign.layout;
+package java.foreign;
 
 import java.util.Map;
 import java.util.Optional;

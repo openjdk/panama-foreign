@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.foreign.layout;
+package java.foreign;
 
 import java.util.Map;
 import java.util.Optional;

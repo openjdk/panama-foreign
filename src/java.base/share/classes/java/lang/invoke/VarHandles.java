@@ -27,9 +27,9 @@ package java.lang.invoke;
 
 import jdk.internal.foreign.LayoutPathsImpl;
 
-import java.foreign.layout.Layout;
-import java.foreign.layout.LayoutPath;
-import java.foreign.layout.Value;
+import java.foreign.Layout;
+import java.foreign.LayoutPath;
+import java.foreign.Value;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Map;

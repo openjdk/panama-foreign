@@ -29,11 +29,11 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
 
-import java.foreign.layout.Layout;
-import java.foreign.layout.Value;
-import java.foreign.layout.Value.Endianness;
-import java.foreign.memory.MemoryAddress;
-import java.foreign.memory.MemoryScope;
+import java.foreign.Layout;
+import java.foreign.MemoryAddress;
+import java.foreign.MemoryScope;
+import java.foreign.Value;
+import java.foreign.Value.Endianness;
 import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.util.Objects;

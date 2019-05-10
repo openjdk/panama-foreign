@@ -26,15 +26,15 @@
  * @run testng TestMemoryAccess
  */
 
-import java.foreign.layout.Group;
-import java.foreign.layout.Layout;
-import java.foreign.layout.LayoutPath;
-import java.foreign.layout.Padding;
-import java.foreign.layout.Sequence;
-import java.foreign.layout.Value;
-import java.foreign.layout.Value.Endianness;
-import java.foreign.memory.MemoryAddress;
-import java.foreign.memory.MemoryScope;
+import java.foreign.Group;
+import java.foreign.Layout;
+import java.foreign.LayoutPath;
+import java.foreign.Padding;
+import java.foreign.Sequence;
+import java.foreign.Value;
+import java.foreign.Value.Endianness;
+import java.foreign.MemoryAddress;
+import java.foreign.MemoryScope;
 import java.lang.invoke.VarHandle;
 
 import org.testng.annotations.*;

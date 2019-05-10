@@ -36,7 +36,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetBooleanAction;
 import sun.security.action.GetPropertyAction;
 
-import java.foreign.memory.MemoryAddress;
+import java.foreign.MemoryAddress;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

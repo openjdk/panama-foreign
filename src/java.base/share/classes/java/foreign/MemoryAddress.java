@@ -23,7 +23,7 @@
  * questions.
  */
 
-package java.foreign.memory;
+package java.foreign;
 
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.MemoryBoundInfo;

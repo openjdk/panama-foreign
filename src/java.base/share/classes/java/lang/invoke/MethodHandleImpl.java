@@ -40,7 +40,7 @@ import sun.invoke.util.ValueConversions;
 import sun.invoke.util.VerifyType;
 import sun.invoke.util.Wrapper;
 
-import java.foreign.layout.LayoutPath;
+import java.foreign.LayoutPath;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;

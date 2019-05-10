@@ -26,8 +26,8 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
-import java.foreign.memory.MemoryAddress;
-import java.foreign.memory.MemoryScope;
+import java.foreign.MemoryAddress;
+import java.foreign.MemoryScope;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 

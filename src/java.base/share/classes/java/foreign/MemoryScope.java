@@ -23,11 +23,10 @@
  * questions.
  */
 
-package java.foreign.memory;
+package java.foreign;
 
 import jdk.internal.foreign.MemoryScopeImpl;
 
-import java.foreign.layout.Layout;
 import java.util.Optional;
 
 /**

@@ -26,11 +26,11 @@ package jdk.internal.foreign;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 
-import java.foreign.layout.Group;
-import java.foreign.layout.Layout;
-import java.foreign.layout.LayoutPath;
-import java.foreign.layout.Sequence;
-import java.foreign.layout.Value;
+import java.foreign.Group;
+import java.foreign.Layout;
+import java.foreign.LayoutPath;
+import java.foreign.Sequence;
+import java.foreign.Value;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.Collections;

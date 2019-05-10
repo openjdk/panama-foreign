@@ -25,9 +25,9 @@
 
 package jdk.internal.foreign;
 
-import java.foreign.layout.Layout;
-import java.foreign.memory.MemoryAddress;
-import java.foreign.memory.MemoryScope;
+import java.foreign.Layout;
+import java.foreign.MemoryAddress;
+import java.foreign.MemoryScope;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
