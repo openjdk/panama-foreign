@@ -355,10 +355,12 @@ class JavaSourceFactory extends SimpleTreeVisitor<Boolean, JType> {
     public Boolean visitFunction(FunctionTree funcTree, JType jt) {
         assert (jt instanceof JType.Function);
         JType.Function fn = (JType.Function)jt;
-        log.print(Level.FINE, () -> "Add method: " + fn.getSourceSignature(false));
+        final String descStr = funcTree.function().toString();
+
+        log.print(Level.FINE, () -> "Add method: " + funcTree.name() + " with descriptor " +
+                fn.getDescriptor() + " for native " + descStr);
 
         addNativeLocation(global_jsb, funcTree);
-        final String descStr = funcTree.function().toString();
         global_jsb.addAnnotation(NATIVE_FUNCTION, Map.of("value", descStr));
         global_jsb.addMethod(funcTree, fn);
 
