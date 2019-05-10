@@ -31,7 +31,7 @@ import java.util.Map;
  * a new layout whose size is known. The resolution process is typically driven by the annotations attached to the
  * unresolved layout.
  */
-public class Unresolved extends AbstractDescriptor<Unresolved> implements Layout {
+public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
     private final String layoutExpression;
 
     Unresolved(String layoutExpression, Map<String, String> annotations) {

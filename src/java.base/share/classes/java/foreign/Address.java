@@ -44,36 +44,23 @@ public final class Address extends Value {
          */
         LAYOUT,
         /**
-         * The address points to the entry point of some native function.
-         */
-        FUNCTION,
-        /**
          * The address does not have any associated pointee info.
          */
         VOID
     }
 
     private final PointeeKind pointeeKind;
-    private final Descriptor descriptor;
+    private final Layout layout;
 
-    private Address(PointeeKind pointeeKind, Descriptor descriptor, long size, Kind kind, Endianness endianness, Optional<Group> contents, Map<String, String> annotations) {
+    private Address(PointeeKind pointeeKind, Layout layout, long size, Kind kind, Endianness endianness, Optional<Group> contents, Map<String, String> annotations) {
         super(kind, endianness, size, contents, annotations);
         this.pointeeKind = pointeeKind;
-        this.descriptor = descriptor;
+        this.layout = layout;
     }
 
     @Override
     public Address withContents(Group contents) {
-        return new Address(pointeeKind, descriptor, bitsSize(), kind(), endianness(), Optional.of(contents), annotations());
-    }
-
-    /**
-     * Obtain the {@link Function} object associated with the memory region pointed to by this address (if any).
-     * @return an optional {@link Function} object.
-     */
-    public Optional<Function> function() {
-        return pointeeKind == PointeeKind.FUNCTION ?
-                Optional.of((Function)descriptor) : Optional.empty();
+        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), Optional.of(contents), annotations());
     }
 
     /**
@@ -82,7 +69,7 @@ public final class Address extends Value {
      */
     public Optional<Layout> layout() {
         return pointeeKind == PointeeKind.LAYOUT ?
-                Optional.of((Layout)descriptor) : Optional.empty();
+                Optional.of(layout) : Optional.empty();
     }
 
     /**
@@ -148,39 +135,6 @@ public final class Address extends Value {
         return new Address(PointeeKind.LAYOUT, layout, size, kind, endianness, Optional.empty(), NO_ANNOS);
     }
 
-    /**
-     * Create a new address of given size and addressee function.
-     * @param size address size.
-     * @param function addressee function.
-     * @return the new address layout.
-     */
-    public static Address ofFunction(long size, Function function) {
-        return ofFunction(size, function, Kind.INTEGRAL_UNSIGNED);
-    }
-
-    /**
-     * Create a new address of given size, kind and addressee function.
-     * @param size address size.
-     * @param kind address kind.
-     * @param function addressee function.
-     * @return the new address layout.
-     */
-    public static Address ofFunction(long size, Function function, Kind kind) {
-        return ofFunction(size, function, kind, Endianness.hostEndian());
-    }
-
-    /**
-     * Create a new address of given size, kind, endianness and addressee function.
-     * @param size address size.
-     * @param kind address kind.
-     * @param endianness address endianness.
-     * @param function addressee function.
-     * @return the new address layout.
-     */
-    public static Address ofFunction(long size, Function function, Kind kind, Endianness endianness) {
-        return new Address(PointeeKind.FUNCTION, function, size, kind, endianness, Optional.empty(), NO_ANNOS);
-    }
-
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -191,22 +145,22 @@ public final class Address extends Value {
         }
         Address addr = (Address)other;
         return super.equals(other) &&
-                Objects.equals(descriptor, addr.descriptor);
+                Objects.equals(layout, addr.layout);
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ Objects.hashCode(descriptor);
+        return super.hashCode() ^ Objects.hashCode(layout);
     }
 
     @Override
     public String toString() {
-        return super.toString() + ":" + (descriptor == null ? "v" : descriptor.toString());
+        return super.toString() + ":" + (layout == null ? "v" : layout.toString());
     }
 
     @Override
     Address withAnnotations(Map<String, String> annotations) {
-        return new Address(pointeeKind, descriptor, bitsSize(), kind(), endianness(), contents(), annotations);
+        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), contents(), annotations);
     }
 
     @Override

@@ -34,7 +34,7 @@ import jdk.internal.misc.Unsafe;
  * value layout also has a size and an endianness (which could be either big-endian or little-endian), as well as
  * an optional substructure layout (see {@link Value#contents()}).
  */
-public class Value extends AbstractDescriptor<Value> implements Layout {
+public class Value extends AbstractLayout<Value> implements Layout {
 
     /**
      * The value kind.

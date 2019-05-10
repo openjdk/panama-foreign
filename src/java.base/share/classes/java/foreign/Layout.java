@@ -24,24 +24,67 @@
  */
 package java.foreign;
 
+import java.util.Map;
+import java.util.Optional;
+
 /**
  * This interface models the layout of a group of bits in a memory region.
  * Layouts can be annotated in order to embed domain specific knowledge, and they can be referenced by name
  * (see {@link Unresolved}). A layout is always associated with a size (in bits).
  */
-public interface Layout extends Descriptor {
+public interface Layout {
+    /**
+     * The key of the predefined 'name' annotation.
+     */
+    String NAME = "name";
+
     /**
      * Computes the layout size, in bits
      * @return the layout size.
      */
     long bitsSize();
 
-    @Override
+    /**
+     * Does this layout contain unresolved layouts?
+     * @return true if this layout contains (possibly nested) unresolved layouts.
+     */
+    boolean isPartial();
+
+    /**
+     * Return the key-value annotations map associated with this object.
+     * @return the key-value annotations map.
+     */
+    Map<String, String> annotations();
+
+    /**
+     * Return the value of the 'name' annotation (if any) associated with this object.
+     * @return the layout name (if any).
+     */
+    default Optional<String> name() {
+        return Optional.ofNullable(annotations().get(NAME));
+    }
+
+    /**
+     * Add annotation to the current layout.
+     * @param name the annotation name.
+     * @param value the annotation value.
+     * @return a new kayout with the desired annotation.
+     */
     Layout withAnnotation(String name, String value);
 
-    @Override
+    /**
+     * Attach name annotation to the current layout.
+     * @param name name annotation.
+     * @return a new layout with desired name annotation.
+     */
+    Layout withName(String name);
+
+    /**
+     * Strip all annotations from the current (possibly annotated) layout.
+     * @return the unannotated layout.
+     */
     Layout stripAnnotations();
 
     @Override
-    Layout withName(String name);
+    String toString();
 }
