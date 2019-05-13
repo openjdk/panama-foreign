@@ -68,7 +68,7 @@ public interface Layout {
      * Add annotation to the current layout.
      * @param name the annotation name.
      * @param value the annotation value.
-     * @return a new kayout with the desired annotation.
+     * @return a new layout with the desired annotation.
      */
     Layout withAnnotation(String name, String value);
 
@@ -87,4 +87,10 @@ public interface Layout {
 
     @Override
     String toString();
+
+    /**
+     * Obtain layout path rooted at this layout.
+     * @return a new layout path rooted at this layout.
+     */
+    LayoutPath toPath();
 }

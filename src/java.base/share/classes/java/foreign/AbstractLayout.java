@@ -24,6 +24,8 @@
  */
 package java.foreign;
 
+import jdk.internal.foreign.LayoutPathsImpl;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -72,6 +74,11 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
         } else {
             return s;
         }
+    }
+
+    @Override
+    public LayoutPath toPath() {
+        return LayoutPathsImpl.of(this);
     }
 
     @Override

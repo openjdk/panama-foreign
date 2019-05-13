@@ -25,11 +25,7 @@
 
 package java.foreign;
 
-import jdk.internal.foreign.LayoutPathsImpl;
-
 import java.lang.invoke.VarHandle;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * A layout path.
@@ -62,27 +58,32 @@ public interface LayoutPath {
     VarHandle dereferenceHandle(Class<?> carrier);
 
     /**
-     * Lookup a layout path for elements with given name.
-     * @param name the name of the matching layout subelements.
-     * @return a stream of matching layout subelements.
+     * Lookup a layout path for a sub-elements with given name.
+     * @param name the name of the matching layout sub-element.
+     * @return the layout path for the sub-element
+     * @throws IllegalArgumentException if no sub-element with given name can be found in current path.
+     * @throws UnsupportedOperationException if the current path does not point to a {@link Group} layout, or
+     * a {@link Value} layout whose sub-contents (see {@link Value#contents()}) are set.
+     *
+     * @implSpec in case multiple sub-elements with matching name exists, the first is returned; that is,
+     * the sub-element with lowest offset from current path is returned.
      */
-    default Stream<LayoutPath> lookup(String name) {
-        return lookup(l -> l.name().map(n -> n.equals(name)).orElse(false));
-    }
+    LayoutPath groupElement(String name) throws IllegalArgumentException, UnsupportedOperationException;
 
     /**
-     * Lookup a layout path with given matching predicate.
-     * @param condition the predicate describing matching layout subelements.
-     * @return a stream of matching layout subelements.
+     * Lookup a layout path for a sub-elements at given index.
+     * @param index the index of the matching layout sub-element.
+     * @return the layout path for the sub-element
+     * @throws IllegalArgumentException if the index is &lt; 0, or if it is bigger than number of elements in the group.
+     * @throws UnsupportedOperationException if the current path does not point to a {@link Group} layout, or
+     * a {@link Value} layout whose sub-contents (see {@link Value#contents()}) are set.
      */
-    Stream<LayoutPath> lookup(Predicate<? super Layout> condition);
+    LayoutPath groupElement(long index) throws IllegalArgumentException, UnsupportedOperationException;
 
     /**
-     * Create a new layout path rooted in the given layout.
-     * @param layout the root of the layout path to be created.
-     * @return a new layout path.
+     * Return a layout path to an array element.
+     * @return a layout path to an array element.
+     * @throws UnsupportedOperationException if the current path does not point to a {@link Sequence} layout.
      */
-    static LayoutPath of(Layout layout) {
-        return LayoutPathsImpl.of(layout);
-    }
+    LayoutPath sequenceElement() throws UnsupportedOperationException;
 }

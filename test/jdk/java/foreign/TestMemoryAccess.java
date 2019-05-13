@@ -45,29 +45,47 @@ public class TestMemoryAccess {
     @Test(dataProvider = "elements")
     public void testAccess(Layout elemLayout, Class<?> carrier, Checker checker) {
         Layout layout = elemLayout.withName("elem");
-        testAccessInternal(layout, carrier, checker);
+        testAccessInternal(layout, layout.toPath(), carrier, checker);
     }
 
     @Test(dataProvider = "elements")
-    public void testPaddedAccess(Layout elemLayout, Class<?> carrier, Checker checker) {
+    public void testPaddedAccessByName(Layout elemLayout, Class<?> carrier, Checker checker) {
         Layout layout = Group.struct(Padding.of(elemLayout.bitsSize()), elemLayout.withName("elem"));
-        testAccessInternal(layout, carrier, checker);
+        testAccessInternal(layout, layout.toPath()
+                .groupElement("elem"), carrier, checker);
+    }
+
+    @Test(dataProvider = "elements")
+    public void testPaddedAccessByIndex(Layout elemLayout, Class<?> carrier, Checker checker) {
+        Layout layout = Group.struct(Padding.of(elemLayout.bitsSize()), elemLayout.withName("elem"));
+        testAccessInternal(layout, layout.toPath()
+                .groupElement(1), carrier, checker);
     }
 
     @Test(dataProvider = "arrayElements")
     public void testArrayAccess(Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
         Sequence seq = Sequence.of(10, elemLayout.withName("elem"));
-        testArrayAccessInternal(seq, carrier, checker);
+        testArrayAccessInternal(seq, seq.toPath()
+                .sequenceElement(), carrier, checker);
     }
 
     @Test(dataProvider = "arrayElements")
-    public void testPaddedArrayAccess(Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
+    public void testPaddedArrayAccessByName(Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
         Sequence seq = Sequence.of(10, Group.struct(Padding.of(elemLayout.bitsSize()), elemLayout.withName("elem")));
-        testArrayAccessInternal(seq, carrier, checker);
+        testArrayAccessInternal(seq, seq.toPath()
+                .sequenceElement()
+                .groupElement("elem"), carrier, checker);
     }
 
-    private void testAccessInternal(Layout layout, Class<?> carrier, Checker checker) {
-        LayoutPath path = LayoutPath.of(layout).lookup("elem").findFirst().get();
+    @Test(dataProvider = "arrayElements")
+    public void testPaddedArrayAccessByIndex(Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
+        Sequence seq = Sequence.of(10, Group.struct(Padding.of(elemLayout.bitsSize()), elemLayout.withName("elem")));
+        testArrayAccessInternal(seq, seq.toPath()
+                .sequenceElement()
+                .groupElement(1), carrier, checker);
+    }
+
+    private void testAccessInternal(Layout layout, LayoutPath path, Class<?> carrier, Checker checker) {
         VarHandle handle = path.dereferenceHandle(carrier);
 
         MemoryAddress outer_address;
@@ -90,8 +108,7 @@ public class TestMemoryAccess {
         }
     }
 
-    private void testArrayAccessInternal(Sequence seq, Class<?> carrier, ArrayChecker checker) {
-        LayoutPath path = LayoutPath.of(seq).lookup("elem").findFirst().get();
+    private void testArrayAccessInternal(Sequence seq, LayoutPath path, Class<?> carrier, ArrayChecker checker) {
         VarHandle handle = path.dereferenceHandle(carrier);
 
         MemoryAddress outer_address;
@@ -120,25 +137,39 @@ public class TestMemoryAccess {
     public void testMatrixAccess(Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
         Sequence seq = Sequence.of(20,
                 Sequence.of(10, elemLayout.withName("elem")));
-        testMatrixAccessInternal(seq, carrier, checker);
+        testMatrixAccessInternal(seq, seq.toPath()
+                .sequenceElement()
+                .sequenceElement(), carrier, checker);
     }
 
     @Test(dataProvider = "matrixElements")
-    public void testPaddedMatrixAccess(Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
+    public void testPaddedMatrixAccessByName(Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
         Sequence seq = Sequence.of(20,
                 Sequence.of(10, Group.struct(Padding.of(elemLayout.bitsSize()), elemLayout.withName("elem"))));
-        testMatrixAccessInternal(seq, carrier, checker);
+        testMatrixAccessInternal(seq, seq.toPath()
+                .sequenceElement()
+                .sequenceElement()
+                .groupElement("elem"), carrier, checker);
+    }
+
+    @Test(dataProvider = "matrixElements")
+    public void testPaddedMatrixAccessByIndex(Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
+        Sequence seq = Sequence.of(20,
+                Sequence.of(10, Group.struct(Padding.of(elemLayout.bitsSize()), elemLayout.withName("elem"))));
+        testMatrixAccessInternal(seq, seq.toPath()
+                .sequenceElement()
+                .sequenceElement()
+                .groupElement(1), carrier, checker);
     }
 
     @Test(dataProvider = "badCarriers",
           expectedExceptions = IllegalArgumentException.class)
     public void testBadCarriers(Class<?> carrier) {
         Layout l = Value.ofUnsignedInt(32).withName("elem");
-        LayoutPath.of(l).dereferenceHandle(carrier);
+        l.toPath().dereferenceHandle(carrier);
     }
 
-    private void testMatrixAccessInternal(Sequence seq, Class<?> carrier, MatrixChecker checker) {
-        LayoutPath path = LayoutPath.of(seq).lookup("elem").findFirst().get();
+    private void testMatrixAccessInternal(Sequence seq, LayoutPath path, Class<?> carrier, MatrixChecker checker) {
         VarHandle handle = path.dereferenceHandle(carrier);
 
         MemoryAddress outer_address;
