@@ -25,18 +25,20 @@
 package java.foreign;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 /**
  * A group layout is used to combine together multiple layouts. There are two ways in which layouts can be combined,
  * e.g. a 'struct' (see {@link Kind#STRUCT}), where contained elements are laid out one after the other, and a 'union'
  * (see {@link Kind#UNION}, where contained elements are laid out 'on top' of each other.
  */
-public class Group extends AbstractLayout<Group> implements Layout {
+public class Group extends AbstractLayout<Group> implements Compound, Iterable<Layout> {
 
     /**
      * The group kind.
@@ -82,8 +84,8 @@ public class Group extends AbstractLayout<Group> implements Layout {
      * Returns the sub-elements associated with this group.
      * @return the element layouts.
      */
-    public List<Layout> elements() {
-        return elements;
+    public Stream<Layout> elements() {
+        return elements.stream();
     }
 
     @Override
@@ -91,6 +93,28 @@ public class Group extends AbstractLayout<Group> implements Layout {
         return wrapWithAnnotations(elements.stream()
                 .map(Object::toString)
                 .collect(Collectors.joining(kind.delimTag, "[", "]")));
+    }
+
+    @Override
+    public Iterator<Layout> iterator() {
+        return elements().iterator();
+    }
+
+    /**
+     * The element layout at given position in this group layout.
+     * @param index the position of the group sub-element.
+     * @return element layout.
+     */
+    public Layout elementLayout(long index) {
+        return elements.get((int)index);
+    }
+
+    /**
+     * Returns the number of elements in this compound layout.
+     * @return the number of elements in this compound layout.
+     */
+    public long elementsSize() {
+        return elements.size();
     }
 
     @Override

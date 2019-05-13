@@ -114,11 +114,11 @@ public class TestMemoryAccess {
         MemoryAddress outer_address;
         try (MemoryScope scope = MemoryScope.globalScope().fork()) {
             MemoryAddress addr = scope.allocate(seq);
-            for (int i = 0 ; i < seq.elementsSize() ; i++) {
+            for (int i = 0 ; i < seq.elementsSize().getAsLong() ; i++) {
                 checker.check(handle, addr, i);
             }
             try {
-                checker.check(handle, addr, seq.elementsSize());
+                checker.check(handle, addr, seq.elementsSize().getAsLong());
                 throw new AssertionError(); //not ok, out of bounds
             } catch (IllegalStateException ex) {
                 //ok, should fail (out of bounds)
@@ -175,14 +175,14 @@ public class TestMemoryAccess {
         MemoryAddress outer_address;
         try (MemoryScope scope = MemoryScope.globalScope().fork()) {
             MemoryAddress addr = scope.allocate(seq);
-            for (int i = 0 ; i < seq.elementsSize() ; i++) {
-                for (int j = 0 ; j < ((Sequence)seq.element()).elementsSize() ; j++) {
+            for (int i = 0 ; i < seq.elementsSize().getAsLong() ; i++) {
+                for (int j = 0 ; j < ((Sequence)seq.elementLayout()).elementsSize().getAsLong() ; j++) {
                     checker.check(handle, addr, i, j);
                 }
             }
             try {
-                checker.check(handle, addr, seq.elementsSize(),
-                        ((Sequence)seq.element()).elementsSize());
+                checker.check(handle, addr, seq.elementsSize().getAsLong(),
+                        ((Sequence)seq.elementLayout()).elementsSize().getAsLong());
                 throw new AssertionError(); //not ok, out of bounds
             } catch (IllegalStateException ex) {
                 //ok, should fail (out of bounds)

@@ -35,10 +35,7 @@ import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.LongSupplier;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public class LayoutPathsImpl {
 
@@ -105,7 +102,7 @@ public class LayoutPathsImpl {
         @Override
         public LayoutPath sequenceElement() throws UnsupportedOperationException {
             if (layout() instanceof Sequence) {
-                return new LayoutPathImpl(((Sequence)layout()).element(), this, offsetFunc);
+                return new LayoutPathImpl(((Sequence)layout()).elementLayout(), this, offsetFunc);
             } else {
                 throw unsupported(layout());
             }
@@ -132,26 +129,24 @@ public class LayoutPathsImpl {
 
     private static LayoutPath lookupGroup(LayoutPath encl, Group group, LayoutSelector selector) {
         LongSupplier offset = encl::offset;
-        if (!(group instanceof Sequence)) {
-            long index = 0;
-            for (Layout l : group.elements()) {
-                if (selector.test(l, index)) {
-                    return of(l, encl, offset);
-                }
-                if (group.kind() != Group.Kind.UNION) {
-                    LongSupplier offsetPrev = offset;
-                    offset = () -> offsetPrev.getAsLong() + l.bitsSize();
-                }
-                index++;
+        long index = 0;
+        for (Layout l : group) {
+            if (selector.test(l, index)) {
+                return of(l, encl, offset);
             }
+            if (group.kind() != Group.Kind.UNION) {
+                LongSupplier offsetPrev = offset;
+                offset = () -> offsetPrev.getAsLong() + l.bitsSize();
+            }
+            index++;
         }
         throw selector.lookupError(group);
     }
 
     private static LayoutPath lookupContents(LayoutPath thisPath, LayoutSelector selector) {
         Value value = (Value)thisPath.layout();
-        if (value.contents().isPresent()) {
-            return lookupGroup(thisPath, value.contents().get(), selector);
+        if (value.contents().isPresent() && (value.contents().get() instanceof Group)) {
+            return lookupGroup(thisPath, (Group)value.contents().get(), selector);
         } else {
             throw unsupported(thisPath.layout());
         }

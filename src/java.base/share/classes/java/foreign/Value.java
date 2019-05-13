@@ -75,9 +75,9 @@ public class Value extends AbstractLayout<Value> implements Layout {
     private final Kind kind;
     private final Endianness endianness;
     private final long size;
-    private final Optional<Group> contents;
+    private final Optional<Compound> contents;
 
-    Value(Kind kind, Endianness endianness, long size, Optional<Group> contents, Map<String, String> annotations) {
+    Value(Kind kind, Endianness endianness, long size, Optional<Compound> contents, Map<String, String> annotations) {
         super(annotations);
         this.kind = kind;
         this.endianness = endianness;
@@ -128,20 +128,20 @@ public class Value extends AbstractLayout<Value> implements Layout {
     }
 
     /**
-     * Return optional group overlay associated with this value layout. This is useful to view a value
+     * Return optional compound overlay associated with this value layout. This is useful to view a value
      * as an aggregate.
-     * @return group overlay.
+     * @return compound overlay.
      */
-    public Optional<Group> contents() {
+    public Optional<Compound> contents() {
         return contents;
     }
 
     /**
-     * Attach a sub-group layout to this value layout.
-     * @param contents the sub-group overlay attached to this (container) layout.
-     * @return a new container layout with associated group substructure.
+     * Attach a sub-compound layout to this value layout.
+     * @param contents the sub-compound overlay attached to this (container) layout.
+     * @return a new container layout with associated compound substructure.
      */
-    public Value withContents(Group contents) {
+    public Value withContents(Compound contents) {
         return new Value(kind, endianness, size, Optional.of(contents), annotations());
     }
 

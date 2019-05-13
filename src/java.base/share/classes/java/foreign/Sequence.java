@@ -24,33 +24,57 @@
  */
 package java.foreign;
 
-import java.util.Collections;
 import java.util.Map;
+import java.util.OptionalLong;
+import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * A sequence layout. A sequence layout is a special case of a group layout, made up of an element layout and a repetition count.
- * The repetition count can be zero if the sequence contains no elements. A sequence layout of the kind e.g. {@code [ 4i32 ]},
- * always induces a group layout e.g. {@code [i32 i32 i32 i32]} - that is, the group associated with a sequence is
- * a 'struct' group (see {@link Group.Kind#STRUCT}), where a given layout element is repeated a number of times that
- * is equal to the sequence size.
+ * The repetition count can be zero if the sequence contains no elements. A 'bound' sequence layout of the kind e.g. {@code [ 4:i32 ]},
+ * can be thought of as a group layout e.g. {@code [i32 i32 i32 i32]} where a given layout element is repeated a number of times that
+ * is equal to the sequence size. Unbound sequence layouts can be thought of an infinite sequence of a layout element,
+ * as in {@code [i32 i32 i32 i32, ...]}. In such cases the sequence layout will not have an associated size.
  */
-public final class Sequence extends Group {
+public final class Sequence extends AbstractLayout<Sequence> implements Compound {
 
-    private final long size;
+    private final OptionalLong size;
     private final Layout elementLayout;
 
-    private Sequence(long size, Layout elementLayout, Map<String, String> annotations) {
-        super(Kind.STRUCT, Collections.nCopies((int)size, elementLayout), annotations);
+    private Sequence(OptionalLong size, Layout elementLayout, Map<String, String> annotations) {
+        super(annotations);
         this.size = size;
         this.elementLayout = elementLayout;
+    }
+
+    @Override
+    public long bitsSize() throws UnsupportedOperationException {
+        if (size.isPresent()) {
+            return elementLayout.bitsSize() * size.getAsLong();
+        } else {
+            throw new UnsupportedOperationException("Cannot compute size of unbound layout");
+        }
+    }
+
+    @Override
+    public boolean isPartial() {
+        return elementLayout.isPartial();
     }
 
     /**
      * The element layout associated with this sequence layout.
      * @return element layout.
      */
-    public Layout element() {
+    public Layout elementLayout() {
         return elementLayout;
+    }
+
+    @Override
+    public Stream<Layout> elements() {
+        Stream<Layout> elems = Stream.iterate(elementLayout, UnaryOperator.identity());
+        return size.isPresent() ?
+                elems.limit(size.getAsLong()) :
+                elems;
     }
 
     /**
@@ -60,21 +84,30 @@ public final class Sequence extends Group {
      * @return the new sequence layout.
      */
     public static Sequence of(long size, Layout elementLayout) {
-        return new Sequence(size, elementLayout, NO_ANNOS);
+        return new Sequence(OptionalLong.of(size), elementLayout, NO_ANNOS);
+    }
+
+    /**
+     * Create a new unbound sequence layout with given element layout.
+     * @param elementLayout the element layout.
+     * @return the new sequence layout.
+     */
+    public static Sequence of(Layout elementLayout) {
+        return new Sequence(OptionalLong.empty(), elementLayout, NO_ANNOS);
     }
 
     /**
      * Returns the repetition count associated with this sequence layout.
      * @return the repetition count (can be zero if array size is unspecified).
      */
-    public long elementsSize() {
+    public OptionalLong elementsSize() {
         return size;
     }
 
     @Override
     public String toString() {
-        return wrapWithAnnotations(String.format("[%d%s]",
-                size, elementLayout));
+        return wrapWithAnnotations(String.format("[%s:%s]",
+                size.isPresent() ? size.getAsLong() : "", elementLayout));
     }
 
     @Override
@@ -94,21 +127,11 @@ public final class Sequence extends Group {
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ Long.hashCode(size) ^ elementLayout.hashCode();
+        return super.hashCode() ^ size.hashCode() ^ elementLayout.hashCode();
     }
 
     @Override
     Sequence withAnnotations(Map<String, String> annotations) {
         return new Sequence(elementsSize(), elementLayout, annotations);
-    }
-
-    @Override
-    public Sequence stripAnnotations() {
-        return (Sequence)super.stripAnnotations();
-    }
-
-    @Override
-    public Sequence withAnnotation(String name, String value) {
-        return (Sequence) super.withAnnotation(name, value);
     }
 }

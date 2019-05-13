@@ -30,8 +30,7 @@ import java.util.Optional;
 
 /**
  * The layout corresponding to a memory address. An address layout can (optionally) be associated with a descriptor
- * describing the contents of the target memory region pointed to by the address - either a function or a layout
- * (see {@link Descriptor}).
+ * describing the contents of the target memory region pointed to by the address (see {@link Layout}).
  */
 public final class Address extends Value {
 
@@ -52,14 +51,14 @@ public final class Address extends Value {
     private final PointeeKind pointeeKind;
     private final Layout layout;
 
-    private Address(PointeeKind pointeeKind, Layout layout, long size, Kind kind, Endianness endianness, Optional<Group> contents, Map<String, String> annotations) {
+    private Address(PointeeKind pointeeKind, Layout layout, long size, Kind kind, Endianness endianness, Optional<Compound> contents, Map<String, String> annotations) {
         super(kind, endianness, size, contents, annotations);
         this.pointeeKind = pointeeKind;
         this.layout = layout;
     }
 
     @Override
-    public Address withContents(Group contents) {
+    public Address withContents(Compound contents) {
         return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), Optional.of(contents), annotations());
     }
 

@@ -309,7 +309,7 @@ final class VarHandles {
         boolean be = ((Value)layout).endianness() == Value.Endianness.BIG_ENDIAN;
 
         long[] strides = ((LayoutPathsImpl.LayoutPathImpl)path).enclosingSequences().stream()
-                .mapToLong(seq -> seq.element().bitsSize() / 8)
+                .mapToLong(seq -> seq.elementLayout().bitsSize() / 8)
                 .toArray();
 
         Map<Integer, MethodHandle> carrierFactory = addressFactories.get(carrier);
