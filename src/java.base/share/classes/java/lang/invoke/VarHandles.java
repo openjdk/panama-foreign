@@ -25,7 +25,7 @@
 
 package java.lang.invoke;
 
-import jdk.internal.foreign.LayoutPathsImpl;
+import jdk.internal.foreign.LayoutPathImpl;
 
 import java.foreign.Layout;
 import java.foreign.LayoutPath;
@@ -294,7 +294,7 @@ final class VarHandles {
     }
 
     static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, LayoutPath path) {
-        if (!carrier.isPrimitive() || carrier == void.class) {
+        if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
             throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
         }
 
@@ -304,11 +304,24 @@ final class VarHandles {
             throw new IllegalArgumentException("Not a value layout: " + layout);
         }
 
-        long offset = path.offset() / 8;
+        LayoutPath path2 = path;
+        while (path2 != null) {
+            if (path2.enclosing() != null &&
+                path2.enclosing().layout() instanceof Value) {
+                throw new IllegalArgumentException("Cannot dereference path into Value container");
+            }
+            path2 = path2.enclosing();
+        }
+
+        if (sizeof(carrier) != layout.bitsSize()) {
+            throw new IllegalArgumentException("Invalid carrier for layout " + layout);
+        }
+
+        long offset = ((LayoutPathImpl)path).offsetInternal() / 8;
         long length = layout.bitsSize() / 8;
         boolean be = ((Value)layout).endianness() == Value.Endianness.BIG_ENDIAN;
 
-        long[] strides = ((LayoutPathsImpl.LayoutPathImpl)path).enclosingSequences().stream()
+        long[] strides = ((LayoutPathImpl)path).enclosingSequences().stream()
                 .mapToLong(seq -> seq.elementLayout().bitsSize() / 8)
                 .toArray();
 
@@ -321,6 +334,20 @@ final class VarHandles {
             return (VarHandle)fac.invoke(be, length, offset, strides);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
+        }
+    }
+
+    static int sizeof(Class<?> carrier) {
+        if (carrier == byte.class) {
+            return 8;
+        } else if (carrier == short.class || carrier == char.class) {
+            return 16;
+        } else if (carrier == int.class || carrier == float.class) {
+            return 32;
+        } else if (carrier == long.class || carrier == double.class) {
+            return 64;
+        } else {
+            throw new IllegalStateException("Cannot get here");
         }
     }
 
