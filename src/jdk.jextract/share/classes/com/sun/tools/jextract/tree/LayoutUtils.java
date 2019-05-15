@@ -33,6 +33,8 @@ import java.foreign.memory.DoubleComplex;
 import java.foreign.memory.FloatComplex;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.LongDoubleComplex;
+
+import com.sun.tools.jextract.Utils;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
@@ -66,9 +68,9 @@ public final class LayoutUtils {
             nativeName = t.spelling();
             if (nativeName.contains("::") || nativeName.contains(" ")) {
                 SourceLocation.Location loc = cursor.getSourceLocation().getFileLocation();
-                return "anon$"
+                return Utils.toJavaIdentifier("anon$"
                         + loc.path().getFileName().toString().replaceAll("\\.", "_")
-                        + "$" + loc.offset();
+                        + "$" + loc.offset());
             }
         }
 
