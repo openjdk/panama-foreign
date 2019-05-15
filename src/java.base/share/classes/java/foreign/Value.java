@@ -77,8 +77,8 @@ public class Value extends AbstractLayout<Value> implements Layout {
     private final long size;
     private final Optional<Compound> contents;
 
-    Value(Kind kind, Endianness endianness, long size, Optional<Compound> contents, Map<String, String> annotations) {
-        super(annotations);
+    Value(Kind kind, Endianness endianness, long size, Optional<Compound> contents, Map<String, String> attributes) {
+        super(attributes);
         this.kind = kind;
         this.endianness = endianness;
         this.size = size;
@@ -142,7 +142,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return a new container layout with associated compound substructure.
      */
     public Value withContents(Compound contents) {
-        return new Value(kind, endianness, size, Optional.of(contents), annotations());
+        return new Value(kind, endianness, size, Optional.of(contents), attributes());
     }
 
     /**
@@ -204,7 +204,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
 
     @Override
     public String toString() {
-        String prefix = wrapWithAnnotations(String.format("%s%d",
+        String prefix = wrapWithAttributes(String.format("%s%d",
                 endianness == Endianness.BIG_ENDIAN ?
                         kind.tag.toUpperCase() : kind.tag,
                 size));
@@ -234,7 +234,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
     }
 
     @Override
-    Value withAnnotations(Map<String, String> annotations) {
-        return new Value(kind, endianness, size, contents, annotations);
+    Value withAttributes(Map<String, String> attributes) {
+        return new Value(kind, endianness, size, contents, attributes);
     }
 }

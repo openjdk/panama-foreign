@@ -34,8 +34,8 @@ import java.util.Map;
 public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
     private final String layoutExpression;
 
-    Unresolved(String layoutExpression, Map<String, String> annotations) {
-        super(annotations);
+    Unresolved(String layoutExpression, Map<String, String> attributes) {
+        super(attributes);
         this.layoutExpression = layoutExpression;
     }
 
@@ -87,11 +87,11 @@ public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
 
     @Override
     public String toString() {
-        return wrapWithAnnotations(String.format("${%s}", layoutExpression));
+        return wrapWithAttributes(String.format("${%s}", layoutExpression));
     }
 
     @Override
-    Unresolved withAnnotations(Map<String, String> annotations) {
-        return new Unresolved(layoutExpression, annotations);
+    Unresolved withAttributes(Map<String, String> attributes) {
+        return new Unresolved(layoutExpression, attributes);
     }
 }

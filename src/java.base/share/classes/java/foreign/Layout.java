@@ -24,19 +24,19 @@
  */
 package java.foreign;
 
-import java.util.Map;
+import java.lang.annotation.Native;
 import java.util.Optional;
 
 /**
  * This interface models the layout of a group of bits in a memory region.
- * Layouts can be annotated in order to embed domain specific knowledge, and they can be referenced by name
- * (see {@link Unresolved}). A layout is always associated with a size (in bits).
+ * Layouts can be associated with one or more attributes in order to embed domain specific knowledge,
+ * and they can be referenced by name (see {@link Unresolved}). A layout is always associated with a size (in bits).
  */
 public interface Layout {
     /**
-     * The key of the predefined 'name' annotation.
+     * The key of the predefined 'name' attribute.
      */
-    String NAME = "name";
+    String NAME_ATTRIBUTE = "name";
 
     /**
      * Computes the layout size, in bits
@@ -51,33 +51,36 @@ public interface Layout {
     boolean isPartial();
 
     /**
-     * Return the key-value annotations map associated with this object.
-     * @return the key-value annotations map.
+     * Return the value of the layout attribute with given name (if any).
+     * @param name the name of the attribute whose value is to be retrieved.
+     * @return the value of the layout attribute with given name.
      */
-    Map<String, String> annotations();
+    Optional<String> attribute(String name);
 
     /**
-     * Return the value of the 'name' annotation (if any) associated with this object.
-     * @return the layout name (if any).
+     * Add an attribute to the current layout.
+     * @param name the attribute name.
+     * @param value the attribute value.
+     * @return a new layout with the desired layout attribute.
+     */
+    Layout withAttribute(String name, String value);
+
+    /**
+     * Return the value of the 'name' attribute (if any) associated with this layout.
+     * @return the layout 'name' attribute (if any).
      */
     default Optional<String> name() {
-        return Optional.ofNullable(annotations().get(NAME));
+        return attribute(NAME_ATTRIBUTE);
     }
-
-    /**
-     * Add annotation to the current layout.
-     * @param name the annotation name.
-     * @param value the annotation value.
-     * @return a new layout with the desired annotation.
-     */
-    Layout withAnnotation(String name, String value);
 
     /**
      * Attach name annotation to the current layout.
      * @param name name annotation.
      * @return a new layout with desired name annotation.
      */
-    Layout withName(String name);
+    default Layout withName(String name) {
+        return withAttribute(NAME_ATTRIBUTE, name);
+    }
 
     /**
      * Strip all annotations from the current (possibly annotated) layout.

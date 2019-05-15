@@ -66,8 +66,8 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
     private final List<Layout> elements;
     private long size = -1L;
 
-    Group(Kind kind, List<Layout> elements, Map<String, String> annotations) {
-        super(annotations);
+    Group(Kind kind, List<Layout> elements, Map<String, String> attributes) {
+        super(attributes);
         this.kind = kind;
         this.elements = elements;
     }
@@ -90,7 +90,7 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
 
     @Override
     public String toString() {
-        return wrapWithAnnotations(elements.stream()
+        return wrapWithAttributes(elements.stream()
                 .map(Object::toString)
                 .collect(Collectors.joining(kind.delimTag, "[", "]")));
     }
@@ -169,7 +169,7 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
     }
 
     @Override
-    Group withAnnotations(Map<String, String> annotations) {
-        return new Group(kind, elements, annotations);
+    Group withAttributes(Map<String, String> attributes) {
+        return new Group(kind, elements, attributes);
     }
 }

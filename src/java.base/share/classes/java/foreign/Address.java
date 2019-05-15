@@ -51,15 +51,15 @@ public final class Address extends Value {
     private final PointeeKind pointeeKind;
     private final Layout layout;
 
-    private Address(PointeeKind pointeeKind, Layout layout, long size, Kind kind, Endianness endianness, Optional<Compound> contents, Map<String, String> annotations) {
-        super(kind, endianness, size, contents, annotations);
+    private Address(PointeeKind pointeeKind, Layout layout, long size, Kind kind, Endianness endianness, Optional<Compound> contents, Map<String, String> attributes) {
+        super(kind, endianness, size, contents, attributes);
         this.pointeeKind = pointeeKind;
         this.layout = layout;
     }
 
     @Override
     public Address withContents(Compound contents) {
-        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), Optional.of(contents), annotations());
+        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), Optional.of(contents), attributes());
     }
 
     /**
@@ -158,8 +158,8 @@ public final class Address extends Value {
     }
 
     @Override
-    Address withAnnotations(Map<String, String> annotations) {
-        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), contents(), annotations);
+    Address withAttributes(Map<String, String> attributes) {
+        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), contents(), attributes);
     }
 
     @Override
@@ -168,7 +168,7 @@ public final class Address extends Value {
     }
 
     @Override
-    public Address withAnnotation(String name, String value) {
-        return (Address)super.withAnnotation(name, value);
+    public Address withAttribute(String name, String value) {
+        return (Address)super.withAttribute(name, value);
     }
 }

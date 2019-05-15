@@ -32,8 +32,8 @@ import java.util.Map;
 public class Padding extends AbstractLayout<Padding> implements Layout {
     private final long size;
 
-    Padding(long size, Map<String, String> annotations) {
-        super(annotations);
+    Padding(long size, Map<String, String> attributes) {
+        super(attributes);
         this.size = size;
     }
 
@@ -58,7 +58,7 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
 
     @Override
     public String toString() {
-        return wrapWithAnnotations("x" + size);
+        return wrapWithAttributes("x" + size);
     }
 
     @Override
@@ -82,7 +82,7 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
     }
 
     @Override
-    Padding withAnnotations(Map<String, String> annotations) {
-        return new Padding(size, annotations);
+    Padding withAttributes(Map<String, String> attributes) {
+        return new Padding(size, attributes);
     }
 }

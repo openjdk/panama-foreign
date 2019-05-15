@@ -41,8 +41,8 @@ public final class Sequence extends AbstractLayout<Sequence> implements Compound
     private final OptionalLong size;
     private final Layout elementLayout;
 
-    private Sequence(OptionalLong size, Layout elementLayout, Map<String, String> annotations) {
-        super(annotations);
+    private Sequence(OptionalLong size, Layout elementLayout, Map<String, String> attributes) {
+        super(attributes);
         this.size = size;
         this.elementLayout = elementLayout;
     }
@@ -106,7 +106,7 @@ public final class Sequence extends AbstractLayout<Sequence> implements Compound
 
     @Override
     public String toString() {
-        return wrapWithAnnotations(String.format("[%s:%s]",
+        return wrapWithAttributes(String.format("[%s:%s]",
                 size.isPresent() ? size.getAsLong() : "", elementLayout));
     }
 
@@ -131,7 +131,7 @@ public final class Sequence extends AbstractLayout<Sequence> implements Compound
     }
 
     @Override
-    Sequence withAnnotations(Map<String, String> annotations) {
-        return new Sequence(elementsSize(), elementLayout, annotations);
+    Sequence withAttributes(Map<String, String> attributes) {
+        return new Sequence(elementsSize(), elementLayout, attributes);
     }
 }

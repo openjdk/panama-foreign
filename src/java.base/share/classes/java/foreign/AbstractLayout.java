@@ -30,44 +30,44 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
-    private final Map<String, String> annotations;
+    private final Map<String, String> attributes;
 
-    public AbstractLayout(Map<String, String> annotations) {
-        this.annotations = Collections.unmodifiableMap(annotations);
+    public AbstractLayout(Map<String, String> attributes) {
+        this.attributes = Collections.unmodifiableMap(attributes);
     }
 
     @Override
-    public Map<String, String> annotations() {
-        return annotations;
+    public Optional<String> attribute(String name) {
+        return Optional.ofNullable(attributes.get(name));
+    }
+
+    protected Map<String, String> attributes() {
+        return attributes;
     }
 
     @Override
     public L stripAnnotations() {
-        return withAnnotations(NO_ANNOS);
+        return withAttributes(NO_ANNOS);
     }
 
     @Override
-    public L withAnnotation(String name, String value) {
-        Map<String, String> newAnnotations = new LinkedHashMap<>(annotations);
+    public L withAttribute(String name, String value) {
+        Map<String, String> newAnnotations = new LinkedHashMap<>(attributes);
         newAnnotations.put(name, value);
-        return withAnnotations(newAnnotations);
+        return withAttributes(newAnnotations);
     }
 
-    @Override
-    public L withName(String name) {
-        return withAnnotation(NAME, name);
-    }
+    abstract L withAttributes(Map<String, String> attributes);
 
-    abstract L withAnnotations(Map<String, String> annotations);
-
-    String wrapWithAnnotations(String s) {
-        if (!annotations.isEmpty()) {
+    String wrapWithAttributes(String s) {
+        if (!attributes.isEmpty()) {
             return String.format("%s%s",
-                    s, annotations.entrySet().stream()
-                            .map(e -> !e.getKey().equals(NAME) ?
+                    s, attributes.entrySet().stream()
+                            .map(e -> !e.getKey().equals(NAME_ATTRIBUTE) ?
                                     String.format("(%s=%s)", e.getKey(), e.getValue()) :
                                     String.format("(%s)", e.getValue()))
                             .collect(Collectors.joining()));
@@ -83,7 +83,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
 
     @Override
     public int hashCode() {
-        return annotations.hashCode();
+        return attributes.hashCode();
     }
 
     @Override
@@ -96,7 +96,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
             return false;
         }
 
-        return annotations.equals(((AbstractLayout)other).annotations);
+        return attributes.equals(((AbstractLayout)other).attributes);
     }
 
     static final Map<String, String> NO_ANNOS = Collections.unmodifiableMap(new HashMap<>());
