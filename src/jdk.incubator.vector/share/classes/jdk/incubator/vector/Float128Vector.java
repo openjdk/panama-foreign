@@ -906,13 +906,13 @@ final class Float128Vector extends FloatVector {
     @Override
     @ForceInline
     public float minLanes(VectorMask<Float> m) {
-        return FloatVector.broadcast(SPECIES, Float.MAX_VALUE).blend(this, m).minLanes();
+        return FloatVector.broadcast(SPECIES, Float.POSITIVE_INFINITY).blend(this, m).minLanes();
     }
 
     @Override
     @ForceInline
     public float maxLanes(VectorMask<Float> m) {
-        return FloatVector.broadcast(SPECIES, Float.MIN_VALUE).blend(this, m).maxLanes();
+        return FloatVector.broadcast(SPECIES, Float.NEGATIVE_INFINITY).blend(this, m).maxLanes();
     }
 
     @Override

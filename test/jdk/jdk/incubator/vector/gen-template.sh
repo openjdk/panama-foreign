@@ -41,9 +41,15 @@ compare_template="Compare"
 reduction_scalar="Reduction-Scalar-op"
 reduction_scalar_min="Reduction-Scalar-Min-op"
 reduction_scalar_max="Reduction-Scalar-Max-op"
+reduction_scalar_masked="Reduction-Scalar-Masked-op"
+reduction_scalar_min_masked="Reduction-Scalar-Masked-Min-op"
+reduction_scalar_max_masked="Reduction-Scalar-Masked-Max-op"
 reduction_op="Reduction-op"
 reduction_op_min="Reduction-Min-op"
 reduction_op_max="Reduction-Max-op"
+reduction_op_masked="Reduction-Masked-op"
+reduction_op_min_masked="Reduction-Masked-Min-op"
+reduction_op_max_masked="Reduction-Masked-Max-op"
 unary_math_template="Unary-op-math"
 binary_math_template="Binary-op-math"
 bool_reduction_scalar="BoolReduction-Scalar-op"
@@ -181,24 +187,31 @@ function gen_binary_op {
   echo "Generating binary op $1 ($2)..."
 #  gen_op_tmpl $binary_scalar "$@"
   gen_op_tmpl $binary "$@"
+  gen_op_tmpl $binary_masked "$@"
 }
 
 function gen_reduction_op {
   echo "Generating reduction op $1 ($2)..."
   gen_op_tmpl $reduction_scalar "$@"
   gen_op_tmpl $reduction_op "$@"
+  gen_op_tmpl $reduction_scalar_masked "$@"
+  gen_op_tmpl $reduction_op_masked "$@"
 }
 
 function gen_reduction_op_min {
   echo "Generating reduction op $1 ($2)..."
   gen_op_tmpl $reduction_scalar_min "$@"
   gen_op_tmpl $reduction_op_min "$@"
+  gen_op_tmpl $reduction_scalar_min_masked "$@"
+  gen_op_tmpl $reduction_op_min_masked "$@"
 }
 
 function gen_reduction_op_max {
   echo "Generating reduction op $1 ($2)..."
   gen_op_tmpl $reduction_scalar_max "$@"
   gen_op_tmpl $reduction_op_max "$@"
+  gen_op_tmpl $reduction_scalar_max_masked "$@"
+  gen_op_tmpl $reduction_op_max_masked "$@"
 }
 
 function gen_bool_reduction_op {
