@@ -24,7 +24,6 @@
  */
 package java.foreign;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +38,7 @@ import java.util.stream.Stream;
  * e.g. a 'struct' (see {@link Kind#STRUCT}), where contained elements are laid out one after the other, and a 'union'
  * (see {@link Kind#UNION}, where contained elements are laid out 'on top' of each other.
  */
-public class Group extends AbstractLayout<Group> implements Compound, Iterable<Layout> {
+public class GroupLayout extends AbstractLayout<GroupLayout> implements CompoundLayout, Iterable<Layout> {
 
     /**
      * The group kind.
@@ -68,7 +67,7 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
     private long size = -1L;
     private long alignment = -1L;
 
-    Group(Kind kind, List<Layout> elements, OptionalLong alignment, Optional<String> name) {
+    GroupLayout(Kind kind, List<Layout> elements, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.kind = kind;
         this.elements = elements;
@@ -127,10 +126,10 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
         if (!super.equals(other)) {
             return false;
         }
-        if (!(other instanceof Group)) {
+        if (!(other instanceof GroupLayout)) {
             return false;
         }
-        Group g = (Group)other;
+        GroupLayout g = (GroupLayout)other;
         return kind.equals(g.kind) && elements.equals(g.elements);
     }
 
@@ -160,8 +159,8 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
      * @param elements The components of the product layout.
      * @return the new product group layout.
      */
-    public static Group struct(Layout... elements) {
-        return new Group(Kind.STRUCT, List.of(elements), OptionalLong.empty(), Optional.empty());
+    public static GroupLayout struct(Layout... elements) {
+        return new GroupLayout(Kind.STRUCT, List.of(elements), OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -169,12 +168,12 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
      * @param elements The components of the sum layout.
      * @return the new sum group layout.
      */
-    public static Group union(Layout... elements) {
-        return new Group(Kind.UNION, List.of(elements), OptionalLong.empty(), Optional.empty());
+    public static GroupLayout union(Layout... elements) {
+        return new GroupLayout(Kind.UNION, List.of(elements), OptionalLong.empty(), Optional.empty());
     }
 
     @Override
-    Group dup(OptionalLong alignment, Optional<String> name) {
-        return new Group(kind, elements, alignment, name);
+    GroupLayout dup(OptionalLong alignment, Optional<String> name) {
+        return new GroupLayout(kind, elements, alignment, name);
     }
 }

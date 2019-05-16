@@ -36,12 +36,12 @@ import java.util.stream.Stream;
  * is equal to the sequence size. Unbounded sequence layouts can be thought of an infinite repetition of a layout element,
  * as in {@code [i32 i32 i32 i32, ...]}. In such cases the sequence layout will not have an associated size.
  */
-public class Sequence extends AbstractLayout<Sequence> implements Compound {
+public class SequenceLayout extends AbstractLayout<SequenceLayout> implements CompoundLayout {
 
     private final OptionalLong size;
     private final Layout elementLayout;
 
-    private Sequence(OptionalLong size, Layout elementLayout, OptionalLong alignment, Optional<String> name) {
+    private SequenceLayout(OptionalLong size, Layout elementLayout, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.size = size;
         this.elementLayout = elementLayout;
@@ -50,7 +50,7 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
     /**
      * Computes the layout size, in bits. Since not all sequences have a finite size, this method can throw an exception.
      * @return the layout size (where defined).
-     * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link Sequence#elementsSize()}).
+     * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementsSize()}).
      */
     @Override
     public long bitsSize() throws UnsupportedOperationException {
@@ -88,8 +88,8 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
      * @param size the array repetition count.
      * @return the new sequence layout.
      */
-    public static Sequence of(long size, Layout elementLayout) {
-        return new Sequence(OptionalLong.of(size), elementLayout, OptionalLong.empty(), Optional.empty());
+    public static SequenceLayout of(long size, Layout elementLayout) {
+        return new SequenceLayout(OptionalLong.of(size), elementLayout, OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -97,8 +97,8 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
      * @param elementLayout the element layout.
      * @return the new sequence layout.
      */
-    public static Sequence of(Layout elementLayout) {
-        return new Sequence(OptionalLong.empty(), elementLayout, OptionalLong.empty(), Optional.empty());
+    public static SequenceLayout of(Layout elementLayout) {
+        return new SequenceLayout(OptionalLong.empty(), elementLayout, OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -123,10 +123,10 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
         if (!super.equals(other)) {
             return false;
         }
-        if (!(other instanceof Sequence)) {
+        if (!(other instanceof SequenceLayout)) {
             return false;
         }
-        Sequence s = (Sequence)other;
+        SequenceLayout s = (SequenceLayout)other;
         return size == s.size && elementLayout.equals(s.elementLayout);
     }
 
@@ -136,7 +136,7 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
     }
 
     @Override
-    Sequence dup(OptionalLong alignment, Optional<String> name) {
-        return new Sequence(elementsSize(), elementLayout, alignment, name);
+    SequenceLayout dup(OptionalLong alignment, Optional<String> name) {
+        return new SequenceLayout(elementsSize(), elementLayout, alignment, name);
     }
 }

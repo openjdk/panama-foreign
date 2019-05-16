@@ -36,7 +36,7 @@ public interface Layout {
     /**
      * Computes the layout size, in bits
      * @return the layout size.
-     * @throws UnsupportedOperationException if the layout has unbounded size (see {@link Sequence}).
+     * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}).
      */
     long bitsSize() throws UnsupportedOperationException;
 
@@ -54,19 +54,22 @@ public interface Layout {
     Layout withName(String name);
 
     /**
-     * Computes alignment.
+     * Returns the alignment constraints assocciated with this layout. Layout alignment defines a power of two A which is the
+     * bitwise alignment of the layout. If A&gt;=8 then A/8 is the number of bytes that must be aligned for any pointer that
+     * correctly points to this layout. Thus:
+     *
+     * <ul>
+     * <li>A=8 means unaligned (in the usual sense), which is common in packets.</li>
+     * <li>A=64 means word aligned (on LP64), A=32 int aligned, A=16 short aligned, etc.</li>
+     * <li>A=512 is the most strict alignment required by the x86/SV ABI (for AVX-512 data).</li>
+     * </ul>
+     *
      * @return bit alignment.
      */
     long alignmentBits();
 
     /**
-     * Creates a new layout which features the desired alignment. Layout alignment defines a power of two A which is the
-     * bitwise alignment of the layout. If A&gt;=8 then A/8 is the number of bits that must be aligned for any pointer that
-     * correctly points to this layout.
-     *
-     * Thus, A=8 means unaligned (in the usual sense), which is common in packets.
-     * A=64 means word aligned (on LP64), A=32 int aligned, A=16 short aligned, etc.
-     * A=512 is the most strict alignment required by the x86/SV ABI (for AVX-512 data).
+     * Creates a new layout which features the desired alignment.
      *
      * @param alignmentBits the required alignment requirements.
      * @return a new layout with given alignment requirements.

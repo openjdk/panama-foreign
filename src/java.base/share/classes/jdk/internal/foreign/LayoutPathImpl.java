@@ -26,16 +26,14 @@ package jdk.internal.foreign;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 
-import java.foreign.Compound;
-import java.foreign.Group;
+import java.foreign.CompoundLayout;
+import java.foreign.GroupLayout;
 import java.foreign.Layout;
 import java.foreign.LayoutPath;
-import java.foreign.Sequence;
-import java.foreign.Value;
+import java.foreign.SequenceLayout;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.LongSupplier;
 
 public class LayoutPathImpl implements LayoutPath {
 
@@ -44,9 +42,9 @@ public class LayoutPathImpl implements LayoutPath {
     final Layout layout;
     final LayoutPathImpl enclosing;
     final long offset;
-    final List<Sequence> enclSequences;
+    final List<SequenceLayout> enclSequences;
 
-    LayoutPathImpl(Layout layout, LayoutPathImpl enclosing, long offset, List<Sequence> enclSequences) {
+    LayoutPathImpl(Layout layout, LayoutPathImpl enclosing, long offset, List<SequenceLayout> enclSequences) {
         this.layout = layout;
         this.enclosing = enclosing;
         this.offset = offset;
@@ -73,7 +71,7 @@ public class LayoutPathImpl implements LayoutPath {
         return JLI.memoryAddressViewVarHandle(carrier, this);
     }
 
-    public final List<Sequence> enclosingSequences() {
+    public final List<SequenceLayout> enclosingSequences() {
         return enclSequences;
     }
 
@@ -84,7 +82,7 @@ public class LayoutPathImpl implements LayoutPath {
 
     @Override
     public LayoutPath elementPath(String name) throws IllegalArgumentException, UnsupportedOperationException {
-        if (layout() instanceof Group) {
+        if (layout() instanceof GroupLayout) {
             return LayoutPathImpl.lookup(this, new ByName(name));
         } else {
             throw unsupported(layout());
@@ -93,7 +91,7 @@ public class LayoutPathImpl implements LayoutPath {
 
     @Override
     public LayoutPath elementPath(long index) throws IllegalArgumentException, UnsupportedOperationException {
-        if (layout() instanceof Compound) {
+        if (layout() instanceof CompoundLayout) {
             return LayoutPathImpl.lookup(this, new ByIndex(index));
         } else {
             throw unsupported(layout());
@@ -102,16 +100,16 @@ public class LayoutPathImpl implements LayoutPath {
 
     @Override
     public LayoutPath elementPath() throws UnsupportedOperationException {
-        if (layout() instanceof Sequence) {
-            List<Sequence> newEnclSequences = new ArrayList<>(enclSequences);
-            newEnclSequences.add((Sequence)layout());
-            return new LayoutPathImpl(((Sequence)layout()).elementLayout(), this, offset, newEnclSequences);
+        if (layout() instanceof SequenceLayout) {
+            List<SequenceLayout> newEnclSequences = new ArrayList<>(enclSequences);
+            newEnclSequences.add((SequenceLayout)layout());
+            return new LayoutPathImpl(((SequenceLayout)layout()).elementLayout(), this, offset, newEnclSequences);
         } else {
             throw unsupported(layout());
         }
     }
 
-    static LayoutPath of(Layout layout, LayoutPath prev, long offset, List<Sequence> enclSequences) {
+    static LayoutPath of(Layout layout, LayoutPath prev, long offset, List<SequenceLayout> enclSequences) {
         checkAlignmentConstraints(prev.layout(), layout, offset);
         return new LayoutPathImpl(layout, (LayoutPathImpl)prev, offset, enclSequences);
     }
@@ -131,29 +129,29 @@ public class LayoutPathImpl implements LayoutPath {
     }
 
     private static LayoutPath lookup(LayoutPath path, LayoutSelector selector) {
-        if (path.layout() instanceof Compound) {
-            return lookupCompound(path, (Compound) path.layout(), selector);
+        if (path.layout() instanceof CompoundLayout) {
+            return lookupCompound(path, (CompoundLayout) path.layout(), selector);
         } else {
             throw unsupported(path.layout());
         }
     }
 
-    private static LayoutPath lookupCompound(LayoutPath encl, Compound compound, LayoutSelector selector) {
+    private static LayoutPath lookupCompound(LayoutPath encl, CompoundLayout compound, LayoutSelector selector) {
         long offset = encl.offset();
-        if (compound instanceof Group) {
-            Group group = (Group)compound;
+        if (compound instanceof GroupLayout) {
+            GroupLayout group = (GroupLayout)compound;
             long index = 0;
             for (Layout l : group) {
                 if (selector.test(l, index)) {
                     return of(l, encl, offset, ((LayoutPathImpl)encl).enclSequences);
                 }
-                if (group.kind() != Group.Kind.UNION) {
+                if (group.kind() != GroupLayout.Kind.UNION) {
                     offset += l.bitsSize();
                 }
                 index++;
             }
         } else {
-            Sequence seq = (Sequence)compound;
+            SequenceLayout seq = (SequenceLayout)compound;
             long index = ((ByIndex)selector).index;
             if (index < 0 || (seq.elementsSize().isPresent() && index >= seq.elementsSize().getAsLong())) {
                 throw new IllegalArgumentException("Invalid index for sequence layout: " + seq);
@@ -167,7 +165,7 @@ public class LayoutPathImpl implements LayoutPath {
 
     interface LayoutSelector {
         boolean test(Layout l, long index);
-        IllegalArgumentException lookupError(Compound l);
+        IllegalArgumentException lookupError(CompoundLayout l);
     }
 
     static class ByName implements LayoutSelector {
@@ -188,7 +186,7 @@ public class LayoutPathImpl implements LayoutPath {
         }
 
         @Override
-        public IllegalArgumentException lookupError(Compound l) {
+        public IllegalArgumentException lookupError(CompoundLayout l) {
             return new IllegalArgumentException(String.format("Cannot find field '%s' in layout %s", name, l));
         }
     }
@@ -210,7 +208,7 @@ public class LayoutPathImpl implements LayoutPath {
         }
 
         @Override
-        public IllegalArgumentException lookupError(Compound l) {
+        public IllegalArgumentException lookupError(CompoundLayout l) {
             return new IllegalArgumentException(String.format("Cannot find field with index '%d' in layout %s", index, l));
         }
     }

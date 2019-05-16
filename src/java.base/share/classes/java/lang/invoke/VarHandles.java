@@ -29,7 +29,7 @@ import jdk.internal.foreign.LayoutPathImpl;
 
 import java.foreign.Layout;
 import java.foreign.LayoutPath;
-import java.foreign.Value;
+import java.foreign.ValueLayout;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.ByteOrder;
@@ -301,7 +301,7 @@ final class VarHandles {
 
         Layout layout = path.layout();
 
-        if (!(layout instanceof Value)) {
+        if (!(layout instanceof ValueLayout)) {
             throw new IllegalArgumentException("Not a value layout: " + layout);
         }
 
@@ -312,7 +312,7 @@ final class VarHandles {
         long offset = ((LayoutPathImpl)path).offset();
         long alignment = path.layout().alignmentBits();
         long length = layout.bitsSize() / 8;
-        boolean be = ((Value)layout).endianness() == ByteOrder.BIG_ENDIAN;
+        boolean be = ((ValueLayout)layout).endianness() == ByteOrder.BIG_ENDIAN;
 
         long[] strides = ((LayoutPathImpl)path).enclosingSequences().stream()
                 .mapToLong(seq -> seq.elementLayout().bitsSize() / 8)

@@ -33,7 +33,7 @@ import java.util.OptionalLong;
  * There are three kind of supported value layouts: integer signed, integer unsigned and floating point. Each
  * value layout also has a size and an endianness (which could be either big-endian or little-endian).
  */
-public class Value extends AbstractLayout<Value> implements Layout {
+public class ValueLayout extends AbstractLayout<ValueLayout> implements Layout {
 
     /**
      * The value kind.
@@ -57,7 +57,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
     private final ByteOrder endianness;
     private final long size;
 
-    Value(Kind kind, ByteOrder endianness, long size, OptionalLong alignment, Optional<String> name) {
+    ValueLayout(Kind kind, ByteOrder endianness, long size, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.kind = kind;
         this.endianness = endianness;
@@ -111,7 +111,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @param size the floating-polong size.
      * @return the new value layout.
      */
-    public static Value ofFloatingPoint(long size) {
+    public static ValueLayout ofFloatingPoint(long size) {
         return ofFloatingPoint(ByteOrder.nativeOrder(), size);
     }
 
@@ -121,8 +121,8 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @param size the floating-point size.
      * @return the new value layout.
      */
-    public static Value ofFloatingPoint(ByteOrder endianness, long size) {
-        return new Value(Kind.FLOATING_POINT, endianness, size, OptionalLong.empty(), Optional.empty());
+    public static ValueLayout ofFloatingPoint(ByteOrder endianness, long size) {
+        return new ValueLayout(Kind.FLOATING_POINT, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -130,7 +130,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @param size the integral size.
      * @return the new value layout.
      */
-    public static Value ofUnsignedInt(long size) {
+    public static ValueLayout ofUnsignedInt(long size) {
         return ofUnsignedInt(ByteOrder.nativeOrder(), size);
     }
 
@@ -140,8 +140,8 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @param size the integral size.
      * @return the new value layout.
      */
-    public static Value ofUnsignedInt(ByteOrder endianness, long size) {
-        return new Value(Kind.INTEGRAL_UNSIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
+    public static ValueLayout ofUnsignedInt(ByteOrder endianness, long size) {
+        return new ValueLayout(Kind.INTEGRAL_UNSIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -149,7 +149,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @param size the integral size.
      * @return the new value layout.
      */
-    public static Value ofSignedInt(long size) {
+    public static ValueLayout ofSignedInt(long size) {
         return ofSignedInt(ByteOrder.nativeOrder(), size);
     }
 
@@ -159,8 +159,8 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @param size the integral size.
      * @return the new value layout.
      */
-    public static Value ofSignedInt(ByteOrder endianness, long size) {
-        return new Value(Kind.INTEGRAL_SIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
+    public static ValueLayout ofSignedInt(ByteOrder endianness, long size) {
+        return new ValueLayout(Kind.INTEGRAL_SIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
     @Override
@@ -179,10 +179,10 @@ public class Value extends AbstractLayout<Value> implements Layout {
         if (!super.equals(other)) {
             return false;
         }
-        if (!(other instanceof Value)) {
+        if (!(other instanceof ValueLayout)) {
             return false;
         }
-        Value v = (Value)other;
+        ValueLayout v = (ValueLayout)other;
         return kind.equals(v.kind) && endianness.equals(v.endianness) &&
             size == v.size;
     }
@@ -194,7 +194,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
     }
 
     @Override
-    Value dup(OptionalLong alignment, Optional<String> name) {
-        return new Value(kind, endianness, size, alignment, name);
+    ValueLayout dup(OptionalLong alignment, Optional<String> name) {
+        return new ValueLayout(kind, endianness, size, alignment, name);
     }
 }

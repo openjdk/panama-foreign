@@ -39,11 +39,11 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
         this.name = name;
     }
 
-    protected OptionalLong optAlignment() {
+    OptionalLong optAlignment() {
         return alignment;
     }
 
-    protected Optional<String> optName() {
+    Optional<String> optName() {
         return name;
     }
 

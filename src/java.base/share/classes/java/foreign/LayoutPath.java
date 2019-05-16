@@ -36,7 +36,7 @@ import java.lang.invoke.VarHandle;
  * Layout paths can feature one or more 'free' dimensions (see {@link LayoutPath#dimensions()}. For instance,
  * a layout path pointing into an unspecified sequence element (see {@link LayoutPath#elementPath()} features
  * a free dimension, which will have to be bound at runtime; that is, the {@link VarHandle} obtained via
- * {@link LayoutPath#dereferenceHandle(Class)} will feature an extra {@long} access coordinate.
+ * {@link LayoutPath#dereferenceHandle(Class)} will feature an extra {@code long} access coordinate.
  */
 public interface LayoutPath {
 
@@ -72,7 +72,7 @@ public interface LayoutPath {
      * A var handle that can be used to dereference memory at this path.
      * @param carrier the var handle carrier type.
      * @return a var handle which can be used to dereference memory at this path.
-     * @throws UnsupportedOperationException if the layout targeted by this path is not a {@link Value} layout.
+     * @throws UnsupportedOperationException if the layout targeted by this path is not a {@link ValueLayout} layout.
      * @throws IllegalArgumentException if the carrier does not represent a primitive type, if the carrier is {@code void},
      * {@code boolean}, or if the size of the carrier type does not match that of the layout targeted by this layout path.
      *
@@ -87,7 +87,7 @@ public interface LayoutPath {
      * @param name the name of the matching layout sub-element.
      * @return the layout path for the sub-element
      * @throws IllegalArgumentException if no sub-element with given name can be found in current path.
-     * @throws UnsupportedOperationException if the current path does not point to a {@link Group} layout.
+     * @throws UnsupportedOperationException if the current path does not point to a {@link GroupLayout} layout.
      *
      * @implSpec in case multiple sub-elements with matching name exists, the first is returned; that is,
      * the sub-element with lowest offset from current path is returned.
@@ -100,7 +100,7 @@ public interface LayoutPath {
      * @param index the index of the matching layout sub-element.
      * @return the layout path for the sub-element
      * @throws IllegalArgumentException if the index is &lt; 0, or if it is bigger than number of elements in the group.
-     * @throws UnsupportedOperationException if the current path does not point to a {@link Compound} layout.
+     * @throws UnsupportedOperationException if the current path does not point to a {@link CompoundLayout} layout.
      */
     LayoutPath elementPath(long index) throws IllegalArgumentException, UnsupportedOperationException;
 
@@ -108,7 +108,7 @@ public interface LayoutPath {
      * Returns a layout path to an unspecified sequence element. The number of dimensions of the resulting path
      * will be {@code 1 + n}, where {@code n} is the number of dimensions in the current path.
      * @return a layout path to an unspecified sequence element.
-     * @throws UnsupportedOperationException if the current path does not point to a {@link Sequence} layout.
+     * @throws UnsupportedOperationException if the current path does not point to a {@link SequenceLayout} layout.
      */
     LayoutPath elementPath() throws UnsupportedOperationException;
 }

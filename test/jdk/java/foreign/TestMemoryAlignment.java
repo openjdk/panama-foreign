@@ -28,13 +28,13 @@
 
 import org.testng.annotations.*;
 
-import java.foreign.Group;
+import java.foreign.GroupLayout;
 import java.foreign.Layout;
 import java.foreign.MemoryAddress;
 import java.foreign.MemoryScope;
-import java.foreign.Padding;
-import java.foreign.Sequence;
-import java.foreign.Value;
+import java.foreign.PaddingLayout;
+import java.foreign.SequenceLayout;
+import java.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.util.stream.LongStream;
 
@@ -44,7 +44,7 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testAlignedAccess(long align) {
-        Layout layout = Value.ofSignedInt(32);
+        Layout layout = ValueLayout.ofSignedInt(32);
         assertEquals(layout.alignmentBits(), 32);
         Layout aligned = layout.alignTo(align);
         assertEquals(aligned.alignmentBits(), align); //unreasonable alignment here, to make sure access throws
@@ -59,10 +59,10 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testUnalignedAccess(long align) {
-        Layout layout = Value.ofSignedInt(32);
+        Layout layout = ValueLayout.ofSignedInt(32);
         assertEquals(layout.alignmentBits(), 32);
         Layout aligned = layout.alignTo(align);
-        Layout alignedGroup = Group.struct(Padding.of(8), aligned);
+        Layout alignedGroup = GroupLayout.struct(PaddingLayout.of(8), aligned);
         assertEquals(alignedGroup.alignmentBits(), align);
         VarHandle vh = aligned.toPath().dereferenceHandle(int.class);
         try (MemoryScope scope = MemoryScope.globalScope().fork()) {
@@ -76,9 +76,9 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testUnalignedPath(long align) {
-        Layout layout = Value.ofSignedInt(32);
+        Layout layout = ValueLayout.ofSignedInt(32);
         Layout aligned = layout.alignTo(align);
-        Layout alignedGroup = Group.struct(Padding.of(8), aligned);
+        Layout alignedGroup = GroupLayout.struct(PaddingLayout.of(8), aligned);
         try {
             alignedGroup.toPath().elementPath(1).dereferenceHandle(int.class);
             assertEquals(align, 8); //this is the only case where path is aligned
@@ -89,7 +89,7 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testUnalignedSequence(long align) {
-        Layout layout = Sequence.of(5, Value.ofSignedInt(32).alignTo(align));
+        Layout layout = SequenceLayout.of(5, ValueLayout.ofSignedInt(32).alignTo(align));
         VarHandle vh = layout.toPath().elementPath().dereferenceHandle(int.class);
         try (MemoryScope scope = MemoryScope.globalScope().fork()) {
             MemoryAddress addr = scope.allocate(layout);
@@ -104,11 +104,11 @@ public class TestMemoryAlignment {
 
     @Test
     public void testPackedAccess() {
-        Value vChar = Value.ofSignedInt(8);
-        Value vShort = Value.ofSignedInt(16);
-        Value vInt = Value.ofSignedInt(32);
+        ValueLayout vChar = ValueLayout.ofSignedInt(8);
+        ValueLayout vShort = ValueLayout.ofSignedInt(16);
+        ValueLayout vInt = ValueLayout.ofSignedInt(32);
         //mimic pragma pack(1)
-        Group g = Group.struct(vChar.alignTo(8),
+        GroupLayout g = GroupLayout.struct(vChar.alignTo(8),
                                vShort.alignTo(8),
                                vInt.alignTo(8));
         assertEquals(g.alignmentBits(), 8);

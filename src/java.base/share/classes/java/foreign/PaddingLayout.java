@@ -30,10 +30,10 @@ import java.util.OptionalLong;
 /**
  * A padding layout specifies the size of extra space used to align struct fields around word boundaries.
  */
-public class Padding extends AbstractLayout<Padding> implements Layout {
+public class PaddingLayout extends AbstractLayout<PaddingLayout> implements Layout {
     private final long size;
 
-    Padding(long size, OptionalLong alignment, Optional<String> name) {
+    PaddingLayout(long size, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.size = size;
     }
@@ -43,8 +43,8 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
      * @param size the padding size in bits.
      * @return the new selector layout.
      */
-    public static Padding of(long size) {
-        return new Padding(size, OptionalLong.empty(), Optional.empty());
+    public static PaddingLayout of(long size) {
+        return new PaddingLayout(size, OptionalLong.empty(), Optional.empty());
     }
 
     @Override
@@ -70,10 +70,10 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
         if (!super.equals(other)) {
             return false;
         }
-        if (!(other instanceof Padding)) {
+        if (!(other instanceof PaddingLayout)) {
             return false;
         }
-        Padding p = (Padding)other;
+        PaddingLayout p = (PaddingLayout)other;
         return size == p.size;
     }
 
@@ -83,7 +83,7 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
     }
 
     @Override
-    Padding dup(OptionalLong alignment, Optional<String> name) {
-        return new Padding(size, alignment, name);
+    PaddingLayout dup(OptionalLong alignment, Optional<String> name) {
+        return new PaddingLayout(size, alignment, name);
     }
 }
