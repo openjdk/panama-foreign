@@ -27,7 +27,7 @@ package java.foreign;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
@@ -68,8 +68,8 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
     private long size = -1L;
     private long alignment = -1L;
 
-    Group(Kind kind, List<Layout> elements, OptionalLong alignment, Map<String, String> attributes) {
-        super(alignment, attributes);
+    Group(Kind kind, List<Layout> elements, OptionalLong alignment, Optional<String> name) {
+        super(alignment, name);
         this.kind = kind;
         this.elements = elements;
     }
@@ -92,7 +92,7 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
 
     @Override
     public String toString() {
-        return wrapWithAlignmentAndAttributes(elements.stream()
+        return decorateLayoutString(elements.stream()
                 .map(Object::toString)
                 .collect(Collectors.joining(kind.delimTag, "[", "]")));
     }
@@ -166,7 +166,7 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
      * @return the new product group layout.
      */
     public static Group struct(Layout... elements) {
-        return new Group(Kind.STRUCT, Arrays.asList(elements), OptionalLong.empty(), NO_ANNOS);
+        return new Group(Kind.STRUCT, Arrays.asList(elements), OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -175,11 +175,11 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
      * @return the new sum group layout.
      */
     public static Group union(Layout... elements) {
-        return new Group(Kind.UNION, Arrays.asList(elements), OptionalLong.empty(), NO_ANNOS);
+        return new Group(Kind.UNION, Arrays.asList(elements), OptionalLong.empty(), Optional.empty());
     }
 
     @Override
-    Group dup(OptionalLong alignment, Map<String, String> attributes) {
-        return new Group(kind, elements, alignment, attributes);
+    Group dup(OptionalLong alignment, Optional<String> name) {
+        return new Group(kind, elements, alignment, name);
     }
 }

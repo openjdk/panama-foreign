@@ -24,7 +24,7 @@
  */
 package java.foreign;
 
-import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -41,8 +41,8 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
     private final OptionalLong size;
     private final Layout elementLayout;
 
-    private Sequence(OptionalLong size, Layout elementLayout, OptionalLong alignment, Map<String, String> attributes) {
-        super(alignment, attributes);
+    private Sequence(OptionalLong size, Layout elementLayout, OptionalLong alignment, Optional<String> name) {
+        super(alignment, name);
         this.size = size;
         this.elementLayout = elementLayout;
     }
@@ -89,7 +89,7 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
      * @return the new sequence layout.
      */
     public static Sequence of(long size, Layout elementLayout) {
-        return new Sequence(OptionalLong.of(size), elementLayout, OptionalLong.empty(), NO_ANNOS);
+        return new Sequence(OptionalLong.of(size), elementLayout, OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -98,7 +98,7 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
      * @return the new sequence layout.
      */
     public static Sequence of(Layout elementLayout) {
-        return new Sequence(OptionalLong.empty(), elementLayout, OptionalLong.empty(), NO_ANNOS);
+        return new Sequence(OptionalLong.empty(), elementLayout, OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -111,7 +111,7 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
 
     @Override
     public String toString() {
-        return wrapWithAlignmentAndAttributes(String.format("[%s:%s]",
+        return decorateLayoutString(String.format("[%s:%s]",
                 size.isPresent() ? size.getAsLong() : "", elementLayout));
     }
 
@@ -136,7 +136,7 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
     }
 
     @Override
-    Sequence dup(OptionalLong alignment, Map<String, String> attributes) {
-        return new Sequence(elementsSize(), elementLayout, alignment, attributes);
+    Sequence dup(OptionalLong alignment, Optional<String> name) {
+        return new Sequence(elementsSize(), elementLayout, alignment, name);
     }
 }

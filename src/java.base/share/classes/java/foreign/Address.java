@@ -24,7 +24,6 @@
  */
 package java.foreign;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -53,15 +52,15 @@ public class Address extends Value {
     private final Layout layout;
 
     private Address(PointeeKind pointeeKind, Layout layout, long size, Kind kind, Endianness endianness, Optional<Compound> contents,
-                    OptionalLong alignment, Map<String, String> attributes) {
-        super(kind, endianness, size, contents, alignment, attributes);
+                    OptionalLong alignment, Optional<String> name) {
+        super(kind, endianness, size, contents, alignment, name);
         this.pointeeKind = pointeeKind;
         this.layout = layout;
     }
 
     @Override
     public Address withContents(Compound contents) {
-        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), Optional.of(contents), optAlignment(), attributes());
+        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), Optional.of(contents), optAlignment(), optName());
     }
 
     /**
@@ -100,7 +99,7 @@ public class Address extends Value {
      * @return the new address layout.
      */
     public static Address ofVoid(long size, Kind kind, Endianness endianness) {
-        return new Address(PointeeKind.VOID, null, size, kind, endianness, Optional.empty(), OptionalLong.empty(), NO_ANNOS);
+        return new Address(PointeeKind.VOID, null, size, kind, endianness, Optional.empty(), OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -133,7 +132,7 @@ public class Address extends Value {
      * @return the new address layout.
      */
     public static Address ofLayout(long size, Layout layout, Kind kind, Endianness endianness) {
-        return new Address(PointeeKind.LAYOUT, layout, size, kind, endianness, Optional.empty(), OptionalLong.empty(), NO_ANNOS);
+        return new Address(PointeeKind.LAYOUT, layout, size, kind, endianness, Optional.empty(), OptionalLong.empty(), Optional.empty());
     }
 
     @Override
@@ -160,17 +159,7 @@ public class Address extends Value {
     }
 
     @Override
-    Address dup(OptionalLong alignment, Map<String, String> attributes) {
-        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), contents(), alignment, attributes);
-    }
-
-    @Override
-    public Address stripAnnotations() {
-        return (Address)super.stripAnnotations();
-    }
-
-    @Override
-    public Address withAttribute(String name, String value) {
-        return (Address)super.withAttribute(name, value);
+    Address dup(OptionalLong alignment, Optional<String> name) {
+        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), contents(), alignment, name);
     }
 }

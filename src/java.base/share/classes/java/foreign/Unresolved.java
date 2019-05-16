@@ -24,7 +24,7 @@
  */
 package java.foreign;
 
-import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 /**
@@ -35,8 +35,8 @@ import java.util.OptionalLong;
 public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
     private final String layoutExpression;
 
-    Unresolved(String layoutExpression, Map<String, String> attributes) {
-        super(OptionalLong.empty(), attributes);
+    Unresolved(String layoutExpression, Optional<String> name) {
+        super(OptionalLong.empty(), name);
         this.layoutExpression = layoutExpression;
     }
 
@@ -46,7 +46,7 @@ public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
       * @return the new unresolved layout.
       */
     public static Unresolved of(String layoutExpression) {
-        return new Unresolved(layoutExpression, NO_ANNOS);
+        return new Unresolved(layoutExpression, Optional.empty());
     }
 
     /**
@@ -93,14 +93,14 @@ public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
 
     @Override
     public String toString() {
-        return wrapWithAlignmentAndAttributes(String.format("${%s}", layoutExpression));
+        return decorateLayoutString(String.format("${%s}", layoutExpression));
     }
 
     @Override
-    Unresolved dup(OptionalLong alignment, Map<String, String> attributes) {
+    Unresolved dup(OptionalLong alignment, Optional<String> name) {
         if (alignment.isPresent()) {
             throw new UnsupportedOperationException("alignTo on Unresolved");
         }
-        return new Unresolved(layoutExpression, attributes);
+        return new Unresolved(layoutExpression, name);
     }
 }

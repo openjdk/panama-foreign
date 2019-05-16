@@ -24,7 +24,6 @@
  */
 package java.foreign;
 
-import java.lang.annotation.Native;
 import java.util.Optional;
 
 /**
@@ -33,10 +32,6 @@ import java.util.Optional;
  * and they can be referenced by name (see {@link Unresolved}). A layout is always associated with a size (in bits).
  */
 public interface Layout {
-    /**
-     * The key of the predefined 'name' attribute.
-     */
-    String NAME_ATTRIBUTE = "name";
 
     /**
      * Computes the layout size, in bits
@@ -51,36 +46,17 @@ public interface Layout {
     boolean isPartial();
 
     /**
-     * Return the value of the layout attribute with given name (if any).
-     * @param name the name of the attribute whose value is to be retrieved.
-     * @return the value of the layout attribute with given name.
-     */
-    Optional<String> attribute(String name);
-
-    /**
-     * Add an attribute to the current layout.
-     * @param name the attribute name.
-     * @param value the attribute value.
-     * @return a new layout with the desired layout attribute.
-     */
-    Layout withAttribute(String name, String value);
-
-    /**
      * Return the value of the 'name' attribute (if any) associated with this layout.
      * @return the layout 'name' attribute (if any).
      */
-    default Optional<String> name() {
-        return attribute(NAME_ATTRIBUTE);
-    }
+    Optional<String> name();
 
     /**
      * Attach name annotation to the current layout.
      * @param name name annotation.
      * @return a new layout with desired name annotation.
      */
-    default Layout withName(String name) {
-        return withAttribute(NAME_ATTRIBUTE, name);
-    }
+    Layout withName(String name);
 
     /**
      * Computes alignment.
@@ -102,12 +78,6 @@ public interface Layout {
      * @throws IllegalArgumentException if the supplied alignment is not a power of two, or if it's lower than 8.
      */
     Layout alignTo(long alignmentBits) throws IllegalArgumentException;
-
-    /**
-     * Strip all annotations from the current (possibly annotated) layout.
-     * @return the unannotated layout.
-     */
-    Layout stripAnnotations();
 
     @Override
     String toString();

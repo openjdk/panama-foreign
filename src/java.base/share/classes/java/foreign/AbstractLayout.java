@@ -26,56 +26,45 @@ package java.foreign;
 
 import jdk.internal.foreign.LayoutPathImpl;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.stream.Collectors;
 
 abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
-    private final Map<String, String> attributes;
     private final OptionalLong alignment;
+    private final Optional<String> name;
 
-    public AbstractLayout(OptionalLong alignment, Map<String, String> attributes) {
-        this.attributes = Collections.unmodifiableMap(attributes);
+    public AbstractLayout(OptionalLong alignment, Optional<String> name) {
         this.alignment = alignment;
-    }
-
-    @Override
-    public Optional<String> attribute(String name) {
-        return Optional.ofNullable(attributes.get(name));
-    }
-
-    protected Map<String, String> attributes() {
-        return attributes;
+        this.name = name;
     }
 
     protected OptionalLong optAlignment() {
         return alignment;
     }
 
-    @Override
-    public L stripAnnotations() {
-        return dup(alignment, NO_ANNOS);
+    protected Optional<String> optName() {
+        return name;
     }
 
     @Override
-    public L withAttribute(String name, String value) {
-        Map<String, String> newAnnotations = new LinkedHashMap<>(attributes);
-        newAnnotations.put(name, value);
-        return dup(alignment, newAnnotations);
+    public L withName(String name) {
+        return dup(alignment, Optional.of(name));
     }
 
-    abstract L dup(OptionalLong alignment, Map<String, String> attributes);
+    @Override
+    public final Optional<String> name() {
+        return name;
+    }
+
+    abstract L dup(OptionalLong alignment, Optional<String> name);
 
     abstract long naturalAlignmentBits();
 
     @Override
     public final L alignTo(long alignmentBits) throws IllegalArgumentException {
         checkAlignment(alignmentBits);
-        return dup(OptionalLong.of(alignmentBits), attributes);
+        return dup(OptionalLong.of(alignmentBits), name);
     }
 
     private void checkAlignment(long alignmentBitCount) {
@@ -91,14 +80,9 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
         return alignment.orElse(naturalAlignmentBits());
     }
 
-    String wrapWithAlignmentAndAttributes(String s) {
-        if (!attributes.isEmpty()) {
-            s = String.format("%s%s",
-                    s, attributes.entrySet().stream()
-                            .map(e -> !e.getKey().equals(NAME_ATTRIBUTE) ?
-                                    String.format("(%s=%s)", e.getKey(), e.getValue()) :
-                                    String.format("(%s)", e.getValue()))
-                            .collect(Collectors.joining()));
+    String decorateLayoutString(String s) {
+        if (name.isPresent()) {
+            s = String.format("%s(%s)", s, name.get());
         }
         if (alignment.isPresent()) {
             s = alignment.getAsLong() + "%" + s;
@@ -116,7 +100,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
 
     @Override
     public int hashCode() {
-        return attributes.hashCode();
+        return name.hashCode() << alignment.orElse(0L);
     }
 
     @Override
@@ -129,8 +113,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
             return false;
         }
 
-        return attributes.equals(((AbstractLayout)other).attributes);
+        return Objects.equals(name, ((AbstractLayout)other).name) &&
+                Objects.equals(alignment, ((AbstractLayout)other).alignment);
     }
-
-    static final Map<String, String> NO_ANNOS = Collections.unmodifiableMap(new HashMap<>());
 }

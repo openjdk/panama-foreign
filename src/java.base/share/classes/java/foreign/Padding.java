@@ -24,7 +24,7 @@
  */
 package java.foreign;
 
-import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 /**
@@ -33,8 +33,8 @@ import java.util.OptionalLong;
 public class Padding extends AbstractLayout<Padding> implements Layout {
     private final long size;
 
-    Padding(long size, OptionalLong alignment, Map<String, String> attributes) {
-        super(alignment, attributes);
+    Padding(long size, OptionalLong alignment, Optional<String> name) {
+        super(alignment, name);
         this.size = size;
     }
 
@@ -44,7 +44,7 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
      * @return the new selector layout.
      */
     public static Padding of(long size) {
-        return new Padding(size, OptionalLong.empty(), NO_ANNOS);
+        return new Padding(size, OptionalLong.empty(), Optional.empty());
     }
 
     @Override
@@ -64,7 +64,7 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
 
     @Override
     public String toString() {
-        return wrapWithAlignmentAndAttributes("x" + size);
+        return decorateLayoutString("x" + size);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
     }
 
     @Override
-    Padding dup(OptionalLong alignment, Map<String, String> attributes) {
-        return new Padding(size, alignment, attributes);
+    Padding dup(OptionalLong alignment, Optional<String> name) {
+        return new Padding(size, alignment, name);
     }
 }
