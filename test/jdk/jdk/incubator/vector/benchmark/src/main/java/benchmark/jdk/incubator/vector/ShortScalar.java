@@ -604,6 +604,27 @@ public class ShortScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void maxMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)(Math.max(a, b));
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+    @Benchmark
     public void min(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
@@ -620,6 +641,27 @@ public class ShortScalar extends AbstractVectorBenchmark {
         bh.consume(rs);
     }
 
+    @Benchmark
+    public void minMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)(Math.min(a, b));
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
 
     @Benchmark
     public void andLanes(Blackhole bh) {
@@ -629,6 +671,23 @@ public class ShortScalar extends AbstractVectorBenchmark {
             r = -1;
             for (int i = 0; i < as.length; i++) {
                 r &= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void andLanesMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        short r = -1;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = -1;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r &= as[i];
             }
         }
         bh.consume(r);
@@ -652,6 +711,23 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
+    public void orLanesMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        short r = 0;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r |= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
     public void xorLanes(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = 0;
@@ -659,6 +735,23 @@ public class ShortScalar extends AbstractVectorBenchmark {
             r = 0;
             for (int i = 0; i < as.length; i++) {
                 r ^= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void xorLanesMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        short r = 0;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r ^= as[i];
             }
         }
         bh.consume(r);
@@ -679,6 +772,21 @@ public class ShortScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void addLanesMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        short r = 0;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r += as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
     public void mulLanes(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = 1;
@@ -686,6 +794,21 @@ public class ShortScalar extends AbstractVectorBenchmark {
             r = 1;
             for (int i = 0; i < as.length; i++) {
                 r *= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void mulLanesMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        short r = 1;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 1;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r *= as[i];
             }
         }
         bh.consume(r);
@@ -705,6 +828,21 @@ public class ShortScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void minLanesMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        short r = Short.MAX_VALUE;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = Short.MAX_VALUE;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r = (short)Math.min(r, a[i]);
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
     public void maxLanes(Blackhole bh) {
         short[] as = fa.apply(size);
         short r = Short.MIN_VALUE;
@@ -712,6 +850,21 @@ public class ShortScalar extends AbstractVectorBenchmark {
             r = Short.MIN_VALUE;
             for (int i = 0; i < as.length; i++) {
                 r = (short)Math.max(r, as[i]);
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void maxLanesMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        short r = Short.MIN_VALUE;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = Short.MIN_VALUE;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r = (short)Math.max(r, a[i]);
             }
         }
         bh.consume(r);

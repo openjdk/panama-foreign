@@ -107,6 +107,28 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FReductionMaskedOp {
+        float apply(float[] a, int idx, boolean[] mask);
+    }
+
+    interface FReductionAllMaskedOp {
+        float apply(float[] a, boolean[] mask);
+    }
+
+    static void assertReductionArraysEqualsMasked(float[] a, float[] b, float c, boolean[] mask,
+                                            FReductionMaskedOp f, FReductionAllMaskedOp fa) {
+        int i = 0;
+        try {
+            Assert.assertEquals(c, fa.apply(a, mask));
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(b[i], f.apply(a, i, mask));
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(c, fa.apply(a, mask), "Final result is incorrect!");
+            Assert.assertEquals(b[i], f.apply(a, i, mask), "at index #" + i);
+        }
+    }
+
     interface FBoolReductionOp {
         boolean apply(boolean[] a, int idx);
     }
@@ -562,7 +584,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatBinaryOpMaskProvider")
-    static void addFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    static void addFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
@@ -602,7 +624,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatBinaryOpMaskProvider")
-    static void subFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    static void subFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
@@ -645,7 +667,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
 
     @Test(dataProvider = "floatBinaryOpMaskProvider")
-    static void divFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    static void divFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
@@ -686,7 +708,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatBinaryOpMaskProvider")
-    static void mulFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    static void mulFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
@@ -766,6 +788,26 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, FloatMaxVectorTests::max);
     }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void maxFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.max(bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, FloatMaxVectorTests::max);
+    }
     static float min(float a, float b) {
         return (float)(Math.min(a, b));
     }
@@ -786,6 +828,32 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, FloatMaxVectorTests::min);
     }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void minFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.min(bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, FloatMaxVectorTests::min);
+    }
+
+
+
+
+
+
 
 
 
@@ -836,6 +904,54 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, ra, FloatMaxVectorTests::addLanes, FloatMaxVectorTests::addLanes);
     }
+    static float addLanesMasked(float[] a, int idx, boolean[] mask) {
+        float res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+            if(mask[i % SPECIES.length()])
+                res += a[i];
+        }
+
+        return res;
+    }
+
+    static float addLanesMasked(float[] a, boolean[] mask) {
+        float res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            float tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                if(mask[(i + j) % SPECIES.length()])
+                    tmp += a[i + j];
+            }
+            res += tmp;
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "floatUnaryOpMaskProvider")
+    static void addLanesFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+        float ra = 0;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                r[i] = av.addLanes(vmask);
+            }
+        }
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                ra += av.addLanes(vmask);
+            }
+        }
+
+        assertReductionArraysEqualsMasked(a, r, ra, mask, FloatMaxVectorTests::addLanesMasked, FloatMaxVectorTests::addLanesMasked);
+    }
     static float mulLanes(float[] a, int idx) {
         float res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
@@ -880,6 +996,54 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, ra, FloatMaxVectorTests::mulLanes, FloatMaxVectorTests::mulLanes);
     }
+    static float mulLanesMasked(float[] a, int idx, boolean[] mask) {
+        float res = 1;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+            if(mask[i % SPECIES.length()])
+                res *= a[i];
+        }
+
+        return res;
+    }
+
+    static float mulLanesMasked(float[] a, boolean[] mask) {
+        float res = 1;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            float tmp = 1;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                if(mask[(i + j) % SPECIES.length()])
+                    tmp *= a[i + j];
+            }
+            res *= tmp;
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "floatUnaryOpMaskProvider")
+    static void mulLanesFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+        float ra = 1;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                r[i] = av.mulLanes(vmask);
+            }
+        }
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                ra *= av.mulLanes(vmask);
+            }
+        }
+
+        assertReductionArraysEqualsMasked(a, r, ra, mask, FloatMaxVectorTests::mulLanesMasked, FloatMaxVectorTests::mulLanesMasked);
+    }
     static float minLanes(float[] a, int idx) {
         float res = Float.POSITIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
@@ -920,6 +1084,50 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, ra, FloatMaxVectorTests::minLanes, FloatMaxVectorTests::minLanes);
     }
+    static float minLanesMasked(float[] a, int idx, boolean[] mask) {
+        float res = Float.POSITIVE_INFINITY;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+            if(mask[i % SPECIES.length()])
+                res = (float)Math.min(res, a[i]);
+        }
+
+        return res;
+    }
+
+    static float minLanesMasked(float[] a, boolean[] mask) {
+        float res = Float.POSITIVE_INFINITY;
+        for (int i = 0; i < a.length; i++) {
+            if(mask[i % SPECIES.length()])
+                res = (float)Math.min(res, a[i]);
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "floatUnaryOpMaskProvider")
+    static void minLanesFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+        float ra = Float.POSITIVE_INFINITY;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                r[i] = av.minLanes(vmask);
+            }
+        }
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Float.POSITIVE_INFINITY;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                ra = (float)Math.min(ra, av.minLanes(vmask));
+            }
+        }
+
+        assertReductionArraysEqualsMasked(a, r, ra, mask, FloatMaxVectorTests::minLanesMasked, FloatMaxVectorTests::minLanesMasked);
+    }
     static float maxLanes(float[] a, int idx) {
         float res = Float.NEGATIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
@@ -959,6 +1167,50 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         }
 
         assertReductionArraysEquals(a, r, ra, FloatMaxVectorTests::maxLanes, FloatMaxVectorTests::maxLanes);
+    }
+    static float maxLanesMasked(float[] a, int idx, boolean[] mask) {
+        float res = Float.NEGATIVE_INFINITY;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+            if(mask[i % SPECIES.length()])
+                res = (float)Math.max(res, a[i]);
+        }
+
+        return res;
+    }
+
+    static float maxLanesMasked(float[] a, boolean[] mask) {
+        float res = Float.NEGATIVE_INFINITY;
+        for (int i = 0; i < a.length; i++) {
+            if(mask[i % SPECIES.length()])
+                res = (float)Math.max(res, a[i]);
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "floatUnaryOpMaskProvider")
+    static void maxLanesFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+        float ra = Float.NEGATIVE_INFINITY;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                r[i] = av.maxLanes(vmask);
+            }
+        }
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Float.NEGATIVE_INFINITY;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                ra = (float)Math.max(ra, av.maxLanes(vmask));
+            }
+        }
+
+        assertReductionArraysEqualsMasked(a, r, ra, mask, FloatMaxVectorTests::maxLanesMasked, FloatMaxVectorTests::maxLanesMasked);
     }
 
 

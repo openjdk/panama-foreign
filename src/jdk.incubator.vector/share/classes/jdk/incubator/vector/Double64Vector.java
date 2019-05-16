@@ -905,13 +905,13 @@ final class Double64Vector extends DoubleVector {
     @Override
     @ForceInline
     public double minLanes(VectorMask<Double> m) {
-        return DoubleVector.broadcast(SPECIES, Double.MAX_VALUE).blend(this, m).minLanes();
+        return DoubleVector.broadcast(SPECIES, Double.POSITIVE_INFINITY).blend(this, m).minLanes();
     }
 
     @Override
     @ForceInline
     public double maxLanes(VectorMask<Double> m) {
-        return DoubleVector.broadcast(SPECIES, Double.MIN_VALUE).blend(this, m).maxLanes();
+        return DoubleVector.broadcast(SPECIES, Double.NEGATIVE_INFINITY).blend(this, m).maxLanes();
     }
 
     @Override

@@ -133,6 +133,28 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 
+    interface FReductionMaskedOp {
+        $type$ apply($type$[] a, int idx, boolean[] mask);
+    }
+
+    interface FReductionAllMaskedOp {
+        $type$ apply($type$[] a, boolean[] mask);
+    }
+
+    static void assertReductionArraysEqualsMasked($type$[] a, $type$[] b, $type$ c, boolean[] mask,
+                                            FReductionMaskedOp f, FReductionAllMaskedOp fa) {
+        int i = 0;
+        try {
+            Assert.assertEquals(c, fa.apply(a, mask));
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(b[i], f.apply(a, i, mask));
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(c, fa.apply(a, mask), "Final result is incorrect!");
+            Assert.assertEquals(b[i], f.apply(a, i, mask), "at index #" + i);
+        }
+    }
+
     interface FBoolReductionOp {
         boolean apply(boolean[] a, int idx);
     }

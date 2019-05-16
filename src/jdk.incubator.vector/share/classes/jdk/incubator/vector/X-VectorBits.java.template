@@ -1345,13 +1345,21 @@ final class $vectortype$ extends $abstractvectortype$ {
     @Override
     @ForceInline
     public $type$ minLanes(VectorMask<$Boxtype$> m) {
+#if[FP]
+        return $abstractvectortype$.broadcast(SPECIES, $Boxtype$.POSITIVE_INFINITY).blend(this, m).minLanes();
+#else[FP]
         return $abstractvectortype$.broadcast(SPECIES, $Boxtype$.MAX_VALUE).blend(this, m).minLanes();
+#end[FP]
     }
 
     @Override
     @ForceInline
     public $type$ maxLanes(VectorMask<$Boxtype$> m) {
+#if[FP]
+        return $abstractvectortype$.broadcast(SPECIES, $Boxtype$.NEGATIVE_INFINITY).blend(this, m).maxLanes();
+#else[FP]
         return $abstractvectortype$.broadcast(SPECIES, $Boxtype$.MIN_VALUE).blend(this, m).maxLanes();
+#end[FP]
     }
 
     @Override
