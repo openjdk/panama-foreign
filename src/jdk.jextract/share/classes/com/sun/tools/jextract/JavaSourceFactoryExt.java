@@ -77,7 +77,10 @@ final class JavaSourceFactoryExt extends JavaSourceFactory {
 
         header_jsb.classEnd();
         String src = header_jsb.build();
-        srcMap.put(headerFile.pkgName + "." + forwarderName, src);
+        if (!headerFile.pkgName.isEmpty()) {
+            forwarderName = headerFile.pkgName + "." + forwarderName;
+        }
+        srcMap.put(forwarderName, src);
         return srcMap;
     }
 

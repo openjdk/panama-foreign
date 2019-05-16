@@ -24,6 +24,7 @@
 package com.sun.tools.jextract;
 
 import java.io.*;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -91,6 +92,12 @@ public final class Writer {
         for (var entry : sources.entrySet()) {
             String srcPath = entry.getKey().replace('.', File.separatorChar) + ".java";
             Path fullPath = destDir.resolve(srcPath).normalize();
+            Path dir = fullPath.getParent();
+            // In case the folder exist and is a link to a folder, this should be OK
+            // Case in point, /tmp on MacOS link to /private/tmp
+            if (Files.exists(dir) && !Files.isDirectory(dir)) {
+                throw new FileAlreadyExistsException(dir.toAbsolutePath().toString());
+            }
             Files.createDirectories(fullPath.getParent());
             Files.write(fullPath, List.of(entry.getValue()));
         }
