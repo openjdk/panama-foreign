@@ -58,11 +58,6 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
     }
 
     @Override
-    public boolean isPartial() {
-        return false;
-    }
-
-    @Override
     public String toString() {
         return decorateLayoutString("x" + size);
     }

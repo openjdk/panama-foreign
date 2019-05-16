@@ -92,9 +92,6 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
 
     @Override
     public LayoutPath toPath() {
-        if (isPartial()) {
-            throw new UnsupportedOperationException("Cannot compute layout path of partial layout: " + this);
-        }
         return LayoutPathImpl.of(this);
     }
 

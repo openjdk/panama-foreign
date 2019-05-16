@@ -155,11 +155,6 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
         return alignment;
     }
 
-    @Override
-    public boolean isPartial() {
-        return elements.stream().anyMatch(Layout::isPartial);
-    }
-
     /**
      * Create a new product group layout with given elements.
      * @param elements The components of the product layout.

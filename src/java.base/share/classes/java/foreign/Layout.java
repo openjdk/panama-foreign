@@ -29,7 +29,7 @@ import java.util.Optional;
 /**
  * This interface models the layout of a group of bits in a memory region.
  * Layouts can be associated with one or more attributes in order to embed domain specific knowledge,
- * and they can be referenced by name (see {@link Unresolved}). A layout is always associated with a size (in bits).
+ * and they have a name (see {@link Layout#name()}). A layout is always associated with a size (in bits).
  */
 public interface Layout {
 
@@ -38,12 +38,6 @@ public interface Layout {
      * @return the layout size.
      */
     long bitsSize();
-
-    /**
-     * Does this layout contain unresolved layouts?
-     * @return true if this layout contains (possibly nested) unresolved layouts.
-     */
-    boolean isPartial();
 
     /**
      * Return the value of the 'name' attribute (if any) associated with this layout.
@@ -85,7 +79,6 @@ public interface Layout {
     /**
      * Obtain layout path rooted at this layout.
      * @return a new layout path rooted at this layout.
-     * @throws UnsupportedOperationException if the layout is partial.
      */
-    LayoutPath toPath() throws UnsupportedOperationException;
+    LayoutPath toPath();
 }

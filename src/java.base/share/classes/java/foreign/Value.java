@@ -32,8 +32,7 @@ import jdk.internal.misc.Unsafe;
 /**
  * A value layout. This layout is used to model basic native types, such as integral values and floating point numbers.
  * There are three kind of supported value layouts: integer signed, integer unsigned and floating point. Each
- * value layout also has a size and an endianness (which could be either big-endian or little-endian), as well as
- * an optional substructure layout (see {@link Value#contents()}).
+ * value layout also has a size and an endianness (which could be either big-endian or little-endian).
  */
 public class Value extends AbstractLayout<Value> implements Layout {
 
@@ -76,14 +75,12 @@ public class Value extends AbstractLayout<Value> implements Layout {
     private final Kind kind;
     private final Endianness endianness;
     private final long size;
-    private final Optional<Compound> contents;
 
-    Value(Kind kind, Endianness endianness, long size, Optional<Compound> contents, OptionalLong alignment, Optional<String> name) {
+    Value(Kind kind, Endianness endianness, long size, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.kind = kind;
         this.endianness = endianness;
         this.size = size;
-        this.contents = contents;
     }
 
     /**
@@ -128,29 +125,6 @@ public class Value extends AbstractLayout<Value> implements Layout {
         return size;
     }
 
-    @Override
-    public boolean isPartial() {
-        return contents.map(Layout::isPartial).orElse(false);
-    }
-
-    /**
-     * Return optional compound overlay associated with this value layout. This is useful to view a value
-     * as an aggregate.
-     * @return compound overlay.
-     */
-    public Optional<Compound> contents() {
-        return contents;
-    }
-
-    /**
-     * Attach a sub-compound layout to this value layout.
-     * @param contents the sub-compound overlay attached to this (container) layout.
-     * @return a new container layout with associated compound substructure.
-     */
-    public Value withContents(Compound contents) {
-        return new Value(kind, endianness, size, Optional.of(contents), optAlignment(), optName());
-    }
-
     /**
      * Create a floating-point value of given size.
      * @param size the floating-polong size.
@@ -167,7 +141,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofFloatingPoint(Endianness endianness, long size) {
-        return new Value(Kind.FLOATING_POINT, endianness, size, Optional.empty(), OptionalLong.empty(), Optional.empty());
+        return new Value(Kind.FLOATING_POINT, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -186,7 +160,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofUnsignedInt(Endianness endianness, long size) {
-        return new Value(Kind.INTEGRAL_UNSIGNED, endianness, size, Optional.empty(), OptionalLong.empty(), Optional.empty());
+        return new Value(Kind.INTEGRAL_UNSIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -205,16 +179,15 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofSignedInt(Endianness endianness, long size) {
-        return new Value(Kind.INTEGRAL_SIGNED, endianness, size, Optional.empty(), OptionalLong.empty(), Optional.empty());
+        return new Value(Kind.INTEGRAL_SIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
     @Override
     public String toString() {
-        String prefix = decorateLayoutString(String.format("%s%d",
+        return decorateLayoutString(String.format("%s%d",
                 endianness == Endianness.BIG_ENDIAN ?
                         kind.tag.toUpperCase() : kind.tag,
                 size));
-        return contents().map(g -> prefix + "=" + g).orElse(prefix);
     }
 
     @Override
@@ -230,17 +203,17 @@ public class Value extends AbstractLayout<Value> implements Layout {
         }
         Value v = (Value)other;
         return kind.equals(v.kind) && endianness.equals(v.endianness) &&
-            size == v.size && contents.equals(v.contents);
+            size == v.size;
     }
 
     @Override
     public int hashCode() {
         return super.hashCode() ^ kind.hashCode() ^ endianness.hashCode() ^
-            Long.hashCode(size) ^ contents.hashCode();
+            Long.hashCode(size);
     }
 
     @Override
     Value dup(OptionalLong alignment, Optional<String> name) {
-        return new Value(kind, endianness, size, contents, alignment, name);
+        return new Value(kind, endianness, size, alignment, name);
     }
 }

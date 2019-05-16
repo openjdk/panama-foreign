@@ -61,11 +61,6 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
         return elementLayout().bitsSize();
     }
 
-    @Override
-    public boolean isPartial() {
-        return elementLayout.isPartial();
-    }
-
     /**
      * The element layout associated with this sequence layout.
      * @return element layout.

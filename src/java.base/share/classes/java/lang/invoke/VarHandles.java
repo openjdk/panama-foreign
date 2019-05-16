@@ -304,15 +304,6 @@ final class VarHandles {
             throw new IllegalArgumentException("Not a value layout: " + layout);
         }
 
-        LayoutPath path2 = path;
-        while (path2 != null) {
-            if (path2.enclosing() != null &&
-                path2.enclosing().layout() instanceof Value) {
-                throw new IllegalArgumentException("Cannot dereference path into Value container");
-            }
-            path2 = path2.enclosing();
-        }
-
         if (sizeof(carrier) != layout.bitsSize()) {
             throw new IllegalArgumentException("Invalid carrier for layout " + layout);
         }

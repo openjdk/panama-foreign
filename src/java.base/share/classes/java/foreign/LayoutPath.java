@@ -71,8 +71,7 @@ public interface LayoutPath {
      * A var handle that can be used to dereference memory at this path.
      * @param carrier the var handle carrier type.
      * @return a var handle which can be used to dereference memory at this path.
-     * @throws UnsupportedOperationException if the layout targeted by this path is not a {@link Value} layout,
-     * or the value to be dereferenced is defined inside another container (see {@link Value#contents()}.
+     * @throws UnsupportedOperationException if the layout targeted by this path is not a {@link Value} layout.
      * @throws IllegalArgumentException if the carrier does not represent a primitive type, if the carrier is {@code void},
      * {@code boolean}, or if the size of the carrier type does not match that of the layout targeted by this layout path.
      *
@@ -86,8 +85,7 @@ public interface LayoutPath {
      * @param name the name of the matching layout sub-element.
      * @return the layout path for the sub-element
      * @throws IllegalArgumentException if no sub-element with given name can be found in current path.
-     * @throws UnsupportedOperationException if the current path does not point to a {@link Group} layout, or
-     * a {@link Value} layout whose sub-contents (see {@link Value#contents()}) are set.
+     * @throws UnsupportedOperationException if the current path does not point to a {@link Group} layout.
      *
      * @implSpec in case multiple sub-elements with matching name exists, the first is returned; that is,
      * the sub-element with lowest offset from current path is returned.
@@ -99,8 +97,7 @@ public interface LayoutPath {
      * @param index the index of the matching layout sub-element.
      * @return the layout path for the sub-element
      * @throws IllegalArgumentException if the index is &lt; 0, or if it is bigger than number of elements in the group.
-     * @throws UnsupportedOperationException if the current path does not point to a {@link Compound} layout, or
-     * a {@link Value} layout whose sub-contents (see {@link Value#contents()}) are set.
+     * @throws UnsupportedOperationException if the current path does not point to a {@link Compound} layout.
      */
     LayoutPath elementPath(long index) throws IllegalArgumentException, UnsupportedOperationException;
 

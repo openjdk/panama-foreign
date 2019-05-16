@@ -141,8 +141,6 @@ public class LayoutPathImpl implements LayoutPath {
     private static LayoutPath lookup(LayoutPath path, LayoutSelector selector) {
         if (path.layout() instanceof Compound) {
             return lookupCompound(path, (Compound) path.layout(), selector);
-        } else if (path.layout() instanceof Value) {
-            return lookupContents(path, selector);
         } else {
             throw unsupported(path.layout());
         }
@@ -173,15 +171,6 @@ public class LayoutPathImpl implements LayoutPath {
             }
         }
         throw selector.lookupError(compound);
-    }
-
-    private static LayoutPath lookupContents(LayoutPath thisPath, LayoutSelector selector) {
-        Value value = (Value)thisPath.layout();
-        if (value.contents().isPresent()) {
-            return lookupCompound(thisPath, value.contents().get(), selector);
-        } else {
-            throw unsupported(thisPath.layout());
-        }
     }
 
     interface LayoutSelector {
