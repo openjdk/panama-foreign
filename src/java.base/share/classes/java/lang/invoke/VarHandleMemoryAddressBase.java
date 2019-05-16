@@ -34,11 +34,17 @@ abstract class VarHandleMemoryAddressBase extends VarHandle {
     final boolean be;
     final long length;
     final long offset;
+    final long alignment;
 
-    VarHandleMemoryAddressBase(VarForm form, boolean be, long length, long offset) {
+    VarHandleMemoryAddressBase(VarForm form, boolean be, long length, long offset, long alignment) {
         super(form);
         this.be = be;
         this.length = length;
         this.offset = offset;
+        this.alignment = alignment;
+    }
+
+    static IllegalStateException newIllegalStateExceptionForMisalignedAccess(long address) {
+        return new IllegalStateException("Misaligned access at address: " + address);
     }
 }

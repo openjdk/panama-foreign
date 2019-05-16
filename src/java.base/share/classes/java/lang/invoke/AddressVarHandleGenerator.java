@@ -126,7 +126,7 @@ class AddressVarHandleGenerator {
 
             VarForm form = new VarForm(implCls, MemoryAddress.class, carrier, components);
 
-            MethodType constrType = MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class, long[].class);
+            MethodType constrType = MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class, long.class, long[].class);
             MethodHandle constr = MethodHandles.Lookup.IMPL_LOOKUP.findConstructor(implCls, constrType);
             constr = MethodHandles.insertArguments(constr, 0, form);
             return constr;
@@ -168,7 +168,7 @@ class AddressVarHandleGenerator {
     }
 
     void addConstructor(BinderClassWriter cw) {
-        MethodType constrType = MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class, long[].class);
+        MethodType constrType = MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class, long.class, long[].class);
         MethodVisitor mv = cw.visitMethod(0, "<init>", constrType.toMethodDescriptorString(), null, null);
         mv.visitCode();
         //super call
@@ -178,12 +178,13 @@ class AddressVarHandleGenerator {
         mv.visitVarInsn(ILOAD, 2);
         mv.visitVarInsn(LLOAD, 3);
         mv.visitVarInsn(LLOAD, 5);
+        mv.visitVarInsn(LLOAD, 7);
         mv.visitMethodInsn(INVOKESPECIAL, Type.getInternalName(BASE_CLASS), "<init>",
-                MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class).toMethodDescriptorString(), false);
+                MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class, long.class).toMethodDescriptorString(), false);
         //init dimensions
         for (int i = 0 ; i < dimensions ; i++) {
             mv.visitVarInsn(ALOAD, 0);
-            mv.visitVarInsn(ALOAD, 7);
+            mv.visitVarInsn(ALOAD, 9);
             mv.visitLdcInsn(i);
             mv.visitInsn(LALOAD);
             mv.visitFieldInsn(PUTFIELD, implClassName, "dim" + i, "J");

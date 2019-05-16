@@ -43,13 +43,13 @@ public class LayoutPathImpl implements LayoutPath {
 
     final Layout layout;
     final LayoutPathImpl enclosing;
-    final LongSupplier offsetFunc;
+    final long offset;
     final List<Sequence> enclSequences;
 
-    LayoutPathImpl(Layout layout, LayoutPathImpl enclosing, LongSupplier offsetFunc, List<Sequence> enclSequences) {
+    LayoutPathImpl(Layout layout, LayoutPathImpl enclosing, long offset, List<Sequence> enclSequences) {
         this.layout = layout;
         this.enclosing = enclosing;
-        this.offsetFunc = offsetFunc;
+        this.offset = offset;
         this.enclSequences = enclSequences;
     }
 
@@ -73,7 +73,7 @@ public class LayoutPathImpl implements LayoutPath {
     }
 
     public long offsetInternal() {
-        return offsetFunc.getAsLong();
+        return offset;
     }
 
     @Override
@@ -113,18 +113,29 @@ public class LayoutPathImpl implements LayoutPath {
         if (layout() instanceof Sequence) {
             List<Sequence> newEnclSequences = new ArrayList<>(enclSequences);
             newEnclSequences.add((Sequence)layout());
-            return new LayoutPathImpl(((Sequence)layout()).elementLayout(), this, offsetFunc, newEnclSequences);
+            return new LayoutPathImpl(((Sequence)layout()).elementLayout(), this, offset, newEnclSequences);
         } else {
             throw unsupported(layout());
         }
     }
 
-    static LayoutPath of(Layout layout, LayoutPath prev, LongSupplier offsetFunc, List<Sequence> enclSequences) {
-        return new LayoutPathImpl(layout, (LayoutPathImpl)prev, offsetFunc, enclSequences);
+    static LayoutPath of(Layout layout, LayoutPath prev, long offset, List<Sequence> enclSequences) {
+        checkAlignmentConstraints(prev.layout(), layout, offset);
+        return new LayoutPathImpl(layout, (LayoutPathImpl)prev, offset, enclSequences);
+    }
+
+    static void checkAlignmentConstraints(Layout encl, Layout current, long offset) {
+        long alignment = current.alignmentBits();
+        if (offset % alignment != 0) {
+            throw new UnsupportedOperationException("Invalid alignment requirements for layout " + current);
+        }
+        if (encl != null && encl.alignmentBits() < alignment) {
+            throw new UnsupportedOperationException("Alignment requirements for layout " + current + " do not match those for enclosing layout " + encl);
+        }
     }
 
     public static LayoutPath of(Layout layout) {
-        return of(layout, ROOT, () -> 0L, List.of());
+        return of(layout, ROOT, 0L, List.of());
     }
 
     private static LayoutPath lookup(LayoutPath path, LayoutSelector selector) {
@@ -138,8 +149,8 @@ public class LayoutPathImpl implements LayoutPath {
     }
 
     private static LayoutPath lookupCompound(LayoutPath encl, Compound compound, LayoutSelector selector) {
+        long offset = ((LayoutPathImpl)encl).offsetInternal();
         if (compound instanceof Group) {
-            LongSupplier offset = ((LayoutPathImpl)encl)::offsetInternal;
             Group group = (Group)compound;
             long index = 0;
             for (Layout l : group) {
@@ -147,20 +158,18 @@ public class LayoutPathImpl implements LayoutPath {
                     return of(l, encl, offset, ((LayoutPathImpl)encl).enclSequences);
                 }
                 if (group.kind() != Group.Kind.UNION) {
-                    LongSupplier offsetPrev = offset;
-                    offset = () -> offsetPrev.getAsLong() + l.bitsSize();
+                    offset += l.bitsSize();
                 }
                 index++;
             }
         } else {
-            LongSupplier offset = ((LayoutPathImpl)encl)::offsetInternal;
             Sequence seq = (Sequence)compound;
             long index = ((ByIndex)selector).index;
             if (index < 0 || (seq.elementsSize().isPresent() && index >= seq.elementsSize().getAsLong())) {
                 throw new IllegalArgumentException("Invalid index for sequence layout: " + seq);
             } else {
                 long elemOffset = seq.elementLayout().bitsSize() * index;
-                return of(seq.elementLayout(), encl, () -> offset.getAsLong() + elemOffset, ((LayoutPathImpl) encl).enclSequences);
+                return of(seq.elementLayout(), encl, offset + elemOffset, ((LayoutPathImpl) encl).enclSequences);
             }
         }
         throw selector.lookupError(compound);
@@ -229,5 +238,5 @@ public class LayoutPathImpl implements LayoutPath {
         return new UnsupportedOperationException("Unsupported path operation on layout " + l);
     }
 
-    public static LayoutPath ROOT = of(null, null, () -> 0L, List.of());
+    public static LayoutPath ROOT = new LayoutPathImpl(null, null, 0L, List.of());
 }

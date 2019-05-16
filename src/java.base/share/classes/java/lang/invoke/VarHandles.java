@@ -317,7 +317,8 @@ final class VarHandles {
             throw new IllegalArgumentException("Invalid carrier for layout " + layout);
         }
 
-        long offset = ((LayoutPathImpl)path).offsetInternal() / 8;
+        long offset = ((LayoutPathImpl)path).offsetInternal();
+        long alignment = path.layout().alignmentBits();
         long length = layout.bitsSize() / 8;
         boolean be = ((Value)layout).endianness() == Value.Endianness.BIG_ENDIAN;
 
@@ -329,9 +330,9 @@ final class VarHandles {
         MethodHandle fac = carrierFactory.computeIfAbsent(strides.length,
                 dims -> new AddressVarHandleGenerator(carrier, dims)
                             .generateHandleFactory());
-        
+
         try {
-            return (VarHandle)fac.invoke(be, length, offset, strides);
+            return (VarHandle)fac.invoke(be, length, offset / 8, (alignment / 8) - 1, strides);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }

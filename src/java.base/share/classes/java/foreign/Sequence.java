@@ -36,13 +36,13 @@ import java.util.stream.Stream;
  * is equal to the sequence size. Unbound sequence layouts can be thought of an infinite sequence of a layout element,
  * as in {@code [i32 i32 i32 i32, ...]}. In such cases the sequence layout will not have an associated size.
  */
-public final class Sequence extends AbstractLayout<Sequence> implements Compound {
+public class Sequence extends AbstractLayout<Sequence> implements Compound {
 
     private final OptionalLong size;
     private final Layout elementLayout;
 
-    private Sequence(OptionalLong size, Layout elementLayout, Map<String, String> attributes) {
-        super(attributes);
+    private Sequence(OptionalLong size, Layout elementLayout, OptionalLong alignment, Map<String, String> attributes) {
+        super(alignment, attributes);
         this.size = size;
         this.elementLayout = elementLayout;
     }
@@ -54,6 +54,11 @@ public final class Sequence extends AbstractLayout<Sequence> implements Compound
         } else {
             throw new UnsupportedOperationException("Cannot compute size of unbound layout");
         }
+    }
+
+    @Override
+    long naturalAlignmentBits() {
+        return elementLayout().bitsSize();
     }
 
     @Override
@@ -84,7 +89,7 @@ public final class Sequence extends AbstractLayout<Sequence> implements Compound
      * @return the new sequence layout.
      */
     public static Sequence of(long size, Layout elementLayout) {
-        return new Sequence(OptionalLong.of(size), elementLayout, NO_ANNOS);
+        return new Sequence(OptionalLong.of(size), elementLayout, OptionalLong.empty(), NO_ANNOS);
     }
 
     /**
@@ -93,7 +98,7 @@ public final class Sequence extends AbstractLayout<Sequence> implements Compound
      * @return the new sequence layout.
      */
     public static Sequence of(Layout elementLayout) {
-        return new Sequence(OptionalLong.empty(), elementLayout, NO_ANNOS);
+        return new Sequence(OptionalLong.empty(), elementLayout, OptionalLong.empty(), NO_ANNOS);
     }
 
     /**
@@ -106,7 +111,7 @@ public final class Sequence extends AbstractLayout<Sequence> implements Compound
 
     @Override
     public String toString() {
-        return wrapWithAttributes(String.format("[%s:%s]",
+        return wrapWithAlignmentAndAttributes(String.format("[%s:%s]",
                 size.isPresent() ? size.getAsLong() : "", elementLayout));
     }
 
@@ -131,7 +136,7 @@ public final class Sequence extends AbstractLayout<Sequence> implements Compound
     }
 
     @Override
-    Sequence withAttributes(Map<String, String> attributes) {
-        return new Sequence(elementsSize(), elementLayout, attributes);
+    Sequence dup(OptionalLong alignment, Map<String, String> attributes) {
+        return new Sequence(elementsSize(), elementLayout, alignment, attributes);
     }
 }

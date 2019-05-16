@@ -25,6 +25,7 @@
 package java.foreign;
 
 import java.util.Map;
+import java.util.OptionalLong;
 
 /**
  * An unresolved layout acts as a placeholder for another layout. Unresolved layouts can be resolved, which yields
@@ -35,7 +36,7 @@ public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
     private final String layoutExpression;
 
     Unresolved(String layoutExpression, Map<String, String> attributes) {
-        super(attributes);
+        super(OptionalLong.empty(), attributes);
         this.layoutExpression = layoutExpression;
     }
 
@@ -81,17 +82,25 @@ public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
     }
 
     @Override
+    long naturalAlignmentBits() {
+        throw new UnsupportedOperationException("alignmentBitCount on Unresolved");
+    }
+
+    @Override
     public boolean isPartial() {
         return true;
     }
 
     @Override
     public String toString() {
-        return wrapWithAttributes(String.format("${%s}", layoutExpression));
+        return wrapWithAlignmentAndAttributes(String.format("${%s}", layoutExpression));
     }
 
     @Override
-    Unresolved withAttributes(Map<String, String> attributes) {
+    Unresolved dup(OptionalLong alignment, Map<String, String> attributes) {
+        if (alignment.isPresent()) {
+            throw new UnsupportedOperationException("alignTo on Unresolved");
+        }
         return new Unresolved(layoutExpression, attributes);
     }
 }

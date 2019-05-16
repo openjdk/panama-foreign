@@ -27,12 +27,13 @@ package java.foreign;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * The layout corresponding to a memory address. An address layout can (optionally) be associated with a descriptor
  * describing the contents of the target memory region pointed to by the address (see {@link Layout}).
  */
-public final class Address extends Value {
+public class Address extends Value {
 
     /**
      * The addressee kind. Denotes the contents of the memory region pointed at by an address.
@@ -51,15 +52,16 @@ public final class Address extends Value {
     private final PointeeKind pointeeKind;
     private final Layout layout;
 
-    private Address(PointeeKind pointeeKind, Layout layout, long size, Kind kind, Endianness endianness, Optional<Compound> contents, Map<String, String> attributes) {
-        super(kind, endianness, size, contents, attributes);
+    private Address(PointeeKind pointeeKind, Layout layout, long size, Kind kind, Endianness endianness, Optional<Compound> contents,
+                    OptionalLong alignment, Map<String, String> attributes) {
+        super(kind, endianness, size, contents, alignment, attributes);
         this.pointeeKind = pointeeKind;
         this.layout = layout;
     }
 
     @Override
     public Address withContents(Compound contents) {
-        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), Optional.of(contents), attributes());
+        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), Optional.of(contents), optAlignment(), attributes());
     }
 
     /**
@@ -98,7 +100,7 @@ public final class Address extends Value {
      * @return the new address layout.
      */
     public static Address ofVoid(long size, Kind kind, Endianness endianness) {
-        return new Address(PointeeKind.VOID, null, size, kind, endianness, Optional.empty(), NO_ANNOS);
+        return new Address(PointeeKind.VOID, null, size, kind, endianness, Optional.empty(), OptionalLong.empty(), NO_ANNOS);
     }
 
     /**
@@ -131,7 +133,7 @@ public final class Address extends Value {
      * @return the new address layout.
      */
     public static Address ofLayout(long size, Layout layout, Kind kind, Endianness endianness) {
-        return new Address(PointeeKind.LAYOUT, layout, size, kind, endianness, Optional.empty(), NO_ANNOS);
+        return new Address(PointeeKind.LAYOUT, layout, size, kind, endianness, Optional.empty(), OptionalLong.empty(), NO_ANNOS);
     }
 
     @Override
@@ -158,8 +160,8 @@ public final class Address extends Value {
     }
 
     @Override
-    Address withAttributes(Map<String, String> attributes) {
-        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), contents(), attributes);
+    Address dup(OptionalLong alignment, Map<String, String> attributes) {
+        return new Address(pointeeKind, layout, bitsSize(), kind(), endianness(), contents(), alignment, attributes);
     }
 
     @Override

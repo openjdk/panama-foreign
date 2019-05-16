@@ -83,6 +83,27 @@ public interface Layout {
     }
 
     /**
+     * Computes alignment.
+     * @return bit alignment.
+     */
+    long alignmentBits();
+
+    /**
+     * Creates a new layout which features the desired alignment. Layout alignment defines a power of two A which is the
+     * bitwise alignment of the layout. If A&gt;=8 then A/8 is the number of bits that must be aligned for any pointer that
+     * correctly points to this layout.
+     *
+     * Thus, A=8 means unaligned (in the usual sense), which is common in packets.
+     * A=64 means word aligned (on LP64), A=32 int aligned, A=16 short aligned, etc.
+     * A=512 is the most strict alignment required by the x86/SV ABI (for AVX-512 data).
+     *
+     * @param alignmentBits the required alignment requirements.
+     * @return a new layout with given alignment requirements.
+     * @throws IllegalArgumentException if the supplied alignment is not a power of two, or if it's lower than 8.
+     */
+    Layout alignTo(long alignmentBits) throws IllegalArgumentException;
+
+    /**
      * Strip all annotations from the current (possibly annotated) layout.
      * @return the unannotated layout.
      */
@@ -94,6 +115,7 @@ public interface Layout {
     /**
      * Obtain layout path rooted at this layout.
      * @return a new layout path rooted at this layout.
+     * @throws UnsupportedOperationException if the layout is partial.
      */
-    LayoutPath toPath();
+    LayoutPath toPath() throws UnsupportedOperationException;
 }

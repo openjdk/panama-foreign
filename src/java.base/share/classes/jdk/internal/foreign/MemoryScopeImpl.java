@@ -44,6 +44,9 @@ public final class MemoryScopeImpl implements MemoryScope {
     // 64KB block
     private final static long UNIT_SIZE = 64 * 1024;
 
+    // The maximum alignment supported by malloc - typically 16 on 64-bit platforms.
+    private final static long MAX_ALIGN = 16;
+
     public State state = ALIVE;
     private Set<MemoryScope> descendants = new HashSet<>();
 
@@ -129,12 +132,12 @@ public final class MemoryScopeImpl implements MemoryScope {
 
     @Override
     public MemoryAddress allocate(Layout layout) {
-        return allocate(layout, 1);
+        return allocate(layout, layout.alignmentBits() / 8);
     }
 
-    public MemoryAddress allocate(Layout layout, int align) {
+    public MemoryAddress allocate(Layout layout, long align) {
         // FIXME: when allocating structs align size up to 8 bytes to allow for raw reads/writes?
-        long size = alignUp(layout.bitsSize() / 8, align);
+        long size = layout.bitsSize() / 8;
         if (size < 0) {
             throw new UnsupportedOperationException("Unknown size for layout: " + layout);
         }
@@ -143,16 +146,16 @@ public final class MemoryScopeImpl implements MemoryScope {
             throw new UnsupportedOperationException("allocate size to large");
         }
 
-        return new MemoryAddressImpl(this, allocateRegion(size));
+        return new MemoryAddressImpl(this, allocateRegion(size, align));
     }
 
-    MemoryBoundInfo allocateRegion(long size) {
+    MemoryBoundInfo allocateRegion(long size, long align) {
         checkAllocate();
         if (size == 0) {
             return MemoryBoundInfo.NOTHING;
         }
 
-        return MemoryBoundInfo.ofNative(allocate(size), size);
+        return MemoryBoundInfo.ofNative(allocate(size, align), size);
     }
 
     private void rollbackAllocation() {
@@ -164,7 +167,11 @@ public final class MemoryScopeImpl implements MemoryScope {
         transaction_origin = -1;
     }
 
-    private long allocate(long size) {
+    private long allocate(long size, long align) {
+        if (align > MAX_ALIGN) {
+            size += align - 1;
+        }
+
         if (size <= 0) {
             rollbackAllocation();
             throw new IllegalArgumentException();
@@ -192,7 +199,7 @@ public final class MemoryScopeImpl implements MemoryScope {
                 }
                 // new buffer allocated, commit partial transaction for simplification
                 transaction_origin = -1;
-                return newBuf;
+                return alignUp(newBuf, align);
             } catch (OutOfMemoryError ome) {
                 rollbackAllocation();
                 throw ome;
@@ -206,7 +213,7 @@ public final class MemoryScopeImpl implements MemoryScope {
             throw new RuntimeException("Invalid alignment: 0x" + Long.toHexString(rv));
         }
 
-        return rv;
+        return alignUp(rv, align);
     }
 
     public void checkAllocate() {

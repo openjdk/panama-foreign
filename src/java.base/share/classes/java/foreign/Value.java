@@ -26,6 +26,8 @@ package java.foreign;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
+
 import jdk.internal.misc.Unsafe;
 
 /**
@@ -77,8 +79,8 @@ public class Value extends AbstractLayout<Value> implements Layout {
     private final long size;
     private final Optional<Compound> contents;
 
-    Value(Kind kind, Endianness endianness, long size, Optional<Compound> contents, Map<String, String> attributes) {
-        super(attributes);
+    Value(Kind kind, Endianness endianness, long size, Optional<Compound> contents, OptionalLong alignment, Map<String, String> attributes) {
+        super(alignment, attributes);
         this.kind = kind;
         this.endianness = endianness;
         this.size = size;
@@ -123,6 +125,11 @@ public class Value extends AbstractLayout<Value> implements Layout {
     }
 
     @Override
+    long naturalAlignmentBits() {
+        return size;
+    }
+
+    @Override
     public boolean isPartial() {
         return contents.map(Layout::isPartial).orElse(false);
     }
@@ -142,7 +149,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return a new container layout with associated compound substructure.
      */
     public Value withContents(Compound contents) {
-        return new Value(kind, endianness, size, Optional.of(contents), attributes());
+        return new Value(kind, endianness, size, Optional.of(contents), optAlignment(), attributes());
     }
 
     /**
@@ -161,7 +168,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofFloatingPoint(Endianness endianness, long size) {
-        return new Value(Kind.FLOATING_POINT, endianness, size, Optional.empty(), NO_ANNOS);
+        return new Value(Kind.FLOATING_POINT, endianness, size, Optional.empty(), OptionalLong.empty(), NO_ANNOS);
     }
 
     /**
@@ -180,7 +187,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofUnsignedInt(Endianness endianness, long size) {
-        return new Value(Kind.INTEGRAL_UNSIGNED, endianness, size, Optional.empty(), NO_ANNOS);
+        return new Value(Kind.INTEGRAL_UNSIGNED, endianness, size, Optional.empty(), OptionalLong.empty(), NO_ANNOS);
     }
 
     /**
@@ -199,12 +206,12 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofSignedInt(Endianness endianness, long size) {
-        return new Value(Kind.INTEGRAL_SIGNED, endianness, size, Optional.empty(), NO_ANNOS);
+        return new Value(Kind.INTEGRAL_SIGNED, endianness, size, Optional.empty(), OptionalLong.empty(), NO_ANNOS);
     }
 
     @Override
     public String toString() {
-        String prefix = wrapWithAttributes(String.format("%s%d",
+        String prefix = wrapWithAlignmentAndAttributes(String.format("%s%d",
                 endianness == Endianness.BIG_ENDIAN ?
                         kind.tag.toUpperCase() : kind.tag,
                 size));
@@ -234,7 +241,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
     }
 
     @Override
-    Value withAttributes(Map<String, String> attributes) {
-        return new Value(kind, endianness, size, contents, attributes);
+    Value dup(OptionalLong alignment, Map<String, String> attributes) {
+        return new Value(kind, endianness, size, contents, alignment, attributes);
     }
 }

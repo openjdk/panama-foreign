@@ -25,6 +25,7 @@
 package java.foreign;
 
 import java.util.Map;
+import java.util.OptionalLong;
 
 /**
  * A padding layout specifies the size of extra space used to align struct fields around word boundaries.
@@ -32,8 +33,8 @@ import java.util.Map;
 public class Padding extends AbstractLayout<Padding> implements Layout {
     private final long size;
 
-    Padding(long size, Map<String, String> attributes) {
-        super(attributes);
+    Padding(long size, OptionalLong alignment, Map<String, String> attributes) {
+        super(alignment, attributes);
         this.size = size;
     }
 
@@ -43,11 +44,16 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
      * @return the new selector layout.
      */
     public static Padding of(long size) {
-        return new Padding(size, NO_ANNOS);
+        return new Padding(size, OptionalLong.empty(), NO_ANNOS);
     }
 
     @Override
     public long bitsSize() {
+        return size;
+    }
+
+    @Override
+    long naturalAlignmentBits() {
         return size;
     }
 
@@ -58,7 +64,7 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
 
     @Override
     public String toString() {
-        return wrapWithAttributes("x" + size);
+        return wrapWithAlignmentAndAttributes("x" + size);
     }
 
     @Override
@@ -82,7 +88,7 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
     }
 
     @Override
-    Padding withAttributes(Map<String, String> attributes) {
-        return new Padding(size, attributes);
+    Padding dup(OptionalLong alignment, Map<String, String> attributes) {
+        return new Padding(size, alignment, attributes);
     }
 }
