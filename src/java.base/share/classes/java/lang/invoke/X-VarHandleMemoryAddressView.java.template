@@ -25,17 +25,8 @@
 package java.lang.invoke;
 
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.misc.Unsafe;
-import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
 
-import java.foreign.Layout;
-import java.foreign.MemoryAddress;
-import java.foreign.MemoryScope;
-import java.foreign.Value;
-import java.foreign.Value.Endianness;
-import java.nio.ByteBuffer;
-import java.nio.ReadOnlyBufferException;
 import java.util.Objects;
 
 import static java.lang.invoke.MethodHandleStatics.UNSAFE;

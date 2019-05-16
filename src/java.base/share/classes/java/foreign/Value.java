@@ -24,10 +24,9 @@
  */
 package java.foreign;
 
+import java.nio.ByteOrder;
 import java.util.Optional;
 import java.util.OptionalLong;
-
-import jdk.internal.misc.Unsafe;
 
 /**
  * A value layout. This layout is used to model basic native types, such as integral values and floating point numbers.
@@ -54,29 +53,11 @@ public class Value extends AbstractLayout<Value> implements Layout {
         }
     }
 
-    /**
-     * value endianness.
-     */
-    public enum Endianness {
-        /** Least-significant-bit stored at lowest address. */
-        LITTLE_ENDIAN,
-        /** Most-significant-bit stored at lowest address. */
-        BIG_ENDIAN;
-
-        /**
-         * Platform-dependent endianness value.
-         * @return the platform-dependent endianness value.
-         */
-        public static Endianness hostEndian() {
-            return Unsafe.getUnsafe().isBigEndian() ? BIG_ENDIAN : LITTLE_ENDIAN;
-        }
-    }
-
     private final Kind kind;
-    private final Endianness endianness;
+    private final ByteOrder endianness;
     private final long size;
 
-    Value(Kind kind, Endianness endianness, long size, OptionalLong alignment, Optional<String> name) {
+    Value(Kind kind, ByteOrder endianness, long size, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.kind = kind;
         this.endianness = endianness;
@@ -95,7 +76,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * Returns the value endianness.
      * @return the value endianness.
      */
-    public Endianness endianness() {
+    public ByteOrder endianness() {
         return endianness;
     }
 
@@ -112,7 +93,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return true if endianness match system architecture.
      */
     public boolean isNativeByteOrder() {
-        return endianness == Endianness.hostEndian();
+        return endianness == ByteOrder.nativeOrder();
     }
 
     @Override
@@ -131,7 +112,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofFloatingPoint(long size) {
-        return ofFloatingPoint(Endianness.hostEndian(), size);
+        return ofFloatingPoint(ByteOrder.nativeOrder(), size);
     }
 
     /**
@@ -140,7 +121,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @param size the floating-point size.
      * @return the new value layout.
      */
-    public static Value ofFloatingPoint(Endianness endianness, long size) {
+    public static Value ofFloatingPoint(ByteOrder endianness, long size) {
         return new Value(Kind.FLOATING_POINT, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
@@ -150,7 +131,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofUnsignedInt(long size) {
-        return ofUnsignedInt(Endianness.hostEndian(), size);
+        return ofUnsignedInt(ByteOrder.nativeOrder(), size);
     }
 
     /**
@@ -159,7 +140,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @param size the integral size.
      * @return the new value layout.
      */
-    public static Value ofUnsignedInt(Endianness endianness, long size) {
+    public static Value ofUnsignedInt(ByteOrder endianness, long size) {
         return new Value(Kind.INTEGRAL_UNSIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
@@ -169,7 +150,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @return the new value layout.
      */
     public static Value ofSignedInt(long size) {
-        return ofSignedInt(Endianness.hostEndian(), size);
+        return ofSignedInt(ByteOrder.nativeOrder(), size);
     }
 
     /**
@@ -178,14 +159,14 @@ public class Value extends AbstractLayout<Value> implements Layout {
      * @param size the integral size.
      * @return the new value layout.
      */
-    public static Value ofSignedInt(Endianness endianness, long size) {
+    public static Value ofSignedInt(ByteOrder endianness, long size) {
         return new Value(Kind.INTEGRAL_SIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
     @Override
     public String toString() {
         return decorateLayoutString(String.format("%s%d",
-                endianness == Endianness.BIG_ENDIAN ?
+                endianness == ByteOrder.BIG_ENDIAN ?
                         kind.tag.toUpperCase() : kind.tag,
                 size));
     }

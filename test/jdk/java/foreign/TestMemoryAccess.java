@@ -32,10 +32,10 @@ import java.foreign.LayoutPath;
 import java.foreign.Padding;
 import java.foreign.Sequence;
 import java.foreign.Value;
-import java.foreign.Value.Endianness;
 import java.foreign.MemoryAddress;
 import java.foreign.MemoryScope;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
@@ -226,31 +226,31 @@ public class TestMemoryAccess {
     public Object[][] createData() {
         return new Object[][] {
                 //BE
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 8), byte.class, Checker.BYTE },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 8), byte.class, Checker.BYTE },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 16), short.class, Checker.SHORT },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 16), short.class, Checker.SHORT },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 16), char.class, Checker.CHAR },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 16), char.class, Checker.CHAR },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 32), int.class, Checker.INT },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 32), int.class, Checker.INT },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 64), long.class, Checker.LONG },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 64), long.class, Checker.LONG },
-                { Value.ofFloatingPoint(Endianness.BIG_ENDIAN, 32), float.class, Checker.FLOAT },
-                { Value.ofFloatingPoint(Endianness.BIG_ENDIAN, 64), double.class, Checker.DOUBLE },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, Checker.BYTE },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, Checker.BYTE },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, Checker.SHORT },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, Checker.SHORT },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, Checker.CHAR },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, Checker.CHAR },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, Checker.INT },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, Checker.INT },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, Checker.LONG },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, Checker.LONG },
+                { Value.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, Checker.FLOAT },
+                { Value.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, Checker.DOUBLE },
                 //LE
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 8), byte.class, Checker.BYTE },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 8), byte.class, Checker.BYTE },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 16), short.class, Checker.SHORT },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 16), short.class, Checker.SHORT },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 16), char.class, Checker.CHAR },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 16), char.class, Checker.CHAR },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 32), int.class, Checker.INT },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 32), int.class, Checker.INT },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 64), long.class, Checker.LONG },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 64), long.class, Checker.LONG },
-                { Value.ofFloatingPoint(Endianness.LITTLE_ENDIAN, 32), float.class, Checker.FLOAT },
-                { Value.ofFloatingPoint(Endianness.LITTLE_ENDIAN, 64), double.class, Checker.DOUBLE },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, Checker.BYTE },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, Checker.BYTE },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, Checker.SHORT },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, Checker.SHORT },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, Checker.CHAR },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, Checker.CHAR },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, Checker.INT },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, Checker.INT },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, Checker.LONG },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, Checker.LONG },
+                { Value.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, Checker.FLOAT },
+                { Value.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, Checker.DOUBLE },
         };
     }
 
@@ -297,31 +297,31 @@ public class TestMemoryAccess {
     public Object[][] createArrayData() {
         return new Object[][] {
                 //BE
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 16), short.class, ArrayChecker.SHORT },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 16), short.class, ArrayChecker.SHORT },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 16), char.class, ArrayChecker.CHAR },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 16), char.class, ArrayChecker.CHAR },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 32), int.class, ArrayChecker.INT },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 32), int.class, ArrayChecker.INT },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 64), long.class, ArrayChecker.LONG },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 64), long.class, ArrayChecker.LONG },
-                { Value.ofFloatingPoint(Endianness.BIG_ENDIAN, 32), float.class, ArrayChecker.FLOAT },
-                { Value.ofFloatingPoint(Endianness.BIG_ENDIAN, 64), double.class, ArrayChecker.DOUBLE },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { Value.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, ArrayChecker.FLOAT },
+                { Value.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, ArrayChecker.DOUBLE },
                 //LE
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 16), short.class, ArrayChecker.SHORT },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 16), short.class, ArrayChecker.SHORT },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 16), char.class, ArrayChecker.CHAR },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 16), char.class, ArrayChecker.CHAR },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 32), int.class, ArrayChecker.INT },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 32), int.class, ArrayChecker.INT },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 64), long.class, ArrayChecker.LONG },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 64), long.class, ArrayChecker.LONG },
-                { Value.ofFloatingPoint(Endianness.LITTLE_ENDIAN, 32), float.class, ArrayChecker.FLOAT },
-                { Value.ofFloatingPoint(Endianness.LITTLE_ENDIAN, 64), double.class, ArrayChecker.DOUBLE },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { Value.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, ArrayChecker.FLOAT },
+                { Value.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, ArrayChecker.DOUBLE },
         };
     }
 
@@ -368,31 +368,31 @@ public class TestMemoryAccess {
     public Object[][] createMatrixData() {
         return new Object[][] {
                 //BE
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 16), short.class, MatrixChecker.SHORT },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 16), short.class, MatrixChecker.SHORT },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 16), char.class, MatrixChecker.CHAR },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 16), char.class, MatrixChecker.CHAR },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 32), int.class, MatrixChecker.INT },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 32), int.class, MatrixChecker.INT },
-                { Value.ofUnsignedInt(Endianness.BIG_ENDIAN, 64), long.class, MatrixChecker.LONG },
-                { Value.ofSignedInt(Endianness.BIG_ENDIAN, 64), long.class, MatrixChecker.LONG },
-                { Value.ofFloatingPoint(Endianness.BIG_ENDIAN, 32), float.class, MatrixChecker.FLOAT },
-                { Value.ofFloatingPoint(Endianness.BIG_ENDIAN, 64), double.class, MatrixChecker.DOUBLE },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { Value.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { Value.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { Value.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, MatrixChecker.FLOAT },
+                { Value.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, MatrixChecker.DOUBLE },
                 //LE
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 16), short.class, MatrixChecker.SHORT },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 16), short.class, MatrixChecker.SHORT },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 16), char.class, MatrixChecker.CHAR },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 16), char.class, MatrixChecker.CHAR },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 32), int.class, MatrixChecker.INT },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 32), int.class, MatrixChecker.INT },
-                { Value.ofUnsignedInt(Endianness.LITTLE_ENDIAN, 64), long.class, MatrixChecker.LONG },
-                { Value.ofSignedInt(Endianness.LITTLE_ENDIAN, 64), long.class, MatrixChecker.LONG },
-                { Value.ofFloatingPoint(Endianness.LITTLE_ENDIAN, 32), float.class, MatrixChecker.FLOAT },
-                { Value.ofFloatingPoint(Endianness.LITTLE_ENDIAN, 64), double.class, MatrixChecker.DOUBLE },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { Value.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { Value.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { Value.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, MatrixChecker.FLOAT },
+                { Value.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, MatrixChecker.DOUBLE },
         };
     }
 

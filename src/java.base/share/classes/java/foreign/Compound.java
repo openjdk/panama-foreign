@@ -12,8 +12,8 @@ public interface Compound extends Layout {
      * Returns a stream of the layout sub-elements which forms this compound layout.
      * @return a stream of layout sub-elements.
      *
-     * @apiNote in case the compound layout is an unbound sequence, the resulting stream is infinite and methods such as
-     * {@link Stream#limit} should be used.
+     * @apiNote in case the compound layout is a {@link Sequence} whose size is unbounded, the resulting stream is infinite
+     * and methods such as {@link Stream#limit} should be used.
      */
     Stream<Layout> elements();
 }

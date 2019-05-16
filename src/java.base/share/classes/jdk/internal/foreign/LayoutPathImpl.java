@@ -65,14 +65,6 @@ public class LayoutPathImpl implements LayoutPath {
 
     @Override
     public long offset() {
-        if (isBound()) {
-            return offsetInternal();
-        } else {
-            throw new UnsupportedOperationException("Cannot get offset on unbound layout path.");
-        }
-    }
-
-    public long offsetInternal() {
         return offset;
     }
 
@@ -86,8 +78,8 @@ public class LayoutPathImpl implements LayoutPath {
     }
 
     @Override
-    public boolean isBound() {
-        return enclSequences.isEmpty();
+    public int dimensions() {
+        return enclSequences.size();
     }
 
     @Override
@@ -147,7 +139,7 @@ public class LayoutPathImpl implements LayoutPath {
     }
 
     private static LayoutPath lookupCompound(LayoutPath encl, Compound compound, LayoutSelector selector) {
-        long offset = ((LayoutPathImpl)encl).offsetInternal();
+        long offset = encl.offset();
         if (compound instanceof Group) {
             Group group = (Group)compound;
             long index = 0;

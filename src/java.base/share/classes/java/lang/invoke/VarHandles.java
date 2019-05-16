@@ -32,6 +32,7 @@ import java.foreign.LayoutPath;
 import java.foreign.Value;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.ByteOrder;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -308,10 +309,10 @@ final class VarHandles {
             throw new IllegalArgumentException("Invalid carrier for layout " + layout);
         }
 
-        long offset = ((LayoutPathImpl)path).offsetInternal();
+        long offset = ((LayoutPathImpl)path).offset();
         long alignment = path.layout().alignmentBits();
         long length = layout.bitsSize() / 8;
-        boolean be = ((Value)layout).endianness() == Value.Endianness.BIG_ENDIAN;
+        boolean be = ((Value)layout).endianness() == ByteOrder.BIG_ENDIAN;
 
         long[] strides = ((LayoutPathImpl)path).enclosingSequences().stream()
                 .mapToLong(seq -> seq.elementLayout().bitsSize() / 8)

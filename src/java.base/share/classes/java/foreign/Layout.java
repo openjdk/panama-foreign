@@ -27,17 +27,18 @@ package java.foreign;
 import java.util.Optional;
 
 /**
- * This interface models the layout of a group of bits in a memory region.
- * Layouts can be associated with one or more attributes in order to embed domain specific knowledge,
- * and they have a name (see {@link Layout#name()}). A layout is always associated with a size (in bits).
+ * This interface models the layout of a contiguous memory region. Layouts have a size (where possible), see {@link Layout#bitsSize()},
+ * an optional name (which is useful to refer to them in other context), see {@link Layout#name()} and alignment
+ * constraints, see {@link Layout#alignmentBits()}.
  */
 public interface Layout {
 
     /**
      * Computes the layout size, in bits
      * @return the layout size.
+     * @throws UnsupportedOperationException if the layout has unbounded size (see {@link Sequence}).
      */
-    long bitsSize();
+    long bitsSize() throws UnsupportedOperationException;
 
     /**
      * Return the value of the 'name' attribute (if any) associated with this layout.

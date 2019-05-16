@@ -31,9 +31,9 @@ import java.util.stream.Stream;
 
 /**
  * A sequence layout. A sequence layout is a special case of a group layout, made up of an element layout and a repetition count.
- * The repetition count can be zero if the sequence contains no elements. A 'bound' sequence layout of the kind e.g. {@code [ 4:i32 ]},
+ * The repetition count can be zero if the sequence contains no elements. A finite sequence layout of the kind e.g. {@code [ 4:i32 ]},
  * can be thought of as a group layout e.g. {@code [i32 i32 i32 i32]} where a given layout element is repeated a number of times that
- * is equal to the sequence size. Unbound sequence layouts can be thought of an infinite sequence of a layout element,
+ * is equal to the sequence size. Unbounded sequence layouts can be thought of an infinite repetition of a layout element,
  * as in {@code [i32 i32 i32 i32, ...]}. In such cases the sequence layout will not have an associated size.
  */
 public class Sequence extends AbstractLayout<Sequence> implements Compound {
@@ -47,12 +47,17 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
         this.elementLayout = elementLayout;
     }
 
+    /**
+     * Computes the layout size, in bits. Since not all sequences have a finite size, this method can throw an exception.
+     * @return the layout size (where defined).
+     * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link Sequence#elementsSize()}).
+     */
     @Override
     public long bitsSize() throws UnsupportedOperationException {
         if (size.isPresent()) {
             return elementLayout.bitsSize() * size.getAsLong();
         } else {
-            throw new UnsupportedOperationException("Cannot compute size of unbound layout");
+            throw new UnsupportedOperationException("Cannot compute size of unbounded sequence");
         }
     }
 
@@ -88,7 +93,7 @@ public class Sequence extends AbstractLayout<Sequence> implements Compound {
     }
 
     /**
-     * Create a new unbound sequence layout with given element layout.
+     * Create a new sequence layout, with unbounded size and given element layout.
      * @param elementLayout the element layout.
      * @return the new sequence layout.
      */

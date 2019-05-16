@@ -161,7 +161,7 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
      * @return the new product group layout.
      */
     public static Group struct(Layout... elements) {
-        return new Group(Kind.STRUCT, Arrays.asList(elements), OptionalLong.empty(), Optional.empty());
+        return new Group(Kind.STRUCT, List.of(elements), OptionalLong.empty(), Optional.empty());
     }
 
     /**
@@ -170,7 +170,7 @@ public class Group extends AbstractLayout<Group> implements Compound, Iterable<L
      * @return the new sum group layout.
      */
     public static Group union(Layout... elements) {
-        return new Group(Kind.UNION, Arrays.asList(elements), OptionalLong.empty(), Optional.empty());
+        return new Group(Kind.UNION, List.of(elements), OptionalLong.empty(), Optional.empty());
     }
 
     @Override
