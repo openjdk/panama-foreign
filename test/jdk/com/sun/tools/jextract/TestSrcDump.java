@@ -61,10 +61,10 @@ public class TestSrcDump extends JextractToolRunner {
         Path realTarget = getOutputFilePath("realGenSrc");
         Files.createDirectory(realTarget);
         Files.createSymbolicLink(src, realTarget);
-        run("--src-dump-dir", src.toString(), "-t", "com.acme",
+        run("--src-dump-dir", src.toString(),
                 getInputFilePath("simple.h").toString()).checkSuccess();
         try {
-            assertTrue(Files.isRegularFile(src.resolve("com").resolve("acme").resolve(staticForwarderName("simple.h") + ".java")));
+            assertTrue(Files.isRegularFile(src.resolve(staticForwarderName("simple.h") + ".java")));
         } finally {
             deleteFile(src);
             deleteDir(realTarget);

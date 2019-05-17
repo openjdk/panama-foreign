@@ -95,10 +95,13 @@ public final class Writer {
             Path dir = fullPath.getParent();
             // In case the folder exist and is a link to a folder, this should be OK
             // Case in point, /tmp on MacOS link to /private/tmp
-            if (Files.exists(dir) && !Files.isDirectory(dir)) {
-                throw new FileAlreadyExistsException(dir.toAbsolutePath().toString());
+            if (Files.exists(dir)) {
+                if (!Files.isDirectory(dir)) {
+                    throw new FileAlreadyExistsException(dir.toAbsolutePath().toString());
+                }
+            } else {
+                Files.createDirectories(fullPath.getParent());
             }
-            Files.createDirectories(fullPath.getParent());
             Files.write(fullPath, List.of(entry.getValue()));
         }
     }
