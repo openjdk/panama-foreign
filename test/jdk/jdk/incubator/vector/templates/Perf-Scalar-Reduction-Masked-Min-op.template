@@ -8,7 +8,7 @@
             r = [[TEST_INIT]];
             for (int i = 0; i < as.length; i++) {
                 if (ms[i % ms.length])
-                    r = ($type$)Math.min(r, a[i]);
+                    r = ($type$)Math.min(r, as[i]);
             }
         }
         bh.consume(r);

@@ -432,7 +432,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             r = Double.POSITIVE_INFINITY;
             for (int i = 0; i < as.length; i++) {
                 if (ms[i % ms.length])
-                    r = (double)Math.min(r, a[i]);
+                    r = (double)Math.min(r, as[i]);
             }
         }
         bh.consume(r);
@@ -460,7 +460,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             r = Double.NEGATIVE_INFINITY;
             for (int i = 0; i < as.length; i++) {
                 if (ms[i % ms.length])
-                    r = (double)Math.max(r, a[i]);
+                    r = (double)Math.max(r, as[i]);
             }
         }
         bh.consume(r);

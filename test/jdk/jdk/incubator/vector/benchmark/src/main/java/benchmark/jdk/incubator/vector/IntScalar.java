@@ -836,7 +836,7 @@ public class IntScalar extends AbstractVectorBenchmark {
             r = Integer.MAX_VALUE;
             for (int i = 0; i < as.length; i++) {
                 if (ms[i % ms.length])
-                    r = (int)Math.min(r, a[i]);
+                    r = (int)Math.min(r, as[i]);
             }
         }
         bh.consume(r);
@@ -864,7 +864,7 @@ public class IntScalar extends AbstractVectorBenchmark {
             r = Integer.MIN_VALUE;
             for (int i = 0; i < as.length; i++) {
                 if (ms[i % ms.length])
-                    r = (int)Math.max(r, a[i]);
+                    r = (int)Math.max(r, as[i]);
             }
         }
         bh.consume(r);
