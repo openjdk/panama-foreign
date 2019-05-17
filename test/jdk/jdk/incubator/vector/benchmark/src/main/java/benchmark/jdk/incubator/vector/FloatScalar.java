@@ -432,7 +432,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
             r = Float.POSITIVE_INFINITY;
             for (int i = 0; i < as.length; i++) {
                 if (ms[i % ms.length])
-                    r = (float)Math.min(r, a[i]);
+                    r = (float)Math.min(r, as[i]);
             }
         }
         bh.consume(r);
@@ -460,7 +460,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
             r = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < as.length; i++) {
                 if (ms[i % ms.length])
-                    r = (float)Math.max(r, a[i]);
+                    r = (float)Math.max(r, as[i]);
             }
         }
         bh.consume(r);

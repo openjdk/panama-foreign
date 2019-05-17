@@ -836,7 +836,7 @@ public class LongScalar extends AbstractVectorBenchmark {
             r = Long.MAX_VALUE;
             for (int i = 0; i < as.length; i++) {
                 if (ms[i % ms.length])
-                    r = (long)Math.min(r, a[i]);
+                    r = (long)Math.min(r, as[i]);
             }
         }
         bh.consume(r);
@@ -864,7 +864,7 @@ public class LongScalar extends AbstractVectorBenchmark {
             r = Long.MIN_VALUE;
             for (int i = 0; i < as.length; i++) {
                 if (ms[i % ms.length])
-                    r = (long)Math.max(r, a[i]);
+                    r = (long)Math.max(r, as[i]);
             }
         }
         bh.consume(r);
