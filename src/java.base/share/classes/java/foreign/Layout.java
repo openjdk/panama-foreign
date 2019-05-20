@@ -77,6 +77,25 @@ public interface Layout {
      */
     Layout alignTo(long alignmentBits) throws IllegalArgumentException;
 
+    /**
+     * Compares the specified object with this layout for equality. Returns {@code true} if and only if the specified
+     * object is also a layout, and it is equal to this layout.
+     *
+     * @param that the object to be compared for equality with this layout.
+     * @return {@code true} if the specified object is equal to this layout.
+     */
+    boolean equals(Object that);
+
+    /**
+     * Returns the hash code value for this layout.
+     * @return the hash code value for this layout.
+     */
+    int hashCode();
+
+    /**
+     * Returns a string representation of this layout.
+     * @return a string representation of this layout.
+     */
     @Override
     String toString();
 

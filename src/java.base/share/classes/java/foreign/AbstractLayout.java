@@ -30,7 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
+abstract class AbstractLayout implements Layout {
     private final OptionalLong alignment;
     private final Optional<String> name;
 
@@ -48,7 +48,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
     }
 
     @Override
-    public L withName(String name) {
+    public AbstractLayout withName(String name) {
         return dup(alignment, Optional.of(name));
     }
 
@@ -57,12 +57,12 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
         return name;
     }
 
-    abstract L dup(OptionalLong alignment, Optional<String> name);
+    abstract AbstractLayout dup(OptionalLong alignment, Optional<String> name);
 
     abstract long naturalAlignmentBits();
 
     @Override
-    public final L alignTo(long alignmentBits) throws IllegalArgumentException {
+    public AbstractLayout alignTo(long alignmentBits) throws IllegalArgumentException {
         checkAlignment(alignmentBits);
         return dup(OptionalLong.of(alignmentBits), name);
     }

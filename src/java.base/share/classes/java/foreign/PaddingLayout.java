@@ -30,7 +30,7 @@ import java.util.OptionalLong;
 /**
  * A padding layout specifies the size of extra space used to align struct fields around word boundaries.
  */
-public class PaddingLayout extends AbstractLayout<PaddingLayout> implements Layout {
+public class PaddingLayout extends AbstractLayout implements Layout {
     private final long size;
 
     PaddingLayout(long size, OptionalLong alignment, Optional<String> name) {
@@ -85,5 +85,24 @@ public class PaddingLayout extends AbstractLayout<PaddingLayout> implements Layo
     @Override
     PaddingLayout dup(OptionalLong alignment, Optional<String> name) {
         return new PaddingLayout(size, alignment, name);
+    }
+
+    //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
+    //but that causes issues with javadoc, see JDK-8224052
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public PaddingLayout withName(String name) {
+        return (PaddingLayout)super.withName(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public PaddingLayout alignTo(long alignmentBits) throws IllegalArgumentException {
+        return (PaddingLayout)super.alignTo(alignmentBits);
     }
 }

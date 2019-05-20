@@ -33,7 +33,7 @@ import java.util.OptionalLong;
  * There are three kind of supported value layouts: integer signed, integer unsigned and floating point. Each
  * value layout also has a size and an endianness (which could be either big-endian or little-endian).
  */
-public class ValueLayout extends AbstractLayout<ValueLayout> implements Layout {
+public class ValueLayout extends AbstractLayout implements Layout {
 
     /**
      * The value kind.
@@ -196,5 +196,24 @@ public class ValueLayout extends AbstractLayout<ValueLayout> implements Layout {
     @Override
     ValueLayout dup(OptionalLong alignment, Optional<String> name) {
         return new ValueLayout(kind, endianness, size, alignment, name);
+    }
+
+    //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
+    //but that causes issues with javadoc, see JDK-8224052
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ValueLayout withName(String name) {
+        return (ValueLayout)super.withName(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ValueLayout alignTo(long alignmentBits) throws IllegalArgumentException {
+        return (ValueLayout)super.alignTo(alignmentBits);
     }
 }

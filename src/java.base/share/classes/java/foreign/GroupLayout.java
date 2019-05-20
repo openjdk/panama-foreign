@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  * e.g. a 'struct' (see {@link Kind#STRUCT}), where contained elements are laid out one after the other, and a 'union'
  * (see {@link Kind#UNION}, where contained elements are laid out 'on top' of each other.
  */
-public class GroupLayout extends AbstractLayout<GroupLayout> implements CompoundLayout, Iterable<Layout> {
+public class GroupLayout extends AbstractLayout implements CompoundLayout, Iterable<Layout> {
 
     /**
      * The group kind.
@@ -96,6 +96,10 @@ public class GroupLayout extends AbstractLayout<GroupLayout> implements Compound
                 .collect(Collectors.joining(kind.delimTag, "[", "]")));
     }
 
+    /**
+     * Returns an iterator over the elements in this layout in proper sequence.
+     * @return an iterator over the elements in this list in proper sequence.
+     */
     @Override
     public Iterator<Layout> iterator() {
         return elements().iterator();
@@ -175,5 +179,24 @@ public class GroupLayout extends AbstractLayout<GroupLayout> implements Compound
     @Override
     GroupLayout dup(OptionalLong alignment, Optional<String> name) {
         return new GroupLayout(kind, elements, alignment, name);
+    }
+
+    //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
+    //but that causes issues with javadoc, see JDK-8224052
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public GroupLayout withName(String name) {
+        return (GroupLayout)super.withName(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public GroupLayout alignTo(long alignmentBits) throws IllegalArgumentException {
+        return (GroupLayout)super.alignTo(alignmentBits);
     }
 }

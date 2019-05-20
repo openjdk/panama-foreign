@@ -65,14 +65,22 @@ public interface MemoryAddress {
      */
     ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException;
 
+    /**
+     * Compares the specified object with this address for equality. Returns {@code true} if and only if the specified
+     * object is also a address, and it is equal to this address.
+     *
+     * @param that the object to be compared for equality with this address.
+     * @return {@code true} if the specified object is equal to this address.
+     */
     @Override
     boolean equals(Object that);
 
+    /**
+     * Returns the hash code value for this address.
+     * @return the hash code value for this address.
+     */
     @Override
     int hashCode();
-
-    @Override
-    String toString();
 
     /**
      * Perform bulk copy from source address to target address.

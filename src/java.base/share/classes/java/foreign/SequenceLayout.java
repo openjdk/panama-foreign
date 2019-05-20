@@ -36,7 +36,7 @@ import java.util.stream.Stream;
  * is equal to the sequence size. Unbounded sequence layouts can be thought of an infinite repetition of a layout element,
  * as in {@code [i32 i32 i32 i32, ...]}. In such cases the sequence layout will not have an associated size.
  */
-public class SequenceLayout extends AbstractLayout<SequenceLayout> implements CompoundLayout {
+public class SequenceLayout extends AbstractLayout implements CompoundLayout {
 
     private final OptionalLong size;
     private final Layout elementLayout;
@@ -138,5 +138,24 @@ public class SequenceLayout extends AbstractLayout<SequenceLayout> implements Co
     @Override
     SequenceLayout dup(OptionalLong alignment, Optional<String> name) {
         return new SequenceLayout(elementsSize(), elementLayout, alignment, name);
+    }
+
+    //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
+    //but that causes issues with javadoc, see JDK-8224052
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SequenceLayout withName(String name) {
+        return (SequenceLayout)super.withName(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SequenceLayout alignTo(long alignmentBits) throws IllegalArgumentException {
+        return (SequenceLayout)super.alignTo(alignmentBits);
     }
 }
