@@ -340,7 +340,8 @@ public class Runner {
             { "TypedefAnonStruct.h", "com.acme", new String[] { "TypedefAnonStruct_h.java" }, false},
             { "pad.h", "com.acme", new String[] { "pad_h.java" }, false},
             { "bitfields.h", "com.acme", new String[] { "bitfields_h.java" }, true},
-            { "globalFuncPointer.h", "com.acme", new String[] { "globalFuncPointer_h.java" }, false}
+            { "globalFuncPointer.h", "com.acme", new String[] { "globalFuncPointer_h.java" }, false},
+            { "atomicTypes.h", "com.acme", new String[] { "atomicTypes_h.java" }, false}
         };
     }
 }

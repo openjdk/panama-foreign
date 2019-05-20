@@ -138,7 +138,9 @@ public class Cursor {
         // FIXME: need a way to pass ar down as user data d
         try (Scope sc = Scope.globalScope().fork()) {
             LibClang.lib.clang_visitChildren(cursor, sc.allocateCallback((c, p, d) -> {
-                ar.add(new Cursor(c));
+                Cursor cursor = new Cursor(c);
+                ClangUtils.observe(cursor);
+                ar.add(cursor);
                 return LibClang.lib.CXChildVisit_Continue();
             }), Pointer.ofNull());
             return ar.stream();

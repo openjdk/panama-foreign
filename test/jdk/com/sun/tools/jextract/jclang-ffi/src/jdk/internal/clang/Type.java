@@ -111,11 +111,22 @@ public class Type {
 
     public TypeKind kind() {
         int v = kind0();
-        return TypeKind.valueOf(v);
+        TypeKind rv = TypeKind.valueOf(v);
+        // TODO: Remove when libclang expose Atomic type
+        return (rv == TypeKind.Unexposed && ClangUtils.isAtomicType(this)) ?
+                TypeKind.Atomic : rv;
+    }
+
+    public Type getValueType() {
+        return ClangUtils.getValueType(this);
     }
 
     public Cursor getDeclarationCursor() {
         return new Cursor(LibClang.lib.clang_getTypeDeclaration(type));
+    }
+
+    public boolean equalType(Type other) {
+        return LibClang.lib.clang_equalTypes(type, other.type) != 0;
     }
 
     @Override
@@ -126,7 +137,7 @@ public class Type {
         if (!(other instanceof Type)) {
             return false;
         }
-        return LibClang.lib.clang_equalTypes(type, ((Type)other).type) != 0;
+        return equalType((Type) other);
     }
 
     @Override

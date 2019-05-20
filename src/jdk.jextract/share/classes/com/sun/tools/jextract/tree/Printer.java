@@ -97,7 +97,9 @@ public final class Printer {
                 println("Canonical Type: " + canonicalType.spelling());
                 println("CType Kind: " + canonicalType.kind().name());
                 println("== Canonical Type ==");
-                dumpType(canonicalType, true);
+                if (! canonicalType.equalType(t)) {
+                    dumpType(canonicalType, true);
+                }
             } else if (t.kind() == TypeKind.ConstantArray || t.kind() == TypeKind.IncompleteArray) {
                 Type etype = t.getElementType();
                 println("Element Type: " + etype.spelling());
