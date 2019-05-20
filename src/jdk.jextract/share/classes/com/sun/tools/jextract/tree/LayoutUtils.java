@@ -151,7 +151,14 @@ public final class LayoutUtils {
                 return Sequence.of(t.getNumberOfElements(), getLayout(t.getElementType()));
             case IncompleteArray:
                 return Sequence.of(0L, getLayout(t.getElementType()));
+            case Atomic:
+                return getLayout(t.getValueType());
             case Unexposed:
+                Type canonical = t.canonicalType();
+                if (canonical.equalType(t)) {
+                    throw new IllegalStateException("Unknown type with same canonical type: " + t.spelling());
+                }
+                return getLayout(canonical);
             case Typedef:
             case Elaborated:
                 return getLayout(t.canonicalType());

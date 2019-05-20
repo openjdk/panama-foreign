@@ -48,7 +48,9 @@ public class Cursor extends StructType {
     }
 
     private static int visit(Visitor v, ByteBuffer c, ByteBuffer p, Object data) {
-        return v.visit(new Cursor(c), new Cursor(p), data).ordinal();
+        Cursor cursor = new Cursor(c);
+        ClangUtils.observe(cursor);
+        return v.visit(cursor, new Cursor(p), data).ordinal();
     }
 
     Cursor(ByteBuffer buf) {

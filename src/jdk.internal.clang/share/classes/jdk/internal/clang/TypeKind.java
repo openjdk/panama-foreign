@@ -79,7 +79,8 @@ public enum TypeKind {
     DependentSizedArray(116),
     MemberPointer(117),
     Auto(118),
-    Elaborated(119);
+    Elaborated(119),
+    Atomic(177);
 
     private final int value;
 

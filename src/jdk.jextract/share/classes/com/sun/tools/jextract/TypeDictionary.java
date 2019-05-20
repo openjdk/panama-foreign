@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import jdk.internal.clang.Type;
@@ -141,7 +140,14 @@ public final class TypeDictionary {
                 return JType.Double;
             case Float:
                 return JType.Float;
+            case Atomic:
+                return getInternal(t.getValueType(), funcResolver);
             case Unexposed:
+                Type canonical = t.canonicalType();
+                if (canonical.equalType(t)) {
+                    throw new IllegalStateException("Unknown type with same canonical type: " + t.spelling());
+                }
+                return getInternal(t.canonicalType(), funcResolver);
             case Elaborated:
                 return getInternal(t.canonicalType(), funcResolver);
             case ConstantArray:

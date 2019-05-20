@@ -80,7 +80,14 @@ public class Type extends StructType {
     public TypeKind kind() {
         int v = kind0();
         // FIXME: assert(v == getData().getInt(0));
-        return TypeKind.valueOf(v);
+        TypeKind rv = TypeKind.valueOf(v);
+        // TODO: Remove when libclang expose Atomic type
+        return (rv == TypeKind.Unexposed && ClangUtils.isAtomicType(this)) ?
+                TypeKind.Atomic : rv;
+    }
+
+    public Type getValueType() {
+        return ClangUtils.getValueType(this);
     }
 
     public native Cursor getDeclarationCursor();

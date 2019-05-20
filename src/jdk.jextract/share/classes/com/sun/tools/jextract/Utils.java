@@ -202,25 +202,25 @@ public class Utils {
     }
 
     private static void fillBuiltinRecordTypes(Type type, List<Cursor> recordTypes) {
-        type = type.canonicalType();
-        switch (type.kind()) {
+        Type canonicalType = type.canonicalType();
+        switch (canonicalType.kind()) {
             case ConstantArray:
             case IncompleteArray:
-                fillBuiltinRecordTypes(type.getElementType(), recordTypes);
+                fillBuiltinRecordTypes(canonicalType.getElementType(), recordTypes);
                 break;
 
             case FunctionProto:
             case FunctionNoProto: {
-                final int numArgs = type.numberOfArgs();
+                final int numArgs = canonicalType.numberOfArgs();
                 for (int i = 0; i < numArgs; i++) {
-                    fillBuiltinRecordTypes(type.argType(i), recordTypes);
+                    fillBuiltinRecordTypes(canonicalType.argType(i), recordTypes);
                 }
-                fillBuiltinRecordTypes(type.resultType(), recordTypes);
+                fillBuiltinRecordTypes(canonicalType.resultType(), recordTypes);
             }
             break;
 
             case Record: {
-                Cursor c = type.getDeclarationCursor();
+                Cursor c = canonicalType.getDeclarationCursor();
                 if (c.isDefinition()) {
                     SourceLocation sloc = c.getSourceLocation();
                     if (sloc != null && sloc.getFileLocation().path() == null) {
@@ -232,13 +232,22 @@ public class Utils {
 
             case BlockPointer:
             case Pointer:
-                fillBuiltinRecordTypes(type.getPointeeType(), recordTypes);
+                fillBuiltinRecordTypes(canonicalType.getPointeeType(), recordTypes);
+                break;
+
+            case Atomic:
+                fillBuiltinRecordTypes(canonicalType.getValueType(), recordTypes);
                 break;
 
             case Unexposed:
+                if (! canonicalType.equalType(type)) {
+                    fillBuiltinRecordTypes(canonicalType, recordTypes);
+                }
+                break;
+
             case Elaborated:
             case Typedef:
-                fillBuiltinRecordTypes(type, recordTypes);
+                fillBuiltinRecordTypes(canonicalType, recordTypes);
                 break;
 
             default: // nothing to do
