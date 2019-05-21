@@ -30,29 +30,29 @@ import static org.testng.Assert.assertTrue;
 
 /*
  * @test
+ * @requires os.family != "windows"
  * @bug 8224013
  * @modules jdk.jextract
  * @build JextractToolRunner
- * @run testng/othervm -Duser.language=en TestSrcDump
+ * @run testng/othervm -Duser.language=en TestSymlink
  */
-public class TestSrcDump extends JextractToolRunner {
+public class TestSymlink extends JextractToolRunner {
+
+    // Not running on Windows, since creating symlink requires Admin access.
+
     @Test
-    public void testNoPkg() {
+    public void testTargetDir() throws IOException {
         Path src = getOutputFilePath("gensrc");
-        if (Files.exists(src)) {
-            if (Files.isDirectory(src)) {
-                deleteDir(src);
-            } else {
-                deleteFile(src);
-            }
-        }
-        run("--src-dump-dir", src.toString(),
-            getInputFilePath("simple.h").toString()).checkSuccess();
+        Path realTarget = getOutputFilePath("realGenSrc");
+        Files.createDirectory(realTarget);
+        Files.createSymbolicLink(src, realTarget);
+        run("--src-dump-dir", src.toString(), "-t", "com.acme",
+                getInputFilePath("simple.h").toString()).checkSuccess();
         try {
-            assertTrue(Files.isRegularFile(src.resolve(staticForwarderName("simple.h") + ".java")));
+            assertTrue(Files.isRegularFile(src.resolve("com").resolve("acme").resolve(staticForwarderName("simple.h") + ".java")));
         } finally {
-            deleteDir(src);
+            deleteFile(src);
+            deleteDir(realTarget);
         }
     }
-
 }
