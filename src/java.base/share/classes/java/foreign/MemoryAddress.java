@@ -30,7 +30,7 @@ import jdk.internal.foreign.MemoryAddressImpl;
 import java.nio.ByteBuffer;
 
 /**
- * A memory address encodes an offset within a given {@link MemorySegment}, which defines the set of . As such, access to
+ * A memory address encodes an offset within a given {@link MemorySegment}. As such, access to
  * the memory location represented by a memory address is subject to spatial and temporal checks as enforced by the
  * address' owning memory region.
  */
