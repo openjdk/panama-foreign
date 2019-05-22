@@ -63,7 +63,7 @@ public class SequenceLayout extends AbstractLayout implements CompoundLayout {
 
     @Override
     long naturalAlignmentBits() {
-        return elementLayout().bitsSize();
+        return elementLayout().alignmentBits();
     }
 
     /**
@@ -87,8 +87,10 @@ public class SequenceLayout extends AbstractLayout implements CompoundLayout {
      * @param elementLayout the element layout.
      * @param size the array repetition count.
      * @return the new sequence layout.
+     * @throws IllegalArgumentException if size &lt; 0.
      */
-    public static SequenceLayout of(long size, Layout elementLayout) {
+    public static SequenceLayout of(long size, Layout elementLayout) throws IllegalArgumentException {
+        checkSize(size, true);
         return new SequenceLayout(OptionalLong.of(size), elementLayout, OptionalLong.empty(), Optional.empty());
     }
 

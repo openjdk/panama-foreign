@@ -23,21 +23,18 @@
 package jdk.internal.foreign;
 
 import jdk.internal.misc.Unsafe;
-import jdk.internal.vm.annotation.ForceInline;
 
+import java.foreign.MemoryAddress;
+import java.foreign.MemorySegment;
+import java.foreign.MemoryScope;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
-public class MemoryBoundInfo {
+public class MemorySegmentImpl implements MemorySegment {
 
-    public static final MemoryBoundInfo EVERYTHING = new MemoryBoundInfo(null, 0, Long.MAX_VALUE) {
-        @Override
-        void checkRange(long offset, long length) {
-            checkOverflow(offset, length);
-        }
-    };
-
-    public static final MemoryBoundInfo NOTHING = ofNative(0, 0);
+    public static final MemorySegmentImpl ofNothing(MemoryScope scope) {
+        return ofNative(scope, 0, 0);
+    }
 
     public static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
@@ -57,8 +54,25 @@ public class MemoryBoundInfo {
     public final Object base;
     public final long min;
     final long length;
+    final MemoryScope scope;
+    final MemoryAddress baseAddr;
 
-    private MemoryBoundInfo(Object base, long min, long length) {
+    @Override
+    public MemoryAddress baseAddress() {
+        return baseAddr;
+    }
+
+    @Override
+    public MemoryScope scope() {
+        return scope;
+    }
+
+    @Override
+    public long bytesSize() {
+        return length;
+    }
+
+    private MemorySegmentImpl(MemoryScope scope, Object base, long min, long length) {
         if(length < 0) {
             throw new IllegalArgumentException("length must be positive");
         }
@@ -69,15 +83,17 @@ public class MemoryBoundInfo {
         this.base = base;
         this.min = min;
         this.length = length;
+        this.scope = scope;
+        this.baseAddr = new MemoryAddressImpl(this);
     }
 
-    public static MemoryBoundInfo ofNative(long min, long length) {
-        return new MemoryBoundInfo(null, min, length);
+    public static MemorySegmentImpl ofNative(MemoryScope scope, long min, long length) {
+        return new MemorySegmentImpl(scope, null, min, length);
     }
 
-    public static MemoryBoundInfo ofHeap(Object base, long min, long length) {
+    public static MemorySegmentImpl ofHeap(MemoryScope scope, Object base, long min, long length) {
         checkOverflow(min, length);
-        return new MemoryBoundInfo(base, min, length);
+        return new MemorySegmentImpl(scope, base, min, length);
     }
 
     private static void checkOverflow(long min, long length) {
@@ -85,14 +101,14 @@ public class MemoryBoundInfo {
         addUnsignedExact(min, length == 0 ? 0 : length - 1);
     }
 
-    public static MemoryBoundInfo ofByteBuffer(ByteBuffer bb) {
+    public static MemorySegmentImpl ofByteBuffer(MemoryScope scope, ByteBuffer bb) {
         // For a direct ByteBuffer base == null and address is absolute
         Object base = getBufferBase(bb);
         long address = getBufferAddress(bb);
 
         int pos = bb.position();
         int limit = bb.limit();
-        return new MemoryBoundInfo(base, address + pos, limit - pos) {
+        return new MemorySegmentImpl(scope, base, address + pos, limit - pos) {
             // Keep a reference to the buffer so it is kept alive while the
             // region is alive
             final Object ref = bb;
@@ -107,25 +123,34 @@ public class MemoryBoundInfo {
             // @@@ Same trick can be performed to create a pointer to a
             //     primitive array
             @Override
-            MemoryBoundInfo limit(long offset, long newLength) {
+            public MemorySegmentImpl resize(long offset, long newLength) {
                 throw new UnsupportedOperationException(); // bb ref would be lost otherwise
             }
         };
     }
 
     void checkRange(long offset, long length) {
-        // FIXME check for negative length?
-        if (offset < 0 || offset > this.length - length) { // careful of overflow
-            throw new IllegalStateException("offset: " + offset + ", region length: " + this.length);
+        if (outOfBounds(offset, length)) {
+            throw new IllegalStateException();
         }
     }
 
-    @ForceInline
-    MemoryBoundInfo limit(long offset, long newLength) {
-        if (newLength > length || newLength < 0) {
+    private boolean outOfBounds(long offset, long length) {
+        return (length < 0 ||
+                offset < 0 ||
+                offset > this.length - length); // careful of overflow
+    }
+
+    @Override
+    public MemorySegmentImpl resize(long offset, long newLength) {
+        if (outOfBounds(offset, newLength)) {
             throw new IllegalArgumentException();
         }
-        return new MemoryBoundInfo(base, min + offset, newLength);
+        return new MemorySegmentImpl(scope, base, min + offset, newLength);
+    }
+
+    void checkAlive() {
+        ((MemoryScopeImpl)scope()).checkAlive();
     }
 
      static long addUnsignedExact(long a, long b) {

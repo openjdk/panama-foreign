@@ -67,11 +67,21 @@ abstract class AbstractLayout implements Layout {
         return dup(OptionalLong.of(alignmentBits), name);
     }
 
-    private void checkAlignment(long alignmentBitCount) {
+    void checkAlignment(long alignmentBitCount) {
         if (alignmentBitCount <= 0 || //alignment must be positive
                 ((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
                 (alignmentBitCount < 8)) { //alignment must be greater than 8
             throw new IllegalArgumentException("Invalid alignment: " + alignmentBitCount);
+        }
+    }
+
+    static void checkSize(long size) {
+        checkSize(size, false);
+    }
+
+    static void checkSize(long size, boolean includeZero) {
+        if (size < 0 || (!includeZero && size == 0)) {
+            throw new IllegalArgumentException("Invalid size for layout: " + size);
         }
     }
 

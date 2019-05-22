@@ -42,8 +42,10 @@ public class PaddingLayout extends AbstractLayout implements Layout {
      * Create a new selector layout from given path expression.
      * @param size the padding size in bits.
      * @return the new selector layout.
+     * @throws IllegalArgumentException if size is &le; 0.
      */
     public static PaddingLayout of(long size) {
+        checkSize(size);
         return new PaddingLayout(size, OptionalLong.empty(), Optional.empty());
     }
 

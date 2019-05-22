@@ -24,18 +24,15 @@ package jdk.internal.foreign;
 
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
-import jdk.internal.vm.annotation.ForceInline;
 
 import java.foreign.MemoryAddress;
-import java.foreign.MemoryScope;
+import java.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public class MemoryAddressImpl implements MemoryAddress {
 
     static Unsafe UNSAFE;
-
-    public static MemoryAddress NULL_ADDR = new MemoryAddressImpl(MemoryScopeImpl.UNCHECKED, MemoryBoundInfo.NOTHING, 0);
 
     static {
         if (MemoryAddressImpl.class.getClassLoader() != null) {
@@ -44,42 +41,28 @@ public class MemoryAddressImpl implements MemoryAddress {
         UNSAFE = Unsafe.getUnsafe();
     }
 
-    private final MemoryBoundInfo boundInfo;
+    private final MemorySegmentImpl segment;
     private final long offset;
-    private final MemoryScope scope;
 
-    public MemoryAddressImpl(MemoryScope scope, MemoryBoundInfo boundInfo) {
-        this(scope, boundInfo, 0);
+    public MemoryAddressImpl(MemorySegmentImpl segment) {
+        this(segment, 0);
     }
 
-    public MemoryAddressImpl(MemoryScope scope, MemoryBoundInfo boundInfo, long offset) {
-        this.boundInfo = Objects.requireNonNull(boundInfo);
+    public MemoryAddressImpl(MemorySegmentImpl segment, long offset) {
+        this.segment = Objects.requireNonNull(segment);
         this.offset = offset;
-        this.scope = scope;
-    }
-
-    public static MemoryAddress ofNull() {
-        return NULL_ADDR;
-    }
-
-    public static MemoryAddress ofNative(long addr) {
-        return ofNative(MemoryScopeImpl.UNCHECKED, addr);
-    }
-
-    public static MemoryAddress ofNative(MemoryScope scope, long addr) {
-        return new MemoryAddressImpl(scope, MemoryBoundInfo.EVERYTHING, addr);
     }
 
     public static MemoryAddress ofArray(Object array) {
         int size = java.lang.reflect.Array.getLength(array);
         long base = UNSAFE.arrayBaseOffset(array.getClass());
         long scale = UNSAFE.arrayIndexScale(array.getClass());
-        return new MemoryAddressImpl(MemoryScopeImpl.UNCHECKED, MemoryBoundInfo.ofHeap(array, base, size * scale));
+        return new MemoryAddressImpl(MemorySegmentImpl.ofHeap(MemoryScopeImpl.UNCHECKED, array, base, size * scale));
     }
 
     public static void copy(MemoryAddressImpl src, MemoryAddressImpl dst, long size) {
-        ((MemoryScopeImpl)src.scope()).checkAlive();
-        ((MemoryScopeImpl)dst.scope()).checkAlive();
+        src.segment.checkAlive();
+        dst.segment.checkAlive();
         src.checkAccess(0, size);
         dst.checkAccess(0, size);
         UNSAFE.copyMemory(
@@ -89,7 +72,7 @@ public class MemoryAddressImpl implements MemoryAddress {
     }
 
     public long size() {
-        return boundInfo.length;
+        return segment.length;
     }
 
     public long offset() {
@@ -97,54 +80,44 @@ public class MemoryAddressImpl implements MemoryAddress {
     }
 
     @Override
-    public MemoryScope scope() {
-        return scope;
-    }
-
-    @Override
-    @ForceInline
-    public MemoryAddress narrow(long newSize) {
-        return new MemoryAddressImpl(scope, boundInfo.limit(offset, offset + newSize), 0);
+    public MemorySegment segment() {
+        return segment;
     }
 
     @Override
     public MemoryAddress offset(long bytes) {
-        return new MemoryAddressImpl(scope, boundInfo, offset + bytes);
+        return new MemoryAddressImpl(segment, offset + bytes);
     }
 
     public void checkAccess(long offset, long length) {
-        if (scope != null) {
-            ((MemoryScopeImpl)scope).checkAlive();
+        if (segment().scope() != null) {
+            segment.checkAlive();
         }
-        boundInfo.checkRange(this.offset + offset, length);
+        segment.checkRange(this.offset + offset, length);
     }
 
     public long unsafeGetOffset() {
-        return boundInfo.min + offset;
+        return segment.min + offset;
     }
 
     public Object unsafeGetBase() {
-        return boundInfo.base;
+        return segment.base;
     }
 
     @Override
     public ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException {
-        boundInfo.checkRange(offset, bytes);
+        checkAccess(0L, bytes);
         return SharedSecrets.getJavaNioAccess()
                 .newDirectByteBuffer(unsafeGetOffset(), bytes, null);
     }
 
     public static long addressof(MemoryAddress address) {
-        if (address.equals(NULL_ADDR)) {
-            return 0L;
-        } else {
-            MemoryAddressImpl addressImpl = (MemoryAddressImpl)address;
-            addressImpl.checkAccess(0L, 1);
-            if (addressImpl.unsafeGetBase() != null) {
-                throw new IllegalStateException("Heap address!");
-            }
-            return addressImpl.unsafeGetOffset();
+        MemoryAddressImpl addressImpl = (MemoryAddressImpl)address;
+        addressImpl.checkAccess(0L, 1);
+        if (addressImpl.unsafeGetBase() != null) {
+            throw new IllegalStateException("Heap address!");
         }
+        return addressImpl.unsafeGetOffset();
     }
 
     @Override
@@ -165,6 +138,6 @@ public class MemoryAddressImpl implements MemoryAddress {
 
     @Override
     public String toString() {
-        return "MemoryAddress{ region: " + boundInfo + " offset=0x" + Long.toHexString(offset) + " }";
+        return "MemoryAddress{ region: " + segment + " offset=0x" + Long.toHexString(offset) + " }";
     }
 }

@@ -46,10 +46,56 @@ public interface MemoryScope extends AutoCloseable {
 
     /**
      * Allocate region of memory with given {@code LayoutType}.
+     * <p>
+     * This is equivalent to the following code:
+     * <blockquote><pre>{@code
+allocate(layout.bitsSize() / 8, layout.alignmentInBits() / 8).baseAddress();
+     * }</pre></blockquote>
+     *
      * @param layout the memory layout to be allocated.
-     * @return an address pointing to the newly allocated memory region.
+     * @return the newly allocated memory region.
+     * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraints.
+     * @throws RuntimeException if the specified size is too large for the system runtime.
+     * @throws OutOfMemoryError if the allocation is refused by the system runtime.
      */
-    MemoryAddress allocate(Layout layout);
+    default MemoryAddress allocate(Layout layout) throws IllegalArgumentException, RuntimeException, OutOfMemoryError {
+        if (layout.bitsSize() % 8 != 0) {
+            throw new IllegalArgumentException("Layout bits size must be a multiple of 8");
+        } else if (layout.alignmentBits() % 8 != 0) {
+            throw new IllegalArgumentException("Layout alignment bits must be a multiple of 8");
+        }
+        return allocate(layout.bitsSize() / 8, layout.alignmentBits() / 8).baseAddress();
+    }
+
+    /**
+     * Allocate an unaligned memory segment with given size (expressed in bits).
+     * <p>
+     * This is equivalent to the following code:
+     * <blockquote><pre>{@code
+allocate(bitsSize, 1).baseAddress();
+     * }</pre></blockquote>
+     *
+     * @param bytesSize the size (expressed in bytes) of the memory segment to be allocated.
+     * @return the newly allocated memory segment.
+     * @throws IllegalArgumentException if specified size is &lt; 0.
+     * @throws RuntimeException if the specified size is too large for the system runtime.
+     * @throws OutOfMemoryError if the allocation is refused by the system runtime.
+     */
+    default MemorySegment allocate(long bytesSize) throws IllegalArgumentException, RuntimeException, OutOfMemoryError {
+        return allocate(bytesSize, 1);
+    }
+
+    /**
+     * Allocate a memory segment with given size (expressed in bits) and alignment constraints (also expressed in bits).
+     * @param bytesSize the size (expressed in bits) of the memory segment to be allocated.
+     * @param alignmentBytes the alignment constraints (expressed in bits) of the memory segment to be allocated.
+     * @return the newly allocated memory segment.
+     * @throws IllegalArgumentException if either specified size or alignment are &lt; 0, or if the alignment constraint
+     * is not a power of 2.
+     * @throws RuntimeException if the specified size is too large for the system runtime.
+     * @throws OutOfMemoryError if the allocation is refused by the system runtime.
+     */
+    MemorySegment allocate(long bytesSize, long alignmentBytes) throws IllegalArgumentException, RuntimeException, OutOfMemoryError;
 
     /**
      * The parent of this scope.

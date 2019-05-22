@@ -110,8 +110,10 @@ public class ValueLayout extends AbstractLayout implements Layout {
      * Create a floating-point value of given size.
      * @param size the floating-polong size.
      * @return the new value layout.
+     * @throws IllegalArgumentException if size is &le; 0.
      */
-    public static ValueLayout ofFloatingPoint(long size) {
+    public static ValueLayout ofFloatingPoint(long size) throws IllegalArgumentException  {
+        checkSize(size);
         return ofFloatingPoint(ByteOrder.nativeOrder(), size);
     }
 
@@ -120,8 +122,10 @@ public class ValueLayout extends AbstractLayout implements Layout {
      * @param endianness the floating-point endianness
      * @param size the floating-point size.
      * @return the new value layout.
+     * @throws IllegalArgumentException if size is &le; 0.
      */
-    public static ValueLayout ofFloatingPoint(ByteOrder endianness, long size) {
+    public static ValueLayout ofFloatingPoint(ByteOrder endianness, long size) throws IllegalArgumentException {
+        checkSize(size);
         return new ValueLayout(Kind.FLOATING_POINT, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
@@ -129,8 +133,10 @@ public class ValueLayout extends AbstractLayout implements Layout {
      * Create an unsigned integral value of given size.
      * @param size the integral size.
      * @return the new value layout.
+     * @throws IllegalArgumentException if size is &le; 0.
      */
-    public static ValueLayout ofUnsignedInt(long size) {
+    public static ValueLayout ofUnsignedInt(long size) throws IllegalArgumentException {
+        checkSize(size);
         return ofUnsignedInt(ByteOrder.nativeOrder(), size);
     }
 
@@ -139,8 +145,10 @@ public class ValueLayout extends AbstractLayout implements Layout {
      * @param endianness the integral endianness
      * @param size the integral size.
      * @return the new value layout.
+     * @throws IllegalArgumentException if size is &le; 0.
      */
-    public static ValueLayout ofUnsignedInt(ByteOrder endianness, long size) {
+    public static ValueLayout ofUnsignedInt(ByteOrder endianness, long size) throws IllegalArgumentException {
+        checkSize(size);
         return new ValueLayout(Kind.INTEGRAL_UNSIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 
@@ -148,8 +156,10 @@ public class ValueLayout extends AbstractLayout implements Layout {
      * Create an signed integral value of given size.
      * @param size the integral size.
      * @return the new value layout.
+     * @throws IllegalArgumentException if size is &le; 0.
      */
-    public static ValueLayout ofSignedInt(long size) {
+    public static ValueLayout ofSignedInt(long size) throws IllegalArgumentException  {
+        checkSize(size);
         return ofSignedInt(ByteOrder.nativeOrder(), size);
     }
 
@@ -158,8 +168,10 @@ public class ValueLayout extends AbstractLayout implements Layout {
      * @param endianness the integral endianness
      * @param size the integral size.
      * @return the new value layout.
+     * @throws IllegalArgumentException if size is &le; 0.
      */
-    public static ValueLayout ofSignedInt(ByteOrder endianness, long size) {
+    public static ValueLayout ofSignedInt(ByteOrder endianness, long size) throws IllegalArgumentException  {
+        checkSize(size);
         return new ValueLayout(Kind.INTEGRAL_SIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
     }
 

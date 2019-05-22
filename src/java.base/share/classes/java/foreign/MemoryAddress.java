@@ -26,13 +26,13 @@
 package java.foreign;
 
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.MemoryBoundInfo;
-import jdk.internal.foreign.MemoryScopeImpl;
 
 import java.nio.ByteBuffer;
 
 /**
- * This interface encapsulate a memory address with certain spatial and temporal bounds.
+ * A memory address encodes an offset within a given {@link MemorySegment}, which defines the set of . As such, access to
+ * the memory location represented by a memory address is subject to spatial and temporal checks as enforced by the
+ * address' owning memory region.
  */
 public interface MemoryAddress {
     /**
@@ -43,25 +43,17 @@ public interface MemoryAddress {
     MemoryAddress offset(long l);
 
     /**
-     * Creates a new memory address whose base address is the same as this address
-     * and whose new limit is at the offset specified by the given argument.
-     * @param newSize The new address limit.
-     * @return a new address with updated base/limit addresses.
+     * The memory segment owning this address.
+     * @return The memory segment owning this address.
      */
-    MemoryAddress narrow(long newSize);
-
-    /**
-     * The scope associated with this address.
-     * @return The scope associated with this address.
-     */
-    MemoryScope scope();
+    MemorySegment segment();
 
     /**
      * Wraps the this address in a direct {@link ByteBuffer}
      *
      * @param bytes the size of the buffer in bytes
      * @return the created {@link ByteBuffer}
-     * @throws IllegalAccessException if bytes is larger than the region covered by this address
+     * @throws IllegalAccessException if bytes is larger than the segment covered by this address
      */
     ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException;
 
@@ -92,32 +84,4 @@ public interface MemoryAddress {
         MemoryAddressImpl.copy((MemoryAddressImpl)src, (MemoryAddressImpl)dst, bytes);
     }
 
-    /**
-     * Returns a memory address that models the memory region associated with the given byte
-     * buffer. The region starts relative to the buffer's position (inclusive)
-     * and ends relative to the buffer's limit (exclusive).
-     * <p>
-     * The address keeps a reference to the buffer to ensure the buffer is kept
-     * live for the life-time of the address.
-     * <p>
-     *
-     * @param bb the byte buffer
-     * @return the created address
-     */
-    static MemoryAddress ofByteBuffer(ByteBuffer bb) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkPermission(new RuntimePermission("java.foreign.Pointer.fromByteBuffer"));
-        }
-        return new MemoryAddressImpl(MemoryScopeImpl.UNCHECKED,
-                MemoryBoundInfo.ofByteBuffer(bb));
-    }
-
-    /**
-     * Return the null address.
-     * @return the null address.
-     */
-    static MemoryAddress ofNull() {
-        return MemoryAddressImpl.NULL_ADDR;
-    }
 }

@@ -25,8 +25,8 @@
 
 package jdk.internal.foreign;
 
-import java.foreign.Layout;
 import java.foreign.MemoryAddress;
+import java.foreign.MemorySegment;
 import java.foreign.MemoryScope;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -131,31 +131,17 @@ public final class MemoryScopeImpl implements MemoryScope {
     }
 
     @Override
-    public MemoryAddress allocate(Layout layout) {
-        return allocate(layout, layout.alignmentBits() / 8);
-    }
-
-    public MemoryAddress allocate(Layout layout, long align) {
-        // FIXME: when allocating structs align size up to 8 bytes to allow for raw reads/writes?
-        long size = layout.bitsSize() / 8;
-        if (size < 0) {
-            throw new UnsupportedOperationException("Unknown size for layout: " + layout);
+    public MemorySegment allocate(long bytesSize, long alignmentBytes) {
+        if (bytesSize < 0) {
+            throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
         }
 
-        if (size > Integer.MAX_VALUE) {
-            throw new UnsupportedOperationException("allocate size to large");
+        if (alignmentBytes < 0 ||
+            ((alignmentBytes & (alignmentBytes - 1)) != 0L)) {
+            throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
         }
 
-        return new MemoryAddressImpl(this, allocateRegion(size, align));
-    }
-
-    MemoryBoundInfo allocateRegion(long size, long align) {
-        checkAllocate();
-        if (size == 0) {
-            return MemoryBoundInfo.NOTHING;
-        }
-
-        return MemoryBoundInfo.ofNative(allocate(size, align), size);
+        return allocateRegion(bytesSize, alignmentBytes);
     }
 
     private void rollbackAllocation() {
@@ -167,7 +153,12 @@ public final class MemoryScopeImpl implements MemoryScope {
         transaction_origin = -1;
     }
 
-    private long allocate(long size, long align) {
+    private MemorySegment allocateRegion(long size, long align) {
+        checkAllocate();
+        if (size == 0) {
+            return MemorySegmentImpl.ofNothing(this);
+        }
+
         if (align > MAX_ALIGN) {
             size += align - 1;
         }
@@ -199,7 +190,7 @@ public final class MemoryScopeImpl implements MemoryScope {
                 }
                 // new buffer allocated, commit partial transaction for simplification
                 transaction_origin = -1;
-                return alignUp(newBuf, align);
+                return MemorySegmentImpl.ofNative(this, alignUp(newBuf, align), size);
             } catch (OutOfMemoryError ome) {
                 rollbackAllocation();
                 throw ome;
@@ -213,7 +204,7 @@ public final class MemoryScopeImpl implements MemoryScope {
             throw new RuntimeException("Invalid alignment: 0x" + Long.toHexString(rv));
         }
 
-        return alignUp(rv, align);
+        return MemorySegmentImpl.ofNative(this, alignUp(rv, align), size);
     }
 
     public void checkAllocate() {
@@ -261,7 +252,7 @@ public final class MemoryScopeImpl implements MemoryScope {
     }
 
     public static void checkAncestor(MemoryAddress a1, MemoryAddress a2) {
-        if (!isAncestor(a1.scope(), a2.scope())) {
+        if (!isAncestor(a1.segment().scope(), a2.segment().scope())) {
             throw new RuntimeException("Access denied");
         }
     }
