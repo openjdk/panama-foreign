@@ -62,7 +62,6 @@ class ClangUtils {
         try {
             return checkBuiltinType(spelling);
         } catch (RuntimeException re) {
-            re.printStackTrace();
             for (Map<String, Type> dict : contexts.values()) {
                 Type rt = dict.get(spelling);
                 if (rt != null) {
