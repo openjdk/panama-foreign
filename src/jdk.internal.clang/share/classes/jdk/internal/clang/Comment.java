@@ -349,7 +349,7 @@ public final class Comment extends StructType {
                     System.exit(2);
                 }
             },
-            true, clangArgs);
+            true, clangArgs).getCursor();
         tuCursor.children().forEach(c -> {
             Comment comment = c.getParsedComment();
             if (comment.kind() != CommentKind.Null) {

@@ -145,7 +145,7 @@ JNIEXPORT void JNICALL Java_jdk_internal_clang_Index_disposeIndex
 }
 
 JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Index_parseFile
-  (JNIEnv *env, jobject obj, jlong addr, jstring path, jboolean detailed, jobjectArray args) {
+  (JNIEnv *env, jobject obj, jlong addr, jstring path, jint options, jobjectArray args) {
     const char *filename = env->GetStringUTFChars(path, NULL);
     jsize argCnt = env->GetArrayLength(args);
     const char** cargs = (const char**) calloc(argCnt, sizeof(char*));
@@ -156,7 +156,7 @@ JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Index_parseFile
         cargs[i] = env->GetStringUTFChars(arg, NULL);
     }
     CXTranslationUnit tu = clang_parseTranslationUnit((CXIndex) addr,
-        filename, cargs, argCnt, NULL, 0, detailed ? CXTranslationUnit_DetailedPreprocessingRecord : CXTranslationUnit_None);
+        filename, cargs, argCnt, NULL, 0, options);
     env->ReleaseStringUTFChars(path, filename);
     for (i = 0; i < argCnt; i++) {
         arg = (jstring) env->GetObjectArrayElement(args, i);
@@ -166,12 +166,15 @@ JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Index_parseFile
     return (jlong) tu;
 }
 
-JNIEXPORT void JNICALL Java_jdk_internal_clang_Index_disposeTranslationUnit
+/*************************************
+ * TranslationUnit functions
+ *************************************/
+JNIEXPORT void JNICALL Java_jdk_internal_clang_TranslationUnit_dispose0
   (JNIEnv *env, jobject obj, jlong tu) {
     clang_disposeTranslationUnit((CXTranslationUnit) tu);
 }
 
-JNIEXPORT int JNICALL Java_jdk_internal_clang_Index_reparse0
+JNIEXPORT int JNICALL Java_jdk_internal_clang_TranslationUnit_reparse0
   (JNIEnv *env, jobject obj, jlong tu, jobjectArray args) {
 
     int nfiles = env->GetArrayLength(args);
@@ -197,7 +200,7 @@ JNIEXPORT int JNICALL Java_jdk_internal_clang_Index_reparse0
     return res;
 }
 
-JNIEXPORT jint JNICALL Java_jdk_internal_clang_Index_saveTranslationUnit
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_TranslationUnit_save0
   (JNIEnv *env, jobject obj, jlong tu, jstring path) {
     const char *filename = env->GetStringUTFChars(path, NULL);
     int res = clang_saveTranslationUnit((CXTranslationUnit) tu, filename, 0);
@@ -205,14 +208,14 @@ JNIEXPORT jint JNICALL Java_jdk_internal_clang_Index_saveTranslationUnit
     return res;
 }
 
-JNIEXPORT jobject JNICALL Java_jdk_internal_clang_Index_getTranslationUnitCursor
+JNIEXPORT jobject JNICALL Java_jdk_internal_clang_TranslationUnit_getCursor0
   (JNIEnv *env, jobject obj, jlong tu) {
     CXCursor cursor = clang_getTranslationUnitCursor((CXTranslationUnit) tu);
     jobject buffer = env->NewDirectByteBuffer(&cursor, sizeof(CXCursor));
     return env->NewObject(clsCursor, ctorCursor, buffer);
 }
 
-JNIEXPORT jobjectArray JNICALL Java_jdk_internal_clang_Index_getTranslationUnitDiagnostics
+JNIEXPORT jobjectArray JNICALL Java_jdk_internal_clang_TranslationUnit_getDiagnostics0
   (JNIEnv *env, jobject obj, jlong jtu) {
     CXTranslationUnit tu = (CXTranslationUnit) jtu;
     unsigned cnt = clang_getNumDiagnostics(tu);
@@ -283,7 +286,7 @@ locationInRange(JNIEnv *env, CXSourceLocation loc, CXSourceRange range) {
     compareSourceLocation(env, loc, end) <= 0;
 }
 
-JNIEXPORT jobjectArray JNICALL Java_jdk_internal_clang_Index_tokenize
+JNIEXPORT jobjectArray JNICALL Java_jdk_internal_clang_TranslationUnit_tokenize
   (JNIEnv *env, jobject obj, jlong jtu, jobject range) {
   CXTranslationUnit tu = (CXTranslationUnit) jtu;
   CXSourceRange *ptr = (CXSourceRange*) J2P(env, range);

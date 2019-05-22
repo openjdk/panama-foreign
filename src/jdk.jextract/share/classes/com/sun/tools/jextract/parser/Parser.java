@@ -71,7 +71,7 @@ public class Parser {
             return sb.toString();
         });
 
-        Cursor tuCursor = index.parse(path.toString(),
+        TranslationUnit tu = index.parse(path.toString(),
             d -> {
                 log.print(Level.INFO, "Clang diagnostic: " + d.toString());
                 if (d.severity() > Diagnostic.CXDiagnostic_Warning) {
@@ -80,8 +80,9 @@ public class Parser {
             },
             supportMacros, args.toArray(new String[0]));
 
-        MacroParser macroParser = new MacroParser(tuCursor.getTranslationUnit(), log);
+        MacroParser macroParser = new MacroParser(tu, log, args);
         List<Tree> decls = new ArrayList<>();
+        Cursor tuCursor = tu.getCursor();
         tuCursor.children().
             peek(c -> log.print(Level.FINEST,
                 () -> "Cursor: " + c.spelling() + "@" + c.USR() + "?" + c.isDeclaration())).
@@ -114,7 +115,6 @@ public class Parser {
                     } else {
                         log.print(Level.FINE, () -> "Defining macro " + macroName);
 
-                        TranslationUnit tu = c.getTranslationUnit();
                         SourceRange range = c.getExtent();
                         String[] tokens = tu.tokens(range);
                         decls.add(treeMaker.createMacro(c, macroParser.eval(c, tokens)));

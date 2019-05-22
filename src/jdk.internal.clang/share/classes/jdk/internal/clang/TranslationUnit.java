@@ -25,6 +25,8 @@ package jdk.internal.clang;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 public class TranslationUnit {
     final long ptr;
@@ -33,27 +35,47 @@ public class TranslationUnit {
         this.ptr = ptr;
     }
 
+    private native void dispose0(long tu);
+    private native int save0(long tu, String file);
+    private native Cursor getCursor0(long tu);
+    private native Diagnostic[] getDiagnostics0(long tu);
+    private native String[] tokenize(long translationUnit, SourceRange range);
+    private native int reparse0(long translationUnit, Index.UnsavedFile[] files);
+
     public final Cursor getCursor() {
-        return Index.getTranslationUnitCursor(ptr);
+        return getCursor0(ptr);
     }
 
     public final Diagnostic[] getDiagnostics() {
-        return Index.getTranslationUnitDiagnostics(ptr);
+        Diagnostic[] rv = getDiagnostics0(ptr);
+        return (rv == null) ? new Diagnostic[0] : rv;
     }
 
     public final String[] tokens(SourceRange range) {
-        return Index.tokenize(ptr, range);
+        return tokenize(ptr, range);
     }
 
     public final void save(Path path) throws TranslationUnitSaveException {
-        int res = Index.saveTranslationUnit(ptr, path.toAbsolutePath().toString());
+        int res = save0(ptr, path.toAbsolutePath().toString());
         if (res != 0) {
             throw new TranslationUnitSaveException(path);
         }
     }
 
+    void processDiagnostics(Consumer<Diagnostic> dh) {
+        Objects.requireNonNull(dh);
+        for (Diagnostic diag : getDiagnostics()) {
+            dh.accept(diag);
+        }
+    }
+
+    public void reparse(Consumer<Diagnostic> dh, Index.UnsavedFile... inMemoryFiles) {
+        reparse0(ptr, inMemoryFiles);
+        processDiagnostics(dh);
+    }
+
     public final void dispose() {
-        Index.disposeTranslationUnit(ptr);
+        dispose0(ptr);
     }
 
     public static class TranslationUnitSaveException extends IOException {

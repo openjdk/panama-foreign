@@ -27,6 +27,7 @@ import com.sun.tools.jextract.Context;
 import com.sun.tools.jextract.JType;
 import com.sun.tools.jextract.Log;
 import com.sun.tools.jextract.TypeDictionary;
+import java.util.Collection;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -48,11 +49,11 @@ public class MacroParser {
     private Reparser reparser;
     private Log log;
 
-    public MacroParser(TranslationUnit tu, Log log) {
+    public MacroParser(TranslationUnit tu, Log log, Collection<String> args) {
+        this.log = log;
         try {
-            this.reparser = new ClangReparser(tu);
-            this.log = log;
-        } catch (IOException ex) {
+            this.reparser = new ClangReparser(tu, args);
+        } catch (IOException | Index.ParsingFailedException ex) {
             this.reparser = Reparser.DUMMY;
         }
     }
@@ -230,23 +231,28 @@ public class MacroParser {
         final Index macroIndex = LibClang.createIndex(true);
         final TranslationUnit macroUnit;
 
-        public ClangReparser(TranslationUnit tu) throws IOException {
+        public ClangReparser(TranslationUnit tu, Collection<String> args) throws IOException, Index.ParsingFailedException {
             Path precompiled = Files.createTempFile("jextract$", ".pch");
             precompiled.toFile().deleteOnExit();
             tu.save(precompiled);
             this.macro = Files.createTempFile("jextract$", ".h");
             this.macro.toFile().deleteOnExit();
+            String[] patchedArgs = Stream.concat(
+                Stream.of(
+                    // Avoid system search path, use bundled instead
+                    "-nostdinc", "-I", Context.getBuiltinHeadersDir().toString(),
+                    // precompiled header
+                    "-include-pch", precompiled.toAbsolutePath().toString()),
+                args.stream()).toArray(String[]::new);
             this.macroUnit = macroIndex.parse(macro.toAbsolutePath().toString(),
                     d -> processDiagnostics(null, d),
                     false, //add serialization support (needed for macros)
-                    "-nostdinc", //disable standard includes (to get a stable reparse environment)
-                    "-I", Context.getBuiltinHeadersDir().toString(),
-                    "-include-pch", precompiled.toAbsolutePath().toString()).getTranslationUnit();
+                    patchedArgs);
         }
 
         @Override
         public Stream<Cursor> reparse(String snippet) {
-            macroIndex.reparse(d -> processDiagnostics(snippet, d), macroUnit,
+            macroUnit.reparse(d -> processDiagnostics(snippet, d),
                     Index.UnsavedFile.of(macro, snippet));
             return macroUnit.getCursor().children();
         }
