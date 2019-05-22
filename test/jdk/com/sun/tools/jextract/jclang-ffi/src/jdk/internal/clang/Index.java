@@ -26,66 +26,93 @@ package jdk.internal.clang;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.Pointer;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 import clang.Index_h.CXTranslationUnitImpl;
-import clang.Index_h.CXDiagnostic;
 
 public class Index {
     // Pointer to CXIndex
     private final Pointer<Void> ptr;
     // Set of TranslationUnit
-    public final List<Pointer<CXTranslationUnitImpl>> translationUnits;
+    public final List<TranslationUnit> translationUnits;
 
     Index(Pointer<Void> ptr) {
         this.ptr = ptr;
         translationUnits = new ArrayList<>();
     }
 
-    public TranslationUnit parseTU(String file, String... args) {
-        final clang.Index_h lclang = LibClang.lib;
+    public static class UnsavedFile {
+        final String file;
+        final String contents;
 
-        try (Scope scope = Scope.globalScope().fork()) {
-            Pointer<Byte> src = scope.allocateCString(file);
-            Pointer<Pointer<Byte>> cargs = toCStrArray(scope, args);
-            Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(
-                    ptr, src, cargs, args.length, null, 0,
-                    LibClang.lib.CXTranslationUnit_DetailedPreprocessingRecord());
-            return new TranslationUnit(tu);
+        private UnsavedFile(Path path, String contents) {
+            this.file = path.toAbsolutePath().toString();
+            this.contents = contents;
+        }
+
+        public static UnsavedFile of(Path path, String contents) {
+            return new UnsavedFile(path, contents);
         }
     }
 
-    public Cursor parse(String file, Consumer<Diagnostic> eh, boolean detailedPreprocessorRecord, String... args) {
+    public static class ParsingFailedException extends RuntimeException {
+        private static final long serialVersionUID = -1L;
+        private final Path srcFile;
+
+        public ParsingFailedException(Path srcFile) {
+            super("Failed to parse " + srcFile.toAbsolutePath().toString());
+            this.srcFile = srcFile;
+        }
+    }
+
+    public TranslationUnit parseTU(String file, int options, String... args)
+    throws ParsingFailedException {
         final clang.Index_h lclang = LibClang.lib;
 
         try (Scope scope = Scope.globalScope().fork()) {
             Pointer<Byte> src = scope.allocateCString(file);
             Pointer<Pointer<Byte>> cargs = toCStrArray(scope, args);
             Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(
-                    ptr, src, cargs, args.length, Pointer.ofNull(), 0,
-                    detailedPreprocessorRecord ?
-                            LibClang.lib.CXTranslationUnit_DetailedPreprocessingRecord() :
-                            LibClang.lib.CXTranslationUnit_None());
+                    ptr, src, cargs, args.length, Pointer.ofNull(), 0, options);
 
-            if (tu != null && !tu.isNull()) {
-                translationUnits.add(tu);
+            if (tu == null || tu.isNull()) {
+                throw new ParsingFailedException(Path.of(file).toAbsolutePath());
             }
 
-            int cntDiags = lclang.clang_getNumDiagnostics(tu);
-            for (int i = 0; i < cntDiags; i++) {
-                @CXDiagnostic Pointer<Void> diag = lclang.clang_getDiagnostic(tu, i);
-                eh.accept(new Diagnostic(diag));
-            }
-
-            return new Cursor(lclang.clang_getTranslationUnitCursor(tu));
+            TranslationUnit rv = new TranslationUnit(tu);
+            translationUnits.add(rv);
+            return rv;
         }
+    }
+
+    private int defaultOptions(boolean detailedPreprocessorRecord) {
+        int rv = LibClang.lib.CXTranslationUnit_ForSerialization();
+        if (detailedPreprocessorRecord) {
+            rv |= LibClang.lib.CXTranslationUnit_DetailedPreprocessingRecord();
+        }
+        return rv;
+    }
+
+    public TranslationUnit parse(String file, Consumer<Diagnostic> dh, boolean detailedPreprocessorRecord, String... args)
+    throws ParsingFailedException {
+        TranslationUnit tu = parse(file, detailedPreprocessorRecord, args);
+        tu.processDiagnostics(dh);
+        return tu;
+    }
+
+    public TranslationUnit parse(String file, boolean detailedPreprocessorRecord, String... args)
+    throws ParsingFailedException {
+        final clang.Index_h lclang = LibClang.lib;
+
+        return parseTU(file, defaultOptions(detailedPreprocessorRecord), args);
     }
 
     public void dispose() {
-        for (Pointer<CXTranslationUnitImpl> tu: translationUnits) {
-            LibClang.lib.clang_disposeTranslationUnit(tu);
+        for (TranslationUnit tu: translationUnits) {
+            tu.dispose();
         }
         LibClang.lib.clang_disposeIndex(ptr);
     }

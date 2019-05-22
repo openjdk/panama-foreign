@@ -6,58 +6,43 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Helper functions to supplement libclang
  */
 class ClangUtils {
-    // C11 types as in n1570::6.2.5
-    private static final String[] builtinTypes = new String[] {
-            "_Bool", "char", "signed char", "unsigned char",
-            "short", "int", "long", "long long",
-            "unsigned short", "unsigned int", "unsigned long", "unsigned long long",
-            "float", "double", "long double",
-            "float _Complex", "double _Complex", "long double _Complex"
-    };
-    private static final Map<String, Type> builtins = new HashMap<>();
+    private static final TranslationUnit typeChecker;
+    private static final Path jextractH;
     private static final Type INVALID_TYPE;
 
     // TU to types table
     private static final Map<TranslationUnit, Map<String, Type>> contexts = new HashMap<>();
 
-    private static Type initBuiltinTypes() {
+    static {
         try {
-            Path tmpFile = Files.createTempFile("jextract", ".h");
-            tmpFile.toFile().deleteOnExit();
-            Files.write(tmpFile, IntStream.range(0, builtinTypes.length)
-                    .mapToObj(i -> builtinTypes[i] + " arg" + i + ";")
-                    .collect(Collectors.toList())
-            );
-            Index idx = LibClang.createIndex(true);
-            Cursor tu = idx.parse(tmpFile.toAbsolutePath().toString(),
-                    d -> {
-                        if (d.severity() > Diagnostic.CXDiagnostic_Warning) {
-                            throw new RuntimeException(d.toString());
-                        }
-
-                    }, false);
-            tu.children().map(Cursor::type)
-                    .forEach(ct -> builtins.put(ct.spelling(), ct));
-            Type t = tu.type();
-            // assert Invalid type
-            if (t.kind() != TypeKind.Invalid || ! t.spelling().isEmpty()) {
-                throw new IllegalStateException("Expected Invalid Type");
-            }
-            return t;
-        } catch (IOException ioExp) {
-            throw new UncheckedIOException(ioExp);
+            jextractH = Files.createTempFile("jextract", ".h");
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
         }
+        jextractH.toFile().deleteOnExit();
+        Index idx = LibClang.createIndex(true);
+        typeChecker = idx.parse(jextractH.toAbsolutePath().toString(), d -> {}, false);
+        INVALID_TYPE = typeChecker.getCursor().type();
     }
 
-    static {
-        INVALID_TYPE = initBuiltinTypes();
+    static Type checkBuiltinType(String spelling) {
+        typeChecker.reparse(d -> {
+            if (d.severity() >= Diagnostic.CXDiagnostic_Warning) {
+                throw new RuntimeException("Cannot parse type " + spelling);
+            }
+        }, Index.UnsavedFile.of(jextractH, spelling + " arg;"));
+        Type found = typeChecker.getCursor().children()
+                .filter(c -> c.kind() == CursorKind.VarDecl)
+                .filter(c -> c.spelling().equals("arg"))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No matching cursor"))
+                .type();
+        return found;
     }
 
     static boolean isAtomicType(Type type) {
@@ -74,15 +59,15 @@ class ClangUtils {
         }
         String spelling = type.spelling();
         spelling = spelling.substring("_Atomic(".length(), spelling.length() - 1);
-        Type rt = builtins.get(spelling);
-        if (rt != null) {
-            return rt;
-        }
-
-        for (Map<String, Type> dict: contexts.values()) {
-            rt = dict.get(spelling);
-            if (rt != null) {
-                return rt;
+        try {
+            return checkBuiltinType(spelling);
+        } catch (RuntimeException re) {
+            re.printStackTrace();
+            for (Map<String, Type> dict : contexts.values()) {
+                Type rt = dict.get(spelling);
+                if (rt != null) {
+                    return rt;
+                }
             }
         }
 

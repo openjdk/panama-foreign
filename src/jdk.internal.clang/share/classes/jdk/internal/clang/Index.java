@@ -32,32 +32,55 @@ public class Index {
     // Pointer to CXIndex
     final long ptr;
     // Set of TranslationUnit
-    public final List<Long> translationUnits;
+    public final List<TranslationUnit> translationUnits;
 
     Index(long ptr) {
         this.ptr = ptr;
         translationUnits = new ArrayList<>();
     }
 
-    native void disposeIndex(long ptr);
+    private native void disposeIndex(long ptr);
     // parseTranslationUnit, return pointer(CXTranslationUnit)
-    private native long parseFile(long ptr, String file, boolean detailedPreprocessorRecord, String... args);
-    static native void disposeTranslationUnit(long tu);
-    static native int saveTranslationUnit(long tu, String file);
-    static native Cursor getTranslationUnitCursor(long tu);
-    static native Diagnostic[] getTranslationUnitDiagnostics(long tu);
-    static native String[] tokenize(long translationUnit, SourceRange range);
-    private static native int reparse0(long translationUnit, UnsavedFile[] files);
+    private native long parseFile(long ptr, String file, int options, String... args);
 
-    public Cursor parse(String file, Consumer<Diagnostic> eh, boolean detailedPreprocessorRecord, String... args) {
-        long tu = parseFile(ptr, file, detailedPreprocessorRecord, args);
-        if (tu != 0) {
-            translationUnits.add(tu);
+    private final static int CXTranslationUnit_DetailedPreprocessingRecord = 0x01;
+    private final static int CXTranslationUnit_ForSerialization = 0x10;
+
+    private final static int defaultOption(boolean detailedPreprocessorRecord) {
+        int rv = CXTranslationUnit_ForSerialization;
+        if (detailedPreprocessorRecord) {
+            rv |= CXTranslationUnit_DetailedPreprocessingRecord;
+        }
+        return rv;
+    }
+
+    public static class ParsingFailedException extends RuntimeException {
+        private static final long serialVersionUID = -1L;
+        private final Path srcFile;
+
+        public ParsingFailedException(Path srcFile) {
+            super("Failed to parse " + srcFile.toAbsolutePath().toString());
+            this.srcFile = srcFile;
+        }
+    }
+
+    public TranslationUnit parse(String file, Consumer<Diagnostic> dh, boolean detailedPreprocessorRecord, String... args)
+            throws ParsingFailedException {
+        TranslationUnit tu = parse(file, detailedPreprocessorRecord, args);
+        tu.processDiagnostics(dh);
+        return tu;
+    }
+
+    public TranslationUnit parse(String file, boolean detailedPreprocessorRecord, String... args)
+            throws ParsingFailedException {
+        long tuPtr = parseFile(ptr, file, defaultOption(detailedPreprocessorRecord), args);
+        if (tuPtr == 0) {
+            throw new ParsingFailedException(Path.of(file).toAbsolutePath());
         }
 
-        processDiagnostics(eh, tu);
-
-        return getTranslationUnitCursor(tu);
+        TranslationUnit tu = new TranslationUnit(tuPtr);
+        translationUnits.add(tu);
+        return tu;
     }
 
     public static class UnsavedFile {
@@ -74,27 +97,9 @@ public class Index {
         }
     }
 
-    public void reparse(Consumer<Diagnostic> eh, TranslationUnit translationUnit, UnsavedFile... inMemoryFiles) {
-        if (!translationUnits.contains(translationUnit.ptr)) {
-            throw new IllegalStateException("Cannot reparse unknown translation unit!");
-        }
-        reparse0(translationUnit.ptr, inMemoryFiles);
-
-        processDiagnostics(eh, translationUnit.ptr);
-    }
-
-    private void processDiagnostics(Consumer<Diagnostic> eh, long translationUnitPtr) {
-        Diagnostic[] diags = getTranslationUnitDiagnostics(translationUnitPtr);
-        if (null != diags) {
-            for (Diagnostic diag: diags) {
-                eh.accept(diag);
-            }
-        }
-    }
-
     public void dispose() {
-        for (long tu: translationUnits) {
-            disposeTranslationUnit(tu);
+        for (TranslationUnit tu: translationUnits) {
+            tu.dispose();
         }
         disposeIndex(ptr);
     }

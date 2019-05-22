@@ -26,19 +26,14 @@ package com.sun.tools.jextract;
 import com.sun.tools.jextract.parser.Parser;
 import com.sun.tools.jextract.tree.FlexibleArrayWarningVisitor;
 import com.sun.tools.jextract.tree.Tree;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,7 +70,7 @@ public class JextractTool {
 
         //generate classes
         Map<String, String> srcMap = new HashMap<>();
-        headerMap.forEach((hf, decls) -> generateHeader(hf, decls,srcMap));
+        headerMap.forEach((hf, decls) -> generateHeader(hf, decls, srcMap));
         return new Writer(ctx, srcMap);
     }
 

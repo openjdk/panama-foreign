@@ -21,15 +21,25 @@
  * questions.
  */
 
+import com.sun.tools.jextract.Context;
+import com.sun.tools.jextract.Filters;
+import com.sun.tools.jextract.JarWriter;
+import com.sun.tools.jextract.JextractTool;
+import com.sun.tools.jextract.Log;
 import com.sun.tools.jextract.MissingSymbolAction;
-import java.foreign.annotations.*;
-import java.nio.file.Files;
+import com.sun.tools.jextract.Options;
+import com.sun.tools.jextract.Writer;
+import java.foreign.annotations.NativeFunction;
+import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeLocation;
+import java.foreign.annotations.NativeStruct;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -45,28 +55,21 @@ import java.util.stream.Collectors;
 import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
-
-import com.sun.tools.jextract.Filters;
-import com.sun.tools.jextract.JextractTool;
-import com.sun.tools.jextract.JarWriter;
-import com.sun.tools.jextract.Log;
-import com.sun.tools.jextract.Options;
-import com.sun.tools.jextract.Writer;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.util.ASMifier;
 import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
 import jdk.internal.org.objectweb.asm.util.Textifier;
 import jdk.internal.org.objectweb.asm.util.TraceClassVisitor;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import com.sun.tools.jextract.Context;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /*
  * @test
@@ -106,7 +109,7 @@ public class Runner {
                 options.build(), Log.createDefault(), Filters.createDefault());
     }
 
-    private Writer extract() throws IOException {
+    private Writer extract()  {
         return new JextractTool(ctx).processHeaders();
     }
 

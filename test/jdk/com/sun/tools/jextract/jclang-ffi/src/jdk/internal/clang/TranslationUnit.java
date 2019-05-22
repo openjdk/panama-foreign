@@ -29,17 +29,21 @@ import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
+import java.foreign.memory.Array;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 import clang.CXString_h.CXString;
 import clang.Index_h.CXDiagnostic;
 import clang.Index_h.CXToken;
 import clang.Index_h.CXTokenKind;
 import clang.Index_h.CXTranslationUnitImpl;
+import clang.Index_h.CXUnsavedFile;
 
 public class TranslationUnit {
-    private final Pointer<CXTranslationUnitImpl> tu;
+    final Pointer<CXTranslationUnitImpl> tu;
     private final Scope scope = Scope.globalScope().fork();
 
     TranslationUnit(Pointer<CXTranslationUnitImpl> tu) {
@@ -54,10 +58,6 @@ public class TranslationUnit {
         final clang.Index_h lclang = LibClang.lib;
 
         int cntDiags = lclang.clang_getNumDiagnostics(tu);
-        if (cntDiags == 0) {
-            return null;
-        }
-
         Diagnostic[] rv = new Diagnostic[cntDiags];
         for (int i = 0; i < cntDiags; i++) {
             @CXDiagnostic Pointer<Void> diag = lclang.clang_getDiagnostic(tu, i);
@@ -75,6 +75,35 @@ public class TranslationUnit {
                 throw new TranslationUnit.TranslationUnitSaveException(path);
             }
         }
+    }
+
+    void processDiagnostics(Consumer<Diagnostic> dh) {
+        Objects.requireNonNull(dh);
+        for (Diagnostic diag : getDiagnostics()) {
+            dh.accept(diag);
+        }
+    }
+
+    public int reparse(Index.UnsavedFile... inMemoryFiles) {
+        final clang.Index_h lclang = LibClang.lib;
+
+        try (Scope s = Scope.globalScope().fork()) {
+            Array<CXUnsavedFile> files = inMemoryFiles.length == 0 ? null :
+                    s.allocateArray(LayoutType.ofStruct(CXUnsavedFile.class), inMemoryFiles.length);
+            for (int i = 0; i < inMemoryFiles.length; i++) {
+                files.get(i).Filename$set(s.allocateCString(inMemoryFiles[i].file));
+                files.get(i).Contents$set(s.allocateCString(inMemoryFiles[i].contents));
+                files.get(i).Length$set(inMemoryFiles[i].contents.length());
+            }
+            return lclang.clang_reparseTranslationUnit(tu, inMemoryFiles.length,
+                    files == null ? Pointer.ofNull() : files.elementPointer(),
+                    lclang.clang_defaultReparseOptions(tu));
+        }
+    }
+
+    public void reparse(Consumer<Diagnostic> dh, Index.UnsavedFile... inMemoryFiles) {
+        reparse(inMemoryFiles);
+        processDiagnostics(dh);
     }
 
     public String[] tokens(SourceRange range) {
@@ -155,12 +184,12 @@ public class TranslationUnit {
 
         public SourceLocation getLocation() {
             return new SourceLocation(LibClang.lib.clang_getTokenLocation(
-                        tu, token));
+                    tu, token));
         }
 
         public SourceRange getExtent() {
             return new SourceRange(LibClang.lib.clang_getTokenExtent(
-                        tu, token));
+                    tu, token));
         }
     }
 
