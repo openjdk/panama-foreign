@@ -43,70 +43,80 @@ import static org.testng.Assert.*;
 public class TestMemoryAccess {
 
     @Test(dataProvider = "elements")
-    public void testAccess(Layout elemLayout, Class<?> carrier, Checker checker) {
+    public void testAccess(long characteristics, Layout elemLayout, Class<?> carrier, Checker checker) {
         Layout layout = elemLayout.withName("elem");
-        testAccessInternal(layout, layout.toPath(), carrier, checker);
+        testAccessInternal(characteristics, layout, layout.toPath(), carrier, checker);
     }
 
     @Test(dataProvider = "elements")
-    public void testPaddedAccessByName(Layout elemLayout, Class<?> carrier, Checker checker) {
+    public void testPaddedAccessByName(long characteristics, Layout elemLayout, Class<?> carrier, Checker checker) {
         Layout layout = GroupLayout.struct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem"));
-        testAccessInternal(layout, layout.toPath()
+        testAccessInternal(characteristics, layout, layout.toPath()
                 .elementPath("elem"), carrier, checker);
     }
 
     @Test(dataProvider = "elements")
-    public void testPaddedAccessByIndex(Layout elemLayout, Class<?> carrier, Checker checker) {
+    public void testPaddedAccessByIndex(long characteristics, Layout elemLayout, Class<?> carrier, Checker checker) {
         Layout layout = GroupLayout.struct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem"));
-        testAccessInternal(layout, layout.toPath()
+        testAccessInternal(characteristics, layout, layout.toPath()
                 .elementPath(1), carrier, checker);
     }
 
     @Test(dataProvider = "elements")
-    public void testPaddedAccessByIndexSeq(Layout elemLayout, Class<?> carrier, Checker checker) {
+    public void testPaddedAccessByIndexSeq(long characteristics, Layout elemLayout, Class<?> carrier, Checker checker) {
         Layout layout = SequenceLayout.of(2, elemLayout);
-        testAccessInternal(layout, layout.toPath()
+        testAccessInternal(characteristics, layout, layout.toPath()
                 .elementPath(1), carrier, checker);
     }
 
     @Test(dataProvider = "arrayElements")
-    public void testArrayAccess(Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
+    public void testArrayAccess(long characteristics, Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
         SequenceLayout seq = SequenceLayout.of(10, elemLayout.withName("elem"));
-        testArrayAccessInternal(seq, seq.toPath()
+        testArrayAccessInternal(characteristics, seq, seq.toPath()
                 .elementPath(), carrier, checker);
     }
 
     @Test(dataProvider = "arrayElements")
-    public void testPaddedArrayAccessByName(Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
+    public void testPaddedArrayAccessByName(long characteristics, Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
         SequenceLayout seq = SequenceLayout.of(10, GroupLayout.struct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem")));
-        testArrayAccessInternal(seq, seq.toPath()
+        testArrayAccessInternal(characteristics, seq, seq.toPath()
                 .elementPath()
                 .elementPath("elem"), carrier, checker);
     }
 
     @Test(dataProvider = "arrayElements")
-    public void testPaddedArrayAccessByIndex(Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
+    public void testPaddedArrayAccessByIndex(long characteristics, Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
         SequenceLayout seq = SequenceLayout.of(10, GroupLayout.struct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem")));
-        testArrayAccessInternal(seq, seq.toPath()
+        testArrayAccessInternal(characteristics, seq, seq.toPath()
                 .elementPath()
                 .elementPath(1), carrier, checker);
     }
 
     @Test(dataProvider = "arrayElements")
-    public void testPaddedArrayAccessByIndexSeq(Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
+    public void testPaddedArrayAccessByIndexSeq(long characteristics, Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
         SequenceLayout seq = SequenceLayout.of(10, SequenceLayout.of(2, elemLayout));
-        testArrayAccessInternal(seq, seq.toPath()
+        testArrayAccessInternal(characteristics, seq, seq.toPath()
                 .elementPath()
                 .elementPath(1), carrier, checker);
     }
 
-    private void testAccessInternal(Layout layout, LayoutPath path, Class<?> carrier, Checker checker) {
+    private void testAccessInternal(long characteristics, Layout layout, LayoutPath path, Class<?> carrier, Checker checker) {
         VarHandle handle = path.dereferenceHandle(carrier);
 
         MemoryAddress outer_address;
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
+        try (MemoryScope scope = MemoryScope.globalScope().fork(characteristics)) {
             MemoryAddress addr = scope.allocate(layout);
-            checker.check(handle, addr);
+            try {
+                checker.check(handle, addr);
+                if ((characteristics & MemoryScope.IMMUTABLE) != 0) {
+                    throw new AssertionError(); //not ok, memory should be immutable
+                }
+            } catch (IllegalStateException ex) {
+                if ((characteristics & MemoryScope.IMMUTABLE) == 0) {
+                    throw new AssertionError(); //we should not have failed!
+                }
+                return;
+            }
             try {
                 checker.check(handle, addr.offset(layout.bitsSize() / 8));
                 throw new AssertionError(); //not ok, out of bounds
@@ -123,14 +133,24 @@ public class TestMemoryAccess {
         }
     }
 
-    private void testArrayAccessInternal(SequenceLayout seq, LayoutPath path, Class<?> carrier, ArrayChecker checker) {
+    private void testArrayAccessInternal(long characteristics, SequenceLayout seq, LayoutPath path, Class<?> carrier, ArrayChecker checker) {
         VarHandle handle = path.dereferenceHandle(carrier);
 
         MemoryAddress outer_address;
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
+        try (MemoryScope scope = MemoryScope.globalScope().fork(characteristics)) {
             MemoryAddress addr = scope.allocate(seq);
-            for (int i = 0 ; i < seq.elementsSize().getAsLong() ; i++) {
-                checker.check(handle, addr, i);
+            try {
+                for (int i = 0; i < seq.elementsSize().getAsLong(); i++) {
+                    checker.check(handle, addr, i);
+                }
+                if ((characteristics & MemoryScope.IMMUTABLE) != 0) {
+                    throw new AssertionError(); //not ok, memory should be immutable
+                }
+            } catch (IllegalStateException ex) {
+                if ((characteristics & MemoryScope.IMMUTABLE) == 0) {
+                    throw new AssertionError(); //we should not have failed!
+                }
+                return;
             }
             try {
                 checker.check(handle, addr, seq.elementsSize().getAsLong());
@@ -149,39 +169,39 @@ public class TestMemoryAccess {
     }
 
     @Test(dataProvider = "matrixElements")
-    public void testMatrixAccess(Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
+    public void testMatrixAccess(long characteristics, Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
         SequenceLayout seq = SequenceLayout.of(20,
                 SequenceLayout.of(10, elemLayout.withName("elem")));
-        testMatrixAccessInternal(seq, seq.toPath()
+        testMatrixAccessInternal(characteristics, seq, seq.toPath()
                 .elementPath()
                 .elementPath(), carrier, checker);
     }
 
     @Test(dataProvider = "matrixElements")
-    public void testPaddedMatrixAccessByName(Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
+    public void testPaddedMatrixAccessByName(long characteristics, Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
         SequenceLayout seq = SequenceLayout.of(20,
                 SequenceLayout.of(10, GroupLayout.struct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem"))));
-        testMatrixAccessInternal(seq, seq.toPath()
+        testMatrixAccessInternal(characteristics, seq, seq.toPath()
                 .elementPath()
                 .elementPath()
                 .elementPath("elem"), carrier, checker);
     }
 
     @Test(dataProvider = "matrixElements")
-    public void testPaddedMatrixAccessByIndex(Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
+    public void testPaddedMatrixAccessByIndex(long characteristics, Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
         SequenceLayout seq = SequenceLayout.of(20,
                 SequenceLayout.of(10, GroupLayout.struct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem"))));
-        testMatrixAccessInternal(seq, seq.toPath()
+        testMatrixAccessInternal(characteristics, seq, seq.toPath()
                 .elementPath()
                 .elementPath()
                 .elementPath(1), carrier, checker);
     }
 
     @Test(dataProvider = "matrixElements")
-    public void testPaddedMatrixAccessByIndexSeq(Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
+    public void testPaddedMatrixAccessByIndexSeq(long characteristics, Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
         SequenceLayout seq = SequenceLayout.of(20,
                 SequenceLayout.of(10, SequenceLayout.of(2, elemLayout)));
-        testMatrixAccessInternal(seq, seq.toPath()
+        testMatrixAccessInternal(characteristics, seq, seq.toPath()
                 .elementPath()
                 .elementPath()
                 .elementPath(1), carrier, checker);
@@ -194,17 +214,27 @@ public class TestMemoryAccess {
         l.toPath().dereferenceHandle(carrier);
     }
 
-    private void testMatrixAccessInternal(SequenceLayout seq, LayoutPath path, Class<?> carrier, MatrixChecker checker) {
+    private void testMatrixAccessInternal(long characteristics, SequenceLayout seq, LayoutPath path, Class<?> carrier, MatrixChecker checker) {
         VarHandle handle = path.dereferenceHandle(carrier);
 
         MemoryAddress outer_address;
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
+        try (MemoryScope scope = MemoryScope.globalScope().fork(characteristics)) {
             MemoryAddress addr = scope.allocate(seq);
-            for (int i = 0 ; i < seq.elementsSize().getAsLong() ; i++) {
-                for (int j = 0; j < ((SequenceLayout)seq.elementLayout()).elementsSize().getAsLong() ; j++) {
-                    checker.check(handle, addr, i, j);
+            try {
+                for (int i = 0; i < seq.elementsSize().getAsLong(); i++) {
+                    for (int j = 0; j < ((SequenceLayout) seq.elementLayout()).elementsSize().getAsLong(); j++) {
+                        checker.check(handle, addr, i, j);
+                    }
                 }
-            }
+                if ((characteristics & MemoryScope.IMMUTABLE) != 0) {
+                    throw new AssertionError(); //not ok, memory should be immutable
+                }
+            } catch (IllegalStateException ex) {
+                if ((characteristics & MemoryScope.IMMUTABLE) == 0) {
+                    throw new AssertionError(); //we should not have failed!
+                }
+                return;
+            } 
             try {
                 checker.check(handle, addr, seq.elementsSize().getAsLong(),
                         ((SequenceLayout)seq.elementLayout()).elementsSize().getAsLong());
@@ -225,32 +255,58 @@ public class TestMemoryAccess {
     @DataProvider(name = "elements")
     public Object[][] createData() {
         return new Object[][] {
-                //BE
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, Checker.BYTE },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, Checker.BYTE },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, Checker.SHORT },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, Checker.SHORT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, Checker.CHAR },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, Checker.CHAR },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, Checker.INT },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, Checker.INT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, Checker.LONG },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, Checker.LONG },
-                { ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, Checker.FLOAT },
-                { ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, Checker.DOUBLE },
-                //LE
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, Checker.BYTE },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, Checker.BYTE },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, Checker.SHORT },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, Checker.SHORT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, Checker.CHAR },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, Checker.CHAR },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, Checker.INT },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, Checker.INT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, Checker.LONG },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, Checker.LONG },
-                { ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, Checker.FLOAT },
-                { ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, Checker.DOUBLE },
+                //BE, RW
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, Checker.BYTE },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, Checker.BYTE },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, Checker.SHORT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, Checker.SHORT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, Checker.CHAR },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, Checker.CHAR },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, Checker.INT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, Checker.INT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, Checker.LONG },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, Checker.LONG },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, Checker.FLOAT },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, Checker.DOUBLE },
+                //BE, RO
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, Checker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, Checker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, Checker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, Checker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, Checker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, Checker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, Checker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, Checker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, Checker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, Checker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, Checker.FLOAT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, Checker.DOUBLE },
+                //LE, RW
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, Checker.BYTE },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, Checker.BYTE },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, Checker.SHORT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, Checker.SHORT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, Checker.CHAR },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, Checker.CHAR },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, Checker.INT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, Checker.INT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, Checker.LONG },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, Checker.LONG },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, Checker.FLOAT },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, Checker.DOUBLE },
+                //LE, RO
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, Checker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, Checker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, Checker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, Checker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, Checker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, Checker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, Checker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, Checker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, Checker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, Checker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, Checker.FLOAT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, Checker.DOUBLE },
         };
     }
 
@@ -296,32 +352,58 @@ public class TestMemoryAccess {
     @DataProvider(name = "arrayElements")
     public Object[][] createArrayData() {
         return new Object[][] {
-                //BE
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, ArrayChecker.SHORT },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, ArrayChecker.SHORT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, ArrayChecker.CHAR },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, ArrayChecker.CHAR },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, ArrayChecker.INT },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, ArrayChecker.INT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, ArrayChecker.LONG },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, ArrayChecker.LONG },
-                { ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, ArrayChecker.FLOAT },
-                { ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, ArrayChecker.DOUBLE },
-                //LE
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, ArrayChecker.SHORT },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, ArrayChecker.SHORT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, ArrayChecker.CHAR },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, ArrayChecker.CHAR },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, ArrayChecker.INT },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, ArrayChecker.INT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, ArrayChecker.LONG },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, ArrayChecker.LONG },
-                { ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, ArrayChecker.FLOAT },
-                { ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, ArrayChecker.DOUBLE },
+                //BE, RW
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, ArrayChecker.FLOAT },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, ArrayChecker.DOUBLE },
+                //BE, RO
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, ArrayChecker.FLOAT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, ArrayChecker.DOUBLE },
+                //LE, RW
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, ArrayChecker.FLOAT },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, ArrayChecker.DOUBLE },
+                //LE, RO
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, ArrayChecker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, ArrayChecker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, ArrayChecker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, ArrayChecker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, ArrayChecker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, ArrayChecker.FLOAT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, ArrayChecker.DOUBLE },
         };
     }
 
@@ -367,32 +449,58 @@ public class TestMemoryAccess {
     @DataProvider(name = "matrixElements")
     public Object[][] createMatrixData() {
         return new Object[][] {
-                //BE
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, MatrixChecker.SHORT },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, MatrixChecker.SHORT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, MatrixChecker.CHAR },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, MatrixChecker.CHAR },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, MatrixChecker.INT },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, MatrixChecker.INT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, MatrixChecker.LONG },
-                { ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, MatrixChecker.LONG },
-                { ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, MatrixChecker.FLOAT },
-                { ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, MatrixChecker.DOUBLE },
-                //LE
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, MatrixChecker.SHORT },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, MatrixChecker.SHORT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, MatrixChecker.CHAR },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, MatrixChecker.CHAR },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, MatrixChecker.INT },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, MatrixChecker.INT },
-                { ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, MatrixChecker.LONG },
-                { ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, MatrixChecker.LONG },
-                { ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, MatrixChecker.FLOAT },
-                { ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, MatrixChecker.DOUBLE },
+                //BE, RW
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, MatrixChecker.FLOAT },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, MatrixChecker.DOUBLE },
+                //BE, RO
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32), float.class, MatrixChecker.FLOAT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 64), double.class, MatrixChecker.DOUBLE },
+                //LE, RW
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { 0L, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { 0L, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, MatrixChecker.FLOAT },
+                { 0L, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, MatrixChecker.DOUBLE },
+                //LE, RO
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 8), byte.class, MatrixChecker.BYTE },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), short.class, MatrixChecker.SHORT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 16), char.class, MatrixChecker.CHAR },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32), int.class, MatrixChecker.INT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 64), long.class, MatrixChecker.LONG },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32), float.class, MatrixChecker.FLOAT },
+                { MemoryScope.IMMUTABLE, ValueLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 64), double.class, MatrixChecker.DOUBLE },
         };
     }
 

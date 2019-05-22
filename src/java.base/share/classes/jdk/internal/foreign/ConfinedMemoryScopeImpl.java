@@ -30,25 +30,18 @@ import java.foreign.MemorySegment;
 import java.foreign.MemoryScope;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
-import jdk.internal.misc.Unsafe;
+public final class ConfinedMemoryScopeImpl extends AbstractMemoryScopeImpl {
 
-public final class MemoryScopeImpl implements MemoryScope {
+    private Set<MemoryScope> descendants = new HashSet<>();
 
     // FIXME: Move this, make it dynamic and correct
     private final static long ALLOC_ALIGNMENT = 8;
-
-    private final static Unsafe U = Unsafe.getUnsafe();
     // 64KB block
     private final static long UNIT_SIZE = 64 * 1024;
 
-    // The maximum alignment supported by malloc - typically 16 on 64-bit platforms.
-    private final static long MAX_ALIGN = 16;
-
     public State state = ALIVE;
-    private Set<MemoryScope> descendants = new HashSet<>();
 
     // the address of allocated memory
     private long block;
@@ -57,9 +50,7 @@ public final class MemoryScopeImpl implements MemoryScope {
     // the free offset when start transaction
     private long transaction_origin;
     // the scope owner
-    private final MemoryScopeImpl parent;
-    // the scope charateristics
-    private final long charateristics;
+    private final AbstractMemoryScopeImpl parent;
     // the scope thread (if confined)
     private final Thread thread;
 
@@ -77,71 +68,43 @@ public final class MemoryScopeImpl implements MemoryScope {
     final static State CLOSED = new State();
     final static State MERGED = new State();
 
-    public static final MemoryScopeImpl GLOBAL = new MemoryScopeImpl(null, PINNED);
-    public static final MemoryScopeImpl UNCHECKED = new MemoryScopeImpl(null, PINNED | MemoryScope.UNCHECKED);
-    
-    public MemoryScopeImpl(MemoryScopeImpl parent, long charateristics) {
+    public ConfinedMemoryScopeImpl(AbstractMemoryScopeImpl parent, long charateristics) {
+        super(charateristics);
         this.parent = parent;
         block = U.allocateMemory(UNIT_SIZE);
         free_offset = 0;
         transaction_origin = -1;
         used_blocks = new ArrayList<>();
-        this.charateristics = charateristics;
-        this.thread = (charateristics & CONFINED) != 0 ?
-            Thread.currentThread() : null;
-    }
-
-    public void checkAlive() {
-        if (thread != null && thread != Thread.currentThread()) {
-            throw new IllegalStateException("Attempt to access scope outside confinement thread!");
-        } else if ((charateristics & MemoryScope.UNCHECKED) != 0 || state == ALIVE) {
-            return;
-        } else if (state == CLOSED) {
-            throw new IllegalStateException("Scope is not alive");
-        } else if (state == MERGED) {
-            ((MemoryScopeImpl) parent()).checkAlive();
-        }
+        this.thread = Thread.currentThread();
     }
 
     @Override
-    public Optional<Thread> confinementThread() {
-        return Optional.ofNullable(thread);
+    public MemoryScope fork(long characteristics) {
+        MemoryScope res = super.fork(characteristics);
+        if (parent instanceof ConfinedMemoryScopeImpl) {
+            ((ConfinedMemoryScopeImpl) parent).descendants.add(this);
+        }
+        return res;
+    }
+
+    @Override
+    public boolean isAlive() {
+        if ((characteristics & MemoryScope.UNCHECKED) != 0) {
+            return true;
+        } else if (state == ALIVE) {
+            return true;
+        } else if (state == CLOSED) {
+            return false;
+        } else if (state == MERGED) {
+            return parent.isAlive();
+        } else {
+            throw new IllegalStateException("Invalid scope state");
+        }
     }
 
     @Override
     public MemoryScope parent() {
         return parent;
-    }
-
-    @Override
-    public MemoryScope fork() {
-        MemoryScope forkedScope = new MemoryScopeImpl(this, 0L);
-        descendants.add(forkedScope);
-        return forkedScope;
-    }
-
-    @Override
-    public MemoryScope fork(long charateristics) {
-        return new MemoryScopeImpl(this, charateristics);
-    }
-
-    @Override
-    public long characteristics() {
-        return 0;
-    }
-
-    @Override
-    public MemorySegment allocate(long bytesSize, long alignmentBytes) {
-        if (bytesSize < 0) {
-            throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
-        }
-
-        if (alignmentBytes < 0 ||
-            ((alignmentBytes & (alignmentBytes - 1)) != 0L)) {
-            throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
-        }
-
-        return allocateRegion(bytesSize, alignmentBytes);
     }
 
     private void rollbackAllocation() {
@@ -153,12 +116,10 @@ public final class MemoryScopeImpl implements MemoryScope {
         transaction_origin = -1;
     }
 
-    private MemorySegment allocateRegion(long size, long align) {
+    @Override
+    MemorySegment allocateRegion(long size, long align) {
         checkAllocate();
-        if (size == 0) {
-            return MemorySegmentImpl.ofNothing(this);
-        }
-
+        long prev_size = size;
         if (align > MAX_ALIGN) {
             size += align - 1;
         }
@@ -190,7 +151,7 @@ public final class MemoryScopeImpl implements MemoryScope {
                 }
                 // new buffer allocated, commit partial transaction for simplification
                 transaction_origin = -1;
-                return MemorySegmentImpl.ofNative(this, alignUp(newBuf, align), size);
+                return MemorySegmentImpl.ofNative(this, alignUp(newBuf, align), prev_size);
             } catch (OutOfMemoryError ome) {
                 rollbackAllocation();
                 throw ome;
@@ -204,7 +165,7 @@ public final class MemoryScopeImpl implements MemoryScope {
             throw new RuntimeException("Invalid alignment: 0x" + Long.toHexString(rv));
         }
 
-        return MemorySegmentImpl.ofNative(this, alignUp(rv, align), size);
+        return MemorySegmentImpl.ofNative(this, alignUp(rv, align), prev_size);
     }
 
     public void checkAllocate() {
@@ -213,11 +174,10 @@ public final class MemoryScopeImpl implements MemoryScope {
         }
     }
 
-    void checkTerminal() {
-        if (thread != null && thread != Thread.currentThread()) {
-            throw new IllegalStateException("Attempt to access scope outside confinement thread!");
-        } else if ((charateristics & PINNED) != 0) {
-            throw new IllegalStateException("Terminal operations close() or merge() not supported by this scope!");
+    @Override
+    void checkThread() {
+        if (thread != Thread.currentThread()) {
+            throw new IllegalStateException("Attempt to access scope outside owning thread");
         }
     }
 
@@ -225,11 +185,15 @@ public final class MemoryScopeImpl implements MemoryScope {
     public void merge() {
         checkTerminal();
         //copy descendants
-        parent.descendants.addAll(descendants);
-        descendants.clear();
+        if (parent instanceof ConfinedMemoryScopeImpl) {
+            ((ConfinedMemoryScopeImpl) parent).descendants.addAll(descendants);
+            descendants.clear();
+        }
         //copy used and current blocks
-        parent.used_blocks.addAll(used_blocks);
-        parent.used_blocks.add(block);
+        if (parent instanceof ConfinedMemoryScopeImpl) {
+            ((ConfinedMemoryScopeImpl)parent).used_blocks.addAll(used_blocks);
+            ((ConfinedMemoryScopeImpl)parent).used_blocks.add(block);
+        }
         //change state
         state = MERGED;
     }
@@ -247,8 +211,10 @@ public final class MemoryScopeImpl implements MemoryScope {
         for (MemoryScope s : descendants) {
             s.close();
         }
-        //remove from parent
-        parent.descendants.remove(this);
+        if (parent instanceof ConfinedMemoryScopeImpl) {
+            //remove from parent
+            ((ConfinedMemoryScopeImpl) parent).descendants.remove(this);
+        }
     }
 
     public static void checkAncestor(MemoryAddress a1, MemoryAddress a2) {
@@ -267,9 +233,5 @@ public final class MemoryScopeImpl implements MemoryScope {
         } else {
             return isAncestor(s1, s2.parent());
         }
-    }
-
-    public static long alignUp(long n, long alignment) {
-        return (n + alignment - 1) & ~(alignment - 1);
     }
 }

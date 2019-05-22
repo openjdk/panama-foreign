@@ -1,6 +1,6 @@
 package java.foreign;
 
-import jdk.internal.foreign.MemoryScopeImpl;
+import jdk.internal.foreign.GlobalMemoryScopeImpl;
 import jdk.internal.foreign.MemorySegmentImpl;
 
 import java.nio.ByteBuffer;
@@ -63,6 +63,6 @@ public interface MemorySegment {
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.foreign.Pointer.fromByteBuffer"));
         }
-        return MemorySegmentImpl.ofByteBuffer(MemoryScopeImpl.UNCHECKED, bb);
+        return MemorySegmentImpl.ofByteBuffer(GlobalMemoryScopeImpl.UNCHECKED, bb);
     }
 }

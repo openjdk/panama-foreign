@@ -150,7 +150,7 @@ public class MemorySegmentImpl implements MemorySegment {
     }
 
     void checkAlive() {
-        ((MemoryScopeImpl)scope()).checkAlive();
+        ((AbstractMemoryScopeImpl)scope()).checkAlive();
     }
 
      static long addUnsignedExact(long a, long b) {

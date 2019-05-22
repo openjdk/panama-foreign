@@ -26,6 +26,7 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 
 import java.foreign.MemoryAddress;
+import java.foreign.MemoryScope;
 import java.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -57,14 +58,14 @@ public class MemoryAddressImpl implements MemoryAddress {
         int size = java.lang.reflect.Array.getLength(array);
         long base = UNSAFE.arrayBaseOffset(array.getClass());
         long scale = UNSAFE.arrayIndexScale(array.getClass());
-        return new MemoryAddressImpl(MemorySegmentImpl.ofHeap(MemoryScopeImpl.UNCHECKED, array, base, size * scale));
+        return new MemoryAddressImpl(MemorySegmentImpl.ofHeap(GlobalMemoryScopeImpl.UNCHECKED, array, base, size * scale));
     }
 
     public static void copy(MemoryAddressImpl src, MemoryAddressImpl dst, long size) {
         src.segment.checkAlive();
         dst.segment.checkAlive();
-        src.checkAccess(0, size);
-        dst.checkAccess(0, size);
+        src.checkAccess(0, size, true);
+        dst.checkAccess(0, size, false);
         UNSAFE.copyMemory(
                 src.unsafeGetBase(), src.unsafeGetOffset(),
                 dst.unsafeGetBase(), dst.unsafeGetOffset(),
@@ -89,8 +90,11 @@ public class MemoryAddressImpl implements MemoryAddress {
         return new MemoryAddressImpl(segment, offset + bytes);
     }
 
-    public void checkAccess(long offset, long length) {
+    public void checkAccess(long offset, long length, boolean readOnly) {
         if (segment().scope() != null) {
+            if (!readOnly && (segment.scope().characteristics() & MemoryScope.IMMUTABLE) != 0) {
+                throw new IllegalStateException("Attempting to write memory in immutable scope");
+            }
             segment.checkAlive();
         }
         segment.checkRange(this.offset + offset, length);
@@ -106,14 +110,14 @@ public class MemoryAddressImpl implements MemoryAddress {
 
     @Override
     public ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException {
-        checkAccess(0L, bytes);
+        checkAccess(0L, bytes, false);
         return SharedSecrets.getJavaNioAccess()
                 .newDirectByteBuffer(unsafeGetOffset(), bytes, null);
     }
 
     public static long addressof(MemoryAddress address) {
         MemoryAddressImpl addressImpl = (MemoryAddressImpl)address;
-        addressImpl.checkAccess(0L, 1);
+        addressImpl.checkAccess(0L, 1, false);
         if (addressImpl.unsafeGetBase() != null) {
             throw new IllegalStateException("Heap address!");
         }
