@@ -24,6 +24,7 @@
 package jdk.internal.foreign;
 
 import jdk.internal.foreign.LayoutPaths.LayoutPath;
+import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.LayoutTypeImpl;
 import jdk.internal.foreign.memory.References;
 
@@ -49,7 +50,7 @@ final class RuntimeSupport {
             BITFIELD_SETTER_IMPL = MethodHandles.lookup().findStatic(RuntimeSupport.class, "bitfieldSetImpl",
                 MethodType.methodType(long.class, long.class, Object.class, LayoutPath.class, LayoutType.class));
             CASTER_IMPL = MethodHandles.lookup().findStatic(RuntimeSupport.class, "casterImpl",
-                    MethodType.methodType(Pointer.class, Pointer.class, LayoutPath.class, LayoutType.class));
+                    MethodType.methodType(Pointer.class, Pointer.class, long.class, LayoutType.class));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -93,7 +94,7 @@ final class RuntimeSupport {
     }
 
     public static MethodHandle casterHandle(LayoutPath path, LayoutType<?> type) {
-        return MethodHandles.insertArguments(CASTER_IMPL, 1, path, type);
+        return MethodHandles.insertArguments(CASTER_IMPL, 1, path.offset() / 8, type);
     }
 
     public static MethodHandle bitfieldGetterHandle(LayoutPath layoutPath, LayoutType<?> type) {
@@ -104,10 +105,8 @@ final class RuntimeSupport {
         return MethodHandles.insertArguments(BITFIELD_SETTER_IMPL, 2, layoutPath, type);
     }
 
-    private static Pointer<?> casterImpl(Pointer<?> ptr, LayoutPath path, LayoutType<?> type) {
-        return Util.unsafeCast(
-            Util.unsafeCast(ptr, NativeTypes.UINT8).offset(path.offset() / 8),
-            type);
+    private static Pointer<?> casterImpl(Pointer<?> ptr, long offset, LayoutType<?> type) {
+        return ((BoundedPointer<?>) ptr).offsetInternal(type, offset);
     }
 
     private static Object bitfieldGetImpl(long bits, LayoutPath layoutPath, LayoutType<?> type) {

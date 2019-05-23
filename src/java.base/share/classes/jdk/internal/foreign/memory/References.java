@@ -25,10 +25,12 @@
 
 package jdk.internal.foreign.memory;
 
-import java.foreign.Scope;
+import jdk.internal.foreign.LibrariesHelper;
+import jdk.internal.foreign.ScopeImpl;
+import jdk.internal.foreign.Util;
+import jdk.internal.vm.annotation.Stable;
+
 import java.foreign.layout.Sequence;
-import java.foreign.layout.Value;
-import java.foreign.layout.Value.Kind;
 import java.foreign.memory.Array;
 import java.foreign.memory.Callback;
 import java.foreign.memory.LayoutType;
@@ -37,10 +39,8 @@ import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Constructor;
 import java.util.function.Supplier;
-import jdk.internal.foreign.LibrariesHelper;
-import jdk.internal.foreign.ScopeImpl;
-import jdk.internal.foreign.Util;
 
 /**
  * Helper class for references. Defines several reference subclasses, specialized in well-known Java carrier
@@ -495,25 +495,38 @@ public final class References {
 
     /**
      * A reference for native structs.
+     *
+     * The getter handle is lazily computed, and specialized per carrier class.
      */
-    @SuppressWarnings("unchecked")
     public static class OfStruct implements Reference {
 
-        static final MethodHandle GETTER_MH;
+        private static final MethodHandle checkAlive;
         static final MethodHandle SETTER_MH;
 
         static {
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
             try {
-                GETTER_MH = MethodHandles.lookup().findStatic(OfStruct.class, "get", MethodType.methodType(Struct.class, Pointer.class));
-                SETTER_MH = MethodHandles.lookup().findStatic(OfStruct.class, "set", MethodType.methodType(void.class, Pointer.class, Struct.class));
+                SETTER_MH = lookup.findStatic(OfStruct.class, "set", MethodType.methodType(void.class, Pointer.class, Struct.class));
+                checkAlive = lookup.findVirtual(BoundedPointer.class, "checkAlive", MethodType.methodType(void.class))
+                        .asType(MethodType.methodType(void.class, Pointer.class));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
+        private final Class<?> carrier;
+        @Stable private MethodHandle getter;
+
+        OfStruct(Class<?> carrier) {
+            this.carrier = carrier;
+        }
+
         @Override
         public MethodHandle getter() {
-            return GETTER_MH;
+            if (getter == null) {
+                getter = makeSpecializedGetter(carrier);
+            }
+            return getter;
         }
 
         @Override
@@ -521,20 +534,27 @@ public final class References {
             return SETTER_MH;
         }
 
-        @SuppressWarnings("unchecked")
-        static Struct<?> get(Pointer<?> pointer) {
-            ((BoundedPointer<?>)pointer).checkAlive();
-            Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).carrier();
-            Class<?> structClass = LibrariesHelper.getStructImplClass(carrier);
-            try {
-                return (Struct<?>)structClass.getConstructor(Pointer.class).newInstance(pointer);
-            } catch (ReflectiveOperationException ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-
         static void set(Pointer<?> pointer, Struct<?> t) {
             Pointer.copy(t.ptr(), pointer);
+        }
+
+        private static MethodHandle makeSpecializedGetter(Class<?> carrier) {
+            Class<?> structClass = LibrariesHelper.getStructImplClass(carrier);
+            MethodHandle cons;
+            try {
+                // Using setAccessible + unreflect here since findConstructor throws an access violation.
+                Constructor<?> rCons = structClass.getConstructor(Pointer.class);
+                rCons.setAccessible(true);
+                cons = MethodHandles.lookup().unreflectConstructor(rCons)
+                        .asType(MethodType.methodType(Struct.class, Pointer.class));
+            } catch (ReflectiveOperationException e) {
+                throw new InternalError(e);
+            }
+
+            // (Pointer)Struct -> (Pointer,Pointer)Struct
+            MethodHandle getter = MethodHandles.collectArguments(cons, 0, checkAlive);
+            // (Pointer,Pointer)Struct -> (Pointer)Struct
+            return MethodHandles.permuteArguments(getter, MethodType.methodType(Struct.class, Pointer.class), 0, 0);
         }
     }
 
@@ -664,9 +684,35 @@ public final class References {
     public static OfArray ofArray = new OfArray();
 
     /**
-     * Reference for struct types.
+     * Cache for struct Reference instances.
      */
-    public static OfStruct ofStruct = new OfStruct();
+    private static final ClassValue<OfStruct> refCache = new ClassValue<>() {
+        @Override
+        protected OfStruct computeValue(Class<?> type) {
+            return new OfStruct(type);
+        }
+    };
+
+    /**
+     * Factory for making a {@link Reference} for a native struct.
+     *
+     * @param carrier the carrier type.
+     * @return the {@link Reference}.
+     */
+    public static Reference ofStruct(Class<?> carrier) {
+        return refCache.get(carrier);
+    }
+
+    /**
+     * Factory for grumpy references to partial types.
+     *
+     * @param typeName the name of the type.
+     * @return the created {@link Reference}.
+     */
+    public static OfGrumpy ofPartial(String typeName) {
+        return new OfGrumpy(() -> new UnsupportedOperationException(
+                "Can not dereference pointer to partial type '" + typeName + "'"));
+    }
 
     /**
      * Reference for function pointer types.

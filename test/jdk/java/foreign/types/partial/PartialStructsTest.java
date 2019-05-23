@@ -27,6 +27,8 @@
  */
 
 import java.foreign.Scope;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -70,6 +72,22 @@ public class PartialStructsTest {
             splitNeg.A2 a2 = sc.allocateStruct(splitNeg.A2.class);
             splitNeg.A3 a3 = sc.allocateStruct(splitNeg.A3.class);
             splitNeg.A4 a4 = sc.allocateStruct(splitNeg.A4.class);
+        }
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testPartialDerefGet() {
+        try (Scope sc = Scope.globalScope().fork()) {
+            Pointer<splitNeg.A1> ptr = sc.allocate(LayoutType.ofStruct(splitNeg.A1.class));
+            ptr.get(); // grumpy
+        }
+    }
+
+    @Test
+    public void testRecursive() {
+        try (Scope sc = Scope.globalScope().fork()) {
+            Recursive r = sc.allocateStruct(Recursive.class);
+            r.next$get();
         }
     }
 }
