@@ -25,15 +25,17 @@
 
 package java.foreign.memory;
 
+import jdk.internal.foreign.LayoutResolver;
+import jdk.internal.foreign.Util;
+import jdk.internal.foreign.memory.LayoutTypeImpl;
+import jdk.internal.foreign.memory.References;
+
 import java.foreign.annotations.NativeCallback;
 import java.foreign.layout.Address;
 import java.foreign.layout.Layout;
 import java.foreign.layout.Value;
 import java.lang.invoke.MethodHandle;
-import jdk.internal.foreign.LayoutResolver;
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.memory.LayoutTypeImpl;
-import jdk.internal.foreign.memory.References;
+import java.util.Optional;
 
 /**
  * This class describes the relationship between a memory layout (usually described in bits) and a Java carrier
@@ -197,7 +199,7 @@ public interface LayoutType<X> {
     }
 
     /**
-     * Create a {@codPoine LayoutType} from a {@link Struct} interface carrier.
+     * Create a {@code LayoutType} from a {@link Struct} interface carrier.
      * @param <T> the struct type.
      * @param carrier the struct carrier.
      * @return the {@code LayoutType}.
@@ -210,9 +212,14 @@ public interface LayoutType<X> {
             // but also allow layout to remain partial, since having a pointer to a partial type is fine.
             // user is free to shoot themselves in the foot later, but since we're automatically deriving
             // the layout from the carrier type, we should try to make it as usable as possible.
-            type = LayoutResolver.get(carrier).tryResolve(type).orElse(type);
+            Optional<Layout> resolved = LayoutResolver.get(carrier).tryResolve(type);
+            if(resolved.isEmpty()) {
+                return LayoutTypeImpl.of(carrier, type, References.ofPartial(type.name().orElse("")));
+            } else {
+                type = resolved.get();
+            }
         }
-        return LayoutTypeImpl.of(carrier, type, References.ofStruct);
+        return LayoutTypeImpl.of(carrier, type, References.ofStruct(carrier));
     }
 
     /**

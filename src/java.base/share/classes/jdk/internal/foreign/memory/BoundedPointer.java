@@ -138,6 +138,10 @@ public class BoundedPointer<X> implements Pointer<X> {
         return new BoundedPointer<>(type, scope, mode, boundInfo, newOffset);
     }
 
+    public BoundedPointer<?> offsetInternal(LayoutType<?> type, long offset) {
+        return new BoundedPointer<>(type, scope, mode, boundInfo, this.offset + offset);
+    }
+
     @Override
     public ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException {
         boundInfo.checkRange(offset, bytes);

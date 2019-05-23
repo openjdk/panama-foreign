@@ -107,7 +107,7 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LayoutTypeImpl<?> that = (LayoutTypeImpl<?>) o;
-        return carrier == carrier &&
+        return carrier == that.carrier &&
                 layout.equals(that.layout);
     }
 
