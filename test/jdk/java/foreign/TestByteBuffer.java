@@ -289,6 +289,27 @@ public class TestByteBuffer {
         checker.accept(base);
     }
 
+    @Test(dataProvider="resizeOps")
+    public void testResizeRoundtripHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
+        int capacity = (int)seq.bitsSize() / 8;
+        byte[] arr = new byte[capacity];
+        MemoryAddress first = MemorySegment.ofArray(arr).baseAddress();
+        initializer.accept(first);
+        MemoryAddress second = MemorySegment.ofByteBuffer(first.asByteBuffer(capacity)).baseAddress();
+        checker.accept(second);
+    }
+
+    @Test(dataProvider="resizeOps")
+    public void testResizeRoundtripNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
+        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
+            int capacity = (int) seq.bitsSize() / 8;
+            MemoryAddress first = scope.allocate(seq);
+            initializer.accept(first);
+            MemoryAddress second = MemorySegment.ofByteBuffer(first.asByteBuffer(capacity)).baseAddress();
+            checker.accept(second);
+        }
+    }
+
     @Test(expectedExceptions = IllegalStateException.class)
     public void testBufferOnClosedScope() {
         MemoryAddress base;

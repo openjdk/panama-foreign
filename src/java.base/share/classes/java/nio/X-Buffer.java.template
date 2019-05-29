@@ -292,11 +292,11 @@ public abstract class $Type$Buffer
         this(mark, pos, lim, cap, null, 0);
     }
 
-    // Creates a new buffer with zero mark, position, limit, and capacity
+    // Creates a new buffer with given base, address and capacity
     //
-    $Type$Buffer() { // package-private
-        super();
-        this.hb = null;
+    $Type$Buffer($type$[] hb, long addr, int cap) { // package-private
+        super(addr, cap);
+        this.hb = hb;
         this.offset = 0;
     }
 

@@ -41,7 +41,7 @@ class Scoped$Type$Buffer extends $Type$Buffer {
     final $Type$Buffer _buffer;
 
     Scoped$Type$Buffer(MemoryScope scope, $Type$Buffer _buffer) {
-        super();
+        super(($type$[])_buffer.base(), _buffer.address, _buffer.capacity());
         this.scope = scope;
         this._buffer = _buffer;
     }

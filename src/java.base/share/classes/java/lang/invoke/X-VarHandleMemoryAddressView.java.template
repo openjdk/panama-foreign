@@ -60,7 +60,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     @ForceInline
     static $type$ swap($type$ rv) {
 #if[byte]
-        return (byte) (Integer.reverse(rv) >>> (Integer.SIZE - Byte.SIZE));
+        // do not swap bytes
+        return rv;
 #else[byte]
         return $BoxType$.reverseBytes(rv);
 #end[byte]

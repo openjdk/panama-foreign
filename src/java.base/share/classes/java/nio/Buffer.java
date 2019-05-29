@@ -214,10 +214,11 @@ public abstract class Buffer {
     // NOTE: hoisted here for speed in JNI GetDirectBufferAddress
     long address;
 
-    // Creates a new buffer with the zero mark, position, limit, and capacity.
+    // Creates a new buffer with given address and capacity.
     //
-    Buffer() {
-        //do nothing
+    Buffer(long addr, int cap) {
+        this.address = addr;
+        this.capacity = cap;
     }
 
     // Creates a new buffer with the given mark, position, limit, and capacity,
