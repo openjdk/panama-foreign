@@ -811,6 +811,21 @@ public class Float128Vector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
+    @Benchmark
+    public void single(Blackhole bh) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.single(SPECIES, a[i]);
+                av.intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
 
     @Benchmark
     public void sin(Blackhole bh) {
@@ -1269,7 +1284,6 @@ public class Float128Vector extends AbstractVectorBenchmark {
     }
 
 
-
     @Benchmark
     public void gather(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
@@ -1286,7 +1300,23 @@ public class Float128Vector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
+    @Benchmark
+    public void gatherMasked(Blackhole bh) {
+        float[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        float[] r = new float[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
 
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i, vmask, b, i);
+                av.intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
 
     @Benchmark
     public void scatter(Blackhole bh) {
@@ -1304,5 +1334,22 @@ public class Float128Vector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
+    @Benchmark
+    public void scatterMasked(Blackhole bh) {
+        float[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        float[] r = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                av.intoArray(r, i, vmask, b, i);
+            }
+        }
+
+        bh.consume(r);
+    }
 }
 

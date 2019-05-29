@@ -1183,7 +1183,6 @@ public class IntScalar extends AbstractVectorBenchmark {
 
 
 
-
     @Benchmark
     public void gatherBase0(Blackhole bh) {
         int[] as = fa.apply(size);
@@ -1242,8 +1241,6 @@ public class IntScalar extends AbstractVectorBenchmark {
         gather(window, bh);
     }
 
-
-
     @Benchmark
     public void scatterBase0(Blackhole bh) {
         int[] as = fa.apply(size);
@@ -1300,6 +1297,5 @@ public class IntScalar extends AbstractVectorBenchmark {
         int window = 512 / Integer.SIZE;
         scatter(window, bh);
     }
-
 }
 

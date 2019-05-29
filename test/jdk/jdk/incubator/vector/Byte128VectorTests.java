@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 
 import java.lang.Integer;
 import java.util.List;
+import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -66,6 +67,26 @@ public class Byte128VectorTests extends AbstractVectorTest {
             }
         } catch (AssertionError e) {
             Assert.assertEquals(r[i], f.apply(a[i]), "at index #" + i + ", input = " + a[i]);
+        }
+    }
+
+    interface FUnArrayOp {
+        byte[] apply(byte a);
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] r, FUnArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a[i]));
+            }
+        } catch (AssertionError e) {
+            byte[] ref = f.apply(a[i]);
+            byte[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i);
         }
     }
 
@@ -258,6 +279,81 @@ public class Byte128VectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FGatherScatterOp {
+        byte[] apply(byte[] a, int ix, int[] b, int iy);
+    }
+
+    static void assertArraysEquals(byte[] a, int[] b, byte[] r, FGatherScatterOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, i, b, i));
+            }
+        } catch (AssertionError e) {
+            byte[] ref = f.apply(a, i, b, i);
+            byte[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + " at index #" + i);
+        }
+    }
+
+    interface FGatherMaskedOp {
+        byte[] apply(byte[] a, int ix, boolean[] mask, int[] b, int iy);
+    }
+
+    interface FScatterMaskedOp {
+        byte[] apply(byte[] r, byte[] a, int ix, boolean[] mask, int[] b, int iy);
+    }
+
+    static void assertArraysEquals(byte[] a, int[] b, byte[] r, boolean[] mask, FGatherMaskedOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, i, mask, b, i));
+            }
+        } catch (AssertionError e) {
+            byte[] ref = f.apply(a, i, mask, b, i);
+            byte[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + ", mask: "
+              + Arrays.toString(mask)
+              + " at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(byte[] a, int[] b, byte[] r, boolean[] mask, FScatterMaskedOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(r, a, i, mask, b, i));
+            }
+        } catch (AssertionError e) {
+            byte[] ref = f.apply(r, a, i, mask, b, i);
+            byte[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + ", r: "
+              + Arrays.toString(Arrays.copyOfRange(r, i, i+SPECIES.length()))
+              + ", mask: "
+              + Arrays.toString(mask)
+              + " at index #" + i);
+        }
+    }
+
     static final List<IntFunction<byte[]>> BYTE_GENERATORS = List.of(
             withToString("byte[-i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -348,6 +444,26 @@ public class Byte128VectorTests extends AbstractVectorTest {
                 toArray(Object[][]::new);
     }
 
+    @DataProvider
+    public Object[][] byteUnaryMaskedOpIndexProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+          flatMap(fs -> INT_INDEX_GENERATORS.stream().flatMap(fm ->
+            BYTE_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fm, fs};
+            }))).
+            toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] scatterMaskedOpIndexProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+          flatMap(fs -> INT_INDEX_GENERATORS.stream().flatMap(fm ->
+            BYTE_GENERATORS.stream().flatMap(fn ->
+              BYTE_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fn, fm, fs};
+            })))).
+            toArray(Object[][]::new);
+    }
 
     static final List<IntFunction<byte[]>> BYTE_COMPARE_GENERATORS = List.of(
             withToString("byte[i]", (int s) -> {
@@ -2080,6 +2196,27 @@ public class Byte128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, Byte128VectorTests::get);
     }
+    static byte[] single(byte val) {
+        byte[] res = new byte[SPECIES.length()];
+        res[0] = val;
+
+        return res;
+    }
+
+    @Test(dataProvider = "byteUnaryOpProvider")
+    static void singleByte128VectorTests(IntFunction<byte[]> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.single(SPECIES, a[i]);
+                av.intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, Byte128VectorTests::single);
+    }
 
 
 
@@ -2221,7 +2358,121 @@ public class Byte128VectorTests extends AbstractVectorTest {
 
 
 
+    static byte[] gather(byte a[], int ix, int[] b, int iy) {
+        byte[] res = new byte[SPECIES.length()];
+        for (int i = 0; i < SPECIES.length(); i++) {
+            int bi = iy + i;
+            res[i] = a[b[bi] + ix];
+        }
+        return res;
+    }
 
+    @Test(dataProvider = "byteUnaryOpIndexProvider")
+    static void gatherByte128VectorTests(IntFunction<byte[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        byte[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i, b, i);
+                av.intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Byte128VectorTests::gather);
+    }
+    static byte[] gatherMasked(byte a[], int ix, boolean[] mask, int[] b, int iy) {
+        byte[] res = new byte[SPECIES.length()];
+        for (int i = 0; i < SPECIES.length(); i++) {
+            int bi = iy + i;
+            if (mask[i]) {
+              res[i] = a[b[bi] + ix];
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "byteUnaryMaskedOpIndexProvider")
+    static void gatherMaskedByte128VectorTests(IntFunction<byte[]> fa, BiFunction<Integer,Integer,int[]> fs, IntFunction<boolean[]> fm) {
+        byte[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        byte[] r = new byte[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Byte> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i, vmask, b, i);
+                av.intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, Byte128VectorTests::gatherMasked);
+    }
+
+    static byte[] scatter(byte a[], int ix, int[] b, int iy) {
+      byte[] res = new byte[SPECIES.length()];
+      for (int i = 0; i < SPECIES.length(); i++) {
+        int bi = iy + i;
+        res[b[bi]] = a[i + ix];
+      }
+      return res;
+    }
+
+    @Test(dataProvider = "byteUnaryOpIndexProvider")
+    static void scatterByte128VectorTests(IntFunction<byte[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        byte[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                av.intoArray(r, i, b, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Byte128VectorTests::scatter);
+    }
+
+    static byte[] scatterMasked(byte r[], byte a[], int ix, boolean[] mask, int[] b, int iy) {
+      // First, gather r.
+      byte[] oldVal = gather(r, ix, b, iy);
+      byte[] newVal = new byte[SPECIES.length()];
+
+      // Second, blending it with a.
+      for (int i = 0; i < SPECIES.length(); i++) {
+        newVal[i] = blend(oldVal[i], a[i+ix], mask[i]);
+      }
+
+      // Third, scatter: copy old value of r, and scatter it manually.
+      byte[] res = Arrays.copyOfRange(r, ix, ix+SPECIES.length());
+      for (int i = 0; i < SPECIES.length(); i++) {
+        int bi = iy + i;
+        res[b[bi]] = newVal[i];
+      }
+
+      return res;
+    }
+
+    @Test(dataProvider = "scatterMaskedOpIndexProvider")
+    static void scatterMaskedByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb, BiFunction<Integer,Integer,int[]> fs, IntFunction<boolean[]> fm) {
+        byte[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        byte[] r = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Byte> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                av.intoArray(r, i, vmask, b, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, Byte128VectorTests::scatterMasked);
+    }
 
 }
 

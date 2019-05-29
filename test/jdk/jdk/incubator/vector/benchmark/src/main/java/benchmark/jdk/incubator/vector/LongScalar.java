@@ -1183,7 +1183,6 @@ public class LongScalar extends AbstractVectorBenchmark {
 
 
 
-
     @Benchmark
     public void gatherBase0(Blackhole bh) {
         long[] as = fa.apply(size);
@@ -1242,8 +1241,6 @@ public class LongScalar extends AbstractVectorBenchmark {
         gather(window, bh);
     }
 
-
-
     @Benchmark
     public void scatterBase0(Blackhole bh) {
         long[] as = fa.apply(size);
@@ -1300,6 +1297,5 @@ public class LongScalar extends AbstractVectorBenchmark {
         int window = 512 / Long.SIZE;
         scatter(window, bh);
     }
-
 }
 

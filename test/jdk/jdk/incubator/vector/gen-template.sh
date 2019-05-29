@@ -58,7 +58,10 @@ with_op_template="With-Op"
 shift_template="Shift-op"
 shift_masked_template="Shift-Masked-op"
 gather_template="Gather-op"
+gather_masked_template="Gather-Masked-op"
 scatter_template="Scatter-op"
+scatter_masked_template="Scatter-Masked-op"
+single_template="Single-op"
 get_template="Get-op"
 rearrange_template="Rearrange"
 
@@ -327,6 +330,9 @@ gen_op_tmpl $rearrange_template "rearrange" "" $unit_output $perf_output $perf_s
 # Get
 gen_get_op "" "" $unit_output $perf_output $perf_scalar_output
 
+# Single
+gen_op_tmpl $single_template "single" "" $unit_output $perf_output $perf_scalar_output
+
 # Math
 gen_op_tmpl $unary_math_template "sin" "Math.sin((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
 gen_op_tmpl $unary_math_template "exp" "Math.exp((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
@@ -357,8 +363,10 @@ gen_unary_alu_op "not" "~((\$type\$)a)" $unit_output $perf_output $perf_scalar_o
 gen_unary_alu_op "sqrt" "Math.sqrt((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
 
 # Gather Scatter operations.
-gen_op_tmpl $gather_template "gather" "" $unit_output $perf_output $perf_scalar_output "!byteOrShort"
-gen_op_tmpl $scatter_template "scatter" "" $unit_output $perf_output $perf_scalar_output "!byteOrShort"
+gen_op_tmpl $gather_template "gather" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $gather_masked_template "gather" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $scatter_template "scatter" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $scatter_masked_template "scatter" "" $unit_output $perf_output $perf_scalar_output
 
 gen_unit_footer $unit_output
 gen_perf_footer $perf_output
