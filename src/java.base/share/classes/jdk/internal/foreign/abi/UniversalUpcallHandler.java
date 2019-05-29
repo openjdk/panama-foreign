@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import java.util.Arrays;
 
 import jdk.internal.foreign.ScopeImpl;
 import jdk.internal.foreign.Util;
-import jdk.internal.foreign.abi.x64.SharedUtils;
 import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.vm.annotation.Stable;
@@ -76,8 +75,11 @@ public class UniversalUpcallHandler implements Library.Symbol {
         return entryPoint;
     }
 
-    public static void invoke(UniversalUpcallHandler handler, long integers, long vectors, long stack, long integerReturn, long vectorReturn, long x87Return) {
-        UpcallContext context = handler.new UpcallContext(integers, vectors, stack, integerReturn, vectorReturn, x87Return);
+    public static void invoke(UniversalUpcallHandler handler, long integers, long vectors,
+                              long stack, long integerReturn, long vectorReturn,
+                              long x87Return, long indirectResult) {
+        UpcallContext context = handler.new UpcallContext(integers, vectors, stack, integerReturn,
+                                                          vectorReturn, x87Return, indirectResult);
         handler.invoke(context);
     }
 
@@ -89,14 +91,17 @@ public class UniversalUpcallHandler implements Library.Symbol {
         private final Pointer<Long> integerReturns;
         private final Pointer<Long> vectorReturns;
         private final Pointer<Long> x87Returns;
+        private final Pointer<Long> indirectResult;
 
-        UpcallContext(long integers, long vectors, long stack, long integerReturn, long vectorReturn, long x87Returns) {
+        UpcallContext(long integers, long vectors, long stack, long integerReturn,
+                      long vectorReturn, long x87Returns, long indirectResult) {
             this.integers = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, integers, false);
             this.vectors = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, vectors, false);
             this.stack = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, stack, false);
             this.integerReturns = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, integerReturn, true);
             this.vectorReturns = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, vectorReturn, true);
             this.x87Returns = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, x87Returns, true);
+            this.indirectResult = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, indirectResult, false);
         }
 
         Pointer<Long> getPtr(ArgumentBinding binding) {
@@ -105,15 +110,17 @@ public class UniversalUpcallHandler implements Library.Symbol {
             case INTEGER_ARGUMENT_REGISTER:
                 return integers.offset(storage.getStorageIndex());
             case VECTOR_ARGUMENT_REGISTER:
-                return vectors.offset(storage.getStorageIndex() * SharedUtils.VECTOR_REGISTER_SIZE / 8);
+                return vectors.offset(storage.getStorageIndex() * storage.getMaxSize() / 8);
             case STACK_ARGUMENT_SLOT:
                 return stack.offset(storage.getStorageIndex());
             case INTEGER_RETURN_REGISTER:
                 return integerReturns.offset(storage.getStorageIndex());
             case VECTOR_RETURN_REGISTER:
-                return vectorReturns.offset(storage.getStorageIndex() * SharedUtils.VECTOR_REGISTER_SIZE / 8);
+                return vectorReturns.offset(storage.getStorageIndex() * storage.getMaxSize() / 8);
             case X87_RETURN_REGISTER:
-                return x87Returns.offset(storage.getStorageIndex() * SharedUtils.X87_REGISTER_SIZE / 8);
+                return x87Returns.offset(storage.getStorageIndex() * storage.getMaxSize() / 8);
+            case INDIRECT_RESULT_REGISTER:
+                return indirectResult.offset(storage.getStorageIndex());
             default:
                 throw new Error("Unhandled storage: " + storage);
             }
@@ -145,7 +152,9 @@ public class UniversalUpcallHandler implements Library.Symbol {
                 result.append((cls + "\n").indent(2));
                 for (ArgumentBinding binding : callingSequence.bindings(cls)) {
                     BoundedPointer<?> argPtr = (BoundedPointer<?>) getPtr(binding);
-                    result.append(argPtr.dump((int) binding.storage().getSize()).indent(4));
+                    if (argPtr.isAccessibleFor(Pointer.AccessMode.READ)) {
+                        result.append(argPtr.dump((int) binding.storage().getSize()).indent(4));
+                    }
                 }
             }
             return result.toString();

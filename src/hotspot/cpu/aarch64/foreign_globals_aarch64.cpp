@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +21,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi;
 
-enum ShuffleRecipeClass {
-    BUFFER(null, null),
-    STACK(StorageClass.STACK_ARGUMENT_SLOT, null),
-    VECTOR(StorageClass.VECTOR_ARGUMENT_REGISTER, StorageClass.VECTOR_RETURN_REGISTER),
-    INTEGER(StorageClass.INTEGER_ARGUMENT_REGISTER, StorageClass.INTEGER_RETURN_REGISTER),
-    X87(null, StorageClass.X87_RETURN_REGISTER),
-    INDIRECT(StorageClass.INDIRECT_RESULT_REGISTER, null);
+#include "precompiled.hpp"
+#include "asm/macroAssembler.hpp"
+#include CPU_HEADER(foreign_globals)
 
-    private final StorageClass argumentStorageClass;
-    private final StorageClass returnStorageClass;
+Register integer_argument_registers[INTEGER_ARGUMENT_REGISTERS_NOOF] = {
+  c_rarg0, c_rarg1, c_rarg2, c_rarg3, c_rarg4, c_rarg5, c_rarg6, c_rarg7
+};
 
-    ShuffleRecipeClass(StorageClass argumentStorageClass, StorageClass returnStorageClass) {
-        this.argumentStorageClass = argumentStorageClass;
-        this.returnStorageClass = returnStorageClass;
-    }
+Register integer_return_registers[INTEGER_RETURN_REGISTERS_NOOF] = {
+  r0, r1, r2, r3, r4, r5, r6, r7
+};
 
-    public StorageClass storageClass(boolean args) {
-        return args ? argumentStorageClass : returnStorageClass;
-    }
-}
+FloatRegister vector_argument_registers[VECTOR_ARGUMENT_REGISTERS_NOOF] = {
+  c_farg0, c_farg1, c_farg2, c_farg3, c_farg4, c_farg5, c_farg6, c_farg7
+};
+
+FloatRegister vector_return_registers[VECTOR_RETURN_REGISTERS_NOOF] = {
+  v0, v1, v2, v3, v4, v5, v6, v7
+};

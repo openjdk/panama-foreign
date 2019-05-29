@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,9 @@
  * @test
  * @requires os.family != "windows"
  * @modules java.base/jdk.internal.misc
+ * @library .. /test/lib
+ * @build jdk.test.lib.Platform
+ * @run main UnixSystem
  */
 
 import java.io.File;
@@ -33,6 +36,8 @@ import java.lang.invoke.MethodHandles;
 import java.foreign.*;
 import java.foreign.memory.*;
 import java.foreign.annotations.*;
+
+import jdk.test.lib.Platform;
 
 public class UnixSystem {
     @NativeHeader(globals = {
@@ -166,7 +171,12 @@ public class UnixSystem {
 
             s = p.get();
 
-            int res = i.__xstat(1, scope.allocateCString(path), p);
+            // The ver argument to __xstat must exactly match _STAT_VER_KERNEL defined
+            // in glibc or it will immediately return EINVAL. This version may differ
+            // depending on the platform.
+            int _STAT_VER_KERNEL = Platform.isAArch64() ? 0 : 1;
+
+            int res = i.__xstat(_STAT_VER_KERNEL, scope.allocateCString(path), p);
             if (res != 0) {
                 throwErrnoException("Call to __xstat failed");
             }

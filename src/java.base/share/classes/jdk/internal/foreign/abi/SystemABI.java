@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,9 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
+import jdk.internal.foreign.abi.aarch64.AArch64ABI;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
 import java.foreign.Library;
 import java.foreign.NativeMethodType;
@@ -104,6 +105,8 @@ public interface SystemABI {
             } else {
                 return SysVx64ABI.getInstance();
             }
+        } else if (arch.equals("aarch64")) {
+            return AArch64ABI.getInstance();
         }
         throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
     }

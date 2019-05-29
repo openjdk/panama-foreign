@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,10 +48,16 @@ struct big_tuple {
    int five;
 };
 
+struct float_tuple {
+  float one;
+  float two;
+};
+
 struct small_tuple SMALL_T = { 1, 2 };
 struct tuple T = { 1, 2, 3, 4 };
 struct big_tuple BIG_T = { 1, 2, 3, 4, 5 };
- 
+struct float_tuple FLOAT_T = { 1.0, 2.0 };
+
 EXPORT struct small_tuple small_make() {
     return SMALL_T;
 }
@@ -70,7 +76,7 @@ EXPORT struct small_tuple small_zero(struct small_tuple t) {
 EXPORT struct tuple make() {
     return T;
 }
- 
+
 EXPORT struct tuple id(struct tuple t) {
     return t;
 }
@@ -82,11 +88,11 @@ EXPORT struct tuple zero(struct tuple t) {
     t.four = 0;
     return t;
 }
- 
+
 EXPORT struct big_tuple big_make() {
     return BIG_T;
 }
- 
+
 EXPORT struct big_tuple big_id(struct big_tuple t) {
     return t;
 }
@@ -97,5 +103,19 @@ EXPORT struct big_tuple big_zero(struct big_tuple t) {
     t.three = 0;
     t.four = 0;
     t.five = 0;
+    return t;
+}
+
+EXPORT struct float_tuple float_make() {
+    return FLOAT_T;
+}
+
+EXPORT struct float_tuple float_id(struct float_tuple t) {
+    return t;
+}
+
+EXPORT struct float_tuple float_zero(struct float_tuple t) {
+    t.one = 0.0f;
+    t.two = 0.0f;
     return t;
 }

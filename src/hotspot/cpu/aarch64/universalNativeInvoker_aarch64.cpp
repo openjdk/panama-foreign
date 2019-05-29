@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,19 +24,14 @@
 
 #include "precompiled.hpp"
 #include "asm/macroAssembler.hpp"
-#include "classfile/javaClasses.inline.hpp"
-#include "interpreter/interpreter.hpp"
-#include "interpreter/interpreterRuntime.hpp"
-#include "memory/allocation.inline.hpp"
-#include "memory/resourceArea.hpp"
 #include "include/jvm.h"
-#include "prims/universalNativeInvoker.hpp"
-#include "runtime/javaCalls.hpp"
-#include "runtime/interfaceSupport.inline.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/arrayOop.inline.hpp"
-#include "runtime/jniHandles.inline.hpp"
+#include "prims/universalNativeInvoker.hpp"
+#include "runtime/interfaceSupport.inline.hpp"
+#include "runtime/javaCalls.hpp"
 
 //// shuffle recipe based (mikael style) stub ////
 
@@ -79,10 +75,15 @@ static size_t class2maxwidth(ShuffleRecipeStorageClass c) {
   case CLASS_INDIRECT:
     return 1;
 
+#ifdef X86
   case CLASS_X87:
     return 2;
+#endif
 
   case CLASS_VECTOR:
+#ifdef AARCH64
+    return 2;
+#else
     if (UseAVX >= 3) {
       return 8;
     } else if (UseAVX >= 1) {
@@ -90,6 +91,7 @@ static size_t class2maxwidth(ShuffleRecipeStorageClass c) {
     } else {
       return 2;
     }
+#endif
 
   default:
     assert(false, "Unexpected class");
@@ -275,7 +277,12 @@ struct ShuffleDowncallContext {
 #ifdef _LP64
     uint64_t integer[INTEGER_ARGUMENT_REGISTERS_NOOF];
     VectorRegister vector[VECTOR_ARGUMENT_REGISTERS_NOOF];
+#ifdef X86
     uintptr_t rax;
+#endif
+#ifdef AARCH64
+    uintptr_t indirect;
+#endif
 #endif
     uint64_t* stack_args;
     size_t stack_args_bytes;
@@ -285,11 +292,13 @@ struct ShuffleDowncallContext {
   struct {
     uint64_t integer[INTEGER_RETURN_REGISTERS_NOOF];
     VectorRegister vector[VECTOR_RETURN_REGISTERS_NOOF];
+#ifdef X86
     long double x87[X87_RETURN_REGISTERS_NOOF];
+#endif
   } returns;
 };
 
-static void dump_vector_register(outputStream* out, XMMRegister reg, VectorRegister value) {
+static void dump_vector_register(outputStream* out, FloatRegister reg, VectorRegister value) {
   out->print("%s = {", reg->name());
   for (size_t i = 0; i < VectorRegister::VECTOR_MAX_WIDTH_U64S; i++) {
     if (i != 0) {
@@ -322,7 +331,9 @@ static void dump_argument_registers(struct ShuffleDowncallContext* ctxt) {
     for (size_t i = 0; i < VECTOR_ARGUMENT_REGISTERS_NOOF; i++) {
       dump_vector_register(&ls, vector_argument_registers[i], ctxt->arguments.vector[i]);
     }
+#ifdef X86
     dump_integer_register(&ls, rax, ctxt->arguments.rax);
+#endif
 
     for (size_t i = 0; i < ctxt->arguments.stack_args_bytes; i += sizeof(uint64_t)) {
       size_t slot = i / sizeof(uint64_t);
@@ -430,6 +441,11 @@ private:
       break;
 #endif
 
+    case CLASS_INDIRECT:
+      assert(_index_in_class == 0, "index must be zero");
+      _context.arguments.indirect = *(uint64_t *)*src_addrp;
+      break;
+
     default:
       assert(false, "Invalid class");
       break;
@@ -461,11 +477,13 @@ private:
       memcpy(*dst_addrp, &_context.returns.integer[_index_in_class], sizeof(uint64_t));
       break;
 
+#ifdef X86
     case CLASS_X87: {
       assert(_index_in_class < X87_RETURN_REGISTERS_NOOF, "out of bounds");
       memcpy(*dst_addrp, &_context.returns.x87[_index_in_class], _npulls * sizeof(uint64_t));
       break;
     }
+#endif
 
     default:
       assert(false, "Invalid class");
@@ -512,7 +530,7 @@ private:
           copy_argument_value(&cur_value_data);
         }
 
-#ifdef _LP64
+#if defined _LP64 && defined X86
         if (_cur_class == CLASS_VECTOR) {
           _context.arguments.rax = _index_in_class;
         }
@@ -731,11 +749,6 @@ private:
 
 void UniversalNativeInvoker::generate_invoke_native(MacroAssembler* _masm) {
 
-
-#if 0
-  fprintf(stderr, "generate_invoke_native()\n");
-#endif
-
   /**
    * invoke_native_stub(struct ShuffleDowncallContext* ctxt) {
    *   rbx = ctxt;
@@ -753,119 +766,91 @@ void UniversalNativeInvoker::generate_invoke_native(MacroAssembler* _masm) {
 
   __ enter();
 
-  // Put the context pointer in ebx/rbx - it's going to be heavily used below both before and after the call
-  Register ctxt_reg = rbx;
+  // Name registers used in the stub code. These are all caller-save so
+  // may be clobbered by the call to the native function. Avoid using
+  // rscratch1 here as it's r8 which is the indirect result register in
+  // the standard ABI.
+  Register Rctx = r10, Rstack_size = r11;
+  Register Rwords = r12, Rtmp = r13;
+  Register Rsrc_ptr = r14, Rdst_ptr = r15;
 
-#ifdef _LP64
+  assert_different_registers(Rctx, Rstack_size, rscratch1, rscratch2);
+
   __ block_comment("init_and_alloc_stack");
 
-  __ push(ctxt_reg); // need to preserve register
-#ifdef _WIN64 // preserve extra registers on MSx64
-  __ push(rsi);
-  __ push(rdi);
-#endif
-
-  __ movptr(ctxt_reg, c_rarg0);
+  __ mov(Rctx, c_rarg0);
+  __ str(Rctx, Address(__ pre(sp, -2 * wordSize)));
 
   __ block_comment("allocate_stack");
-  __ movptr(rcx, Address(ctxt_reg, offsetof(struct ShuffleDowncallContext, arguments.stack_args_bytes)));
-  __ subptr(rsp, rcx);
-  __ andptr(rsp, -64);
-
-  // Note: rcx is used below!
-
+  __ ldr(Rstack_size, Address(Rctx, offsetof(struct ShuffleDowncallContext,
+                                             arguments.stack_args_bytes)));
+  __ add(rscratch2, Rstack_size, 15);
+  __ andr(rscratch2, rscratch2, -16);    // SP must always be 16 byte aligned
+  __ sub(sp, sp, rscratch2);
 
   __ block_comment("load_arguments");
 
-  __ shrptr(rcx, LogBytesPerWord); // bytes -> words
-  __ movptr(rsi, Address(ctxt_reg, offsetof(struct ShuffleDowncallContext, arguments.stack_args)));
-  __ movptr(rdi, rsp);
-  __ rep_mov();
+  __ ldr(Rsrc_ptr, Address(Rctx, offsetof(struct ShuffleDowncallContext,
+                                          arguments.stack_args)));
+  __ lsr(Rwords, Rstack_size, LogBytesPerWord);
+  __ mov(Rdst_ptr, sp);
 
+  Label Ldone, Lnext;
+  __ bind(Lnext);
+  __ cbz(Rwords, Ldone);
+  __ ldr(Rtmp, __ post(Rsrc_ptr, wordSize));
+  __ str(Rtmp, __ post(Rdst_ptr, wordSize));
+  __ sub(Rwords, Rwords, 1);
+  __ b(Lnext);
+  __ bind(Ldone);
 
+  const size_t vector_arg_base = offsetof(struct ShuffleDowncallContext, arguments.vector);
   for (size_t i = 0; i < VECTOR_ARGUMENT_REGISTERS_NOOF; i++) {
-    // [1] -> 64 bit -> xmm
-    // [2] -> 128 bit -> xmm
-    // [4] -> 256 bit -> ymm
-    // [8] -> 512 bit -> zmm
-
-    XMMRegister reg = vector_argument_registers[i];
-    size_t offs = offsetof(struct ShuffleDowncallContext, arguments.vector) + i * sizeof(VectorRegister);
-    if (UseAVX >= 3) {
-      __ evmovdqul(reg, Address(ctxt_reg, (int)offs), Assembler::AVX_512bit);
-    } else if (UseAVX >= 1) {
-      __ vmovdqu(reg, Address(ctxt_reg, (int)offs));
-    } else {
-      __ movdqu(reg, Address(ctxt_reg, (int)offs));
-    }
+    size_t offs = vector_arg_base + i * sizeof(VectorRegister);
+    __ ldrq(vector_argument_registers[i], Address(Rctx, (int)offs));
   }
 
+  const size_t integer_arg_base = offsetof(struct ShuffleDowncallContext, arguments.integer);
   for (size_t i = 0; i < INTEGER_ARGUMENT_REGISTERS_NOOF; i++) {
-    size_t offs = offsetof(struct ShuffleDowncallContext, arguments.integer) + i * sizeof(uintptr_t);
-    __ movptr(integer_argument_registers[i], Address(ctxt_reg, (int)offs));
+    size_t offs = integer_arg_base + i * sizeof(uintptr_t);
+    __ ldr(integer_argument_registers[i], Address(Rctx, (int)offs));
   }
 
-  __ movptr(rax, Address(ctxt_reg, offsetof(struct ShuffleDowncallContext, arguments.rax)));
-
-#ifdef _WIN64
-  __ block_comment("allocate shadow space for argument register spill");
-  __ subptr(rsp, 32);
-#endif
+  // Temporary storage for struct returned by value
+  __ ldr(r8, Address(Rctx, offsetof(struct ShuffleDowncallContext, arguments.indirect)));
 
   // call target function
   __ block_comment("call target function");
-  __ call(Address(ctxt_reg, offsetof(struct ShuffleDowncallContext, arguments.next_pc)));
+  __ ldr(rscratch2, Address(Rctx, offsetof(struct ShuffleDowncallContext,
+                                           arguments.next_pc)));
+  __ blr(rscratch2);
 
-#ifdef _WIN64
-  __ block_comment("pop shadow space");
-  __ addptr(rsp, 32);
-#endif
+  __ ldr(Rctx, Address(rfp, -2 * wordSize));   // Might have clobbered Rctx
 
   __ block_comment("store_registers");
+
+  const size_t integer_return_base = offsetof(struct ShuffleDowncallContext, returns.integer);
   for (size_t i = 0; i < INTEGER_RETURN_REGISTERS_NOOF; i++) {
-    ssize_t offs = offsetof(struct ShuffleDowncallContext, returns.integer) + i * sizeof(uintptr_t);
-    __ movptr(Address(ctxt_reg, offs), integer_return_registers[i]);
+    ssize_t offs = integer_return_base + i * sizeof(uintptr_t);
+    __ str(integer_return_registers[i], Address(Rctx, offs));
   }
 
+  const size_t vector_return_base = offsetof(struct ShuffleDowncallContext, returns.vector);
   for (size_t i = 0; i < VECTOR_RETURN_REGISTERS_NOOF; i++) {
-    // [1] -> 64 bit -> xmm
-    // [2] -> 128 bit -> xmm (SSE)
-    // [4] -> 256 bit -> ymm (AVX)
-    // [8] -> 512 bit -> zmm (AVX-512, aka AVX3)
-
-    XMMRegister reg = vector_return_registers[i];
-    size_t offs = offsetof(struct ShuffleDowncallContext, returns.vector) + i * sizeof(VectorRegister);
-    if (UseAVX >= 3) {
-      __ evmovdqul(Address(ctxt_reg, (int)offs), reg, Assembler::AVX_512bit);
-    } else if (UseAVX >= 1) {
-      __ vmovdqu(Address(ctxt_reg, (int)offs), reg);
-    } else {
-      __ movdqu(Address(ctxt_reg, (int)offs), reg);
-    }
+    ssize_t offs = vector_return_base + i * sizeof(VectorRegister);
+    __ lea(rscratch2, Address(Rctx, offs));
+    __ strq(vector_return_registers[i], rscratch2);
   }
-
-  for (size_t i = 0; i < X87_RETURN_REGISTERS_NOOF; i++) {
-    size_t offs = offsetof(struct ShuffleDowncallContext, returns.x87) + i * (sizeof(long double));
-    __ fstp_x(Address(ctxt_reg, (int)offs)); //pop ST(0)
-  }
-#else
-  __ hlt();
-#endif
-
-  // Restore backed up preserved register
-  __ movptr(ctxt_reg, Address(rbp, -(int)sizeof(uintptr_t)));
-#ifdef _WIN64
-  __ movptr(rsi, Address(rbp, -(int)(sizeof(uintptr_t) * 2)));
-  __ movptr(rdi, Address(rbp, -(int)(sizeof(uintptr_t) * 3)));
-#endif
 
   __ leave();
-  __ ret(0);
+  __ ret(lr);
 
   __ flush();
 }
 
-void UniversalNativeInvoker::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr, arrayHandle rets_arr, address code, JavaThread* thread) {
+void UniversalNativeInvoker::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr,
+                                           arrayHandle rets_arr, address code,
+                                           JavaThread* thread) {
   ShuffleRecipe recipe(recipe_arr);
 
 #ifndef PRODUCT

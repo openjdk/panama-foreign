@@ -122,7 +122,9 @@ public class UniversalNativeInvoker {
 
         if (DEBUG) {
             System.err.println("Returned from method " + methodName + " with " + returnValues.length + " return values");
-            System.err.println("structPtr = 0x" + Long.toHexString(retPtr.addr()));
+            if (callingSequence.returnsInMemory()) {
+                System.err.println("structPtr = 0x" + Long.toHexString(retPtr.addr()));
+            }
             for (int i = 0; i < returnValues.length; i++) {
                 System.err.println("returnValues[" + i + "] = 0x" + Long.toHexString(returnValues[i]));
             }
