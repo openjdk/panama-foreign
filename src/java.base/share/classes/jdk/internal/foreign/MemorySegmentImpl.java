@@ -38,19 +38,6 @@ public class MemorySegmentImpl implements MemorySegment {
 
     public static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
-    public static final long BYTE_BUFFER_BASE;
-    public static final long BUFFER_ADDRESS;
-
-    static {
-        try {
-            BYTE_BUFFER_BASE = UNSAFE.objectFieldOffset(ByteBuffer.class.getDeclaredField("hb"));
-            BUFFER_ADDRESS = UNSAFE.objectFieldOffset(Buffer.class.getDeclaredField("address"));
-        }
-        catch (Exception e) {
-            throw new InternalError(e);
-        }
-    }
-
     public final Object base;
     public final long min;
     final long length;
@@ -72,7 +59,7 @@ public class MemorySegmentImpl implements MemorySegment {
         return length;
     }
 
-    private MemorySegmentImpl(MemoryScope scope, Object base, long min, long length) {
+    protected MemorySegmentImpl(MemoryScope scope, Object base, long min, long length) {
         if(length < 0) {
             throw new IllegalArgumentException("length must be positive");
         }
@@ -96,37 +83,20 @@ public class MemorySegmentImpl implements MemorySegment {
         return new MemorySegmentImpl(scope, base, min, length);
     }
 
+    public static MemorySegmentImpl ofArray(Object array) {
+        int size = java.lang.reflect.Array.getLength(array);
+        long base = UNSAFE.arrayBaseOffset(array.getClass());
+        long scale = UNSAFE.arrayIndexScale(array.getClass());
+        return new MemorySegmentImpl(GlobalMemoryScopeImpl.UNCHECKED, array, base, size * scale);
+    }
+
     private static void checkOverflow(long min, long length) {
         // we never access at `length`
         addUnsignedExact(min, length == 0 ? 0 : length - 1);
     }
 
     public static MemorySegmentImpl ofByteBuffer(MemoryScope scope, ByteBuffer bb) {
-        // For a direct ByteBuffer base == null and address is absolute
-        Object base = getBufferBase(bb);
-        long address = getBufferAddress(bb);
-
-        int pos = bb.position();
-        int limit = bb.limit();
-        return new MemorySegmentImpl(scope, base, address + pos, limit - pos) {
-            // Keep a reference to the buffer so it is kept alive while the
-            // region is alive
-            final Object ref = bb;
-
-            // @@@ For heap ByteBuffer the addr() will throw an exception
-            //     need to adapt a pointer and memory region be more cognizant
-            //     of the double addressing mode
-            //     the direct address for a heap buffer needs to behave
-            //     differently see JNI GetPrimitiveArrayCritical for clues on
-            //     behaviour.
-
-            // @@@ Same trick can be performed to create a pointer to a
-            //     primitive array
-            @Override
-            public MemorySegmentImpl resize(long offset, long newLength) {
-                throw new UnsupportedOperationException(); // bb ref would be lost otherwise
-            }
-        };
+        return ByteBufferMemorySegmentImpl.of(scope, bb);
     }
 
     void checkRange(long offset, long length) {
@@ -135,7 +105,7 @@ public class MemorySegmentImpl implements MemorySegment {
         }
     }
 
-    private boolean outOfBounds(long offset, long length) {
+    protected boolean outOfBounds(long offset, long length) {
         return (length < 0 ||
                 offset < 0 ||
                 offset > this.length - length); // careful of overflow
@@ -170,13 +140,5 @@ public class MemorySegmentImpl implements MemorySegment {
         return base != null ?
                 "HeapRegion{base=" + base + ", length=" + length + "}" :
                 "NativeRegion{min=" + min + ", length=" + length + "}";
-    }
-
-    static Object getBufferBase(ByteBuffer bb) {
-        return UNSAFE.getReference(bb, BYTE_BUFFER_BASE);
-    }
-
-    static long getBufferAddress(ByteBuffer bb) {
-        return UNSAFE.getLong(bb, BUFFER_ADDRESS);
     }
 }

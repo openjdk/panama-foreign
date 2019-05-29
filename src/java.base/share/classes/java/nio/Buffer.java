@@ -30,6 +30,7 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 
+import java.foreign.MemoryScope;
 import java.util.Spliterator;
 
 /**
@@ -213,6 +214,12 @@ public abstract class Buffer {
     // NOTE: hoisted here for speed in JNI GetDirectBufferAddress
     long address;
 
+    // Creates a new buffer with the zero mark, position, limit, and capacity.
+    //
+    Buffer() {
+        //do nothing
+    }
+
     // Creates a new buffer with the given mark, position, limit, and capacity,
     // after checking invariants.
     //
@@ -263,7 +270,7 @@ public abstract class Buffer {
      *
      * @return  The capacity of this buffer
      */
-    public final int capacity() {
+    public int capacity() {
         return capacity;
     }
 
@@ -272,7 +279,7 @@ public abstract class Buffer {
      *
      * @return  The position of this buffer
      */
-    public final int position() {
+    public int position() {
         return position;
     }
 
@@ -324,7 +331,7 @@ public abstract class Buffer {
      *
      * @return  The limit of this buffer
      */
-    public final int limit() {
+    public int limit() {
         return limit;
     }
 
@@ -481,7 +488,7 @@ public abstract class Buffer {
      *
      * @return  The number of elements remaining in this buffer
      */
-    public final int remaining() {
+    public int remaining() {
         return limit - position;
     }
 
@@ -492,7 +499,7 @@ public abstract class Buffer {
      * @return  {@code true} if, and only if, there is at least one element
      *          remaining in this buffer
      */
-    public final boolean hasRemaining() {
+    public boolean hasRemaining() {
         return position < limit;
     }
 
@@ -739,9 +746,15 @@ public abstract class Buffer {
                 public JavaNioAccess.BufferPool getDirectBufferPool() {
                     return Bits.BUFFER_POOL;
                 }
+
                 @Override
                 public ByteBuffer newDirectByteBuffer(long addr, int cap, Object ob) {
                     return new DirectByteBuffer(addr, cap, ob);
+                }
+
+                @Override
+                public ByteBuffer newScopedByteBuffer(MemoryScope scope, ByteBuffer bb) {
+                    return ScopedByteBuffer.of(scope, bb);
                 }
             });
     }

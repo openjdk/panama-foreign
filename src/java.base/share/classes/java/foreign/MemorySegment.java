@@ -52,7 +52,8 @@ public interface MemorySegment {
      * and ends relative to the buffer's limit (exclusive).
      * <p>
      * The resulting segment keeps a reference to the buffer to ensure the buffer is kept
-     * live for the life-time of the address.
+     * live for the life-time of the segment; also, the resulting segment is allocated on a <em>pinned</em> scope
+     * which cannot be closed.
      * <p>
      *
      * @param bb the byte buffer
@@ -64,5 +65,25 @@ public interface MemorySegment {
             security.checkPermission(new RuntimePermission("java.foreign.Pointer.fromByteBuffer"));
         }
         return MemorySegmentImpl.ofByteBuffer(GlobalMemoryScopeImpl.UNCHECKED, bb);
+    }
+
+    /**
+     * Returns a memory segment that models the memory associated with a given heap-allocated primitive array.
+     * <p>
+     * The resulting segment keeps a reference to the array to ensure the underlying array is kept
+     * live for the life-time of the segment; also, the resulting segment is allocated on a <em>pinned</em> scope
+     * which cannot be closed.
+     *
+     * @param arr the primitive array
+     * @return the created segment
+     * @throws IllegalArgumentException if the array is not a primitive type array, or if the number of dimension in
+     * the array is greater than 1.
+     */
+    static MemorySegment ofArray(Object arr) throws IllegalArgumentException {
+        if (!arr.getClass().isArray() ||
+                !arr.getClass().componentType().isPrimitive()) {
+            throw new IllegalArgumentException("Not a primitive array");
+        }
+        return MemorySegmentImpl.ofArray(arr);
     }
 }

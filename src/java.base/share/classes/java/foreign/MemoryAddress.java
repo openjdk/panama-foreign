@@ -28,6 +28,7 @@ package java.foreign;
 import jdk.internal.foreign.MemoryAddressImpl;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * A memory address encodes an offset within a given {@link MemorySegment}. As such, access to
@@ -49,13 +50,27 @@ public interface MemoryAddress {
     MemorySegment segment();
 
     /**
-     * Wraps the this address in a direct {@link ByteBuffer}
+     * Wraps the this address in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
+     * the properties of this address. For instance, if this address' region belongs to a scope which is <em>immutable</em>
+     * (see {@link MemoryScope#IMMUTABLE}, then the resulting buffer is <em>read-only</em> (see {@link ByteBuffer#isReadOnly()}.
+     * Additionally, if this address models a native memory address, the resulting buffer is <em>direct</em> (see
+     * {@link ByteBuffer#isDirect()}.
+     * <p>
+     * The life-cycle of the returned buffer will be tied to that of this address. That means that if the memory scope
+     * which this address' segment belongs to is closed (see {@link MemoryScope#close()}, accessing the returned
+     * buffer will result in an exception.
+     * <p>
+     * The resulting buffer endianness is {@link java.nio.ByteOrder#BIG_ENDIAN}; this can be changed using
+     * {@link ByteBuffer#order(ByteOrder)}.
      *
      * @param bytes the size of the buffer in bytes
      * @return the created {@link ByteBuffer}
-     * @throws IllegalAccessException if bytes is larger than the segment covered by this address
+     * @throws IllegalArgumentException if bytes is larger than the segment covered by this address.
+     * @throws UnsupportedOperationException if this address cannot be mapped onto a {@link ByteBuffer} instance,
+     * e.g. because it models an heap-based address that is not based on a {@code byte[]}).
+     * @throws IllegalStateException if the scope associated with this address' segment has been closed.
      */
-    ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException;
+    ByteBuffer asByteBuffer(int bytes) throws IllegalArgumentException, UnsupportedOperationException, IllegalStateException;
 
     /**
      * Compares the specified object with this address for equality. Returns {@code true} if and only if the specified

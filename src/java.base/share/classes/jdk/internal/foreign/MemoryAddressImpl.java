@@ -22,6 +22,7 @@
  */
 package jdk.internal.foreign;
 
+import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 
@@ -34,12 +35,14 @@ import java.util.Objects;
 public class MemoryAddressImpl implements MemoryAddress {
 
     static Unsafe UNSAFE;
+    static final int BYTE_ARR_BASE;
 
     static {
         if (MemoryAddressImpl.class.getClassLoader() != null) {
             throw new IllegalStateException();
         }
         UNSAFE = Unsafe.getUnsafe();
+        BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
     }
 
     private final MemorySegmentImpl segment;
@@ -52,13 +55,6 @@ public class MemoryAddressImpl implements MemoryAddress {
     public MemoryAddressImpl(MemorySegmentImpl segment, long offset) {
         this.segment = Objects.requireNonNull(segment);
         this.offset = offset;
-    }
-
-    public static MemoryAddress ofArray(Object array) {
-        int size = java.lang.reflect.Array.getLength(array);
-        long base = UNSAFE.arrayBaseOffset(array.getClass());
-        long scale = UNSAFE.arrayIndexScale(array.getClass());
-        return new MemoryAddressImpl(MemorySegmentImpl.ofHeap(GlobalMemoryScopeImpl.UNCHECKED, array, base, size * scale));
     }
 
     public static void copy(MemoryAddressImpl src, MemoryAddressImpl dst, long size) {
@@ -109,10 +105,35 @@ public class MemoryAddressImpl implements MemoryAddress {
     }
 
     @Override
-    public ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException {
-        checkAccess(0L, bytes, false);
-        return SharedSecrets.getJavaNioAccess()
-                .newDirectByteBuffer(unsafeGetOffset(), bytes, null);
+    public ByteBuffer asByteBuffer(int bytes) throws IllegalArgumentException, UnsupportedOperationException, IllegalStateException {
+        boolean readOnly = (segment().scope().characteristics() & MemoryScope.IMMUTABLE) != 0;
+        segment.checkAlive();
+        segment.resize(this.offset, bytes); //throws IAE if out of bounds
+        checkAccess(0L, bytes, readOnly);
+        JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
+        Object base = unsafeGetBase();
+        long offset = unsafeGetOffset();
+        ByteBuffer _bb;
+        if (base != null) {
+            if (!(base instanceof byte[])) {
+                throw new UnsupportedOperationException("Not an address to an heap-allocated byte array");
+            } else if (offset > Integer.MAX_VALUE) {
+                //we should not get here
+                throw new AssertionError("Offset is too large");
+            }
+            _bb = ByteBuffer.wrap((byte[])base, (int)offset - BYTE_ARR_BASE, bytes);
+        } else {
+            _bb = nioAccess.newDirectByteBuffer(offset, bytes, null);
+        }
+        if (readOnly) {
+            //scope is IMMUTABLE - obtain a RO byte buffer
+            _bb = _bb.asReadOnlyBuffer();
+        }
+        if ((segment.scope().characteristics() & MemoryScope.PINNED) == 0) {
+            //scope is not PINNED - need to wrap the buffer so that appropriate scope checks take place
+            _bb = nioAccess.newScopedByteBuffer(segment.scope, _bb);
+        }
+        return _bb;
     }
 
     public static long addressof(MemoryAddress address) {
