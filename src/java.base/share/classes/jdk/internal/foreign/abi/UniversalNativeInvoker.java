@@ -68,7 +68,7 @@ public class UniversalNativeInvoker {
     private final UniversalAdapter adapter;
 
     public UniversalNativeInvoker(Library.Symbol symbol, CallingSequence callingSequence, NativeMethodType nmt,
-                                     UniversalAdapter adapter) throws IllegalAccessException {
+                                     UniversalAdapter adapter) {
         this.adapter = adapter;
         this.addr = symbol.getAddress().addr();
         this.methodName = symbol.getName();

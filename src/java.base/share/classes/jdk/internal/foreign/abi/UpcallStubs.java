@@ -35,12 +35,7 @@ public class UpcallStubs {
     private static final Cleaner cleaner = CleanerFactory.cleaner();
 
     public static <S extends Library.Symbol> S registerUpcallStub(S up) {
-        long addr;
-        try {
-            addr = up.getAddress().addr();
-        } catch (IllegalAccessException iae) {
-            throw new IllegalStateException(iae);
-        }
+        long addr = up.getAddress().addr();
         cleaner.register(up, () -> freeUpcallStub(addr));
         return up;
     }

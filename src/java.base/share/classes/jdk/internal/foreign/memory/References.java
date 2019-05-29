@@ -446,11 +446,7 @@ public final class References {
 
         static void set(Pointer<?> pointer, Pointer<?> pointerValue) {
             ScopeImpl.checkAncestor(pointerValue, pointer);
-            try {
-                ((BoundedPointer<?>)pointer).putBits(pointerValue.addr());
-            } catch (IllegalAccessException iae) {
-                throw new RuntimeException("Access denied", iae);
-            }
+            ((BoundedPointer<?>)pointer).putBits(pointerValue.addr());
         }
     }
 
@@ -482,7 +478,7 @@ public final class References {
         }
 
         static Array<?> get(Pointer<?> pointer) {
-            ((BoundedPointer<?>)pointer).checkAlive();
+            ((BoundedPointer<?>)pointer).checkAccess(Pointer.AccessMode.NONE);
             Sequence seq = (Sequence)pointer.type().layout();
             LayoutType<?> elementType = ((LayoutTypeImpl<?>)pointer.type()).elementType();
             return new BoundedArray<>((BoundedPointer<?>)Util.unsafeCast(pointer, elementType), seq.elementsSize());
@@ -500,15 +496,17 @@ public final class References {
      */
     public static class OfStruct implements Reference {
 
-        private static final MethodHandle checkAlive;
+        private static final MethodHandle checkAccess;
         static final MethodHandle SETTER_MH;
 
         static {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             try {
                 SETTER_MH = lookup.findStatic(OfStruct.class, "set", MethodType.methodType(void.class, Pointer.class, Struct.class));
-                checkAlive = lookup.findVirtual(BoundedPointer.class, "checkAlive", MethodType.methodType(void.class))
-                        .asType(MethodType.methodType(void.class, Pointer.class));
+                checkAccess = MethodHandles.insertArguments(
+                        lookup.findVirtual(BoundedPointer.class, "checkAccess", MethodType.methodType(void.class, Pointer.AccessMode.class))
+                            .asType(MethodType.methodType(void.class, Pointer.class, Pointer.AccessMode.class)),
+                        1, Pointer.AccessMode.NONE);
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
@@ -545,14 +543,14 @@ public final class References {
                 // Using setAccessible + unreflect here since findConstructor throws an access violation.
                 Constructor<?> rCons = structClass.getConstructor(Pointer.class);
                 rCons.setAccessible(true);
-                cons = MethodHandles.lookup().unreflectConstructor(rCons)
+                cons =  MethodHandles.lookup().unreflectConstructor(rCons)
                         .asType(MethodType.methodType(Struct.class, Pointer.class));
             } catch (ReflectiveOperationException e) {
                 throw new InternalError(e);
             }
 
             // (Pointer)Struct -> (Pointer,Pointer)Struct
-            MethodHandle getter = MethodHandles.collectArguments(cons, 0, checkAlive);
+            MethodHandle getter = MethodHandles.collectArguments(cons, 0, checkAccess);
             // (Pointer,Pointer)Struct -> (Pointer)Struct
             return MethodHandles.permuteArguments(getter, MethodType.methodType(Struct.class, Pointer.class), 0, 0);
         }
@@ -598,11 +596,7 @@ public final class References {
 
         static void set(Pointer<?> pointer, Callback<?> func) {
             ScopeImpl.checkAncestor(func.entryPoint(), pointer);
-            try {
-                ((BoundedPointer<?>)pointer).putBits(func.entryPoint().addr());
-            } catch (IllegalAccessException iae) {
-                throw new RuntimeException("Access denied", iae);
-            }
+            ((BoundedPointer<?>)pointer).putBits(func.entryPoint().addr());
         }
     }
 

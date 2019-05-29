@@ -37,6 +37,8 @@ import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
+import java.foreign.memory.Array;
+import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandles;
@@ -59,6 +61,33 @@ public class OutOfBoundsTest {
         Pointer<Pointer<Byte>> ptr$ptr();
     }
 
+    @NativeStruct("[i32(x)](SmallStruct)")
+    public interface SmallStruct extends Struct<SmallStruct> {
+        @NativeGetter("x")
+        Pointer<Byte> x$get();
+        @NativeSetter("x")
+        void x$set(int x);
+        @NativeAddressof("x")
+        Pointer<Integer> x$ptr();
+    }
+
+    @NativeStruct("[i32(x)i32(y)](LargeStruct)")
+    public interface LargeStruct extends Struct<LargeStruct> {
+        @NativeGetter("x")
+        int x$get();
+        @NativeSetter("x")
+        void x$set(int x);
+        @NativeAddressof("x")
+        Pointer<Integer> x$ptr();
+
+        @NativeGetter("y")
+        int y$get();
+        @NativeSetter("y")
+        void y$set(int y);
+        @NativeAddressof("y")
+        Pointer<Integer> y$ptr();
+    }
+
     private static final OutOfBounds lib = Libraries.bind(OutOfBounds.class, Libraries.loadLibrary(MethodHandles.lookup(), "OutOfBounds"));
 
     @Test(expectedExceptions = IllegalStateException.class)
@@ -77,6 +106,24 @@ public class OutOfBoundsTest {
             p = p.offset(1); // oob
             ptrStruct s = scope.allocateStruct(ptrStruct.class);
             s.ptr$set(p); // should throw
+        }
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testArrayLargerOOB() {
+        try(Scope scope = Libraries.libraryScope(lib).fork()) {
+            Pointer<Array<Byte>> p = scope.allocate(NativeTypes.INT8.array(5));
+            p = p.cast(NativeTypes.VOID).cast(NativeTypes.INT8.array(10));
+            p.get(); // should throw
+        }
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testStructLargerOOB() {
+        try(Scope scope = Libraries.libraryScope(lib).fork()) {
+            Pointer<SmallStruct> p = scope.allocate(LayoutType.ofStruct(SmallStruct.class));
+            Pointer<LargeStruct> lp = p.cast(NativeTypes.VOID).cast(LayoutType.ofStruct(LargeStruct.class));
+            lp.get(); // should throw
         }
     }
 }

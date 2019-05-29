@@ -169,7 +169,7 @@ public class PointerScopeTest {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = ".*Scope is not alive")
     public void testCallbackAccess() {
-        testAfterScope(s -> s.allocateCallback(PointerScopeLib.Cb.class, ()->{}), cb -> getAddr(cb.entryPoint()));
+        testAfterScope(s -> s.allocateCallback(PointerScopeLib.Cb.class, ()->{}), cb -> cb.entryPoint().addr());
     }
 
     //allocate pointer and pass it to function
@@ -211,13 +211,5 @@ public class PointerScopeTest {
         Z z = allocator.apply(sc);
         sc.close();
         action.accept(z);
-    }
-
-    private long getAddr(Pointer<?> ptr) {
-        try {
-            return ptr.addr();
-        } catch (IllegalAccessException ex) {
-            throw new IllegalStateException(ex);
-        }
     }
 }

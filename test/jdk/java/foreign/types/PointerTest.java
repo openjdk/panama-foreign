@@ -39,7 +39,9 @@ import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
+import java.security.AccessControlException;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 
 import org.testng.annotations.*;
 
@@ -299,6 +301,41 @@ public class PointerTest {
     public void test1ByteRegionAtMaxHeapOffset() throws IllegalAccessException {
         Pointer<?> ptr = ptrs.get_1_byte_pointer(); // should not throw
         assertEquals(-1L, ptr.addr());
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testAddrNotAlive() {
+        Pointer<Integer> ptr;
+        try (Scope scope = Scope.globalScope().fork()) {
+            ptr = scope.allocate(NativeTypes.INT32);
+        }
+        ptr.addr(); // should throw
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testAddrOOB() {
+        try (Scope scope = Scope.globalScope().fork()) {
+            Pointer<Integer> ptr = scope.allocate(NativeTypes.INT32);
+            ptr = ptr.offset(1);
+            ptr.addr(); // should throw
+        }
+    }
+
+    @Test(dataProvider = "accessOps", expectedExceptions = AccessControlException.class)
+    public void testAddrNoAccess(UnaryOperator<Pointer<Integer>> op) {
+        try (Scope scope = Scope.globalScope().fork()) {
+            Pointer<Integer> ptr = scope.allocate(NativeTypes.INT32);
+            ptr = op.apply(ptr);
+            ptr.addr(); // should throw
+        }
+    }
+
+    @DataProvider(name = "accessOps")
+    public Object[][] accessOps() {
+        return new Object[][] {
+            new Object[] { (UnaryOperator<Pointer<Integer>>) Pointer::asReadOnly },
+            new Object[] { (UnaryOperator<Pointer<Integer>>) Pointer::asWriteOnly }
+        };
     }
 
 }

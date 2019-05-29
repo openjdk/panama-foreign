@@ -115,13 +115,7 @@ public class ConstantsTest extends JextractToolRunner {
     }
 
     static Predicate<Pointer<Byte>> pointerEqualsTo(long addr) {
-        return p -> {
-            try {
-                return p.addr() == addr;
-            } catch (IllegalAccessException ex) {
-                throw new IllegalStateException(ex);
-            }
-        };
+        return p -> p.addr() == addr;
     }
 
     @DataProvider

@@ -61,7 +61,7 @@ public class CallbackImpl<X> implements Callback<X> {
     @SuppressWarnings("unchecked")
     public X asFunction() {
         try {
-            ((BoundedPointer<?>) entryPoint()).checkAlive();
+            ((BoundedPointer<?>) entryPoint()).checkAccess(Pointer.AccessMode.READ);
             //create a wrapper around a true native function
             Class<?> callbackClass = LibrariesHelper.getCallbackImplClass(funcIntfClass);
             return (X) callbackClass.getConstructor(Pointer.class).newInstance(entryPoint());

@@ -95,7 +95,7 @@ public class MemoryBoundInfo {
         Util.addUnsignedExact(min, length == 0 ? 0 : length - 1);
     }
 
-    void checkRange(long offset, long length) {
+    void checkRange(long offset, long length) throws IllegalStateException {
         // FIXME check for negative length?
         if (offset < 0 || offset > this.length - length) { // careful of overflow
             throw new IllegalStateException("offset: " + offset + ", region length: " + this.length);

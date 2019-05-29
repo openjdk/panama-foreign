@@ -315,7 +315,7 @@ public class DirectSignatureShuffler {
         return value ? 1 : 0;
     }
 
-    private static long pointerToLong(Pointer<?> value) throws IllegalAccessException {
+    private static long pointerToLong(Pointer<?> value) {
         return value.addr();
     }
 
@@ -325,7 +325,7 @@ public class DirectSignatureShuffler {
                 BoundedPointer.createNativeVoidPointer(addr).cast(lt);
     }
 
-    private static long callbackToLong(Callback<?> value) throws IllegalAccessException {
+    private static long callbackToLong(Callback<?> value) {
         return value.entryPoint().addr();
     }
 

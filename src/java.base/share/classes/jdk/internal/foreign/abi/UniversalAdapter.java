@@ -34,5 +34,5 @@ public interface UniversalAdapter {
             Pointer<?>> dstPtrFunc, List<ArgumentBinding> bindings) throws Throwable;
 
     Object boxValue(LayoutType<?> type, Function<ArgumentBinding,
-            Pointer<?>> srcPtrFunc, List<ArgumentBinding> bindings) throws IllegalAccessException;
+            Pointer<?>> srcPtrFunc, List<ArgumentBinding> bindings);
 }

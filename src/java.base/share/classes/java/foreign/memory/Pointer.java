@@ -133,10 +133,11 @@ public interface Pointer<X> {
     /**
      * Returns the underlying memory address associated with this pointer, if available.
      * @return the memory address.
-     * @throws IllegalAccessException if the memory address is not a native address,
-     * if the pointer is not alive, or if the pointer is out of bounds.
+     * @throws UnsupportedOperationException if the memory address is not a native address.
+     * @throws IllegalStateException if the pointer is not alive, or out of bounds.
+     * @throws AccessControlException if the pointer does not support the {@link AccessMode#READ_WRITE} access mode.
      */
-    long addr() throws IllegalAccessException;
+    long addr() throws UnsupportedOperationException, IllegalStateException, AccessControlException;
 
     /**
      * Construct an array out of an element pointer, with given size.
@@ -194,7 +195,7 @@ public interface Pointer<X> {
      * <p>
      * For a direct ByteBuffer the address is accessible via {@link #addr()},
      * where as for a heap ByteBuffer this method throws an
-     * {@code IllegalStateException}.
+     * {@link UnsupportedOperationException}.
      *
      * @param bb the byte buffer
      * @return the created pointer
@@ -210,13 +211,17 @@ public interface Pointer<X> {
     /**
      * Wraps the this pointer in a direct {@link ByteBuffer}
      *
+     * This method performs the same access checks as {@link Pointer#addr()}.
+     *
      * @param bytes the size of the buffer in bytes
      * @return the created {@link ByteBuffer}
-     * @throws IllegalAccessException if bytes is larger than the region covered by this pointer
+     * @throws UnsupportedOperationException if the memory address is not a native address.
+     * @throws IllegalStateException if the pointer is not alive, or out of bounds.
+     * @throws AccessControlException if the pointer does not support the {@link AccessMode#READ_WRITE} access mode.
      */
-    ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException;
+    ByteBuffer asDirectByteBuffer(int bytes) throws UnsupportedOperationException, IllegalStateException, AccessControlException;
 
-    static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
+    static void copy(Pointer<?> src, Pointer<?> dst, long bytes) {
         BoundedPointer<?> bsrc = (BoundedPointer<?>) Objects.requireNonNull(src);
         BoundedPointer<?> bdst = (BoundedPointer<?>) Objects.requireNonNull(dst);
         bsrc.copyTo(bdst, bytes);
@@ -234,11 +239,7 @@ public interface Pointer<X> {
         }
         assert src.type().bytesSize() == dst.type().bytesSize() : "byteSize should be equal after type check";
 
-        try {
-            copy(src, dst, dst.type().bytesSize());
-        } catch (IllegalAccessException ex) {
-            throw new IllegalArgumentException(ex);
-        }
+        copy(src, dst, dst.type().bytesSize());
     }
 
     static String toString(Pointer<Byte> cstr) {
@@ -259,6 +260,10 @@ public interface Pointer<X> {
      * Defines a set of memory access modes
      */
     enum AccessMode {
+        /**
+         * An access mode that allows no access
+         */
+        NONE(0),
         /**
          * A read-only access mode
          */

@@ -151,8 +151,6 @@ public class StructTest {
             Pointer.copy(p, s.ptr(), size);
 
             testIntArray(s, p);
-        } catch (IllegalAccessException iae) {
-            throw new RuntimeException("Unexpected exception " + iae);
         }
     }
 
