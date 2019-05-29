@@ -1090,7 +1090,6 @@ public class FloatScalar extends AbstractVectorBenchmark {
         bh.consume(rs);
     }
 
-
     @Benchmark
     public void gatherBase0(Blackhole bh) {
         float[] as = fa.apply(size);
@@ -1149,8 +1148,6 @@ public class FloatScalar extends AbstractVectorBenchmark {
         gather(window, bh);
     }
 
-
-
     @Benchmark
     public void scatterBase0(Blackhole bh) {
         float[] as = fa.apply(size);
@@ -1207,6 +1204,5 @@ public class FloatScalar extends AbstractVectorBenchmark {
         int window = 512 / Float.SIZE;
         scatter(window, bh);
     }
-
 }
 

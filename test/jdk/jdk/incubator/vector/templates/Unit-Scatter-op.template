@@ -1,4 +1,3 @@
-#if[!byteOrShort]
     static $type$[] [[TEST]]($type$ a[], int ix, int[] b, int iy) {
       $type$[] res = new $type$[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -13,4 +12,4 @@
 [[KERNEL]]
         assertArraysEquals(a, b, r, $vectorteststype$::[[TEST]]);
     }
-#end[!byteOrShort]
+

@@ -74,6 +74,26 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FUnArrayOp {
+        double[] apply(double a);
+    }
+
+    static void assertArraysEquals(double[] a, double[] r, FUnArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a[i]));
+            }
+        } catch (AssertionError e) {
+            double[] ref = f.apply(a[i]);
+            double[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i);
+        }
+    }
+
     static void assertArraysEquals(double[] a, double[] r, boolean[] mask, FUnOp f) {
         int i = 0;
         try {
@@ -349,6 +369,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
         }
     }
+
     interface FGatherScatterOp {
         double[] apply(double[] a, int ix, int[] b, int iy);
     }
@@ -372,6 +393,57 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FGatherMaskedOp {
+        double[] apply(double[] a, int ix, boolean[] mask, int[] b, int iy);
+    }
+
+    interface FScatterMaskedOp {
+        double[] apply(double[] r, double[] a, int ix, boolean[] mask, int[] b, int iy);
+    }
+
+    static void assertArraysEquals(double[] a, int[] b, double[] r, boolean[] mask, FGatherMaskedOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, i, mask, b, i));
+            }
+        } catch (AssertionError e) {
+            double[] ref = f.apply(a, i, mask, b, i);
+            double[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + ", mask: "
+              + Arrays.toString(mask)
+              + " at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(double[] a, int[] b, double[] r, boolean[] mask, FScatterMaskedOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(r, a, i, mask, b, i));
+            }
+        } catch (AssertionError e) {
+            double[] ref = f.apply(r, a, i, mask, b, i);
+            double[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + ", r: "
+              + Arrays.toString(Arrays.copyOfRange(r, i, i+SPECIES.length()))
+              + ", mask: "
+              + Arrays.toString(mask)
+              + " at index #" + i);
+        }
+    }
 
     static final List<IntFunction<double[]>> DOUBLE_GENERATORS = List.of(
             withToString("double[-i * 5]", (int s) -> {
@@ -481,6 +553,26 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
                 toArray(Object[][]::new);
     }
 
+    @DataProvider
+    public Object[][] doubleUnaryMaskedOpIndexProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+          flatMap(fs -> INT_INDEX_GENERATORS.stream().flatMap(fm ->
+            DOUBLE_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fm, fs};
+            }))).
+            toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] scatterMaskedOpIndexProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+          flatMap(fs -> INT_INDEX_GENERATORS.stream().flatMap(fm ->
+            DOUBLE_GENERATORS.stream().flatMap(fn ->
+              DOUBLE_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fn, fm, fs};
+            })))).
+            toArray(Object[][]::new);
+    }
 
     static final List<IntFunction<double[]>> DOUBLE_COMPARE_GENERATORS = List.of(
             withToString("double[i]", (int s) -> {
@@ -1551,6 +1643,27 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, DoubleMaxVectorTests::get);
     }
+    static double[] single(double val) {
+        double[] res = new double[SPECIES.length()];
+        res[0] = val;
+
+        return res;
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void singleDoubleMaxVectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.single(SPECIES, a[i]);
+                av.intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, DoubleMaxVectorTests::single);
+    }
 
     static double sin(double a) {
         return (double)(Math.sin((double)a));
@@ -2160,7 +2273,6 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask, DoubleMaxVectorTests::sqrt);
     }
 
-
     static double[] gather(double a[], int ix, int[] b, int iy) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++) {
@@ -2185,7 +2297,34 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, DoubleMaxVectorTests::gather);
     }
+    static double[] gatherMasked(double a[], int ix, boolean[] mask, int[] b, int iy) {
+        double[] res = new double[SPECIES.length()];
+        for (int i = 0; i < SPECIES.length(); i++) {
+            int bi = iy + i;
+            if (mask[i]) {
+              res[i] = a[b[bi] + ix];
+            }
+        }
+        return res;
+    }
 
+    @Test(dataProvider = "doubleUnaryMaskedOpIndexProvider")
+    static void gatherMaskedDoubleMaxVectorTests(IntFunction<double[]> fa, BiFunction<Integer,Integer,int[]> fs, IntFunction<boolean[]> fm) {
+        double[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        double[] r = new double[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i, vmask, b, i);
+                av.intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, DoubleMaxVectorTests::gatherMasked);
+    }
 
     static double[] scatter(double a[], int ix, int[] b, int iy) {
       double[] res = new double[SPECIES.length()];
@@ -2210,6 +2349,44 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         }
 
         assertArraysEquals(a, b, r, DoubleMaxVectorTests::scatter);
+    }
+
+    static double[] scatterMasked(double r[], double a[], int ix, boolean[] mask, int[] b, int iy) {
+      // First, gather r.
+      double[] oldVal = gather(r, ix, b, iy);
+      double[] newVal = new double[SPECIES.length()];
+
+      // Second, blending it with a.
+      for (int i = 0; i < SPECIES.length(); i++) {
+        newVal[i] = blend(oldVal[i], a[i+ix], mask[i]);
+      }
+
+      // Third, scatter: copy old value of r, and scatter it manually.
+      double[] res = Arrays.copyOfRange(r, ix, ix+SPECIES.length());
+      for (int i = 0; i < SPECIES.length(); i++) {
+        int bi = iy + i;
+        res[b[bi]] = newVal[i];
+      }
+
+      return res;
+    }
+
+    @Test(dataProvider = "scatterMaskedOpIndexProvider")
+    static void scatterMaskedDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb, BiFunction<Integer,Integer,int[]> fs, IntFunction<boolean[]> fm) {
+        double[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        double[] r = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                av.intoArray(r, i, vmask, b, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, DoubleMaxVectorTests::scatterMasked);
     }
 
 }
