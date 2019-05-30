@@ -395,6 +395,7 @@ public final class References {
          * @return the double value.
          */
         static double get(Pointer<?> pointer) {
+            ((BoundedPointer<?>) pointer).checkAccess(Pointer.AccessMode.READ);
             return Util.withOffHeapAddress(pointer, References::longDoubleToDouble);
         }
 
@@ -403,6 +404,7 @@ public final class References {
          * @param value the double value.
          */
         static void set(Pointer<?> pointer, double value) {
+            ((BoundedPointer<?>) pointer).checkAccess(Pointer.AccessMode.WRITE);
             Util.withOffHeapAddress(pointer, addr -> { doubleToLongDouble(addr, value); return null; });
         }
     }

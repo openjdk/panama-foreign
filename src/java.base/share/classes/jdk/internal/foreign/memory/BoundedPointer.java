@@ -109,6 +109,10 @@ public class BoundedPointer<X> implements Pointer<X> {
         return effectiveAddress();
     }
 
+    public long addrUnchecked() {
+        return effectiveAddress();
+    }
+
     @Override
     public Array<X> withSize(long size) {
         return new BoundedArray<>(this, size);
@@ -210,7 +214,7 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     private void checkAccessibleFor(AccessMode mode) {
         if (!isAccessibleFor(mode)) {
-            throw new AccessControlException("Access denied for mode: +" + mode + ". Allowed: " + this.mode);
+            throw new AccessControlException("Access denied for mode: " + mode + ". Allowed: " + this.mode);
         }
     }
 
