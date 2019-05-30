@@ -327,10 +327,28 @@ public class TestByteBuffer {
         }
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testBufferOnWrongAddress() {
-        MemoryAddress base = MemorySegment.ofArray(new long[100]).baseAddress();
-        base.asByteBuffer(10);
+    @Test(dataProvider="resizeOps")
+    public void testCopyHeapToNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
+        int bytes = (int)seq.bitsSize() / 8;
+        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
+            MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes]);
+            initializer.accept(heapArray.baseAddress());
+            MemorySegment nativeArray = scope.allocate(bytes);
+            MemoryAddress.copy(heapArray.baseAddress(), nativeArray.baseAddress(), bytes);
+            checker.accept(nativeArray.baseAddress());
+        }
+    }
+
+    @Test(dataProvider="resizeOps")
+    public void testCopyNativeToHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
+        int bytes = (int)seq.bitsSize() / 8;
+        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
+            MemoryAddress base = scope.allocate(seq);
+            initializer.accept(base);
+            MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes]);
+            MemoryAddress.copy(base, heapArray.baseAddress(), bytes);
+            checker.accept(heapArray.baseAddress());
+        }
     }
 
     @DataProvider(name = "bufferOps")
