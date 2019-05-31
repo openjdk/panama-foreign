@@ -43,7 +43,7 @@ public class BoundedPointer<X> implements Pointer<X> {
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
     private static final BoundedPointer<?> theNullPointer = new BoundedPointer<>(
-        LayoutTypeImpl.nullType, null, AccessMode.READ, MemoryBoundInfo.NOTHING);
+        LayoutTypeImpl.nullType, null, AccessMode.READ_WRITE, MemoryBoundInfo.NOTHING);
 
     public static boolean isNull(long addr) {
         // FIMXE: Include the 64k?
@@ -104,9 +104,12 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     @Override
-    public long addr() throws UnsupportedOperationException, IllegalAccessException {
-        checkAlive();
-        checkInBounds();
+    public long addr() throws UnsupportedOperationException, IllegalStateException, AccessControlException {
+        checkAccess(AccessMode.READ_WRITE);
+        return effectiveAddress();
+    }
+
+    public long addrUnchecked() {
         return effectiveAddress();
     }
 
@@ -143,10 +146,9 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     @Override
-    public ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException {
-        boundInfo.checkRange(offset, bytes);
+    public ByteBuffer asDirectByteBuffer(int bytes) throws UnsupportedOperationException, IllegalStateException, AccessControlException {
         return SharedSecrets.getJavaNioAccess()
-                .newDirectByteBuffer(addr(), bytes, null);
+                .newDirectByteBuffer(addr(), bytes, null); // implicit checks when calling addr()
     }
 
     public void copyTo(BoundedPointer<?> dst, long bytes) {
@@ -200,21 +202,19 @@ public class BoundedPointer<X> implements Pointer<X> {
             src.equals(dest);
     }
 
-    public void checkAlive() {
+    private void checkAlive() throws IllegalStateException {
         if (scope != null) {
             ((ScopeImpl)scope).checkAlive();
         }
     }
 
-    private void checkAccessibleFor(AccessMode mode) {
-        if (!isAccessibleFor(mode)) {
-            throw new AccessControlException("Access denied");
-        }
+    private void checkRange(long length) throws IllegalStateException {
+        boundInfo.checkRange(offset, length);
     }
 
-    private void checkInBounds() {
-        if (! (type.layout() instanceof Unresolved)) {
-            boundInfo.checkRange(offset, type.bytesSize());
+    private void checkAccessibleFor(AccessMode mode) {
+        if (!isAccessibleFor(mode)) {
+            throw new AccessControlException("Access denied for mode: " + mode + ". Allowed: " + this.mode);
         }
     }
 
@@ -229,7 +229,11 @@ public class BoundedPointer<X> implements Pointer<X> {
     private void checkAccess(AccessMode mode, long length) {
         checkAlive();
         checkAccessibleFor(mode);
-        boundInfo.checkRange(offset, length);
+        checkRange(length);
+    }
+
+    public void checkAccess(AccessMode mode) {
+        checkAccess(mode, type.layout() instanceof Unresolved ? 0 : type.bytesSize());
     }
 
     public static BoundedPointer<?> createNativeVoidPointer(long offset) {
@@ -275,11 +279,7 @@ public class BoundedPointer<X> implements Pointer<X> {
         } else if (o instanceof BoundedPointer) {
             return ((BoundedPointer) o).effectiveAddress() == effectiveAddress();
         } else if (o instanceof Pointer) {
-            try {
-                return ((Pointer) o).addr() == addr();
-            } catch (IllegalAccessException iae) {
-                throw new IllegalStateException();
-            }
+            return ((Pointer) o).addr() == addr();
         } else {
             return false;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ import java.util.Objects;
 
 import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
+import jdk.internal.foreign.abi.aarch64.AArch64ABI;
 import jdk.internal.foreign.memory.References.Reference;
 
 public class LayoutTypeImpl<X> implements LayoutType<X> {
@@ -61,6 +62,8 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
                 PTR_SIZE = NativeTypes.LittleEndian.SysVABI.POINTER.bytesSize() * 8;
             } else if (abi instanceof Windowsx64ABI) {
                 PTR_SIZE = NativeTypes.LittleEndian.WinABI.POINTER.bytesSize() * 8;
+            } else if (abi instanceof AArch64ABI) {
+                PTR_SIZE = NativeTypes.LittleEndian.SysVABI.POINTER.bytesSize() * 8;
             } else {
                 throw new UnsupportedOperationException("Unsupported ABI");
             }

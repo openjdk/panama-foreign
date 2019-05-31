@@ -56,6 +56,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
+
+import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.foreign.memory.Types;
 import jdk.internal.misc.Unsafe;
@@ -352,11 +354,17 @@ public final class Util {
         return (Pointer<?>) UNSAFE.getReference(o, 0L);
     }
 
+    /*
+     * Note that this method does not do any access checking for the pointer if it's offheap.
+     * This is left up to the caller.
+     *
+     * For heap pointers this method requires READ_WRITE access, to copy the value back and forth to offheap.
+     */
     public static <Z> Z withOffHeapAddress(Pointer<?> p, LongFunction<Z> longFunction) {
         try {
             try {
-                //address
-                return longFunction.apply(p.addr());
+                //address, without checking
+                return longFunction.apply(((BoundedPointer<?>) p).addrUnchecked());
             } catch (UnsupportedOperationException ex) {
                 //heap pointer
                 try (Scope sc = Scope.globalScope().fork()) {

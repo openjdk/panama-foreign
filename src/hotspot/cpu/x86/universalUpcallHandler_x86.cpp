@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ static void upcall_init(void) {
 
   const char* cname = "jdk/internal/foreign/abi/UniversalUpcallHandler";
   const char* mname = "invoke";
-  const char* mdesc = "(Ljdk/internal/foreign/abi/UniversalUpcallHandler;JJJJJJ)V";
+  const char* mdesc = "(Ljdk/internal/foreign/abi/UniversalUpcallHandler;JJJJJJJ)V";
   Symbol* cname_sym = SymbolTable::lookup(cname, (int)strlen(cname), THREAD);
   Symbol* mname_sym = SymbolTable::lookup(mname, (int)strlen(mname), THREAD);
   Symbol* mdesc_sym = SymbolTable::lookup(mdesc, (int)strlen(mdesc), THREAD);
@@ -228,7 +228,7 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
   ThreadInVMfromNative __tiv(thread);
 
   JavaValue result(T_VOID);
-  JavaCallArguments args(6 * 2);
+  JavaCallArguments args(7 * 2);
 
   args.push_jobject(rec);
 #ifdef _LP64
@@ -242,6 +242,7 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
   args.push_long((jlong)&context->returns.integer.regs);
   args.push_long((jlong)&context->returns.vector.regs);
   args.push_long((jlong)&context->returns.x87.regs);
+  args.push_long(0L /* Indirect result on AArch64 */);
 
   JavaCalls::call_static(&result, upcall_info.upcall_method.klass, upcall_info.upcall_method.name, upcall_info.upcall_method.sig, &args, thread);
 

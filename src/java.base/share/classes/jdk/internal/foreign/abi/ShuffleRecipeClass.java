@@ -27,7 +27,8 @@ enum ShuffleRecipeClass {
     STACK(StorageClass.STACK_ARGUMENT_SLOT, null),
     VECTOR(StorageClass.VECTOR_ARGUMENT_REGISTER, StorageClass.VECTOR_RETURN_REGISTER),
     INTEGER(StorageClass.INTEGER_ARGUMENT_REGISTER, StorageClass.INTEGER_RETURN_REGISTER),
-    X87(null, StorageClass.X87_RETURN_REGISTER);
+    X87(null, StorageClass.X87_RETURN_REGISTER),
+    INDIRECT(StorageClass.INDIRECT_RESULT_REGISTER, null);
 
     private final StorageClass argumentStorageClass;
     private final StorageClass returnStorageClass;

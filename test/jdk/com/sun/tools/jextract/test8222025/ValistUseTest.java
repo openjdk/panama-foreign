@@ -23,6 +23,7 @@
 
 import java.nio.file.Path;
 import java.io.IOException;
+import jdk.test.lib.Platform;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertTrue;
@@ -31,8 +32,9 @@ import static org.testng.Assert.assertTrue;
  * @test
  * @bug 8222025
  * @summary jextract generates reference to underfined type for va_list
- * @library ..
+ * @library .. /test/lib
  * @requires os.family != "windows"
+ * @build jdk.test.lib.Platform
  * @run testng ValistUseTest
  */
 public class ValistUseTest extends JextractToolRunner {
@@ -45,7 +47,14 @@ public class ValistUseTest extends JextractToolRunner {
             va_list_use_H.toString()).checkSuccess();
         try {
             Loader loader = classLoader(vaListUseJar);
-            Class<?> vaListTag = loader.loadClass("clang_support.builtin$_h$__va_list_tag");
+
+            Class<?> vaListTag;
+            if (Platform.isAArch64()) {
+                vaListTag = loader.loadClass("clang_support.builtin$_h$__va_list");
+            } else {
+                vaListTag = loader.loadClass("clang_support.builtin$_h$__va_list_tag");
+            }
+
             assertTrue(vaListTag != null);
         } finally {
             deleteFile(vaListUseJar);

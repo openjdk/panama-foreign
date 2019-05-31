@@ -95,11 +95,7 @@ public class Windowsx64ABI implements SystemABI {
             }
         }
 
-        try {
-            return new UniversalNativeInvoker(symbol, callingSequence, nmt, adapter).getBoundMethodHandle();
-        } catch (IllegalAccessException ex) {
-            throw new IllegalStateException(ex);
-        }
+        return new UniversalNativeInvoker(symbol, callingSequence, nmt, adapter).getBoundMethodHandle();
     }
 
     @Override
@@ -173,7 +169,7 @@ public class Windowsx64ABI implements SystemABI {
 
         @Override
         public Object boxValue(LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> srcPtrFunc,
-                               List<ArgumentBinding> bindings) throws IllegalAccessException {
+                               List<ArgumentBinding> bindings) {
             assert (bindings.size() == 1); // always on windows
             ArgumentBinding binding = bindings.get(0);
             Class<?> carrier = ((LayoutTypeImpl<?>) type).carrier();

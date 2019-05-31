@@ -315,7 +315,7 @@ public class DirectSignatureShuffler {
         return value ? 1 : 0;
     }
 
-    private static long pointerToLong(Pointer<?> value) throws IllegalAccessException {
+    private static long pointerToLong(Pointer<?> value) {
         return value.addr();
     }
 
@@ -325,7 +325,7 @@ public class DirectSignatureShuffler {
                 BoundedPointer.createNativeVoidPointer(addr).cast(lt);
     }
 
-    private static long callbackToLong(Callback<?> value) throws IllegalAccessException {
+    private static long callbackToLong(Callback<?> value) {
         return value.entryPoint().addr();
     }
 
@@ -410,12 +410,17 @@ public class DirectSignatureShuffler {
         switch (binding.storage().getStorageClass()) {
             case X87_RETURN_REGISTER:
             case STACK_ARGUMENT_SLOT:
+            case INDIRECT_RESULT_REGISTER:
                 //arguments passed in memory not supported
                 return false;
             case VECTOR_ARGUMENT_REGISTER:
             case VECTOR_RETURN_REGISTER:
                 //avoid passing around floats as doubles as that leads to trouble
                 return (binding.argument().layout().bitsSize() / 8) == binding.storage().getSize();
+            case INTEGER_ARGUMENT_REGISTER:
+                // On some platforms large by-value structures are passed by
+                // pointer in integer argument registers
+                return (binding.argument().layout().bitsSize() / 8) <= binding.storage().getSize();
             default:
                 return true;
         }

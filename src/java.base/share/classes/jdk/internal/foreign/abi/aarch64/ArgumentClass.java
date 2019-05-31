@@ -1,12 +1,11 @@
 /*
  * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,30 +21,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi;
+package jdk.internal.foreign.abi.aarch64;
 
-import jdk.internal.ref.CleanerFactory;
-
-import java.foreign.Library;
-import java.lang.ref.Cleaner;
-
-public class UpcallStubs {
-
-    // This is used to clear upcall stub symbols when no longer retained in scopes
-    private static final Cleaner cleaner = CleanerFactory.cleaner();
-
-    public static <S extends Library.Symbol> S registerUpcallStub(S up) {
-        long addr = up.getAddress().addr();
-        cleaner.register(up, () -> freeUpcallStub(addr));
-        return up;
-    }
-
-    // natives
-    private static native Library.Symbol getUpcallStub(long addr);
-    private static native void freeUpcallStub(long addr);
-
-    private static native void registerNatives();
-    static {
-        registerNatives();
-    }
+public enum ArgumentClass {
+    POINTER, INTEGER, VECTOR, MEMORY, HFA;
 }

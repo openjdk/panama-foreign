@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,6 +64,13 @@ public class StructByValueTest {
         @NativeFunction("(${big_tuple})${big_tuple}")
         big_tuple big_zero(big_tuple t);
 
+        @NativeFunction("()${float_tuple}")
+        float_tuple float_make();
+        @NativeFunction("(${float_tuple})${float_tuple}")
+        float_tuple float_id(float_tuple t);
+        @NativeFunction("(${float_tuple})${float_tuple}")
+        float_tuple float_zero(float_tuple t);
+
         @NativeStruct("[i32(one) i32(two)](small_tuple)")
         interface small_tuple extends Struct<small_tuple> {
             @NativeGetter("one")
@@ -97,12 +104,21 @@ public class StructByValueTest {
             @NativeGetter("five")
             int five();
         }
+
+        @NativeStruct("[f32(one) f32(two)](float_tuple)")
+        interface float_tuple extends Struct<float_tuple> {
+            @NativeGetter("one")
+            float one();
+            @NativeGetter("two")
+            float two();
+        }
     }
 
     static structbyvalue lib =
             Libraries.bind(structbyvalue.class,
                     Libraries.loadLibrary(MethodHandles.lookup(), "structbyvalue"));
 
+    @Test
     public void testSmallTuple() {
         structbyvalue.small_tuple t = lib.small_make();
         checkSmallTuple(t, 1, 2);
@@ -129,6 +145,15 @@ public class StructByValueTest {
         checkBigTuple(bt, 1, 2, 3, 4, 5);
     }
 
+    @Test
+    public void testFloatTuple() {
+        structbyvalue.float_tuple t = lib.float_make();
+        checkFloatTuple(t, 1.0f, 2.0f);
+        checkFloatTuple(lib.float_id(t), 1.0f, 2.0f);
+        checkFloatTuple(lib.float_zero(t), 0.0f, 0.0f);
+        checkFloatTuple(t, 1.0f, 2.0f);
+    }
+
     static void checkTuple(structbyvalue.tuple t, int one, int two, int three, int four) {
         assertEquals(t.one(), one);
         assertEquals(t.two(), two);
@@ -145,6 +170,11 @@ public class StructByValueTest {
     }
 
     static void checkSmallTuple(structbyvalue.small_tuple t, int one, int two) {
+        assertEquals(t.one(), one);
+        assertEquals(t.two(), two);
+    }
+
+    static void checkFloatTuple(structbyvalue.float_tuple t, float one, float two) {
         assertEquals(t.one(), one);
         assertEquals(t.two(), two);
     }

@@ -143,7 +143,7 @@ class HeaderImplGenerator extends BinderClassGenerator {
             String name = info.name;
             long addr = lookup.lookup(name.isEmpty() ? methodName : name).getAddress().addr();
             p = new BoundedPointer<>(lt, libScope, AccessMode.READ_WRITE, MemoryBoundInfo.ofNative(addr, lt.bytesSize()));
-        } catch (IllegalAccessException | NoSuchMethodException e) {
+        } catch (NoSuchMethodException e) {
             throw new IllegalStateException(e);
         }
 

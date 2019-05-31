@@ -1,12 +1,11 @@
 /*
  * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,30 +21,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi;
 
-import jdk.internal.ref.CleanerFactory;
+#include "precompiled.hpp"
+#include "asm/macroAssembler.hpp"
+#include CPU_HEADER(foreign_globals)
 
-import java.foreign.Library;
-import java.lang.ref.Cleaner;
+Register integer_argument_registers[INTEGER_ARGUMENT_REGISTERS_NOOF] = {
+  c_rarg0, c_rarg1, c_rarg2, c_rarg3, c_rarg4, c_rarg5, c_rarg6, c_rarg7
+};
 
-public class UpcallStubs {
+Register integer_return_registers[INTEGER_RETURN_REGISTERS_NOOF] = {
+  r0, r1, r2, r3, r4, r5, r6, r7
+};
 
-    // This is used to clear upcall stub symbols when no longer retained in scopes
-    private static final Cleaner cleaner = CleanerFactory.cleaner();
+FloatRegister vector_argument_registers[VECTOR_ARGUMENT_REGISTERS_NOOF] = {
+  c_farg0, c_farg1, c_farg2, c_farg3, c_farg4, c_farg5, c_farg6, c_farg7
+};
 
-    public static <S extends Library.Symbol> S registerUpcallStub(S up) {
-        long addr = up.getAddress().addr();
-        cleaner.register(up, () -> freeUpcallStub(addr));
-        return up;
-    }
-
-    // natives
-    private static native Library.Symbol getUpcallStub(long addr);
-    private static native void freeUpcallStub(long addr);
-
-    private static native void registerNatives();
-    static {
-        registerNatives();
-    }
-}
+FloatRegister vector_return_registers[VECTOR_RETURN_REGISTERS_NOOF] = {
+  v0, v1, v2, v3, v4, v5, v6, v7
+};

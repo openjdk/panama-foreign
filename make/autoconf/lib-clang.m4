@@ -144,7 +144,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
 
     AC_CHECK_HEADER("clang-c/Index.h", [], [ENABLE_LIBCLANG="false"])
     if test "x$ENABLE_LIBCLANG" = "xtrue"; then
-      if test "x$TOOLCHAIN_TYPE" = "xmicrosoft"; then
+      if test "x$TOOLCHAIN_TYPE" = "xmicrosoft" || test "x$COMPILE_TYPE" = "xcross"; then
         # Just trust the lib is there
         LIBS=$LIBCLANG_LIBS
       else

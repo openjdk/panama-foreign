@@ -68,7 +68,7 @@ public class UniversalNativeInvoker {
     private final UniversalAdapter adapter;
 
     public UniversalNativeInvoker(Library.Symbol symbol, CallingSequence callingSequence, NativeMethodType nmt,
-                                     UniversalAdapter adapter) throws IllegalAccessException {
+                                     UniversalAdapter adapter) {
         this.adapter = adapter;
         this.addr = symbol.getAddress().addr();
         this.methodName = symbol.getName();
@@ -122,7 +122,9 @@ public class UniversalNativeInvoker {
 
         if (DEBUG) {
             System.err.println("Returned from method " + methodName + " with " + returnValues.length + " return values");
-            System.err.println("structPtr = 0x" + Long.toHexString(retPtr.addr()));
+            if (callingSequence.returnsInMemory()) {
+                System.err.println("structPtr = 0x" + Long.toHexString(retPtr.addr()));
+            }
             for (int i = 0; i < returnValues.length; i++) {
                 System.err.println("returnValues[" + i + "] = 0x" + Long.toHexString(returnValues[i]));
             }

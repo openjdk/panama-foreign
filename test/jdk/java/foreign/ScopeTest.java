@@ -141,8 +141,6 @@ public class ScopeTest {
             for (int i = 0; i < data.length; i++) {
                 assertEquals(ibNative.get(), data[i]);
             }
-        } catch (IllegalAccessException iae) {
-            fail("Not expecting IAE");
         }
     }
 

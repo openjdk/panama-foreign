@@ -60,6 +60,11 @@ public class CallingSequence {
         return bindingsByIndex.getOrDefault(-1, List.of());
     }
 
+    private static boolean isReturnInMemoryStorageClass(StorageClass storageClass) {
+        return storageClass == StorageClass.INTEGER_ARGUMENT_REGISTER
+            || storageClass == StorageClass.INDIRECT_RESULT_REGISTER;
+    }
+
     public ArgumentBinding returnInMemoryBinding() {
         if (!returnsInMemory) {
             throw new IllegalStateException("Attempting to obtain in-memory binding for regular return");
@@ -67,7 +72,7 @@ public class CallingSequence {
         //if returns in memory, we have two bindings with position -1, the argument and the return.
         //The code below filters out the return binding.
         return bindingsByIndex.getOrDefault(-1, List.of()).stream()
-                .filter(b -> b.storage().getStorageClass() == StorageClass.INTEGER_ARGUMENT_REGISTER)
+                .filter(b -> isReturnInMemoryStorageClass(b.storage().getStorageClass()))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
     }
