@@ -59,6 +59,9 @@ public abstract class AbstractMemoryScopeImpl implements MemoryScope {
         if ((characteristics() & MemoryScope.CONFINED) != 0) {
             checkThread();
         }
+        if ((characteristics() & MemoryScope.PINNED) != 0) {
+            return;
+        }
         if (!isAlive()) {
             throw new IllegalStateException("Scope is not alive");
         }

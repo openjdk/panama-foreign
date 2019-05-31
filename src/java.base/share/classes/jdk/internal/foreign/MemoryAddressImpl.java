@@ -34,16 +34,8 @@ import java.util.Objects;
 
 public class MemoryAddressImpl implements MemoryAddress {
 
-    static Unsafe UNSAFE;
-    static final int BYTE_ARR_BASE;
-
-    static {
-        if (MemoryAddressImpl.class.getClassLoader() != null) {
-            throw new IllegalStateException();
-        }
-        UNSAFE = Unsafe.getUnsafe();
-        BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
-    }
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
+    private static final int BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
 
     private final MemorySegmentImpl segment;
     private final long offset;
@@ -58,8 +50,6 @@ public class MemoryAddressImpl implements MemoryAddress {
     }
 
     public static void copy(MemoryAddressImpl src, MemoryAddressImpl dst, long size) {
-        src.segment.checkAlive();
-        dst.segment.checkAlive();
         src.checkAccess(0, size, true);
         dst.checkAccess(0, size, false);
         UNSAFE.copyMemory(
@@ -87,11 +77,8 @@ public class MemoryAddressImpl implements MemoryAddress {
     }
 
     public void checkAccess(long offset, long length, boolean readOnly) {
-        if (segment().scope() != null) {
-            if (!readOnly && (segment.scope().characteristics() & MemoryScope.IMMUTABLE) != 0) {
-                throw new IllegalStateException("Attempting to write memory in immutable scope");
-            }
-            segment.checkAlive();
+        if (!readOnly && (segment.scope().characteristics() & MemoryScope.IMMUTABLE) != 0) {
+            throw new IllegalStateException("Attempting to write memory in immutable scope");
         }
         segment.checkRange(this.offset + offset, length);
     }
@@ -107,8 +94,7 @@ public class MemoryAddressImpl implements MemoryAddress {
     @Override
     public ByteBuffer asByteBuffer(int bytes) throws IllegalArgumentException, UnsupportedOperationException, IllegalStateException {
         boolean readOnly = (segment().scope().characteristics() & MemoryScope.IMMUTABLE) != 0;
-        segment.checkAlive();
-        segment.resize(this.offset, bytes); //throws IAE if out of bounds
+        segment.resize(this.offset, bytes); //throws IAE if out of bounds, or ISE if not alive
         checkAccess(0L, bytes, readOnly);
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
         Object base = unsafeGetBase();

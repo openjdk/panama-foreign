@@ -100,6 +100,7 @@ public class MemorySegmentImpl implements MemorySegment {
     }
 
     void checkRange(long offset, long length) {
+        checkAlive();
         if (outOfBounds(offset, length)) {
             throw new IllegalStateException();
         }
@@ -113,13 +114,14 @@ public class MemorySegmentImpl implements MemorySegment {
 
     @Override
     public MemorySegmentImpl resize(long offset, long newLength) {
+        checkAlive();
         if (outOfBounds(offset, newLength)) {
             throw new IllegalArgumentException();
         }
         return new MemorySegmentImpl(scope, base, min + offset, newLength);
     }
 
-    void checkAlive() {
+    private void checkAlive() {
         ((AbstractMemoryScopeImpl)scope()).checkAlive();
     }
 

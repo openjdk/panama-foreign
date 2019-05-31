@@ -30,7 +30,6 @@ import jdk.internal.misc.VM;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
-import java.foreign.MemoryAddress;
 import java.lang.reflect.Field;
 import java.util.Set;
 
@@ -1234,31 +1233,5 @@ public final class Unsafe {
             throw new IllegalArgumentException("buffer is non-direct");
 
         theInternalUnsafe.invokeCleaner(directBuffer);
-    }
-
-    /**
-     * Obtain the base object (if any) associated with this address. This can be used in conjunction with
-     * {@link #getOffset(MemoryAddress)} in order to obtain a base/offset addressing coordinate pair
-     * to be used with methods like {@link #getInt(Object, long)} and the likes.
-     *
-     * @param address the address whose base object is to be obtained.
-     * @return the base object associated with the address, or {@code null}.
-     */
-    public final Object getBase(MemoryAddress address) {
-        return theUnsafe.getBase(address);
-    }
-
-    /**
-     * Obtain the offset associated with this address. If {@link #getBase(MemoryAddress)} returns {@null} on the passed
-     * address, then the offset is to be interpreted as the (absolute) numerical value associated said address.
-     * Alternatively, the offset represents the displacement of a field or an array element within the containing
-     * base object. This can be used in conjunction with {@link #getBase(MemoryAddress)} in order to obtain a base/offset
-     * addressing coordinate pair to be used with methods like {@link #getInt(Object, long)} and the likes.
-     *
-     * @param address the address whose offset is to be obtained.
-     * @return the offset associated with the address.
-     */
-    public final long getOffset(MemoryAddress address) {
-        return theUnsafe.getOffset(address);
     }
 }
