@@ -62,172 +62,179 @@ public final class NativeTypes {
     /**
      * An 8-bit signed integral type, platform endian format.
      */
-    public static LayoutType<Byte> INT8 = isHostLE ?
+    public static final LayoutType<Byte> INT8 = isHostLE ?
             LittleEndian.INT8 : BigEndian.INT8;
 
     /**
      * An 8-bit unsigned integral type, platform endian format.
      */
-    public static LayoutType<Byte> UINT8 = isHostLE ?
+    public static final LayoutType<Byte> UINT8 = isHostLE ?
             LittleEndian.UINT8 : BigEndian.UINT8;
 
     /**
      * A 16-bit signed integral type, platform endian format.
      */
-    public static LayoutType<Short> INT16 = isHostLE ?
+    public static final LayoutType<Short> INT16 = isHostLE ?
             LittleEndian.INT16 : BigEndian.INT16;
 
     /**
      * A 16-bit unsigned integral type, platform endian format.
      */
-    public static LayoutType<Short> UINT16 = isHostLE ?
+    public static final LayoutType<Short> UINT16 = isHostLE ?
             LittleEndian.UINT16 : BigEndian.UINT16;
 
     /**
      * An 32-bit signed integral type, platform endian format.
      */
-    public static LayoutType<Integer> INT32 = isHostLE ?
+    public static final LayoutType<Integer> INT32 = isHostLE ?
             LittleEndian.INT32 : BigEndian.INT32;
 
     /**
      * A 32-bit unsigned integral type, platform endian format.
      */
-    public static LayoutType<Integer> UINT32 = isHostLE ?
+    public static final LayoutType<Integer> UINT32 = isHostLE ?
             LittleEndian.UINT32 : BigEndian.UINT32;
 
     /**
      * A 64-bit signed integral type, platform endian format.
      */
-    public static LayoutType<Long> INT64 = isHostLE ?
+    public static final LayoutType<Long> INT64 = isHostLE ?
             LittleEndian.INT64 : BigEndian.INT64;
 
     /**
      * A 64-bit unsigned integral type, platform endian format.
      */
-    public static LayoutType<Long> UINT64 = isHostLE ?
+    public static final LayoutType<Long> UINT64 = isHostLE ?
             LittleEndian.UINT64 : BigEndian.UINT64;
 
     /**
      * A single precision floating point type, according to the IEEE 754 standard,
      * platform endian format.
      */
-    public static LayoutType<Float> IEEE_FLOAT32 = isHostLE ?
+    public static final LayoutType<Float> IEEE_FLOAT32 = isHostLE ?
             LittleEndian.IEEE_FLOAT32 : BigEndian.IEEE_FLOAT32;
 
     /**
      * A double precision floating point type, according to the IEEE 754 standard,
      * platform endian format.
      */
-    public static LayoutType<Double> IEEE_FLOAT64 = isHostLE ?
+    public static final LayoutType<Double> IEEE_FLOAT64 = isHostLE ?
             LittleEndian.IEEE_FLOAT64 : BigEndian.IEEE_FLOAT64;
 
     /**
      * An extended precision floating point type, according to the IEEE 754 standard,
      * platform endian format.
      */
-    public static LayoutType<Double> IEEE_FLOAT80 = isHostLE ?
+    public static final LayoutType<Double> IEEE_FLOAT80 = isHostLE ?
             LittleEndian.IEEE_FLOAT80 : BigEndian.IEEE_FLOAT80;
 
     /**
      * The {@code void} type.
      */
-    public static LayoutType<Void> VOID = LayoutType.ofVoid(Value.ofUnsignedInt(0));
+    public static final LayoutType<Void> VOID = LayoutType.ofVoid(Value.ofUnsignedInt(0));
 
     /**
      * The {@code _Bool} native type, according to system ABI.
      */
-    public static LayoutType<Byte> BOOL =
+    public static final LayoutType<Byte> BOOL =
             pick(LittleEndian.WinABI.BOOL, LittleEndian.SysVABI.BOOL,
                  LittleEndian.AArch64ABI.BOOL);
 
     /**
      * The {@code unsigned char} native type, according to system ABI.
      */
-    public static LayoutType<Byte> UCHAR =
+    public static final LayoutType<Byte> UCHAR =
             pick(LittleEndian.WinABI.UCHAR, LittleEndian.SysVABI.UCHAR,
                  LittleEndian.AArch64ABI.UCHAR);
 
     /**
+     * The {@code signed char} native type, according to system ABI.
+     */
+    public static final LayoutType<Byte> SCHAR =
+            pick(LittleEndian.WinABI.SCHAR, LittleEndian.SysVABI.SCHAR,
+                 LittleEndian.AArch64ABI.SCHAR);
+
+    /**
      * The {@code char} native type, according to system ABI.
      */
-    public static LayoutType<Byte> CHAR =
+    public static final LayoutType<Byte> CHAR =
             pick(LittleEndian.WinABI.CHAR, LittleEndian.SysVABI.CHAR,
                  LittleEndian.AArch64ABI.CHAR);
 
     /**
      * The {@code short} native type, according to system ABI.
      */
-    public static LayoutType<Short> SHORT =
+    public static final LayoutType<Short> SHORT =
             pick(LittleEndian.WinABI.SHORT, LittleEndian.SysVABI.SHORT,
                  LittleEndian.AArch64ABI.SHORT);
 
     /**
      * The {@code unsigned short} native type, according to system ABI.
      */
-    public static LayoutType<Short> USHORT =
+    public static final LayoutType<Short> USHORT =
             pick(LittleEndian.WinABI.USHORT, LittleEndian.SysVABI.USHORT,
                  LittleEndian.AArch64ABI.USHORT);
 
     /**
      * The {@code int} native type, according to system ABI.
      */
-    public static LayoutType<Integer> INT =
+    public static final LayoutType<Integer> INT =
             pick(LittleEndian.WinABI.INT, LittleEndian.SysVABI.INT,
                  LittleEndian.AArch64ABI.INT);
 
     /**
      * The {@code unsigned int} native type, according to system ABI.
      */
-    public static LayoutType<Integer> UINT =
+    public static final LayoutType<Integer> UINT =
             pick(LittleEndian.WinABI.UINT, LittleEndian.SysVABI.UINT,
                  LittleEndian.AArch64ABI.UINT);
 
     /**
      * The {@code long} native type, according to system ABI.
      */
-    public static LayoutType<Long> LONG =
+    public static final LayoutType<Long> LONG =
             pick(LittleEndian.WinABI.LONG, LittleEndian.SysVABI.LONG,
                  LittleEndian.WinABI.LONG);
 
     /**
      * The {@code unsigned long} native type, according to system ABI.
      */
-    public static LayoutType<Long> ULONG =
+    public static final LayoutType<Long> ULONG =
             pick(LittleEndian.WinABI.ULONG, LittleEndian.SysVABI.ULONG,
                  LittleEndian.AArch64ABI.ULONG);
 
     /**
      * The {@code long long} native type, according to system ABI.
      */
-    public static LayoutType<Long> LONGLONG =
+    public static final LayoutType<Long> LONGLONG =
             pick(LittleEndian.WinABI.LONGLONG, LittleEndian.SysVABI.LONGLONG,
                  LittleEndian.AArch64ABI.LONGLONG);
 
     /**
      * The {@code unsigned long long} native type, according to system ABI.
      */
-    public static LayoutType<Long> ULONGLONG =
+    public static final LayoutType<Long> ULONGLONG =
             pick(LittleEndian.WinABI.ULONGLONG, LittleEndian.SysVABI.ULONGLONG,
                  LittleEndian.AArch64ABI.ULONGLONG);
 
     /**
      * The {@code float} native type, according to system ABI.
      */
-    public static LayoutType<Float> FLOAT =
+    public static final LayoutType<Float> FLOAT =
             pick(LittleEndian.WinABI.FLOAT, LittleEndian.SysVABI.FLOAT,
                  LittleEndian.AArch64ABI.FLOAT);
 
     /**
      * The {@code double} native type, according to system ABI.
      */
-    public static LayoutType<Double> DOUBLE =
+    public static final LayoutType<Double> DOUBLE =
             pick(LittleEndian.WinABI.DOUBLE, LittleEndian.SysVABI.DOUBLE,
                  LittleEndian.AArch64ABI.DOUBLE);
 
     /**
      * The {@code T*} native type, according to system ABI.
      */
-    public static LayoutType<Pointer<Void>> POINTER =
+    public static final LayoutType<Pointer<Void>> POINTER =
             pick(LittleEndian.WinABI.POINTER, LittleEndian.SysVABI.POINTER,
                  LittleEndian.AArch64ABI.POINTER);
 
@@ -239,70 +246,70 @@ public final class NativeTypes {
         /**
          * An 8-bit signed integral type, big endian format.
          */
-        public static LayoutType<Byte> INT8 = LayoutType.ofByte(
+        public static final LayoutType<Byte> INT8 = LayoutType.ofByte(
                 Value.ofSignedInt(Value.Endianness.BIG_ENDIAN, 8));
 
         /**
          * An 8-bit unsigned integral type, big endian format.
          */
-        public static LayoutType<Byte> UINT8 = LayoutType.ofByte(
+        public static final LayoutType<Byte> UINT8 = LayoutType.ofByte(
                 Value.ofUnsignedInt(Value.Endianness.BIG_ENDIAN, 8));
 
         /**
          * A 16-bit signed integral type, big endian format.
          */
-        public static LayoutType<Short> INT16 = LayoutType.ofShort(
+        public static final LayoutType<Short> INT16 = LayoutType.ofShort(
                 Value.ofSignedInt(Value.Endianness.BIG_ENDIAN, 16));
 
         /**
          * A 16-bit unsigned integral type, big endian format.
          */
-        public static LayoutType<Short> UINT16 = LayoutType.ofShort(
+        public static final LayoutType<Short> UINT16 = LayoutType.ofShort(
                 Value.ofUnsignedInt(Value.Endianness.BIG_ENDIAN, 16));
 
         /**
          * A 32-bit signed integral type, big endian format.
          */
-        public static LayoutType<Integer> INT32 = LayoutType.ofInt(
+        public static final LayoutType<Integer> INT32 = LayoutType.ofInt(
                 Value.ofSignedInt(Value.Endianness.BIG_ENDIAN, 32));
 
         /**
          * A 32-bit unsigned integral type, big endian format.
          */
-        public static LayoutType<Integer> UINT32 = LayoutType.ofInt(
+        public static final LayoutType<Integer> UINT32 = LayoutType.ofInt(
                 Value.ofUnsignedInt(Value.Endianness.BIG_ENDIAN, 32));
 
         /**
          * A 64-bit signed integral type, big endian format.
          */
-        public static LayoutType<Long> INT64 = LayoutType.ofLong(
+        public static final LayoutType<Long> INT64 = LayoutType.ofLong(
                 Value.ofSignedInt(Value.Endianness.BIG_ENDIAN, 64));
 
         /**
          * A 64-bit unsigned integral type, big endian format.
          */
-        public static LayoutType<Long> UINT64 = LayoutType.ofLong(
+        public static final LayoutType<Long> UINT64 = LayoutType.ofLong(
                 Value.ofUnsignedInt(Value.Endianness.BIG_ENDIAN, 64));
 
         /**
          * A single precision floating point type, according to the IEEE 754 standard,
          * big endian format.
          */
-        public static LayoutType<Float> IEEE_FLOAT32 = LayoutType.ofFloat(
+        public static final LayoutType<Float> IEEE_FLOAT32 = LayoutType.ofFloat(
                 Value.ofFloatingPoint(Value.Endianness.BIG_ENDIAN, 32));
 
         /**
          * A double precision floating point type, according to the IEEE 754 standard,
          * big endian format.
          */
-        public static LayoutType<Double> IEEE_FLOAT64 = LayoutType.ofDouble(
+        public static final LayoutType<Double> IEEE_FLOAT64 = LayoutType.ofDouble(
                 Value.ofFloatingPoint(Value.Endianness.BIG_ENDIAN, 64));
 
         /**
          * An extended precision floating point type, according to the IEEE 754 standard,
          * big endian format.
          */
-        public static LayoutType<Double> IEEE_FLOAT80 = LayoutType.ofDouble(
+        public static final LayoutType<Double> IEEE_FLOAT80 = LayoutType.ofDouble(
                 Value.ofFloatingPoint(Value.Endianness.BIG_ENDIAN, 80));
     }
 
@@ -314,70 +321,70 @@ public final class NativeTypes {
         /**
          * An 8-bit signed integral type, little endian format.
          */
-        public static LayoutType<Byte> INT8 = LayoutType.ofByte(
+        public static final LayoutType<Byte> INT8 = LayoutType.ofByte(
                 Value.ofSignedInt(Value.Endianness.LITTLE_ENDIAN, 8));
 
         /**
          * An 8-bit unsigned integral type, little endian format.
          */
-        public static LayoutType<Byte> UINT8 = LayoutType.ofByte(
+        public static final LayoutType<Byte> UINT8 = LayoutType.ofByte(
                 Value.ofUnsignedInt(Value.Endianness.LITTLE_ENDIAN, 8));
 
         /**
          * A 16-bit signed integral type, little endian format.
          */
-        public static LayoutType<Short> INT16 = LayoutType.ofShort(
+        public static final LayoutType<Short> INT16 = LayoutType.ofShort(
                 Value.ofSignedInt(Value.Endianness.LITTLE_ENDIAN, 16));
 
         /**
          * A 16-bit unsigned integral type, little endian format.
          */
-        public static LayoutType<Short> UINT16 = LayoutType.ofShort(
+        public static final LayoutType<Short> UINT16 = LayoutType.ofShort(
                 Value.ofUnsignedInt(Value.Endianness.LITTLE_ENDIAN, 16));
 
         /**
          * A 32-bit signed integral type, little endian format.
          */
-        public static LayoutType<Integer> INT32 = LayoutType.ofInt(
+        public static final LayoutType<Integer> INT32 = LayoutType.ofInt(
                 Value.ofSignedInt(Value.Endianness.LITTLE_ENDIAN, 32));
 
         /**
          * A 32-bit unsigned integral type, little endian format.
          */
-        public static LayoutType<Integer> UINT32 = LayoutType.ofInt(
+        public static final LayoutType<Integer> UINT32 = LayoutType.ofInt(
                 Value.ofUnsignedInt(Value.Endianness.LITTLE_ENDIAN, 32));
 
         /**
          * A 64-bit signed integral type, little endian format.
          */
-        public static LayoutType<Long> INT64 = LayoutType.ofLong(
+        public static final LayoutType<Long> INT64 = LayoutType.ofLong(
                 Value.ofSignedInt(Value.Endianness.LITTLE_ENDIAN, 64));
 
         /**
          * A 64-bit unsigned integral type, little endian format.
          */
-        public static LayoutType<Long> UINT64 = LayoutType.ofLong(
+        public static final LayoutType<Long> UINT64 = LayoutType.ofLong(
                 Value.ofUnsignedInt(Value.Endianness.LITTLE_ENDIAN, 64));
 
         /**
          * A single precision floating point type, according to the IEEE 754 standard,
          * little endian format.
          */
-        public static LayoutType<Float> IEEE_FLOAT32 = LayoutType.ofFloat(
+        public static final LayoutType<Float> IEEE_FLOAT32 = LayoutType.ofFloat(
                 Value.ofFloatingPoint(Value.Endianness.LITTLE_ENDIAN, 32));
 
         /**
          * A double precision floating point type, according to the IEEE 754 standard,
          * little endian format.
          */
-        public static LayoutType<Double> IEEE_FLOAT64 = LayoutType.ofDouble(
+        public static final LayoutType<Double> IEEE_FLOAT64 = LayoutType.ofDouble(
                 Value.ofFloatingPoint(Value.Endianness.LITTLE_ENDIAN, 64));
 
         /**
          * An extended precision floating point type, according to the IEEE 754 standard,
          * little endian format.
          */
-        public static LayoutType<Double> IEEE_FLOAT80 = LayoutType.ofDouble(
+        public static final LayoutType<Double> IEEE_FLOAT80 = LayoutType.ofDouble(
                 Value.ofFloatingPoint(Value.Endianness.LITTLE_ENDIAN, 80));
 
         /**
@@ -388,77 +395,82 @@ public final class NativeTypes {
             /**
              * The {@code _Bool} native type.
              */
-            public static LayoutType<Byte> BOOL = UINT8;
+            public static final LayoutType<Byte> BOOL = UINT8;
 
             /**
              * The {@code unsigned char} native type.
              */
-            public static LayoutType<Byte> UCHAR = UINT8;
+            public static final LayoutType<Byte> UCHAR = UINT8;
+
+            /**
+             * The {@code signed char} native type.
+             */
+            public static final LayoutType<Byte> SCHAR = INT8;
 
             /**
              * The {@code char} native type.
              */
-            public static LayoutType<Byte> CHAR = INT8;
+            public static final LayoutType<Byte> CHAR = SCHAR;
 
             /**
              * The {@code short} native type.
              */
-            public static LayoutType<Short> SHORT = INT16;
+            public static final LayoutType<Short> SHORT = INT16;
 
             /**
              * The {@code unsigned short} native type.
              */
-            public static LayoutType<Short> USHORT = UINT16;
+            public static final LayoutType<Short> USHORT = UINT16;
 
             /**
              * The {@code int} native type.
              */
-            public static LayoutType<Integer> INT = INT32;
+            public static final LayoutType<Integer> INT = INT32;
 
             /**
              * The {@code unsigned int} native type.
              */
-            public static LayoutType<Integer> UINT = UINT32;
+            public static final LayoutType<Integer> UINT = UINT32;
 
             /**
              * The {@code long} native type.
              */
-            public static LayoutType<Long> LONG = INT64;
+            public static final LayoutType<Long> LONG = INT64;
 
             /**
              * The {@code unsigned long} native type.
              */
-            public static LayoutType<Long> ULONG = UINT64;
+            public static final LayoutType<Long> ULONG = UINT64;
 
             /**
              * The {@code long long} native type.
              */
-            public static LayoutType<Long> LONGLONG = INT64;
+            public static final LayoutType<Long> LONGLONG = INT64;
 
             /**
              * The {@code unsigned long long} native type.
              */
-            public static LayoutType<Long> ULONGLONG = UINT64;
+            public static final LayoutType<Long> ULONGLONG = UINT64;
 
             /**
              * The {@code float} native type.
              */
-            public static LayoutType<Float> FLOAT = IEEE_FLOAT32;
+            public static final LayoutType<Float> FLOAT = IEEE_FLOAT32;
 
             /**
              * The {@code double} native type.
              */
-            public static LayoutType<Double> DOUBLE = IEEE_FLOAT64;
+            public static final LayoutType<Double> DOUBLE = IEEE_FLOAT64;
 
             /**
              * The {@code long double} native type.
              */
-            public static LayoutType<Double> LONGDOUBLE = IEEE_FLOAT80;
+            public static final LayoutType<Double> LONGDOUBLE = IEEE_FLOAT80;
 
             /**
              * The {@code T*} native type.
              */
-            public static LayoutType<Pointer<Void>> POINTER =
+            public static final LayoutType<Pointer<Void>> POINTER =
                     NativeTypes.VOID.pointer(Value.ofUnsignedInt(Value.Endianness.LITTLE_ENDIAN, 64));
         }
 
@@ -470,72 +482,77 @@ public final class NativeTypes {
             /**
              * The {@code _Bool} native type.
              */
-            public static LayoutType<Byte> BOOL = UINT8;
+            public static final LayoutType<Byte> BOOL = UINT8;
 
             /**
              * The {@code unsigned char} native type.
              */
-            public static LayoutType<Byte> UCHAR = UINT8;
+            public static final LayoutType<Byte> UCHAR = UINT8;
+
+            /**
+             * The {@code signed char} native type.
+             */
+            public static final LayoutType<Byte> SCHAR = INT8;
 
             /**
              * The {@code char} native type.
              */
-            public static LayoutType<Byte> CHAR = INT8;
+            public static final LayoutType<Byte> CHAR = SCHAR;
 
             /**
              * The {@code short} native type.
              */
-            public static LayoutType<Short> SHORT = INT16;
+            public static final LayoutType<Short> SHORT = INT16;
 
             /**
              * The {@code unsigned short} native type.
              */
-            public static LayoutType<Short> USHORT = UINT16;
+            public static final LayoutType<Short> USHORT = UINT16;
 
             /**
              * The {@code int} native type.
              */
-            public static LayoutType<Integer> INT = INT32;
+            public static final LayoutType<Integer> INT = INT32;
 
             /**
              * The {@code unsigned int} native type.
              */
-            public static LayoutType<Integer> UINT = UINT32;
+            public static final LayoutType<Integer> UINT = UINT32;
 
             /**
              * The {@code long} native type.
              */
-            public static LayoutType<Long> LONG = LayoutType.ofLong(INT32.layout());
+            public static final LayoutType<Long> LONG = LayoutType.ofLong(INT32.layout());
 
             /**
              * The {@code unsigned long} native type.
              */
-            public static LayoutType<Long> ULONG = LayoutType.ofLong(UINT32.layout());
+            public static final LayoutType<Long> ULONG = LayoutType.ofLong(UINT32.layout());
 
             /**
              * The {@code long long} native type.
              */
-            public static LayoutType<Long> LONGLONG = INT64;
+            public static final LayoutType<Long> LONGLONG = INT64;
 
             /**
              * The {@code unsigned long long} native type.
              */
-            public static LayoutType<Long> ULONGLONG = UINT64;
+            public static final LayoutType<Long> ULONGLONG = UINT64;
 
             /**
              * The {@code float} native type.
              */
-            public static LayoutType<Float> FLOAT = IEEE_FLOAT32;
+            public static final LayoutType<Float> FLOAT = IEEE_FLOAT32;
 
             /**
              * The {@code double} native type.
              */
-            public static LayoutType<Double> DOUBLE = IEEE_FLOAT64;
+            public static final LayoutType<Double> DOUBLE = IEEE_FLOAT64;
 
             /**
              * The {@code T*} native type.
              */
-            public static LayoutType<Pointer<Void>> POINTER =
+            public static final LayoutType<Pointer<Void>> POINTER =
                     NativeTypes.VOID.pointer(Value.ofUnsignedInt(Value.Endianness.LITTLE_ENDIAN, 64));
         }
 
@@ -547,78 +564,83 @@ public final class NativeTypes {
             /**
              * The {@code _Bool} native type.
              */
-            public static LayoutType<Byte> BOOL = UINT8;
+            public static final LayoutType<Byte> BOOL = UINT8;
 
             /**
              * The {@code unsigned char} native type.
              */
-            public static LayoutType<Byte> UCHAR = UINT8;
+            public static final LayoutType<Byte> UCHAR = UINT8;
+
+            /**
+             * The {@code signed char} native type.
+             */
+            public static final LayoutType<Byte> SCHAR = INT8;
 
             /**
              * The {@code char} native type.
              */
-            public static LayoutType<Byte> CHAR = UINT8;
+            public static final LayoutType<Byte> CHAR = UCHAR;
 
             /**
              * The {@code short} native type.
              */
-            public static LayoutType<Short> SHORT = INT16;
+            public static final LayoutType<Short> SHORT = INT16;
 
             /**
              * The {@code unsigned short} native type.
              */
-            public static LayoutType<Short> USHORT = UINT16;
+            public static final LayoutType<Short> USHORT = UINT16;
 
             /**
              * The {@code int} native type.
              */
-            public static LayoutType<Integer> INT = INT32;
+            public static final LayoutType<Integer> INT = INT32;
 
             /**
              * The {@code unsigned int} native type.
              */
-            public static LayoutType<Integer> UINT = UINT32;
+            public static final LayoutType<Integer> UINT = UINT32;
 
             /**
              * The {@code long} native type.
              */
-            public static LayoutType<Long> LONG = INT64;
+            public static final LayoutType<Long> LONG = INT64;
 
             /**
              * The {@code unsigned long} native type.
              */
-            public static LayoutType<Long> ULONG = UINT64;
+            public static final LayoutType<Long> ULONG = UINT64;
 
             /**
              * The {@code long long} native type.
              */
-            public static LayoutType<Long> LONGLONG = INT64;
+            public static final LayoutType<Long> LONGLONG = INT64;
 
             /**
              * The {@code unsigned long long} native type.
              */
-            public static LayoutType<Long> ULONGLONG = UINT64;
+            public static final LayoutType<Long> ULONGLONG = UINT64;
 
             /**
              * The {@code float} native type.
              */
-            public static LayoutType<Float> FLOAT = IEEE_FLOAT32;
+            public static final LayoutType<Float> FLOAT = IEEE_FLOAT32;
 
             /**
              * The {@code double} native type.
              */
-            public static LayoutType<Double> DOUBLE = IEEE_FLOAT64;
+            public static final LayoutType<Double> DOUBLE = IEEE_FLOAT64;
 
             /**
              * The {@code long double} native type.
              */
-            public static LayoutType<Double> LONGDOUBLE = LayoutType.ofDouble(
+            public static final LayoutType<Double> LONGDOUBLE = LayoutType.ofDouble(
                     Value.ofFloatingPoint(Value.Endianness.LITTLE_ENDIAN, 128));
 
             /**
              * The {@code T*} native type.
              */
-            public static LayoutType<Pointer<Void>> POINTER =
+            public static final LayoutType<Pointer<Void>> POINTER =
                     NativeTypes.VOID.pointer(Value.ofUnsignedInt(Value.Endianness.LITTLE_ENDIAN, 64));
         }
     }
