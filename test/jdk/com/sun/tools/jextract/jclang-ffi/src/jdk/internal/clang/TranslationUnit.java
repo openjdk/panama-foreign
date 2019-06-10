@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 import clang.CXString_h.CXString;
+import clang.Index_h;
 import clang.Index_h.CXDiagnostic;
 import clang.Index_h.CXToken;
 import clang.Index_h.CXTokenKind;
@@ -55,7 +56,7 @@ public class TranslationUnit {
     }
 
     public Diagnostic[] getDiagnostics() {
-        final clang.Index_h lclang = LibClang.lib;
+        final Index_h lclang = LibClang.lib;
 
         int cntDiags = lclang.clang_getNumDiagnostics(tu);
         Diagnostic[] rv = new Diagnostic[cntDiags];
@@ -85,7 +86,7 @@ public class TranslationUnit {
     }
 
     public int reparse(Index.UnsavedFile... inMemoryFiles) {
-        final clang.Index_h lclang = LibClang.lib;
+        final Index_h lclang = LibClang.lib;
 
         try (Scope s = Scope.globalScope().fork()) {
             Array<CXUnsavedFile> files = inMemoryFiles.length == 0 ? null :

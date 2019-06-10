@@ -22,7 +22,9 @@
  */
 package jdk.internal.clang;
 
+import clang.CXString_h;
 import clang.CXString_h.CXString;
+import clang.Index_h;
 
 import java.foreign.Libraries;
 import java.foreign.Library;
@@ -33,8 +35,8 @@ import java.nio.file.Paths;
 public class LibClang {
     private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");
 
-    static final clang.Index_h lib;
-    private static final clang.CXString_h lcxstr;
+    static final Index_h lib;
+    private static final CXString_h lcxstr;
 
     static {
         if (DEBUG) {
@@ -44,8 +46,8 @@ public class LibClang {
                 ? "libclang"
                 : "clang";
         Library libclang = Libraries.loadLibrary(MethodHandles.lookup(), libName);
-        lib = Libraries.bind(clang.Index_h.class, libclang);
-        lcxstr = Libraries.bind(clang.CXString_h.class, libclang);
+        lib = Libraries.bind(Index_h.class, libclang);
+        lcxstr = Libraries.bind(CXString_h.class, libclang);
     }
 
     public static Index createIndex(boolean local) {
