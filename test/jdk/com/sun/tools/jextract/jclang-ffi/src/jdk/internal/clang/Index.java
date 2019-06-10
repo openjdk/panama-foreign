@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import clang.Index_h;
 import clang.Index_h.CXTranslationUnitImpl;
 
 public class Index {
@@ -70,7 +71,7 @@ public class Index {
 
     public TranslationUnit parseTU(String file, int options, String... args)
     throws ParsingFailedException {
-        final clang.Index_h lclang = LibClang.lib;
+        final Index_h lclang = LibClang.lib;
 
         try (Scope scope = Scope.globalScope().fork()) {
             Pointer<Byte> src = scope.allocateCString(file);
@@ -105,7 +106,7 @@ public class Index {
 
     public TranslationUnit parse(String file, boolean detailedPreprocessorRecord, String... args)
     throws ParsingFailedException {
-        final clang.Index_h lclang = LibClang.lib;
+        final Index_h lclang = LibClang.lib;
 
         return parseTU(file, defaultOptions(detailedPreprocessorRecord), args);
     }
