@@ -25,6 +25,7 @@ package com.sun.tools.jextract;
 import java.util.Map;
 import java.util.Set;
 import com.sun.tools.jextract.tree.FunctionTree;
+import javax.lang.model.SourceVersion;
 
 /**
  * A helper class to generate header interface class in source form.
@@ -237,7 +238,8 @@ class JavaSourceBuilder {
     protected void fillArgNames(JType.Function fn, FunctionTree funcTree, String[] argNames) {
         for (int i = 0; i < fn.args.length; i++) {
             String name = funcTree != null? funcTree.paramName(i) : null;
-            argNames[i] = (name == null || name.isEmpty())? ("$arg" + i) : name;
+            argNames[i] = (name == null || name.isEmpty() || SourceVersion.isKeyword(name)) ?
+                    ("$arg" + i) : name;
         }
         if (fn.isVarArgs) {
             argNames[argNames.length - 1] = "$args";
