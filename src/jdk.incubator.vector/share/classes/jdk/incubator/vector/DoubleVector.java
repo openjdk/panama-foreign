@@ -117,6 +117,26 @@ public abstract class DoubleVector extends Vector<Double> {
                                                  ((bits, s) -> ((DoubleSpecies)s).op(i -> Double.longBitsToDouble((long)bits))));
     }
 
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    static VectorShuffle<Double> shuffleIotaHelper(VectorSpecies<Double> species, int step) {
+        switch (species.bitSize()) {
+            case 64: return VectorIntrinsics.shuffleIota(double.class, Double64Vector.Double64Shuffle.class, species,
+                                                        64 / Double.SIZE, step,
+                                                        (val, l) -> new Double64Vector.Double64Shuffle(i -> ((i + val) & (l-1))));
+            case 128: return VectorIntrinsics.shuffleIota(double.class, Double128Vector.Double128Shuffle.class, species,
+                                                        128/ Double.SIZE, step,
+                                                        (val, l) -> new Double128Vector.Double128Shuffle(i -> ((i + val) & (l-1))));
+            case 256: return VectorIntrinsics.shuffleIota(double.class, Double256Vector.Double256Shuffle.class, species,
+                                                        256/ Double.SIZE, step,
+                                                        (val, l) -> new Double256Vector.Double256Shuffle(i -> ((i + val) & (l-1))));
+            case 512: return VectorIntrinsics.shuffleIota(double.class, Double512Vector.Double512Shuffle.class, species,
+                                                        512 / Double.SIZE, step,
+                                                        (val, l) -> new Double512Vector.Double512Shuffle(i -> ((i + val) & (l-1))));
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
     /**
      * Loads a vector from a byte array starting at an offset.
      * <p>

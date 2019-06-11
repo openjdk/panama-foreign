@@ -1527,6 +1527,14 @@
    do_signature(vector_broadcast_coerced_sig, "(Ljava/lang/Class;Ljava/lang/Class;IJLjdk/incubator/vector/VectorSpecies;Ljdk/incubator/vector/VectorIntrinsics$BroadcastOperation;)Ljava/lang/Object;")     \
    do_name(vector_broadcast_coerced_name, "broadcastCoerced")                                                                                  \
                                                                                                                                                \
+  do_intrinsic(_VectorShuffleIota, jdk_incubator_vector_VectorIntrinsics, vector_shuffle_step_iota_name, vector_shuffle_step_iota_sig, F_S)        \
+   do_signature(vector_shuffle_step_iota_sig, "(Ljava/lang/Class;Ljava/lang/Class;Ljdk/incubator/vector/VectorSpecies;IILjdk/incubator/vector/VectorIntrinsics$ShuffleIotaOperation;)Ljdk/incubator/vector/VectorShuffle;")                                         \
+   do_name(vector_shuffle_step_iota_name, "shuffleIota")                                                                                        \
+                                                                                                                                               \
+  do_intrinsic(_VectorShuffleToVector, jdk_incubator_vector_VectorIntrinsics, vector_shuffle_to_vector_name, vector_shuffle_to_vector_sig, F_S)     \
+   do_signature(vector_shuffle_to_vector_sig, "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;Ljdk/incubator/vector/VectorShuffle;ILjdk/incubator/vector/VectorIntrinsics$ShuffleToVectorOperation;)Ljava/lang/Object;")                                        \
+   do_name(vector_shuffle_to_vector_name, "shuffleToVector")                                                                                  \
+                                                                                                                                                 \
   do_intrinsic(_VectorLoadOp, jdk_incubator_vector_VectorIntrinsics, vector_load_op_name, vector_load_op_sig, F_S)                             \
    do_signature(vector_load_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;ILjdk/incubator/vector/VectorSpecies;Ljdk/incubator/vector/VectorIntrinsics$LoadOperation;)Ljava/lang/Object;") \
    do_name(vector_load_op_name,     "load")                                                                                                    \

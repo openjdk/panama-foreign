@@ -125,6 +125,26 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
 #end[FP]
     }
 
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    static VectorShuffle<$Boxtype$> shuffleIotaHelper(VectorSpecies<$Boxtype$> species, int step) {
+        switch (species.bitSize()) {
+            case 64: return VectorIntrinsics.shuffleIota($type$.class, $Type$64Vector.$Type$64Shuffle.class, species,
+                                                        64 / $Boxtype$.SIZE, step,
+                                                        (val, l) -> new $Type$64Vector.$Type$64Shuffle(i -> ((i + val) & (l-1))));
+            case 128: return VectorIntrinsics.shuffleIota($type$.class, $Type$128Vector.$Type$128Shuffle.class, species,
+                                                        128/ $Boxtype$.SIZE, step,
+                                                        (val, l) -> new $Type$128Vector.$Type$128Shuffle(i -> ((i + val) & (l-1))));
+            case 256: return VectorIntrinsics.shuffleIota($type$.class, $Type$256Vector.$Type$256Shuffle.class, species,
+                                                        256/ $Boxtype$.SIZE, step,
+                                                        (val, l) -> new $Type$256Vector.$Type$256Shuffle(i -> ((i + val) & (l-1))));
+            case 512: return VectorIntrinsics.shuffleIota($type$.class, $Type$512Vector.$Type$512Shuffle.class, species,
+                                                        512 / $Boxtype$.SIZE, step,
+                                                        (val, l) -> new $Type$512Vector.$Type$512Shuffle(i -> ((i + val) & (l-1))));
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
     /**
      * Loads a vector from a byte array starting at an offset.
      * <p>

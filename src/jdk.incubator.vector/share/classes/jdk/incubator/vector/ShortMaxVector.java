@@ -1056,48 +1056,63 @@ final class ShortMaxVector extends ShortVector {
 
 
     @Override
+    @ForceInline
     public ShortMaxVector rotateLanesLeft(int j) {
-        short[] vec = getElements();
-        short[] res = new short[length()];
-        for (int i = 0; i < length(); i++){
-            res[(j + i) % length()] = vec[i];
-        }
-        return new ShortMaxVector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Short> PermMask  = VectorShuffle.shuffleIota(SPECIES, L - j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
     public ShortMaxVector rotateLanesRight(int j) {
-        short[] vec = getElements();
-        short[] res = new short[length()];
-        for (int i = 0; i < length(); i++){
-            int z = i - j;
-            if(j < 0) {
-                res[length() + z] = vec[i];
-            } else {
-                res[z] = vec[i];
-            }
-        }
-        return new ShortMaxVector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Short> PermMask = VectorShuffle.shuffleIota(SPECIES, j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public ShortMaxVector shiftLanesLeft(int j) {
-        short[] vec = getElements();
-        short[] res = new short[length()];
-        for (int i = 0; i < length() - j; i++) {
-            res[i] = vec[i + j];
-        }
-        return new ShortMaxVector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         ShortMaxShuffle     Iota    = (ShortMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, L-j));
+         VectorMask<Short> BlendMask = Iota.toVector().lessThan(ShortMaxVector.broadcast(SPECIES, (short)(L-j)));
+         Iota    = (ShortMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, L -j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public ShortMaxVector shiftLanesRight(int j) {
-        short[] vec = getElements();
-        short[] res = new short[length()];
-        for (int i = 0; i < length() - j; i++){
-            res[i + j] = vec[i];
-        }
-        return new ShortMaxVector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         ShortMaxShuffle     Iota    = (ShortMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         VectorMask<Short> BlendMask = Iota.toVector().greaterThanEq(ShortMaxVector.broadcast(SPECIES, (short)(j)));
+         Iota    = (ShortMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
@@ -1336,13 +1351,20 @@ final class ShortMaxVector extends ShortVector {
             return SPECIES;
         }
 
-        @Override
-        public ShortVector toVector() {
+        private ShortVector toVector_helper() {
             short[] va = new short[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
               va[i] = (short) lane(i);
             }
             return ShortVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        public ShortVector toVector() {
+            return VectorIntrinsics.shuffleToVector(ShortMaxVector.class, short.class, ShortMaxShuffle.class, this,
+                                                    SPECIES.length(), 
+                                                    (s) -> (((ShortMaxShuffle)(s)).toVector_helper()));
         }
 
         @Override
@@ -1369,6 +1391,7 @@ final class ShortMaxVector extends ShortVector {
                 throw new UnsupportedOperationException("Bad lane type for casting.");
             }
         }
+
 
         @Override
         public ShortMaxShuffle rearrange(VectorShuffle<Short> o) {

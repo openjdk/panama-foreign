@@ -1107,48 +1107,63 @@ final class Int128Vector extends IntVector {
     }
 
     @Override
+    @ForceInline
     public Int128Vector rotateLanesLeft(int j) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        for (int i = 0; i < length(); i++){
-            res[(j + i) % length()] = vec[i];
-        }
-        return new Int128Vector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Integer> PermMask  = VectorShuffle.shuffleIota(SPECIES, L - j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
     public Int128Vector rotateLanesRight(int j) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        for (int i = 0; i < length(); i++){
-            int z = i - j;
-            if(j < 0) {
-                res[length() + z] = vec[i];
-            } else {
-                res[z] = vec[i];
-            }
-        }
-        return new Int128Vector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Integer> PermMask = VectorShuffle.shuffleIota(SPECIES, j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public Int128Vector shiftLanesLeft(int j) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        for (int i = 0; i < length() - j; i++) {
-            res[i] = vec[i + j];
-        }
-        return new Int128Vector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         Int128Shuffle     Iota    = (Int128Shuffle)(VectorShuffle.shuffleIota(SPECIES, L-j));
+         VectorMask<Integer> BlendMask = Iota.toVector().lessThan(Int128Vector.broadcast(SPECIES, (int)(L-j)));
+         Iota    = (Int128Shuffle)(VectorShuffle.shuffleIota(SPECIES, L -j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public Int128Vector shiftLanesRight(int j) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        for (int i = 0; i < length() - j; i++){
-            res[i + j] = vec[i];
-        }
-        return new Int128Vector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         Int128Shuffle     Iota    = (Int128Shuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         VectorMask<Integer> BlendMask = Iota.toVector().greaterThanEq(Int128Vector.broadcast(SPECIES, (int)(j)));
+         Iota    = (Int128Shuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
@@ -1387,13 +1402,20 @@ final class Int128Vector extends IntVector {
             return SPECIES;
         }
 
-        @Override
-        public IntVector toVector() {
+        private IntVector toVector_helper() {
             int[] va = new int[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
               va[i] = (int) lane(i);
             }
             return IntVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        public IntVector toVector() {
+            return VectorIntrinsics.shuffleToVector(Int128Vector.class, int.class, Int128Shuffle.class, this,
+                                                    SPECIES.length(), 
+                                                    (s) -> (((Int128Shuffle)(s)).toVector_helper()));
         }
 
         @Override
@@ -1420,6 +1442,7 @@ final class Int128Vector extends IntVector {
                 throw new UnsupportedOperationException("Bad lane type for casting.");
             }
         }
+
 
         @Override
         public Int128Shuffle rearrange(VectorShuffle<Integer> o) {

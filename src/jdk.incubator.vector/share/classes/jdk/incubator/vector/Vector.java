@@ -559,6 +559,7 @@ public abstract class Vector<E> {
      * @param i the number of lanes to rotate left
      * @return the result of rotating left lane elements of this vector by the
      * given number of lanes
+     * @throws IllegalArgumentException if {@code i} is {@code < 0}.
      */
     public abstract Vector<E> rotateLanesLeft(int i);
 
@@ -575,6 +576,7 @@ public abstract class Vector<E> {
      * @param i the number of lanes to rotate right
      * @return the result of rotating right lane elements of this vector by the
      * given number of lanes
+     * @throws IllegalArgumentException if {@code i} is {@code < 0}.
      */
     public abstract Vector<E> rotateLanesRight(int i);
 
@@ -1086,7 +1088,7 @@ public abstract class Vector<E> {
 
     /**
      * Returns a shuffle of same species as {@code this} vector and with lane elements set to sequential {@code int}
-     * values starting from {@code start}.
+     * values starting from {@code start} and looping around species length.
      * <p>
      * This method behaves as if it returns the result of calling the static {@link VectorShuffle#shuffleIota(VectorSpecies, int) shuffleIota()}
      * method in VectorShuffle as follows:

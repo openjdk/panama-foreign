@@ -1632,48 +1632,63 @@ final class $vectortype$ extends $abstractvectortype$ {
 #end[intOrLong]
 
     @Override
+    @ForceInline
     public $vectortype$ rotateLanesLeft(int j) {
-        $type$[] vec = getElements();
-        $type$[] res = new $type$[length()];
-        for (int i = 0; i < length(); i++){
-            res[(j + i) % length()] = vec[i];
-        }
-        return new $vectortype$(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<$Boxtype$> PermMask  = VectorShuffle.shuffleIota(SPECIES, L - j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
     public $vectortype$ rotateLanesRight(int j) {
-        $type$[] vec = getElements();
-        $type$[] res = new $type$[length()];
-        for (int i = 0; i < length(); i++){
-            int z = i - j;
-            if(j < 0) {
-                res[length() + z] = vec[i];
-            } else {
-                res[z] = vec[i];
-            }
-        }
-        return new $vectortype$(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<$Boxtype$> PermMask = VectorShuffle.shuffleIota(SPECIES, j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public $vectortype$ shiftLanesLeft(int j) {
-        $type$[] vec = getElements();
-        $type$[] res = new $type$[length()];
-        for (int i = 0; i < length() - j; i++) {
-            res[i] = vec[i + j];
-        }
-        return new $vectortype$(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         $shuffletype$     Iota    = ($shuffletype$)(VectorShuffle.shuffleIota(SPECIES, L-j));
+         VectorMask<$Boxtype$> BlendMask = Iota.toVector().lessThan($vectortype$.broadcast(SPECIES, ($type$)(L-j)));
+         Iota    = ($shuffletype$)(VectorShuffle.shuffleIota(SPECIES, L -j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public $vectortype$ shiftLanesRight(int j) {
-        $type$[] vec = getElements();
-        $type$[] res = new $type$[length()];
-        for (int i = 0; i < length() - j; i++){
-            res[i + j] = vec[i];
-        }
-        return new $vectortype$(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         $shuffletype$     Iota    = ($shuffletype$)(VectorShuffle.shuffleIota(SPECIES, j));
+         VectorMask<$Boxtype$> BlendMask = Iota.toVector().greaterThanEq($vectortype$.broadcast(SPECIES, ($type$)(j)));
+         Iota    = ($shuffletype$)(VectorShuffle.shuffleIota(SPECIES, j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
@@ -1944,13 +1959,20 @@ final class $vectortype$ extends $abstractvectortype$ {
             return SPECIES;
         }
 
-        @Override
-        public $abstractvectortype$ toVector() {
+        private $abstractvectortype$ toVector_helper() {
             $type$[] va = new $type$[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
               va[i] = ($type$) lane(i);
             }
             return $abstractvectortype$.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        public $abstractvectortype$ toVector() {
+            return VectorIntrinsics.shuffleToVector($vectortype$.class, $type$.class, $shuffletype$.class, this,
+                                                    SPECIES.length(), 
+                                                    (s) -> ((($shuffletype$)(s)).toVector_helper()));
         }
 
         @Override
@@ -1977,6 +1999,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                 throw new UnsupportedOperationException("Bad lane type for casting.");
             }
         }
+
 
         @Override
         public $shuffletype$ rearrange(VectorShuffle<$Boxtype$> o) {

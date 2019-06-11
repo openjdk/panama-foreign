@@ -50,6 +50,7 @@ class x86 {
   static address _d2i_fixup;
   static address _d2l_fixup;
 
+  static address _vector_iota_indices;
   static address _float_sign_mask;
   static address _float_sign_flip;
   static address _double_sign_mask;
@@ -144,6 +145,10 @@ class x86 {
 
   static address vector_byte_bitset() {
     return _vector_byte_bitset;
+  }
+
+  static address vector_iota_indices() {
+    return _vector_iota_indices;
   }
 
   static address vector_long_perm_mask() {

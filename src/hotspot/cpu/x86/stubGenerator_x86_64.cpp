@@ -1245,6 +1245,21 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
+  address generate_iota_indices(const char *stub_name) {
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", stub_name);
+    address start = __ pc();
+    __ emit_data64(0x0706050403020100, relocInfo::none);
+    __ emit_data64(0x0F0E0D0C0B0A0908, relocInfo::none);
+    __ emit_data64(0x1716151413121110, relocInfo::none);
+    __ emit_data64(0x1F1E1D1C1B1A1918, relocInfo::none);
+    __ emit_data64(0x2726252423222120, relocInfo::none);
+    __ emit_data64(0x2F2E2D2C2B2A2928, relocInfo::none);
+    __ emit_data64(0x3736353433323130, relocInfo::none);
+    __ emit_data64(0x3F3E3D3C3B3A3938, relocInfo::none);
+    return start;
+  }
+
   address generate_fp_mask(const char *stub_name, int64_t mask) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", stub_name);
@@ -6212,6 +6227,7 @@ address generate_avx_ghash_processBlocks() {
     StubRoutines::x86::_d2i_fixup = generate_d2i_fixup();
     StubRoutines::x86::_d2l_fixup = generate_d2l_fixup();
 
+    StubRoutines::x86::_vector_iota_indices     = generate_iota_indices("iota_indices");
     StubRoutines::x86::_float_sign_mask  = generate_fp_mask("float_sign_mask",  0x7FFFFFFF7FFFFFFF);
     StubRoutines::x86::_float_sign_flip  = generate_fp_mask("float_sign_flip",  0x8000000080000000);
     StubRoutines::x86::_double_sign_mask = generate_fp_mask("double_sign_mask", 0x7FFFFFFFFFFFFFFF);

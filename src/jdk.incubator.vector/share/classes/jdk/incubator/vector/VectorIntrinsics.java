@@ -101,6 +101,33 @@ import jdk.incubator.vector.Vector;
     }
 
     /* ============================================================================ */
+    interface ShuffleIotaOperation<E> {
+        VectorShuffle<E> apply(int step, int length);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static
+    <E>
+    VectorShuffle<E> shuffleIota(Class<?> E, Class<?> ShuffleClass, VectorSpecies<E> s, int length,
+                     int step, ShuffleIotaOperation<E> defaultImpl) {
+       assert isNonCapturingLambda(defaultImpl) : defaultImpl;
+       return defaultImpl.apply(step, length);
+    }
+
+    interface ShuffleToVectorOperation<VM, Sh, E> {
+       VM apply(Sh s);
+    }
+
+    @HotSpotIntrinsicCandidate 
+    static 
+    <VM ,Sh extends VectorShuffle<E>, E> 
+    VM shuffleToVector(Class<?> VM, Class<?>E , Class<?> ShuffleClass, Sh s, int length,
+                       ShuffleToVectorOperation<VM,Sh,E> defaultImpl) {
+      assert isNonCapturingLambda(defaultImpl) : defaultImpl;
+      return defaultImpl.apply(s);
+    }
+
+    /* ============================================================================ */
 
     @HotSpotIntrinsicCandidate
     static

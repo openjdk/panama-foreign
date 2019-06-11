@@ -1056,48 +1056,63 @@ final class ByteMaxVector extends ByteVector {
 
 
     @Override
+    @ForceInline
     public ByteMaxVector rotateLanesLeft(int j) {
-        byte[] vec = getElements();
-        byte[] res = new byte[length()];
-        for (int i = 0; i < length(); i++){
-            res[(j + i) % length()] = vec[i];
-        }
-        return new ByteMaxVector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Byte> PermMask  = VectorShuffle.shuffleIota(SPECIES, L - j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
     public ByteMaxVector rotateLanesRight(int j) {
-        byte[] vec = getElements();
-        byte[] res = new byte[length()];
-        for (int i = 0; i < length(); i++){
-            int z = i - j;
-            if(j < 0) {
-                res[length() + z] = vec[i];
-            } else {
-                res[z] = vec[i];
-            }
-        }
-        return new ByteMaxVector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Byte> PermMask = VectorShuffle.shuffleIota(SPECIES, j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public ByteMaxVector shiftLanesLeft(int j) {
-        byte[] vec = getElements();
-        byte[] res = new byte[length()];
-        for (int i = 0; i < length() - j; i++) {
-            res[i] = vec[i + j];
-        }
-        return new ByteMaxVector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         ByteMaxShuffle     Iota    = (ByteMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, L-j));
+         VectorMask<Byte> BlendMask = Iota.toVector().lessThan(ByteMaxVector.broadcast(SPECIES, (byte)(L-j)));
+         Iota    = (ByteMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, L -j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public ByteMaxVector shiftLanesRight(int j) {
-        byte[] vec = getElements();
-        byte[] res = new byte[length()];
-        for (int i = 0; i < length() - j; i++){
-            res[i + j] = vec[i];
-        }
-        return new ByteMaxVector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         ByteMaxShuffle     Iota    = (ByteMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         VectorMask<Byte> BlendMask = Iota.toVector().greaterThanEq(ByteMaxVector.broadcast(SPECIES, (byte)(j)));
+         Iota    = (ByteMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
@@ -1336,13 +1351,20 @@ final class ByteMaxVector extends ByteVector {
             return SPECIES;
         }
 
-        @Override
-        public ByteVector toVector() {
+        private ByteVector toVector_helper() {
             byte[] va = new byte[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
               va[i] = (byte) lane(i);
             }
             return ByteVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        public ByteVector toVector() {
+            return VectorIntrinsics.shuffleToVector(ByteMaxVector.class, byte.class, ByteMaxShuffle.class, this,
+                                                    SPECIES.length(), 
+                                                    (s) -> (((ByteMaxShuffle)(s)).toVector_helper()));
         }
 
         @Override
@@ -1369,6 +1391,7 @@ final class ByteMaxVector extends ByteVector {
                 throw new UnsupportedOperationException("Bad lane type for casting.");
             }
         }
+
 
         @Override
         public ByteMaxShuffle rearrange(VectorShuffle<Byte> o) {

@@ -1094,48 +1094,63 @@ final class Long64Vector extends LongVector {
     }
 
     @Override
+    @ForceInline
     public Long64Vector rotateLanesLeft(int j) {
-        long[] vec = getElements();
-        long[] res = new long[length()];
-        for (int i = 0; i < length(); i++){
-            res[(j + i) % length()] = vec[i];
-        }
-        return new Long64Vector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Long> PermMask  = VectorShuffle.shuffleIota(SPECIES, L - j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
     public Long64Vector rotateLanesRight(int j) {
-        long[] vec = getElements();
-        long[] res = new long[length()];
-        for (int i = 0; i < length(); i++){
-            int z = i - j;
-            if(j < 0) {
-                res[length() + z] = vec[i];
-            } else {
-                res[z] = vec[i];
-            }
-        }
-        return new Long64Vector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Long> PermMask = VectorShuffle.shuffleIota(SPECIES, j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public Long64Vector shiftLanesLeft(int j) {
-        long[] vec = getElements();
-        long[] res = new long[length()];
-        for (int i = 0; i < length() - j; i++) {
-            res[i] = vec[i + j];
-        }
-        return new Long64Vector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         Long64Shuffle     Iota    = (Long64Shuffle)(VectorShuffle.shuffleIota(SPECIES, L-j));
+         VectorMask<Long> BlendMask = Iota.toVector().lessThan(Long64Vector.broadcast(SPECIES, (long)(L-j)));
+         Iota    = (Long64Shuffle)(VectorShuffle.shuffleIota(SPECIES, L -j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public Long64Vector shiftLanesRight(int j) {
-        long[] vec = getElements();
-        long[] res = new long[length()];
-        for (int i = 0; i < length() - j; i++){
-            res[i + j] = vec[i];
-        }
-        return new Long64Vector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         Long64Shuffle     Iota    = (Long64Shuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         VectorMask<Long> BlendMask = Iota.toVector().greaterThanEq(Long64Vector.broadcast(SPECIES, (long)(j)));
+         Iota    = (Long64Shuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
@@ -1374,13 +1389,20 @@ final class Long64Vector extends LongVector {
             return SPECIES;
         }
 
-        @Override
-        public LongVector toVector() {
+        private LongVector toVector_helper() {
             long[] va = new long[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
               va[i] = (long) lane(i);
             }
             return LongVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        public LongVector toVector() {
+            return VectorIntrinsics.shuffleToVector(Long64Vector.class, long.class, Long64Shuffle.class, this,
+                                                    SPECIES.length(), 
+                                                    (s) -> (((Long64Shuffle)(s)).toVector_helper()));
         }
 
         @Override
@@ -1407,6 +1429,7 @@ final class Long64Vector extends LongVector {
                 throw new UnsupportedOperationException("Bad lane type for casting.");
             }
         }
+
 
         @Override
         public Long64Shuffle rearrange(VectorShuffle<Long> o) {

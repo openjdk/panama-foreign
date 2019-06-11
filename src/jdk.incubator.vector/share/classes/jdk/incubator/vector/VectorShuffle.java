@@ -146,8 +146,24 @@ public abstract class VectorShuffle<E> {
      * @see Vector#shuffleIota(int)
      */
     @ForceInline
+    @SuppressWarnings("unchecked")
     public static <E> VectorShuffle<E> shuffleIota(VectorSpecies<E> species, int start) {
-        return ((AbstractSpecies<E>) species).shuffleFromOpFactory.apply(i -> i + start);
+       Class<?> elementType = species.elementType();
+       if (elementType == byte.class) {
+           return (VectorShuffle) ByteVector.shuffleIotaHelper((VectorSpecies<Byte>) species, start);
+       } else if (elementType == short.class) {
+           return (VectorShuffle) ShortVector.shuffleIotaHelper((VectorSpecies<Short>) species, start);
+       } else if (elementType == int.class) {
+           return (VectorShuffle) IntVector.shuffleIotaHelper((VectorSpecies<Integer>) species, start);
+       } else if (elementType == long.class) {
+           return (VectorShuffle) LongVector.shuffleIotaHelper((VectorSpecies<Long>) species, start);
+       } else if (elementType == float.class) {
+           return (VectorShuffle) FloatVector.shuffleIotaHelper((VectorSpecies<Float>) species, start);
+       } else if (elementType == double.class) {
+           return (VectorShuffle) DoubleVector.shuffleIotaHelper((VectorSpecies<Double>) species, start);
+       } else {
+           throw new UnsupportedOperationException("Bad lane type for shuffleIota.");
+       }
     }
 
     /**
