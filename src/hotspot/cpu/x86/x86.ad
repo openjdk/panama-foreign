@@ -1371,6 +1371,7 @@ int HandlerImpl::emit_deopt_handler(CodeBuffer& cbuf) {
   static address vector_double_signmask() { return StubRoutines::x86::vector_double_sign_mask(); }
   static address vector_double_signflip() { return StubRoutines::x86::vector_double_sign_flip(); }
   static address vector_all_bits_set() { return StubRoutines::x86::vector_all_bits_set(); }
+  static address vector_iota_indices() { return StubRoutines::x86::vector_iota_indices(); }
   static address vector_byte_bitset() { return StubRoutines::x86::vector_byte_bitset(); }
   static address vector_long_perm_mask() { return StubRoutines::x86::vector_long_perm_mask(); }
   static address vector_short_to_byte_mask() { return StubRoutines::x86::vector_short_to_byte_mask(); }
@@ -2126,6 +2127,7 @@ static inline jlong replicate8_imm(int con, int width) {
   }
   return val;
 }
+
 
 #ifndef PRODUCT
   void MachNopNode::format(PhaseRegAlloc*, outputStream* st) const {
@@ -23095,6 +23097,64 @@ instruct storemask8l(vecD dst, vecZ src, rRegL scratch) %{
     __ evpcmpq(ktmp, k0, $src$$XMMRegister, ExternalAddress(vector_all_bits_set()), cp, vector_len, $scratch$$Register);
     // The dst is only 128-bit - thus we can do a smaller move.
     __ evmovdqub($dst$$XMMRegister, ktmp, ExternalAddress(vector_byte_bitset()), false, 0, $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+//-------------------------------- LOAD_IOTA_INDICES----------------------------------
+
+instruct loadcon4b(vecS dst, immI0 src, rRegI scratch) %{
+  predicate(UseSSE > 1  && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadConst src));
+  effect(TEMP scratch);
+  format %{ "movdqu $dst, CONSTANT_MEMORY\t! load iota indices" %}
+  ins_encode %{
+      __ movdqu($dst$$XMMRegister, ExternalAddress(vector_iota_indices()), $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadcon8b(vecD dst, immI0 src, rRegI scratch) %{
+  predicate(UseSSE > 1  && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadConst src));
+  effect(TEMP scratch);
+  format %{ "movdqu $dst, CONSTANT_MEMORY\t! load iota indices" %}
+  ins_encode %{
+      __ movdqu($dst$$XMMRegister, ExternalAddress(vector_iota_indices()), $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadcon16b(vecX dst, immI0 src, rRegI scratch) %{
+  predicate(UseAVX > 0  && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadConst src));
+  effect(TEMP scratch);
+  format %{ "vpmovdqu $dst, CONSTANT_MEMORY\t! load iota indices"  %}
+  ins_encode %{
+     __ vmovdqu($dst$$XMMRegister, ExternalAddress(vector_iota_indices()), $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadcon32b(vecY dst, immI0 src, rRegI scratch) %{
+  predicate(UseAVX > 0  && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadConst src));
+  effect(TEMP scratch);
+  format %{ "vmovdqu $dst, CONSTANT_MEMORY\t! load iota indices" %}
+  ins_encode %{
+     __ vmovdqu($dst$$XMMRegister, ExternalAddress(vector_iota_indices()), $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadcon64b(vecZ dst, immI0 src, rRegL scratch) %{
+  predicate(UseAVX > 2  && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadConst src));
+  effect(TEMP scratch);
+  format %{ "vmovdqub $dst,k0, CONSTANT_MEMORY\t! load iota indices" %}
+  ins_encode %{
+     int vector_len = 2;
+     __ evmovdqub($dst$$XMMRegister, k0, ExternalAddress(vector_iota_indices()), false, vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}

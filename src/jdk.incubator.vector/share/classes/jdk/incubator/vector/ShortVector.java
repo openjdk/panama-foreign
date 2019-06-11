@@ -117,6 +117,26 @@ public abstract class ShortVector extends Vector<Short> {
                                                  ((bits, s) -> ((ShortSpecies)s).op(i -> (short)bits)));
     }
 
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    static VectorShuffle<Short> shuffleIotaHelper(VectorSpecies<Short> species, int step) {
+        switch (species.bitSize()) {
+            case 64: return VectorIntrinsics.shuffleIota(short.class, Short64Vector.Short64Shuffle.class, species,
+                                                        64 / Short.SIZE, step,
+                                                        (val, l) -> new Short64Vector.Short64Shuffle(i -> ((i + val) & (l-1))));
+            case 128: return VectorIntrinsics.shuffleIota(short.class, Short128Vector.Short128Shuffle.class, species,
+                                                        128/ Short.SIZE, step,
+                                                        (val, l) -> new Short128Vector.Short128Shuffle(i -> ((i + val) & (l-1))));
+            case 256: return VectorIntrinsics.shuffleIota(short.class, Short256Vector.Short256Shuffle.class, species,
+                                                        256/ Short.SIZE, step,
+                                                        (val, l) -> new Short256Vector.Short256Shuffle(i -> ((i + val) & (l-1))));
+            case 512: return VectorIntrinsics.shuffleIota(short.class, Short512Vector.Short512Shuffle.class, species,
+                                                        512 / Short.SIZE, step,
+                                                        (val, l) -> new Short512Vector.Short512Shuffle(i -> ((i + val) & (l-1))));
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
     /**
      * Loads a vector from a byte array starting at an offset.
      * <p>

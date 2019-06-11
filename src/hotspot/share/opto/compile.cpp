@@ -2790,6 +2790,15 @@ Node* Compile::expand_vbox_node_helper(Node* vbox,
   }
 }
 
+static const char * get_field_name(ciInstanceKlass * box_class) {
+   if(box_class->is_vectormask())
+      return "bits";
+   else if (box_class->is_vectorshuffle())
+      return "reorder";
+   else
+      return "vec";
+}
+
 Node* Compile::expand_vbox_alloc_node(VectorBoxAllocateNode* vbox_alloc,
                                       Node* value,
                                       const TypeInstPtr* box_type,
@@ -2838,7 +2847,7 @@ Node* Compile::expand_vbox_alloc_node(VectorBoxAllocateNode* vbox_alloc,
 
 
   // Store the allocated array into object.
-  ciField* field = box_klass->get_field_by_name(ciSymbol::make(is_mask ? "bits" : "vec"),
+  ciField* field = box_klass->get_field_by_name(ciSymbol::make(get_field_name(box_klass)),
                                                 ciSymbol::make(TypeArrayKlass::external_name(bt)),
                                                 false);
   Node* vec_field = kit.basic_plus_adr(vec_obj, field->offset_in_bytes());

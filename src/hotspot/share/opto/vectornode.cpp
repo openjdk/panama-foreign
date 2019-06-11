@@ -1019,7 +1019,9 @@ void VectorMaskCmpNode::dump_spec(outputStream *st) const {
 Node* VectorUnboxNode::Identity(PhaseGVN *phase) {
   Node* n = obj()->uncast();
   if (n->Opcode() == Op_VectorBox) {
-    return n->in(VectorBoxNode::Value);
+    if (Type::cmp(bottom_type(), n->in(VectorBoxNode::Value)->bottom_type()) == 0) {
+      return n->in(VectorBoxNode::Value);
+    }
   }
   return this;
 }

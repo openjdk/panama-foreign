@@ -1167,48 +1167,63 @@ final class Float64Vector extends FloatVector {
 
 
     @Override
+    @ForceInline
     public Float64Vector rotateLanesLeft(int j) {
-        float[] vec = getElements();
-        float[] res = new float[length()];
-        for (int i = 0; i < length(); i++){
-            res[(j + i) % length()] = vec[i];
-        }
-        return new Float64Vector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Float> PermMask  = VectorShuffle.shuffleIota(SPECIES, L - j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
     public Float64Vector rotateLanesRight(int j) {
-        float[] vec = getElements();
-        float[] res = new float[length()];
-        for (int i = 0; i < length(); i++){
-            int z = i - j;
-            if(j < 0) {
-                res[length() + z] = vec[i];
-            } else {
-                res[z] = vec[i];
-            }
-        }
-        return new Float64Vector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Float> PermMask = VectorShuffle.shuffleIota(SPECIES, j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public Float64Vector shiftLanesLeft(int j) {
-        float[] vec = getElements();
-        float[] res = new float[length()];
-        for (int i = 0; i < length() - j; i++) {
-            res[i] = vec[i + j];
-        }
-        return new Float64Vector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         Float64Shuffle     Iota    = (Float64Shuffle)(VectorShuffle.shuffleIota(SPECIES, L-j));
+         VectorMask<Float> BlendMask = Iota.toVector().lessThan(Float64Vector.broadcast(SPECIES, (float)(L-j)));
+         Iota    = (Float64Shuffle)(VectorShuffle.shuffleIota(SPECIES, L -j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public Float64Vector shiftLanesRight(int j) {
-        float[] vec = getElements();
-        float[] res = new float[length()];
-        for (int i = 0; i < length() - j; i++){
-            res[i + j] = vec[i];
-        }
-        return new Float64Vector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         Float64Shuffle     Iota    = (Float64Shuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         VectorMask<Float> BlendMask = Iota.toVector().greaterThanEq(Float64Vector.broadcast(SPECIES, (float)(j)));
+         Iota    = (Float64Shuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
@@ -1448,13 +1463,20 @@ final class Float64Vector extends FloatVector {
             return SPECIES;
         }
 
-        @Override
-        public FloatVector toVector() {
+        private FloatVector toVector_helper() {
             float[] va = new float[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
               va[i] = (float) lane(i);
             }
             return FloatVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        public FloatVector toVector() {
+            return VectorIntrinsics.shuffleToVector(Float64Vector.class, float.class, Float64Shuffle.class, this,
+                                                    SPECIES.length(), 
+                                                    (s) -> (((Float64Shuffle)(s)).toVector_helper()));
         }
 
         @Override
@@ -1481,6 +1503,7 @@ final class Float64Vector extends FloatVector {
                 throw new UnsupportedOperationException("Bad lane type for casting.");
             }
         }
+
 
         @Override
         public Float64Shuffle rearrange(VectorShuffle<Float> o) {

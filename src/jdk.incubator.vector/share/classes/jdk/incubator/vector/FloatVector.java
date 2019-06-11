@@ -117,6 +117,26 @@ public abstract class FloatVector extends Vector<Float> {
                                                  ((bits, s) -> ((FloatSpecies)s).op(i -> Float.intBitsToFloat((int)bits))));
     }
 
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    static VectorShuffle<Float> shuffleIotaHelper(VectorSpecies<Float> species, int step) {
+        switch (species.bitSize()) {
+            case 64: return VectorIntrinsics.shuffleIota(float.class, Float64Vector.Float64Shuffle.class, species,
+                                                        64 / Float.SIZE, step,
+                                                        (val, l) -> new Float64Vector.Float64Shuffle(i -> ((i + val) & (l-1))));
+            case 128: return VectorIntrinsics.shuffleIota(float.class, Float128Vector.Float128Shuffle.class, species,
+                                                        128/ Float.SIZE, step,
+                                                        (val, l) -> new Float128Vector.Float128Shuffle(i -> ((i + val) & (l-1))));
+            case 256: return VectorIntrinsics.shuffleIota(float.class, Float256Vector.Float256Shuffle.class, species,
+                                                        256/ Float.SIZE, step,
+                                                        (val, l) -> new Float256Vector.Float256Shuffle(i -> ((i + val) & (l-1))));
+            case 512: return VectorIntrinsics.shuffleIota(float.class, Float512Vector.Float512Shuffle.class, species,
+                                                        512 / Float.SIZE, step,
+                                                        (val, l) -> new Float512Vector.Float512Shuffle(i -> ((i + val) & (l-1))));
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
     /**
      * Loads a vector from a byte array starting at an offset.
      * <p>

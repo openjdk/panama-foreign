@@ -117,6 +117,26 @@ public abstract class LongVector extends Vector<Long> {
                                                  ((bits, s) -> ((LongSpecies)s).op(i -> (long)bits)));
     }
 
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    static VectorShuffle<Long> shuffleIotaHelper(VectorSpecies<Long> species, int step) {
+        switch (species.bitSize()) {
+            case 64: return VectorIntrinsics.shuffleIota(long.class, Long64Vector.Long64Shuffle.class, species,
+                                                        64 / Long.SIZE, step,
+                                                        (val, l) -> new Long64Vector.Long64Shuffle(i -> ((i + val) & (l-1))));
+            case 128: return VectorIntrinsics.shuffleIota(long.class, Long128Vector.Long128Shuffle.class, species,
+                                                        128/ Long.SIZE, step,
+                                                        (val, l) -> new Long128Vector.Long128Shuffle(i -> ((i + val) & (l-1))));
+            case 256: return VectorIntrinsics.shuffleIota(long.class, Long256Vector.Long256Shuffle.class, species,
+                                                        256/ Long.SIZE, step,
+                                                        (val, l) -> new Long256Vector.Long256Shuffle(i -> ((i + val) & (l-1))));
+            case 512: return VectorIntrinsics.shuffleIota(long.class, Long512Vector.Long512Shuffle.class, species,
+                                                        512 / Long.SIZE, step,
+                                                        (val, l) -> new Long512Vector.Long512Shuffle(i -> ((i + val) & (l-1))));
+            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+        }
+    }
+
     /**
      * Loads a vector from a byte array starting at an offset.
      * <p>

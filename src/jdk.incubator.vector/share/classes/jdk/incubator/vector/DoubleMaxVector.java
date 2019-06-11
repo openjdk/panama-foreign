@@ -1167,48 +1167,63 @@ final class DoubleMaxVector extends DoubleVector {
 
 
     @Override
+    @ForceInline
     public DoubleMaxVector rotateLanesLeft(int j) {
-        double[] vec = getElements();
-        double[] res = new double[length()];
-        for (int i = 0; i < length(); i++){
-            res[(j + i) % length()] = vec[i];
-        }
-        return new DoubleMaxVector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Double> PermMask  = VectorShuffle.shuffleIota(SPECIES, L - j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
     public DoubleMaxVector rotateLanesRight(int j) {
-        double[] vec = getElements();
-        double[] res = new double[length()];
-        for (int i = 0; i < length(); i++){
-            int z = i - j;
-            if(j < 0) {
-                res[length() + z] = vec[i];
-            } else {
-                res[z] = vec[i];
-            }
-        }
-        return new DoubleMaxVector(res);
+      int L = length();
+      if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+      } else {
+        j = j & (L-1);
+        VectorShuffle<Double> PermMask = VectorShuffle.shuffleIota(SPECIES, j);
+        return this.rearrange(PermMask);
+      }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public DoubleMaxVector shiftLanesLeft(int j) {
-        double[] vec = getElements();
-        double[] res = new double[length()];
-        for (int i = 0; i < length() - j; i++) {
-            res[i] = vec[i + j];
-        }
-        return new DoubleMaxVector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         DoubleMaxShuffle     Iota    = (DoubleMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, L-j));
+         VectorMask<Double> BlendMask = Iota.toVector().lessThan(DoubleMaxVector.broadcast(SPECIES, (double)(L-j)));
+         Iota    = (DoubleMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, L -j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
     public DoubleMaxVector shiftLanesRight(int j) {
-        double[] vec = getElements();
-        double[] res = new double[length()];
-        for (int i = 0; i < length() - j; i++){
-            res[i + j] = vec[i];
-        }
-        return new DoubleMaxVector(res);
+       int L = length();
+       if (j < 0) {
+         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
+       } else if ( j >= L ) {
+         return ZERO;
+       } else {
+         DoubleMaxShuffle     Iota    = (DoubleMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         VectorMask<Double> BlendMask = Iota.toVector().greaterThanEq(DoubleMaxVector.broadcast(SPECIES, (double)(j)));
+         Iota    = (DoubleMaxShuffle)(VectorShuffle.shuffleIota(SPECIES, j));
+         return ZERO.blend(this.rearrange(Iota),BlendMask);
+       }
     }
 
     @Override
@@ -1448,13 +1463,20 @@ final class DoubleMaxVector extends DoubleVector {
             return SPECIES;
         }
 
-        @Override
-        public DoubleVector toVector() {
+        private DoubleVector toVector_helper() {
             double[] va = new double[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
               va[i] = (double) lane(i);
             }
             return DoubleVector.fromArray(SPECIES, va, 0);
+        }
+
+        @Override
+        @ForceInline
+        public DoubleVector toVector() {
+            return VectorIntrinsics.shuffleToVector(DoubleMaxVector.class, double.class, DoubleMaxShuffle.class, this,
+                                                    SPECIES.length(), 
+                                                    (s) -> (((DoubleMaxShuffle)(s)).toVector_helper()));
         }
 
         @Override
@@ -1481,6 +1503,7 @@ final class DoubleMaxVector extends DoubleVector {
                 throw new UnsupportedOperationException("Bad lane type for casting.");
             }
         }
+
 
         @Override
         public DoubleMaxShuffle rearrange(VectorShuffle<Double> o) {
