@@ -30,7 +30,7 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 
-import java.foreign.MemoryScope;
+import java.foreign.MemorySegment;
 import java.util.Spliterator;
 
 /**
@@ -754,8 +754,8 @@ public abstract class Buffer {
                 }
 
                 @Override
-                public ByteBuffer newScopedByteBuffer(MemoryScope scope, ByteBuffer bb) {
-                    return ScopedByteBuffer.of(scope, bb);
+                public ByteBuffer newScopedByteBuffer(MemorySegment segment, ByteBuffer bb) {
+                    return ScopedByteBuffer.of(segment, bb);
                 }
             });
     }

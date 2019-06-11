@@ -26,19 +26,23 @@
 
 package jdk.internal.foreign;
 
-import java.foreign.MemoryScope;
+import jdk.internal.misc.Unsafe;
+
+import java.foreign.MemorySegment;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
-public class ByteBufferMemorySegmentImpl extends MemorySegmentImpl {
+public class BufferScope extends MemorySegmentImpl.Scope {
 
-    public static final long BYTE_BUFFER_BASE;
-    public static final long BUFFER_ADDRESS;
+    private static Unsafe unsafe = Unsafe.getUnsafe();
+
+    private static final long BYTE_BUFFER_BASE;
+    private static final long BUFFER_ADDRESS;
 
     static {
         try {
-            BYTE_BUFFER_BASE = UNSAFE.objectFieldOffset(ByteBuffer.class.getDeclaredField("hb"));
-            BUFFER_ADDRESS = UNSAFE.objectFieldOffset(Buffer.class.getDeclaredField("address"));
+            BYTE_BUFFER_BASE = unsafe.objectFieldOffset(ByteBuffer.class.getDeclaredField("hb"));
+            BUFFER_ADDRESS = unsafe.objectFieldOffset(Buffer.class.getDeclaredField("address"));
         }
         catch (Exception e) {
             throw new InternalError(e);
@@ -46,37 +50,37 @@ public class ByteBufferMemorySegmentImpl extends MemorySegmentImpl {
     }
 
     // Keep a reference to the buffer so it is kept alive while the segment is alive
-    final ByteBuffer ref;
+    private ByteBuffer bb;
 
-    private ByteBufferMemorySegmentImpl(ByteBuffer bb, MemoryScope scope, Object base, long min, long length) {
-        super(scope, base, min, length);
-        this.ref = bb;
+    private BufferScope(ByteBuffer bb) {
+        this.bb = bb;
     }
 
     @Override
-    public MemorySegmentImpl resize(long offset, long newLength) {
-        if (outOfBounds(offset, newLength)) {
-            throw new IllegalArgumentException();
-        }
-        return new ByteBufferMemorySegmentImpl(ref, scope, base, min + offset, newLength);
+    public Object base() {
+        return getBufferBase(bb);
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        bb = null;
     }
 
     static Object getBufferBase(ByteBuffer bb) {
-        return UNSAFE.getReference(bb, BYTE_BUFFER_BASE);
+        return unsafe.getReference(bb, BYTE_BUFFER_BASE);
     }
 
     static long getBufferAddress(ByteBuffer bb) {
-        return UNSAFE.getLong(bb, BUFFER_ADDRESS);
+        return unsafe.getLong(bb, BUFFER_ADDRESS);
     }
 
-    static ByteBufferMemorySegmentImpl of(MemoryScope scope, ByteBuffer bb) {
-        Object bbBase = getBufferBase(bb);
+    public static MemorySegment of(ByteBuffer bb) {
         long bbAddress = getBufferAddress(bb);
 
         int pos = bb.position();
         int limit = bb.limit();
 
-        return new ByteBufferMemorySegmentImpl(bb, scope, bbBase,
-                bbAddress + pos, limit - pos);
+        return new MemorySegmentImpl(bbAddress + pos, limit - pos, 0, new BufferScope(bb));
     }
 }

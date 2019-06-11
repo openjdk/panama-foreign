@@ -51,13 +51,13 @@ public interface MemoryAddress {
 
     /**
      * Wraps the this address in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
-     * the properties of this address. For instance, if this address' region belongs to a scope which is <em>immutable</em>
-     * (see {@link MemoryScope#IMMUTABLE}, then the resulting buffer is <em>read-only</em> (see {@link ByteBuffer#isReadOnly()}.
+     * the properties of this address. For instance, if this address' region belongs to a segment which is <em>immutable</em>
+     * (see {@link MemorySegment#asReadOnly()}, then the resulting buffer is <em>read-only</em> (see {@link ByteBuffer#isReadOnly()}.
      * Additionally, if this address models a native memory address, the resulting buffer is <em>direct</em> (see
      * {@link ByteBuffer#isDirect()}.
      * <p>
      * The life-cycle of the returned buffer will be tied to that of this address. That means that if the memory scope
-     * which this address' segment belongs to is closed (see {@link MemoryScope#close()}, accessing the returned
+     * which this address' segment belongs to is closed (see {@link MemorySegment#close()}, accessing the returned
      * buffer will result in an exception.
      * <p>
      * The resulting buffer endianness is {@link java.nio.ByteOrder#BIG_ENDIAN}; this can be changed using

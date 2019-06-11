@@ -1,7 +1,8 @@
 package java.foreign;
 
-import jdk.internal.foreign.GlobalMemoryScopeImpl;
-import jdk.internal.foreign.MemorySegmentImpl;
+import jdk.internal.foreign.BufferScope;
+import jdk.internal.foreign.HeapScope;
+import jdk.internal.foreign.NativeScope;
 
 import java.nio.ByteBuffer;
 
@@ -10,8 +11,20 @@ import java.nio.ByteBuffer;
  * and temporal bounds. Spatial bounds make sure that it is not possible for an address to refer to an area
  * outside of its owning memory segment. Temporal checks make sure that an address cannot perform operation on
  * a memory segment which is no longer available.
+ * <p>
+ * Memory segments support <em>views</em>, that is, it is possible to create immutable view of a memory segment
+ * (see {@link MemorySegment#asReadOnly()}) which does not support write operations. It is also possible
+ * to create a <em>pinned</em> view of a memory segment (see {@link MemorySegment#asPinned()}), which cannot be
+ * closed (see {@link MemorySegment#close()}). Finally, it is possible to create views whose spatial bounds
+ * are stricter (see {@link MemorySegment#resize(long, long)}).
+ * <p>
+ * Temporal bounds of the original segment are inherited by the view; that is, closing a resized segment view
+ * will cause the whole segment to be closed; as such special care must be taken when sharing views
+ * between multiple clients. If a client want to protect itself against early closure of a segment by
+ * another actor, it is the responsibility of that client to take protective measures, such as calling
+ * {@link MemorySegment#asPinned()} before sharing the view with another client.
  */
-public interface MemorySegment {
+public interface MemorySegment extends AutoCloseable {
 
     /**
      * The base memory address associated with this memory segment.
@@ -35,16 +48,51 @@ public interface MemorySegment {
     MemorySegment resize(long offset, long newSize) throws IllegalArgumentException;
 
     /**
-     * The scope associated with this address.
-     * @return The scope associated with this address.
-     */
-    MemoryScope scope();
-
-    /**
      * The size (in bytes) of this memory segment.
      * @return The size (in bytes) of this memory segment.
      */
     long bytesSize();
+
+    /**
+     * Obtains a read-only view of this segment.
+     * @return a read-only view of this segment.
+     */
+    MemorySegment asReadOnly();
+
+    /**
+     * Obtains a pinned view of this segment - that is a view that does not support calls to the
+     * the {@link MemorySegment#close()} method.
+     * @return a pinned view of this segment.
+     */
+    MemorySegment asPinned();
+
+    /**
+     * Is this segment alive?
+     * @return true, if the segment is alive?
+     * @see MemorySegment#close()
+     */
+    boolean isAlive();
+
+    /**
+     * Is this segment pinned - that is, does it allow for the segment to be closed using
+     * the {@link MemorySegment#close()} method?
+     * @return true, if the segment is pinned?
+     * @see MemorySegment#asReadOnly()
+     */
+    boolean isPinned();
+
+    /**
+     * Is this segment read-only?
+     * @return true, if the segment does not support write operations.
+     */
+    boolean isReadOnly();
+
+    /**
+     * Closes this memory segment, and releases any resources allocated with it.
+     * @throws UnsupportedOperationException if the segment cannot be closed (e.g. because the segment is pinned)
+     * @see MemorySegment#isPinned()
+     */
+    void close() throws UnsupportedOperationException;
 
     /**
      * Returns a memory segment that models the memory associated with the given byte
@@ -64,7 +112,7 @@ public interface MemorySegment {
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.foreign.Pointer.fromByteBuffer"));
         }
-        return MemorySegmentImpl.ofByteBuffer(GlobalMemoryScopeImpl.UNCHECKED, bb);
+        return BufferScope.of(bb);
     }
 
     /**
@@ -84,6 +132,70 @@ public interface MemorySegment {
                 !arr.getClass().componentType().isPrimitive()) {
             throw new IllegalArgumentException("Not a primitive array");
         }
-        return MemorySegmentImpl.ofArray(arr);
+        return HeapScope.ofArray(arr);
+    }
+
+    /**
+     * Allocate region of memory with given {@code LayoutType}.
+     * <p>
+     * This is equivalent to the following code:
+     * <blockquote><pre>{@code
+ofNative(layout.bitsSize() / 8, layout.alignmentInBits() / 8);
+     * }</pre></blockquote>
+     *
+     * @param layout the memory layout to be allocated.
+     * @return the newly allocated memory segment.
+     * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraints.
+     * @throws RuntimeException if the specified size is too large for the system runtime.
+     * @throws OutOfMemoryError if the allocation is refused by the system runtime.
+     */
+    static MemorySegment ofNative(Layout layout) throws IllegalArgumentException {
+        if (layout.bitsSize() % 8 != 0) {
+            throw new IllegalArgumentException("Layout bits size must be a multiple of 8");
+        } else if (layout.alignmentBits() % 8 != 0) {
+            throw new IllegalArgumentException("Layout alignment bits must be a multiple of 8");
+        }
+        return ofNative(layout.bitsSize() / 8, layout.alignmentBits() / 8);
+    }
+
+    /**
+     * Allocate an unaligned memory segment with given size (expressed in bits).
+     * <p>
+     * This is equivalent to the following code:
+     * <blockquote><pre>{@code
+ofNative(bitsSize, 1);
+     * }</pre></blockquote>
+     *
+     * @param bytesSize the size (expressed in bytes) of the memory segment to be allocated.
+     * @return the newly allocated memory segment.
+     * @throws IllegalArgumentException if specified size is &lt; 0.
+     * @throws RuntimeException if the specified size is too large for the system runtime.
+     * @throws OutOfMemoryError if the allocation is refused by the system runtime.
+     */
+    static MemorySegment ofNative(long bytesSize) throws IllegalArgumentException {
+        return ofNative(bytesSize, 1);
+    }
+
+    /**
+     * Allocate a memory segment with given size (expressed in bits) and alignment constraints (also expressed in bits).
+     * @param bytesSize the size (expressed in bits) of the memory segment to be allocated.
+     * @param alignmentBytes the alignment constraints (expressed in bits) of the memory segment to be allocated.
+     * @return the newly allocated memory segment.
+     * @throws IllegalArgumentException if either specified size or alignment are &lt; 0, or if the alignment constraint
+     * is not a power of 2.
+     * @throws RuntimeException if the specified size is too large for the system runtime.
+     * @throws OutOfMemoryError if the allocation is refused by the system runtime.
+     */
+    static MemorySegment ofNative(long bytesSize, long alignmentBytes) throws IllegalArgumentException {
+        if (bytesSize <= 0) {
+            throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
+        }
+
+        if (alignmentBytes < 0 ||
+            ((alignmentBytes & (alignmentBytes - 1)) != 0L)) {
+            throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
+        }
+
+        return NativeScope.of(bytesSize, alignmentBytes);
     }
 }

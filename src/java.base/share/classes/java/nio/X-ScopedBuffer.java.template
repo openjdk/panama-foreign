@@ -29,25 +29,25 @@ package java.nio;
 
 import java.io.IOException;
 import java.util.stream.IntStream;
-import jdk.internal.foreign.AbstractMemoryScopeImpl;
+import jdk.internal.foreign.MemorySegmentImpl;
 import jdk.internal.ref.Cleaner;
 import sun.nio.ch.DirectBuffer;
 
-import java.foreign.MemoryScope;
+import java.foreign.MemorySegment;
 
 class Scoped$Type$Buffer extends $Type$Buffer {
 
-    final MemoryScope scope;
+    final MemorySegment scope;
     final $Type$Buffer _buffer;
 
-    Scoped$Type$Buffer(MemoryScope scope, $Type$Buffer _buffer) {
-        super(($type$[])_buffer.base(), _buffer.address, _buffer.capacity());
+    Scoped$Type$Buffer(MemorySegment scope, $Type$Buffer _buffer) {
+        super(_buffer.hb, _buffer.address, _buffer.capacity());
         this.scope = scope;
         this._buffer = _buffer;
     }
     
     void checkAlive() {
-        ((AbstractMemoryScopeImpl)scope).checkAlive();
+        ((MemorySegmentImpl)scope).checkValidState();
     }
 
     @Override
@@ -300,19 +300,19 @@ class Scoped$Type$Buffer extends $Type$Buffer {
     @Override
     public boolean hasArray() {
         checkAlive();
-        return _buffer.hasArray();
+        return super.hasArray();
     }
 
     @Override
     public $type$[] array() {
         checkAlive();
-        return _buffer.array();
+        return super.array();
     }
 
     @Override
     public int arrayOffset() {
         checkAlive();
-        return _buffer.arrayOffset();
+        return super.arrayOffset();
     }
 
     @Override
@@ -429,7 +429,7 @@ class Scoped$Type$Buffer extends $Type$Buffer {
 #end[char]
 
     static class ScopedDirect$Type$Buffer extends Scoped$Type$Buffer implements DirectBuffer {
-        ScopedDirect$Type$Buffer(MemoryScope scope, $Type$Buffer _buffer) {
+        ScopedDirect$Type$Buffer(MemorySegment scope, $Type$Buffer _buffer) {
             super(scope, _buffer);
         }
 
@@ -449,7 +449,7 @@ class Scoped$Type$Buffer extends $Type$Buffer {
         }
     }
     
-    public static Scoped$Type$Buffer of(MemoryScope scope, $Type$Buffer bb) {
+    public static Scoped$Type$Buffer of(MemorySegment scope, $Type$Buffer bb) {
         if (bb.isDirect()) {
             return new ScopedDirect$Type$Buffer(scope, bb);
         } else {

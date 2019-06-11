@@ -26,52 +26,52 @@
 
 package jdk.internal.foreign;
 
-import java.foreign.MemoryScope;
+import jdk.internal.misc.Unsafe;
+
 import java.foreign.MemorySegment;
 
-public class GlobalMemoryScopeImpl extends AbstractMemoryScopeImpl {
+public class NativeScope extends MemorySegmentImpl.Scope {
 
-    public GlobalMemoryScopeImpl(long charateristics) {
-        super(charateristics);
+    private static Unsafe unsafe = Unsafe.getUnsafe();
+
+    // The maximum alignment supported by malloc - typically 16 on 64-bit platforms.
+    private final static long MAX_ALIGN = 16;
+
+    private final long addr;
+
+    private NativeScope(long addr) {
+        this.addr = addr;
     }
 
     @Override
-    public boolean isAlive() {
-        return true;
+    public Object base() {
+        return null;
     }
 
     @Override
-    void checkThread() {
-        //do nothing
+    public void close() {
+        super.close();
+        unsafe.freeMemory(addr);
     }
 
-    @Override
-    public MemorySegment allocateRegion(long bytesSize, long alignmentBytes) throws IllegalArgumentException, RuntimeException, OutOfMemoryError {
+    public static MemorySegment of(long bytesSize, long alignmentBytes) {
         long alignedSize = bytesSize;
 
         if (alignmentBytes > MAX_ALIGN) {
             alignedSize = bytesSize + (alignmentBytes - 1);
         }
 
-        long buf = U.allocateMemory(alignedSize);
-        return MemorySegmentImpl.ofNative(this, alignUp(buf, alignmentBytes), bytesSize);
+        long buf = unsafe.allocateMemory(alignedSize);
+        long alignedBuf = alignUp(buf, alignmentBytes);
+        MemorySegment segment = new MemorySegmentImpl(buf, alignedSize, 0, new NativeScope(buf));
+        if (alignedBuf != buf) {
+            long delta = alignedBuf - buf;
+            segment = segment.resize(delta, bytesSize);
+        }
+        return segment;
     }
 
-    @Override
-    public MemoryScope parent() {
-        return null;
+    public static long alignUp(long n, long alignment) {
+        return (n + alignment - 1) & -alignment;
     }
-
-    @Override
-    public void close() {
-        checkTerminal();
-    }
-
-    @Override
-    public void merge() {
-        checkTerminal();
-    }
-
-    public static final GlobalMemoryScopeImpl GLOBAL = new GlobalMemoryScopeImpl(MemoryScope.PINNED);
-    public static final GlobalMemoryScopeImpl UNCHECKED = new GlobalMemoryScopeImpl(PINNED | MemoryScope.UNCHECKED);
 }

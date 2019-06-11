@@ -31,7 +31,7 @@ import org.testng.annotations.*;
 import java.foreign.GroupLayout;
 import java.foreign.Layout;
 import java.foreign.MemoryAddress;
-import java.foreign.MemoryScope;
+import java.foreign.MemorySegment;
 import java.foreign.PaddingLayout;
 import java.foreign.SequenceLayout;
 import java.foreign.ValueLayout;
@@ -49,8 +49,8 @@ public class TestMemoryAlignment {
         Layout aligned = layout.alignTo(align);
         assertEquals(aligned.alignmentBits(), align); //unreasonable alignment here, to make sure access throws
         VarHandle vh = aligned.toPath().dereferenceHandle(int.class);
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress addr = scope.allocate(aligned);
+        try (MemorySegment segment = MemorySegment.ofNative(aligned)) {
+            MemoryAddress addr = segment.baseAddress();
             vh.set(addr, -42);
             int val = (int)vh.get(addr);
             assertEquals(val, -42);
@@ -65,8 +65,8 @@ public class TestMemoryAlignment {
         Layout alignedGroup = GroupLayout.struct(PaddingLayout.of(8), aligned);
         assertEquals(alignedGroup.alignmentBits(), align);
         VarHandle vh = aligned.toPath().dereferenceHandle(int.class);
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress addr = scope.allocate(alignedGroup);
+        try (MemorySegment segment = MemorySegment.ofNative(alignedGroup)) {
+            MemoryAddress addr = segment.baseAddress();
             vh.set(addr.offset(1L), -42);
             assertEquals(align, 8); //this is the only case where access is aligned
         } catch (IllegalStateException ex) {
@@ -91,8 +91,8 @@ public class TestMemoryAlignment {
     public void testUnalignedSequence(long align) {
         Layout layout = SequenceLayout.of(5, ValueLayout.ofSignedInt(32).alignTo(align));
         VarHandle vh = layout.toPath().elementPath().dereferenceHandle(int.class);
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress addr = scope.allocate(layout);
+        try (MemorySegment segment = MemorySegment.ofNative(layout)) {
+            MemoryAddress addr = segment.baseAddress();
             for (long i = 0 ; i < 5 ; i++) {
                 vh.set(addr, i, -42);
             }
@@ -115,8 +115,8 @@ public class TestMemoryAlignment {
         VarHandle vh_c = g.toPath().elementPath(0).dereferenceHandle(byte.class);
         VarHandle vh_s = g.toPath().elementPath(1).dereferenceHandle(short.class);
         VarHandle vh_i = g.toPath().elementPath(2).dereferenceHandle(int.class);
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress addr = scope.allocate(g);
+        try (MemorySegment segment = MemorySegment.ofNative(g)) {
+            MemoryAddress addr = segment.baseAddress();
             vh_c.set(addr, Byte.MIN_VALUE);
             assertEquals(vh_c.get(addr), Byte.MIN_VALUE);
             vh_s.set(addr, Short.MIN_VALUE);

@@ -32,7 +32,7 @@ import jdk.internal.misc.Unsafe;
 import org.testng.annotations.*;
 
 import java.foreign.MemoryAddress;
-import java.foreign.MemoryScope;
+import java.foreign.MemorySegment;
 import java.foreign.SequenceLayout;
 import java.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
@@ -145,8 +145,8 @@ public class TestNative {
 
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress address = scope.allocate(seq);
+        try (MemorySegment segment = MemorySegment.ofNative(seq)) {
+            MemoryAddress address = segment.baseAddress();
             initializer.accept(address);
             checker.accept(address);
         }
@@ -155,8 +155,8 @@ public class TestNative {
     @Test(dataProvider="buffers")
     public void testNativeCapacity(Function<ByteBuffer, Buffer> bufferFunction, int elemSize) {
         int capacity = (int)doubles.bitsSize() / 8;
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress address = scope.allocate(doubles);
+        try (MemorySegment segment = MemorySegment.ofNative(doubles)) {
+            MemoryAddress address = segment.baseAddress();
             ByteBuffer bb = address.asByteBuffer((int)doubles.bitsSize() / 8);
             Buffer buf = bufferFunction.apply(bb);
             int expected = capacity / elemSize;

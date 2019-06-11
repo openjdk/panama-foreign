@@ -1,146 +1,162 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ *  This code is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License version 2 only, as
+ *  published by the Free Software Foundation.  Oracle designates this
+ *  particular file as subject to the "Classpath" exception as provided
+ *  by Oracle in the LICENSE file that accompanied this code.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ *  This code is distributed in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ *  version 2 for more details (a copy is included in the LICENSE file that
+ *  accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *  You should have received a copy of the GNU General Public License version
+ *  2 along with this work; if not, write to the Free Software Foundation,
+ *  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ *   Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ *  or visit www.oracle.com if you need additional information or have any
+ *  questions.
+ *
  */
-package jdk.internal.foreign;
 
-import jdk.internal.misc.Unsafe;
+package jdk.internal.foreign;
 
 import java.foreign.MemoryAddress;
 import java.foreign.MemorySegment;
-import java.foreign.MemoryScope;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
 
-public class MemorySegmentImpl implements MemorySegment {
+public final class MemorySegmentImpl implements MemorySegment {
 
-    public static final MemorySegmentImpl ofNothing(MemoryScope scope) {
-        return ofNative(scope, 0, 0);
-    }
-
-    public static final Unsafe UNSAFE = Unsafe.getUnsafe();
-
-    public final Object base;
-    public final long min;
     final long length;
-    final MemoryScope scope;
-    final MemoryAddress baseAddr;
+    final int mask;
+    final long min;
+    final Thread thread;
+    final Scope scope;
 
-    @Override
-    public MemoryAddress baseAddress() {
-        return baseAddr;
+    final static int READ_ONLY = 1;
+    final static int PINNED = READ_ONLY << 1;
+
+    public MemorySegmentImpl(long min, long length, int mask, Scope scope) {
+        this.length = length;
+        this.mask = mask;
+        this.min = min;
+        this.thread = Thread.currentThread();
+        this.scope = scope;
+    }
+
+    public MemorySegmentImpl root() {
+        return this;
     }
 
     @Override
-    public MemoryScope scope() {
-        return scope;
+    public final MemorySegment resize(long offset, long newSize) throws IllegalArgumentException {
+        checkValidState();
+        if (outOfBounds(offset, newSize)) {
+            throw new IllegalArgumentException();
+        }
+        return new MemorySegmentImpl(min + offset, newSize, mask, scope);
     }
 
     @Override
-    public long bytesSize() {
+    public final MemoryAddress baseAddress() {
+        checkValidState();
+        return new MemoryAddressImpl(this, 0);
+    }
+
+    @Override
+    public final long bytesSize() {
+        checkValidState();
         return length;
     }
 
-    protected MemorySegmentImpl(MemoryScope scope, Object base, long min, long length) {
-        if(length < 0) {
-            throw new IllegalArgumentException("length must be positive");
-        }
-        if(base != null && min < 0) {
-            throw new IllegalArgumentException("min must be positive if base is used");
-        }
-        checkOverflow(min, length);
-        this.base = base;
-        this.min = min;
-        this.length = length;
-        this.scope = scope;
-        this.baseAddr = new MemoryAddressImpl(this);
+    @Override
+    public final MemorySegment asReadOnly() {
+        checkValidState();
+        return new MemorySegmentImpl(min, length, mask | READ_ONLY, scope);
     }
 
-    public static MemorySegmentImpl ofNative(MemoryScope scope, long min, long length) {
-        return new MemorySegmentImpl(scope, null, min, length);
+    @Override
+    public final MemorySegment asPinned() {
+        checkValidState();
+        return new MemorySegmentImpl(min, length, mask | PINNED, scope);
     }
 
-    public static MemorySegmentImpl ofHeap(MemoryScope scope, Object base, long min, long length) {
-        checkOverflow(min, length);
-        return new MemorySegmentImpl(scope, base, min, length);
+    @Override
+    public final boolean isAlive() {
+        checkValidState();
+        return scope.isAlive();
     }
 
-    public static MemorySegmentImpl ofArray(Object array) {
-        int size = java.lang.reflect.Array.getLength(array);
-        long base = UNSAFE.arrayBaseOffset(array.getClass());
-        long scale = UNSAFE.arrayIndexScale(array.getClass());
-        return new MemorySegmentImpl(GlobalMemoryScopeImpl.UNCHECKED, array, base, size * scale);
+    @Override
+    public final boolean isPinned() {
+        checkValidState();
+        return isSet(PINNED);
     }
 
-    private static void checkOverflow(long min, long length) {
-        // we never access at `length`
-        addUnsignedExact(min, length == 0 ? 0 : length - 1);
+    @Override
+    public final boolean isReadOnly() {
+        checkValidState();
+        return isSet(READ_ONLY);
     }
 
-    public static MemorySegmentImpl ofByteBuffer(MemoryScope scope, ByteBuffer bb) {
-        return ByteBufferMemorySegmentImpl.of(scope, bb);
+    public final boolean isSet(int mask) {
+        return (this.mask & mask) != 0;
     }
 
-    void checkRange(long offset, long length) {
-        checkAlive();
-        if (outOfBounds(offset, length)) {
-            throw new IllegalStateException();
+    @Override
+    public final void close() throws UnsupportedOperationException {
+        checkValidState();
+        if (isPinned()) {
+            throw new UnsupportedOperationException();
+        } else {
+            scope.close();
         }
     }
 
-    protected boolean outOfBounds(long offset, long length) {
+    public final void checkValidState() {
+        if (thread != Thread.currentThread()) {
+            throw new IllegalStateException("Attempt to access segment outside owning thread");
+        } else if (!scope.isAlive()) {
+            throw new IllegalStateException("Segment is not alive");
+        }
+    }
+
+    private String outOfBoundsMsg(long offset, long length) {
+        return String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
+                this, offset, length);
+    }
+
+    void checkRange(long offset, long length, boolean writeAccess) {
+        checkValidState();
+        if (isSet(READ_ONLY) && writeAccess) {
+            throw new UnsupportedOperationException("Cannot write to read-only memory segment");
+        } else if (outOfBounds(offset, length)) {
+            throw new IllegalStateException(outOfBoundsMsg(offset, length));
+        }
+    }
+
+    boolean outOfBounds(long offset, long length) {
         return (length < 0 ||
                 offset < 0 ||
                 offset > this.length - length); // careful of overflow
     }
 
-    @Override
-    public MemorySegmentImpl resize(long offset, long newLength) {
-        checkAlive();
-        if (outOfBounds(offset, newLength)) {
-            throw new IllegalArgumentException();
+    public Object base() {
+        return scope.base();
+    }
+
+    static abstract class Scope {
+        boolean isAlive = true;
+        final boolean isAlive() {
+            return isAlive;
         }
-        return new MemorySegmentImpl(scope, base, min + offset, newLength);
-    }
-
-    private void checkAlive() {
-        ((AbstractMemoryScopeImpl)scope()).checkAlive();
-    }
-
-     static long addUnsignedExact(long a, long b) {
-        long result = a + b;
-        if(Long.compareUnsigned(result, a) < 0) {
-            throw new ArithmeticException(
-                "Unsigned overflow: "
-                    + Long.toUnsignedString(a) + " + "
-                    + Long.toUnsignedString(b));
+        void close() {
+            isAlive = false;
         }
-
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return base != null ?
-                "HeapRegion{base=" + base + ", length=" + length + "}" :
-                "NativeRegion{min=" + min + ", length=" + length + "}";
+        abstract Object base();
     }
 }

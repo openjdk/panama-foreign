@@ -24,8 +24,6 @@
  */
 package java.lang.invoke;
 
-import java.foreign.MemoryScope;
-
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.vm.annotation.ForceInline;
 
@@ -78,7 +76,7 @@ final class VarHandleMemoryAddressAs$Type$s {
     @ForceInline
     static long offset(MemoryAddressImpl bb, long offset, long alignment) {
         long address = bb.unsafeGetOffset() + offset;
-        if ((bb.segment().scope().characteristics() & MemoryScope.UNALIGNED) == 0 && (address & alignment) != 0) {
+        if ((address & alignment) != 0) {
             throw VarHandleMemoryAddressBase.newIllegalStateExceptionForMisalignedAccess(address);
         }
         return address;

@@ -32,7 +32,6 @@
 
 import java.foreign.GroupLayout;
 import java.foreign.MemoryAddress;
-import java.foreign.MemoryScope;
 import java.foreign.MemorySegment;
 import java.foreign.SequenceLayout;
 import java.foreign.ValueLayout;
@@ -165,8 +164,8 @@ public class TestByteBuffer {
 
     @Test
     public void testOffheap() {
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress base = scope.allocate(tuples);
+        try (MemorySegment segment = MemorySegment.ofNative(tuples)) {
+            MemoryAddress base = segment.baseAddress();
             initTuples(base);
 
             ByteBuffer bb = base.asByteBuffer((int) tuples.bitsSize() / 8);
@@ -226,8 +225,8 @@ public class TestByteBuffer {
     @Test(dataProvider = "bufferOps")
     public void testScopedBuffer(Function<ByteBuffer, Buffer> bufferFactory, Map<Method, Object[]> members) {
         Buffer bb;
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress base = scope.allocate(bytes);
+        try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
+            MemoryAddress base = segment.baseAddress();
             bb = bufferFactory.apply(base.asByteBuffer((int) bytes.bitsSize() / 8));
         }
         //outside of scope!!
@@ -239,7 +238,7 @@ public class TestByteBuffer {
                 Throwable cause = ex.getCause();
                 if (cause instanceof IllegalStateException) {
                     //all other buffer operation should fail because of the scope check
-                    assertTrue(ex.getCause().getMessage().contains("Scope is not alive"));
+                    assertTrue(ex.getCause().getMessage().contains("not alive"));
                 } else {
                     //all other exceptions were unexpected - fail
                     assertTrue(false);
@@ -253,8 +252,8 @@ public class TestByteBuffer {
 
     @Test(dataProvider = "bufferOps")
     public void testDirectBuffer(Function<ByteBuffer, Buffer> bufferFactory, Map<Method, Object[]> members) {
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress base = scope.allocate(bytes);
+        try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
+            MemoryAddress base = segment.baseAddress();
             Buffer bb = bufferFactory.apply(base.asByteBuffer((int)bytes.bitsSize() / 8));
             assertTrue(bb.isDirect());
             DirectBuffer directBuffer = ((DirectBuffer)bb);
@@ -266,8 +265,8 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeOffheap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress base = scope.allocate(seq);
+        try (MemorySegment segment = MemorySegment.ofNative(seq)) {
+            MemoryAddress base = segment.baseAddress();
             initializer.accept(base);
             checker.accept(base);
         }
@@ -301,9 +300,9 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeRoundtripNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
+        try (MemorySegment segment = MemorySegment.ofNative(seq)) {
             int capacity = (int) seq.bitsSize() / 8;
-            MemoryAddress first = scope.allocate(seq);
+            MemoryAddress first = segment.baseAddress();
             initializer.accept(first);
             MemoryAddress second = MemorySegment.ofByteBuffer(first.asByteBuffer(capacity)).baseAddress();
             checker.accept(second);
@@ -313,16 +312,16 @@ public class TestByteBuffer {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testBufferOnClosedScope() {
         MemoryAddress base;
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            base = scope.allocate(bytes);
+        try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
+            base = segment.baseAddress();
         }
         base.asByteBuffer((int)bytes.elementsSize().getAsLong());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBufferTooLarge() {
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress base = scope.allocate(bytes);
+        try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
+            MemoryAddress base = segment.baseAddress();
             base.asByteBuffer((int)bytes.elementsSize().getAsLong() * 2);
         }
     }
@@ -330,10 +329,9 @@ public class TestByteBuffer {
     @Test(dataProvider="resizeOps")
     public void testCopyHeapToNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         int bytes = (int)seq.bitsSize() / 8;
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes]);
+        try (MemorySegment nativeArray = MemorySegment.ofNative(bytes) ;
+             MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
             initializer.accept(heapArray.baseAddress());
-            MemorySegment nativeArray = scope.allocate(bytes);
             MemoryAddress.copy(heapArray.baseAddress(), nativeArray.baseAddress(), bytes);
             checker.accept(nativeArray.baseAddress());
         }
@@ -342,11 +340,10 @@ public class TestByteBuffer {
     @Test(dataProvider="resizeOps")
     public void testCopyNativeToHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         int bytes = (int)seq.bitsSize() / 8;
-        try (MemoryScope scope = MemoryScope.globalScope().fork()) {
-            MemoryAddress base = scope.allocate(seq);
-            initializer.accept(base);
-            MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes]);
-            MemoryAddress.copy(base, heapArray.baseAddress(), bytes);
+        try (MemorySegment nativeArray = MemorySegment.ofNative(seq) ;
+             MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
+            initializer.accept(nativeArray.baseAddress());
+            MemoryAddress.copy(nativeArray.baseAddress(), heapArray.baseAddress(), bytes);
             checker.accept(heapArray.baseAddress());
         }
     }

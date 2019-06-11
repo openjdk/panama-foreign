@@ -27,7 +27,6 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 
 import java.foreign.MemoryAddress;
-import java.foreign.MemoryScope;
 import java.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -77,10 +76,7 @@ public class MemoryAddressImpl implements MemoryAddress {
     }
 
     public void checkAccess(long offset, long length, boolean readOnly) {
-        if (!readOnly && (segment.scope().characteristics() & MemoryScope.IMMUTABLE) != 0) {
-            throw new IllegalStateException("Attempting to write memory in immutable scope");
-        }
-        segment.checkRange(this.offset + offset, length);
+        segment.checkRange(this.offset + offset, length, !readOnly);
     }
 
     public long unsafeGetOffset() {
@@ -88,12 +84,12 @@ public class MemoryAddressImpl implements MemoryAddress {
     }
 
     public Object unsafeGetBase() {
-        return segment.base;
+        return segment.base();
     }
 
     @Override
     public ByteBuffer asByteBuffer(int bytes) throws IllegalArgumentException, UnsupportedOperationException, IllegalStateException {
-        boolean readOnly = (segment().scope().characteristics() & MemoryScope.IMMUTABLE) != 0;
+        boolean readOnly = segment.isReadOnly();
         segment.resize(this.offset, bytes); //throws IAE if out of bounds, or ISE if not alive
         checkAccess(0L, bytes, readOnly);
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
@@ -115,9 +111,9 @@ public class MemoryAddressImpl implements MemoryAddress {
             //scope is IMMUTABLE - obtain a RO byte buffer
             _bb = _bb.asReadOnlyBuffer();
         }
-        if ((segment.scope().characteristics() & MemoryScope.PINNED) == 0) {
+        if (!segment.isPinned()) {
             //scope is not PINNED - need to wrap the buffer so that appropriate scope checks take place
-            _bb = nioAccess.newScopedByteBuffer(segment.scope, _bb);
+            _bb = nioAccess.newScopedByteBuffer(segment, _bb);
         }
         return _bb;
     }
