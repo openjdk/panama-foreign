@@ -47,4 +47,8 @@ abstract class VarHandleMemoryAddressBase extends VarHandle {
     static IllegalStateException newIllegalStateExceptionForMisalignedAccess(long address) {
         return new IllegalStateException("Misaligned access at address: " + address);
     }
+
+    abstract long[] strides();
+
+    abstract Class<?> carrier();
 }

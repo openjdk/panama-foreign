@@ -25,12 +25,14 @@ package jdk.internal.foreign;
 
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
+import sun.invoke.util.Wrapper;
 
 import java.foreign.CompoundLayout;
 import java.foreign.GroupLayout;
 import java.foreign.Layout;
 import java.foreign.LayoutPath;
 import java.foreign.SequenceLayout;
+import java.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +70,21 @@ public class LayoutPathImpl implements LayoutPath {
 
     @Override
     public VarHandle dereferenceHandle(Class<?> carrier) {
-        return JLI.memoryAddressViewVarHandle(carrier, this);
+        if (!(layout instanceof ValueLayout)) {
+            throw new IllegalArgumentException("Not a value layout: " + layout);
+        }
+
+        if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class // illegal carrier?
+            || Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitsSize()) { // carrier has the right size?
+            throw new IllegalArgumentException("Invalid carrier: " + carrier + ", for layout " + layout);
+        }
+
+        return JLI.memoryAddressViewVarHandle(
+                carrier,
+                layout.alignmentBits() / 8,
+                ((ValueLayout) layout).endianness(),
+                offset / 8,
+                enclSequences.stream().mapToLong(seq -> seq.elementLayout().bitsSize() / 8).toArray());
     }
 
     public final List<SequenceLayout> enclosingSequences() {

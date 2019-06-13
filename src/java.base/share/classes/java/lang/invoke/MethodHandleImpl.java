@@ -42,6 +42,7 @@ import sun.invoke.util.Wrapper;
 
 import java.foreign.LayoutPath;
 import java.lang.reflect.Array;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1801,9 +1802,11 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
             }
 
             @Override
-            public VarHandle memoryAddressViewVarHandle(Class<?> carrier, LayoutPath path) {
-                return VarHandles.makeMemoryAddressViewHandle(carrier, path);
+            public VarHandle memoryAddressViewVarHandle(Class<?> carrier, long alignment,
+                                                        ByteOrder order, long offset, long[] strides) {
+                return VarHandles.makeMemoryAddressViewHandle(carrier, alignment, order, offset, strides);
             }
+
         });
     }
 

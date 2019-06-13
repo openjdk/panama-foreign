@@ -52,17 +52,30 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
 import static jdk.internal.org.objectweb.asm.Opcodes.ALOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.ARETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.BIPUSH;
 import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
 import static jdk.internal.org.objectweb.asm.Opcodes.GETFIELD;
+import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_0;
+import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_1;
+import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_2;
+import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_3;
+import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_4;
+import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_5;
+import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_M1;
 import static jdk.internal.org.objectweb.asm.Opcodes.ILOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.LADD;
 import static jdk.internal.org.objectweb.asm.Opcodes.LALOAD;
+import static jdk.internal.org.objectweb.asm.Opcodes.LASTORE;
 import static jdk.internal.org.objectweb.asm.Opcodes.LLOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.LMUL;
+import static jdk.internal.org.objectweb.asm.Opcodes.NEWARRAY;
 import static jdk.internal.org.objectweb.asm.Opcodes.PUTFIELD;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.DUP;
+import static jdk.internal.org.objectweb.asm.Opcodes.SIPUSH;
+import static jdk.internal.org.objectweb.asm.Opcodes.T_LONG;
 
 class AddressVarHandleGenerator {
     private static final String DEBUG_DUMP_CLASSES_DIR_PROPERTY = "jdk.internal.foreign.ClassGenerator.DEBUG_DUMP_CLASSES_DIR";
@@ -156,6 +169,10 @@ class AddressVarHandleGenerator {
         addConstructor(cw);
 
         addAccessModeTypeMethod(cw);
+
+        addStridesAccessor(cw);
+
+        addCarrierAccessor(cw);
 
         for (VarHandle.AccessMode mode : VarHandle.AccessMode.values()) {
             addAccessModeMethodIfNeeded(mode, cw);
@@ -276,6 +293,33 @@ class AddressVarHandleGenerator {
         }
     }
 
+    void addStridesAccessor(BinderClassWriter cw) {
+        MethodVisitor mv = cw.visitMethod(ACC_FINAL, "strides", "()[J", null, null);
+        mv.visitCode();
+        iConstInsn(mv, dimensions);
+        mv.visitIntInsn(NEWARRAY, T_LONG);
+
+        for (int i = 0 ; i < dimensions ; i++) {
+            mv.visitInsn(DUP);
+            iConstInsn(mv, i);
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitFieldInsn(GETFIELD, implClassName, "dim" + i, "J");
+            mv.visitInsn(LASTORE);
+        }
+
+        mv.visitInsn(ARETURN);
+
+        mv.visitEnd();
+    }
+
+    void addCarrierAccessor(BinderClassWriter cw) {
+        MethodVisitor mv = cw.visitMethod(ACC_FINAL, "carrier", "()Ljava/lang/Class;", null, null);
+        mv.visitCode();
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(carrier));
+        mv.visitInsn(ARETURN);
+        mv.visitEnd();
+    }
+
     //where
     private Class<?> defineClass(BinderClassWriter cw, byte[] classBytes) {
         try {
@@ -325,6 +369,26 @@ class AddressVarHandleGenerator {
             case L_TYPE:  return Opcodes.ALOAD;
             default:
                 throw new InternalError("unknown local type: " + type);
+        }
+    }
+
+    private static void iConstInsn(MethodVisitor mv, int i) {
+        switch (i) {
+            case -1: mv.visitInsn(ICONST_M1); break;
+            case 0:  mv.visitInsn(ICONST_0);  break;
+            case 1:  mv.visitInsn(ICONST_1);  break;
+            case 2:  mv.visitInsn(ICONST_2);  break;
+            case 3:  mv.visitInsn(ICONST_3);  break;
+            case 4:  mv.visitInsn(ICONST_4);  break;
+            case 5:  mv.visitInsn(ICONST_5);  break;
+            default:
+                if(i >= Byte.MIN_VALUE && i <= Byte.MAX_VALUE) {
+                    mv.visitIntInsn(BIPUSH, i);
+                } else if (i >= Short.MIN_VALUE && i <= Short.MAX_VALUE) {
+                    mv.visitIntInsn(SIPUSH, i);
+                } else {
+                    mv.visitLdcInsn(i);
+                }
         }
     }
 

@@ -26,6 +26,7 @@
 package java.lang.invoke;
 
 import jdk.internal.foreign.LayoutPathImpl;
+import sun.invoke.util.Wrapper;
 
 import java.foreign.Layout;
 import java.foreign.LayoutPath;
@@ -33,6 +34,7 @@ import java.foreign.ValueLayout;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -294,29 +296,27 @@ final class VarHandles {
         throw new UnsupportedOperationException();
     }
 
-    static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, LayoutPath path) {
-        if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
-            throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
-        }
-
-        Layout layout = path.layout();
-
-        if (!(layout instanceof ValueLayout)) {
-            throw new IllegalArgumentException("Not a value layout: " + layout);
-        }
-
-        if (sizeof(carrier) != layout.bitsSize()) {
-            throw new IllegalArgumentException("Invalid carrier for layout " + layout);
-        }
-
-        long offset = ((LayoutPathImpl)path).offset();
-        long alignment = path.layout().alignmentBits();
-        long length = layout.bitsSize() / 8;
-        boolean be = ((ValueLayout)layout).endianness() == ByteOrder.BIG_ENDIAN;
-
-        long[] strides = ((LayoutPathImpl)path).enclosingSequences().stream()
-                .mapToLong(seq -> seq.elementLayout().bitsSize() / 8)
-                .toArray();
+    /**
+     * Creates a memory access VarHandle.
+     *
+     * Resulting VarHandle will take a {@link java.foreign.MemoryAddress} as first argument,
+     * and a certain number of coordinate {@code long} parameters, depending on the length
+     * of the {@code strides} argument array.
+     *
+     * Coordinates are multiplied with corresponding scale factors ({@code strides}) and added
+     * to a single fixed offset to compute an effective offset from the given MemoryAddress for the access.
+     *
+     * @param carrier the Java carrier type.
+     * @param alignment alignment requirement to be checked upon access. In bytes. Must be a power of 2.
+     * @param byteOrder the byte order.
+     * @param offset a constant offset for the access.
+     * @param strides the scale factors with which to multiply given access coordinates.
+     * @return the created VarHandle.
+     */
+    static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, long alignment,
+                                                 ByteOrder byteOrder, long offset, long[] strides) {
+        long size = Wrapper.forPrimitiveType(carrier).bitWidth() / 8;
+        boolean be = byteOrder == ByteOrder.BIG_ENDIAN;
 
         Map<Integer, MethodHandle> carrierFactory = addressFactories.get(carrier);
         MethodHandle fac = carrierFactory.computeIfAbsent(strides.length,
@@ -324,23 +324,9 @@ final class VarHandles {
                             .generateHandleFactory());
 
         try {
-            return (VarHandle)fac.invoke(be, length, offset / 8, (alignment / 8) - 1, strides);
+            return (VarHandle)fac.invoke(be, size, offset, alignment - 1, strides);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
-        }
-    }
-
-    static int sizeof(Class<?> carrier) {
-        if (carrier == byte.class) {
-            return 8;
-        } else if (carrier == short.class || carrier == char.class) {
-            return 16;
-        } else if (carrier == int.class || carrier == float.class) {
-            return 32;
-        } else if (carrier == long.class || carrier == double.class) {
-            return 64;
-        } else {
-            throw new IllegalStateException("Cannot get here");
         }
     }
 
