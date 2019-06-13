@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -133,6 +133,10 @@ public class Cursor {
         return CursorKind.valueOf(kind);
     }
 
+    public int kind0() {
+        return kind;
+    }
+
     public Stream<Cursor> children() {
         final ArrayList<Cursor> ar = new ArrayList<>();
         // FIXME: need a way to pass ar down as user data d
@@ -160,10 +164,13 @@ public class Cursor {
         return new TranslationUnit(LibClang.lib.clang_Cursor_getTranslationUnit(cursor));
     }
 
+    private Pointer<Void> eval0() {
+        return LibClang.lib.clang_Cursor_Evaluate(cursor);
+    }
+
     public EvalResult eval() {
-        //this throws because, for now, the eval API is never needed when parsing Index.h
-        //which only contains simple numeric macros which can be parsed w/o libclang support.
-        throw new UnsupportedOperationException("Eval API missing!");
+        Pointer<Void> ptr = eval0();
+        return ptr.isNull() ? EvalResult.erroneous : new EvalResult(ptr);
     }
 
     @Override
