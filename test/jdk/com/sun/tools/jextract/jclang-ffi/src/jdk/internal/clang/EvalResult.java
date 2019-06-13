@@ -23,7 +23,14 @@
 
 package jdk.internal.clang;
 
-public abstract class EvalResult implements AutoCloseable {
+import java.foreign.memory.Pointer;
+
+public class EvalResult implements AutoCloseable {
+    private final Pointer<?> ptr;
+
+    public EvalResult(Pointer<?> ptr) {
+        this.ptr = ptr;
+    }
 
     public enum Kind {
         Integral,
@@ -33,11 +40,81 @@ public abstract class EvalResult implements AutoCloseable {
         Unknown
     }
 
-    abstract Kind getKind();
+    private int getKind0() {
+        return LibClang.lib.clang_EvalResult_getKind(ptr);
+    }
 
-    abstract long getAsInt();
+    public Kind getKind() {
+        int code = getKind0();
+        switch (code) {
+            case 1: return Kind.Integral;
+            case 2: return Kind.FloatingPoint;
+            case 3: case 4: case 5:
+                return Kind.StrLiteral;
+            default:
+                return Kind.Unknown;
+        }
+    }
 
-    abstract double getAsFloat();
+    private long getAsInt0() {
+        return LibClang.lib.clang_EvalResult_getAsLongLong(ptr);
+    }
 
-    abstract String getAsString();
+    public long getAsInt() {
+        Kind kind = getKind();
+        switch (kind) {
+            case Integral:
+                return getAsInt0();
+            default:
+                throw new IllegalStateException("Unexpected kind: " + kind);
+        }
+    }
+
+    private double getAsFloat0() {
+        return LibClang.lib.clang_EvalResult_getAsDouble(ptr);
+    }
+
+    public double getAsFloat() {
+        Kind kind = getKind();
+        switch (kind) {
+            case FloatingPoint:
+                return getAsFloat0();
+            default:
+                throw new IllegalStateException("Unexpected kind: " + kind);
+        }
+    }
+
+    private String getAsString0() {
+        Pointer<Byte> value = LibClang.lib.clang_EvalResult_getAsStr(ptr);
+        return Pointer.toString(value);
+    }
+
+    public String getAsString() {
+        Kind kind = getKind();
+        switch (kind) {
+            case StrLiteral:
+                return getAsString0();
+            default:
+                throw new IllegalStateException("Unexpected kind: " + kind);
+        }
+    }
+
+    @Override
+    public void close() {
+        if (!ptr.isNull()) {
+            LibClang.lib.clang_EvalResult_dispose(ptr);
+        }
+    }
+
+    final static EvalResult erroneous = new EvalResult(Pointer.ofNull()) {
+        @Override
+        public Kind getKind() {
+            return Kind.Erroneous;
+        }
+
+        @Override
+        public void close() {
+            //do nothing
+        }
+    };
 }
