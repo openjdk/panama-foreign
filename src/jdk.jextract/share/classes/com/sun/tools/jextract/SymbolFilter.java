@@ -26,6 +26,7 @@ package com.sun.tools.jextract;
 import com.sun.tools.jextract.tree.FunctionTree;
 import com.sun.tools.jextract.tree.MacroTree;
 import com.sun.tools.jextract.tree.Tree;
+import com.sun.tools.jextract.tree.TypedefTree;
 import com.sun.tools.jextract.tree.VarTree;
 
 import java.foreign.Libraries;
@@ -67,5 +68,10 @@ public class SymbolFilter extends TreeFilter {
     @Override
     public Boolean visitMacro(MacroTree mt, Void v) {
         return filter(mt);
+    }
+
+    @Override
+    public Boolean visitTypedef(TypedefTree tt, Void v) {
+        return filters.filterSymbol(tt);
     }
 }

@@ -30,9 +30,15 @@ struct abstract {
     short throws;
 } abstract;
 
-#define Byte char
+typedef char Byte;
 void func(Byte byte, Byte* out);
 
 #define byte 1
 #define content byte + 1
 
+typedef struct {
+    short s1;
+    short s2;
+} Long;
+
+long twoShorts(Long s, Long* out, long* rv);

@@ -23,8 +23,8 @@
 
 /*
  * @test
- * @bug 8225533
- * @run driver JtregJextract -- exports.h
+ * @bug 8225533 8225552
+ * @run driver JtregJextract -t com.example -- exports.h
  * @run testng Test8225533
  */
 
@@ -40,7 +40,7 @@ public class Test8225533 {
     public void test() throws Throwable {
         // As long as this test compiled, test passes
         // Do a minimum check
-        Class<?> header = loadClass(JextractToolRunner.headerInterfaceName("exports.h"));
+        Class<?> header = loadClass("com.example." + JextractToolRunner.headerInterfaceName("exports.h"));
         assertTrue(header != null);
         Method foo = header.getMethod("foo", int.class);
         assertNotNull(foo);

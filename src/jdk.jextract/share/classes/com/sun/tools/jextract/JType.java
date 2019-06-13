@@ -153,13 +153,7 @@ public abstract class JType {
 
         @Override
         public String getSourceSignature(boolean isArgument) {
-            // java.foreign.* is imported
-            if (externalName.startsWith("java.lang.") ||
-                externalName.startsWith("java.foreign.")) {
-                return externalName.substring(externalName.lastIndexOf(".") + 1);
-            } else {
-                return externalName;
-            }
+            return externalName;
         }
 
         public String getSimpleName() {
