@@ -1566,7 +1566,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
                     return ei < 0 ? 0 : v1.lane(ei);
                 }));
         VectorMask<Integer> valid = shuffle.laneIsValid();
-        if (m.bitwise(BitCombiner.ANDC2, valid).anyTrue()) {
+        if (m.andNot(valid).anyTrue()) {
             shuffle.checkIndexes();
             throw new AssertionError();
         }

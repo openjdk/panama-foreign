@@ -1564,7 +1564,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                     return ei < 0 ? 0 : v1.lane(ei);
                 }));
         VectorMask<Double> valid = shuffle.laneIsValid();
-        if (m.bitwise(BitCombiner.ANDC2, valid).anyTrue()) {
+        if (m.andNot(valid).anyTrue()) {
             shuffle.checkIndexes();
             throw new AssertionError();
         }

@@ -1564,7 +1564,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
                     return ei < 0 ? 0 : v1.lane(ei);
                 }));
         VectorMask<Float> valid = shuffle.laneIsValid();
-        if (m.bitwise(BitCombiner.ANDC2, valid).anyTrue()) {
+        if (m.andNot(valid).anyTrue()) {
             shuffle.checkIndexes();
             throw new AssertionError();
         }

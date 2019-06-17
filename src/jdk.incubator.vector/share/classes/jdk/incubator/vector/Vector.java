@@ -2866,7 +2866,7 @@ public abstract class Vector<E> {
      *     int M = domlen / ranlen;
      *     assert 0 <= part && part < M; //else AIOOBE
      *     int origin = part * ranlen;
-     *     physical = Arrays.copyOfRange(origin, origin + ranlen);
+     *     physical = Arrays.copyOfRange(logical, origin, origin + ranlen);
      * } else { // (domlen < ranlen) // contracting
      *     int M = ranlen / domlen;
      *     assert 0 >= part && part > -M; //else AIOOBE

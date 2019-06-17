@@ -71,19 +71,23 @@ public abstract class VectorOperators {
         /**
          * Returns the Java operator symbol or method
          * name corresponding to this operation.
+         * If there is no symbol or method, return a
+         * string containing a representative expression
+         * for the operation.
          * 
          * The symbolic name of the constant,
          * such as {@code "ADD"},
          * is also available as {@link #name()}.
          *
          * @return an operator token, such as {@code "+"},
-         *         or a method name, such as {@code "max"}
+         *         or a method name, such as {@code "max"},
+         *         or a representative expression, such as {@code "a^((a^b)&c)"}
          */
         public abstract String operatorName();
 
         /**
-         * Returns the arity of this operator (1 or 2).
-         * @return the arity of this operator (1 or 2)
+         * Returns the arity of this operator (1, 2, or 3).
+         * @return the arity of this operator (1, 2, or 3)
          */
         public abstract int arity();
 
@@ -99,8 +103,8 @@ public abstract class VectorOperators {
          * If this operator is a {@code Conversion},
          * returns its {@linkplain Conversion#rangeType range type}.
          * 
-         * Otherwise, the operator's return value is always of
-         * whatever type it is given as an input, and this method
+         * Otherwise, the operator's return value always has
+         * whatever type was given as an input, and this method
          * returns {@code Object.class} to denote that fact.
          * @return the special return type, or {@code Object.class} if none
          */
@@ -449,7 +453,7 @@ public abstract class VectorOperators {
     // Ternary operations
 
     /** Produce {@code a^((a^b)&c), bitwise c?b:a)}.  Integral only. */
-    public static final /*float*/ Ternary BITWISE_BLEND = ternary("BITWISE_BLEND", "fma", -1 /*VectorIntrinsics.VECTOR_OP_BITWISE_BLEND*/, VO_NOFP);
+    public static final /*float*/ Ternary BITWISE_BLEND = ternary("BITWISE_BLEND", "a^((a^b)&c)", -1 /*VectorIntrinsics.VECTOR_OP_BITWISE_BLEND*/, VO_NOFP);
     /** Produce {@code fma(a,b,c)}.  Floating only. */
     public static final /*float*/ Ternary FMA = ternary("FMA", "fma", VectorIntrinsics.VECTOR_OP_FMA, VO_ONLYFP);
 
@@ -1136,141 +1140,6 @@ public abstract class VectorOperators {
             case VectorIntrinsics.BT_ge:  return a >= b;
             }
             throw new AssertionError();
-        }
-    }
-
-    /**
-     * Bit manipulation operations that are applicable
-     * to vector mask bits and lane bits.
-     *
-     * There are precisely 16 of these, because there are only
-     * {@linkplain BitCombiner#opCode() 16 distinct truth tables}
-     * for binary boolean operations.
-     * 
-     * Trivial operations, such as "return false always" or
-     * "just copy argument #1", are included.
-     */
-    public enum BitCombiner {
-        /** Combine {@code a&b}. */
-        AND(0b1000),
-        /** Combine {@code ~a&b}. */
-        ANDC1(0b0010),
-        /** Combine {@code a&~b}. */
-        ANDC2(0b0100),
-        /** Combine {@code ~(a|b)}. */
-        NOR(0b0001),
-        /** Combine {@code a|b}. */
-        OR(0b1110),
-        /** Combine {@code ~a|b}. */
-        ORC1(0b1011),
-        /** Combine {@code a|~b}. */
-        ORC2(0b1101),
-        /** Combine {@code ~(a&b)}. */
-        NAND(0b0111),
-        /** Combine {@code a^b}. */
-        XOR(0b0110),
-        /** Combine {@code a^~b}. */
-        XNOR(0b1001),
-        /** Return only {@code 0L}. */
-        FALSE(0b0000),
-        /** Return only {@code ~0L}. */
-        TRUE(0b1111),
-        /** Return only {@code ~a}. */
-        NOT1(0b0011),
-        /** Return only {@code ~b}. */
-        NOT2(0b0101),
-        /** Return only {@code a}. */
-        JUST1(0b1100),
-        /** Return only {@code b}. */
-        JUST2(0b1010);
-
-        BitCombiner(int opCode) {
-            this.opCode = opCode | 0x100; //@Stable != 0
-        }
-
-        /** Evaluates this logical operation relation against
-         *  a pair of boolean arguments.
-         *  @param a the first argument
-         *  @param b the second argument
-         *  @return the selected logical combination of
-         *          {@code a} and {@code b}
-         */
-        public boolean apply(boolean a, boolean b) {
-            int shift = ((a ? 2 : 0) + (b ? 1 : 0));
-            return ((opCode >> shift) & 1) != 0;
-        }
-
-        /** Evaluates this logical operation relation against
-         *  a pair of long bitfield arguments.
-         *  @param a the first argument
-         *  @param b the second argument
-         *  @return the bitwise application of this comparison
-         *          between bits of {@code a} and {@code b}
-         */
-        public long apply(long a, long b) {
-            switch (opCode()) {
-            case 0b1000: return a&b;    // AND
-            case 0b0010: return ~a&b;   // ANDC1
-            case 0b0100: return a&~b;   // ANDC2
-            case 0b0001: return ~(a|b); // NOR
-            case 0b1110: return a|b;    // OR
-            case 0b1011: return ~a|b;   // ORC1
-            case 0b1101: return a|~b;   // ORC2
-            case 0b0111: return ~(a&b); // NAND
-            case 0b0110: return a^b;    // XOR
-            case 0b1001: return a^~b;   // XNOR
-            case 0b0000: return 0L;     // FALSE
-            case 0b1111: return ~0L;    // TRUE
-            case 0b0011: return ~a;     // C1
-            case 0b0101: return ~b;     // C2
-            case 0b1100: return a;      // X1
-            case 0b1010: return b;      // X2
-            }
-            throw new AssertionError();
-        }
-
-        private @Stable final int opCode;
-
-        /**
-         * Returns a four-bit encoding of the truth table for this
-         * operation.  The encoding is a small integer of the form
-         * {@code P*8+Q*4+R*2+S}, where each letter is defined as
-         * follows:
-         * <ul>
-         * <li> {@code P=this.apply(true,true)?1:0}
-         * <li> {@code Q=this.apply(true,false)?1:0}
-         * <li> {@code R=this.apply(false,true)?1:0}
-         * <li> {@code S=this.apply(false,false)?1:0}
-         * </ul>
-         * @return an encoding of this operation's truth table
-         * @see #ofOpCode(int)
-         */
-        public int opCode() { return opCode & 0xFF; }
-
-        /**
-         * Given an encoded truth table (a four-bit
-         * value in the range 0..15), return the
-         * corresponding combiner.
-         * @param opCode the desired truth table encoding
-         * @return a combiner with that truth table
-         * @see #opCode()
-         */
-        public static BitCombiner ofOpCode(int opCode) {
-            if (opCode != (opCode & (BY_OPCODE.length-1)))
-                throw new IllegalArgumentException("bad opCode: "+opCode);
-            return BY_OPCODE[opCode];
-        }
-
-        private @Stable static final BitCombiner[] BY_OPCODE;
-        static {
-            BitCombiner[] a = new BitCombiner[16];
-            assert(values().length == a.length);
-            for (BitCombiner op : values()) {
-                int opc = op.opCode();
-                assert(a[opc] == null);
-                a[opc] = op;
-            }
-            BY_OPCODE = a;
         }
     }
 

@@ -362,69 +362,71 @@ public abstract class VectorMask<E> {
     public abstract int lastTrue();
 
     /**
-     * Logically ands this mask with an input mask.
+     * Computes the logical intersection (as {@code a&b})
+     * between this mask and a second input mask.
      * <p>
      * This is a lane-wise binary operation which applies
-     * the logical and operation
+     * the logical {@code AND} operation
      * ({@code &}) to each corresponding pair of mask bits.
-     * It is equivalent to
-     * {@linkplain #bitwise(VectorOperators.BitCombiner,VectorMask) bitwise application}
-     * of {@link VectorOperators.BitCombiner#AND BitCombiner.AND}.
      *
-     * @param o the input mask
-     * @return the result of logically and-ing this mask with an input mask
+     * @param m the second input mask
+     * @return the result of logically conjoining the two input masks
      */
-    public abstract VectorMask<E> and(VectorMask<E> o);
+    public abstract VectorMask<E> and(VectorMask<E> m);
 
     /**
-     * Logically ands this mask with an input mask.
+     * Computes the logical union (as {@code a|b}) of this mask
+     * and a second input mask.
      * <p>
      * This is a lane-wise binary operation which applies
-     * the logical and operation
+     * the logical {@code OR} operation
      * ({@code |}) to each corresponding pair of mask bits.
-     * It is equivalent to
-     * {@linkplain #bitwise(VectorOperators.BitCombiner,VectorMask) bitwise application}
-     * of {@link VectorOperators.BitCombiner#OR BitCombiner.OR}.
      *
-     * @param o the input mask
-     * @return the result of logically or-ing this mask with an input mask
+     * @param m the input mask
+     * @return the result of logically disjoining the two input masks
      */
-    public abstract VectorMask<E> or(VectorMask<E> o);
+    public abstract VectorMask<E> or(VectorMask<E> m);
+
+    /**
+     * Determines logical equivalence of this mask
+     * to a second input mask (as boolean {@code a==b}
+     * or {@code a^~b}).
+     * <p>
+     * This is a lane-wise binary operation tests each
+     * corresponding pair of mask bits for equality.
+     * It is also equivalent to a inverse {@code XOR}
+     * operation ({@code ^~}) on the mask bits.
+     *
+     * @param m the input mask
+     * @return a mask showing where the two input masks were equal
+     */
+    public abstract VectorMask<E> equal(VectorMask<E> m);
+
+    /**
+     * Logically subtracts a second input mask
+     * from this mask (as {@code a&~b}).
+     * <p>
+     * This is a lane-wise binary operation which applies
+     * the logical {@code ANDC} operation
+     * ({@code &~}) to each corresponding pair of mask bits.
+     *
+     * @param m the second input mask
+     * @return the result of logically subtracting the second mask from this mask
+     */
+    public abstract VectorMask<E> andNot(VectorMask<E> m);
 
     /**
      * Logically negates this mask.
      * <p>
      * This is a lane-wise binary operation which applies
-     * the logical not operation
+     * the logical {@code NOT} operation
      * ({@code ~}) to each mask bit.
-     * It is equivalent to
-     * {@linkplain #bitwise(VectorOperators.BitCombiner,VectorMask) bitwise application}
-     * of {@link VectorOperators.BitCombiner#NOT1 BitCombiner.NOT1} applied
-     * to this vector (with a redundant copy of itself).
      *
      * @return the result of logically negating this mask
      */
     public abstract VectorMask<E> not();
 
-    /**
-     * Logically combines this mask with an input mask,
-     * using the selected single-bit binary operator.
-     * <p>
-     * This is a lane-wise binary operation which applies
-     * the selected logical combination to each lane,
-     * as if executing {@code op.apply(a,b)} for each
-     * corresponding pair of mask bits {@code a} and
-     * {@code b}.
-     *
-     * @param op the desired bit-combination operation
-     * @param o the input mask
-     * @return the result of logically combining this mask with an input mask
-     * @see #and(VectorMask)
-     * @see #or(VectorMask)
-     */
-    public abstract VectorMask<E> bitwise(VectorOperators.BitCombiner op, VectorMask<E> o);
-
-    // FIXME: Consider blend, splice, permute operations.
+    // FIXME: Consider blend, slice, rearrange operations.
 
     /**
      * Removes lanes numbered {@code N} from this mask where the
@@ -567,8 +569,7 @@ public abstract class VectorMask<E> {
             if (this.vectorSpecies().equals(that.vectorSpecies())) {
                 @SuppressWarnings("unchecked")
                 VectorMask<E> that2 = (VectorMask<E>) that;
-                return !this.bitwise(VectorOperators.BitCombiner.XOR,
-                                     that2).anyTrue();
+                return this.equal(that2).allTrue();
             }
         }
         return false;

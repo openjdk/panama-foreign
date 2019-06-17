@@ -52,16 +52,17 @@ import jdk.incubator.vector.Vector;
     static final int VECTOR_OP_DIV  = 7;
     static final int VECTOR_OP_MIN  = 8;
     static final int VECTOR_OP_MAX  = 9;
-    static final int VECTOR_OP_FIRST_NONZERO = -9;  //FIXME: Implement?
+    static final int VECTOR_OP_FIRST_NONZERO = -9;  //a!=0?a:b  FIXME: Implement?
 
     static final int VECTOR_OP_AND  = 10;
-    static final int VECTOR_OP_ANDC2 = -10;  //FIXME: Implement?
+    static final int VECTOR_OP_ANDC2 = -10;  //&~ FIXME: Implement?
     static final int VECTOR_OP_OR   = 11;
     static final int VECTOR_OP_XOR  = 12;
+    static final int VECTOR_OP_EQV = -12;  //^~ FIXME: Implement?
 
     // Ternary
     static final int VECTOR_OP_FMA  = 13;
-    static final int VECTOR_OP_BITWISE_BLEND = -13;  //FIXME: Implement?
+    static final int VECTOR_OP_BITWISE_BLEND = -13;  //a^((a^b)&c) FIXME: Implement?
 
     // Broadcast int
     static final int VECTOR_OP_LSHIFT  = 14;

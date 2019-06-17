@@ -155,16 +155,21 @@ abstract class AbstractMask<E> extends VectorMask<E> {
     }
 
     @Override
-    public AbstractMask<E> not() {
+    public AbstractMask<E> equal(VectorMask<E> o) {
         // FIXME: Generate good code here.
-        return uOp((i, a) -> !a);
+        return bOp(o, (i, a, b) -> a == b);
     }
 
     @Override
-    public AbstractMask<E> bitwise(BitCombiner op, VectorMask<E> o) {
-        // FIXME: Pull out the truth table op.opCode
-        // and use a switch.
-        return bOp(o, (i, a, b) -> op.apply(a, b));
+    public AbstractMask<E> andNot(VectorMask<E> o) {
+        // FIXME: Generate good code here.
+        return bOp(o, (i, a, b) -> a && !b);
+    }
+
+    @Override
+    public AbstractMask<E> not() {
+        // FIXME: Generate good code here.
+        return uOp((i, a) -> !a);
     }
 
     /*package-private*/
@@ -191,7 +196,7 @@ abstract class AbstractMask<E> extends VectorMask<E> {
         int vlength = length();
         Vector<E> iota = vectorSpecies().zero().addIndex(1);
         VectorMask<E> badMask = checkIndex0(offset, limit, iota, vlength);
-        return this.bitwise(BitCombiner.ANDC2, badMask);
+        return this.andNot(badMask);
     }
 
     /*package-private*/
@@ -298,51 +303,4 @@ abstract class AbstractMask<E> extends VectorMask<E> {
         throw new IndexOutOfBoundsException(msg);
     }
 
-    static {
-        assert(testBitCombiner());
-    }
-    private static boolean testBitCombiner() {
-        // Test BitCombiner implementation.
-        for (int opc = 0; opc <= 0xF; opc++) {
-            BitCombiner op = BitCombiner.ofOpCode(opc);
-            assert(op.opCode() == opc);
-            for (int x12 = 0; x12 < 4; x12++) {
-                int x1 = ((x12 >> 1) & 1);
-                int x2 = ((x12 >> 0) & 1);
-                int res = ((opc >> x12) & 1);
-                assert(op.apply(x1!=0, x2!=0) == (res!=0))
-                    : Arrays.asList(op, opc, x1, x2, res);
-                assert(op.apply(-x1, -x2) == -res)
-                    : Arrays.asList(op, opc, x1, x2, res);
-            }
-        }
-        long x1 = 0x123456789ABCDEFL, x2 = x1 << 4;
-        for (BitCombiner op1 : BitCombiner.values()) {
-            long res1 = op1.apply(x1, x2);
-            for (BitCombiner op2 : BitCombiner.values()) {
-                long res2 = op2.apply(x1, x2);
-                for (BitCombiner op3 : BitCombiner.values()) {
-                    long res3 = op3.apply(res1,
-                                          res2);
-                    int opCode123 = (int) op3.apply(op1.opCode(),
-                                                    op2.opCode());
-                    opCode123 &= 0x0F;
-                    BitCombiner op123 = BitCombiner.ofOpCode(opCode123);
-                    long res123 = op123.apply(x1, x2);
-                    assert(res3 == res123)
-                        : Arrays.asList(Long.toHexString(x1),
-                                        Long.toHexString(x2),
-                                        op1 + " => " +
-                                        Long.toHexString(res1),
-                                        op2 + " => " +
-                                        Long.toHexString(res2),
-                                        op3 + " => " +
-                                        Long.toHexString(res3)
-                                        + " != " +
-                                        Long.toHexString(res123));
-                }
-            }
-        }
-        return true;
-    }
 }

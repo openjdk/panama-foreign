@@ -1493,7 +1493,7 @@ public abstract class LongVector extends AbstractVector<Long> {
                     return ei < 0 ? 0 : v1.lane(ei);
                 }));
         VectorMask<Long> valid = shuffle.laneIsValid();
-        if (m.bitwise(BitCombiner.ANDC2, valid).anyTrue()) {
+        if (m.andNot(valid).anyTrue()) {
             shuffle.checkIndexes();
             throw new AssertionError();
         }
