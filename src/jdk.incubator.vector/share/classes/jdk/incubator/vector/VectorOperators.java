@@ -1,0 +1,1377 @@
+/*
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have
+ * questions.
+ */
+package jdk.incubator.vector;
+
+import java.util.function.IntFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+import java.util.HashMap;
+import java.util.ArrayList;
+
+import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
+
+/**
+ * This class consists solely of static constants
+ * that describe lane-wise vector operations, plus nested interfaces
+ * which classify them.
+ */
+public abstract class VectorOperators {
+    private VectorOperators() { }
+
+    /**
+     * Lane-wise operations that are applicable to vector lane values
+     * of some or all lane types.  Subtypes are {@link Unary},
+     * {@link Binary}, {@link Ternary}, {@link Associative},
+     * {@link Comparison}, and {@link Conversion}.
+     *
+     * @apiNote
+     * User code should not implement this interface.  A future release of
+     * this type may restrict implementations to be members of the same
+     * package.
+     */
+    public interface Operator {
+        /**
+         * Returns the symbolic name of this operation,
+         * as a constant in {@link VectorOperators}.
+         *
+         * The operator symbol or Java method name,
+         * such as {@code "+"} or {@code "max"},
+         * is also available as {@link #operatorName()}.
+         * 
+         * @return the symbolic name of this operation,
+         *         such as {@code "ADD"}
+         */
+        public abstract String name();
+
+        /**
+         * Returns the Java operator symbol or method
+         * name corresponding to this operation.
+         * 
+         * The symbolic name of the constant,
+         * such as {@code "ADD"},
+         * is also available as {@link #name()}.
+         *
+         * @return an operator token, such as {@code "+"},
+         *         or a method name, such as {@code "max"}
+         */
+        public abstract String operatorName();
+
+        /**
+         * Returns the arity of this operator (1 or 2).
+         * @return the arity of this operator (1 or 2)
+         */
+        public abstract int arity();
+
+        /**
+         * Reports whether this operator returns a boolean (a mask).
+         * @return whether this operator returns a boolean
+         */
+        public abstract boolean isBoolean();
+
+        /**
+         * Reports the special return type of this operator.
+         * If this operator is a boolean, returns {@code boolean.class}.
+         * If this operator is a {@code Conversion},
+         * returns its {@linkplain Conversion#rangeType range type}.
+         * 
+         * Otherwise, the operator's return value is always of
+         * whatever type it is given as an input, and this method
+         * returns {@code Object.class} to denote that fact.
+         * @return the special return type, or {@code Object.class} if none
+         */
+        public abstract Class<?> rangeType();
+
+        /**
+         * Returns the associativity of this operator.
+         * Only binary operators can be associative.
+         * @return the associativity of this operator
+         */
+        public abstract boolean isAssociative();
+
+        /**
+         * Reports whether this operation is compatible with
+         * the proposed element type.
+         * 
+         * First, unrestricted operations are compatible with all element
+         * types.
+         *
+         * Next, if the element type is {@code double} or {@code float}
+         * and the operation is restricted to floating point types, it is
+         * compatible.
+         *
+         * Otherwise, if the element type is neither {@code double} nor
+         * {@code float} and the operation is restricted to integral
+         * types, it is compatible.  Otherwise, the operation is not
+         * compatible.
+         *
+         * @param elementType the proposed operand type for the operation
+         * @return whether the proposed type is compatible with this operation
+         */
+        public abstract boolean compatibleWith(Class<?> elementType);
+
+        // FIXME: Maybe add a query about architectural support.
+    }
+
+    /**
+     * Unary lane-wise operations that are applicable to
+     * vector lane values of some or all lane types.
+     */
+    public interface Unary extends Operator {
+    }
+
+    /**
+     * Ternary lane-wise operations that are applicable to
+     * vector lane values of some or all lane types.
+     *
+     * @apiNote
+     * User code should not implement this interface.  A future release of
+     * this type may restrict implementations to be members of the same
+     * package.
+     */
+    public interface Ternary extends Operator {
+    }
+
+    /**
+     * Binary lane-wise operations that are applicable to
+     * vector lane values of some or all lane types.
+     *
+     * @apiNote
+     * User code should not implement this interface.  A future release of
+     * this type may restrict implementations to be members of the same
+     * package.
+     */
+    public interface Binary extends Operator {
+    }
+
+    /**
+     * Binary associative lane-wise operations that are
+     * applicable to vector lane values of some or all lane types.
+     *
+     * @apiNote
+     * User code should not implement this interface.  A future release of
+     * this type may restrict implementations to be members of the same
+     * package.
+     */
+    public interface Associative extends Binary {
+    }
+
+    /**
+     * Binary lane-wise comparisons that are
+     * applicable to vector lane values of all lane types.
+     *
+     * @apiNote
+     * User code should not implement this interface.  A future release of
+     * this type may restrict implementations to be members of the same
+     * package.
+     */
+    public interface Comparison extends Operator {
+        /** Evaluates this comparison relation against
+         *  a pair of long arguments.
+         *  @param a the first argument
+         *  @param b the second argument
+         *  @returns whether this comparison relation
+         *           holds between {@code a} and {@code b}
+         */
+        public boolean test(long a, long b);
+    }
+
+    /**
+     * Conversion operations that are applicable to
+     * vector lane values of specific lane types.
+     *
+     * @param <E> the boxed element type for the conversion
+     *        domain type (the input lane type)
+     * @param <F> the boxed element type for the conversion
+     *        range type (the output lane type)
+     *
+     * @apiNote
+     * User code should not implement this interface.  A future release of
+     * this type may restrict implementations to be members of the same
+     * package.
+     */
+    public interface Conversion<E,F> extends Operator {
+        /**
+         * The domain of this conversion, a primitive type.
+         * @returns the domain of this conversion
+         */
+        public abstract Class<E> domainType();
+
+        /**
+         * The range of this conversion, a primitive type.
+         * @returns the range of this conversion
+         */
+        @Override
+        public abstract Class<F> rangeType();
+
+        /**
+         * Ensures that this conversion has the
+         * desired domain and range types.
+         * @param from the desired domain type
+         * @param to the desired range type
+         * @param <E> the desired domain type
+         * @param <F> the desired range type
+         * @returns this conversion object, with validated domain and range 
+         */
+        public abstract
+        <E,F> Conversion<E,F> check(Class<E> from, Class<F> to);
+
+        /// Factories.
+
+        /**
+         * The Java language assignment or casting conversion between two types.
+         * @param <E> the domain type (boxed version of a lane type)
+         * @param <F> the range type (boxed version of a lane type)
+         * @param from the type of the value to convert
+         * @param to the desired type after conversion
+         * @returns a Java assignment or casting conversion
+         */
+        @ForceInline
+        public static <E,F> Conversion<E,F> ofCast(Class<E> from, Class<F> to) {
+            LaneType dom = LaneType.of(from);
+            LaneType ran = LaneType.of(to);
+            return ConversionImpl.ofCast(dom, ran).check(from, to);
+        }
+
+        /**
+         * The bitwise reinterpretation between two types.
+         * @param <E> the domain type (boxed version of a lane type)
+         * @param <F> the range type (boxed version of a lane type)
+         * @param from the type of the value to reinterpret
+         * @param to the desired type after reinterpretation
+         * @returns a bitwise reinterpretation conversion
+         */
+        @ForceInline
+        public static <E,F> Conversion<E,F> ofReinterpret(Class<E> from, Class<F> to) {
+            LaneType dom = LaneType.of(from);
+            LaneType ran = LaneType.of(to);
+            return ConversionImpl.ofReinterpret(dom, ran).check(from, to);
+        }
+
+        /**
+         * An in-place version of a narrowing
+         * conversion between two types.
+         * The output of the conversion must be no larger
+         * than the type {@code E}.
+         * Any unused lane bits are ignored and
+         * overwritten by zero bits (not a copied sign bit).
+         * @param <E> the domain and range type (boxed version of a lane type)
+         * @param conv the narrowing conversion to treat in-place
+         * @param to the desired type after the narrowing conversion
+         * @returns a Java narrowing conversion,
+         *          stored back to the original lane of type {@code E}
+         */
+        @ForceInline
+        static <E> Conversion<E,E> ofNarrowing(Conversion<E,?> conv) {
+            Class<E> lt = conv.domainType();
+            return ConversionImpl.ofInplace((ConversionImpl<?,?>) conv, false).check(lt, lt);
+        }
+
+        /**
+         * An in-place version of a widening
+         * conversion between two types.
+         * The input of the conversion must be no larger
+         * than the type {@code E}.
+         * Any unused lane bits are ignored and
+         * overwritten by the result.
+         * @param <E> the domain and range type (boxed version of a lane type)
+         * @param conv the widening conversion to treat in-place
+         * @param to the desired type after the widening conversion
+         * @returns a Java widening conversion,
+         *          loading its input from same lane of type {@code E}
+         */
+        @ForceInline
+        static <E> Conversion<E,E> ofWidening(Conversion<?,E> conv) {
+            Class<E> lt = conv.rangeType();
+            return ConversionImpl.ofInplace((ConversionImpl<?,?>) conv, true).check(lt, lt);
+        }
+
+    }
+
+    /*package-private*/
+    static int opCode(Operator op, int requireKind, int forbidKind) {
+        return ((OperatorImpl)op).opCode(requireKind, forbidKind);
+    }
+
+    /*package-private*/
+    static boolean opKind(Operator op, int bit) {
+        return ((OperatorImpl)op).opKind(bit);
+    }
+
+    /*package-private*/
+    static final int
+        VO_ALL                     = 0,
+        VO_UNARY                   = 0x001,
+        VO_BINARY                  = 0x002,
+        VO_TERNARY                 = 0x003,
+        VO_ARITY_MASK              = (VO_UNARY|VO_BINARY|VO_TERNARY),
+        VO_ASSOC                   = 0x004,
+        VO_SHIFT                   = 0x008,
+        VO_BOOL                    = 0x010,
+        VO_CONV                    = 0x020,
+        VO_PRIVATE                 = 0x040, // not public, invisible
+        VO_SPECIAL                 = 0x080, // random special handling
+        VO_NOFP                    = 0x100,
+        VO_ONLYFP                  = 0x200,
+        VO_OPCODE_VALID            = 0x800,
+        VO_OPCODE_SHIFT            = 12,
+        VO_OPCODE_LIMIT            = 0x400,
+        VO_RAN_SHIFT               = 0,
+        VO_DOM_SHIFT               = 4,
+        VO_DOM_RAN_MASK            = 0x0FF,
+        VO_KIND_CAST               = 0x000,
+        VO_KIND_BITWISE            = 0x100,
+        VO_KIND_INPLACE            = 0x200;
+
+    private static final HashMap<Integer, String> OPC_NAME
+        = new HashMap<>();
+    private static final HashMap<Integer, String> CMP_OPC_NAME
+        = new HashMap<>();
+    private static final HashMap<Integer, String> CONV_OPC_NAME
+        = new HashMap<>();
+
+    // Unary operations
+
+    /** Produce {@code ~a}.  Integral only. */
+    public static final /*bitwise*/ Unary NOT = unary("NOT", "~", VectorIntrinsics.VECTOR_OP_NOT, VO_NOFP);
+    /** Produce {@code a==0?0:-1} (zero or minus one).  Integral only. */
+    public static final /*bitwise*/ Unary ZOMO = unary("ZOMO", "a==0?0:-1", -1 /*VectorIntrinsics.VECTOR_OP_ZOMO*/, VO_NOFP);
+    /** Produce {@code abs(a)}. */
+    public static final Unary ABS = unary("ABS", "abs", VectorIntrinsics.VECTOR_OP_ABS, VO_ALL);
+    /** Produce {@code -a}. */
+    public static final Unary NEG = unary("NEG", "-a", VectorIntrinsics.VECTOR_OP_NEG, VO_ALL|VO_SPECIAL);
+
+    /** Produce {@code sin(a)}.  Floating only. */
+    public static final /*float*/ Unary SIN = unary("SIN", "sin", VectorIntrinsics.VECTOR_OP_SIN, VO_ONLYFP);
+    /** Produce {@code cos(a)}.  Floating only. */
+    public static final /*float*/ Unary COS = unary("COS", "cos", VectorIntrinsics.VECTOR_OP_COS, VO_ONLYFP);
+    /** Produce {@code tan(a)}.  Floating only. */
+    public static final /*float*/ Unary TAN = unary("TAN", "tan", VectorIntrinsics.VECTOR_OP_TAN, VO_ONLYFP);
+    /** Produce {@code asin(a)}.  Floating only. */
+    public static final /*float*/ Unary ASIN = unary("ASIN", "asin", VectorIntrinsics.VECTOR_OP_ASIN, VO_ONLYFP);
+    /** Produce {@code acos(a)}.  Floating only. */
+    public static final /*float*/ Unary ACOS = unary("ACOS", "acos", VectorIntrinsics.VECTOR_OP_ACOS, VO_ONLYFP);
+    /** Produce {@code atan(a)}.  Floating only. */
+    public static final /*float*/ Unary ATAN = unary("ATAN", "atan", VectorIntrinsics.VECTOR_OP_ATAN, VO_ONLYFP);
+
+    /** Produce {@code exp(a)}.  Floating only. */
+    public static final /*float*/ Unary EXP = unary("EXP", "exp", VectorIntrinsics.VECTOR_OP_EXP, VO_ONLYFP);
+    /** Produce {@code log(a)}.  Floating only. */
+    public static final /*float*/ Unary LOG = unary("LOG", "log", VectorIntrinsics.VECTOR_OP_LOG, VO_ONLYFP);
+    /** Produce {@code log10(a)}.  Floating only. */
+    public static final /*float*/ Unary LOG10 = unary("LOG10", "log10", VectorIntrinsics.VECTOR_OP_LOG10, VO_ONLYFP);
+    /** Produce {@code sqrt(a)}.  Floating only. */
+    public static final /*float*/ Unary SQRT = unary("SQRT", "sqrt", VectorIntrinsics.VECTOR_OP_SQRT, VO_ONLYFP);
+    /** Produce {@code cbrt(a)}.  Floating only. */
+    public static final /*float*/ Unary CBRT = unary("CBRT", "cbrt", VectorIntrinsics.VECTOR_OP_CBRT, VO_ONLYFP);
+
+    /** Produce {@code sinh(a)}.  Floating only. */
+    public static final /*float*/ Unary SINH = unary("SINH", "sinh", VectorIntrinsics.VECTOR_OP_SINH, VO_ONLYFP);
+    /** Produce {@code cosh(a)}.  Floating only. */
+    public static final /*float*/ Unary COSH = unary("COSH", "cosh", VectorIntrinsics.VECTOR_OP_COSH, VO_ONLYFP);
+    /** Produce {@code tanh(a)}.  Floating only. */
+    public static final /*float*/ Unary TANH = unary("TANH", "tanh", VectorIntrinsics.VECTOR_OP_TANH, VO_ONLYFP);
+    /** Produce {@code expm1(a)}.  Floating only. */
+    public static final /*float*/ Unary EXPM1 = unary("EXPM1", "expm1", VectorIntrinsics.VECTOR_OP_EXPM1, VO_ONLYFP);
+    /** Produce {@code log1p(a)}.  Floating only. */
+    public static final /*float*/ Unary LOG1P = unary("LOG1P", "log1p", VectorIntrinsics.VECTOR_OP_LOG1P, VO_ONLYFP);
+
+    // Binary operations
+
+    /** Produce {@code a+b}. */
+    public static final Associative ADD = assoc("ADD", "+", VectorIntrinsics.VECTOR_OP_ADD, VO_ALL+VO_ASSOC);
+    /** Produce {@code a-b}. */
+    public static final Binary SUB = binary("SUB", "-", VectorIntrinsics.VECTOR_OP_SUB, VO_ALL);
+    /** Produce {@code a*b}. */
+    public static final Associative MUL = assoc("MUL", "*", VectorIntrinsics.VECTOR_OP_MUL, VO_ALL+VO_ASSOC);
+    /** Produce {@code a/b}. Floating only. */
+    public static final Binary DIV = binary("DIV", "/", VectorIntrinsics.VECTOR_OP_DIV, VO_ONLYFP);
+    /** Produce {@code min(a,b)}. */
+    public static final Associative MIN = assoc("MIN", "min", VectorIntrinsics.VECTOR_OP_MIN, VO_ALL+VO_ASSOC);
+    /** Produce {@code max(a,b)}. */
+    public static final Associative MAX = assoc("MAX", "max", VectorIntrinsics.VECTOR_OP_MAX, VO_ALL+VO_ASSOC);
+    /** Produce {@code a!=0?a:b}. */
+    public static final Associative FIRST_NONZERO = assoc("FIRST_NONZERO", "a!=0?a:b", -1 /*VectorIntrinsics.VECTOR_OP_FIRST_NONZERO*/, VO_ALL+VO_ASSOC);
+
+    /** Produce {@code a&b}.  Integral only. */
+    public static final Associative AND = assoc("AND", "&", VectorIntrinsics.VECTOR_OP_AND, VO_NOFP+VO_ASSOC);
+    /** Produce {@code a&~b}.  Integral only. */
+    public static final /*bitwise*/ Binary ANDC2 = binary("ANDC2", "&~", -1 /*VectorIntrinsics.VECTOR_OP_ANDC2*/, VO_NOFP); // FIXME
+    /** Produce {@code a|b}.  Integral only. */
+    public static final /*bitwise*/ Associative OR = assoc("OR", "|", VectorIntrinsics.VECTOR_OP_OR, VO_NOFP+VO_ASSOC);
+    /*package-private*/ /** Version of OR which works on float and double too. */
+    static final Associative OR_UNCHECKED = assoc("OR_UNCHECKED", "|", VectorIntrinsics.VECTOR_OP_OR, VO_ASSOC+VO_PRIVATE);
+    /** Produce {@code a^b}.  Integral only. */
+    public static final /*bitwise*/ Associative XOR = assoc("XOR", "^", VectorIntrinsics.VECTOR_OP_XOR, VO_NOFP+VO_ASSOC);
+
+    /** Produce {@code a<<(n&(ESIZE-1))}.  Integral only. */
+    public static final /*bitwise*/ Binary LSHL = binary("LSHL", "<<", VectorIntrinsics.VECTOR_OP_LSHIFT, VO_SHIFT);
+    /** Produce {@code a>>(n&(ESIZE-1))}.  Integral only. */
+    public static final /*bitwise*/ Binary ASHR = binary("ASHR", ">>", VectorIntrinsics.VECTOR_OP_RSHIFT, VO_SHIFT);
+    /** Produce {@code a>>>(n&(ESIZE-1))}.  Integral only. */
+    public static final /*bitwise*/ Binary LSHR = binary("LSHR", ">>>", VectorIntrinsics.VECTOR_OP_URSHIFT, VO_SHIFT);
+    /** Produce {@code rotateLeft(a,n)}.  Integral only. */
+    public static final /*bitwise*/ Binary ROL = binary("ROL", "rotateLeft", -1 /*VectorIntrinsics.VECTOR_OP_LROTATE*/, VO_SHIFT);
+    /** Produce {@code rotateRight(a,n)}.  Integral only. */
+    public static final /*bitwise*/ Binary ROR = binary("ROR", "rotateRight", -1 /*VectorIntrinsics.VECTOR_OP_RROTATE*/, VO_SHIFT);
+
+    /** Produce {@code atan2(a,b)}.  Floating only. */
+    public static final /*float*/ Binary ATAN2 = binary("ATAN2", "atan2", VectorIntrinsics.VECTOR_OP_ATAN2, VO_ONLYFP);
+    /** Produce {@code pow(a,b)}.  Floating only. */
+    public static final /*float*/ Binary POW = binary("POW", "pow", VectorIntrinsics.VECTOR_OP_POW, VO_ONLYFP);
+    /** Produce {@code hypot(a,b)}.  Floating only. */
+    public static final /*float*/ Binary HYPOT = binary("HYPOT", "hypot", VectorIntrinsics.VECTOR_OP_HYPOT, VO_ONLYFP);
+
+    // Ternary operations
+
+    /** Produce {@code a^((a^b)&c), bitwise c?b:a)}.  Integral only. */
+    public static final /*float*/ Ternary BITWISE_BLEND = ternary("BITWISE_BLEND", "fma", -1 /*VectorIntrinsics.VECTOR_OP_BITWISE_BLEND*/, VO_NOFP);
+    /** Produce {@code fma(a,b,c)}.  Floating only. */
+    public static final /*float*/ Ternary FMA = ternary("FMA", "fma", VectorIntrinsics.VECTOR_OP_FMA, VO_ONLYFP);
+
+    // Binary boolean operations
+
+    /** Compare {@code a==b}. */
+    public static final Comparison EQ = compare("EQ", "==", VectorIntrinsics.BT_eq, VO_ALL);
+    /** Compare {@code a!=b}. */
+    public static final Comparison NE = compare("NE", "!=", VectorIntrinsics.BT_ne, VO_ALL);
+    /** Compare {@code a<b}. */
+    public static final Comparison LT = compare("LT", "<",  VectorIntrinsics.BT_lt, VO_ALL);
+    /** Compare {@code a<=b}. */
+    public static final Comparison LE = compare("LE", "<=", VectorIntrinsics.BT_le, VO_ALL);
+    /** Compare {@code a>b}. */
+    public static final Comparison GT = compare("GT", ">",  VectorIntrinsics.BT_gt, VO_ALL);
+    /** Compare {@code a>=b}. */
+    public static final Comparison GE = compare("GE", ">=", VectorIntrinsics.BT_ge, VO_ALL);
+    // FIXME: add unsigned comparisons
+
+    // Conversion operations
+
+    /** Convert {@code byteVal} to {@code (double)byteVal}. */
+    public static final Conversion<Byte,Double> B2D = convert("B2D", 'C', byte.class, double.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code byteVal} to {@code (float)byteVal}. */
+    public static final Conversion<Byte,Float> B2F = convert("B2F", 'C', byte.class, float.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code byteVal} to {@code (int)byteVal}. */
+    public static final Conversion<Byte,Integer> B2I = convert("B2I", 'C', byte.class, int.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code byteVal} to {@code (long)byteVal}. */
+    public static final Conversion<Byte,Long> B2L = convert("B2L", 'C', byte.class, long.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code byteVal} to {@code (short)byteVal}. */
+    public static final Conversion<Byte,Short> B2S = convert("B2S", 'C', byte.class, short.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code doubleVal} to {@code (byte)doubleVal}. */
+    public static final Conversion<Double,Byte> D2B = convert("D2B", 'C', double.class, byte.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code doubleVal} to {@code (float)doubleVal}. */
+    public static final Conversion<Double,Float> D2F = convert("D2F", 'C', double.class, float.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code doubleVal} to {@code (int)doubleVal}. */
+    public static final Conversion<Double,Integer> D2I = convert("D2I", 'C', double.class, int.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code doubleVal} to {@code (long)doubleVal}. */
+    public static final Conversion<Double,Long> D2L = convert("D2L", 'C', double.class, long.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code doubleVal} to {@code (short)doubleVal}. */
+    public static final Conversion<Double,Short> D2S = convert("D2S", 'C', double.class, short.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code floatVal} to {@code (byte)floatVal}. */
+    public static final Conversion<Float,Byte> F2B = convert("F2B", 'C', float.class, byte.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code floatVal} to {@code (double)floatVal}. */
+    public static final Conversion<Float,Double> F2D = convert("F2D", 'C', float.class, double.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code floatVal} to {@code (int)floatVal}. */
+    public static final Conversion<Float,Integer> F2I = convert("F2I", 'C', float.class, int.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code floatVal} to {@code (long)floatVal}. */
+    public static final Conversion<Float,Long> F2L = convert("F2L", 'C', float.class, long.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code floatVal} to {@code (short)floatVal}. */
+    public static final Conversion<Float,Short> F2S = convert("F2S", 'C', float.class, short.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code intVal} to {@code (byte)intVal}. */
+    public static final Conversion<Integer,Byte> I2B = convert("I2B", 'C', int.class, byte.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code intVal} to {@code (double)intVal}. */
+    public static final Conversion<Integer,Double> I2D = convert("I2D", 'C', int.class, double.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code intVal} to {@code (float)intVal}. */
+    public static final Conversion<Integer,Float> I2F = convert("I2F", 'C', int.class, float.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code intVal} to {@code (long)intVal}. */
+    public static final Conversion<Integer,Long> I2L = convert("I2L", 'C', int.class, long.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code intVal} to {@code (short)intVal}. */
+    public static final Conversion<Integer,Short> I2S = convert("I2S", 'C', int.class, short.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code longVal} to {@code (byte)longVal}. */
+    public static final Conversion<Long,Byte> L2B = convert("L2B", 'C', long.class, byte.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code longVal} to {@code (double)longVal}. */
+    public static final Conversion<Long,Double> L2D = convert("L2D", 'C', long.class, double.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code longVal} to {@code (float)longVal}. */
+    public static final Conversion<Long,Float> L2F = convert("L2F", 'C', long.class, float.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code longVal} to {@code (int)longVal}. */
+    public static final Conversion<Long,Integer> L2I = convert("L2I", 'C', long.class, int.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code longVal} to {@code (short)longVal}. */
+    public static final Conversion<Long,Short> L2S = convert("L2S", 'C', long.class, short.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code shortVal} to {@code (byte)shortVal}. */
+    public static final Conversion<Short,Byte> S2B = convert("S2B", 'C', short.class, byte.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code shortVal} to {@code (double)shortVal}. */
+    public static final Conversion<Short,Double> S2D = convert("S2D", 'C', short.class, double.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code shortVal} to {@code (float)shortVal}. */
+    public static final Conversion<Short,Float> S2F = convert("S2F", 'C', short.class, float.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code shortVal} to {@code (int)shortVal}. */
+    public static final Conversion<Short,Integer> S2I = convert("S2I", 'C', short.class, int.class, VO_KIND_CAST, VO_ALL);
+    /** Convert {@code shortVal} to {@code (long)shortVal}. */
+    public static final Conversion<Short,Long> S2L = convert("S2L", 'C', short.class, long.class, VO_KIND_CAST, VO_ALL);
+    /** In-place narrow {@code doubleVal} to {@code (byte)doubleVal} inside double. */
+    public static final Conversion<Double,Double> INPLACE_D2B = convert("INPLACE_D2B", 'N', double.class, double.class, VO_KIND_INPLACE + 0x78, VO_ALL);
+    /** In-place narrow {@code doubleVal} to {@code (float)doubleVal} inside double. */
+    public static final Conversion<Double,Double> INPLACE_D2F = convert("INPLACE_D2F", 'N', double.class, double.class, VO_KIND_INPLACE + 0x76, VO_ALL);
+    /** In-place narrow {@code doubleVal} to {@code (int)doubleVal} inside double. */
+    public static final Conversion<Double,Double> INPLACE_D2I = convert("INPLACE_D2I", 'N', double.class, double.class, VO_KIND_INPLACE + 0x7a, VO_ALL);
+    /** In-place narrow {@code doubleVal} to {@code (short)doubleVal} inside double. */
+    public static final Conversion<Double,Double> INPLACE_D2S = convert("INPLACE_D2S", 'N', double.class, double.class, VO_KIND_INPLACE + 0x79, VO_ALL);
+    /** In-place narrow {@code floatVal} to {@code (byte)floatVal} inside float. */
+    public static final Conversion<Float,Float> INPLACE_F2B = convert("INPLACE_F2B", 'N', float.class, float.class, VO_KIND_INPLACE + 0x68, VO_ALL);
+    /** In-place narrow {@code floatVal} to {@code (short)floatVal} inside float. */
+    public static final Conversion<Float,Float> INPLACE_F2S = convert("INPLACE_F2S", 'N', float.class, float.class, VO_KIND_INPLACE + 0x69, VO_ALL);
+    /** In-place narrow {@code intVal} to {@code (byte)intVal} inside int. */
+    public static final Conversion<Integer,Integer> INPLACE_I2B = convert("INPLACE_I2B", 'N', int.class, int.class, VO_KIND_INPLACE + 0xa8, VO_ALL);
+    /** In-place narrow {@code intVal} to {@code (short)intVal} inside int. */
+    public static final Conversion<Integer,Integer> INPLACE_I2S = convert("INPLACE_I2S", 'N', int.class, int.class, VO_KIND_INPLACE + 0xa9, VO_ALL);
+    /** In-place narrow {@code longVal} to {@code (byte)longVal} inside long. */
+    public static final Conversion<Long,Long> INPLACE_L2B = convert("INPLACE_L2B", 'N', long.class, long.class, VO_KIND_INPLACE + 0xb8, VO_ALL);
+    /** In-place narrow {@code longVal} to {@code (float)longVal} inside long. */
+    public static final Conversion<Long,Long> INPLACE_L2F = convert("INPLACE_L2F", 'N', long.class, long.class, VO_KIND_INPLACE + 0xb6, VO_ALL);
+    /** In-place narrow {@code longVal} to {@code (int)longVal} inside long. */
+    public static final Conversion<Long,Long> INPLACE_L2I = convert("INPLACE_L2I", 'N', long.class, long.class, VO_KIND_INPLACE + 0xba, VO_ALL);
+    /** In-place narrow {@code longVal} to {@code (short)longVal} inside long. */
+    public static final Conversion<Long,Long> INPLACE_L2S = convert("INPLACE_L2S", 'N', long.class, long.class, VO_KIND_INPLACE + 0xb9, VO_ALL);
+    /** In-place narrow {@code shortVal} to {@code (byte)shortVal} inside short. */
+    public static final Conversion<Short,Short> INPLACE_S2B = convert("INPLACE_S2B", 'N', short.class, short.class, VO_KIND_INPLACE + 0x98, VO_ALL);
+    /** In-place widen {@code byteVal} inside double to {@code (double)byteVal}. */
+    public static final Conversion<Double,Double> INPLACE_B2D = convert("INPLACE_B2D", 'W', double.class, double.class, VO_KIND_INPLACE + 0x87, VO_ALL);
+    /** In-place widen {@code byteVal} inside float to {@code (float)byteVal}. */
+    public static final Conversion<Float,Float> INPLACE_B2F = convert("INPLACE_B2F", 'W', float.class, float.class, VO_KIND_INPLACE + 0x86, VO_ALL);
+    /** In-place widen {@code byteVal} inside int to {@code (int)byteVal}. */
+    public static final Conversion<Integer,Integer> INPLACE_B2I = convert("INPLACE_B2I", 'W', int.class, int.class, VO_KIND_INPLACE + 0x8a, VO_ALL);
+    /** In-place widen {@code byteVal} inside long to {@code (long)byteVal}. */
+    public static final Conversion<Long,Long> INPLACE_B2L = convert("INPLACE_B2L", 'W', long.class, long.class, VO_KIND_INPLACE + 0x8b, VO_ALL);
+    /** In-place widen {@code byteVal} inside short to {@code (short)byteVal}. */
+    public static final Conversion<Short,Short> INPLACE_B2S = convert("INPLACE_B2S", 'W', short.class, short.class, VO_KIND_INPLACE + 0x89, VO_ALL);
+    /** In-place widen {@code floatVal} inside double to {@code (double)floatVal}. */
+    public static final Conversion<Double,Double> INPLACE_F2D = convert("INPLACE_F2D", 'W', double.class, double.class, VO_KIND_INPLACE + 0x67, VO_ALL);
+    /** In-place widen {@code floatVal} inside long to {@code (long)floatVal}. */
+    public static final Conversion<Long,Long> INPLACE_F2L = convert("INPLACE_F2L", 'W', long.class, long.class, VO_KIND_INPLACE + 0x6b, VO_ALL);
+    /** In-place widen {@code intVal} inside double to {@code (double)intVal}. */
+    public static final Conversion<Double,Double> INPLACE_I2D = convert("INPLACE_I2D", 'W', double.class, double.class, VO_KIND_INPLACE + 0xa7, VO_ALL);
+    /** In-place widen {@code intVal} inside long to {@code (long)intVal}. */
+    public static final Conversion<Long,Long> INPLACE_I2L = convert("INPLACE_I2L", 'W', long.class, long.class, VO_KIND_INPLACE + 0xab, VO_ALL);
+    /** In-place widen {@code shortVal} inside double to {@code (double)shortVal}. */
+    public static final Conversion<Double,Double> INPLACE_S2D = convert("INPLACE_S2D", 'W', double.class, double.class, VO_KIND_INPLACE + 0x97, VO_ALL);
+    /** In-place widen {@code shortVal} inside float to {@code (float)shortVal}. */
+    public static final Conversion<Float,Float> INPLACE_S2F = convert("INPLACE_S2F", 'W', float.class, float.class, VO_KIND_INPLACE + 0x96, VO_ALL);
+    /** In-place widen {@code shortVal} inside int to {@code (int)shortVal}. */
+    public static final Conversion<Integer,Integer> INPLACE_S2I = convert("INPLACE_S2I", 'W', int.class, int.class, VO_KIND_INPLACE + 0x9a, VO_ALL);
+    /** In-place widen {@code shortVal} inside long to {@code (long)shortVal}. */
+    public static final Conversion<Long,Long> INPLACE_S2L = convert("INPLACE_S2L", 'W', long.class, long.class, VO_KIND_INPLACE + 0x9b, VO_ALL);
+    /** Reinterpret bits of {@code doubleVal} as {@code long}. */
+    public static final Conversion<Double,Long> REINTERPRET_D2L = convert("REINTERPRET_D2L", 'R', double.class, long.class, VO_KIND_BITWISE, VO_ALL);
+    /** Reinterpret bits of {@code floatVal} as {@code int}. */
+    public static final Conversion<Float,Integer> REINTERPRET_F2I = convert("REINTERPRET_F2I", 'R', float.class, int.class, VO_KIND_BITWISE, VO_ALL);
+    /** Reinterpret bits of {@code intVal} as {@code float}. */
+    public static final Conversion<Integer,Float> REINTERPRET_I2F = convert("REINTERPRET_I2F", 'R', int.class, float.class, VO_KIND_BITWISE, VO_ALL);
+    /** Reinterpret bits of {@code longVal} as {@code double}. */
+    public static final Conversion<Long,Double> REINTERPRET_L2D = convert("REINTERPRET_L2D", 'R', long.class, double.class, VO_KIND_BITWISE, VO_ALL);
+    /** Zero-extend {@code byteVal} to {@code int}. */
+    public static final Conversion<Byte,Integer> ZERO_EXTEND_B2I = convert("ZERO_EXTEND_B2I", 'Z', byte.class, int.class, VO_KIND_BITWISE, VO_ALL);
+    /** Zero-extend {@code byteVal} to {@code long}. */
+    public static final Conversion<Byte,Long> ZERO_EXTEND_B2L = convert("ZERO_EXTEND_B2L", 'Z', byte.class, long.class, VO_KIND_BITWISE, VO_ALL);
+    /** Zero-extend {@code byteVal} to {@code short}. */
+    public static final Conversion<Byte,Short> ZERO_EXTEND_B2S = convert("ZERO_EXTEND_B2S", 'Z', byte.class, short.class, VO_KIND_BITWISE, VO_ALL);
+    /** Zero-extend {@code intVal} to {@code long}. */
+    public static final Conversion<Integer,Long> ZERO_EXTEND_I2L = convert("ZERO_EXTEND_I2L", 'Z', int.class, long.class, VO_KIND_BITWISE, VO_ALL);
+    /** Zero-extend {@code shortVal} to {@code int}. */
+    public static final Conversion<Short,Integer> ZERO_EXTEND_S2I = convert("ZERO_EXTEND_S2I", 'Z', short.class, int.class, VO_KIND_BITWISE, VO_ALL);
+    /** Zero-extend {@code shortVal} to {@code long}. */
+    public static final Conversion<Short,Long> ZERO_EXTEND_S2L = convert("ZERO_EXTEND_S2L", 'Z', short.class, long.class, VO_KIND_BITWISE, VO_ALL);
+
+    // (End of conversion operators)
+
+    private static int opInfo(int opCode, int bits) {
+        if (opCode >= 0) {
+            bits |= VO_OPCODE_VALID;
+        } else {
+            opCode &= (VO_OPCODE_LIMIT - 1);  // not a valid op
+            bits |= VO_SPECIAL;  // mark for special handling
+        }
+        assert((bits >> VO_OPCODE_SHIFT) == 0);
+        assert(opCode >= 0 && opCode < VO_OPCODE_LIMIT);
+        return (opCode << VO_OPCODE_SHIFT) + bits;
+    }
+
+    private static Unary unary(String name, String opName, int opCode, int flags) {
+        if (opCode >= 0 && (flags & VO_PRIVATE) == 0)
+            OPC_NAME.put(opCode, name);
+        return new UnaryImpl(name, opName, opInfo(opCode, flags | VO_UNARY));
+    }
+
+    private static Binary binary(String name, String opName, int opCode, int flags) {
+        if (opCode >= 0 && (flags & VO_PRIVATE) == 0)
+            OPC_NAME.put(opCode, name);
+        return new BinaryImpl(name, opName, opInfo(opCode, flags | VO_BINARY));
+    }
+
+    private static Ternary ternary(String name, String opName, int opCode, int flags) {
+        if (opCode >= 0 && (flags & VO_PRIVATE) == 0)
+            OPC_NAME.put(opCode, name);
+        return new TernaryImpl(name, opName, opInfo(opCode, flags | VO_TERNARY));
+    }
+
+    private static Associative assoc(String name, String opName, int opCode, int flags) {
+        if (opCode >= 0 && (flags & VO_PRIVATE) == 0)
+            OPC_NAME.put(opCode, name);
+        return new AssociativeImpl(name, opName, opInfo(opCode, flags | VO_BINARY | VO_ASSOC));
+    }
+
+    private static Comparison compare(String name, String opName, int opCode, int flags) {
+        if (opCode >= 0 && (flags & VO_PRIVATE) == 0)
+            CMP_OPC_NAME.put(opCode, name);
+        return new ComparisonImpl(name, opName, opInfo(opCode, flags | VO_BINARY | VO_BOOL));
+    }
+
+    private static <E,F> ConversionImpl<E,F>
+    convert(String name, char kind, Class<E> dom, Class<F> ran, int opCode, int flags) {
+        int domran = ((LaneType.of(dom).basicType << VO_DOM_SHIFT) +
+                      (LaneType.of(ran).basicType << VO_RAN_SHIFT));
+        if (opCode >= 0) {
+            if ((opCode & VO_DOM_RAN_MASK) == 0) {
+                opCode += domran;
+            } else {
+                // only the widening or narrowing guys specify their own opcode dom/ran
+                assert(dom == ran && "WN".indexOf(kind) >= 0);
+            }
+            if ((flags & VO_PRIVATE) == 0)
+                CONV_OPC_NAME.put(opCode, name);
+        }
+        String opName = dom+"-"+kind+"-"+ran; //??
+        return new ConversionImpl<>(name, opName, opInfo(opCode, flags | VO_UNARY | VO_CONV),
+                                    kind, dom, ran);
+    }
+
+    private static abstract class OperatorImpl implements Operator {
+        private @Stable final String symName;
+        private @Stable final String opName;
+        private @Stable final int opInfo;
+
+        OperatorImpl(String symName, String opName, int opInfo) {
+            this.symName = symName;
+            this.opName = opName;
+            this.opInfo = opInfo;
+            assert(opInfo != 0);
+        }
+
+        @Override
+        public final String name() {
+            return symName;
+        }
+        @Override
+        public final String operatorName() {
+            return opName;
+        }
+        @Override
+        public final String toString() {
+            return name();
+        }
+        @Override
+        public final int arity() {
+            return opInfo & VO_ARITY_MASK;
+        }
+        @Override
+        public final boolean isBoolean() {
+            return opKind(VO_BOOL);
+        }
+        @Override
+        public Class<?> rangeType() {
+            return Object.class;
+        }
+        @Override
+        public final boolean isAssociative() {
+            return opKind(VO_ASSOC);
+        }
+
+        @ForceInline
+        public boolean compatibleWith(Class<?> elementType) {
+            return compatibleWith(LaneType.of(elementType));
+        }
+
+        /*package-private*/
+        @ForceInline
+        int opInfo() {
+            return opInfo;
+        }
+
+        /*package-private*/
+        @ForceInline
+        int opCode(int requireKind, int forbidKind) {
+            int opc = opCodeRaw();
+            if ((opInfo & requireKind) != requireKind ||
+                (forbidKind != 0 &&
+                 (opInfo & forbidKind)  == forbidKind)) {
+                throw illegalOperation(requireKind, forbidKind);
+            }
+            return opc;
+        }
+
+        /*package-private*/
+        @ForceInline
+        int opCodeRaw() {
+            return (opInfo >> VO_OPCODE_SHIFT);
+        }
+
+        /*package-private*/
+        UnsupportedOperationException
+        illegalOperation(int requireKind, int forbidKind) {
+            String msg1 = "";
+            requireKind &=~ VO_OPCODE_VALID;
+            switch (requireKind) {
+            case VO_ONLYFP:  msg1 = "floating point operation required here"; break;
+            case VO_NOFP:    msg1 = "integral/bitwise operation required here"; break;
+            case VO_ASSOC:   msg1 = "associative operation required here"; break;
+            }
+            String msg2 = "";
+            switch (forbidKind) {
+            case VO_ONLYFP:  msg2 = "inapplicable floating point operation"; break;
+            case VO_NOFP:    msg2 = "inapplicable integral/bitwise operation"; break;
+            }
+            if ((opInfo & VO_OPCODE_VALID) == 0) {
+                msg2 = "operation is not implemented";
+            }
+            return illegalOperation(msg1, msg2);
+        }
+
+        /*package-private*/
+        UnsupportedOperationException
+        illegalOperation(String msg1, String msg2) {
+            String dot = "";
+            if (!msg1.isEmpty() && !msg2.isEmpty()) {
+                dot = "; ";
+            } else if (msg1.isEmpty() && msg2.isEmpty()) {
+                // Couldn't decode the *kind bits.
+                msg1 = "illegal operation";
+            }
+            String msg = String.format("%s: %s%s%s", this, msg1, dot, msg2);
+            return new UnsupportedOperationException(msg);
+        }
+
+
+        /*package-private*/
+        @ForceInline
+        boolean opKind(int kindBit) {
+            return (opInfo & kindBit) != 0;
+        }
+
+        @ForceInline
+        /*package-private*/
+        boolean compatibleWith(LaneType laneType) {
+            if (laneType.elementKind == 'F') {
+                return !opKind(VO_NOFP);
+            } else if (laneType.elementKind == 'I') {
+                return !opKind(VO_ONLYFP);
+            } else {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    private static class UnaryImpl extends OperatorImpl implements Unary {
+        private UnaryImpl(String symName, String opName, int opInfo) {
+            super(symName, opName, opInfo);
+        }
+    }
+
+    private static class BinaryImpl extends OperatorImpl implements Binary {
+        private BinaryImpl(String symName, String opName, int opInfo) {
+            super(symName, opName, opInfo);
+        }
+    }
+
+    private static class TernaryImpl extends OperatorImpl implements Ternary {
+        private TernaryImpl(String symName, String opName, int opInfo) {
+            super(symName, opName, opInfo);
+        }
+    }
+
+    private static class AssociativeImpl extends BinaryImpl implements Associative {
+        private AssociativeImpl(String symName, String opName, int opInfo) {
+            super(symName, opName, opInfo);
+        }
+    }
+
+    /*package-private*/
+    static
+    class ConversionImpl<E,F> extends OperatorImpl
+                              implements Conversion<E,F> {
+        private ConversionImpl(String symName, String opName, int opInfo,
+                               char kind, Class<E> dom, Class<F> ran) {
+            super(symName, opName, opInfo);
+            this.kind = kind;
+            this.dom = LaneType.of(dom);
+            this.ran = LaneType.of(ran);
+            check(dom, ran);  // make sure it all lines up
+        }
+        private final @Stable char kind;
+        private final @Stable LaneType dom;
+        private final @Stable LaneType ran;
+
+        // non-overrides are all package-private
+
+        char kind()  { return kind; }
+        LaneType domain() { return dom; }
+        LaneType range()  { return ran; }
+
+        int sizeChangeLog2() {
+            return ran.elementSizeLog2 - dom.elementSizeLog2;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public Class<E> domainType() {
+            return (Class<E>) dom.elementType;
+        }
+        @SuppressWarnings("unchecked")
+        @Override
+        public Class<F> rangeType() {
+            return (Class<F>) ran.elementType;
+        }
+
+        @SuppressWarnings("unchecked")
+        @ForceInline
+        public
+        <E,F> Conversion<E,F>
+        check(Class<E> dom, Class<F> ran) {
+            if (this.dom.elementType != dom ||
+                this.ran.elementType != ran)
+                throw checkFailed(dom, ran);
+            return (Conversion<E,F>) this;
+        }
+        private RuntimeException checkFailed(Class<?> dom, Class<?> ran) {
+            return new ClassCastException(toString()+": not "+dom+" -> "+ran);
+        }
+
+        static ConversionImpl<?,?> ofCopy(LaneType dom) {
+            return findConv('I', dom, dom);
+        }
+        static ConversionImpl<?,?> ofCast(LaneType dom, LaneType ran) {
+            if (dom == ran)  return ofCopy(dom);
+            return findConv('C', dom, ran);
+        }
+        static ConversionImpl<?,?> ofReinterpret(LaneType dom, LaneType ran) {
+            if (dom == ran)  return ofCopy(dom);
+            if (dom.elementKind == 'I' &&
+                ran.elementKind == 'I' &&
+                dom.elementSize < ran.elementSize) {
+                // Zero extension of field (unsigned semantics).
+                return findConv('Z', dom, ran);
+            }
+            // if (dom.elementSize != ran.elementSize) {
+            //     throw new IllegalArgumentException("bad reinterpret");
+            // }
+            return findConv('R', dom, ran);
+        }
+        static ConversionImpl<?,?> ofInplace(ConversionImpl<?,?> conv,
+                                             boolean widening) {
+            int domSize = conv.dom.elementSize;
+            int ranSize = conv.ran.elementSize;
+            if (domSize >= ranSize && widening)
+                throw new IllegalArgumentException(conv + ": must be a widening conversion");
+            if (domSize <= ranSize && !widening)
+                throw new IllegalArgumentException(conv + ": must be a narrowing conversion");
+            if (conv.kind != 'C')
+                throw new IllegalArgumentException(conv + ": must be a standard Java conversion");
+            char kind = (widening ? 'W' : 'N');
+            return findConv(kind, conv.dom, conv.ran);
+        }
+
+        @ForceInline
+        private static ConversionImpl<?,?>
+        findConv(char kind, LaneType dom, LaneType ran) {
+            ConversionImpl<?,?>[] cache = cacheOf(kind, dom);
+            int ranKey = ran.switchKey;
+            ConversionImpl<?,?> conv = cache[ranKey];
+            if (conv != null) {
+                return conv;
+            }
+            return makeConv(kind, dom, ran);
+        }
+
+        static String a2b(LaneType dom, LaneType ran) {
+            return dom.typeChar + "2" + ran.typeChar;
+        }
+
+        static ConversionImpl<?,?>
+        makeConv(char kind, LaneType dom, LaneType ran) {
+            String name;
+            Class<?> domType = dom.elementType;
+            Class<?> ranType = ran.elementType;
+            int domCode = (dom.basicType << VO_DOM_SHIFT);
+            int ranCode = (ran.basicType << VO_RAN_SHIFT);
+            int opCode = domCode + ranCode;
+            switch (kind) {
+            case 'I':
+                assert(dom == ran);
+                name = "COPY_"+a2b(dom, ran);
+                opCode = VO_KIND_CAST;
+                break;
+            case 'C':
+                name = ""+a2b(dom, ran);
+                opCode = VO_KIND_CAST;
+                break;
+            case 'R':
+                name = "REINTERPRET_"+a2b(dom, ran);
+                opCode = VO_KIND_BITWISE;
+                break;
+            case 'Z':
+                name = "ZERO_EXTEND_"+a2b(dom, ran);
+                opCode = VO_KIND_BITWISE;
+                break;
+            case 'W':
+                name = "INPLACE_"+a2b(dom, ran);
+                opCode += VO_KIND_INPLACE;
+                domType = ranType;  // slice narrow domain from range
+                break;
+            case 'N':
+                name = "INPLACE_"+a2b(dom, ran);
+                opCode += VO_KIND_INPLACE;
+                ranType = domType;  // zero-fill narrow range
+                break;
+            default:  throw new AssertionError();
+            }
+            ConversionImpl<?,?> conv = convert(name, kind, domType, ranType, opCode, VO_ALL);
+            // Put into the cache for next time.
+            // The JIT can see into this cache
+            // when kind/dom/ran are all constant.
+            ConversionImpl<?,?>[] cache = cacheOf(kind, dom);
+            int ranKey = ran.switchKey;
+            // The extra "check" calls help validate that
+            // we aren't cross-wiring the cache.
+            conv.check(domType, ranType);
+            synchronized (ConversionImpl.class) {
+                if (cache[ranKey] == null) {
+                    cache[ranKey] = conv; 
+                } else {
+                    conv = cache[ranKey];
+                    conv.check(domType, ranType);
+                }
+            }
+            return conv;
+        }
+        private final void check(char kind, LaneType dom, LaneType ran) {
+            if (this.kind != kind || this.dom != dom || this.ran != ran) {
+                throw new AssertionError(this + " != " + dom + kind + ran);
+            }
+        }
+
+        /** Helper for cache probes. */
+        @ForceInline
+        private static ConversionImpl<?,?>[]
+        cacheOf(char kind, LaneType dom) {
+            assert("CIRZWN".indexOf(kind) >= 0);
+            int k = (kind <= 'I' ? KIND_CI :
+                     (kind == 'R' || kind == 'Z') ? KIND_RZ :
+                     KIND_WN);
+            return CACHES[k][dom.switchKey];
+        }
+        private static final int
+            LINE_LIMIT = LaneType.SK_LIMIT,
+            KIND_CI = 0, KIND_RZ = 1, KIND_WN = 2, KIND_LIMIT = 3;
+        private static final @Stable ConversionImpl<?,?>[][][]
+            CACHES = new ConversionImpl<?,?>[KIND_LIMIT][LINE_LIMIT][LINE_LIMIT];
+
+        private synchronized static void initCaches() {
+            for (var f : VectorOperators.class.getFields()) {
+                if (f.getType() != Conversion.class)  continue;
+                ConversionImpl<?,?> conv;
+                try {
+                    conv = (ConversionImpl) f.get(null);
+                } catch (ReflectiveOperationException ex) {
+                    throw new AssertionError(ex);
+                }
+                LaneType dom = conv.dom;
+                LaneType ran = conv.ran;
+                int opc = conv.opCodeRaw();
+                switch (conv.kind) {
+                case 'W':
+                    int domCode = (opc >> VO_DOM_SHIFT) & 0xF;
+                    dom = LaneType.ofBasicType(domCode);
+                    break;
+                case 'N':
+                    int ranCode = (opc >> VO_RAN_SHIFT) & 0xF;
+                    ran = LaneType.ofBasicType(ranCode);
+                    break;
+                }
+                assert((opc & VO_DOM_RAN_MASK) ==
+                       ((dom.basicType << VO_DOM_SHIFT) +
+                        (ran.basicType << VO_RAN_SHIFT)));
+                ConversionImpl<?,?>[] cache = cacheOf(conv.kind, dom);
+                int ranKey = ran.switchKey;
+                if (cache[ranKey] != conv) {
+                    assert(cache[ranKey] == null ||
+                           cache[ranKey].name().equals(conv.name()))
+                        : conv + " vs. " + cache[ranKey];
+                    cache[ranKey] = conv;
+                }
+            }
+        }
+
+        // hack for generating static field defs
+        static { assert(genCode()); }
+        private static boolean genCode() {
+            if (true)  return true;  // remove to enable code
+            ArrayList<String> defs = new ArrayList<>();
+            for (LaneType l1 : LaneType.values()) {
+                for (LaneType l2 : LaneType.values()) {
+                    for (int i = 0; i <= 2; i++) {
+                        ConversionImpl<?,?> c;
+                        try {
+                            c = ((i == 0) ? ofCast(l1, l2) :
+                                 (i == 1) ? ofReinterpret(l1, l2) :
+                                 ofInplace(ofCast(l1, l2), (l1.elementSize < l2.elementSize)));
+                        } catch (IllegalArgumentException ex) {
+                            assert((i == 1 && l1.elementSize != l2.elementSize) ||
+                                   (i == 2 && l1.elementSize == l2.elementSize));
+                            continue;  // ignore this combo
+                        }
+                        if (c.kind == 'C' ||
+                            c.kind == 'Z' ||
+                            (c.kind == 'R' &&
+                             l1.elementKind+l2.elementKind == 'F'+'I' &&
+                             l1.elementSize == l2.elementSize) ||
+                            (c.kind == 'N' || c.kind == 'W')) {
+                            int opc = c.opCodeRaw();
+                            String opcs;
+                            switch (opc & ~VO_DOM_RAN_MASK) {
+                            case VO_KIND_CAST: opcs = "VO_KIND_CAST"; break;
+                            case VO_KIND_BITWISE: opcs = "VO_KIND_BITWISE"; break;
+                            case VO_KIND_INPLACE: opcs = "VO_KIND_INPLACE"; break;
+                            default: opcs = Integer.toHexString(opc);
+                            }
+                            String code = c.genCode(opcs);
+                            if (!defs.contains(code))  defs.add(code);
+                        }
+                    }
+                }
+            }
+            java.util.Collections.sort(defs);
+            for (String def : defs)  System.out.println(def);
+            return true;
+        }
+        private String genCode(String opcs) {
+            if (true)  return null;  // remove to enable code
+            int domran = opCodeRaw() & VO_DOM_RAN_MASK;
+            switch (kind()) {
+            case 'W': case 'N':
+                opcs += " + 0x" + Integer.toHexString(domran);
+            }
+            String doc;
+            switch (kind()) {
+            case 'R':
+                doc = "Reinterpret bits of {@code _domVal} as {@code _ran}";
+                break;
+            case 'Z':
+                doc = "Zero-extend {@code _domVal} to {@code _ran}";
+                break;
+            case 'W':
+                doc = "In-place widen {@code _domVal} inside _ran to {@code (_ran)_domVal}";
+                LaneType logdom = LaneType.ofBasicType(domran >> VO_DOM_SHIFT & 0xF);
+                doc = doc.replace("_dom", logdom.elementType.getSimpleName());
+                break;
+            case 'N':
+                doc = "In-place narrow {@code _domVal} to {@code (_ran)_domVal} inside _dom";
+                LaneType logran = LaneType.ofBasicType(domran >> VO_RAN_SHIFT & 0xF);
+                doc = doc.replace("_ran", logran.elementType.getSimpleName());
+                break;
+            default:
+                doc = "Convert {@code _domVal} to {@code (_ran)_domVal}";
+            }
+            String code = (
+                    "    /** _Doc. */" + "\n" +
+                    "    public static final Conversion<_Dom,_Ran> _N" +
+                    " = convert(\"_N\", '_K', _dom.class, _ran.class, _opc, VO_ALL);");
+            return code
+                .replace("_Doc", doc)
+                .replace("_dom", dom.elementType.getSimpleName())
+                .replace("_ran", ran.elementType.getSimpleName())
+                .replace("_Dom", dom.genericElementType.getSimpleName())
+                .replace("_Ran", ran.genericElementType.getSimpleName())
+                .replace("_N", name())
+                .replace("_K", ""+kind())
+                .replace("_opc", ""+opcs);
+        }
+    }
+
+    private static class ComparisonImpl extends OperatorImpl implements Comparison {
+        private ComparisonImpl(String symName, String opName, int opInfo) {
+            super(symName, opName, opInfo);
+        }
+        @Override
+        public Class<?> rangeType() {
+            return boolean.class;
+        }
+        public boolean test(long a, long b) {
+            switch (opInfo() >> VO_OPCODE_SHIFT) {
+            case VectorIntrinsics.BT_eq:  return a == b;
+            case VectorIntrinsics.BT_ne:  return a != b;
+            case VectorIntrinsics.BT_lt:  return a <  b;
+            case VectorIntrinsics.BT_le:  return a <= b;
+            case VectorIntrinsics.BT_gt:  return a >  b;
+            case VectorIntrinsics.BT_ge:  return a >= b;
+            }
+            throw new AssertionError();
+        }
+    }
+
+    /**
+     * Bit manipulation operations that are applicable
+     * to vector mask bits and lane bits.
+     *
+     * There are precisely 16 of these, because there are only
+     * {@linkplain BitCombiner#opCode() 16 distinct truth tables}
+     * for binary boolean operations.
+     * 
+     * Trivial operations, such as "return false always" or
+     * "just copy argument #1", are included.
+     */
+    public enum BitCombiner {
+        /** Combine {@code a&b}. */
+        AND(0b1000),
+        /** Combine {@code ~a&b}. */
+        ANDC1(0b0010),
+        /** Combine {@code a&~b}. */
+        ANDC2(0b0100),
+        /** Combine {@code ~(a|b)}. */
+        NOR(0b0001),
+        /** Combine {@code a|b}. */
+        OR(0b1110),
+        /** Combine {@code ~a|b}. */
+        ORC1(0b1011),
+        /** Combine {@code a|~b}. */
+        ORC2(0b1101),
+        /** Combine {@code ~(a&b)}. */
+        NAND(0b0111),
+        /** Combine {@code a^b}. */
+        XOR(0b0110),
+        /** Combine {@code a^~b}. */
+        XNOR(0b1001),
+        /** Return only {@code 0L}. */
+        FALSE(0b0000),
+        /** Return only {@code ~0L}. */
+        TRUE(0b1111),
+        /** Return only {@code ~a}. */
+        NOT1(0b0011),
+        /** Return only {@code ~b}. */
+        NOT2(0b0101),
+        /** Return only {@code a}. */
+        JUST1(0b1100),
+        /** Return only {@code b}. */
+        JUST2(0b1010);
+
+        BitCombiner(int opCode) {
+            this.opCode = opCode | 0x100; //@Stable != 0
+        }
+
+        /** Evaluates this logical operation relation against
+         *  a pair of boolean arguments.
+         *  @param a the first argument
+         *  @param b the second argument
+         *  @return the selected logical combination of
+         *          {@code a} and {@code b}
+         */
+        public boolean apply(boolean a, boolean b) {
+            int shift = ((a ? 2 : 0) + (b ? 1 : 0));
+            return ((opCode >> shift) & 1) != 0;
+        }
+
+        /** Evaluates this logical operation relation against
+         *  a pair of long bitfield arguments.
+         *  @param a the first argument
+         *  @param b the second argument
+         *  @return the bitwise application of this comparison
+         *          between bits of {@code a} and {@code b}
+         */
+        public long apply(long a, long b) {
+            switch (opCode()) {
+            case 0b1000: return a&b;    // AND
+            case 0b0010: return ~a&b;   // ANDC1
+            case 0b0100: return a&~b;   // ANDC2
+            case 0b0001: return ~(a|b); // NOR
+            case 0b1110: return a|b;    // OR
+            case 0b1011: return ~a|b;   // ORC1
+            case 0b1101: return a|~b;   // ORC2
+            case 0b0111: return ~(a&b); // NAND
+            case 0b0110: return a^b;    // XOR
+            case 0b1001: return a^~b;   // XNOR
+            case 0b0000: return 0L;     // FALSE
+            case 0b1111: return ~0L;    // TRUE
+            case 0b0011: return ~a;     // C1
+            case 0b0101: return ~b;     // C2
+            case 0b1100: return a;      // X1
+            case 0b1010: return b;      // X2
+            }
+            throw new AssertionError();
+        }
+
+        private @Stable final int opCode;
+
+        /**
+         * Returns a four-bit encoding of the truth table for this
+         * operation.  The encoding is a small integer of the form
+         * {@code P*8+Q*4+R*2+S}, where each letter is defined as
+         * follows:
+         * <ul>
+         * <li> {@code P=this.apply(true,true)?1:0}
+         * <li> {@code Q=this.apply(true,false)?1:0}
+         * <li> {@code R=this.apply(false,true)?1:0}
+         * <li> {@code S=this.apply(false,false)?1:0}
+         * </ul>
+         * @return an encoding of this operation's truth table
+         * @see #ofOpCode(int)
+         */
+        public int opCode() { return opCode & 0xFF; }
+
+        /**
+         * Given an encoded truth table (a four-bit
+         * value in the range 0..15), return the
+         * corresponding combiner.
+         * @param opCode the desired truth table encoding
+         * @return a combiner with that truth table
+         * @see #opCode()
+         */
+        public static BitCombiner ofOpCode(int opCode) {
+            if (opCode != (opCode & (BY_OPCODE.length-1)))
+                throw new IllegalArgumentException("bad opCode: "+opCode);
+            return BY_OPCODE[opCode];
+        }
+
+        private @Stable static final BitCombiner[] BY_OPCODE;
+        static {
+            BitCombiner[] a = new BitCombiner[16];
+            assert(values().length == a.length);
+            for (BitCombiner op : values()) {
+                int opc = op.opCode();
+                assert(a[opc] == null);
+                a[opc] = op;
+            }
+            BY_OPCODE = a;
+        }
+    }
+
+    static {
+        ConversionImpl.initCaches();
+        assert(checkConstants());
+    }
+
+    private static boolean checkConstants() {
+        // Check uniqueness of opcodes, to prevent dumb aliasing errors.
+        OperatorImpl[] ops = new OperatorImpl[VO_OPCODE_LIMIT << VO_OPCODE_SHIFT];
+        for (var f : VectorOperators.class.getFields()) {
+            Class<?> ft = f.getType();
+            OperatorImpl op;
+            try {
+                op = (OperatorImpl) f.get(null);
+            } catch (ReflectiveOperationException ex) {
+                throw new AssertionError(ex);
+            }
+            assert(op.name().equals(f.getName())) : op;
+            assert(op.isAssociative() == (ft == Associative.class)) : op;
+            assert(op.isBoolean() == (ft == Comparison.class)) : op;
+            if (ft == Unary.class || ft == Conversion.class) {
+                assert(op.arity() == 1) : op;
+            } else if (ft == Ternary.class) {
+                assert(op.arity() == 3) : op;
+            } else {
+                assert(op.arity() == 2) : op;
+                if (ft != Associative.class &&
+                    ft != Comparison.class) {
+                    assert(ft == Binary.class) : op;
+                }
+            }
+            if (op.opKind(VO_OPCODE_VALID)) {
+                int opsMask = (((VO_OPCODE_LIMIT-1) << VO_OPCODE_SHIFT)
+                               | VO_BOOL | VO_CONV
+                               | VO_ARITY_MASK);
+                int opsIndex = op.opInfo & opsMask;
+                OperatorImpl op0 = ops[opsIndex];
+                assert(op0 == null)
+                    : java.util.Arrays.asList(op0, Integer.toHexString(op0.opInfo), op, Integer.toHexString(op.opInfo));
+                ops[opsIndex] = op;
+            } else {
+                // These are all the "-1" opcode guys we know about:
+                assert(op == ZOMO ||
+                       op == FIRST_NONZERO ||
+                       op == ANDC2 ||
+                       op == ROL ||
+                       op == ROR ||
+                       op == BITWISE_BLEND) : op;
+            }
+        }
+        return true;
+    }
+
+    // Managing behavioral information on slow paths:
+    /*package-private*/
+    static class ImplCache<OP extends Operator,T> {
+        public ImplCache(Class<OP> whatKind,
+                         Class<? extends Vector<?>> whatVec) {
+            this.whatKind = whatKind;
+            this.whatVec = whatVec;
+        }
+
+        // These are used only for forming diagnostics:
+        private final Class<OP> whatKind;
+        private final Class<? extends Vector<?>> whatVec;
+
+        private final @Stable
+        Object[] cache = new Object[VO_OPCODE_LIMIT];
+
+        public T find(OP op, int opc, IntFunction<T> supplier) {
+            @SuppressWarnings("unchecked")
+            T fn = (T) cache[opc];
+            if (fn != null)  return fn;
+            fn = supplier.apply(opc);
+            if (fn == null)  throw badOp(op);
+            assert(VectorIntrinsics.isNonCapturingLambda(fn)) : fn;
+            // The JIT can see into this cache:
+            cache[opc] = fn;
+            return fn;
+        }
+
+        private UnsupportedOperationException badOp(Operator op) {
+            String msg = String.format("%s: illegal %s in %s",
+                                       op,
+                                       whatKind.getSimpleName().toLowerCase(),
+                                       whatVec.getSimpleName());
+            return new UnsupportedOperationException(msg);
+        }
+
+        @Override public String toString() {
+            ArrayList<String> entries = new ArrayList<>();
+            for (int i = 0; i < cache.length; i++) {
+                Object fn = cache[i];
+                if (fn != null)  entries.add(i+": "+fn);
+            }
+            return String.format("ImplCache<%s,%s>[%s]",
+                                 whatKind.getSimpleName(),
+                                 whatVec.getSimpleName(),
+                                 String.join(", ", entries));
+        }
+    }
+}
