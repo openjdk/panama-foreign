@@ -416,7 +416,7 @@ public class DirectSignatureShuffler {
             case VECTOR_ARGUMENT_REGISTER:
             case VECTOR_RETURN_REGISTER:
                 //avoid passing around floats as doubles as that leads to trouble
-                return (binding.argument().layout().bitsSize() / 8) == binding.storage().getSize();
+                return binding.argument().layout().bitsSize() == 64;
             case INTEGER_ARGUMENT_REGISTER:
                 // On some platforms large by-value structures are passed by
                 // pointer in integer argument registers

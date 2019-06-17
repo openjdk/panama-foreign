@@ -63,7 +63,7 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
             } else if (abi instanceof Windowsx64ABI) {
                 PTR_SIZE = NativeTypes.LittleEndian.WinABI.POINTER.bytesSize() * 8;
             } else if (abi instanceof AArch64ABI) {
-                PTR_SIZE = NativeTypes.LittleEndian.SysVABI.POINTER.bytesSize() * 8;
+                PTR_SIZE = NativeTypes.LittleEndian.AArch64ABI.POINTER.bytesSize() * 8;
             } else {
                 throw new UnsupportedOperationException("Unsupported ABI");
             }
