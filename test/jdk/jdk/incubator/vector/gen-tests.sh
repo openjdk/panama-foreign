@@ -24,6 +24,26 @@
 # questions.
 #
 
+# For manual invocation.
+# You can regenerate the source files,
+# and you can clean them up.
+# FIXME: Move this script under $REPO/make/gensrc/
+list_mech_gen() {
+    ( # List MG files physically present
+      grep -il 'mechanically generated.*do not edit' $(find * -name \*.java -print)
+      # List MG files currently deleted (via --clean)
+      hg status -nd .
+    ) | egrep '(^|/)(Byte|Short|Int|Long|Float|Double)(Scalar|([0-9Max]+Vector)).*\.java$'
+}
+case $* in
+'')             CLASS_FILTER='*';;
+--generate*)    CLASS_FILTER=${2-'*'};;
+--clean)        MG=$(list_mech_gen); set -x; rm -f $MG; exit;;
+--revert)       MG=$(list_mech_gen); set -x; hg revert $MG; exit;;
+--list)         list_mech_gen; exit;;
+--help|*)       echo "Usage: $0 [--generate [file] | --clean | --revert | --list]"; exit 1;;
+esac
+
 . config.sh
 
 # First, generate the template file.
@@ -134,7 +154,9 @@ do
 
 
     # Generate jtreg tests
-    Log true " ${bits}_jtreg"
+ case $vectorteststype in
+ $CLASS_FILTER)
+    Log true " ${bits}_jtreg $vectorteststype.java"
     Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs -i${TEMPLATE_FILE} -o$vectorteststype.java "
     TEST_DEST_FILE="${vectorteststype}.java"
     rm -f ${TEST_DEST_FILE}
@@ -145,9 +167,13 @@ do
       tr -d  '\r' < ${TEST_DEST_FILE} > temp
       mv temp ${TEST_DEST_FILE}
     fi
+    ;;
+ esac
 
     # Generate jmh performance tests
-    Log true " ${bits}_jmh"
+ case $vectorbenchtype in
+ $CLASS_FILTER)
+    Log true " ${bits}_jmh $vectorbenchtype.java"
     Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs -i${PERF_TEMPLATE_FILE} -o${vectorteststype}Perf.java "
     PERF_DEST_FILE="${PERF_DEST}/${vectorbenchtype}.java"
     rm -f ${PERF_DEST_FILE}
@@ -158,10 +184,14 @@ do
       tr -d  '\r' < ${PERF_DEST_FILE} > temp
       mv temp ${PERF_DEST_FILE}
     fi
+    ;;
+ esac
   done
 
   # Generate jmh performance tests
-  Log true " scalar"
+ case ${Type}Scalar in
+ $CLASS_FILTER)
+  Log true " scalar ${Type}Scalar.java"
   PERF_DEST_FILE="${PERF_DEST}/${Type}Scalar.java"
   rm -f ${PERF_DEST_FILE}
   ${JAVA} -cp . ${SPP_CLASSNAME} -nel $args \
@@ -171,6 +201,8 @@ do
     tr -d  '\r' < ${PERF_DEST_FILE} > temp
     mv temp ${PERF_DEST_FILE}
   fi
+    ;;
+ esac
 
 
   # Generate tests for loads and stores
@@ -191,7 +223,9 @@ do
     fi
 
     # Generate
-    Log true " ${bits}_ls"
+ case $vectorteststype in
+ $CLASS_FILTER)
+    Log true " ${bits}_ls $vectorteststype.java"
     Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs -itemplates/X-LoadStoreTest.java.template -o$vectorteststype.java "
     TEST_DEST_FILE="${vectorteststype}.java"
     rm -f ${TEST_DEST_FILE}
@@ -202,6 +236,8 @@ do
       tr -d  '\r' < ${TEST_DEST_FILE} > temp
       mv temp ${TEST_DEST_FILE}
     fi
+    ;;
+ esac
 
     # TODO: Generate jmh performance tests for LoadStore variants
   done

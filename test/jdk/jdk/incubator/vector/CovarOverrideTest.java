@@ -51,11 +51,15 @@ import static org.testng.Assert.assertTrue;
 public class CovarOverrideTest {
 
     static final Set<String> NON_COVARIENT_RETURNING_METHOD_NAMES_ON_VECTOR =
-            Set.of("cast", "reinterpret", "reshape");
+            Set.of("convert", "check",
+                   "convertShape", "reinterpretShape", "castShape",
+                   "viewAsIntegralLanes", "viewAsFloatingLanes",
+                   // Deprecated methods (renamed to be more explicit):
+                   "cast", "reinterpret", "reshape");
 
     @DataProvider
     public static Object[][] classesProvider() {
-        return List.of(
+        return List.<Class<? extends Vector>>of(
                 ByteVector.class,
                 ShortVector.class,
                 IntVector.class,
@@ -66,15 +70,29 @@ public class CovarOverrideTest {
                 toArray(Object[][]::new);
     }
 
+    static Class<?> getPublicSuper(Class<?> c) {
+        String pkg = c.getPackageName();
+        for (;;) {
+            Class<?> superClass = c.getSuperclass();
+            if (superClass == Object.class) {
+                Class<?>[] ifcs = c.getInterfaces();
+                assert(ifcs.length == 1);
+                superClass = ifcs[0];
+            }
+            assert(superClass.getPackageName().equals(pkg)) : c;
+            if (Modifier.isPublic(superClass.getModifiers()))
+                return superClass;
+            // ByteVector <: package-private AbstractVector <: Vector
+            c = superClass;
+        }
+    }
+
     @Test(dataProvider = "classesProvider")
     public void testCovarientOverridesExist(Class<?> c) {
-        Class<?> superClass = c.getSuperclass();
-
+        assert(c != Vector.class &&
+               Vector.class.isAssignableFrom(c));
         Class<?> vectorClass = c;
-        if (superClass == VectorSpecies.class) {
-            vectorClass = c.getDeclaringClass();
-        }
-
+        Class<?> superClass = getPublicSuper(c);
         List<Method> notFound = new ArrayList<>();
         List<Method> notCovarientlyOverridden = new ArrayList<>();
         for (Method superMethod : getVectorReturningMethods(superClass)) {
@@ -106,7 +124,7 @@ public class CovarOverrideTest {
         var filteredMethods = Stream.of(c.getDeclaredMethods()).
                 filter(m -> Modifier.isPublic(m.getModifiers())).
                 filter(m -> Vector.class == m.getReturnType());
-        if (c == Vector.class) {
+        if (c == Vector.class || c == VectorSpecies.class) {
             filteredMethods = filteredMethods.
                     filter(m -> !NON_COVARIENT_RETURNING_METHOD_NAMES_ON_VECTOR.contains(m.getName()));
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -54,15 +55,15 @@ import java.util.Objects;
  * For each lane of the input mask the
  * lane element is operated on using the specified scalar unary operation and
  * the boolean result is placed into the mask result at the same lane.
- * The following pseudocode expresses the behavior of this operation category:
+ * The following pseudocode illustrates the behavior of this operation category:
  *
  * <pre>{@code
  * VectorMask<E> a = ...;
  * boolean[] ar = new boolean[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_unary_op(a.isSet(i));
+ *     ar[i] = scalar_unary_op(a.laneIsSet(i));
  * }
- * VectorMask<E> r = VectorMask.fromArray(a.species(), ar, 0);
+ * VectorMask<E> r = VectorMask.fromArray(a.vectorSpecies(), ar, 0);
  * }</pre>
  *
  * <li>
@@ -72,52 +73,78 @@ import java.util.Objects;
  * the corresponding lane elements from a and b are operated on
  * using the specified scalar binary operation and the boolean result is placed
  * into the mask result at the same lane.
- * The following pseudocode expresses the behavior of this operation category:
+ * The following pseudocode illustrates the behavior of this operation category:
  *
  * <pre>{@code
  * VectorMask<E> a = ...;
  * VectorMask<E> b = ...;
  * boolean[] ar = new boolean[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_binary_op(a.isSet(i), b.isSet(i));
+ *     ar[i] = scalar_binary_op(a.laneIsSet(i), b.laneIsSet(i));
  * }
- * VectorMask<E> r = VectorMask.fromArray(a.species(), ar, 0);
+ * VectorMask<E> r = VectorMask.fromArray(a.vectorSpecies(), ar, 0);
  * }</pre>
  *
  * <li>
  * A cross-lane reduction operation accepts an input mask and produces a scalar result.
  * For each lane of the input mask the lane element is operated on, together with a scalar accumulation value,
  * using the specified scalar binary operation.  The scalar result is the final value of the accumulator. The
- * following pseudocode expresses the behaviour of this operation category:
+ * following pseudocode illustrates the behaviour of this operation category:
  *
  * <pre>{@code
  * Mask<E> a = ...;
  * int acc = zero_for_scalar_binary_op;  // 0, or 1 for &
  * for (int i = 0; i < a.length(); i++) {
- *      acc = scalar_binary_op(acc, a.isSet(i) ? 1 : 0);  // & | +
+ *      acc = scalar_binary_op(acc, a.laneIsSet(i) ? 1 : 0);  // & | +
  * }
  * return acc;  // maybe boolean (acc != 0)
  * }</pre>
  *
  * </ul>
  * @param <E> the boxed element type of this mask
+ *
+ * <h1>Value-based classes and identity operations</h1>
+ *
+ * {@code VectorMask}, along with {@link Vector}, is a
+ * <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
+ * class.
+ *
+ * With {@code VectorMask}, identity-sensitive operations such as {@code ==}
+ * may yield unpredictable results, or reduced performance.  Oddly
+ * enough, {@link VectorMask#equals(Object) v.equals(w)} is likely to be
+ * faster than {@code v==w}, since {@code equals} is <em>not</em>
+ * an identity sensitive method.  (Neither is {@code toString} nor
+ * {@code hashCode}.)
+
+ * Also, vector mask objects can be stored in locals and parameters and as
+ * {@code static final} constants, but storing them in other Java
+ * fields or in array elements, while semantically valid, may incur
+ * performance penalties.
  */
 public abstract class VectorMask<E> {
     VectorMask() {}
 
     /**
-     * Returns the species of this mask.
+     * Returns the vector species to which this mask applies.
+     * This mask applies to vectors of the same species,
+     * and the same number of lanes.
      *
-     * @return the species of this mask
+     * @return the vector species of this mask
      */
-    public abstract VectorSpecies<E> species();
+    public abstract VectorSpecies<E> vectorSpecies();
 
     /**
-     * Returns the number of mask lanes (the length).
+     * Returns the number of mask lanes.
+     * This mask applies to vectors of the same number of lanes,
+     * and the same species.
      *
      * @return the number of mask lanes
      */
-    public int length() { return species().length(); }
+    @ForceInline
+    public final int length() {
+        AbstractSpecies<E> vspecies = (AbstractSpecies<E>) vectorSpecies();
+        return vspecies.laneCount();
+    }
 
     /**
      * Returns a mask where each lane is set or unset according to given
@@ -126,16 +153,25 @@ public abstract class VectorMask<E> {
      * For each mask lane, where {@code N} is the mask lane index,
      * if the given {@code boolean} value at index {@code N} is {@code true}
      * then the mask lane at index {@code N} is set, otherwise it is unset.
+     * <p>
+     * The given species must have a number of lanes that is compatible
+     * with the given array.
      *
-     * @param species mask species
+     * @param species vector species for the desired mask
      * @param bits the given {@code boolean} values
-     * @return a mask where each lane is set or unset according to the given {@code boolean} value
-     * @throws IndexOutOfBoundsException if {@code bits.length < species.length()}
+     * @return a mask where each lane is set or unset according to the given
+     *         {@code boolean} value
+     * @throws IllegalArgumentException
+     *         if {@code bits.length != species.length()}
+     * @see #fromLong(VectorSpecies, boolean...)
+     * @see #fromArray(VectorSpecies, boolean[], int)
      * @see Vector#maskFromValues(boolean...)
      */
     @ForceInline
     public static <E> VectorMask<E> fromValues(VectorSpecies<E> species, boolean... bits) {
-        return fromArray(species, bits, 0);
+        AbstractSpecies<E> vspecies = (AbstractSpecies<E>) species;
+        VectorIntrinsics.requireLength(bits.length, vspecies.laneCount());
+        return fromArray(vspecies, bits, 0);
     }
 
     /**
@@ -145,70 +181,94 @@ public abstract class VectorMask<E> {
      * if the array element at index {@code ix + N} is {@code true} then the
      * mask lane at index {@code N} is set, otherwise it is unset.
      *
-     * @param species mask species
+     * @param species vector species for the desired mask
      * @param bits the {@code boolean} array
      * @param offset the offset into the array
-     * @return the mask loaded from a {@code boolean} array
+     * @return the mask loaded from the {@code boolean} array
      * @throws IndexOutOfBoundsException if {@code offset < 0}, or
      * {@code offset > bits.length - species.length()}
-     * @see Vector#maskFromArray(boolean[], int)
+     * @see #fromLong(VectorSpecies, boolean...)
+     * @see #fromValues(VectorSpecies, boolean...)
      */
     @ForceInline
     @SuppressWarnings("unchecked")
     public static <E> VectorMask<E> fromArray(VectorSpecies<E> species, boolean[] bits, int offset) {
-        Objects.requireNonNull(bits);
-        offset = VectorIntrinsics.checkIndex(offset, bits.length, species.length());
-        return VectorIntrinsics.load((Class<VectorMask<E>>) species.maskType(), species.elementType(), species.length(),
+        AbstractSpecies<E> vsp = (AbstractSpecies<E>) species;
+        int laneCount = vsp.laneCount();
+        offset = VectorIntrinsics.checkFromIndexSize(offset, laneCount, bits.length);
+        return VectorIntrinsics.load(
+                vsp.maskType(), vsp.elementType(), laneCount,
                 bits, (long) offset + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
-                bits, offset, species,
-                (boolean[] c, int idx, VectorSpecies<E> s) -> ((AbstractSpecies<E>)s).opm(n -> c[idx + n]));
+                bits, offset, vsp,
+                (c, idx, s)
+                  -> s.opm(n -> c[idx + n]));
     }
 
     /**
-     * Returns a mask where all lanes are set.
+     * Returns a mask where each lane is set or unset according to
+     * the bits in the given bitmask, starting with the least
+     * significant bit, and continuing up through the sign bit.
+     * <p>
+     * For each mask lane, where {@code N} is the mask lane index,
+     * if the expression {@code (bits>>min(63,N))&1} is non-zero,
+     * then the mask lane at index {@code N} is set, otherwise it is unset.
+     * <p>
+     * If the given species has fewer than 64 lanes, the high
+     * {@code 64-VLENGTH} bits of the bit-mask are ignored.
+     * If the given species has more than 64 lanes, the sign
+     * bit is replicated into lane 64 and beyond.
      *
-     * @param species mask species
-     * @return a mask where all lanes are set
-     * @see Vector#maskAllTrue()
+     * @param species vector species for the desired mask
+     * @param bits the given mask bits, as a 64-bit signed integer
+     * @return a mask where each lane is set or unset according to
+     *         the bits in the given integer value
+     * @see #fromValues(VectorSpecies, boolean...)
+     * @see #fromArray(VectorSpecies, boolean[], int)
+     * @see Vector#maskFromBits(long)
      */
     @ForceInline
-    @SuppressWarnings("unchecked")
-    public static <E> VectorMask<E> maskAllTrue(VectorSpecies<E> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<VectorMask<E>>) species.maskType(), species.elementType(), species.length(),
-                -1,  species,
-                ((z, s) -> AbstractMask.trueMask(s)));
+    public static <E> VectorMask<E> fromLong(VectorSpecies<E> species, long bits) {
+        AbstractSpecies<E> vspecies = (AbstractSpecies<E>) species;
+        int laneCount = vspecies.laneCount();
+        if (laneCount < Long.SIZE) {
+            int extraSignBits = Long.SIZE - laneCount;
+            bits <<= extraSignBits;
+            bits >>= extraSignBits;
+        }
+        if (bits == (bits >> 1)) {
+            // Special case.
+            assert(bits == 0 || bits == -1);
+            return vspecies.maskAll(bits != 0);
+        }
+        // FIXME: Intrinsify this.
+        long shifted = bits;
+        boolean[] a = new boolean[laneCount];
+        for (int i = 0; i < a.length; i++) {
+            a[i] = ((shifted & 1) != 0);
+            shifted >>= 1;  // replicate sign bit
+        }
+        return fromValues(vspecies, a);
     }
 
     /**
-     * Returns a mask where all lanes are unset.
-     *
-     * @param species mask species
-     * @return a mask where all lanes are unset
-     * @see Vector#maskAllFalse()
-     */
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public static <E> VectorMask<E> maskAllFalse(VectorSpecies<E> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<VectorMask<E>>) species.maskType(), species.elementType(), species.length(),
-                0, species,
-                ((z, s) -> AbstractMask.falseMask(s)));
-    }
-
-    /**
-     * Converts this mask to a mask of the given species shape of element type {@code F}.
+     * Converts this mask to a mask of the given species of
+     * element type {@code F}.
+     * The {@code species.length()} must be equal to the
+     * mask length.
+     * The various mask lane bits are unmodified.
      * <p>
      * For each mask lane, where {@code N} is the lane index, if the
      * mask lane at index {@code N} is set, then the mask lane at index
      * {@code N} of the resulting mask is set, otherwise that mask lane is
      * not set.
      *
-     * @param s the species of the desired mask
+     * @param species vector species for the desired mask
      * @param <F> the boxed element type of the species
      * @return a mask converted by shape and element type
      * @throws IllegalArgumentException if this mask length and the species
-     * length differ
+     *         length differ
      */
-    public abstract <F> VectorMask<F> cast(VectorSpecies<F> s);
+    public abstract <F> VectorMask<F> cast(VectorSpecies<F> species);
 
     /**
      * Returns the lane elements of this mask packed into a {@code long}
@@ -217,12 +277,15 @@ public abstract class VectorMask<E> {
      * The lane elements are packed in the order of least significant bit
      * to most significant bit.
      * For each mask lane where {@code N} is the mask lane index, if the
-     * mask lane is set then the {@code N}'th bit is set to one in the
-     * resulting {@code long} value, otherwise the {@code N}'th bit is set
+     * mask lane is set then the {@code N}th bit is set to one in the
+     * resulting {@code long} value, otherwise the {@code N}th bit is set
      * to zero.
+     * The mask must no more than 64 lanes.
      *
      * @return the lane elements of this mask packed into a {@code long}
-     * value.
+     *         value.
+     * @throws IllegalArgumentException if there are more than 64 lanes
+     *         in this mask
      */
     public abstract long toLong();
 
@@ -230,8 +293,10 @@ public abstract class VectorMask<E> {
      * Returns an {@code boolean} array containing the lane elements of this
      * mask.
      * <p>
-     * This method behaves as if it {@link #intoArray(boolean[], int)} stores}
-     * this mask into an allocated array and returns that array as
+     * This method behaves as if it stores
+     * this mask into an allocated array
+     * (using {@link #intoArray(boolean[], int)})
+     * and returns that array as
      * follows:
      * <pre>{@code
      * boolean[] a = new boolean[this.length()];
@@ -247,13 +312,13 @@ public abstract class VectorMask<E> {
      * Stores this mask into a {@code boolean} array starting at offset.
      * <p>
      * For each mask lane, where {@code N} is the mask lane index,
-     * the lane element at index {@code N} is stored into the array at index
-     * {@code i + N}.
+     * the lane element at index {@code N} is stored into the array
+     * element {@code a[offset+N]}.
      *
-     * @param a the array
+     * @param a the array, of type boolean[]
      * @param offset the offset into the array
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
-     * {@code offset > a.length - this.length()}
+     * @throws IndexOutOfBoundsException if {@code offset < 0} or
+     *         {@code offset > a.length - this.length()}
      */
     public abstract void intoArray(boolean[] a, int offset);
 
@@ -281,47 +346,151 @@ public abstract class VectorMask<E> {
     public abstract int trueCount();
 
     /**
+     * Returns the index of the first mask lane that is set.
+     * Returns {@code VLENGTH} if none of them are set.
+     *
+     * @return the index of the first mask lane that is set, or {@code VLENGTH}
+     */
+    public abstract int firstTrue();
+
+    /**
+     * Returns the index of the last mask lane that is set.
+     * Returns {@code -1} if none of them are set.
+     *
+     * @return the index of the last mask lane that is set, or {@code -1}
+     */
+    public abstract int lastTrue();
+
+    /**
      * Logically ands this mask with an input mask.
      * <p>
-     * This is a lane-wise binary operation which applies the logical and operation
-     * ({@code &&}) to each lane.
+     * This is a lane-wise binary operation which applies
+     * the logical and operation
+     * ({@code &}) to each corresponding pair of mask bits.
+     * It is equivalent to
+     * {@linkplain #bitwise(VectorOperators.BitCombiner,VectorMask) bitwise application}
+     * of {@link VectorOperators.BitCombiner#AND BitCombiner.AND}.
      *
      * @param o the input mask
-     * @return the result of logically and'ing this mask with an input mask
+     * @return the result of logically and-ing this mask with an input mask
      */
     public abstract VectorMask<E> and(VectorMask<E> o);
 
     /**
-     * Logically ors this mask with an input mask.
+     * Logically ands this mask with an input mask.
      * <p>
-     * This is a lane-wise binary operation which applies the logical or operation
-     * ({@code ||}) to each lane.
+     * This is a lane-wise binary operation which applies
+     * the logical and operation
+     * ({@code |}) to each corresponding pair of mask bits.
+     * It is equivalent to
+     * {@linkplain #bitwise(VectorOperators.BitCombiner,VectorMask) bitwise application}
+     * of {@link VectorOperators.BitCombiner#OR BitCombiner.OR}.
      *
      * @param o the input mask
-     * @return the result of logically or'ing this mask with an input mask
+     * @return the result of logically or-ing this mask with an input mask
      */
     public abstract VectorMask<E> or(VectorMask<E> o);
 
     /**
      * Logically negates this mask.
      * <p>
-     * This is a lane-wise unary operation which applies the logical not operation
-     * ({@code !}) to each lane.
+     * This is a lane-wise binary operation which applies
+     * the logical not operation
+     * ({@code ~}) to each mask bit.
+     * It is equivalent to
+     * {@linkplain #bitwise(VectorOperators.BitCombiner,VectorMask) bitwise application}
+     * of {@link VectorOperators.BitCombiner#NOT1 BitCombiner.NOT1} applied
+     * to this vector (with a redundant copy of itself).
      *
-     * @return the result of logically negating this mask.
+     * @return the result of logically negating this mask
      */
     public abstract VectorMask<E> not();
 
     /**
-     * Returns a vector representation of this mask.
+     * Logically combines this mask with an input mask,
+     * using the selected single-bit binary operator.
      * <p>
-     * For each mask lane, where {@code N} is the mask lane index,
-     * if the mask lane is set then an element value whose most significant
-     * bit is set is placed into the resulting vector at lane index
-     * {@code N}, otherwise the default element value is placed into the
-     * resulting vector at lane index {@code N}.
+     * This is a lane-wise binary operation which applies
+     * the selected logical combination to each lane,
+     * as if executing {@code op.apply(a,b)} for each
+     * corresponding pair of mask bits {@code a} and
+     * {@code b}.
      *
-     * @return a vector representation of this mask.
+     * @param op the desired bit-combination operation
+     * @param o the input mask
+     * @return the result of logically combining this mask with an input mask
+     * @see #and(VectorMask)
+     * @see #or(VectorMask)
+     */
+    public abstract VectorMask<E> bitwise(VectorOperators.BitCombiner op, VectorMask<E> o);
+
+    // FIXME: Consider blend, splice, permute operations.
+
+    /**
+     * Removes lanes numbered {@code N} from this mask where the
+     * adjusted index {@code N+offset}, is not in the range
+     * {@code [0..limit-1]}.
+     * 
+     * <p> In all cases the series of set and unset lanes is assigned
+     * as if by using infinite precision or {@code VLENGTH-}saturating
+     * additions or subtractions, without overflow or wrap-around.
+     *
+     * @apiNote
+     *
+     * This method performs a SIMD emulation of the check performed by
+     * {@link Objects#checkIndex(int,int)}, on the index numbers in
+     * the range {@code [offset..offset+VLENGTH-1].  If an exception
+     * is desired, the resulting mask can be compared with the
+     * original mask; if they are not equal, then at least one lane
+     * was out of range, and exception processing can be performed.
+     *
+     * <p> A mask which is a series of {@code N} set lanes followed by
+     * a series of series of unset lanes can be obtained by calling
+     * {@code allTrue.indexInRange(0, N)}, where {@code allTrue} is a
+     * mask of all true bits.  A mask of {@code N1} unset lanes
+     * followed by {@code N2} set lanes can be obtained by calling
+     * {@code allTrue.indexInRange(-N1, N2)}.
+     *
+     * @return the original mask, with out-of-range lanes unset
+     */
+    public abstract VectorMask<E> indexInRange(int offset, int limit);
+
+    /**
+     * Returns a vector representation of this mask, the
+     * lane bits of which are set or unset in correspondence
+     * to the mask bits.
+     *
+     * For each mask lane, where {@code N} is the mask lane index, if
+     * the mask lane is set at {@code N} then the specific non-default
+     * value {@code -1} is placed into the resulting vector at lane
+     * index {@code N}.  Otherwise the default element value {@code 0}
+     * is placed into the resulting vector at lane index {@code N}.
+     *
+     * Whether the element type ({@code ETYPE}) of this mask is
+     * floating point or integral, the lane value, as selected by the
+     * mask, will be one of the two arithmetic values {@code 0} or
+     * {@code -1}.  For every {@code ETYPE} the most significant bit
+     * of the vector lane is set if and only if the mask lane is set.
+     * In addition, for integral types, <em>all</em> lane bits are set
+     * in lanes where the mask is set.
+     * 
+     * <p> The vector returned is the same as would be computed by
+     * {@code ZERO.blend(MINUS_ONE, this)}, where {@code ZERO} and
+     * {@code MINUS_ONE} are vectors which replicate the default
+     * {@code ETYPE} value and the {@code ETYPE} value representing
+     * {@code -1}, respectively.
+     *
+     * @apiNote For the sake of static type checking, users may wish
+     * to check the resulting vector against the expected integral
+     * lane type or species.  If the mask is for a float-point
+     * species, then the resulting vector will have the same shape and
+     * lane size, but an integral type.  If the mask is for an
+     * integral species, the resulting vector will be of exactly that
+     * species.
+     *
+     * @return a vector representation of this mask
+     * @see Vector#check(Class)
+     * @see Vector#check(VectorSpecies)
      */
     public abstract Vector<E> toVector();
 
@@ -331,15 +500,124 @@ public abstract class VectorMask<E> {
      *
      * @return true if the lane at index {@code i} is set, otherwise false
      */
-    public abstract boolean lane(int i);
+    public abstract boolean laneIsSet(int i);
 
     /**
-     * Tests if the lane at index {@code i} is set
-     * @param i the lane index
-     * @return true if the lane at index {@code i} is set, otherwise false
-     * @see #lane
+     * Checks that this mask applies to vectors with the given element type,
+     * and returns this mask unchanged.
+     * The effect is similar to this pseudocode:
+     * {@code elementType == vectorSpecies().elementType()
+     *        ? this
+     *        : throw new ClassCastException()}.
+     *
+     * @param elementType the required lane type
+     * @param <F> the boxed element type of the required lane type
+     * @return the same mask
+     * @throws ClassCastException if the element type is wrong
+     * @see Vector#check(Class)
+     * @see VectorMask#check(VectorSpecies)
      */
-    public boolean isSet(int i) {
-        return lane(i);
+    public abstract <F> VectorMask<F> check(Class<F> elementType);
+
+    /**
+     * Checks that this mask has the given species,
+     * and returns this mask unchanged.
+     * The effect is similar to this pseudocode:
+     * {@code species == vectorSpecies()
+     *        ? this
+     *        : throw new ClassCastException()}.
+     *
+     * @param species vector species required for this mask
+     * @param <F> the boxed element type of the required species
+     * @return the same mask
+     * @throws ClassCastException if the species is wrong
+     * @see Vector#check(Class)
+     * @see Vector#check(VectorSpecies)
+     */
+    public abstract <F> VectorMask<F> check(VectorSpecies<F> species);
+
+    /**
+     * Returns a string representation of this mask, of the form
+     * {@code "Mask[T.TT...]"}, reporting the mask bit
+     * settings (as 'T' or '.' characters) in lane order.
+     *
+     * @return a string of the form {@code "Mask[T.TT...]"}
+     */
+    @Override
+    public final String toString() {
+        StringBuilder buf = new StringBuilder(length());
+        buf.append("Mask[");
+        for (boolean isSet : toArray()) {
+            buf.append(isSet ? 'T' : '.');
+        }
+        return buf.append(']').toString();
+    }
+
+    /**
+     * Indicates whether this mask is identical to some other object.
+     * Two masks are identical only if they have the same species
+     * and same source indexes, in the same order.
+
+     * @return whether this vector is identical to some other object
+     */
+    @Override
+    public final boolean equals(Object obj) {
+        if (obj instanceof VectorMask) {
+            VectorMask<?> that = (VectorMask<?>) obj;
+            if (this.vectorSpecies().equals(that.vectorSpecies())) {
+                @SuppressWarnings("unchecked")
+                VectorMask<E> that2 = (VectorMask<E>) that;
+                return !this.bitwise(VectorOperators.BitCombiner.XOR,
+                                     that2).anyTrue();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hash code value for the mask,
+     * based on the mask bit settings and the vector species.
+     *
+     * @return  a hash code value for this mask
+     */
+    @Override
+    public final int hashCode() {
+        return Objects.hash(vectorSpecies(), Arrays.hashCode(toArray()));
+    }
+
+    // ==== JROSE NAME CHANGES ====
+
+    // TYPE CHANGED
+    // * toVector() return type is Vector<?> not Vector<E>
+    // ADDED
+    // * indexInRange(int,int,int) (SIMD range check, no overflow)
+    // * fromLong(VectorSpecies, long) (inverse of toLong)
+    // * check(VectorSpecies) (static type-safety check)
+    // * toString(), equals(Object), hashCode() (documented)
+    // * added <E> (not <?>) to toVector
+
+    /** Renamed to {@link #vectorSpecies()}. */
+    @Deprecated
+    public final VectorSpecies<E> species() { return vectorSpecies(); }
+
+    /** Renamed to {@link #laneIsSet(int)}. */
+    @Deprecated
+    public final boolean lane(int i) { return laneIsSet(i); }
+
+    /** Renamed to {@link #laneIsSet(int)}. */
+    @Deprecated
+    public final boolean isSet(int i) { return laneIsSet(i); }
+
+    /** Use {@link VectorSpecies#maskAll(boolean)}. */
+    @Deprecated
+    public static <E> VectorMask<E> maskAllTrue(VectorSpecies<E> species) { return fromBoolean(species, true); }
+
+    /** Use {@link VectorSpecies#maskAll(boolean)}. */
+    @Deprecated
+    public static <E> VectorMask<E> maskAllFalse(VectorSpecies<E> species) { return fromBoolean(species, false); }
+
+    /** Use {@link VectorSpecies#maskAll} */
+    public static <E> VectorMask<E> fromBoolean(VectorSpecies<E> species, boolean bit) {
+        return species.maskAll(bit);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,1322 +36,303 @@ import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
+
 import static jdk.incubator.vector.VectorIntrinsics.*;
+import static jdk.incubator.vector.VectorOperators.*;
 
-@SuppressWarnings("cast")
+#warn This file is preprocessed before being compiled
+
+@SuppressWarnings("cast")  // warning: redundant cast
 final class $vectortype$ extends $abstractvectortype$ {
-    private static final VectorSpecies<$Boxtype$> SPECIES = $Type$Vector.SPECIES_$BITS$;
+    static final $Type$Species VSPECIES =
+        ($Type$Species) $Type$Vector.SPECIES_$BITS$;
 
-    static final $vectortype$ ZERO = new $vectortype$();
+    static final VectorShape VSHAPE =
+        VSPECIES.vectorShape();
 
-    static final int LENGTH = SPECIES.length();
+    static final Class<$vectortype$> VCLASS = $vectortype$.class;
 
-#if[!byteOrShort]
-    // Index vector species
-    private static final IntVector.IntSpecies INDEX_SPECIES;
+    static final int VSIZE = VSPECIES.vectorBitSize();
 
-    static {
-#if[longOrDouble64]
-        INDEX_SPECIES = (IntVector.IntSpecies) IntVector.species(VectorShape.S_64_BIT);
-#else[longOrDouble64]
-        int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
-        INDEX_SPECIES = (IntVector.IntSpecies) IntVector.species(VectorShape.forBitSize(bitSize));
-#end[longOrDouble64]
-    }
+    static final int VLENGTH = VSPECIES.laneCount();
 
-#end[!byteOrShort]
+    static final Class<$Boxtype$> ETYPE = $type$.class;
+
+    // The JVM expects to find the state here.
     private final $type$[] vec; // Don't access directly, use getElements() instead.
-
-    private $type$[] getElements() {
-        return VectorIntrinsics.maybeRebox(this).vec;
-    }
-
-    $vectortype$() {
-        vec = new $type$[SPECIES.length()];
-    }
 
     $vectortype$($type$[] v) {
         vec = v;
     }
 
-    @Override
-    public int length() { return LENGTH; }
+    // For compatibility as $vectortype$::new,
+    // stored into species.vectorFactory.
+    $vectortype$(Object v) {
+        this(($type$[]) v);
+    }
 
-    // Unary operator
+    static final $vectortype$ ZERO = new $vectortype$(new $type$[VLENGTH]);
+    static final $vectortype$ IOTA = new $vectortype$(VSPECIES.iotaArray());
+
+    static {
+        // Warm up a few species caches.
+        // If we do this too much we will
+        // get NPEs from bootstrap circularity.
+        VSPECIES.dummyVector();
+        VSPECIES.withLanes(LaneType.BYTE);
+    }
+
+    // Specialized extractors
+
+    @ForceInline
+    final @Override
+    public $Type$Species vspecies() {
+        // ISSUE:  This should probably be a @Stable
+        // field inside AbstractVector, rather than
+        // a megamorphic method.
+        return VSPECIES;
+    }
+
+#if[extraOverrides]
+    // The following methods do not seem to help the JIT.  This is
+    // probably because once you have the VSPECIES you have everything
+    // else and can inline from its fields.  Add them back in later,
+    // maybe, if we think we need them.  By refraining from overriding
+    // them, we make them monomorphic, which also helps the JIT.
+
+    @ForceInline
+    @Override
+    public final Class<$Boxtype$> elementType() { return $Boxtype$.class; }
+
+    @ForceInline
+    @Override
+    public final int elementSize() { return $Boxtype$.SIZE; }
+
+    @ForceInline
+    @Override
+    public final VectorShape shape() { return VSHAPE; }
+
+    @ForceInline
+    @Override
+    public final int length() { return VLENGTH; }
+
+    @ForceInline
+    @Override
+    public final int bitSize() { return VSIZE; }
+
+    @ForceInline
+    @Override
+    public final int byteSize() { return VSIZE / Byte.SIZE; }
+
+#end[extraOverrides]
+
+    /*package-private*/
+    @ForceInline
+    final @Override
+    $type$[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
+
+    // Virtualized constructors
 
     @Override
-    $vectortype$ uOp(FUnOp f) {
-        $type$[] vec = getElements();
-        $type$[] res = new $type$[length()];
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i]);
-        }
-        return new $vectortype$(res);
+    @ForceInline
+    public final $vectortype$ broadcast($type$ e) {
+        return ($vectortype$) super.broadcastTemplate(e);  // specialize
+    }
+
+#if[!long]
+    @Override
+    @ForceInline
+    public final $vectortype$ broadcast(long e) {
+        return ($vectortype$) super.broadcastTemplate(e);  // specialize
+    }
+#end[!long]
+
+    @Override
+    @ForceInline
+    $masktype$ maskFromArray(boolean[] bits) {
+        return new $masktype$(bits);
     }
 
     @Override
-    $vectortype$ uOp(VectorMask<$Boxtype$> o, FUnOp f) {
-        $type$[] vec = getElements();
-        $type$[] res = new $type$[length()];
-        boolean[] mbits = (($masktype$)o).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
-        }
-        return new $vectortype$(res);
+    @ForceInline
+    $shuffletype$ iotaShuffle() { return $shuffletype$.IOTA; }
+
+    @Override
+    @ForceInline
+    $shuffletype$ shuffleFromBytes(byte[] reorder) { return new $shuffletype$(reorder); }
+
+    @Override
+    @ForceInline
+    $shuffletype$ shuffleFromArray(int[] indexes, int i) { return new $shuffletype$(indexes, i); }
+
+    @Override
+    @ForceInline
+    $shuffletype$ shuffleFromOp(IntUnaryOperator fn) { return new $shuffletype$(fn); }
+
+    // Make a vector of the same species but the given elements:
+    @ForceInline
+    final @Override
+    $vectortype$ vectorFactory($type$[] vec) {
+        return new $vectortype$(vec);
+    }
+
+    @ForceInline
+    final @Override
+    Byte$bits$Vector asByteVectorRaw() {
+        return (Byte$bits$Vector) super.asByteVectorRawTemplate();  // specialize
+    }
+
+    @ForceInline
+    final @Override
+    AbstractVector<?> asVectorRaw(LaneType laneType) {
+        return super.asVectorRawTemplate(laneType);  // specialize
+    }
+
+    // Unary operator
+
+    final @Override
+    $vectortype$ uOp(FUnOp f) {
+        return ($vectortype$) super.uOp(f);  // specialize
+    }
+
+    @ForceInline
+    final @Override
+    $vectortype$ uOp(VectorMask<$Boxtype$> m, FUnOp f) {
+        return ($vectortype$) super.uOp(($masktype$)m, f);  // specialize
     }
 
     // Binary operator
 
-    @Override
+    @ForceInline
+    final @Override
     $vectortype$ bOp(Vector<$Boxtype$> o, FBinOp f) {
-        $type$[] res = new $type$[length()];
-        $type$[] vec1 = this.getElements();
-        $type$[] vec2 = (($vectortype$)o).getElements();
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec1[i], vec2[i]);
-        }
-        return new $vectortype$(res);
+        return ($vectortype$) super.bOp(($vectortype$)o, f);  // specialize
     }
 
-    @Override
-    $vectortype$ bOp(Vector<$Boxtype$> o1, VectorMask<$Boxtype$> o2, FBinOp f) {
-        $type$[] res = new $type$[length()];
-        $type$[] vec1 = this.getElements();
-        $type$[] vec2 = (($vectortype$)o1).getElements();
-        boolean[] mbits = (($masktype$)o2).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
-        }
-        return new $vectortype$(res);
+    @ForceInline
+    final @Override
+    $vectortype$ bOp(Vector<$Boxtype$> o,
+                     VectorMask<$Boxtype$> m, FBinOp f) {
+        return ($vectortype$) super.bOp(($vectortype$)o, ($masktype$)m,
+                                        f);  // specialize
     }
 
-    // Trinary operator
+    // Ternary operator
 
-    @Override
+    @ForceInline
+    final @Override
     $vectortype$ tOp(Vector<$Boxtype$> o1, Vector<$Boxtype$> o2, FTriOp f) {
-        $type$[] res = new $type$[length()];
-        $type$[] vec1 = this.getElements();
-        $type$[] vec2 = (($vectortype$)o1).getElements();
-        $type$[] vec3 = (($vectortype$)o2).getElements();
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
-        }
-        return new $vectortype$(res);
+        return ($vectortype$) super.tOp(($vectortype$)o1, ($vectortype$)o2,
+                                        f);  // specialize
     }
 
-    @Override
-    $vectortype$ tOp(Vector<$Boxtype$> o1, Vector<$Boxtype$> o2, VectorMask<$Boxtype$> o3, FTriOp f) {
-        $type$[] res = new $type$[length()];
-        $type$[] vec1 = getElements();
-        $type$[] vec2 = (($vectortype$)o1).getElements();
-        $type$[] vec3 = (($vectortype$)o2).getElements();
-        boolean[] mbits = (($masktype$)o3).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
-        }
-        return new $vectortype$(res);
+    @ForceInline
+    final @Override
+    $vectortype$ tOp(Vector<$Boxtype$> o1, Vector<$Boxtype$> o2,
+                     VectorMask<$Boxtype$> m, FTriOp f) {
+        return ($vectortype$) super.tOp(($vectortype$)o1, ($vectortype$)o2,
+                                        ($masktype$)m, f);  // specialize
     }
 
-    @Override
+    @ForceInline
+    final @Override
     $type$ rOp($type$ v, FBinOp f) {
-        $type$[] vec = getElements();
-        for (int i = 0; i < length(); i++) {
-            v = f.apply(i, v, vec[i]);
-        }
-        return v;
+        return super.rOp(v, f);  // specialize
     }
 
     @Override
     @ForceInline
-    public <F> Vector<F> cast(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
-        if (s.length() != LENGTH)
-            throw new IllegalArgumentException("Vector length this species length differ");
-
-        return VectorIntrinsics.cast(
-            $vectortype$.class,
-            $type$.class, LENGTH,
-            s.vectorType(),
-            s.elementType(), LENGTH,
-            this, s,
-            (species, vector) -> vector.castDefault(species)
-        );
-    }
-
-    @SuppressWarnings("unchecked")
-    @ForceInline
-    private <F> Vector<F> castDefault(VectorSpecies<F> s) {
-        int limit = s.length();
-
-        Class<?> stype = s.elementType();
-        if (stype == byte.class) {
-            byte[] a = new byte[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (byte) this.lane(i);
-            }
-            return (Vector) ByteVector.fromArray((VectorSpecies<Byte>) s, a, 0);
-        } else if (stype == short.class) {
-            short[] a = new short[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (short) this.lane(i);
-            }
-            return (Vector) ShortVector.fromArray((VectorSpecies<Short>) s, a, 0);
-        } else if (stype == int.class) {
-            int[] a = new int[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (int) this.lane(i);
-            }
-            return (Vector) IntVector.fromArray((VectorSpecies<Integer>) s, a, 0);
-        } else if (stype == long.class) {
-            long[] a = new long[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (long) this.lane(i);
-            }
-            return (Vector) LongVector.fromArray((VectorSpecies<Long>) s, a, 0);
-        } else if (stype == float.class) {
-            float[] a = new float[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (float) this.lane(i);
-            }
-            return (Vector) FloatVector.fromArray((VectorSpecies<Float>) s, a, 0);
-        } else if (stype == double.class) {
-            double[] a = new double[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (double) this.lane(i);
-            }
-            return (Vector) DoubleVector.fromArray((VectorSpecies<Double>) s, a, 0);
-        } else {
-            throw new UnsupportedOperationException("Bad lane type for casting.");
-        }
-    }
-
-    @Override
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public <F> Vector<F> reinterpret(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
-
-        if(s.elementType().equals($type$.class)) {
-            return (Vector<F>) reshape((VectorSpecies<$Boxtype$>)s);
-        }
-        if(s.bitSize() == bitSize()) {
-            return reinterpretType(s);
-        }
-
-        return defaultReinterpret(s);
-    }
-
-    @ForceInline
-    private <F> Vector<F> reinterpretType(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
-
-        Class<?> stype = s.elementType();
-        if (stype == byte.class) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                Byte$bits$Vector.class,
-                byte.class, Byte$bits$Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == short.class) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                Short$bits$Vector.class,
-                short.class, Short$bits$Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == int.class) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                Int$bits$Vector.class,
-                int.class, Int$bits$Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == long.class) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                Long$bits$Vector.class,
-                long.class, Long$bits$Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == float.class) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                Float$bits$Vector.class,
-                float.class, Float$bits$Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == double.class) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                Double$bits$Vector.class,
-                double.class, Double$bits$Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else {
-            throw new UnsupportedOperationException("Bad lane type for casting.");
-        }
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ reshape(VectorSpecies<$Boxtype$> s) {
-        Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.vectorType() == $Type$64Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                $Type$64Vector.class,
-                $type$.class, $Type$64Vector.LENGTH,
-                this, s,
-                (species, vector) -> ($abstractvectortype$) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 128 && (s.vectorType() == $Type$128Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                $Type$128Vector.class,
-                $type$.class, $Type$128Vector.LENGTH,
-                this, s,
-                (species, vector) -> ($abstractvectortype$) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 256 && (s.vectorType() == $Type$256Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                $Type$256Vector.class,
-                $type$.class, $Type$256Vector.LENGTH,
-                this, s,
-                (species, vector) -> ($abstractvectortype$) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 512 && (s.vectorType() == $Type$512Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                $Type$512Vector.class,
-                $type$.class, $Type$512Vector.LENGTH,
-                this, s,
-                (species, vector) -> ($abstractvectortype$) vector.defaultReinterpret(species)
-            );
-        } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.vectorType() == $Type$MaxVector.class)) {
-            return VectorIntrinsics.reinterpret(
-                $vectortype$.class,
-                $type$.class, LENGTH,
-                $Type$MaxVector.class,
-                $type$.class, $Type$MaxVector.LENGTH,
-                this, s,
-                (species, vector) -> ($abstractvectortype$) vector.defaultReinterpret(species)
-            );
-        } else {
-            throw new InternalError("Unimplemented size");
-        }
-    }
-
-    // Binary operations with scalars
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ add($type$ o) {
-        return add(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ add($type$ o, VectorMask<$Boxtype$> m) {
-        return add(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ sub($type$ o) {
-        return sub(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ sub($type$ o, VectorMask<$Boxtype$> m) {
-        return sub(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ mul($type$ o) {
-        return mul(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ mul($type$ o, VectorMask<$Boxtype$> m) {
-        return mul(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ min($type$ o) {
-        return min(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ max($type$ o) {
-        return max(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<$Boxtype$> equal($type$ o) {
-        return equal(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<$Boxtype$> notEqual($type$ o) {
-        return notEqual(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<$Boxtype$> lessThan($type$ o) {
-        return lessThan(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<$Boxtype$> lessThanEq($type$ o) {
-        return lessThanEq(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<$Boxtype$> greaterThan($type$ o) {
-        return greaterThan(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<$Boxtype$> greaterThanEq($type$ o) {
-        return greaterThanEq(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ blend($type$ o, VectorMask<$Boxtype$> m) {
-        return blend(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-
-#if[FP]
-    @Override
-    @ForceInline
-    public $abstractvectortype$ div($type$ o) {
-        return div(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ div($type$ o, VectorMask<$Boxtype$> m) {
-        return div(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ div(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return blend(div(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ atan2($type$ o) {
-        return atan2(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ atan2($type$ o, VectorMask<$Boxtype$> m) {
-        return atan2(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ pow($type$ o) {
-        return pow(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ pow($type$ o, VectorMask<$Boxtype$> m) {
-        return pow(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ fma($type$ o1, $type$ o2) {
-        return fma(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o1), ($vectortype$)$abstractvectortype$.broadcast(SPECIES, o2));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ fma($type$ o1, $type$ o2, VectorMask<$Boxtype$> m) {
-        return fma(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o1), ($vectortype$)$abstractvectortype$.broadcast(SPECIES, o2), m);
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ hypot($type$ o) {
-        return hypot(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ hypot($type$ o, VectorMask<$Boxtype$> m) {
-        return hypot(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-#end[FP]
-
-#if[BITWISE]
-    @Override
-    @ForceInline
-    public $abstractvectortype$ and($type$ o) {
-        return and(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ and($type$ o, VectorMask<$Boxtype$> m) {
-        return and(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ or($type$ o) {
-        return or(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ or($type$ o, VectorMask<$Boxtype$> m) {
-        return or(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ xor($type$ o) {
-        return xor(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$ xor($type$ o, VectorMask<$Boxtype$> m) {
-        return xor(($vectortype$)$abstractvectortype$.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ neg() {
-        return ($vectortype$)zero(SPECIES).sub(this);
-    }
-#end[BITWISE]
-
-    // Unary operations
-
-    @ForceInline
-    @Override
-    public $vectortype$ neg(VectorMask<$Boxtype$> m) {
-        return blend(neg(), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ abs() {
-        return VectorIntrinsics.unaryOp(
-            VECTOR_OP_ABS, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> v1.uOp((i, a) -> ($type$) Math.abs(a)));
-    }
-
-    @ForceInline
-    @Override
-    public $vectortype$ abs(VectorMask<$Boxtype$> m) {
-        return blend(abs(), m);
-    }
-
-#if[FP]
-    @Override
-    @ForceInline
-    public $vectortype$ neg() {
-        return VectorIntrinsics.unaryOp(
-            VECTOR_OP_NEG, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> v1.uOp((i, a) -> ($type$) -a));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ div(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$)(a / b)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ sqrt() {
-        return VectorIntrinsics.unaryOp(
-            VECTOR_OP_SQRT, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> v1.uOp((i, a) -> ($type$) Math.sqrt((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ exp() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_EXP, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.exp((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ log1p() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_LOG1P, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.log1p((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ log() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_LOG, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.log((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ log10() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_LOG10, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.log10((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ expm1() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_EXPM1, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.expm1((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ cbrt() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_CBRT, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.cbrt((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ sin() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_SIN, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.sin((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ cos() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_COS, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.cos((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ tan() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_TAN, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.tan((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ asin() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_ASIN, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.asin((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ acos() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_ACOS, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.acos((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ atan() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_ATAN, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.atan((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ sinh() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_SINH, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.sinh((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ cosh() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_COSH, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.cosh((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ tanh() {
-        return ($vectortype$) VectorIntrinsics.unaryOp(
-            VECTOR_OP_TANH, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.tanh((double) a)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ pow(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return ($vectortype$) VectorIntrinsics.binaryOp(
-            VECTOR_OP_POW, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(Math.pow(a,b))));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ hypot(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return ($vectortype$) VectorIntrinsics.binaryOp(
-            VECTOR_OP_HYPOT, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(Math.hypot(a,b))));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ atan2(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return ($vectortype$) VectorIntrinsics.binaryOp(
-            VECTOR_OP_ATAN2, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(Math.atan2(a,b))));
-    }
-
-#end[FP]
-
-#if[BITWISE]
-    @Override
-    @ForceInline
-    public $vectortype$ not() {
-        return VectorIntrinsics.unaryOp(
-            VECTOR_OP_NOT, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v1 -> v1.uOp((i, a) -> ($type$) ~a));
-    }
-
-    @ForceInline
-    @Override
-    public $vectortype$ not(VectorMask<$Boxtype$> m) {
-        return blend(not(), m);
-    }
-#end[BITWISE]
-    // Binary operations
-
-    @Override
-    @ForceInline
-    public $vectortype$ add(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_ADD, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$)(a + b)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ add(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return blend(add(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ sub(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_SUB, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$)(a - b)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ sub(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return blend(sub(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ mul(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ mul(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return blend(mul(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ min(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return ($vectortype$) VectorIntrinsics.binaryOp(
-            VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$) Math.min(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ min(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return blend(min(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ max(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$) Math.max(a, b)));
-        }
-
-    @Override
-    @ForceInline
-    public $vectortype$ max(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return blend(max(v), m);
-    }
-
-#if[BITWISE]
-    @Override
-    @ForceInline
-    public $vectortype$ and(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_AND, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$)(a & b)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ or(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_OR, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$)(a | b)));
+    public final <F>
+    Vector<F> convertShape(VectorOperators.Conversion<$Boxtype$,F> conv,
+                           VectorSpecies<F> rsp, int part) {
+        return super.convertShapeTemplate(conv, rsp, part);  // specialize
     }
 
     @Override
     @ForceInline
-    public $vectortype$ xor(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_XOR, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$)(a ^ b)));
+    public final <F>
+    Vector<F> reinterpretShape(VectorSpecies<F> toSpecies, int part) {
+        return super.reinterpretShapeTemplate(toSpecies, part);  // specialize
     }
 
-    @Override
-    @ForceInline
-    public $vectortype$ and(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return blend(and(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ or(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return blend(or(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ xor(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
-        return blend(xor(v), m);
-    }
-#end[BITWISE]
-
-#if[byte]
-    @Override
-    @ForceInline
-    public $vectortype$ shiftLeft(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a << (i & 0x7))));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftLeft(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftLeft(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftLeft(Vector<$Boxtype$> s) {
-        $vectortype$ shiftv = ($vectortype$)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0x7));
-        return this.bOp(shiftv, (i, a, b) -> ($type$) (a << (b & 0x7)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) ((a & 0xFF) >>> (i & 0x7))));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftRight(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftRight(Vector<$Boxtype$> s) {
-        $vectortype$ shiftv = ($vectortype$)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0x7));
-        return this.bOp(shiftv, (i, a, b) -> ($type$) (a >>> (b & 0x7)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftArithmeticRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a >> (i & 0x7))));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftArithmeticRight(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftArithmeticRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftArithmeticRight(Vector<$Boxtype$> s) {
-        $vectortype$ shiftv = ($vectortype$)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0x7));
-        return this.bOp(shiftv, (i, a, b) -> ($type$) (a >> (b & 0x7)));
-    }
-
-#end[byte]
-#if[short]
-    @Override
-    @ForceInline
-    public $vectortype$ shiftLeft(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a << (i & 0xF))));
-    }
+    // Specialized algebraic operations:
 
-    @Override
-    @ForceInline
-    public $vectortype$ shiftLeft(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftLeft(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftLeft(Vector<$Boxtype$> s) {
-        $vectortype$ shiftv = ($vectortype$)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0xF));
-        return this.bOp(shiftv, (i, a, b) -> ($type$) (a << (b & 0xF)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) ((a & 0xFFFF) >>> (i & 0xF))));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftRight(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftRight(Vector<$Boxtype$> s) {
-        $vectortype$ shiftv = ($vectortype$)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0xF));
-        return this.bOp(shiftv, (i, a, b) -> ($type$) (a >>> (b & 0xF)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftArithmeticRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a >> (i & 0xF))));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftArithmeticRight(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftArithmeticRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftArithmeticRight(Vector<$Boxtype$> s) {
-        $vectortype$ shiftv = ($vectortype$)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, ($type$) 0xF));
-        return this.bOp(shiftv, (i, a, b) -> ($type$) (a >> (b & 0xF)));
-    }
-#end[short]
-#if[intOrLong]
-    @Override
-    @ForceInline
-    public $vectortype$ shiftLeft(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftLeft(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftLeft(s), m);
-    }
+    // The following definition forces a specialized version of this
+    // crucial method into the v-table of this class.  A call to add()
+    // will inline to a call to lanewise(ADD,), at which point the JIT
+    // intrinsic will have the opcode of ADD, plus all the metadata
+    // for this particular class, enabling it to generate precise
+    // code.
+    //
+    // There is probably no benefit to the JIT to specialize the
+    // masked or broadcast versions of the lanewise method.
 
     @Override
     @ForceInline
-    public $vectortype$ shiftRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a >>> i)));
+    public $vectortype$ lanewise(Unary op) {
+        return ($vectortype$) super.lanewiseTemplate(op);  // specialize
     }
 
     @Override
     @ForceInline
-    public $vectortype$ shiftRight(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftRight(s), m);
+    public $vectortype$ lanewise(Binary op, Vector<$Boxtype$> v) {
+        return ($vectortype$) super.lanewiseTemplate(op, v);  // specialize
     }
 
+#if[!FP]
+    /*package-private*/
     @Override
-    @ForceInline
-    public $vectortype$ shiftArithmeticRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a >> i)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftArithmeticRight(int s, VectorMask<$Boxtype$> m) {
-        return blend(shiftArithmeticRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftLeft(Vector<$Boxtype$> s) {
-        $vectortype$ shiftv = ($vectortype$)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, {#if[int]?0x1f:0x3f}));
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, shiftv,
-            (v1, v2) -> v1.bOp(v2,(i,a, b) -> ($type$) (a << b)));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ shiftRight(Vector<$Boxtype$> s) {
-        $vectortype$ shiftv = ($vectortype$)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, {#if[int]?0x1f:0x3f}));
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, shiftv,
-            (v1, v2) -> v1.bOp(v2,(i,a, b) -> ($type$) (a >>> b)));
+    @ForceInline $vectortype$
+    lanewiseShift(VectorOperators.Binary op, int e) {
+        return ($vectortype$) super.lanewiseShiftTemplate(op, e);  // specialize
     }
+#end[!FP]
 
+    /*package-private*/
     @Override
     @ForceInline
-    public $vectortype$ shiftArithmeticRight(Vector<$Boxtype$> s) {
-        $vectortype$ shiftv = ($vectortype$)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and($abstractvectortype$.broadcast(SPECIES, {#if[int]?0x1f:0x3f}));
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, shiftv,
-            (v1, v2) -> v1.bOp(v2,(i,a, b) -> ($type$) (a >> b)));
+    public final
+    $vectortype$
+    lanewise(VectorOperators.Ternary op, Vector<$Boxtype$> v1, Vector<$Boxtype$> v2) {
+        return ($vectortype$) super.lanewiseTemplate(op, v1, v2);  // specialize
     }
-#end[intOrLong]
-    // Ternary operations
 
-#if[FP]
     @Override
     @ForceInline
-    public $vectortype$ fma(Vector<$Boxtype$> o1, Vector<$Boxtype$> o2) {
-        Objects.requireNonNull(o1);
-        Objects.requireNonNull(o2);
-        $vectortype$ v1 = ($vectortype$)o1;
-        $vectortype$ v2 = ($vectortype$)o2;
-        return VectorIntrinsics.ternaryOp(
-            VECTOR_OP_FMA, $vectortype$.class, $type$.class, LENGTH,
-            this, v1, v2,
-            (w1, w2, w3) -> w1.tOp(w2, w3, (i, a, b, c) -> Math.fma(a, b, c)));
+    public final
+    $vectortype$ addIndex(int scale) {
+        return ($vectortype$) super.addIndexTemplate(scale);  // specialize
     }
-#end[FP]
 
     // Type specific horizontal reductions
-#if[BITWISE]
 
     @Override
     @ForceInline
-    public $type$ addLanes() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_ADD, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a + b)));
+    public final $type$ reduceLanes(VectorOperators.Associative op) {
+        return super.reduceLanesTemplate(op);  // specialized
     }
 
     @Override
     @ForceInline
-    public $type$ andLanes() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_AND, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp(($type$) -1, (i, a, b) -> ($type$) (a & b)));
+    public final $type$ reduceLanes(VectorOperators.Associative op,
+                                    VectorMask<$Boxtype$> m) {
+        return super.reduceLanesTemplate(op, m);  // specialized
     }
 
     @Override
     @ForceInline
-    public $type$ andLanes(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, ($type$) -1).blend(this, m).andLanes();
+    public final long reduceLanesToLong(VectorOperators.Associative op) {
+        return (long) super.reduceLanesTemplate(op);  // specialized
     }
 
     @Override
     @ForceInline
-    public $type$ minLanes() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp($Boxtype$.MAX_VALUE , (i, a, b) -> ($type$) Math.min(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public $type$ maxLanes() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp($Boxtype$.MIN_VALUE , (i, a, b) -> ($type$) Math.max(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public $type$ mulLanes() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public $type$ orLanes() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_OR, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a | b)));
-    }
-
-    @Override
-    @ForceInline
-    public $type$ orLanes(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, ($type$) 0).blend(this, m).orLanes();
-    }
-
-    @Override
-    @ForceInline
-    public $type$ xorLanes() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_XOR, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a ^ b)));
-    }
-
-    @Override
-    @ForceInline
-    public $type$ xorLanes(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, ($type$) 0).blend(this, m).xorLanes();
-    }
-#end[BITWISE]
-
-#if[FP]
-    @Override
-    @ForceInline
-    public $type$ addLanes() {
-        $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
-                                VECTOR_OP_ADD, $vectortype$.class, $type$.class, LENGTH,
-                                this,
-                                v -> {
-                                    $type$ r = v.rOp(($type$) 0, (i, a, b) -> ($type$) (a + b));
-                                    return (long)$Type$.$type$To$Bitstype$Bits(r);
-                                });
-        return $Type$.$bitstype$BitsTo$Fptype$(bits);
-    }
-
-    @Override
-    @ForceInline
-    public $type$ mulLanes() {
-        $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
-                                VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
-                                this,
-                                v -> {
-                                    $type$ r = v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b));
-                                    return (long)$Type$.$type$To$Bitstype$Bits(r);
-                                });
-        return $Type$.$bitstype$BitsTo$Fptype$(bits);
-    }
-
-    @Override
-    @ForceInline
-    public $type$ minLanes() {
-        $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
-                                VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
-                                this,
-                                v -> {
-                                    $type$ r = v.rOp($Boxtype$.POSITIVE_INFINITY , (i, a, b) -> ($type$) Math.min(a, b));
-                                    return (long)$Type$.$type$To$Bitstype$Bits(r);
-                                });
-        return $Type$.$bitstype$BitsTo$Fptype$(bits);
-    }
-
-    @Override
-    @ForceInline
-    public $type$ maxLanes() {
-        $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
-                                VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
-                                this,
-                                v -> {
-                                    $type$ r = v.rOp($Boxtype$.NEGATIVE_INFINITY, (i, a, b) -> ($type$) Math.max(a, b));
-                                    return (long)$Type$.$type$To$Bitstype$Bits(r);
-                                });
-        return $Type$.$bitstype$BitsTo$Fptype$(bits);
-    }
-
-#end[FP]
-
-    @Override
-    @ForceInline
-    public $type$ addLanes(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, ($type$) 0).blend(this, m).addLanes();
-    }
-
-
-    @Override
-    @ForceInline
-    public $type$ mulLanes(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, ($type$) 1).blend(this, m).mulLanes();
-    }
-
-    @Override
-    @ForceInline
-    public $type$ minLanes(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, $Boxtype$.MAX_VALUE).blend(this, m).minLanes();
-    }
-
-    @Override
-    @ForceInline
-    public $type$ maxLanes(VectorMask<$Boxtype$> m) {
-        return $abstractvectortype$.broadcast(SPECIES, $Boxtype$.MIN_VALUE).blend(this, m).maxLanes();
+    public final long reduceLanesToLong(VectorOperators.Associative op,
+                                        VectorMask<$Boxtype$> m) {
+        return (long) super.reduceLanesTemplate(op, m);  // specialized
     }
 
     @Override
@@ -1362,358 +343,114 @@ final class $vectortype$ extends $abstractvectortype$ {
         for (int i = 0; i < a.length; i++) {
             sa[i] = (int) a[i];
         }
-        return VectorShuffle.fromArray(SPECIES, sa, 0);
+        return VectorShuffle.fromArray(VSPECIES, sa, 0);
     }
 
-    // Memory operations
-
-    private static final int ARRAY_SHIFT         = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_$TYPE$_INDEX_SCALE);
-    private static final int BOOLEAN_ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_BOOLEAN_INDEX_SCALE);
+    // Specialized comparisons
 
     @Override
     @ForceInline
-    public void intoArray($type$[] a, int ix) {
-        Objects.requireNonNull(a);
-        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
-        VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
-                               a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_$TYPE$_BASE_OFFSET,
-                               this,
-                               a, ix,
-                               (arr, idx, v) -> v.forEach((i, e) -> arr[idx + i] = e));
+    public final $masktype$ compare(Comparison op, Vector<$Boxtype$> v) {
+        return super.compareTemplate($masktype$.class, op, v);  // specialize
     }
 
     @Override
     @ForceInline
-    public final void intoArray($type$[] a, int ax, VectorMask<$Boxtype$> m) {
-        $abstractvectortype$ oldVal = $abstractvectortype$.fromArray(SPECIES, a, ax);
-        $abstractvectortype$ newVal = oldVal.blend(this, m);
-        newVal.intoArray(a, ax);
+    public final $masktype$ compare(Comparison op, $type$ s) {
+        return super.compareTemplate($masktype$.class, op, s);  // specialize
     }
-#if[!byteOrShort]
+
+#if[!long]
     @Override
     @ForceInline
-    public void intoArray($type$[] a, int ix, int[] b, int iy) {
-#if[longOrDouble64]
-        this.intoArray(a, ix + b[iy]);
-#else[longOrDouble64]
-        Objects.requireNonNull(a);
-        Objects.requireNonNull(b);
-
-        // Index vector: vix[0:n] = i -> ix + indexMap[iy + i]
-        IntVector vix = IntVector.fromArray(INDEX_SPECIES, b, iy).add(ix);
-
-        vix = VectorIntrinsics.checkIndex(vix, a.length);
-
-        VectorIntrinsics.storeWithMap($vectortype$.class, $type$.class, LENGTH, $vectorindextype$,
-                               a, Unsafe.ARRAY_$TYPE$_BASE_OFFSET, vix,
-                               this,
-                               a, ix, b, iy,
-                               (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));
-#end[longOrDouble64]
+    public final $masktype$ compare(Comparison op, long s) {
+        return super.compareTemplate($masktype$.class, op, s);  // specialize
     }
-
-     @Override
-     @ForceInline
-     public final void intoArray($type$[] a, int ax, VectorMask<$Boxtype$> m, int[] b, int iy) {
-         // @@@ This can result in out of bounds errors for unset mask lanes
-         $abstractvectortype$ oldVal = $abstractvectortype$.fromArray(SPECIES, a, ax, b, iy);
-         $abstractvectortype$ newVal = oldVal.blend(this, m);
-         newVal.intoArray(a, ax, b, iy);
-     }
-#end[!byteOrShort]
+#end[!long]
 
     @Override
     @ForceInline
-    public void intoByteArray(byte[] a, int ix) {
-        Objects.requireNonNull(a);
-        ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
-        VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
-                               a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                               this,
-                               a, ix,
-                               (c, idx, v) -> {
-                                   ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
-                                   $Type$Buffer tb = bbc{#if[byte]?;:.as$Type$Buffer();}
-                                   v.forEach((i, e) -> tb.put(e));
-                               });
+    public $vectortype$ blend(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) {
+        return ($vectortype$)
+            super.blendTemplate($masktype$.class,
+                                ($vectortype$) v,
+                                ($masktype$) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, VectorMask<$Boxtype$> m) {
-        $vectortype$ oldVal = ($vectortype$) $abstractvectortype$.fromByteArray(SPECIES, a, ix);
-        $vectortype$ newVal = oldVal.blend(this, m);
-        newVal.intoByteArray(a, ix);
+    public $vectortype$ slice(int origin, Vector<$Boxtype$> v) {
+        return ($vectortype$) super.sliceTemplate(origin, v);  // specialize
     }
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix) {
-        if (bb.order() != ByteOrder.nativeOrder()) {
-            throw new IllegalArgumentException();
-        }
-        if (bb.isReadOnly()) {
-            throw new ReadOnlyBufferException();
-        }
-        ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
-        VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
-                               U.getReference(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
-                               this,
-                               bb, ix,
-                               (c, idx, v) -> {
-                                   ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
-                                   $Type$Buffer tb = bbc{#if[byte]?;:.as$Type$Buffer();}
-                                   v.forEach((i, e) -> tb.put(e));
-                               });
+    public $vectortype$ unslice(int origin, Vector<$Boxtype$> w, int part) {
+        return ($vectortype$) super.unsliceTemplate(origin, w, part);  // specialize
     }
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, VectorMask<$Boxtype$> m) {
-        $vectortype$ oldVal = ($vectortype$) $abstractvectortype$.fromByteBuffer(SPECIES, bb, ix);
-        $vectortype$ newVal = oldVal.blend(this, m);
-        newVal.intoByteBuffer(bb, ix);
-    }
-
-    //
-
-    @Override
-    public String toString() {
-        return Arrays.toString(getElements());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || this.getClass() != o.getClass()) return false;
-
-        $vectortype$ that = ($vectortype$) o;
-        return this.equal(that).allTrue();
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(vec);
-    }
-
-    // Binary test
-
-    @Override
-    $masktype$ bTest(Vector<$Boxtype$> o, FBinTest f) {
-        $type$[] vec1 = getElements();
-        $type$[] vec2 = (($vectortype$)o).getElements();
-        boolean[] bits = new boolean[length()];
-        for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec1[i], vec2[i]);
-        }
-        return new $masktype$(bits);
-    }
-
-    // Comparisons
-
-    @Override
-    @ForceInline
-    public $masktype$ equal(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-
-        return VectorIntrinsics.compare(
-            BT_eq, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    public $vectortype$ unslice(int origin, Vector<$Boxtype$> w, int part, VectorMask<$Boxtype$> m) {
+        return ($vectortype$)
+            super.unsliceTemplate($masktype$.class,
+                                  origin, w, part,
+                                  ($masktype$) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public $masktype$ notEqual(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-
-        return VectorIntrinsics.compare(
-            BT_ne, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    public $vectortype$ rearrange(VectorShuffle<$Boxtype$> s) {
+        return ($vectortype$)
+            super.rearrangeTemplate($shuffletype$.class,
+                                    ($shuffletype$) s);  // specialize
     }
 
     @Override
     @ForceInline
-    public $masktype$ lessThan(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-
-        return VectorIntrinsics.compare(
-            BT_lt, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    public $vectortype$ rearrange(VectorShuffle<$Boxtype$> shuffle,
+                                  VectorMask<$Boxtype$> m) {
+        return ($vectortype$)
+            super.rearrangeTemplate($shuffletype$.class,
+                                    ($shuffletype$) shuffle,
+                                    ($masktype$) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public $masktype$ lessThanEq(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-
-        return VectorIntrinsics.compare(
-            BT_le, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    public $vectortype$ rearrange(VectorShuffle<$Boxtype$> s,
+                                  Vector<$Boxtype$> v) {
+        return ($vectortype$)
+            super.rearrangeTemplate($shuffletype$.class,
+                                    ($shuffletype$) s,
+                                    ($vectortype$) v);  // specialize
     }
 
     @Override
     @ForceInline
-    public $masktype$ greaterThan(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-
-        return ($masktype$) VectorIntrinsics.compare(
-            BT_gt, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    public $vectortype$ selectFrom(Vector<$Boxtype$> v) {
+        return ($vectortype$)
+            super.selectFromTemplate(($vectortype$) v);  // specialize
     }
 
     @Override
     @ForceInline
-    public $masktype$ greaterThanEq(Vector<$Boxtype$> o) {
-        Objects.requireNonNull(o);
-        $vectortype$ v = ($vectortype$)o;
-
-        return VectorIntrinsics.compare(
-            BT_ge, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
+    public $vectortype$ selectFrom(Vector<$Boxtype$> v,
+                                   VectorMask<$Boxtype$> m) {
+        return ($vectortype$)
+            super.selectFromTemplate(($vectortype$) v,
+                                     ($masktype$) m);  // specialize
     }
 
-    // Foreach
-
-    @Override
-    void forEach(FUnCon f) {
-        $type$[] vec = getElements();
-        for (int i = 0; i < length(); i++) {
-            f.apply(i, vec[i]);
-        }
-    }
-
-    @Override
-    void forEach(VectorMask<$Boxtype$> o, FUnCon f) {
-        boolean[] mbits = (($masktype$)o).getBits();
-        forEach((i, a) -> {
-            if (mbits[i]) { f.apply(i, a); }
-        });
-    }
-
-#if[FP]
-    $bitsvectortype$ toBits() {
-        $type$[] vec = getElements();
-        $bitstype$[] res = new $bitstype$[this.species().length()];
-        for(int i = 0; i < this.species().length(); i++){
-            res[i] = $Type$.$type$To$Bitstype$Bits(vec[i]);
-        }
-        return new $bitsvectortype$(res);
-    }
-#end[FP]
-
-#if[intOrLong]
-    $fpvectortype$ toFP() {
-        $type$[] vec = getElements();
-        $fptype$[] res = new $fptype$[this.species().length()];
-        for(int i = 0; i < this.species().length(); i++){
-            res[i] = $Boxfptype$.$bitstype$BitsTo$Fptype$(vec[i]);
-        }
-        return new $fpvectortype$(res);
-    }
-#end[intOrLong]
-
-    @Override
-    public $vectortype$ rotateLanesLeft(int j) {
-        $type$[] vec = getElements();
-        $type$[] res = new $type$[length()];
-        for (int i = 0; i < length(); i++){
-            res[(j + i) % length()] = vec[i];
-        }
-        return new $vectortype$(res);
-    }
-
-    @Override
-    public $vectortype$ rotateLanesRight(int j) {
-        $type$[] vec = getElements();
-        $type$[] res = new $type$[length()];
-        for (int i = 0; i < length(); i++){
-            int z = i - j;
-            if(j < 0) {
-                res[length() + z] = vec[i];
-            } else {
-                res[z] = vec[i];
-            }
-        }
-        return new $vectortype$(res);
-    }
-
-    @Override
-    public $vectortype$ shiftLanesLeft(int j) {
-        $type$[] vec = getElements();
-        $type$[] res = new $type$[length()];
-        for (int i = 0; i < length() - j; i++) {
-            res[i] = vec[i + j];
-        }
-        return new $vectortype$(res);
-    }
-
-    @Override
-    public $vectortype$ shiftLanesRight(int j) {
-        $type$[] vec = getElements();
-        $type$[] res = new $type$[length()];
-        for (int i = 0; i < length() - j; i++){
-            res[i + j] = vec[i];
-        }
-        return new $vectortype$(res);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ rearrange(Vector<$Boxtype$> v,
-                                  VectorShuffle<$Boxtype$> s, VectorMask<$Boxtype$> m) {
-        return this.rearrange(s).blend(v.rearrange(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ rearrange(VectorShuffle<$Boxtype$> o1) {
-        Objects.requireNonNull(o1);
-        $shuffletype$ s =  ($shuffletype$)o1;
-
-        return VectorIntrinsics.rearrangeOp(
-            $vectortype$.class, $shuffletype$.class, $type$.class, LENGTH,
-            this, s,
-            (v1, s_) -> v1.uOp((i, a) -> {
-                int ei = s_.lane(i);
-                return v1.lane(ei);
-            }));
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ blend(Vector<$Boxtype$> o1, VectorMask<$Boxtype$> o2) {
-        Objects.requireNonNull(o1);
-        Objects.requireNonNull(o2);
-        $vectortype$ v = ($vectortype$)o1;
-        $masktype$   m = ($masktype$)o2;
-
-        return VectorIntrinsics.blend(
-            $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
-            this, v, m,
-            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.lane(i) ? b : a));
-    }
-
-    // Accessors
 
 #if[FP]
     @Override
     public $type$ lane(int i) {
-        if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        if (i < 0 || i >= VLENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + VLENGTH);
         }
         $bitstype$ bits = ($bitstype$) VectorIntrinsics.extract(
-                                $vectortype$.class, $type$.class, LENGTH,
+                                VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
                                     $type$[] vecarr = vec.getElements();
@@ -1723,27 +460,27 @@ final class $vectortype$ extends $abstractvectortype$ {
     }
 
     @Override
-    public $vectortype$ with(int i, $type$ e) {
-        if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+    public $vectortype$ withLane(int i, $type$ e) {
+        if (i < 0 || i >= VLENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + VLENGTH);
         }
         return VectorIntrinsics.insert(
-                                $vectortype$.class, $type$.class, LENGTH,
+                                VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)$Type$.$type$To$Bitstype$Bits(e),
                                 (v, ix, bits) -> {
                                     $type$[] res = v.getElements().clone();
                                     res[ix] = $Type$.$bitstype$BitsTo$Type$(($bitstype$)bits);
-                                    return new $vectortype$(res);
+                                    return v.vectorFactory(res);
                                 });
     }
 #else[FP]
     @Override
     public $type$ lane(int i) {
-        if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        if (i < 0 || i >= VLENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + VLENGTH);
         }
         return ($type$) VectorIntrinsics.extract(
-                                $vectortype$.class, $type$.class, LENGTH,
+                                VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
                                     $type$[] vecarr = vec.getElements();
@@ -1752,17 +489,17 @@ final class $vectortype$ extends $abstractvectortype$ {
     }
 
     @Override
-    public $vectortype$ with(int i, $type$ e) {
-        if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+    public $vectortype$ withLane(int i, $type$ e) {
+        if (i < 0 || i >= VLENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + VLENGTH);
         }
         return VectorIntrinsics.insert(
-                                $vectortype$.class, $type$.class, LENGTH,
+                                VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
                                     $type$[] res = v.getElements().clone();
                                     res[ix] = ($type$)bits;
-                                    return new $vectortype$(res);
+                                    return v.vectorFactory(res);
                                 });
     }
 #end[FP]
@@ -1770,8 +507,6 @@ final class $vectortype$ extends $abstractvectortype$ {
     // Mask
 
     static final class $masktype$ extends AbstractMask<$Boxtype$> {
-        static final $masktype$ TRUE_MASK = new $masktype$(true);
-        static final $masktype$ FALSE_MASK = new $masktype$(false);
 
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
@@ -1780,7 +515,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         }
 
         public $masktype$(boolean[] bits, int offset) {
-            boolean[] a = new boolean[species().length()];
+            boolean[] a = new boolean[vspecies().laneCount()];
             for (int i = 0; i < a.length; i++) {
                 a[i] = bits[offset + i];
             }
@@ -1788,9 +523,18 @@ final class $vectortype$ extends $abstractvectortype$ {
         }
 
         public $masktype$(boolean val) {
-            boolean[] bits = new boolean[species().length()];
+            boolean[] bits = new boolean[vspecies().laneCount()];
             Arrays.fill(bits, val);
             this.bits = bits;
+        }
+
+        @ForceInline
+        final @Override
+        public $Type$Species vspecies() {
+            // ISSUE:  This should probably be a @Stable
+            // field inside AbstractMask, rather than
+            // a megamorphic method.
+            return VSPECIES;
         }
 
         boolean[] getBits() {
@@ -1799,9 +543,9 @@ final class $vectortype$ extends $abstractvectortype$ {
 
         @Override
         $masktype$ uOp(MUnOp f) {
-            boolean[] res = new boolean[species().length()];
+            boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            for (int i = 0; i < species().length(); i++) {
+            for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i]);
             }
             return new $masktype$(res);
@@ -1809,55 +553,47 @@ final class $vectortype$ extends $abstractvectortype$ {
 
         @Override
         $masktype$ bOp(VectorMask<$Boxtype$> o, MBinOp f) {
-            boolean[] res = new boolean[species().length()];
+            boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
             boolean[] mbits = (($masktype$)o).getBits();
-            for (int i = 0; i < species().length(); i++) {
+            for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new $masktype$(res);
         }
 
+        @ForceInline
         @Override
-        public VectorSpecies<$Boxtype$> species() {
-            return SPECIES;
-        }
-
-        @Override
-        public $vectortype$ toVector() {
-            $type$[] res = new $type$[species().length()];
-            boolean[] bits = getBits();
-            for (int i = 0; i < species().length(); i++) {
-                // -1 will result in the most significant bit being set in
-                // addition to some or all other bits
-                res[i] = ($type$) (bits[i] ? -1 : 0);
-            }
-            return new $vectortype$(res);
+        public final
+        $vectortype$ toVector() {
+            return ($vectortype$) super.toVectorTemplate();  // specialize
         }
 
         @Override
         @ForceInline
-        @SuppressWarnings("unchecked")
-        public <E> VectorMask<E> cast(VectorSpecies<E> species) {
-            if (length() != species.length())
+        public <E> VectorMask<E> cast(VectorSpecies<E> s) {
+            AbstractSpecies<E> species = (AbstractSpecies<E>) s;
+            if (length() != species.laneCount())
                 throw new IllegalArgumentException("VectorMask length and species length differ");
-            Class<?> stype = species.elementType();
-            boolean [] maskArray = toArray();
-            if (stype == byte.class) {
-                return (VectorMask <E>) new Byte$bits$Vector.Byte$bits$Mask(maskArray);
-            } else if (stype == short.class) {
-                return (VectorMask <E>) new Short$bits$Vector.Short$bits$Mask(maskArray);
-            } else if (stype == int.class) {
-                return (VectorMask <E>) new Int$bits$Vector.Int$bits$Mask(maskArray);
-            } else if (stype == long.class) {
-                return (VectorMask <E>) new Long$bits$Vector.Long$bits$Mask(maskArray);
-            } else if (stype == float.class) {
-                return (VectorMask <E>) new Float$bits$Vector.Float$bits$Mask(maskArray);
-            } else if (stype == double.class) {
-                return (VectorMask <E>) new Double$bits$Vector.Double$bits$Mask(maskArray);
-            } else {
-                throw new UnsupportedOperationException("Bad lane type for casting.");
+            boolean[] maskArray = toArray();
+            // enum-switches don't optimize properly JDK-8161245
+            switch (species.laneType.switchKey) {
+            case LaneType.SK_BYTE:
+                return new Byte$bits$Vector.Byte$bits$Mask(maskArray).check(species);
+            case LaneType.SK_SHORT:
+                return new Short$bits$Vector.Short$bits$Mask(maskArray).check(species);
+            case LaneType.SK_INT:
+                return new Int$bits$Vector.Int$bits$Mask(maskArray).check(species);
+            case LaneType.SK_LONG:
+                return new Long$bits$Vector.Long$bits$Mask(maskArray).check(species);
+            case LaneType.SK_FLOAT:
+                return new Float$bits$Vector.Float$bits$Mask(maskArray).check(species);
+            case LaneType.SK_DOUBLE:
+                return new Double$bits$Vector.Double$bits$Mask(maskArray).check(species);
             }
+
+            // Should not reach here.
+            throw new AssertionError(species);
         }
 
         // Unary operations
@@ -1866,7 +602,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         @ForceInline
         public $masktype$ not() {
             return ($masktype$) VectorIntrinsics.unaryOp(
-                                             VECTOR_OP_NOT, $masktype$.class, $bitstype$.class, LENGTH,
+                                             VECTOR_OP_NOT, $masktype$.class, $bitstype$.class, VLENGTH,
                                              this,
                                              (m1) -> m1.uOp((i, a) -> !a));
         }
@@ -1878,7 +614,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         public $masktype$ and(VectorMask<$Boxtype$> o) {
             Objects.requireNonNull(o);
             $masktype$ m = ($masktype$)o;
-            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, $masktype$.class, $bitstype$.class, LENGTH,
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, $masktype$.class, $bitstype$.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
@@ -1888,7 +624,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         public $masktype$ or(VectorMask<$Boxtype$> o) {
             Objects.requireNonNull(o);
             $masktype$ m = ($masktype$)o;
-            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, $masktype$.class, $bitstype$.class, LENGTH,
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, $masktype$.class, $bitstype$.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
@@ -1898,7 +634,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(BT_ne, $masktype$.class, $bitstype$.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, $masktype$.class, $bitstype$.class, VLENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper((($masktype$)m).getBits()));
         }
@@ -1906,10 +642,17 @@ final class $vectortype$ extends $abstractvectortype$ {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(BT_overflow, $masktype$.class, $bitstype$.class, LENGTH,
-                                         this, VectorMask.maskAllTrue(species()),
+            return VectorIntrinsics.test(BT_overflow, $masktype$.class, $bitstype$.class, VLENGTH,
+                                         this, vspecies().maskAll(true),
                                          (m, __) -> allTrueHelper((($masktype$)m).getBits()));
         }
+
+        /*package-private*/
+        static $masktype$ maskAll(boolean bit) {
+            return bit ? TRUE_MASK : FALSE_MASK;
+        }
+        static final $masktype$ TRUE_MASK = new $masktype$(true);
+        static final $masktype$ FALSE_MASK = new $masktype$(false);
     }
 
     // Shuffle
@@ -1927,47 +670,53 @@ final class $vectortype$ extends $abstractvectortype$ {
             super(reorder, i);
         }
 
-        public $shuffletype$(IntUnaryOperator f) {
-            super(f);
+        public $shuffletype$(IntUnaryOperator fn) {
+            super(fn);
         }
 
         @Override
-        public VectorSpecies<$Boxtype$> species() {
-            return SPECIES;
+        public $Type$Species vspecies() {
+            return VSPECIES;
         }
 
+        static {
+            // There must be enough bits in the shuffle lanes to encode
+            // VLENGTH valid indexes and VLENGTH exceptional ones.
+            assert(VLENGTH < Byte.MAX_VALUE);
+            assert(Byte.MIN_VALUE <= -VLENGTH);
+        }
+        static final $shuffletype$ IOTA = new $shuffletype$(IDENTITY);
+
         @Override
-        public $abstractvectortype$ toVector() {
-            $type$[] va = new $type$[SPECIES.length()];
-            for (int i = 0; i < va.length; i++) {
-              va[i] = ($type$) lane(i);
-            }
-            return $abstractvectortype$.fromArray(SPECIES, va, 0);
+        public $vectortype$ toVector() {
+            return ($vectortype$) super.toVectorTemplate();  // specialize
         }
 
         @Override
         @ForceInline
-        @SuppressWarnings("unchecked")
-        public <F> VectorShuffle<F> cast(VectorSpecies<F> species) {
-            if (length() != species.length())
-                throw new IllegalArgumentException("Shuffle length and species length differ");
-            Class<?> stype = species.elementType();
-            int [] shuffleArray = toArray();
-            if (stype == byte.class) {
-                return (VectorShuffle<F>) new Byte$bits$Vector.Byte$bits$Shuffle(shuffleArray);
-            } else if (stype == short.class) {
-                return (VectorShuffle<F>) new Short$bits$Vector.Short$bits$Shuffle(shuffleArray);
-            } else if (stype == int.class) {
-                return (VectorShuffle<F>) new Int$bits$Vector.Int$bits$Shuffle(shuffleArray);
-            } else if (stype == long.class) {
-                return (VectorShuffle<F>) new Long$bits$Vector.Long$bits$Shuffle(shuffleArray);
-            } else if (stype == float.class) {
-                return (VectorShuffle<F>) new Float$bits$Vector.Float$bits$Shuffle(shuffleArray);
-            } else if (stype == double.class) {
-                return (VectorShuffle<F>) new Double$bits$Vector.Double$bits$Shuffle(shuffleArray);
-            } else {
-                throw new UnsupportedOperationException("Bad lane type for casting.");
+        public <F> VectorShuffle<F> cast(VectorSpecies<F> s) {
+            AbstractSpecies<F> species = (AbstractSpecies<F>) s;
+            if (length() != species.laneCount())
+                throw new AssertionError("NYI: Shuffle length and species length differ");
+            int[] shuffleArray = toArray();
+            // enum-switches don't optimize properly JDK-8161245
+            switch (species.laneType.switchKey) {
+            case LaneType.SK_BYTE:
+                return new Byte$bits$Vector.Byte$bits$Shuffle(shuffleArray).check(species);
+            case LaneType.SK_SHORT:
+                return new Short$bits$Vector.Short$bits$Shuffle(shuffleArray).check(species);
+            case LaneType.SK_INT:
+                return new Int$bits$Vector.Int$bits$Shuffle(shuffleArray).check(species);
+            case LaneType.SK_LONG:
+                return new Long$bits$Vector.Long$bits$Shuffle(shuffleArray).check(species);
+            case LaneType.SK_FLOAT:
+                return new Float$bits$Vector.Float$bits$Shuffle(shuffleArray).check(species);
+            case LaneType.SK_DOUBLE:
+                return new Double$bits$Vector.Double$bits$Shuffle(shuffleArray).check(species);
             }
+
+            // Should not reach here.
+            throw new AssertionError(species);
         }
 
         @Override
@@ -1975,16 +724,54 @@ final class $vectortype$ extends $abstractvectortype$ {
             $shuffletype$ s = ($shuffletype$) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
-                r[i] = reorder[s.reorder[i]];
+                int ssi = s.reorder[i];
+                r[i] = this.reorder[ssi];  // throws on exceptional index
             }
             return new $shuffletype$(r);
         }
     }
 
-    // VectorSpecies
+    // ================================================
 
+    // Specialized low-level memory operations.
+
+    @ForceInline
     @Override
-    public VectorSpecies<$Boxtype$> species() {
-        return SPECIES;
+    final
+    $abstractvectortype$ fromArray0($type$[] a, int offset) {
+        return super.fromArray0(a, offset);  // specialize
     }
+
+    @ForceInline
+    @Override
+    final
+    $abstractvectortype$ fromByteArray0(byte[] a, int offset) {
+        return super.fromByteArray0(a, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    $abstractvectortype$ fromByteBuffer0(ByteBuffer bb, int offset) {
+        return super.fromByteBuffer0(bb, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    void intoArray0($type$[] a, int offset) {
+        super.intoArray0(a, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    void intoByteArray0(byte[] a, int offset) {
+        super.intoByteArray0(a, offset);  // specialize
+    }
+
+    // End of specialized low-level memory operations.
+
+    // ================================================
+
 }

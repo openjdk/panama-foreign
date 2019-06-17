@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,20 @@
  */
 package jdk.incubator.vector;
 
+import java.util.Arrays;
 import java.util.function.IntUnaryOperator;
+import jdk.internal.vm.annotation.ForceInline;
 
 abstract class AbstractShuffle<E> extends VectorShuffle<E> {
     static final IntUnaryOperator IDENTITY = i -> i;
 
     // Internal representation allows for a maximum index of 256
-    // Values are masked by (species().length() - 1)
+    // Values are clipped to [-VLENGTH..VLENGTH-1].
     final byte[] reorder;
 
     AbstractShuffle(byte[] reorder) {
         this.reorder = reorder;
+        assert(indexesInRange(reorder));
     }
 
     public AbstractShuffle(int[] reorder) {
@@ -42,38 +45,190 @@ abstract class AbstractShuffle<E> extends VectorShuffle<E> {
     }
 
     public AbstractShuffle(int[] reorder, int offset) {
-        byte[] a = new byte[species().length()];
-        for (int i = 0; i < a.length; i++) {
-            a[i] = (byte) (reorder[offset + i] & (a.length - 1));
+        int length = length();
+        byte[] a = new byte[length];
+        for (int i = 0; i < length; i++) {
+            int si = reorder[offset + i];
+            si = partiallyWrapIndex(si, length);
+            a[i] = (byte) si;
         }
         this.reorder = a;
     }
 
     public AbstractShuffle(IntUnaryOperator f) {
-        byte[] a = new byte[species().length()];
+        int length = length();
+        byte[] a = new byte[length];
         for (int i = 0; i < a.length; i++) {
-            a[i] = (byte) (f.applyAsInt(i) & (a.length - 1));
+            int si = f.applyAsInt(i);
+            si = partiallyWrapIndex(si, length);
+            a[i] = (byte) si;
         }
         this.reorder = a;
     }
 
+    /*package-private*/
+    abstract AbstractSpecies<E> vspecies();
+
     @Override
+    @ForceInline
+    public final VectorSpecies<E> vectorSpecies() {
+        return vspecies();
+    }
+
+    @Override
+    @ForceInline
     public void intoArray(int[] a, int offset) {
-        for (int i = 0; i < reorder.length; i++) {
-            a[i] = reorder[i];
+        int vlen = reorder.length;
+        for (int i = 0; i < vlen; i++) {
+            int sourceIndex = reorder[i];
+            assert(sourceIndex >= -vlen && sourceIndex < vlen);
+            a[offset + i] = sourceIndex;
         }
     }
 
     @Override
+    @ForceInline
     public int[] toArray() {
         int[] a = new int[reorder.length];
         intoArray(a, 0);
         return a;
     }
 
-    @Override
-    public int lane(int i) {
-        return reorder[i];
+    /*package-private*/
+    @ForceInline
+    final
+    AbstractVector<E>
+    toVectorTemplate() {
+        // Note that the values produced by laneSource
+        // are already clipped.  At this point we convert
+        // them from internal ints (or bytes) into the ETYPE.
+        // FIXME: Use a conversion intrinsic for this operation.
+        // https://bugs.openjdk.java.net/browse/JDK-8225740
+        return (AbstractVector<E>) vspecies().fromIntValues(toArray());
     }
 
+    @ForceInline
+    public final AbstractShuffle<E> checkIndexes() {
+        // FIXME: vectorize this
+        int length = reorder.length;
+        for (int index : reorder) {
+            if (index < 0) {
+                throw checkIndexFailed(index, length());
+            }
+        }
+        return this;
+    }
+
+    @ForceInline
+    public final AbstractShuffle<E> wrapIndexes() {
+        // FIXME: vectorize this
+        int length = reorder.length;
+        for (int index : reorder) {
+            if (index < 0) {
+                return wrapAndRebuild(reorder);
+            }
+        }
+        return this;
+    }
+
+    @ForceInline
+    public final AbstractShuffle<E> wrapAndRebuild(byte[] oldReorder) {
+        int length = oldReorder.length;
+        byte[] reorder = new byte[length];
+        for (int i = 0; i < length; i++) {
+            int si = oldReorder[i];
+            // FIXME: This does not work unless it's a power of 2.
+            if ((length & (length - 1)) == 0) {
+                si += si & length;  // power-of-two optimization
+            } else if (si < 0) {
+                // non-POT code requires a conditional add
+                si += length;
+            }
+            assert(si >= 0 && si < length);
+            reorder[i] = (byte) si;
+        }
+        return vspecies().dummyVector().shuffleFromBytes(reorder);
+    }
+
+    @ForceInline
+    public final AbstractMask<E> laneIsValid() {
+        // FIXME: vectorize this
+        int length = reorder.length;
+        boolean[] bits = new boolean[length];
+        for (int i = 0; i < length; i++) {
+            if (reorder[i] >= 0) {
+                bits[i] = true;
+            }
+        }
+        return vspecies().dummyVector().maskFromArray(bits);
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public
+    <F> VectorShuffle<F> check(VectorSpecies<F> species) {
+        if (species != vectorSpecies()) {
+            throw AbstractSpecies.checkFailed(this, species);
+        }
+        return (VectorShuffle<F>) this;
+    }
+
+    @Override
+    @ForceInline
+    public final int checkIndex(int index) {
+        return checkIndex0(index, length(), (byte)1);
+    }
+
+    @Override
+    @ForceInline
+    public final int wrapIndex(int index) {
+        return checkIndex0(index, length(), (byte)0);
+    }
+
+    /** Return invalid indexes partially wrapped
+     * mod VLENGTH to negative values.
+     */
+    /*package-private*/
+    @ForceInline
+    static final
+    int partiallyWrapIndex(int index, int laneCount) {
+        return checkIndex0(index, laneCount, (byte)-1);
+    }
+
+    /*package-private*/
+    @ForceInline
+    public static int checkIndex0(int index, int laneCount, byte mode) {
+        int wrapped = VectorIntrinsics.wrapToRange(index, laneCount);
+        if (mode == 0 || wrapped == index) {
+            return wrapped;
+        }
+        if (mode < 0) {
+            return wrapped - laneCount;  // special mode for internal storage
+        }
+        throw checkIndexFailed(index, laneCount);
+    }
+
+    private static IndexOutOfBoundsException checkIndexFailed(int index, int laneCount) {
+        int max = laneCount - 1;
+        String msg = "required an index in [0.."+max+"] but found "+index;
+        return new IndexOutOfBoundsException(msg);
+    }
+
+    static boolean indexesInRange(byte[] reorder) {
+        int length = reorder.length;
+        for (byte si : reorder) {
+            if (si >= length || si < -length) {
+                boolean assertsEnabled = false;
+                assert(assertsEnabled = true);
+                if (assertsEnabled) {
+                    String msg = ("index "+si+"out of range ["+length+"] in "+
+                                  java.util.Arrays.toString(reorder));
+                    throw new AssertionError(msg);
+                }
+                return false;
+            }
+        }
+        return true;
+    }
 }

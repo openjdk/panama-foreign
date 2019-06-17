@@ -52,7 +52,7 @@ public class MethodOverideTest {
 
     @DataProvider
     public static Object[][] vectorClassesProvider() {
-        return Stream.of(
+        return Stream.<Class<?>>of(
                 ByteVector.class,
                 ShortVector.class,
                 IntVector.class,

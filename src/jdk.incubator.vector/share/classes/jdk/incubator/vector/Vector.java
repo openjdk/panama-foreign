@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,11 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
 
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
@@ -38,38 +41,122 @@ import java.util.function.UnaryOperator;
 import jdk.incubator.vector.*;
 
 /**
- * A {@code Vector} is designed for use in computations that can be transformed
- * by a runtime compiler, on supported hardware, to Single Instruction Multiple
- * Data (SIMD) computations leveraging vector hardware registers and vector
- * hardware instructions.  Such SIMD computations exploit data parallelism to
- * perform the same operation on multiple data points simultaneously in
- * less time than it would ordinarily take to perform the same operation
- * sequentially on each data point.
- * <p>
- * A Vector represents an ordered immutable sequence of values of the same
- * element type {@code e} that is one of the following primitive types
- * {@code byte}, {@code short}, {@code int}, {@code long}, {@code float}, or
- * {@code double}).  The type variable {@code E} corresponds to the boxed
- * element type, specifically the class that wraps a value of {@code e} in an
- * object (such the {@code Integer} class that wraps a value of {@code int}}.
- * A Vector has a {@link #shape() shape} {@code S}, extending type {@link VectorShape},
- * that governs the total {@link #bitSize() size} in bits of the sequence of values.
- * The combination of element type and shape determines a <em>vector species</em>,
- * represented by {@link jdk.incubator.vector.VectorSpecies}.
- * <p>
- * The number of values in the sequence is referred to as the Vector
- * {@link #length() length}.  The length also corresponds to the number of
- * Vector lanes.  The lane element at lane index {@code N} (from {@code 0},
- * inclusive, to length, exclusive) corresponds to the {@code N + 1}'th value in
- * the sequence.
- * Note: this arrangement
- * of Vector bit size, Vector length, element bit size, and lane element index
- * has no bearing on how a Vector instance and its sequence of elements may be
- * arranged in memory or represented as a value in a vector hardware register.
- * <p>
+ * A
+ *
+ * <!-- The following paragraphs are shared verbatim
+ *   -- between Vector.java and package-info.java -->
+ * sequence of a fixed number of <em>lanes</em>,
+ * all of some fixed
+ * {@linkplain Vector#elementType() <em>element type</em>}
+ * such as {@code byte}, {@code long}, or {@code float}.
+ * Each lane contains an independent value of the element type.
+ * Operations on vectors are typically
+ * <a href="Vector.html#lane-wise"><em>lane-wise</em></a>,
+ * distributing some scalar operator (such as
+ * {@linkplain Vector#add(Vector) addition})
+ * across the lanes of the participating vectors,
+ *
+ * usually generating a vector result whose lanes contain the various
+ * scalar results.  When run on a supporting platform, lane-wise
+ * operations can be executed in parallel by the hardware.  This style
+ * of parallelism is called <em>Single Instruction Multiple Data</em>
+ * (SIMD) parallelism.
+ *
+ * <p> In the SIMD style of programming, most of the operations within
+ * a vector lane are unconditional, but the effect of conditional
+ * execution may be achieved using
+ * <a href="Vector.html#masking"><em>masked operations</em></a>
+ * such as {@link Vector#blend(Vector,VectorMask) blend()},
+ * under the control of an associated {@link VectorMask}.
+ * Data motion other than strictly lane-wise flow is achieved using
+ * <a href="Vector.html#cross-lane"><em>cross-lane</em></a>
+ * operations, often under the control of an associated
+ * {@link VectorShuffle}.
+ * Lane data and/or whole vectors can be reformatted using various
+ * kinds of lane-wise
+ * {@linkplain Vector#convert(VectorOperators.Conversion,int) conversions},
+ * and byte-wise reformatting
+ * {@linkplain Vector#reinterpretShape(VectorSpecies,int) reinterpretations},
+ * often under the control of a reflective {@link VectorSpecies}
+ * object which selects an alternative vector format different
+ * from that of the input vector.
+ *
+ * <!-- The preceding paragraphs are shared verbatim
+ *   -- between Vector.java and package-info.java -->
+ *
+ * <p> The {@linkplain #elementType element type} of a vector,
+ * sometimes called {@code ETYPE}, is one of the primitive types
+ * {@code byte}, {@code short}, {@code int}, {@code long}, {@code
+ * float}, or {@code double}.
+ *
+ * <p> The type {@code E} in {@code Vector<E>} is a generic type
+ * argument that corresponds to the element type.  In fact, it is the
+ * <em>boxed</em> version of the primitive element type.  For example,
+ * in the type {@code Vector<Integer>}, the {@code E} parameter is
+ * {@code Integer} but the {@code ETYPE} is {@code int}.  In such a
+ * vector, each lane carries a primitive {@code int} value.  This
+ * pattern continues for the other primitive types as well.
+ *
+ * <p> The {@linkplain #length() length} of a vector is the number of
+ * lanes it contains.
+ *
+ * This number is also called {@code VLENGTH} when the context makes
+ * clear which vector it belongs to.  Each vector has its own fixed
+ * {@code VLENGTH} but different instances of vectors may have
+ * different lengths.  {@code VLENGTH} is an important number, because
+ * it estimates the SIMD performance gain of a single vector operation
+ * as compared to scalar execution of the {@code VLENGTH} scalar
+ * operators which underly the vector operation.
+ *
+ * <p> The information capacity of a vector is determined by its
+ * {@linkplain #shape() <em>vector shape</em>}, also called its
+ * {@code VSHAPE}.  Each possible {@code VSHAPE} is represented by
+ * a member of the {@link VectorShape} enumeration, and represents
+ * an implementation format shared in common by all vectors of a
+ * of that shape.  Thus, the {@linkplain #bitSize() size in bits} of
+ * of a vector is determined by appealing to its vector shape.
+ *
+ * <p> Some Java platforms given special support to only one shape,
+ * while others support several.  A typical platform is not likely
+ * to support all the shapes described by this API.  For this reason,
+ * most vector operations work on a single input shape and
+ * produce the same shape on output.  Operations which change
+ * shape are clearly documented as such <em>shape-changing</em>,
+ * while the majority of operations are <em>shape-invariant</em>,
+ * to avoid disadvantaging platforms which support only one shape.
+ * There are queries to discover, for the current Java platform,
+ * the {@linkplain VectorShape#preferredShape()preferred shape}
+ * for general SIMD computation, or the
+ * {@linkplain VectorShape#largestShapeFor(Class) largest
+ * available shape} for any given lane type.  To be portable,
+ * code using this API should start by querying a supported
+ * shape, and then process all data with shape-invariant
+ * operations, within the selected shape.
+ *
+ * <p> Each unique combination of element type and vector shape
+ * determines a unique
+ * {@linkplain #species() <em>vector species</em>}.
+ * A vector species is represented by a fixed instance of
+ * {@link VectorSpecies VectorSpecies&lt;E&gt;}
+ * shared in common by all vectors of the same shape and
+ * {@code ETYPE}.
+ *
+ * <p> Vector shape, {@code VLENGTH}, and {@code ETYPE} are all
+ * mutually constrained, so that {@code VLENGTH} times the
+ * {@linkplain #elementSize() bit-size of each lane}
+ * must always match the bit-size of the vector's shape.
+ *
+ * Thus, {@link plain #reinterpretShape(VectorSpecies,int) reinterpreting} a
+ * vector via a cast may double its length if and only if it either
+ * halves the lane size, or else changes the shape.  Likewise,
+ * reinterpreting a vector may double the lane size if and only if it
+ * either halves the length, or else changes the shape of the vector.
+ *
+ * <h1><a id="subtype"></a>Vector subtypes</h1>
+ *
  * Vector declares a set of vector operations (methods) that are common to all
  * element types (such as addition).  Sub-classes of Vector with a concrete
- * boxed element type declare further operations that are specific to that
+ * element type declare further operations that are specific to that
  * element type (such as access to element values in lanes, logical operations
  * on values of integral elements types, or transcendental operations on values
  * of floating point element types).
@@ -81,184 +168,818 @@ import jdk.incubator.vector.*;
  * They expose static constants corresponding to the supported species,
  * and static methods on these types generally take a species as a parameter.
  * For example,
- * {@link jdk.incubator.vector.FloatVector#fromArray(VectorSpecies, float[], int) FloatVector.fromArray()}
+ * {@link FloatVector#fromArray(VectorSpecies, float[], int) FloatVector.fromArray}
  * creates and returns a float vector of the specified species, with elements
  * loaded from the specified float array.
- * <p>
  * It is recommended that Species instances be held in {@code static final}
  * fields for optimal creation and usage of Vector values by the runtime compiler.
- * <p>
- * Vector operations can be grouped into various categories and their behavior
- * generally specified as follows:
+ *
+ * <h1><a id="lane-wise"></a>Lane-wise operations</h1>
+ *
+ * Most operations on vectors are lane-wise, which means the operation
+ * is composed of an underlying scalar operator, which is repeated for
+ * each distinct lane of the input vector.  If there are additional
+ * vector arguments of the same type, their lanes are aligned with the
+ * lanes of the first input vector.  (They must all have a common
+ * {@code VLENGTH}.)  The output resulting from a lane-wise operation
+ * will have a {@code VLENGTH} which is equal to the {@code VLENGTH}
+ * of the input(s) to the operation.  Thus, lane-wise operations are
+ * <em>length-invariant</em>, in their basic definitions.
+ *
+ * <p> The principle of length-invariance is combined with another
+ * basic principle, that lane-wise operations are always
+ * <em>shape-invariant</em>, meaning that the inputs and the output of
+ * a lane-wise operation will have a common {@code VSHAPE}.  When the
+ * principles conflict, because a logical result (with an invariant
+ * {@code VLENGTH}), does not fit into the invariant {@code VSHAPE},
+ * the resulting expansions and contractions are handled explicitly
+ * with
+ * <a href="Vector.html#expansion">special conventions</a>.
+ *
+ * <p> Vector operations can be grouped into various categories and
+ * their behavior can be generally specified in terms of underlying
+ * scalar operators.  In the examples below, {@code ETYPE} is the
+ * element type of the operation (such as {@code int.class}) and
+ * {@code EVector} is the corresponding concrete vector type (such as
+ * {@code IntVector.class}).
+ *
  * <ul>
  * <li>
- * A lane-wise unary operation operates on one input vector and produces a
- * result vector.
- * For each lane of the input vector the
- * lane element is operated on using the specified scalar unary operation and
- * the element result is placed into the vector result at the same lane.
- * The following pseudocode expresses the behavior of this operation category,
- * where {@code e} is the element type and {@code EVector} corresponds to the
- * primitive Vector type:
+ * A <em>lane-wise unary</em> operation takes one input vector,
+ * distributing a unary scalar operator across the lanes, 
+ * and produces a result vector of the same type and shape.
+ *
+ * For each lane of the input vector {@code a},
+ * the underlying scalar operator is applied to the lane value.
+ * The result is placed into the vector result in the same lane.
+ * The following pseudocode illustrates the behavior of this operation
+ * category:
  *
  * <pre>{@code
+ * ETYPE scalar_unary_op(ETYPE s);
  * EVector a = ...;
- * e[] ar = new e[a.length()];
- * for (int i = 0; i < a.length(); i++) {
+ * VectorSpecies<E> species = a.species();
+ * ETYPE[] ar = new ETYPE[a.length()];
+ * for (int i = 0; i < ar.length; i++) {
  *     ar[i] = scalar_unary_op(a.lane(i));
  * }
- * EVector r = EVector.fromArray(a.species(), ar, 0);
+ * EVector r = EVector.fromArray(species, ar, 0);
  * }</pre>
  *
- * Unless otherwise specified the input and result vectors will have the same
- * element type and shape.
- *
  * <li>
- * A lane-wise binary operation operates on two input
- * vectors and produces a result vector.
- * For each lane of the two input vectors a and b,
- * the corresponding lane elements from a and b are operated on
- * using the specified scalar binary operation and the element result is placed
- * into the vector result at the same lane.
- * The following pseudocode expresses the behavior of this operation category:
+ * A <em>lane-wise binary</em> operation takes two input vectors,
+ * distributing a binary scalar operator across the lanes, 
+ * and produces a result vector of the same type and shape.
+ * 
+ * For each lane of the two input vectors {@code a} and {@code b},
+ * the underlying scalar operator is applied to the lane values.
+ * The result is placed into the vector result in the same lane.
+ * The following pseudocode illustrates the behavior of this operation
+ * category:
  *
  * <pre>{@code
+ * ETYPE scalar_binary_op(ETYPE s, ETYPE t);
  * EVector a = ...;
+ * VectorSpecies<E> species = a.species();
  * EVector b = ...;
- * e[] ar = new e[a.length()];
- * for (int i = 0; i < a.length(); i++) {
+ * b.check(species);  // must have same species
+ * ETYPE[] ar = new ETYPE[a.length()];
+ * for (int i = 0; i < ar.length; i++) {
  *     ar[i] = scalar_binary_op(a.lane(i), b.lane(i));
  * }
- * EVector r = EVector.fromArray(a.species(), ar, 0);
+ * EVector r = EVector.fromArray(species, ar, 0);
  * }</pre>
- *
- * Unless otherwise specified the two input and result vectors will have the
- * same element type and shape.
+ * </li>
  *
  * <li>
- * Generalizing from unary and binary operations, a lane-wise n-ary
- * operation operates on n input vectors and produces a result vector.
- * N lane elements from each input vector are operated on
- * using the specified n-ary scalar operation and the element result is placed
- * into the vector result at the same lane.
- * Unless otherwise specified the n input and result vectors will have the same
- * element type and shape.
+ * Generalizing from unary and binary operations,
+ * a <em>lane-wise n-ary</em> operation takes {@code N} input vectors {@code v[j]},
+ * distributing an n-ary scalar operator across the lanes,
+ * and produces a result vector of the same type and shape.
+ * Except for a few ternary operations, this API has no support
+ * lane-wise n-ary operations.
+ *
+ * For each lane of all of the input vectors {@code v[j]},
+ * the underlying scalar operator is applied to the lane values.
+ * The result is placed into the vector result in the same lane.
+ * The following pseudocode illustrates the behavior of this operation
+ * category:
+ *
+ * <pre>{@code
+ * ETYPE scalar_nary_op(ETYPE... args);
+ * EVector[] v = ...;
+ * int N = v.length;
+ * VectorSpecies<E> species = v[0].species();
+ * for (EVector arg : v) {
+ *     arg.check(species);  // all must have same species
+ * }
+ * ETYPE[] ar = new ETYPE[a.length()];
+ * for (int i = 0; i < ar.length; i++) {
+ *     ETYPE[] args = new ETYPE[N];
+ *     for (int j = 0; j < N; j++) {
+ *         args[j] = v[j].lane(i);
+ *     }
+ *     ar[i] = scalar_nary_op(args);
+ * }
+ * EVector r = EVector.fromArray(species, ar, 0);
+ * }</pre>
+ * </li>
  *
  * <li>
- * A cross-lane vector reduction operation operates on all the lane
- * elements of an input vector.
+ * A <em>lane-wise conversion</em> operation takes one input vector,
+ * distributing a unary scalar conversion operator across the lanes,
+ * and produces a logical result of the converted values.  The logical
+ * result (or at least a part of it) is presented in a vector of the
+ * same shape as the input vector.
+ *
+ * <p> Unlike other lane-wise operations, conversions can change lane
+ * type, from the input (domain) type to the output (range) type.  The
+ * lane size may change along with the type.  In order to manage the
+ * size changes, lane-wise conversion methods can product <em>partial
+ * results</em>, under the control of a {@code part} parameter, which
+ * is <a href="Vector.html#expansion">explained elsewhere</a>.
+ *
+ * <p> The following pseudocode illustrates the behavior of this
+ * operation category in the specific example of a conversion from
+ * {@code int} to {@code double}:
+ *
+ * <pre>{@code
+ * IntVector a = ...;
+ * int VLENGTH = a.length();
+ * VectorShape VSHAPE = a.shape();
+ * double[] arlogical = new double[VLENGTH];
+ * for (int i = 0; i < limit; i++) {
+ *     int e = a.lane(i);
+ *     arlogical[i] = (double) e;
+ * }
+ * VectorSpecies<Double> rs = VSHAPE.withLanes(double.class);
+ * DoubleVector r = DoubleVector.fromArray(rs, arlogical, 0);
+ * int M = Double.BITS / Integer.BITS;  // expansion factor
+ * assert r.length() == VLENGTH / M;
+ * }</pre>
+ * </li>
+ *
+ * <li>
+ * A <em>cross-lane reduction</em> operation operates on all
+ * the lane elements of an input vector.
  * An accumulation function is applied to all the
  * lane elements to produce a scalar result.
  * If the reduction operation is associative then the result may be accumulated
  * by operating on the lane elements in any order using a specified associative
  * scalar binary operation and identity value.  Otherwise, the reduction
- * operation specifies the behavior of the accumulation function.
- * The following pseudocode expresses the behavior of this operation category
+ * operation specifies the order of accumulation.
+ * The following pseudocode illustrates the behavior of this operation category
  * if it is associative:
  * <pre>{@code
+ * ETYPE assoc_scalar_binary_op(ETYPE s, ETYPE t);
  * EVector a = ...;
- * e r = <identity value>;
+ * ETYPE r = <identity value>;
  * for (int i = 0; i < a.length(); i++) {
  *     r = assoc_scalar_binary_op(r, a.lane(i));
  * }
  * }</pre>
- *
- * Unless otherwise specified the scalar result type and element type will be
- * the same.
+ * </li>
  *
  * <li>
- * A lane-wise binary test operation operates on two input vectors and produces a
- * result mask.  For each lane of the two input vectors, a and b say, the
- * the corresponding lane elements from a and b are operated on using the
- * specified scalar binary test operation and the boolean result is placed
- * into the mask at the same lane.
- * The following pseudocode expresses the behavior of this operation category:
+ * A <em>cross-lane movement</em> operation operates on all
+ * the lane elements of an input vector and moves them
+ * in a data-dependent manner into <em>different lanes</em>
+ * in an output vector.
+ * The movement is steered by an auxiliary datum, such as
+ * a {@link VectorShuffle} or a scalar index defining the
+ * origin of the movement.
+ * The following pseudocode illustrates the behavior of this
+ * operation category, in the case of a shuffle:
  * <pre>{@code
  * EVector a = ...;
- * EVector b = ...;
- * boolean[] ar = new boolean[a.length()];
- * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_binary_test_op(a.lane(i), b.lane(i));
+ * Shuffle<E> s = ...;
+ * ETYPE[] ar = new ETYPE[a.length()];
+ * for (int i = 0; i < ar.length; i++) {
+ *     int source = s.laneSource(i);
+ *     ar[i] = a.lane(source);
  * }
- * VectorMask r = VectorMask.fromArray(a.species(), ar, 0);
+ * EVector r = EVector.fromArray(a.species(), ar, 0);
  * }</pre>
- *
- * Unless otherwise specified the two input vectors and result mask will have
- * the same element type and shape.
+ * </li>
  *
  * <li>
- * The prior categories of operation can be said to operate within the vector
- * lanes, where lane access is uniformly applied to all vectors, specifically
- * the scalar operation is applied to elements taken from input vectors at the
- * same lane, and if appropriate applied to the result vector at the same lane.
- * A further category of operation is a cross-lane vector operation where lane
- * access is defined by the arguments to the operation.  Cross-lane operations
- * generally rearrange lane elements, for example by permutation (commonly
- * controlled by a {@link jdk.incubator.vector.VectorShuffle}) or by blending (commonly controlled by a
- * {@link jdk.incubator.vector.VectorMask}). Such an operation explicitly specifies how it rearranges lane
- * elements.
+ * A <em>masked operation</em> is one which is a variation on one of the
+ * previous operations (either lane-wise or cross-lane), where
+ * the operation takes an extra trailing {@link VectorMask} argument.
+ * In lanes the mask is set, the operation behaves as if the mask
+ * argument were absent, but in lanes where the mask is unset, the
+ * underlying scalar operation is suppressed.
+ * Masked operations are explained in
+ * <a href="Vector.html#masking">greater detail elsewhere</a>.
+ *
+ * <li>
+ * A very special case of a masked lane-wise binary operation is a
+ * {@linkplain blend(Vector,VectorMask) blend}, which operates
+ * lane-wise on two input vectors {@code a} and {@code b}, selecting lane
+ * values from one input or the other depending on a mask {@code m}.
+ * In lanes where {@code m} is set, the corresponding value from
+ * {@code b} is selected into the result; otherwise the value from
+ * {@code a} is selected.  Thus, a blend acts as a vectorized version
+ * of Java's ternary selection expression {@code m?b:a}:
+ * <pre>{@code
+ * ETYPE[] ar = new ETYPE[a.length()];
+ * for (int i = 0; i < ar.length; i++) {
+ *     boolean isSet = m.laneIsSet(i);
+ *     ar[i] = isSet ? b.lane(i) : a.lane(i);
+ * }
+ * EVector r = EVector.fromArray(species, ar, 0);
+ * }</pre>
+ * </li>
+ *
+ * <li>
+ * A <em>lane-wise binary test</em> operation takes two input vectors,
+ * distributing a binary scalar comparison across the lanes, 
+ * and produces, not a vector of booleans, but rather a
+ * {@linkplain VectorMask vector mask}.
+ *
+ * For each lane of the two input vectors {@code a} and {@code b},
+ * the underlying scalar comparison operator is applied to the lane values.
+ * The resulting boolean is placed into the vector mask result in the same lane.
+ * The following pseudocode illustrates the behavior of this operation
+ * category:
+ * <pre>{@code
+ * boolean scalar_binary_test_op(ETYPE s, ETYPE t);
+ * EVector a = ...;
+ * VectorSpecies<E> species = a.species();
+ * EVector b = ...;
+ * b.check(species);  // must have same species
+ * boolean[] mr = new boolean[a.length()];
+ * for (int i = 0; i < mr.length; i++) {
+ *     mr[i] = scalar_binary_test_op(a.lane(i), b.lane(i));
+ * }
+ * VectorMask<E> m = VectorMask.fromArray(species, mr, 0);
+ * }</pre>
+ * </li>
+ *
  * </ul>
  *
  * <p>
  * If a vector operation does not belong to one of the above categories then
- * the operation explicitly specifies how it processes the lane elements of
- * input vectors, and where appropriate expresses the behavior using
+ * the method documentation explicitly specifies how it processes the lanes of
+ * input vectors, and where appropriate illustrates the behavior using
  * pseudocode.
  *
  * <p>
- * Many vector operations provide an additional {@link VectorMask mask} accepting
- * variant.
- * The mask controls which lanes are selected for application of the scalar
- * operation.  Masks are a key component for the support of control flow in
- * vector computations.
- * <p>
- * Many vector operations provide an additional {@link jdk.incubator.vector.VectorMask mask}-accepting
- * variant.
- * The mask controls which lanes are selected for application of the scalar
- * operation.  Masks are a key component for the support of control flow in
- * vector computations.
- * <p>
- * For certain operation categories the mask accepting variants can be specified
- * in generic terms.  If a lane of the mask is set then the scalar operation is
- * applied to corresponding lane elements, otherwise if a lane of a mask is not
- * set then a default scalar operation is applied and its result is placed into
- * the vector result at the same lane. The default operation is specified as follows:
+ * Most lane-wise binary and comparison operations offer convenience
+ * overloadings which accept a scalar as the second input, in place of a
+ * vector.  In this case the scalar value is promoted to a vector by
+ * {@linkplain Vector#broadcast(long) broadcasting it}
+ * into the same lane structure as the first input.
+ *
+ * <h1><a id="masking"></a>Masked operations</h1>
+ *
+ * <p> Many vector operations accept an optional
+ * {@link VectorMask mask} argument, selecting which lanes participate
+ * in the underlying scalar operator.  If present, the mask argument
+ * appears at the end of the method argument list.
+ *
+ * <p> Each lane of the mask argument is a boolean which is either in
+ * the <em>set</em> or <em>unset</em> state.  For lanes where the mask
+ * argument is unset, the underlying scalar operator is suppressed.
+ * In this way, masks allow vector operations to emulate scalar
+ * control flow operations, without losing SIMD parallelism, except
+ * where the mask lane is unset.
+ *
+ * <p> An operation suppressed by a mask will never cause an exception
+ * or side effect of any sort, even if the underlying scalar operator
+ * can potentially do so.  For example, an unset lane that seems to
+ * access an out of bounds array element or divide an integral value
+ * by zero will simply be ignored.  Values in suppressed lanes never
+ * participate or appear in the result of the overall operation.
+ *
+ * <p> Result lanes corresponding to a suppressed operation will be
+ * filled with a default value which depends on the specific
+ * operation, as follows:
+ *
  * <ul>
- * <li>
- * For a lane-wise n-ary operation the default operation is a function that returns
- * it's first argument, specifically the lane element of the first input vector.
- * <li>
- * For an associative vector reduction operation the default operation is a
- * function that returns the identity value.
- * <li>
- * For lane-wise binary test operation the default operation is a function that
- * returns false.
+ *
+ * <li>If the operation is a unary, binary, or n-ary arithmetic or
+ * logical operation, suppressed lanes are filled from the first
+ * vector operand (i.e., the vector recieving the method call), as if
+ * by a {@linkplain #blend(Vector,VectorMask) blend}.</li>
+ * 
+ * <li>If the operation is a memory load or a {@code slice()} from
+ * another vector, suppressed lanes are not loaded, and are filled
+ * with the default value for the {@code ETYPE}, which in every case
+ * consists of all zero bits.</li>
+ * 
+ * <li>If the operation is a memory store or an {@code unslice()} into
+ * another vector, suppressed lanes are not stored, and the
+ * corresponding memory or vector locations (if any) are unchanged.
+ *
+ * <p> (Note: Memory effects such as race conditions never occur for
+ * suppressed lanes.  That is, implementations will not secretly
+ * re-write the existing value for unset lanes.  In the Java Memory
+ * Model, reassigning a memory variable to its current value is not a
+ * no-op; it may quietly undo a racing store from another
+ * thread.)</li>
+ *
+ * <li>If the operation is a reduction, suppressed lanes are ignored
+ * in the reduction.  If all lanes are suppressed, a suitable neutral
+ * value is returned, depending on the specific reduction operation,
+ * and documented by the masked variant of that method.  (This means
+ * that users can obtain the neutral value programmatically by
+ * executing the reduction on a dummy vector with an all-unset mask.)
+ *
+ * <li>If the operation is a comparison operation, suppressed output
+ * lanes in the resulting mask are themselves unset, as if the
+ * suppressed comparison operation returned {@code false} regardless
+ * of the suppressed input values.</li>
+ * 
+ * <li>In other cases, such as masked
+ * <a href="Vector.html#cross-lane"><em>cross-lane movements</em></a>,
+ * the specific effects of masking are documented by the masked
+ * variant of the method.
+ *
  * </ul>
- * Otherwise, the mask accepting variant of the operation explicitly specifies
- * how it processes the lane elements of input vectors, and where appropriate
- * expresses the behavior using pseudocode.
  *
- * <p>
- * For convenience, many vector operations of arity greater than one provide
- * an additional scalar-accepting variant (such as adding a constant scalar
- * value to all lanes of a vector).  This variant accepts compatible
- * scalar values instead of vectors for the second and subsequent input vectors,
- * if any.
- * Unless otherwise specified the scalar variant behaves as if each scalar value
- * is transformed to a vector using the appropriate vector {@code broadcast} operation, and
- * then the vector accepting vector operation is applied using the transformed
- * values.
+ * <p> As an example, a masked binary operation on two input vectors
+ * {@code a} and {@code b} suppresses the binary operation for lanes
+ * where the mask is unset, and retains the original lane value from
+ * {@code a}.  The following pseudocode illustrates this behavior:
+ * <pre>{@code
+ * ETYPE scalar_binary_op(ETYPE s, ETYPE t);
+ * EVector a = ...;
+ * VectorSpecies<E> species = a.species();
+ * EVector b = ...;
+ * b.check(species);  // must have same species
+ * VectorMask<E> m = ...;
+ * m.check(species);  // must have same species
+ * boolean[] ar = new boolean[a.length()];
+ * for (int i = 0; i < ar.length; i++) {
+ *     if (m.laneIsSet(i)) {
+ *         ar[i] = scalar_binary_op(a.lane(i), b.lane(i));
+ *     } else {
+ *         ar[i] = a.lane(i);  // from first input
+ *     }
+ * }
+ * EVector r = EVector.fromArray(species, ar, 0);
+ * }</pre>
  *
- * <p>
- * This is a value-based
- * class; use of identity-sensitive operations (including reference equality
- * ({@code ==}), identity hash code, or synchronization) on instances of
- * {@code Vector} may have unpredictable results and should be avoided.
+ * <h1><a id="lane-order">Lane order and byte order</h1>
  *
- * @param <E> the boxed element type of elements in this vector
+ * The number of lane values stored in a given vector is referred to
+ * as its {@linkplain #length() vector length} or {@code VLENGTH}.
+ *
+ * It is useful to consider vector lanes as ordered
+ * <em>sequentially</em> from first to last, with the first lane
+ * numbered {@code 0}, the next lane numbered {@code 1}, and so on to
+ * the last lane numbered {@code VLENGTH-1}.  This is a temporal
+ * order, where lower-numbered lanes are considered earlier than
+ * higher-numbered (later) lanes.  This API uses these terms
+ * in preference to spatial terms such as "left", "right", "high",
+ * and "low".
+ *
+ * <p> Temporal terminology works well for vectors because they
+ * (usually) represent small fixed-sized segments in a long sequence
+ * of workload elements, where the workload is conceptually traversed
+ * in time order from beginning to end.  (This is a mental model: it
+ * does not exclude multicore divide-and-conquer techniques.)  Thus,
+ * when a scalar loop is transformed into a vector loop, adjacent
+ * scalar items (one earlier, one later) in the workload end up as
+ * adjacent lanes in a single vector (again, one earlier, one later).
+ * At a vector boundary, the last lane item in the earlier vector is
+ * adjacent to (and just before) the first lane item in the
+ * immediately following vector.
+ *
+ * <p> Vectors are also sometimes thought of in spatial terms, where
+ * the first lane is placed at an edge of some virtual paper, and
+ * subsequent lanes are presented in order next to it.  When using
+ * spatial terms, all directions are equally plausible: Some vector
+ * notations present lanes from left to right, and others from right
+ * to left; still others present from top to bottom or vice versa.
+ * Using the language of time (before, after, first, last) instead of
+ * space (left, right, high, low) is often more likely to avoid
+ * misunderstandings.
+ *
+ * <p> As second reason to prefer temporal to spatial language about
+ * vector lanes is the fact that the terms "left", "right", "high" and
+ * "low" are widely used to describe the relations between bits in
+ * scalar values.  The leftmost or highest bit in a given type is
+ * likely to be a sign bit, while the rightmost or lowest bit is
+ * likely to be the arithmetically least significant, and so on.
+ * Applying these terms to vector lanes risks confusion, however,
+ * because it is relatively rare to find algorithms where, given two
+ * adjacent vector lanes, one lane is somehow more arithmetically
+ * significant than its neighbor, and even in those cases, there is no
+ * general way to know which neighbor is the the more significant.
+ *
+ * <p> Putting the terms together, we view the information structure
+ * of a vector as a temporal sequence of lanes ("first", "next",
+ * "earlier", "later", "last", etc.)  of bit-strings which are
+ * internally ordered spatially (either "low" to "high" or "right" to
+ * "left").  The primitive values in the lanes are decoded from these
+ * bit-strings, in the usual way.  Most vector operations, like most
+ * Java scalar operators, treat primitive values as atomic values, but
+ * some operations reveal the internal bit-string structure.
+ *
+ * <p> When a vector is loaded from or stored into memory, the order
+ * of vector lanes is <em>always consistent </em> with the inherent
+ * ordering of the memory container.  This is true whether or not
+ * individual lane elements are subject to "byte swapping" due to
+ * details of byte order.  Thus, while the scalar lane elements of
+ * vector might be "byte swapped", the lanes themselves are never
+ * reordered, except by an explicit method call that performs
+ * cross-lane reordering.
+ *
+ * <p> When vector lane values are stored to Java variables of the
+ * same type, byte swapping is performed if and only if the
+ * implementation of the vector hardware requires such swapping.  It
+ * is therefore unconditional and invisible.
+ *
+ * <p> As a useful fiction, this API presents a consistent illusion
+ * that vector lane bytes are composed into larger lane scalars in
+ * <em>little endian order</em>.  This means that storing a vector
+ * into a Java byte array will reveal the successive bytes of the
+ * vector lane values in little-endian order on all platforms,
+ * regardless of native memory order, and also regardless of byte
+ * order (if any) within vector unit registers.
+ *
+ * <p> This hypothetical little-endian ordering also appears when a
+ * {@linkplain #reinterpretShape(VectorSpecies,int) reinterpretation cast} is
+ * applied in such a way that lane boundaries are discarded and
+ * redrawn differently, while maintaining vector bits unchanged.  In
+ * such an operation, two adjacent lanes will contribute bytes to a
+ * single new lane (or vice versa), and the sequential order of the
+ * two lanes will determine the arithmetic order of the bytes in the
+ * single lane.  In this case, the little-endian convention provides
+ * portable results, so that on all platforms earlier lanes tend to
+ * contribute lower (rightward) bits, and later lanes tend to
+ * contribute higher (leftward) bits.  The {@linkplain #reinterpretAsBytes()
+ * reinterpretation casts} between {@link ByteVector}s and the
+ * other non-byte vectors use this convention to clarify their
+ * portable semantics.
+ *
+ * <p> The little-endian fiction for relating lane order to per-lane
+ * byte order is slightly preferable to an equivalent big-endian
+ * fiction, because some related formulas are much simpler,
+ * specifically those which renumber bytes after lane structure
+ * changes.  The earliest byte is invariantly earliest across all lane
+ * structure changes, but only if little-endian convention are used.
+ * The root cause of this is that bytes in scalars are numbered from
+ * the least significant (rightmost) to the omst significant
+ * (leftmost), and almost never vice-versa.  If we habitually numbered
+ * sign bits as zero (as on some computers) then this API would reach
+ * for big-endian fictions to create unified addressing of vector
+ * bytes.
+ *
+ * <h1><a id="expansion">Expansions, contractions, and partial results</h1>
+ *
+ * Since vectors are fixed in size, occasions often arise where the
+ * logical result of an operation is not the same as the physical size
+ * of the proposed output vector.  To encourage user code that is as
+ * portable and predictable as possible, this API has a systematic
+ * approach to the design of such <em>resizing</em> vector operations.
+ *
+ * <p> As a basic principle, lane-wise operations are
+ * <em>length-invariant</em>.  Length-invariance simply means that
+ * if {@code VLENGTH} lanes go into an operation, the same number
+ * of lanes come out, with nothing discarded and no extra padding.
+ *
+ * <p> As a second principle, sometimes in tension with the first,
+ * lane-wise operations are also <em>shape-invariant</em>, unless
+ * clearly marked otherwise.
+ *
+ * Shape-invariance means that {@code VSHAPE} is constant for typical
+ * computations.  Keeping the same shape throughout a computation
+ * helps ensure that scarce vector resources are efficiently used.
+ * (On some hardware platforms shape changes could cause unwanted
+ * effects like extra data movement instructions, round trips through
+ * memory, or pipeline bubbles.)
+ *
+ * <p> Tension between these principles arises when an operation
+ * produces a <em>logical result</em> that is too large for the
+ * required output {@code VSHAPE}.  In other cases, when a logical
+ * result is smaller than the capacity of the output {@code VSHAPE},
+ * the positioning of the logical result is open to question, since
+ * the physical output vector must contain a mix of logical result and
+ * padding.
+ *
+ * <p> In the first case, of a too-large logical result being crammed
+ * into a too-small output {@code VSHAPE}, we say that data has
+ * <em>expanded</em>.  In other words, an <em>expansion operation</em>
+ * has caused the output shape to overflow.  Symmetrically, in the
+ * second case of a small logical result fitting into a roomy output
+ * {@code VSHAPE}, the data has <em>contracted</em>, and the
+ * <em>contraction operation</em> has required the output shape to pad
+ * itself with extra zero lanes.
+ *
+ * <p> In both cases we can speak of a parameter {@code M} which
+ * measures the <em>expansion ratio</em> or <em>contraction ratio</em>
+ * between the logical result size (in bits) and the bit-size of the
+ * actual output shape.  When vector shapes are changed, and lane
+ * sizes are not, {@code M} is just the integral ratio of the output
+ * shape to the logical result.  (With the possible exception of
+ * the {@linkplain VectorShape#S_Max_BIT maximum shape}, all vector
+ * sizes are powers of two, and so the ratio {@code M} is always
+ * an integer.  In the hypothetical case of a non-integral ratio,
+ * the value {@code M} would be rounded up to the next integer,
+ * and then the same general considerations would apply.)
+ *
+ * <p> If the logical result is larger than the physical output shape,
+ * such a shape change must inevitably drop result lanes (all but
+ * {@code 1/M} of the logical result).  If the logical size is smaller
+ * than the output, the shape change must introduce zero-filled lanes
+ * of padding (all but {@code 1/M} of the physical output).  The first
+ * case, with dropped lanes, is an expansion, while the second, with
+ * padding lanes added, is a contraction.
+ *
+ * <p> Similarly, consider a lane-wise conversion operation which
+ * leaves the shape invariant but changes the lane size by a ratio of
+ * {@code M}.  If the logical result is larger than the output (or
+ * input), this conversion must reduce the {@code VLENGTH} lanes of the
+ * output by {@code M}, dropping all but {@code 1/M} of the logical
+ * result lanes.  As before, the dropping of lanes is the hallmark of
+ * an expansion.  A lane-wise operation which contracts lane size by a
+ * ratio of {@code M} must increase the {@code VLENGTH} by the same
+ * factor {@code M}, filling the extra lanes with a zero padding
+ * value; because padding must be added this is a contraction.
+ *
+ * <p> It is also possible (though somewhat confusing) to change both
+ * lane size and container size in one operation which performs both
+ * lane conversion <em>and</em> reshaping.  If this is done, the same
+ * rules apply, but the logical result size is the product of the
+ * input size times any expansion or contraction ratio from the lane
+ * change size.
+ *
+ * <p> For completeness, we can also speak of <em>in-place
+ * operations</em> for the frequent case when resizing does not occur.
+ * With an in-place operation, the data is simply copied from logical
+ * output to its physical container with no truncation or padding.
+ * The ratio parameter {@code M} in this case is unity.
+ *
+ * <p> Note that the classification of contraction vs. expansion
+ * depends on the relative sizes of the logical result and the
+ * physical output container.  The size of the input container may be
+ * larger or smaller than either of the other two values, without
+ * changing the classification.  For example, a conversion from a
+ * 128-bit shape to a 256-bit shape will be a contraction in many
+ * cases, but it would be an expansion if it were combined with a
+ * conversion from {@code byte} to {@code long}, since in that case
+ * the logical result would be 1024 bits in size.  This example also
+ * illustrates that a logical result does not need to correspond to
+ * any particular platform-supported vector shape.
+ *
+ * <p> Although lane-wise masked operations can be viewed as producing
+ * partial operations, they are not classified (in this API) as
+ * expansions or contractions.  A masked load from an array surely
+ * produces a partial vector, but there is no meaningful "logical
+ * output vector" that this partial result was contracted from.
+ *
+ * <p> Some care is required with these terms, because it is the
+ * <em>data</em>, not the <em>container size</em>, that is expanding
+ * or contracting, relative to the size of its output container.
+ * Thus, resizing a 128-bit input into 512-bit vector has the effect
+ * of a <em>contraction</em>.  Though the 128 bits of payload hasn't
+ * changed in size, we can say it "looks smaller" in its new 512-bit
+ * home, and this will capture the practical details of the situation.
+ *
+ * <p> If a vector method might expand its data, it accepts an extra
+ * {@code int} parameter called {@code part}, or the "part number".
+ * The part number must be in the range {@code [0..M-1]}, where
+ * {@code M} is the expansion ratio.  The part number selects one
+ * of {@code M} contiguous disjoint equally-sized blocks of lanes
+ * from the logical result and fills the physical output vector
+ * with this block of lanes.
+ *
+ * <p> Specifically, the lanes selected from the logical result of an
+ * expansion are numbered in the range {@code [R..R+L-1]}, where
+ * {@code L} is the {@code VLENGTH} of the physical output vector, and
+ * the origin of the block, {@code R}, is {@code part*L}.
+ *
+ * <p> A similar convention applies to any vector method that might
+ * contract its data.  Such a method also accepts an extra part number
+ * parameter (again called {@code part}) which steers the contracted
+ * data lanes one of {@code M} contiguous disjoint equally-sized
+ * blocks of lanes in the physical output vector.  The remaining lanes
+ * are filled with zero, or as specified by the method.
+ *
+ * <p> Specifically, the data is steered into the lanes numbered in the
+ * range {@code [R..R+L-1}, where {@code L} is the {@code VLENGTH} of
+ * the logical result vector, and the origin of the block, {@code R},
+ * is again a multiple of {@code L} selected by the part number,
+ * specifically {@code |part|*L}.
+ *
+ * <p> In the case of a contraction, the part number must be in the
+ * non-positive range {@code [-M+1..0]}.  This convention is adopted
+ * because some methods can perform both expansions and contractions,
+ * in a data-dependent manner, and the extra sign on the part number
+ * serves as an error check.  If vector method takes a part number and
+ * is invoked to perform an in-place operation (neither contracting
+ * nor expanding), the {@code part} parameter must be exactly zero.
+ * Part numbers outside the allowed ranges will elicit an indexing
+ * exception.  Note that in all cases a zero part number is valid, and
+ * corresponds to an operation which preserves as many lanes as
+ * possible from the beginning of the logical result, and places them
+ * into the beginning of the physical output container.  This is
+ * often a desirable default, so a part number of zero is safe
+ * in all cases and useful in most cases.
+ *
+ * <p> The various resizing operations of this API contract or expand
+ * their data as follows:
+ * <ul>
+ *
+ * <li>
+ * {@link Vector#convert(VectorOperators.Conversion,int) Vector.convert()}
+ * will expand (respectively, contract) its operand by ratio
+ * {@code M} if the
+ * {@linkplain #elementSize() element size} of its output is
+ * larger (respectively, smaller) by a factor of {@code M}.
+ * If the element sizes of input and output are the same,
+ * then {@code convert()} is an in-place operation.
+ *
+ * <li>
+ * {@link Vector#convertShape(VectorOperators.Conversion,VectorSpecies,int) Vector.convertShape()}
+ * will expand (respectively, contract) its operand by ratio
+ * {@code M} if the bit-size of its logical result is
+ * larger (respectively, smaller) than the bit-size of its
+ * output shape.
+ * The size of the logical result is defined as the
+ * {@linkplain #elementSize() element size} of the output,
+ * times the {@code VLENGTH} of its input.
+ *
+ * Depending on the ratio of the changed lane sizes, the logical size
+ * may be (in various cases) either larger or smaller than the input
+ * vector, independently of whether the operation is an expansion
+ * or contraction.
+ *
+ * <li>
+ * Since {@link Vector#castShape(VectorSpecies,int) Vector.castShape()}
+ * is a convenience method for {@code convertShape()}, its classification
+ * as an expansion or contraction is the same as for {@code convertShape()}.
+ *
+ * <li>
+ * {@link Vector#reinterpretShape(VectorSpecies,int) Vector.reinterpretShape()}
+ * is an expansion (respectively, contraction) by ratio {@code M} if the
+ * {@linkplain #bitSize() vector bit-size} of its input is
+ * crammed into a smaller (respectively, dropped into a larger)
+ * output container by a factor of {@code M}.
+ * Otherwise it is an in-place operation.
+ *
+ * Since this method is a reinterpretation cast that can erase and
+ * redraw lane boundaries as well as modify shape, the input vector's
+ * lane size and lane count are irrelevant to its classification as
+ * expanding or contracting.
+ *
+ * <li>
+ * The {@link #unslice(int,Vector,int) unslice()} methods expand
+ * by a ratio of {@code M=2}, because the single input slice is
+ * positioned and inserted somewhere within two consecutive background
+ * vectors.  The part number selects the first or second background
+ * vector, as updated by the inserted slice.
+ * Note that the corresponding
+ * {@link #slice(int,Vector) slice()} methods, although inverse
+ * to the {@code unslice()} methods, do not contract their data
+ * and thus require no part number.  This is because
+ * {@code slice()} delivers a slice of exactly {@code VLENGTH}
+ * lanes extracted from two input vectors.
+ * </ul>
+ *
+ * The method {@link VectorSpecies#partLimit(VectorSpecies,boolean)
+ * partLimit()} on {@link VectorSpecies} can be used, before any
+ * expanding or contracting operation is performed, to query the
+ * limiting value on a part parameter for a proposed expansion
+ * or contraction.  The value returned from {@code partLimit()} is
+ * positive for expansions, negative for contractions, and zero for
+ * in-place operations.  Its absolute value is the parameter {@code
+ * M}, and so it serves as an exclusive limit on valid part number
+ * arguments for the relevant methods.  Thus, for expansions, the
+ * {@code partLimit()} value {@code M} is the exclusive upper limit
+ * for part numbers, while for contractions the {@code partLimit()}
+ * value {@code -M} is the exclusive <em>lower</em> limit.
+ * 
+ * <h1><a id="cross-lane">Moving data across lane boundaries</h1>
+ * The cross-lane methods which do not redraw lanes or change species
+ * are more regularly structured and easier to reason about.
+ * These operations are:
+ * <ul>
+ *
+ * <li>The {@link #slice(int,Vector) slice()} family of methods,
+ * which extract contiguous slice of {@code VLENGTH} fields from
+ * a given origin point within a concatenated pair of vectors.
+ * 
+ * <li>The {@link #unslice(int,Vector,int) unslice()} family of
+ * methods, which insert a contiguous slice of {@code VLENGTH} fields
+ * into a concatenated pair of vectors at a given origin point.
+ *
+ * <li>The {@link #rearrange(VectorShuffle) rearrange()} family of
+ * methods, which select an arbitrary set of {@code VLENGTH} lanes
+ * from one or two input vectors, and assemble them in an arbitrary
+ * order.  The selection and order of lanes is controlled by a
+ * {@code VectorShuffle} object, which acts as an routing table
+ * mapping source lanes to destination lanes.  A {@code VectorShuffle}
+ * can encode a mathematical permutation as well as many other
+ * patterns of data movement.
+ *
+ * </ul> 
+ * <p> Some vector operations are not lane-wise, but rather move data
+ * across lane boundaries.  Such operations are typically rare in SIMD
+ * code, though they are sometimes necessary for specific algorithms
+ * that manipulate data formats at a low level, and/or require SIMD
+ * data to move in complex local patterns.  (Local movement in a small
+ * window of a large array of data is relatively unusual, although
+ * some highly patterned algorithms call for it.)  In this API such
+ * methods are always clearly recognizable, so that simpler lane-wise
+ * reasoning can be confidently applied to the rest of the code.
+ *
+ * <p> In some cases, vector lane boundaries are discarded and
+ * "redrawn from scratch", so that data in a given input lane might
+ * appear (in several parts) distributed through several output lanes,
+ * or (conversely) data from several input lanes might be consolidated
+ * into a single output lane.  The fundamental method which can redraw
+ * lanes boundaries is
+ * {@link #reinterpretShape(VectorSpecies,int) reinterpretShape()}.
+ * Built on top of this method, certain convenience methods such
+ * as {@link #reinterpretAsBytes() reinterpretAsBytes()} or
+ * {@link #reinterpretAsInts() reinterpretAsInts()} will
+ * (potentially) redraw lane boundaries, while retaining the
+ * same overall vector shape.
+ *
+ * <p> Operations which produce or consume a scalar result can be
+ * viewed as very simple cross-lane operations.  Methods in the
+ * {@link #reduceLanesToLong(VectorOperators.Associative)
+ * reduceLanes()} family fold together all lanes (or mask-selected
+ * lanes) of a method and return a single result.  As an inverse, the
+ * {@link #broadcast(long) broadcast} family of methods can be thought
+ * of as crossing lanes in the other direction, from a scalar to all
+ * lanes of the output vector.  Single-lane access methods such as
+ * {@code lane(I)} or {@code withLane(I,E)} might also be regarded as
+ * very simple cross-lane operations.
+ *
+ * <p> Likewise, a method which moves a non-byte vector to or from a
+ * byte array could be viewed as a cross-lane operation, because the
+ * vector lanes must be distributed into separate bytes, or (in the
+ * other direction) consolidated from array bytes.
+ *
+ * @implNote
+ *
+ * <h1>Hardware platform dependencies</h1>
+ * 
+ * The Vector API is to accelerate computations in style of Single
+ * Instruction Multiple Data (SIMD), using available hardware
+ * resources such as vector hardware registers and vector hardware
+ * instructions.  The API is designed to make effective use of
+ * multiple SIMD hardware platforms.
+ *
+ * <p> This API will also work correctly even on Java platforms which
+ * do not include specialized hardware support for SIMD computations.
+ * The Vector API is not likely to provide any special performance
+ * benefit on such platforms.
+ *
+ * <h1>No boxing of primitives</h1>
+ *
+ * Although a vector type like {@code Vector<Integer>} may seem to
+ * work with boxed {@code Integer} values, the overheads associated
+ * with boxing are avoided by having each vector subtype work
+ * internally on lane values of the actual {@code ETYPE}, such as
+ * {@code int}.  A few {@linkplain Vector#toList() interoperability
+ * methods}, are specified to work on boxed values.  These are
+ * documented as <em>not</em> for use in inner loops.
+ *
+ * <h1>Value-based classes and identity operations</h1>
+ *
+ * {@code Vector}, along with all of its subtypes and many of its
+ * helper types like {@code VectorMask} and {@code VectorShuffle}, is a
+ * <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
+ * class.
+ *
+ * <p> Once created, a vector is never mutated, not even if only
+ * {@linkplain IntVector#withLane(int,int) a single lane is changed}.
+ * A new vector is always created to hold a new configuration
+ * of lane values.  The unavailability of mutative methods is a
+ * necessary consequence of suppressing the object identity of
+ * all vectors, as value-based classes.
+ *
+ * <p> With {@code Vector},
+ *
+ * <!-- The following paragraph is shared verbatim
+ *   -- between Vector.java and package-info.java -->
+ * identity-sensitive operations such as {@code ==} may yield
+ * unpredictable results, or reduced performance.  Oddly enough,
+ * {@link Vector#equals(Object) v.equals(w)} is likely to be faster
+ * than {@code v==w}, since {@code equals} is <em>not</em> an identity
+ * sensitive method.  It is also reasonable to use, on vectors, the
+ * {@code toString} and {@code hashCode} methods of {@code Object}.
+ *
+ * Also, these objects can be stored in locals and parameters and as
+ * {@code static final} constants, but storing them in other Java
+ * fields or in array elements, while semantically valid, may incur
+ * performance penalties.
+ * <!-- The preceding paragraph is shared verbatim
+ *   -- between Vector.java and package-info.java -->
+ *
+ * @param <E> the generic (boxed) version of the vector {@code ETYPE}
+ * 
  */
 public abstract class Vector<E> {
 
+    // This type is sealed within its package.
+    // Users cannot roll their own vector types.
     Vector() {}
 
     /**
@@ -269,856 +990,2387 @@ public abstract class Vector<E> {
     public abstract VectorSpecies<E> species();
 
     /**
-     * Returns the primitive element type of this vector.
+     * Returns the primitive element type ({@code ETYPE}) of this vector.
+     * This is the same value as {@code this.species().elementType()}.
      *
      * @return the primitive element type of this vector
      */
-    public Class<E> elementType() { return species().elementType(); }
+    public abstract Class<E> elementType();
 
     /**
-     * Returns the element size, in bits, of this vector.
+     * Returns the size of each lane, in bits, of this vector.
+     * This is the same value as {@code this.species().elementSize()}.
      *
-     * @return the element size, in bits, of this vector
+     * @return the lane size, in bits, of this vector
      */
-    public int elementSize() { return species().elementSize(); }
+    public abstract int elementSize();
 
     /**
      * Returns the shape of this vector.
+     * This is the same value as {@code this.species().vectorShape()}.
      *
      * @return the shape of this vector
      */
-    public VectorShape shape() { return species().shape(); }
+    public abstract VectorShape shape();
 
     /**
-     * Returns the number of vector lanes (the length).
+     * Returns the number of vector lanes ({@code VLENGTH}).
      *
      * @return the number of vector lanes
      */
-    public int length() { return species().length(); }
+    public abstract int length();
 
     /**
      * Returns the total size, in bits, of this vector.
+     * This is the same value as {@code this.shape().vectorBitSize()}.
      *
      * @return the total size, in bits, of this vector
      */
-    public int bitSize() { return species().bitSize(); }
-
-    //Arithmetic
+    public abstract int bitSize();
 
     /**
-     * Adds this vector to an input vector.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive addition operation
-     * ({@code +}) to each lane.
+     * Returns the total size, in bytes, of this vector.
+     * This is the same value as {@code this.bitSize()/Byte.SIZE}.
+     *
+     * @return the total size, in bytes, of this vector
+     */
+    public abstract int byteSize();
+
+    /// Arithmetic
+
+    /**
+     * Operates on the lane values of this vector.
+     *
+     * This is a lane-wise binary operation which applies
+     * the selected operation to each lane.
+     *
+     * <p>FIXME: Write about the unary operators here.
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the method return type.
+     *
+     * @return the result of applying the operation lane-wise
+               to the input vector
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     */
+    public abstract Vector<E> lanewise(VectorOperators.Unary op);
+
+    /**
+     * Operates on the lane values of this vector,
+     * with selection of lane elements controlled by a mask.
+     *
+     * This is a lane-wise binary operation which applies
+     * the selected operation to each lane.
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the method return type.
+     *
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vector
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Unary,Vector)
+     */
+    public abstract Vector<E> lanewise(VectorOperators.Unary op,
+                                       VectorMask<E> o);
+
+    /**
+     * Combines the corresponding lane values of this vector
+     * with those of a second input vector.
+     *
+     * This is a lane-wise binary operation which applies
+     * the selected operation to each lane.
+     *
+     * <p>FIXME: Write about the binary operators here.
+     * Shift counts are reduced (as unsigned values) modulo
+     * {@code ESIZE}, so the shift is always in the range
+     * {@code [0..ESIZE-1]}.
+     * It is as if the shift value were subjected to a
+     * bitwise logical {@code AND} operator ({@code &})
+     * with the mask value {@code ESIZE-1}.
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the method return type.
      *
      * @param v the input vector
-     * @return the result of adding this vector to the input vector
+     * @return the result of applying the operation lane-wise
+     *         to the two input vectors
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public abstract Vector<E> lanewise(VectorOperators.Binary op,
+                                       Vector<E> v);
+
+    /**
+     * Combines the corresponding lane values of this vector
+     * with those of a second input vector,
+     * with selection of lane elements controlled by a mask.
+     *
+     * This is a lane-wise binary operation which applies
+     * the selected operation to each lane.
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the method return type.
+     *
+     * @param v the second input vector
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the two input vectors
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     */
+    public abstract Vector<E> lanewise(VectorOperators.Binary op,
+                                       Vector<E> v, VectorMask<E> o);
+
+    /**
+     * Combines the lane values of this vector
+     * with the value of a broadcast scalar.
+     *
+     * This is a lane-wise binary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e))}.
+     *
+     * <p> The {@code long} value must be accurately representable
+     * by the {@code ETYPE} of this vector's species, so that
+     * {@code e==(long)(ETYPE)e}, or else the operator must
+     * accept the long value as-is (as in the case of shifts).
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the method parameter and return types.
+     *
+     * @param e the input scalar
+     * @return the result of applying the operation lane-wise
+     *         to the input vector and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @throws IllegalArgumentException
+     *         if the given {@code long} value cannot
+     *         be represented by the right operand type
+     *         of the vector operation
+     * @see #broadcast(long)
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public abstract Vector<E> lanewise(VectorOperators.Binary op,
+                                       long e);
+
+    /**
+     * Combines the corresponding lane values of this vector
+     * with those of a second input vector,
+     * with selection of lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise binary operation which applies
+     * the selected operation to each lane.
+     * The second operand is a broadcast integral value.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e), m)}.
+     *
+     * <p> The {@code long} value must be accurately representable
+     * by the {@code ETYPE} of this vector's species, so that
+     * {@code e==(long)(ETYPE)e}, or else the operator must
+     * accept the long value as-is (as in the case of shifts).
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the method parameter and return types.
+     *
+     * @param e the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vector and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @throws IllegalArgumentException
+     *         if the given {@code long} value cannot
+     *         be represented by the right operand type
+     *         of the vector operation
+     * @see #broadcast(long)
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public abstract Vector<E> lanewise(VectorOperators.Binary op,
+                                       long e, VectorMask<E> o);
+
+    /**
+     * Combines the corresponding lane values of this vector
+     * with the lanes of a second and a third input vector.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     *
+     * <p>FIXME: Write about the ternary operators here.
+     * For now it's only {@code FMA} and {@code BITWISE_BLEND}.
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the method return type.
+     *
+     * @param v1 the second input vector
+     * @param v2 the third input vector
+     * @return the result of applying the operation lane-wise
+     *         to the three input vectors
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #broadcast(long)
+     */
+    public abstract Vector<E> lanewise(VectorOperators.Ternary op,
+                                       Vector<E> v1,
+                                       Vector<E> v2);
+
+    /**
+     * Combines the corresponding lane values of this vector
+     * with the lanes of a second and a third input vector,
+     * with selection of lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the method return type.
+     *
+     * @param v1 the second input vector
+     * @param v2 the third input vector
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the three input vectors
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     */
+    public abstract Vector<E> lanewise(VectorOperators.Ternary op,
+                                       Vector<E> v1, Vector<E> v2,
+                                       VectorMask<E> o);
+
+    /// Full-service binary ops: ADD, SUB, MUL, DIV
+    //
+    // These include masked and non-masked versions.
+    // Subclasses will also add broadcast (masked or not).
+
+    // Full-service functions support all four variations
+    // of vector vs. broadcast scalar, and mask vs. not.
+    // The lanewise generic operator is (by this defintion)
+    // also a full-service function.
+
+    // Other named functions handle just the one named
+    // variation.  Still others are not named, and are
+    // reached only by lanewise.
+
+    /**
+     * Adds this vector to a second input vector.
+     * <p>
+     * This is a lane-wise binary operation which applies
+     * the primitive addition operation ({@code +})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#ADD
+     *    ADD}{@code , v)}.
+     *
+     * <p>
+     * As a full-service named operation, this method
+     * comes in masked and unmasked overloadings, and
+     * (in subclasses) also comes in scalar-broadcast
+     * overloadings (both masked and unmasked).
+     *
+     * @param v a second input vector
+     * @return the result of adding this vector to the second input vector
+     * @see #add(Vector,VectorMask)
+     * @see IntVector#add(int)
+     * @see VectorOperators#ADD
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see IntVector#lanewise(VectorOperators.Binary,int)
      */
     public abstract Vector<E> add(Vector<E> v);
 
     /**
-     * Adds this vector to an input vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive addition operation
-     * ({@code +}) to each lane.
+     * Adds this vector to a second input vector, selecting lanes
+     * under the control of a mask.
      *
-     * @param v the input vector
+     * This is a masked lane-wise binary operation which applies
+     * the primitive addition operation ({@code +})
+     * to each pair of corresponding lane values.
+     *
+     * For any lane unset in the mask, the primitive operation is
+     * suppressed and receiver retains the original value stored in
+     * that lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     *    lanewise}{@code (}{@link VectorOperators#ADD
+     *    ADD}{@code , v, m)}.
+     * 
+     * <p>
+     * As a full-service named operation, this method
+     * comes in masked and unmasked overloadings, and
+     * (in subclasses) also comes in scalar-broadcast
+     * overloadings (both masked and unmasked).
+     *
+     * @param v the second input vector
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the given vector
+     * @see #add(Vector)
+     * @see IntVector#add(int,VectorMask)
+     * @see VectorOperators#ADD
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see IntVector#lanewise(VectorOperators.Binary,int,VectorMask)
      */
     public abstract Vector<E> add(Vector<E> v, VectorMask<E> m);
 
     /**
-     * Subtracts an input vector from this vector.
+     * Subtracts a second input vector from this vector.
      * <p>
-     * This is a lane-wise binary operation which applies the primitive subtraction
-     * operation ({@code -}) to each lane.
+     * This is a lane-wise binary operation which applies
+     * the primitive subtraction operation ({@code -})
+     * to each pair of corresponding lane values.
      *
-     * @param v the input vector
-     * @return the result of subtracting the input vector from this vector
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#SUB
+     *    SUB}{@code , v)}.
+     *
+     * <p>
+     * As a full-service named operation, this method
+     * comes in masked and unmasked overloadings, and
+     * (in subclasses) also comes in scalar-broadcast
+     * overloadings (both masked and unmasked).
+     *
+     * @param v a second input vector
+     * @return the result of subtracting the second input vector from this vector
+     * @see #sub(Vector,VectorMask)
+     * @see IntVector#sub(int)
+     * @see VectorOperators#SUB
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see IntVector#lanewise(VectorOperators.Binary,int)
      */
     public abstract Vector<E> sub(Vector<E> v);
 
     /**
-     * Subtracts an input vector from this vector, selecting lane elements
-     * controlled by a mask.
+     * Subtracts a second input vector from this vector
+     * under the control of a mask.
      * <p>
-     * This is a lane-wise binary operation which applies the primitive subtraction
-     * operation ({@code -}) to each lane.
+     * This is a masked lane-wise binary operation which applies
+     * the primitive subtraction operation ({@code -})
+     * to each pair of corresponding lane values.
      *
-     * @param v the input vector
+     * For any lane unset in the mask, the primitive operation is
+     * suppressed and receiver retains the original value stored in
+     * that lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     *    lanewise}{@code (}{@link VectorOperators#SUB
+     *    SUB}{@code , v, m)}.
+     * 
+     * <p>
+     * As a full-service named operation, this method
+     * comes in masked and unmasked overloadings, and
+     * (in subclasses) also comes in scalar-broadcast
+     * overloadings (both masked and unmasked).
+     *
+     * @param v the second input vector
      * @param m the mask controlling lane selection
-     * @return the result of subtracting the input vector from this vector
+     * @return the result of subtracting the second input vector from this vector
+     * @see #sub(Vector)
+     * @see IntVector#sub(int,VectorMask)
+     * @see VectorOperators#SUB
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see IntVector#lanewise(VectorOperators.Binary,int,VectorMask)
      */
     public abstract Vector<E> sub(Vector<E> v, VectorMask<E> m);
 
     /**
-     * Multiplies this vector with an input vector.
+     * Multiplies this vector by a second input vector.
      * <p>
-     * This is a lane-wise binary operation which applies the primitive multiplication
-     * operation ({@code *}) to each lane.
+     * This is a lane-wise binary operation which applies
+     * the primitive multiplication operation ({@code *})
+     * to each pair of corresponding lane values.
      *
-     * @param v the input vector
-     * @return the result of multiplying this vector with the input vector
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#MUL
+     *    MUL}{@code , v)}.
+     *
+     * <p>
+     * As a full-service named operation, this method
+     * comes in masked and unmasked overloadings, and
+     * (in subclasses) also comes in scalar-broadcast
+     * overloadings (both masked and unmasked).
+     *
+     * @param v a second input vector
+     * @return the result of multiplying this vector by the second input vector
+     * @see #mul(Vector,VectorMask)
+     * @see IntVector#mul(int)
+     * @see VectorOperators#MUL
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see IntVector#lanewise(VectorOperators.Binary,int)
      */
     public abstract Vector<E> mul(Vector<E> v);
 
     /**
-     * Multiplies this vector with an input vector, selecting lane elements
-     * controlled by a mask.
+     * Multiplies this vector by a second input vector
+     * under the control of a mask.
      * <p>
-     * This is a lane-wise binary operation which applies the primitive multiplication
-     * operation ({@code *}) to each lane.
+     * This is a lane-wise binary operation which applies
+     * the primitive multiplication operation ({@code *})
+     * to each pair of corresponding lane values.
      *
-     * @param v the input vector
+     * For any lane unset in the mask, the primitive operation is
+     * suppressed and receiver retains the original value stored in
+     * that lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     *    lanewise}{@code (}{@link VectorOperators#MUL
+     *    MUL}{@code , v, m)}.
+     * 
+     * <p>
+     * As a full-service named operation, this method
+     * comes in masked and unmasked overloadings, and
+     * (in subclasses) also comes in scalar-broadcast
+     * overloadings (both masked and unmasked).
+     *
+     * @param v the second input vector
      * @param m the mask controlling lane selection
-     * @return the result of multiplying this vector with the input vector
+     * @return the result of multiplying this vector by the given vector
+     * @see #mul(Vector)
+     * @see IntVector#mul(int,VectorMask)
+     * @see VectorOperators#MUL
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see IntVector#lanewise(VectorOperators.Binary,int,VectorMask)
      */
     public abstract Vector<E> mul(Vector<E> v, VectorMask<E> m);
 
     /**
+     * Divides this vector by a second input vector.
+     * <p>
+     * This is a lane-wise binary operation which applies
+     * the primitive division operation ({@code /})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#DIV
+     *    DIV}{@code , v)}.
+     *
+     * <p>
+     * If the underlying scalar operator does not support
+     * division by zero, but is presented with a zero divisor,
+     * an {@code ArithmeticException} will be thrown.
+     *
+     * <p>
+     * As a full-service named operation, this method
+     * comes in masked and unmasked overloadings, and
+     * (in subclasses) also comes in scalar-broadcast
+     * overloadings (both masked and unmasked).
+     *
+     * @param v a second input vector
+     * @return the result of dividing this vector by the second input vector
+     * @throws ArithmeticException if any lane
+     *         in {@code v} is zero
+     *         and {@code ETYPE} is not {@code float} or {@code double}.
+     * @see #div(Vector,VectorMask)
+     * @see DoubleVector#div(double)
+     * @see VectorOperators#DIV
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see IntVector#lanewise(VectorOperators.Binary,int)
+     */
+    public abstract Vector<E> div(Vector<E> v);
+
+    /**
+     * Divides this vector by a second input vector
+     * under the control of a mask.
+     * <p>
+     * This is a lane-wise binary operation which applies
+     * the primitive division operation ({@code /})
+     * to each pair of corresponding lane values.
+     *
+     * For any lane unset in the mask, the primitive operation is
+     * suppressed and receiver retains the original value stored in
+     * that lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     *    lanewise}{@code (}{@link VectorOperators#DIV
+     *    DIV}{@code , v, m)}.
+     *
+     * <p>
+     * If the underlying scalar operator does not support
+     * division by zero, but is presented with a zero divisor,
+     * an {@code ArithmeticException} will be thrown.
+     *
+     * <p>
+     * As a full-service named operation, this method
+     * comes in masked and unmasked overloadings, and
+     * (in subclasses) also comes in scalar-broadcast
+     * overloadings (both masked and unmasked).
+     *
+     * @param v a second input vector
+     * @param m the mask controlling lane selection
+     * @return the result of dividing this vector by the second input vector
+     * @throws ArithmeticException if any lane selected by {@code m}
+     *         in {@code v} is zero
+     *         and {@code ETYPE} is not {@code float} or {@code double}.
+     * @see #div(Vector)
+     * @see DoubleVector#div(double,VectorMask)
+     * @see VectorOperators#DIV
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see DoubleVector#lanewise(VectorOperators.Binary,double,VectorMask)
+     */
+    public abstract Vector<E> div(Vector<E> v, VectorMask<E> m);
+
+    /// END OF FULL-SERVICE BINARY METHODS
+
+    /// Non-full-service unary ops: NEG, ABS
+
+    /**
      * Negates this vector.
      * <p>
-     * This is a lane-wise unary operation which applies the primitive negation operation
-     * ({@code -}) to each lane.
+     * This is a lane-wise unary operation which applies
+     * the primitive negation operation ({@code -x})
+     * to each input lane.
      *
-     * @return the negation this vector
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Unary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#NEG
+     *    MIN}{@code)}.
+     *
+     * @apiNote
+     * This method has no masked variant, but the corresponding
+     * masked operation can be obtained from the
+     * {@linkplain #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * lanewise method}.
+     *
+     * @return the negation of this vector
+     * @see VectorOperators#NEG
+     * @see #lanewise(VectorOperators.Unary,Vector)
+     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
      */
     public abstract Vector<E> neg();
 
     /**
-     * Negates this vector, selecting lane elements controlled by a mask.
+     * Returns the absolute value of this vector.
      * <p>
-     * This is a lane-wise unary operation which applies the primitive negation operation
-     * ({@code -}) to each lane.
+     * This is a lane-wise unary operation which applies
+     * the method {@code Math.abs}
+     * to each input lane.
      *
-     * @param m the mask controlling lane selection
-     * @return the negation this vector
-     */
-    public abstract Vector<E> neg(VectorMask<E> m);
-
-    // Maths from java.math
-
-    /**
-     * Returns the modulus of this vector.
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Unary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#ABS
+     *    MIN}{@code)}.
+     *
      * <p>
-     * This is a lane-wise unary operation which applies the operation
-     * {@code (a) -> (a < 0) ? -a : a} to each lane.
+     * This method has no masked variant, but the corresponding
+     * masked operation can be obtained from the
+     * {@linkplain #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * lanewise method}.
      *
-     * @return the modulus this vector
+     * @return the absolute value of this vector
+     * @see VectorOperators#ABS
+     * @see #lanewise(VectorOperators.Unary,Vector)
+     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
      */
     public abstract Vector<E> abs();
 
-    /**
-     * Returns the modulus of this vector, selecting lane elements controlled by
-     * a mask.
-     * <p>
-     * This is a lane-wise unary operation which applies the operation
-     * {@code (a) -> (a < 0) ? -a : a} to each lane.
-     *
-     * @param m the mask controlling lane selection
-     * @return the modulus this vector
-     */
-    public abstract Vector<E> abs(VectorMask<E> m);
+    /// Non-full-service binary ops: MIN, MAX
 
     /**
-     * Returns the minimum of this vector and an input vector.
-     * <p>
-     * This is a lane-wise binary operation which applies the operation
-     * {@code (a, b) -> a < b ? a : b}  to each lane.
+     * Computes the smaller of this vector and a second input vector.
      *
-     * @param v the input vector
-     * @return the minimum of this vector and the input vector
+     * This is a lane-wise binary operation which applies the
+     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#MIN
+     *    MIN}{@code , v)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.  Subclasses define an additional
+     * scalar-broadcast overloading of this method.
+     *
+     * @param v a second input vector
+     * @return the lanewise minimum of this vector and the second input vector
+     * @see IntVector#min(int)
+     * @see VectorOperators#MIN
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
     public abstract Vector<E> min(Vector<E> v);
 
     /**
-     * Returns the minimum of this vector and an input vector,
-     * selecting lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the operation
-     * {@code (a, b) -> a < b ? a : b}  to each lane.
+     * Computes the larger of this vector and a second input vector.
      *
-     * @param v the input vector
-     * @param m the mask controlling lane selection
-     * @return the minimum of this vector and the input vector
-     */
-    public abstract Vector<E> min(Vector<E> v, VectorMask<E> m);
-
-    /**
-     * Returns the maximum of this vector and an input vector.
-     * <p>
-     * This is a lane-wise binary operation which applies the operation
-     * {@code (a, b) -> a > b ? a : b}  to each lane.
+     * This is a lane-wise binary operation which applies the
+     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * corresponding lane values.
      *
-     * @param v the input vector
-     * @return the maximum of this vector and the input vector
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#MAX
+     *    MAX}{@code , v)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.  Subclasses define an additional
+     * scalar-broadcast overloading of this method.
+     *
+     * @param v a second input vector
+     * @return the lanewise maximum of this vector and the second input vector
+     * @see IntVector#max(int)
+     * @see VectorOperators#MAX
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
     public abstract Vector<E> max(Vector<E> v);
 
+    // Reductions
+
     /**
-     * Returns the maximum of this vector and an input vector,
-     * selecting lane elements controlled by a mask.
+     * Returns a value accumulated from all the lanes of this vector.
      * <p>
-     * This is a lane-wise binary operation which applies the operation
-     * {@code (a, b) -> a > b ? a : b}  to each lane.
+     * This is an associative cross-lane reduction operation which
+     * applies the specified operation to all the lane elements.
+     * The result is delivered as a {@code long} value, rather
+     * than the vector's native {@code ETYPE}.
      *
-     * @param v the input vector
-     * @param m the mask controlling lane selection
-     * @return the maximum of this vector and the input vector
+     * @apiNote
+     * If the {@code ETYPE} is {@code float} or {@code double},
+     * this operation can lose precision and/or range, as a
+     * normal part of casting the result down to {@code long}.
+     *
+     * Usually
+     * {@linkplain IntVector#reduceLanes(VectorOperators.Associative)
+     * strongly typed access}
+     * is preferable, if you are working with a vector
+     * subtype that has a known element type.
+     *
+     * @implNote
+     * The value of a floating-point reduction may be a function
+     * both of the input values as well as the order of scalar
+     * operations which combine those values, specifically in the
+     * case of {@code ADD} and {@code MUL} operations, where
+     * details of rounding depend on operand order.
+     * See {@link FloatVector#reduceLanes(VectorOperators.Associative)
+     * FloatVector.reduceLanes()} for a discussion.
+     *
+     * @param op the operation used to combine lane values
+     * @return the accumulated result, cast to {@code long}
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #reduceLanesToLong(VectorOperators.Associative,VectorMask)
+     * @see IntVector#reduceLanes(VectorOperators.Associative)
+     * @see FloatVector#reduceLanes(VectorOperators.Associative)
      */
-    public abstract Vector<E> max(Vector<E> v, VectorMask<E> m);
+    public abstract long reduceLanesToLong(VectorOperators.Associative op);
+
+    /**
+     * Returns a value accumulated from selected lanes of this vector,
+     * controlled by a mask.
+     * <p>
+     * This is an associative cross-lane reduction operation which
+     * applies the specified operation to the selected lane elements.
+     * The result is delivered as a {@code long} value, rather
+     * than the vector's native {@code ETYPE}.
+     * <p>
+     * If no elements are selected, an operation-specific identity
+     * value is returned.
+     * <ul>
+     * <li>
+     * If the operation is {@code ADD}, {@code XOR}, or {@code OR},
+     * then the identity value is zero.
+     * <li>
+     * If the operation is {@code MUL},
+     * then the identity value is one.
+     * <li>
+     * If the operation is {@code AND},
+     * then the identity value is minus one (all bits set).
+     * <li>
+     * If the operation is {@code MAX},
+     * then the identity value is the {@code MIN_VALUE}
+     * of the vector's native {@code ETYPE}.
+     * (In the case of floating point types, the value
+     * {@code NEGATIVE_INFINITY} is used, and will appear
+     * after casting as {@code Long.MAX_VALUE}.
+     * <li>
+     * If the operation is {@code MIN},
+     * then the identity value is the {@code MIN_VALUE}
+     * of the vector's native {@code ETYPE}.
+     * (In the case of floating point types, the value
+     * {@code NEGATIVE_INFINITY} is used, and will appear
+     * after casting as {@code Long.MAX_VALUE}.
+     * </ul>
+     *
+     * @apiNote
+     * If the {@code ETYPE} is {@code float} or {@code double},
+     * this operation can lose precision and/or range, as a
+     * normal part of casting the result down to {@code long}.
+     *
+     * Usually
+     * {@linkplain IntVector#reduceLanes(VectorOperators.Associative,VectorMask)
+     * strongly typed access}
+     * is preferable, if you are working with a vector
+     * subtype that has a known element type.
+     *
+     * @implNote
+     * The value of a floating-point reduction may be a function
+     * both of the input values as well as the order of scalar
+     * operations which combine those values, specifically in the
+     * case of {@code ADD} and {@code MUL} operations, where
+     * details of rounding depend on operand order.
+     * See {@link FloatVector#reduceLanes(VectorOperators.Associative)
+     * FloatVector.reduceLanes()} for a discussion.
+     *
+     * @param op the operation used to combine lane values
+     * @param m the mask controlling lane selection
+     * @return the reduced result accumulated from the selected lane values
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #reduceLanesToLong(VectorOperators.Associative)
+     * @see IntVector#reduceLanes(VectorOperators.Associative,VectorMask)
+     * @see FloatVector#reduceLanes(VectorOperators.Associative,VectorMask)
+     */
+    public abstract long reduceLanesToLong(VectorOperators.Associative op,
+                                           VectorMask<E> m);
+
 
     // Comparisons
 
     /**
-     * Tests if this vector is equal to an input vector.
+     * Tests if this vector is equal to another input vector.
      * <p>
-     * This is a lane-wise binary test operation which applies the primitive equals
-     * operation ({@code ==}) to each lane.
+     * This is a lane-wise binary test operation which applies
+     * the primitive equals operation ({@code ==})
+     * to each pair of corresponding lane values.
+     * The result is the same as {@code compare(VectorOperators.EQ, v)}.
      *
-     * @param v the input vector
-     * @return the result mask of testing if this vector is equal to the input
-     * vector
+     * @param v a second input vector
+     * @return the mask result of testing lane-wise if this vector
+     *         equal to the second input vector
+     * @see #compare(VectorOperators.Comparison,Vector)
+     * @see VectorOperators#EQ
      */
-    public abstract VectorMask<E> equal(Vector<E> v);
+    public abstract VectorMask<E> eq(Vector<E> v);
 
     /**
-     * Tests if this vector is not equal to an input vector.
+     * Tests if this vector is less than another input vector.
      * <p>
-     * This is a lane-wise binary test operation which applies the primitive not equals
-     * operation ({@code !=}) to each lane.
+     * This is a lane-wise binary test operation which applies
+     * the primitive less-than operation ({@code <}) to each lane.
+     * The result is the same as {@code compare(VectorOperators.LT, v)}.
      *
-     * @param v the input vector
-     * @return the result mask of testing if this vector is not equal to the
-     * input vector
+     * @param v a second input vector
+     * @return the mask result of testing lane-wise if this vector
+     *         is less than the second input vector
+     * @see #compare(VectorOperators.Comparison,Vector)
+     * @see VectorOperators#LT
      */
-    public abstract VectorMask<E> notEqual(Vector<E> v);
+    public abstract VectorMask<E> lt(Vector<E> v);
 
     /**
-     * Tests if this vector is less than an input vector.
+     * Tests this vector by comparing it with another input vector,
+     * according to the given comparison operation.
      * <p>
-     * This is a lane-wise binary test operation which applies the primitive less than
-     * operation ({@code <}) to each lane.
+     * This is a lane-wise binary test operation which applies
+     * to each pair of corresponding lane values.
      *
-     * @param v the input vector
-     * @return the mask result of testing if this vector is less than the input
-     * vector
+     * @param v a second input vector
+     * @return the mask result of testing lane-wise if this vector
+     *         compares to the input, according to the selected
+     *         comparison operator
+     * @see #equals(Vector)
+     * @see #lessThan(Vector)
+     * @see VectorOperators.Comparison
      */
-    public abstract VectorMask<E> lessThan(Vector<E> v);
+    public abstract VectorMask<E> compare(VectorOperators.Comparison op,
+                                          Vector<E> v);
 
     /**
-     * Tests if this vector is less or equal to an input vector.
-     * <p>
-     * This is a lane-wise binary test operation which applies the primitive less than
-     * or equal to operation ({@code <=}) to each lane.
+     * Tests this vector by comparing it with an input scalar,
+     * according to the given comparison operation.
      *
-     * @param v the input vector
-     * @return the mask result of testing if this vector is less than or equal
-     * to the input vector
+     * This is a lane-wise binary test operation which applies
+     * to each pair of corresponding lane values.
+     *
+     * <p> The {@code long} value must be accurately representable
+     * by the {@code ETYPE} of this vector's species, so that
+     * {@code e==(long)(ETYPE)e}.
+     * <p>
+     * The result is the same as
+     * {@code this.compare(op, this.broadcast(s))}.
+     * That is, the scalar may be regarded as broadcast to
+     * a vector of the same species, and then compared
+     * against the original vector, using the selected
+     * comparison operation.
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the method parameter.
+     *
+     * @param e the input scalar
+     * @return the mask result of testing lane-wise if this vector
+     *         compares to the input, according to the selected
+     *         comparison operator
+     * @throws IllegalArgumentException
+     *         if the given {@code long} value cannot
+     *         be represented by the vector's {@code ETYPE}
+     * @see #broadcast(long)
+     * @see #compare(VectorOperators.Comparison,Vector)
      */
-    public abstract VectorMask<E> lessThanEq(Vector<E> v);
+    public abstract VectorMask<E> compare(VectorOperators.Comparison op,
+                                          long e);
 
     /**
-     * Tests if this vector is greater than an input vector.
+     * Replaces lanes of this vector with selected lanes
+     * from a second input vector under the control of a mask.
      * <p>
-     * This is a lane-wise binary test operation which applies the primitive greater than
-     * operation ({@code >}) to each lane.
+     * This is a masked lane-wise binary operation which
+     * selects one or the other value from
+     * each pair of corresponding lane values.
      *
-     * @param v the input vector
-     * @return the mask result of testing if this vector is greater than the
-     * input vector
-     */
-    public abstract VectorMask<E> greaterThan(Vector<E> v);
-
-    /**
-     * Tests if this vector is greater than or equal to an input vector.
-     * <p>
-     * This is a lane-wise binary test operation which applies the primitive greater than
-     * or equal to operation ({@code >=}) to each lane.
+     * For any lane set in the mask, the new lane value
+     * is taken from the second input vector.
      *
-     * @param v the input vector
-     * @return the mask result of testing if this vector is greater than or
-     * equal to the given vector
-     */
-    public abstract VectorMask<E> greaterThanEq(Vector<E> v);
-
-    // Elemental shifting
-
-    /**
-     * Rotates left the lane elements of this vector by the given number of
-     * lanes, {@code i}, modulus the vector length.
-     * <p>
-     * This is a cross-lane operation that permutes the lane elements of this
-     * vector.
-     * For each lane of the input vector, at lane index {@code N}, the lane
-     * element is placed into the result vector at lane index
-     * {@code (N + i) % length()}.
+     * For any lane unset in the mask, the replacement is
+     * suppressed and receiver retains the original value stored in
+     * that lane.
      *
-     * @param i the number of lanes to rotate left
-     * @return the result of rotating left lane elements of this vector by the
-     * given number of lanes
-     */
-    public abstract Vector<E> rotateLanesLeft(int i);
-
-    /**
-     * Rotates right the lane elements of this vector by the given number of
-     * lanes, {@code i}, modulus the vector length.
-     * <p>
-     * This is a cross-lane operation that permutes the lane elements of this
-     * vector.
-     * For each lane of the input vector, at lane index {@code N}, the lane
-     * element is placed into the result vector at lane index
-     * {@code (N + length() - (i % length())) % length()}
+     * The following pseudocode illustrates this behavior:
+     * <pre>{@code
+     * Vector<E> a = ...;
+     * VectorSpecies<E> species = a.species();
+     * Vector<E> b = ...;
+     * b.check(species);
+     * VectorMask<E> m = ...;
+     * ETYPE[] ar = a.toArray();
+     * for (int i = 0; i < ar.length; i++) {
+     *     if (m.laneIsSet(i)) {
+     *         ar[i] = b.lane(i);
+     *     }
+     * }
+     * return EVector.fromArray(s, ar, 0);
+     * }</pre>
      *
-     * @param i the number of lanes to rotate right
-     * @return the result of rotating right lane elements of this vector by the
-     * given number of lanes
-     */
-    public abstract Vector<E> rotateLanesRight(int i);
-
-    /**
-     * Shift left the lane elements of this vector by the given number of
-     * lanes, {@code i}, modulus the vector length.
-     * <p>
-     * This is a cross-lane operation that permutes the lane elements of this
-     * vector and behaves as if rotating left the lane elements by {@code i},
-     * and then the zero value is placed into the result vector at lane indexes
-     * less than {@code i % length()}.
-     *
-     * @param i the number of lanes to shift left
-     * @return the result of shifting left lane elements of this vector by the
-     * given number of lanes
-     * @throws IllegalArgumentException if {@code i} is {@code < 0}.
-     */
-    public abstract Vector<E> shiftLanesLeft(int i);
-
-    /**
-     * Shift right the lane elements of this vector by the given number of
-     * lanes, {@code i}, modulus the vector length.
-     * <p>
-     * This is a cross-lane operation that permutes the lane elements of this
-     * vector and behaves as if rotating right the lane elements by {@code i},
-     * and then the zero value is placed into the result vector at lane indexes
-     * greater or equal to {@code length() - (i % length())}.
-     *
-     * @param i the number of lanes to shift right
-     * @return the result of shifting right lane elements of this vector by the
-     * given number of lanes
-     * @throws IllegalArgumentException if {@code i} is {@code < 0}.
-     */
-    public abstract Vector<E> shiftLanesRight(int i);
-
-    /**
-     * Blends the lane elements of this vector with those of an input vector,
-     * selecting lanes controlled by a mask.
-     * <p>
-     * For each lane of the mask, at lane index {@code N}, if the mask lane
-     * is set then the lane element at {@code N} from the input vector is
-     * selected and placed into the resulting vector at {@code N},
-     * otherwise the lane element at {@code N} from this vector is
-     * selected and placed into the resulting vector at {@code N}.
-     *
-     * @param v the input vector
-     * @param m the mask controlling lane selection
+     * @param v the second input vector, containing replacement lane values
+     * @param m the mask controlling lane selection from the second input vector
      * @return the result of blending the lane elements of this vector with
-     * those of an input vector
+     *         those of the second input vector
      */
     public abstract Vector<E> blend(Vector<E> v, VectorMask<E> m);
 
     /**
-     * Rearranges the lane elements of this vector selecting lane indexes
-     * controlled by a shuffle.
+     * Adds the lanes of this vector to their corresponding
+     * lane numbers, scaled by a given constant.
+     *
+     * This is a lane-wise unary operation which, for
+     * each lane {@code N}, computes the scaled index value
+     * {@code N*scale} and adds it to the value already
+     * in lane {@code N} of the current vector.
+     *
+     * <p> The scale must not be so large, and the element size must
+     * not be so small, that that there would be an overflow when
+     * computing any of the {@code N*scale} or {@code VLENGTH*scale},
+     * when the the result is represented using the vector
+     * lane type {@code ETYPE}.
+     *
      * <p>
-     * This is a cross-lane operation that rearranges the lane elements of this
+     * The following pseudocode illustrates this behavior:
+     * <pre>{@code
+     * Vector<E> a = ...;
+     * VectorSpecies<E> species = a.species();
+     * ETYPE[] ar = a.toArray();
+     * for (int i = 0; i < ar.length; i++) {
+     *     long d = (long)i * scale;
+     *     if (d != (ETYPE) d)  throw ...;
+     *     ar[i] += (ETYPE) d;
+     * }
+     * long d = (long)ar.length * scale;
+     * if (d != (ETYPE) d)  throw ...;
+     * return EVector.fromArray(s, ar, 0);
+     * }</pre>
+     *
+     * @param scale the number to multiply by each lane index
+     *        {@code N}, typically {@code 1}
+     * @return the result of incrementing each lane element by its
+     *         corresponding lane index {@code N}, scaled by {@code scale}
+     * @throws IllegalArgumentException
+     *         if the values in the interval
+     *         {@code [0..VLENGTH*scale]}
+     *         are not representable by the {@code ETYPE}
+     */
+    public abstract Vector<E> addIndex(int scale);
+
+    // Slicing segments of adjacent lanes
+
+    /**
+     * Slices a segment of adjacent lanes, starting at a given
+     * {@code origin} lane in the current vector, and continuing (as
+     * needed) into an immediately following vector.  The block of
+     * {@code VLENGTH} lanes is extracted into its own vector and
+     * returned.
+     *
+     * <p> This is a cross-lane operation that shifts lane elements
+     * to the front, from the current vector and the second vector.
+     * Both vectors can be viewed as a combined "background" of length
+     * {@code 2*VLENGTH}, from which a slice is extracted.
+     *
+     * The lane numbered {@code N} in the output vector is copied
+     * from lane {@code origin+N} of the input vector, if that
+     * lane exists, else from lane {@code origin+N-VLENGTH} of
+     * the second vector (which is guaranteed to exist).
+     *
+     * <p> The {@code origin} value must be in the inclusive range
+     * {@code 0..VLENGTH}.  As limiting cases, {@code v.slice(0,w)}
+     * and {@code v.slice(VLENGTH,w)} return {@code v} and {@code w},
+     * respectively.
+     *
+     * @apiNote
+     *
+     * This method may be regarded as the inverse of
+     * {@code #unslice(int,Vector,int) unslice()},
+     * in that the sliced value could be unsliced back into its
+     * original position in the two input vectors, without
+     * disturbing unrelated elements, as in the following
+     * pseudocode:
+     * <pre>{@code
+     * EVector slice = v1.slice(origin, v2);
+     * EVector w1 = slice.unslice(origin, v1, 0);
+     * EVector w2 = slice.unslice(origin, v2, 1);
+     * assert v1.equals(w1);
+     * assert v2.equals(w2);
+     * }</pre>
+     *
+     * <p> This method also supports a variety of cross-lane shifts and
+     * rotates as follows:
+     * <ul>
+     *
+     * <li>To shift lanes forward to the front of the vector, supply a
+     * zero vector for the second operand and specify the shift count
+     * as the origin.  For example: {@code v.slice(shift, v.broadcast(0))}.
+     *
+     * <li>To shift lanes backward to the back of the vector, supply a
+     * zero vector for the <em>first</em> operand, and specify the
+     * negative shift count as the origin (modulo {@code VLENGTH}.
+     * For example: {@code v.broadcast(0).slice(v.length()-shift, v)}.
+     *
+     * <li>To rotate lanes forward toward the front end of the vector,
+     * cycling the earliest lanes around to the back, supply the same
+     * vector for both operands and specify the rotate count as the
+     * origin.  For example: {@code v.slice(rotate, v)}.
+     *
+     * <li>To rotate lanes backward toward the back end of the vector,
+     * cycling the latest lanes around to the front, supply the same
+     * vector for both operands and specify the negative of the rotate
+     * count (modulo {@code VLENGTH}) as the origin.  For example:
+     * {@code v.slice(v.length() - rotate, v)}.
+     *
+     * <li>
+     * Since {@code origin} values less then zero or more than
+     * {@code VLENGTH} will be rejected, if you need to rotate
+     * by an unpredictable multiple of {@code VLENGTH}, be sure
+     * to reduce the origin value into the required range.
+     * The {@link VectorSpecies#loopBound(int) loopBound()}
+     * method can help with this.  For example:
+     * {@code v.slice(rotate - v.species().loopBound(rotate), v)}.
+     *
+     * </ul>
+     *
+     * @param origin the first input lane to transfer into the slice
+     * @param v1 a second vector logically concatenated with the first,
+     *        before the slice is taken (if omitted it defaults to zero)
+     * @return a contiguous slice of {@code VLENGTH} lanes, taken from
+     *         this vector starting at the indicated origin, and
+     *         continuing (as needed) into the second vector
+     * @throws ArrayIndexOutOfBoundsException if {@code origin}
+     *         is negative or greater than {@code VLENGTH}
+     * @see #slice(int,Vector,VectorMask)
+     * @see #slice(int)
+     * @see #unslice(int,Vector,int)
+     */
+    public abstract Vector<E> slice(int origin, Vector<E> v1);
+
+    /**
+     * Slices a segment of adjacent lanes
+     * under the control of a mask,
+     * starting at a given
+     * {@code origin} lane in the current vector, and continuing (as
+     * needed) into an immediately following vector.  The block of
+     * {@code VLENGTH} lanes is extracted into its own vector and
+     * returned.
+     *
+     * The resulting vector will be zero in all lanes unset in the
+     * given mask.  Lanes set in the mask will contain data copied
+     * from selected lanes of {@code this} or {@code v1}.
+     *
+     * <p> This is a cross-lane operation that shifts lane elements
+     * to the front, from the current vector and the second vector.
+     * Both vectors can be viewed as a combined "background" of length
+     * {@code 2*VLENGTH}, from which a slice is extracted.
+     *
+     * The returned result is equal to the expression
+     * {@code broadcast(0).blend(slice(origin,v1),m)}.
+     *
+     * @apiNote
+     * This method may be regarded as the inverse of
+     * {@code #unslice(int,Vector,int,VectorMask) unslice()},
+     * in that the sliced value could be unsliced back into its
+     * original position in the two input vectors, without
+     * disturbing unrelated elements, as in the following
+     * pseudocode:
+     * <pre>{@code
+     * EVector slice = v1.slice(origin, v2, m);
+     * EVector w1 = slice.unslice(origin, v1, 0, m);
+     * EVector w2 = slice.unslice(origin, v2, 1, m);
+     * assert v1.equals(w1);
+     * assert v2.equals(w2);
+     * }</pre>
+     *
+     * @param origin the first input lane to transfer into the slice
+     * @param v1 a second vector logically concatenated with the first,
+     *        before the slice is taken (if omitted it defaults to zero)
+     * @param m the mask controlling lane selection into the resulting vector
+     * @return a contiguous slice of {@code VLENGTH} lanes, taken from
+     *         this vector starting at the indicated origin, and
+     *         continuing (as needed) into the second vector
+     * @throws ArrayIndexOutOfBoundsException if {@code origin}
+     *         is negative or greater than {@code VLENGTH}
+     * @see #slice(int,Vector)
+     * @see #unslice(int,Vector,int,VectorMask)
+     */
+    // FIXME: does this pull its weight?  It's symmetrical with masked unslice.
+    public abstract Vector<E> slice(int origin, Vector<E> v1, VectorMask<E> m);
+
+    /**
+     * Slices a segment of adjacent lanes, starting at a given
+     * {@code origin} lane in the current vector.  A block of
+     * {@code VLENGTH} lanes, possibly padded with zero lanes, is
+     * extracted into its own vector and returned.
+     *
+     * This is a convenience method which slices from a single
+     * vector against an extended background of zero lanes.
+     * It is equivalent to
+     * {@link #slice(int,Vector) slice}{@code
+     * (origin, }{@link #broadcast(long) broadcast}{@code (0))}.
+     * It may also be viewed simply as a cross-lane shift
+     * from later to earlier lanes, with zeroes filling
+     * in the vacated lanes at the end of the vector.
+     * In this view, the shift count is {@code origin}.
+     *
+     * @param origin the first input lane to transfer into the slice
+     * @return the last {@code VLENGTH-origin} input lanes,
+     *         placed starting in the first lane of the ouput,
+     *         padded at the end with zeroes
+     * @throws ArrayIndexOutOfBoundsException if {@code origin}
+     *         is negative or greater than {@code VLENGTH}
+     * @see #slice(int,Vector)
+     * @see #unslice(int,Vector,int)
+     */
+    // FIXME: does this pull its weight?
+    // It's a one-off and broadcast(0) is easy.  It's here as a teaching aid.
+    public abstract Vector<E> slice(int origin);
+
+    /**
+     * Reverses a {@linkplain #slice(int,Vector) slice()}, inserting
+     * the current vector as a slice within another "background" input
+     * vector, which is regarded as one or the other input to a
+     * hypothetical subsequent {@code slice()} operation.
+     * 
+     * <p> This is a cross-lane operation that permutes the lane
+     * elements of the current vector toward the back and inserts them
+     * into a logical pair of background vectors.  Only one of the
+     * pair will be returned, however.  The background is formed by
+     * duplicating the second input vector.  (However, the output will
+     * never contain two duplicates from the same input lane.)
+     *
+     * The lane numbered {@code N} in the input vector is copied into
+     * lane {@code origin+N} of the first background vector, if that
+     * lane exists, else into lane {@code origin+N-VLENGTH} of the
+     * second background vector (which is guaranteed to exist).
+     *
+     * The first or second background vector, updated with the
+     * inserted slice, is returned.  The {@code part} number of zero
+     * or one selects the first or second updated background vector.
+     *
+     * <p> The {@code origin} value must be in the inclusive range
+     * {@code 0..VLENGTH}.  As limiting cases, {@code v.unslice(0,w,0)}
+     * and {@code v.unslice(VLENGTH,w,1)} both return {@code v}, while
+     * {@code v.unslice(0,w,1)} and {@code v.unslice(VLENGTH,w,0)}
+     * both return {@code w}.
+     *
+     * @apiNote
+     * This method supports a variety of cross-lane insertion
+     * operations as follows:
+     * <ul>
+     *
+     * <li>To insert near the end of a background vector {@code w}
+     * at some offset, specify the offset as the origin and
+     * select part zero. For example: {@code v.unslice(offset, w, 0)}.
+     *
+     * <li>To insert near the end of a background vector {@code w},
+     * but capturing the overflow into the next vector {@code x},
+     * specify the offset as the origin and select part one.
+     * For example: {@code v.unslice(offset, x, 1)}.
+     *
+     * <li>To insert the last {@code N} items near the beginning
+     * of a background vector {@code w}, supply a {@code VLENGTH-N}
+     * as the origin and select part one.
+     * For example: {@code v.unslice(v.length()-N, w)}.
+     *
+     * </ul>
+     *
+     * @param origin the first output lane to receive the slice
+     * @param w the background vector that (as two copies) will receive
+     *        the inserted slice
+     * @param part the part number of the result (either zero or one)
+     * @return either the first or second part of a pair of
+     *         background vectors {@code w}, updated by inserting
+     *         this vector at the indicated origin
+     * @throws ArrayIndexOutOfBoundsException if {@code origin}
+     *         is negative or greater than {@code VLENGTH},
+     *         or if {@code part} is not zero or one
+     * @see #slice(int,Vector)
+     * @see #unslice(int,Vector,int,VectorMask)
+     */
+    public abstract Vector<E> unslice(int origin, Vector<E> w, int part);
+
+    /**
+     * Reverses a {@linkplain #slice(int,Vector) slice()}, inserting
+     * (under the control of a mask)
+     * the current vector as a slice within another "background" input
+     * vector, which is regarded as one or the other input to a
+     * hypothetical subsequent {@code slice()} operation.
+     *
+     * <p> This is a cross-lane operation that permutes the lane
+     * elements of the current vector forward and inserts its lanes
+     * (when selected by the mask) into a logical pair of background
+     * vectors.  As with the
+     * {@code #unslice(int,Vector,int) unmasked version} of this method,
+     * only one of the pair will be returned, as selected by the
+     * {@code part} number.
+     *
+     * For each lane {@code N} selected by the mask, the lane value
+     * is copied into
+     * lane {@code origin+N} of the first background vector, if that
+     * lane exists, else into lane {@code origin+N-VLENGTH} of the
+     * second background vector (which is guaranteed to exist).
+     * Background lanes retain their original values if the
+     * corresponding input lanes {@code N} are unset in the mask.
+     *
+     * The first or second background vector, updated with set lanes
+     * of the inserted slice, is returned.  The {@code part} number of
+     * zero or one selects the first or second updated background
      * vector.
-     * For each lane of the shuffle, at lane index {@code N} with lane
-     * element {@code I}, the lane element at {@code I} from this vector is
-     * selected and placed into the resulting vector at {@code N}.
+     *
+     * @param origin the first output lane to receive the slice
+     * @param w the background vector that (as two copies) will receive
+     *        the inserted slice, if they are set in {@code m}
+     * @param part the part number of the result (either zero or one)
+     * @param m the mask controlling lane selection from the current vector
+     * @return either the first or second part of a pair of
+     *         background vectors {@code w}, updated by inserting
+     *         selected lanes of this vector at the indicated origin
+     * @throws ArrayIndexOutOfBoundsException if {@code origin}
+     *         is negative or greater than {@code VLENGTH},
+     *         or if {@code part} is not zero or one
+     * @see #unslice(int,Vector,int)
+     * @see #slice(int,Vector)
+     */
+    public abstract Vector<E> unslice(int origin, Vector<E> w, int part, VectorMask<E> m);
+
+    /**
+     * Reverses a {@linkplain #slice(int) slice()}, inserting
+     * the current vector as a slice within a "background" input
+     * of zero lane values.  Compared to other {@code unslice()}
+     * methods, this method only returns the first of the
+     * pair of background vectors.
+     *
+     * This is a convenience method which returns the result of
+     * {@link #unslice(int,Vector,int) unslice}{@code
+     * (origin, }{@link #broadcast(long) broadcast}{@code (0), 0)}.
+     * It may also be viewed simply as a cross-lane shift
+     * from earlier to later lanes, with zeroes filling
+     * in the vacated lanes at the beginning of the vector.
+     * In this view, the shift count is {@code origin}.
+     *
+     * @param origin the first output lane to receive the slice
+     * @return the first {@code VLENGTH-origin} input lanes,
+     *         placed starting at the given origin,
+     *         padded at the beginning with zeroes
+     * @throws ArrayIndexOutOfBoundsException if {@code origin}
+     *         is negative or greater than {@code VLENGTH}
+     * @see #unslice(int,Vector,int)
+     * @see #slice(int)
+     */
+    // FIXME: does this pull its weight?
+    // It's a one-off and broadcast(0) is easy.  It's here as a teaching aid.
+    public abstract Vector<E> unslice(int origin);
+
+    // ISSUE: Add a slice which uses a mask instead of an origin?
+    //public abstract Vector<E> slice(VectorMask<E> support);
+
+    // ISSUE: Add some more options for questionable edge conditions?
+    // We might define enum EdgeOption { ERROR, ZERO, WRAP } for the
+    // default of throwing AIOOBE, or substituting zeroes, or just
+    // reducing the out-of-bounds index modulo VLENGTH.  Similar
+    // concerns also apply to general Shuffle operations.  For now,
+    // just support ERROR, since that is safest.
+
+    /**
+     * Rearranges the lane elements of this vector, selecting lanes
+     * under the control of a specific shuffle.
+     *
+     * This is a cross-lane operation that rearranges the lane
+     * elements of this vector.
+     * 
+     * For each lane {@code N} of the shuffle, and for each lane
+     * source index {@code I=s.laneSource(N)} in the shuffle,
+     * the output lane {@code N} obtains the value from
+     * the input vector at lane {@code I}.
      *
      * @param s the shuffle controlling lane index selection
      * @return the rearrangement of the lane elements of this vector
+     * @throw IndexOutOfBoundsException if there are any exceptional
+     *        source indexes in the shuffle
+     * @see #rearrange(VectorShuffle,VectorMask)
+     * @see #rearrange(VectorShuffle,Vector)
+     * @see VectorShuffle#laneIsValid()
      */
     public abstract Vector<E> rearrange(VectorShuffle<E> s);
 
     /**
-     * Rearranges the lane elements of this vector and those of an input vector,
-     * selecting lane indexes controlled by shuffles and a mask.
-     * <p>
-     * This is a cross-lane operation that rearranges the lane elements of this
-     * vector and the input vector.  This method behaves as if it rearranges
-     * each vector with the corresponding shuffle and then blends the two
-     * results with the mask:
+     * Rearranges the lane elements of this vector, selecting lanes
+     * under the control of a specific shuffle and a mask.
+     *
+     * This is a cross-lane operation that rearranges the lane
+     * elements of this vector.
+     * 
+     * For each lane {@code N} of the shuffle, and for each lane
+     * source index {@code I=s.laneSource(N)} in the shuffle,
+     * the output lane {@code N} obtains the value from
+     * the input vector at lane {@code I} if the mask is set.
+     * Otherwise the output lane {@code N} is set to zero.
+     *
+     * <p> This method returns the value of this pseudocode:
      * <pre>{@code
-     * return this.rearrange(s1).blend(v.rearrange(s2), m);
+     * Vector<E> r = this.rearrange(s.wrapIndexes());
+     * return broadcast(0).blend(r, s.laneIsValid());
      * }</pre>
      *
-     * @param v the input vector
-     * @param s the shuffle controlling lane index selection of the input vector
-     * if corresponding mask lanes are set, otherwise controlling lane
-     * index selection of this vector
-     * @param m the mask controlling shuffled lane selection
-     * @return the rearrangement of lane elements of this vector and
-     * those of an input vector
+     * @param s the shuffle controlling lane index selection
+     * @param m the mask controlling application of the shuffle
+     * @return the rearrangement of the lane elements of this vector
+     * @throw IndexOutOfBoundsException if there are any exceptional
+     *        source indexes in the shuffle where the mask is set
+     * @see #rearrange(VectorShuffle)
+     * @see #rearrange(VectorShuffle,Vector)
+     * @see VectorShuffle#laneIsValid()
      */
-    public abstract Vector<E> rearrange(Vector<E> v,
-                                           VectorShuffle<E> s, VectorMask<E> m);
+    public abstract Vector<E> rearrange(VectorShuffle<E> s, VectorMask<E> m);
 
+    /**
+     * Rearranges the lane elements of two vectors, selecting lanes
+     * under the control of a specific shuffle, using both normal and
+     * exceptional indexes in the shuffle to steer data.
+     *
+     * This is a cross-lane operation that rearranges the lane
+     * elements of the two input vectors (the current vector
+     * and a second vector {@code v}).
+     *
+     * For each lane {@code N} of the shuffle, and for each lane
+     * source index {@code I=s.laneSource(N)} in the shuffle,
+     * the output lane {@code N} obtains the value from
+     * the first vector at lane {@code I} if {@code I>=0}.
+     * Otherwise, the exceptional index {@code I} is wrapped
+     * by adding {@code VLENGTH} to it and used to index
+     * the <em>second</em> vector, at index {@code I+VLENGTH},
+     *
+     * <p> This method returns the value of this pseudocode:
+     * <pre>{@code
+     * Vector<E> r1 = this.rearrange(s.wrapIndexes());
+     * // or else: r1 = this.rearrange(s, valid);
+     * Vector<E> r2 = v.rearrange(s.wrapIndexes());
+     * return r2.blend(r1,s.laneIsValid());
+     * }</pre>
+     *
+     * @param s the shuffle controlling lane selection from both input vectors
+     * @param v the second input vector
+     * @return the rearrangement of lane elements of this vector and
+     *         a second input vector
+     * @see #rearrange(VectorShuffle)
+     * @see #rearrange(VectorShuffle,VectorMask)
+     * @see VectorShuffle#laneIsValid()
+     * @see #slice(int,Vector)
+     */
+    public abstract Vector<E> rearrange(VectorShuffle<E> s, Vector<E> v);
 
+    /**
+     * Using index values stored in the lanes of this vector,
+     * assemble values stored in second vector {@code v}.
+     * The second vector thus serves as a table, whose
+     * elements are selected by indexes in the current vector.
+     *
+     * This is a cross-lane operation that rearranges the lane
+     * elements of the argument vector, under the control of
+     * this vector.
+     *
+     * For each lane {@code N} of this vector, and for each lane
+     * value {@code I=this.lane(N)} in this vector,
+     * the output lane {@code N} obtains the value from
+     * the argument vector at lane {@code I}.
+     * 
+     * In this way, the result contains only values stored in the
+     * argument vector {@code v}, but presented in an order which
+     * depends on the index values in {@code this}.
+     *
+     * The result is the same as the expression
+     * {@code v.rearrange(this.toShuffle())}.
+     *
+     * @param v the vector supplying the result values
+     * @return the rearrangement of the lane elements of {@code v}
+     * @throw IndexOutOfBoundsException if any invalid
+     *        source indexes are found in {@code this}
+     * @see #rearrange(VectorShuffle)
+     */
+    public abstract Vector<E> selectFrom(Vector<E> v);
+
+    /**
+     * Using index values stored in the lanes of this vector,
+     * assemble values stored in second vector, under the control
+     * of a mask.
+     * Using index values stored in the lanes of this vector,
+     * assemble values stored in second vector {@code v}.
+     * The second vector thus serves as a table, whose
+     * elements are selected by indexes in the current vector.
+     * Lanes that are unset in the mask receive a
+     * zero rather than a value from the table.
+     *
+     * This is a cross-lane operation that rearranges the lane
+     * elements of the argument vector, under the control of
+     * this vector and the mask.
+     *
+     * The result is the same as the expression
+     * {@code v.rearrange(this.toShuffle(), m)}.
+     *
+     * @param v the vector supplying the result values
+     * @param m the mask controlling selection from {@code v}
+     * @return the rearrangement of the lane elements of {@code v}
+     * @throw IndexOutOfBoundsException if any invalid
+     *        source indexes are found in {@code this},
+     *        in a lane which is set in the mask
+     * @see #selectFrom(Vector)
+     * @see #rearrange(VectorShuffle,VectorMask)
+     */
+    public abstract Vector<E> selectFrom(Vector<E> v, VectorMask<E> m);
 
     // Conversions
 
     /**
-     * Converts this vector into a shuffle, creating a shuffle from vector
-     * lane elements cast to {@code int} then logically AND'ed with the
-     * shuffle length minus one.
+     * Returns a vector of the same species as this one
+     * where all lane elements are set to
+     * the primitive value {@code e}.
+     * The contents of the current vector are discarded;
+     * only the species is relevant to this operation.
+     *
+     * <p> This method returns the value of this expression:
+     * {@code EVector.broadcast(this.species(), (ETYPE)e)}, where
+     * {@code EVector} is the vector class specific to this
+     * vector's element type {@code ETYPE}.
+     * The {@code long} value must be accurately representable
+     * by {@code ETYPE}, so that {@code e==(long)(ETYPE)e}.
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the method parameter and return types.
+     *
+     * @param e the value to broadcast
+     * @return a vector where all lane elements are set to
+     *         the primitive value {@code e}
+     * @throws IllegalArgumentException
+     *         if the given {@code long} value cannot
+     *         be represented by the vector's {@code ETYPE}
+     * @see VectorSpecies#broadcast(long)
+     * @see IntVector#broadcast(int)
+     * @see FloatVector#broadcast(float)
+     */
+    public abstract Vector<E> broadcast(long e);
+
+    /**
+     * Returns a mask of same species as this vector,
+     * where each lane is set or unset according to given
+     * single boolean, which is broadcast to all lanes.
      * <p>
-     * This methods behaves as if it returns the result of creating a shuffle
-     * given an array of the vector lane elements, as follows:
+     * This method returns the value of this expression:
+     * {@code species().maskAll(bit)}.
+     *
+     * @param bit the given mask bit to be replicated
+     * @return a mask where each lane is set or unset according to
+     *         the given bit
+     * @see VectorSpecies#maskAll(boolean)
+     */
+    public abstract VectorMask<E> maskAll(boolean bit);
+
+    /**
+     * Converts this vector into a shuffle, converting the lane values
+     * to {@code int} and regarding them as source indexes.
+     * <p>
+     * This method behaves as if it returns the result of creating a shuffle
+     * given an array of the vector elements, as follows:
      * <pre>{@code
-     * $type$[] a = this.toArray();
+     * long[] a = this.toLongArray();
      * int[] sa = new int[a.length];
      * for (int i = 0; i < a.length; i++) {
      *     sa[i] = (int) a[i];
      * }
-     * return this.species().shuffleFromValues(sa);
+     * return VectorShuffle.fromValues(this.species(), sa);
      * }</pre>
      *
      * @return a shuffle representation of this vector
+     * @see VectorShuffle#fromValues(VectorSpecies,int...)
      */
     public abstract VectorShuffle<E> toShuffle();
 
     // Bitwise preserving
 
     /**
-     * Transforms this vector to a vector of the given species of element type {@code F}.
+     * Transforms this vector to a vector of the given species of
+     * element type {@code F}, reinterpreting the bytes of this
+     * vector without performing any value conversions.
+     *
+     * <p> Depending on the selected species, this operation may
+     * either <a href="Vector.html#expansion">expand or contract</a>
+     * its logical result, in which case a non-zero {@code part}
+     * number can further control the selection and steering of the
+     * logical result into the physical output vector.
+     *
      * <p>
      * The underlying bits of this vector are copied to the resulting
-     * vector without modification, but those bits, before copying, may be
-     * truncated if the this vector's bit size is greater than desired vector's bit
-     * size, or appended to with zero bits if this vector's bit size is less
-     * than desired vector's bit size.
-     * <p>
-     * The method behaves as if this vector is stored into a byte buffer
-     * and then the desired vector is loaded from the byte buffer using
-     * native byte ordering. The implication is that ByteBuffer reads bytes
-     * and then composes them based on the byte ordering so the result
-     * depends on this composition.
-     * <p>
-     * For example, on a system with ByteOrder.LITTLE_ENDIAN, loading from
-     * byte array with values {0,1,2,3} and reshaping to int, leads to bytes
-     * being composed in order 0x3 0x2 0x1 0x0 which is decimal value 50462976.
-     * On a system with ByteOrder.BIG_ENDIAN, the value is instead 66051 because
-     * bytes are composed in order 0x0 0x1 0x2 0x3.
-     * <p>
-     * The following pseudocode expresses the behavior:
+     * vector without modification, but those bits, before copying,
+     * may be truncated if the this vector's bit-size is greater than
+     * desired vector's bit size, or filled with zero bits if this
+     * vector's bit-size is less than desired vector's bit-size.
+     *
+     * <p> If the old and new species have different shape, this is a
+     * <em>shape-changing</em> operation, and may have special
+     * implementation costs.
+     *
+     * <p> The method behaves as if this vector is stored into a byte
+     * buffer or array using little-endian byte ordering and then the
+     * desired vector is loaded from the same byte buffer or array
+     * using the same ordering.
+     *
+     * <p> The following pseudocode illustrates the behavior:
      * <pre>{@code
-     * int bufferLen = Math.max(this.bitSize(), s.bitSize()) / Byte.SIZE;
-     * ByteBuffer bb = ByteBuffer.allocate(bufferLen).order(ByteOrder.nativeOrder());
-     * this.intoByteBuffer(bb, 0);
-     * return $type$Vector.fromByteBuffer(s, bb, 0);
+     * int domSize = this.byteSize();
+     * int ranSize = species.vectorByteSize();
+     * int M = (domSize > ranSize ? domSize / ranSize : ranSize / domSize);
+     * assert Math.abs(part) < M;
+     * assert (part == 0) || (part > 0) == (domSize > ranSize);
+     * byte[] ra = new byte[Math.max(domSize, ranSize)];
+     * if (domSize > ranSize) {  // expansion
+     *     this.intoByteArray(ra, 0);
+     *     int origin = part * ranSize;
+     *     return species.fromByteArray(ra, origin);
+     * } else {  // contraction or size-invariant
+     *     int origin = (-part) * domSize;
+     *     this.intoByteArray(ra, origin);
+     *     return species.fromByteArray(ra, 0);
+     * }
      * }</pre>
      *
-     * @param s species of desired vector
+     * @apiNote Although this method is defined as if the vectors in
+     * question were loaded or stored into memory, memory semantics
+     * has little to do or nothing with the actual implementation.
+     * The appeal to little-endian ordering is simply a shorthand
+     * for what could otherwise be a large number of detailed rules
+     * concerning the mapping between lane-structured vectors and
+     * byte-sturctured vectors.
+     *
+     * @param species the desired vector species
+     * @param part the <a href="Vector.html#expansion">part number</a>
+     *        of the result, or zero if neither expanding nor contracting
      * @param <F> the boxed element type of the species
      * @return a vector transformed, by shape and element type, from this vector
-     * @see Vector#reshape(VectorSpecies)
-     * @see Vector#cast(VectorSpecies)
+     * @see Vector#convertShape(VectorOperators.Conversion,VectorSpecies,int)
+     * @see Vector#castShape(VectorSpecies,int)
+     * @see VectorSpecies#partLimit(VectorSpecies,boolean)
      */
-    public abstract <F> Vector<F> reinterpret(VectorSpecies<F> s);
-
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    <F> Vector<F> defaultReinterpret(VectorSpecies<F> s) {
-        int blen = Math.max(s.bitSize(), this.species().bitSize()) / Byte.SIZE;
-        ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
-        this.intoByteBuffer(bb, 0);
-
-        Class<?> stype = s.elementType();
-        if (stype == byte.class) {
-           return (Vector) ByteVector.fromByteBuffer((ByteVector.ByteSpecies)s, bb, 0);
-        } else if (stype == short.class) {
-           return (Vector) ShortVector.fromByteBuffer((ShortVector.ShortSpecies)s, bb, 0);
-        } else if (stype == int.class) {
-           return (Vector) IntVector.fromByteBuffer((IntVector.IntSpecies)s, bb, 0);
-        } else if (stype == long.class) {
-           return (Vector) LongVector.fromByteBuffer((LongVector.LongSpecies)s, bb, 0);
-        } else if (stype == float.class) {
-           return (Vector) FloatVector.fromByteBuffer((FloatVector.FloatSpecies)s, bb, 0);
-        } else if (stype == double.class) {
-           return (Vector) DoubleVector.fromByteBuffer((DoubleVector.DoubleSpecies)s, bb, 0);
-        } else {
-            throw new UnsupportedOperationException("Bad lane type for reinterpret.");
-        }
-    }
+    public abstract <F> Vector<F> reinterpretShape(VectorSpecies<F> species, int part);
 
     /**
-     * Transforms this vector to a vector of same element type but different shape identified by species.
-     * <p>
-     * The lane elements of this vector are copied without
-     * modification to the resulting vector, but those lane elements, before
-     * copying, may be truncated if this vector's length is greater than the desired
-     * vector's length, or appended to with default element values if this
-     * vector's length is less than desired vector's length.
-     * <p>
-     * The method behaves as if this vector is stored into a byte array
-     * and then the returned vector is loaded from the byte array.
-     * The following pseudocode expresses the behavior:
-     * <pre>{@code
-     * int alen = Math.max(this.bitSize(), s.bitSize()) / Byte.SIZE;
-     * byte[] a = new byte[alen];
-     * this.intoByteArray(a, 0);
-     * return $type$Vector.fromByteArray(s, a, 0);
-     * }</pre>
+     * Views this vector as a vector of the same shape
+     * and contents but a lane type of {@code byte},
+     * where the bytes are extracted from the lanes
+     * according to little-endian order.
+     * It is a convenience method for the expression
+     * {@code reinterpretShape(species().withLanes(byte.class))}.
+     * It may be considered an inverse to the various
+     * methods which consolidate bytes into larger lanes
+     * within the same vector, such as
+     * {@link Vector#reinterpretAsInts()}.
      *
-     * @param s species of the desired vector
-     * @return a vector transformed, by shape, from this vector
-     * @see Vector#reinterpret(VectorSpecies)
-     * @see Vector#cast(VectorSpecies)
+     * @return a {@code ByteVector} with the same shape and information content
+     * @see Vector#reinterpretShape(VectorSpecies,int)
+     * @see ByteVector#toIntArray
+     * @see ByteVector#toFloatArray
+     * @see VectorSpecies#withLanes(Class)
      */
-    public abstract Vector<E> reshape(VectorSpecies<E> s);
-
-    // Cast
+    public abstract ByteVector reinterpretAsBytes();
 
     /**
-     * Converts this vector to a vector of the given species element type {@code F}.
-     * <p>
-     * For each vector lane up to the length of this vector or
-     * desired vector, which ever is the minimum, and where {@code N} is the
-     * vector lane index, the element at index {@code N} of primitive type
-     * {@code E} is converted, according to primitive conversion rules
-     * specified by the Java Language Specification, to a value of primitive
-     * type {@code F} and placed into the resulting vector at lane index
-     * {@code N}. If desired vector's length is greater than this
-     * vector's length then the default primitive value is placed into
-     * subsequent lanes of the resulting vector.
+     * Reinterprets this vector as a vector of the same shape
+     * and contents but a lane type of {@code short},
+     * where the lanes are assembled from successive bytes
+     * according to little-endian order.
+     * It is a convenience method for the expression
+     * {@code reinterpretShape(species().withLanes(short.class))}.
+     * It may be considered an inverse to {@link Vector#reinterpretAsBytes()}.
      *
-     * @param s species of the desired vector
+     * @return a {@code ShortVector} with the same shape and information content
+     */
+    public abstract ShortVector reinterpretAsShorts();
+
+    /**
+     * Reinterprets this vector as a vector of the same shape
+     * and contents but a lane type of {@code int},
+     * where the lanes are assembled from successive bytes
+     * according to little-endian order.
+     * It is a convenience method for the expression
+     * {@code reinterpretShape(species().withLanes(int.class))}.
+     * It may be considered an inverse to {@link Vector#reinterpretAsBytes()}.
+     *
+     * @return a {@code IntVector} with the same shape and information content
+     */
+    public abstract IntVector reinterpretAsInts();
+
+    /**
+     * Reinterprets this vector as a vector of the same shape
+     * and contents but a lane type of {@code long},
+     * where the lanes are assembled from successive bytes
+     * according to little-endian order.
+     * It is a convenience method for the expression
+     * {@code reinterpretShape(species().withLanes(long.class))}.
+     * It may be considered an inverse to {@link Vector#reinterpretAsBytes()}.
+     *
+     * @return a {@code LongVector} with the same shape and information content
+     */
+    public abstract LongVector reinterpretAsLongs();
+
+    /**
+     * Reinterprets this vector as a vector of the same shape
+     * and contents but a lane type of {@code float},
+     * where the lanes are assembled from successive bytes
+     * according to little-endian order.
+     * It is a convenience method for the expression
+     * {@code reinterpretShape(species().withLanes(float.class))}.
+     * It may be considered an inverse to {@link Vector#reinterpretAsBytes()}.
+     *
+     * @return a {@code FloatVector} with the same shape and information content
+     */
+    public abstract FloatVector reinterpretAsFloats();
+
+    /**
+     * Reinterprets this vector as a vector of the same shape
+     * and contents but a lane type of {@code double},
+     * where the lanes are assembled from successive bytes
+     * according to little-endian order.
+     * It is a convenience method for the expression
+     * {@code reinterpretShape(species().withLanes(double.class))}.
+     * It may be considered an inverse to {@link Vector#reinterpretAsBytes()}.
+     *
+     * @return a {@code DoubleVector} with the same shape and information content
+     */
+    public abstract DoubleVector reinterpretAsDoubles();
+
+    /**
+     * Views this vector as a vector of the same shape, length, and
+     * contents, but a lane type that is not a floating-point type.
+     *
+     * This is a lane-wise reinterpretation cast on the lane values.
+     * As such, there this method does not change {@code VSHAPE} or
+     * {@code VLENGTH}, and there is no change to the bitwise contents
+     * of the vector.  If the vector's {@code ETYPE} is already an
+     * integral type, the same vector is returned unchanged.
+     *
+     * This method returns the value of this expression:
+     * {@code convert(conv,part)}, where {@code conv} is
+     * {@code VectorOperators.Conversion.ofReinterpret(E.class,F.class)},
+     * and {@code F} is the non-floating-point type of the
+     * same size as {@code E}.
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the return type.
+     *
+     * @return the original vector, reinterpreted as non-floating point
+     * @see VectorOperators.Conversion#ofReinterpret(Class,Class)
+     * @see Vector#convert(VectorOperators.Conversion,int)
+     */
+    public abstract Vector<?> viewAsIntegralLanes();
+
+    /**
+     * Views this vector as a vector of the same shape, length, and
+     * contents, but a lane type that is a floating-point type.
+     *
+     * This is a lane-wise reinterpretation cast on the lane values.
+     * As such, there this method does not change {@code VSHAPE} or
+     * {@code VLENGTH}, and there is no change to the bitwise contents
+     * of the vector.  If the vector's {@code ETYPE} is already a
+     * float-point type, the same vector is returned unchanged.
+     *
+     * If the vector's element size does not match any floating point
+     * type size, an {@code IllegalArgumentException} is thrown.
+     *
+     * This method returns the value of this expression:
+     * {@code convert(conv,part)}, where {@code conv} is
+     * {@code VectorOperators.Conversion.ofReinterpret(E.class,F.class)},
+     * and {@code F} is the floating-point type of the
+     * same size as {@code E}, if any.
+     *
+     * @apiNote
+     * Subtypes improve on this method by sharpening
+     * the return type.
+     *
+     * @return the original vector, reinterpreted as floating point
+     * @throws IllegalArgumentException if there is no floating point
+     *         type the same size as the lanes of this vector
+     * @see VectorOperators.Conversion#ofReinterpret(Class,Class)
+     * @see Vector#convert(VectorOperators.Conversion,int)
+     */
+    public abstract Vector<?> viewAsFloatingLanes();
+
+    /**
+     * Convert this vector to a vector of the same shape and a new
+     * element type, converting lane values from the current {@code ETYPE}
+     * to a new lane type (called {@code FTYPE} here) according to the
+     * indicated {@linkplain VectorOperators.Conversion conversion}.
+     *
+     * This is a lane-wise shape-invariant operation which copies
+     * {@code ETYPE} values from the input vector to corresponding
+     * {@code FTYPE} values in the result.  Depending on the selected
+     * conversion, this operation may either
+     * <a href="Vector.html#expansion">expand or contract</a> its
+     * logical result, in which case a non-zero {@code part} number
+     * can further control the selection and steering of the logical
+     * result into the physical output vector.
+     *
+     * <p> Each specific conversion is described by a conversion
+     * constant in the class {@link VectorOperators}.  Each conversion
+     * operator has a specified {@linkplain
+     * VectorOperators.Conversion#domainType() domain type} and
+     * {@linkplain VectorOperators.Conversion#rangeType() range type}.
+     * The domain type must exactly match the lane type of the input
+     * vector, while the range type determines the lane type of the
+     * output vectors.
+     *
+     * <p> A conversion operator may be classified as (respectively)
+     * in-place, expanding, or contracting, depending on whether the
+     * bit-size of its domain type is (respectively) equal, less than,
+     * or greater than the bit-size of its range type.
+     *
+     * <p> Independently, conversion operations can also be classified
+     * as reinterpreting or value-transforming, depending on whether
+     * the conversion copies representation bits unchanged, or changes
+     * the representation bits in order to retain (part or all of)
+     * the logical value of the input value.
+     *
+     * <p> If a reinterpreting conversion contracts, it will truncate the
+     * upper bits of the input.  If it expands, it will pad upper bits
+     * of the output with zero bits, when there are no corresponding
+     * input bits.
+     *
+     * <p> As another variation of behavior, an in-place conversion
+     * can incorporate an expanding or contracting conversion, while
+     * retaining the same lane size between input and output.
+     *
+     * In the case of a contraction, the lane value is first converted
+     * to the smaller value, and then zero-padded (as if by a subsequent
+     * reinterpretation) before storing into the output lane.
+     *
+     * In the case of an expansion, the lane value is first truncated
+     * to the smaller value (as if by an initial reinterpretation),
+     * and then converted before storing into the output lane.
+     *
+     * <p> An expanding conversion such as {@code S2I} ({@code short}
+     * value to {@code long}) takes a scalar value and represents it
+     * in a larger format (always with some information redundancy).
+     *
+     * A contracting conversion such as {@code D2F} ({@code double}
+     * value to {@code float}) takes a scalar value and represents it
+     * in a smaller format (always with some information loss).
+     *
+     * Some in-place conversions may also include information loss,
+     * such as {@code L2D} ({@code long} value to {@code double})
+     * or {@code F2I}  ({@code float} value to {@code int}).
+     *
+     * Reinterpreting in-place conversions are not lossy, unless the
+     * bitwise value is somehow not legal in the output type.
+     * Converting the bit-pattern of a {@code NaN} may discard bits
+     * from the {@code NaN}'s significand.
+     *
+     * <p> This classification is important, because, unless otherwise
+     * documented, conversion operations <em>never change vector
+     * shape</em>, regardless of how they may change <em>lane sizes</em>.
+     *
+     * Therefore an <em>expanding</em> conversion cannot store all of its
+     * results in its output vector, because the output vector has fewer
+     * lanes of larger size, in order to have the same overall bit-size as
+     * its input.
+     *
+     * Likewise, a contracting conversion must store its relatively small
+     * results into a subset of the lanes of the output vector, defaulting
+     * the unused lanes to zero.
+     *
+     * <p> As an example, a conversion from {@code byte} to {@code long}
+     * ({@code M=8}) will discard 87.5% of the input values in order to
+     * convert the remaining 12.5% into the roomy {@code long} lanes of
+     * the output vector. The inverse conversion will convert back all of
+     * the large results, but will waste 87.5% of the lanes in the output
+     * vector.
+     *
+     * <em>In-place</em> conversions ({@code M=1}) deliver all of
+     * their results in one output vector, without wasting lanes.
+     *
+     * <p> To manage the details of these
+     * <a href="Vector.html#expansion">expansions and contractions</a>,
+     * a non-zero {@code part} parameter selects partial results from
+     * expansions, or steers the results of contractions into
+     * corresponding locations, as follows:
+     *
+     * <ul>
+     * <li> expanding by {@code M}: {@code part} must be in the range
+     * {@code [0..M-1]}, and selects the block of {@code VLENGTH/M} input
+     * lanes starting at the <em>origin lane</em> at {@code part*VLENGTH/M}.
+
+     * <p> The {@code VLENGTH/M} output lanes represent a partial
+     * slice of the whole logical result of the conversion, filling
+     * the entire physical output vector.
+     *
+     * <li> contracting by {@code M}: {@code part} must be in the range
+     * {@code [-M+1..0]}, and steers all {@code VLENGTH} input lanes into
+     * the output located at the <em>origin lane</em> {@code -part*VLENGTH}.
+     * There is a total of {@code VLENGTH*M} output lanes, and those not
+     * holding converted input values are filled with zeroes.
+     *
+     * <p> A group of such output vectors, with logical result parts
+     * steered to disjoint blocks, can be reassembled using the
+     * {@linkplain VectorOperators#OR bitwise or} or (for floating
+     * point) the {@link VectorOperators#FIRST_NONZERO FIRST_NONZERO}
+     * operator.
+     *
+     * <li> in-place ({@code M=1}): {@code part} must be zero.
+     * Both vectors have the same {@code VLENGTH}.  The result is
+     * always positioned at the <em>origin lane</em> of zero.
+     *
+     * </ul>
+     *
+     * <p> This method is a restricted version of the more general
+     * but less frequently used <em>shape-changing</em> method
+     * {@link #convertShape(VectorOperators.Conversion,VectorSpecies,int)
+     * convertShape()}.
+     * The result of this method is the same as the expression
+     * {@code this.convertShape(conv, rsp, this.broadcast(part))},
+     * where the output species is
+     * {@code rsp=this.species().withLanes(FTYPE.class)}.
+     * 
+     * @param conv the desired scalar conversion to apply lane-wise
+     * @param part the <a href="Vector.html#expansion">part number</a>
+     *        of the result, or zero if neither expanding nor contracting
      * @param <F> the boxed element type of the species
      * @return a vector converted by shape and element type from this vector
-     * @see Vector#reshape(VectorSpecies)
-     * @see Vector#reinterpret(VectorSpecies)
+     * @throws ArrayIndexOutOfBoundsException unless {@code part} is zero,
+     *         or else the expansion ratio is {@code M} and
+     *         {@code part} is positive and less than {@code M},
+     *         or else the contraction ratio is {@code M} and
+     *         {@code part} is negative and greater {@code -M}
+     *
+     * @see VectorOperators#I2L
+     * @see VectorOperators.Conversion#ofCast(Class,Class)
+     * @see VectorSpecies#partLimit(VectorSpecies,boolean)
+     * @see #viewAsFloatingLanes(VectorSpecies,int)
+     * @see #viewAsIntegralLanes(VectorSpecies,int)
+     * @see #convertShape(VectorOperators.Conversion,VectorSpecies,int)
+     * @see #reinterpretShape(VectorSpecies,int)
      */
-    public abstract <F> Vector<F> cast(VectorSpecies<F> s);
+    public abstract <F> Vector<F> convert(VectorOperators.Conversion<E,F> conv, int part);
+
+    /**
+     * Converts this vector to a vector of the given species, shape and
+     * element type, converting lane values from the current {@code ETYPE}
+     * to a new lane type (called {@code FTYPE} here) according to the
+     * indicated {@linkplain VectorOperators.Conversion conversion}.
+     *
+     * This is a lane-wise operation which copies {@code ETYPE} values
+     * from the input vector to corresponding {@code FTYPE} values in
+     * the result.
+     * 
+     * <p> If the old and new species have the same shape, the behavior
+     * is exactly the same as the simpler, shape-invariant method
+     * {@link @linkplain #convert(VectorOperators.Conversion,int) convert()}.
+     * In such cases, the simpler method {@code convert()} should be
+     * used, to make code easier to reason about.
+     * Otherwise, this is a <em>shape-changing</em> operation, and may
+     * have special implementation costs.
+     *
+     * <p> As a combined effect of shape changes and lane size changes,
+     * the input and output species may have different lane counts, causing
+     * <a href="Vector.html#expansion">expansion or contraction</a>.
+     * In this case a non-zero {@code part} parameter selects
+     * partial results from an expanded logical result, or steers
+     * the results of a contracted logical result into a physical
+     * output vector of the required output species.
+     *
+     * <p >The following pseudocode illustrates the behavior of this
+     * method for in-place, expanding, and contracting conversions.
+     * (This pseudocode also applies to the shape-invariant method,
+     * but with shape restrictions on the output species.)
+     * Note that only one of the three code paths is relevant to any
+     * particular combination of conversion operator and shapes.
+     *
+     * <pre>{@code
+     * FTYPE scalar_conversion_op(ETYPE s);
+     * EVector a = ...;
+     * VectorSpecies<F> rsp = ...;
+     * int part = ...;
+     * VectorSpecies<E> dsp = a.species();
+     * int domlen = dsp.length();
+     * int ranlen = rsp.length();
+     * FTYPE[] logical = new FTYPE[domlen];
+     * for (int i = 0; i < domlen; i++) {
+     *   logical[i] = scalar_conversion_op(a.lane(i));
+     * }
+     * FTYPE[] physical;
+     * if (domlen == ranlen) { // in-place
+     *     assert part == 0; //else AIOOBE
+     *     physical = logical;
+     * } else if (domlen > ranlen) { // expanding
+     *     int M = domlen / ranlen;
+     *     assert 0 <= part && part < M; //else AIOOBE
+     *     int origin = part * ranlen;
+     *     physical = Arrays.copyOfRange(origin, origin + ranlen);
+     * } else { // (domlen < ranlen) // contracting
+     *     int M = ranlen / domlen;
+     *     assert 0 >= part && part > -M; //else AIOOBE
+     *     int origin = -part * domlen;
+     *     System.arraycopy(logical, 0, physical, origin, domlen);
+     * }
+     * return FVector.fromArray(ran, physical, 0);
+     * }</pre>
+     *
+     * @param conv the desired scalar conversion to apply lane-wise
+     * @param rsp the desired output species
+     * @param part the <a href="Vector.html#expansion">part number</a>
+     *        of the result, or zero if neither expanding nor contracting
+     * @param <F> the boxed element type of the output species
+     * @return a vector converted by element type from this vector
+     * @see #convert(VectorOperators.Conversion,int)
+     * @see #castShape(VectorSpecies,int)
+     * @see #reinterpretShape(VectorSpecies,int)
+     */
+    public abstract <F> Vector<F> convertShape(VectorOperators.Conversion<E,F> conv, VectorSpecies<F> rsp, int part);
+
+    /**
+     * Convenience method for converting a vector from one lane type
+     * to another, reshaping as needed when lane sizes change.
+     *
+     * This method returns the value of this expression:
+     * {@code convertShape(conv,rsp,part)}, where {@code conv} is
+     * {@code VectorOperators.Conversion.ofCast(E.class,F.class)}.
+     *
+     * <p> If the old and new species have different shape, this is a
+     * <em>shape-changing</em> operation, and may have special
+     * implementation costs.
+     *
+     * @param rsp the desired output species
+     * @param part the <a href="Vector.html#expansion">part number</a>
+     *        of the result, or zero if neither expanding nor contracting
+     * @param <F> the boxed element type of the output species
+     * @return a vector converted by element type from this vector
+     * @see VectorOperators.Conversion#ofCast(Class,Class)
+     * @see Vector#convertShape(VectorOperators.Conversion,VectorSpecies,int)
+     */
+    // FIXME: Does this carry its weight?
+    public abstract <F> Vector<F> castShape(VectorSpecies<F> rsp, int part);
+
+    /**
+     * Checks that this vector has the given element type,
+     * and returns this vector unchanged.
+     * The effect is similar to this pseudocode:
+     * {@code elementType == species().elementType()
+     *        ? this
+     *        : throw new ClassCastException()}.
+     *
+     * @param elementType the required lane type
+     * @param <F> the boxed element type of the required lane type
+     * @return the same vector
+     * @throws ClassCastException if the vector has the wrong element type
+     * @see VectorSpecies#check(Class)
+     * @see VectorMask#check(Class)
+     * @see Vector#check(VectorSpecies)
+     * @see VectorShuffle#check(VectorSpecies)
+     */
+    public abstract <F> Vector<F> check(Class<F> elementType);
+
+    /**
+     * Checks that this vector has the given species,
+     * and returns this vector unchanged.
+     * The effect is similar to this pseudocode:
+     * {@code species == species()
+     *        ? this
+     *        : throw new ClassCastException()}.
+     *
+     * @param species the required species
+     * @param <F> the boxed element type of the required species
+     * @return the same vector
+     * @throws ClassCastException if the vector has the wrong species
+     * @see Vector#check(Class)
+     * @see VectorMask#check(VectorSpecies)
+     * @see VectorShuffle#check(VectorSpecies)
+     */
+    public abstract <F> Vector<F> check(VectorSpecies<F> species);
 
     //Array stores
 
     /**
      * Stores this vector into a byte array starting at an offset.
      * <p>
-     * Bytes are extracted from primitive lane elements according to the
-     * native byte order of the underlying platform.
+     * Bytes are extracted from primitive lane elements according
+     * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
+     * The lanes are stored according to their
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
-     * This method behaves as it calls the
-     * byte buffer, offset, and mask accepting
-     * {@link #intoByteBuffer(ByteBuffer, int, VectorMask) method} as follows:
+     * This method behaves as if it calls
+     * {@link #intoByteBuffer(ByteBuffer,int,ByteOrder,VectorMask)
+     * intoByteBuffer()} as follows:
      * <pre>{@code
-     * return this.intoByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
+     * var bb = ByteBuffer.wrap(a);
+     * var bo = ByteOrder.LITTLE_ENDIAN;
+     * var m = maskAll(true);
+     * intoByteBuffer(bb, offset, m, bo);
      * }</pre>
      *
      * @param a the byte array
-     * @param i the offset into the array
-     * @return a vector loaded from a byte array
-     * @throws IndexOutOfBoundsException if {@code i < 0} or
-     * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
+     * @param offset the offset into the array
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*ESIZE < 0}
+     *         or {@code offset+(N+1)*ESIZE > a.length}
+     *         for any lane {@code N} in the vector
      */
-    public abstract void intoByteArray(byte[] a, int i);
+    public abstract void intoByteArray(byte[] a, int offset);
 
     /**
-     * Stores this vector into a byte array starting at an offset and using a mask.
+     * Stores this vector into a byte array starting at an offset
+     * using a mask.
      * <p>
-     * Bytes are extracted from primitive lane elements according to the
-     * native byte order of the underlying platform.
+     * Bytes are extracted from primitive lane elements according
+     * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
+     * The lanes are stored according to their
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
-     * This method behaves as it calls the
-     * byte buffer, offset, and mask accepting
-     * {@link #intoByteBuffer(ByteBuffer, int, VectorMask) method} as follows:
+     * This method behaves as if it calls
+     * {@link #intoByteBuffer(ByteBuffer,int,ByteOrder,VectorMask)
+     * intoByteBuffer()} as follows:
      * <pre>{@code
-     * return this.intoByteBuffer(ByteBuffer.wrap(a), i, m);
+     * var bb = ByteBuffer.wrap(a);
+     * var bo = ByteOrder.LITTLE_ENDIAN;
+     * intoByteBuffer(bb, offset, m, bo);
      * }</pre>
      *
      * @param a the byte array
-     * @param i the offset into the array
+     * @param offset the offset into the array
      * @param m the mask controlling lane selection
-     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
-     * or {@code > a.length},
-     * for any vector lane index {@code N} where the mask at lane {@code N}
-     * is set
-     * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*ESIZE < 0}
+     *         or {@code offset+(N+1)*ESIZE > a.length}
+     *         for any lane {@code N} in the vector
+     *         where the mask is set
      */
-    public abstract void intoByteArray(byte[] a, int i, VectorMask<E> m);
+    public abstract void intoByteArray(byte[] a, int offset,
+                                       VectorMask<E> m);
 
     /**
-     * Stores this vector into a {@link ByteBuffer byte buffer} starting at an
-     * offset into the byte buffer.
+     * Stores this vector into a byte array starting at an offset
+     * using explicit byte order and a mask.
      * <p>
-     * Bytes are extracted from primitive lane elements according to the
-     * native byte order of the underlying platform.
+     * Bytes are extracted from primitive lane elements according
+     * to the specified byte ordering.
+     * The lanes are stored according to their
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
-     * This method behaves as if it calls the byte buffer, offset, and mask
-     * accepting
-     * {@link #intoByteBuffer(ByteBuffer, int, VectorMask)} method} as follows:
+     * This method behaves as if it calls
+     * {@link #intoByteBuffer(ByteBuffer,int,ByteOrder,VectorMask)
+     * intoByteBuffer()} as follows:
      * <pre>{@code
-     *   this.intoByteBuffer(b, i, this.maskAllTrue())
+     * var bb = ByteBuffer.wrap(a);
+     * intoByteBuffer(bb, offset, m, bo);
      * }</pre>
      *
-     * @param b the byte buffer
-     * @param i the offset into the byte buffer
-     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
-     * or {@code > b.limit()},
-     * or if there are fewer than
-     * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
-     * remaining in the byte buffer from the given offset
+     * @param a the byte array
+     * @param offset the offset into the array
+     * @param bo the intended byte order
+     * @param m the mask controlling lane selection
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*ESIZE < 0}
+     *         or {@code offset+(N+1)*ESIZE > a.length}
+     *         for any lane {@code N} in the vector
+     *         where the mask is set
      */
-    public abstract void intoByteBuffer(ByteBuffer b, int i);
+    public abstract void intoByteArray(byte[] a, int offset,
+                                       ByteOrder bo,
+                                       VectorMask<E> m);
 
     /**
-     * Stores this vector into a {@link ByteBuffer byte buffer} starting at an
-     * offset into the byte buffer and using a mask.
+     * Stores this vector into a byte buffer starting at an offset
+     * using explicit byte order.
      * <p>
-     * This method behaves as if the byte buffer is viewed as a primitive
-     * {@link java.nio.Buffer buffer} for the primitive element type,
-     * according to the native byte order of the underlying platform, and
-     * the lane elements of this vector are put into the buffer if the
-     * corresponding mask lane is set.
-     * The following pseudocode expresses the behavior, where
-     * {@coce EBuffer} is the primitive buffer type, {@code e} is the
+     * Bytes are extracted from primitive lane elements according
+     * to the specified byte ordering.
+     * The lanes are stored according to their
+     * <a href="Vector.html#lane-order">memory ordering</a>.
+     * <p>
+     * This method behaves as if it calls
+     * {@link #intoByteBuffer(ByteBuffer,int,ByteOrder,VectorMask)
+     * intoByteBuffer()} as follows:
+     * <pre>{@code
+     * var m = maskAll(true);
+     * intoByteBuffer(bb, offset, m, bo);
+     * }</pre>
+     *
+     * @param bb the byte buffer
+     * @param offset the offset into the array
+     * @param bo the intended byte order
+     * @param m the mask controlling lane selection
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*ESIZE < 0}
+     *         or {@code offset+(N+1)*ESIZE > bb.limit()}
+     *         for any lane {@code N} in the vector
+     */
+    public abstract void intoByteBuffer(ByteBuffer bb, int offset, ByteOrder bo);
+
+    /**
+     * Stores this vector into a byte buffer starting at an offset
+     * using explicit byte order and a mask.
+     * <p>
+     * Bytes are extracted from primitive lane elements according
+     * to the specified byte ordering.
+     * The lanes are stored according to their
+     * <a href="Vector.html#lane-order">memory ordering</a>.
+     * <p>
+     * The following pseudocode illustrates the behavior, where
+     * {@code EBuffer} is the primitive buffer type, {@code ETYPE} is the
      * primitive element type, and {@code EVector} is the primitive
      * vector type for this vector:
      * <pre>{@code
-     * EBuffer eb = b.duplicate().
-     *     order(ByteOrder.nativeOrder()).position(i).
-     *     asEBuffer();
-     * e[] es = ((EVector)this).toArray();
-     * for (int n = 0; n < t.length; n++) {
-     *     if (m.isSet(n)) {
+     * EBuffer eb = bb.duplicate()
+     *     .position(offset)
+     *     .order(bo).asEBuffer();
+     * ETYPE[] a = this.toArray();
+     * for (int n = 0; n < a.length; n++) {
+     *     if (m.laneIsSet(n)) {
      *         eb.put(n, es[n]);
      *     }
      * }
      * }</pre>
+     * @implNote
+     * This operation is likely to be more efficient if
+     * the specified byte order is the same as
+     * {@linkplain ByteOrder#nativeOrder()
+     * the platform native order},
+     * since this method will not need to reorder
+     * the bytes of lane values.
+     * In the special case where {@code ETYPE} is
+     * {@code byte}, the byte order argument is
+     * ignored.
      *
-     * @param b the byte buffer
-     * @param i the offset into the byte buffer
-     * @param m the mask
-     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
-     * or {@code > b.limit()},
-     * for any vector lane index {@code N} where the mask at lane {@code N}
-     * is set
-     * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)} bytes
+     * @param bb the byte buffer
+     * @param offset the offset into the array
+     * @param bo the intended byte order
+     * @param m the mask controlling lane selection
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*ESIZE < 0}
+     *         or {@code offset+(N+1)*ESIZE > bb.limit()}
+     *         for any lane {@code N} in the vector
+     *         where the mask is set
      */
-    public abstract void intoByteBuffer(ByteBuffer b, int i, VectorMask<E> m);
+    public abstract void intoByteBuffer(ByteBuffer bb, int offset,
+                                        ByteOrder bo, VectorMask<E> m);
 
     /**
-     * Find bit size based on element type and number of elements.
+     * Returns a packed array containing all the lane values.
+     * The array length is the same as the vector length.
+     * The element type of the array is the same as the element
+     * type of the vector.
+     * The array elements are stored in lane order.
+     * Overrides of this method on subtypes of {@code Vector}
+     * which specify the element type have an accurately typed
+     * array result.
      *
-     * @param c the element type
-     * @param numElem number of lanes in the vector
-     * @return size in bits for vector
+     * @apiNote
+     * Usually {@linkplain IntVector#toArray() strongly typed access}
+     * is preferable, if you are working with a vector
+     * subtype that has a known element type.
+     *
+     * @return an accurately typed array containing
+     *         the lane values of this vector
+     * @see ByteVector#toArray()
+     * @see IntVector#toArray()
+     * @see DoubleVector#toArray()
      */
+    public abstract Object toArray();
+
+    /**
+     * Returns a {@code long[]} array containing all
+     * the lane values, converted to the type {@code long}.
+     * The array length is the same as the vector length.
+     * The array elements are converted as if by casting
+     * and stored in lane order.
+     * This operation can lose precision and/or range
+     * if the vector element type is {@code float}
+     * or {@code double}.
+     *
+     * @apiNote
+     * Usually {@linkplain IntVector#toArray() strongly typed access}
+     * is preferable, if you are working with a vector
+     * subtype that has a known element type.
+     *
+     * @return a {@code long[]} array containing
+     *         the lane values of this vector
+     * @see #toArray()
+     * @see LongVector#toArray
+     */
+    public abstract long[] toLongArray();
+
+    /**
+     * Returns a {@code double[]} array containing all
+     * the lane values, converted to the type {@code double}.
+     * The array length is the same as the vector length.
+     * The array elements are converted as if by casting
+     * and stored in lane order.
+     * This operation can lose precision
+     * if the vector element type is {@code long}.
+     *
+     * @apiNote
+     * Usually {@link IntVector#toArray() strongly typed access}
+     * is preferable, if you are working with a vector
+     * subtype that has a known element type.
+     *
+     * @return a {@code double[]} array containing
+     *         the lane values of this vector
+     * @see #toArray()
+     * @see DoubleVector#toArray
+     */
+    public abstract double[] toDoubleArray();
+
+    /**
+     * Returns a string representation of this vector, of the form
+     * {@code "[0,1,2...]"}, reporting the lane values of this
+     * vector, in lane order.
+     *
+     * The string is produced as if by a call to {@linkplain
+     * Arrays.toString(int[]) the {@code Arrays.toString} method}
+     * appropriate to the array returned by {@linkplain #toArray this
+     * vector's {@code toArray} method}.
+     *
+     * @return a string of the form {@code "[0,1,2...]"}
+     * reporting the lane values of this vector
+     */
+    @Override
+    public abstract String toString();
+
+    /**
+     * Indicates whether this vector is identical to some other object.
+     * Two vectors are identical only if they have the same species
+     * and same lane values, in the same order.
+
+     * <p>The comparison of lane values is produced as if by a call to
+     * {@linkplain Arrays.equals(int[],int[]) the {@code
+     * Arrays.equals} method} appropriate to the array returned by
+     * {@linkplain #toArray this vector's {@code toArray} method}.
+     *
+     * @return whether this vector is identical to some other object
+     */
+    @Override
+    public abstract boolean equals(Object obj);
+
+    /**
+     * Returns a hash code value for the vector.
+     * based on the lane values and the vector species.
+     *
+     * @return  a hash code value for this vector
+     */
+    @Override
+    public abstract int hashCode();
+
+    /**
+     * Returns all the lane values of this vector, boxed in a list.
+     * The list elements are boxed and presented in lane order.
+     * The list is immutable, as if returned from
+     * {@link List#of(Object[]) List.&lt;E&gt;of}.
+     *
+     * @apiNote
+     * Because this operation jumps out of the domain of vectors into
+     * the domain of Java collections, it is likely to have large
+     * overheads, as compared with other vector operations.
+     * Often {@link #toArray Vector.toArray} is preferable,
+     * since it produces a packed array of unboxed lane values.
+     *
+     * @return a list containing the lane values of this vector
+     */
+    // FIXME:  Does this pull its weight?  Probably not.
+    // Perhaps it's fine to rely on the {@code toArray()} methods.
+    public abstract List<E> toList();
+
+    // ==== JROSE NAME CHANGES ====
+
+    // RAISED FROM SUBCLASSES (with generalized type)
+    // * toArray() -> ETYPE[] <: Object (erased return type for interop)
+    // * toString(), equals(Object), hashCode() (documented)
+    // ADDED
+    // * compare(OP,v) to replace most of the comparison methods
+    // * maskAll(boolean) to replace maskAllTrue/False
+    // * toList() -> List<E> (interop with collections)
+    // * toLongArray(), toDoubleArray() (generic unboxed access)
+    // * check(Class), check(VectorSpecies) (static type-safety checks)
+    // * enum Comparison (enum of EQ, NE, GT, LT, GE, LE)
+    // * zero(VS), broadcast(long) (basic factories)
+    // * reinterpretAsEs(), viewAsXLanes (bytewise reinterpreting views)
+    // * addIndex(int) (iota function)
+
+    /** Use {@code numElem*}{@link VectorSpecies#elementSize(Class)}. */
+    @Deprecated
     public static int bitSizeForVectorLength(Class<?> c, int numElem) {
-        if (c == float.class) {
-            return Float.SIZE * numElem;
-        }
-        else if (c == double.class) {
-            return Double.SIZE * numElem;
-        }
-        else if (c == byte.class) {
-            return Byte.SIZE * numElem;
-        }
-        else if (c == short.class) {
-            return Short.SIZE * numElem;
-        }
-        else if (c == int.class) {
-            return Integer.SIZE * numElem;
-        }
-        else if (c == long.class) {
-            return Long.SIZE * numElem;
-        }
-        else {
-            throw new IllegalArgumentException("Bad vector type: " + c.getName());
-        }
+        return VectorSpecies.elementSize(c) * numElem;
     }
 
-    /**
-     * Returns a mask of same species as {@code this} vector and where each lane is set or unset according to given
-     * {@code boolean} values.
-     * <p>
-     * This method behaves as if it returns the result of calling the static {@link VectorMask#fromValues(VectorSpecies, boolean...) fromValues()}
-     * method in VectorMask as follows:
-     * <pre> {@code
-     *     return VectorMask.fromValues(this.species(), bits);
-     * } </pre>
-     *
-     * @param bits the given {@code boolean} values
-     * @return a mask where each lane is set or unset according to the given {@code boolean} value
-     * @throws IndexOutOfBoundsException if {@code bits.length < this.species().length()}
-     * @see VectorMask#fromValues(VectorSpecies, boolean...)
-     */
-    @ForceInline
+    /** Use #lt() */
+    @Deprecated
+    public VectorMask<E> lessThan(Vector<E> v) { return lt(v); }
+
+    /** Use #eq() */
+    @Deprecated
+    public VectorMask<E> equal(Vector<E> v) { return eq(v); }
+
+    /** Use #compare(VectorOperators.Comparison,Vector) */
+    @Deprecated
+    public VectorMask<E> notEqual(Vector<E> v) { return compare(VectorOperators.NE, v); }
+
+    /** Use #compare(VectorOperators.Comparison,Vector) */
+    @Deprecated
+    public VectorMask<E> lessThanEq(Vector<E> v) { return compare(VectorOperators.LE, v); }
+
+    /** Use #compare(VectorOperators.Comparison,Vector) */
+    @Deprecated
+    public VectorMask<E> greaterThan(Vector<E> v) { return compare(VectorOperators.GT, v); }
+
+    /** Use #compare(VectorOperators.Comparison,Vector) */
+    @Deprecated
+    public VectorMask<E> greaterThanEq(Vector<E> v) { return compare(VectorOperators.GE, v); }
+
+    /** Use #maskAll(boolean) */
+    @Deprecated
+    public VectorMask<E> maskAllTrue() { return maskAll(true); }
+
+    /** Use #maskAll(boolean) */
+    @Deprecated
+    public VectorMask<E> maskAllFalse() { return maskAll(false); }
+
+    /** Use VectorMask#fromArray(VectorSpecies, boolean[], int) */
+    @Deprecated
+    public VectorMask<E> maskFromArray(boolean[] a, int offset) { return VectorMask.fromArray(species(), a, offset); }
+
+    /** Use VectorMask.fromValues(...) */
+    @Deprecated
     public final VectorMask<E> maskFromValues(boolean... bits) {
         return VectorMask.fromValues(this.species(), bits);
     }
 
-    /**
-     * Loads a mask of same species as {@code this} vector from a {@code boolean} array starting at an offset.
-     * <p>
-     * This method behaves as if it returns the result of calling the static {@link VectorMask#fromArray(VectorSpecies, boolean[], int) fromArray()}
-     * method in VectorMask as follows:
-     * <pre> {@code
-     *     return VectorMask.fromArray(this.species(), bits, offset);
-     * } </pre>
-     *
-     * @param bits the {@code boolean} array
-     * @param offset the offset into the array
-     * @return the mask loaded from a {@code boolean} array
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
-     * {@code offset > bits.length - species.length()}
-     * @see VectorMask#fromArray(VectorSpecies, boolean[], int)
-     */
-    @ForceInline
-    public final VectorMask<E> maskFromArray(boolean[] bits, int offset) {
-        return VectorMask.fromArray(this.species(), bits, offset);
+    /** Use explicit argument of ByteOrder.LITTLE_ENDIAN */
+    @Deprecated
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset) {
+        ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
+        if (bb.order() != bo)  throw new IllegalArgumentException();
+        intoByteBuffer(bb, offset, bo);
     }
 
-    /**
-     * Returns a mask of same species as {@code this} vector and where all lanes are set.
-     *
-     * @return a mask where all lanes are set
-     * @see VectorMask#maskAllTrue(VectorSpecies)
-     */
-    @ForceInline
-    public final VectorMask<E> maskAllTrue() {
-        return VectorMask.maskAllTrue(this.species());
+    /** Use explicit argument of ByteOrder.LITTLE_ENDIAN */
+    @Deprecated
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        VectorMask<E> m) {
+        ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
+        if (bb.order() != bo)  throw new IllegalArgumentException();
+        intoByteBuffer(bb, offset, bo, m);
     }
 
-    /**
-     * Returns a mask of same species as {@code this} vector and where all lanes are unset.
-     *
-     * @return a mask where all lanes are unset
-     * @see VectorMask#maskAllFalse(VectorSpecies)
-     */
-    @ForceInline
-    public final VectorMask<E> maskAllFalse() {
-        return VectorMask.maskAllFalse(this.species());
+    /** Use reinterpretShape(s,0). */
+    @Deprecated
+    public <F> Vector<F> reinterpret(VectorSpecies<F> s) {
+        return reinterpretShape(s, 0);
     }
 
-    /**
-     * Returns a shuffle of same species as {@code this} vector and where each lane element is set to a given
-     * {@code int} value logically AND'ed by the species length minus one.
-     * <p>
-     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#fromValues(VectorSpecies, int...) fromValues()}
-     * method in VectorShuffle as follows:
-     * <pre> {@code
-     *     return VectorShuffle.fromValues(this.species(), ixs);
-     * } </pre>
-     *
-     * @param ixs the given {@code int} values
-     * @return a shuffle where each lane element is set to a given
-     * {@code int} value
-     * @throws IndexOutOfBoundsException if the number of int values is
-     * {@code < this.species().length()}
-     * @see AbstractShuffle#fromValues(VectorSpecies, int...)
-     */
-    @ForceInline
-    public final VectorShuffle<E> shuffleFromValues(int... ixs) {
-        return VectorShuffle.fromValues(this.species(), ixs);
+    /** Use reinterpretShape(s,0). */
+    @Deprecated
+    public Vector<E> reshape(VectorSpecies<E> s) {
+        s.check(elementType());  // verify same E
+        return reinterpretShape(s, 0);
     }
 
-    /**
-     * Loads a shuffle of same species as {@code this} vector from an {@code int} array starting at an offset.
-     * <p>
-     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#fromArray(VectorSpecies, int[], int) fromArray()}
-     * method in VectorShuffle as follows:
-     * <pre> {@code
-     *     return VectorShuffle.fromArray(this.species(), ixs, offset);
-     * } </pre>
-     *
-     * @param ixs the {@code int} array
-     * @param offset the offset into the array
-     * @return a shuffle loaded from the {@code int} array
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
-     * {@code offset > ixs.length - this.species().length()}
-     * @see AbstractShuffle#fromArray(VectorSpecies, int[], int)
-     */
-    @ForceInline
-    public final VectorShuffle<E> shuffleFromArray(int[] ixs, int offset) {
-        return VectorShuffle.fromArray(this.species(), ixs, offset);
+    /** Use castShape(s, 0). */
+    @Deprecated
+    public <F> Vector<F> cast(VectorSpecies<F> s) {
+        return castShape(s, 0);
     }
 
-    /**
-     * Returns a shuffle of same species as {@code this} vector of mapped indexes where each lane element is
-     * the result of applying a mapping function to the corresponding lane
-     * index.
-     * <p>
-     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#shuffle(VectorSpecies, IntUnaryOperator) shuffle()}
-     * method in VectorShuffle as follows:
-     * <pre> {@code
-     *     return AbstractShuffle.shuffle(this.species(), f);
-     * } </pre>
-     *
-     * @param f the lane index mapping function
-     * @return a shuffle of mapped indexes
-     * @see AbstractShuffle#shuffle(VectorSpecies, IntUnaryOperator)
-     */
-    @ForceInline
-    public final VectorShuffle<E> shuffle(IntUnaryOperator f) {
-        return AbstractShuffle.shuffle(this.species(), f);
+    /** Use lanewise(NEG, m). */
+    @Deprecated
+    public Vector<E> neg(VectorMask<E> m) {
+        return lanewise(VectorOperators.NEG, m);
     }
 
-    /**
-     * Returns a shuffle of same species as {@code this} vector and where each lane element is the value of its
-     * corresponding lane index.
-     * <p>
-     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#shuffleIota(VectorSpecies) shuffleIota()}
-     * method in VectorShuffle as follows:
-     * <pre> {@code
-     *     return VectorShuffle.shuffleIota(this.species());
-     * } </pre>
-     *
-     * @return a shuffle of lane indexes
-     * @see AbstractShuffle#shuffleIota(VectorSpecies)
-     */
-    @ForceInline
-    public final VectorShuffle<E> shuffleIota() {
-        return VectorShuffle.shuffleIota(this.species());
+    /** Use lanewise(ABS, m). */
+    @Deprecated
+    public Vector<E> abs(VectorMask<E> m) {
+        return lanewise(VectorOperators.ABS, m);
     }
 
-    /**
-     * Returns a shuffle of same species as {@code this} vector and with lane elements set to sequential {@code int}
-     * values starting from {@code start}.
-     * <p>
-     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#shuffleIota(VectorSpecies, int) shuffleIota()}
-     * method in VectorShuffle as follows:
-     * <pre> {@code
-     *     return VectorShuffle.shuffleIota(this.species(), start);
-     * } </pre>
-     *
-     * @param start starting value of sequence
-     * @return a shuffle of lane indexes
-     * @see AbstractShuffle#shuffleIota(VectorSpecies, int)
-     */
-    @ForceInline
-    public final VectorShuffle<E> shuffleIota(int start) {
-        return VectorShuffle.shuffleIota(this.species(), start);
+    /** use v.slice(-i &amp; (VLENGTH-1), v) */
+    @Deprecated
+    public Vector<E> rotateLanesLeft(int i) {
+        return slice(-i & (length()-1), this);
     }
-
-    /**
-     * Returns a shuffle of same species as {@code this} vector and with lane elements set to sequential {@code int}
-     * values starting from {@code start} and looping around species length.
-     * <p>
-     * This method behaves as if it returns the result of calling the static {@link VectorShuffle#shuffleOffset(VectorSpecies, int) shuffleOffset()}
-     * method in VectorShuffle as follows:
-     * <pre> {@code
-     *     return VectorShuffle.shuffleOffset(this.species(), start);
-     * } </pre>
-     *
-     * @param start starting value of sequence
-     * @return a shuffle of lane indexes
-     * @see AbstractShuffle#shuffleOffset(VectorSpecies, int)
-     */
-    @ForceInline
-    public final VectorShuffle<E> shuffleOffset(int start) {
-        return VectorShuffle.shuffleOffset(this.species(), start);
+    /** use v.slice(i &amp; (VLENGTH-1), v) */
+    @Deprecated
+    public Vector<E> rotateLanesRight(int i) {
+        return slice(i & (length()-1), this);
+    }
+    /** use v.broadcast(0).slice(i &amp; (VLENGTH-1), v) */
+    @Deprecated
+    public Vector<E> shiftLanesLeft(int i) {
+        return broadcast(0).slice(-i & (length()-1), this);
+    }
+    /** use v.slice(i &amp; (VLENGTH-1), v.broadcast(0)); */
+    @Deprecated
+    public Vector<E> shiftLanesRight(int i) {
+        return slice(i & (length()-1), broadcast(0));
     }
 }

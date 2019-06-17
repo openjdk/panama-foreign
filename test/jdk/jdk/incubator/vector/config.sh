@@ -46,9 +46,9 @@ PERF_DEST="benchmark/src/main/java/benchmark/jdk/incubator/vector/"
 
 function Log () {
   if [ $1 == true ]; then
-    echo -ne "$2"
+    echo "$2"
   fi
-  echo -ne "$2" >> $BUILDLOG_FILE
+  echo "$2" >> $BUILDLOG_FILE
 }
 
 function LogRun () {

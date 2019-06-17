@@ -23,6 +23,8 @@
 
 package benchmark.jdk.incubator.vector;
 
+#warn This file is preprocessed before being compiled
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 

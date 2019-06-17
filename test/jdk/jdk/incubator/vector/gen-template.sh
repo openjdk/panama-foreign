@@ -76,17 +76,29 @@ function replace_variables {
     cp $filename ${filename}.current
   fi
 
-  sed -i -e "s/\[\[TEST\]\]/${test}/g" ${filename}.current
-  sed -i -e "s/\[\[TEST_TYPE\]\]/${masked}/g" ${filename}.current
-  sed -i -e "s/\[\[TEST_OP\]\]/${op}/g" ${filename}.current
-  sed -i -e "s/\[\[TEST_INIT\]\]/${init}/g" ${filename}.current
-  sed -i -e "s/\[\[OP_NAME\]\]/${op_name}/g" ${filename}.current
+  sed_prog="
+    s/\[\[TEST_TYPE\]\]/${masked}/g
+    s/\[\[TEST_OP\]\]/${op}/g
+    s/\[\[TEST_INIT\]\]/${init}/g
+    s/\[\[OP_NAME\]\]/${op_name}/g
+    s/\[\[TEST\]\]/${test}/g
+  "
+
+  # convert v.lanewise_FOO(...) => v.lanewise(FOO,...)
+  case $test in
+  lanewise_[A-Z]*)
+    op_token="VectorOperators.${test#lanewise_}"
+    sed_prog="$sed_prog
+      s/[.]${test}[(][)]/.lanewise(${op_token})/g
+      s/[.]${test}[(]/.lanewise(${op_token}, /g
+    ";;
+  esac
 
   # Guard the test if necessary
   if [ "$guard" != "" ]; then
     echo -e "#if[${guard}]\n" >> $output
   fi
-  cat "${filename}.current" >> $output
+  sed -e "$sed_prog" < ${filename}.current >> $output
   if [ "$guard" != "" ]; then
     echo -e "#end[${guard}]\n" >> $output
   fi
@@ -253,16 +265,18 @@ gen_binary_alu_op "sub" "a - b" $unit_output $perf_output $perf_scalar_output
 gen_binary_alu_op "div" "a \/ b" $unit_output $perf_output $perf_scalar_output "FP"
 gen_binary_alu_op "mul" "a \* b" $unit_output $perf_output $perf_scalar_output
 gen_binary_alu_op "and" "a \& b" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_binary_alu_op "lanewise_ANDC2" "a \& ~b" $unit_output $perf_output $perf_scalar_output "BITWISE"
 gen_binary_alu_op "or" "a | b" $unit_output $perf_output $perf_scalar_output "BITWISE"
 gen_binary_alu_op "xor" "a ^ b" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_binary_alu_op "lanewise_FIRST_NONZERO" "{#if[FP]?Double.doubleToLongBits}(a)!=0?a:b" $unit_output $perf_output $perf_scalar_output
 
 # Shifts
 gen_binary_alu_op "shiftLeft" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
 gen_binary_alu_op "shiftLeft" "(a << (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
 gen_binary_alu_op "shiftLeft" "(a << (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
 gen_binary_alu_op "shiftRight" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_binary_alu_op "shiftRight" "(a >>> (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
-gen_binary_alu_op "shiftRight" "(a >>> (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
+gen_binary_alu_op "shiftRight" "((a \& 0xFF) >>> (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_binary_alu_op "shiftRight" "((a \& 0xFFFF) >>> (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
 gen_binary_alu_op "shiftArithmeticRight" "(a >> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
 gen_binary_alu_op "shiftArithmeticRight" "(a >> (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
 gen_binary_alu_op "shiftArithmeticRight" "(a >> (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
@@ -288,7 +302,7 @@ gen_reduction_op "addLanes" "+" $unit_output $perf_output $perf_scalar_output ""
 gen_reduction_op "mulLanes" "*" $unit_output $perf_output $perf_scalar_output "" "1"
 gen_reduction_op_min "minLanes" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.\$MaxValue\$"
 gen_reduction_op_max "maxLanes" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.\$MinValue\$"
-
+#gen_reduction_op "reduce_FIRST_NONZERO" "lanewise_FIRST_NONZERO" "{#if[FP]?Double.doubleToLongBits}(a)=0?a:b" $unit_output $perf_output $perf_scalar_output "" "1"
 
 # Boolean reductions.
 gen_bool_reduction_op "anyTrue" "|" $unit_output $perf_output $perf_scalar_output "BITWISE" "false"
@@ -336,11 +350,13 @@ gen_op_tmpl $binary_math_template "atan2" "Math.atan2((double)a, (double)b)" $un
 
 # Ternary operations.
 gen_ternary_alu_op "fma" "Math.fma(a, b, c)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_ternary_alu_op "lanewise_BITWISE_BLEND" "(a\&~(c))|(b\&c)" $unit_output $perf_output $perf_scalar_output "BITWISE"
 
 # Unary operations.
 gen_unary_alu_op "neg" "-((\$type\$)a)" $unit_output $perf_output $perf_scalar_output
 gen_unary_alu_op "abs" "Math.abs((\$type\$)a)" $unit_output $perf_output $perf_scalar_output
 gen_unary_alu_op "not" "~((\$type\$)a)" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_unary_alu_op "lanewise_ZOMO" "(a==0?0:-1)" $unit_output $perf_output $perf_scalar_output "BITWISE"
 gen_unary_alu_op "sqrt" "Math.sqrt((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
 
 # Gather Scatter operations.
