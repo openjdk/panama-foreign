@@ -23,6 +23,8 @@
 
 package benchmark.jdk.incubator.vector;
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
@@ -235,6 +237,46 @@ public class FloatScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+    @Benchmark
+    public void lanewise_FIRST_NONZERO(Blackhole bh) {
+        float[] as = fa.apply(size);
+        float[] bs = fb.apply(size);
+        float[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                float a = as[i];
+                float b = bs[i];
+                rs[i] = (float)(Double.doubleToLongBits(a)!=0?a:b);
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void lanewise_FIRST_NONZEROMasked(Blackhole bh) {
+        float[] as = fa.apply(size);
+        float[] bs = fb.apply(size);
+        float[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                float a = as[i];
+                float b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (float)(Double.doubleToLongBits(a)!=0?a:b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
 
 
 
@@ -884,6 +926,8 @@ public class FloatScalar extends AbstractVectorBenchmark {
     }
 
 
+
+
     @Benchmark
     public void neg(Blackhole bh) {
         float[] as = fa.apply(size);
@@ -947,6 +991,8 @@ public class FloatScalar extends AbstractVectorBenchmark {
 
         bh.consume(rs);
     }
+
+
 
 
 

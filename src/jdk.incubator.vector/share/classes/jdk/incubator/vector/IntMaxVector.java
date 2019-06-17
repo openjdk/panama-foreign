@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,825 +34,267 @@ import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
+
 import static jdk.incubator.vector.VectorIntrinsics.*;
+import static jdk.incubator.vector.VectorOperators.*;
 
-@SuppressWarnings("cast")
+// -- This file was mechanically generated: Do not edit! -- //
+
+@SuppressWarnings("cast")  // warning: redundant cast
 final class IntMaxVector extends IntVector {
-    private static final VectorSpecies<Integer> SPECIES = IntVector.SPECIES_MAX;
+    static final IntSpecies VSPECIES =
+        (IntSpecies) IntVector.SPECIES_MAX;
 
-    static final IntMaxVector ZERO = new IntMaxVector();
+    static final VectorShape VSHAPE =
+        VSPECIES.vectorShape();
 
-    static final int LENGTH = SPECIES.length();
+    static final Class<IntMaxVector> VCLASS = IntMaxVector.class;
 
-    // Index vector species
-    private static final IntVector.IntSpecies INDEX_SPECIES;
+    static final int VSIZE = VSPECIES.vectorBitSize();
 
-    static {
-        int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
-        INDEX_SPECIES = (IntVector.IntSpecies) IntVector.species(VectorShape.forBitSize(bitSize));
-    }
+    static final int VLENGTH = VSPECIES.laneCount();
 
+    static final Class<Integer> ETYPE = int.class;
+
+    // The JVM expects to find the state here.
     private final int[] vec; // Don't access directly, use getElements() instead.
-
-    private int[] getElements() {
-        return VectorIntrinsics.maybeRebox(this).vec;
-    }
-
-    IntMaxVector() {
-        vec = new int[SPECIES.length()];
-    }
 
     IntMaxVector(int[] v) {
         vec = v;
     }
 
-    @Override
-    public int length() { return LENGTH; }
+    // For compatibility as IntMaxVector::new,
+    // stored into species.vectorFactory.
+    IntMaxVector(Object v) {
+        this((int[]) v);
+    }
 
-    // Unary operator
+    static final IntMaxVector ZERO = new IntMaxVector(new int[VLENGTH]);
+    static final IntMaxVector IOTA = new IntMaxVector(VSPECIES.iotaArray());
+
+    static {
+        // Warm up a few species caches.
+        // If we do this too much we will
+        // get NPEs from bootstrap circularity.
+        VSPECIES.dummyVector();
+        VSPECIES.withLanes(LaneType.BYTE);
+    }
+
+    // Specialized extractors
+
+    @ForceInline
+    final @Override
+    public IntSpecies vspecies() {
+        // ISSUE:  This should probably be a @Stable
+        // field inside AbstractVector, rather than
+        // a megamorphic method.
+        return VSPECIES;
+    }
+
+
+    /*package-private*/
+    @ForceInline
+    final @Override
+    int[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
+
+    // Virtualized constructors
 
     @Override
-    IntMaxVector uOp(FUnOp f) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i]);
-        }
-        return new IntMaxVector(res);
+    @ForceInline
+    public final IntMaxVector broadcast(int e) {
+        return (IntMaxVector) super.broadcastTemplate(e);  // specialize
     }
 
     @Override
-    IntMaxVector uOp(VectorMask<Integer> o, FUnOp f) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        boolean[] mbits = ((IntMaxMask)o).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
-        }
-        return new IntMaxVector(res);
+    @ForceInline
+    public final IntMaxVector broadcast(long e) {
+        return (IntMaxVector) super.broadcastTemplate(e);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    IntMaxMask maskFromArray(boolean[] bits) {
+        return new IntMaxMask(bits);
+    }
+
+    @Override
+    @ForceInline
+    IntMaxShuffle iotaShuffle() { return IntMaxShuffle.IOTA; }
+
+    @Override
+    @ForceInline
+    IntMaxShuffle shuffleFromBytes(byte[] reorder) { return new IntMaxShuffle(reorder); }
+
+    @Override
+    @ForceInline
+    IntMaxShuffle shuffleFromArray(int[] indexes, int i) { return new IntMaxShuffle(indexes, i); }
+
+    @Override
+    @ForceInline
+    IntMaxShuffle shuffleFromOp(IntUnaryOperator fn) { return new IntMaxShuffle(fn); }
+
+    // Make a vector of the same species but the given elements:
+    @ForceInline
+    final @Override
+    IntMaxVector vectorFactory(int[] vec) {
+        return new IntMaxVector(vec);
+    }
+
+    @ForceInline
+    final @Override
+    ByteMaxVector asByteVectorRaw() {
+        return (ByteMaxVector) super.asByteVectorRawTemplate();  // specialize
+    }
+
+    @ForceInline
+    final @Override
+    AbstractVector<?> asVectorRaw(LaneType laneType) {
+        return super.asVectorRawTemplate(laneType);  // specialize
+    }
+
+    // Unary operator
+
+    final @Override
+    IntMaxVector uOp(FUnOp f) {
+        return (IntMaxVector) super.uOp(f);  // specialize
+    }
+
+    @ForceInline
+    final @Override
+    IntMaxVector uOp(VectorMask<Integer> m, FUnOp f) {
+        return (IntMaxVector) super.uOp((IntMaxMask)m, f);  // specialize
     }
 
     // Binary operator
 
-    @Override
+    @ForceInline
+    final @Override
     IntMaxVector bOp(Vector<Integer> o, FBinOp f) {
-        int[] res = new int[length()];
-        int[] vec1 = this.getElements();
-        int[] vec2 = ((IntMaxVector)o).getElements();
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec1[i], vec2[i]);
-        }
-        return new IntMaxVector(res);
+        return (IntMaxVector) super.bOp((IntMaxVector)o, f);  // specialize
     }
 
-    @Override
-    IntMaxVector bOp(Vector<Integer> o1, VectorMask<Integer> o2, FBinOp f) {
-        int[] res = new int[length()];
-        int[] vec1 = this.getElements();
-        int[] vec2 = ((IntMaxVector)o1).getElements();
-        boolean[] mbits = ((IntMaxMask)o2).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
-        }
-        return new IntMaxVector(res);
+    @ForceInline
+    final @Override
+    IntMaxVector bOp(Vector<Integer> o,
+                     VectorMask<Integer> m, FBinOp f) {
+        return (IntMaxVector) super.bOp((IntMaxVector)o, (IntMaxMask)m,
+                                        f);  // specialize
     }
 
-    // Trinary operator
+    // Ternary operator
 
-    @Override
+    @ForceInline
+    final @Override
     IntMaxVector tOp(Vector<Integer> o1, Vector<Integer> o2, FTriOp f) {
-        int[] res = new int[length()];
-        int[] vec1 = this.getElements();
-        int[] vec2 = ((IntMaxVector)o1).getElements();
-        int[] vec3 = ((IntMaxVector)o2).getElements();
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
-        }
-        return new IntMaxVector(res);
+        return (IntMaxVector) super.tOp((IntMaxVector)o1, (IntMaxVector)o2,
+                                        f);  // specialize
     }
 
-    @Override
-    IntMaxVector tOp(Vector<Integer> o1, Vector<Integer> o2, VectorMask<Integer> o3, FTriOp f) {
-        int[] res = new int[length()];
-        int[] vec1 = getElements();
-        int[] vec2 = ((IntMaxVector)o1).getElements();
-        int[] vec3 = ((IntMaxVector)o2).getElements();
-        boolean[] mbits = ((IntMaxMask)o3).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
-        }
-        return new IntMaxVector(res);
+    @ForceInline
+    final @Override
+    IntMaxVector tOp(Vector<Integer> o1, Vector<Integer> o2,
+                     VectorMask<Integer> m, FTriOp f) {
+        return (IntMaxVector) super.tOp((IntMaxVector)o1, (IntMaxVector)o2,
+                                        (IntMaxMask)m, f);  // specialize
     }
 
-    @Override
+    @ForceInline
+    final @Override
     int rOp(int v, FBinOp f) {
-        int[] vec = getElements();
-        for (int i = 0; i < length(); i++) {
-            v = f.apply(i, v, vec[i]);
-        }
-        return v;
+        return super.rOp(v, f);  // specialize
     }
 
     @Override
     @ForceInline
-    public <F> Vector<F> cast(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
-        if (s.length() != LENGTH)
-            throw new IllegalArgumentException("Vector length this species length differ");
-
-        return VectorIntrinsics.cast(
-            IntMaxVector.class,
-            int.class, LENGTH,
-            s.vectorType(),
-            s.elementType(), LENGTH,
-            this, s,
-            (species, vector) -> vector.castDefault(species)
-        );
-    }
-
-    @SuppressWarnings("unchecked")
-    @ForceInline
-    private <F> Vector<F> castDefault(VectorSpecies<F> s) {
-        int limit = s.length();
-
-        Class<?> stype = s.elementType();
-        if (stype == byte.class) {
-            byte[] a = new byte[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (byte) this.lane(i);
-            }
-            return (Vector) ByteVector.fromArray((VectorSpecies<Byte>) s, a, 0);
-        } else if (stype == short.class) {
-            short[] a = new short[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (short) this.lane(i);
-            }
-            return (Vector) ShortVector.fromArray((VectorSpecies<Short>) s, a, 0);
-        } else if (stype == int.class) {
-            int[] a = new int[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (int) this.lane(i);
-            }
-            return (Vector) IntVector.fromArray((VectorSpecies<Integer>) s, a, 0);
-        } else if (stype == long.class) {
-            long[] a = new long[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (long) this.lane(i);
-            }
-            return (Vector) LongVector.fromArray((VectorSpecies<Long>) s, a, 0);
-        } else if (stype == float.class) {
-            float[] a = new float[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (float) this.lane(i);
-            }
-            return (Vector) FloatVector.fromArray((VectorSpecies<Float>) s, a, 0);
-        } else if (stype == double.class) {
-            double[] a = new double[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (double) this.lane(i);
-            }
-            return (Vector) DoubleVector.fromArray((VectorSpecies<Double>) s, a, 0);
-        } else {
-            throw new UnsupportedOperationException("Bad lane type for casting.");
-        }
+    public final <F>
+    Vector<F> convertShape(VectorOperators.Conversion<Integer,F> conv,
+                           VectorSpecies<F> rsp, int part) {
+        return super.convertShapeTemplate(conv, rsp, part);  // specialize
     }
 
     @Override
     @ForceInline
-    @SuppressWarnings("unchecked")
-    public <F> Vector<F> reinterpret(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
-
-        if(s.elementType().equals(int.class)) {
-            return (Vector<F>) reshape((VectorSpecies<Integer>)s);
-        }
-        if(s.bitSize() == bitSize()) {
-            return reinterpretType(s);
-        }
-
-        return defaultReinterpret(s);
+    public final <F>
+    Vector<F> reinterpretShape(VectorSpecies<F> toSpecies, int part) {
+        return super.reinterpretShapeTemplate(toSpecies, part);  // specialize
     }
 
-    @ForceInline
-    private <F> Vector<F> reinterpretType(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
+    // Specialized algebraic operations:
 
-        Class<?> stype = s.elementType();
-        if (stype == byte.class) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                ByteMaxVector.class,
-                byte.class, ByteMaxVector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == short.class) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                ShortMaxVector.class,
-                short.class, ShortMaxVector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == int.class) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                IntMaxVector.class,
-                int.class, IntMaxVector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == long.class) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                LongMaxVector.class,
-                long.class, LongMaxVector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == float.class) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                FloatMaxVector.class,
-                float.class, FloatMaxVector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == double.class) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                DoubleMaxVector.class,
-                double.class, DoubleMaxVector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else {
-            throw new UnsupportedOperationException("Bad lane type for casting.");
-        }
+    // The following definition forces a specialized version of this
+    // crucial method into the v-table of this class.  A call to add()
+    // will inline to a call to lanewise(ADD,), at which point the JIT
+    // intrinsic will have the opcode of ADD, plus all the metadata
+    // for this particular class, enabling it to generate precise
+    // code.
+    //
+    // There is probably no benefit to the JIT to specialize the
+    // masked or broadcast versions of the lanewise method.
+
+    @Override
+    @ForceInline
+    public IntMaxVector lanewise(Unary op) {
+        return (IntMaxVector) super.lanewiseTemplate(op);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntVector reshape(VectorSpecies<Integer> s) {
-        Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.vectorType() == Int64Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                Int64Vector.class,
-                int.class, Int64Vector.LENGTH,
-                this, s,
-                (species, vector) -> (IntVector) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 128 && (s.vectorType() == Int128Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                Int128Vector.class,
-                int.class, Int128Vector.LENGTH,
-                this, s,
-                (species, vector) -> (IntVector) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 256 && (s.vectorType() == Int256Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                Int256Vector.class,
-                int.class, Int256Vector.LENGTH,
-                this, s,
-                (species, vector) -> (IntVector) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 512 && (s.vectorType() == Int512Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                Int512Vector.class,
-                int.class, Int512Vector.LENGTH,
-                this, s,
-                (species, vector) -> (IntVector) vector.defaultReinterpret(species)
-            );
-        } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.vectorType() == IntMaxVector.class)) {
-            return VectorIntrinsics.reinterpret(
-                IntMaxVector.class,
-                int.class, LENGTH,
-                IntMaxVector.class,
-                int.class, IntMaxVector.LENGTH,
-                this, s,
-                (species, vector) -> (IntVector) vector.defaultReinterpret(species)
-            );
-        } else {
-            throw new InternalError("Unimplemented size");
-        }
+    public IntMaxVector lanewise(Binary op, Vector<Integer> v) {
+        return (IntMaxVector) super.lanewiseTemplate(op, v);  // specialize
     }
 
-    // Binary operations with scalars
+    /*package-private*/
+    @Override
+    @ForceInline IntMaxVector
+    lanewiseShift(VectorOperators.Binary op, int e) {
+        return (IntMaxVector) super.lanewiseShiftTemplate(op, e);  // specialize
+    }
 
+    /*package-private*/
     @Override
     @ForceInline
-    public IntVector add(int o) {
-        return add((IntMaxVector)IntVector.broadcast(SPECIES, o));
+    public final
+    IntMaxVector
+    lanewise(VectorOperators.Ternary op, Vector<Integer> v1, Vector<Integer> v2) {
+        return (IntMaxVector) super.lanewiseTemplate(op, v1, v2);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntVector add(int o, VectorMask<Integer> m) {
-        return add((IntMaxVector)IntVector.broadcast(SPECIES, o), m);
+    public final
+    IntMaxVector addIndex(int scale) {
+        return (IntMaxVector) super.addIndexTemplate(scale);  // specialize
     }
-
-    @Override
-    @ForceInline
-    public IntVector sub(int o) {
-        return sub((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector sub(int o, VectorMask<Integer> m) {
-        return sub((IntMaxVector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector mul(int o) {
-        return mul((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector mul(int o, VectorMask<Integer> m) {
-        return mul((IntMaxVector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector min(int o) {
-        return min((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector max(int o) {
-        return max((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> equal(int o) {
-        return equal((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> notEqual(int o) {
-        return notEqual((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> lessThan(int o) {
-        return lessThan((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> lessThanEq(int o) {
-        return lessThanEq((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> greaterThan(int o) {
-        return greaterThan((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> greaterThanEq(int o) {
-        return greaterThanEq((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector blend(int o, VectorMask<Integer> m) {
-        return blend((IntMaxVector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-
-    @Override
-    @ForceInline
-    public IntVector and(int o) {
-        return and((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector and(int o, VectorMask<Integer> m) {
-        return and((IntMaxVector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector or(int o) {
-        return or((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector or(int o, VectorMask<Integer> m) {
-        return or((IntMaxVector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector xor(int o) {
-        return xor((IntMaxVector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector xor(int o, VectorMask<Integer> m) {
-        return xor((IntMaxVector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector neg() {
-        return (IntMaxVector)zero(SPECIES).sub(this);
-    }
-
-    // Unary operations
-
-    @ForceInline
-    @Override
-    public IntMaxVector neg(VectorMask<Integer> m) {
-        return blend(neg(), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector abs() {
-        return VectorIntrinsics.unaryOp(
-            VECTOR_OP_ABS, IntMaxVector.class, int.class, LENGTH,
-            this,
-            v1 -> v1.uOp((i, a) -> (int) Math.abs(a)));
-    }
-
-    @ForceInline
-    @Override
-    public IntMaxVector abs(VectorMask<Integer> m) {
-        return blend(abs(), m);
-    }
-
-
-    @Override
-    @ForceInline
-    public IntMaxVector not() {
-        return VectorIntrinsics.unaryOp(
-            VECTOR_OP_NOT, IntMaxVector.class, int.class, LENGTH,
-            this,
-            v1 -> v1.uOp((i, a) -> (int) ~a));
-    }
-
-    @ForceInline
-    @Override
-    public IntMaxVector not(VectorMask<Integer> m) {
-        return blend(not(), m);
-    }
-    // Binary operations
-
-    @Override
-    @ForceInline
-    public IntMaxVector add(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_ADD, IntMaxVector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a + b)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector add(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(add(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector sub(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_SUB, IntMaxVector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a - b)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector sub(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(sub(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector mul(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_MUL, IntMaxVector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector mul(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(mul(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector min(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-        return (IntMaxVector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_MIN, IntMaxVector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) Math.min(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector min(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(min(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector max(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_MAX, IntMaxVector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) Math.max(a, b)));
-        }
-
-    @Override
-    @ForceInline
-    public IntMaxVector max(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(max(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector and(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_AND, IntMaxVector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a & b)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector or(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_OR, IntMaxVector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a | b)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector xor(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_XOR, IntMaxVector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a ^ b)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector and(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(and(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector or(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(or(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector xor(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(xor(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector shiftLeft(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, IntMaxVector.class, int.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (int) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector shiftLeft(int s, VectorMask<Integer> m) {
-        return blend(shiftLeft(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector shiftRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, IntMaxVector.class, int.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (int) (a >>> i)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector shiftRight(int s, VectorMask<Integer> m) {
-        return blend(shiftRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector shiftArithmeticRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, IntMaxVector.class, int.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (int) (a >> i)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector shiftArithmeticRight(int s, VectorMask<Integer> m) {
-        return blend(shiftArithmeticRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector shiftLeft(Vector<Integer> s) {
-        IntMaxVector shiftv = (IntMaxVector)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(IntVector.broadcast(SPECIES, 0x1f));
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_LSHIFT, IntMaxVector.class, int.class, LENGTH,
-            this, shiftv,
-            (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a << b)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector shiftRight(Vector<Integer> s) {
-        IntMaxVector shiftv = (IntMaxVector)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(IntVector.broadcast(SPECIES, 0x1f));
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_URSHIFT, IntMaxVector.class, int.class, LENGTH,
-            this, shiftv,
-            (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a >>> b)));
-    }
-
-    @Override
-    @ForceInline
-    public IntMaxVector shiftArithmeticRight(Vector<Integer> s) {
-        IntMaxVector shiftv = (IntMaxVector)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(IntVector.broadcast(SPECIES, 0x1f));
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_RSHIFT, IntMaxVector.class, int.class, LENGTH,
-            this, shiftv,
-            (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a >> b)));
-    }
-    // Ternary operations
-
 
     // Type specific horizontal reductions
 
     @Override
     @ForceInline
-    public int addLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_ADD, IntMaxVector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a + b)));
+    public final int reduceLanes(VectorOperators.Associative op) {
+        return super.reduceLanesTemplate(op);  // specialized
     }
 
     @Override
     @ForceInline
-    public int andLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_AND, IntMaxVector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) -1, (i, a, b) -> (int) (a & b)));
+    public final int reduceLanes(VectorOperators.Associative op,
+                                    VectorMask<Integer> m) {
+        return super.reduceLanesTemplate(op, m);  // specialized
     }
 
     @Override
     @ForceInline
-    public int andLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) -1).blend(this, m).andLanes();
+    public final long reduceLanesToLong(VectorOperators.Associative op) {
+        return (long) super.reduceLanesTemplate(op);  // specialized
     }
 
     @Override
     @ForceInline
-    public int minLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MIN, IntMaxVector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp(Integer.MAX_VALUE , (i, a, b) -> (int) Math.min(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public int maxLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MAX, IntMaxVector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp(Integer.MIN_VALUE , (i, a, b) -> (int) Math.max(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public int mulLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MUL, IntMaxVector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) 1, (i, a, b) -> (int) (a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public int orLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_OR, IntMaxVector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a | b)));
-    }
-
-    @Override
-    @ForceInline
-    public int orLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).orLanes();
-    }
-
-    @Override
-    @ForceInline
-    public int xorLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_XOR, IntMaxVector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a ^ b)));
-    }
-
-    @Override
-    @ForceInline
-    public int xorLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).xorLanes();
-    }
-
-
-    @Override
-    @ForceInline
-    public int addLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).addLanes();
-    }
-
-
-    @Override
-    @ForceInline
-    public int mulLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 1).blend(this, m).mulLanes();
-    }
-
-    @Override
-    @ForceInline
-    public int minLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, Integer.MAX_VALUE).blend(this, m).minLanes();
-    }
-
-    @Override
-    @ForceInline
-    public int maxLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, Integer.MIN_VALUE).blend(this, m).maxLanes();
+    public final long reduceLanesToLong(VectorOperators.Associative op,
+                                        VectorMask<Integer> m) {
+        return (long) super.reduceLanesTemplate(op, m);  // specialized
     }
 
     @Override
@@ -863,339 +305,111 @@ final class IntMaxVector extends IntVector {
         for (int i = 0; i < a.length; i++) {
             sa[i] = (int) a[i];
         }
-        return VectorShuffle.fromArray(SPECIES, sa, 0);
+        return VectorShuffle.fromArray(VSPECIES, sa, 0);
     }
 
-    // Memory operations
-
-    private static final int ARRAY_SHIFT         = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_INT_INDEX_SCALE);
-    private static final int BOOLEAN_ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_BOOLEAN_INDEX_SCALE);
+    // Specialized comparisons
 
     @Override
     @ForceInline
-    public void intoArray(int[] a, int ix) {
-        Objects.requireNonNull(a);
-        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
-        VectorIntrinsics.store(IntMaxVector.class, int.class, LENGTH,
-                               a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_INT_BASE_OFFSET,
-                               this,
-                               a, ix,
-                               (arr, idx, v) -> v.forEach((i, e) -> arr[idx + i] = e));
+    public final IntMaxMask compare(Comparison op, Vector<Integer> v) {
+        return super.compareTemplate(IntMaxMask.class, op, v);  // specialize
     }
 
     @Override
     @ForceInline
-    public final void intoArray(int[] a, int ax, VectorMask<Integer> m) {
-        IntVector oldVal = IntVector.fromArray(SPECIES, a, ax);
-        IntVector newVal = oldVal.blend(this, m);
-        newVal.intoArray(a, ax);
-    }
-    @Override
-    @ForceInline
-    public void intoArray(int[] a, int ix, int[] b, int iy) {
-        Objects.requireNonNull(a);
-        Objects.requireNonNull(b);
-
-        // Index vector: vix[0:n] = i -> ix + indexMap[iy + i]
-        IntVector vix = IntVector.fromArray(INDEX_SPECIES, b, iy).add(ix);
-
-        vix = VectorIntrinsics.checkIndex(vix, a.length);
-
-        VectorIntrinsics.storeWithMap(IntMaxVector.class, int.class, LENGTH, vix.getClass(),
-                               a, Unsafe.ARRAY_INT_BASE_OFFSET, vix,
-                               this,
-                               a, ix, b, iy,
-                               (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));
-    }
-
-     @Override
-     @ForceInline
-     public final void intoArray(int[] a, int ax, VectorMask<Integer> m, int[] b, int iy) {
-         // @@@ This can result in out of bounds errors for unset mask lanes
-         IntVector oldVal = IntVector.fromArray(SPECIES, a, ax, b, iy);
-         IntVector newVal = oldVal.blend(this, m);
-         newVal.intoArray(a, ax, b, iy);
-     }
-
-    @Override
-    @ForceInline
-    public void intoByteArray(byte[] a, int ix) {
-        Objects.requireNonNull(a);
-        ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
-        VectorIntrinsics.store(IntMaxVector.class, int.class, LENGTH,
-                               a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                               this,
-                               a, ix,
-                               (c, idx, v) -> {
-                                   ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
-                                   IntBuffer tb = bbc.asIntBuffer();
-                                   v.forEach((i, e) -> tb.put(e));
-                               });
+    public final IntMaxMask compare(Comparison op, int s) {
+        return super.compareTemplate(IntMaxMask.class, op, s);  // specialize
     }
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, VectorMask<Integer> m) {
-        IntMaxVector oldVal = (IntMaxVector) IntVector.fromByteArray(SPECIES, a, ix);
-        IntMaxVector newVal = oldVal.blend(this, m);
-        newVal.intoByteArray(a, ix);
+    public final IntMaxMask compare(Comparison op, long s) {
+        return super.compareTemplate(IntMaxMask.class, op, s);  // specialize
     }
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix) {
-        if (bb.order() != ByteOrder.nativeOrder()) {
-            throw new IllegalArgumentException();
-        }
-        if (bb.isReadOnly()) {
-            throw new ReadOnlyBufferException();
-        }
-        ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
-        VectorIntrinsics.store(IntMaxVector.class, int.class, LENGTH,
-                               U.getReference(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
-                               this,
-                               bb, ix,
-                               (c, idx, v) -> {
-                                   ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
-                                   IntBuffer tb = bbc.asIntBuffer();
-                                   v.forEach((i, e) -> tb.put(e));
-                               });
+    public IntMaxVector blend(Vector<Integer> v, VectorMask<Integer> m) {
+        return (IntMaxVector)
+            super.blendTemplate(IntMaxMask.class,
+                                (IntMaxVector) v,
+                                (IntMaxMask) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, VectorMask<Integer> m) {
-        IntMaxVector oldVal = (IntMaxVector) IntVector.fromByteBuffer(SPECIES, bb, ix);
-        IntMaxVector newVal = oldVal.blend(this, m);
-        newVal.intoByteBuffer(bb, ix);
-    }
-
-    //
-
-    @Override
-    public String toString() {
-        return Arrays.toString(getElements());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || this.getClass() != o.getClass()) return false;
-
-        IntMaxVector that = (IntMaxVector) o;
-        return this.equal(that).allTrue();
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(vec);
-    }
-
-    // Binary test
-
-    @Override
-    IntMaxMask bTest(Vector<Integer> o, FBinTest f) {
-        int[] vec1 = getElements();
-        int[] vec2 = ((IntMaxVector)o).getElements();
-        boolean[] bits = new boolean[length()];
-        for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec1[i], vec2[i]);
-        }
-        return new IntMaxMask(bits);
-    }
-
-    // Comparisons
-
-    @Override
-    @ForceInline
-    public IntMaxMask equal(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-
-        return VectorIntrinsics.compare(
-            BT_eq, IntMaxVector.class, IntMaxMask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    public IntMaxVector slice(int origin, Vector<Integer> v) {
+        return (IntMaxVector) super.sliceTemplate(origin, v);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntMaxMask notEqual(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-
-        return VectorIntrinsics.compare(
-            BT_ne, IntMaxVector.class, IntMaxMask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    public IntMaxVector unslice(int origin, Vector<Integer> w, int part) {
+        return (IntMaxVector) super.unsliceTemplate(origin, w, part);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntMaxMask lessThan(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-
-        return VectorIntrinsics.compare(
-            BT_lt, IntMaxVector.class, IntMaxMask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    public IntMaxVector unslice(int origin, Vector<Integer> w, int part, VectorMask<Integer> m) {
+        return (IntMaxVector)
+            super.unsliceTemplate(IntMaxMask.class,
+                                  origin, w, part,
+                                  (IntMaxMask) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntMaxMask lessThanEq(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-
-        return VectorIntrinsics.compare(
-            BT_le, IntMaxVector.class, IntMaxMask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    public IntMaxVector rearrange(VectorShuffle<Integer> s) {
+        return (IntMaxVector)
+            super.rearrangeTemplate(IntMaxShuffle.class,
+                                    (IntMaxShuffle) s);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntMaxMask greaterThan(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-
-        return (IntMaxMask) VectorIntrinsics.compare(
-            BT_gt, IntMaxVector.class, IntMaxMask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    public IntMaxVector rearrange(VectorShuffle<Integer> shuffle,
+                                  VectorMask<Integer> m) {
+        return (IntMaxVector)
+            super.rearrangeTemplate(IntMaxShuffle.class,
+                                    (IntMaxShuffle) shuffle,
+                                    (IntMaxMask) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntMaxMask greaterThanEq(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        IntMaxVector v = (IntMaxVector)o;
-
-        return VectorIntrinsics.compare(
-            BT_ge, IntMaxVector.class, IntMaxMask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
-    }
-
-    // Foreach
-
-    @Override
-    void forEach(FUnCon f) {
-        int[] vec = getElements();
-        for (int i = 0; i < length(); i++) {
-            f.apply(i, vec[i]);
-        }
-    }
-
-    @Override
-    void forEach(VectorMask<Integer> o, FUnCon f) {
-        boolean[] mbits = ((IntMaxMask)o).getBits();
-        forEach((i, a) -> {
-            if (mbits[i]) { f.apply(i, a); }
-        });
-    }
-
-
-    FloatMaxVector toFP() {
-        int[] vec = getElements();
-        float[] res = new float[this.species().length()];
-        for(int i = 0; i < this.species().length(); i++){
-            res[i] = Float.intBitsToFloat(vec[i]);
-        }
-        return new FloatMaxVector(res);
-    }
-
-    @Override
-    public IntMaxVector rotateLanesLeft(int j) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        for (int i = 0; i < length(); i++){
-            res[(j + i) % length()] = vec[i];
-        }
-        return new IntMaxVector(res);
-    }
-
-    @Override
-    public IntMaxVector rotateLanesRight(int j) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        for (int i = 0; i < length(); i++){
-            int z = i - j;
-            if(j < 0) {
-                res[length() + z] = vec[i];
-            } else {
-                res[z] = vec[i];
-            }
-        }
-        return new IntMaxVector(res);
-    }
-
-    @Override
-    public IntMaxVector shiftLanesLeft(int j) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        for (int i = 0; i < length() - j; i++) {
-            res[i] = vec[i + j];
-        }
-        return new IntMaxVector(res);
-    }
-
-    @Override
-    public IntMaxVector shiftLanesRight(int j) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        for (int i = 0; i < length() - j; i++){
-            res[i + j] = vec[i];
-        }
-        return new IntMaxVector(res);
+    public IntMaxVector rearrange(VectorShuffle<Integer> s,
+                                  Vector<Integer> v) {
+        return (IntMaxVector)
+            super.rearrangeTemplate(IntMaxShuffle.class,
+                                    (IntMaxShuffle) s,
+                                    (IntMaxVector) v);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntMaxVector rearrange(Vector<Integer> v,
-                                  VectorShuffle<Integer> s, VectorMask<Integer> m) {
-        return this.rearrange(s).blend(v.rearrange(s), m);
+    public IntMaxVector selectFrom(Vector<Integer> v) {
+        return (IntMaxVector)
+            super.selectFromTemplate((IntMaxVector) v);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntMaxVector rearrange(VectorShuffle<Integer> o1) {
-        Objects.requireNonNull(o1);
-        IntMaxShuffle s =  (IntMaxShuffle)o1;
-
-        return VectorIntrinsics.rearrangeOp(
-            IntMaxVector.class, IntMaxShuffle.class, int.class, LENGTH,
-            this, s,
-            (v1, s_) -> v1.uOp((i, a) -> {
-                int ei = s_.lane(i);
-                return v1.lane(ei);
-            }));
+    public IntMaxVector selectFrom(Vector<Integer> v,
+                                   VectorMask<Integer> m) {
+        return (IntMaxVector)
+            super.selectFromTemplate((IntMaxVector) v,
+                                     (IntMaxMask) m);  // specialize
     }
 
-    @Override
-    @ForceInline
-    public IntMaxVector blend(Vector<Integer> o1, VectorMask<Integer> o2) {
-        Objects.requireNonNull(o1);
-        Objects.requireNonNull(o2);
-        IntMaxVector v = (IntMaxVector)o1;
-        IntMaxMask   m = (IntMaxMask)o2;
-
-        return VectorIntrinsics.blend(
-            IntMaxVector.class, IntMaxMask.class, int.class, LENGTH,
-            this, v, m,
-            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.lane(i) ? b : a));
-    }
-
-    // Accessors
 
     @Override
     public int lane(int i) {
-        if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        if (i < 0 || i >= VLENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + VLENGTH);
         }
         return (int) VectorIntrinsics.extract(
-                                IntMaxVector.class, int.class, LENGTH,
+                                VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
                                     int[] vecarr = vec.getElements();
@@ -1204,25 +418,23 @@ final class IntMaxVector extends IntVector {
     }
 
     @Override
-    public IntMaxVector with(int i, int e) {
-        if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+    public IntMaxVector withLane(int i, int e) {
+        if (i < 0 || i >= VLENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + VLENGTH);
         }
         return VectorIntrinsics.insert(
-                                IntMaxVector.class, int.class, LENGTH,
+                                VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
                                     int[] res = v.getElements().clone();
                                     res[ix] = (int)bits;
-                                    return new IntMaxVector(res);
+                                    return v.vectorFactory(res);
                                 });
     }
 
     // Mask
 
     static final class IntMaxMask extends AbstractMask<Integer> {
-        static final IntMaxMask TRUE_MASK = new IntMaxMask(true);
-        static final IntMaxMask FALSE_MASK = new IntMaxMask(false);
 
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
@@ -1231,7 +443,7 @@ final class IntMaxVector extends IntVector {
         }
 
         public IntMaxMask(boolean[] bits, int offset) {
-            boolean[] a = new boolean[species().length()];
+            boolean[] a = new boolean[vspecies().laneCount()];
             for (int i = 0; i < a.length; i++) {
                 a[i] = bits[offset + i];
             }
@@ -1239,9 +451,18 @@ final class IntMaxVector extends IntVector {
         }
 
         public IntMaxMask(boolean val) {
-            boolean[] bits = new boolean[species().length()];
+            boolean[] bits = new boolean[vspecies().laneCount()];
             Arrays.fill(bits, val);
             this.bits = bits;
+        }
+
+        @ForceInline
+        final @Override
+        public IntSpecies vspecies() {
+            // ISSUE:  This should probably be a @Stable
+            // field inside AbstractMask, rather than
+            // a megamorphic method.
+            return VSPECIES;
         }
 
         boolean[] getBits() {
@@ -1250,9 +471,9 @@ final class IntMaxVector extends IntVector {
 
         @Override
         IntMaxMask uOp(MUnOp f) {
-            boolean[] res = new boolean[species().length()];
+            boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            for (int i = 0; i < species().length(); i++) {
+            for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i]);
             }
             return new IntMaxMask(res);
@@ -1260,55 +481,47 @@ final class IntMaxVector extends IntVector {
 
         @Override
         IntMaxMask bOp(VectorMask<Integer> o, MBinOp f) {
-            boolean[] res = new boolean[species().length()];
+            boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
             boolean[] mbits = ((IntMaxMask)o).getBits();
-            for (int i = 0; i < species().length(); i++) {
+            for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new IntMaxMask(res);
         }
 
+        @ForceInline
         @Override
-        public VectorSpecies<Integer> species() {
-            return SPECIES;
-        }
-
-        @Override
-        public IntMaxVector toVector() {
-            int[] res = new int[species().length()];
-            boolean[] bits = getBits();
-            for (int i = 0; i < species().length(); i++) {
-                // -1 will result in the most significant bit being set in
-                // addition to some or all other bits
-                res[i] = (int) (bits[i] ? -1 : 0);
-            }
-            return new IntMaxVector(res);
+        public final
+        IntMaxVector toVector() {
+            return (IntMaxVector) super.toVectorTemplate();  // specialize
         }
 
         @Override
         @ForceInline
-        @SuppressWarnings("unchecked")
-        public <E> VectorMask<E> cast(VectorSpecies<E> species) {
-            if (length() != species.length())
+        public <E> VectorMask<E> cast(VectorSpecies<E> s) {
+            AbstractSpecies<E> species = (AbstractSpecies<E>) s;
+            if (length() != species.laneCount())
                 throw new IllegalArgumentException("VectorMask length and species length differ");
-            Class<?> stype = species.elementType();
-            boolean [] maskArray = toArray();
-            if (stype == byte.class) {
-                return (VectorMask <E>) new ByteMaxVector.ByteMaxMask(maskArray);
-            } else if (stype == short.class) {
-                return (VectorMask <E>) new ShortMaxVector.ShortMaxMask(maskArray);
-            } else if (stype == int.class) {
-                return (VectorMask <E>) new IntMaxVector.IntMaxMask(maskArray);
-            } else if (stype == long.class) {
-                return (VectorMask <E>) new LongMaxVector.LongMaxMask(maskArray);
-            } else if (stype == float.class) {
-                return (VectorMask <E>) new FloatMaxVector.FloatMaxMask(maskArray);
-            } else if (stype == double.class) {
-                return (VectorMask <E>) new DoubleMaxVector.DoubleMaxMask(maskArray);
-            } else {
-                throw new UnsupportedOperationException("Bad lane type for casting.");
+            boolean[] maskArray = toArray();
+            // enum-switches don't optimize properly JDK-8161245
+            switch (species.laneType.switchKey) {
+            case LaneType.SK_BYTE:
+                return new ByteMaxVector.ByteMaxMask(maskArray).check(species);
+            case LaneType.SK_SHORT:
+                return new ShortMaxVector.ShortMaxMask(maskArray).check(species);
+            case LaneType.SK_INT:
+                return new IntMaxVector.IntMaxMask(maskArray).check(species);
+            case LaneType.SK_LONG:
+                return new LongMaxVector.LongMaxMask(maskArray).check(species);
+            case LaneType.SK_FLOAT:
+                return new FloatMaxVector.FloatMaxMask(maskArray).check(species);
+            case LaneType.SK_DOUBLE:
+                return new DoubleMaxVector.DoubleMaxMask(maskArray).check(species);
             }
+
+            // Should not reach here.
+            throw new AssertionError(species);
         }
 
         // Unary operations
@@ -1317,7 +530,7 @@ final class IntMaxVector extends IntVector {
         @ForceInline
         public IntMaxMask not() {
             return (IntMaxMask) VectorIntrinsics.unaryOp(
-                                             VECTOR_OP_NOT, IntMaxMask.class, int.class, LENGTH,
+                                             VECTOR_OP_NOT, IntMaxMask.class, int.class, VLENGTH,
                                              this,
                                              (m1) -> m1.uOp((i, a) -> !a));
         }
@@ -1329,7 +542,7 @@ final class IntMaxVector extends IntVector {
         public IntMaxMask and(VectorMask<Integer> o) {
             Objects.requireNonNull(o);
             IntMaxMask m = (IntMaxMask)o;
-            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, IntMaxMask.class, int.class, LENGTH,
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, IntMaxMask.class, int.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
@@ -1339,7 +552,7 @@ final class IntMaxVector extends IntVector {
         public IntMaxMask or(VectorMask<Integer> o) {
             Objects.requireNonNull(o);
             IntMaxMask m = (IntMaxMask)o;
-            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, IntMaxMask.class, int.class, LENGTH,
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, IntMaxMask.class, int.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
@@ -1349,7 +562,7 @@ final class IntMaxVector extends IntVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(BT_ne, IntMaxMask.class, int.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, IntMaxMask.class, int.class, VLENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((IntMaxMask)m).getBits()));
         }
@@ -1357,10 +570,17 @@ final class IntMaxVector extends IntVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(BT_overflow, IntMaxMask.class, int.class, LENGTH,
-                                         this, VectorMask.maskAllTrue(species()),
+            return VectorIntrinsics.test(BT_overflow, IntMaxMask.class, int.class, VLENGTH,
+                                         this, vspecies().maskAll(true),
                                          (m, __) -> allTrueHelper(((IntMaxMask)m).getBits()));
         }
+
+        /*package-private*/
+        static IntMaxMask maskAll(boolean bit) {
+            return bit ? TRUE_MASK : FALSE_MASK;
+        }
+        static final IntMaxMask TRUE_MASK = new IntMaxMask(true);
+        static final IntMaxMask FALSE_MASK = new IntMaxMask(false);
     }
 
     // Shuffle
@@ -1378,47 +598,53 @@ final class IntMaxVector extends IntVector {
             super(reorder, i);
         }
 
-        public IntMaxShuffle(IntUnaryOperator f) {
-            super(f);
+        public IntMaxShuffle(IntUnaryOperator fn) {
+            super(fn);
         }
 
         @Override
-        public VectorSpecies<Integer> species() {
-            return SPECIES;
+        public IntSpecies vspecies() {
+            return VSPECIES;
         }
 
+        static {
+            // There must be enough bits in the shuffle lanes to encode
+            // VLENGTH valid indexes and VLENGTH exceptional ones.
+            assert(VLENGTH < Byte.MAX_VALUE);
+            assert(Byte.MIN_VALUE <= -VLENGTH);
+        }
+        static final IntMaxShuffle IOTA = new IntMaxShuffle(IDENTITY);
+
         @Override
-        public IntVector toVector() {
-            int[] va = new int[SPECIES.length()];
-            for (int i = 0; i < va.length; i++) {
-              va[i] = (int) lane(i);
-            }
-            return IntVector.fromArray(SPECIES, va, 0);
+        public IntMaxVector toVector() {
+            return (IntMaxVector) super.toVectorTemplate();  // specialize
         }
 
         @Override
         @ForceInline
-        @SuppressWarnings("unchecked")
-        public <F> VectorShuffle<F> cast(VectorSpecies<F> species) {
-            if (length() != species.length())
-                throw new IllegalArgumentException("Shuffle length and species length differ");
-            Class<?> stype = species.elementType();
-            int [] shuffleArray = toArray();
-            if (stype == byte.class) {
-                return (VectorShuffle<F>) new ByteMaxVector.ByteMaxShuffle(shuffleArray);
-            } else if (stype == short.class) {
-                return (VectorShuffle<F>) new ShortMaxVector.ShortMaxShuffle(shuffleArray);
-            } else if (stype == int.class) {
-                return (VectorShuffle<F>) new IntMaxVector.IntMaxShuffle(shuffleArray);
-            } else if (stype == long.class) {
-                return (VectorShuffle<F>) new LongMaxVector.LongMaxShuffle(shuffleArray);
-            } else if (stype == float.class) {
-                return (VectorShuffle<F>) new FloatMaxVector.FloatMaxShuffle(shuffleArray);
-            } else if (stype == double.class) {
-                return (VectorShuffle<F>) new DoubleMaxVector.DoubleMaxShuffle(shuffleArray);
-            } else {
-                throw new UnsupportedOperationException("Bad lane type for casting.");
+        public <F> VectorShuffle<F> cast(VectorSpecies<F> s) {
+            AbstractSpecies<F> species = (AbstractSpecies<F>) s;
+            if (length() != species.laneCount())
+                throw new AssertionError("NYI: Shuffle length and species length differ");
+            int[] shuffleArray = toArray();
+            // enum-switches don't optimize properly JDK-8161245
+            switch (species.laneType.switchKey) {
+            case LaneType.SK_BYTE:
+                return new ByteMaxVector.ByteMaxShuffle(shuffleArray).check(species);
+            case LaneType.SK_SHORT:
+                return new ShortMaxVector.ShortMaxShuffle(shuffleArray).check(species);
+            case LaneType.SK_INT:
+                return new IntMaxVector.IntMaxShuffle(shuffleArray).check(species);
+            case LaneType.SK_LONG:
+                return new LongMaxVector.LongMaxShuffle(shuffleArray).check(species);
+            case LaneType.SK_FLOAT:
+                return new FloatMaxVector.FloatMaxShuffle(shuffleArray).check(species);
+            case LaneType.SK_DOUBLE:
+                return new DoubleMaxVector.DoubleMaxShuffle(shuffleArray).check(species);
             }
+
+            // Should not reach here.
+            throw new AssertionError(species);
         }
 
         @Override
@@ -1426,16 +652,54 @@ final class IntMaxVector extends IntVector {
             IntMaxShuffle s = (IntMaxShuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
-                r[i] = reorder[s.reorder[i]];
+                int ssi = s.reorder[i];
+                r[i] = this.reorder[ssi];  // throws on exceptional index
             }
             return new IntMaxShuffle(r);
         }
     }
 
-    // VectorSpecies
+    // ================================================
 
+    // Specialized low-level memory operations.
+
+    @ForceInline
     @Override
-    public VectorSpecies<Integer> species() {
-        return SPECIES;
+    final
+    IntVector fromArray0(int[] a, int offset) {
+        return super.fromArray0(a, offset);  // specialize
     }
+
+    @ForceInline
+    @Override
+    final
+    IntVector fromByteArray0(byte[] a, int offset) {
+        return super.fromByteArray0(a, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    IntVector fromByteBuffer0(ByteBuffer bb, int offset) {
+        return super.fromByteBuffer0(bb, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    void intoArray0(int[] a, int offset) {
+        super.intoArray0(a, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    void intoByteArray0(byte[] a, int offset) {
+        super.intoByteArray0(a, offset);  // specialize
+    }
+
+    // End of specialized low-level memory operations.
+
+    // ================================================
+
 }

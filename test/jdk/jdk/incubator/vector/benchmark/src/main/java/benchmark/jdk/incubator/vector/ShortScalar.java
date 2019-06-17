@@ -23,6 +23,8 @@
 
 package benchmark.jdk.incubator.vector;
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
@@ -234,6 +236,48 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
+    public void lanewise_ANDC2(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)(a & ~b);
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void lanewise_ANDC2Masked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)(a & ~b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
     public void or(Blackhole bh) {
         short[] as = fa.apply(size);
         short[] bs = fb.apply(size);
@@ -316,6 +360,44 @@ public class ShortScalar extends AbstractVectorBenchmark {
     }
 
 
+    @Benchmark
+    public void lanewise_FIRST_NONZERO(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)((a)!=0?a:b);
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void lanewise_FIRST_NONZEROMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)((a)!=0?a:b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
 
 
 
@@ -377,7 +459,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 short a = as[i];
                 short b = bs[i];
-                rs[i] = (short)((a >>> (b & 0xF)));
+                rs[i] = (short)(((a & 0xFFFF) >>> (b & 0xF)));
             }
         }
 
@@ -398,7 +480,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
                 short a = as[i];
                 short b = bs[i];
                 if (ms[i % ms.length]) {
-                    rs[i] = (short)((a >>> (b & 0xF)));
+                    rs[i] = (short)(((a & 0xFFFF) >>> (b & 0xF)));
                 } else {
                     rs[i] = a;
                 }
@@ -929,6 +1011,53 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
 
+
+    @Benchmark
+    public void lanewise_BITWISE_BLEND(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] cs = fc.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                short c = cs[i];
+                rs[i] = (short)((a&~(c))|(b&c));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+
+    @Benchmark
+    public void lanewise_BITWISE_BLENDMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] cs = fc.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                short c = cs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)((a&~(c))|(b&c));
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
     @Benchmark
     public void neg(Blackhole bh) {
         short[] as = fa.apply(size);
@@ -1022,6 +1151,42 @@ public class ShortScalar extends AbstractVectorBenchmark {
                 short a = as[i];
                 boolean m = ms[i % ms.length];
                 rs[i] = (m ? (short)(~((short)a)) : a);
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void lanewise_ZOMO(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                rs[i] = (short)((a==0?0:-1));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void lanewise_ZOMOMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                boolean m = ms[i % ms.length];
+                rs[i] = (m ? (short)((a==0?0:-1)) : a);
             }
         }
 

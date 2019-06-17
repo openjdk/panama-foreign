@@ -28,6 +28,8 @@
  *
  */
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 import jdk.incubator.vector.VectorShape;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorMask;
@@ -51,6 +53,11 @@ public class Int256VectorLoadStoreTests extends AbstractVectorTest {
                 IntVector.SPECIES_256;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
+
+
+    static final int BUFFER_REPS = Integer.getInteger("jdk.incubator.vector.test.buffer-vectors", 25000 / 256);
+
+    static final int BUFFER_SIZE = Integer.getInteger("jdk.incubator.vector.test.buffer-size", BUFFER_REPS * (256 / 8));
 
     static void assertArraysEquals(int[] a, int[] r, boolean[] mask) {
         int i = 0;
@@ -87,11 +94,11 @@ public class Int256VectorLoadStoreTests extends AbstractVectorTest {
 
     static final List<IntFunction<int[]>> INT_GENERATORS = List.of(
             withToString("int[i * 5]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (int)(i * 5));
             }),
             withToString("int[i + 1]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (((int)(i + 1) == 0) ? 1 : (int)(i + 1)));
             })
     );

@@ -29,6 +29,8 @@
  *
  */
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 import jdk.incubator.vector.VectorShape;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorMask;
@@ -57,6 +59,12 @@ public class ByteMaxVectorLoadStoreTests extends AbstractVectorTest {
     static VectorShape getMaxBit() {
         return VectorShape.S_Max_BIT;
     }
+
+    private static final int Max = 256;  // juts so we can do N/Max
+
+    static final int BUFFER_REPS = Integer.getInteger("jdk.incubator.vector.test.buffer-vectors", 25000 / Max);
+
+    static final int BUFFER_SIZE = Integer.getInteger("jdk.incubator.vector.test.buffer-size", BUFFER_REPS * (Max / 8));
 
     static void assertArraysEquals(byte[] a, byte[] r, boolean[] mask) {
         int i = 0;
@@ -93,11 +101,11 @@ public class ByteMaxVectorLoadStoreTests extends AbstractVectorTest {
 
     static final List<IntFunction<byte[]>> BYTE_GENERATORS = List.of(
             withToString("byte[i * 5]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (byte)(i * 5));
             }),
             withToString("byte[i + 1]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (((byte)(i + 1) == 0) ? 1 : (byte)(i + 1)));
             })
     );

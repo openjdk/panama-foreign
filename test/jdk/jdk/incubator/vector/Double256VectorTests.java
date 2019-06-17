@@ -27,10 +27,13 @@
  * @run testng/othervm -ea -esa Double256VectorTests
  */
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 import jdk.incubator.vector.VectorShape;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorShuffle;
 import jdk.incubator.vector.VectorMask;
+import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.DoubleVector;
@@ -54,6 +57,11 @@ public class Double256VectorTests extends AbstractVectorTest {
                 DoubleVector.SPECIES_256;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
+
+
+    static final int BUFFER_REPS = Integer.getInteger("jdk.incubator.vector.test.buffer-vectors", 25000 / 256);
+
+    static final int BUFFER_SIZE = Integer.getInteger("jdk.incubator.vector.test.buffer-size", BUFFER_REPS * (256 / 8));
 
     interface FUnOp {
         double apply(double a);
@@ -111,10 +119,10 @@ public class Double256VectorTests extends AbstractVectorTest {
         int i = 0;
         try {
             for (; i < a.length; i += SPECIES.length()) {
-                Assert.assertEquals(f.apply(a, i), b[i]);
+                Assert.assertEquals(b[i], f.apply(a, i));
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+            Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
         }
     }
 
@@ -170,7 +178,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                 Assert.assertEquals(r[i], f.apply(a[i], b[i]));
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(f.apply(a[i], b[i]), r[i], "(" + a[i] + ", " + b[i] + ") at index #" + i);
+            Assert.assertEquals(r[i], f.apply(a[i], b[i]), "(" + a[i] + ", " + b[i] + ") at index #" + i);
         }
     }
 
@@ -195,11 +203,11 @@ public class Double256VectorTests extends AbstractVectorTest {
         try {
             for (; j < a.length; j += SPECIES.length()) {
                 for (i = 0; i < SPECIES.length(); i++) {
-                    Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
+                    Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j]));
                 }
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j], "at index #" + i + ", " + j);
+            Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j]), "at index #" + i + ", " + j);
         }
     }
 
@@ -317,10 +325,10 @@ public class Double256VectorTests extends AbstractVectorTest {
         int i = 0;
         try {
             for (; i < a.length; i++) {
-                Assert.assertEquals(f.apply(a, i), r[i]);
+                Assert.assertEquals(r[i], f.apply(a, i));
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
+            Assert.assertEquals(r[i], f.apply(a,i), "at index #" + i);
         }
     }
     interface FGatherScatterOp {
@@ -337,7 +345,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         } catch (AssertionError e) {
             double[] ref = f.apply(a, i, b, i);
             double[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
-            Assert.assertEquals(ref, res,
+            Assert.assertEquals(res, ref,
               "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
               + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
               + ", b: "
@@ -349,19 +357,19 @@ public class Double256VectorTests extends AbstractVectorTest {
 
     static final List<IntFunction<double[]>> DOUBLE_GENERATORS = List.of(
             withToString("double[-i * 5]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (double)(-i * 5));
             }),
             withToString("double[i * 5]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (double)(i * 5));
             }),
             withToString("double[i + 1]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (((double)(i + 1) == 0) ? 1 : (double)(i + 1)));
             }),
             withToString("double[cornerCaseValue(i)]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> cornerCaseValue(i));
             })
     );
@@ -458,23 +466,23 @@ public class Double256VectorTests extends AbstractVectorTest {
 
     static final List<IntFunction<double[]>> DOUBLE_COMPARE_GENERATORS = List.of(
             withToString("double[i]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (double)i);
             }),
             withToString("double[i + 1]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (double)(i + 1));
             }),
             withToString("double[i - 2]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (double)(i - 2));
             }),
             withToString("double[zigZag(i)]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> i%3 == 0 ? (double)i : (i%3 == 1 ? (double)(i + 1) : (double)(i - 2)));
             }),
             withToString("double[cornerCaseValue(i)]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> cornerCaseValue(i));
             })
     );
@@ -528,14 +536,34 @@ public class Double256VectorTests extends AbstractVectorTest {
    }
 
    static final IntFunction<double[]> fr = (vl) -> {
-        int length = 1000 * vl;
+        int length = BUFFER_REPS * vl;
         return new double[length];
     };
 
     static final IntFunction<boolean[]> fmr = (vl) -> {
-        int length = 1000 * vl;
+        int length = BUFFER_REPS * vl;
         return new boolean[length];
     };
+
+    @Test
+    static void smokeTest1() {
+        DoubleVector three = DoubleVector.broadcast(SPECIES, (byte)-3);
+        DoubleVector three2 = (DoubleVector) SPECIES.broadcast(-3);
+        assert(three.equal(three2).allTrue());
+        DoubleVector three3 = three2.broadcast(1).broadcast(-3);
+        assert(three.equal(three3).allTrue());
+        int scale = 2;
+        Class<?> ETYPE = double.class;
+        if (ETYPE == double.class || ETYPE == long.class)
+            scale = 1000000;
+        else if (ETYPE == byte.class && SPECIES.length() >= 64)
+            scale = 1;
+        DoubleVector higher = three.addIndex(scale);
+        VectorMask<Double> m = three.compare(VectorOperators.LE, higher);
+        assert(m.allTrue());
+        double max = higher.maxLanes();
+        assert(max == -3 + scale * (SPECIES.length()-1));
+    }
     static double add(double a, double b) {
         return (double)(a + b);
     }
@@ -706,6 +734,48 @@ public class Double256VectorTests extends AbstractVectorTest {
 
 
 
+
+
+    static double lanewise_FIRST_NONZERO(double a, double b) {
+        return (double)(Double.doubleToLongBits(a)!=0?a:b);
+    }
+
+    @Test(dataProvider = "doubleBinaryOpProvider")
+    static void lanewise_FIRST_NONZERODouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length());
+        double[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.FIRST_NONZERO, bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Double256VectorTests::lanewise_FIRST_NONZERO);
+    }
+
+    @Test(dataProvider = "doubleBinaryOpMaskProvider")
+    static void lanewise_FIRST_NONZERODouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length());
+        double[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.FIRST_NONZERO, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, Double256VectorTests::lanewise_FIRST_NONZERO);
+    }
 
 
 
@@ -1744,6 +1814,13 @@ public class Double256VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "doubleTernaryOpProvider")
     static void fmaDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb, IntFunction<double[]> fc) {
+        int count = INVOC_COUNT;
+        switch ("fma") {
+        case "fma": case "lanewise_FMA":
+           // Math.fma uses BigDecimal
+           count = Math.max(5, count/20); break;
+        }
+        final int INVOC_COUNT = count;
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] c = fc.apply(SPECIES.length());
@@ -1765,6 +1842,13 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleTernaryOpMaskProvider")
     static void fmaDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<double[]> fc, IntFunction<boolean[]> fm) {
+        int count = INVOC_COUNT;
+        switch ("fma") {
+        case "fma": case "lanewise_FMA":
+           // Math.fma uses BigDecimal
+           count = Math.max(5, count/20); break;
+        }
+        final int INVOC_COUNT = count;
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] c = fc.apply(SPECIES.length());
@@ -1783,6 +1867,9 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, c, r, mask, Double256VectorTests::fma);
     }
+
+
+
 
 
     static double neg(double a) {
@@ -1858,6 +1945,9 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Double256VectorTests::abs);
     }
+
+
+
 
 
 

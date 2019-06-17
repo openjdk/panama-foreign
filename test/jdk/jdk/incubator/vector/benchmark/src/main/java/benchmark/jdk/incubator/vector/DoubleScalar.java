@@ -23,6 +23,8 @@
 
 package benchmark.jdk.incubator.vector;
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
@@ -235,6 +237,46 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+    @Benchmark
+    public void lanewise_FIRST_NONZERO(Blackhole bh) {
+        double[] as = fa.apply(size);
+        double[] bs = fb.apply(size);
+        double[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                double a = as[i];
+                double b = bs[i];
+                rs[i] = (double)(Double.doubleToLongBits(a)!=0?a:b);
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void lanewise_FIRST_NONZEROMasked(Blackhole bh) {
+        double[] as = fa.apply(size);
+        double[] bs = fb.apply(size);
+        double[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                double a = as[i];
+                double b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (double)(Double.doubleToLongBits(a)!=0?a:b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
 
 
 
@@ -884,6 +926,8 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
 
+
+
     @Benchmark
     public void neg(Blackhole bh) {
         double[] as = fa.apply(size);
@@ -947,6 +991,8 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
         bh.consume(rs);
     }
+
+
 
 
 

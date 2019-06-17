@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,808 +34,267 @@ import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
+
 import static jdk.incubator.vector.VectorIntrinsics.*;
+import static jdk.incubator.vector.VectorOperators.*;
 
-@SuppressWarnings("cast")
+// -- This file was mechanically generated: Do not edit! -- //
+
+@SuppressWarnings("cast")  // warning: redundant cast
 final class Short64Vector extends ShortVector {
-    private static final VectorSpecies<Short> SPECIES = ShortVector.SPECIES_64;
+    static final ShortSpecies VSPECIES =
+        (ShortSpecies) ShortVector.SPECIES_64;
 
-    static final Short64Vector ZERO = new Short64Vector();
+    static final VectorShape VSHAPE =
+        VSPECIES.vectorShape();
 
-    static final int LENGTH = SPECIES.length();
+    static final Class<Short64Vector> VCLASS = Short64Vector.class;
 
+    static final int VSIZE = VSPECIES.vectorBitSize();
+
+    static final int VLENGTH = VSPECIES.laneCount();
+
+    static final Class<Short> ETYPE = short.class;
+
+    // The JVM expects to find the state here.
     private final short[] vec; // Don't access directly, use getElements() instead.
-
-    private short[] getElements() {
-        return VectorIntrinsics.maybeRebox(this).vec;
-    }
-
-    Short64Vector() {
-        vec = new short[SPECIES.length()];
-    }
 
     Short64Vector(short[] v) {
         vec = v;
     }
 
-    @Override
-    public int length() { return LENGTH; }
+    // For compatibility as Short64Vector::new,
+    // stored into species.vectorFactory.
+    Short64Vector(Object v) {
+        this((short[]) v);
+    }
 
-    // Unary operator
+    static final Short64Vector ZERO = new Short64Vector(new short[VLENGTH]);
+    static final Short64Vector IOTA = new Short64Vector(VSPECIES.iotaArray());
+
+    static {
+        // Warm up a few species caches.
+        // If we do this too much we will
+        // get NPEs from bootstrap circularity.
+        VSPECIES.dummyVector();
+        VSPECIES.withLanes(LaneType.BYTE);
+    }
+
+    // Specialized extractors
+
+    @ForceInline
+    final @Override
+    public ShortSpecies vspecies() {
+        // ISSUE:  This should probably be a @Stable
+        // field inside AbstractVector, rather than
+        // a megamorphic method.
+        return VSPECIES;
+    }
+
+
+    /*package-private*/
+    @ForceInline
+    final @Override
+    short[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
+
+    // Virtualized constructors
 
     @Override
-    Short64Vector uOp(FUnOp f) {
-        short[] vec = getElements();
-        short[] res = new short[length()];
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i]);
-        }
-        return new Short64Vector(res);
+    @ForceInline
+    public final Short64Vector broadcast(short e) {
+        return (Short64Vector) super.broadcastTemplate(e);  // specialize
     }
 
     @Override
-    Short64Vector uOp(VectorMask<Short> o, FUnOp f) {
-        short[] vec = getElements();
-        short[] res = new short[length()];
-        boolean[] mbits = ((Short64Mask)o).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
-        }
-        return new Short64Vector(res);
+    @ForceInline
+    public final Short64Vector broadcast(long e) {
+        return (Short64Vector) super.broadcastTemplate(e);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    Short64Mask maskFromArray(boolean[] bits) {
+        return new Short64Mask(bits);
+    }
+
+    @Override
+    @ForceInline
+    Short64Shuffle iotaShuffle() { return Short64Shuffle.IOTA; }
+
+    @Override
+    @ForceInline
+    Short64Shuffle shuffleFromBytes(byte[] reorder) { return new Short64Shuffle(reorder); }
+
+    @Override
+    @ForceInline
+    Short64Shuffle shuffleFromArray(int[] indexes, int i) { return new Short64Shuffle(indexes, i); }
+
+    @Override
+    @ForceInline
+    Short64Shuffle shuffleFromOp(IntUnaryOperator fn) { return new Short64Shuffle(fn); }
+
+    // Make a vector of the same species but the given elements:
+    @ForceInline
+    final @Override
+    Short64Vector vectorFactory(short[] vec) {
+        return new Short64Vector(vec);
+    }
+
+    @ForceInline
+    final @Override
+    Byte64Vector asByteVectorRaw() {
+        return (Byte64Vector) super.asByteVectorRawTemplate();  // specialize
+    }
+
+    @ForceInline
+    final @Override
+    AbstractVector<?> asVectorRaw(LaneType laneType) {
+        return super.asVectorRawTemplate(laneType);  // specialize
+    }
+
+    // Unary operator
+
+    final @Override
+    Short64Vector uOp(FUnOp f) {
+        return (Short64Vector) super.uOp(f);  // specialize
+    }
+
+    @ForceInline
+    final @Override
+    Short64Vector uOp(VectorMask<Short> m, FUnOp f) {
+        return (Short64Vector) super.uOp((Short64Mask)m, f);  // specialize
     }
 
     // Binary operator
 
-    @Override
+    @ForceInline
+    final @Override
     Short64Vector bOp(Vector<Short> o, FBinOp f) {
-        short[] res = new short[length()];
-        short[] vec1 = this.getElements();
-        short[] vec2 = ((Short64Vector)o).getElements();
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec1[i], vec2[i]);
-        }
-        return new Short64Vector(res);
+        return (Short64Vector) super.bOp((Short64Vector)o, f);  // specialize
     }
 
-    @Override
-    Short64Vector bOp(Vector<Short> o1, VectorMask<Short> o2, FBinOp f) {
-        short[] res = new short[length()];
-        short[] vec1 = this.getElements();
-        short[] vec2 = ((Short64Vector)o1).getElements();
-        boolean[] mbits = ((Short64Mask)o2).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
-        }
-        return new Short64Vector(res);
+    @ForceInline
+    final @Override
+    Short64Vector bOp(Vector<Short> o,
+                     VectorMask<Short> m, FBinOp f) {
+        return (Short64Vector) super.bOp((Short64Vector)o, (Short64Mask)m,
+                                        f);  // specialize
     }
 
-    // Trinary operator
+    // Ternary operator
 
-    @Override
+    @ForceInline
+    final @Override
     Short64Vector tOp(Vector<Short> o1, Vector<Short> o2, FTriOp f) {
-        short[] res = new short[length()];
-        short[] vec1 = this.getElements();
-        short[] vec2 = ((Short64Vector)o1).getElements();
-        short[] vec3 = ((Short64Vector)o2).getElements();
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
-        }
-        return new Short64Vector(res);
+        return (Short64Vector) super.tOp((Short64Vector)o1, (Short64Vector)o2,
+                                        f);  // specialize
     }
 
-    @Override
-    Short64Vector tOp(Vector<Short> o1, Vector<Short> o2, VectorMask<Short> o3, FTriOp f) {
-        short[] res = new short[length()];
-        short[] vec1 = getElements();
-        short[] vec2 = ((Short64Vector)o1).getElements();
-        short[] vec3 = ((Short64Vector)o2).getElements();
-        boolean[] mbits = ((Short64Mask)o3).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
-        }
-        return new Short64Vector(res);
+    @ForceInline
+    final @Override
+    Short64Vector tOp(Vector<Short> o1, Vector<Short> o2,
+                     VectorMask<Short> m, FTriOp f) {
+        return (Short64Vector) super.tOp((Short64Vector)o1, (Short64Vector)o2,
+                                        (Short64Mask)m, f);  // specialize
     }
 
-    @Override
+    @ForceInline
+    final @Override
     short rOp(short v, FBinOp f) {
-        short[] vec = getElements();
-        for (int i = 0; i < length(); i++) {
-            v = f.apply(i, v, vec[i]);
-        }
-        return v;
+        return super.rOp(v, f);  // specialize
     }
 
     @Override
     @ForceInline
-    public <F> Vector<F> cast(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
-        if (s.length() != LENGTH)
-            throw new IllegalArgumentException("Vector length this species length differ");
-
-        return VectorIntrinsics.cast(
-            Short64Vector.class,
-            short.class, LENGTH,
-            s.vectorType(),
-            s.elementType(), LENGTH,
-            this, s,
-            (species, vector) -> vector.castDefault(species)
-        );
-    }
-
-    @SuppressWarnings("unchecked")
-    @ForceInline
-    private <F> Vector<F> castDefault(VectorSpecies<F> s) {
-        int limit = s.length();
-
-        Class<?> stype = s.elementType();
-        if (stype == byte.class) {
-            byte[] a = new byte[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (byte) this.lane(i);
-            }
-            return (Vector) ByteVector.fromArray((VectorSpecies<Byte>) s, a, 0);
-        } else if (stype == short.class) {
-            short[] a = new short[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (short) this.lane(i);
-            }
-            return (Vector) ShortVector.fromArray((VectorSpecies<Short>) s, a, 0);
-        } else if (stype == int.class) {
-            int[] a = new int[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (int) this.lane(i);
-            }
-            return (Vector) IntVector.fromArray((VectorSpecies<Integer>) s, a, 0);
-        } else if (stype == long.class) {
-            long[] a = new long[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (long) this.lane(i);
-            }
-            return (Vector) LongVector.fromArray((VectorSpecies<Long>) s, a, 0);
-        } else if (stype == float.class) {
-            float[] a = new float[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (float) this.lane(i);
-            }
-            return (Vector) FloatVector.fromArray((VectorSpecies<Float>) s, a, 0);
-        } else if (stype == double.class) {
-            double[] a = new double[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (double) this.lane(i);
-            }
-            return (Vector) DoubleVector.fromArray((VectorSpecies<Double>) s, a, 0);
-        } else {
-            throw new UnsupportedOperationException("Bad lane type for casting.");
-        }
+    public final <F>
+    Vector<F> convertShape(VectorOperators.Conversion<Short,F> conv,
+                           VectorSpecies<F> rsp, int part) {
+        return super.convertShapeTemplate(conv, rsp, part);  // specialize
     }
 
     @Override
     @ForceInline
-    @SuppressWarnings("unchecked")
-    public <F> Vector<F> reinterpret(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
-
-        if(s.elementType().equals(short.class)) {
-            return (Vector<F>) reshape((VectorSpecies<Short>)s);
-        }
-        if(s.bitSize() == bitSize()) {
-            return reinterpretType(s);
-        }
-
-        return defaultReinterpret(s);
+    public final <F>
+    Vector<F> reinterpretShape(VectorSpecies<F> toSpecies, int part) {
+        return super.reinterpretShapeTemplate(toSpecies, part);  // specialize
     }
 
-    @ForceInline
-    private <F> Vector<F> reinterpretType(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
+    // Specialized algebraic operations:
 
-        Class<?> stype = s.elementType();
-        if (stype == byte.class) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                Byte64Vector.class,
-                byte.class, Byte64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == short.class) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                Short64Vector.class,
-                short.class, Short64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == int.class) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                Int64Vector.class,
-                int.class, Int64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == long.class) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                Long64Vector.class,
-                long.class, Long64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == float.class) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                Float64Vector.class,
-                float.class, Float64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == double.class) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                Double64Vector.class,
-                double.class, Double64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else {
-            throw new UnsupportedOperationException("Bad lane type for casting.");
-        }
+    // The following definition forces a specialized version of this
+    // crucial method into the v-table of this class.  A call to add()
+    // will inline to a call to lanewise(ADD,), at which point the JIT
+    // intrinsic will have the opcode of ADD, plus all the metadata
+    // for this particular class, enabling it to generate precise
+    // code.
+    //
+    // There is probably no benefit to the JIT to specialize the
+    // masked or broadcast versions of the lanewise method.
+
+    @Override
+    @ForceInline
+    public Short64Vector lanewise(Unary op) {
+        return (Short64Vector) super.lanewiseTemplate(op);  // specialize
     }
 
     @Override
     @ForceInline
-    public ShortVector reshape(VectorSpecies<Short> s) {
-        Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.vectorType() == Short64Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                Short64Vector.class,
-                short.class, Short64Vector.LENGTH,
-                this, s,
-                (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 128 && (s.vectorType() == Short128Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                Short128Vector.class,
-                short.class, Short128Vector.LENGTH,
-                this, s,
-                (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 256 && (s.vectorType() == Short256Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                Short256Vector.class,
-                short.class, Short256Vector.LENGTH,
-                this, s,
-                (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 512 && (s.vectorType() == Short512Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                Short512Vector.class,
-                short.class, Short512Vector.LENGTH,
-                this, s,
-                (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
-            );
-        } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.vectorType() == ShortMaxVector.class)) {
-            return VectorIntrinsics.reinterpret(
-                Short64Vector.class,
-                short.class, LENGTH,
-                ShortMaxVector.class,
-                short.class, ShortMaxVector.LENGTH,
-                this, s,
-                (species, vector) -> (ShortVector) vector.defaultReinterpret(species)
-            );
-        } else {
-            throw new InternalError("Unimplemented size");
-        }
+    public Short64Vector lanewise(Binary op, Vector<Short> v) {
+        return (Short64Vector) super.lanewiseTemplate(op, v);  // specialize
     }
 
-    // Binary operations with scalars
+    /*package-private*/
+    @Override
+    @ForceInline Short64Vector
+    lanewiseShift(VectorOperators.Binary op, int e) {
+        return (Short64Vector) super.lanewiseShiftTemplate(op, e);  // specialize
+    }
 
+    /*package-private*/
     @Override
     @ForceInline
-    public ShortVector add(short o) {
-        return add((Short64Vector)ShortVector.broadcast(SPECIES, o));
+    public final
+    Short64Vector
+    lanewise(VectorOperators.Ternary op, Vector<Short> v1, Vector<Short> v2) {
+        return (Short64Vector) super.lanewiseTemplate(op, v1, v2);  // specialize
     }
 
     @Override
     @ForceInline
-    public ShortVector add(short o, VectorMask<Short> m) {
-        return add((Short64Vector)ShortVector.broadcast(SPECIES, o), m);
+    public final
+    Short64Vector addIndex(int scale) {
+        return (Short64Vector) super.addIndexTemplate(scale);  // specialize
     }
-
-    @Override
-    @ForceInline
-    public ShortVector sub(short o) {
-        return sub((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector sub(short o, VectorMask<Short> m) {
-        return sub((Short64Vector)ShortVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector mul(short o) {
-        return mul((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector mul(short o, VectorMask<Short> m) {
-        return mul((Short64Vector)ShortVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector min(short o) {
-        return min((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector max(short o) {
-        return max((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Short> equal(short o) {
-        return equal((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Short> notEqual(short o) {
-        return notEqual((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Short> lessThan(short o) {
-        return lessThan((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Short> lessThanEq(short o) {
-        return lessThanEq((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Short> greaterThan(short o) {
-        return greaterThan((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Short> greaterThanEq(short o) {
-        return greaterThanEq((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector blend(short o, VectorMask<Short> m) {
-        return blend((Short64Vector)ShortVector.broadcast(SPECIES, o), m);
-    }
-
-
-    @Override
-    @ForceInline
-    public ShortVector and(short o) {
-        return and((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector and(short o, VectorMask<Short> m) {
-        return and((Short64Vector)ShortVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector or(short o) {
-        return or((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector or(short o, VectorMask<Short> m) {
-        return or((Short64Vector)ShortVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector xor(short o) {
-        return xor((Short64Vector)ShortVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector xor(short o, VectorMask<Short> m) {
-        return xor((Short64Vector)ShortVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector neg() {
-        return (Short64Vector)zero(SPECIES).sub(this);
-    }
-
-    // Unary operations
-
-    @ForceInline
-    @Override
-    public Short64Vector neg(VectorMask<Short> m) {
-        return blend(neg(), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector abs() {
-        return VectorIntrinsics.unaryOp(
-            VECTOR_OP_ABS, Short64Vector.class, short.class, LENGTH,
-            this,
-            v1 -> v1.uOp((i, a) -> (short) Math.abs(a)));
-    }
-
-    @ForceInline
-    @Override
-    public Short64Vector abs(VectorMask<Short> m) {
-        return blend(abs(), m);
-    }
-
-
-    @Override
-    @ForceInline
-    public Short64Vector not() {
-        return VectorIntrinsics.unaryOp(
-            VECTOR_OP_NOT, Short64Vector.class, short.class, LENGTH,
-            this,
-            v1 -> v1.uOp((i, a) -> (short) ~a));
-    }
-
-    @ForceInline
-    @Override
-    public Short64Vector not(VectorMask<Short> m) {
-        return blend(not(), m);
-    }
-    // Binary operations
-
-    @Override
-    @ForceInline
-    public Short64Vector add(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_ADD, Short64Vector.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short)(a + b)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector add(Vector<Short> v, VectorMask<Short> m) {
-        return blend(add(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector sub(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_SUB, Short64Vector.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short)(a - b)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector sub(Vector<Short> v, VectorMask<Short> m) {
-        return blend(sub(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector mul(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_MUL, Short64Vector.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector mul(Vector<Short> v, VectorMask<Short> m) {
-        return blend(mul(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector min(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-        return (Short64Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_MIN, Short64Vector.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short) Math.min(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector min(Vector<Short> v, VectorMask<Short> m) {
-        return blend(min(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector max(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_MAX, Short64Vector.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short) Math.max(a, b)));
-        }
-
-    @Override
-    @ForceInline
-    public Short64Vector max(Vector<Short> v, VectorMask<Short> m) {
-        return blend(max(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector and(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_AND, Short64Vector.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short)(a & b)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector or(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_OR, Short64Vector.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short)(a | b)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector xor(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_XOR, Short64Vector.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short)(a ^ b)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector and(Vector<Short> v, VectorMask<Short> m) {
-        return blend(and(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector or(Vector<Short> v, VectorMask<Short> m) {
-        return blend(or(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector xor(Vector<Short> v, VectorMask<Short> m) {
-        return blend(xor(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector shiftLeft(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, Short64Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a << (i & 0xF))));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector shiftLeft(int s, VectorMask<Short> m) {
-        return blend(shiftLeft(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector shiftLeft(Vector<Short> s) {
-        Short64Vector shiftv = (Short64Vector)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(ShortVector.broadcast(SPECIES, (short) 0xF));
-        return this.bOp(shiftv, (i, a, b) -> (short) (a << (b & 0xF)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector shiftRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, Short64Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) ((a & 0xFFFF) >>> (i & 0xF))));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector shiftRight(int s, VectorMask<Short> m) {
-        return blend(shiftRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector shiftRight(Vector<Short> s) {
-        Short64Vector shiftv = (Short64Vector)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(ShortVector.broadcast(SPECIES, (short) 0xF));
-        return this.bOp(shiftv, (i, a, b) -> (short) (a >>> (b & 0xF)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector shiftArithmeticRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, Short64Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >> (i & 0xF))));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector shiftArithmeticRight(int s, VectorMask<Short> m) {
-        return blend(shiftArithmeticRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector shiftArithmeticRight(Vector<Short> s) {
-        Short64Vector shiftv = (Short64Vector)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(ShortVector.broadcast(SPECIES, (short) 0xF));
-        return this.bOp(shiftv, (i, a, b) -> (short) (a >> (b & 0xF)));
-    }
-    // Ternary operations
-
 
     // Type specific horizontal reductions
 
     @Override
     @ForceInline
-    public short addLanes() {
-        return (short) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_ADD, Short64Vector.class, short.class, LENGTH,
-            this,
-            v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a + b)));
+    public final short reduceLanes(VectorOperators.Associative op) {
+        return super.reduceLanesTemplate(op);  // specialized
     }
 
     @Override
     @ForceInline
-    public short andLanes() {
-        return (short) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_AND, Short64Vector.class, short.class, LENGTH,
-            this,
-            v -> (long) v.rOp((short) -1, (i, a, b) -> (short) (a & b)));
+    public final short reduceLanes(VectorOperators.Associative op,
+                                    VectorMask<Short> m) {
+        return super.reduceLanesTemplate(op, m);  // specialized
     }
 
     @Override
     @ForceInline
-    public short andLanes(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, (short) -1).blend(this, m).andLanes();
+    public final long reduceLanesToLong(VectorOperators.Associative op) {
+        return (long) super.reduceLanesTemplate(op);  // specialized
     }
 
     @Override
     @ForceInline
-    public short minLanes() {
-        return (short) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MIN, Short64Vector.class, short.class, LENGTH,
-            this,
-            v -> (long) v.rOp(Short.MAX_VALUE , (i, a, b) -> (short) Math.min(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public short maxLanes() {
-        return (short) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MAX, Short64Vector.class, short.class, LENGTH,
-            this,
-            v -> (long) v.rOp(Short.MIN_VALUE , (i, a, b) -> (short) Math.max(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public short mulLanes() {
-        return (short) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MUL, Short64Vector.class, short.class, LENGTH,
-            this,
-            v -> (long) v.rOp((short) 1, (i, a, b) -> (short) (a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public short orLanes() {
-        return (short) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_OR, Short64Vector.class, short.class, LENGTH,
-            this,
-            v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a | b)));
-    }
-
-    @Override
-    @ForceInline
-    public short orLanes(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).orLanes();
-    }
-
-    @Override
-    @ForceInline
-    public short xorLanes() {
-        return (short) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_XOR, Short64Vector.class, short.class, LENGTH,
-            this,
-            v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a ^ b)));
-    }
-
-    @Override
-    @ForceInline
-    public short xorLanes(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).xorLanes();
-    }
-
-
-    @Override
-    @ForceInline
-    public short addLanes(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, (short) 0).blend(this, m).addLanes();
-    }
-
-
-    @Override
-    @ForceInline
-    public short mulLanes(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, (short) 1).blend(this, m).mulLanes();
-    }
-
-    @Override
-    @ForceInline
-    public short minLanes(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, Short.MAX_VALUE).blend(this, m).minLanes();
-    }
-
-    @Override
-    @ForceInline
-    public short maxLanes(VectorMask<Short> m) {
-        return ShortVector.broadcast(SPECIES, Short.MIN_VALUE).blend(this, m).maxLanes();
+    public final long reduceLanesToLong(VectorOperators.Associative op,
+                                        VectorMask<Short> m) {
+        return (long) super.reduceLanesTemplate(op, m);  // specialized
     }
 
     @Override
@@ -846,305 +305,111 @@ final class Short64Vector extends ShortVector {
         for (int i = 0; i < a.length; i++) {
             sa[i] = (int) a[i];
         }
-        return VectorShuffle.fromArray(SPECIES, sa, 0);
+        return VectorShuffle.fromArray(VSPECIES, sa, 0);
     }
 
-    // Memory operations
-
-    private static final int ARRAY_SHIFT         = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_SHORT_INDEX_SCALE);
-    private static final int BOOLEAN_ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_BOOLEAN_INDEX_SCALE);
+    // Specialized comparisons
 
     @Override
     @ForceInline
-    public void intoArray(short[] a, int ix) {
-        Objects.requireNonNull(a);
-        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
-        VectorIntrinsics.store(Short64Vector.class, short.class, LENGTH,
-                               a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_SHORT_BASE_OFFSET,
-                               this,
-                               a, ix,
-                               (arr, idx, v) -> v.forEach((i, e) -> arr[idx + i] = e));
+    public final Short64Mask compare(Comparison op, Vector<Short> v) {
+        return super.compareTemplate(Short64Mask.class, op, v);  // specialize
     }
 
     @Override
     @ForceInline
-    public final void intoArray(short[] a, int ax, VectorMask<Short> m) {
-        ShortVector oldVal = ShortVector.fromArray(SPECIES, a, ax);
-        ShortVector newVal = oldVal.blend(this, m);
-        newVal.intoArray(a, ax);
+    public final Short64Mask compare(Comparison op, short s) {
+        return super.compareTemplate(Short64Mask.class, op, s);  // specialize
     }
 
     @Override
     @ForceInline
-    public void intoByteArray(byte[] a, int ix) {
-        Objects.requireNonNull(a);
-        ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
-        VectorIntrinsics.store(Short64Vector.class, short.class, LENGTH,
-                               a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                               this,
-                               a, ix,
-                               (c, idx, v) -> {
-                                   ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
-                                   ShortBuffer tb = bbc.asShortBuffer();
-                                   v.forEach((i, e) -> tb.put(e));
-                               });
+    public final Short64Mask compare(Comparison op, long s) {
+        return super.compareTemplate(Short64Mask.class, op, s);  // specialize
     }
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, VectorMask<Short> m) {
-        Short64Vector oldVal = (Short64Vector) ShortVector.fromByteArray(SPECIES, a, ix);
-        Short64Vector newVal = oldVal.blend(this, m);
-        newVal.intoByteArray(a, ix);
+    public Short64Vector blend(Vector<Short> v, VectorMask<Short> m) {
+        return (Short64Vector)
+            super.blendTemplate(Short64Mask.class,
+                                (Short64Vector) v,
+                                (Short64Mask) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix) {
-        if (bb.order() != ByteOrder.nativeOrder()) {
-            throw new IllegalArgumentException();
-        }
-        if (bb.isReadOnly()) {
-            throw new ReadOnlyBufferException();
-        }
-        ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
-        VectorIntrinsics.store(Short64Vector.class, short.class, LENGTH,
-                               U.getReference(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
-                               this,
-                               bb, ix,
-                               (c, idx, v) -> {
-                                   ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
-                                   ShortBuffer tb = bbc.asShortBuffer();
-                                   v.forEach((i, e) -> tb.put(e));
-                               });
+    public Short64Vector slice(int origin, Vector<Short> v) {
+        return (Short64Vector) super.sliceTemplate(origin, v);  // specialize
     }
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, VectorMask<Short> m) {
-        Short64Vector oldVal = (Short64Vector) ShortVector.fromByteBuffer(SPECIES, bb, ix);
-        Short64Vector newVal = oldVal.blend(this, m);
-        newVal.intoByteBuffer(bb, ix);
-    }
-
-    //
-
-    @Override
-    public String toString() {
-        return Arrays.toString(getElements());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || this.getClass() != o.getClass()) return false;
-
-        Short64Vector that = (Short64Vector) o;
-        return this.equal(that).allTrue();
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(vec);
-    }
-
-    // Binary test
-
-    @Override
-    Short64Mask bTest(Vector<Short> o, FBinTest f) {
-        short[] vec1 = getElements();
-        short[] vec2 = ((Short64Vector)o).getElements();
-        boolean[] bits = new boolean[length()];
-        for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec1[i], vec2[i]);
-        }
-        return new Short64Mask(bits);
-    }
-
-    // Comparisons
-
-    @Override
-    @ForceInline
-    public Short64Mask equal(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-
-        return VectorIntrinsics.compare(
-            BT_eq, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    public Short64Vector unslice(int origin, Vector<Short> w, int part) {
+        return (Short64Vector) super.unsliceTemplate(origin, w, part);  // specialize
     }
 
     @Override
     @ForceInline
-    public Short64Mask notEqual(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-
-        return VectorIntrinsics.compare(
-            BT_ne, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    public Short64Vector unslice(int origin, Vector<Short> w, int part, VectorMask<Short> m) {
+        return (Short64Vector)
+            super.unsliceTemplate(Short64Mask.class,
+                                  origin, w, part,
+                                  (Short64Mask) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public Short64Mask lessThan(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-
-        return VectorIntrinsics.compare(
-            BT_lt, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    public Short64Vector rearrange(VectorShuffle<Short> s) {
+        return (Short64Vector)
+            super.rearrangeTemplate(Short64Shuffle.class,
+                                    (Short64Shuffle) s);  // specialize
     }
 
     @Override
     @ForceInline
-    public Short64Mask lessThanEq(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-
-        return VectorIntrinsics.compare(
-            BT_le, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    public Short64Vector rearrange(VectorShuffle<Short> shuffle,
+                                  VectorMask<Short> m) {
+        return (Short64Vector)
+            super.rearrangeTemplate(Short64Shuffle.class,
+                                    (Short64Shuffle) shuffle,
+                                    (Short64Mask) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public Short64Mask greaterThan(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-
-        return (Short64Mask) VectorIntrinsics.compare(
-            BT_gt, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    public Short64Vector rearrange(VectorShuffle<Short> s,
+                                  Vector<Short> v) {
+        return (Short64Vector)
+            super.rearrangeTemplate(Short64Shuffle.class,
+                                    (Short64Shuffle) s,
+                                    (Short64Vector) v);  // specialize
     }
 
     @Override
     @ForceInline
-    public Short64Mask greaterThanEq(Vector<Short> o) {
-        Objects.requireNonNull(o);
-        Short64Vector v = (Short64Vector)o;
-
-        return VectorIntrinsics.compare(
-            BT_ge, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
-    }
-
-    // Foreach
-
-    @Override
-    void forEach(FUnCon f) {
-        short[] vec = getElements();
-        for (int i = 0; i < length(); i++) {
-            f.apply(i, vec[i]);
-        }
-    }
-
-    @Override
-    void forEach(VectorMask<Short> o, FUnCon f) {
-        boolean[] mbits = ((Short64Mask)o).getBits();
-        forEach((i, a) -> {
-            if (mbits[i]) { f.apply(i, a); }
-        });
-    }
-
-
-
-    @Override
-    public Short64Vector rotateLanesLeft(int j) {
-        short[] vec = getElements();
-        short[] res = new short[length()];
-        for (int i = 0; i < length(); i++){
-            res[(j + i) % length()] = vec[i];
-        }
-        return new Short64Vector(res);
-    }
-
-    @Override
-    public Short64Vector rotateLanesRight(int j) {
-        short[] vec = getElements();
-        short[] res = new short[length()];
-        for (int i = 0; i < length(); i++){
-            int z = i - j;
-            if(j < 0) {
-                res[length() + z] = vec[i];
-            } else {
-                res[z] = vec[i];
-            }
-        }
-        return new Short64Vector(res);
-    }
-
-    @Override
-    public Short64Vector shiftLanesLeft(int j) {
-        short[] vec = getElements();
-        short[] res = new short[length()];
-        for (int i = 0; i < length() - j; i++) {
-            res[i] = vec[i + j];
-        }
-        return new Short64Vector(res);
-    }
-
-    @Override
-    public Short64Vector shiftLanesRight(int j) {
-        short[] vec = getElements();
-        short[] res = new short[length()];
-        for (int i = 0; i < length() - j; i++){
-            res[i + j] = vec[i];
-        }
-        return new Short64Vector(res);
+    public Short64Vector selectFrom(Vector<Short> v) {
+        return (Short64Vector)
+            super.selectFromTemplate((Short64Vector) v);  // specialize
     }
 
     @Override
     @ForceInline
-    public Short64Vector rearrange(Vector<Short> v,
-                                  VectorShuffle<Short> s, VectorMask<Short> m) {
-        return this.rearrange(s).blend(v.rearrange(s), m);
+    public Short64Vector selectFrom(Vector<Short> v,
+                                   VectorMask<Short> m) {
+        return (Short64Vector)
+            super.selectFromTemplate((Short64Vector) v,
+                                     (Short64Mask) m);  // specialize
     }
 
-    @Override
-    @ForceInline
-    public Short64Vector rearrange(VectorShuffle<Short> o1) {
-        Objects.requireNonNull(o1);
-        Short64Shuffle s =  (Short64Shuffle)o1;
-
-        return VectorIntrinsics.rearrangeOp(
-            Short64Vector.class, Short64Shuffle.class, short.class, LENGTH,
-            this, s,
-            (v1, s_) -> v1.uOp((i, a) -> {
-                int ei = s_.lane(i);
-                return v1.lane(ei);
-            }));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector blend(Vector<Short> o1, VectorMask<Short> o2) {
-        Objects.requireNonNull(o1);
-        Objects.requireNonNull(o2);
-        Short64Vector v = (Short64Vector)o1;
-        Short64Mask   m = (Short64Mask)o2;
-
-        return VectorIntrinsics.blend(
-            Short64Vector.class, Short64Mask.class, short.class, LENGTH,
-            this, v, m,
-            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.lane(i) ? b : a));
-    }
-
-    // Accessors
 
     @Override
     public short lane(int i) {
-        if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        if (i < 0 || i >= VLENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + VLENGTH);
         }
         return (short) VectorIntrinsics.extract(
-                                Short64Vector.class, short.class, LENGTH,
+                                VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
                                     short[] vecarr = vec.getElements();
@@ -1153,25 +418,23 @@ final class Short64Vector extends ShortVector {
     }
 
     @Override
-    public Short64Vector with(int i, short e) {
-        if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+    public Short64Vector withLane(int i, short e) {
+        if (i < 0 || i >= VLENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + VLENGTH);
         }
         return VectorIntrinsics.insert(
-                                Short64Vector.class, short.class, LENGTH,
+                                VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
                                     short[] res = v.getElements().clone();
                                     res[ix] = (short)bits;
-                                    return new Short64Vector(res);
+                                    return v.vectorFactory(res);
                                 });
     }
 
     // Mask
 
     static final class Short64Mask extends AbstractMask<Short> {
-        static final Short64Mask TRUE_MASK = new Short64Mask(true);
-        static final Short64Mask FALSE_MASK = new Short64Mask(false);
 
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
@@ -1180,7 +443,7 @@ final class Short64Vector extends ShortVector {
         }
 
         public Short64Mask(boolean[] bits, int offset) {
-            boolean[] a = new boolean[species().length()];
+            boolean[] a = new boolean[vspecies().laneCount()];
             for (int i = 0; i < a.length; i++) {
                 a[i] = bits[offset + i];
             }
@@ -1188,9 +451,18 @@ final class Short64Vector extends ShortVector {
         }
 
         public Short64Mask(boolean val) {
-            boolean[] bits = new boolean[species().length()];
+            boolean[] bits = new boolean[vspecies().laneCount()];
             Arrays.fill(bits, val);
             this.bits = bits;
+        }
+
+        @ForceInline
+        final @Override
+        public ShortSpecies vspecies() {
+            // ISSUE:  This should probably be a @Stable
+            // field inside AbstractMask, rather than
+            // a megamorphic method.
+            return VSPECIES;
         }
 
         boolean[] getBits() {
@@ -1199,9 +471,9 @@ final class Short64Vector extends ShortVector {
 
         @Override
         Short64Mask uOp(MUnOp f) {
-            boolean[] res = new boolean[species().length()];
+            boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            for (int i = 0; i < species().length(); i++) {
+            for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i]);
             }
             return new Short64Mask(res);
@@ -1209,55 +481,47 @@ final class Short64Vector extends ShortVector {
 
         @Override
         Short64Mask bOp(VectorMask<Short> o, MBinOp f) {
-            boolean[] res = new boolean[species().length()];
+            boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
             boolean[] mbits = ((Short64Mask)o).getBits();
-            for (int i = 0; i < species().length(); i++) {
+            for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new Short64Mask(res);
         }
 
+        @ForceInline
         @Override
-        public VectorSpecies<Short> species() {
-            return SPECIES;
-        }
-
-        @Override
-        public Short64Vector toVector() {
-            short[] res = new short[species().length()];
-            boolean[] bits = getBits();
-            for (int i = 0; i < species().length(); i++) {
-                // -1 will result in the most significant bit being set in
-                // addition to some or all other bits
-                res[i] = (short) (bits[i] ? -1 : 0);
-            }
-            return new Short64Vector(res);
+        public final
+        Short64Vector toVector() {
+            return (Short64Vector) super.toVectorTemplate();  // specialize
         }
 
         @Override
         @ForceInline
-        @SuppressWarnings("unchecked")
-        public <E> VectorMask<E> cast(VectorSpecies<E> species) {
-            if (length() != species.length())
+        public <E> VectorMask<E> cast(VectorSpecies<E> s) {
+            AbstractSpecies<E> species = (AbstractSpecies<E>) s;
+            if (length() != species.laneCount())
                 throw new IllegalArgumentException("VectorMask length and species length differ");
-            Class<?> stype = species.elementType();
-            boolean [] maskArray = toArray();
-            if (stype == byte.class) {
-                return (VectorMask <E>) new Byte64Vector.Byte64Mask(maskArray);
-            } else if (stype == short.class) {
-                return (VectorMask <E>) new Short64Vector.Short64Mask(maskArray);
-            } else if (stype == int.class) {
-                return (VectorMask <E>) new Int64Vector.Int64Mask(maskArray);
-            } else if (stype == long.class) {
-                return (VectorMask <E>) new Long64Vector.Long64Mask(maskArray);
-            } else if (stype == float.class) {
-                return (VectorMask <E>) new Float64Vector.Float64Mask(maskArray);
-            } else if (stype == double.class) {
-                return (VectorMask <E>) new Double64Vector.Double64Mask(maskArray);
-            } else {
-                throw new UnsupportedOperationException("Bad lane type for casting.");
+            boolean[] maskArray = toArray();
+            // enum-switches don't optimize properly JDK-8161245
+            switch (species.laneType.switchKey) {
+            case LaneType.SK_BYTE:
+                return new Byte64Vector.Byte64Mask(maskArray).check(species);
+            case LaneType.SK_SHORT:
+                return new Short64Vector.Short64Mask(maskArray).check(species);
+            case LaneType.SK_INT:
+                return new Int64Vector.Int64Mask(maskArray).check(species);
+            case LaneType.SK_LONG:
+                return new Long64Vector.Long64Mask(maskArray).check(species);
+            case LaneType.SK_FLOAT:
+                return new Float64Vector.Float64Mask(maskArray).check(species);
+            case LaneType.SK_DOUBLE:
+                return new Double64Vector.Double64Mask(maskArray).check(species);
             }
+
+            // Should not reach here.
+            throw new AssertionError(species);
         }
 
         // Unary operations
@@ -1266,7 +530,7 @@ final class Short64Vector extends ShortVector {
         @ForceInline
         public Short64Mask not() {
             return (Short64Mask) VectorIntrinsics.unaryOp(
-                                             VECTOR_OP_NOT, Short64Mask.class, short.class, LENGTH,
+                                             VECTOR_OP_NOT, Short64Mask.class, short.class, VLENGTH,
                                              this,
                                              (m1) -> m1.uOp((i, a) -> !a));
         }
@@ -1278,7 +542,7 @@ final class Short64Vector extends ShortVector {
         public Short64Mask and(VectorMask<Short> o) {
             Objects.requireNonNull(o);
             Short64Mask m = (Short64Mask)o;
-            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Short64Mask.class, short.class, LENGTH,
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Short64Mask.class, short.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
@@ -1288,7 +552,7 @@ final class Short64Vector extends ShortVector {
         public Short64Mask or(VectorMask<Short> o) {
             Objects.requireNonNull(o);
             Short64Mask m = (Short64Mask)o;
-            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Short64Mask.class, short.class, LENGTH,
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Short64Mask.class, short.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
@@ -1298,7 +562,7 @@ final class Short64Vector extends ShortVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(BT_ne, Short64Mask.class, short.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, Short64Mask.class, short.class, VLENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((Short64Mask)m).getBits()));
         }
@@ -1306,10 +570,17 @@ final class Short64Vector extends ShortVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(BT_overflow, Short64Mask.class, short.class, LENGTH,
-                                         this, VectorMask.maskAllTrue(species()),
+            return VectorIntrinsics.test(BT_overflow, Short64Mask.class, short.class, VLENGTH,
+                                         this, vspecies().maskAll(true),
                                          (m, __) -> allTrueHelper(((Short64Mask)m).getBits()));
         }
+
+        /*package-private*/
+        static Short64Mask maskAll(boolean bit) {
+            return bit ? TRUE_MASK : FALSE_MASK;
+        }
+        static final Short64Mask TRUE_MASK = new Short64Mask(true);
+        static final Short64Mask FALSE_MASK = new Short64Mask(false);
     }
 
     // Shuffle
@@ -1327,47 +598,53 @@ final class Short64Vector extends ShortVector {
             super(reorder, i);
         }
 
-        public Short64Shuffle(IntUnaryOperator f) {
-            super(f);
+        public Short64Shuffle(IntUnaryOperator fn) {
+            super(fn);
         }
 
         @Override
-        public VectorSpecies<Short> species() {
-            return SPECIES;
+        public ShortSpecies vspecies() {
+            return VSPECIES;
         }
 
+        static {
+            // There must be enough bits in the shuffle lanes to encode
+            // VLENGTH valid indexes and VLENGTH exceptional ones.
+            assert(VLENGTH < Byte.MAX_VALUE);
+            assert(Byte.MIN_VALUE <= -VLENGTH);
+        }
+        static final Short64Shuffle IOTA = new Short64Shuffle(IDENTITY);
+
         @Override
-        public ShortVector toVector() {
-            short[] va = new short[SPECIES.length()];
-            for (int i = 0; i < va.length; i++) {
-              va[i] = (short) lane(i);
-            }
-            return ShortVector.fromArray(SPECIES, va, 0);
+        public Short64Vector toVector() {
+            return (Short64Vector) super.toVectorTemplate();  // specialize
         }
 
         @Override
         @ForceInline
-        @SuppressWarnings("unchecked")
-        public <F> VectorShuffle<F> cast(VectorSpecies<F> species) {
-            if (length() != species.length())
-                throw new IllegalArgumentException("Shuffle length and species length differ");
-            Class<?> stype = species.elementType();
-            int [] shuffleArray = toArray();
-            if (stype == byte.class) {
-                return (VectorShuffle<F>) new Byte64Vector.Byte64Shuffle(shuffleArray);
-            } else if (stype == short.class) {
-                return (VectorShuffle<F>) new Short64Vector.Short64Shuffle(shuffleArray);
-            } else if (stype == int.class) {
-                return (VectorShuffle<F>) new Int64Vector.Int64Shuffle(shuffleArray);
-            } else if (stype == long.class) {
-                return (VectorShuffle<F>) new Long64Vector.Long64Shuffle(shuffleArray);
-            } else if (stype == float.class) {
-                return (VectorShuffle<F>) new Float64Vector.Float64Shuffle(shuffleArray);
-            } else if (stype == double.class) {
-                return (VectorShuffle<F>) new Double64Vector.Double64Shuffle(shuffleArray);
-            } else {
-                throw new UnsupportedOperationException("Bad lane type for casting.");
+        public <F> VectorShuffle<F> cast(VectorSpecies<F> s) {
+            AbstractSpecies<F> species = (AbstractSpecies<F>) s;
+            if (length() != species.laneCount())
+                throw new AssertionError("NYI: Shuffle length and species length differ");
+            int[] shuffleArray = toArray();
+            // enum-switches don't optimize properly JDK-8161245
+            switch (species.laneType.switchKey) {
+            case LaneType.SK_BYTE:
+                return new Byte64Vector.Byte64Shuffle(shuffleArray).check(species);
+            case LaneType.SK_SHORT:
+                return new Short64Vector.Short64Shuffle(shuffleArray).check(species);
+            case LaneType.SK_INT:
+                return new Int64Vector.Int64Shuffle(shuffleArray).check(species);
+            case LaneType.SK_LONG:
+                return new Long64Vector.Long64Shuffle(shuffleArray).check(species);
+            case LaneType.SK_FLOAT:
+                return new Float64Vector.Float64Shuffle(shuffleArray).check(species);
+            case LaneType.SK_DOUBLE:
+                return new Double64Vector.Double64Shuffle(shuffleArray).check(species);
             }
+
+            // Should not reach here.
+            throw new AssertionError(species);
         }
 
         @Override
@@ -1375,16 +652,54 @@ final class Short64Vector extends ShortVector {
             Short64Shuffle s = (Short64Shuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
-                r[i] = reorder[s.reorder[i]];
+                int ssi = s.reorder[i];
+                r[i] = this.reorder[ssi];  // throws on exceptional index
             }
             return new Short64Shuffle(r);
         }
     }
 
-    // VectorSpecies
+    // ================================================
 
+    // Specialized low-level memory operations.
+
+    @ForceInline
     @Override
-    public VectorSpecies<Short> species() {
-        return SPECIES;
+    final
+    ShortVector fromArray0(short[] a, int offset) {
+        return super.fromArray0(a, offset);  // specialize
     }
+
+    @ForceInline
+    @Override
+    final
+    ShortVector fromByteArray0(byte[] a, int offset) {
+        return super.fromByteArray0(a, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    ShortVector fromByteBuffer0(ByteBuffer bb, int offset) {
+        return super.fromByteBuffer0(bb, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    void intoArray0(short[] a, int offset) {
+        super.intoArray0(a, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    void intoByteArray0(byte[] a, int offset) {
+        super.intoByteArray0(a, offset);  // specialize
+    }
+
+    // End of specialized low-level memory operations.
+
+    // ================================================
+
 }
