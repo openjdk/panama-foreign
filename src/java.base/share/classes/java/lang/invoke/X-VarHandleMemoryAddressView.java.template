@@ -50,20 +50,17 @@ final class VarHandleMemoryAddressAs$Type$s {
         return $Type$.$rawType$BitsTo$Type$(rv);
     }
 #else[floatingPoint]
+#if[byte]
     @ForceInline
     static $type$ convEndian(boolean big, $type$ n) {
-        return big == BE ? n : swap(n);
+        return n;
     }
-
-    @ForceInline
-    static $type$ swap($type$ rv) {
-#if[byte]
-        // do not swap bytes
-        return rv;
 #else[byte]
-        return $BoxType$.reverseBytes(rv);
-#end[byte]
+    @ForceInline
+    static $type$ convEndian(boolean big, $type$ n) {
+        return big == BE ? n : $BoxType$.reverseBytes(n);
     }
+#end[byte]
 #end[floatingPoint]
 
     @ForceInline
@@ -93,9 +90,9 @@ final class VarHandleMemoryAddressAs$Type$s {
         return $Type$.$rawType$BitsTo$Type$(rawValue);
 #else[floatingPoint]
 #if[byte]
-        return convEndian(handle.be, UNSAFE.get$Type$(
-                            bb.unsafeGetBase(),
-                            offset(bb, base, handle.alignment)));
+        return UNSAFE.get$Type$(
+                bb.unsafeGetBase(),
+                offset(bb, base, handle.alignment));
 #else[byte]
         return UNSAFE.get$Type$Unaligned(
                 bb.unsafeGetBase(),
@@ -117,9 +114,9 @@ final class VarHandleMemoryAddressAs$Type$s {
 #else[floatingPoint]
 #if[byte]
         UNSAFE.put$Type$(
-                         bb.unsafeGetBase(),
-                         offset(bb, base, handle.alignment),
-                         convEndian(handle.be, value));
+                bb.unsafeGetBase(),
+                offset(bb, base, handle.alignment),
+                value);
 #else[byte]
         UNSAFE.put$Type$Unaligned(
                 bb.unsafeGetBase(),
@@ -188,17 +185,10 @@ final class VarHandleMemoryAddressAs$Type$s {
     @ForceInline
     static boolean compareAndSet0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAddressImpl bb = checkAddress(obb, base, handle.length, false);
-#if[Object]
-        return UNSAFE.compareAndSetReference(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                convEndian(handle.be, expected), convEndian(handle.be, value));
-#else[Object]
         return UNSAFE.compareAndSet$RawType$(
                 bb.unsafeGetBase(),
                 offset(bb, base, handle.alignment),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
-#end[Object]
     }
 
     @ForceInline
@@ -270,19 +260,11 @@ final class VarHandleMemoryAddressAs$Type$s {
     @ForceInline
     static $type$ getAndSet0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressImpl bb = checkAddress(obb, base, handle.length, false);
-#if[Object]
-        return convEndian(handle.be,
-                          UNSAFE.getAndSetReference(
-                                  bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
-                                  convEndian(handle.be, value)));
-#else[Object]
         return convEndian(handle.be,
                           UNSAFE.getAndSet$RawType$(
                                   bb.unsafeGetBase(),
                                   offset(bb, base, handle.alignment),
                                   convEndian(handle.be, value)));
-#end[Object]
     }
 
     @ForceInline
