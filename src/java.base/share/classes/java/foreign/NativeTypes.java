@@ -28,6 +28,7 @@ package java.foreign;
 import java.foreign.layout.Value;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
+import sun.security.action.GetPropertyAction;
 
 /**
  * This class defines constants modelling standard types.
@@ -40,11 +41,11 @@ public final class NativeTypes {
     private static final boolean isX86;
 
     static {
-        String arch = System.getProperty("os.arch");
+        String arch = GetPropertyAction.privilegedGetProperty("os.arch");
         isX86 = arch.equals("amd64") || arch.equals("x86_64");
         isAArch64 = arch.equals("aarch64");
         isHostLE = isAArch64 || isX86;
-        String os = System.getProperty("os.name");
+        String os = GetPropertyAction.privilegedGetProperty("os.name");
         isWindows = os.startsWith("Windows");
     }
 

@@ -75,6 +75,7 @@ public class TranslationUnit {
     }
 
     public final void dispose() {
+        ClangUtils.removeTU(this);
         dispose0(ptr);
     }
 

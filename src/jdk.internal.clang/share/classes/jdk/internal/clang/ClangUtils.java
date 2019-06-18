@@ -82,4 +82,8 @@ class ClangUtils {
         Map<String, Type> context = contexts.computeIfAbsent(tu, k -> new HashMap<>());
         return context.putIfAbsent(type.spelling(), type);
     }
+
+    static void removeTU(TranslationUnit tu) {
+        contexts.remove(tu);
+    }
 }

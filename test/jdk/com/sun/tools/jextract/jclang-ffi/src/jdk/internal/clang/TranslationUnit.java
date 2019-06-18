@@ -126,6 +126,7 @@ public class TranslationUnit {
     }
 
     public void dispose() {
+        ClangUtils.removeTU(this);
         LibClang.lib.clang_disposeTranslationUnit(tu);
     }
 
