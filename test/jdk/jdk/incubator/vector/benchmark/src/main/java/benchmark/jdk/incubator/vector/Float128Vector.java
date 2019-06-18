@@ -1057,7 +1057,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void fma(Blackhole bh) {
+    public void lanewise_FMA(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] c = fc.apply(SPECIES.length());
@@ -1068,7 +1068,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 FloatVector cv = FloatVector.fromArray(SPECIES, c, i);
-                av.fma(bv, cv).intoArray(r, i);
+                av.lanewise(VectorOperators.FMA, bv, cv).intoArray(r, i);
             }
         }
 
@@ -1078,7 +1078,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void fmaMasked(Blackhole bh) {
+    public void lanewise_FMAMasked(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] c = fc.apply(SPECIES.length());
@@ -1091,7 +1091,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 FloatVector cv = FloatVector.fromArray(SPECIES, c, i);
-                av.fma(bv, cv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.FMA, bv, cv, vmask).intoArray(r, i);
             }
         }
 

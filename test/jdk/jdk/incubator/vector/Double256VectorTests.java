@@ -1807,15 +1807,15 @@ public class Double256VectorTests extends AbstractVectorTest {
 
 
 
-    static double fma(double a, double b, double c) {
+    static double lanewise_FMA(double a, double b, double c) {
         return (double)(Math.fma(a, b, c));
     }
 
 
     @Test(dataProvider = "doubleTernaryOpProvider")
-    static void fmaDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb, IntFunction<double[]> fc) {
+    static void lanewise_FMADouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb, IntFunction<double[]> fc) {
         int count = INVOC_COUNT;
-        switch ("fma") {
+        switch ("lanewise_FMA") {
         case "fma": case "lanewise_FMA":
            // Math.fma uses BigDecimal
            count = Math.max(5, count/20); break;
@@ -1831,19 +1831,19 @@ public class Double256VectorTests extends AbstractVectorTest {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
                 DoubleVector cv = DoubleVector.fromArray(SPECIES, c, i);
-                av.fma(bv, cv).intoArray(r, i);
+                av.lanewise(VectorOperators.FMA, bv, cv).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, c, r, Double256VectorTests::fma);
+        assertArraysEquals(a, b, c, r, Double256VectorTests::lanewise_FMA);
     }
 
 
     @Test(dataProvider = "doubleTernaryOpMaskProvider")
-    static void fmaDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
+    static void lanewise_FMADouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<double[]> fc, IntFunction<boolean[]> fm) {
         int count = INVOC_COUNT;
-        switch ("fma") {
+        switch ("lanewise_FMA") {
         case "fma": case "lanewise_FMA":
            // Math.fma uses BigDecimal
            count = Math.max(5, count/20); break;
@@ -1861,11 +1861,11 @@ public class Double256VectorTests extends AbstractVectorTest {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
                 DoubleVector cv = DoubleVector.fromArray(SPECIES, c, i);
-                av.fma(bv, cv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.FMA, bv, cv, vmask).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, c, r, mask, Double256VectorTests::fma);
+        assertArraysEquals(a, b, c, r, mask, Double256VectorTests::lanewise_FMA);
     }
 
 

@@ -431,6 +431,12 @@ public abstract class ByteVector extends AbstractVector<Byte> {
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like ByteVector,
+     * {@linkplain #broadcast(byte) the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.broadcast((byte)e)}.
+     * The two expressions will produce numerically identical results.
      */
     @Override
     public abstract ByteVector broadcast(long e);
@@ -579,6 +585,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @see #lanewise(VectorOperators.Binary,byte)
+     * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
      */
     @Override
     public abstract ByteVector lanewise(VectorOperators.Binary op,
@@ -733,8 +740,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *         to the input vector and the scalar
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
-     * @see #lanewise(VectorOperators.Binary,byte)
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Binary,byte)
      */
     @ForceInline
     public final
@@ -746,6 +753,13 @@ public abstract class ByteVector extends AbstractVector<Byte> {
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like ByteVector,
+     * {@linkplain #lanewise(VectorOperators.Binary,byte)
+     * the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.lanewise(op,(byte)e)}.
+     * The two expressions will produce numerically identical results.
      */
     @ForceInline
     public final
@@ -763,6 +777,13 @@ public abstract class ByteVector extends AbstractVector<Byte> {
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like ByteVector,
+     * {@linkplain #lanewise(VectorOperators.Binary,byte,VectorMask)
+     * the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.lanewise(op,(byte)e,m)}.
+     * The two expressions will produce numerically identical results.
      */
     @ForceInline
     public final
@@ -822,9 +843,22 @@ public abstract class ByteVector extends AbstractVector<Byte> {
 
     // Ternary lanewise support
 
-    /**
+    // Ternary operators come in eight variations:
+    //   lanewise(op, [broadcast(e1)|v1], [broadcast(e2)|v2])
+    //   lanewise(op, [broadcast(e1)|v1], [broadcast(e2)|v2], mask)
+
+    // It is annoying to support all of these variations of masking
+    // and broadcast, but it would be more surprising not to continue
+    // the obvious pattern started by unary and binary.
+
+   /**
      * {@inheritDoc} <!--workaround-->
+     * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector,VectorMask)
      * @see #lanewise(VectorOperators.Ternary,byte,byte)
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte)
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector)
      */
     @Override
     public abstract ByteVector lanewise(VectorOperators.Ternary op,
@@ -864,6 +898,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector,VectorMask)
      */
     @ForceInline
     public final
@@ -874,21 +911,174 @@ public abstract class ByteVector extends AbstractVector<Byte> {
         return blend(lanewise(op, v1, v2), m);
     }
 
-    // There are no broadcasting versions of ternary lanewise,
-    // because this class does not implement any ternary operations.
+    /**
+     * Combines the lane values of this vector
+     * with the values of two broadcast scalars.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2))}.
+     *
+     * @param e1 the first input scalar
+     * @param e2 the second input scalar
+     * @return the result of applying the operation lane-wise
+     *         to the input vector and the scalars
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
+                                  byte e1,
+                                  byte e2) {
+        return lanewise(op, broadcast(e1), broadcast(e1));
+    }
 
-    // ByteVector lanewise(VectorOperators.Ternary op,
-    //                               byte e1,
-    //                               byte e2) {
-    //     return lanewise(op, broadcast(e1), broadcast(e1));
-    // }
+    /**
+     * Combines the lane values of this vector
+     * with the values of two broadcast scalars,
+     * with selection of lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2), m)}.
+     *
+     * @param e1 the first input scalar
+     * @param e2 the second input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vector and the scalars
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,byte,byte)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,e1,e2,m)
+                                  byte e1,
+                                  byte e2,
+                                  VectorMask<Byte> m) {
+        return blend(lanewise(op, e1, e2), m);
+    }
 
-    // ByteVector lanewise(VectorOperators.Ternary op,
-    //                               byte e1,
-    //                               byte e2,
-    //                               VectorMask<Byte> m) {
-    //     return blend(lanewise(op, e), m);
-    // }
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, v1, this.broadcast(e2))}.
+     *
+     * @param v1 the other input vector
+     * @param e2 the input scalar
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,byte,byte)
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte,VectorMask)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,v1,e2)
+                                  Vector<Byte> v1,
+                                  byte e2) {
+        return lanewise(op, v1, broadcast(e2));
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
+     *
+     * @param v1 the other input vector
+     * @param e2 the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,v1,e2,m)
+                                  Vector<Byte> v1,
+                                  byte e2,
+                                  VectorMask<Byte> m) {
+        return blend(lanewise(op, v1, e2), m);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), v2)}.
+     *
+     * @param e1 the input scalar
+     * @param v2 the other input vector
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector,VectorMask)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,e1,v2)
+                                  byte e1,
+                                  Vector<Byte> v2) {
+        return lanewise(op, broadcast(e1), v2);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
+     *
+     * @param e1 the input scalar
+     * @param v2 the other input vector
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,e1,v2,m)
+                                  byte e1,
+                                  Vector<Byte> v2,
+                                  VectorMask<Byte> m) {
+        return blend(lanewise(op, e1, v2), m);
+    }
+
+    // (Thus endeth the Great and Mighty Ternary Ogdoad.)
+    // https://en.wikipedia.org/wiki/Ogdoad
 
     /// FULL-SERVICE BINARY METHODS: ADD, SUB, MUL, DIV
     //
@@ -913,7 +1103,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,byte)
      *    lanewise}{@code (}{@link VectorOperators#ADD
-     *    ADD}{@code , s)}.
+     *    ADD}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of adding each lane of this vector to the scalar
@@ -983,7 +1173,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,byte)
      *    lanewise}{@code (}{@link VectorOperators#SUB
-     *    SUB}{@code , s)}.
+     *    SUB}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of subtracting the scalar from each lane of this vector
@@ -1053,7 +1243,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,byte)
      *    lanewise}{@code (}{@link VectorOperators#MUL
-     *    MUL}{@code , s)}.
+     *    MUL}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of multiplying this vector by the given scalar
@@ -1123,7 +1313,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,byte)
      *    lanewise}{@code (}{@link VectorOperators#DIV
-     *    DIV}{@code , s)}.
+     *    DIV}{@code , e)}.
      *
      * <p>
      * If the underlying scalar operator does not support
@@ -1190,7 +1380,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
 
     /// SECOND-TIER BINARY METHODS
     //
-    // There are no masked or broadcast versions.
+    // There are no masked versions.
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1198,6 +1388,30 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     @Override
     public final ByteVector min(Vector<Byte> v) {
         return lanewise(MIN, v);
+    }
+
+    // FIXME:  "broadcast of an input scalar" is really wordy.  Reduce?
+    /**
+     * Computes the smaller of this vector and the broadcast of an input scalar.
+     *
+     * This is a lane-wise binary operation which appliesthe
+     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte)
+     *    lanewise}{@code (}{@link VectorOperators#MIN
+     *    MIN}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #min(Vector)
+     * @see #broadcast(byte)
+     * @see VectorOperators#MIN
+     * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
+     */
+    public final ByteVector min(byte e) {
+        return lanewise(MIN, e);
     }
 
     /**
@@ -1208,7 +1422,143 @@ public abstract class ByteVector extends AbstractVector<Byte> {
         return lanewise(MAX, v);
     }
 
-    /// UNARY OPERATIONS
+    /**
+     * Computes the larger of this vector and the broadcast of an input scalar.
+     *
+     * This is a lane-wise binary operation which appliesthe
+     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte)
+     *    lanewise}{@code (}{@link VectorOperators#MAX
+     *    MAX}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #max(Vector)
+     * @see #broadcast(byte)
+     * @see VectorOperators#MAX
+     * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
+     */
+    public final ByteVector max(byte e) {
+        return lanewise(MAX, e);
+    }
+
+    // common bitwise operators: and, or, not (with scalar versions)
+    /**
+     * Computes the bitwise logical conjunction ({@code &})
+     * of this vector and a second input vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "and" operation ({@code &})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#AND
+     *    AND}{@code , v)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @param v a second input vector
+     * @return the bitwise {@code &} of this vector and the second input vector
+     * @see #and(byte)
+     * @see #or(Vector)
+     * @see #not()
+     * @see VectorOperators#AND
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final ByteVector and(Vector<Byte> v) {
+        return lanewise(AND, v);
+    }
+
+    /**
+     * Computes the bitwise logical conjunction ({@code &})
+     * of this vector and a scalar.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "and" operation ({@code &})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#AND
+     *    AND}{@code , e)}.
+     *
+     * @param e an input scalar
+     * @return the bitwise {@code &} of this vector and scalar
+     * @see #and(Vector)
+     * @see VectorOperators#AND
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final ByteVector and(byte e) {
+        return lanewise(AND, e);
+    }
+
+    /**
+     * Computes the bitwise logical disjunction ({@code |})
+     * of this vector and a second input vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "or" operation ({@code |})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#OR
+     *    AND}{@code , v)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @param v a second input vector
+     * @return the bitwise {@code |} of this vector and the second input vector
+     * @see #or(byte)
+     * @see #and(Vector)
+     * @see #not()
+     * @see VectorOperators#OR
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final ByteVector or(Vector<Byte> v) {
+        return lanewise(OR, v);
+    }
+
+    /**
+     * Computes the bitwise logical disjunction ({@code |})
+     * of this vector and a scalar.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "or" operation ({@code |})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#OR
+     *    OR}{@code , e)}.
+     *
+     * @param e an input scalar
+     * @return the bitwise {@code |} of this vector and scalar
+     * @see #or(Vector)
+     * @see VectorOperators#OR
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final ByteVector or(byte e) {
+        return lanewise(OR, e);
+    }
+
+
+
+    /// UNARY METHODS
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1227,6 +1577,37 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     ByteVector abs() {
         return lanewise(ABS);
     }
+
+    // not (~)
+    /**
+     * Computes the bitwise logical complement ({@code ~})
+     * of this vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "not" operation ({@code ~})
+     * to each lane value.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Unary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#NOT
+     *    NOT}{@code )}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @return the bitwise complement {@code ~} of this vector
+     * @see #and(Vector)
+     * @see VectorOperators#NOT
+     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     */
+    public final ByteVector not() {
+        return lanewise(NOT);
+    }
+
 
     /// COMPARISONS
 
@@ -1330,7 +1711,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * the comparison operation to each lane.
      * <p>
      * The result is the same as
-     * {@code compare(op, broadcast(species(), s))}.
+     * {@code compare(op, broadcast(species(), e))}.
      * That is, the scalar may be regarded as broadcast to
      * a vector of the same species, and then compared
      * against the original vector, using the selected
@@ -1637,7 +2018,117 @@ public abstract class ByteVector extends AbstractVector<Byte> {
         return v.rearrange(this.toShuffle(), m);
     }
 
-    /// FMA
+    /// Ternary operations
+
+    /**
+     * Blends together the bits of two vectors under
+     * the control of a third, which supplies mask bits.
+     *
+     * <p>
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(byte,byte)
+     * @see #bitwiseBlend(byte,Vector)
+     * @see #bitwiseBlend(Vector,byte)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     */
+    public final
+    ByteVector bitwiseBlend(Vector<Byte> bits, Vector<Byte> mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
+
+    /**
+     * Blends together the bits of a vector and a scalar under
+     * the control of another scalar, which supplies mask bits.
+     *
+     * <p>
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
+     */
+    public final
+    ByteVector bitwiseBlend(byte bits, byte mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
+
+    /**
+     * Blends together the bits of a vector and a scalar under
+     * the control of another vector, which supplies mask bits.
+     *
+     * <p>
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector,VectorMask)
+     */
+    public final
+    ByteVector bitwiseBlend(byte bits, Vector<Byte> mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
+
+    /**
+     * Blends together the bits of two vectors scalar under
+     * the control of a scalar, which supplies mask bits.
+     *
+     * <p>
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte,VectorMask)
+     */
+    public final
+    ByteVector bitwiseBlend(Vector<Byte> bits, byte mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
 
 
     // Type specific horizontal reductions
@@ -1656,9 +2147,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * <ul>
      * <li>
      * In the case of {@code FIRST_NONZERO}, the reduction returns
-     * the value from the lowest-numbered non-zero lane. As with
-     * {@code MAX} and {@code MIN}, floating point {@code -0.0}
-     * is treated as a value distinct from the default zero value.
+     * the value from the lowest-numbered non-zero lane.
+     *
      *
      * <li>
      * In the case of floating point addition and multiplication, the
@@ -1678,6 +2168,14 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
      * @see #reduceLanes(VectorOperators.Associative,VectorMask)
+     * @see #add(Vector)
+     * @see #mul(Vector)
+     * @see #min(Vector)
+     * @see #max(Vector)
+     * @see #and(Vector)
+     * @see #or(Vector)
+     * @see VectorOperators#XOR
+     * @see VectorOperators#FIRST_NONZERO
      */
     public abstract byte reduceLanes(VectorOperators.Associative op);
 
@@ -2714,10 +3212,10 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@code "[0,1,2...]"}, reporting the lane values of this vector,
      * in lane order.
      *
-     * The string is produced as if by a call to {@linkplain
-     * java.util.Arrays#toString(byte[]) the {@code Arrays.toString}
-     * method} appropriate to the byte array returned by
-     * {@linkplain #toArray this vector's {@code toArray} method}.
+     * The string is produced as if by a call to {@link
+     * java.util.Arrays#toString(byte[]) Arrays.toString()},
+     * as appropriate to the byte array returned by
+     * {@link #toArray this.toArray()}.
      *
      * @return a string of the form {@code "[0,1,2...]"}
      * reporting the lane values of this vector
@@ -3127,7 +3625,6 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     @Deprecated public final byte andLanes(VectorMask<Byte> m) { return reduceLanes(AND, m); }
     @Deprecated public final byte xorLanes() { return reduceLanes(XOR); }
     @Deprecated public final byte xorLanes(VectorMask<Byte> m) { return reduceLanes(XOR, m); }
-    @Deprecated public final ByteVector sqrt() { return lanewise(SQRT); }
     @Deprecated public final ByteVector sqrt(VectorMask<Byte> m) { return lanewise(SQRT, m); }
     @Deprecated public final ByteVector tan() { return lanewise(TAN); }
     @Deprecated public final ByteVector tan(VectorMask<Byte> m) { return lanewise(TAN, m); }
@@ -3159,8 +3656,6 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     @Deprecated public final ByteVector log10(VectorMask<Byte> m) { return lanewise(LOG10, m); }
     @Deprecated public final ByteVector log1p() { return lanewise(LOG1P); }
     @Deprecated public final ByteVector log1p(VectorMask<Byte> m) { return lanewise(LOG1P, m); }
-    @Deprecated public final ByteVector pow(Vector<Byte> v) { return lanewise(POW, v); }
-    @Deprecated public final ByteVector pow(byte s) { return lanewise(POW, s); }
     @Deprecated public final ByteVector pow(Vector<Byte> v, VectorMask<Byte> m) { return lanewise(POW, v, m); }
     @Deprecated public final ByteVector pow(byte s, VectorMask<Byte> m) { return lanewise(POW, s, m); }
     @Deprecated public final ByteVector exp() { return lanewise(EXP); }
@@ -3171,20 +3666,14 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     @Deprecated public final ByteVector hypot(byte s) { return lanewise(HYPOT, s); }
     @Deprecated public final ByteVector hypot(Vector<Byte> v, VectorMask<Byte> m) { return lanewise(HYPOT, v, m); }
     @Deprecated public final ByteVector hypot(byte s, VectorMask<Byte> m) { return lanewise(HYPOT, s, m); }
-    @Deprecated 
-    public final ByteVector and(Vector<Byte> v) { return lanewise(AND, v); }
-    @Deprecated public final ByteVector and(byte s) { return lanewise(AND, s); }
     @Deprecated public final ByteVector and(Vector<Byte> v, VectorMask<Byte> m) { return lanewise(AND, v, m); }
     @Deprecated public final ByteVector and(byte s, VectorMask<Byte> m) { return lanewise(AND, s, m); }
-    @Deprecated public final ByteVector or(Vector<Byte> v) { return lanewise(OR, v); }
-    @Deprecated public final ByteVector or(byte s) { return lanewise(OR, s); }
     @Deprecated public final ByteVector or(Vector<Byte> v, VectorMask<Byte> m) { return lanewise(OR, v, m); }
     @Deprecated public final ByteVector or(byte s, VectorMask<Byte> m) { return lanewise(OR, s, m); }
     @Deprecated public final ByteVector xor(Vector<Byte> v) { return lanewise(XOR, v); }
     @Deprecated public final ByteVector xor(byte s) { return lanewise(XOR, s); }
     @Deprecated public final ByteVector xor(Vector<Byte> v, VectorMask<Byte> m) { return lanewise(XOR, v, m); }
     @Deprecated public final ByteVector xor(byte s, VectorMask<Byte> m) { return lanewise(XOR, s, m); }
-    @Deprecated public final ByteVector not() { return lanewise(NOT); }
     @Deprecated public final ByteVector not(VectorMask<Byte> m) { return lanewise(NOT, m); }
     @Deprecated public final ByteVector shiftLeft(int s) { return lanewise(LSHL, (byte) s); }
     @Deprecated public final ByteVector shiftLeft(int s, VectorMask<Byte> m) { return lanewise(LSHL, (byte) s, m); }

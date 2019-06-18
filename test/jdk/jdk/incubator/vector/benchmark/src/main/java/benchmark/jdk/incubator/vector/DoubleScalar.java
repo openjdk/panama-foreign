@@ -881,7 +881,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void fma(Blackhole bh) {
+    public void lanewise_FMA(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] cs = fc.apply(size);
@@ -903,7 +903,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void fmaMasked(Blackhole bh) {
+    public void lanewise_FMAMasked(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] cs = fc.apply(size);

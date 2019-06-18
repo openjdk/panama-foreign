@@ -432,6 +432,12 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like DoubleVector,
+     * {@linkplain #broadcast(double) the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.broadcast((double)e)}.
+     * The two expressions will produce numerically identical results.
      */
     @Override
     public abstract DoubleVector broadcast(long e);
@@ -606,6 +612,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @see #lanewise(VectorOperators.Binary,double)
+     * @see #lanewise(VectorOperators.Binary,double,VectorMask)
      */
     @Override
     public abstract DoubleVector lanewise(VectorOperators.Binary op,
@@ -722,8 +729,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         to the input vector and the scalar
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
-     * @see #lanewise(VectorOperators.Binary,double)
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Binary,double)
      */
     @ForceInline
     public final
@@ -735,6 +742,13 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like DoubleVector,
+     * {@linkplain #lanewise(VectorOperators.Binary,double)
+     * the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.lanewise(op,(double)e)}.
+     * The two expressions will produce numerically identical results.
      */
     @ForceInline
     public final
@@ -750,6 +764,13 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like DoubleVector,
+     * {@linkplain #lanewise(VectorOperators.Binary,double,VectorMask)
+     * the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.lanewise(op,(double)e,m)}.
+     * The two expressions will produce numerically identical results.
      */
     @ForceInline
     public final
@@ -761,9 +782,22 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     // Ternary lanewise support
 
-    /**
+    // Ternary operators come in eight variations:
+    //   lanewise(op, [broadcast(e1)|v1], [broadcast(e2)|v2])
+    //   lanewise(op, [broadcast(e1)|v1], [broadcast(e2)|v2], mask)
+
+    // It is annoying to support all of these variations of masking
+    // and broadcast, but it would be more surprising not to continue
+    // the obvious pattern started by unary and binary.
+
+   /**
      * {@inheritDoc} <!--workaround-->
+     * @see #lanewise(VectorOperators.Ternary,double,double,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,double,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,double,Vector,VectorMask)
      * @see #lanewise(VectorOperators.Ternary,double,double)
+     * @see #lanewise(VectorOperators.Ternary,Vector,double)
+     * @see #lanewise(VectorOperators.Ternary,double,Vector)
      */
     @Override
     public abstract DoubleVector lanewise(VectorOperators.Ternary op,
@@ -799,9 +833,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @see #lanewise(VectorOperators.Ternary,double,double,VectorMask)
-     * @apiNote Since {@code double} vectors do not support
-     * any ternary operations, this method always throws an exception.
-     * 
+     * @see #lanewise(VectorOperators.Ternary,Vector,double,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,double,Vector,VectorMask)
      */
     @ForceInline
     public final
@@ -832,7 +865,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     @ForceInline
     public final
-    DoubleVector lanewise(VectorOperators.Ternary op,
+    DoubleVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
                                   double e1,
                                   double e2) {
         return lanewise(op, broadcast(e1), broadcast(e1));
@@ -855,17 +888,131 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         to the input vector and the scalars
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
-     * @see #lanewise(VectorOperators.Ternary,double,double)
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,double,double)
      */
     @ForceInline
     public final
-    DoubleVector lanewise(VectorOperators.Ternary op,
+    DoubleVector lanewise(VectorOperators.Ternary op, //(op,e1,e2,m)
                                   double e1,
                                   double e2,
                                   VectorMask<Double> m) {
         return blend(lanewise(op, e1, e2), m);
     }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, v1, this.broadcast(e2))}.
+     *
+     * @param v1 the other input vector
+     * @param e2 the input scalar
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,double,double)
+     * @see #lanewise(VectorOperators.Ternary,Vector,double,VectorMask)
+     */
+    @ForceInline
+    public final
+    DoubleVector lanewise(VectorOperators.Ternary op, //(op,v1,e2)
+                                  Vector<Double> v1,
+                                  double e2) {
+        return lanewise(op, v1, broadcast(e2));
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
+     *
+     * @param v1 the other input vector
+     * @param e2 the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,double,double,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,double)
+     */
+    @ForceInline
+    public final
+    DoubleVector lanewise(VectorOperators.Ternary op, //(op,v1,e2,m)
+                                  Vector<Double> v1,
+                                  double e2,
+                                  VectorMask<Double> m) {
+        return blend(lanewise(op, v1, e2), m);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), v2)}.
+     *
+     * @param e1 the input scalar
+     * @param v2 the other input vector
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,double,Vector,VectorMask)
+     */
+    @ForceInline
+    public final
+    DoubleVector lanewise(VectorOperators.Ternary op, //(op,e1,v2)
+                                  double e1,
+                                  Vector<Double> v2) {
+        return lanewise(op, broadcast(e1), v2);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
+     *
+     * @param e1 the input scalar
+     * @param v2 the other input vector
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,double,Vector)
+     */
+    @ForceInline
+    public final
+    DoubleVector lanewise(VectorOperators.Ternary op, //(op,e1,v2,m)
+                                  double e1,
+                                  Vector<Double> v2,
+                                  VectorMask<Double> m) {
+        return blend(lanewise(op, e1, v2), m);
+    }
+
+    // (Thus endeth the Great and Mighty Ternary Ogdoad.)
+    // https://en.wikipedia.org/wiki/Ogdoad
 
     /// FULL-SERVICE BINARY METHODS: ADD, SUB, MUL, DIV
     //
@@ -890,7 +1037,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,double)
      *    lanewise}{@code (}{@link VectorOperators#ADD
-     *    ADD}{@code , s)}.
+     *    ADD}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of adding each lane of this vector to the scalar
@@ -960,7 +1107,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,double)
      *    lanewise}{@code (}{@link VectorOperators#SUB
-     *    SUB}{@code , s)}.
+     *    SUB}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of subtracting the scalar from each lane of this vector
@@ -1030,7 +1177,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,double)
      *    lanewise}{@code (}{@link VectorOperators#MUL
-     *    MUL}{@code , s)}.
+     *    MUL}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of multiplying this vector by the given scalar
@@ -1104,7 +1251,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,double)
      *    lanewise}{@code (}{@link VectorOperators#DIV
-     *    DIV}{@code , s)}.
+     *    DIV}{@code , e)}.
      *
      * <p>
      * If the underlying scalar operator does not support
@@ -1183,25 +1330,139 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /// SECOND-TIER BINARY METHODS
     //
-    // There are no masked or broadcast versions.
+    // There are no masked versions.
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * For this method, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than, the default zero value.
      */
     @Override
     public final DoubleVector min(Vector<Double> v) {
         return lanewise(MIN, v);
     }
 
+    // FIXME:  "broadcast of an input scalar" is really wordy.  Reduce?
+    /**
+     * Computes the smaller of this vector and the broadcast of an input scalar.
+     *
+     * This is a lane-wise binary operation which appliesthe
+     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,double)
+     *    lanewise}{@code (}{@link VectorOperators#MIN
+     *    MIN}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #min(Vector)
+     * @see #broadcast(double)
+     * @see VectorOperators#MIN
+     * @see #lanewise(VectorOperators.Binary,double,VectorMask)
+     * @apiNote
+     * For this method, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than, the default zero value.
+     */
+    public final DoubleVector min(double e) {
+        return lanewise(MIN, e);
+    }
+
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * For this method, negative floating-point zero compares
+     * less than the default value, positive zero.
      */
     @Override
     public final DoubleVector max(Vector<Double> v) {
         return lanewise(MAX, v);
     }
 
-    /// UNARY OPERATIONS
+    /**
+     * Computes the larger of this vector and the broadcast of an input scalar.
+     *
+     * This is a lane-wise binary operation which appliesthe
+     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,double)
+     *    lanewise}{@code (}{@link VectorOperators#MAX
+     *    MAX}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #max(Vector)
+     * @see #broadcast(double)
+     * @see VectorOperators#MAX
+     * @see #lanewise(VectorOperators.Binary,double,VectorMask)
+     * @apiNote
+     * For this method, negative floating-point zero compares
+     * less than the default value, positive zero.
+     */
+    public final DoubleVector max(double e) {
+        return lanewise(MAX, e);
+    }
+
+
+    // common FP operator: pow
+    /**
+     * Raises this vector to the power of a second input vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * method {@code Math.pow()}
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#POW
+     *    POW}{@code , n)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @param n a vector exponent by which to raise this vector
+     * @return the {@code n}-th power of this vector
+     * @see #pow(double)
+     * @see VectorOperators#POW
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final DoubleVector pow(Vector<Double> n) {
+        return lanewise(POW, n);
+    }
+
+    /**
+     * Raises this vector to a scalar power.
+     *
+     * This is a lane-wise binary operation which applies the
+     * method {@code Math.pow()}
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#POW
+     *    POW}{@code , n)}.
+     *
+     * @param n a scalar exponent by which to raise this vector
+     * @return the {@code n}-th power of this vector
+     * @see #pow(Vector)
+     * @see VectorOperators#POW
+     * @see #lanewise(VectorOperators.Binary,double,VectorMask)
+     */
+    public final DoubleVector pow(double n) {
+        return lanewise(POW, n);
+    }
+
+    /// UNARY METHODS
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1219,6 +1480,28 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     public final
     DoubleVector abs() {
         return lanewise(ABS);
+    }
+
+
+    // sqrt
+    /**
+     * Computes the square root of this vector.
+     *
+     * This is a lane-wise unary operation which applies the
+     * the method {@code Math.sqrt()}
+     * to each lane value.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Unary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#SQRT
+     *    SQRT}{@code )}.
+     *
+     * @return the square root of this vector
+     * @see VectorOperators#SQRT
+     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     */
+    public final DoubleVector sqrt() {
+        return lanewise(SQRT);
     }
 
     /// COMPARISONS
@@ -1323,7 +1606,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * the comparison operation to each lane.
      * <p>
      * The result is the same as
-     * {@code compare(op, broadcast(species(), s))}.
+     * {@code compare(op, broadcast(species(), e))}.
      * That is, the scalar may be regarded as broadcast to
      * a vector of the same species, and then compared
      * against the original vector, using the selected
@@ -1630,7 +1913,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
         return v.rearrange(this.toShuffle(), m);
     }
 
-    /// FMA
+    /// Ternary operations
+
 
     /**
      * Multiplies this vector by a second input vector, and sums
@@ -1639,7 +1923,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Extended precision is used for the intermediate result,
      * avoiding possible loss of precision from rounding once
      * for each of the two operations.
-     * The result is numerically close to {@code this.mul(v1).add(v2)},
+     * The result is numerically close to {@code this.mul(b).add(c)},
      * and is typically closer to the true mathematical result.
      * <p>
      * This is a lane-wise ternary operation which applies the
@@ -1649,17 +1933,20 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
      *    lanewise}{@code (}{@link VectorOperators#FMA
-     *    FMA}{@code , v1, v2)}.
+     *    FMA}{@code , b, c)}.
      *
-     * @param v1 the second input vector, supplying multiplier values
-     * @param v2 the third input vector, supplying addend values
+     * @param b the second input vector, supplying multiplier values
+     * @param b the third input vector, supplying addend values
      * @return the product of this vector and the second input vector
      *         summed with the third input vector, using extended precision
      *         for the intermediate result
+     * @see #fma(double,double)
+     * @see VectorOperators#FMA
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
      */
     public final
-    DoubleVector fma(Vector<Double> v1, Vector<Double> v2) {
-        return lanewise(FMA, v1, v2);
+    DoubleVector fma(Vector<Double> b, Vector<Double> c) {
+        return lanewise(FMA, b, c);
     }
 
     /**
@@ -1669,7 +1956,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Extended precision is used for the intermediate result,
      * avoiding possible loss of precision from rounding once
      * for each of the two operations.
-     * The result is numerically close to {@code this.mul(s1).add(s2)},
+     * The result is numerically close to {@code this.mul(b).add(c)},
      * and is typically closer to the true mathematical result.
      * <p>
      * This is a lane-wise ternary operation which applies the
@@ -1679,87 +1966,23 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
      *    lanewise}{@code (}{@link VectorOperators#FMA
-     *    FMA}{@code , {@link #broadcast(double)
-     *    broadcast}(s1), {@link #broadcast(double)
-     *    broadcast}(s2))}.
+     *    FMA}{@code , b, c)}.
      *
-     * @param s1 the scalar multiplier
-     * @param s2 the scalar addend
+     * @param b the scalar multiplier
+     * @param c the scalar addend
      * @return the product of this vector and the scalar multiplier
      *         summed with scalar addend, using extended precision
      *         for the intermediate result
+     * @see #fma(Vector,Vector)
+     * @see VectorOperators#FMA
+     * @see #lanewise(VectorOperators.Ternary,double,double,VectorMask)
      */
     public final
-    DoubleVector fma(double s1, double s2) {
-        return lanewise(FMA, s1, s2);
+    DoubleVector fma(double b, double c) {
+        return lanewise(FMA, b, c);
     }
 
-    /**
-     * Multiplies this vector by a second input vector, and sums
-     * the result with a third,
-     * under the control of a mask.
-     *
-     * Extended precision is used for the intermediate result,
-     * avoiding possible loss of precision from rounding once
-     * for each of the two operations.
-     * The result is numerically close to {@code this.mul(v1,m).add(v2,m)},
-     * and is typically closer to the true mathematical result.
-     * <p>
-     * This is a lane-wise ternary operation which applies the
-     * {@link Math#fma(double,double,double) Math#fma(a,b,c)}
-     * operation to each lane.
-     *
-     * This method is also equivalent to the expression
-     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
-     *    lanewise}{@code (}{@link VectorOperators#FMA
-     *    FMA}{@code , v1, v2, m)}.
-     *
-     * @param v1 the second input vector, supplying multiplier values
-     * @param v2 the third input vector, supplying addend values
-     * @param m the mask controlling lane selection
-     * @return the product of this vector and the second input vector
-     *         summed with the third input vector, using extended precision
-     *         for the intermediate result
-     */
-    public final DoubleVector
-    fma(Vector<Double> v1, Vector<Double> v2, VectorMask<Double> m) {
-        return lanewise(FMA, v1, v2, m);
-    }
-
-    /**
-     * Multiplies this vector by a scalar multiplier, and sums
-     * the result with a scalar addend,
-     * under the control of a mask.
-     *
-     * Extended precision is used for the intermediate result,
-     * avoiding possible loss of precision from rounding once
-     * for each of the two operations.
-     * The result is numerically close to {@code this.mul(s1,m).add(s2,m)},
-     * and is typically closer to the true mathematical result.
-     * <p>
-     * This is a lane-wise ternary operation which applies the
-     * {@link Math#fma(double,double,double) Math#fma(a,b,c)}
-     * operation to each lane.
-     *
-     * This method is also equivalent to the expression
-     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
-     *    lanewise}{@code (}{@link VectorOperators#FMA
-     *    FMA}{@code , {@link #broadcast(double)
-     *    broadcast}(s1), {@link #broadcast(double)
-     *    broadcast}(s2), m)}.
-     *
-     * @param s1 the scalar multiplier
-     * @param s2 the scalar addend
-     * @param m the mask controlling lane selection
-     * @return the product of this vector and the scalar multiplier
-     *         summed with scalar addend, using extended precision
-     *         for the intermediate result
-     */
-    public final
-    DoubleVector fma(double s1, double s2, VectorMask<Double> m) {
-        return lanewise(FMA, s1, s2, m);
-    }
-
+    // Don't bother with (Vector,double) and (double,Vector) overloadings.
 
     // Type specific horizontal reductions
 
@@ -1777,9 +2000,11 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * <ul>
      * <li>
      * In the case of {@code FIRST_NONZERO}, the reduction returns
-     * the value from the lowest-numbered non-zero lane. As with
-     * {@code MAX} and {@code MIN}, floating point {@code -0.0}
-     * is treated as a value distinct from the default zero value.
+     * the value from the lowest-numbered non-zero lane.
+     *
+     * As with {@code MAX} and {@code MIN}, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than, the default zero value.
      *
      * <li>
      * In the case of floating point addition and multiplication, the
@@ -1817,6 +2042,11 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
      * @see #reduceLanes(VectorOperators.Associative,VectorMask)
+     * @see #add(Vector)
+     * @see #mul(Vector)
+     * @see #min(Vector)
+     * @see #max(Vector)
+     * @see VectorOperators#FIRST_NONZERO
      */
     public abstract double reduceLanes(VectorOperators.Associative op);
 
@@ -2899,10 +3129,10 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@code "[0,1,2...]"}, reporting the lane values of this vector,
      * in lane order.
      *
-     * The string is produced as if by a call to {@linkplain
-     * java.util.Arrays#toString(double[]) the {@code Arrays.toString}
-     * method} appropriate to the double array returned by
-     * {@linkplain #toArray this vector's {@code toArray} method}.
+     * The string is produced as if by a call to {@link
+     * java.util.Arrays#toString(double[]) Arrays.toString()},
+     * as appropriate to the double array returned by
+     * {@link #toArray this.toArray()}.
      *
      * @return a string of the form {@code "[0,1,2...]"}
      * reporting the lane values of this vector
@@ -3312,7 +3542,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     @Deprecated public final double andLanes(VectorMask<Double> m) { return reduceLanes(AND, m); }
     @Deprecated public final double xorLanes() { return reduceLanes(XOR); }
     @Deprecated public final double xorLanes(VectorMask<Double> m) { return reduceLanes(XOR, m); }
-    @Deprecated public final DoubleVector sqrt() { return lanewise(SQRT); }
     @Deprecated public final DoubleVector sqrt(VectorMask<Double> m) { return lanewise(SQRT, m); }
     @Deprecated public final DoubleVector tan() { return lanewise(TAN); }
     @Deprecated public final DoubleVector tan(VectorMask<Double> m) { return lanewise(TAN, m); }
@@ -3344,8 +3573,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     @Deprecated public final DoubleVector log10(VectorMask<Double> m) { return lanewise(LOG10, m); }
     @Deprecated public final DoubleVector log1p() { return lanewise(LOG1P); }
     @Deprecated public final DoubleVector log1p(VectorMask<Double> m) { return lanewise(LOG1P, m); }
-    @Deprecated public final DoubleVector pow(Vector<Double> v) { return lanewise(POW, v); }
-    @Deprecated public final DoubleVector pow(double s) { return lanewise(POW, s); }
     @Deprecated public final DoubleVector pow(Vector<Double> v, VectorMask<Double> m) { return lanewise(POW, v, m); }
     @Deprecated public final DoubleVector pow(double s, VectorMask<Double> m) { return lanewise(POW, s, m); }
     @Deprecated public final DoubleVector exp() { return lanewise(EXP); }
@@ -3356,20 +3583,14 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     @Deprecated public final DoubleVector hypot(double s) { return lanewise(HYPOT, s); }
     @Deprecated public final DoubleVector hypot(Vector<Double> v, VectorMask<Double> m) { return lanewise(HYPOT, v, m); }
     @Deprecated public final DoubleVector hypot(double s, VectorMask<Double> m) { return lanewise(HYPOT, s, m); }
-    @Deprecated 
-    public final DoubleVector and(Vector<Double> v) { return lanewise(AND, v); }
-    @Deprecated public final DoubleVector and(double s) { return lanewise(AND, s); }
     @Deprecated public final DoubleVector and(Vector<Double> v, VectorMask<Double> m) { return lanewise(AND, v, m); }
     @Deprecated public final DoubleVector and(double s, VectorMask<Double> m) { return lanewise(AND, s, m); }
-    @Deprecated public final DoubleVector or(Vector<Double> v) { return lanewise(OR, v); }
-    @Deprecated public final DoubleVector or(double s) { return lanewise(OR, s); }
     @Deprecated public final DoubleVector or(Vector<Double> v, VectorMask<Double> m) { return lanewise(OR, v, m); }
     @Deprecated public final DoubleVector or(double s, VectorMask<Double> m) { return lanewise(OR, s, m); }
     @Deprecated public final DoubleVector xor(Vector<Double> v) { return lanewise(XOR, v); }
     @Deprecated public final DoubleVector xor(double s) { return lanewise(XOR, s); }
     @Deprecated public final DoubleVector xor(Vector<Double> v, VectorMask<Double> m) { return lanewise(XOR, v, m); }
     @Deprecated public final DoubleVector xor(double s, VectorMask<Double> m) { return lanewise(XOR, s, m); }
-    @Deprecated public final DoubleVector not() { return lanewise(NOT); }
     @Deprecated public final DoubleVector not(VectorMask<Double> m) { return lanewise(NOT, m); }
     @Deprecated public final DoubleVector shiftLeft(int s) { return lanewise(LSHL, (double) s); }
     @Deprecated public final DoubleVector shiftLeft(int s, VectorMask<Double> m) { return lanewise(LSHL, (double) s, m); }

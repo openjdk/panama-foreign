@@ -881,7 +881,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void fma(Blackhole bh) {
+    public void lanewise_FMA(Blackhole bh) {
         float[] as = fa.apply(size);
         float[] bs = fb.apply(size);
         float[] cs = fc.apply(size);
@@ -903,7 +903,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void fmaMasked(Blackhole bh) {
+    public void lanewise_FMAMasked(Blackhole bh) {
         float[] as = fa.apply(size);
         float[] bs = fb.apply(size);
         float[] cs = fc.apply(size);

@@ -1807,13 +1807,13 @@ public class Float64VectorTests extends AbstractVectorTest {
 
 
 
-    static float fma(float a, float b, float c) {
+    static float lanewise_FMA(float a, float b, float c) {
         return (float)(Math.fma(a, b, c));
     }
 
 
     @Test(dataProvider = "floatTernaryOpProvider")
-    static void fmaFloat64VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb, IntFunction<float[]> fc) {
+    static void lanewise_FMAFloat64VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb, IntFunction<float[]> fc) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] c = fc.apply(SPECIES.length());
@@ -1824,16 +1824,16 @@ public class Float64VectorTests extends AbstractVectorTest {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 FloatVector cv = FloatVector.fromArray(SPECIES, c, i);
-                av.fma(bv, cv).intoArray(r, i);
+                av.lanewise(VectorOperators.FMA, bv, cv).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, c, r, Float64VectorTests::fma);
+        assertArraysEquals(a, b, c, r, Float64VectorTests::lanewise_FMA);
     }
 
 
     @Test(dataProvider = "floatTernaryOpMaskProvider")
-    static void fmaFloat64VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    static void lanewise_FMAFloat64VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb,
                                           IntFunction<float[]> fc, IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
@@ -1847,11 +1847,11 @@ public class Float64VectorTests extends AbstractVectorTest {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
                 FloatVector cv = FloatVector.fromArray(SPECIES, c, i);
-                av.fma(bv, cv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.FMA, bv, cv, vmask).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, c, r, mask, Float64VectorTests::fma);
+        assertArraysEquals(a, b, c, r, mask, Float64VectorTests::lanewise_FMA);
     }
 
 

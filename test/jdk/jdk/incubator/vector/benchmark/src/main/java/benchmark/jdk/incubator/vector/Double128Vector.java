@@ -1057,7 +1057,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void fma(Blackhole bh) {
+    public void lanewise_FMA(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] c = fc.apply(SPECIES.length());
@@ -1068,7 +1068,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
                 DoubleVector cv = DoubleVector.fromArray(SPECIES, c, i);
-                av.fma(bv, cv).intoArray(r, i);
+                av.lanewise(VectorOperators.FMA, bv, cv).intoArray(r, i);
             }
         }
 
@@ -1078,7 +1078,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void fmaMasked(Blackhole bh) {
+    public void lanewise_FMAMasked(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] c = fc.apply(SPECIES.length());
@@ -1091,7 +1091,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
                 DoubleVector cv = DoubleVector.fromArray(SPECIES, c, i);
-                av.fma(bv, cv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.FMA, bv, cv, vmask).intoArray(r, i);
             }
         }
 
