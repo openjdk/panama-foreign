@@ -349,7 +349,7 @@ gen_op_tmpl $binary_math_template "pow" "Math.pow((double)a, (double)b)" $unit_o
 gen_op_tmpl $binary_math_template "atan2" "Math.atan2((double)a, (double)b)" $unit_output $perf_output $perf_scalar_output "FP"
 
 # Ternary operations.
-gen_ternary_alu_op "fma" "Math.fma(a, b, c)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_ternary_alu_op "lanewise_FMA" "Math.fma(a, b, c)" $unit_output $perf_output $perf_scalar_output "FP"
 gen_ternary_alu_op "lanewise_BITWISE_BLEND" "(a\&~(c))|(b\&c)" $unit_output $perf_output $perf_scalar_output "BITWISE"
 
 # Unary operations.

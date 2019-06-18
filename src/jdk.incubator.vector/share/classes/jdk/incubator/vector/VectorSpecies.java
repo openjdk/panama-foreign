@@ -156,7 +156,7 @@ public interface VectorSpecies<E> {
      * </pre>
      * <p> Specifically, this method computes
      * {@code length - floorMod(length, VLENGTH)}, where
-     * {@link Math.floorMod(int,int) floorMod} computes a remainder
+     * {@link Math#floorMod(int,int) floorMod} computes a remainder
      * value by rounding its quotient toward negative infinity.
      * As long as {@code VLENGTH} is a power of two, then the result
      * is also equal to {@code length & ~(VLENGTH - 1)}.

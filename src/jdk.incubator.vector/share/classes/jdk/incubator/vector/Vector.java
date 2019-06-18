@@ -81,6 +81,26 @@ import jdk.incubator.vector.*;
  * object which selects an alternative vector format different
  * from that of the input vector.
  *
+ * <p> {@code Vector<E>} declares a set of vector operations (methods)
+ * that are common to all element types.  These common operations
+ * include generic access to lane values, data selection and movement,
+ * reformatting, and certain arithmetic and logical operations (such as addition
+ * or comparison) that are common to all primitive types.
+ *
+ * <p> <a href="Vector.html#subtypes">Public subtypes of {@code Vector}</a>
+ * correspond to specific
+ * element types.  These declare further operations that are specific
+ * to that element type, including unboxed access to lane values,
+ * bitwise operations on values of integral element types, or
+ * transcendental operations on values of floating point element
+ * types.
+ *
+ * <p>This package contains a public subtype of {@link Vector}
+ * corresponding to each supported element type:
+ * {@link ByteVector}, {@link ShortVector},
+ * {@link IntVector}, {@link LongVector},
+ * {@link FloatVector}, and {@link DoubleVector}.
+ *
  * <!-- The preceding paragraphs are shared verbatim
  *   -- between Vector.java and package-info.java -->
  *
@@ -108,7 +128,9 @@ import jdk.incubator.vector.*;
  * as compared to scalar execution of the {@code VLENGTH} scalar
  * operators which underly the vector operation.
  *
- * <p> The information capacity of a vector is determined by its
+ * <h1><a id="species"></a>Shapes and species</h1>
+ *
+ * The information capacity of a vector is determined by its
  * {@linkplain #shape() <em>vector shape</em>}, also called its
  * {@code VSHAPE}.  Each possible {@code VSHAPE} is represented by
  * a member of the {@link VectorShape} enumeration, and represents
@@ -125,7 +147,7 @@ import jdk.incubator.vector.*;
  * while the majority of operations are <em>shape-invariant</em>,
  * to avoid disadvantaging platforms which support only one shape.
  * There are queries to discover, for the current Java platform,
- * the {@linkplain VectorShape#preferredShape()preferred shape}
+ * the {@linkplain VectorShape#preferredShape() preferred shape}
  * for general SIMD computation, or the
  * {@linkplain VectorShape#largestShapeFor(Class) largest
  * available shape} for any given lane type.  To be portable,
@@ -141,6 +163,13 @@ import jdk.incubator.vector.*;
  * shared in common by all vectors of the same shape and
  * {@code ETYPE}.
  *
+ * <p> Unless otherwise documented, lane-wise vector operations
+ * require that all vector inputs have exactly the same {@code VSHAPE}
+ * and {@code VLENGTH}, which is to say that they must have exactly
+ * the same species.  This allows corresponding lanes to be paired
+ * unambiguously.  The {@link #check(VectorSpecies) check()} method
+ * provides an easy way to perform this check explicitly.
+ *
  * <p> Vector shape, {@code VLENGTH}, and {@code ETYPE} are all
  * mutually constrained, so that {@code VLENGTH} times the
  * {@linkplain #elementSize() bit-size of each lane}
@@ -152,7 +181,7 @@ import jdk.incubator.vector.*;
  * reinterpreting a vector may double the lane size if and only if it
  * either halves the length, or else changes the shape of the vector.
  *
- * <h1><a id="subtype"></a>Vector subtypes</h1>
+ * <h1><a id="subtypes"></a>Vector subtypes</h1>
  *
  * Vector declares a set of vector operations (methods) that are common to all
  * element types (such as addition).  Sub-classes of Vector with a concrete
@@ -174,9 +203,31 @@ import jdk.incubator.vector.*;
  * It is recommended that Species instances be held in {@code static final}
  * fields for optimal creation and usage of Vector values by the runtime compiler.
  *
+ * <p> The various typed vector classes expose static constants
+ * corresponding to their supported species, and static methods on these
+ * types generally take a species as a parameter.  For example, the
+ * constant {@link FloatVector#SPECIES_256 FloatVector.SPECIES_256}
+ * is the unique species whose lanes are {@code float}s and whose
+ * vector size is 256 bits.  Again, the constant
+ * {@link ShortVector#SPECIES_PREFERRED} is the species which
+ * best supports processing of {@code short} vector lanes on
+ * the currently running Java platform.
+ *
+ * <p> As another example, a broadcast scalar value of
+ * {@code (double)0.5} can be obtained by calling
+ * {@link DoubleVector#broadcast(VectorSpecies,double)
+ * DoubleVector.broadcast(dsp, 0.5)}, but the argument {@code dsp} is
+ * required to select the species (and hence the shape and length) of
+ * the resulting vector.
+ *
  * <h1><a id="lane-wise"></a>Lane-wise operations</h1>
  *
- * Most operations on vectors are lane-wise, which means the operation
+ * We use the term <em>lanes</em> when defining operations on
+ * vectors. The number of lanes in a vector is the number of scalar
+ * elements it holds. For example, a vector of type {@code float} and
+ * shape {@code S_256_BIT} has eight lanes, since {@code 32*8=256}.
+ *
+ * <p> Most operations on vectors are lane-wise, which means the operation
  * is composed of an underlying scalar operator, which is repeated for
  * each distinct lane of the input vector.  If there are additional
  * vector arguments of the same type, their lanes are aligned with the
@@ -431,6 +482,17 @@ import jdk.incubator.vector.*;
  * {@linkplain Vector#broadcast(long) broadcasting it}
  * into the same lane structure as the first input.
  *
+ * For example, to multiply all lanes of a {@code double} vector by
+ * a scalar value{@code 1.1}, the expression {@code v.mul(1.1)} is
+ * easier to work with than an equivalent expression with an explicit
+ * broadcast operation, such as {@code v.mul(v.broadcast(1.1))}
+ * or {@code v.mul(DoubleVector.broadcast(v.species(), 1.1))}.
+ *
+ * Unless otherwise specified the scalar variant always behaves as if
+ * each scalar value is first transformed to a vector of the same
+ * species as the first vector input, using the appropriate
+ * {@code broadcast} operation.
+ * 
  * <h1><a id="masking"></a>Masked operations</h1>
  *
  * <p> Many vector operations accept an optional
@@ -490,7 +552,7 @@ import jdk.incubator.vector.*;
  * lanes in the resulting mask are themselves unset, as if the
  * suppressed comparison operation returned {@code false} regardless
  * of the suppressed input values.</li>
- * 
+ *
  * <li>In other cases, such as masked
  * <a href="Vector.html#cross-lane"><em>cross-lane movements</em></a>,
  * the specific effects of masking are documented by the masked
@@ -628,6 +690,49 @@ import jdk.incubator.vector.*;
  * for big-endian fictions to create unified addressing of vector
  * bytes.
  *
+ * <h1><a id="memory">Memory operations</h1>
+ *
+ * As was already mentioned, vectors can be loaded from memory and
+ * stored back.  An optional mask can control which individual memory
+ * locations are read from or written to.  The shape of a vector
+ * determines how much memory it will occupy.  In the absence of
+ * masking, the lanes are stored as a dense sequence of back-to-back
+ * values in memory, the same as a dense (gap-free) series of single
+ * scalar values in an array of the scalar type.
+ *
+ * Memory order corresponds exactly to lane order.  The first vector
+ * lane value occupies the first position in memory, and so on, up to
+ * the length of the vector.  Although memory order is not directly
+ * defined by Java as a separate concept, the memory order of stored
+ * vector lanes always corresponds to increasing index values in a
+ * Java array or in a {@link java.nio.ByteBuffer}.
+ *
+ * <p> Byte order for lane storage is chosen such that the stored
+ * vector values can be read or written as single primitive values,
+ * within the array or buffer that holds the vector, producing the
+ * same values as the lane-wise values within the vector.
+ * This fact is independent of the convenient fiction that lane values
+ * inside of vectors are stored in little-endian order.
+ *
+ * <p> For example,
+ * {@link FloatVector#fromArray(VectorSpecies, float[], int)
+ *        FloatVector.fromArray(fsp,fa,i)}
+ * creates and returns a float vector of some particular species {@code fsp},
+ * with elements loaded from some float array {@code fa}.
+ * The first lane is loaded from {@code fa[i]} and the last lane
+ * is initialized loaded from {@code fa[i+VL-1]}, where {@code VL}
+ * is the length of the vector as derived from the species {@code fsp}.
+ * Then, {@link FloatVector#add(Vector<Float>) fv=FloatVector.add(fv2)}
+ * will produce another float vector of that species {@code fsp},
+ * given a vector {@code fv2} of the same species {@code fsp}.
+ * Next, {@link FloatVector#compare(VectorOperators.Comparison,float)
+ * mnz=fv.compare(NE, 0.0f)} tests whether the result is zero,
+ *
+ * yielding a mask {@code mnz}.  The non-zero lanes (and only those
+ * lanes) can then be stored back into the original array elements
+ * using the statement
+ * {@link FloatVector#intoArray(float[],int,VectorMask) fv.intoArray(fa,i,mnz)}.
+ * 
  * <h1><a id="expansion">Expansions, contractions, and partial results</h1>
  *
  * Since vectors are fixed in size, occasions often arise where the
@@ -1055,6 +1160,8 @@ public abstract class Vector<E> {
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
      * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Ternary,Vector)
      */
     public abstract Vector<E> lanewise(VectorOperators.Unary op);
 
@@ -1104,6 +1211,8 @@ public abstract class Vector<E> {
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Unary,Vector)
+     * @see #lanewise(VectorOperators.Ternary,Vector)
      */
     public abstract Vector<E> lanewise(VectorOperators.Binary op,
                                        Vector<E> v);
@@ -1159,7 +1268,7 @@ public abstract class Vector<E> {
      *         be represented by the right operand type
      *         of the vector operation
      * @see #broadcast(long)
-     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Binary,long,VectorMask)
      */
     public abstract Vector<E> lanewise(VectorOperators.Binary op,
                                        long e);
@@ -1220,8 +1329,9 @@ public abstract class Vector<E> {
      *         to the three input vectors
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
+     * @see #lanewise(VectorOperators.Unary,Vector)
+     * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
-     * @see #broadcast(long)
      */
     public abstract Vector<E> lanewise(VectorOperators.Ternary op,
                                        Vector<E> v1,
@@ -1252,10 +1362,17 @@ public abstract class Vector<E> {
                                        Vector<E> v1, Vector<E> v2,
                                        VectorMask<E> o);
 
+    // Note:  lanewise(Binary) has two rudimentary broadcast
+    // operations from an approximate scalar type (long).
+    // We don both with that, here, for lanewise(Ternary).
+    // The vector subtypes supply a full suite of
+    // broadcasting and masked lanewise operations
+    // for their specific ETYPEs:
+    //   lanewise(Unary, [mask])
+    //   lanewise(Binary, [e | v], [mask])
+    //   lanewise(Ternary, [e1 | v1], [e2 | v2], [mask])
+
     /// Full-service binary ops: ADD, SUB, MUL, DIV
-    //
-    // These include masked and non-masked versions.
-    // Subclasses will also add broadcast (masked or not).
 
     // Full-service functions support all four variations
     // of vector vs. broadcast scalar, and mask vs. not.
@@ -1263,8 +1380,8 @@ public abstract class Vector<E> {
     // also a full-service function.
 
     // Other named functions handle just the one named
-    // variation.  Still others are not named, and are
-    // reached only by lanewise.
+    // variation.  Most lanewise operations are *not* named,
+    // and are reached only by lanewise.
 
     /**
      * Adds this vector to a second input vector.
@@ -1600,7 +1717,7 @@ public abstract class Vector<E> {
      *
      * <p>
      * This is not a full-service named operation like
-     * {link #add(Vector) add}.  A masked version of
+     * {@link #add(Vector) add()}.  A masked version of
      * version of this operation is not directly available
      * but may be obtained via the masked version of
      * {@code lanewise}.  Subclasses define an additional
@@ -1629,7 +1746,7 @@ public abstract class Vector<E> {
      *
      * <p>
      * This is not a full-service named operation like
-     * {link #add(Vector) add}.  A masked version of
+     * {@link #add(Vector) add()}.  A masked version of
      * version of this operation is not directly available
      * but may be obtained via the masked version of
      * {@code lanewise}.  Subclasses define an additional
@@ -2825,7 +2942,7 @@ public abstract class Vector<E> {
      * 
      * <p> If the old and new species have the same shape, the behavior
      * is exactly the same as the simpler, shape-invariant method
-     * {@link @linkplain #convert(VectorOperators.Conversion,int) convert()}.
+     * {@link #convert(VectorOperators.Conversion,int) convert()}.
      * In such cases, the simpler method {@code convert()} should be
      * used, to make code easier to reason about.
      * Otherwise, this is a <em>shape-changing</em> operation, and may
@@ -3185,10 +3302,10 @@ public abstract class Vector<E> {
      * {@code "[0,1,2...]"}, reporting the lane values of this
      * vector, in lane order.
      *
-     * The string is produced as if by a call to {@linkplain
-     * Arrays.toString(int[]) the {@code Arrays.toString} method}
-     * appropriate to the array returned by {@linkplain #toArray this
-     * vector's {@code toArray} method}.
+     * The string is produced as if by a call to
+     * {@link Arrays#toString(int[]) Arrays.toString()},
+     * as appropriate to the array returned by
+     * {@link #toArray() this.toArray()}.
      *
      * @return a string of the form {@code "[0,1,2...]"}
      * reporting the lane values of this vector
@@ -3202,9 +3319,9 @@ public abstract class Vector<E> {
      * and same lane values, in the same order.
 
      * <p>The comparison of lane values is produced as if by a call to
-     * {@linkplain Arrays.equals(int[],int[]) the {@code
-     * Arrays.equals} method} appropriate to the array returned by
-     * {@linkplain #toArray this vector's {@code toArray} method}.
+     * {@link Arrays#equals(int[],int[]) Arrays.equals()},
+     * as appropriate to the arrays returned by
+     * {@link #toArray toArray()} on both vectors.
      *
      * @return whether this vector is identical to some other object
      */

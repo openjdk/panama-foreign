@@ -441,7 +441,7 @@ public abstract class VectorMask<E> {
      *
      * This method performs a SIMD emulation of the check performed by
      * {@link Objects#checkIndex(int,int)}, on the index numbers in
-     * the range {@code [offset..offset+VLENGTH-1].  If an exception
+     * the range {@code [offset..offset+VLENGTH-1]}.  If an exception
      * is desired, the resulting mask can be compared with the
      * original mask; if they are not equal, then at least one lane
      * was out of range, and exception processing can be performed.

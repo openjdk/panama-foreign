@@ -507,5 +507,5 @@ public abstract class VectorShuffle<E> {
     @Deprecated
     public final VectorSpecies<E> species() { return vectorSpecies(); }
 
-    //@@@ FIXME: maybe add inversion, mask generation, index normalization
+    //FIXME: maybe add inversion, mask generation, index normalization
 }

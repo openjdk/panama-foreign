@@ -439,6 +439,12 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 #if[!long]
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like $abstractvectortype$,
+     * {@linkplain #broadcast($type$) the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.broadcast(($type$)e)}.
+     * The two expressions will produce numerically identical results.
      */
     @Override
     public abstract $abstractvectortype$ broadcast(long e);
@@ -634,6 +640,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @see #lanewise(VectorOperators.Binary,$type$)
+     * @see #lanewise(VectorOperators.Binary,$type$,VectorMask)
      */
     @Override
     public abstract $abstractvectortype$ lanewise(VectorOperators.Binary op,
@@ -814,8 +821,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *         to the input vector and the scalar
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
-     * @see #lanewise(VectorOperators.Binary,$type$)
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Binary,$type$)
      */
     @ForceInline
     public final
@@ -828,6 +835,13 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 #if[!long]
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like $abstractvectortype$,
+     * {@linkplain #lanewise(VectorOperators.Binary,$type$)
+     * the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.lanewise(op,($type$)e)}.
+     * The two expressions will produce numerically identical results.
      */
     @ForceInline
     public final
@@ -847,6 +861,13 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like $abstractvectortype$,
+     * {@linkplain #lanewise(VectorOperators.Binary,$type$,VectorMask)
+     * the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.lanewise(op,($type$)e,m)}.
+     * The two expressions will produce numerically identical results.
      */
     @ForceInline
     public final
@@ -913,9 +934,22 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 
     // Ternary lanewise support
 
-    /**
+    // Ternary operators come in eight variations:
+    //   lanewise(op, [broadcast(e1)|v1], [broadcast(e2)|v2])
+    //   lanewise(op, [broadcast(e1)|v1], [broadcast(e2)|v2], mask)
+
+    // It is annoying to support all of these variations of masking
+    // and broadcast, but it would be more surprising not to continue
+    // the obvious pattern started by unary and binary.
+
+   /**
      * {@inheritDoc} <!--workaround-->
+     * @see #lanewise(VectorOperators.Ternary,$type$,$type$,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,$type$,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,$type$,Vector,VectorMask)
      * @see #lanewise(VectorOperators.Ternary,$type$,$type$)
+     * @see #lanewise(VectorOperators.Ternary,Vector,$type$)
+     * @see #lanewise(VectorOperators.Ternary,$type$,Vector)
      */
     @Override
     public abstract $abstractvectortype$ lanewise(VectorOperators.Ternary op,
@@ -963,12 +997,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 
     /**
      * {@inheritDoc} <!--workaround-->
-#if[FP]
      * @see #lanewise(VectorOperators.Ternary,$type$,$type$,VectorMask)
-     * @apiNote Since {@code $type$} vectors do not support
-     * any ternary operations, this method always throws an exception.
-     * 
-#end[FP]
+     * @see #lanewise(VectorOperators.Ternary,Vector,$type$,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,$type$,Vector,VectorMask)
      */
     @ForceInline
     public final
@@ -979,7 +1010,6 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
         return blend(lanewise(op, v1, v2), m);
     }
 
-#if[FP]
     /**
      * Combines the lane values of this vector
      * with the values of two broadcast scalars.
@@ -1000,7 +1030,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      */
     @ForceInline
     public final
-    $abstractvectortype$ lanewise(VectorOperators.Ternary op,
+    $abstractvectortype$ lanewise(VectorOperators.Ternary op, //(op,e1,e2)
                                   $type$ e1,
                                   $type$ e2) {
         return lanewise(op, broadcast(e1), broadcast(e1));
@@ -1023,34 +1053,131 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *         to the input vector and the scalars
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
-     * @see #lanewise(VectorOperators.Ternary,$type$,$type$)
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,$type$,$type$)
      */
     @ForceInline
     public final
-    $abstractvectortype$ lanewise(VectorOperators.Ternary op,
+    $abstractvectortype$ lanewise(VectorOperators.Ternary op, //(op,e1,e2,m)
                                   $type$ e1,
                                   $type$ e2,
                                   VectorMask<$Boxtype$> m) {
         return blend(lanewise(op, e1, e2), m);
     }
-#else[FP]
-    // There are no broadcasting versions of ternary lanewise,
-    // because this class does not implement any ternary operations.
 
-    // $abstractvectortype$ lanewise(VectorOperators.Ternary op,
-    //                               $type$ e1,
-    //                               $type$ e2) {
-    //     return lanewise(op, broadcast(e1), broadcast(e1));
-    // }
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, v1, this.broadcast(e2))}.
+     *
+     * @param v1 the other input vector
+     * @param e2 the input scalar
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,$type$,$type$)
+     * @see #lanewise(VectorOperators.Ternary,Vector,$type$,VectorMask)
+     */
+    @ForceInline
+    public final
+    $abstractvectortype$ lanewise(VectorOperators.Ternary op, //(op,v1,e2)
+                                  Vector<$Boxtype$> v1,
+                                  $type$ e2) {
+        return lanewise(op, v1, broadcast(e2));
+    }
 
-    // $abstractvectortype$ lanewise(VectorOperators.Ternary op,
-    //                               $type$ e1,
-    //                               $type$ e2,
-    //                               VectorMask<$Boxtype$> m) {
-    //     return blend(lanewise(op, e), m);
-    // }
-#end[FP]
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
+     *
+     * @param v1 the other input vector
+     * @param e2 the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,$type$,$type$,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,$type$)
+     */
+    @ForceInline
+    public final
+    $abstractvectortype$ lanewise(VectorOperators.Ternary op, //(op,v1,e2,m)
+                                  Vector<$Boxtype$> v1,
+                                  $type$ e2,
+                                  VectorMask<$Boxtype$> m) {
+        return blend(lanewise(op, v1, e2), m);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), v2)}.
+     *
+     * @param e1 the input scalar
+     * @param v2 the other input vector
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,$type$,Vector,VectorMask)
+     */
+    @ForceInline
+    public final
+    $abstractvectortype$ lanewise(VectorOperators.Ternary op, //(op,e1,v2)
+                                  $type$ e1,
+                                  Vector<$Boxtype$> v2) {
+        return lanewise(op, broadcast(e1), v2);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     * <p>
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
+     *
+     * @param e1 the input scalar
+     * @param v2 the other input vector
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,$type$,Vector)
+     */
+    @ForceInline
+    public final
+    $abstractvectortype$ lanewise(VectorOperators.Ternary op, //(op,e1,v2,m)
+                                  $type$ e1,
+                                  Vector<$Boxtype$> v2,
+                                  VectorMask<$Boxtype$> m) {
+        return blend(lanewise(op, e1, v2), m);
+    }
+
+    // (Thus endeth the Great and Mighty Ternary Ogdoad.)
+    // https://en.wikipedia.org/wiki/Ogdoad
 
     /// FULL-SERVICE BINARY METHODS: ADD, SUB, MUL, DIV
     //
@@ -1075,7 +1202,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,$type$)
      *    lanewise}{@code (}{@link VectorOperators#ADD
-     *    ADD}{@code , s)}.
+     *    ADD}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of adding each lane of this vector to the scalar
@@ -1145,7 +1272,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,$type$)
      *    lanewise}{@code (}{@link VectorOperators#SUB
-     *    SUB}{@code , s)}.
+     *    SUB}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of subtracting the scalar from each lane of this vector
@@ -1215,7 +1342,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,$type$)
      *    lanewise}{@code (}{@link VectorOperators#MUL
-     *    MUL}{@code , s)}.
+     *    MUL}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of multiplying this vector by the given scalar
@@ -1291,7 +1418,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,$type$)
      *    lanewise}{@code (}{@link VectorOperators#DIV
-     *    DIV}{@code , s)}.
+     *    DIV}{@code , e)}.
      *
      * <p>
      * If the underlying scalar operator does not support
@@ -1376,25 +1503,262 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 
     /// SECOND-TIER BINARY METHODS
     //
-    // There are no masked or broadcast versions.
+    // There are no masked versions.
 
     /**
      * {@inheritDoc} <!--workaround-->
+#if[FP]
+     * @apiNote
+     * For this method, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than, the default zero value.
+#end[FP]
      */
     @Override
     public final $abstractvectortype$ min(Vector<$Boxtype$> v) {
         return lanewise(MIN, v);
     }
 
+    // FIXME:  "broadcast of an input scalar" is really wordy.  Reduce?
+    /**
+     * Computes the smaller of this vector and the broadcast of an input scalar.
+     *
+     * This is a lane-wise binary operation which appliesthe
+     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,$type$)
+     *    lanewise}{@code (}{@link VectorOperators#MIN
+     *    MIN}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #min(Vector)
+     * @see #broadcast($type$)
+     * @see VectorOperators#MIN
+     * @see #lanewise(VectorOperators.Binary,$type$,VectorMask)
+#if[FP]
+     * @apiNote
+     * For this method, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than, the default zero value.
+#end[FP]
+     */
+    public final $abstractvectortype$ min($type$ e) {
+        return lanewise(MIN, e);
+    }
+
     /**
      * {@inheritDoc} <!--workaround-->
+#if[FP]
+     * @apiNote
+     * For this method, negative floating-point zero compares
+     * less than the default value, positive zero.
+#end[FP]
      */
     @Override
     public final $abstractvectortype$ max(Vector<$Boxtype$> v) {
         return lanewise(MAX, v);
     }
 
-    /// UNARY OPERATIONS
+    /**
+     * Computes the larger of this vector and the broadcast of an input scalar.
+     *
+     * This is a lane-wise binary operation which appliesthe
+     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,$type$)
+     *    lanewise}{@code (}{@link VectorOperators#MAX
+     *    MAX}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #max(Vector)
+     * @see #broadcast($type$)
+     * @see VectorOperators#MAX
+     * @see #lanewise(VectorOperators.Binary,$type$,VectorMask)
+#if[FP]
+     * @apiNote
+     * For this method, negative floating-point zero compares
+     * less than the default value, positive zero.
+#end[FP]
+     */
+    public final $abstractvectortype$ max($type$ e) {
+        return lanewise(MAX, e);
+    }
+
+#if[BITWISE]
+    // common bitwise operators: and, or, not (with scalar versions)
+    /**
+     * Computes the bitwise logical conjunction ({@code &})
+     * of this vector and a second input vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "and" operation ({@code &})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#AND
+     *    AND}{@code , v)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @param v a second input vector
+     * @return the bitwise {@code &} of this vector and the second input vector
+     * @see #and($type$)
+     * @see #or(Vector)
+     * @see #not()
+     * @see VectorOperators#AND
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final $abstractvectortype$ and(Vector<$Boxtype$> v) {
+        return lanewise(AND, v);
+    }
+
+    /**
+     * Computes the bitwise logical conjunction ({@code &})
+     * of this vector and a scalar.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "and" operation ({@code &})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#AND
+     *    AND}{@code , e)}.
+     *
+     * @param e an input scalar
+     * @return the bitwise {@code &} of this vector and scalar
+     * @see #and(Vector)
+     * @see VectorOperators#AND
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final $abstractvectortype$ and($type$ e) {
+        return lanewise(AND, e);
+    }
+
+    /**
+     * Computes the bitwise logical disjunction ({@code |})
+     * of this vector and a second input vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "or" operation ({@code |})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#OR
+     *    AND}{@code , v)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @param v a second input vector
+     * @return the bitwise {@code |} of this vector and the second input vector
+     * @see #or($type$)
+     * @see #and(Vector)
+     * @see #not()
+     * @see VectorOperators#OR
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final $abstractvectortype$ or(Vector<$Boxtype$> v) {
+        return lanewise(OR, v);
+    }
+
+    /**
+     * Computes the bitwise logical disjunction ({@code |})
+     * of this vector and a scalar.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "or" operation ({@code |})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#OR
+     *    OR}{@code , e)}.
+     *
+     * @param e an input scalar
+     * @return the bitwise {@code |} of this vector and scalar
+     * @see #or(Vector)
+     * @see VectorOperators#OR
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final $abstractvectortype$ or($type$ e) {
+        return lanewise(OR, e);
+    }
+
+#end[BITWISE]
+
+#if[FP]
+    // common FP operator: pow
+    /**
+     * Raises this vector to the power of a second input vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * method {@code Math.pow()}
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#POW
+     *    POW}{@code , n)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @param n a vector exponent by which to raise this vector
+     * @return the {@code n}-th power of this vector
+     * @see #pow($type$)
+     * @see VectorOperators#POW
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final $abstractvectortype$ pow(Vector<$Boxtype$> n) {
+        return lanewise(POW, n);
+    }
+
+    /**
+     * Raises this vector to a scalar power.
+     *
+     * This is a lane-wise binary operation which applies the
+     * method {@code Math.pow()}
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#POW
+     *    POW}{@code , n)}.
+     *
+     * @param n a scalar exponent by which to raise this vector
+     * @return the {@code n}-th power of this vector
+     * @see #pow(Vector)
+     * @see VectorOperators#POW
+     * @see #lanewise(VectorOperators.Binary,$type$,VectorMask)
+     */
+    public final $abstractvectortype$ pow($type$ n) {
+        return lanewise(POW, n);
+    }
+#end[FP]
+
+    /// UNARY METHODS
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1413,6 +1777,61 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     $abstractvectortype$ abs() {
         return lanewise(ABS);
     }
+
+#if[BITWISE]
+    // not (~)
+    /**
+     * Computes the bitwise logical complement ({@code ~})
+     * of this vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "not" operation ({@code ~})
+     * to each lane value.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Unary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#NOT
+     *    NOT}{@code )}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @return the bitwise complement {@code ~} of this vector
+     * @see #and(Vector)
+     * @see VectorOperators#NOT
+     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     */
+    public final $abstractvectortype$ not() {
+        return lanewise(NOT);
+    }
+#end[BITWISE]
+
+#if[FP]
+    // sqrt
+    /**
+     * Computes the square root of this vector.
+     *
+     * This is a lane-wise unary operation which applies the
+     * the method {@code Math.sqrt()}
+     * to each lane value.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Unary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#SQRT
+     *    SQRT}{@code )}.
+     *
+     * @return the square root of this vector
+     * @see VectorOperators#SQRT
+     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     */
+    public final $abstractvectortype$ sqrt() {
+        return lanewise(SQRT);
+    }
+#end[FP]
 
     /// COMPARISONS
 
@@ -1516,7 +1935,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * the comparison operation to each lane.
      * <p>
      * The result is the same as
-     * {@code compare(op, broadcast(species(), s))}.
+     * {@code compare(op, broadcast(species(), e))}.
      * That is, the scalar may be regarded as broadcast to
      * a vector of the same species, and then compared
      * against the original vector, using the selected
@@ -1825,7 +2244,119 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
         return v.rearrange(this.toShuffle(), m);
     }
 
-    /// FMA
+    /// Ternary operations
+
+#if[BITWISE]
+    /**
+     * Blends together the bits of two vectors under
+     * the control of a third, which supplies mask bits.
+     *
+     * <p>
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend($type$,$type$)
+     * @see #bitwiseBlend($type$,Vector)
+     * @see #bitwiseBlend(Vector,$type$)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     */
+    public final
+    $abstractvectortype$ bitwiseBlend(Vector<$Boxtype$> bits, Vector<$Boxtype$> mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
+
+    /**
+     * Blends together the bits of a vector and a scalar under
+     * the control of another scalar, which supplies mask bits.
+     *
+     * <p>
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,$type$,$type$,VectorMask)
+     */
+    public final
+    $abstractvectortype$ bitwiseBlend($type$ bits, $type$ mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
+
+    /**
+     * Blends together the bits of a vector and a scalar under
+     * the control of another vector, which supplies mask bits.
+     *
+     * <p>
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,$type$,Vector,VectorMask)
+     */
+    public final
+    $abstractvectortype$ bitwiseBlend($type$ bits, Vector<$Boxtype$> mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
+
+    /**
+     * Blends together the bits of two vectors scalar under
+     * the control of a scalar, which supplies mask bits.
+     *
+     * <p>
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,Vector,$type$,VectorMask)
+     */
+    public final
+    $abstractvectortype$ bitwiseBlend(Vector<$Boxtype$> bits, $type$ mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
+#end[BITWISE]
 
 #if[FP]
     /**
@@ -1835,7 +2366,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * Extended precision is used for the intermediate result,
      * avoiding possible loss of precision from rounding once
      * for each of the two operations.
-     * The result is numerically close to {@code this.mul(v1).add(v2)},
+     * The result is numerically close to {@code this.mul(b).add(c)},
      * and is typically closer to the true mathematical result.
      * <p>
      * This is a lane-wise ternary operation which applies the
@@ -1845,17 +2376,20 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
      *    lanewise}{@code (}{@link VectorOperators#FMA
-     *    FMA}{@code , v1, v2)}.
+     *    FMA}{@code , b, c)}.
      *
-     * @param v1 the second input vector, supplying multiplier values
-     * @param v2 the third input vector, supplying addend values
+     * @param b the second input vector, supplying multiplier values
+     * @param b the third input vector, supplying addend values
      * @return the product of this vector and the second input vector
      *         summed with the third input vector, using extended precision
      *         for the intermediate result
+     * @see #fma($type$,$type$)
+     * @see VectorOperators#FMA
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
      */
     public final
-    $abstractvectortype$ fma(Vector<$Boxtype$> v1, Vector<$Boxtype$> v2) {
-        return lanewise(FMA, v1, v2);
+    $abstractvectortype$ fma(Vector<$Boxtype$> b, Vector<$Boxtype$> c) {
+        return lanewise(FMA, b, c);
     }
 
     /**
@@ -1865,7 +2399,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * Extended precision is used for the intermediate result,
      * avoiding possible loss of precision from rounding once
      * for each of the two operations.
-     * The result is numerically close to {@code this.mul(s1).add(s2)},
+     * The result is numerically close to {@code this.mul(b).add(c)},
      * and is typically closer to the true mathematical result.
      * <p>
      * This is a lane-wise ternary operation which applies the
@@ -1875,87 +2409,23 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
      *    lanewise}{@code (}{@link VectorOperators#FMA
-     *    FMA}{@code , {@link #broadcast($type$)
-     *    broadcast}(s1), {@link #broadcast($type$)
-     *    broadcast}(s2))}.
+     *    FMA}{@code , b, c)}.
      *
-     * @param s1 the scalar multiplier
-     * @param s2 the scalar addend
+     * @param b the scalar multiplier
+     * @param c the scalar addend
      * @return the product of this vector and the scalar multiplier
      *         summed with scalar addend, using extended precision
      *         for the intermediate result
+     * @see #fma(Vector,Vector)
+     * @see VectorOperators#FMA
+     * @see #lanewise(VectorOperators.Ternary,$type$,$type$,VectorMask)
      */
     public final
-    $abstractvectortype$ fma($type$ s1, $type$ s2) {
-        return lanewise(FMA, s1, s2);
+    $abstractvectortype$ fma($type$ b, $type$ c) {
+        return lanewise(FMA, b, c);
     }
 
-    /**
-     * Multiplies this vector by a second input vector, and sums
-     * the result with a third,
-     * under the control of a mask.
-     *
-     * Extended precision is used for the intermediate result,
-     * avoiding possible loss of precision from rounding once
-     * for each of the two operations.
-     * The result is numerically close to {@code this.mul(v1,m).add(v2,m)},
-     * and is typically closer to the true mathematical result.
-     * <p>
-     * This is a lane-wise ternary operation which applies the
-     * {@link Math#fma($type$,$type$,$type$) Math#fma(a,b,c)}
-     * operation to each lane.
-     *
-     * This method is also equivalent to the expression
-     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
-     *    lanewise}{@code (}{@link VectorOperators#FMA
-     *    FMA}{@code , v1, v2, m)}.
-     *
-     * @param v1 the second input vector, supplying multiplier values
-     * @param v2 the third input vector, supplying addend values
-     * @param m the mask controlling lane selection
-     * @return the product of this vector and the second input vector
-     *         summed with the third input vector, using extended precision
-     *         for the intermediate result
-     */
-    public final $abstractvectortype$
-    fma(Vector<$Boxtype$> v1, Vector<$Boxtype$> v2, VectorMask<$Boxtype$> m) {
-        return lanewise(FMA, v1, v2, m);
-    }
-
-    /**
-     * Multiplies this vector by a scalar multiplier, and sums
-     * the result with a scalar addend,
-     * under the control of a mask.
-     *
-     * Extended precision is used for the intermediate result,
-     * avoiding possible loss of precision from rounding once
-     * for each of the two operations.
-     * The result is numerically close to {@code this.mul(s1,m).add(s2,m)},
-     * and is typically closer to the true mathematical result.
-     * <p>
-     * This is a lane-wise ternary operation which applies the
-     * {@link Math#fma($type$,$type$,$type$) Math#fma(a,b,c)}
-     * operation to each lane.
-     *
-     * This method is also equivalent to the expression
-     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
-     *    lanewise}{@code (}{@link VectorOperators#FMA
-     *    FMA}{@code , {@link #broadcast($type$)
-     *    broadcast}(s1), {@link #broadcast($type$)
-     *    broadcast}(s2), m)}.
-     *
-     * @param s1 the scalar multiplier
-     * @param s2 the scalar addend
-     * @param m the mask controlling lane selection
-     * @return the product of this vector and the scalar multiplier
-     *         summed with scalar addend, using extended precision
-     *         for the intermediate result
-     */
-    public final
-    $abstractvectortype$ fma($type$ s1, $type$ s2, VectorMask<$Boxtype$> m) {
-        return lanewise(FMA, s1, s2, m);
-    }
-
+    // Don't bother with (Vector,$type$) and ($type$,Vector) overloadings.
 #end[FP]
 
     // Type specific horizontal reductions
@@ -1974,9 +2444,13 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * <ul>
      * <li>
      * In the case of {@code FIRST_NONZERO}, the reduction returns
-     * the value from the lowest-numbered non-zero lane. As with
-     * {@code MAX} and {@code MIN}, floating point {@code -0.0}
-     * is treated as a value distinct from the default zero value.
+     * the value from the lowest-numbered non-zero lane.
+     *
+#if[FP]
+     * As with {@code MAX} and {@code MIN}, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than, the default zero value.
+#end[FP]
      *
      * <li>
      * In the case of floating point addition and multiplication, the
@@ -2016,6 +2490,16 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
      * @see #reduceLanes(VectorOperators.Associative,VectorMask)
+     * @see #add(Vector)
+     * @see #mul(Vector)
+     * @see #min(Vector)
+     * @see #max(Vector)
+#if[BITWISE]
+     * @see #and(Vector)
+     * @see #or(Vector)
+     * @see VectorOperators#XOR
+#end[BITWISE]
+     * @see VectorOperators#FIRST_NONZERO
      */
     public abstract $type$ reduceLanes(VectorOperators.Associative op);
 
@@ -3231,10 +3715,10 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@code "[0,1,2...]"}, reporting the lane values of this vector,
      * in lane order.
      *
-     * The string is produced as if by a call to {@linkplain
-     * java.util.Arrays#toString($type$[]) the {@code Arrays.toString}
-     * method} appropriate to the $type$ array returned by
-     * {@linkplain #toArray this vector's {@code toArray} method}.
+     * The string is produced as if by a call to {@link
+     * java.util.Arrays#toString($type$[]) Arrays.toString()},
+     * as appropriate to the $type$ array returned by
+     * {@link #toArray this.toArray()}.
      *
      * @return a string of the form {@code "[0,1,2...]"}
      * reporting the lane values of this vector
@@ -3651,7 +4135,6 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     @Deprecated public final $type$ andLanes(VectorMask<$Boxtype$> m) { return reduceLanes(AND, m); }
     @Deprecated public final $type$ xorLanes() { return reduceLanes(XOR); }
     @Deprecated public final $type$ xorLanes(VectorMask<$Boxtype$> m) { return reduceLanes(XOR, m); }
-    @Deprecated public final $abstractvectortype$ sqrt() { return lanewise(SQRT); }
     @Deprecated public final $abstractvectortype$ sqrt(VectorMask<$Boxtype$> m) { return lanewise(SQRT, m); }
     @Deprecated public final $abstractvectortype$ tan() { return lanewise(TAN); }
     @Deprecated public final $abstractvectortype$ tan(VectorMask<$Boxtype$> m) { return lanewise(TAN, m); }
@@ -3683,8 +4166,6 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     @Deprecated public final $abstractvectortype$ log10(VectorMask<$Boxtype$> m) { return lanewise(LOG10, m); }
     @Deprecated public final $abstractvectortype$ log1p() { return lanewise(LOG1P); }
     @Deprecated public final $abstractvectortype$ log1p(VectorMask<$Boxtype$> m) { return lanewise(LOG1P, m); }
-    @Deprecated public final $abstractvectortype$ pow(Vector<$Boxtype$> v) { return lanewise(POW, v); }
-    @Deprecated public final $abstractvectortype$ pow($type$ s) { return lanewise(POW, s); }
     @Deprecated public final $abstractvectortype$ pow(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) { return lanewise(POW, v, m); }
     @Deprecated public final $abstractvectortype$ pow($type$ s, VectorMask<$Boxtype$> m) { return lanewise(POW, s, m); }
     @Deprecated public final $abstractvectortype$ exp() { return lanewise(EXP); }
@@ -3695,20 +4176,14 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     @Deprecated public final $abstractvectortype$ hypot($type$ s) { return lanewise(HYPOT, s); }
     @Deprecated public final $abstractvectortype$ hypot(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) { return lanewise(HYPOT, v, m); }
     @Deprecated public final $abstractvectortype$ hypot($type$ s, VectorMask<$Boxtype$> m) { return lanewise(HYPOT, s, m); }
-    @Deprecated 
-    public final $abstractvectortype$ and(Vector<$Boxtype$> v) { return lanewise(AND, v); }
-    @Deprecated public final $abstractvectortype$ and($type$ s) { return lanewise(AND, s); }
     @Deprecated public final $abstractvectortype$ and(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) { return lanewise(AND, v, m); }
     @Deprecated public final $abstractvectortype$ and($type$ s, VectorMask<$Boxtype$> m) { return lanewise(AND, s, m); }
-    @Deprecated public final $abstractvectortype$ or(Vector<$Boxtype$> v) { return lanewise(OR, v); }
-    @Deprecated public final $abstractvectortype$ or($type$ s) { return lanewise(OR, s); }
     @Deprecated public final $abstractvectortype$ or(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) { return lanewise(OR, v, m); }
     @Deprecated public final $abstractvectortype$ or($type$ s, VectorMask<$Boxtype$> m) { return lanewise(OR, s, m); }
     @Deprecated public final $abstractvectortype$ xor(Vector<$Boxtype$> v) { return lanewise(XOR, v); }
     @Deprecated public final $abstractvectortype$ xor($type$ s) { return lanewise(XOR, s); }
     @Deprecated public final $abstractvectortype$ xor(Vector<$Boxtype$> v, VectorMask<$Boxtype$> m) { return lanewise(XOR, v, m); }
     @Deprecated public final $abstractvectortype$ xor($type$ s, VectorMask<$Boxtype$> m) { return lanewise(XOR, s, m); }
-    @Deprecated public final $abstractvectortype$ not() { return lanewise(NOT); }
     @Deprecated public final $abstractvectortype$ not(VectorMask<$Boxtype$> m) { return lanewise(NOT, m); }
     @Deprecated public final $abstractvectortype$ shiftLeft(int s) { return lanewise(LSHL, ($type$) s); }
     @Deprecated public final $abstractvectortype$ shiftLeft(int s, VectorMask<$Boxtype$> m) { return lanewise(LSHL, ($type$) s, m); }
