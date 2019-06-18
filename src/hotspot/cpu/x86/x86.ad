@@ -6355,7 +6355,7 @@ instruct rvadd64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rsadd4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2) %{
+instruct rsadd4S_reduction_reg(rRegI dst, rRegI src1, legVecD src2, legRegF tmp, rRegI tmp2) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
@@ -6379,7 +6379,7 @@ instruct rsadd4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   ins_pipe( pipe_slow );
 %}
 
-instruct rvadd4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2) %{
+instruct rvadd4S_reduction_reg(rRegI dst, rRegI src1, legVecD src2, legRegF tmp, rRegI tmp2) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
@@ -6401,7 +6401,7 @@ instruct rvadd4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   ins_pipe( pipe_slow );
 %}
 
-instruct rsadd8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI tmp2) %{
+instruct rsadd8S_reduction_reg(rRegI dst, rRegI src1, legVecX src2, legRegF tmp, rRegI tmp2) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
@@ -6427,7 +6427,7 @@ instruct rsadd8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI
   ins_pipe( pipe_slow );
 %}
 
-instruct rvadd8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI tmp2) %{
+instruct rvadd8S_reduction_reg(rRegI dst, rRegI src1, legVecX src2, legRegF tmp, rRegI tmp2) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
@@ -6451,7 +6451,7 @@ instruct rvadd8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI
   ins_pipe( pipe_slow );
 %}
 
-instruct rvadd16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, rRegI tmp2) %{
+instruct rvadd16S_reduction_reg(rRegI dst, rRegI src1, legVecY src2, legRegF tmp, rRegI tmp2) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
