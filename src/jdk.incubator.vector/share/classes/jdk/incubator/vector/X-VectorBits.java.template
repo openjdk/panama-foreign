@@ -208,15 +208,15 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @ForceInline
     final @Override
-    $vectortype$ bOp(Vector<$Boxtype$> o, FBinOp f) {
-        return ($vectortype$) super.bOp(($vectortype$)o, f);  // specialize
+    $vectortype$ bOp(Vector<$Boxtype$> v, FBinOp f) {
+        return ($vectortype$) super.bOp(($vectortype$)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    $vectortype$ bOp(Vector<$Boxtype$> o,
+    $vectortype$ bOp(Vector<$Boxtype$> v,
                      VectorMask<$Boxtype$> m, FBinOp f) {
-        return ($vectortype$) super.bOp(($vectortype$)o, ($masktype$)m,
+        return ($vectortype$) super.bOp(($vectortype$)v, ($masktype$)m,
                                         f);  // specialize
     }
 
@@ -224,16 +224,16 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @ForceInline
     final @Override
-    $vectortype$ tOp(Vector<$Boxtype$> o1, Vector<$Boxtype$> o2, FTriOp f) {
-        return ($vectortype$) super.tOp(($vectortype$)o1, ($vectortype$)o2,
+    $vectortype$ tOp(Vector<$Boxtype$> v1, Vector<$Boxtype$> v2, FTriOp f) {
+        return ($vectortype$) super.tOp(($vectortype$)v1, ($vectortype$)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    $vectortype$ tOp(Vector<$Boxtype$> o1, Vector<$Boxtype$> o2,
+    $vectortype$ tOp(Vector<$Boxtype$> v1, Vector<$Boxtype$> v2,
                      VectorMask<$Boxtype$> m, FTriOp f) {
-        return ($vectortype$) super.tOp(($vectortype$)o1, ($vectortype$)o2,
+        return ($vectortype$) super.tOp(($vectortype$)v1, ($vectortype$)v2,
                                         ($masktype$)m, f);  // specialize
     }
 
@@ -552,10 +552,10 @@ final class $vectortype$ extends $abstractvectortype$ {
         }
 
         @Override
-        $masktype$ bOp(VectorMask<$Boxtype$> o, MBinOp f) {
+        $masktype$ bOp(VectorMask<$Boxtype$> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = (($masktype$)o).getBits();
+            boolean[] mbits = (($masktype$)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -611,9 +611,9 @@ final class $vectortype$ extends $abstractvectortype$ {
 
         @Override
         @ForceInline
-        public $masktype$ and(VectorMask<$Boxtype$> o) {
-            Objects.requireNonNull(o);
-            $masktype$ m = ($masktype$)o;
+        public $masktype$ and(VectorMask<$Boxtype$> mask) {
+            Objects.requireNonNull(mask);
+            $masktype$ m = ($masktype$)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, $masktype$.class, $bitstype$.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -621,9 +621,9 @@ final class $vectortype$ extends $abstractvectortype$ {
 
         @Override
         @ForceInline
-        public $masktype$ or(VectorMask<$Boxtype$> o) {
-            Objects.requireNonNull(o);
-            $masktype$ m = ($masktype$)o;
+        public $masktype$ or(VectorMask<$Boxtype$> mask) {
+            Objects.requireNonNull(mask);
+            $masktype$ m = ($masktype$)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, $masktype$.class, $bitstype$.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -720,8 +720,8 @@ final class $vectortype$ extends $abstractvectortype$ {
         }
 
         @Override
-        public $shuffletype$ rearrange(VectorShuffle<$Boxtype$> o) {
-            $shuffletype$ s = ($shuffletype$) o;
+        public $shuffletype$ rearrange(VectorShuffle<$Boxtype$> shuffle) {
+            $shuffletype$ s = ($shuffletype$) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

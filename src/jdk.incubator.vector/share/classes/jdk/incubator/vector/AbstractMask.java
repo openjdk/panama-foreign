@@ -143,27 +143,27 @@ abstract class AbstractMask<E> extends VectorMask<E> {
     }
 
     @Override
-    public AbstractMask<E> and(VectorMask<E> o) {
+    public AbstractMask<E> and(VectorMask<E> m) {
         // FIXME: Generate good code here.
-        return bOp(o, (i, a, b) -> a && b);
+        return bOp(m, (i, a, b) -> a && b);
     }
 
     @Override
-    public AbstractMask<E> or(VectorMask<E> o) {
+    public AbstractMask<E> or(VectorMask<E> m) {
         // FIXME: Generate good code here.
-        return bOp(o, (i, a, b) -> a || b);
+        return bOp(m, (i, a, b) -> a || b);
     }
 
     @Override
-    public AbstractMask<E> equal(VectorMask<E> o) {
+    public AbstractMask<E> equal(VectorMask<E> m) {
         // FIXME: Generate good code here.
-        return bOp(o, (i, a, b) -> a == b);
+        return bOp(m, (i, a, b) -> a == b);
     }
 
     @Override
-    public AbstractMask<E> andNot(VectorMask<E> o) {
+    public AbstractMask<E> andNot(VectorMask<E> m) {
         // FIXME: Generate good code here.
-        return bOp(o, (i, a, b) -> a && !b);
+        return bOp(m, (i, a, b) -> a && !b);
     }
 
     @Override

@@ -520,19 +520,29 @@ import jdk.incubator.vector.*;
  *
  * <ul>
  *
- * <li>If the operation is a unary, binary, or n-ary arithmetic or
+ * <li>If the masked operation is a unary, binary, or n-ary arithmetic or
  * logical operation, suppressed lanes are filled from the first
  * vector operand (i.e., the vector recieving the method call), as if
  * by a {@linkplain #blend(Vector,VectorMask) blend}.</li>
  * 
- * <li>If the operation is a memory load or a {@code slice()} from
+ * <li>If the masked operation is a memory load or a {@code slice()} from
  * another vector, suppressed lanes are not loaded, and are filled
  * with the default value for the {@code ETYPE}, which in every case
- * consists of all zero bits.</li>
+ * consists of all zero bits.  An unset lane can never cause an
+ * exception, even if the hypothetical corresponding memory location
+ * does not exist (because it is out of an array's index range).</li>
  * 
- * <li>If the operation is a memory store or an {@code unslice()} into
+ * <li>If the operation is a cross-lane operation with an operand
+ * which supplies lane indexes (of type {@code VectorShuffle} or
+ * {@code Vector}, suppressed lanes are not computed, and are filled
+ * with the zero default value.  Normally, invalid lane indexes elicit
+ * an {@code IndexOutOfBoundsException}, but if a lane is unset, the
+ * zero value is quietly substituted, regardless of the index.  This
+ * rule is similar to the previous rule, for masked memory loads.</li>
+ *
+ * <li>If the masked operation is a memory store or an {@code unslice()} into
  * another vector, suppressed lanes are not stored, and the
- * corresponding memory or vector locations (if any) are unchanged.
+ * corresponding memory or vector locations (if any) are unchanged.</li>
  *
  * <p> (Note: Memory effects such as race conditions never occur for
  * suppressed lanes.  That is, implementations will not secretly
@@ -541,17 +551,19 @@ import jdk.incubator.vector.*;
  * no-op; it may quietly undo a racing store from another
  * thread.)</li>
  *
- * <li>If the operation is a reduction, suppressed lanes are ignored
+ * <li>If the masked operation is a reduction, suppressed lanes are ignored
  * in the reduction.  If all lanes are suppressed, a suitable neutral
  * value is returned, depending on the specific reduction operation,
  * and documented by the masked variant of that method.  (This means
  * that users can obtain the neutral value programmatically by
  * executing the reduction on a dummy vector with an all-unset mask.)
  *
- * <li>If the operation is a comparison operation, suppressed output
+ * <li>If the masked operation is a comparison operation, suppressed output
  * lanes in the resulting mask are themselves unset, as if the
  * suppressed comparison operation returned {@code false} regardless
- * of the suppressed input values.</li>
+ * of the suppressed input values.  In effect, it is as if the
+ * comparison operation were performed unmasked, and then the
+ * result intersected with the controlling mask.</li>
  *
  * <li>In other cases, such as masked
  * <a href="Vector.html#cross-lane"><em>cross-lane movements</em></a>,
@@ -1184,7 +1196,7 @@ public abstract class Vector<E> {
      * @see #lanewise(VectorOperators.Unary,Vector)
      */
     public abstract Vector<E> lanewise(VectorOperators.Unary op,
-                                       VectorMask<E> o);
+                                       VectorMask<E> m);
 
     /**
      * Combines the corresponding lane values of this vector
@@ -1238,7 +1250,7 @@ public abstract class Vector<E> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      */
     public abstract Vector<E> lanewise(VectorOperators.Binary op,
-                                       Vector<E> v, VectorMask<E> o);
+                                       Vector<E> v, VectorMask<E> m);
 
     /**
      * Combines the lane values of this vector
@@ -1249,14 +1261,15 @@ public abstract class Vector<E> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e))}.
      *
-     * <p> The {@code long} value must be accurately representable
-     * by the {@code ETYPE} of this vector's species, so that
-     * {@code e==(long)(ETYPE)e}, or else the operator must
-     * accept the long value as-is (as in the case of shifts).
-     *
      * @apiNote
+     * The {@code long} value {@code e} must be accurately
+     * representable by the {@code ETYPE} of this vector's species,
+     * so that {@code e==(long)(ETYPE)e}.  This rule is enforced
+     * by the implicit call to {@code broadcast()}.
+     * <p>
      * Subtypes improve on this method by sharpening
-     * the method parameter and return types.
+     * the method return type and
+     * the type of the scalar parameter {@code e}.
      *
      * @param e the input scalar
      * @return the result of applying the operation lane-wise
@@ -1277,21 +1290,22 @@ public abstract class Vector<E> {
      * Combines the corresponding lane values of this vector
      * with those of a second input vector,
      * with selection of lane elements controlled by a mask.
-     * <p>
+     *
      * This is a lane-wise binary operation which applies
      * the selected operation to each lane.
      * The second operand is a broadcast integral value.
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e), m)}.
      *
-     * <p> The {@code long} value must be accurately representable
-     * by the {@code ETYPE} of this vector's species, so that
-     * {@code e==(long)(ETYPE)e}, or else the operator must
-     * accept the long value as-is (as in the case of shifts).
-     *
      * @apiNote
+     * The {@code long} value {@code e} must be accurately
+     * representable by the {@code ETYPE} of this vector's species,
+     * so that {@code e==(long)(ETYPE)e}.  This rule is enforced
+     * by the implicit call to {@code broadcast()}.
+     * <p>
      * Subtypes improve on this method by sharpening
-     * the method parameter and return types.
+     * the method return type and
+     * the type of the scalar parameter {@code e}.
      *
      * @param e the input scalar
      * @param m the mask controlling lane selection
@@ -1307,12 +1321,12 @@ public abstract class Vector<E> {
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
     public abstract Vector<E> lanewise(VectorOperators.Binary op,
-                                       long e, VectorMask<E> o);
+                                       long e, VectorMask<E> m);
 
     /**
      * Combines the corresponding lane values of this vector
      * with the lanes of a second and a third input vector.
-     * <p>
+     *
      * This is a lane-wise ternary operation which applies
      * the selected operation to each lane.
      *
@@ -1341,7 +1355,7 @@ public abstract class Vector<E> {
      * Combines the corresponding lane values of this vector
      * with the lanes of a second and a third input vector,
      * with selection of lane elements controlled by a mask.
-     * <p>
+     *
      * This is a lane-wise ternary operation which applies
      * the selected operation to each lane.
      *
@@ -1360,7 +1374,7 @@ public abstract class Vector<E> {
      */
     public abstract Vector<E> lanewise(VectorOperators.Ternary op,
                                        Vector<E> v1, Vector<E> v2,
-                                       VectorMask<E> o);
+                                       VectorMask<E> m);
 
     // Note:  lanewise(Binary) has two rudimentary broadcast
     // operations from an approximate scalar type (long).
@@ -1385,7 +1399,7 @@ public abstract class Vector<E> {
 
     /**
      * Adds this vector to a second input vector.
-     * <p>
+     *
      * This is a lane-wise binary operation which applies
      * the primitive addition operation ({@code +})
      * to each pair of corresponding lane values.
@@ -1420,7 +1434,7 @@ public abstract class Vector<E> {
      * to each pair of corresponding lane values.
      *
      * For any lane unset in the mask, the primitive operation is
-     * suppressed and receiver retains the original value stored in
+     * suppressed and this vector retains the original value stored in
      * that lane.
      *
      * This method is also equivalent to the expression
@@ -1447,7 +1461,7 @@ public abstract class Vector<E> {
 
     /**
      * Subtracts a second input vector from this vector.
-     * <p>
+     *
      * This is a lane-wise binary operation which applies
      * the primitive subtraction operation ({@code -})
      * to each pair of corresponding lane values.
@@ -1476,13 +1490,13 @@ public abstract class Vector<E> {
     /**
      * Subtracts a second input vector from this vector
      * under the control of a mask.
-     * <p>
+     *
      * This is a masked lane-wise binary operation which applies
      * the primitive subtraction operation ({@code -})
      * to each pair of corresponding lane values.
      *
      * For any lane unset in the mask, the primitive operation is
-     * suppressed and receiver retains the original value stored in
+     * suppressed and this vector retains the original value stored in
      * that lane.
      *
      * This method is also equivalent to the expression
@@ -1509,7 +1523,7 @@ public abstract class Vector<E> {
 
     /**
      * Multiplies this vector by a second input vector.
-     * <p>
+     *
      * This is a lane-wise binary operation which applies
      * the primitive multiplication operation ({@code *})
      * to each pair of corresponding lane values.
@@ -1538,13 +1552,13 @@ public abstract class Vector<E> {
     /**
      * Multiplies this vector by a second input vector
      * under the control of a mask.
-     * <p>
+     *
      * This is a lane-wise binary operation which applies
      * the primitive multiplication operation ({@code *})
      * to each pair of corresponding lane values.
      *
      * For any lane unset in the mask, the primitive operation is
-     * suppressed and receiver retains the original value stored in
+     * suppressed and this vector retains the original value stored in
      * that lane.
      *
      * This method is also equivalent to the expression
@@ -1571,7 +1585,7 @@ public abstract class Vector<E> {
 
     /**
      * Divides this vector by a second input vector.
-     * <p>
+     *
      * This is a lane-wise binary operation which applies
      * the primitive division operation ({@code /})
      * to each pair of corresponding lane values.
@@ -1608,13 +1622,13 @@ public abstract class Vector<E> {
     /**
      * Divides this vector by a second input vector
      * under the control of a mask.
-     * <p>
+     *
      * This is a lane-wise binary operation which applies
      * the primitive division operation ({@code /})
      * to each pair of corresponding lane values.
      *
      * For any lane unset in the mask, the primitive operation is
-     * suppressed and receiver retains the original value stored in
+     * suppressed and this vector retains the original value stored in
      * that lane.
      *
      * This method is also equivalent to the expression
@@ -1653,7 +1667,7 @@ public abstract class Vector<E> {
 
     /**
      * Negates this vector.
-     * <p>
+     *
      * This is a lane-wise unary operation which applies
      * the primitive negation operation ({@code -x})
      * to each input lane.
@@ -1678,7 +1692,7 @@ public abstract class Vector<E> {
 
     /**
      * Returns the absolute value of this vector.
-     * <p>
+     *
      * This is a lane-wise unary operation which applies
      * the method {@code Math.abs}
      * to each input lane.
@@ -1765,7 +1779,7 @@ public abstract class Vector<E> {
 
     /**
      * Returns a value accumulated from all the lanes of this vector.
-     * <p>
+     *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to all the lane elements.
      * The result is delivered as a {@code long} value, rather
@@ -1804,7 +1818,7 @@ public abstract class Vector<E> {
     /**
      * Returns a value accumulated from selected lanes of this vector,
      * controlled by a mask.
-     * <p>
+     *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to the selected lane elements.
      * The result is delivered as a {@code long} value, rather
@@ -1875,7 +1889,7 @@ public abstract class Vector<E> {
 
     /**
      * Tests if this vector is equal to another input vector.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the primitive equals operation ({@code ==})
      * to each pair of corresponding lane values.
@@ -1891,7 +1905,7 @@ public abstract class Vector<E> {
 
     /**
      * Tests if this vector is less than another input vector.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the primitive less-than operation ({@code <}) to each lane.
      * The result is the same as {@code compare(VectorOperators.LT, v)}.
@@ -1907,7 +1921,7 @@ public abstract class Vector<E> {
     /**
      * Tests this vector by comparing it with another input vector,
      * according to the given comparison operation.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * to each pair of corresponding lane values.
      *
@@ -1918,20 +1932,42 @@ public abstract class Vector<E> {
      * @see #equals(Vector)
      * @see #lessThan(Vector)
      * @see VectorOperators.Comparison
+     * @see #compare(VectorOperators.Comparison, Vector, VectorMask)
      */
     public abstract VectorMask<E> compare(VectorOperators.Comparison op,
                                           Vector<E> v);
 
     /**
+     * Tests this vector by comparing it with another input vector,
+     * according to the given comparison operation,
+     * in lanes selected by a mask.
+     *
+     * This is a masked lane-wise binary test operation which applies
+     * to each pair of corresponding lane values.
+     *
+     * The returned result is equal to the expression
+     * {@code compare(op,v).and(m)}.
+     *
+     * @param v a second input vector
+     * @param m the mask controlling lane selection
+     * @return the mask result of testing lane-wise if this vector
+     *         compares to the input, according to the selected
+     *         comparison operator,
+     *         and only in the lanes selected by the mask
+     * @see #compare(VectorOperators.Comparison, Vector)
+     */
+    public abstract VectorMask<E> compare(VectorOperators.Comparison op,
+                                          Vector<E> v,
+                                          VectorMask<E> m);
+
+    /**
      * Tests this vector by comparing it with an input scalar,
-     * according to the given comparison operation.
+     * according to the given comparison operation,
+     * in lanes selected by a mask.
      *
      * This is a lane-wise binary test operation which applies
      * to each pair of corresponding lane values.
      *
-     * <p> The {@code long} value must be accurately representable
-     * by the {@code ETYPE} of this vector's species, so that
-     * {@code e==(long)(ETYPE)e}.
      * <p>
      * The result is the same as
      * {@code this.compare(op, this.broadcast(s))}.
@@ -1941,8 +1977,13 @@ public abstract class Vector<E> {
      * comparison operation.
      *
      * @apiNote
+     * The {@code long} value {@code e} must be accurately
+     * representable by the {@code ETYPE} of this vector's species,
+     * so that {@code e==(long)(ETYPE)e}.  This rule is enforced
+     * by the implicit call to {@code broadcast()}.
+     * <p>
      * Subtypes improve on this method by sharpening
-     * the method parameter.
+     * the type of the scalar parameter {@code e}.
      *
      * @param e the input scalar
      * @return the mask result of testing lane-wise if this vector
@@ -1958,19 +1999,59 @@ public abstract class Vector<E> {
                                           long e);
 
     /**
-     * Replaces lanes of this vector with selected lanes
-     * from a second input vector under the control of a mask.
+     * Tests this vector by comparing it with an input scalar,
+     * according to the given comparison operation,
+     * in lanes selected by a mask.
+     *
+     * This is a masked lane-wise binary test operation which applies
+     * to each pair of corresponding lane values.
+     *
+     * The returned result is equal to the expression
+     * {@code compare(op,s).and(m)}.
+     *
+     * @apiNote
+     * The {@code long} value {@code e} must be accurately
+     * representable by the {@code ETYPE} of this vector's species,
+     * so that {@code e==(long)(ETYPE)e}.  This rule is enforced
+     * by the implicit call to {@code broadcast()}.
      * <p>
+     * Subtypes improve on this method by sharpening
+     * the type of the scalar parameter {@code e}.
+     *
+     * @param e the input scalar
+     * @param m the mask controlling lane selection
+     * @return the mask result of testing lane-wise if this vector
+     *         compares to the input, according to the selected
+     *         comparison operator,
+     *         and only in the lanes selected by the mask
+     * @throws IllegalArgumentException
+     *         if the given {@code long} value cannot
+     *         be represented by the vector's {@code ETYPE}
+     * @see #broadcast(long)
+     * @see #compare(VectorOperators.Comparison,Vector)
+     */
+    public abstract VectorMask<E> compare(VectorOperators.Comparison op,
+                                          long e,
+                                          VectorMask<E> m);
+
+    /**
+     * Replaces selected lanes of this vector with
+     * corresponding lanes from a second input vector
+     * under the control of a mask.
+     *
      * This is a masked lane-wise binary operation which
-     * selects one or the other value from
-     * each pair of corresponding lane values.
+     * selects each lane value from one or the other input.
      *
-     * For any lane set in the mask, the new lane value
-     * is taken from the second input vector.
-     *
-     * For any lane unset in the mask, the replacement is
-     * suppressed and receiver retains the original value stored in
+     * <ul>
+     * <li>
+     * For any lane <em>set</em> in the mask, the new lane value
+     * is taken from the second input vector, and replaces
+     * whatever value was in the that lane of this vector.
+     * <li>
+     * For any lane <em>unset</em> in the mask, the replacement is
+     * suppressed and this vector retains the original value stored in
      * that lane.
+     * </ul>
      *
      * The following pseudocode illustrates this behavior:
      * <pre>{@code
@@ -1994,6 +2075,33 @@ public abstract class Vector<E> {
      *         those of the second input vector
      */
     public abstract Vector<E> blend(Vector<E> v, VectorMask<E> m);
+
+    /**
+     * Replaces selected lanes of this vector with
+     * a scalar value
+     * under the control of a mask.
+     *
+     * This is a masked lane-wise binary operation which
+     * selects each lane value from one or the other input.
+     *
+     * The returned result is equal to the expression
+     * {@code blend(broadcast(e),m)}.
+     *
+     * @apiNote
+     * The {@code long} value {@code e} must be accurately
+     * representable by the {@code ETYPE} of this vector's species,
+     * so that {@code e==(long)(ETYPE)e}.  This rule is enforced
+     * by the implicit call to {@code broadcast()}.
+     * <p>
+     * Subtypes improve on this method by sharpening
+     * the type of the scalar parameter {@code e}.
+     *
+     * @param e the input scalar, containing the replacement lane value
+     * @param m the mask controlling lane selection of the scalar
+     * @return the result of blending the lane elements of this vector with
+     *         the scalar value
+     */
+    public abstract Vector<E> blend(long e, VectorMask<E> m);
 
     /**
      * Adds the lanes of this vector to their corresponding
@@ -2505,6 +2613,7 @@ public abstract class Vector<E> {
      * Returns a vector of the same species as this one
      * where all lane elements are set to
      * the primitive value {@code e}.
+     *
      * The contents of the current vector are discarded;
      * only the species is relevant to this operation.
      *
@@ -2512,12 +2621,25 @@ public abstract class Vector<E> {
      * {@code EVector.broadcast(this.species(), (ETYPE)e)}, where
      * {@code EVector} is the vector class specific to this
      * vector's element type {@code ETYPE}.
-     * The {@code long} value must be accurately representable
-     * by {@code ETYPE}, so that {@code e==(long)(ETYPE)e}.
+     *
+     * <p>
+     * The {@code long} value {@code e} must be accurately
+     * representable by the {@code ETYPE} of this vector's species,
+     * so that {@code e==(long)(ETYPE)e}.
+     *
+     * If this rule is violated the problem is not detected
+     * statically, but an {@code IllegalArgumentException} is thrown
+     * at run-time.  Thus, this method somewhat weakens the static
+     * type checking of immediate constants and other scalars, but it
+     * makes up for this by improving the expressiveness of the
+     * generic API.  Note that an {@code e} value in the range
+     * {@code [-128..127]} is always acceptable, since every
+     * {@code ETYPE} will accept every {@code byte} value.
      *
      * @apiNote
      * Subtypes improve on this method by sharpening
-     * the method parameter and return types.
+     * the method return type and
+     * and the type of the scalar parameter {@code e}.
      *
      * @param e the value to broadcast
      * @return a vector where all lane elements are set to
