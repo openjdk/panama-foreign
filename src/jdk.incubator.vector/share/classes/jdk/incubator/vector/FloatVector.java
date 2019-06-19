@@ -396,6 +396,19 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * where all lane elements are set to
      * the primitive value {@code e}.
      *
+     * The contents of the current vector are discarded;
+     * only the species is relevant to this operation.
+     *
+     * <p> This method returns the value of this expression:
+     * {@code FloatVector.broadcast(this.species(), e)}.
+     *
+     * @apiNote
+     * Unlike the similar method named {@code broadcast()}
+     * in the supertype {@code Vector}, this method does not
+     * need to validate its argument, and cannot throw
+     * {@code IllegalArgumentException}.  This method is
+     * therefore preferable to the supertype method.
+     *
      * @param e the value to broadcast
      * @return a vector where all lane elements are set to
      *         the primitive value {@code e}
@@ -433,7 +446,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @apiNote
-     * When working with vector subtypes like FloatVector,
+     * When working with vector subtypes like {@code FloatVector},
      * {@linkplain #broadcast(float) the more strongly typed method}
      * is typically selected.  It can be explicitly selected
      * using a cast: {@code v.broadcast((float)e)}.
@@ -691,7 +704,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * Combines the lane values of this vector
      * with the value of a broadcast scalar.
-     * <p>
+     *
      * This is a lane-wise binary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
@@ -717,8 +730,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Combines the lane values of this vector
      * with the value of a broadcast scalar,
      * with selection of lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies
+     *
+     * This is a masked lane-wise binary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e), m)}.
@@ -743,7 +756,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @apiNote
-     * When working with vector subtypes like FloatVector,
+     * When working with vector subtypes like {@code FloatVector},
      * {@linkplain #lanewise(VectorOperators.Binary,float)
      * the more strongly typed method}
      * is typically selected.  It can be explicitly selected
@@ -765,7 +778,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @apiNote
-     * When working with vector subtypes like FloatVector,
+     * When working with vector subtypes like {@code FloatVector},
      * {@linkplain #lanewise(VectorOperators.Binary,float,VectorMask)
      * the more strongly typed method}
      * is typically selected.  It can be explicitly selected
@@ -848,7 +861,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * Combines the lane values of this vector
      * with the values of two broadcast scalars.
-     * <p>
+     *
      * This is a lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
@@ -875,8 +888,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Combines the lane values of this vector
      * with the values of two broadcast scalars,
      * with selection of lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise ternary operation which applies
+     *
+     * This is a masked lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2), m)}.
@@ -903,7 +916,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * Combines the lane values of this vector
      * with the values of another vector and a broadcast scalar.
-     * <p>
+     *
      * This is a lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
@@ -930,8 +943,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Combines the lane values of this vector
      * with the values of another vector and a broadcast scalar,
      * with selection of lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise ternary operation which applies
+     *
+     * This is a masked lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
@@ -959,7 +972,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * Combines the lane values of this vector
      * with the values of another vector and a broadcast scalar.
-     * <p>
+     *
      * This is a lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
@@ -986,8 +999,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Combines the lane values of this vector
      * with the values of another vector and a broadcast scalar,
      * with selection of lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise ternary operation which applies
+     *
+     * This is a masked lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
@@ -1066,7 +1079,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Adds this vector to the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive addition operation ({@code +}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1101,7 +1114,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * Subtracts an input scalar from this vector.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive subtraction operation ({@code -}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1136,7 +1149,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Subtracts an input scalar from this vector
      * under the control of a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive subtraction operation ({@code -}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1206,7 +1219,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Multiplies this vector by the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive multiplication operation ({@code *}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1294,7 +1307,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Divides this vector by the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive division operation ({@code /}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1517,7 +1530,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /**
      * Tests if this vector is equal to an input scalar.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the primitive equals operation ({@code ==}) to each lane.
      * The result is the same as {@code compare(VectorOperators.Comparison.EQ, e)}.
@@ -1525,7 +1538,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @param e the input scalar
      * @return the result mask of testing if this vector
      *         is equal to {@code e}
-     * @see #compare(VectorOperators.Comparison, float)
+     * @see #compare(VectorOperators.Comparison,float)
      */
     public final
     VectorMask<Float> eq(float e) {
@@ -1543,7 +1556,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /**
      * Tests if this vector is less than an input scalar.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the primitive less than operation ({@code <}) to each lane.
      * The result is the same as {@code compare(VectorOperators.LT, e)}.
@@ -1551,7 +1564,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @param e the input scalar
      * @return the mask result of testing if this vector
      *         is less than the input scalar
-     * @see #compare(VectorOperators.Comparison, float)
+     * @see #compare(VectorOperators.Comparison,float)
      */
     public final
     VectorMask<Float> lt(float e) {
@@ -1599,9 +1612,20 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public final
+    VectorMask<Float> compare(VectorOperators.Comparison op,
+                                  Vector<Float> v,
+                                  VectorMask<Float> m) {
+        return compare(op, v).and(m);
+    }
+
+    /**
      * Tests this vector by comparing it with an input scalar,
      * according to the given comparison operation.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the comparison operation to each lane.
      * <p>
@@ -1616,6 +1640,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the mask result of testing lane-wise if this vector
      *         compares to the input, according to the selected
      *         comparison operator
+     * @see FloatVector#compare(VectorOperators.Comparison,Vector)
      * @see #eq(float)
      * @see #lessThan(float)
      */
@@ -1630,6 +1655,31 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /**
+     * Tests this vector by comparing it with an input scalar,
+     * according to the given comparison operation,
+     * in lanes selected by a mask.
+     *
+     * This is a masked lane-wise binary test operation which applies
+     * to each pair of corresponding lane values.
+     *
+     * The returned result is equal to the expression
+     * {@code compare(op,s).and(m)}.
+     *
+     * @param e the input scalar
+     * @param m the mask controlling lane selection
+     * @return the mask result of testing lane-wise if this vector
+     *         compares to the input, according to the selected
+     *         comparison operator,
+     *         and only in the lanes selected by the mask
+     * @see FloatVector#compare(VectorOperators.Comparison,Vector,VectorMask)
+     */
+    public final VectorMask<Float> compare(VectorOperators.Comparison op,
+                                               float e,
+                                               VectorMask<Float> m) {
+        return compare(op, e).and(m);
+    }
+
+    /**
      * {@inheritDoc} <!--workaround-->
      */
     @Override public abstract
@@ -1641,6 +1691,16 @@ public abstract class FloatVector extends AbstractVector<Float> {
     M compareTemplate(Class<M> maskType, Comparison op, long e) {
         return compareTemplate(maskType, op, broadcast(e));
     }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override public final
+    VectorMask<Float> compare(Comparison op, long e, VectorMask<Float> m) {
+        return compare(op, broadcast(e), m);
+    }
+
+
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1686,21 +1746,43 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /**
-     * Blends the lane elements of this vector with those of the broadcast of an
-     * input scalar, selecting lanes controlled by a mask.
-     * <p>
-     * For each lane of the mask, at lane index {@code N}, if the mask lane
-     * is set then the lane element at {@code N} from the input vector is
-     * selected and placed into the resulting vector at {@code N},
-     * otherwise the lane element at {@code N} from this input vector is
-     * selected and placed into the resulting vector at {@code N}.
+     * Replaces selected lanes of this vector with
+     * a scalar value
+     * under the control of a mask.
      *
-     * @param e the input scalar
-     * @param m the mask controlling lane selection
+     * This is a masked lane-wise binary operation which
+     * selects each lane value from one or the other input.
+     *
+     * The returned result is equal to the expression
+     * {@code blend(broadcast(e),m)}.
+     *
+     * @param e the input scalar, containing the replacement lane value
+     * @param m the mask controlling lane selection of the scalar
      * @return the result of blending the lane elements of this vector with
-     * those of the broadcast of an input scalar
+     *         the scalar value
      */
     public final FloatVector blend(float e,
+                                            VectorMask<Float> m) {
+        return blend(broadcast(e), m);
+    }
+
+    /**
+     * Replaces selected lanes of this vector with
+     * a scalar value
+     * under the control of a mask.
+     *
+     * This is a masked lane-wise binary operation which
+     * selects each lane value from one or the other input.
+     *
+     * The returned result is equal to the expression
+     * {@code blend(broadcast(e),m)}.
+     *
+     * @param e the input scalar, containing the replacement lane value
+     * @param m the mask controlling lane selection of the scalar
+     * @return the result of blending the lane elements of this vector with
+     *         the scalar value
+     */
+    public final FloatVector blend(long e,
                                             VectorMask<Float> m) {
         return blend(broadcast(e), m);
     }
@@ -1925,7 +2007,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * for each of the two operations.
      * The result is numerically close to {@code this.mul(b).add(c)},
      * and is typically closer to the true mathematical result.
-     * <p>
+     *
      * This is a lane-wise ternary operation which applies the
      * {@link Math#fma(float,float,float) Math#fma(a,b,c)}
      * operation to each lane.
@@ -1958,7 +2040,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * for each of the two operations.
      * The result is numerically close to {@code this.mul(b).add(c)},
      * and is typically closer to the true mathematical result.
-     * <p>
+     *
      * This is a lane-wise ternary operation which applies the
      * {@link Math#fma(float,float,float) Math#fma(a,b,c)}
      * operation to each lane.
@@ -1988,7 +2070,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /**
      * Returns a value accumulated from all the lanes of this vector.
-     * <p>
+     *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to all the lane elements.
      *
@@ -2053,7 +2135,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * Returns a value accumulated from selected lanes of this vector,
      * controlled by a mask.
-     * <p>
+     *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to the selected lane elements.
      * <p>
@@ -2189,7 +2271,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * Replaces the lane element of this vector at lane index {@code i} with
      * value {@code e}.
-     * <p>
+     *
      * This is a cross-lane operation and behaves as if it returns the result
      * of blending this vector with an input vector that is the result of
      * broadcasting {@code e} and a mask that has only one lane set at lane
@@ -2235,7 +2317,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /** {@inheritDoc} <!--workaround-->
      * @implNote
      * When this method is used on used on vectors
-     * of type FloatVector,
+     * of type {@code FloatVector},
      * fractional bits in lane values will be lost,
      * and lane values of large magnitude will be
      * clipped to {@code Long.MAX_VALUE} or
@@ -2255,7 +2337,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /** {@inheritDoc} <!--workaround-->
      * @implNote
      * When this method is used on used on vectors
-     * of type FloatVector,
+     * of type {@code FloatVector},
      * there will be no loss of precision.
      */
     @ForceInline
@@ -2345,7 +2427,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of float (zero).
+     * value of {@code float} (zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -2382,7 +2464,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of float (zero).
+     * value of {@code float} (zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -2453,7 +2535,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * Loads a vector from an array of type {@code float[]}
      * starting at an offset and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of float (zero).
+     * value of {@code float} (zero).
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then the array element at
      * index {@code offset + N} is placed into the resulting vector at lane index
@@ -2702,7 +2784,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /**
-     * Stores this vector into an array of float
+     * Stores this vector into an array of {@code float}
      * starting at offset and using a mask.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
@@ -3132,7 +3214,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *
      * The string is produced as if by a call to {@link
      * java.util.Arrays#toString(float[]) Arrays.toString()},
-     * as appropriate to the float array returned by
+     * as appropriate to the {@code float} array returned by
      * {@link #toArray this.toArray()}.
      *
      * @return a string of the form {@code "[0,1,2...]"}

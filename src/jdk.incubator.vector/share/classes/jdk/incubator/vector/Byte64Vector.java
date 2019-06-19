@@ -171,15 +171,15 @@ final class Byte64Vector extends ByteVector {
 
     @ForceInline
     final @Override
-    Byte64Vector bOp(Vector<Byte> o, FBinOp f) {
-        return (Byte64Vector) super.bOp((Byte64Vector)o, f);  // specialize
+    Byte64Vector bOp(Vector<Byte> v, FBinOp f) {
+        return (Byte64Vector) super.bOp((Byte64Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Byte64Vector bOp(Vector<Byte> o,
+    Byte64Vector bOp(Vector<Byte> v,
                      VectorMask<Byte> m, FBinOp f) {
-        return (Byte64Vector) super.bOp((Byte64Vector)o, (Byte64Mask)m,
+        return (Byte64Vector) super.bOp((Byte64Vector)v, (Byte64Mask)m,
                                         f);  // specialize
     }
 
@@ -187,16 +187,16 @@ final class Byte64Vector extends ByteVector {
 
     @ForceInline
     final @Override
-    Byte64Vector tOp(Vector<Byte> o1, Vector<Byte> o2, FTriOp f) {
-        return (Byte64Vector) super.tOp((Byte64Vector)o1, (Byte64Vector)o2,
+    Byte64Vector tOp(Vector<Byte> v1, Vector<Byte> v2, FTriOp f) {
+        return (Byte64Vector) super.tOp((Byte64Vector)v1, (Byte64Vector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Byte64Vector tOp(Vector<Byte> o1, Vector<Byte> o2,
+    Byte64Vector tOp(Vector<Byte> v1, Vector<Byte> v2,
                      VectorMask<Byte> m, FTriOp f) {
-        return (Byte64Vector) super.tOp((Byte64Vector)o1, (Byte64Vector)o2,
+        return (Byte64Vector) super.tOp((Byte64Vector)v1, (Byte64Vector)v2,
                                         (Byte64Mask)m, f);  // specialize
     }
 
@@ -479,10 +479,10 @@ final class Byte64Vector extends ByteVector {
         }
 
         @Override
-        Byte64Mask bOp(VectorMask<Byte> o, MBinOp f) {
+        Byte64Mask bOp(VectorMask<Byte> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((Byte64Mask)o).getBits();
+            boolean[] mbits = ((Byte64Mask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -538,9 +538,9 @@ final class Byte64Vector extends ByteVector {
 
         @Override
         @ForceInline
-        public Byte64Mask and(VectorMask<Byte> o) {
-            Objects.requireNonNull(o);
-            Byte64Mask m = (Byte64Mask)o;
+        public Byte64Mask and(VectorMask<Byte> mask) {
+            Objects.requireNonNull(mask);
+            Byte64Mask m = (Byte64Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Byte64Mask.class, byte.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -548,9 +548,9 @@ final class Byte64Vector extends ByteVector {
 
         @Override
         @ForceInline
-        public Byte64Mask or(VectorMask<Byte> o) {
-            Objects.requireNonNull(o);
-            Byte64Mask m = (Byte64Mask)o;
+        public Byte64Mask or(VectorMask<Byte> mask) {
+            Objects.requireNonNull(mask);
+            Byte64Mask m = (Byte64Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Byte64Mask.class, byte.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -647,8 +647,8 @@ final class Byte64Vector extends ByteVector {
         }
 
         @Override
-        public Byte64Shuffle rearrange(VectorShuffle<Byte> o) {
-            Byte64Shuffle s = (Byte64Shuffle) o;
+        public Byte64Shuffle rearrange(VectorShuffle<Byte> shuffle) {
+            Byte64Shuffle s = (Byte64Shuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

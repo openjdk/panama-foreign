@@ -172,15 +172,15 @@ final class Float128Vector extends FloatVector {
 
     @ForceInline
     final @Override
-    Float128Vector bOp(Vector<Float> o, FBinOp f) {
-        return (Float128Vector) super.bOp((Float128Vector)o, f);  // specialize
+    Float128Vector bOp(Vector<Float> v, FBinOp f) {
+        return (Float128Vector) super.bOp((Float128Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Float128Vector bOp(Vector<Float> o,
+    Float128Vector bOp(Vector<Float> v,
                      VectorMask<Float> m, FBinOp f) {
-        return (Float128Vector) super.bOp((Float128Vector)o, (Float128Mask)m,
+        return (Float128Vector) super.bOp((Float128Vector)v, (Float128Mask)m,
                                         f);  // specialize
     }
 
@@ -188,16 +188,16 @@ final class Float128Vector extends FloatVector {
 
     @ForceInline
     final @Override
-    Float128Vector tOp(Vector<Float> o1, Vector<Float> o2, FTriOp f) {
-        return (Float128Vector) super.tOp((Float128Vector)o1, (Float128Vector)o2,
+    Float128Vector tOp(Vector<Float> v1, Vector<Float> v2, FTriOp f) {
+        return (Float128Vector) super.tOp((Float128Vector)v1, (Float128Vector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Float128Vector tOp(Vector<Float> o1, Vector<Float> o2,
+    Float128Vector tOp(Vector<Float> v1, Vector<Float> v2,
                      VectorMask<Float> m, FTriOp f) {
-        return (Float128Vector) super.tOp((Float128Vector)o1, (Float128Vector)o2,
+        return (Float128Vector) super.tOp((Float128Vector)v1, (Float128Vector)v2,
                                         (Float128Mask)m, f);  // specialize
     }
 
@@ -475,10 +475,10 @@ final class Float128Vector extends FloatVector {
         }
 
         @Override
-        Float128Mask bOp(VectorMask<Float> o, MBinOp f) {
+        Float128Mask bOp(VectorMask<Float> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((Float128Mask)o).getBits();
+            boolean[] mbits = ((Float128Mask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -534,9 +534,9 @@ final class Float128Vector extends FloatVector {
 
         @Override
         @ForceInline
-        public Float128Mask and(VectorMask<Float> o) {
-            Objects.requireNonNull(o);
-            Float128Mask m = (Float128Mask)o;
+        public Float128Mask and(VectorMask<Float> mask) {
+            Objects.requireNonNull(mask);
+            Float128Mask m = (Float128Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Float128Mask.class, int.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -544,9 +544,9 @@ final class Float128Vector extends FloatVector {
 
         @Override
         @ForceInline
-        public Float128Mask or(VectorMask<Float> o) {
-            Objects.requireNonNull(o);
-            Float128Mask m = (Float128Mask)o;
+        public Float128Mask or(VectorMask<Float> mask) {
+            Objects.requireNonNull(mask);
+            Float128Mask m = (Float128Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Float128Mask.class, int.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -643,8 +643,8 @@ final class Float128Vector extends FloatVector {
         }
 
         @Override
-        public Float128Shuffle rearrange(VectorShuffle<Float> o) {
-            Float128Shuffle s = (Float128Shuffle) o;
+        public Float128Shuffle rearrange(VectorShuffle<Float> shuffle) {
+            Float128Shuffle s = (Float128Shuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

@@ -171,15 +171,15 @@ final class ByteMaxVector extends ByteVector {
 
     @ForceInline
     final @Override
-    ByteMaxVector bOp(Vector<Byte> o, FBinOp f) {
-        return (ByteMaxVector) super.bOp((ByteMaxVector)o, f);  // specialize
+    ByteMaxVector bOp(Vector<Byte> v, FBinOp f) {
+        return (ByteMaxVector) super.bOp((ByteMaxVector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    ByteMaxVector bOp(Vector<Byte> o,
+    ByteMaxVector bOp(Vector<Byte> v,
                      VectorMask<Byte> m, FBinOp f) {
-        return (ByteMaxVector) super.bOp((ByteMaxVector)o, (ByteMaxMask)m,
+        return (ByteMaxVector) super.bOp((ByteMaxVector)v, (ByteMaxMask)m,
                                         f);  // specialize
     }
 
@@ -187,16 +187,16 @@ final class ByteMaxVector extends ByteVector {
 
     @ForceInline
     final @Override
-    ByteMaxVector tOp(Vector<Byte> o1, Vector<Byte> o2, FTriOp f) {
-        return (ByteMaxVector) super.tOp((ByteMaxVector)o1, (ByteMaxVector)o2,
+    ByteMaxVector tOp(Vector<Byte> v1, Vector<Byte> v2, FTriOp f) {
+        return (ByteMaxVector) super.tOp((ByteMaxVector)v1, (ByteMaxVector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    ByteMaxVector tOp(Vector<Byte> o1, Vector<Byte> o2,
+    ByteMaxVector tOp(Vector<Byte> v1, Vector<Byte> v2,
                      VectorMask<Byte> m, FTriOp f) {
-        return (ByteMaxVector) super.tOp((ByteMaxVector)o1, (ByteMaxVector)o2,
+        return (ByteMaxVector) super.tOp((ByteMaxVector)v1, (ByteMaxVector)v2,
                                         (ByteMaxMask)m, f);  // specialize
     }
 
@@ -479,10 +479,10 @@ final class ByteMaxVector extends ByteVector {
         }
 
         @Override
-        ByteMaxMask bOp(VectorMask<Byte> o, MBinOp f) {
+        ByteMaxMask bOp(VectorMask<Byte> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((ByteMaxMask)o).getBits();
+            boolean[] mbits = ((ByteMaxMask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -538,9 +538,9 @@ final class ByteMaxVector extends ByteVector {
 
         @Override
         @ForceInline
-        public ByteMaxMask and(VectorMask<Byte> o) {
-            Objects.requireNonNull(o);
-            ByteMaxMask m = (ByteMaxMask)o;
+        public ByteMaxMask and(VectorMask<Byte> mask) {
+            Objects.requireNonNull(mask);
+            ByteMaxMask m = (ByteMaxMask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, ByteMaxMask.class, byte.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -548,9 +548,9 @@ final class ByteMaxVector extends ByteVector {
 
         @Override
         @ForceInline
-        public ByteMaxMask or(VectorMask<Byte> o) {
-            Objects.requireNonNull(o);
-            ByteMaxMask m = (ByteMaxMask)o;
+        public ByteMaxMask or(VectorMask<Byte> mask) {
+            Objects.requireNonNull(mask);
+            ByteMaxMask m = (ByteMaxMask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, ByteMaxMask.class, byte.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -647,8 +647,8 @@ final class ByteMaxVector extends ByteVector {
         }
 
         @Override
-        public ByteMaxShuffle rearrange(VectorShuffle<Byte> o) {
-            ByteMaxShuffle s = (ByteMaxShuffle) o;
+        public ByteMaxShuffle rearrange(VectorShuffle<Byte> shuffle) {
+            ByteMaxShuffle s = (ByteMaxShuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

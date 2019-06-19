@@ -167,15 +167,15 @@ final class LongMaxVector extends LongVector {
 
     @ForceInline
     final @Override
-    LongMaxVector bOp(Vector<Long> o, FBinOp f) {
-        return (LongMaxVector) super.bOp((LongMaxVector)o, f);  // specialize
+    LongMaxVector bOp(Vector<Long> v, FBinOp f) {
+        return (LongMaxVector) super.bOp((LongMaxVector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    LongMaxVector bOp(Vector<Long> o,
+    LongMaxVector bOp(Vector<Long> v,
                      VectorMask<Long> m, FBinOp f) {
-        return (LongMaxVector) super.bOp((LongMaxVector)o, (LongMaxMask)m,
+        return (LongMaxVector) super.bOp((LongMaxVector)v, (LongMaxMask)m,
                                         f);  // specialize
     }
 
@@ -183,16 +183,16 @@ final class LongMaxVector extends LongVector {
 
     @ForceInline
     final @Override
-    LongMaxVector tOp(Vector<Long> o1, Vector<Long> o2, FTriOp f) {
-        return (LongMaxVector) super.tOp((LongMaxVector)o1, (LongMaxVector)o2,
+    LongMaxVector tOp(Vector<Long> v1, Vector<Long> v2, FTriOp f) {
+        return (LongMaxVector) super.tOp((LongMaxVector)v1, (LongMaxVector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    LongMaxVector tOp(Vector<Long> o1, Vector<Long> o2,
+    LongMaxVector tOp(Vector<Long> v1, Vector<Long> v2,
                      VectorMask<Long> m, FTriOp f) {
-        return (LongMaxVector) super.tOp((LongMaxVector)o1, (LongMaxVector)o2,
+        return (LongMaxVector) super.tOp((LongMaxVector)v1, (LongMaxVector)v2,
                                         (LongMaxMask)m, f);  // specialize
     }
 
@@ -470,10 +470,10 @@ final class LongMaxVector extends LongVector {
         }
 
         @Override
-        LongMaxMask bOp(VectorMask<Long> o, MBinOp f) {
+        LongMaxMask bOp(VectorMask<Long> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((LongMaxMask)o).getBits();
+            boolean[] mbits = ((LongMaxMask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -529,9 +529,9 @@ final class LongMaxVector extends LongVector {
 
         @Override
         @ForceInline
-        public LongMaxMask and(VectorMask<Long> o) {
-            Objects.requireNonNull(o);
-            LongMaxMask m = (LongMaxMask)o;
+        public LongMaxMask and(VectorMask<Long> mask) {
+            Objects.requireNonNull(mask);
+            LongMaxMask m = (LongMaxMask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, LongMaxMask.class, long.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -539,9 +539,9 @@ final class LongMaxVector extends LongVector {
 
         @Override
         @ForceInline
-        public LongMaxMask or(VectorMask<Long> o) {
-            Objects.requireNonNull(o);
-            LongMaxMask m = (LongMaxMask)o;
+        public LongMaxMask or(VectorMask<Long> mask) {
+            Objects.requireNonNull(mask);
+            LongMaxMask m = (LongMaxMask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, LongMaxMask.class, long.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -638,8 +638,8 @@ final class LongMaxVector extends LongVector {
         }
 
         @Override
-        public LongMaxShuffle rearrange(VectorShuffle<Long> o) {
-            LongMaxShuffle s = (LongMaxShuffle) o;
+        public LongMaxShuffle rearrange(VectorShuffle<Long> shuffle) {
+            LongMaxShuffle s = (LongMaxShuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

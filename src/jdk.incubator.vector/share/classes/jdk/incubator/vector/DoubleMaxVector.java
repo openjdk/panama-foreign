@@ -172,15 +172,15 @@ final class DoubleMaxVector extends DoubleVector {
 
     @ForceInline
     final @Override
-    DoubleMaxVector bOp(Vector<Double> o, FBinOp f) {
-        return (DoubleMaxVector) super.bOp((DoubleMaxVector)o, f);  // specialize
+    DoubleMaxVector bOp(Vector<Double> v, FBinOp f) {
+        return (DoubleMaxVector) super.bOp((DoubleMaxVector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    DoubleMaxVector bOp(Vector<Double> o,
+    DoubleMaxVector bOp(Vector<Double> v,
                      VectorMask<Double> m, FBinOp f) {
-        return (DoubleMaxVector) super.bOp((DoubleMaxVector)o, (DoubleMaxMask)m,
+        return (DoubleMaxVector) super.bOp((DoubleMaxVector)v, (DoubleMaxMask)m,
                                         f);  // specialize
     }
 
@@ -188,16 +188,16 @@ final class DoubleMaxVector extends DoubleVector {
 
     @ForceInline
     final @Override
-    DoubleMaxVector tOp(Vector<Double> o1, Vector<Double> o2, FTriOp f) {
-        return (DoubleMaxVector) super.tOp((DoubleMaxVector)o1, (DoubleMaxVector)o2,
+    DoubleMaxVector tOp(Vector<Double> v1, Vector<Double> v2, FTriOp f) {
+        return (DoubleMaxVector) super.tOp((DoubleMaxVector)v1, (DoubleMaxVector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    DoubleMaxVector tOp(Vector<Double> o1, Vector<Double> o2,
+    DoubleMaxVector tOp(Vector<Double> v1, Vector<Double> v2,
                      VectorMask<Double> m, FTriOp f) {
-        return (DoubleMaxVector) super.tOp((DoubleMaxVector)o1, (DoubleMaxVector)o2,
+        return (DoubleMaxVector) super.tOp((DoubleMaxVector)v1, (DoubleMaxVector)v2,
                                         (DoubleMaxMask)m, f);  // specialize
     }
 
@@ -475,10 +475,10 @@ final class DoubleMaxVector extends DoubleVector {
         }
 
         @Override
-        DoubleMaxMask bOp(VectorMask<Double> o, MBinOp f) {
+        DoubleMaxMask bOp(VectorMask<Double> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((DoubleMaxMask)o).getBits();
+            boolean[] mbits = ((DoubleMaxMask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -534,9 +534,9 @@ final class DoubleMaxVector extends DoubleVector {
 
         @Override
         @ForceInline
-        public DoubleMaxMask and(VectorMask<Double> o) {
-            Objects.requireNonNull(o);
-            DoubleMaxMask m = (DoubleMaxMask)o;
+        public DoubleMaxMask and(VectorMask<Double> mask) {
+            Objects.requireNonNull(mask);
+            DoubleMaxMask m = (DoubleMaxMask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, DoubleMaxMask.class, long.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -544,9 +544,9 @@ final class DoubleMaxVector extends DoubleVector {
 
         @Override
         @ForceInline
-        public DoubleMaxMask or(VectorMask<Double> o) {
-            Objects.requireNonNull(o);
-            DoubleMaxMask m = (DoubleMaxMask)o;
+        public DoubleMaxMask or(VectorMask<Double> mask) {
+            Objects.requireNonNull(mask);
+            DoubleMaxMask m = (DoubleMaxMask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, DoubleMaxMask.class, long.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -643,8 +643,8 @@ final class DoubleMaxVector extends DoubleVector {
         }
 
         @Override
-        public DoubleMaxShuffle rearrange(VectorShuffle<Double> o) {
-            DoubleMaxShuffle s = (DoubleMaxShuffle) o;
+        public DoubleMaxShuffle rearrange(VectorShuffle<Double> shuffle) {
+            DoubleMaxShuffle s = (DoubleMaxShuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

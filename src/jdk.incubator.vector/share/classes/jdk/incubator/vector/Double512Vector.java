@@ -172,15 +172,15 @@ final class Double512Vector extends DoubleVector {
 
     @ForceInline
     final @Override
-    Double512Vector bOp(Vector<Double> o, FBinOp f) {
-        return (Double512Vector) super.bOp((Double512Vector)o, f);  // specialize
+    Double512Vector bOp(Vector<Double> v, FBinOp f) {
+        return (Double512Vector) super.bOp((Double512Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Double512Vector bOp(Vector<Double> o,
+    Double512Vector bOp(Vector<Double> v,
                      VectorMask<Double> m, FBinOp f) {
-        return (Double512Vector) super.bOp((Double512Vector)o, (Double512Mask)m,
+        return (Double512Vector) super.bOp((Double512Vector)v, (Double512Mask)m,
                                         f);  // specialize
     }
 
@@ -188,16 +188,16 @@ final class Double512Vector extends DoubleVector {
 
     @ForceInline
     final @Override
-    Double512Vector tOp(Vector<Double> o1, Vector<Double> o2, FTriOp f) {
-        return (Double512Vector) super.tOp((Double512Vector)o1, (Double512Vector)o2,
+    Double512Vector tOp(Vector<Double> v1, Vector<Double> v2, FTriOp f) {
+        return (Double512Vector) super.tOp((Double512Vector)v1, (Double512Vector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Double512Vector tOp(Vector<Double> o1, Vector<Double> o2,
+    Double512Vector tOp(Vector<Double> v1, Vector<Double> v2,
                      VectorMask<Double> m, FTriOp f) {
-        return (Double512Vector) super.tOp((Double512Vector)o1, (Double512Vector)o2,
+        return (Double512Vector) super.tOp((Double512Vector)v1, (Double512Vector)v2,
                                         (Double512Mask)m, f);  // specialize
     }
 
@@ -475,10 +475,10 @@ final class Double512Vector extends DoubleVector {
         }
 
         @Override
-        Double512Mask bOp(VectorMask<Double> o, MBinOp f) {
+        Double512Mask bOp(VectorMask<Double> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((Double512Mask)o).getBits();
+            boolean[] mbits = ((Double512Mask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -534,9 +534,9 @@ final class Double512Vector extends DoubleVector {
 
         @Override
         @ForceInline
-        public Double512Mask and(VectorMask<Double> o) {
-            Objects.requireNonNull(o);
-            Double512Mask m = (Double512Mask)o;
+        public Double512Mask and(VectorMask<Double> mask) {
+            Objects.requireNonNull(mask);
+            Double512Mask m = (Double512Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Double512Mask.class, long.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -544,9 +544,9 @@ final class Double512Vector extends DoubleVector {
 
         @Override
         @ForceInline
-        public Double512Mask or(VectorMask<Double> o) {
-            Objects.requireNonNull(o);
-            Double512Mask m = (Double512Mask)o;
+        public Double512Mask or(VectorMask<Double> mask) {
+            Objects.requireNonNull(mask);
+            Double512Mask m = (Double512Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Double512Mask.class, long.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -643,8 +643,8 @@ final class Double512Vector extends DoubleVector {
         }
 
         @Override
-        public Double512Shuffle rearrange(VectorShuffle<Double> o) {
-            Double512Shuffle s = (Double512Shuffle) o;
+        public Double512Shuffle rearrange(VectorShuffle<Double> shuffle) {
+            Double512Shuffle s = (Double512Shuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

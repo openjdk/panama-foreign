@@ -172,15 +172,15 @@ final class Short256Vector extends ShortVector {
 
     @ForceInline
     final @Override
-    Short256Vector bOp(Vector<Short> o, FBinOp f) {
-        return (Short256Vector) super.bOp((Short256Vector)o, f);  // specialize
+    Short256Vector bOp(Vector<Short> v, FBinOp f) {
+        return (Short256Vector) super.bOp((Short256Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Short256Vector bOp(Vector<Short> o,
+    Short256Vector bOp(Vector<Short> v,
                      VectorMask<Short> m, FBinOp f) {
-        return (Short256Vector) super.bOp((Short256Vector)o, (Short256Mask)m,
+        return (Short256Vector) super.bOp((Short256Vector)v, (Short256Mask)m,
                                         f);  // specialize
     }
 
@@ -188,16 +188,16 @@ final class Short256Vector extends ShortVector {
 
     @ForceInline
     final @Override
-    Short256Vector tOp(Vector<Short> o1, Vector<Short> o2, FTriOp f) {
-        return (Short256Vector) super.tOp((Short256Vector)o1, (Short256Vector)o2,
+    Short256Vector tOp(Vector<Short> v1, Vector<Short> v2, FTriOp f) {
+        return (Short256Vector) super.tOp((Short256Vector)v1, (Short256Vector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Short256Vector tOp(Vector<Short> o1, Vector<Short> o2,
+    Short256Vector tOp(Vector<Short> v1, Vector<Short> v2,
                      VectorMask<Short> m, FTriOp f) {
-        return (Short256Vector) super.tOp((Short256Vector)o1, (Short256Vector)o2,
+        return (Short256Vector) super.tOp((Short256Vector)v1, (Short256Vector)v2,
                                         (Short256Mask)m, f);  // specialize
     }
 
@@ -480,10 +480,10 @@ final class Short256Vector extends ShortVector {
         }
 
         @Override
-        Short256Mask bOp(VectorMask<Short> o, MBinOp f) {
+        Short256Mask bOp(VectorMask<Short> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((Short256Mask)o).getBits();
+            boolean[] mbits = ((Short256Mask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -539,9 +539,9 @@ final class Short256Vector extends ShortVector {
 
         @Override
         @ForceInline
-        public Short256Mask and(VectorMask<Short> o) {
-            Objects.requireNonNull(o);
-            Short256Mask m = (Short256Mask)o;
+        public Short256Mask and(VectorMask<Short> mask) {
+            Objects.requireNonNull(mask);
+            Short256Mask m = (Short256Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Short256Mask.class, short.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -549,9 +549,9 @@ final class Short256Vector extends ShortVector {
 
         @Override
         @ForceInline
-        public Short256Mask or(VectorMask<Short> o) {
-            Objects.requireNonNull(o);
-            Short256Mask m = (Short256Mask)o;
+        public Short256Mask or(VectorMask<Short> mask) {
+            Objects.requireNonNull(mask);
+            Short256Mask m = (Short256Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Short256Mask.class, short.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -648,8 +648,8 @@ final class Short256Vector extends ShortVector {
         }
 
         @Override
-        public Short256Shuffle rearrange(VectorShuffle<Short> o) {
-            Short256Shuffle s = (Short256Shuffle) o;
+        public Short256Shuffle rearrange(VectorShuffle<Short> shuffle) {
+            Short256Shuffle s = (Short256Shuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

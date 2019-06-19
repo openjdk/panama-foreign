@@ -172,15 +172,15 @@ final class Short64Vector extends ShortVector {
 
     @ForceInline
     final @Override
-    Short64Vector bOp(Vector<Short> o, FBinOp f) {
-        return (Short64Vector) super.bOp((Short64Vector)o, f);  // specialize
+    Short64Vector bOp(Vector<Short> v, FBinOp f) {
+        return (Short64Vector) super.bOp((Short64Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Short64Vector bOp(Vector<Short> o,
+    Short64Vector bOp(Vector<Short> v,
                      VectorMask<Short> m, FBinOp f) {
-        return (Short64Vector) super.bOp((Short64Vector)o, (Short64Mask)m,
+        return (Short64Vector) super.bOp((Short64Vector)v, (Short64Mask)m,
                                         f);  // specialize
     }
 
@@ -188,16 +188,16 @@ final class Short64Vector extends ShortVector {
 
     @ForceInline
     final @Override
-    Short64Vector tOp(Vector<Short> o1, Vector<Short> o2, FTriOp f) {
-        return (Short64Vector) super.tOp((Short64Vector)o1, (Short64Vector)o2,
+    Short64Vector tOp(Vector<Short> v1, Vector<Short> v2, FTriOp f) {
+        return (Short64Vector) super.tOp((Short64Vector)v1, (Short64Vector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Short64Vector tOp(Vector<Short> o1, Vector<Short> o2,
+    Short64Vector tOp(Vector<Short> v1, Vector<Short> v2,
                      VectorMask<Short> m, FTriOp f) {
-        return (Short64Vector) super.tOp((Short64Vector)o1, (Short64Vector)o2,
+        return (Short64Vector) super.tOp((Short64Vector)v1, (Short64Vector)v2,
                                         (Short64Mask)m, f);  // specialize
     }
 
@@ -480,10 +480,10 @@ final class Short64Vector extends ShortVector {
         }
 
         @Override
-        Short64Mask bOp(VectorMask<Short> o, MBinOp f) {
+        Short64Mask bOp(VectorMask<Short> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((Short64Mask)o).getBits();
+            boolean[] mbits = ((Short64Mask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -539,9 +539,9 @@ final class Short64Vector extends ShortVector {
 
         @Override
         @ForceInline
-        public Short64Mask and(VectorMask<Short> o) {
-            Objects.requireNonNull(o);
-            Short64Mask m = (Short64Mask)o;
+        public Short64Mask and(VectorMask<Short> mask) {
+            Objects.requireNonNull(mask);
+            Short64Mask m = (Short64Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Short64Mask.class, short.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -549,9 +549,9 @@ final class Short64Vector extends ShortVector {
 
         @Override
         @ForceInline
-        public Short64Mask or(VectorMask<Short> o) {
-            Objects.requireNonNull(o);
-            Short64Mask m = (Short64Mask)o;
+        public Short64Mask or(VectorMask<Short> mask) {
+            Objects.requireNonNull(mask);
+            Short64Mask m = (Short64Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Short64Mask.class, short.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -648,8 +648,8 @@ final class Short64Vector extends ShortVector {
         }
 
         @Override
-        public Short64Shuffle rearrange(VectorShuffle<Short> o) {
-            Short64Shuffle s = (Short64Shuffle) o;
+        public Short64Shuffle rearrange(VectorShuffle<Short> shuffle) {
+            Short64Shuffle s = (Short64Shuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

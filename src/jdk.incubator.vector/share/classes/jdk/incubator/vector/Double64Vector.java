@@ -172,15 +172,15 @@ final class Double64Vector extends DoubleVector {
 
     @ForceInline
     final @Override
-    Double64Vector bOp(Vector<Double> o, FBinOp f) {
-        return (Double64Vector) super.bOp((Double64Vector)o, f);  // specialize
+    Double64Vector bOp(Vector<Double> v, FBinOp f) {
+        return (Double64Vector) super.bOp((Double64Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Double64Vector bOp(Vector<Double> o,
+    Double64Vector bOp(Vector<Double> v,
                      VectorMask<Double> m, FBinOp f) {
-        return (Double64Vector) super.bOp((Double64Vector)o, (Double64Mask)m,
+        return (Double64Vector) super.bOp((Double64Vector)v, (Double64Mask)m,
                                         f);  // specialize
     }
 
@@ -188,16 +188,16 @@ final class Double64Vector extends DoubleVector {
 
     @ForceInline
     final @Override
-    Double64Vector tOp(Vector<Double> o1, Vector<Double> o2, FTriOp f) {
-        return (Double64Vector) super.tOp((Double64Vector)o1, (Double64Vector)o2,
+    Double64Vector tOp(Vector<Double> v1, Vector<Double> v2, FTriOp f) {
+        return (Double64Vector) super.tOp((Double64Vector)v1, (Double64Vector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Double64Vector tOp(Vector<Double> o1, Vector<Double> o2,
+    Double64Vector tOp(Vector<Double> v1, Vector<Double> v2,
                      VectorMask<Double> m, FTriOp f) {
-        return (Double64Vector) super.tOp((Double64Vector)o1, (Double64Vector)o2,
+        return (Double64Vector) super.tOp((Double64Vector)v1, (Double64Vector)v2,
                                         (Double64Mask)m, f);  // specialize
     }
 
@@ -475,10 +475,10 @@ final class Double64Vector extends DoubleVector {
         }
 
         @Override
-        Double64Mask bOp(VectorMask<Double> o, MBinOp f) {
+        Double64Mask bOp(VectorMask<Double> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((Double64Mask)o).getBits();
+            boolean[] mbits = ((Double64Mask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -534,9 +534,9 @@ final class Double64Vector extends DoubleVector {
 
         @Override
         @ForceInline
-        public Double64Mask and(VectorMask<Double> o) {
-            Objects.requireNonNull(o);
-            Double64Mask m = (Double64Mask)o;
+        public Double64Mask and(VectorMask<Double> mask) {
+            Objects.requireNonNull(mask);
+            Double64Mask m = (Double64Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Double64Mask.class, long.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -544,9 +544,9 @@ final class Double64Vector extends DoubleVector {
 
         @Override
         @ForceInline
-        public Double64Mask or(VectorMask<Double> o) {
-            Objects.requireNonNull(o);
-            Double64Mask m = (Double64Mask)o;
+        public Double64Mask or(VectorMask<Double> mask) {
+            Objects.requireNonNull(mask);
+            Double64Mask m = (Double64Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Double64Mask.class, long.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -643,8 +643,8 @@ final class Double64Vector extends DoubleVector {
         }
 
         @Override
-        public Double64Shuffle rearrange(VectorShuffle<Double> o) {
-            Double64Shuffle s = (Double64Shuffle) o;
+        public Double64Shuffle rearrange(VectorShuffle<Double> shuffle) {
+            Double64Shuffle s = (Double64Shuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

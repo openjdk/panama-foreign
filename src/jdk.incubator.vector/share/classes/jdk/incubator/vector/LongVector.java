@@ -396,6 +396,19 @@ public abstract class LongVector extends AbstractVector<Long> {
      * where all lane elements are set to
      * the primitive value {@code e}.
      *
+     * The contents of the current vector are discarded;
+     * only the species is relevant to this operation.
+     *
+     * <p> This method returns the value of this expression:
+     * {@code LongVector.broadcast(this.species(), e)}.
+     *
+     * @apiNote
+     * Unlike the similar method named {@code broadcast()}
+     * in the supertype {@code Vector}, this method does not
+     * need to validate its argument, and cannot throw
+     * {@code IllegalArgumentException}.  This method is
+     * therefore preferable to the supertype method.
+     *
      * @param e the value to broadcast
      * @return a vector where all lane elements are set to
      *         the primitive value {@code e}
@@ -651,7 +664,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * Combines the lane values of this vector
      * with the value of a broadcast scalar.
-     * <p>
+     *
      * This is a lane-wise binary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
@@ -683,8 +696,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Combines the lane values of this vector
      * with the value of a broadcast scalar,
      * with selection of lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies
+     *
+     * This is a masked lane-wise binary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e), m)}.
@@ -828,7 +841,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * Combines the lane values of this vector
      * with the values of two broadcast scalars.
-     * <p>
+     *
      * This is a lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
@@ -855,8 +868,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Combines the lane values of this vector
      * with the values of two broadcast scalars,
      * with selection of lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise ternary operation which applies
+     *
+     * This is a masked lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2), m)}.
@@ -883,7 +896,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * Combines the lane values of this vector
      * with the values of another vector and a broadcast scalar.
-     * <p>
+     *
      * This is a lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
@@ -910,8 +923,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Combines the lane values of this vector
      * with the values of another vector and a broadcast scalar,
      * with selection of lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise ternary operation which applies
+     *
+     * This is a masked lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
@@ -939,7 +952,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * Combines the lane values of this vector
      * with the values of another vector and a broadcast scalar.
-     * <p>
+     *
      * This is a lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
@@ -966,8 +979,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Combines the lane values of this vector
      * with the values of another vector and a broadcast scalar,
      * with selection of lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise ternary operation which applies
+     *
+     * This is a masked lane-wise ternary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
@@ -1046,7 +1059,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Adds this vector to the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive addition operation ({@code +}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1081,7 +1094,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * Subtracts an input scalar from this vector.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive subtraction operation ({@code -}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1116,7 +1129,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Subtracts an input scalar from this vector
      * under the control of a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive subtraction operation ({@code -}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1186,7 +1199,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Multiplies this vector by the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive multiplication operation ({@code *}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1262,7 +1275,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Divides this vector by the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive division operation ({@code /}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1536,7 +1549,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /**
      * Tests if this vector is equal to an input scalar.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the primitive equals operation ({@code ==}) to each lane.
      * The result is the same as {@code compare(VectorOperators.Comparison.EQ, e)}.
@@ -1544,7 +1557,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @param e the input scalar
      * @return the result mask of testing if this vector
      *         is equal to {@code e}
-     * @see #compare(VectorOperators.Comparison, long)
+     * @see #compare(VectorOperators.Comparison,long)
      */
     public final
     VectorMask<Long> eq(long e) {
@@ -1562,7 +1575,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /**
      * Tests if this vector is less than an input scalar.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the primitive less than operation ({@code <}) to each lane.
      * The result is the same as {@code compare(VectorOperators.LT, e)}.
@@ -1570,7 +1583,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @param e the input scalar
      * @return the mask result of testing if this vector
      *         is less than the input scalar
-     * @see #compare(VectorOperators.Comparison, long)
+     * @see #compare(VectorOperators.Comparison,long)
      */
     public final
     VectorMask<Long> lt(long e) {
@@ -1618,9 +1631,20 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public final
+    VectorMask<Long> compare(VectorOperators.Comparison op,
+                                  Vector<Long> v,
+                                  VectorMask<Long> m) {
+        return compare(op, v).and(m);
+    }
+
+    /**
      * Tests this vector by comparing it with an input scalar,
      * according to the given comparison operation.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the comparison operation to each lane.
      * <p>
@@ -1635,6 +1659,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the mask result of testing lane-wise if this vector
      *         compares to the input, according to the selected
      *         comparison operator
+     * @see LongVector#compare(VectorOperators.Comparison,Vector)
      * @see #eq(long)
      * @see #lessThan(long)
      */
@@ -1646,6 +1671,31 @@ public abstract class LongVector extends AbstractVector<Long> {
     <M extends VectorMask<Long>>
     M compareTemplate(Class<M> maskType, Comparison op, long e) {
         return compareTemplate(maskType, op, broadcast(e));
+    }
+
+    /**
+     * Tests this vector by comparing it with an input scalar,
+     * according to the given comparison operation,
+     * in lanes selected by a mask.
+     *
+     * This is a masked lane-wise binary test operation which applies
+     * to each pair of corresponding lane values.
+     *
+     * The returned result is equal to the expression
+     * {@code compare(op,s).and(m)}.
+     *
+     * @param e the input scalar
+     * @param m the mask controlling lane selection
+     * @return the mask result of testing lane-wise if this vector
+     *         compares to the input, according to the selected
+     *         comparison operator,
+     *         and only in the lanes selected by the mask
+     * @see LongVector#compare(VectorOperators.Comparison,Vector,VectorMask)
+     */
+    public final VectorMask<Long> compare(VectorOperators.Comparison op,
+                                               long e,
+                                               VectorMask<Long> m) {
+        return compare(op, e).and(m);
     }
 
 
@@ -1693,24 +1743,26 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /**
-     * Blends the lane elements of this vector with those of the broadcast of an
-     * input scalar, selecting lanes controlled by a mask.
-     * <p>
-     * For each lane of the mask, at lane index {@code N}, if the mask lane
-     * is set then the lane element at {@code N} from the input vector is
-     * selected and placed into the resulting vector at {@code N},
-     * otherwise the lane element at {@code N} from this input vector is
-     * selected and placed into the resulting vector at {@code N}.
+     * Replaces selected lanes of this vector with
+     * a scalar value
+     * under the control of a mask.
      *
-     * @param e the input scalar
-     * @param m the mask controlling lane selection
+     * This is a masked lane-wise binary operation which
+     * selects each lane value from one or the other input.
+     *
+     * The returned result is equal to the expression
+     * {@code blend(broadcast(e),m)}.
+     *
+     * @param e the input scalar, containing the replacement lane value
+     * @param m the mask controlling lane selection of the scalar
      * @return the result of blending the lane elements of this vector with
-     * those of the broadcast of an input scalar
+     *         the scalar value
      */
     public final LongVector blend(long e,
                                             VectorMask<Long> m) {
         return blend(broadcast(e), m);
     }
+
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1926,7 +1978,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Blends together the bits of two vectors under
      * the control of a third, which supplies mask bits.
      *
-     * <p>
+     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -1955,7 +2007,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Blends together the bits of a vector and a scalar under
      * the control of another scalar, which supplies mask bits.
      *
-     * <p>
+     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -1982,7 +2034,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Blends together the bits of a vector and a scalar under
      * the control of another vector, which supplies mask bits.
      *
-     * <p>
+     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2009,7 +2061,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Blends together the bits of two vectors scalar under
      * the control of a scalar, which supplies mask bits.
      *
-     * <p>
+     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2037,7 +2089,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /**
      * Returns a value accumulated from all the lanes of this vector.
-     * <p>
+     *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to all the lane elements.
      *
@@ -2084,7 +2136,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * Returns a value accumulated from selected lanes of this vector,
      * controlled by a mask.
-     * <p>
+     *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to the selected lane elements.
      * <p>
@@ -2216,7 +2268,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * Replaces the lane element of this vector at lane index {@code i} with
      * value {@code e}.
-     * <p>
+     *
      * This is a cross-lane operation and behaves as if it returns the result
      * of blending this vector with an input vector that is the result of
      * broadcasting {@code e} and a mask that has only one lane set at lane
@@ -2263,7 +2315,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      * This is an alias for {@link #toArray()}
      * When this method is used on used on vectors
-     * of type LongVector,
+     * of type {@code LongVector},
      * there will be no loss of range or precision.
      */
     @ForceInline
@@ -2275,7 +2327,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /** {@inheritDoc} <!--workaround-->
      * @implNote
      * When this method is used on used on vectors
-     * of type LongVector,
+     * of type {@code LongVector},
      * up to nine bits of precision may be lost
      * for lane values of large magnitude.
      */
@@ -2366,7 +2418,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of long (zero).
+     * value of {@code long} (zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -2403,7 +2455,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of long (zero).
+     * value of {@code long} (zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -2474,7 +2526,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Loads a vector from an array of type {@code long[]}
      * starting at an offset and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of long (zero).
+     * value of {@code long} (zero).
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then the array element at
      * index {@code offset + N} is placed into the resulting vector at lane index
@@ -2726,7 +2778,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /**
-     * Stores this vector into an array of long
+     * Stores this vector into an array of {@code long}
      * starting at offset and using a mask.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
@@ -3156,7 +3208,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      *
      * The string is produced as if by a call to {@link
      * java.util.Arrays#toString(long[]) Arrays.toString()},
-     * as appropriate to the long array returned by
+     * as appropriate to the {@code long} array returned by
      * {@link #toArray this.toArray()}.
      *
      * @return a string of the form {@code "[0,1,2...]"}

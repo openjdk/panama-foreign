@@ -172,15 +172,15 @@ final class IntMaxVector extends IntVector {
 
     @ForceInline
     final @Override
-    IntMaxVector bOp(Vector<Integer> o, FBinOp f) {
-        return (IntMaxVector) super.bOp((IntMaxVector)o, f);  // specialize
+    IntMaxVector bOp(Vector<Integer> v, FBinOp f) {
+        return (IntMaxVector) super.bOp((IntMaxVector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    IntMaxVector bOp(Vector<Integer> o,
+    IntMaxVector bOp(Vector<Integer> v,
                      VectorMask<Integer> m, FBinOp f) {
-        return (IntMaxVector) super.bOp((IntMaxVector)o, (IntMaxMask)m,
+        return (IntMaxVector) super.bOp((IntMaxVector)v, (IntMaxMask)m,
                                         f);  // specialize
     }
 
@@ -188,16 +188,16 @@ final class IntMaxVector extends IntVector {
 
     @ForceInline
     final @Override
-    IntMaxVector tOp(Vector<Integer> o1, Vector<Integer> o2, FTriOp f) {
-        return (IntMaxVector) super.tOp((IntMaxVector)o1, (IntMaxVector)o2,
+    IntMaxVector tOp(Vector<Integer> v1, Vector<Integer> v2, FTriOp f) {
+        return (IntMaxVector) super.tOp((IntMaxVector)v1, (IntMaxVector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    IntMaxVector tOp(Vector<Integer> o1, Vector<Integer> o2,
+    IntMaxVector tOp(Vector<Integer> v1, Vector<Integer> v2,
                      VectorMask<Integer> m, FTriOp f) {
-        return (IntMaxVector) super.tOp((IntMaxVector)o1, (IntMaxVector)o2,
+        return (IntMaxVector) super.tOp((IntMaxVector)v1, (IntMaxVector)v2,
                                         (IntMaxMask)m, f);  // specialize
     }
 
@@ -480,10 +480,10 @@ final class IntMaxVector extends IntVector {
         }
 
         @Override
-        IntMaxMask bOp(VectorMask<Integer> o, MBinOp f) {
+        IntMaxMask bOp(VectorMask<Integer> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((IntMaxMask)o).getBits();
+            boolean[] mbits = ((IntMaxMask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -539,9 +539,9 @@ final class IntMaxVector extends IntVector {
 
         @Override
         @ForceInline
-        public IntMaxMask and(VectorMask<Integer> o) {
-            Objects.requireNonNull(o);
-            IntMaxMask m = (IntMaxMask)o;
+        public IntMaxMask and(VectorMask<Integer> mask) {
+            Objects.requireNonNull(mask);
+            IntMaxMask m = (IntMaxMask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, IntMaxMask.class, int.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -549,9 +549,9 @@ final class IntMaxVector extends IntVector {
 
         @Override
         @ForceInline
-        public IntMaxMask or(VectorMask<Integer> o) {
-            Objects.requireNonNull(o);
-            IntMaxMask m = (IntMaxMask)o;
+        public IntMaxMask or(VectorMask<Integer> mask) {
+            Objects.requireNonNull(mask);
+            IntMaxMask m = (IntMaxMask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, IntMaxMask.class, int.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -648,8 +648,8 @@ final class IntMaxVector extends IntVector {
         }
 
         @Override
-        public IntMaxShuffle rearrange(VectorShuffle<Integer> o) {
-            IntMaxShuffle s = (IntMaxShuffle) o;
+        public IntMaxShuffle rearrange(VectorShuffle<Integer> shuffle) {
+            IntMaxShuffle s = (IntMaxShuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

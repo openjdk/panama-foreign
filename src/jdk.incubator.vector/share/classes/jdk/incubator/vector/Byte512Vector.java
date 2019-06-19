@@ -171,15 +171,15 @@ final class Byte512Vector extends ByteVector {
 
     @ForceInline
     final @Override
-    Byte512Vector bOp(Vector<Byte> o, FBinOp f) {
-        return (Byte512Vector) super.bOp((Byte512Vector)o, f);  // specialize
+    Byte512Vector bOp(Vector<Byte> v, FBinOp f) {
+        return (Byte512Vector) super.bOp((Byte512Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Byte512Vector bOp(Vector<Byte> o,
+    Byte512Vector bOp(Vector<Byte> v,
                      VectorMask<Byte> m, FBinOp f) {
-        return (Byte512Vector) super.bOp((Byte512Vector)o, (Byte512Mask)m,
+        return (Byte512Vector) super.bOp((Byte512Vector)v, (Byte512Mask)m,
                                         f);  // specialize
     }
 
@@ -187,16 +187,16 @@ final class Byte512Vector extends ByteVector {
 
     @ForceInline
     final @Override
-    Byte512Vector tOp(Vector<Byte> o1, Vector<Byte> o2, FTriOp f) {
-        return (Byte512Vector) super.tOp((Byte512Vector)o1, (Byte512Vector)o2,
+    Byte512Vector tOp(Vector<Byte> v1, Vector<Byte> v2, FTriOp f) {
+        return (Byte512Vector) super.tOp((Byte512Vector)v1, (Byte512Vector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Byte512Vector tOp(Vector<Byte> o1, Vector<Byte> o2,
+    Byte512Vector tOp(Vector<Byte> v1, Vector<Byte> v2,
                      VectorMask<Byte> m, FTriOp f) {
-        return (Byte512Vector) super.tOp((Byte512Vector)o1, (Byte512Vector)o2,
+        return (Byte512Vector) super.tOp((Byte512Vector)v1, (Byte512Vector)v2,
                                         (Byte512Mask)m, f);  // specialize
     }
 
@@ -479,10 +479,10 @@ final class Byte512Vector extends ByteVector {
         }
 
         @Override
-        Byte512Mask bOp(VectorMask<Byte> o, MBinOp f) {
+        Byte512Mask bOp(VectorMask<Byte> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((Byte512Mask)o).getBits();
+            boolean[] mbits = ((Byte512Mask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -538,9 +538,9 @@ final class Byte512Vector extends ByteVector {
 
         @Override
         @ForceInline
-        public Byte512Mask and(VectorMask<Byte> o) {
-            Objects.requireNonNull(o);
-            Byte512Mask m = (Byte512Mask)o;
+        public Byte512Mask and(VectorMask<Byte> mask) {
+            Objects.requireNonNull(mask);
+            Byte512Mask m = (Byte512Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Byte512Mask.class, byte.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -548,9 +548,9 @@ final class Byte512Vector extends ByteVector {
 
         @Override
         @ForceInline
-        public Byte512Mask or(VectorMask<Byte> o) {
-            Objects.requireNonNull(o);
-            Byte512Mask m = (Byte512Mask)o;
+        public Byte512Mask or(VectorMask<Byte> mask) {
+            Objects.requireNonNull(mask);
+            Byte512Mask m = (Byte512Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Byte512Mask.class, byte.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -647,8 +647,8 @@ final class Byte512Vector extends ByteVector {
         }
 
         @Override
-        public Byte512Shuffle rearrange(VectorShuffle<Byte> o) {
-            Byte512Shuffle s = (Byte512Shuffle) o;
+        public Byte512Shuffle rearrange(VectorShuffle<Byte> shuffle) {
+            Byte512Shuffle s = (Byte512Shuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];

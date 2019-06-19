@@ -167,15 +167,15 @@ final class Long128Vector extends LongVector {
 
     @ForceInline
     final @Override
-    Long128Vector bOp(Vector<Long> o, FBinOp f) {
-        return (Long128Vector) super.bOp((Long128Vector)o, f);  // specialize
+    Long128Vector bOp(Vector<Long> v, FBinOp f) {
+        return (Long128Vector) super.bOp((Long128Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Long128Vector bOp(Vector<Long> o,
+    Long128Vector bOp(Vector<Long> v,
                      VectorMask<Long> m, FBinOp f) {
-        return (Long128Vector) super.bOp((Long128Vector)o, (Long128Mask)m,
+        return (Long128Vector) super.bOp((Long128Vector)v, (Long128Mask)m,
                                         f);  // specialize
     }
 
@@ -183,16 +183,16 @@ final class Long128Vector extends LongVector {
 
     @ForceInline
     final @Override
-    Long128Vector tOp(Vector<Long> o1, Vector<Long> o2, FTriOp f) {
-        return (Long128Vector) super.tOp((Long128Vector)o1, (Long128Vector)o2,
+    Long128Vector tOp(Vector<Long> v1, Vector<Long> v2, FTriOp f) {
+        return (Long128Vector) super.tOp((Long128Vector)v1, (Long128Vector)v2,
                                         f);  // specialize
     }
 
     @ForceInline
     final @Override
-    Long128Vector tOp(Vector<Long> o1, Vector<Long> o2,
+    Long128Vector tOp(Vector<Long> v1, Vector<Long> v2,
                      VectorMask<Long> m, FTriOp f) {
-        return (Long128Vector) super.tOp((Long128Vector)o1, (Long128Vector)o2,
+        return (Long128Vector) super.tOp((Long128Vector)v1, (Long128Vector)v2,
                                         (Long128Mask)m, f);  // specialize
     }
 
@@ -470,10 +470,10 @@ final class Long128Vector extends LongVector {
         }
 
         @Override
-        Long128Mask bOp(VectorMask<Long> o, MBinOp f) {
+        Long128Mask bOp(VectorMask<Long> m, MBinOp f) {
             boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((Long128Mask)o).getBits();
+            boolean[] mbits = ((Long128Mask)m).getBits();
             for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
@@ -529,9 +529,9 @@ final class Long128Vector extends LongVector {
 
         @Override
         @ForceInline
-        public Long128Mask and(VectorMask<Long> o) {
-            Objects.requireNonNull(o);
-            Long128Mask m = (Long128Mask)o;
+        public Long128Mask and(VectorMask<Long> mask) {
+            Objects.requireNonNull(mask);
+            Long128Mask m = (Long128Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Long128Mask.class, long.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
@@ -539,9 +539,9 @@ final class Long128Vector extends LongVector {
 
         @Override
         @ForceInline
-        public Long128Mask or(VectorMask<Long> o) {
-            Objects.requireNonNull(o);
-            Long128Mask m = (Long128Mask)o;
+        public Long128Mask or(VectorMask<Long> mask) {
+            Objects.requireNonNull(mask);
+            Long128Mask m = (Long128Mask)mask;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Long128Mask.class, long.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
@@ -638,8 +638,8 @@ final class Long128Vector extends LongVector {
         }
 
         @Override
-        public Long128Shuffle rearrange(VectorShuffle<Long> o) {
-            Long128Shuffle s = (Long128Shuffle) o;
+        public Long128Shuffle rearrange(VectorShuffle<Long> shuffle) {
+            Long128Shuffle s = (Long128Shuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
                 int ssi = s.reorder[i];
