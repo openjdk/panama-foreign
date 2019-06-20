@@ -614,7 +614,12 @@ public class JextractToolProviderTest extends JextractToolRunner {
     public void testBuiltinHeader() throws IOException {
         testBuiltinInclude("stdarg.h", checkSuccess);
         testBuiltinInclude("stdbool.h", checkSuccess);
-        testBuiltinInclude("emmintrin.h", checkSuccess);
+        String arch = System.getProperty("os.arch");
+        boolean isX86 = arch.equals("amd64") || arch.equals("x86_64");
+        boolean isWindows = System.getProperty("os.name").startsWith("Windows");
+        if (isX86 && !isWindows) {
+            testBuiltinInclude("emmintrin.h", checkSuccess);
+        }
     }
 
     @Test
