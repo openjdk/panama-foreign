@@ -40,34 +40,7 @@
 
 typedef void (*InvokeNativeStub)(struct ShuffleDowncallContext* ctxt);
 
-enum ShuffleRecipeStorageClass {
-  CLASS_BUF,
-  CLASS_FIRST = CLASS_BUF,
-  CLASS_STACK,
-  CLASS_VECTOR,
-  CLASS_INTEGER,
-  CLASS_X87,
-  CLASS_INDIRECT,
-  CLASS_LAST = CLASS_INDIRECT,
-  CLASS_NOOF
-};
-
-static ShuffleRecipeStorageClass index2storage_class[CLASS_NOOF + 1] = {
-  CLASS_BUF, CLASS_STACK, CLASS_VECTOR, CLASS_INTEGER, CLASS_X87, CLASS_INDIRECT, CLASS_NOOF
-};
-
-static const char* index2storage_class_name[CLASS_NOOF] = {
-  "CLASS_BUF", "CLASS_STACK", "CLASS_VECTOR", "CLASS_INTEGER", "CLASS_X87", "CLASS_INDIRECT"
-};
-
-static ShuffleRecipeStorageClass next_storage_class(ShuffleRecipeStorageClass c) {
-  int idx = (int)c + 1;
-  assert(idx < CLASS_NOOF + 1, "Out of bounds");
-  return index2storage_class[idx];
-}
-
-
-static size_t class2maxwidth(ShuffleRecipeStorageClass c) {
+size_t ShuffleRecipe::storage_class_max_width(ShuffleRecipeStorageClass c) {
   switch (c) {
   case CLASS_BUF:
   case CLASS_STACK:
@@ -75,23 +48,8 @@ static size_t class2maxwidth(ShuffleRecipeStorageClass c) {
   case CLASS_INDIRECT:
     return 1;
 
-#ifdef X86
-  case CLASS_X87:
-    return 2;
-#endif
-
   case CLASS_VECTOR:
-#ifdef AARCH64
     return 2;
-#else
-    if (UseAVX >= 3) {
-      return 8;
-    } else if (UseAVX >= 1) {
-      return 4;
-    } else {
-      return 2;
-    }
-#endif
 
   default:
     assert(false, "Unexpected class");
@@ -99,191 +57,11 @@ static size_t class2maxwidth(ShuffleRecipeStorageClass c) {
   }
 }
 
-enum ShuffleRecipeOp {
-  OP_STOP,
-  OP_SKIP,
-  OP_PULL,
-  OP_PULL_LABEL,
-  OP_CREATE_BUFFER,
-  OP_NOP,
-  OP_NOOF
-};
-
-static const char* op_name[OP_NOOF] = {
-  "OP_STOP", "OP_SKIP", "OP_PULL", "OP_PULL_LABEL", "OP_CREATE_BUFFER", "OP_NOP"
-};
-
-#ifndef PRODUCT
-static const char* op2name(ShuffleRecipeOp op) {
-  assert(op <= OP_NOOF, "invalid op");
-  return op_name[op];
-}
-#endif
-
-class ShuffleRecipe : public StackObj {
-public:
-  ShuffleRecipe(arrayHandle recipe)
-    : _recipe(recipe) {
-    assert(_recipe()->length() > 0, "Empty recipe not allowed");
-
-    init_sizes();
-  }
-
-  arrayHandle recipe() { return _recipe; }
-  uint64_t word(size_t index) {
-    uint64_t* bits = (uint64_t*)_recipe()->base(T_LONG);
-    return bits[index];
-  }
-
-  size_t length() { return _length; }
-
-  size_t stack_args_slots() { return _stack_args_slots; }
-  size_t buffer_slots() { return _buffer_slots; }
-  size_t nlabels() { return _nlabels; }
-
-#ifndef PRODUCT
-  void print(outputStream* s);
-#endif
-
-private:
-  void init_sizes();
-
-  arrayHandle _recipe; // the long[] recipe array
-  size_t _length;
-
-  size_t _buffer_slots;
-  size_t _stack_args_slots;
-  size_t _nlabels;
-};
-
-class ShuffleRecipeStream {
-public:
-  ShuffleRecipeStream(ShuffleRecipe& recipe)
-    : _recipe(recipe) {
-    _next_word_index = 0;
-    _cur_class = CLASS_FIRST;
-    _direction = ARGUMENTS;
-
-    read_recipe_word();
-  }
-
-  void read_recipe_word() {
-    _cur_bits = _recipe.word(_next_word_index);
-    _next_word_index++;
-  }
-
-  bool has_more() {
-    return _cur_class < CLASS_NOOF;
-  }
-
-  void init_for_returns() {
-    assert(_direction == ARGUMENTS, "stream already advanced");
-    _cur_class = CLASS_FIRST;
-    _direction = RETURNS;
-  }
-
-  ShuffleRecipeOp next() {
-    assert(has_more(), "stream empty");
-
-    if (_cur_bits == 1) {
-      read_recipe_word();
-    }
-
-    ShuffleRecipeOp op = (ShuffleRecipeOp)(_cur_bits & 7);
-    _cur_bits >>= 3;
-
-    if (op == OP_STOP) {
-      _cur_class = next_storage_class(_cur_class);
-    }
-
-    return op;
-  }
-
-private:
-  enum Direction { ARGUMENTS, RETURNS };
-
-  Direction _direction;
-  ShuffleRecipe& _recipe;
-
-  size_t _next_word_index;
-  uint64_t _cur_bits;
-
-  ShuffleRecipeStorageClass _cur_class;
-};
-
-void ShuffleRecipe::init_sizes() {
-  _length = _recipe()->length();
-
-  size_t slots_for_class[CLASS_NOOF] = { 0 };
-  size_t nbuffers = 0;
-
-  int cur_class = CLASS_FIRST;
-
-  ShuffleRecipeStream stream(*this);
-
-  while(stream.has_more() && cur_class <= CLASS_STACK) {
-    switch (stream.next()) {
-    case OP_NOP:
-      break;
-
-    case OP_STOP:
-      cur_class++;
-      break;
-
-    case OP_CREATE_BUFFER:
-      nbuffers++;
-      break;
-
-    case OP_SKIP:
-    case OP_PULL:
-    case OP_PULL_LABEL:
-      slots_for_class[cur_class]++;
-      break;
-
-    default:
-      assert(false, "Unexpected op");
-      break;
-    }
-  }
-
-  _stack_args_slots = slots_for_class[CLASS_STACK];
-  _buffer_slots = slots_for_class[CLASS_BUF];
-  _nlabels = nbuffers;
-}
-
-#ifndef PRODUCT
-void ShuffleRecipe::print(outputStream* s) {
-  ShuffleRecipeStream stream(*this);
-
-  s->print_cr("Arguments:");
-  while (stream.has_more()) {
-    ShuffleRecipeOp op = stream.next();
-
-    s->print_cr("OP: %s", op2name(op));
-  }
-
-  s->print_cr("Returns:");
-  while (stream.has_more()) {
-    ShuffleRecipeOp op = stream.next();
-
-    s->print_cr("OP: %s", op2name(op));
-  }
-}
-#endif
-
-
 struct ShuffleDowncallContext {
   struct {
-#ifdef _LP64
     uint64_t integer[INTEGER_ARGUMENT_REGISTERS_NOOF];
     VectorRegister vector[VECTOR_ARGUMENT_REGISTERS_NOOF];
-#ifdef X86
-    uintptr_t rax;
-#endif
-#ifdef AARCH64
     uintptr_t indirect;
-#endif
-#endif
     uint64_t* stack_args;
     size_t stack_args_bytes;
     address next_pc;
@@ -292,9 +70,6 @@ struct ShuffleDowncallContext {
   struct {
     uint64_t integer[INTEGER_RETURN_REGISTERS_NOOF];
     VectorRegister vector[VECTOR_RETURN_REGISTERS_NOOF];
-#ifdef X86
-    long double x87[X87_RETURN_REGISTERS_NOOF];
-#endif
   } returns;
 };
 
@@ -410,7 +185,7 @@ private:
       uint64_t* values = (uint64_t*)*src_addrp;
       for (size_t i = 0; i < _npulls; i++) {
         ls.print_cr("Pulling %3zd times to %20s[%3zd]: 0x%" PRIx64 "\n",
-          _npulls, index2storage_class_name[_cur_class], _index_in_class, values[i]);
+          _npulls, ShuffleRecipe::storage_class_name(_cur_class), _index_in_class, values[i]);
       }
     }
 
@@ -537,7 +312,7 @@ private:
 #endif
 
         _index_in_class = 0;
-        _cur_class = next_storage_class(_cur_class);
+        _cur_class = ShuffleRecipe::next_storage_class(_cur_class);
         break;
 
       case OP_CREATE_BUFFER:
@@ -561,7 +336,7 @@ private:
 
       case OP_PULL:
         _npulls++;
-        if (_npulls == class2maxwidth(_cur_class)) {
+        if (_npulls == ShuffleRecipe::storage_class_max_width(_cur_class)) {
           copy_argument_value(&cur_value_data);
         }
         break;
@@ -601,7 +376,7 @@ private:
         }
 
         _index_in_class = 0;
-        _cur_class = next_storage_class(_cur_class);
+        _cur_class = ShuffleRecipe::next_storage_class(_cur_class);
         break;
 
       case OP_CREATE_BUFFER:
@@ -623,7 +398,7 @@ private:
 
       case OP_PULL:
         _npulls++;
-        if (_npulls == class2maxwidth(_cur_class)) {
+        if (_npulls == ShuffleRecipe::storage_class_max_width(_cur_class)) {
           copy_return_value(&cur_value_data);
         }
         break;
@@ -657,95 +432,6 @@ private:
   void* _buffers;
   void** _labels;
 };
-
-#ifndef PRODUCT
-class ShuffleRecipeVerifier : public StackObj {
-public:
-  ShuffleRecipeVerifier(ShuffleRecipe& recipe, size_t args_length, size_t rets_length)
-    : _recipe(recipe), _args_length(args_length), _rets_length(rets_length), _stream(_recipe) {
-  }
-
-  void verify() {
-    for (size_t i = 0; i < _recipe.length(); i++) {
-      assert((_recipe.word(i) >> 63) == 1, "MSB in recipe word must be set");
-    }
-
-    do_verify(ARGUMENTS);
-
-    _stream.init_for_returns();
-    do_verify(RETURNS);
-  }
-
-private:
-  enum Direction {
-    ARGUMENTS,
-    RETURNS
-  };
-
-  void do_verify(Direction direction) {
-    struct op_stats {
-      size_t op_count_per_class[CLASS_NOOF][OP_NOOF];
-      size_t op_count[OP_NOOF];
-    };
-
-    struct op_stats stats;
-
-    memset(&stats, 0, sizeof(stats));
-
-    int cur_class = CLASS_FIRST;
-    bool done = false;
-
-    while (_stream.has_more()) {
-      assert(!done, "Stream unexpectedly returned additional tokens");
-
-      ShuffleRecipeOp op = _stream.next();
-
-      stats.op_count_per_class[cur_class][op]++;
-      stats.op_count[op]++;
-
-      switch (op) {
-      case OP_NOP:
-      case OP_SKIP:
-      case OP_PULL:
-        break;
-
-      case OP_STOP:
-        cur_class++;
-        if (cur_class == CLASS_NOOF) {
-          done = true;
-        }
-        break;
-
-      case OP_CREATE_BUFFER:
-        assert(cur_class == CLASS_BUF, "Buffers may only be created in buffer class");
-        assert(direction == ARGUMENTS, "Buffers can only be created when processing arguments");
-        break;
-
-      case OP_PULL_LABEL:
-        assert(cur_class != CLASS_BUF, "Must not pull pull labels in buffer class");
-        assert(direction == ARGUMENTS, "Buffer labels can only be pulled when processing arguments");
-        break;
-
-      default:
-        assert(false, "Unexpected op");
-        break;
-      }
-    }
-
-    assert(done, "Not enough STOP operations");
-
-    assert(stats.op_count[OP_CREATE_BUFFER] == stats.op_count[OP_PULL_LABEL], "All labels must be pulled");
-    assert(direction == RETURNS || stats.op_count[OP_PULL] == _args_length, "All argument values must be pulled");
-    assert(direction == ARGUMENTS || stats.op_count[OP_PULL] == _rets_length, "All return values must be pulled");
-  }
-
-private:
-  ShuffleRecipe& _recipe;
-  size_t _args_length;
-  size_t _rets_length;
-  ShuffleRecipeStream _stream;
-};
-#endif
 
 void UniversalNativeInvoker::generate_invoke_native(MacroAssembler* _masm) {
 
@@ -848,15 +534,9 @@ void UniversalNativeInvoker::generate_invoke_native(MacroAssembler* _masm) {
   __ flush();
 }
 
-void UniversalNativeInvoker::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr,
+void UniversalNativeInvoker::invoke_recipe(ShuffleRecipe& recipe, arrayHandle args_arr,
                                            arrayHandle rets_arr, address code,
                                            JavaThread* thread) {
-  ShuffleRecipe recipe(recipe_arr);
-
-#ifndef PRODUCT
-  ShuffleRecipeVerifier verifier(recipe, args_arr()->length(), rets_arr()->length());
-  verifier.verify();
-#endif
 
   ShuffleDowncall call(recipe, args_arr, rets_arr, code, invoke_native_address());
   call.invoke(thread);
