@@ -569,13 +569,18 @@ public abstract class LongVector extends AbstractVector<Long> {
                                           Vector<Long> v) {
         LongVector that = (LongVector) v;
         that.check(this);
-        if (opKind(op, VO_SPECIAL )) {
+        if (opKind(op, VO_SPECIAL  | VO_SHIFT)) {
             if (op == FIRST_NONZERO) {
                 // FIXME: Support this in the JIT.
                 VectorMask<Long> thisNZ
                     = this.viewAsIntegralLanes().compare(NE, (long) 0);
                 that = that.blend((long) 0, thisNZ.cast(vspecies()));
                 op = OR_UNCHECKED;
+            }
+            if (opKind(op, VO_SHIFT)) {
+                // As per shift specification for Java, mask the shift count.
+                // This allows the JIT to ignore some ISA details.
+                that = that.lanewise(AND, SHIFT_MASK);
             }
             if (op == ROR || op == ROL) {  // FIXME: JIT should do this
                 LongVector neg = that.lanewise(NEG);

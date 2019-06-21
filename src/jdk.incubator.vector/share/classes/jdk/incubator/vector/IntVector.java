@@ -610,13 +610,18 @@ public abstract class IntVector extends AbstractVector<Integer> {
                                           Vector<Integer> v) {
         IntVector that = (IntVector) v;
         that.check(this);
-        if (opKind(op, VO_SPECIAL )) {
+        if (opKind(op, VO_SPECIAL  | VO_SHIFT)) {
             if (op == FIRST_NONZERO) {
                 // FIXME: Support this in the JIT.
                 VectorMask<Integer> thisNZ
                     = this.viewAsIntegralLanes().compare(NE, (int) 0);
                 that = that.blend((int) 0, thisNZ.cast(vspecies()));
                 op = OR_UNCHECKED;
+            }
+            if (opKind(op, VO_SHIFT)) {
+                // As per shift specification for Java, mask the shift count.
+                // This allows the JIT to ignore some ISA details.
+                that = that.lanewise(AND, SHIFT_MASK);
             }
             if (op == ROR || op == ROL) {  // FIXME: JIT should do this
                 IntVector neg = that.lanewise(NEG);
