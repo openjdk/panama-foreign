@@ -22,6 +22,9 @@
  */
 package java.foreign.memory;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
 import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 
@@ -160,11 +163,13 @@ public interface Pointer<X> {
      */
     @SuppressWarnings("unchecked")
     default X get() {
-        try {
-            return (X)type().getter().invoke(this);
-        } catch (Throwable ex) {
-            throw new IllegalStateException(ex);
-        }
+        return AccessController.doPrivileged((PrivilegedAction<X>) () -> {
+            try {
+                return (X) type().getter().invoke(this);
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        });
     }
 
     /**
@@ -172,11 +177,14 @@ public interface Pointer<X> {
      * @param x the value to be stored.
      */
     default void set(X x) {
-        try {
-            type().setter().invoke(this, x);
-        } catch (Throwable ex) {
-            throw new IllegalStateException(ex);
-        }
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            try {
+                type().setter().invoke(this, x);
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+            return null;
+        });
     }
 
     /**

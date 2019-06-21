@@ -26,6 +26,7 @@ package com.sun.tools.jextract;
 import java.foreign.memory.DoubleComplex;
 import java.foreign.memory.FloatComplex;
 import java.foreign.memory.LongDoubleComplex;
+import java.foreign.memory.UnknownType;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -50,6 +51,7 @@ public final class TypeDictionary {
     private final Set<String> resolutionRoots;
     private int serialNo;
 
+    private final static JType UNKNOWN = JType.of(UnknownType.class);
     public TypeDictionary(HeaderResolver resolver, HeaderFile headerFile) {
         this.resolver = resolver;
         this.headerFile = headerFile;
@@ -204,7 +206,7 @@ public final class TypeDictionary {
                 } else if (ek == TypeKind.LongDouble) {
                     return JType.of(LongDoubleComplex.class);
                 } else {
-                    throw new UnsupportedOperationException("_Complex kind " + ek + " not supported");
+                    return UNKNOWN;
                 }
             case Vector:
                 switch ((int) t.size()) {
@@ -214,10 +216,10 @@ public final class TypeDictionary {
                     case 32:
                     case 64:
                     default:
-                        throw new UnsupportedOperationException("Support for vector size: " + t.size());
+                        return UNKNOWN;
                 }
             default:
-                throw new IllegalStateException("Unexpected type:" + t.kind());
+                return UNKNOWN;
         }
     }
 

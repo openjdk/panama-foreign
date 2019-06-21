@@ -176,12 +176,15 @@ public final class LayoutUtils {
                 } else if (ek == TypeKind.LongDouble) {
                     return LayoutType.ofStruct(LongDoubleComplex.class).layout();
                 } else {
-                    throw new IllegalArgumentException(
-                        "Unsupported _Complex kind: " + ek);
+                    return Unresolved.of(String.format("Complex_%d_%s",
+                            t.size(), t.getElementType().spelling().replace(" ", "_")));
                 }
+            case Vector:
+                // Use element type for now
+                return Unresolved.of(String.format("Vector_%d_%s",
+                        t.size(), t.getElementType().spelling().replace(" ", "_")));
             default:
-                throw new IllegalArgumentException(
-                        "Unsupported type kind: " + t.kind()  + ", for type: " + t.spelling());
+                return Unresolved.of(String.format("UnknownType_%d_Bytes", t.size()));
         }
     }
 

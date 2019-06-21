@@ -21,17 +21,18 @@
  * questions.
  */
 
-import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeLocation;
 import java.foreign.memory.Pointer;
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.spi.ToolProvider;
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -42,6 +43,7 @@ import static org.testng.Assert.assertTrue;
 /*
  * @test
  * @modules jdk.jextract
+ * @bug 8225630
  * @build JextractToolRunner
  * @run testng/othervm -Duser.language=en JextractToolProviderTest
  */
@@ -593,18 +595,31 @@ public class JextractToolProviderTest extends JextractToolRunner {
         }
     }
 
-    private void testBuiltinInclude(String name) {
-        Path fileJar = getOutputFilePath(name + "inc.jar");
+    private void testBuiltinInclude(String name, BiConsumer<JextractResult, Path> validation)
+            throws IOException {
+        Path tmpSrc = Files.createTempFile("jet", ".h");
+        Files.write(tmpSrc, List.of("#include <" + name + ">;"));
+        Path fileJar = getOutputFilePath(name.replace(".", "_") + ".jar");
         deleteFile(fileJar);
-        Path fileH = getInputFilePath(name + "inc.h");
-        run("-o", fileJar.toString(), fileH.toString()).checkSuccess();
+        JextractResult result = run("-o", fileJar.toString(), tmpSrc.toString());
+        validation.accept(result, fileJar);
         deleteFile(fileJar);
     }
 
+    private final static BiConsumer<JextractResult, Path> checkSuccess = (result, jar) -> {
+        result.checkSuccess();
+    };
+
     @Test
-    public void testBuiltinHeader() {
-        testBuiltinInclude("stdarg");
-        testBuiltinInclude("stdbool");
+    public void testBuiltinHeader() throws IOException {
+        testBuiltinInclude("stdarg.h", checkSuccess);
+        testBuiltinInclude("stdbool.h", checkSuccess);
+        String arch = System.getProperty("os.arch");
+        boolean isX86 = arch.equals("amd64") || arch.equals("x86_64");
+        boolean isWindows = System.getProperty("os.name").startsWith("Windows");
+        if (isX86 && !isWindows) {
+            testBuiltinInclude("emmintrin.h", checkSuccess);
+        }
     }
 
     @Test

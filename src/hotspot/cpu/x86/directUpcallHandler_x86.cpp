@@ -420,6 +420,7 @@ static void shuffle_arguments(MacroAssembler* _masm, GrowableArray<ArgMove>* arg
   }
 }
 
+// TODO: how to handle AttachCurrentThreadAsDaemon before upcall?
 address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver, Method* entry, TRAPS) {
   CodeBuffer buffer("upcall_stub_linkToNative", 1024, 1024);
 

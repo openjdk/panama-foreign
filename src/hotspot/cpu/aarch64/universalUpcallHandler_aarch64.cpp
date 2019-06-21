@@ -27,6 +27,7 @@
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/symbolTable.hpp"
 #include "include/jvm.h"
+#include "jni.h"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
@@ -36,6 +37,8 @@
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniHandles.inline.hpp"
+
+extern struct JavaVM_ main_vm;
 
 static struct {
   bool inited;
@@ -109,7 +112,14 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
   ::fprintf(stderr, "upcall_helper(%p, %p)\n", rec, context);
 #endif
 
+   void *p_env = NULL;
+
   JavaThread* thread = JavaThread::current();
+  if (thread == NULL) {
+    JavaVM_ *vm = (JavaVM *)(&main_vm);
+    vm -> functions -> AttachCurrentThreadAsDaemon(vm, &p_env, NULL);
+    thread = JavaThread::current();
+  }
 
   assert(thread->is_Java_thread(), "really?");
 

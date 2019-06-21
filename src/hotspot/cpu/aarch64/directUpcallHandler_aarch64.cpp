@@ -26,6 +26,7 @@
 #include "asm/macroAssembler.hpp"
 #include "classfile/symbolTable.hpp"
 #include "include/jvm.h"
+#include "jni.h"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
@@ -34,6 +35,8 @@
 #include "prims/directUpcallHandler.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
+
+extern struct JavaVM_ main_vm;
 
 static struct SpecializedUpcallInfo {
   bool inited;
@@ -113,6 +116,7 @@ struct upcall_context {
   int nlongs = (mask & ARG_MASK);                                       \
   int ndoubles = ((mask >> ARG_SHIFT) & ARG_MASK);                      \
   int rettag = RES_TAG;                                                 \
+  void *p_env = NULL;                                                   \
                                                                         \
   JavaCallArguments args((1 + nlongs + ndoubles) * 2);                  \
                                                                         \
@@ -132,6 +136,11 @@ struct upcall_context {
   Method* meth = specialized_upcall_info[nlongs][ndoubles][rettag].meth;\
                                                                         \
   JavaThread* thread = JavaThread::current();                           \
+  if (thread == NULL) {                                                 \
+    JavaVM_ *vm = (JavaVM *)(&main_vm);                                 \
+    vm -> functions -> AttachCurrentThreadAsDaemon(vm, &p_env, NULL);           \
+    thread = JavaThread::current();                                     \
+  }                                                                     \
   ThreadInVMfromNative __tiv(thread);                                   \
   JavaValue result(RES_T);                                              \
   JavaCalls::call(&result, meth, &args, thread);
