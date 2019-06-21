@@ -715,25 +715,124 @@ abstract class AbstractVector<E> extends Vector<E> {
         case 'C':  // lane-wise cast (but not identity)
             rtype = rsp.elementType();
             rlength = rsp.laneCount();
-            etype = this.elementType();
-            vlength = this.length();  // (profile)
-            rvtype = rsp.dummyVector().getClass();  // (profile)
-            return VectorIntrinsics.cast(
-                    this.getClass(), etype, vlength,
-                    rvtype, rtype, rlength,
-                    this, rsp,
-                    AbstractVector::defaultCast);
+            // enum-switches don't optimize properly JDK-8161245
+            switch (rsp.laneType.switchKey) {
+            case LaneType.SK_BYTE:
+                etype = byte.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.cast(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultCast);
+            case LaneType.SK_SHORT:
+                etype = short.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.cast(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultCast);
+            case LaneType.SK_INT:
+                etype = int.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.cast(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultCast);
+            case LaneType.SK_LONG:
+                etype = long.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.cast(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultCast);
+            case LaneType.SK_FLOAT:
+                etype = float.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.cast(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultCast);
+            case LaneType.SK_DOUBLE:
+                etype = double.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.cast(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultCast);
+            }
+            break;
         case 'X':  // reinterpret cast, not lane-wise if lane sizes differ
             rtype = rsp.elementType();
             rlength = rsp.laneCount();
-            etype = this.elementType();
-            vlength = this.length();  // (profile)
-            rvtype = rsp.dummyVector().getClass();  // (profile)
-            return VectorIntrinsics.reinterpret(
-                    this.getClass(), etype, vlength,
-                    rvtype, rtype, rlength,
-                    this, rsp,
-                    AbstractVector::defaultReinterpret);
+            switch (rsp.laneType.switchKey) {
+            case LaneType.SK_BYTE:
+                etype = byte.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.reinterpret(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultReinterpret);
+            case LaneType.SK_SHORT:
+                etype = short.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.reinterpret(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultReinterpret);
+            case LaneType.SK_INT:
+                etype = int.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.reinterpret(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultReinterpret);
+            case LaneType.SK_LONG:
+                etype = long.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.reinterpret(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultReinterpret);
+            case LaneType.SK_FLOAT:
+                etype = float.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.reinterpret(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultReinterpret);
+            case LaneType.SK_DOUBLE:
+                etype = double.class;
+                vlength = this.length();  // (profile)
+                rvtype = rsp.dummyVector().getClass();  // (profile)
+                return VectorIntrinsics.reinterpret(
+                        this.getClass(), etype, vlength,
+                        rvtype, rtype, rlength,
+                        this, rsp,
+                        AbstractVector::defaultReinterpret);
+            }
+            break;
         }
         throw new AssertionError();
     }

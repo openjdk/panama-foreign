@@ -396,6 +396,19 @@ public abstract class LongVector extends AbstractVector<Long> {
      * where all lane elements are set to
      * the primitive value {@code e}.
      *
+     * The contents of the current vector are discarded;
+     * only the species is relevant to this operation.
+     *
+     * <p> This method returns the value of this expression:
+     * {@code LongVector.broadcast(this.species(), e)}.
+     *
+     * @apiNote
+     * Unlike the similar method named {@code broadcast()}
+     * in the supertype {@code Vector}, this method does not
+     * need to validate its argument, and cannot throw
+     * {@code IllegalArgumentException}.  This method is
+     * therefore preferable to the supertype method.
+     *
      * @param e the value to broadcast
      * @return a vector where all lane elements are set to
      *         the primitive value {@code e}
@@ -545,6 +558,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @see #lanewise(VectorOperators.Binary,long)
+     * @see #lanewise(VectorOperators.Binary,long,VectorMask)
      */
     @Override
     public abstract LongVector lanewise(VectorOperators.Binary op,
@@ -555,18 +569,13 @@ public abstract class LongVector extends AbstractVector<Long> {
                                           Vector<Long> v) {
         LongVector that = (LongVector) v;
         that.check(this);
-        if (opKind(op, VO_SPECIAL  | VO_SHIFT)) {
+        if (opKind(op, VO_SPECIAL )) {
             if (op == FIRST_NONZERO) {
                 // FIXME: Support this in the JIT.
                 VectorMask<Long> thisNZ
                     = this.viewAsIntegralLanes().compare(NE, (long) 0);
                 that = that.blend((long) 0, thisNZ.cast(vspecies()));
                 op = OR_UNCHECKED;
-            }
-            if (opKind(op, VO_SHIFT)) {
-                // As per shift specification for Java, mask the shift count.
-                // This allows the JIT to ignore some ISA details.
-                that = that.lanewise(AND, SHIFT_MASK);
             }
             if (op == ROR || op == ROL) {  // FIXME: JIT should do this
                 LongVector neg = that.lanewise(NEG);
@@ -655,7 +664,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * Combines the lane values of this vector
      * with the value of a broadcast scalar.
-     * <p>
+     *
      * This is a lane-wise binary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
@@ -687,8 +696,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Combines the lane values of this vector
      * with the value of a broadcast scalar,
      * with selection of lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies
+     *
+     * This is a masked lane-wise binary operation which applies
      * the selected operation to each lane.
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e), m)}.
@@ -699,8 +708,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         to the input vector and the scalar
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
-     * @see #lanewise(VectorOperators.Binary,long)
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Binary,long)
      */
     @ForceInline
     public final
@@ -761,9 +770,22 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     // Ternary lanewise support
 
-    /**
+    // Ternary operators come in eight variations:
+    //   lanewise(op, [broadcast(e1)|v1], [broadcast(e2)|v2])
+    //   lanewise(op, [broadcast(e1)|v1], [broadcast(e2)|v2], mask)
+
+    // It is annoying to support all of these variations of masking
+    // and broadcast, but it would be more surprising not to continue
+    // the obvious pattern started by unary and binary.
+
+   /**
      * {@inheritDoc} <!--workaround-->
+     * @see #lanewise(VectorOperators.Ternary,long,long,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,long,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,long,Vector,VectorMask)
      * @see #lanewise(VectorOperators.Ternary,long,long)
+     * @see #lanewise(VectorOperators.Ternary,Vector,long)
+     * @see #lanewise(VectorOperators.Ternary,long,Vector)
      */
     @Override
     public abstract LongVector lanewise(VectorOperators.Ternary op,
@@ -803,6 +825,9 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @see #lanewise(VectorOperators.Ternary,long,long,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,long,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,long,Vector,VectorMask)
      */
     @ForceInline
     public final
@@ -813,21 +838,174 @@ public abstract class LongVector extends AbstractVector<Long> {
         return blend(lanewise(op, v1, v2), m);
     }
 
-    // There are no broadcasting versions of ternary lanewise,
-    // because this class does not implement any ternary operations.
+    /**
+     * Combines the lane values of this vector
+     * with the values of two broadcast scalars.
+     *
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2))}.
+     *
+     * @param e1 the first input scalar
+     * @param e2 the second input scalar
+     * @return the result of applying the operation lane-wise
+     *         to the input vector and the scalars
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,long,long,VectorMask)
+     */
+    @ForceInline
+    public final
+    LongVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
+                                  long e1,
+                                  long e2) {
+        return lanewise(op, broadcast(e1), broadcast(e1));
+    }
 
-    // LongVector lanewise(VectorOperators.Ternary op,
-    //                               long e1,
-    //                               long e2) {
-    //     return lanewise(op, broadcast(e1), broadcast(e1));
-    // }
+    /**
+     * Combines the lane values of this vector
+     * with the values of two broadcast scalars,
+     * with selection of lane elements controlled by a mask.
+     *
+     * This is a masked lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2), m)}.
+     *
+     * @param e1 the first input scalar
+     * @param e2 the second input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vector and the scalars
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,long,long)
+     */
+    @ForceInline
+    public final
+    LongVector lanewise(VectorOperators.Ternary op, //(op,e1,e2,m)
+                                  long e1,
+                                  long e2,
+                                  VectorMask<Long> m) {
+        return blend(lanewise(op, e1, e2), m);
+    }
 
-    // LongVector lanewise(VectorOperators.Ternary op,
-    //                               long e1,
-    //                               long e2,
-    //                               VectorMask<Long> m) {
-    //     return blend(lanewise(op, e), m);
-    // }
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar.
+     *
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, v1, this.broadcast(e2))}.
+     *
+     * @param v1 the other input vector
+     * @param e2 the input scalar
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,long,long)
+     * @see #lanewise(VectorOperators.Ternary,Vector,long,VectorMask)
+     */
+    @ForceInline
+    public final
+    LongVector lanewise(VectorOperators.Ternary op, //(op,v1,e2)
+                                  Vector<Long> v1,
+                                  long e2) {
+        return lanewise(op, v1, broadcast(e2));
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     *
+     * This is a masked lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
+     *
+     * @param v1 the other input vector
+     * @param e2 the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,long,long,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,long)
+     */
+    @ForceInline
+    public final
+    LongVector lanewise(VectorOperators.Ternary op, //(op,v1,e2,m)
+                                  Vector<Long> v1,
+                                  long e2,
+                                  VectorMask<Long> m) {
+        return blend(lanewise(op, v1, e2), m);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar.
+     *
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), v2)}.
+     *
+     * @param e1 the input scalar
+     * @param v2 the other input vector
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,long,Vector,VectorMask)
+     */
+    @ForceInline
+    public final
+    LongVector lanewise(VectorOperators.Ternary op, //(op,e1,v2)
+                                  long e1,
+                                  Vector<Long> v2) {
+        return lanewise(op, broadcast(e1), v2);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     *
+     * This is a masked lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
+     *
+     * @param e1 the input scalar
+     * @param v2 the other input vector
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,long,Vector)
+     */
+    @ForceInline
+    public final
+    LongVector lanewise(VectorOperators.Ternary op, //(op,e1,v2,m)
+                                  long e1,
+                                  Vector<Long> v2,
+                                  VectorMask<Long> m) {
+        return blend(lanewise(op, e1, v2), m);
+    }
+
+    // (Thus endeth the Great and Mighty Ternary Ogdoad.)
+    // https://en.wikipedia.org/wiki/Ogdoad
 
     /// FULL-SERVICE BINARY METHODS: ADD, SUB, MUL, DIV
     //
@@ -852,7 +1030,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,long)
      *    lanewise}{@code (}{@link VectorOperators#ADD
-     *    ADD}{@code , s)}.
+     *    ADD}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of adding each lane of this vector to the scalar
@@ -881,7 +1059,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Adds this vector to the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive addition operation ({@code +}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -916,13 +1094,13 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * Subtracts an input scalar from this vector.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive subtraction operation ({@code -}) to each lane.
      *
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,long)
      *    lanewise}{@code (}{@link VectorOperators#SUB
-     *    SUB}{@code , s)}.
+     *    SUB}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of subtracting the scalar from each lane of this vector
@@ -951,7 +1129,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Subtracts an input scalar from this vector
      * under the control of a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive subtraction operation ({@code -}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -992,7 +1170,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,long)
      *    lanewise}{@code (}{@link VectorOperators#MUL
-     *    MUL}{@code , s)}.
+     *    MUL}{@code , e)}.
      *
      * @param e the input scalar
      * @return the result of multiplying this vector by the given scalar
@@ -1021,7 +1199,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Multiplies this vector by the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive multiplication operation ({@code *}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1062,7 +1240,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Binary,long)
      *    lanewise}{@code (}{@link VectorOperators#DIV
-     *    DIV}{@code , s)}.
+     *    DIV}{@code , e)}.
      *
      * <p>
      * If the underlying scalar operator does not support
@@ -1097,7 +1275,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Divides this vector by the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a masked lane-wise binary operation which applies
      * the primitive division operation ({@code /}) to each lane.
      *
      * This method is also equivalent to the expression
@@ -1129,7 +1307,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /// SECOND-TIER BINARY METHODS
     //
-    // There are no masked or broadcast versions.
+    // There are no masked versions.
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1137,6 +1315,30 @@ public abstract class LongVector extends AbstractVector<Long> {
     @Override
     public final LongVector min(Vector<Long> v) {
         return lanewise(MIN, v);
+    }
+
+    // FIXME:  "broadcast of an input scalar" is really wordy.  Reduce?
+    /**
+     * Computes the smaller of this vector and the broadcast of an input scalar.
+     *
+     * This is a lane-wise binary operation which appliesthe
+     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,long)
+     *    lanewise}{@code (}{@link VectorOperators#MIN
+     *    MIN}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #min(Vector)
+     * @see #broadcast(long)
+     * @see VectorOperators#MIN
+     * @see #lanewise(VectorOperators.Binary,long,VectorMask)
+     */
+    public final LongVector min(long e) {
+        return lanewise(MIN, e);
     }
 
     /**
@@ -1147,7 +1349,143 @@ public abstract class LongVector extends AbstractVector<Long> {
         return lanewise(MAX, v);
     }
 
-    /// UNARY OPERATIONS
+    /**
+     * Computes the larger of this vector and the broadcast of an input scalar.
+     *
+     * This is a lane-wise binary operation which appliesthe
+     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,long)
+     *    lanewise}{@code (}{@link VectorOperators#MAX
+     *    MAX}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #max(Vector)
+     * @see #broadcast(long)
+     * @see VectorOperators#MAX
+     * @see #lanewise(VectorOperators.Binary,long,VectorMask)
+     */
+    public final LongVector max(long e) {
+        return lanewise(MAX, e);
+    }
+
+    // common bitwise operators: and, or, not (with scalar versions)
+    /**
+     * Computes the bitwise logical conjunction ({@code &})
+     * of this vector and a second input vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "and" operation ({@code &})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#AND
+     *    AND}{@code , v)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @param v a second input vector
+     * @return the bitwise {@code &} of this vector and the second input vector
+     * @see #and(long)
+     * @see #or(Vector)
+     * @see #not()
+     * @see VectorOperators#AND
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final LongVector and(Vector<Long> v) {
+        return lanewise(AND, v);
+    }
+
+    /**
+     * Computes the bitwise logical conjunction ({@code &})
+     * of this vector and a scalar.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "and" operation ({@code &})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#AND
+     *    AND}{@code , e)}.
+     *
+     * @param e an input scalar
+     * @return the bitwise {@code &} of this vector and scalar
+     * @see #and(Vector)
+     * @see VectorOperators#AND
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final LongVector and(long e) {
+        return lanewise(AND, e);
+    }
+
+    /**
+     * Computes the bitwise logical disjunction ({@code |})
+     * of this vector and a second input vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "or" operation ({@code |})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#OR
+     *    AND}{@code , v)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @param v a second input vector
+     * @return the bitwise {@code |} of this vector and the second input vector
+     * @see #or(long)
+     * @see #and(Vector)
+     * @see #not()
+     * @see VectorOperators#OR
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final LongVector or(Vector<Long> v) {
+        return lanewise(OR, v);
+    }
+
+    /**
+     * Computes the bitwise logical disjunction ({@code |})
+     * of this vector and a scalar.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "or" operation ({@code |})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#OR
+     *    OR}{@code , e)}.
+     *
+     * @param e an input scalar
+     * @return the bitwise {@code |} of this vector and scalar
+     * @see #or(Vector)
+     * @see VectorOperators#OR
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    public final LongVector or(long e) {
+        return lanewise(OR, e);
+    }
+
+
+
+    /// UNARY METHODS
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1167,6 +1505,37 @@ public abstract class LongVector extends AbstractVector<Long> {
         return lanewise(ABS);
     }
 
+    // not (~)
+    /**
+     * Computes the bitwise logical complement ({@code ~})
+     * of this vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "not" operation ({@code ~})
+     * to each lane value.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Unary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#NOT
+     *    NOT}{@code )}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @return the bitwise complement {@code ~} of this vector
+     * @see #and(Vector)
+     * @see VectorOperators#NOT
+     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     */
+    public final LongVector not() {
+        return lanewise(NOT);
+    }
+
+
     /// COMPARISONS
 
     /**
@@ -1180,7 +1549,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /**
      * Tests if this vector is equal to an input scalar.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the primitive equals operation ({@code ==}) to each lane.
      * The result is the same as {@code compare(VectorOperators.Comparison.EQ, e)}.
@@ -1188,7 +1557,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @param e the input scalar
      * @return the result mask of testing if this vector
      *         is equal to {@code e}
-     * @see #compare(VectorOperators.Comparison, long)
+     * @see #compare(VectorOperators.Comparison,long)
      */
     public final
     VectorMask<Long> eq(long e) {
@@ -1206,7 +1575,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /**
      * Tests if this vector is less than an input scalar.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the primitive less than operation ({@code <}) to each lane.
      * The result is the same as {@code compare(VectorOperators.LT, e)}.
@@ -1214,7 +1583,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @param e the input scalar
      * @return the mask result of testing if this vector
      *         is less than the input scalar
-     * @see #compare(VectorOperators.Comparison, long)
+     * @see #compare(VectorOperators.Comparison,long)
      */
     public final
     VectorMask<Long> lt(long e) {
@@ -1262,14 +1631,25 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public final
+    VectorMask<Long> compare(VectorOperators.Comparison op,
+                                  Vector<Long> v,
+                                  VectorMask<Long> m) {
+        return compare(op, v).and(m);
+    }
+
+    /**
      * Tests this vector by comparing it with an input scalar,
      * according to the given comparison operation.
-     * <p>
+     *
      * This is a lane-wise binary test operation which applies
      * the comparison operation to each lane.
      * <p>
      * The result is the same as
-     * {@code compare(op, broadcast(species(), s))}.
+     * {@code compare(op, broadcast(species(), e))}.
      * That is, the scalar may be regarded as broadcast to
      * a vector of the same species, and then compared
      * against the original vector, using the selected
@@ -1279,6 +1659,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the mask result of testing lane-wise if this vector
      *         compares to the input, according to the selected
      *         comparison operator
+     * @see LongVector#compare(VectorOperators.Comparison,Vector)
      * @see #eq(long)
      * @see #lessThan(long)
      */
@@ -1290,6 +1671,31 @@ public abstract class LongVector extends AbstractVector<Long> {
     <M extends VectorMask<Long>>
     M compareTemplate(Class<M> maskType, Comparison op, long e) {
         return compareTemplate(maskType, op, broadcast(e));
+    }
+
+    /**
+     * Tests this vector by comparing it with an input scalar,
+     * according to the given comparison operation,
+     * in lanes selected by a mask.
+     *
+     * This is a masked lane-wise binary test operation which applies
+     * to each pair of corresponding lane values.
+     *
+     * The returned result is equal to the expression
+     * {@code compare(op,s).and(m)}.
+     *
+     * @param e the input scalar
+     * @param m the mask controlling lane selection
+     * @return the mask result of testing lane-wise if this vector
+     *         compares to the input, according to the selected
+     *         comparison operator,
+     *         and only in the lanes selected by the mask
+     * @see LongVector#compare(VectorOperators.Comparison,Vector,VectorMask)
+     */
+    public final VectorMask<Long> compare(VectorOperators.Comparison op,
+                                               long e,
+                                               VectorMask<Long> m) {
+        return compare(op, e).and(m);
     }
 
 
@@ -1337,24 +1743,26 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /**
-     * Blends the lane elements of this vector with those of the broadcast of an
-     * input scalar, selecting lanes controlled by a mask.
-     * <p>
-     * For each lane of the mask, at lane index {@code N}, if the mask lane
-     * is set then the lane element at {@code N} from the input vector is
-     * selected and placed into the resulting vector at {@code N},
-     * otherwise the lane element at {@code N} from this input vector is
-     * selected and placed into the resulting vector at {@code N}.
+     * Replaces selected lanes of this vector with
+     * a scalar value
+     * under the control of a mask.
      *
-     * @param e the input scalar
-     * @param m the mask controlling lane selection
+     * This is a masked lane-wise binary operation which
+     * selects each lane value from one or the other input.
+     *
+     * The returned result is equal to the expression
+     * {@code blend(broadcast(e),m)}.
+     *
+     * @param e the input scalar, containing the replacement lane value
+     * @param m the mask controlling lane selection of the scalar
      * @return the result of blending the lane elements of this vector with
-     * those of the broadcast of an input scalar
+     *         the scalar value
      */
     public final LongVector blend(long e,
                                             VectorMask<Long> m) {
         return blend(broadcast(e), m);
     }
+
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1564,14 +1972,124 @@ public abstract class LongVector extends AbstractVector<Long> {
         return v.rearrange(this.toShuffle(), m);
     }
 
-    /// FMA
+    /// Ternary operations
+
+    /**
+     * Blends together the bits of two vectors under
+     * the control of a third, which supplies mask bits.
+     *
+     *
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(long,long)
+     * @see #bitwiseBlend(long,Vector)
+     * @see #bitwiseBlend(Vector,long)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     */
+    public final
+    LongVector bitwiseBlend(Vector<Long> bits, Vector<Long> mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
+
+    /**
+     * Blends together the bits of a vector and a scalar under
+     * the control of another scalar, which supplies mask bits.
+     *
+     *
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,long,long,VectorMask)
+     */
+    public final
+    LongVector bitwiseBlend(long bits, long mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
+
+    /**
+     * Blends together the bits of a vector and a scalar under
+     * the control of another vector, which supplies mask bits.
+     *
+     *
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,long,Vector,VectorMask)
+     */
+    public final
+    LongVector bitwiseBlend(long bits, Vector<Long> mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
+
+    /**
+     * Blends together the bits of two vectors scalar under
+     * the control of a scalar, which supplies mask bits.
+     *
+     *
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,Vector,long,VectorMask)
+     */
+    public final
+    LongVector bitwiseBlend(Vector<Long> bits, long mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
 
 
     // Type specific horizontal reductions
 
     /**
      * Returns a value accumulated from all the lanes of this vector.
-     * <p>
+     *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to all the lane elements.
      *
@@ -1583,9 +2101,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * <ul>
      * <li>
      * In the case of {@code FIRST_NONZERO}, the reduction returns
-     * the value from the lowest-numbered non-zero lane. As with
-     * {@code MAX} and {@code MIN}, floating point {@code -0.0}
-     * is treated as a value distinct from the default zero value.
+     * the value from the lowest-numbered non-zero lane.
+     *
      *
      * <li>
      * In the case of floating point addition and multiplication, the
@@ -1605,13 +2122,21 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
      * @see #reduceLanes(VectorOperators.Associative,VectorMask)
+     * @see #add(Vector)
+     * @see #mul(Vector)
+     * @see #min(Vector)
+     * @see #max(Vector)
+     * @see #and(Vector)
+     * @see #or(Vector)
+     * @see VectorOperators#XOR
+     * @see VectorOperators#FIRST_NONZERO
      */
     public abstract long reduceLanes(VectorOperators.Associative op);
 
     /**
      * Returns a value accumulated from selected lanes of this vector,
      * controlled by a mask.
-     * <p>
+     *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to the selected lane elements.
      * <p>
@@ -1743,7 +2268,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * Replaces the lane element of this vector at lane index {@code i} with
      * value {@code e}.
-     * <p>
+     *
      * This is a cross-lane operation and behaves as if it returns the result
      * of blending this vector with an input vector that is the result of
      * broadcasting {@code e} and a mask that has only one lane set at lane
@@ -1790,7 +2315,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      * This is an alias for {@link #toArray()}
      * When this method is used on used on vectors
-     * of type LongVector,
+     * of type {@code LongVector},
      * there will be no loss of range or precision.
      */
     @ForceInline
@@ -1802,7 +2327,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /** {@inheritDoc} <!--workaround-->
      * @implNote
      * When this method is used on used on vectors
-     * of type LongVector,
+     * of type {@code LongVector},
      * up to nine bits of precision may be lost
      * for lane values of large magnitude.
      */
@@ -1893,7 +2418,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of long (zero).
+     * value of {@code long} (zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -1930,7 +2455,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of long (zero).
+     * value of {@code long} (zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -2001,7 +2526,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * Loads a vector from an array of type {@code long[]}
      * starting at an offset and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of long (zero).
+     * value of {@code long} (zero).
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then the array element at
      * index {@code offset + N} is placed into the resulting vector at lane index
@@ -2253,7 +2778,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /**
-     * Stores this vector into an array of long
+     * Stores this vector into an array of {@code long}
      * starting at offset and using a mask.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
@@ -2681,10 +3206,10 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@code "[0,1,2...]"}, reporting the lane values of this vector,
      * in lane order.
      *
-     * The string is produced as if by a call to {@linkplain
-     * java.util.Arrays#toString(long[]) the {@code Arrays.toString}
-     * method} appropriate to the long array returned by
-     * {@linkplain #toArray this vector's {@code toArray} method}.
+     * The string is produced as if by a call to {@link
+     * java.util.Arrays#toString(long[]) Arrays.toString()},
+     * as appropriate to the {@code long} array returned by
+     * {@link #toArray this.toArray()}.
      *
      * @return a string of the form {@code "[0,1,2...]"}
      * reporting the lane values of this vector
@@ -3085,7 +3610,6 @@ public abstract class LongVector extends AbstractVector<Long> {
     @Deprecated public final long andLanes(VectorMask<Long> m) { return reduceLanes(AND, m); }
     @Deprecated public final long xorLanes() { return reduceLanes(XOR); }
     @Deprecated public final long xorLanes(VectorMask<Long> m) { return reduceLanes(XOR, m); }
-    @Deprecated public final LongVector sqrt() { return lanewise(SQRT); }
     @Deprecated public final LongVector sqrt(VectorMask<Long> m) { return lanewise(SQRT, m); }
     @Deprecated public final LongVector tan() { return lanewise(TAN); }
     @Deprecated public final LongVector tan(VectorMask<Long> m) { return lanewise(TAN, m); }
@@ -3117,8 +3641,6 @@ public abstract class LongVector extends AbstractVector<Long> {
     @Deprecated public final LongVector log10(VectorMask<Long> m) { return lanewise(LOG10, m); }
     @Deprecated public final LongVector log1p() { return lanewise(LOG1P); }
     @Deprecated public final LongVector log1p(VectorMask<Long> m) { return lanewise(LOG1P, m); }
-    @Deprecated public final LongVector pow(Vector<Long> v) { return lanewise(POW, v); }
-    @Deprecated public final LongVector pow(long s) { return lanewise(POW, s); }
     @Deprecated public final LongVector pow(Vector<Long> v, VectorMask<Long> m) { return lanewise(POW, v, m); }
     @Deprecated public final LongVector pow(long s, VectorMask<Long> m) { return lanewise(POW, s, m); }
     @Deprecated public final LongVector exp() { return lanewise(EXP); }
@@ -3129,20 +3651,14 @@ public abstract class LongVector extends AbstractVector<Long> {
     @Deprecated public final LongVector hypot(long s) { return lanewise(HYPOT, s); }
     @Deprecated public final LongVector hypot(Vector<Long> v, VectorMask<Long> m) { return lanewise(HYPOT, v, m); }
     @Deprecated public final LongVector hypot(long s, VectorMask<Long> m) { return lanewise(HYPOT, s, m); }
-    @Deprecated 
-    public final LongVector and(Vector<Long> v) { return lanewise(AND, v); }
-    @Deprecated public final LongVector and(long s) { return lanewise(AND, s); }
     @Deprecated public final LongVector and(Vector<Long> v, VectorMask<Long> m) { return lanewise(AND, v, m); }
     @Deprecated public final LongVector and(long s, VectorMask<Long> m) { return lanewise(AND, s, m); }
-    @Deprecated public final LongVector or(Vector<Long> v) { return lanewise(OR, v); }
-    @Deprecated public final LongVector or(long s) { return lanewise(OR, s); }
     @Deprecated public final LongVector or(Vector<Long> v, VectorMask<Long> m) { return lanewise(OR, v, m); }
     @Deprecated public final LongVector or(long s, VectorMask<Long> m) { return lanewise(OR, s, m); }
     @Deprecated public final LongVector xor(Vector<Long> v) { return lanewise(XOR, v); }
     @Deprecated public final LongVector xor(long s) { return lanewise(XOR, s); }
     @Deprecated public final LongVector xor(Vector<Long> v, VectorMask<Long> m) { return lanewise(XOR, v, m); }
     @Deprecated public final LongVector xor(long s, VectorMask<Long> m) { return lanewise(XOR, s, m); }
-    @Deprecated public final LongVector not() { return lanewise(NOT); }
     @Deprecated public final LongVector not(VectorMask<Long> m) { return lanewise(NOT, m); }
     @Deprecated public final LongVector shiftLeft(int s) { return lanewise(LSHL, (long) s); }
     @Deprecated public final LongVector shiftLeft(int s, VectorMask<Long> m) { return lanewise(LSHL, (long) s, m); }
