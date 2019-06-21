@@ -27,7 +27,7 @@
 
 JVM_ENTRY(static void, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
   //acquire code cache lock
-  MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   //find code blob
   CodeBlob* cb = CodeCache::find_blob((char*)addr);
   assert(cb != NULL, "Attempting to free non-existent stub");
@@ -40,7 +40,7 @@ JVM_END
 
 JVM_ENTRY(static jobject, UH_GetUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
   //acquire code cache lock
-  MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   //find code blob
   CodeBlob* cb = CodeCache::find_blob((char*)addr);
   if (cb != NULL) {

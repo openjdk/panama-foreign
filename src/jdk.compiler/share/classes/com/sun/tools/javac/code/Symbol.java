@@ -434,6 +434,10 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
         return name == name.table.names.init;
     }
 
+    public boolean isDynamic() {
+        return false;
+    }
+
     /** The fully qualified name of this symbol.
      *  This is the same as the symbol's name except for class symbols,
      *  which are handled separately.
@@ -1559,6 +1563,10 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
             return ClassFile.CONSTANT_Fieldref;
         }
 
+        public MethodHandleSymbol asMethodHandle(boolean getter) {
+            return new MethodHandleSymbol(this, getter);
+        }
+
         /** Clone this symbol with new owner.
          */
         public VarSymbol clone(Symbol newOwner) {
@@ -1772,10 +1780,6 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
                     ClassFile.CONSTANT_InterfaceMethodref : ClassFile.CONSTANT_Methodref;
         }
 
-        public boolean isDynamic() {
-            return false;
-        }
-
         public boolean isHandle() {
             return false;
         }
@@ -1959,6 +1963,13 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
             return (flags() & LAMBDA_METHOD) == LAMBDA_METHOD;
         }
 
+        /** override this method to point to the original enclosing method if this method symbol represents a synthetic
+         *  lambda method
+         */
+        public MethodSymbol originalEnclosingMethod() {
+            return this;
+        }
+
         /** The implementation of this (abstract) symbol in class origin;
          *  null if none exists. Synthetic methods are not considered
          *  as possible implementations.
@@ -2052,7 +2063,8 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
 
         @DefinedBy(Api.LANGUAGE_MODEL)
         public Type getReceiverType() {
-            return asType().getReceiverType();
+            Type result = asType().getReceiverType();
+            return (result == null) ? Type.noType : result;
         }
 
         @DefinedBy(Api.LANGUAGE_MODEL)
@@ -2105,32 +2117,82 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
         }
     }
 
+    /** A class for condy.
+     */
+    public static class DynamicVarSymbol extends VarSymbol implements Dynamic, LoadableConstant {
+        public LoadableConstant[] staticArgs;
+        public MethodHandleSymbol bsm;
+
+        public DynamicVarSymbol(Name name, Symbol owner, MethodHandleSymbol bsm, Type type, LoadableConstant[] staticArgs) {
+            super(0, name, type, owner);
+            this.bsm = bsm;
+            this.staticArgs = staticArgs;
+        }
+
+        @Override
+        public boolean isDynamic() {
+            return true;
+        }
+
+        @Override
+        public PoolConstant dynamicType() {
+            return type;
+        }
+
+        @Override
+        public LoadableConstant[] staticArgs() {
+            return staticArgs;
+        }
+
+        @Override
+        public LoadableConstant bootstrapMethod() {
+            return bsm;
+        }
+
+        @Override
+        public int poolTag() {
+            return ClassFile.CONSTANT_Dynamic;
+        }
+    }
+
     /** A class for method handles.
      */
     public static class MethodHandleSymbol extends MethodSymbol implements LoadableConstant {
 
         private Symbol refSym;
+        private boolean getter;
 
         public MethodHandleSymbol(Symbol msym) {
+            this(msym, false);
+        }
+
+        public MethodHandleSymbol(Symbol msym, boolean getter) {
             super(msym.flags_field, msym.name, msym.type, msym.owner);
             this.refSym = msym;
+            this.getter = getter;
         }
 
         /**
          * Returns the kind associated with this method handle.
          */
         public int referenceKind() {
-            if (refSym.isConstructor()) {
-                return ClassFile.REF_newInvokeSpecial;
+            if (refSym.kind == VAR) {
+                return getter ?
+                        refSym.isStatic() ? ClassFile.REF_getStatic : ClassFile.REF_getField :
+                        refSym.isStatic() ? ClassFile.REF_putStatic : ClassFile.REF_putField;
             } else {
-                if (refSym.isStatic()) {
-                    return ClassFile.REF_invokeStatic;
-                } else if ((refSym.flags() & PRIVATE) != 0) {
-                    return ClassFile.REF_invokeSpecial;
-                } else if (refSym.enclClass().isInterface()) {
-                    return ClassFile.REF_invokeInterface;
+                if (refSym.isConstructor()) {
+                    return ClassFile.REF_newInvokeSpecial;
                 } else {
-                    return ClassFile.REF_invokeVirtual;
+                    if (refSym.isStatic()) {
+                        return ClassFile.REF_invokeStatic;
+                    } else if ((refSym.flags() & PRIVATE) != 0) {
+                        return ClassFile.REF_invokeSpecial;
+                    } else if (refSym.enclClass().isInterface()) {
+                        return ClassFile.REF_invokeInterface;
+                    } else {
+                        return ClassFile.REF_invokeVirtual;
+                    }
                 }
             }
         }

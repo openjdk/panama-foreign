@@ -28,6 +28,7 @@
 #include "logging/log.hpp"
 #include "memory/allocation.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/method.hpp"
@@ -55,12 +56,15 @@ unsigned int method_hash(const Method* method) {
   return name_hash ^ signature_hash;
 }
 
+typedef ConcurrentHashTable<WeakHandle<vm_resolved_method_table_data>,
+                            ResolvedMethodTableConfig,
+                            mtClass> ResolvedMethodTableHash;
+
 class ResolvedMethodTableConfig : public ResolvedMethodTableHash::BaseConfig {
  private:
  public:
   static uintx get_hash(WeakHandle<vm_resolved_method_table_data> const& value,
                         bool* is_dead) {
-    EXCEPTION_MARK;
     oop val_oop = value.peek();
     if (val_oop == NULL) {
       *is_dead = true;
@@ -83,14 +87,14 @@ class ResolvedMethodTableConfig : public ResolvedMethodTableHash::BaseConfig {
   }
 };
 
-ResolvedMethodTableHash* ResolvedMethodTable::_local_table           = NULL;
-size_t                   ResolvedMethodTable::_current_size          = (size_t)1 << ResolvedMethodTableSizeLog;
+static ResolvedMethodTableHash* _local_table           = NULL;
+static size_t                   _current_size          = (size_t)1 << ResolvedMethodTableSizeLog;
 
 OopStorage*              ResolvedMethodTable::_weak_handles          = NULL;
-
 volatile bool            ResolvedMethodTable::_has_work              = false;
-volatile size_t          ResolvedMethodTable::_items_count           = 0;
-volatile size_t          ResolvedMethodTable::_uncleaned_items_count = 0;
+
+volatile size_t          _items_count           = 0;
+volatile size_t          _uncleaned_items_count = 0;
 
 void ResolvedMethodTable::create_table() {
   _local_table  = new ResolvedMethodTableHash(ResolvedMethodTableSizeLog, END_SIZE, GROW_HINT);
@@ -176,8 +180,8 @@ static void log_insert(const Method* method) {
   LogTarget(Debug, membername, table) log;
   if (log.is_enabled()) {
     ResourceMark rm;
-    log_debug(membername, table) ("ResolvedMethod entry added for %s",
-                                  method->name_and_sig_as_C_string());
+    log.print("ResolvedMethod entry added for %s",
+              method->name_and_sig_as_C_string());
   }
 }
 
@@ -198,8 +202,6 @@ oop ResolvedMethodTable::add_method(const Method* method, Handle rmethod_name) {
       return wh.resolve();
     }
   }
-
-  return rmethod_name();
 }
 
 void ResolvedMethodTable::item_added() {
@@ -209,14 +211,6 @@ void ResolvedMethodTable::item_added() {
 void ResolvedMethodTable::item_removed() {
   Atomic::dec(&_items_count);
   log_trace(membername, table) ("ResolvedMethod entry removed");
-}
-
-bool ResolvedMethodTable::has_work() {
-  return _has_work;
-}
-
-OopStorage* ResolvedMethodTable::weak_storage() {
-  return _weak_handles;
 }
 
 double ResolvedMethodTable::get_load_factor() {
@@ -251,7 +245,7 @@ void ResolvedMethodTable::check_concurrent_work() {
 }
 
 void ResolvedMethodTable::trigger_concurrent_work() {
-  MutexLockerEx ml(Service_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker ml(Service_lock, Mutex::_no_safepoint_check_flag);
   _has_work = true;
   Service_lock->notify_all();
 }
@@ -346,16 +340,6 @@ void ResolvedMethodTable::inc_dead_counter(size_t ndead) {
 // cleaning. Note it might trigger a resize instead.
 void ResolvedMethodTable::finish_dead_counter() {
   check_concurrent_work();
-
-#ifdef ASSERT
-  if (SafepointSynchronize::is_at_safepoint()) {
-    size_t fail_cnt = verify_and_compare_entries();
-    if (fail_cnt != 0) {
-      tty->print_cr("ERROR: fail_cnt=" SIZE_FORMAT, fail_cnt);
-      guarantee(fail_cnt == 0, "unexpected ResolvedMethodTable verification failures");
-    }
-  }
-#endif // ASSERT
 }
 
 #if INCLUDE_JVMTI
@@ -402,26 +386,16 @@ void ResolvedMethodTable::adjust_method_entries(bool * trace_name_printed) {
 }
 #endif // INCLUDE_JVMTI
 
-// Verification and comp
-class VerifyCompResolvedMethod : StackObj {
-  GrowableArray<oop>* _oops;
+// Verification
+class VerifyResolvedMethod : StackObj {
  public:
-  size_t _errors;
-  VerifyCompResolvedMethod(GrowableArray<oop>* oops) : _oops(oops), _errors(0) {}
   bool operator()(WeakHandle<vm_resolved_method_table_data>* val) {
-    oop s = val->peek();
-    if (s == NULL) {
-      return true;
+    oop obj = val->peek();
+    if (obj != NULL) {
+      Method* method = (Method*)java_lang_invoke_ResolvedMethodName::vmtarget(obj);
+      guarantee(method->is_method(), "Must be");
+      guarantee(!method->is_old(), "Must be");
     }
-    int len = _oops->length();
-    for (int i = 0; i < len; i++) {
-      bool eq = s == _oops->at(i);
-      assert(!eq, "Duplicate entries");
-      if (eq) {
-        _errors++;
-      }
-    }
-    _oops->push(s);
     return true;
   };
 };
@@ -430,16 +404,9 @@ size_t ResolvedMethodTable::items_count() {
   return _items_count;
 }
 
-size_t ResolvedMethodTable::verify_and_compare_entries() {
-  Thread* thr = Thread::current();
-  GrowableArray<oop>* oops =
-    new (ResourceObj::C_HEAP, mtInternal)
-      GrowableArray<oop>((int)_current_size, true);
-
-  VerifyCompResolvedMethod vcs(oops);
-  if (!_local_table->try_scan(thr, vcs)) {
+void ResolvedMethodTable::verify() {
+  VerifyResolvedMethod vcs;
+  if (!_local_table->try_scan(Thread::current(), vcs)) {
     log_info(membername, table)("verify unavailable at this moment");
   }
-  delete oops;
-  return vcs._errors;
 }

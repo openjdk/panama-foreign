@@ -62,9 +62,9 @@ static void upcall_init(void) {
   const char* cname = "jdk/internal/foreign/abi/UniversalUpcallHandler";
   const char* mname = "invoke";
   const char* mdesc = "(Ljdk/internal/foreign/abi/UniversalUpcallHandler;JJJJJJJ)V";
-  Symbol* cname_sym = SymbolTable::lookup(cname, (int)strlen(cname), THREAD);
-  Symbol* mname_sym = SymbolTable::lookup(mname, (int)strlen(mname), THREAD);
-  Symbol* mdesc_sym = SymbolTable::lookup(mdesc, (int)strlen(mdesc), THREAD);
+  Symbol* cname_sym = SymbolTable::new_symbol(cname, (int)strlen(cname));
+  Symbol* mname_sym = SymbolTable::new_symbol(mname, (int)strlen(mname));
+  Symbol* mdesc_sym = SymbolTable::new_symbol(mdesc, (int)strlen(mdesc));
 
 #if 0
   ::fprintf(stderr, "cname_sym: %p\n", cname_sym);

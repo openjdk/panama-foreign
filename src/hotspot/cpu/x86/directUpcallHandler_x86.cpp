@@ -81,9 +81,9 @@ static void specialized_upcall_init(int nlongs, int ndoubles, int rettag) {
     ::fprintf(stderr, "mdesc: %s\n", desc.as_string());
   #endif
 
-  Symbol* cname_sym = SymbolTable::lookup(cname.as_string(), (int) cname.size(), THREAD);
-  Symbol* mname_sym = SymbolTable::lookup(mname.as_string(), (int) mname.size(), THREAD);
-  Symbol* mdesc_sym = SymbolTable::lookup(desc.as_string(), (int) desc.size(), THREAD);
+  Symbol* cname_sym = SymbolTable::new_symbol(cname.as_string(), (int) cname.size());
+  Symbol* mname_sym = SymbolTable::new_symbol(mname.as_string(), (int) mname.size());
+  Symbol* mdesc_sym = SymbolTable::new_symbol(desc.as_string(), (int) desc.size());
 
   #if 0
     ::fprintf(stderr, "cname_sym: %p\n", cname_sym);
