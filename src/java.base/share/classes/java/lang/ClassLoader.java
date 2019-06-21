@@ -227,7 +227,7 @@ import jdk.internal.foreign.memory.BoundedPointer;
  * or a fully qualified name as defined by
  * <cite>The Java&trade; Language Specification</cite>.
  *
- * @jls 6.7  Fully Qualified Names
+ * @jls 6.7 Fully Qualified Names
  * @jls 13.1 The Form of a Binary
  * @see      #resolveClass(Class)
  * @since 1.0
@@ -1898,6 +1898,16 @@ public abstract class ClassLoader {
      * otherwise, if unnamed, it will set the class path to the current
      * working directory.
      *
+     * <p> JAR files on the class path may contain a {@code Class-Path} manifest
+     * attribute to specify dependent JAR files to be included in the class path.
+     * {@code Class-Path} entries must meet certain conditions for validity (see
+     * the <a href="{@docRoot}/../specs/jar/jar.html#class-path-attribute">
+     * JAR File Specification</a> for details).  Invalid {@code Class-Path}
+     * entries are ignored.  For debugging purposes, ignored entries can be
+     * printed to the console if the
+     * {@systemProperty jdk.net.URLClassPath.showIgnoredClassPathEntries} system
+     * property is set to {@code true}.
+     *
      * @return  The system {@code ClassLoader}
      *
      * @throws  SecurityException
@@ -2189,7 +2199,7 @@ public abstract class ClassLoader {
      * @revised 9
      * @spec JPMS
      *
-     * @jvms 5.3 Run-time package
+     * @jvms 5.3 Creation and Loading
      * @see <a href="{@docRoot}/../specs/jar/jar.html#package-sealing">
      *      The JAR File Specification: Package Sealing</a>
      */
@@ -2223,7 +2233,7 @@ public abstract class ClassLoader {
      * @throws  NullPointerException
      *          if {@code name} is {@code null}.
      *
-     * @jvms 5.3 Run-time package
+     * @jvms 5.3 Creation and Loading
      *
      * @since  9
      * @spec JPMS
@@ -2250,7 +2260,7 @@ public abstract class ClassLoader {
      *         this class loader; or an zero length array if no package has been
      *         defined by this class loader.
      *
-     * @jvms 5.3 Run-time package
+     * @jvms 5.3 Creation and Loading
      *
      * @since  9
      * @spec JPMS

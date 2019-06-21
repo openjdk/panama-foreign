@@ -32,7 +32,7 @@ ifeq ($(ENABLE_LIBCLANG), true)
   $(eval $(call SetupJdkLibrary, BUILD_LIBJCLANG, \
       NAME := jclang, \
       OPTIMIZATION := LOW, \
-      CFLAGS := $(CFLAGS_JDKLIB) \
+      CXXFLAGS := $(CXXFLAGS_JDKLIB) \
           $(LIBCLANG_CPPFLAGS), \
       LDFLAGS := $(LDFLAGS_JDKLIB) $(LIBCLANG_LDFLAGS) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
