@@ -757,7 +757,6 @@ int InstructForm::memory_operand(FormDict &globals) const {
   return NO_MEMORY_OPERAND;
 }
 
-
 // This instruction captures the machine-independent bottom_type
 // Expected use is for pointer vs oop determination for LoadP
 bool InstructForm::captures_bottom_type(FormDict &globals) const {
@@ -775,8 +774,9 @@ bool InstructForm::captures_bottom_type(FormDict &globals) const {
        !strcmp(_matrule->_rChild->_opType,"GetAndSetP")   ||
        !strcmp(_matrule->_rChild->_opType,"GetAndSetN")   ||
 #if INCLUDE_ZGC
+       !strcmp(_matrule->_rChild->_opType,"ZGetAndSetP") ||
+       !strcmp(_matrule->_rChild->_opType,"ZCompareAndExchangeP") ||
        !strcmp(_matrule->_rChild->_opType,"LoadBarrierSlowReg") ||
-       !strcmp(_matrule->_rChild->_opType,"LoadBarrierWeakSlowReg") ||
 #endif
 #if INCLUDE_SHENANDOAHGC
        !strcmp(_matrule->_rChild->_opType,"ShenandoahCompareAndExchangeP") ||
@@ -3506,12 +3506,16 @@ int MatchNode::needs_ideal_memory_edge(FormDict &globals) const {
     "CompareAndSwapB", "CompareAndSwapS", "CompareAndSwapI", "CompareAndSwapL", "CompareAndSwapP", "CompareAndSwapN",
     "WeakCompareAndSwapB", "WeakCompareAndSwapS", "WeakCompareAndSwapI", "WeakCompareAndSwapL", "WeakCompareAndSwapP", "WeakCompareAndSwapN",
     "CompareAndExchangeB", "CompareAndExchangeS", "CompareAndExchangeI", "CompareAndExchangeL", "CompareAndExchangeP", "CompareAndExchangeN",
+#if INCLUDE_SHENANDOAHGC
     "ShenandoahCompareAndSwapN", "ShenandoahCompareAndSwapP", "ShenandoahWeakCompareAndSwapP", "ShenandoahWeakCompareAndSwapN", "ShenandoahCompareAndExchangeP", "ShenandoahCompareAndExchangeN",
+#endif
     "StoreCM",
-    "ClearArray",
     "GetAndSetB", "GetAndSetS", "GetAndAddI", "GetAndSetI", "GetAndSetP",
     "GetAndAddB", "GetAndAddS", "GetAndAddL", "GetAndSetL", "GetAndSetN",
-    "LoadBarrierSlowReg", "LoadBarrierWeakSlowReg"
+#if INCLUDE_ZGC
+    "LoadBarrierSlowReg", "ZGetAndSetP", "ZCompareAndSwapP", "ZCompareAndExchangeP", "ZWeakCompareAndSwapP",
+#endif
+    "ClearArray"
   };
   int cnt = sizeof(needs_ideal_memory_list)/sizeof(char*);
   if( strcmp(_opType,"PrefetchAllocation")==0 )
@@ -3808,7 +3812,7 @@ void MatchNode::count_commutative_op(int& count) {
     "MaxI","MinI","MaxF","MinF","MaxD","MinD",
     "MaxV", "MinV",
     "MulI","MulL","MulF","MulD",
-    "MulVS","MulVI","MulVL","MulVF","MulVD",
+    "MulVB","MulVS","MulVI","MulVL","MulVF","MulVD",
     "OrI","OrL",
     "OrV",
     "XorI","XorL",
@@ -4175,10 +4179,10 @@ bool MatchRule::is_vector() const {
   static const char *vector_list[] = {
     "AddVB","AddVS","AddVI","AddVL","AddVF","AddVD",
     "SubVB","SubVS","SubVI","SubVL","SubVF","SubVD",
-    "MulVS","MulVI","MulVL","MulVF","MulVD",
+    "MulVB","MulVS","MulVI","MulVL","MulVF","MulVD",
     "CMoveVD", "CMoveVF",
     "DivVF","DivVD",
-    "AbsVF","AbsVD",
+    "AbsVB","AbsVS","AbsVI","AbsVL","AbsVF","AbsVD",
     "NegVF","NegVD",
     "SqrtVD","SqrtVF",
     "AndV" ,"XorV" ,"OrV",
