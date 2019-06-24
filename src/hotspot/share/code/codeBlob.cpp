@@ -367,7 +367,7 @@ EntryBlob* EntryBlob::create(const char* name, CodeBuffer* cb, intptr_t exceptio
   EntryBlob* blob = NULL;
   unsigned int size = CodeBlob::allocation_size(cb, sizeof(EntryBlob));
   {
-    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     blob = new (size) EntryBlob(name, size, cb, exception_handler_offset, receiver);
   }
   // Track memory usage statistic after releasing CodeCache_lock
