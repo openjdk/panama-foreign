@@ -41,9 +41,15 @@ compare_template="Compare"
 reduction_scalar="Reduction-Scalar-op"
 reduction_scalar_min="Reduction-Scalar-Min-op"
 reduction_scalar_max="Reduction-Scalar-Max-op"
+reduction_scalar_masked="Reduction-Scalar-Masked-op"
+reduction_scalar_min_masked="Reduction-Scalar-Masked-Min-op"
+reduction_scalar_max_masked="Reduction-Scalar-Masked-Max-op"
 reduction_op="Reduction-op"
 reduction_op_min="Reduction-Min-op"
 reduction_op_max="Reduction-Max-op"
+reduction_op_masked="Reduction-Masked-op"
+reduction_op_min_masked="Reduction-Masked-Min-op"
+reduction_op_max_masked="Reduction-Masked-Max-op"
 unary_math_template="Unary-op-math"
 binary_math_template="Binary-op-math"
 bool_reduction_scalar="BoolReduction-Scalar-op"
@@ -52,7 +58,10 @@ with_op_template="With-Op"
 shift_template="Shift-op"
 shift_masked_template="Shift-Masked-op"
 gather_template="Gather-op"
+gather_masked_template="Gather-Masked-op"
 scatter_template="Scatter-op"
+scatter_masked_template="Scatter-Masked-op"
+single_template="Single-op"
 get_template="Get-op"
 rearrange_template="Rearrange"
 
@@ -193,24 +202,37 @@ function gen_binary_op {
   echo "Generating binary op $1 ($2)..."
 #  gen_op_tmpl $binary_scalar "$@"
   gen_op_tmpl $binary "$@"
+  gen_op_tmpl $binary_masked "$@"
+}
+
+function gen_binary_op_no_masked {
+  echo "Generating binary op $1 ($2)..."
+#  gen_op_tmpl $binary_scalar "$@"
+  gen_op_tmpl $binary "$@"
 }
 
 function gen_reduction_op {
   echo "Generating reduction op $1 ($2)..."
   gen_op_tmpl $reduction_scalar "$@"
   gen_op_tmpl $reduction_op "$@"
+  gen_op_tmpl $reduction_scalar_masked "$@"
+  gen_op_tmpl $reduction_op_masked "$@"
 }
 
 function gen_reduction_op_min {
   echo "Generating reduction op $1 ($2)..."
   gen_op_tmpl $reduction_scalar_min "$@"
   gen_op_tmpl $reduction_op_min "$@"
+  gen_op_tmpl $reduction_scalar_min_masked "$@"
+  gen_op_tmpl $reduction_op_min_masked "$@"
 }
 
 function gen_reduction_op_max {
   echo "Generating reduction op $1 ($2)..."
   gen_op_tmpl $reduction_scalar_max "$@"
   gen_op_tmpl $reduction_op_max "$@"
+  gen_op_tmpl $reduction_scalar_max_masked "$@"
+  gen_op_tmpl $reduction_op_max_masked "$@"
 }
 
 function gen_bool_reduction_op {
@@ -272,14 +294,14 @@ gen_binary_alu_op "lanewise_FIRST_NONZERO" "{#if[FP]?Double.doubleToLongBits}(a)
 
 # Shifts
 gen_binary_alu_op "shiftLeft" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_binary_alu_op "shiftLeft" "(a << (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
-gen_binary_alu_op "shiftLeft" "(a << (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
+#gen_binary_alu_op "shiftLeft" "(a << (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
+#gen_binary_alu_op "shiftLeft" "(a << (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
 gen_binary_alu_op "shiftRight" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_binary_alu_op "shiftRight" "((a \& 0xFF) >>> (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
-gen_binary_alu_op "shiftRight" "((a \& 0xFFFF) >>> (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
+#gen_binary_alu_op "shiftRight" "((a \& 0xFF) >>> (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
+#gen_binary_alu_op "shiftRight" "((a \& 0xFFFF) >>> (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
 gen_binary_alu_op "shiftArithmeticRight" "(a >> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_binary_alu_op "shiftArithmeticRight" "(a >> (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
-gen_binary_alu_op "shiftArithmeticRight" "(a >> (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
+#gen_binary_alu_op "shiftArithmeticRight" "(a >> (b \& 0x7))" $unit_output $perf_output $perf_scalar_output "byte"
+#gen_binary_alu_op "shiftArithmeticRight" "(a >> (b \& 0xF))" $unit_output $perf_output $perf_scalar_output "short"
 gen_shift_cst_op "shiftLeft" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
 gen_shift_cst_op "shiftLeft" "(a << (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
 gen_shift_cst_op "shiftLeft" "(a << (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
@@ -291,8 +313,8 @@ gen_shift_cst_op "shiftArithmeticRight" "(a >> (b \& 7))" $unit_output $perf_out
 gen_shift_cst_op "shiftArithmeticRight" "(a >> (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
 
 # Masked reductions.
-gen_binary_op "max" "Math.max(a, b)" $unit_output $perf_output $perf_scalar_output
-gen_binary_op "min" "Math.min(a, b)" $unit_output $perf_output $perf_scalar_output
+gen_binary_op_no_masked "max" "Math.max(a, b)" $unit_output $perf_output $perf_scalar_output
+gen_binary_op_no_masked "min" "Math.min(a, b)" $unit_output $perf_output $perf_scalar_output
 
 # Reductions.
 gen_reduction_op "andLanes" "\&" $unit_output $perf_output $perf_scalar_output "BITWISE" "-1"
@@ -328,6 +350,9 @@ gen_op_tmpl $rearrange_template "rearrange" "" $unit_output $perf_output $perf_s
 # Get
 gen_get_op "" "" $unit_output $perf_output $perf_scalar_output
 
+# Single
+gen_op_tmpl $single_template "single" "" $unit_output $perf_output $perf_scalar_output
+
 # Math
 gen_op_tmpl $unary_math_template "sin" "Math.sin((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
 gen_op_tmpl $unary_math_template "exp" "Math.exp((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
@@ -360,8 +385,10 @@ gen_unary_alu_op "lanewise_ZOMO" "(a==0?0:-1)" $unit_output $perf_output $perf_s
 gen_unary_alu_op "sqrt" "Math.sqrt((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
 
 # Gather Scatter operations.
-gen_op_tmpl $gather_template "gather" "" $unit_output $perf_output $perf_scalar_output "!byteOrShort"
-gen_op_tmpl $scatter_template "scatter" "" $unit_output $perf_output $perf_scalar_output "!byteOrShort"
+gen_op_tmpl $gather_template "gather" "" $unit_output $perf_output $perf_scalar_output
+# gen_op_tmpl $gather_masked_template "gather" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $scatter_template "scatter" "" $unit_output $perf_output $perf_scalar_output
+# gen_op_tmpl $scatter_masked_template "scatter" "" $unit_output $perf_output $perf_scalar_output
 
 gen_unit_footer $unit_output
 gen_perf_footer $perf_output

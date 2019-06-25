@@ -124,6 +124,11 @@ final class Int64Vector extends IntVector {
     @ForceInline
     Int64Shuffle iotaShuffle() { return Int64Shuffle.IOTA; }
 
+    @ForceInline
+    Int64Shuffle iotaShuffle(int start) { 
+        return (Int64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Int64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Int64Shuffle(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     Int64Shuffle shuffleFromBytes(byte[] reorder) { return new Int64Shuffle(reorder); }
@@ -615,9 +620,15 @@ final class Int64Vector extends IntVector {
         }
         static final Int64Shuffle IOTA = new Int64Shuffle(IDENTITY);
 
-        @Override
-        public Int64Vector toVector() {
+        private Int64Vector toVector_helper() {
             return (Int64Vector) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public Int64Vector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Int64Shuffle.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

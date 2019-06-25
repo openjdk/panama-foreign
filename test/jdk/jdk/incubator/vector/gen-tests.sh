@@ -163,7 +163,7 @@ do
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
       -i${TEMPLATE_FILE} \
       -o${TEST_DEST_FILE}
-    if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
+    if [ VAR_OS_ENV==windows.cygwin ]; then
       tr -d  '\r' < ${TEST_DEST_FILE} > temp
       mv temp ${TEST_DEST_FILE}
     fi
@@ -180,7 +180,7 @@ do
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
       -i${PERF_TEMPLATE_FILE} \
       -o${PERF_DEST_FILE}
-    if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
+    if [ VAR_OS_ENV==windows.cygwin ]; then
       tr -d  '\r' < ${PERF_DEST_FILE} > temp
       mv temp ${PERF_DEST_FILE}
     fi
@@ -197,7 +197,7 @@ do
   ${JAVA} -cp . ${SPP_CLASSNAME} -nel $args \
     -i${PERF_SCALAR_TEMPLATE_FILE} \
     -o${PERF_DEST_FILE}
-  if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
+  if [ VAR_OS_ENV==windows.cygwin ]; then
     tr -d  '\r' < ${PERF_DEST_FILE} > temp
     mv temp ${PERF_DEST_FILE}
   fi
@@ -232,7 +232,7 @@ do
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
       -itemplates/X-LoadStoreTest.java.template \
       -o${TEST_DEST_FILE}
-    if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
+    if [ VAR_OS_ENV==windows.cygwin ]; then
       tr -d  '\r' < ${TEST_DEST_FILE} > temp
       mv temp ${TEST_DEST_FILE}
     fi

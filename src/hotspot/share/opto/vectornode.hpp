@@ -1071,6 +1071,12 @@ class Pack2DNode : public PackNode {
 };
 
 
+class VectorLoadConstNode : public VectorNode {
+ public:
+  VectorLoadConstNode(Node* in1, const TypeVect* vt) : VectorNode(in1, vt) {}
+  virtual int Opcode() const;
+};
+
 //========================Extract_Scalar_from_Vector===========================
 
 //------------------------------ExtractNode------------------------------------

@@ -437,10 +437,6 @@ public class Long256Vector extends AbstractVectorBenchmark {
 
 
 
-
-
-
-
     @Benchmark
     public void shiftRight(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
@@ -481,10 +477,6 @@ public class Long256Vector extends AbstractVectorBenchmark {
 
 
 
-
-
-
-
     @Benchmark
     public void shiftArithmeticRight(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
@@ -522,10 +514,6 @@ public class Long256Vector extends AbstractVectorBenchmark {
 
         bh.consume(r);
     }
-
-
-
-
 
 
 
@@ -707,6 +695,25 @@ public class Long256Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
+    public void andLanesMasked(Blackhole bh) {
+        long[] a = fa.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Long> vmask = VectorMask.fromValues(SPECIES, mask);
+        long ra = -1;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = -1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                ra &= av.andLanes(vmask);
+            }
+        }
+        bh.consume(ra);
+    }
+
+
+
+    @Benchmark
     public void orLanes(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long ra = 0;
@@ -716,6 +723,25 @@ public class Long256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
                 ra |= av.orLanes();
+            }
+        }
+        bh.consume(ra);
+    }
+
+
+
+    @Benchmark
+    public void orLanesMasked(Blackhole bh) {
+        long[] a = fa.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Long> vmask = VectorMask.fromValues(SPECIES, mask);
+        long ra = 0;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                ra |= av.orLanes(vmask);
             }
         }
         bh.consume(ra);
@@ -739,6 +765,25 @@ public class Long256Vector extends AbstractVectorBenchmark {
     }
 
 
+
+    @Benchmark
+    public void xorLanesMasked(Blackhole bh) {
+        long[] a = fa.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Long> vmask = VectorMask.fromValues(SPECIES, mask);
+        long ra = 0;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                ra ^= av.xorLanes(vmask);
+            }
+        }
+        bh.consume(ra);
+    }
+
+
     @Benchmark
     public void addLanes(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
@@ -749,6 +794,23 @@ public class Long256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
                 ra += av.addLanes();
+            }
+        }
+        bh.consume(ra);
+    }
+
+    @Benchmark
+    public void addLanesMasked(Blackhole bh) {
+        long[] a = fa.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Long> vmask = VectorMask.fromValues(SPECIES, mask);
+        long ra = 0;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                ra += av.addLanes(vmask);
             }
         }
         bh.consume(ra);
@@ -770,6 +832,23 @@ public class Long256Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void mulLanesMasked(Blackhole bh) {
+        long[] a = fa.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Long> vmask = VectorMask.fromValues(SPECIES, mask);
+        long ra = 1;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                ra *= av.mulLanes(vmask);
+            }
+        }
+        bh.consume(ra);
+    }
+
+    @Benchmark
     public void minLanes(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long ra = Long.MAX_VALUE;
@@ -785,6 +864,23 @@ public class Long256Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void minLanesMasked(Blackhole bh) {
+        long[] a = fa.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Long> vmask = VectorMask.fromValues(SPECIES, mask);
+        long ra = Long.MAX_VALUE;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Long.MAX_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                ra = (long)Math.min(ra, av.minLanes(vmask));
+            }
+        }
+        bh.consume(ra);
+    }
+
+    @Benchmark
     public void maxLanes(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long ra = Long.MIN_VALUE;
@@ -794,6 +890,23 @@ public class Long256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
                 ra = (long)Math.max(ra, av.maxLanes());
+            }
+        }
+        bh.consume(ra);
+    }
+
+    @Benchmark
+    public void maxLanesMasked(Blackhole bh) {
+        long[] a = fa.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Long> vmask = VectorMask.fromValues(SPECIES, mask);
+        long ra = Long.MIN_VALUE;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Long.MIN_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                ra = (long)Math.max(ra, av.maxLanes(vmask));
             }
         }
         bh.consume(ra);
@@ -1159,6 +1272,21 @@ public class Long256Vector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
+    @Benchmark
+    public void single(Blackhole bh) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.single(SPECIES, a[i]);
+                av.intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
 
 
 
@@ -1361,7 +1489,6 @@ public class Long256Vector extends AbstractVectorBenchmark {
 
 
 
-
     @Benchmark
     public void gather(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
@@ -1378,8 +1505,6 @@ public class Long256Vector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
-
-
     @Benchmark
     public void scatter(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
@@ -1395,6 +1520,5 @@ public class Long256Vector extends AbstractVectorBenchmark {
 
         bh.consume(r);
     }
-
 }
 

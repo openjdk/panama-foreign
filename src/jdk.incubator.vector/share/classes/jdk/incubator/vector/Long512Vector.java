@@ -119,6 +119,11 @@ final class Long512Vector extends LongVector {
     @ForceInline
     Long512Shuffle iotaShuffle() { return Long512Shuffle.IOTA; }
 
+    @ForceInline
+    Long512Shuffle iotaShuffle(int start) { 
+        return (Long512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long512Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long512Shuffle(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     Long512Shuffle shuffleFromBytes(byte[] reorder) { return new Long512Shuffle(reorder); }
@@ -605,9 +610,15 @@ final class Long512Vector extends LongVector {
         }
         static final Long512Shuffle IOTA = new Long512Shuffle(IDENTITY);
 
-        @Override
-        public Long512Vector toVector() {
+        private Long512Vector toVector_helper() {
             return (Long512Vector) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public Long512Vector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Long512Shuffle.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

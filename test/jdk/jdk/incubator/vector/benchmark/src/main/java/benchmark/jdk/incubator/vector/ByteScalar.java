@@ -401,138 +401,6 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
 
-    @Benchmark
-    public void shiftLeft(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                rs[i] = (byte)((a << (b & 0x7)));
-            }
-        }
-
-        bh.consume(rs);
-    }
-
-
-
-    @Benchmark
-    public void shiftLeftMasked(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                if (ms[i % ms.length]) {
-                    rs[i] = (byte)((a << (b & 0x7)));
-                } else {
-                    rs[i] = a;
-                }
-            }
-        }
-        bh.consume(rs);
-    }
-
-
-
-
-
-
-
-    @Benchmark
-    public void shiftRight(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                rs[i] = (byte)(((a & 0xFF) >>> (b & 0x7)));
-            }
-        }
-
-        bh.consume(rs);
-    }
-
-
-
-    @Benchmark
-    public void shiftRightMasked(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                if (ms[i % ms.length]) {
-                    rs[i] = (byte)(((a & 0xFF) >>> (b & 0x7)));
-                } else {
-                    rs[i] = a;
-                }
-            }
-        }
-        bh.consume(rs);
-    }
-
-
-
-
-
-
-
-    @Benchmark
-    public void shiftArithmeticRight(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                rs[i] = (byte)((a >> (b & 0x7)));
-            }
-        }
-
-        bh.consume(rs);
-    }
-
-
-
-    @Benchmark
-    public void shiftArithmeticRightMasked(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                if (ms[i % ms.length]) {
-                    rs[i] = (byte)((a >> (b & 0x7)));
-                } else {
-                    rs[i] = a;
-                }
-            }
-        }
-        bh.consume(rs);
-    }
-
 
 
 
@@ -719,6 +587,23 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
+    public void andLanesMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        byte r = -1;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = -1;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r &= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
     public void orLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = 0;
@@ -726,6 +611,23 @@ public class ByteScalar extends AbstractVectorBenchmark {
             r = 0;
             for (int i = 0; i < as.length; i++) {
                 r |= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void orLanesMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        byte r = 0;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r |= as[i];
             }
         }
         bh.consume(r);
@@ -747,6 +649,23 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
 
+
+    @Benchmark
+    public void xorLanesMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        byte r = 0;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r ^= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+
     @Benchmark
     public void addLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
@@ -755,6 +674,21 @@ public class ByteScalar extends AbstractVectorBenchmark {
             r = 0;
             for (int i = 0; i < as.length; i++) {
                 r += as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void addLanesMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        byte r = 0;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r += as[i];
             }
         }
         bh.consume(r);
@@ -774,6 +708,21 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void mulLanesMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        byte r = 1;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 1;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r *= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
     public void minLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = Byte.MAX_VALUE;
@@ -787,6 +736,21 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void minLanesMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        byte r = Byte.MAX_VALUE;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = Byte.MAX_VALUE;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r = (byte)Math.min(r, as[i]);
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
     public void maxLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = Byte.MIN_VALUE;
@@ -794,6 +758,21 @@ public class ByteScalar extends AbstractVectorBenchmark {
             r = Byte.MIN_VALUE;
             for (int i = 0; i < as.length; i++) {
                 r = (byte)Math.max(r, as[i]);
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void maxLanesMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        byte r = Byte.MIN_VALUE;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = Byte.MIN_VALUE;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r = (byte)Math.max(r, as[i]);
             }
         }
         bh.consume(r);
@@ -1195,7 +1174,119 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
 
+    @Benchmark
+    public void gatherBase0(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        int[] is    = fs.apply(size);
+        byte[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                int ix = 0 + is[i];
+                rs[i] = as[ix];
+            }
+        }
+
+        bh.consume(rs);
+    }
 
 
+    void gather(int window, Blackhole bh) {
+        byte[] as = fa.apply(size);
+        int[] is    = fs.apply(size);
+        byte[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i += window) {
+                for (int j = 0; j < window; j++) {
+                    int ix = i + is[i + j];
+                    rs[i + j] = as[ix];
+                }
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void gather064(Blackhole bh) {
+        int window = 64 / Byte.SIZE;
+        gather(window, bh);
+    }
+
+    @Benchmark
+    public void gather128(Blackhole bh) {
+        int window = 128 / Byte.SIZE;
+        gather(window, bh);
+    }
+
+    @Benchmark
+    public void gather256(Blackhole bh) {
+        int window = 256 / Byte.SIZE;
+        gather(window, bh);
+    }
+
+    @Benchmark
+    public void gather512(Blackhole bh) {
+        int window = 512 / Byte.SIZE;
+        gather(window, bh);
+    }
+
+    @Benchmark
+    public void scatterBase0(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        int[] is    = fs.apply(size);
+        byte[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                int ix = 0 + is[i];
+                rs[ix] = as[i];
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    void scatter(int window, Blackhole bh) {
+        byte[] as = fa.apply(size);
+        int[] is    = fs.apply(size);
+        byte[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i += window) {
+                for (int j = 0; j < window; j++) {
+                    int ix = i + is[i + j];
+                    rs[ix] = as[i + j];
+                }
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void scatter064(Blackhole bh) {
+        int window = 64 / Byte.SIZE;
+        scatter(window, bh);
+    }
+
+    @Benchmark
+    public void scatter128(Blackhole bh) {
+        int window = 128 / Byte.SIZE;
+        scatter(window, bh);
+    }
+
+    @Benchmark
+    public void scatter256(Blackhole bh) {
+        int window = 256 / Byte.SIZE;
+        scatter(window, bh);
+    }
+
+    @Benchmark
+    public void scatter512(Blackhole bh) {
+        int window = 512 / Byte.SIZE;
+        scatter(window, bh);
+    }
 }
 

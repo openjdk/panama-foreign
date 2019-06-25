@@ -119,6 +119,11 @@ final class Long64Vector extends LongVector {
     @ForceInline
     Long64Shuffle iotaShuffle() { return Long64Shuffle.IOTA; }
 
+    @ForceInline
+    Long64Shuffle iotaShuffle(int start) { 
+        return (Long64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long64Shuffle(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     Long64Shuffle shuffleFromBytes(byte[] reorder) { return new Long64Shuffle(reorder); }
@@ -605,9 +610,15 @@ final class Long64Vector extends LongVector {
         }
         static final Long64Shuffle IOTA = new Long64Shuffle(IDENTITY);
 
-        @Override
-        public Long64Vector toVector() {
+        private Long64Vector toVector_helper() {
             return (Long64Vector) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public Long64Vector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Long64Shuffle.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

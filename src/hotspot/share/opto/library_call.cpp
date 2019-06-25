@@ -334,6 +334,8 @@ class LibraryCallKit : public GraphKit {
   // Vector API support
   bool inline_vector_nary_operation(int n);
   bool inline_vector_broadcast_coerced();
+  bool inline_vector_shuffle_to_vector();
+  bool inline_vector_shuffle_iota();
   bool inline_vector_mem_operation(bool is_store);
   bool inline_vector_gather_scatter(bool is_scatter);
   bool inline_vector_reduction();
@@ -911,6 +913,10 @@ bool LibraryCallKit::try_to_inline(int predicate) {
     return inline_vector_nary_operation(3);
   case vmIntrinsics::_VectorBroadcastCoerced:
     return inline_vector_broadcast_coerced();
+  case vmIntrinsics::_VectorShuffleIota:
+    return inline_vector_shuffle_iota();
+  case vmIntrinsics::_VectorShuffleToVector:
+    return inline_vector_shuffle_to_vector();
   case vmIntrinsics::_VectorLoadOp:
     return inline_vector_mem_operation(/*is_store=*/false);
   case vmIntrinsics::_VectorStoreOp:
@@ -7019,6 +7025,97 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   operation = box_vector(operation, vbox_type, elem_bt, num_elem);
   set_vector_result(operation);
 
+  C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
+  return true;
+}
+
+// <Sh extends VectorShuffle<E>,  E>
+//  Sh ShuffleIota(Class<?> E, Class<?> ShuffleClass, Vector.Species<E> s, int length,
+//                  int step, ShuffleIotaOperation<Sh, E> defaultImpl)
+bool LibraryCallKit::inline_vector_shuffle_iota() {
+  const TypeInstPtr* shuffle_klass = gvn().type(argument(1))->is_instptr();
+  const TypeInt* vlen             = gvn().type(argument(3))->is_int();
+  Node* step                      = argument(4);
+
+  if (!vlen->is_con() || shuffle_klass->const_oop() == NULL) {
+    return false; // not enough info for intrinsification
+  }
+
+  int num_elem = vlen->get_con();
+  BasicType elem_bt = T_BYTE;
+
+  if (num_elem < 4) 
+    return false;
+
+  if (!arch_supports_vector(VectorNode::replicate_opcode(elem_bt), num_elem, elem_bt, VecMaskNotUsed)) {
+    return false;   
+  }
+  if (!arch_supports_vector(Op_AddVB, num_elem, elem_bt, VecMaskNotUsed)) {
+    return false;   
+  }
+  if (!arch_supports_vector(Op_AndV, num_elem, elem_bt, VecMaskNotUsed)) {
+    return false;   
+  }
+
+  const TypeVect * vt = TypeVect::make(Type::get_const_basic_type(elem_bt), num_elem);
+
+  Node* iota =  _gvn.transform(new VectorLoadConstNode(gvn().makecon(TypeInt::ZERO), vt));
+  Node* bcast_step = _gvn.transform(VectorNode::scalar2vector(step, num_elem, Type::get_const_basic_type(elem_bt)));
+
+  Node* bcast_mod  = _gvn.transform(VectorNode::scalar2vector(gvn().makecon(TypeInt::make(num_elem-1)),
+                                             num_elem, Type::get_const_basic_type(elem_bt)));
+  Node* add = _gvn.transform(VectorNode::make(Op_AddI, iota, bcast_step, num_elem, elem_bt));
+  Node* res = _gvn.transform(VectorNode::make(Op_AndI, add,  bcast_mod, num_elem, elem_bt));
+
+  ciKlass* sbox_klass = shuffle_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  const TypeInstPtr* shuffle_box_type = TypeInstPtr::make_exact(TypePtr::NotNull, sbox_klass);
+
+  // Wrap it up in VectorBox to keep object type information.
+  res = box_vector(res, shuffle_box_type, elem_bt, num_elem);
+
+  set_vector_result(res);
+  C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
+  return true;
+}
+
+// <VM ,Sh extends VectorShuffle<E>, E>
+// VM shuffleToVector(Class<VM> VecClass, Class<?>E , Class<?> ShuffleClass, Sh s, int length,
+//                    ShuffleToVectorOperation<VM,Sh,E> defaultImpl)
+bool LibraryCallKit::inline_vector_shuffle_to_vector() {
+  const TypeInstPtr* vector_klass  = gvn().type(argument(0))->is_instptr();
+  const TypeInstPtr* elem_klass    = gvn().type(argument(1))->is_instptr();
+  const TypeInstPtr* shuffle_klass = gvn().type(argument(2))->is_instptr();
+  Node* shuffle                    = argument(3);
+  const TypeInt* vlen              = gvn().type(argument(4))->is_int();
+
+  if (!vlen->is_con() || shuffle_klass->const_oop() == NULL) {
+    return false; // not enough info for intrinsification
+  }
+
+  int num_elem = vlen->get_con();
+  ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
+  BasicType elem_bt = elem_type->basic_type();
+
+  if (num_elem < 4) { 
+    return false;
+  }
+
+  if (!arch_supports_vector(Op_VectorLoadShuffle, num_elem, elem_bt, VecMaskNotUsed)) {
+    return false; // not supported
+  }
+
+  ciKlass* sbox_klass = shuffle_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  const TypeInstPtr* shuffle_box_type = TypeInstPtr::make_exact(TypePtr::NotNull, sbox_klass);
+
+  // Unbox shuffle
+  Node* shuffle_vec = unbox_vector(shuffle, shuffle_box_type, elem_bt, num_elem);
+
+  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  const TypeInstPtr* vec_box_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
+
+  // Box vector
+  Node* res = box_vector(shuffle_vec, vec_box_type, elem_bt, num_elem);
+  set_vector_result(res);
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
   return true;
 }

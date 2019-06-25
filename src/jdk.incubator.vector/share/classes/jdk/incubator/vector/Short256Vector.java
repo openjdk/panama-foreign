@@ -124,6 +124,11 @@ final class Short256Vector extends ShortVector {
     @ForceInline
     Short256Shuffle iotaShuffle() { return Short256Shuffle.IOTA; }
 
+    @ForceInline
+    Short256Shuffle iotaShuffle(int start) { 
+        return (Short256Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Short256Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Short256Shuffle(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     Short256Shuffle shuffleFromBytes(byte[] reorder) { return new Short256Shuffle(reorder); }
@@ -615,9 +620,15 @@ final class Short256Vector extends ShortVector {
         }
         static final Short256Shuffle IOTA = new Short256Shuffle(IDENTITY);
 
-        @Override
-        public Short256Vector toVector() {
+        private Short256Vector toVector_helper() {
             return (Short256Vector) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public Short256Vector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Short256Shuffle.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

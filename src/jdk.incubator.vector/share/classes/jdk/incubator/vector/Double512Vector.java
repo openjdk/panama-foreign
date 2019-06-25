@@ -124,6 +124,11 @@ final class Double512Vector extends DoubleVector {
     @ForceInline
     Double512Shuffle iotaShuffle() { return Double512Shuffle.IOTA; }
 
+    @ForceInline
+    Double512Shuffle iotaShuffle(int start) { 
+        return (Double512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Double512Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Double512Shuffle(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     Double512Shuffle shuffleFromBytes(byte[] reorder) { return new Double512Shuffle(reorder); }
@@ -610,9 +615,15 @@ final class Double512Vector extends DoubleVector {
         }
         static final Double512Shuffle IOTA = new Double512Shuffle(IDENTITY);
 
-        @Override
-        public Double512Vector toVector() {
+        private Double512Vector toVector_helper() {
             return (Double512Vector) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public Double512Vector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Double512Shuffle.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

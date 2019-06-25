@@ -160,6 +160,11 @@ final class $vectortype$ extends $abstractvectortype$ {
     @ForceInline
     $shuffletype$ iotaShuffle() { return $shuffletype$.IOTA; }
 
+    @ForceInline
+    $shuffletype$ iotaShuffle(int start) { 
+        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, (val, l) -> new $shuffletype$(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     $shuffletype$ shuffleFromBytes(byte[] reorder) { return new $shuffletype$(reorder); }
@@ -687,9 +692,15 @@ final class $vectortype$ extends $abstractvectortype$ {
         }
         static final $shuffletype$ IOTA = new $shuffletype$(IDENTITY);
 
-        @Override
-        public $vectortype$ toVector() {
+        private $vectortype$ toVector_helper() {
             return ($vectortype$) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public $vectortype$ toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, $shuffletype$.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

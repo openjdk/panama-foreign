@@ -1,0 +1,15 @@
+
+    @Benchmark
+    public void [[TEST]][[TEST_TYPE]][[OP_NAME]](Blackhole bh) {
+        $type$[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        $type$ r = [[TEST_INIT]];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = [[TEST_INIT]];
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r = ($type$)Math.max(r, as[i]);
+            }
+        }
+        bh.consume(r);
+    }

@@ -83,6 +83,26 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FUnArrayOp {
+        double[] apply(double a);
+    }
+
+    static void assertArraysEquals(double[] a, double[] r, FUnArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a[i]));
+            }
+        } catch (AssertionError e) {
+            double[] ref = f.apply(a[i]);
+            double[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i);
+        }
+    }
+
     static void assertArraysEquals(double[] a, double[] r, boolean[] mask, FUnOp f) {
         int i = 0;
         try {
@@ -113,6 +133,28 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         } catch (AssertionError e) {
             Assert.assertEquals(c, fa.apply(a), "Final result is incorrect!");
             Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
+        }
+    }
+
+    interface FReductionMaskedOp {
+        double apply(double[] a, int idx, boolean[] mask);
+    }
+
+    interface FReductionAllMaskedOp {
+        double apply(double[] a, boolean[] mask);
+    }
+
+    static void assertReductionArraysEqualsMasked(double[] a, double[] b, double c, boolean[] mask,
+                                            FReductionMaskedOp f, FReductionAllMaskedOp fa) {
+        int i = 0;
+        try {
+            Assert.assertEquals(c, fa.apply(a, mask));
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(b[i], f.apply(a, i, mask));
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(c, fa.apply(a, mask), "Final result is incorrect!");
+            Assert.assertEquals(b[i], f.apply(a, i, mask), "at index #" + i);
         }
     }
 
@@ -336,6 +378,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
             Assert.assertEquals(r[i], f.apply(a,i), "at index #" + i);
         }
     }
+
     interface FGatherScatterOp {
         double[] apply(double[] a, int ix, int[] b, int iy);
     }
@@ -359,6 +402,57 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FGatherMaskedOp {
+        double[] apply(double[] a, int ix, boolean[] mask, int[] b, int iy);
+    }
+
+    interface FScatterMaskedOp {
+        double[] apply(double[] r, double[] a, int ix, boolean[] mask, int[] b, int iy);
+    }
+
+    static void assertArraysEquals(double[] a, int[] b, double[] r, boolean[] mask, FGatherMaskedOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, i, mask, b, i));
+            }
+        } catch (AssertionError e) {
+            double[] ref = f.apply(a, i, mask, b, i);
+            double[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + ", mask: "
+              + Arrays.toString(mask)
+              + " at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(double[] a, int[] b, double[] r, boolean[] mask, FScatterMaskedOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(r, a, i, mask, b, i));
+            }
+        } catch (AssertionError e) {
+            double[] ref = f.apply(r, a, i, mask, b, i);
+            double[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + ", r: "
+              + Arrays.toString(Arrays.copyOfRange(r, i, i+SPECIES.length()))
+              + ", mask: "
+              + Arrays.toString(mask)
+              + " at index #" + i);
+        }
+    }
 
     static final List<IntFunction<double[]>> DOUBLE_GENERATORS = List.of(
             withToString("double[-i * 5]", (int s) -> {
@@ -468,6 +562,26 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
                 toArray(Object[][]::new);
     }
 
+    @DataProvider
+    public Object[][] doubleUnaryMaskedOpIndexProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+          flatMap(fs -> INT_INDEX_GENERATORS.stream().flatMap(fm ->
+            DOUBLE_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fm, fs};
+            }))).
+            toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] scatterMaskedOpIndexProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+          flatMap(fs -> INT_INDEX_GENERATORS.stream().flatMap(fm ->
+            DOUBLE_GENERATORS.stream().flatMap(fn ->
+              DOUBLE_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fn, fm, fs};
+            })))).
+            toArray(Object[][]::new);
+    }
 
     static final List<IntFunction<double[]>> DOUBLE_COMPARE_GENERATORS = List.of(
             withToString("double[i]", (int s) -> {
@@ -591,7 +705,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleBinaryOpMaskProvider")
-    static void addDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
+    static void addDoubleMaxVectorTestsMasked(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
@@ -631,7 +745,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleBinaryOpMaskProvider")
-    static void subDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
+    static void subDoubleMaxVectorTestsMasked(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
@@ -674,7 +788,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
 
     @Test(dataProvider = "doubleBinaryOpMaskProvider")
-    static void divDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
+    static void divDoubleMaxVectorTestsMasked(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
@@ -715,7 +829,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleBinaryOpMaskProvider")
-    static void mulDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
+    static void mulDoubleMaxVectorTestsMasked(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
@@ -763,7 +877,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleBinaryOpMaskProvider")
-    static void lanewise_FIRST_NONZERODoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
+    static void lanewise_FIRST_NONZERODoubleMaxVectorTestsMasked(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
@@ -781,18 +895,6 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, mask, DoubleMaxVectorTests::lanewise_FIRST_NONZERO);
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -863,6 +965,12 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
 
 
+
+
+
+
+
+
     static double addLanes(double[] a, int idx) {
         double res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
@@ -906,6 +1014,54 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         }
 
         assertReductionArraysEquals(a, r, ra, DoubleMaxVectorTests::addLanes, DoubleMaxVectorTests::addLanes);
+    }
+    static double addLanesMasked(double[] a, int idx, boolean[] mask) {
+        double res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+            if(mask[i % SPECIES.length()])
+                res += a[i];
+        }
+
+        return res;
+    }
+
+    static double addLanesMasked(double[] a, boolean[] mask) {
+        double res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            double tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                if(mask[(i + j) % SPECIES.length()])
+                    tmp += a[i + j];
+            }
+            res += tmp;
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "doubleUnaryOpMaskProvider")
+    static void addLanesDoubleMaxVectorTestsMasked(IntFunction<double[]> fa, IntFunction<boolean[]> fm) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
+        double ra = 0;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                r[i] = av.addLanes(vmask);
+            }
+        }
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                ra += av.addLanes(vmask);
+            }
+        }
+
+        assertReductionArraysEqualsMasked(a, r, ra, mask, DoubleMaxVectorTests::addLanesMasked, DoubleMaxVectorTests::addLanesMasked);
     }
     static double mulLanes(double[] a, int idx) {
         double res = 1;
@@ -951,6 +1107,54 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, ra, DoubleMaxVectorTests::mulLanes, DoubleMaxVectorTests::mulLanes);
     }
+    static double mulLanesMasked(double[] a, int idx, boolean[] mask) {
+        double res = 1;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+            if(mask[i % SPECIES.length()])
+                res *= a[i];
+        }
+
+        return res;
+    }
+
+    static double mulLanesMasked(double[] a, boolean[] mask) {
+        double res = 1;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            double tmp = 1;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                if(mask[(i + j) % SPECIES.length()])
+                    tmp *= a[i + j];
+            }
+            res *= tmp;
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "doubleUnaryOpMaskProvider")
+    static void mulLanesDoubleMaxVectorTestsMasked(IntFunction<double[]> fa, IntFunction<boolean[]> fm) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
+        double ra = 1;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                r[i] = av.mulLanes(vmask);
+            }
+        }
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                ra *= av.mulLanes(vmask);
+            }
+        }
+
+        assertReductionArraysEqualsMasked(a, r, ra, mask, DoubleMaxVectorTests::mulLanesMasked, DoubleMaxVectorTests::mulLanesMasked);
+    }
     static double minLanes(double[] a, int idx) {
         double res = Double.POSITIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
@@ -991,6 +1195,50 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, ra, DoubleMaxVectorTests::minLanes, DoubleMaxVectorTests::minLanes);
     }
+    static double minLanesMasked(double[] a, int idx, boolean[] mask) {
+        double res = Double.POSITIVE_INFINITY;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+            if(mask[i % SPECIES.length()])
+                res = (double)Math.min(res, a[i]);
+        }
+
+        return res;
+    }
+
+    static double minLanesMasked(double[] a, boolean[] mask) {
+        double res = Double.POSITIVE_INFINITY;
+        for (int i = 0; i < a.length; i++) {
+            if(mask[i % SPECIES.length()])
+                res = (double)Math.min(res, a[i]);
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "doubleUnaryOpMaskProvider")
+    static void minLanesDoubleMaxVectorTestsMasked(IntFunction<double[]> fa, IntFunction<boolean[]> fm) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
+        double ra = Double.POSITIVE_INFINITY;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                r[i] = av.minLanes(vmask);
+            }
+        }
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Double.POSITIVE_INFINITY;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                ra = (double)Math.min(ra, av.minLanes(vmask));
+            }
+        }
+
+        assertReductionArraysEqualsMasked(a, r, ra, mask, DoubleMaxVectorTests::minLanesMasked, DoubleMaxVectorTests::minLanesMasked);
+    }
     static double maxLanes(double[] a, int idx) {
         double res = Double.NEGATIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
@@ -1030,6 +1278,50 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         }
 
         assertReductionArraysEquals(a, r, ra, DoubleMaxVectorTests::maxLanes, DoubleMaxVectorTests::maxLanes);
+    }
+    static double maxLanesMasked(double[] a, int idx, boolean[] mask) {
+        double res = Double.NEGATIVE_INFINITY;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+            if(mask[i % SPECIES.length()])
+                res = (double)Math.max(res, a[i]);
+        }
+
+        return res;
+    }
+
+    static double maxLanesMasked(double[] a, boolean[] mask) {
+        double res = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < a.length; i++) {
+            if(mask[i % SPECIES.length()])
+                res = (double)Math.max(res, a[i]);
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "doubleUnaryOpMaskProvider")
+    static void maxLanesDoubleMaxVectorTestsMasked(IntFunction<double[]> fa, IntFunction<boolean[]> fm) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Double> vmask = VectorMask.fromValues(SPECIES, mask);
+        double ra = Double.NEGATIVE_INFINITY;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                r[i] = av.maxLanes(vmask);
+            }
+        }
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Double.NEGATIVE_INFINITY;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                ra = (double)Math.max(ra, av.maxLanes(vmask));
+            }
+        }
+
+        assertReductionArraysEqualsMasked(a, r, ra, mask, DoubleMaxVectorTests::maxLanesMasked, DoubleMaxVectorTests::maxLanesMasked);
     }
 
 
@@ -1369,6 +1661,27 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         }
 
         assertArraysEquals(a, r, DoubleMaxVectorTests::get);
+    }
+    static double[] single(double val) {
+        double[] res = new double[SPECIES.length()];
+        res[0] = val;
+
+        return res;
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void singleDoubleMaxVectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.single(SPECIES, a[i]);
+                av.intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, DoubleMaxVectorTests::single);
     }
 
     static double sin(double a) {
@@ -1999,7 +2312,6 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask, DoubleMaxVectorTests::sqrt);
     }
 
-
     static double[] gather(double a[], int ix, int[] b, int iy) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++) {
@@ -2024,8 +2336,6 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, DoubleMaxVectorTests::gather);
     }
-
-
     static double[] scatter(double a[], int ix, int[] b, int iy) {
       double[] res = new double[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {

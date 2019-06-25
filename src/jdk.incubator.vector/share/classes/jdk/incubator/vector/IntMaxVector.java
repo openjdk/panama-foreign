@@ -124,6 +124,11 @@ final class IntMaxVector extends IntVector {
     @ForceInline
     IntMaxShuffle iotaShuffle() { return IntMaxShuffle.IOTA; }
 
+    @ForceInline
+    IntMaxShuffle iotaShuffle(int start) { 
+        return (IntMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, IntMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new IntMaxShuffle(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     IntMaxShuffle shuffleFromBytes(byte[] reorder) { return new IntMaxShuffle(reorder); }
@@ -615,9 +620,15 @@ final class IntMaxVector extends IntVector {
         }
         static final IntMaxShuffle IOTA = new IntMaxShuffle(IDENTITY);
 
-        @Override
-        public IntMaxVector toVector() {
+        private IntMaxVector toVector_helper() {
             return (IntMaxVector) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public IntMaxVector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, IntMaxShuffle.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

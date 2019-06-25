@@ -124,6 +124,11 @@ final class ShortMaxVector extends ShortVector {
     @ForceInline
     ShortMaxShuffle iotaShuffle() { return ShortMaxShuffle.IOTA; }
 
+    @ForceInline
+    ShortMaxShuffle iotaShuffle(int start) { 
+        return (ShortMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ShortMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ShortMaxShuffle(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     ShortMaxShuffle shuffleFromBytes(byte[] reorder) { return new ShortMaxShuffle(reorder); }
@@ -615,9 +620,15 @@ final class ShortMaxVector extends ShortVector {
         }
         static final ShortMaxShuffle IOTA = new ShortMaxShuffle(IDENTITY);
 
-        @Override
-        public ShortMaxVector toVector() {
+        private ShortMaxVector toVector_helper() {
             return (ShortMaxVector) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public ShortMaxVector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, ShortMaxShuffle.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

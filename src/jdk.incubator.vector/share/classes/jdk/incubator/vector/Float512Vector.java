@@ -124,6 +124,11 @@ final class Float512Vector extends FloatVector {
     @ForceInline
     Float512Shuffle iotaShuffle() { return Float512Shuffle.IOTA; }
 
+    @ForceInline
+    Float512Shuffle iotaShuffle(int start) { 
+        return (Float512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Float512Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Float512Shuffle(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     Float512Shuffle shuffleFromBytes(byte[] reorder) { return new Float512Shuffle(reorder); }
@@ -610,9 +615,15 @@ final class Float512Vector extends FloatVector {
         }
         static final Float512Shuffle IOTA = new Float512Shuffle(IDENTITY);
 
-        @Override
-        public Float512Vector toVector() {
+        private Float512Vector toVector_helper() {
             return (Float512Vector) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public Float512Vector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Float512Shuffle.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

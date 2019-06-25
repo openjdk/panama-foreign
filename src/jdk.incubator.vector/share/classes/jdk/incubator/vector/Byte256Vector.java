@@ -123,6 +123,11 @@ final class Byte256Vector extends ByteVector {
     @ForceInline
     Byte256Shuffle iotaShuffle() { return Byte256Shuffle.IOTA; }
 
+    @ForceInline
+    Byte256Shuffle iotaShuffle(int start) { 
+        return (Byte256Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte256Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Byte256Shuffle(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     Byte256Shuffle shuffleFromBytes(byte[] reorder) { return new Byte256Shuffle(reorder); }
@@ -614,9 +619,15 @@ final class Byte256Vector extends ByteVector {
         }
         static final Byte256Shuffle IOTA = new Byte256Shuffle(IDENTITY);
 
-        @Override
-        public Byte256Vector toVector() {
+        private Byte256Vector toVector_helper() {
             return (Byte256Vector) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public Byte256Vector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Byte256Shuffle.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

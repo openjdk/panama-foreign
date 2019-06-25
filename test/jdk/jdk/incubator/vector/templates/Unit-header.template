@@ -61,9 +61,7 @@ import org.testng.annotations.Test;
 
 import java.lang.Integer;
 import java.util.List;
-#if[!byteOrShort]
 import java.util.Arrays;
-#end[!byteOrShort]
 import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -109,6 +107,26 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 
+    interface FUnArrayOp {
+        $type$[] apply($type$ a);
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] r, FUnArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a[i]));
+            }
+        } catch (AssertionError e) {
+            $type$[] ref = f.apply(a[i]);
+            $type$[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i);
+        }
+    }
+
     static void assertArraysEquals($type$[] a, $type$[] r, boolean[] mask, FUnOp f) {
         int i = 0;
         try {
@@ -139,6 +157,28 @@ public class $vectorteststype$ extends AbstractVectorTest {
         } catch (AssertionError e) {
             Assert.assertEquals(c, fa.apply(a), "Final result is incorrect!");
             Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
+        }
+    }
+
+    interface FReductionMaskedOp {
+        $type$ apply($type$[] a, int idx, boolean[] mask);
+    }
+
+    interface FReductionAllMaskedOp {
+        $type$ apply($type$[] a, boolean[] mask);
+    }
+
+    static void assertReductionArraysEqualsMasked($type$[] a, $type$[] b, $type$ c, boolean[] mask,
+                                            FReductionMaskedOp f, FReductionAllMaskedOp fa) {
+        int i = 0;
+        try {
+            Assert.assertEquals(c, fa.apply(a, mask));
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(b[i], f.apply(a, i, mask));
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(c, fa.apply(a, mask), "Final result is incorrect!");
+            Assert.assertEquals(b[i], f.apply(a, i, mask), "at index #" + i);
         }
     }
 
@@ -364,7 +404,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
             Assert.assertEquals(r[i], f.apply(a,i), "at index #" + i);
         }
     }
-#if[!byteOrShort]
+
     interface FGatherScatterOp {
         $type$[] apply($type$[] a, int ix, int[] b, int iy);
     }
@@ -388,7 +428,57 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 
-#end[!byteOrShort]
+    interface FGatherMaskedOp {
+        $type$[] apply($type$[] a, int ix, boolean[] mask, int[] b, int iy);
+    }
+
+    interface FScatterMaskedOp {
+        $type$[] apply($type$[] r, $type$[] a, int ix, boolean[] mask, int[] b, int iy);
+    }
+
+    static void assertArraysEquals($type$[] a, int[] b, $type$[] r, boolean[] mask, FGatherMaskedOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, i, mask, b, i));
+            }
+        } catch (AssertionError e) {
+            $type$[] ref = f.apply(a, i, mask, b, i);
+            $type$[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + ", mask: "
+              + Arrays.toString(mask)
+              + " at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals($type$[] a, int[] b, $type$[] r, boolean[] mask, FScatterMaskedOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(r, a, i, mask, b, i));
+            }
+        } catch (AssertionError e) {
+            $type$[] ref = f.apply(r, a, i, mask, b, i);
+            $type$[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + ", r: "
+              + Arrays.toString(Arrays.copyOfRange(r, i, i+SPECIES.length()))
+              + ", mask: "
+              + Arrays.toString(mask)
+              + " at index #" + i);
+        }
+    }
 
     static final List<IntFunction<$type$[]>> $TYPE$_GENERATORS = List.of(
             withToString("$type$[-i * 5]", (int s) -> {
@@ -498,6 +588,26 @@ public class $vectorteststype$ extends AbstractVectorTest {
                 toArray(Object[][]::new);
     }
 
+    @DataProvider
+    public Object[][] $type$UnaryMaskedOpIndexProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+          flatMap(fs -> INT_INDEX_GENERATORS.stream().flatMap(fm ->
+            $TYPE$_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fm, fs};
+            }))).
+            toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] scatterMaskedOpIndexProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+          flatMap(fs -> INT_INDEX_GENERATORS.stream().flatMap(fm ->
+            $TYPE$_GENERATORS.stream().flatMap(fn ->
+              $TYPE$_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fn, fm, fs};
+            })))).
+            toArray(Object[][]::new);
+    }
 
     static final List<IntFunction<$type$[]>> $TYPE$_COMPARE_GENERATORS = List.of(
             withToString("$type$[i]", (int s) -> {

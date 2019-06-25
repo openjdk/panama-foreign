@@ -119,6 +119,11 @@ final class LongMaxVector extends LongVector {
     @ForceInline
     LongMaxShuffle iotaShuffle() { return LongMaxShuffle.IOTA; }
 
+    @ForceInline
+    LongMaxShuffle iotaShuffle(int start) { 
+        return (LongMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, LongMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new LongMaxShuffle(i -> ((i + val) & (l-1))));
+    }
+
     @Override
     @ForceInline
     LongMaxShuffle shuffleFromBytes(byte[] reorder) { return new LongMaxShuffle(reorder); }
@@ -605,9 +610,15 @@ final class LongMaxVector extends LongVector {
         }
         static final LongMaxShuffle IOTA = new LongMaxShuffle(IDENTITY);
 
-        @Override
-        public LongMaxVector toVector() {
+        private LongMaxVector toVector_helper() {
             return (LongMaxVector) super.toVectorTemplate();  // specialize
+        }
+
+        @Override
+        @ForceInline
+        public LongMaxVector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, LongMaxShuffle.class, this, VLENGTH,
+                                                    (s) -> (s.toVector_helper()));
         }
 
         @Override

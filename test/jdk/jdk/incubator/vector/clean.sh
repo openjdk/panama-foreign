@@ -24,4 +24,4 @@
 # questions.
 #
 
-rm -rf *.class build.log test-output myVectorTemplate.template
+rm -rf *.class build.log test-output

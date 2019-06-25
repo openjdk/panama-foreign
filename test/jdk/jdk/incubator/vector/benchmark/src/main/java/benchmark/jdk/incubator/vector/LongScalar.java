@@ -441,10 +441,6 @@ public class LongScalar extends AbstractVectorBenchmark {
 
 
 
-
-
-
-
     @Benchmark
     public void shiftRight(Blackhole bh) {
         long[] as = fa.apply(size);
@@ -487,10 +483,6 @@ public class LongScalar extends AbstractVectorBenchmark {
 
 
 
-
-
-
-
     @Benchmark
     public void shiftArithmeticRight(Blackhole bh) {
         long[] as = fa.apply(size);
@@ -530,10 +522,6 @@ public class LongScalar extends AbstractVectorBenchmark {
         }
         bh.consume(rs);
     }
-
-
-
-
 
 
 
@@ -719,6 +707,23 @@ public class LongScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
+    public void andLanesMasked(Blackhole bh) {
+        long[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        long r = -1;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = -1;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r &= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
     public void orLanes(Blackhole bh) {
         long[] as = fa.apply(size);
         long r = 0;
@@ -726,6 +731,23 @@ public class LongScalar extends AbstractVectorBenchmark {
             r = 0;
             for (int i = 0; i < as.length; i++) {
                 r |= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void orLanesMasked(Blackhole bh) {
+        long[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        long r = 0;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r |= as[i];
             }
         }
         bh.consume(r);
@@ -747,6 +769,23 @@ public class LongScalar extends AbstractVectorBenchmark {
     }
 
 
+
+    @Benchmark
+    public void xorLanesMasked(Blackhole bh) {
+        long[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        long r = 0;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r ^= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+
     @Benchmark
     public void addLanes(Blackhole bh) {
         long[] as = fa.apply(size);
@@ -755,6 +794,21 @@ public class LongScalar extends AbstractVectorBenchmark {
             r = 0;
             for (int i = 0; i < as.length; i++) {
                 r += as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void addLanesMasked(Blackhole bh) {
+        long[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        long r = 0;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 0;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r += as[i];
             }
         }
         bh.consume(r);
@@ -774,6 +828,21 @@ public class LongScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void mulLanesMasked(Blackhole bh) {
+        long[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        long r = 1;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = 1;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r *= as[i];
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
     public void minLanes(Blackhole bh) {
         long[] as = fa.apply(size);
         long r = Long.MAX_VALUE;
@@ -787,6 +856,21 @@ public class LongScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void minLanesMasked(Blackhole bh) {
+        long[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        long r = Long.MAX_VALUE;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = Long.MAX_VALUE;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r = (long)Math.min(r, as[i]);
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
     public void maxLanes(Blackhole bh) {
         long[] as = fa.apply(size);
         long r = Long.MIN_VALUE;
@@ -794,6 +878,21 @@ public class LongScalar extends AbstractVectorBenchmark {
             r = Long.MIN_VALUE;
             for (int i = 0; i < as.length; i++) {
                 r = (long)Math.max(r, as[i]);
+            }
+        }
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void maxLanesMasked(Blackhole bh) {
+        long[] as = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        long r = Long.MIN_VALUE;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = Long.MIN_VALUE;
+            for (int i = 0; i < as.length; i++) {
+                if (ms[i % ms.length])
+                    r = (long)Math.max(r, as[i]);
             }
         }
         bh.consume(r);
@@ -1195,7 +1294,6 @@ public class LongScalar extends AbstractVectorBenchmark {
 
 
 
-
     @Benchmark
     public void gatherBase0(Blackhole bh) {
         long[] as = fa.apply(size);
@@ -1254,8 +1352,6 @@ public class LongScalar extends AbstractVectorBenchmark {
         gather(window, bh);
     }
 
-
-
     @Benchmark
     public void scatterBase0(Blackhole bh) {
         long[] as = fa.apply(size);
@@ -1312,6 +1408,5 @@ public class LongScalar extends AbstractVectorBenchmark {
         int window = 512 / Long.SIZE;
         scatter(window, bh);
     }
-
 }
 
