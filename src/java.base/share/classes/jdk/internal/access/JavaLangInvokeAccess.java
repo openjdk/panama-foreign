@@ -25,7 +25,6 @@
 
 package jdk.internal.access;
 
-import java.foreign.LayoutPath;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
@@ -115,4 +114,28 @@ public interface JavaLangInvokeAccess {
     VarHandle memoryAddressViewVarHandle(Class<?> carrier, long alignment,
                                          ByteOrder order, long offset, long[] strides);
 
+    /**
+     * Returns the carrier associated with a memory access var handle.
+     */
+    Class<?> memoryAddressCarrier(VarHandle handle);
+
+    /**
+     * Returns the alignment associated with a memory access var handle.
+     */
+    long memoryAddressAlignment(VarHandle handle);
+
+    /**
+     * Returns the byte order associated with a memory access var handle.
+     */
+    ByteOrder memoryAddressByteOrder(VarHandle handle);
+
+    /**
+     * Returns the offset associated with a memory access var handle.
+     */
+    long memoryAddressOffset(VarHandle handle);
+
+    /**
+     * Returns the strides associated with a memory access var handle.
+     */
+    long[] memoryAddressStrides(VarHandle handle);
 }

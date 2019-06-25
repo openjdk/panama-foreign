@@ -1807,6 +1807,38 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
                 return VarHandles.makeMemoryAddressViewHandle(carrier, alignment, order, offset, strides);
             }
 
+            @Override
+            public Class<?> memoryAddressCarrier(VarHandle handle) {
+                return checkMemAccessHandle(handle).carrier();
+            }
+
+            @Override
+            public long memoryAddressAlignment(VarHandle handle) {
+                return checkMemAccessHandle(handle).alignment + 1;
+            }
+
+            @Override
+            public ByteOrder memoryAddressByteOrder(VarHandle handle) {
+                return checkMemAccessHandle(handle).be ?
+                        ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
+            }
+
+            @Override
+            public long memoryAddressOffset(VarHandle handle) {
+                return checkMemAccessHandle(handle).offset;
+            }
+
+            @Override
+            public long[] memoryAddressStrides(VarHandle handle) {
+                return checkMemAccessHandle(handle).strides();
+            }
+
+            private VarHandleMemoryAddressBase checkMemAccessHandle(VarHandle handle) {
+                if (!(handle instanceof VarHandleMemoryAddressBase)) {
+                    throw new IllegalArgumentException("Not a memory access varhandle: " + handle);
+                }
+                return (VarHandleMemoryAddressBase) handle;
+            }
         });
     }
 
