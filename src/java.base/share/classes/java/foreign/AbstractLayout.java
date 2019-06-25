@@ -86,7 +86,7 @@ abstract class AbstractLayout implements Layout {
     }
 
     @Override
-    public final long alignmentBits() {
+    public final long bitsAlignment() {
         return alignment.orElse(naturalAlignmentBits());
     }
 

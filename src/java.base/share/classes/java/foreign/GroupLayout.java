@@ -153,7 +153,7 @@ public class GroupLayout extends AbstractLayout implements CompoundLayout, Itera
     @Override
     long naturalAlignmentBits() {
         if (alignment == -1L) {
-            alignment = Kind.UNION.sizeFunc.applyAsLong(elements.stream().mapToLong(Layout::alignmentBits));
+            alignment = Kind.UNION.sizeFunc.applyAsLong(elements.stream().mapToLong(Layout::bitsAlignment));
         }
         return alignment;
     }

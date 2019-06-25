@@ -107,7 +107,7 @@ public class TestNative {
                                               BiFunction<Z, Integer, Object> nativeBufferExtractor,
                                               BiFunction<Long, Integer, Object> nativeRawExtractor) {
         long nelems = layout.elementsSize().getAsLong();
-        ByteBuffer bb = base.asByteBuffer((int)layout.bitsSize() / 8);
+        ByteBuffer bb = base.asByteBuffer((int)layout.bytesSize());
         Z z = bufferFactory.apply(bb);
         for (long i = 0 ; i < nelems ; i++) {
             Object handleValue = handleExtractor.apply(base, i);
@@ -154,10 +154,10 @@ public class TestNative {
 
     @Test(dataProvider="buffers")
     public void testNativeCapacity(Function<ByteBuffer, Buffer> bufferFunction, int elemSize) {
-        int capacity = (int)doubles.bitsSize() / 8;
+        int capacity = (int)doubles.bytesSize();
         try (MemorySegment segment = MemorySegment.ofNative(doubles)) {
             MemoryAddress address = segment.baseAddress();
-            ByteBuffer bb = address.asByteBuffer((int)doubles.bitsSize() / 8);
+            ByteBuffer bb = address.asByteBuffer((int)doubles.bytesSize());
             Buffer buf = bufferFunction.apply(bb);
             int expected = capacity / elemSize;
             assertEquals(buf.capacity(), expected);

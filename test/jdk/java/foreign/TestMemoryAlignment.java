@@ -45,9 +45,9 @@ public class TestMemoryAlignment {
     @Test(dataProvider = "alignments")
     public void testAlignedAccess(long align) {
         Layout layout = ValueLayout.ofSignedInt(32);
-        assertEquals(layout.alignmentBits(), 32);
+        assertEquals(layout.bitsAlignment(), 32);
         Layout aligned = layout.alignTo(align);
-        assertEquals(aligned.alignmentBits(), align); //unreasonable alignment here, to make sure access throws
+        assertEquals(aligned.bitsAlignment(), align); //unreasonable alignment here, to make sure access throws
         VarHandle vh = aligned.toPath().dereferenceHandle(int.class);
         try (MemorySegment segment = MemorySegment.ofNative(aligned)) {
             MemoryAddress addr = segment.baseAddress();
@@ -60,10 +60,10 @@ public class TestMemoryAlignment {
     @Test(dataProvider = "alignments")
     public void testUnalignedAccess(long align) {
         Layout layout = ValueLayout.ofSignedInt(32);
-        assertEquals(layout.alignmentBits(), 32);
+        assertEquals(layout.bitsAlignment(), 32);
         Layout aligned = layout.alignTo(align);
         Layout alignedGroup = GroupLayout.struct(PaddingLayout.of(8), aligned);
-        assertEquals(alignedGroup.alignmentBits(), align);
+        assertEquals(alignedGroup.bitsAlignment(), align);
         VarHandle vh = aligned.toPath().dereferenceHandle(int.class);
         try (MemorySegment segment = MemorySegment.ofNative(alignedGroup)) {
             MemoryAddress addr = segment.baseAddress();
@@ -111,7 +111,7 @@ public class TestMemoryAlignment {
         GroupLayout g = GroupLayout.struct(vChar.alignTo(8),
                                vShort.alignTo(8),
                                vInt.alignTo(8));
-        assertEquals(g.alignmentBits(), 8);
+        assertEquals(g.bitsAlignment(), 8);
         VarHandle vh_c = g.toPath().elementPath(0).dereferenceHandle(byte.class);
         VarHandle vh_s = g.toPath().elementPath(1).dereferenceHandle(short.class);
         VarHandle vh_i = g.toPath().elementPath(2).dereferenceHandle(int.class);

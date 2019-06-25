@@ -26,48 +26,19 @@
 
 package jdk.internal.foreign;
 
-import jdk.internal.misc.Unsafe;
+import java.util.function.Supplier;
 
-import java.foreign.MemorySegment;
+public final class Utils {
 
-public class NativeScope extends MemorySegmentImpl.Scope {
-
-    private static Unsafe unsafe = Unsafe.getUnsafe();
-
-    // The maximum alignment supported by malloc - typically 16 on 64-bit platforms.
-    private final static long MAX_ALIGN = 16;
-
-    private final long addr;
-
-    private NativeScope(long addr) {
-        this.addr = addr;
+    public static long alignUp(long n, long alignment) {
+        return (n + alignment - 1) & -alignment;
     }
 
-    @Override
-    public Object base() {
-        return null;
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        unsafe.freeMemory(addr);
-    }
-
-    public static MemorySegment of(long bytesSize, long alignmentBytes) {
-        long alignedSize = bytesSize;
-
-        if (alignmentBytes > MAX_ALIGN) {
-            alignedSize = bytesSize + (alignmentBytes - 1);
+    public static long bitsToBytesOrThrow(long bits, Supplier<RuntimeException> exFactory) {
+        if (bits % 8 == 0) {
+            return bits / 8;
+        } else {
+            throw exFactory.get();
         }
-
-        long buf = unsafe.allocateMemory(alignedSize);
-        long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemorySegment segment = new MemorySegmentImpl(buf, alignedSize, 0, new NativeScope(buf));
-        if (alignedBuf != buf) {
-            long delta = alignedBuf - buf;
-            segment = segment.resize(delta, bytesSize);
-        }
-        return segment;
     }
 }

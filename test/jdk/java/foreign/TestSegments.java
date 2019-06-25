@@ -50,7 +50,7 @@ public class TestSegments {
         MemorySegment.ofNative(size, align);
     }
 
-    @Test(dataProvider = "badLayouts", expectedExceptions = IllegalArgumentException.class)
+    @Test(dataProvider = "badLayouts", expectedExceptions = UnsupportedOperationException.class)
     public void testBadAllocateLayout(Layout layout) {
         MemorySegment.ofNative(layout);
     }

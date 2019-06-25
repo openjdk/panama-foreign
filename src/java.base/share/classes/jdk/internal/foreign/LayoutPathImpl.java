@@ -81,10 +81,10 @@ public class LayoutPathImpl implements LayoutPath {
 
         return JLI.memoryAddressViewVarHandle(
                 carrier,
-                layout.alignmentBits() / 8,
+                layout.bytesAlignment(),
                 ((ValueLayout) layout).endianness(),
-                offset / 8,
-                enclSequences.stream().mapToLong(seq -> seq.elementLayout().bitsSize() / 8).toArray());
+                Utils.bitsToBytesOrThrow(offset, IllegalStateException::new),
+                enclSequences.stream().mapToLong(seq -> seq.elementLayout().bytesSize()).toArray());
     }
 
     public final List<SequenceLayout> enclosingSequences() {
@@ -131,11 +131,11 @@ public class LayoutPathImpl implements LayoutPath {
     }
 
     static void checkAlignmentConstraints(Layout encl, Layout current, long offset) {
-        long alignment = current.alignmentBits();
+        long alignment = current.bitsAlignment();
         if (offset % alignment != 0) {
             throw new UnsupportedOperationException("Invalid alignment requirements for layout " + current);
         }
-        if (encl != null && encl.alignmentBits() < alignment) {
+        if (encl != null && encl.bitsAlignment() < alignment) {
             throw new UnsupportedOperationException("Alignment requirements for layout " + current + " do not match those for enclosing layout " + encl);
         }
     }

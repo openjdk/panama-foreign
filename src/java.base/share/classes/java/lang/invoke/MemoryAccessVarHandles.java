@@ -24,6 +24,7 @@
  */
 package java.lang.invoke;
 
+import jdk.internal.foreign.Utils;
 import sun.invoke.util.Wrapper;
 
 import java.nio.ByteOrder;
@@ -60,7 +61,8 @@ public class MemoryAccessVarHandles {
             throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
         }
 
-        return VarHandles.makeMemoryAddressViewHandle(carrier, Wrapper.forPrimitiveType(carrier).bitWidth() / 8,
+        return VarHandles.makeMemoryAddressViewHandle(carrier,
+                Utils.bitsToBytesOrThrow(Wrapper.forPrimitiveType(carrier).bitWidth(), IllegalStateException::new),
                 ByteOrder.nativeOrder(), 0, new long[]{});
     }
 

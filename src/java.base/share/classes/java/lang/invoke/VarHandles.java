@@ -26,6 +26,7 @@
 package java.lang.invoke;
 
 import jdk.internal.foreign.LayoutPathImpl;
+import jdk.internal.foreign.Utils;
 import sun.invoke.util.Wrapper;
 
 import java.foreign.Layout;
@@ -315,7 +316,7 @@ final class VarHandles {
      */
     static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, long alignment,
                                                  ByteOrder byteOrder, long offset, long[] strides) {
-        long size = Wrapper.forPrimitiveType(carrier).bitWidth() / 8;
+        long size = Utils.bitsToBytesOrThrow(Wrapper.forPrimitiveType(carrier).bitWidth(), IllegalStateException::new);
         boolean be = byteOrder == ByteOrder.BIG_ENDIAN;
 
         Map<Integer, MethodHandle> carrierFactory = addressFactories.get(carrier);

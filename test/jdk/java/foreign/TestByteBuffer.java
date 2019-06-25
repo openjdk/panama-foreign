@@ -141,7 +141,7 @@ public class TestByteBuffer {
                                               BiFunction<MemoryAddress, Long, Object> handleExtractor,
                                               Function<Z, Object> bufferExtractor) {
         long nelems = layout.elementsSize().getAsLong();
-        long elemSize = layout.elementLayout().bitsSize() / 8;
+        long elemSize = layout.elementLayout().bytesSize();
         for (long i = 0 ; i < nelems ; i++) {
             long limit = nelems - i;
             MemorySegment resizedSegment = base.segment().resize(i * elemSize, limit * elemSize);
@@ -168,19 +168,19 @@ public class TestByteBuffer {
             MemoryAddress base = segment.baseAddress();
             initTuples(base);
 
-            ByteBuffer bb = base.asByteBuffer((int) tuples.bitsSize() / 8);
+            ByteBuffer bb = base.asByteBuffer((int) tuples.bytesSize());
             checkTuples(base, bb);
         }
     }
 
     @Test
     public void testHeap() {
-        byte[] arr = new byte[(int) tuples.bitsSize() / 8];
+        byte[] arr = new byte[(int) tuples.bytesSize()];
         MemorySegment region = MemorySegment.ofArray(arr);
         MemoryAddress base = region.baseAddress();
         initTuples(base);
 
-        ByteBuffer bb = base.asByteBuffer((int) tuples.bitsSize() / 8);
+        ByteBuffer bb = base.asByteBuffer((int) tuples.bytesSize());
         checkTuples(base, bb);
     }
 
@@ -192,7 +192,7 @@ public class TestByteBuffer {
 
         //write to channel
         try (FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-            withMappedBuffer(channel, FileChannel.MapMode.READ_WRITE, 0, tuples.bitsSize() / 8, mbb -> {
+            withMappedBuffer(channel, FileChannel.MapMode.READ_WRITE, 0, tuples.bytesSize(), mbb -> {
                 MemorySegment segment = MemorySegment.ofByteBuffer(mbb);
                 MemoryAddress base = segment.baseAddress();
                 initTuples(base);
@@ -202,7 +202,7 @@ public class TestByteBuffer {
 
         //read from channel
         try (FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.READ)) {
-            withMappedBuffer(channel, FileChannel.MapMode.READ_ONLY, 0, tuples.bitsSize() / 8, mbb -> {
+            withMappedBuffer(channel, FileChannel.MapMode.READ_ONLY, 0, tuples.bytesSize(), mbb -> {
                 MemorySegment segment = MemorySegment.ofByteBuffer(mbb);
                 MemoryAddress base = segment.baseAddress();
                 checkTuples(base, mbb);
@@ -227,7 +227,7 @@ public class TestByteBuffer {
         Buffer bb;
         try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
             MemoryAddress base = segment.baseAddress();
-            bb = bufferFactory.apply(base.asByteBuffer((int) bytes.bitsSize() / 8));
+            bb = bufferFactory.apply(base.asByteBuffer((int) bytes.bytesSize()));
         }
         //outside of scope!!
         for (Map.Entry<Method, Object[]> e : members.entrySet()) {
@@ -254,7 +254,7 @@ public class TestByteBuffer {
     public void testDirectBuffer(Function<ByteBuffer, Buffer> bufferFactory, Map<Method, Object[]> members) {
         try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
             MemoryAddress base = segment.baseAddress();
-            Buffer bb = bufferFactory.apply(base.asByteBuffer((int)bytes.bitsSize() / 8));
+            Buffer bb = bufferFactory.apply(base.asByteBuffer((int)bytes.bytesSize()));
             assertTrue(bb.isDirect());
             DirectBuffer directBuffer = ((DirectBuffer)bb);
             assertEquals(directBuffer.address(), MemoryAddressImpl.addressof(base));
@@ -274,7 +274,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        int capacity = (int)seq.bitsSize() / 8;
+        int capacity = (int)seq.bytesSize();
         MemoryAddress base = MemorySegment.ofArray(new byte[capacity]).baseAddress();
         initializer.accept(base);
         checker.accept(base);
@@ -282,7 +282,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeBuffer(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        int capacity = (int)seq.bitsSize() / 8;
+        int capacity = (int)seq.bytesSize();
         MemoryAddress base = MemorySegment.ofByteBuffer(ByteBuffer.wrap(new byte[capacity])).baseAddress();
         initializer.accept(base);
         checker.accept(base);
@@ -290,7 +290,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeRoundtripHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        int capacity = (int)seq.bitsSize() / 8;
+        int capacity = (int)seq.bytesSize();
         byte[] arr = new byte[capacity];
         MemoryAddress first = MemorySegment.ofArray(arr).baseAddress();
         initializer.accept(first);
@@ -301,7 +301,7 @@ public class TestByteBuffer {
     @Test(dataProvider="resizeOps")
     public void testResizeRoundtripNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         try (MemorySegment segment = MemorySegment.ofNative(seq)) {
-            int capacity = (int) seq.bitsSize() / 8;
+            int capacity = (int) seq.bytesSize();
             MemoryAddress first = segment.baseAddress();
             initializer.accept(first);
             MemoryAddress second = MemorySegment.ofByteBuffer(first.asByteBuffer(capacity)).baseAddress();
@@ -328,7 +328,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testCopyHeapToNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        int bytes = (int)seq.bitsSize() / 8;
+        int bytes = (int)seq.bytesSize();
         try (MemorySegment nativeArray = MemorySegment.ofNative(bytes) ;
              MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
             initializer.accept(heapArray.baseAddress());
@@ -339,7 +339,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testCopyNativeToHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        int bytes = (int)seq.bitsSize() / 8;
+        int bytes = (int)seq.bytesSize();
         try (MemorySegment nativeArray = MemorySegment.ofNative(seq) ;
              MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
             initializer.accept(nativeArray.baseAddress());

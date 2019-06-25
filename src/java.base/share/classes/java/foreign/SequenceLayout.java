@@ -63,7 +63,7 @@ public class SequenceLayout extends AbstractLayout implements CompoundLayout {
 
     @Override
     long naturalAlignmentBits() {
-        return elementLayout().alignmentBits();
+        return elementLayout().bitsAlignment();
     }
 
     /**

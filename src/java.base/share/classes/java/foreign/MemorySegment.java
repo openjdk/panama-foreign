@@ -140,22 +140,17 @@ public interface MemorySegment extends AutoCloseable {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-ofNative(layout.bitsSize() / 8, layout.alignmentInBits() / 8);
+ofNative(layout.bytesSize(), layout.bytesAlignment());
      * }</pre></blockquote>
      *
      * @param layout the memory layout to be allocated.
      * @return the newly allocated memory segment.
-     * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraints.
+     * @throws UnsupportedOperationException if the specified layout has illegal size or alignment constraints.
      * @throws RuntimeException if the specified size is too large for the system runtime.
      * @throws OutOfMemoryError if the allocation is refused by the system runtime.
      */
     static MemorySegment ofNative(Layout layout) throws IllegalArgumentException {
-        if (layout.bitsSize() % 8 != 0) {
-            throw new IllegalArgumentException("Layout bits size must be a multiple of 8");
-        } else if (layout.alignmentBits() % 8 != 0) {
-            throw new IllegalArgumentException("Layout alignment bits must be a multiple of 8");
-        }
-        return ofNative(layout.bitsSize() / 8, layout.alignmentBits() / 8);
+        return ofNative(layout.bytesSize(), layout.bytesAlignment());
     }
 
     /**

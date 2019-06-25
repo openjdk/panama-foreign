@@ -119,7 +119,7 @@ public class TestMemoryAccess {
                 return;
             }
             try {
-                checker.check(handle, addr.offset(layout.bitsSize() / 8));
+                checker.check(handle, addr.offset(layout.bytesSize()));
                 throw new AssertionError(); //not ok, out of bounds
             } catch (IllegalStateException ex) {
                 //ok, should fail (out of bounds)
