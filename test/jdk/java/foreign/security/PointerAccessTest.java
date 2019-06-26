@@ -22,17 +22,14 @@
  */
 
 import java.foreign.NativeTypes;
+import java.foreign.Scope;
 import java.foreign.annotations.NativeAddressof;
 import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
-import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.foreign.Libraries;
-import java.foreign.Scope;
 
 import static org.testng.Assert.assertEquals;
 
