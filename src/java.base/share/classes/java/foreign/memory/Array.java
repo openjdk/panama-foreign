@@ -25,10 +25,12 @@
 
 package java.foreign.memory;
 
-import jdk.internal.foreign.memory.BoundedArray;
-
+import java.util.Objects;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
+import jdk.internal.foreign.Util;
+import jdk.internal.foreign.memory.BoundedArray;
+import jdk.internal.foreign.memory.BoundedPointer;
 
 /**
  * This interface models a native array. An array is composed by a base pointer and a size.
@@ -170,36 +172,104 @@ public interface Array<X> {
      * @throws IllegalArgumentException if the two arrays have different layouts.
      */
     static <Z> void assign(Array<Z> src, Array<Z> dst) {
-        Pointer.copy(((BoundedArray<?>) src).ptr(), ((BoundedArray<?>) dst).ptr());
+        Pointer.copy(src.ptr(), dst.ptr());
     }
 
     /**
-     * Copy contents of source native array into destination Java array.
-     * @param src source native array.
-     * @param arr destination Java array.
-     * @param <Z> the array carrier type.
-     * @throws IndexOutOfBoundsException if the source array size exceeds that of the target.
+     * Copies an array from the specified source array, beginning at the
+     * specified position, to the specified position of the destination array.
+     * A subsequence of array components are copied from the source
+     * array referenced by {@code src} to the destination array
+     * referenced by {@code dest}. The number of components copied is
+     * equal to the {@code length} argument. The components at
+     * positions {@code srcPos} through
+     * {@code srcPos+length-1} in the source array are copied into
+     * positions {@code destPos} through
+     * {@code destPos+length-1}, respectively, of the destination
+     * array.
+     *
+     * @param      src      the source array.
+     * @param      srcPos   starting position in the source array.
+     * @param      dest     the destination array.
+     * @param      destPos  starting position in the destination data.
+     * @param      length   the number of array elements to be copied.
+     * @param      <Z>      the carrier type
+     * @throws     IndexOutOfBoundsException  if copying would cause
+     *             access of data outside array bounds.
+     * @throws     NullPointerException if either {@code src} or
+     *             {@code dest} is {@code null}.
      */
-    static <Z> void assign(Array<Z> src, Object arr) {
-        long len = src.length();
-        if (len > java.lang.reflect.Array.getLength(arr)) {
-            throw new IndexOutOfBoundsException("destination array too small");
+    static <Z> void copy(Array<Z> src, long srcPos, Array<Z> dest, long destPos, long length) {
+        Objects.requireNonNull(src);
+        Objects.requireNonNull(dest);
+
+        if (length == 0) {
+            return;
         }
-        BoundedArray.copyTo(src, arr, (int)len);
+
+        Array.assign(src.slice(srcPos, length), dest.slice(destPos, length));
     }
 
     /**
-     * Copy contents of source Java array into destination native array.
-     * @param arr source Java array.
-     * @param dst destination native array.
-     * @param <Z> the array carrier type.
-     * @throws IndexOutOfBoundsException if the source array size exceeds that of the target.
+     * Return a subsequence of elements as an {@code Array}. The returned array
+     * is a coherent view of those selected elements, any change in either is
+     * actually changed in the other.
+     *
+     * @param from The starting position of the subsequence
+     * @param count The number of elements in the subsequence
+     * @throws IndexOutOfBoundsException if the range cause access outside of the array
+     * @return The Array of the selected elements
      */
-    static <Z> void assign(Object arr, Array<Z> dst) {
-        int len = java.lang.reflect.Array.getLength(arr);
-        if (java.lang.reflect.Array.getLength(arr) > dst.length()) {
-            throw new IndexOutOfBoundsException("destination array too small");
+    default Array<X> slice(long from, long count) {
+        if (from < 0 || count < 0 || (from + count) > length()) {
+            throw new IndexOutOfBoundsException();
         }
-        BoundedArray.copyFrom(dst, arr, len);
+        return elementPointer().offset(from).withSize(count);
+    }
+
+    /**
+     * Return a {@code Pointer} to the array. This is different to the {@code
+     * elementPointer} because the {@code Layout} of the returned pointer is
+     * for the whole array instead of a single element.
+     *
+     * @return The Pointer to the Array
+     */
+    default Pointer<Array<X>> ptr() {
+        return Util.unsafeCast(elementPointer(), elementType().array(length()));
+    }
+
+    /**
+     * Return an {@code Array} represents the heap-allocated primitive array.
+     * The returned {@code Array} or derived {@code Pointer} is good to use in
+     * Java code but may cause UnsupportedOperationException when used in
+     * argument to native call.
+     *
+     * @param elementType The layout of the element type
+     * @param javaArray The heap-allocated primitive array
+     * @param <Z> The carrier type of the element
+     * @throws IllegalAccessException The specified array is of primitive type
+     *            or the elementType doesn't not match the primitive type
+     * @throws SecurityException if access is not permitted based on
+     *            the current security policy.
+     * @throws UnsupportedOperationException if the Array is used
+     * @return The Array represent the heap-allocated primitive array
+     */
+    static <Z> Array<Z> ofPrimitiveArray(LayoutType<Z> elementType, Object javaArray) {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.foreign.memory.fromHeap"));
+        }
+
+        Class<?> elemCarrier = javaArray.getClass().getComponentType();
+        if (!elemCarrier.isPrimitive()) {
+            throw new IllegalArgumentException("Not primitive type");
+        }
+        if (elementType.carrier() != elemCarrier ||
+                elementType.layout().bitsSize() != Util.sizeof(elemCarrier)) {
+            throw new IllegalArgumentException("Type does not match");
+        }
+
+        return BoundedPointer.fromArray(elementType, javaArray)
+                .withSize(java.lang.reflect.Array.getLength(javaArray));
     }
 }

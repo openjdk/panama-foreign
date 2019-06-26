@@ -152,7 +152,7 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     public void copyTo(BoundedPointer<?> dst, long bytes) {
-        if(bytes == 0) return; // nothing to do
+        if (bytes == 0) return; // nothing to do
         Objects.requireNonNull(dst);
 
         checkRead(bytes);

@@ -49,10 +49,6 @@ public class BoundedArray<X> implements Array<X> {
         return size;
     }
 
-    public Pointer<Array<X>> ptr() {
-        return Util.unsafeCast(pointer, elementType().array(size));
-    }
-
     @Override
     public BoundedPointer<X> elementPointer() {
         return pointer.limit(size);

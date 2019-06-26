@@ -39,12 +39,12 @@ import static org.testng.Assert.*;
 public class BulkArrayTest {
 
     @Test(dataProvider = "arrays")
-    public void testBulk(LayoutType<?> type, Object arr) {
+    public <Z> void testBulk(LayoutType<Z> type, Object arr) {
         try (Scope sc = Scope.globalScope().fork()) {
-            Array<?> nativeArr = sc.allocateArray(type, 10);
-            Array.assign(arr, nativeArr);
+            Array<Z> nativeArr = sc.allocateArray(type, 10);
+            Array.assign(Array.ofPrimitiveArray(type, arr), nativeArr);
             Object temp = java.lang.reflect.Array.newInstance(arr.getClass().componentType(), 10);
-            Array.assign(nativeArr, temp);
+            Array.assign(nativeArr, Array.ofPrimitiveArray(type, temp));
             assertTrue(Objects.deepEquals(arr, temp));
         }
     }

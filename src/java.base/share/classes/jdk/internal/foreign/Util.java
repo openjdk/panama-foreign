@@ -463,7 +463,7 @@ public final class Util {
         } else if (carrier == long.class || carrier == double.class) {
             return 64;
         } else {
-            throw new IllegalStateException("Unexpected carrier: " + carrier.getName());
+            throw new IllegalArgumentException("Unexpected carrier: " + carrier.getName());
         }
     }
 }
