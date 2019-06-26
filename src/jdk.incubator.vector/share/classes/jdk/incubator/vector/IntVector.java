@@ -1925,9 +1925,8 @@ public abstract class IntVector extends AbstractVector<Integer> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final IntVector slice(int origin) {
-        return slice(origin, broadcast(0));
-    }
+    @Override public abstract
+    IntVector slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1981,9 +1980,8 @@ public abstract class IntVector extends AbstractVector<Integer> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final IntVector unslice(int origin) {
-        return unslice(origin, broadcast(0), 0);
-    }
+    @Override public abstract
+    IntVector unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {

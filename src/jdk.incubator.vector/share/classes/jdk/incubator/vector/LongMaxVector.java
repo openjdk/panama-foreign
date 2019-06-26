@@ -121,7 +121,7 @@ final class LongMaxVector extends LongVector {
 
     @ForceInline
     LongMaxShuffle iotaShuffle(int start) { 
-        return (LongMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, LongMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new LongMaxShuffle(i -> ((i + val) & (l-1))));
+        return (LongMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, LongMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new LongMaxShuffle(i -> (LongMaxShuffle.partiallyWrapIndex(i + val, l))));
     }
 
     @Override
@@ -340,6 +340,19 @@ final class LongMaxVector extends LongVector {
 
     @Override
     @ForceInline
+    public LongMaxVector slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         LongMaxShuffle Iota = iotaShuffle(origin);
+         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(origin))));
+         Iota = iotaShuffle(origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
+    }
+
+    @Override
+    @ForceInline
     public LongMaxVector unslice(int origin, Vector<Long> w, int part) {
         return (LongMaxVector) super.unsliceTemplate(origin, w, part);  // specialize
     }
@@ -351,6 +364,19 @@ final class LongMaxVector extends LongVector {
             super.unsliceTemplate(LongMaxMask.class,
                                   origin, w, part,
                                   (LongMaxMask) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public LongMaxVector unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         LongMaxShuffle Iota = iotaShuffle(-origin);
+         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(0))));
+         Iota = iotaShuffle(-origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
     }
 
     @Override
@@ -610,15 +636,11 @@ final class LongMaxVector extends LongVector {
         }
         static final LongMaxShuffle IOTA = new LongMaxShuffle(IDENTITY);
 
-        private LongMaxVector toVector_helper() {
-            return (LongMaxVector) super.toVectorTemplate();  // specialize
-        }
-
         @Override
         @ForceInline
         public LongMaxVector toVector() {
             return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, LongMaxShuffle.class, this, VLENGTH,
-                                                    (s) -> (s.toVector_helper()));
+                                                    (s) -> ((LongMaxVector)(((AbstractShuffle<Long>)(s)).toVectorTemplate())));
         }
 
         @Override

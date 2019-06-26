@@ -121,7 +121,7 @@ final class Long64Vector extends LongVector {
 
     @ForceInline
     Long64Shuffle iotaShuffle(int start) { 
-        return (Long64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long64Shuffle(i -> ((i + val) & (l-1))));
+        return (Long64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long64Shuffle(i -> (Long64Shuffle.partiallyWrapIndex(i + val, l))));
     }
 
     @Override
@@ -340,6 +340,19 @@ final class Long64Vector extends LongVector {
 
     @Override
     @ForceInline
+    public Long64Vector slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         Long64Shuffle Iota = iotaShuffle(origin);
+         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(origin))));
+         Iota = iotaShuffle(origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
+    }
+
+    @Override
+    @ForceInline
     public Long64Vector unslice(int origin, Vector<Long> w, int part) {
         return (Long64Vector) super.unsliceTemplate(origin, w, part);  // specialize
     }
@@ -351,6 +364,19 @@ final class Long64Vector extends LongVector {
             super.unsliceTemplate(Long64Mask.class,
                                   origin, w, part,
                                   (Long64Mask) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         Long64Shuffle Iota = iotaShuffle(-origin);
+         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(0))));
+         Iota = iotaShuffle(-origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
     }
 
     @Override
@@ -610,15 +636,11 @@ final class Long64Vector extends LongVector {
         }
         static final Long64Shuffle IOTA = new Long64Shuffle(IDENTITY);
 
-        private Long64Vector toVector_helper() {
-            return (Long64Vector) super.toVectorTemplate();  // specialize
-        }
-
         @Override
         @ForceInline
         public Long64Vector toVector() {
             return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Long64Shuffle.class, this, VLENGTH,
-                                                    (s) -> (s.toVector_helper()));
+                                                    (s) -> ((Long64Vector)(((AbstractShuffle<Long>)(s)).toVectorTemplate())));
         }
 
         @Override

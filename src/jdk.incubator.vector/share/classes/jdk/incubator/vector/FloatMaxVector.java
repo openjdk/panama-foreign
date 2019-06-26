@@ -126,7 +126,7 @@ final class FloatMaxVector extends FloatVector {
 
     @ForceInline
     FloatMaxShuffle iotaShuffle(int start) { 
-        return (FloatMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, FloatMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new FloatMaxShuffle(i -> ((i + val) & (l-1))));
+        return (FloatMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, FloatMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new FloatMaxShuffle(i -> (FloatMaxShuffle.partiallyWrapIndex(i + val, l))));
     }
 
     @Override
@@ -344,6 +344,19 @@ final class FloatMaxVector extends FloatVector {
 
     @Override
     @ForceInline
+    public FloatMaxVector slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         FloatMaxShuffle Iota = iotaShuffle(origin);
+         VectorMask<Float> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((float)(origin))));
+         Iota = iotaShuffle(origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
+    }
+
+    @Override
+    @ForceInline
     public FloatMaxVector unslice(int origin, Vector<Float> w, int part) {
         return (FloatMaxVector) super.unsliceTemplate(origin, w, part);  // specialize
     }
@@ -355,6 +368,19 @@ final class FloatMaxVector extends FloatVector {
             super.unsliceTemplate(FloatMaxMask.class,
                                   origin, w, part,
                                   (FloatMaxMask) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public FloatMaxVector unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         FloatMaxShuffle Iota = iotaShuffle(-origin);
+         VectorMask<Float> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((float)(0))));
+         Iota = iotaShuffle(-origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
     }
 
     @Override
@@ -615,15 +641,11 @@ final class FloatMaxVector extends FloatVector {
         }
         static final FloatMaxShuffle IOTA = new FloatMaxShuffle(IDENTITY);
 
-        private FloatMaxVector toVector_helper() {
-            return (FloatMaxVector) super.toVectorTemplate();  // specialize
-        }
-
         @Override
         @ForceInline
         public FloatMaxVector toVector() {
             return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, FloatMaxShuffle.class, this, VLENGTH,
-                                                    (s) -> (s.toVector_helper()));
+                                                    (s) -> ((FloatMaxVector)(((AbstractShuffle<Float>)(s)).toVectorTemplate())));
         }
 
         @Override

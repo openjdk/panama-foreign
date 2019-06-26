@@ -1926,9 +1926,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final ShortVector slice(int origin) {
-        return slice(origin, broadcast(0));
-    }
+    @Override public abstract
+    ShortVector slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1982,9 +1981,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final ShortVector unslice(int origin) {
-        return unslice(origin, broadcast(0), 0);
-    }
+    @Override public abstract
+    ShortVector unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {

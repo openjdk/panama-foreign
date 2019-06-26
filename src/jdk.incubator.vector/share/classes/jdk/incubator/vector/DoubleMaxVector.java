@@ -126,7 +126,7 @@ final class DoubleMaxVector extends DoubleVector {
 
     @ForceInline
     DoubleMaxShuffle iotaShuffle(int start) { 
-        return (DoubleMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, DoubleMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new DoubleMaxShuffle(i -> ((i + val) & (l-1))));
+        return (DoubleMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, DoubleMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new DoubleMaxShuffle(i -> (DoubleMaxShuffle.partiallyWrapIndex(i + val, l))));
     }
 
     @Override
@@ -344,6 +344,19 @@ final class DoubleMaxVector extends DoubleVector {
 
     @Override
     @ForceInline
+    public DoubleMaxVector slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         DoubleMaxShuffle Iota = iotaShuffle(origin);
+         VectorMask<Double> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((double)(origin))));
+         Iota = iotaShuffle(origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
+    }
+
+    @Override
+    @ForceInline
     public DoubleMaxVector unslice(int origin, Vector<Double> w, int part) {
         return (DoubleMaxVector) super.unsliceTemplate(origin, w, part);  // specialize
     }
@@ -355,6 +368,19 @@ final class DoubleMaxVector extends DoubleVector {
             super.unsliceTemplate(DoubleMaxMask.class,
                                   origin, w, part,
                                   (DoubleMaxMask) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public DoubleMaxVector unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         DoubleMaxShuffle Iota = iotaShuffle(-origin);
+         VectorMask<Double> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((double)(0))));
+         Iota = iotaShuffle(-origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
     }
 
     @Override
@@ -615,15 +641,11 @@ final class DoubleMaxVector extends DoubleVector {
         }
         static final DoubleMaxShuffle IOTA = new DoubleMaxShuffle(IDENTITY);
 
-        private DoubleMaxVector toVector_helper() {
-            return (DoubleMaxVector) super.toVectorTemplate();  // specialize
-        }
-
         @Override
         @ForceInline
         public DoubleMaxVector toVector() {
             return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, DoubleMaxShuffle.class, this, VLENGTH,
-                                                    (s) -> (s.toVector_helper()));
+                                                    (s) -> ((DoubleMaxVector)(((AbstractShuffle<Double>)(s)).toVectorTemplate())));
         }
 
         @Override

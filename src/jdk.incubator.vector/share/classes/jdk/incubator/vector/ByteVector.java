@@ -1925,9 +1925,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final ByteVector slice(int origin) {
-        return slice(origin, broadcast(0));
-    }
+    @Override public abstract
+    ByteVector slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1981,9 +1980,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final ByteVector unslice(int origin) {
-        return unslice(origin, broadcast(0), 0);
-    }
+    @Override public abstract
+    ByteVector unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {

@@ -126,7 +126,7 @@ final class Double64Vector extends DoubleVector {
 
     @ForceInline
     Double64Shuffle iotaShuffle(int start) { 
-        return (Double64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Double64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Double64Shuffle(i -> ((i + val) & (l-1))));
+        return (Double64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Double64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Double64Shuffle(i -> (Double64Shuffle.partiallyWrapIndex(i + val, l))));
     }
 
     @Override
@@ -344,6 +344,19 @@ final class Double64Vector extends DoubleVector {
 
     @Override
     @ForceInline
+    public Double64Vector slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         Double64Shuffle Iota = iotaShuffle(origin);
+         VectorMask<Double> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((double)(origin))));
+         Iota = iotaShuffle(origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
+    }
+
+    @Override
+    @ForceInline
     public Double64Vector unslice(int origin, Vector<Double> w, int part) {
         return (Double64Vector) super.unsliceTemplate(origin, w, part);  // specialize
     }
@@ -355,6 +368,19 @@ final class Double64Vector extends DoubleVector {
             super.unsliceTemplate(Double64Mask.class,
                                   origin, w, part,
                                   (Double64Mask) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public Double64Vector unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         Double64Shuffle Iota = iotaShuffle(-origin);
+         VectorMask<Double> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((double)(0))));
+         Iota = iotaShuffle(-origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
     }
 
     @Override
@@ -615,15 +641,11 @@ final class Double64Vector extends DoubleVector {
         }
         static final Double64Shuffle IOTA = new Double64Shuffle(IDENTITY);
 
-        private Double64Vector toVector_helper() {
-            return (Double64Vector) super.toVectorTemplate();  // specialize
-        }
-
         @Override
         @ForceInline
         public Double64Vector toVector() {
             return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Double64Shuffle.class, this, VLENGTH,
-                                                    (s) -> (s.toVector_helper()));
+                                                    (s) -> ((Double64Vector)(((AbstractShuffle<Double>)(s)).toVectorTemplate())));
         }
 
         @Override

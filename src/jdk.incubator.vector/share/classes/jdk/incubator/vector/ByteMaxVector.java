@@ -125,7 +125,7 @@ final class ByteMaxVector extends ByteVector {
 
     @ForceInline
     ByteMaxShuffle iotaShuffle(int start) { 
-        return (ByteMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ByteMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ByteMaxShuffle(i -> ((i + val) & (l-1))));
+        return (ByteMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ByteMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ByteMaxShuffle(i -> (ByteMaxShuffle.partiallyWrapIndex(i + val, l))));
     }
 
     @Override
@@ -349,6 +349,19 @@ final class ByteMaxVector extends ByteVector {
 
     @Override
     @ForceInline
+    public ByteMaxVector slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         ByteMaxShuffle Iota = iotaShuffle(origin);
+         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(origin))));
+         Iota = iotaShuffle(origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
+    }
+
+    @Override
+    @ForceInline
     public ByteMaxVector unslice(int origin, Vector<Byte> w, int part) {
         return (ByteMaxVector) super.unsliceTemplate(origin, w, part);  // specialize
     }
@@ -360,6 +373,19 @@ final class ByteMaxVector extends ByteVector {
             super.unsliceTemplate(ByteMaxMask.class,
                                   origin, w, part,
                                   (ByteMaxMask) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public ByteMaxVector unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         ByteMaxShuffle Iota = iotaShuffle(-origin);
+         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(0))));
+         Iota = iotaShuffle(-origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
     }
 
     @Override
@@ -619,15 +645,11 @@ final class ByteMaxVector extends ByteVector {
         }
         static final ByteMaxShuffle IOTA = new ByteMaxShuffle(IDENTITY);
 
-        private ByteMaxVector toVector_helper() {
-            return (ByteMaxVector) super.toVectorTemplate();  // specialize
-        }
-
         @Override
         @ForceInline
         public ByteMaxVector toVector() {
             return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, ByteMaxShuffle.class, this, VLENGTH,
-                                                    (s) -> (s.toVector_helper()));
+                                                    (s) -> ((ByteMaxVector)(((AbstractShuffle<Byte>)(s)).toVectorTemplate())));
         }
 
         @Override

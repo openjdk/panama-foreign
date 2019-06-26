@@ -125,7 +125,7 @@ final class Byte64Vector extends ByteVector {
 
     @ForceInline
     Byte64Shuffle iotaShuffle(int start) { 
-        return (Byte64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Byte64Shuffle(i -> ((i + val) & (l-1))));
+        return (Byte64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Byte64Shuffle(i -> (Byte64Shuffle.partiallyWrapIndex(i + val, l))));
     }
 
     @Override
@@ -349,6 +349,19 @@ final class Byte64Vector extends ByteVector {
 
     @Override
     @ForceInline
+    public Byte64Vector slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         Byte64Shuffle Iota = iotaShuffle(origin);
+         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(origin))));
+         Iota = iotaShuffle(origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
+    }
+
+    @Override
+    @ForceInline
     public Byte64Vector unslice(int origin, Vector<Byte> w, int part) {
         return (Byte64Vector) super.unsliceTemplate(origin, w, part);  // specialize
     }
@@ -360,6 +373,19 @@ final class Byte64Vector extends ByteVector {
             super.unsliceTemplate(Byte64Mask.class,
                                   origin, w, part,
                                   (Byte64Mask) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public Byte64Vector unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         Byte64Shuffle Iota = iotaShuffle(-origin);
+         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(0))));
+         Iota = iotaShuffle(-origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
     }
 
     @Override
@@ -619,15 +645,11 @@ final class Byte64Vector extends ByteVector {
         }
         static final Byte64Shuffle IOTA = new Byte64Shuffle(IDENTITY);
 
-        private Byte64Vector toVector_helper() {
-            return (Byte64Vector) super.toVectorTemplate();  // specialize
-        }
-
         @Override
         @ForceInline
         public Byte64Vector toVector() {
             return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Byte64Shuffle.class, this, VLENGTH,
-                                                    (s) -> (s.toVector_helper()));
+                                                    (s) -> ((Byte64Vector)(((AbstractShuffle<Byte>)(s)).toVectorTemplate())));
         }
 
         @Override

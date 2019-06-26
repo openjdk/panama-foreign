@@ -126,7 +126,7 @@ final class ShortMaxVector extends ShortVector {
 
     @ForceInline
     ShortMaxShuffle iotaShuffle(int start) { 
-        return (ShortMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ShortMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ShortMaxShuffle(i -> ((i + val) & (l-1))));
+        return (ShortMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ShortMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ShortMaxShuffle(i -> (ShortMaxShuffle.partiallyWrapIndex(i + val, l))));
     }
 
     @Override
@@ -350,6 +350,19 @@ final class ShortMaxVector extends ShortVector {
 
     @Override
     @ForceInline
+    public ShortMaxVector slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         ShortMaxShuffle Iota = iotaShuffle(origin);
+         VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((short)(origin))));
+         Iota = iotaShuffle(origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
+    }
+
+    @Override
+    @ForceInline
     public ShortMaxVector unslice(int origin, Vector<Short> w, int part) {
         return (ShortMaxVector) super.unsliceTemplate(origin, w, part);  // specialize
     }
@@ -361,6 +374,19 @@ final class ShortMaxVector extends ShortVector {
             super.unsliceTemplate(ShortMaxMask.class,
                                   origin, w, part,
                                   (ShortMaxMask) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public ShortMaxVector unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         ShortMaxShuffle Iota = iotaShuffle(-origin);
+         VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((short)(0))));
+         Iota = iotaShuffle(-origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
     }
 
     @Override
@@ -620,15 +646,11 @@ final class ShortMaxVector extends ShortVector {
         }
         static final ShortMaxShuffle IOTA = new ShortMaxShuffle(IDENTITY);
 
-        private ShortMaxVector toVector_helper() {
-            return (ShortMaxVector) super.toVectorTemplate();  // specialize
-        }
-
         @Override
         @ForceInline
         public ShortMaxVector toVector() {
             return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, ShortMaxShuffle.class, this, VLENGTH,
-                                                    (s) -> (s.toVector_helper()));
+                                                    (s) -> ((ShortMaxVector)(((AbstractShuffle<Short>)(s)).toVectorTemplate())));
         }
 
         @Override

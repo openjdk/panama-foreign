@@ -1802,9 +1802,8 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final LongVector slice(int origin) {
-        return slice(origin, broadcast(0));
-    }
+    @Override public abstract
+    LongVector slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1858,9 +1857,8 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final LongVector unslice(int origin) {
-        return unslice(origin, broadcast(0), 0);
-    }
+    @Override public abstract
+    LongVector unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {

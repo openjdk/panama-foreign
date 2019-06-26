@@ -162,7 +162,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @ForceInline
     $shuffletype$ iotaShuffle(int start) { 
-        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, (val, l) -> new $shuffletype$(i -> ((i + val) & (l-1))));
+        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, (val, l) -> new $shuffletype$(i -> ($shuffletype$.partiallyWrapIndex(i + val, l))));
     }
 
     @Override
@@ -390,6 +390,19 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
+    public $vectortype$ slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         $shuffletype$ Iota = iotaShuffle(origin);
+         VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast(($type$)(origin))));
+         Iota = iotaShuffle(origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
+    }
+
+    @Override
+    @ForceInline
     public $vectortype$ unslice(int origin, Vector<$Boxtype$> w, int part) {
         return ($vectortype$) super.unsliceTemplate(origin, w, part);  // specialize
     }
@@ -401,6 +414,19 @@ final class $vectortype$ extends $abstractvectortype$ {
             super.unsliceTemplate($masktype$.class,
                                   origin, w, part,
                                   ($masktype$) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         $shuffletype$ Iota = iotaShuffle(-origin);
+         VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast(($type$)(0))));
+         Iota = iotaShuffle(-origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
     }
 
     @Override
@@ -692,15 +718,11 @@ final class $vectortype$ extends $abstractvectortype$ {
         }
         static final $shuffletype$ IOTA = new $shuffletype$(IDENTITY);
 
-        private $vectortype$ toVector_helper() {
-            return ($vectortype$) super.toVectorTemplate();  // specialize
-        }
-
         @Override
         @ForceInline
         public $vectortype$ toVector() {
             return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, $shuffletype$.class, this, VLENGTH,
-                                                    (s) -> (s.toVector_helper()));
+                                                    (s) -> (($vectortype$)(((AbstractShuffle<$Boxtype$>)(s)).toVectorTemplate())));
         }
 
         @Override

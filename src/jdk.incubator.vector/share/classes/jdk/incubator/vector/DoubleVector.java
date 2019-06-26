@@ -1820,9 +1820,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final DoubleVector slice(int origin) {
-        return slice(origin, broadcast(0));
-    }
+    @Override public abstract
+    DoubleVector slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1876,9 +1875,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final DoubleVector unslice(int origin) {
-        return unslice(origin, broadcast(0), 0);
-    }
+    @Override public abstract
+    DoubleVector unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {

@@ -2153,9 +2153,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final $abstractvectortype$ slice(int origin) {
-        return slice(origin, broadcast(0));
-    }
+    @Override public abstract
+    $abstractvectortype$ slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -2209,9 +2208,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final $abstractvectortype$ unslice(int origin) {
-        return unslice(origin, broadcast(0), 0);
-    }
+    @Override public abstract
+    $abstractvectortype$ unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {

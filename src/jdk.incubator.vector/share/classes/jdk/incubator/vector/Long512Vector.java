@@ -121,7 +121,7 @@ final class Long512Vector extends LongVector {
 
     @ForceInline
     Long512Shuffle iotaShuffle(int start) { 
-        return (Long512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long512Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long512Shuffle(i -> ((i + val) & (l-1))));
+        return (Long512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long512Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long512Shuffle(i -> (Long512Shuffle.partiallyWrapIndex(i + val, l))));
     }
 
     @Override
@@ -340,6 +340,19 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
+    public Long512Vector slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         Long512Shuffle Iota = iotaShuffle(origin);
+         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(origin))));
+         Iota = iotaShuffle(origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
+    }
+
+    @Override
+    @ForceInline
     public Long512Vector unslice(int origin, Vector<Long> w, int part) {
         return (Long512Vector) super.unsliceTemplate(origin, w, part);  // specialize
     }
@@ -351,6 +364,19 @@ final class Long512Vector extends LongVector {
             super.unsliceTemplate(Long512Mask.class,
                                   origin, w, part,
                                   (Long512Mask) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public Long512Vector unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
+       } else {
+         Long512Shuffle Iota = iotaShuffle(-origin);
+         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(0))));
+         Iota = iotaShuffle(-origin);
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
+       }
     }
 
     @Override
@@ -610,15 +636,11 @@ final class Long512Vector extends LongVector {
         }
         static final Long512Shuffle IOTA = new Long512Shuffle(IDENTITY);
 
-        private Long512Vector toVector_helper() {
-            return (Long512Vector) super.toVectorTemplate();  // specialize
-        }
-
         @Override
         @ForceInline
         public Long512Vector toVector() {
             return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Long512Shuffle.class, this, VLENGTH,
-                                                    (s) -> (s.toVector_helper()));
+                                                    (s) -> ((Long512Vector)(((AbstractShuffle<Long>)(s)).toVectorTemplate())));
         }
 
         @Override

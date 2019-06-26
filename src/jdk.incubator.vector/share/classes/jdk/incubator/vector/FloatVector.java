@@ -1820,9 +1820,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final FloatVector slice(int origin) {
-        return slice(origin, broadcast(0));
-    }
+    @Override public abstract
+    FloatVector slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
@@ -1876,9 +1875,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public final FloatVector unslice(int origin) {
-        return unslice(origin, broadcast(0), 0);
-    }
+    @Override public abstract
+    FloatVector unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {
