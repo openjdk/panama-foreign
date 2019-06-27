@@ -2742,7 +2742,7 @@ public abstract class Vector<E> {
      * The appeal to little-endian ordering is simply a shorthand
      * for what could otherwise be a large number of detailed rules
      * concerning the mapping between lane-structured vectors and
-     * byte-sturctured vectors.
+     * byte-structured vectors.
      *
      * @param species the desired vector species
      * @param part the <a href="Vector.html#expansion">part number</a>
@@ -2851,7 +2851,7 @@ public abstract class Vector<E> {
      * integral type, the same vector is returned unchanged.
      *
      * This method returns the value of this expression:
-     * {@code convert(conv,part)}, where {@code conv} is
+     * {@code convert(conv,0)}, where {@code conv} is
      * {@code VectorOperators.Conversion.ofReinterpret(E.class,F.class)},
      * and {@code F} is the non-floating-point type of the
      * same size as {@code E}.
@@ -2880,7 +2880,7 @@ public abstract class Vector<E> {
      * type size, an {@code IllegalArgumentException} is thrown.
      *
      * This method returns the value of this expression:
-     * {@code convert(conv,part)}, where {@code conv} is
+     * {@code convert(conv,0)}, where {@code conv} is
      * {@code VectorOperators.Conversion.ofReinterpret(E.class,F.class)},
      * and {@code F} is the floating-point type of the
      * same size as {@code E}, if any.
@@ -2950,7 +2950,7 @@ public abstract class Vector<E> {
      * and then converted before storing into the output lane.
      *
      * <p> An expanding conversion such as {@code S2I} ({@code short}
-     * value to {@code long}) takes a scalar value and represents it
+     * value to {@code int}) takes a scalar value and represents it
      * in a larger format (always with some information redundancy).
      *
      * A contracting conversion such as {@code D2F} ({@code double}

@@ -2529,9 +2529,11 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * the value from the lowest-numbered non-zero lane.
      *
 #if[FP]
-     * As with {@code MAX} and {@code MIN}, floating point negative
-     * zero {@code -0.0} is treated as a value distinct from, and less
-     * than, the default zero value.
+     * (As with {@code MAX} and {@code MIN}, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from
+     * the default zero value, so a first-nonzero lane reduction
+     * might return {@code -0.0} even in the presence of non-zero
+     * lane values.)
 #end[FP]
      *
      * <li>
@@ -2596,7 +2598,12 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * value is returned.
      * <ul>
      * <li>
-     * If the operation is {@code ADD}, {#if[BITWISE]?{@code XOR}, {@code OR},}
+     * If the operation is
+#if[BITWISE]
+     *  {@code ADD}, {@code XOR}, {@code OR},
+#else[BITWISE]
+     *  {@code ADD}
+#end[BITWISE]
      * or {@code FIRST_NONZERO},
      * then the identity value is zero, the default {@code $type$} value.
      * <li>

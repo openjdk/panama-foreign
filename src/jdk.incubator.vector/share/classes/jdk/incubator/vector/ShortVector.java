@@ -2271,7 +2271,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
      * value is returned.
      * <ul>
      * <li>
-     * If the operation is {@code ADD}, {#if[BITWISE]?{@code XOR}, {@code OR},}
+     * If the operation is
+     *  {@code ADD}, {@code XOR}, {@code OR},
      * or {@code FIRST_NONZERO},
      * then the identity value is zero, the default {@code short} value.
      * <li>

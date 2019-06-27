@@ -2082,9 +2082,11 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * In the case of {@code FIRST_NONZERO}, the reduction returns
      * the value from the lowest-numbered non-zero lane.
      *
-     * As with {@code MAX} and {@code MIN}, floating point negative
-     * zero {@code -0.0} is treated as a value distinct from, and less
-     * than, the default zero value.
+     * (As with {@code MAX} and {@code MIN}, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from
+     * the default zero value, so a first-nonzero lane reduction
+     * might return {@code -0.0} even in the presence of non-zero
+     * lane values.)
      *
      * <li>
      * In the case of floating point addition and multiplication, the
@@ -2141,7 +2143,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * value is returned.
      * <ul>
      * <li>
-     * If the operation is {@code ADD}, {#if[BITWISE]?{@code XOR}, {@code OR},}
+     * If the operation is
+     *  {@code ADD}
      * or {@code FIRST_NONZERO},
      * then the identity value is zero, the default {@code double} value.
      * <li>
