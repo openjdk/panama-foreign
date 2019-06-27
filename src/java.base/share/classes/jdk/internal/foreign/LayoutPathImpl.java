@@ -4,7 +4,9 @@
  *
  *  This code is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License version 2 only, as
- *  published by the Free Software Foundation.
+ *  published by the Free Software Foundation.  Oracle designates this
+ *  particular file as subject to the "Classpath" exception as provided
+ *  by Oracle in the LICENSE file that accompanied this code.
  *
  *  This code is distributed in the hope that it will be useful, but WITHOUT
  *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -16,11 +18,11 @@
  *  2 along with this work; if not, write to the Free Software Foundation,
  *  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ *   Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  *  or visit www.oracle.com if you need additional information or have any
  *  questions.
+ *
  */
-
 package jdk.internal.foreign;
 
 import jdk.internal.access.JavaLangInvokeAccess;
@@ -30,208 +32,120 @@ import sun.invoke.util.Wrapper;
 import java.foreign.CompoundLayout;
 import java.foreign.GroupLayout;
 import java.foreign.Layout;
-import java.foreign.LayoutPath;
 import java.foreign.SequenceLayout;
 import java.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LayoutPathImpl implements LayoutPath {
+public class LayoutPathImpl implements CompoundLayout.Path {
 
     private static JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
 
-    final Layout layout;
-    final LayoutPathImpl enclosing;
-    final long offset;
-    final List<SequenceLayout> enclSequences;
+    private final Layout layout;
+    private final long offset;
+    private final LayoutPathImpl enclosing;
+    private final List<Long> scales;
 
-    LayoutPathImpl(Layout layout, LayoutPathImpl enclosing, long offset, List<SequenceLayout> enclSequences) {
+    private LayoutPathImpl(Layout layout, long offset, List<Long> scales, LayoutPathImpl enclosing) {
         this.layout = layout;
-        this.enclosing = enclosing;
         this.offset = offset;
-        this.enclSequences = enclSequences;
+        this.scales = scales;
+        this.enclosing = enclosing;
     }
 
-    @Override
-    public Layout layout() {
-        return layout;
-    }
-
-    @Override
-    public LayoutPathImpl enclosing() {
-        return enclosing;
-    }
-
-    @Override
     public long offset() {
         return offset;
     }
 
     @Override
+    public CompoundLayout.Path sequenceElement() throws UnsupportedOperationException {
+        check(SequenceLayout.class);
+        SequenceLayout seq = (SequenceLayout)layout;
+        Layout elem = seq.elementLayout();
+        List<Long> newScales = new ArrayList<>(scales);
+        newScales.add(elem.bitsSize());
+        return LayoutPathImpl.nestedPath(elem, offset, newScales, this);
+    }
+
+    @Override
+    public CompoundLayout.Path sequenceElement(long index) throws IllegalArgumentException, UnsupportedOperationException {
+        check(SequenceLayout.class);
+        SequenceLayout seq = (SequenceLayout)layout;
+        if (index < 0 || (seq.elementsSize().isPresent() && index >= seq.elementsSize().getAsLong())) {
+            throw new IllegalArgumentException("Sequence index out of bound; found: %d, size: %d");
+        }
+        return LayoutPathImpl.nestedPath(seq.elementLayout(), offset, scales, this);
+    }
+
+    @Override
+    public CompoundLayout.Path groupElement(String name) throws IllegalArgumentException, UnsupportedOperationException {
+        check(GroupLayout.class);
+        GroupLayout g = (GroupLayout)layout;
+        long offset = 0;
+        Layout elem = null;
+        for (long i = 0; i < g.elementsSize(); i++) {
+            Layout l = g.elementLayout(i);
+            if (l.name().isPresent() &&
+                l.name().get().equals(name)) {
+                elem = l;
+                break;
+            } else {
+                offset += l.bitsSize();
+            }
+        }
+        if (elem == null) {
+            throw new IllegalArgumentException("Cannot resolve '" + name + "' in layout " + layout);
+        }
+        return LayoutPathImpl.nestedPath(elem, this.offset + offset, scales, this);
+    }
+
+    void check(Class<?> layoutClass) {
+        if (!layoutClass.isAssignableFrom(layout.getClass())) {
+            throw new IllegalStateException("Expected layout of type: " + layoutClass.getName());
+        }
+    }
+
     public VarHandle dereferenceHandle(Class<?> carrier) {
         if (!(layout instanceof ValueLayout)) {
             throw new IllegalArgumentException("Not a value layout: " + layout);
         }
 
         if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class // illegal carrier?
-            || Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitsSize()) { // carrier has the right size?
+                || Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitsSize()) { // carrier has the right size?
             throw new IllegalArgumentException("Invalid carrier: " + carrier + ", for layout " + layout);
         }
+
+        checkAlignment(this);
 
         return JLI.memoryAddressViewVarHandle(
                 carrier,
                 layout.bytesAlignment(),
                 ((ValueLayout) layout).endianness(),
                 Utils.bitsToBytesOrThrow(offset, IllegalStateException::new),
-                enclSequences.stream().mapToLong(seq -> seq.elementLayout().bytesSize()).toArray());
+                scales.stream().mapToLong(s -> Utils.bitsToBytesOrThrow(s, IllegalStateException::new)).toArray());
     }
 
-    public final List<SequenceLayout> enclosingSequences() {
-        return enclSequences;
+    public static LayoutPathImpl rootPath(Layout layout) {
+        return new LayoutPathImpl(layout, 0L, List.of(), null);
     }
 
-    @Override
-    public int dimensions() {
-        return enclSequences.size();
+    public static LayoutPathImpl nestedPath(Layout layout, long offset, List<Long> scales, LayoutPathImpl encl) {
+        return new LayoutPathImpl(layout, offset, scales, encl);
     }
 
-    @Override
-    public LayoutPath elementPath(String name) throws IllegalArgumentException, UnsupportedOperationException {
-        if (layout() instanceof GroupLayout) {
-            return LayoutPathImpl.lookup(this, new ByName(name));
-        } else {
-            throw unsupported(layout());
+    static void checkAlignment(LayoutPathImpl path) {
+        Layout layout = path.layout;
+        long alignment = layout.bitsAlignment();
+        if (path.offset % alignment != 0) {
+            throw new UnsupportedOperationException("Invalid alignment requirements for layout " + layout);
         }
-    }
-
-    @Override
-    public LayoutPath elementPath(long index) throws IllegalArgumentException, UnsupportedOperationException {
-        if (layout() instanceof CompoundLayout) {
-            return LayoutPathImpl.lookup(this, new ByIndex(index));
-        } else {
-            throw unsupported(layout());
-        }
-    }
-
-    @Override
-    public LayoutPath elementPath() throws UnsupportedOperationException {
-        if (layout() instanceof SequenceLayout) {
-            List<SequenceLayout> newEnclSequences = new ArrayList<>(enclSequences);
-            newEnclSequences.add((SequenceLayout)layout());
-            return new LayoutPathImpl(((SequenceLayout)layout()).elementLayout(), this, offset, newEnclSequences);
-        } else {
-            throw unsupported(layout());
-        }
-    }
-
-    static LayoutPath of(Layout layout, LayoutPath prev, long offset, List<SequenceLayout> enclSequences) {
-        checkAlignmentConstraints(prev.layout(), layout, offset);
-        return new LayoutPathImpl(layout, (LayoutPathImpl)prev, offset, enclSequences);
-    }
-
-    static void checkAlignmentConstraints(Layout encl, Layout current, long offset) {
-        long alignment = current.bitsAlignment();
-        if (offset % alignment != 0) {
-            throw new UnsupportedOperationException("Invalid alignment requirements for layout " + current);
-        }
-        if (encl != null && encl.bitsAlignment() < alignment) {
-            throw new UnsupportedOperationException("Alignment requirements for layout " + current + " do not match those for enclosing layout " + encl);
-        }
-    }
-
-    public static LayoutPath of(Layout layout) {
-        return of(layout, ROOT, 0L, List.of());
-    }
-
-    private static LayoutPath lookup(LayoutPath path, LayoutSelector selector) {
-        if (path.layout() instanceof CompoundLayout) {
-            return lookupCompound(path, (CompoundLayout) path.layout(), selector);
-        } else {
-            throw unsupported(path.layout());
-        }
-    }
-
-    private static LayoutPath lookupCompound(LayoutPath encl, CompoundLayout compound, LayoutSelector selector) {
-        long offset = encl.offset();
-        if (compound instanceof GroupLayout) {
-            GroupLayout group = (GroupLayout)compound;
-            long index = 0;
-            for (Layout l : group) {
-                if (selector.test(l, index)) {
-                    return of(l, encl, offset, ((LayoutPathImpl)encl).enclSequences);
-                }
-                if (group.kind() != GroupLayout.Kind.UNION) {
-                    offset += l.bitsSize();
-                }
-                index++;
+        LayoutPathImpl encl = path.enclosing;
+        if (encl != null) {
+            if (encl.layout.bitsAlignment() < alignment) {
+                throw new UnsupportedOperationException("Alignment requirements for layout " + layout + " do not match those for enclosing layout " + encl.layout);
             }
-        } else {
-            SequenceLayout seq = (SequenceLayout)compound;
-            long index = ((ByIndex)selector).index;
-            if (index < 0 || (seq.elementsSize().isPresent() && index >= seq.elementsSize().getAsLong())) {
-                throw new IllegalArgumentException("Invalid index for sequence layout: " + seq);
-            } else {
-                long elemOffset = seq.elementLayout().bitsSize() * index;
-                return of(seq.elementLayout(), encl, offset + elemOffset, ((LayoutPathImpl) encl).enclSequences);
-            }
-        }
-        throw selector.lookupError(compound);
-    }
-
-    interface LayoutSelector {
-        boolean test(Layout l, long index);
-        IllegalArgumentException lookupError(CompoundLayout l);
-    }
-
-    static class ByName implements LayoutSelector {
-
-        private final String name;
-
-        ByName(String name) {
-            if (name.isEmpty()) {
-                throw new IllegalArgumentException("Empty field name");
-            }
-            this.name = name;
-        }
-
-        @Override
-        public boolean test(Layout l, long index) {
-            return l.name().isPresent() &&
-                    name.equals(l.name().get());
-        }
-
-        @Override
-        public IllegalArgumentException lookupError(CompoundLayout l) {
-            return new IllegalArgumentException(String.format("Cannot find field '%s' in layout %s", name, l));
+            checkAlignment(encl);
         }
     }
-
-    static class ByIndex implements LayoutSelector {
-
-        private final long index;
-
-        ByIndex(long index) {
-            if (index < 0) {
-                throw new IllegalArgumentException("Negative element index");
-            }
-            this.index = index;
-        }
-
-        @Override
-        public boolean test(Layout l, long index) {
-            return index == this.index;
-        }
-
-        @Override
-        public IllegalArgumentException lookupError(CompoundLayout l) {
-            return new IllegalArgumentException(String.format("Cannot find field with index '%d' in layout %s", index, l));
-        }
-    }
-
-    private static UnsupportedOperationException unsupported(Layout l) {
-        return new UnsupportedOperationException("Unsupported path operation on layout " + l);
-    }
-
-    public static LayoutPath ROOT = new LayoutPathImpl(null, null, 0L, List.of());
 }

@@ -31,6 +31,7 @@
 import jdk.internal.misc.Unsafe;
 import org.testng.annotations.*;
 
+import java.foreign.CompoundLayout;
 import java.foreign.MemoryAddress;
 import java.foreign.MemorySegment;
 import java.foreign.SequenceLayout;
@@ -87,13 +88,13 @@ public class TestNative {
             ValueLayout.ofFloatingPoint(64)
     );
 
-    static VarHandle byteHandle = bytes.toPath().elementPath().dereferenceHandle(byte.class);
-    static VarHandle charHandle = chars.toPath().elementPath().dereferenceHandle(char.class);
-    static VarHandle shortHandle = shorts.toPath().elementPath().dereferenceHandle(short.class);
-    static VarHandle intHandle = ints.toPath().elementPath().dereferenceHandle(int.class);
-    static VarHandle floatHandle = floats.toPath().elementPath().dereferenceHandle(float.class);
-    static VarHandle longHandle = doubles.toPath().elementPath().dereferenceHandle(long.class);
-    static VarHandle doubleHandle = longs.toPath().elementPath().dereferenceHandle(double.class);
+    static VarHandle byteHandle = bytes.dereferenceHandle(byte.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle charHandle = chars.dereferenceHandle(char.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle shortHandle = shorts.dereferenceHandle(short.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle intHandle = ints.dereferenceHandle(int.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle floatHandle = floats.dereferenceHandle(float.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle longHandle = doubles.dereferenceHandle(long.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle doubleHandle = longs.dereferenceHandle(double.class, CompoundLayout.Path::sequenceElement);
 
     static void initBytes(MemoryAddress base, SequenceLayout seq, BiConsumer<MemoryAddress, Long> handleSetter) {
         for (long i = 0; i < seq.elementsSize().getAsLong() ; i++) {

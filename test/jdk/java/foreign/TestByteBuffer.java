@@ -30,6 +30,7 @@
  * @run testng TestByteBuffer
  */
 
+import java.foreign.CompoundLayout;
 import java.foreign.GroupLayout;
 import java.foreign.MemoryAddress;
 import java.foreign.MemorySegment;
@@ -103,16 +104,16 @@ public class TestByteBuffer {
             ValueLayout.ofFloatingPoint(64)
     );
 
-    static VarHandle indexHandle = tuples.toPath().elementPath().elementPath("index").dereferenceHandle(int.class);
-    static VarHandle valueHandle = tuples.toPath().elementPath().elementPath("value").dereferenceHandle(float.class);
+    static VarHandle indexHandle = tuples.dereferenceHandle(int.class, path -> path.sequenceElement().groupElement("index"));
+    static VarHandle valueHandle = tuples.dereferenceHandle(float.class, path -> path.sequenceElement().groupElement("value"));
 
-    static VarHandle byteHandle = bytes.toPath().elementPath().dereferenceHandle(byte.class);
-    static VarHandle charHandle = chars.toPath().elementPath().dereferenceHandle(char.class);
-    static VarHandle shortHandle = shorts.toPath().elementPath().dereferenceHandle(short.class);
-    static VarHandle intHandle = ints.toPath().elementPath().dereferenceHandle(int.class);
-    static VarHandle floatHandle = floats.toPath().elementPath().dereferenceHandle(float.class);
-    static VarHandle longHandle = doubles.toPath().elementPath().dereferenceHandle(long.class);
-    static VarHandle doubleHandle = longs.toPath().elementPath().dereferenceHandle(double.class);
+    static VarHandle byteHandle = bytes.dereferenceHandle(byte.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle charHandle = chars.dereferenceHandle(char.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle shortHandle = shorts.dereferenceHandle(short.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle intHandle = ints.dereferenceHandle(int.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle floatHandle = floats.dereferenceHandle(float.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle longHandle = doubles.dereferenceHandle(long.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle doubleHandle = longs.dereferenceHandle(double.class, CompoundLayout.Path::sequenceElement);
 
 
     static void initTuples(MemoryAddress base) {

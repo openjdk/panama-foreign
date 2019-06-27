@@ -28,6 +28,7 @@
 
 import org.testng.annotations.*;
 
+import java.foreign.CompoundLayout;
 import java.foreign.GroupLayout;
 import java.foreign.Layout;
 import java.foreign.MemoryAddress;
@@ -44,11 +45,11 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testAlignedAccess(long align) {
-        Layout layout = ValueLayout.ofSignedInt(32);
+        ValueLayout layout = ValueLayout.ofSignedInt(32);
         assertEquals(layout.bitsAlignment(), 32);
-        Layout aligned = layout.alignTo(align);
+        ValueLayout aligned = layout.alignTo(align);
         assertEquals(aligned.bitsAlignment(), align); //unreasonable alignment here, to make sure access throws
-        VarHandle vh = aligned.toPath().dereferenceHandle(int.class);
+        VarHandle vh = aligned.dereferenceHandle(int.class);
         try (MemorySegment segment = MemorySegment.ofNative(aligned)) {
             MemoryAddress addr = segment.baseAddress();
             vh.set(addr, -42);
@@ -59,12 +60,12 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testUnalignedAccess(long align) {
-        Layout layout = ValueLayout.ofSignedInt(32);
+        ValueLayout layout = ValueLayout.ofSignedInt(32);
         assertEquals(layout.bitsAlignment(), 32);
-        Layout aligned = layout.alignTo(align);
+        ValueLayout aligned = layout.alignTo(align);
         Layout alignedGroup = GroupLayout.struct(PaddingLayout.of(8), aligned);
         assertEquals(alignedGroup.bitsAlignment(), align);
-        VarHandle vh = aligned.toPath().dereferenceHandle(int.class);
+        VarHandle vh = aligned.dereferenceHandle(int.class);
         try (MemorySegment segment = MemorySegment.ofNative(alignedGroup)) {
             MemoryAddress addr = segment.baseAddress();
             vh.set(addr.offset(1L), -42);
@@ -77,10 +78,10 @@ public class TestMemoryAlignment {
     @Test(dataProvider = "alignments")
     public void testUnalignedPath(long align) {
         Layout layout = ValueLayout.ofSignedInt(32);
-        Layout aligned = layout.alignTo(align);
-        Layout alignedGroup = GroupLayout.struct(PaddingLayout.of(8), aligned);
+        Layout aligned = layout.alignTo(align).withName("value");
+        GroupLayout alignedGroup = GroupLayout.struct(PaddingLayout.of(8), aligned);
         try {
-            alignedGroup.toPath().elementPath(1).dereferenceHandle(int.class);
+            alignedGroup.dereferenceHandle(int.class, path -> path.groupElement("value"));
             assertEquals(align, 8); //this is the only case where path is aligned
         } catch (UnsupportedOperationException ex) {
             assertNotEquals(align, 8); //if align != 8, path is always unaligned
@@ -89,8 +90,8 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testUnalignedSequence(long align) {
-        Layout layout = SequenceLayout.of(5, ValueLayout.ofSignedInt(32).alignTo(align));
-        VarHandle vh = layout.toPath().elementPath().dereferenceHandle(int.class);
+        SequenceLayout layout = SequenceLayout.of(5, ValueLayout.ofSignedInt(32).alignTo(align));
+        VarHandle vh = layout.dereferenceHandle(int.class, CompoundLayout.Path::sequenceElement);
         try (MemorySegment segment = MemorySegment.ofNative(layout)) {
             MemoryAddress addr = segment.baseAddress();
             for (long i = 0 ; i < 5 ; i++) {
@@ -108,13 +109,13 @@ public class TestMemoryAlignment {
         ValueLayout vShort = ValueLayout.ofSignedInt(16);
         ValueLayout vInt = ValueLayout.ofSignedInt(32);
         //mimic pragma pack(1)
-        GroupLayout g = GroupLayout.struct(vChar.alignTo(8),
-                               vShort.alignTo(8),
-                               vInt.alignTo(8));
+        GroupLayout g = GroupLayout.struct(vChar.alignTo(8).withName("a"),
+                               vShort.alignTo(8).withName("b"),
+                               vInt.alignTo(8).withName("c"));
         assertEquals(g.bitsAlignment(), 8);
-        VarHandle vh_c = g.toPath().elementPath(0).dereferenceHandle(byte.class);
-        VarHandle vh_s = g.toPath().elementPath(1).dereferenceHandle(short.class);
-        VarHandle vh_i = g.toPath().elementPath(2).dereferenceHandle(int.class);
+        VarHandle vh_c = g.dereferenceHandle(byte.class, path -> path.groupElement("a"));
+        VarHandle vh_s = g.dereferenceHandle(short.class, path -> path.groupElement("b"));
+        VarHandle vh_i = g.dereferenceHandle(int.class, path -> path.groupElement("c"));
         try (MemorySegment segment = MemorySegment.ofNative(g)) {
             MemoryAddress addr = segment.baseAddress();
             vh_c.set(addr, Byte.MIN_VALUE);

@@ -25,17 +25,12 @@
 
 package java.lang.invoke;
 
-import jdk.internal.foreign.LayoutPathImpl;
 import jdk.internal.foreign.Utils;
 import sun.invoke.util.Wrapper;
 
-import java.foreign.Layout;
-import java.foreign.LayoutPath;
-import java.foreign.ValueLayout;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

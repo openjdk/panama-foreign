@@ -27,6 +27,7 @@ package java.foreign;
 import jdk.internal.foreign.Utils;
 
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 
 /**
  * This interface models the layout of a contiguous memory region. Layouts have a size (where possible), see {@link Layout#bitsSize()},
@@ -129,10 +130,4 @@ public interface Layout {
      */
     @Override
     String toString();
-
-    /**
-     * Obtain layout path rooted at this layout.
-     * @return a new layout path rooted at this layout.
-     */
-    LayoutPath toPath();
 }

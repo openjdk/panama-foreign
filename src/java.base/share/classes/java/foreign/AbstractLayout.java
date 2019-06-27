@@ -101,11 +101,6 @@ abstract class AbstractLayout implements Layout {
     }
 
     @Override
-    public LayoutPath toPath() {
-        return LayoutPathImpl.of(this);
-    }
-
-    @Override
     public int hashCode() {
         return name.hashCode() << alignment.orElse(0L);
     }

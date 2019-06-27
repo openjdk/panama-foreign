@@ -24,6 +24,9 @@
  */
 package java.foreign;
 
+import jdk.internal.foreign.LayoutPathImpl;
+
+import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -208,6 +211,17 @@ public class ValueLayout extends AbstractLayout implements Layout {
     @Override
     ValueLayout dup(OptionalLong alignment, Optional<String> name) {
         return new ValueLayout(kind, endianness, size, alignment, name);
+    }
+
+    /**
+     * A var handle that can be used to dereference this value layout.
+     * @param carrier the var handle carrier type.
+     * @return a var handle which can be used to dereference this value layout.
+     * @throws IllegalArgumentException if the carrier does not represent a primitive type, if the carrier is {@code void},
+     * {@code boolean}, or if the size of the carrier type does not match that of the layout targeted by this layout path.
+     */
+    public VarHandle dereferenceHandle(Class<?> carrier) throws IllegalArgumentException {
+        return LayoutPathImpl.rootPath(this).dereferenceHandle(carrier);
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout

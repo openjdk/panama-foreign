@@ -40,7 +40,6 @@ import sun.invoke.util.ValueConversions;
 import sun.invoke.util.VerifyType;
 import sun.invoke.util.Wrapper;
 
-import java.foreign.LayoutPath;
 import java.lang.reflect.Array;
 import java.nio.ByteOrder;
 import java.util.Arrays;
