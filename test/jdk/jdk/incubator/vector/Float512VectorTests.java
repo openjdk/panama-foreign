@@ -678,6 +678,26 @@ public class Float512VectorTests extends AbstractVectorTest {
         float max = higher.maxLanes();
         assert(max == -3 + scale * (SPECIES.length()-1));
     }
+    static float ADD(float a, float b) {
+        return (float)(a + b);
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void ADDFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.ADD, bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Float512VectorTests::ADD);
+    }
     static float add(float a, float b) {
         return (float)(a + b);
     }
@@ -700,6 +720,26 @@ public class Float512VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void ADDFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.ADD, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, Float512VectorTests::ADD);
+    }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
     static void addFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
@@ -717,6 +757,26 @@ public class Float512VectorTests extends AbstractVectorTest {
         }
 
         assertArraysEquals(a, b, r, mask, Float512VectorTests::add);
+    }
+    static float SUB(float a, float b) {
+        return (float)(a - b);
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void SUBFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.SUB, bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Float512VectorTests::SUB);
     }
     static float sub(float a, float b) {
         return (float)(a - b);
@@ -740,6 +800,26 @@ public class Float512VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void SUBFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.SUB, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, Float512VectorTests::SUB);
+    }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
     static void subFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
@@ -758,7 +838,107 @@ public class Float512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, mask, Float512VectorTests::sub);
     }
+    static float MUL(float a, float b) {
+        return (float)(a * b);
+    }
 
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void MULFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.MUL, bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Float512VectorTests::MUL);
+    }
+    static float mul(float a, float b) {
+        return (float)(a * b);
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void mulFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.mul(bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Float512VectorTests::mul);
+    }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void MULFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.MUL, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, Float512VectorTests::MUL);
+    }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void mulFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.mul(bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, Float512VectorTests::mul);
+    }
+
+    static float DIV(float a, float b) {
+        return (float)(a / b);
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void DIVFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.DIV, bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Float512VectorTests::DIV);
+    }
     static float div(float a, float b) {
         return (float)(a / b);
     }
@@ -783,6 +963,26 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
     @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void DIVFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.DIV, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, mask, Float512VectorTests::DIV);
+    }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
     static void divFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
@@ -802,60 +1002,12 @@ public class Float512VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, mask, Float512VectorTests::div);
     }
 
-    static float mul(float a, float b) {
-        return (float)(a * b);
-    }
-
-    @Test(dataProvider = "floatBinaryOpProvider")
-    static void mulFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
-        float[] a = fa.apply(SPECIES.length());
-        float[] b = fb.apply(SPECIES.length());
-        float[] r = fr.apply(SPECIES.length());
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                av.mul(bv).intoArray(r, i);
-            }
-        }
-
-        assertArraysEquals(a, b, r, Float512VectorTests::mul);
-    }
-
-    @Test(dataProvider = "floatBinaryOpMaskProvider")
-    static void mulFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
-                                          IntFunction<boolean[]> fm) {
-        float[] a = fa.apply(SPECIES.length());
-        float[] b = fb.apply(SPECIES.length());
-        float[] r = fr.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                av.mul(bv, vmask).intoArray(r, i);
-            }
-        }
-
-        assertArraysEquals(a, b, r, mask, Float512VectorTests::mul);
-    }
-
-
-
-
-
-
-
-
-    static float lanewise_FIRST_NONZERO(float a, float b) {
+    static float FIRST_NONZERO(float a, float b) {
         return (float)(Double.doubleToLongBits(a)!=0?a:b);
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")
-    static void lanewise_FIRST_NONZEROFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void FIRST_NONZEROFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
@@ -868,11 +1020,11 @@ public class Float512VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, Float512VectorTests::lanewise_FIRST_NONZERO);
+        assertArraysEquals(a, b, r, Float512VectorTests::FIRST_NONZERO);
     }
 
     @Test(dataProvider = "floatBinaryOpMaskProvider")
-    static void lanewise_FIRST_NONZEROFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    static void FIRST_NONZEROFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
@@ -888,7 +1040,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, mask, Float512VectorTests::lanewise_FIRST_NONZERO);
+        assertArraysEquals(a, b, r, mask, Float512VectorTests::FIRST_NONZERO);
     }
 
 
@@ -914,12 +1066,20 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
 
-    static float max(float a, float b) {
-        return (float)(Math.max(a, b));
+
+
+
+
+
+
+
+
+    static float MIN(float a, float b) {
+        return (float)(Math.min(a, b));
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")
-    static void maxFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void MINFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
@@ -928,11 +1088,11 @@ public class Float512VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                av.max(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.MIN, bv).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, r, Float512VectorTests::max);
+        assertArraysEquals(a, b, r, Float512VectorTests::MIN);
     }
     static float min(float a, float b) {
         return (float)(Math.min(a, b));
@@ -954,6 +1114,46 @@ public class Float512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Float512VectorTests::min);
     }
+    static float MAX(float a, float b) {
+        return (float)(Math.max(a, b));
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void MAXFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.MAX, bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Float512VectorTests::MAX);
+    }
+    static float max(float a, float b) {
+        return (float)(Math.max(a, b));
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void maxFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.max(bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Float512VectorTests::max);
+    }
 
 
 
@@ -966,7 +1166,7 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
 
-    static float addLanes(float[] a, int idx) {
+    static float ADD(float[] a, int idx) {
         float res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res += a[i];
@@ -975,7 +1175,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float addLanes(float[] a) {
+    static float ADD(float[] a) {
         float res = 0;
         for (int i = 0; i < a.length; i += SPECIES.length()) {
             float tmp = 0;
@@ -988,7 +1188,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void addLanesFloat512VectorTests(IntFunction<float[]> fa) {
+    static void ADDFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         float ra = 0;
@@ -996,7 +1196,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.addLanes();
+                r[i] = av.reduceLanes(VectorOperators.ADD);
             }
         }
 
@@ -1004,13 +1204,13 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra += av.addLanes();
+                ra += av.reduceLanes(VectorOperators.ADD);
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Float512VectorTests::addLanes, Float512VectorTests::addLanes);
+        assertReductionArraysEquals(a, r, ra, Float512VectorTests::ADD, Float512VectorTests::ADD);
     }
-    static float addLanesMasked(float[] a, int idx, boolean[] mask) {
+    static float ADDMasked(float[] a, int idx, boolean[] mask) {
         float res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             if(mask[i % SPECIES.length()])
@@ -1020,7 +1220,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float addLanesMasked(float[] a, boolean[] mask) {
+    static float ADDMasked(float[] a, boolean[] mask) {
         float res = 0;
         for (int i = 0; i < a.length; i += SPECIES.length()) {
             float tmp = 0;
@@ -1034,7 +1234,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpMaskProvider")
-    static void addLanesFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
+    static void ADDFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1044,7 +1244,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.addLanes(vmask);
+                r[i] = av.reduceLanes(VectorOperators.ADD, vmask);
             }
         }
 
@@ -1052,13 +1252,13 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra += av.addLanes(vmask);
+                ra += av.reduceLanes(VectorOperators.ADD, vmask);
             }
         }
 
-        assertReductionArraysEqualsMasked(a, r, ra, mask, Float512VectorTests::addLanesMasked, Float512VectorTests::addLanesMasked);
+        assertReductionArraysEqualsMasked(a, r, ra, mask, Float512VectorTests::ADDMasked, Float512VectorTests::ADDMasked);
     }
-    static float mulLanes(float[] a, int idx) {
+    static float MUL(float[] a, int idx) {
         float res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res *= a[i];
@@ -1067,7 +1267,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float mulLanes(float[] a) {
+    static float MUL(float[] a) {
         float res = 1;
         for (int i = 0; i < a.length; i += SPECIES.length()) {
             float tmp = 1;
@@ -1080,7 +1280,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void mulLanesFloat512VectorTests(IntFunction<float[]> fa) {
+    static void MULFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         float ra = 1;
@@ -1088,7 +1288,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.mulLanes();
+                r[i] = av.reduceLanes(VectorOperators.MUL);
             }
         }
 
@@ -1096,13 +1296,13 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra *= av.mulLanes();
+                ra *= av.reduceLanes(VectorOperators.MUL);
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Float512VectorTests::mulLanes, Float512VectorTests::mulLanes);
+        assertReductionArraysEquals(a, r, ra, Float512VectorTests::MUL, Float512VectorTests::MUL);
     }
-    static float mulLanesMasked(float[] a, int idx, boolean[] mask) {
+    static float MULMasked(float[] a, int idx, boolean[] mask) {
         float res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             if(mask[i % SPECIES.length()])
@@ -1112,7 +1312,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float mulLanesMasked(float[] a, boolean[] mask) {
+    static float MULMasked(float[] a, boolean[] mask) {
         float res = 1;
         for (int i = 0; i < a.length; i += SPECIES.length()) {
             float tmp = 1;
@@ -1126,7 +1326,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpMaskProvider")
-    static void mulLanesFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
+    static void MULFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1136,7 +1336,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.mulLanes(vmask);
+                r[i] = av.reduceLanes(VectorOperators.MUL, vmask);
             }
         }
 
@@ -1144,13 +1344,13 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra *= av.mulLanes(vmask);
+                ra *= av.reduceLanes(VectorOperators.MUL, vmask);
             }
         }
 
-        assertReductionArraysEqualsMasked(a, r, ra, mask, Float512VectorTests::mulLanesMasked, Float512VectorTests::mulLanesMasked);
+        assertReductionArraysEqualsMasked(a, r, ra, mask, Float512VectorTests::MULMasked, Float512VectorTests::MULMasked);
     }
-    static float minLanes(float[] a, int idx) {
+    static float MIN(float[] a, int idx) {
         float res = Float.POSITIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (float)Math.min(res, a[i]);
@@ -1159,7 +1359,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float minLanes(float[] a) {
+    static float MIN(float[] a) {
         float res = Float.POSITIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (float)Math.min(res, a[i]);
@@ -1168,7 +1368,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void minLanesFloat512VectorTests(IntFunction<float[]> fa) {
+    static void MINFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         float ra = Float.POSITIVE_INFINITY;
@@ -1176,7 +1376,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.minLanes();
+                r[i] = av.reduceLanes(VectorOperators.MIN);
             }
         }
 
@@ -1184,13 +1384,13 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = Float.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.min(ra, av.minLanes());
+                ra = (float)Math.min(ra, av.reduceLanes(VectorOperators.MIN));
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Float512VectorTests::minLanes, Float512VectorTests::minLanes);
+        assertReductionArraysEquals(a, r, ra, Float512VectorTests::MIN, Float512VectorTests::MIN);
     }
-    static float minLanesMasked(float[] a, int idx, boolean[] mask) {
+    static float MINMasked(float[] a, int idx, boolean[] mask) {
         float res = Float.POSITIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             if(mask[i % SPECIES.length()])
@@ -1200,7 +1400,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float minLanesMasked(float[] a, boolean[] mask) {
+    static float MINMasked(float[] a, boolean[] mask) {
         float res = Float.POSITIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             if(mask[i % SPECIES.length()])
@@ -1210,7 +1410,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpMaskProvider")
-    static void minLanesFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
+    static void MINFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1220,7 +1420,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.minLanes(vmask);
+                r[i] = av.reduceLanes(VectorOperators.MIN, vmask);
             }
         }
 
@@ -1228,13 +1428,13 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = Float.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.min(ra, av.minLanes(vmask));
+                ra = (float)Math.min(ra, av.reduceLanes(VectorOperators.MIN, vmask));
             }
         }
 
-        assertReductionArraysEqualsMasked(a, r, ra, mask, Float512VectorTests::minLanesMasked, Float512VectorTests::minLanesMasked);
+        assertReductionArraysEqualsMasked(a, r, ra, mask, Float512VectorTests::MINMasked, Float512VectorTests::MINMasked);
     }
-    static float maxLanes(float[] a, int idx) {
+    static float MAX(float[] a, int idx) {
         float res = Float.NEGATIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             res = (float)Math.max(res, a[i]);
@@ -1243,7 +1443,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float maxLanes(float[] a) {
+    static float MAX(float[] a) {
         float res = Float.NEGATIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             res = (float)Math.max(res, a[i]);
@@ -1252,7 +1452,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void maxLanesFloat512VectorTests(IntFunction<float[]> fa) {
+    static void MAXFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         float ra = Float.NEGATIVE_INFINITY;
@@ -1260,7 +1460,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.maxLanes();
+                r[i] = av.reduceLanes(VectorOperators.MAX);
             }
         }
 
@@ -1268,13 +1468,13 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.max(ra, av.maxLanes());
+                ra = (float)Math.max(ra, av.reduceLanes(VectorOperators.MAX));
             }
         }
 
-        assertReductionArraysEquals(a, r, ra, Float512VectorTests::maxLanes, Float512VectorTests::maxLanes);
+        assertReductionArraysEquals(a, r, ra, Float512VectorTests::MAX, Float512VectorTests::MAX);
     }
-    static float maxLanesMasked(float[] a, int idx, boolean[] mask) {
+    static float MAXMasked(float[] a, int idx, boolean[] mask) {
         float res = Float.NEGATIVE_INFINITY;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
             if(mask[i % SPECIES.length()])
@@ -1284,7 +1484,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    static float maxLanesMasked(float[] a, boolean[] mask) {
+    static float MAXMasked(float[] a, boolean[] mask) {
         float res = Float.NEGATIVE_INFINITY;
         for (int i = 0; i < a.length; i++) {
             if(mask[i % SPECIES.length()])
@@ -1294,7 +1494,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         return res;
     }
     @Test(dataProvider = "floatUnaryOpMaskProvider")
-    static void maxLanesFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
+    static void MAXFloat512VectorTestsMasked(IntFunction<float[]> fa, IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1304,7 +1504,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                r[i] = av.maxLanes(vmask);
+                r[i] = av.reduceLanes(VectorOperators.MAX, vmask);
             }
         }
 
@@ -1312,11 +1512,11 @@ public class Float512VectorTests extends AbstractVectorTest {
             ra = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.max(ra, av.maxLanes(vmask));
+                ra = (float)Math.max(ra, av.reduceLanes(VectorOperators.MAX, vmask));
             }
         }
 
-        assertReductionArraysEqualsMasked(a, r, ra, mask, Float512VectorTests::maxLanesMasked, Float512VectorTests::maxLanesMasked);
+        assertReductionArraysEqualsMasked(a, r, ra, mask, Float512VectorTests::MAXMasked, Float512VectorTests::MAXMasked);
     }
 
 
@@ -1331,7 +1531,7 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.with(0, (float)4).intoArray(r, i);
+                av.withLane(0, (float)4).intoArray(r, i);
             }
         }
 
@@ -1339,7 +1539,7 @@ public class Float512VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatCompareOpProvider")
-    static void lessThanFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void LTFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
 
@@ -1347,7 +1547,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.lessThan(bv);
+                VectorMask<Float> mv = av.compare(VectorOperators.LT, bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1359,7 +1559,7 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
     @Test(dataProvider = "floatCompareOpProvider")
-    static void greaterThanFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void ltFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
 
@@ -1367,7 +1567,27 @@ public class Float512VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.greaterThan(bv);
+                VectorMask<Float> mv = av.lt(bv);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.lane(j), a[i + j] < b[i + j]);
+                }
+            }
+        }
+    }
+
+
+    @Test(dataProvider = "floatCompareOpProvider")
+    static void GTFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                VectorMask<Float> mv = av.compare(VectorOperators.GT, bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1379,7 +1599,7 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
     @Test(dataProvider = "floatCompareOpProvider")
-    static void equalFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void EQFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
 
@@ -1387,7 +1607,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.equal(bv);
+                VectorMask<Float> mv = av.compare(VectorOperators.EQ, bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1399,7 +1619,7 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
     @Test(dataProvider = "floatCompareOpProvider")
-    static void notEqualFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void eqFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
 
@@ -1407,7 +1627,27 @@ public class Float512VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.notEqual(bv);
+                VectorMask<Float> mv = av.eq(bv);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.lane(j), a[i + j] == b[i + j]);
+                }
+            }
+        }
+    }
+
+
+    @Test(dataProvider = "floatCompareOpProvider")
+    static void NEFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                VectorMask<Float> mv = av.compare(VectorOperators.NE, bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1419,7 +1659,7 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
     @Test(dataProvider = "floatCompareOpProvider")
-    static void lessThanEqFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void LEFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
 
@@ -1427,7 +1667,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.lessThanEq(bv);
+                VectorMask<Float> mv = av.compare(VectorOperators.LE, bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1439,7 +1679,7 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
     @Test(dataProvider = "floatCompareOpProvider")
-    static void greaterThanEqFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void GEFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
 
@@ -1447,7 +1687,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.greaterThanEq(bv);
+                VectorMask<Float> mv = av.compare(VectorOperators.GE, bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1679,376 +1919,376 @@ public class Float512VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, Float512VectorTests::single);
     }
 
-    static float sin(float a) {
+    static float SIN(float a) {
         return (float)(Math.sin((double)a));
     }
 
-    static float strictsin(float a) {
+    static float strictSIN(float a) {
         return (float)(StrictMath.sin((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void sinFloat512VectorTests(IntFunction<float[]> fa) {
+    static void SINFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.sin().intoArray(r, i);
+                av.lanewise(VectorOperators.SIN).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::sin, Float512VectorTests::strictsin);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::SIN, Float512VectorTests::strictSIN);
     }
 
 
-    static float exp(float a) {
+    static float EXP(float a) {
         return (float)(Math.exp((double)a));
     }
 
-    static float strictexp(float a) {
+    static float strictEXP(float a) {
         return (float)(StrictMath.exp((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void expFloat512VectorTests(IntFunction<float[]> fa) {
+    static void EXPFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.exp().intoArray(r, i);
+                av.lanewise(VectorOperators.EXP).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::exp, Float512VectorTests::strictexp);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::EXP, Float512VectorTests::strictEXP);
     }
 
 
-    static float log1p(float a) {
+    static float LOG1P(float a) {
         return (float)(Math.log1p((double)a));
     }
 
-    static float strictlog1p(float a) {
+    static float strictLOG1P(float a) {
         return (float)(StrictMath.log1p((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void log1pFloat512VectorTests(IntFunction<float[]> fa) {
+    static void LOG1PFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.log1p().intoArray(r, i);
+                av.lanewise(VectorOperators.LOG1P).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::log1p, Float512VectorTests::strictlog1p);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::LOG1P, Float512VectorTests::strictLOG1P);
     }
 
 
-    static float log(float a) {
+    static float LOG(float a) {
         return (float)(Math.log((double)a));
     }
 
-    static float strictlog(float a) {
+    static float strictLOG(float a) {
         return (float)(StrictMath.log((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void logFloat512VectorTests(IntFunction<float[]> fa) {
+    static void LOGFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.log().intoArray(r, i);
+                av.lanewise(VectorOperators.LOG).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::log, Float512VectorTests::strictlog);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::LOG, Float512VectorTests::strictLOG);
     }
 
 
-    static float log10(float a) {
+    static float LOG10(float a) {
         return (float)(Math.log10((double)a));
     }
 
-    static float strictlog10(float a) {
+    static float strictLOG10(float a) {
         return (float)(StrictMath.log10((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void log10Float512VectorTests(IntFunction<float[]> fa) {
+    static void LOG10Float512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.log10().intoArray(r, i);
+                av.lanewise(VectorOperators.LOG10).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::log10, Float512VectorTests::strictlog10);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::LOG10, Float512VectorTests::strictLOG10);
     }
 
 
-    static float expm1(float a) {
+    static float EXPM1(float a) {
         return (float)(Math.expm1((double)a));
     }
 
-    static float strictexpm1(float a) {
+    static float strictEXPM1(float a) {
         return (float)(StrictMath.expm1((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void expm1Float512VectorTests(IntFunction<float[]> fa) {
+    static void EXPM1Float512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.expm1().intoArray(r, i);
+                av.lanewise(VectorOperators.EXPM1).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::expm1, Float512VectorTests::strictexpm1);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::EXPM1, Float512VectorTests::strictEXPM1);
     }
 
 
-    static float cos(float a) {
+    static float COS(float a) {
         return (float)(Math.cos((double)a));
     }
 
-    static float strictcos(float a) {
+    static float strictCOS(float a) {
         return (float)(StrictMath.cos((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void cosFloat512VectorTests(IntFunction<float[]> fa) {
+    static void COSFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.cos().intoArray(r, i);
+                av.lanewise(VectorOperators.COS).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::cos, Float512VectorTests::strictcos);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::COS, Float512VectorTests::strictCOS);
     }
 
 
-    static float tan(float a) {
+    static float TAN(float a) {
         return (float)(Math.tan((double)a));
     }
 
-    static float stricttan(float a) {
+    static float strictTAN(float a) {
         return (float)(StrictMath.tan((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void tanFloat512VectorTests(IntFunction<float[]> fa) {
+    static void TANFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.tan().intoArray(r, i);
+                av.lanewise(VectorOperators.TAN).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::tan, Float512VectorTests::stricttan);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::TAN, Float512VectorTests::strictTAN);
     }
 
 
-    static float sinh(float a) {
+    static float SINH(float a) {
         return (float)(Math.sinh((double)a));
     }
 
-    static float strictsinh(float a) {
+    static float strictSINH(float a) {
         return (float)(StrictMath.sinh((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void sinhFloat512VectorTests(IntFunction<float[]> fa) {
+    static void SINHFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.sinh().intoArray(r, i);
+                av.lanewise(VectorOperators.SINH).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::sinh, Float512VectorTests::strictsinh);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::SINH, Float512VectorTests::strictSINH);
     }
 
 
-    static float cosh(float a) {
+    static float COSH(float a) {
         return (float)(Math.cosh((double)a));
     }
 
-    static float strictcosh(float a) {
+    static float strictCOSH(float a) {
         return (float)(StrictMath.cosh((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void coshFloat512VectorTests(IntFunction<float[]> fa) {
+    static void COSHFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.cosh().intoArray(r, i);
+                av.lanewise(VectorOperators.COSH).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::cosh, Float512VectorTests::strictcosh);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::COSH, Float512VectorTests::strictCOSH);
     }
 
 
-    static float tanh(float a) {
+    static float TANH(float a) {
         return (float)(Math.tanh((double)a));
     }
 
-    static float stricttanh(float a) {
+    static float strictTANH(float a) {
         return (float)(StrictMath.tanh((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void tanhFloat512VectorTests(IntFunction<float[]> fa) {
+    static void TANHFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.tanh().intoArray(r, i);
+                av.lanewise(VectorOperators.TANH).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::tanh, Float512VectorTests::stricttanh);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::TANH, Float512VectorTests::strictTANH);
     }
 
 
-    static float asin(float a) {
+    static float ASIN(float a) {
         return (float)(Math.asin((double)a));
     }
 
-    static float strictasin(float a) {
+    static float strictASIN(float a) {
         return (float)(StrictMath.asin((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void asinFloat512VectorTests(IntFunction<float[]> fa) {
+    static void ASINFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.asin().intoArray(r, i);
+                av.lanewise(VectorOperators.ASIN).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::asin, Float512VectorTests::strictasin);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::ASIN, Float512VectorTests::strictASIN);
     }
 
 
-    static float acos(float a) {
+    static float ACOS(float a) {
         return (float)(Math.acos((double)a));
     }
 
-    static float strictacos(float a) {
+    static float strictACOS(float a) {
         return (float)(StrictMath.acos((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void acosFloat512VectorTests(IntFunction<float[]> fa) {
+    static void ACOSFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.acos().intoArray(r, i);
+                av.lanewise(VectorOperators.ACOS).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::acos, Float512VectorTests::strictacos);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::ACOS, Float512VectorTests::strictACOS);
     }
 
 
-    static float atan(float a) {
+    static float ATAN(float a) {
         return (float)(Math.atan((double)a));
     }
 
-    static float strictatan(float a) {
+    static float strictATAN(float a) {
         return (float)(StrictMath.atan((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void atanFloat512VectorTests(IntFunction<float[]> fa) {
+    static void ATANFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.atan().intoArray(r, i);
+                av.lanewise(VectorOperators.ATAN).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::atan, Float512VectorTests::strictatan);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::ATAN, Float512VectorTests::strictATAN);
     }
 
 
-    static float cbrt(float a) {
+    static float CBRT(float a) {
         return (float)(Math.cbrt((double)a));
     }
 
-    static float strictcbrt(float a) {
+    static float strictCBRT(float a) {
         return (float)(StrictMath.cbrt((double)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void cbrtFloat512VectorTests(IntFunction<float[]> fa) {
+    static void CBRTFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.cbrt().intoArray(r, i);
+                av.lanewise(VectorOperators.CBRT).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::cbrt, Float512VectorTests::strictcbrt);
+        assertArraysEqualsWithinOneUlp(a, r, Float512VectorTests::CBRT, Float512VectorTests::strictCBRT);
     }
 
 
-    static float hypot(float a, float b) {
+    static float HYPOT(float a, float b) {
         return (float)(Math.hypot((double)a, (double)b));
     }
 
-    static float stricthypot(float a, float b) {
+    static float strictHYPOT(float a, float b) {
         return (float)(StrictMath.hypot((double)a, (double)b));
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")
-    static void hypotFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void HYPOTFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
@@ -2057,25 +2297,25 @@ public class Float512VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                av.hypot(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.HYPOT, bv).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, b, r, Float512VectorTests::hypot, Float512VectorTests::stricthypot);
+        assertArraysEqualsWithinOneUlp(a, b, r, Float512VectorTests::HYPOT, Float512VectorTests::strictHYPOT);
     }
 
 
 
-    static float pow(float a, float b) {
+    static float POW(float a, float b) {
         return (float)(Math.pow((double)a, (double)b));
     }
 
-    static float strictpow(float a, float b) {
+    static float strictPOW(float a, float b) {
         return (float)(StrictMath.pow((double)a, (double)b));
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")
-    static void powFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void POWFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
@@ -2084,25 +2324,25 @@ public class Float512VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                av.pow(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.POW, bv).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, b, r, Float512VectorTests::pow, Float512VectorTests::strictpow);
+        assertArraysEqualsWithinOneUlp(a, b, r, Float512VectorTests::POW, Float512VectorTests::strictPOW);
     }
 
 
 
-    static float atan2(float a, float b) {
+    static float ATAN2(float a, float b) {
         return (float)(Math.atan2((double)a, (double)b));
     }
 
-    static float strictatan2(float a, float b) {
+    static float strictATAN2(float a, float b) {
         return (float)(StrictMath.atan2((double)a, (double)b));
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")
-    static void atan2Float512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void ATAN2Float512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
@@ -2111,22 +2351,22 @@ public class Float512VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                av.atan2(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.ATAN2, bv).intoArray(r, i);
             }
         }
 
-        assertArraysEqualsWithinOneUlp(a, b, r, Float512VectorTests::atan2, Float512VectorTests::strictatan2);
+        assertArraysEqualsWithinOneUlp(a, b, r, Float512VectorTests::ATAN2, Float512VectorTests::strictATAN2);
     }
 
 
 
-    static float lanewise_FMA(float a, float b, float c) {
+    static float FMA(float a, float b, float c) {
         return (float)(Math.fma(a, b, c));
     }
 
 
     @Test(dataProvider = "floatTernaryOpProvider")
-    static void lanewise_FMAFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb, IntFunction<float[]> fc) {
+    static void FMAFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb, IntFunction<float[]> fc) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] c = fc.apply(SPECIES.length());
@@ -2141,12 +2381,12 @@ public class Float512VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, c, r, Float512VectorTests::lanewise_FMA);
+        assertArraysEquals(a, b, c, r, Float512VectorTests::FMA);
     }
 
 
     @Test(dataProvider = "floatTernaryOpMaskProvider")
-    static void lanewise_FMAFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    static void FMAFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb,
                                           IntFunction<float[]> fc, IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
@@ -2164,34 +2404,34 @@ public class Float512VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, c, r, mask, Float512VectorTests::lanewise_FMA);
+        assertArraysEquals(a, b, c, r, mask, Float512VectorTests::FMA);
     }
 
 
 
 
 
-    static float neg(float a) {
+    static float NEG(float a) {
         return (float)(-((float)a));
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void negFloat512VectorTests(IntFunction<float[]> fa) {
+    static void NEGFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.neg().intoArray(r, i);
+                av.lanewise(VectorOperators.NEG).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, r, Float512VectorTests::neg);
+        assertArraysEquals(a, r, Float512VectorTests::NEG);
     }
 
     @Test(dataProvider = "floatUnaryOpMaskProvider")
-    static void negMaskedFloat512VectorTests(IntFunction<float[]> fa,
+    static void NEGMaskedFloat512VectorTests(IntFunction<float[]> fa,
                                                 IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
@@ -2201,15 +2441,34 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.neg(vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.NEG, vmask).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, r, mask, Float512VectorTests::neg);
+        assertArraysEquals(a, r, mask, Float512VectorTests::NEG);
+    }
+
+    static float ABS(float a) {
+        return (float)(Math.abs((float)a));
     }
 
     static float abs(float a) {
         return (float)(Math.abs((float)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void ABSFloat512VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                av.lanewise(VectorOperators.ABS).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, Float512VectorTests::ABS);
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
@@ -2228,7 +2487,7 @@ public class Float512VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatUnaryOpMaskProvider")
-    static void absMaskedFloat512VectorTests(IntFunction<float[]> fa,
+    static void ABSMaskedFloat512VectorTests(IntFunction<float[]> fa,
                                                 IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
@@ -2238,11 +2497,11 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.abs(vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.ABS, vmask).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, r, mask, Float512VectorTests::abs);
+        assertArraysEquals(a, r, mask, Float512VectorTests::ABS);
     }
 
 
@@ -2252,31 +2511,31 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
 
-    static float sqrt(float a) {
+    static float SQRT(float a) {
         return (float)(Math.sqrt((double)a));
     }
 
 
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void sqrtFloat512VectorTests(IntFunction<float[]> fa) {
+    static void SQRTFloat512VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.sqrt().intoArray(r, i);
+                av.lanewise(VectorOperators.SQRT).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, r, Float512VectorTests::sqrt);
+        assertArraysEquals(a, r, Float512VectorTests::SQRT);
     }
 
 
 
     @Test(dataProvider = "floatUnaryOpMaskProvider")
-    static void sqrtMaskedFloat512VectorTests(IntFunction<float[]> fa,
+    static void SQRTMaskedFloat512VectorTests(IntFunction<float[]> fa,
                                                 IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
@@ -2286,11 +2545,11 @@ public class Float512VectorTests extends AbstractVectorTest {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                av.sqrt(vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.SQRT, vmask).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, r, mask, Float512VectorTests::sqrt);
+        assertArraysEquals(a, r, mask, Float512VectorTests::SQRT);
     }
 
     static float[] gather(float a[], int ix, int[] b, int iy) {

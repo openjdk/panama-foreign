@@ -6,6 +6,6 @@
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 $abstractvectortype$ av = $abstractvectortype$.fromArray(SPECIES, a, i);
                 $abstractvectortype$ bv = $abstractvectortype$.fromArray(SPECIES, b, i);
-                av.[[TEST]](bv).intoArray(r, i);
+                av.lanewise(VectorOperators.[[TEST]], bv).intoArray(r, i);
             }
         }

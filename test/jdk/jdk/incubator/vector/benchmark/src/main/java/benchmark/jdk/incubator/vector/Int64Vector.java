@@ -91,7 +91,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void add(Blackhole bh) {
+    public void ADD(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -100,7 +100,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.add(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.ADD, bv).intoArray(r, i);
             }
         }
 
@@ -108,43 +108,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void addMasked(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.add(bv, vmask).intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-    @Benchmark
-    public void sub(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.sub(bv).intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-    @Benchmark
-    public void subMasked(Blackhole bh) {
+    public void ADDMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -155,17 +119,15 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.sub(bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.ADD, bv, vmask).intoArray(r, i);
             }
         }
 
         bh.consume(r);
     }
 
-
-
     @Benchmark
-    public void mul(Blackhole bh) {
+    public void SUB(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -174,7 +136,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.mul(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.SUB, bv).intoArray(r, i);
             }
         }
 
@@ -182,46 +144,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void mulMasked(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.mul(bv, vmask).intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-
-    @Benchmark
-    public void and(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.and(bv).intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-
-
-    @Benchmark
-    public void andMasked(Blackhole bh) {
+    public void SUBMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -232,7 +155,43 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.and(bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.SUB, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void MUL(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.MUL, bv).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void MULMasked(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.MUL, bv, vmask).intoArray(r, i);
             }
         }
 
@@ -242,7 +201,84 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void lanewise_ANDC2(Blackhole bh) {
+    public void FIRST_NONZERO(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.FIRST_NONZERO, bv).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void FIRST_NONZEROMasked(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.FIRST_NONZERO, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+    @Benchmark
+    public void AND(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.AND, bv).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void ANDMasked(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                IntVector bv = IntVector.fromArray(SPECIES, b, i);
+                av.lanewise(VectorOperators.AND, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void ANDC2(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -261,7 +297,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void lanewise_ANDC2Masked(Blackhole bh) {
+    public void ANDC2Masked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -282,7 +318,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void or(Blackhole bh) {
+    public void OR(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -291,7 +327,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.or(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.OR, bv).intoArray(r, i);
             }
         }
 
@@ -301,7 +337,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void orMasked(Blackhole bh) {
+    public void ORMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -312,7 +348,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.or(bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.OR, bv, vmask).intoArray(r, i);
             }
         }
 
@@ -322,7 +358,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void xor(Blackhole bh) {
+    public void XOR(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -331,7 +367,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.xor(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.XOR, bv).intoArray(r, i);
             }
         }
 
@@ -341,7 +377,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void xorMasked(Blackhole bh) {
+    public void XORMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -352,7 +388,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.xor(bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.XOR, bv, vmask).intoArray(r, i);
             }
         }
 
@@ -360,8 +396,9 @@ public class Int64Vector extends AbstractVectorBenchmark {
     }
 
 
+
     @Benchmark
-    public void lanewise_FIRST_NONZERO(Blackhole bh) {
+    public void LSHL(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -370,15 +407,17 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.lanewise(VectorOperators.FIRST_NONZERO, bv).intoArray(r, i);
+                av.lanewise(VectorOperators.LSHL, bv).intoArray(r, i);
             }
         }
 
         bh.consume(r);
     }
 
+
+
     @Benchmark
-    public void lanewise_FIRST_NONZEROMasked(Blackhole bh) {
+    public void LSHLMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -389,7 +428,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.lanewise(VectorOperators.FIRST_NONZERO, bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.LSHL, bv, vmask).intoArray(r, i);
             }
         }
 
@@ -397,8 +436,9 @@ public class Int64Vector extends AbstractVectorBenchmark {
     }
 
 
+
     @Benchmark
-    public void shiftLeft(Blackhole bh) {
+    public void ASHR(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -407,7 +447,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.shiftLeft(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.ASHR, bv).intoArray(r, i);
             }
         }
 
@@ -417,7 +457,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftLeftMasked(Blackhole bh) {
+    public void ASHRMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -428,7 +468,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.shiftLeft(bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.ASHR, bv, vmask).intoArray(r, i);
             }
         }
 
@@ -438,7 +478,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftRight(Blackhole bh) {
+    public void LSHR(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -447,7 +487,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.shiftRight(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.LSHR, bv).intoArray(r, i);
             }
         }
 
@@ -457,7 +497,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftRightMasked(Blackhole bh) {
+    public void LSHRMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -468,7 +508,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.shiftRight(bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.LSHR, bv, vmask).intoArray(r, i);
             }
         }
 
@@ -478,7 +518,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftArithmeticRight(Blackhole bh) {
+    public void LSHLShift(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -486,8 +526,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.shiftArithmeticRight(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.LSHL, (int)b[i]).intoArray(r, i);
             }
         }
 
@@ -497,46 +536,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftArithmeticRightMasked(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.shiftArithmeticRight(bv, vmask).intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-
-
-    @Benchmark
-    public void shiftLeftShift(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.shiftLeft((int)b[i]).intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-
-
-    @Benchmark
-    public void shiftLeftMaskedShift(Blackhole bh) {
+    public void LSHLMaskedShift(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -546,7 +546,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.shiftLeft((int)b[i], vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.LSHL, (int)b[i], vmask).intoArray(r, i);
             }
         }
 
@@ -560,7 +560,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftRightShift(Blackhole bh) {
+    public void LSHRShift(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -568,7 +568,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.shiftRight((int)b[i]).intoArray(r, i);
+                av.lanewise(VectorOperators.LSHR, (int)b[i]).intoArray(r, i);
             }
         }
 
@@ -578,49 +578,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftRightMaskedShift(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.shiftRight((int)b[i], vmask).intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-
-
-
-
-
-
-    @Benchmark
-    public void shiftArithmeticRightShift(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.shiftArithmeticRight((int)b[i]).intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-
-
-    @Benchmark
-    public void shiftArithmeticRightMaskedShift(Blackhole bh) {
+    public void LSHRMaskedShift(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -630,7 +588,49 @@ public class Int64Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.shiftArithmeticRight((int)b[i], vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.LSHR, (int)b[i], vmask).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+
+
+
+
+
+    @Benchmark
+    public void ASHRShift(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                av.lanewise(VectorOperators.ASHR, (int)b[i]).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void ASHRMaskedShift(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                av.lanewise(VectorOperators.ASHR, (int)b[i], vmask).intoArray(r, i);
             }
         }
 
@@ -643,7 +643,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void max(Blackhole bh) {
+    public void MIN(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -652,7 +652,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.max(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.MIN, bv).intoArray(r, i);
             }
         }
 
@@ -660,7 +660,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void min(Blackhole bh) {
+    public void MAX(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -669,7 +669,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.min(bv).intoArray(r, i);
+                av.lanewise(VectorOperators.MAX, bv).intoArray(r, i);
             }
         }
 
@@ -678,7 +678,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void andLanes(Blackhole bh) {
+    public void AND(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int ra = -1;
 
@@ -686,7 +686,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = -1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra &= av.andLanes();
+                ra &= av.AND();
             }
         }
         bh.consume(ra);
@@ -695,7 +695,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void andLanesMasked(Blackhole bh) {
+    public void ANDMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -705,7 +705,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = -1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra &= av.andLanes(vmask);
+                ra &= av.AND(vmask);
             }
         }
         bh.consume(ra);
@@ -714,7 +714,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void orLanes(Blackhole bh) {
+    public void OR(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int ra = 0;
 
@@ -722,7 +722,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra |= av.orLanes();
+                ra |= av.OR();
             }
         }
         bh.consume(ra);
@@ -731,43 +731,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void orLanesMasked(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
-        int ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra |= av.orLanes(vmask);
-            }
-        }
-        bh.consume(ra);
-    }
-
-
-
-    @Benchmark
-    public void xorLanes(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra ^= av.xorLanes();
-            }
-        }
-        bh.consume(ra);
-    }
-
-
-
-    @Benchmark
-    public void xorLanesMasked(Blackhole bh) {
+    public void ORMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -777,15 +741,16 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra ^= av.xorLanes(vmask);
+                ra |= av.OR(vmask);
             }
         }
         bh.consume(ra);
     }
 
 
+
     @Benchmark
-    public void addLanes(Blackhole bh) {
+    public void XOR(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int ra = 0;
 
@@ -793,14 +758,16 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra += av.addLanes();
+                ra ^= av.XOR();
             }
         }
         bh.consume(ra);
     }
 
+
+
     @Benchmark
-    public void addLanesMasked(Blackhole bh) {
+    public void XORMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -810,14 +777,47 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra += av.addLanes(vmask);
+                ra ^= av.XOR(vmask);
+            }
+        }
+        bh.consume(ra);
+    }
+
+
+    @Benchmark
+    public void ADD(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int ra = 0;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                ra += av.ADD();
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void mulLanes(Blackhole bh) {
+    public void ADDMasked(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        int ra = 0;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                ra += av.ADD(vmask);
+            }
+        }
+        bh.consume(ra);
+    }
+
+    @Benchmark
+    public void MUL(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int ra = 1;
 
@@ -825,14 +825,14 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra *= av.mulLanes();
+                ra *= av.MUL();
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void mulLanesMasked(Blackhole bh) {
+    public void MULMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -842,14 +842,14 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra *= av.mulLanes(vmask);
+                ra *= av.MUL(vmask);
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void minLanes(Blackhole bh) {
+    public void MIN(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int ra = Integer.MAX_VALUE;
 
@@ -857,14 +857,14 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = Integer.MAX_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra = (int)Math.min(ra, av.minLanes());
+                ra = (int)Math.min(ra, av.MIN());
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void minLanesMasked(Blackhole bh) {
+    public void MINMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -874,14 +874,14 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = Integer.MAX_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra = (int)Math.min(ra, av.minLanes(vmask));
+                ra = (int)Math.min(ra, av.MIN(vmask));
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void maxLanes(Blackhole bh) {
+    public void MAX(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int ra = Integer.MIN_VALUE;
 
@@ -889,14 +889,14 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = Integer.MIN_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra = (int)Math.max(ra, av.maxLanes());
+                ra = (int)Math.max(ra, av.MAX());
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void maxLanesMasked(Blackhole bh) {
+    public void MAXMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -906,7 +906,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             ra = Integer.MIN_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                ra = (int)Math.max(ra, av.maxLanes(vmask));
+                ra = (int)Math.max(ra, av.MAX(vmask));
             }
         }
         bh.consume(ra);
@@ -947,14 +947,14 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void with(Blackhole bh) {
+    public void withLane(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.with(0, (int)4).intoArray(r, i);
+                av.withLane(0, (int)4).intoArray(r, i);
             }
         }
 
@@ -962,7 +962,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public Object lessThan() {
+    public Object LT() {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
@@ -972,7 +972,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                VectorMask<Integer> mv = av.lessThan(bv);
+                VectorMask<Integer> mv = av.LT(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -982,7 +982,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object greaterThan() {
+    public Object GT() {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
@@ -992,7 +992,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                VectorMask<Integer> mv = av.greaterThan(bv);
+                VectorMask<Integer> mv = av.GT(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1002,7 +1002,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object equal() {
+    public Object EQ() {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
@@ -1012,7 +1012,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                VectorMask<Integer> mv = av.equal(bv);
+                VectorMask<Integer> mv = av.EQ(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1022,7 +1022,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object notEqual() {
+    public Object NE() {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
@@ -1032,7 +1032,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                VectorMask<Integer> mv = av.notEqual(bv);
+                VectorMask<Integer> mv = av.NE(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1042,7 +1042,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object lessThanEq() {
+    public Object LE() {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
@@ -1052,7 +1052,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                VectorMask<Integer> mv = av.lessThanEq(bv);
+                VectorMask<Integer> mv = av.LE(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1062,7 +1062,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object greaterThanEq() {
+    public Object GE() {
         int[] a = fa.apply(size);
         int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
@@ -1072,7 +1072,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                VectorMask<Integer> mv = av.greaterThanEq(bv);
+                VectorMask<Integer> mv = av.GE(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1309,7 +1309,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void lanewise_BITWISE_BLEND(Blackhole bh) {
+    public void BITWISE_BLEND(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] c = fc.apply(SPECIES.length());
@@ -1330,7 +1330,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void lanewise_BITWISE_BLENDMasked(Blackhole bh) {
+    public void BITWISE_BLENDMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] c = fc.apply(SPECIES.length());
@@ -1352,14 +1352,14 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void neg(Blackhole bh) {
+    public void NEG(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.neg().intoArray(r, i);
+                av.lanewise(VectorOperators.NEG).intoArray(r, i);
             }
         }
 
@@ -1367,39 +1367,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void negMasked(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.neg(vmask).intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-    @Benchmark
-    public void abs(Blackhole bh) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] r = fr.apply(SPECIES.length());
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.abs().intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-    @Benchmark
-    public void absMasked(Blackhole bh) {
+    public void NEGMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1408,33 +1376,30 @@ public class Int64Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.abs(vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.NEG, vmask).intoArray(r, i);
             }
         }
 
         bh.consume(r);
     }
 
-
     @Benchmark
-    public void not(Blackhole bh) {
+    public void ABS(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.not().intoArray(r, i);
+                av.lanewise(VectorOperators.ABS).intoArray(r, i);
             }
         }
 
         bh.consume(r);
     }
 
-
-
     @Benchmark
-    public void notMasked(Blackhole bh) {
+    public void ABSMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1443,7 +1408,23 @@ public class Int64Vector extends AbstractVectorBenchmark {
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
-                av.not(vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.ABS, vmask).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+    @Benchmark
+    public void NOT(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                av.lanewise(VectorOperators.NOT).intoArray(r, i);
             }
         }
 
@@ -1453,7 +1434,26 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void lanewise_ZOMO(Blackhole bh) {
+    public void NOTMasked(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                av.lanewise(VectorOperators.NOT, vmask).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void ZOMO(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
 
@@ -1470,7 +1470,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void lanewise_ZOMOMasked(Blackhole bh) {
+    public void ZOMOMasked(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
