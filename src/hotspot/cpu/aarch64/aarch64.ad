@@ -13326,13 +13326,12 @@ instruct insert2F(vecD dst, vecD src, vRegF val, immI idx)
   predicate(n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorInsert (Binary src val) idx));
   ins_cost(INSN_COST);
+  effect(TEMP_DEF dst);
   format %{ "orr    $dst, T8B, $src, $src\n\t"
             "ins    $dst, S, $val, $idx, 0\t# insert into vector(2F)" %}
   ins_encode %{
-    if (as_FloatRegister($dst$$reg) != as_FloatRegister($src$$reg)) {
-      __ orr(as_FloatRegister($dst$$reg), __ T8B,
-             as_FloatRegister($src$$reg), as_FloatRegister($src$$reg));
-    }
+    __ orr(as_FloatRegister($dst$$reg), __ T8B,
+           as_FloatRegister($src$$reg), as_FloatRegister($src$$reg));
     __ ins(as_FloatRegister($dst$$reg), __ S,
            as_FloatRegister($val$$reg), $idx$$constant, 0);
   %}
@@ -13344,13 +13343,12 @@ instruct insert4F(vecX dst, vecX src, vRegF val, immI idx)
   predicate(n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorInsert (Binary src val) idx));
   ins_cost(INSN_COST);
+  effect(TEMP_DEF dst);
   format %{ "orr    $dst, T16B, $src, $src\n\t"
             "ins    $dst, S, $val, $idx, 0\t# insert into vector(4F)" %}
   ins_encode %{
-    if (as_FloatRegister($dst$$reg) != as_FloatRegister($src$$reg)) {
-      __ orr(as_FloatRegister($dst$$reg), __ T16B,
-             as_FloatRegister($src$$reg), as_FloatRegister($src$$reg));
-    }
+    __ orr(as_FloatRegister($dst$$reg), __ T16B,
+           as_FloatRegister($src$$reg), as_FloatRegister($src$$reg));
     __ ins(as_FloatRegister($dst$$reg), __ S,
            as_FloatRegister($val$$reg), $idx$$constant, 0);
   %}
@@ -13362,13 +13360,12 @@ instruct insert2D(vecX dst, vecX src, vRegD val, immI idx)
   predicate(n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorInsert (Binary src val) idx));
   ins_cost(INSN_COST);
+  effect(TEMP_DEF dst);
   format %{ "orr    $dst, T16B, $src, $src\n\t"
             "ins    $dst, D, $val, $idx, 0\t# insert into vector(2D)" %}
   ins_encode %{
-    if (as_FloatRegister($dst$$reg) != as_FloatRegister($src$$reg)) {
-      __ orr(as_FloatRegister($dst$$reg), __ T16B,
-             as_FloatRegister($src$$reg), as_FloatRegister($src$$reg));
-    }
+    __ orr(as_FloatRegister($dst$$reg), __ T16B,
+           as_FloatRegister($src$$reg), as_FloatRegister($src$$reg));
     __ ins(as_FloatRegister($dst$$reg), __ D,
            as_FloatRegister($val$$reg), $idx$$constant, 0);
   %}
