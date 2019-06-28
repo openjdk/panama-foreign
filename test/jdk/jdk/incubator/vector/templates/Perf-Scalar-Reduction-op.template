@@ -1,6 +1,6 @@
 
     @Benchmark
-    public void [[TEST]][[TEST_TYPE]][[OP_NAME]](Blackhole bh) {
+    public void [[TEST]][[TEST_TYPE]][[OP_NAME]]Lanes(Blackhole bh) {
         $type$[] as = fa.apply(size);
         $type$ r = [[TEST_INIT]];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {

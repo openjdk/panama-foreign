@@ -93,15 +93,15 @@ public class AbstractVectorBenchmark {
         var v1 = lo.reshape(to);
         var v2 = hi.reshape(to).shiftLanesRight(vlen);
         var r = v2.blend(v1, lo_mask);
-        return r;
+        return (IntVector)r;
     }
 
     static VectorMask<Integer> mask(VectorSpecies<Integer> from, VectorSpecies<Integer> to, int i) {
         int vlen = from.length();
         var v1 = IntVector.broadcast(from, 1);    //                         [1 1 ... 1]
         var v2 = v1.reshape(to);                  // [0 0 ... 0 |   ...     | 1 1 ... 1]
-        var v3 = v2.shiftLanesRight(i * vlen);            // [0 0 ... 0 | 1 1 ... 1 | 0 0 ... 0]
-        return v3.notEqual(0);                    // [F F ... F | T T ... T | F F ... F]
+        var v3 = v2.shiftLanesRight(i * vlen);    // [0 0 ... 0 | 1 1 ... 1 | 0 0 ... 0]
+        return v3.notEqual(to.broadcast(0));      // [F F ... F | T T ... T | F F ... F]
     }
 
     static <E> IntVector sum(ByteVector va) {

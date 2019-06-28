@@ -564,7 +564,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void AND(Blackhole bh) {
+    public void ANDLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short ra = -1;
 
@@ -572,7 +572,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = -1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra &= av.AND();
+                ra &= av.reduceLanes(VectorOperators.AND);
             }
         }
         bh.consume(ra);
@@ -581,7 +581,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void ANDMasked(Blackhole bh) {
+    public void ANDMaskedLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Short> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -591,7 +591,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = -1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra &= av.AND(vmask);
+                ra &= av.reduceLanes(VectorOperators.AND, vmask);
             }
         }
         bh.consume(ra);
@@ -600,7 +600,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void OR(Blackhole bh) {
+    public void ORLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short ra = 0;
 
@@ -608,7 +608,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra |= av.OR();
+                ra |= av.reduceLanes(VectorOperators.OR);
             }
         }
         bh.consume(ra);
@@ -617,43 +617,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void ORMasked(Blackhole bh) {
-        short[] a = fa.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Short> vmask = VectorMask.fromValues(SPECIES, mask);
-        short ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra |= av.OR(vmask);
-            }
-        }
-        bh.consume(ra);
-    }
-
-
-
-    @Benchmark
-    public void XOR(Blackhole bh) {
-        short[] a = fa.apply(SPECIES.length());
-        short ra = 0;
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            ra = 0;
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra ^= av.XOR();
-            }
-        }
-        bh.consume(ra);
-    }
-
-
-
-    @Benchmark
-    public void XORMasked(Blackhole bh) {
+    public void ORMaskedLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Short> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -663,15 +627,16 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra ^= av.XOR(vmask);
+                ra |= av.reduceLanes(VectorOperators.OR, vmask);
             }
         }
         bh.consume(ra);
     }
 
 
+
     @Benchmark
-    public void ADD(Blackhole bh) {
+    public void XORLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short ra = 0;
 
@@ -679,14 +644,16 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra += av.ADD();
+                ra ^= av.reduceLanes(VectorOperators.XOR);
             }
         }
         bh.consume(ra);
     }
 
+
+
     @Benchmark
-    public void ADDMasked(Blackhole bh) {
+    public void XORMaskedLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Short> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -696,14 +663,47 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra += av.ADD(vmask);
+                ra ^= av.reduceLanes(VectorOperators.XOR, vmask);
+            }
+        }
+        bh.consume(ra);
+    }
+
+
+    @Benchmark
+    public void ADDLanes(Blackhole bh) {
+        short[] a = fa.apply(SPECIES.length());
+        short ra = 0;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
+                ra += av.reduceLanes(VectorOperators.ADD);
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MUL(Blackhole bh) {
+    public void ADDMaskedLanes(Blackhole bh) {
+        short[] a = fa.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Short> vmask = VectorMask.fromValues(SPECIES, mask);
+        short ra = 0;
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
+                ra += av.reduceLanes(VectorOperators.ADD, vmask);
+            }
+        }
+        bh.consume(ra);
+    }
+
+    @Benchmark
+    public void MULLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short ra = 1;
 
@@ -711,14 +711,14 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra *= av.MUL();
+                ra *= av.reduceLanes(VectorOperators.MUL);
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MULMasked(Blackhole bh) {
+    public void MULMaskedLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Short> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -728,14 +728,14 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra *= av.MUL(vmask);
+                ra *= av.reduceLanes(VectorOperators.MUL, vmask);
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MIN(Blackhole bh) {
+    public void MINLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short ra = Short.MAX_VALUE;
 
@@ -743,14 +743,14 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = Short.MAX_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra = (short)Math.min(ra, av.MIN());
+                ra = (short)Math.min(ra, av.reduceLanes(VectorOperators.MIN));
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MINMasked(Blackhole bh) {
+    public void MINMaskedLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Short> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -760,14 +760,14 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = Short.MAX_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra = (short)Math.min(ra, av.MIN(vmask));
+                ra = (short)Math.min(ra, av.reduceLanes(VectorOperators.MIN, vmask));
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MAX(Blackhole bh) {
+    public void MAXLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short ra = Short.MIN_VALUE;
 
@@ -775,14 +775,14 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = Short.MIN_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra = (short)Math.max(ra, av.MAX());
+                ra = (short)Math.max(ra, av.reduceLanes(VectorOperators.MAX));
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MAXMasked(Blackhole bh) {
+    public void MAXMaskedLanes(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Short> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -792,7 +792,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             ra = Short.MIN_VALUE;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
-                ra = (short)Math.max(ra, av.MAX(vmask));
+                ra = (short)Math.max(ra, av.reduceLanes(VectorOperators.MAX, vmask));
             }
         }
         bh.consume(ra);
@@ -858,7 +858,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 ShortVector bv = ShortVector.fromArray(SPECIES, b, i);
-                VectorMask<Short> mv = av.LT(bv);
+                VectorMask<Short> mv = av.compare(VectorOperators.LT, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -878,7 +878,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 ShortVector bv = ShortVector.fromArray(SPECIES, b, i);
-                VectorMask<Short> mv = av.GT(bv);
+                VectorMask<Short> mv = av.compare(VectorOperators.GT, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -898,7 +898,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 ShortVector bv = ShortVector.fromArray(SPECIES, b, i);
-                VectorMask<Short> mv = av.EQ(bv);
+                VectorMask<Short> mv = av.compare(VectorOperators.EQ, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -918,7 +918,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 ShortVector bv = ShortVector.fromArray(SPECIES, b, i);
-                VectorMask<Short> mv = av.NE(bv);
+                VectorMask<Short> mv = av.compare(VectorOperators.NE, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -938,7 +938,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 ShortVector bv = ShortVector.fromArray(SPECIES, b, i);
-                VectorMask<Short> mv = av.LE(bv);
+                VectorMask<Short> mv = av.compare(VectorOperators.LE, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -958,7 +958,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 ShortVector bv = ShortVector.fromArray(SPECIES, b, i);
-                VectorMask<Short> mv = av.GE(bv);
+                VectorMask<Short> mv = av.compare(VectorOperators.GE, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }

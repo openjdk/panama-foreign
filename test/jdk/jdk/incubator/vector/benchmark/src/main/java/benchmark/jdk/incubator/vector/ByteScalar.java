@@ -572,7 +572,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void AND(Blackhole bh) {
+    public void ANDLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = -1;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -587,7 +587,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void ANDMasked(Blackhole bh) {
+    public void ANDMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = -1;
@@ -604,7 +604,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void OR(Blackhole bh) {
+    public void ORLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -619,7 +619,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void ORMasked(Blackhole bh) {
+    public void ORMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = 0;
@@ -636,7 +636,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void XOR(Blackhole bh) {
+    public void XORLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -651,7 +651,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void XORMasked(Blackhole bh) {
+    public void XORMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = 0;
@@ -667,7 +667,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void ADD(Blackhole bh) {
+    public void ADDLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -680,7 +680,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void ADDMasked(Blackhole bh) {
+    public void ADDMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = 0;
@@ -695,7 +695,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void MUL(Blackhole bh) {
+    public void MULLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = 1;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -708,7 +708,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void MULMasked(Blackhole bh) {
+    public void MULMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = 1;
@@ -723,7 +723,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void MIN(Blackhole bh) {
+    public void MINLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = Byte.MAX_VALUE;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -736,7 +736,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void MINMasked(Blackhole bh) {
+    public void MINMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = Byte.MAX_VALUE;
@@ -751,7 +751,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void MAX(Blackhole bh) {
+    public void MAXLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = Byte.MIN_VALUE;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -764,7 +764,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void MAXMasked(Blackhole bh) {
+    public void MAXMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = Byte.MIN_VALUE;

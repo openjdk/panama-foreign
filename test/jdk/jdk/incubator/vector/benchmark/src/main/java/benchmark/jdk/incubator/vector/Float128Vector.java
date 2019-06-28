@@ -347,7 +347,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void ADD(Blackhole bh) {
+    public void ADDLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float ra = 0;
 
@@ -355,14 +355,14 @@ public class Float128Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra += av.ADD();
+                ra += av.reduceLanes(VectorOperators.ADD);
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void ADDMasked(Blackhole bh) {
+    public void ADDMaskedLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -372,14 +372,14 @@ public class Float128Vector extends AbstractVectorBenchmark {
             ra = 0;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra += av.ADD(vmask);
+                ra += av.reduceLanes(VectorOperators.ADD, vmask);
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MUL(Blackhole bh) {
+    public void MULLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float ra = 1;
 
@@ -387,14 +387,14 @@ public class Float128Vector extends AbstractVectorBenchmark {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra *= av.MUL();
+                ra *= av.reduceLanes(VectorOperators.MUL);
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MULMasked(Blackhole bh) {
+    public void MULMaskedLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -404,14 +404,14 @@ public class Float128Vector extends AbstractVectorBenchmark {
             ra = 1;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra *= av.MUL(vmask);
+                ra *= av.reduceLanes(VectorOperators.MUL, vmask);
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MIN(Blackhole bh) {
+    public void MINLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float ra = Float.POSITIVE_INFINITY;
 
@@ -419,14 +419,14 @@ public class Float128Vector extends AbstractVectorBenchmark {
             ra = Float.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.min(ra, av.MIN());
+                ra = (float)Math.min(ra, av.reduceLanes(VectorOperators.MIN));
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MINMasked(Blackhole bh) {
+    public void MINMaskedLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -436,14 +436,14 @@ public class Float128Vector extends AbstractVectorBenchmark {
             ra = Float.POSITIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.min(ra, av.MIN(vmask));
+                ra = (float)Math.min(ra, av.reduceLanes(VectorOperators.MIN, vmask));
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MAX(Blackhole bh) {
+    public void MAXLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         float ra = Float.NEGATIVE_INFINITY;
 
@@ -451,14 +451,14 @@ public class Float128Vector extends AbstractVectorBenchmark {
             ra = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.max(ra, av.MAX());
+                ra = (float)Math.max(ra, av.reduceLanes(VectorOperators.MAX));
             }
         }
         bh.consume(ra);
     }
 
     @Benchmark
-    public void MAXMasked(Blackhole bh) {
+    public void MAXMaskedLanes(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         VectorMask<Float> vmask = VectorMask.fromValues(SPECIES, mask);
@@ -468,7 +468,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
             ra = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
-                ra = (float)Math.max(ra, av.MAX(vmask));
+                ra = (float)Math.max(ra, av.reduceLanes(VectorOperators.MAX, vmask));
             }
         }
         bh.consume(ra);
@@ -502,7 +502,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.LT(bv);
+                VectorMask<Float> mv = av.compare(VectorOperators.LT, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -522,7 +522,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.GT(bv);
+                VectorMask<Float> mv = av.compare(VectorOperators.GT, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -542,7 +542,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.EQ(bv);
+                VectorMask<Float> mv = av.compare(VectorOperators.EQ, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -562,7 +562,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.NE(bv);
+                VectorMask<Float> mv = av.compare(VectorOperators.NE, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -582,7 +582,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.LE(bv);
+                VectorMask<Float> mv = av.compare(VectorOperators.LE, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -602,7 +602,7 @@ public class Float128Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector av = FloatVector.fromArray(SPECIES, a, i);
                 FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
-                VectorMask<Float> mv = av.GE(bv);
+                VectorMask<Float> mv = av.compare(VectorOperators.GE, bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
