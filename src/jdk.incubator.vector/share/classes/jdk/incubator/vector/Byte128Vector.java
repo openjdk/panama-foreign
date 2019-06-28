@@ -163,13 +163,14 @@ final class Byte128Vector extends ByteVector {
 
     final @Override
     Byte128Vector uOp(FUnOp f) {
-        return (Byte128Vector) super.uOp(f);  // specialize
+        return (Byte128Vector) super.uOpTemplate(f);  // specialize
     }
 
     @ForceInline
     final @Override
     Byte128Vector uOp(VectorMask<Byte> m, FUnOp f) {
-        return (Byte128Vector) super.uOp((Byte128Mask)m, f);  // specialize
+        return (Byte128Vector)
+            super.uOpTemplate((Byte128Mask)m, f);  // specialize
     }
 
     // Binary operator
@@ -177,15 +178,16 @@ final class Byte128Vector extends ByteVector {
     @ForceInline
     final @Override
     Byte128Vector bOp(Vector<Byte> v, FBinOp f) {
-        return (Byte128Vector) super.bOp((Byte128Vector)v, f);  // specialize
+        return (Byte128Vector) super.bOpTemplate((Byte128Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
     Byte128Vector bOp(Vector<Byte> v,
                      VectorMask<Byte> m, FBinOp f) {
-        return (Byte128Vector) super.bOp((Byte128Vector)v, (Byte128Mask)m,
-                                        f);  // specialize
+        return (Byte128Vector)
+            super.bOpTemplate((Byte128Vector)v, (Byte128Mask)m,
+                              f);  // specialize
     }
 
     // Ternary operator
@@ -193,22 +195,24 @@ final class Byte128Vector extends ByteVector {
     @ForceInline
     final @Override
     Byte128Vector tOp(Vector<Byte> v1, Vector<Byte> v2, FTriOp f) {
-        return (Byte128Vector) super.tOp((Byte128Vector)v1, (Byte128Vector)v2,
-                                        f);  // specialize
+        return (Byte128Vector)
+            super.tOpTemplate((Byte128Vector)v1, (Byte128Vector)v2,
+                              f);  // specialize
     }
 
     @ForceInline
     final @Override
     Byte128Vector tOp(Vector<Byte> v1, Vector<Byte> v2,
                      VectorMask<Byte> m, FTriOp f) {
-        return (Byte128Vector) super.tOp((Byte128Vector)v1, (Byte128Vector)v2,
-                                        (Byte128Mask)m, f);  // specialize
+        return (Byte128Vector)
+            super.tOpTemplate((Byte128Vector)v1, (Byte128Vector)v2,
+                              (Byte128Mask)m, f);  // specialize
     }
 
     @ForceInline
     final @Override
     byte rOp(byte v, FBinOp f) {
-        return super.rOp(v, f);  // specialize
+        return super.rOpTemplate(v, f);  // specialize
     }
 
     @Override
@@ -699,35 +703,35 @@ final class Byte128Vector extends ByteVector {
     @Override
     final
     ByteVector fromArray0(byte[] a, int offset) {
-        return super.fromArray0(a, offset);  // specialize
+        return super.fromArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     ByteVector fromByteArray0(byte[] a, int offset) {
-        return super.fromByteArray0(a, offset);  // specialize
+        return super.fromByteArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     ByteVector fromByteBuffer0(ByteBuffer bb, int offset) {
-        return super.fromByteBuffer0(bb, offset);  // specialize
+        return super.fromByteBuffer0Template(bb, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoArray0(byte[] a, int offset) {
-        super.intoArray0(a, offset);  // specialize
+        super.intoArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoByteArray0(byte[] a, int offset) {
-        super.intoByteArray0(a, offset);  // specialize
+        super.intoByteArray0Template(a, offset);  // specialize
     }
 
     // End of specialized low-level memory operations.

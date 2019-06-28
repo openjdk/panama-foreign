@@ -106,6 +106,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      */
     /*package-private*/
     @ForceInline
+    final
     AbstractMask<Long> maskFactory(boolean[] bits) {
         return vspecies().maskFactory(bits);
     }
@@ -117,6 +118,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     LongVector vOp(FVOp f) {
         long[] res = new long[length()];
         for (int i = 0; i < res.length; i++) {
@@ -126,6 +128,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     @ForceInline
+    final
     LongVector vOp(VectorMask<Long> m, FVOp f) {
         long[] res = new long[length()];
         boolean[] mbits = ((AbstractMask<Long>)m).getBits();
@@ -145,8 +148,11 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /*package-private*/
+    abstract
+    LongVector uOp(FUnOp f);
     @ForceInline
-    LongVector uOp(FUnOp f) {
+    final
+    LongVector uOpTemplate(FUnOp f) {
         long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < res.length; i++) {
@@ -156,9 +162,13 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     LongVector uOp(VectorMask<Long> m,
-                             FUnOp f) {
+                             FUnOp f);
+    @ForceInline
+    final
+    LongVector uOpTemplate(VectorMask<Long> m,
+                                     FUnOp f) {
         long[] vec = getElements();
         long[] res = new long[length()];
         boolean[] mbits = ((AbstractMask<Long>)m).getBits();
@@ -176,9 +186,13 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     LongVector bOp(Vector<Long> o,
-                             FBinOp f) {
+                             FBinOp f);
+    @ForceInline
+    final
+    LongVector bOpTemplate(Vector<Long> o,
+                                     FBinOp f) {
         long[] res = new long[length()];
         long[] vec1 = this.getElements();
         long[] vec2 = ((LongVector)o).getElements();
@@ -189,10 +203,15 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     LongVector bOp(Vector<Long> o,
                              VectorMask<Long> m,
-                             FBinOp f) {
+                             FBinOp f);
+    @ForceInline
+    final
+    LongVector bOpTemplate(Vector<Long> o,
+                                     VectorMask<Long> m,
+                                     FBinOp f) {
         long[] res = new long[length()];
         long[] vec1 = this.getElements();
         long[] vec2 = ((LongVector)o).getElements();
@@ -211,10 +230,15 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     LongVector tOp(Vector<Long> o1,
                              Vector<Long> o2,
-                             FTriOp f) {
+                             FTriOp f);
+    @ForceInline
+    final
+    LongVector tOpTemplate(Vector<Long> o1,
+                                     Vector<Long> o2,
+                                     FTriOp f) {
         long[] res = new long[length()];
         long[] vec1 = this.getElements();
         long[] vec2 = ((LongVector)o1).getElements();
@@ -226,11 +250,17 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     LongVector tOp(Vector<Long> o1,
                              Vector<Long> o2,
                              VectorMask<Long> m,
-                             FTriOp f) {
+                             FTriOp f);
+    @ForceInline
+    final
+    LongVector tOpTemplate(Vector<Long> o1,
+                                     Vector<Long> o2,
+                                     VectorMask<Long> m,
+                                     FTriOp f) {
         long[] res = new long[length()];
         long[] vec1 = this.getElements();
         long[] vec2 = ((LongVector)o1).getElements();
@@ -245,8 +275,11 @@ public abstract class LongVector extends AbstractVector<Long> {
     // Reduction operator
 
     /*package-private*/
+    abstract
+    long rOp(long v, FBinOp f);
     @ForceInline
-    long rOp(long v, FBinOp f) {
+    final
+    long rOpTemplate(long v, FBinOp f) {
         long[] vec = getElements();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
@@ -263,6 +296,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> LongVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
         //dummy; no vec = getElements();
@@ -275,6 +309,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> LongVector ldOp(M memory, int offset,
                                   VectorMask<Long> m,
                                   FLdOp<M> f) {
@@ -295,6 +330,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
         long[] vec = getElements();
@@ -305,6 +341,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> void stOp(M memory, int offset,
                   VectorMask<Long> m,
                   FStOp<M> f) {
@@ -326,6 +363,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     AbstractMask<Long> bTest(int cond,
                                   Vector<Long> o,
                                   FBinTest f) {
@@ -353,7 +391,6 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /*package-private*/
-    @ForceInline
     @Override
     abstract LongSpecies vspecies();
 
@@ -1639,6 +1676,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     VectorMask<Long> compare(VectorOperators.Comparison op, Vector<Long> v);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Long>>
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Long> v) {
@@ -1658,6 +1696,7 @@ public abstract class LongVector extends AbstractVector<Long> {
             });
     }
 
+    @ForceInline
     private static
     boolean compareWithOp(int cond, long a, long b) {
         switch (cond) {
@@ -1709,6 +1748,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     VectorMask<Long> compare(Comparison op, long e);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Long>>
     M compareTemplate(Class<M> maskType, Comparison op, long e) {
@@ -1750,6 +1790,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     <M extends VectorMask<Long>>
     LongVector
     blendTemplate(Class<M> maskType, LongVector v, M m) {
@@ -1924,6 +1965,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Long>>
     LongVector rearrangeTemplate(Class<S> shuffletype, S shuffle) {
         shuffle.checkIndexes();
@@ -1946,6 +1988,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Long>>
     LongVector rearrangeTemplate(Class<S> shuffletype,
                                            S shuffle,
@@ -1976,6 +2019,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Long>>
     LongVector rearrangeTemplate(Class<S> shuffletype,
                                            S shuffle,
@@ -2234,6 +2278,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     long reduceLanesTemplate(VectorOperators.Associative op,
                                VectorMask<Long> m) {
         LongVector v = reduceIdentityVector(op).blend(this, m);
@@ -2242,6 +2287,7 @@ public abstract class LongVector extends AbstractVector<Long> {
 
     /*package-private*/
     @ForceInline
+    final
     long reduceLanesTemplate(VectorOperators.Associative op) {
         if (op == FIRST_NONZERO) {
             // FIXME:  The JIT should handle this, and other scan ops alos.
@@ -3080,8 +3126,11 @@ public abstract class LongVector extends AbstractVector<Long> {
     // byte swapping.
 
     /*package-private*/
+    abstract
+    LongVector fromArray0(long[] a, int offset);
     @ForceInline
-    LongVector fromArray0(long[] a, int offset) {
+    final
+    LongVector fromArray0Template(long[] a, int offset) {
         LongSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3091,9 +3140,12 @@ public abstract class LongVector extends AbstractVector<Long> {
                                     (arr_, off_, i) -> arr_[off_ + i]));
     }
 
-    @ForceInline
     @Override
-    LongVector fromByteArray0(byte[] a, int offset) {
+    abstract
+    LongVector fromByteArray0(byte[] a, int offset);
+    @ForceInline
+    final
+    LongVector fromByteArray0Template(byte[] a, int offset) {
         LongSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3105,8 +3157,11 @@ public abstract class LongVector extends AbstractVector<Long> {
             });
     }
 
+    abstract
+    LongVector fromByteBuffer0(ByteBuffer bb, int offset);
     @ForceInline
-    LongVector fromByteBuffer0(ByteBuffer bb, int offset) {
+    final
+    LongVector fromByteBuffer0Template(ByteBuffer bb, int offset) {
         LongSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3122,8 +3177,11 @@ public abstract class LongVector extends AbstractVector<Long> {
     // Caller is reponsible for applying index checks, masking, and
     // byte swapping.
 
+    abstract
+    void intoArray0(long[] a, int offset);
     @ForceInline
-    void intoArray0(long[] a, int offset) {
+    final
+    void intoArray0Template(long[] a, int offset) {
         LongSpecies vsp = vspecies();
         VectorIntrinsics.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3134,8 +3192,11 @@ public abstract class LongVector extends AbstractVector<Long> {
                       (arr_, off_, i, e) -> arr_[off_+i] = e));
     }
 
+    abstract
+    void intoByteArray0(byte[] a, int offset);
     @ForceInline
-    void intoByteArray0(byte[] a, int offset) {
+    final
+    void intoByteArray0Template(byte[] a, int offset) {
         LongSpecies vsp = vspecies();
         VectorIntrinsics.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3148,6 +3209,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     @ForceInline
+    final
     void intoByteBuffer0(ByteBuffer bb, int offset) {
         LongSpecies vsp = vspecies();
         VectorIntrinsics.store(
@@ -3172,6 +3234,7 @@ public abstract class LongVector extends AbstractVector<Long> {
             .checkIndexByLane(offset, limit, vsp.iota(), scale);
     }
 
+    @ForceInline
     private void conditionalStoreNYI(int offset,
                                      LongSpecies vsp,
                                      VectorMask<Long> m,
@@ -3188,6 +3251,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     /*package-private*/
     @Override
     @ForceInline
+    final
     LongVector maybeSwap(ByteOrder bo) {
         if (bo != NATIVE_ENDIAN) {
             return this.reinterpretAsBytes()

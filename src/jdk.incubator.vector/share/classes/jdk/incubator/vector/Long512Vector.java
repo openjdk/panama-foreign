@@ -159,13 +159,14 @@ final class Long512Vector extends LongVector {
 
     final @Override
     Long512Vector uOp(FUnOp f) {
-        return (Long512Vector) super.uOp(f);  // specialize
+        return (Long512Vector) super.uOpTemplate(f);  // specialize
     }
 
     @ForceInline
     final @Override
     Long512Vector uOp(VectorMask<Long> m, FUnOp f) {
-        return (Long512Vector) super.uOp((Long512Mask)m, f);  // specialize
+        return (Long512Vector)
+            super.uOpTemplate((Long512Mask)m, f);  // specialize
     }
 
     // Binary operator
@@ -173,15 +174,16 @@ final class Long512Vector extends LongVector {
     @ForceInline
     final @Override
     Long512Vector bOp(Vector<Long> v, FBinOp f) {
-        return (Long512Vector) super.bOp((Long512Vector)v, f);  // specialize
+        return (Long512Vector) super.bOpTemplate((Long512Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
     Long512Vector bOp(Vector<Long> v,
                      VectorMask<Long> m, FBinOp f) {
-        return (Long512Vector) super.bOp((Long512Vector)v, (Long512Mask)m,
-                                        f);  // specialize
+        return (Long512Vector)
+            super.bOpTemplate((Long512Vector)v, (Long512Mask)m,
+                              f);  // specialize
     }
 
     // Ternary operator
@@ -189,22 +191,24 @@ final class Long512Vector extends LongVector {
     @ForceInline
     final @Override
     Long512Vector tOp(Vector<Long> v1, Vector<Long> v2, FTriOp f) {
-        return (Long512Vector) super.tOp((Long512Vector)v1, (Long512Vector)v2,
-                                        f);  // specialize
+        return (Long512Vector)
+            super.tOpTemplate((Long512Vector)v1, (Long512Vector)v2,
+                              f);  // specialize
     }
 
     @ForceInline
     final @Override
     Long512Vector tOp(Vector<Long> v1, Vector<Long> v2,
                      VectorMask<Long> m, FTriOp f) {
-        return (Long512Vector) super.tOp((Long512Vector)v1, (Long512Vector)v2,
-                                        (Long512Mask)m, f);  // specialize
+        return (Long512Vector)
+            super.tOpTemplate((Long512Vector)v1, (Long512Vector)v2,
+                              (Long512Mask)m, f);  // specialize
     }
 
     @ForceInline
     final @Override
     long rOp(long v, FBinOp f) {
-        return super.rOp(v, f);  // specialize
+        return super.rOpTemplate(v, f);  // specialize
     }
 
     @Override
@@ -690,35 +694,35 @@ final class Long512Vector extends LongVector {
     @Override
     final
     LongVector fromArray0(long[] a, int offset) {
-        return super.fromArray0(a, offset);  // specialize
+        return super.fromArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     LongVector fromByteArray0(byte[] a, int offset) {
-        return super.fromByteArray0(a, offset);  // specialize
+        return super.fromByteArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     LongVector fromByteBuffer0(ByteBuffer bb, int offset) {
-        return super.fromByteBuffer0(bb, offset);  // specialize
+        return super.fromByteBuffer0Template(bb, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoArray0(long[] a, int offset) {
-        super.intoArray0(a, offset);  // specialize
+        super.intoArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoByteArray0(byte[] a, int offset) {
-        super.intoByteArray0(a, offset);  // specialize
+        super.intoByteArray0Template(a, offset);  // specialize
     }
 
     // End of specialized low-level memory operations.

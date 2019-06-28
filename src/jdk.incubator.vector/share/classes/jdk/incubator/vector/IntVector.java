@@ -106,6 +106,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      */
     /*package-private*/
     @ForceInline
+    final
     AbstractMask<Integer> maskFactory(boolean[] bits) {
         return vspecies().maskFactory(bits);
     }
@@ -117,6 +118,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     IntVector vOp(FVOp f) {
         int[] res = new int[length()];
         for (int i = 0; i < res.length; i++) {
@@ -126,6 +128,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     @ForceInline
+    final
     IntVector vOp(VectorMask<Integer> m, FVOp f) {
         int[] res = new int[length()];
         boolean[] mbits = ((AbstractMask<Integer>)m).getBits();
@@ -145,8 +148,11 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /*package-private*/
+    abstract
+    IntVector uOp(FUnOp f);
     @ForceInline
-    IntVector uOp(FUnOp f) {
+    final
+    IntVector uOpTemplate(FUnOp f) {
         int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < res.length; i++) {
@@ -156,9 +162,13 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     IntVector uOp(VectorMask<Integer> m,
-                             FUnOp f) {
+                             FUnOp f);
+    @ForceInline
+    final
+    IntVector uOpTemplate(VectorMask<Integer> m,
+                                     FUnOp f) {
         int[] vec = getElements();
         int[] res = new int[length()];
         boolean[] mbits = ((AbstractMask<Integer>)m).getBits();
@@ -176,9 +186,13 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     IntVector bOp(Vector<Integer> o,
-                             FBinOp f) {
+                             FBinOp f);
+    @ForceInline
+    final
+    IntVector bOpTemplate(Vector<Integer> o,
+                                     FBinOp f) {
         int[] res = new int[length()];
         int[] vec1 = this.getElements();
         int[] vec2 = ((IntVector)o).getElements();
@@ -189,10 +203,15 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     IntVector bOp(Vector<Integer> o,
                              VectorMask<Integer> m,
-                             FBinOp f) {
+                             FBinOp f);
+    @ForceInline
+    final
+    IntVector bOpTemplate(Vector<Integer> o,
+                                     VectorMask<Integer> m,
+                                     FBinOp f) {
         int[] res = new int[length()];
         int[] vec1 = this.getElements();
         int[] vec2 = ((IntVector)o).getElements();
@@ -211,10 +230,15 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     IntVector tOp(Vector<Integer> o1,
                              Vector<Integer> o2,
-                             FTriOp f) {
+                             FTriOp f);
+    @ForceInline
+    final
+    IntVector tOpTemplate(Vector<Integer> o1,
+                                     Vector<Integer> o2,
+                                     FTriOp f) {
         int[] res = new int[length()];
         int[] vec1 = this.getElements();
         int[] vec2 = ((IntVector)o1).getElements();
@@ -226,11 +250,17 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     IntVector tOp(Vector<Integer> o1,
                              Vector<Integer> o2,
                              VectorMask<Integer> m,
-                             FTriOp f) {
+                             FTriOp f);
+    @ForceInline
+    final
+    IntVector tOpTemplate(Vector<Integer> o1,
+                                     Vector<Integer> o2,
+                                     VectorMask<Integer> m,
+                                     FTriOp f) {
         int[] res = new int[length()];
         int[] vec1 = this.getElements();
         int[] vec2 = ((IntVector)o1).getElements();
@@ -245,8 +275,11 @@ public abstract class IntVector extends AbstractVector<Integer> {
     // Reduction operator
 
     /*package-private*/
+    abstract
+    int rOp(int v, FBinOp f);
     @ForceInline
-    int rOp(int v, FBinOp f) {
+    final
+    int rOpTemplate(int v, FBinOp f) {
         int[] vec = getElements();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
@@ -263,6 +296,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> IntVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
         //dummy; no vec = getElements();
@@ -275,6 +309,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> IntVector ldOp(M memory, int offset,
                                   VectorMask<Integer> m,
                                   FLdOp<M> f) {
@@ -295,6 +330,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
         int[] vec = getElements();
@@ -305,6 +341,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> void stOp(M memory, int offset,
                   VectorMask<Integer> m,
                   FStOp<M> f) {
@@ -326,6 +363,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     AbstractMask<Integer> bTest(int cond,
                                   Vector<Integer> o,
                                   FBinTest f) {
@@ -353,7 +391,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /*package-private*/
-    @ForceInline
     @Override
     abstract IntSpecies vspecies();
 
@@ -1720,6 +1757,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     VectorMask<Integer> compare(VectorOperators.Comparison op, Vector<Integer> v);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Integer>>
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Integer> v) {
@@ -1739,6 +1777,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
             });
     }
 
+    @ForceInline
     private static
     boolean compareWithOp(int cond, int a, int b) {
         switch (cond) {
@@ -1790,6 +1829,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     VectorMask<Integer> compare(Comparison op, int e);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Integer>>
     M compareTemplate(Class<M> maskType, Comparison op, int e) {
@@ -1830,6 +1870,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     VectorMask<Integer> compare(Comparison op, long e);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Integer>>
     M compareTemplate(Class<M> maskType, Comparison op, long e) {
@@ -1856,6 +1897,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     <M extends VectorMask<Integer>>
     IntVector
     blendTemplate(Class<M> maskType, IntVector v, M m) {
@@ -2051,6 +2093,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Integer>>
     IntVector rearrangeTemplate(Class<S> shuffletype, S shuffle) {
         shuffle.checkIndexes();
@@ -2073,6 +2116,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Integer>>
     IntVector rearrangeTemplate(Class<S> shuffletype,
                                            S shuffle,
@@ -2103,6 +2147,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Integer>>
     IntVector rearrangeTemplate(Class<S> shuffletype,
                                            S shuffle,
@@ -2361,6 +2406,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     int reduceLanesTemplate(VectorOperators.Associative op,
                                VectorMask<Integer> m) {
         IntVector v = reduceIdentityVector(op).blend(this, m);
@@ -2369,6 +2415,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
     /*package-private*/
     @ForceInline
+    final
     int reduceLanesTemplate(VectorOperators.Associative op) {
         if (op == FIRST_NONZERO) {
             // FIXME:  The JIT should handle this, and other scan ops alos.
@@ -3207,8 +3254,11 @@ public abstract class IntVector extends AbstractVector<Integer> {
     // byte swapping.
 
     /*package-private*/
+    abstract
+    IntVector fromArray0(int[] a, int offset);
     @ForceInline
-    IntVector fromArray0(int[] a, int offset) {
+    final
+    IntVector fromArray0Template(int[] a, int offset) {
         IntSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3218,9 +3268,12 @@ public abstract class IntVector extends AbstractVector<Integer> {
                                     (arr_, off_, i) -> arr_[off_ + i]));
     }
 
-    @ForceInline
     @Override
-    IntVector fromByteArray0(byte[] a, int offset) {
+    abstract
+    IntVector fromByteArray0(byte[] a, int offset);
+    @ForceInline
+    final
+    IntVector fromByteArray0Template(byte[] a, int offset) {
         IntSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3232,8 +3285,11 @@ public abstract class IntVector extends AbstractVector<Integer> {
             });
     }
 
+    abstract
+    IntVector fromByteBuffer0(ByteBuffer bb, int offset);
     @ForceInline
-    IntVector fromByteBuffer0(ByteBuffer bb, int offset) {
+    final
+    IntVector fromByteBuffer0Template(ByteBuffer bb, int offset) {
         IntSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3249,8 +3305,11 @@ public abstract class IntVector extends AbstractVector<Integer> {
     // Caller is reponsible for applying index checks, masking, and
     // byte swapping.
 
+    abstract
+    void intoArray0(int[] a, int offset);
     @ForceInline
-    void intoArray0(int[] a, int offset) {
+    final
+    void intoArray0Template(int[] a, int offset) {
         IntSpecies vsp = vspecies();
         VectorIntrinsics.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3261,8 +3320,11 @@ public abstract class IntVector extends AbstractVector<Integer> {
                       (arr_, off_, i, e) -> arr_[off_+i] = e));
     }
 
+    abstract
+    void intoByteArray0(byte[] a, int offset);
     @ForceInline
-    void intoByteArray0(byte[] a, int offset) {
+    final
+    void intoByteArray0Template(byte[] a, int offset) {
         IntSpecies vsp = vspecies();
         VectorIntrinsics.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3275,6 +3337,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     @ForceInline
+    final
     void intoByteBuffer0(ByteBuffer bb, int offset) {
         IntSpecies vsp = vspecies();
         VectorIntrinsics.store(
@@ -3299,6 +3362,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
             .checkIndexByLane(offset, limit, vsp.iota(), scale);
     }
 
+    @ForceInline
     private void conditionalStoreNYI(int offset,
                                      IntSpecies vsp,
                                      VectorMask<Integer> m,
@@ -3315,6 +3379,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     /*package-private*/
     @Override
     @ForceInline
+    final
     IntVector maybeSwap(ByteOrder bo) {
         if (bo != NATIVE_ENDIAN) {
             return this.reinterpretAsBytes()

@@ -164,13 +164,14 @@ final class Float64Vector extends FloatVector {
 
     final @Override
     Float64Vector uOp(FUnOp f) {
-        return (Float64Vector) super.uOp(f);  // specialize
+        return (Float64Vector) super.uOpTemplate(f);  // specialize
     }
 
     @ForceInline
     final @Override
     Float64Vector uOp(VectorMask<Float> m, FUnOp f) {
-        return (Float64Vector) super.uOp((Float64Mask)m, f);  // specialize
+        return (Float64Vector)
+            super.uOpTemplate((Float64Mask)m, f);  // specialize
     }
 
     // Binary operator
@@ -178,15 +179,16 @@ final class Float64Vector extends FloatVector {
     @ForceInline
     final @Override
     Float64Vector bOp(Vector<Float> v, FBinOp f) {
-        return (Float64Vector) super.bOp((Float64Vector)v, f);  // specialize
+        return (Float64Vector) super.bOpTemplate((Float64Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
     Float64Vector bOp(Vector<Float> v,
                      VectorMask<Float> m, FBinOp f) {
-        return (Float64Vector) super.bOp((Float64Vector)v, (Float64Mask)m,
-                                        f);  // specialize
+        return (Float64Vector)
+            super.bOpTemplate((Float64Vector)v, (Float64Mask)m,
+                              f);  // specialize
     }
 
     // Ternary operator
@@ -194,22 +196,24 @@ final class Float64Vector extends FloatVector {
     @ForceInline
     final @Override
     Float64Vector tOp(Vector<Float> v1, Vector<Float> v2, FTriOp f) {
-        return (Float64Vector) super.tOp((Float64Vector)v1, (Float64Vector)v2,
-                                        f);  // specialize
+        return (Float64Vector)
+            super.tOpTemplate((Float64Vector)v1, (Float64Vector)v2,
+                              f);  // specialize
     }
 
     @ForceInline
     final @Override
     Float64Vector tOp(Vector<Float> v1, Vector<Float> v2,
                      VectorMask<Float> m, FTriOp f) {
-        return (Float64Vector) super.tOp((Float64Vector)v1, (Float64Vector)v2,
-                                        (Float64Mask)m, f);  // specialize
+        return (Float64Vector)
+            super.tOpTemplate((Float64Vector)v1, (Float64Vector)v2,
+                              (Float64Mask)m, f);  // specialize
     }
 
     @ForceInline
     final @Override
     float rOp(float v, FBinOp f) {
-        return super.rOp(v, f);  // specialize
+        return super.rOpTemplate(v, f);  // specialize
     }
 
     @Override
@@ -695,35 +699,35 @@ final class Float64Vector extends FloatVector {
     @Override
     final
     FloatVector fromArray0(float[] a, int offset) {
-        return super.fromArray0(a, offset);  // specialize
+        return super.fromArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     FloatVector fromByteArray0(byte[] a, int offset) {
-        return super.fromByteArray0(a, offset);  // specialize
+        return super.fromByteArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     FloatVector fromByteBuffer0(ByteBuffer bb, int offset) {
-        return super.fromByteBuffer0(bb, offset);  // specialize
+        return super.fromByteBuffer0Template(bb, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoArray0(float[] a, int offset) {
-        super.intoArray0(a, offset);  // specialize
+        super.intoArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoByteArray0(byte[] a, int offset) {
-        super.intoByteArray0(a, offset);  // specialize
+        super.intoByteArray0Template(a, offset);  // specialize
     }
 
     // End of specialized low-level memory operations.

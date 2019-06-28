@@ -164,13 +164,14 @@ final class Double64Vector extends DoubleVector {
 
     final @Override
     Double64Vector uOp(FUnOp f) {
-        return (Double64Vector) super.uOp(f);  // specialize
+        return (Double64Vector) super.uOpTemplate(f);  // specialize
     }
 
     @ForceInline
     final @Override
     Double64Vector uOp(VectorMask<Double> m, FUnOp f) {
-        return (Double64Vector) super.uOp((Double64Mask)m, f);  // specialize
+        return (Double64Vector)
+            super.uOpTemplate((Double64Mask)m, f);  // specialize
     }
 
     // Binary operator
@@ -178,15 +179,16 @@ final class Double64Vector extends DoubleVector {
     @ForceInline
     final @Override
     Double64Vector bOp(Vector<Double> v, FBinOp f) {
-        return (Double64Vector) super.bOp((Double64Vector)v, f);  // specialize
+        return (Double64Vector) super.bOpTemplate((Double64Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
     Double64Vector bOp(Vector<Double> v,
                      VectorMask<Double> m, FBinOp f) {
-        return (Double64Vector) super.bOp((Double64Vector)v, (Double64Mask)m,
-                                        f);  // specialize
+        return (Double64Vector)
+            super.bOpTemplate((Double64Vector)v, (Double64Mask)m,
+                              f);  // specialize
     }
 
     // Ternary operator
@@ -194,22 +196,24 @@ final class Double64Vector extends DoubleVector {
     @ForceInline
     final @Override
     Double64Vector tOp(Vector<Double> v1, Vector<Double> v2, FTriOp f) {
-        return (Double64Vector) super.tOp((Double64Vector)v1, (Double64Vector)v2,
-                                        f);  // specialize
+        return (Double64Vector)
+            super.tOpTemplate((Double64Vector)v1, (Double64Vector)v2,
+                              f);  // specialize
     }
 
     @ForceInline
     final @Override
     Double64Vector tOp(Vector<Double> v1, Vector<Double> v2,
                      VectorMask<Double> m, FTriOp f) {
-        return (Double64Vector) super.tOp((Double64Vector)v1, (Double64Vector)v2,
-                                        (Double64Mask)m, f);  // specialize
+        return (Double64Vector)
+            super.tOpTemplate((Double64Vector)v1, (Double64Vector)v2,
+                              (Double64Mask)m, f);  // specialize
     }
 
     @ForceInline
     final @Override
     double rOp(double v, FBinOp f) {
-        return super.rOp(v, f);  // specialize
+        return super.rOpTemplate(v, f);  // specialize
     }
 
     @Override
@@ -695,35 +699,35 @@ final class Double64Vector extends DoubleVector {
     @Override
     final
     DoubleVector fromArray0(double[] a, int offset) {
-        return super.fromArray0(a, offset);  // specialize
+        return super.fromArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     DoubleVector fromByteArray0(byte[] a, int offset) {
-        return super.fromByteArray0(a, offset);  // specialize
+        return super.fromByteArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     DoubleVector fromByteBuffer0(ByteBuffer bb, int offset) {
-        return super.fromByteBuffer0(bb, offset);  // specialize
+        return super.fromByteBuffer0Template(bb, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoArray0(double[] a, int offset) {
-        super.intoArray0(a, offset);  // specialize
+        super.intoArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoByteArray0(byte[] a, int offset) {
-        super.intoByteArray0(a, offset);  // specialize
+        super.intoByteArray0Template(a, offset);  // specialize
     }
 
     // End of specialized low-level memory operations.

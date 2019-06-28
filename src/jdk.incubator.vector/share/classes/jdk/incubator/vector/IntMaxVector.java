@@ -164,13 +164,14 @@ final class IntMaxVector extends IntVector {
 
     final @Override
     IntMaxVector uOp(FUnOp f) {
-        return (IntMaxVector) super.uOp(f);  // specialize
+        return (IntMaxVector) super.uOpTemplate(f);  // specialize
     }
 
     @ForceInline
     final @Override
     IntMaxVector uOp(VectorMask<Integer> m, FUnOp f) {
-        return (IntMaxVector) super.uOp((IntMaxMask)m, f);  // specialize
+        return (IntMaxVector)
+            super.uOpTemplate((IntMaxMask)m, f);  // specialize
     }
 
     // Binary operator
@@ -178,15 +179,16 @@ final class IntMaxVector extends IntVector {
     @ForceInline
     final @Override
     IntMaxVector bOp(Vector<Integer> v, FBinOp f) {
-        return (IntMaxVector) super.bOp((IntMaxVector)v, f);  // specialize
+        return (IntMaxVector) super.bOpTemplate((IntMaxVector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
     IntMaxVector bOp(Vector<Integer> v,
                      VectorMask<Integer> m, FBinOp f) {
-        return (IntMaxVector) super.bOp((IntMaxVector)v, (IntMaxMask)m,
-                                        f);  // specialize
+        return (IntMaxVector)
+            super.bOpTemplate((IntMaxVector)v, (IntMaxMask)m,
+                              f);  // specialize
     }
 
     // Ternary operator
@@ -194,22 +196,24 @@ final class IntMaxVector extends IntVector {
     @ForceInline
     final @Override
     IntMaxVector tOp(Vector<Integer> v1, Vector<Integer> v2, FTriOp f) {
-        return (IntMaxVector) super.tOp((IntMaxVector)v1, (IntMaxVector)v2,
-                                        f);  // specialize
+        return (IntMaxVector)
+            super.tOpTemplate((IntMaxVector)v1, (IntMaxVector)v2,
+                              f);  // specialize
     }
 
     @ForceInline
     final @Override
     IntMaxVector tOp(Vector<Integer> v1, Vector<Integer> v2,
                      VectorMask<Integer> m, FTriOp f) {
-        return (IntMaxVector) super.tOp((IntMaxVector)v1, (IntMaxVector)v2,
-                                        (IntMaxMask)m, f);  // specialize
+        return (IntMaxVector)
+            super.tOpTemplate((IntMaxVector)v1, (IntMaxVector)v2,
+                              (IntMaxMask)m, f);  // specialize
     }
 
     @ForceInline
     final @Override
     int rOp(int v, FBinOp f) {
-        return super.rOp(v, f);  // specialize
+        return super.rOpTemplate(v, f);  // specialize
     }
 
     @Override
@@ -700,35 +704,35 @@ final class IntMaxVector extends IntVector {
     @Override
     final
     IntVector fromArray0(int[] a, int offset) {
-        return super.fromArray0(a, offset);  // specialize
+        return super.fromArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     IntVector fromByteArray0(byte[] a, int offset) {
-        return super.fromByteArray0(a, offset);  // specialize
+        return super.fromByteArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     IntVector fromByteBuffer0(ByteBuffer bb, int offset) {
-        return super.fromByteBuffer0(bb, offset);  // specialize
+        return super.fromByteBuffer0Template(bb, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoArray0(int[] a, int offset) {
-        super.intoArray0(a, offset);  // specialize
+        super.intoArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoByteArray0(byte[] a, int offset) {
-        super.intoByteArray0(a, offset);  // specialize
+        super.intoByteArray0Template(a, offset);  // specialize
     }
 
     // End of specialized low-level memory operations.

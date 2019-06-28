@@ -106,6 +106,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      */
     /*package-private*/
     @ForceInline
+    final
     AbstractMask<Float> maskFactory(boolean[] bits) {
         return vspecies().maskFactory(bits);
     }
@@ -117,6 +118,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     FloatVector vOp(FVOp f) {
         float[] res = new float[length()];
         for (int i = 0; i < res.length; i++) {
@@ -126,6 +128,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     @ForceInline
+    final
     FloatVector vOp(VectorMask<Float> m, FVOp f) {
         float[] res = new float[length()];
         boolean[] mbits = ((AbstractMask<Float>)m).getBits();
@@ -145,8 +148,11 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /*package-private*/
+    abstract
+    FloatVector uOp(FUnOp f);
     @ForceInline
-    FloatVector uOp(FUnOp f) {
+    final
+    FloatVector uOpTemplate(FUnOp f) {
         float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < res.length; i++) {
@@ -156,9 +162,13 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     FloatVector uOp(VectorMask<Float> m,
-                             FUnOp f) {
+                             FUnOp f);
+    @ForceInline
+    final
+    FloatVector uOpTemplate(VectorMask<Float> m,
+                                     FUnOp f) {
         float[] vec = getElements();
         float[] res = new float[length()];
         boolean[] mbits = ((AbstractMask<Float>)m).getBits();
@@ -176,9 +186,13 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     FloatVector bOp(Vector<Float> o,
-                             FBinOp f) {
+                             FBinOp f);
+    @ForceInline
+    final
+    FloatVector bOpTemplate(Vector<Float> o,
+                                     FBinOp f) {
         float[] res = new float[length()];
         float[] vec1 = this.getElements();
         float[] vec2 = ((FloatVector)o).getElements();
@@ -189,10 +203,15 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     FloatVector bOp(Vector<Float> o,
                              VectorMask<Float> m,
-                             FBinOp f) {
+                             FBinOp f);
+    @ForceInline
+    final
+    FloatVector bOpTemplate(Vector<Float> o,
+                                     VectorMask<Float> m,
+                                     FBinOp f) {
         float[] res = new float[length()];
         float[] vec1 = this.getElements();
         float[] vec2 = ((FloatVector)o).getElements();
@@ -211,10 +230,15 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     FloatVector tOp(Vector<Float> o1,
                              Vector<Float> o2,
-                             FTriOp f) {
+                             FTriOp f);
+    @ForceInline
+    final
+    FloatVector tOpTemplate(Vector<Float> o1,
+                                     Vector<Float> o2,
+                                     FTriOp f) {
         float[] res = new float[length()];
         float[] vec1 = this.getElements();
         float[] vec2 = ((FloatVector)o1).getElements();
@@ -226,11 +250,17 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     FloatVector tOp(Vector<Float> o1,
                              Vector<Float> o2,
                              VectorMask<Float> m,
-                             FTriOp f) {
+                             FTriOp f);
+    @ForceInline
+    final
+    FloatVector tOpTemplate(Vector<Float> o1,
+                                     Vector<Float> o2,
+                                     VectorMask<Float> m,
+                                     FTriOp f) {
         float[] res = new float[length()];
         float[] vec1 = this.getElements();
         float[] vec2 = ((FloatVector)o1).getElements();
@@ -245,8 +275,11 @@ public abstract class FloatVector extends AbstractVector<Float> {
     // Reduction operator
 
     /*package-private*/
+    abstract
+    float rOp(float v, FBinOp f);
     @ForceInline
-    float rOp(float v, FBinOp f) {
+    final
+    float rOpTemplate(float v, FBinOp f) {
         float[] vec = getElements();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
@@ -263,6 +296,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> FloatVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
         //dummy; no vec = getElements();
@@ -275,6 +309,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> FloatVector ldOp(M memory, int offset,
                                   VectorMask<Float> m,
                                   FLdOp<M> f) {
@@ -295,6 +330,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
         float[] vec = getElements();
@@ -305,6 +341,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> void stOp(M memory, int offset,
                   VectorMask<Float> m,
                   FStOp<M> f) {
@@ -326,6 +363,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     AbstractMask<Float> bTest(int cond,
                                   Vector<Float> o,
                                   FBinTest f) {
@@ -353,7 +391,6 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /*package-private*/
-    @ForceInline
     @Override
     abstract FloatSpecies vspecies();
 
@@ -1613,6 +1650,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     VectorMask<Float> compare(VectorOperators.Comparison op, Vector<Float> v);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Float>>
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Float> v) {
@@ -1632,6 +1670,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
             });
     }
 
+    @ForceInline
     private static
     boolean compareWithOp(int cond, float a, float b) {
         switch (cond) {
@@ -1683,6 +1722,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     VectorMask<Float> compare(Comparison op, float e);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Float>>
     M compareTemplate(Class<M> maskType, Comparison op, float e) {
@@ -1723,6 +1763,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     VectorMask<Float> compare(Comparison op, long e);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Float>>
     M compareTemplate(Class<M> maskType, Comparison op, long e) {
@@ -1749,6 +1790,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     <M extends VectorMask<Float>>
     FloatVector
     blendTemplate(Class<M> maskType, FloatVector v, M m) {
@@ -1944,6 +1986,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Float>>
     FloatVector rearrangeTemplate(Class<S> shuffletype, S shuffle) {
         shuffle.checkIndexes();
@@ -1966,6 +2009,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Float>>
     FloatVector rearrangeTemplate(Class<S> shuffletype,
                                            S shuffle,
@@ -1996,6 +2040,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Float>>
     FloatVector rearrangeTemplate(Class<S> shuffletype,
                                            S shuffle,
@@ -2238,6 +2283,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     float reduceLanesTemplate(VectorOperators.Associative op,
                                VectorMask<Float> m) {
         FloatVector v = reduceIdentityVector(op).blend(this, m);
@@ -2246,6 +2292,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
     /*package-private*/
     @ForceInline
+    final
     float reduceLanesTemplate(VectorOperators.Associative op) {
         if (op == FIRST_NONZERO) {
             // FIXME:  The JIT should handle this, and other scan ops alos.
@@ -3083,8 +3130,11 @@ public abstract class FloatVector extends AbstractVector<Float> {
     // byte swapping.
 
     /*package-private*/
+    abstract
+    FloatVector fromArray0(float[] a, int offset);
     @ForceInline
-    FloatVector fromArray0(float[] a, int offset) {
+    final
+    FloatVector fromArray0Template(float[] a, int offset) {
         FloatSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3094,9 +3144,12 @@ public abstract class FloatVector extends AbstractVector<Float> {
                                     (arr_, off_, i) -> arr_[off_ + i]));
     }
 
-    @ForceInline
     @Override
-    FloatVector fromByteArray0(byte[] a, int offset) {
+    abstract
+    FloatVector fromByteArray0(byte[] a, int offset);
+    @ForceInline
+    final
+    FloatVector fromByteArray0Template(byte[] a, int offset) {
         FloatSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3108,8 +3161,11 @@ public abstract class FloatVector extends AbstractVector<Float> {
             });
     }
 
+    abstract
+    FloatVector fromByteBuffer0(ByteBuffer bb, int offset);
     @ForceInline
-    FloatVector fromByteBuffer0(ByteBuffer bb, int offset) {
+    final
+    FloatVector fromByteBuffer0Template(ByteBuffer bb, int offset) {
         FloatSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3125,8 +3181,11 @@ public abstract class FloatVector extends AbstractVector<Float> {
     // Caller is reponsible for applying index checks, masking, and
     // byte swapping.
 
+    abstract
+    void intoArray0(float[] a, int offset);
     @ForceInline
-    void intoArray0(float[] a, int offset) {
+    final
+    void intoArray0Template(float[] a, int offset) {
         FloatSpecies vsp = vspecies();
         VectorIntrinsics.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3137,8 +3196,11 @@ public abstract class FloatVector extends AbstractVector<Float> {
                       (arr_, off_, i, e) -> arr_[off_+i] = e));
     }
 
+    abstract
+    void intoByteArray0(byte[] a, int offset);
     @ForceInline
-    void intoByteArray0(byte[] a, int offset) {
+    final
+    void intoByteArray0Template(byte[] a, int offset) {
         FloatSpecies vsp = vspecies();
         VectorIntrinsics.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3151,6 +3213,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     @ForceInline
+    final
     void intoByteBuffer0(ByteBuffer bb, int offset) {
         FloatSpecies vsp = vspecies();
         VectorIntrinsics.store(
@@ -3175,6 +3238,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
             .checkIndexByLane(offset, limit, vsp.iota(), scale);
     }
 
+    @ForceInline
     private void conditionalStoreNYI(int offset,
                                      FloatSpecies vsp,
                                      VectorMask<Float> m,
@@ -3191,6 +3255,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /*package-private*/
     @Override
     @ForceInline
+    final
     FloatVector maybeSwap(ByteOrder bo) {
         if (bo != NATIVE_ENDIAN) {
             return this.reinterpretAsBytes()

@@ -106,6 +106,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
      */
     /*package-private*/
     @ForceInline
+    final
     AbstractMask<Short> maskFactory(boolean[] bits) {
         return vspecies().maskFactory(bits);
     }
@@ -117,6 +118,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     ShortVector vOp(FVOp f) {
         short[] res = new short[length()];
         for (int i = 0; i < res.length; i++) {
@@ -126,6 +128,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     }
 
     @ForceInline
+    final
     ShortVector vOp(VectorMask<Short> m, FVOp f) {
         short[] res = new short[length()];
         boolean[] mbits = ((AbstractMask<Short>)m).getBits();
@@ -145,8 +148,11 @@ public abstract class ShortVector extends AbstractVector<Short> {
     }
 
     /*package-private*/
+    abstract
+    ShortVector uOp(FUnOp f);
     @ForceInline
-    ShortVector uOp(FUnOp f) {
+    final
+    ShortVector uOpTemplate(FUnOp f) {
         short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < res.length; i++) {
@@ -156,9 +162,13 @@ public abstract class ShortVector extends AbstractVector<Short> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     ShortVector uOp(VectorMask<Short> m,
-                             FUnOp f) {
+                             FUnOp f);
+    @ForceInline
+    final
+    ShortVector uOpTemplate(VectorMask<Short> m,
+                                     FUnOp f) {
         short[] vec = getElements();
         short[] res = new short[length()];
         boolean[] mbits = ((AbstractMask<Short>)m).getBits();
@@ -176,9 +186,13 @@ public abstract class ShortVector extends AbstractVector<Short> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     ShortVector bOp(Vector<Short> o,
-                             FBinOp f) {
+                             FBinOp f);
+    @ForceInline
+    final
+    ShortVector bOpTemplate(Vector<Short> o,
+                                     FBinOp f) {
         short[] res = new short[length()];
         short[] vec1 = this.getElements();
         short[] vec2 = ((ShortVector)o).getElements();
@@ -189,10 +203,15 @@ public abstract class ShortVector extends AbstractVector<Short> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     ShortVector bOp(Vector<Short> o,
                              VectorMask<Short> m,
-                             FBinOp f) {
+                             FBinOp f);
+    @ForceInline
+    final
+    ShortVector bOpTemplate(Vector<Short> o,
+                                     VectorMask<Short> m,
+                                     FBinOp f) {
         short[] res = new short[length()];
         short[] vec1 = this.getElements();
         short[] vec2 = ((ShortVector)o).getElements();
@@ -211,10 +230,15 @@ public abstract class ShortVector extends AbstractVector<Short> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     ShortVector tOp(Vector<Short> o1,
                              Vector<Short> o2,
-                             FTriOp f) {
+                             FTriOp f);
+    @ForceInline
+    final
+    ShortVector tOpTemplate(Vector<Short> o1,
+                                     Vector<Short> o2,
+                                     FTriOp f) {
         short[] res = new short[length()];
         short[] vec1 = this.getElements();
         short[] vec2 = ((ShortVector)o1).getElements();
@@ -226,11 +250,17 @@ public abstract class ShortVector extends AbstractVector<Short> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     ShortVector tOp(Vector<Short> o1,
                              Vector<Short> o2,
                              VectorMask<Short> m,
-                             FTriOp f) {
+                             FTriOp f);
+    @ForceInline
+    final
+    ShortVector tOpTemplate(Vector<Short> o1,
+                                     Vector<Short> o2,
+                                     VectorMask<Short> m,
+                                     FTriOp f) {
         short[] res = new short[length()];
         short[] vec1 = this.getElements();
         short[] vec2 = ((ShortVector)o1).getElements();
@@ -245,8 +275,11 @@ public abstract class ShortVector extends AbstractVector<Short> {
     // Reduction operator
 
     /*package-private*/
+    abstract
+    short rOp(short v, FBinOp f);
     @ForceInline
-    short rOp(short v, FBinOp f) {
+    final
+    short rOpTemplate(short v, FBinOp f) {
         short[] vec = getElements();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
@@ -263,6 +296,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> ShortVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
         //dummy; no vec = getElements();
@@ -275,6 +309,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> ShortVector ldOp(M memory, int offset,
                                   VectorMask<Short> m,
                                   FLdOp<M> f) {
@@ -295,6 +330,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
         short[] vec = getElements();
@@ -305,6 +341,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> void stOp(M memory, int offset,
                   VectorMask<Short> m,
                   FStOp<M> f) {
@@ -326,6 +363,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     AbstractMask<Short> bTest(int cond,
                                   Vector<Short> o,
                                   FBinTest f) {
@@ -353,7 +391,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
     }
 
     /*package-private*/
-    @ForceInline
     @Override
     abstract ShortSpecies vspecies();
 
@@ -1721,6 +1758,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     VectorMask<Short> compare(VectorOperators.Comparison op, Vector<Short> v);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Short>>
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Short> v) {
@@ -1740,6 +1778,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
             });
     }
 
+    @ForceInline
     private static
     boolean compareWithOp(int cond, short a, short b) {
         switch (cond) {
@@ -1791,6 +1830,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     VectorMask<Short> compare(Comparison op, short e);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Short>>
     M compareTemplate(Class<M> maskType, Comparison op, short e) {
@@ -1831,6 +1871,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     VectorMask<Short> compare(Comparison op, long e);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Short>>
     M compareTemplate(Class<M> maskType, Comparison op, long e) {
@@ -1857,6 +1898,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     <M extends VectorMask<Short>>
     ShortVector
     blendTemplate(Class<M> maskType, ShortVector v, M m) {
@@ -2052,6 +2094,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Short>>
     ShortVector rearrangeTemplate(Class<S> shuffletype, S shuffle) {
         shuffle.checkIndexes();
@@ -2074,6 +2117,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Short>>
     ShortVector rearrangeTemplate(Class<S> shuffletype,
                                            S shuffle,
@@ -2104,6 +2148,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Short>>
     ShortVector rearrangeTemplate(Class<S> shuffletype,
                                            S shuffle,
@@ -2362,6 +2407,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     short reduceLanesTemplate(VectorOperators.Associative op,
                                VectorMask<Short> m) {
         ShortVector v = reduceIdentityVector(op).blend(this, m);
@@ -2370,6 +2416,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /*package-private*/
     @ForceInline
+    final
     short reduceLanesTemplate(VectorOperators.Associative op) {
         if (op == FIRST_NONZERO) {
             // FIXME:  The JIT should handle this, and other scan ops alos.
@@ -3185,8 +3232,11 @@ public abstract class ShortVector extends AbstractVector<Short> {
     // byte swapping.
 
     /*package-private*/
+    abstract
+    ShortVector fromArray0(short[] a, int offset);
     @ForceInline
-    ShortVector fromArray0(short[] a, int offset) {
+    final
+    ShortVector fromArray0Template(short[] a, int offset) {
         ShortSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3196,9 +3246,12 @@ public abstract class ShortVector extends AbstractVector<Short> {
                                     (arr_, off_, i) -> arr_[off_ + i]));
     }
 
-    @ForceInline
     @Override
-    ShortVector fromByteArray0(byte[] a, int offset) {
+    abstract
+    ShortVector fromByteArray0(byte[] a, int offset);
+    @ForceInline
+    final
+    ShortVector fromByteArray0Template(byte[] a, int offset) {
         ShortSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3210,8 +3263,11 @@ public abstract class ShortVector extends AbstractVector<Short> {
             });
     }
 
+    abstract
+    ShortVector fromByteBuffer0(ByteBuffer bb, int offset);
     @ForceInline
-    ShortVector fromByteBuffer0(ByteBuffer bb, int offset) {
+    final
+    ShortVector fromByteBuffer0Template(ByteBuffer bb, int offset) {
         ShortSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3227,8 +3283,11 @@ public abstract class ShortVector extends AbstractVector<Short> {
     // Caller is reponsible for applying index checks, masking, and
     // byte swapping.
 
+    abstract
+    void intoArray0(short[] a, int offset);
     @ForceInline
-    void intoArray0(short[] a, int offset) {
+    final
+    void intoArray0Template(short[] a, int offset) {
         ShortSpecies vsp = vspecies();
         VectorIntrinsics.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3239,8 +3298,11 @@ public abstract class ShortVector extends AbstractVector<Short> {
                       (arr_, off_, i, e) -> arr_[off_+i] = e));
     }
 
+    abstract
+    void intoByteArray0(byte[] a, int offset);
     @ForceInline
-    void intoByteArray0(byte[] a, int offset) {
+    final
+    void intoByteArray0Template(byte[] a, int offset) {
         ShortSpecies vsp = vspecies();
         VectorIntrinsics.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3253,6 +3315,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     }
 
     @ForceInline
+    final
     void intoByteBuffer0(ByteBuffer bb, int offset) {
         ShortSpecies vsp = vspecies();
         VectorIntrinsics.store(
@@ -3277,6 +3340,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
             .checkIndexByLane(offset, limit, vsp.iota(), scale);
     }
 
+    @ForceInline
     private void conditionalStoreNYI(int offset,
                                      ShortSpecies vsp,
                                      VectorMask<Short> m,
@@ -3293,6 +3357,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     /*package-private*/
     @Override
     @ForceInline
+    final
     ShortVector maybeSwap(ByteOrder bo) {
         if (bo != NATIVE_ENDIAN) {
             return this.reinterpretAsBytes()

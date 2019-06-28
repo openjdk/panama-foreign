@@ -164,13 +164,14 @@ final class DoubleMaxVector extends DoubleVector {
 
     final @Override
     DoubleMaxVector uOp(FUnOp f) {
-        return (DoubleMaxVector) super.uOp(f);  // specialize
+        return (DoubleMaxVector) super.uOpTemplate(f);  // specialize
     }
 
     @ForceInline
     final @Override
     DoubleMaxVector uOp(VectorMask<Double> m, FUnOp f) {
-        return (DoubleMaxVector) super.uOp((DoubleMaxMask)m, f);  // specialize
+        return (DoubleMaxVector)
+            super.uOpTemplate((DoubleMaxMask)m, f);  // specialize
     }
 
     // Binary operator
@@ -178,15 +179,16 @@ final class DoubleMaxVector extends DoubleVector {
     @ForceInline
     final @Override
     DoubleMaxVector bOp(Vector<Double> v, FBinOp f) {
-        return (DoubleMaxVector) super.bOp((DoubleMaxVector)v, f);  // specialize
+        return (DoubleMaxVector) super.bOpTemplate((DoubleMaxVector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
     DoubleMaxVector bOp(Vector<Double> v,
                      VectorMask<Double> m, FBinOp f) {
-        return (DoubleMaxVector) super.bOp((DoubleMaxVector)v, (DoubleMaxMask)m,
-                                        f);  // specialize
+        return (DoubleMaxVector)
+            super.bOpTemplate((DoubleMaxVector)v, (DoubleMaxMask)m,
+                              f);  // specialize
     }
 
     // Ternary operator
@@ -194,22 +196,24 @@ final class DoubleMaxVector extends DoubleVector {
     @ForceInline
     final @Override
     DoubleMaxVector tOp(Vector<Double> v1, Vector<Double> v2, FTriOp f) {
-        return (DoubleMaxVector) super.tOp((DoubleMaxVector)v1, (DoubleMaxVector)v2,
-                                        f);  // specialize
+        return (DoubleMaxVector)
+            super.tOpTemplate((DoubleMaxVector)v1, (DoubleMaxVector)v2,
+                              f);  // specialize
     }
 
     @ForceInline
     final @Override
     DoubleMaxVector tOp(Vector<Double> v1, Vector<Double> v2,
                      VectorMask<Double> m, FTriOp f) {
-        return (DoubleMaxVector) super.tOp((DoubleMaxVector)v1, (DoubleMaxVector)v2,
-                                        (DoubleMaxMask)m, f);  // specialize
+        return (DoubleMaxVector)
+            super.tOpTemplate((DoubleMaxVector)v1, (DoubleMaxVector)v2,
+                              (DoubleMaxMask)m, f);  // specialize
     }
 
     @ForceInline
     final @Override
     double rOp(double v, FBinOp f) {
-        return super.rOp(v, f);  // specialize
+        return super.rOpTemplate(v, f);  // specialize
     }
 
     @Override
@@ -695,35 +699,35 @@ final class DoubleMaxVector extends DoubleVector {
     @Override
     final
     DoubleVector fromArray0(double[] a, int offset) {
-        return super.fromArray0(a, offset);  // specialize
+        return super.fromArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     DoubleVector fromByteArray0(byte[] a, int offset) {
-        return super.fromByteArray0(a, offset);  // specialize
+        return super.fromByteArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     DoubleVector fromByteBuffer0(ByteBuffer bb, int offset) {
-        return super.fromByteBuffer0(bb, offset);  // specialize
+        return super.fromByteBuffer0Template(bb, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoArray0(double[] a, int offset) {
-        super.intoArray0(a, offset);  // specialize
+        super.intoArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoByteArray0(byte[] a, int offset) {
-        super.intoByteArray0(a, offset);  // specialize
+        super.intoByteArray0Template(a, offset);  // specialize
     }
 
     // End of specialized low-level memory operations.

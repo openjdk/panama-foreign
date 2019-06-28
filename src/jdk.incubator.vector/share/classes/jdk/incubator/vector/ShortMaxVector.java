@@ -164,13 +164,14 @@ final class ShortMaxVector extends ShortVector {
 
     final @Override
     ShortMaxVector uOp(FUnOp f) {
-        return (ShortMaxVector) super.uOp(f);  // specialize
+        return (ShortMaxVector) super.uOpTemplate(f);  // specialize
     }
 
     @ForceInline
     final @Override
     ShortMaxVector uOp(VectorMask<Short> m, FUnOp f) {
-        return (ShortMaxVector) super.uOp((ShortMaxMask)m, f);  // specialize
+        return (ShortMaxVector)
+            super.uOpTemplate((ShortMaxMask)m, f);  // specialize
     }
 
     // Binary operator
@@ -178,15 +179,16 @@ final class ShortMaxVector extends ShortVector {
     @ForceInline
     final @Override
     ShortMaxVector bOp(Vector<Short> v, FBinOp f) {
-        return (ShortMaxVector) super.bOp((ShortMaxVector)v, f);  // specialize
+        return (ShortMaxVector) super.bOpTemplate((ShortMaxVector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
     ShortMaxVector bOp(Vector<Short> v,
                      VectorMask<Short> m, FBinOp f) {
-        return (ShortMaxVector) super.bOp((ShortMaxVector)v, (ShortMaxMask)m,
-                                        f);  // specialize
+        return (ShortMaxVector)
+            super.bOpTemplate((ShortMaxVector)v, (ShortMaxMask)m,
+                              f);  // specialize
     }
 
     // Ternary operator
@@ -194,22 +196,24 @@ final class ShortMaxVector extends ShortVector {
     @ForceInline
     final @Override
     ShortMaxVector tOp(Vector<Short> v1, Vector<Short> v2, FTriOp f) {
-        return (ShortMaxVector) super.tOp((ShortMaxVector)v1, (ShortMaxVector)v2,
-                                        f);  // specialize
+        return (ShortMaxVector)
+            super.tOpTemplate((ShortMaxVector)v1, (ShortMaxVector)v2,
+                              f);  // specialize
     }
 
     @ForceInline
     final @Override
     ShortMaxVector tOp(Vector<Short> v1, Vector<Short> v2,
                      VectorMask<Short> m, FTriOp f) {
-        return (ShortMaxVector) super.tOp((ShortMaxVector)v1, (ShortMaxVector)v2,
-                                        (ShortMaxMask)m, f);  // specialize
+        return (ShortMaxVector)
+            super.tOpTemplate((ShortMaxVector)v1, (ShortMaxVector)v2,
+                              (ShortMaxMask)m, f);  // specialize
     }
 
     @ForceInline
     final @Override
     short rOp(short v, FBinOp f) {
-        return super.rOp(v, f);  // specialize
+        return super.rOpTemplate(v, f);  // specialize
     }
 
     @Override
@@ -700,35 +704,35 @@ final class ShortMaxVector extends ShortVector {
     @Override
     final
     ShortVector fromArray0(short[] a, int offset) {
-        return super.fromArray0(a, offset);  // specialize
+        return super.fromArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     ShortVector fromByteArray0(byte[] a, int offset) {
-        return super.fromByteArray0(a, offset);  // specialize
+        return super.fromByteArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     ShortVector fromByteBuffer0(ByteBuffer bb, int offset) {
-        return super.fromByteBuffer0(bb, offset);  // specialize
+        return super.fromByteBuffer0Template(bb, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoArray0(short[] a, int offset) {
-        super.intoArray0(a, offset);  // specialize
+        super.intoArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoByteArray0(byte[] a, int offset) {
-        super.intoByteArray0(a, offset);  // specialize
+        super.intoByteArray0Template(a, offset);  // specialize
     }
 
     // End of specialized low-level memory operations.

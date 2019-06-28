@@ -106,6 +106,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     /*package-private*/
     @ForceInline
+    final
     AbstractMask<Double> maskFactory(boolean[] bits) {
         return vspecies().maskFactory(bits);
     }
@@ -117,6 +118,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     DoubleVector vOp(FVOp f) {
         double[] res = new double[length()];
         for (int i = 0; i < res.length; i++) {
@@ -126,6 +128,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     @ForceInline
+    final
     DoubleVector vOp(VectorMask<Double> m, FVOp f) {
         double[] res = new double[length()];
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
@@ -145,8 +148,11 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     /*package-private*/
+    abstract
+    DoubleVector uOp(FUnOp f);
     @ForceInline
-    DoubleVector uOp(FUnOp f) {
+    final
+    DoubleVector uOpTemplate(FUnOp f) {
         double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < res.length; i++) {
@@ -156,9 +162,13 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     DoubleVector uOp(VectorMask<Double> m,
-                             FUnOp f) {
+                             FUnOp f);
+    @ForceInline
+    final
+    DoubleVector uOpTemplate(VectorMask<Double> m,
+                                     FUnOp f) {
         double[] vec = getElements();
         double[] res = new double[length()];
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
@@ -176,9 +186,13 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     DoubleVector bOp(Vector<Double> o,
-                             FBinOp f) {
+                             FBinOp f);
+    @ForceInline
+    final
+    DoubleVector bOpTemplate(Vector<Double> o,
+                                     FBinOp f) {
         double[] res = new double[length()];
         double[] vec1 = this.getElements();
         double[] vec2 = ((DoubleVector)o).getElements();
@@ -189,10 +203,15 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     DoubleVector bOp(Vector<Double> o,
                              VectorMask<Double> m,
-                             FBinOp f) {
+                             FBinOp f);
+    @ForceInline
+    final
+    DoubleVector bOpTemplate(Vector<Double> o,
+                                     VectorMask<Double> m,
+                                     FBinOp f) {
         double[] res = new double[length()];
         double[] vec1 = this.getElements();
         double[] vec2 = ((DoubleVector)o).getElements();
@@ -211,10 +230,15 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     DoubleVector tOp(Vector<Double> o1,
                              Vector<Double> o2,
-                             FTriOp f) {
+                             FTriOp f);
+    @ForceInline
+    final
+    DoubleVector tOpTemplate(Vector<Double> o1,
+                                     Vector<Double> o2,
+                                     FTriOp f) {
         double[] res = new double[length()];
         double[] vec1 = this.getElements();
         double[] vec2 = ((DoubleVector)o1).getElements();
@@ -226,11 +250,17 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     /*package-private*/
-    @ForceInline
+    abstract
     DoubleVector tOp(Vector<Double> o1,
                              Vector<Double> o2,
                              VectorMask<Double> m,
-                             FTriOp f) {
+                             FTriOp f);
+    @ForceInline
+    final
+    DoubleVector tOpTemplate(Vector<Double> o1,
+                                     Vector<Double> o2,
+                                     VectorMask<Double> m,
+                                     FTriOp f) {
         double[] res = new double[length()];
         double[] vec1 = this.getElements();
         double[] vec2 = ((DoubleVector)o1).getElements();
@@ -245,8 +275,11 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     // Reduction operator
 
     /*package-private*/
+    abstract
+    double rOp(double v, FBinOp f);
     @ForceInline
-    double rOp(double v, FBinOp f) {
+    final
+    double rOpTemplate(double v, FBinOp f) {
         double[] vec = getElements();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
@@ -263,6 +296,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> DoubleVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
         //dummy; no vec = getElements();
@@ -275,6 +309,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> DoubleVector ldOp(M memory, int offset,
                                   VectorMask<Double> m,
                                   FLdOp<M> f) {
@@ -295,6 +330,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
         double[] vec = getElements();
@@ -305,6 +341,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     <M> void stOp(M memory, int offset,
                   VectorMask<Double> m,
                   FStOp<M> f) {
@@ -326,6 +363,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     AbstractMask<Double> bTest(int cond,
                                   Vector<Double> o,
                                   FBinTest f) {
@@ -353,7 +391,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     /*package-private*/
-    @ForceInline
     @Override
     abstract DoubleSpecies vspecies();
 
@@ -1613,6 +1650,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     VectorMask<Double> compare(VectorOperators.Comparison op, Vector<Double> v);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Double>>
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Double> v) {
@@ -1632,6 +1670,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
             });
     }
 
+    @ForceInline
     private static
     boolean compareWithOp(int cond, double a, double b) {
         switch (cond) {
@@ -1683,6 +1722,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     VectorMask<Double> compare(Comparison op, double e);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Double>>
     M compareTemplate(Class<M> maskType, Comparison op, double e) {
@@ -1723,6 +1763,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     VectorMask<Double> compare(Comparison op, long e);
 
     /*package-private*/
+    @ForceInline
     final
     <M extends VectorMask<Double>>
     M compareTemplate(Class<M> maskType, Comparison op, long e) {
@@ -1749,6 +1790,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     <M extends VectorMask<Double>>
     DoubleVector
     blendTemplate(Class<M> maskType, DoubleVector v, M m) {
@@ -1944,6 +1986,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Double>>
     DoubleVector rearrangeTemplate(Class<S> shuffletype, S shuffle) {
         shuffle.checkIndexes();
@@ -1966,6 +2009,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Double>>
     DoubleVector rearrangeTemplate(Class<S> shuffletype,
                                            S shuffle,
@@ -1996,6 +2040,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     <S extends VectorShuffle<Double>>
     DoubleVector rearrangeTemplate(Class<S> shuffletype,
                                            S shuffle,
@@ -2238,6 +2283,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     double reduceLanesTemplate(VectorOperators.Associative op,
                                VectorMask<Double> m) {
         DoubleVector v = reduceIdentityVector(op).blend(this, m);
@@ -2246,6 +2292,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /*package-private*/
     @ForceInline
+    final
     double reduceLanesTemplate(VectorOperators.Associative op) {
         if (op == FIRST_NONZERO) {
             // FIXME:  The JIT should handle this, and other scan ops alos.
@@ -3082,8 +3129,11 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     // byte swapping.
 
     /*package-private*/
+    abstract
+    DoubleVector fromArray0(double[] a, int offset);
     @ForceInline
-    DoubleVector fromArray0(double[] a, int offset) {
+    final
+    DoubleVector fromArray0Template(double[] a, int offset) {
         DoubleSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3093,9 +3143,12 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                                     (arr_, off_, i) -> arr_[off_ + i]));
     }
 
-    @ForceInline
     @Override
-    DoubleVector fromByteArray0(byte[] a, int offset) {
+    abstract
+    DoubleVector fromByteArray0(byte[] a, int offset);
+    @ForceInline
+    final
+    DoubleVector fromByteArray0Template(byte[] a, int offset) {
         DoubleSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3107,8 +3160,11 @@ public abstract class DoubleVector extends AbstractVector<Double> {
             });
     }
 
+    abstract
+    DoubleVector fromByteBuffer0(ByteBuffer bb, int offset);
     @ForceInline
-    DoubleVector fromByteBuffer0(ByteBuffer bb, int offset) {
+    final
+    DoubleVector fromByteBuffer0Template(ByteBuffer bb, int offset) {
         DoubleSpecies vsp = vspecies();
         return VectorIntrinsics.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3124,8 +3180,11 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     // Caller is reponsible for applying index checks, masking, and
     // byte swapping.
 
+    abstract
+    void intoArray0(double[] a, int offset);
     @ForceInline
-    void intoArray0(double[] a, int offset) {
+    final
+    void intoArray0Template(double[] a, int offset) {
         DoubleSpecies vsp = vspecies();
         VectorIntrinsics.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3136,8 +3195,11 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                       (arr_, off_, i, e) -> arr_[off_+i] = e));
     }
 
+    abstract
+    void intoByteArray0(byte[] a, int offset);
     @ForceInline
-    void intoByteArray0(byte[] a, int offset) {
+    final
+    void intoByteArray0Template(byte[] a, int offset) {
         DoubleSpecies vsp = vspecies();
         VectorIntrinsics.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3150,6 +3212,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     @ForceInline
+    final
     void intoByteBuffer0(ByteBuffer bb, int offset) {
         DoubleSpecies vsp = vspecies();
         VectorIntrinsics.store(
@@ -3174,6 +3237,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
             .checkIndexByLane(offset, limit, vsp.iota(), scale);
     }
 
+    @ForceInline
     private void conditionalStoreNYI(int offset,
                                      DoubleSpecies vsp,
                                      VectorMask<Double> m,
@@ -3190,6 +3254,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /*package-private*/
     @Override
     @ForceInline
+    final
     DoubleVector maybeSwap(ByteOrder bo) {
         if (bo != NATIVE_ENDIAN) {
             return this.reinterpretAsBytes()

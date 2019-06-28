@@ -164,13 +164,14 @@ final class Short128Vector extends ShortVector {
 
     final @Override
     Short128Vector uOp(FUnOp f) {
-        return (Short128Vector) super.uOp(f);  // specialize
+        return (Short128Vector) super.uOpTemplate(f);  // specialize
     }
 
     @ForceInline
     final @Override
     Short128Vector uOp(VectorMask<Short> m, FUnOp f) {
-        return (Short128Vector) super.uOp((Short128Mask)m, f);  // specialize
+        return (Short128Vector)
+            super.uOpTemplate((Short128Mask)m, f);  // specialize
     }
 
     // Binary operator
@@ -178,15 +179,16 @@ final class Short128Vector extends ShortVector {
     @ForceInline
     final @Override
     Short128Vector bOp(Vector<Short> v, FBinOp f) {
-        return (Short128Vector) super.bOp((Short128Vector)v, f);  // specialize
+        return (Short128Vector) super.bOpTemplate((Short128Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
     Short128Vector bOp(Vector<Short> v,
                      VectorMask<Short> m, FBinOp f) {
-        return (Short128Vector) super.bOp((Short128Vector)v, (Short128Mask)m,
-                                        f);  // specialize
+        return (Short128Vector)
+            super.bOpTemplate((Short128Vector)v, (Short128Mask)m,
+                              f);  // specialize
     }
 
     // Ternary operator
@@ -194,22 +196,24 @@ final class Short128Vector extends ShortVector {
     @ForceInline
     final @Override
     Short128Vector tOp(Vector<Short> v1, Vector<Short> v2, FTriOp f) {
-        return (Short128Vector) super.tOp((Short128Vector)v1, (Short128Vector)v2,
-                                        f);  // specialize
+        return (Short128Vector)
+            super.tOpTemplate((Short128Vector)v1, (Short128Vector)v2,
+                              f);  // specialize
     }
 
     @ForceInline
     final @Override
     Short128Vector tOp(Vector<Short> v1, Vector<Short> v2,
                      VectorMask<Short> m, FTriOp f) {
-        return (Short128Vector) super.tOp((Short128Vector)v1, (Short128Vector)v2,
-                                        (Short128Mask)m, f);  // specialize
+        return (Short128Vector)
+            super.tOpTemplate((Short128Vector)v1, (Short128Vector)v2,
+                              (Short128Mask)m, f);  // specialize
     }
 
     @ForceInline
     final @Override
     short rOp(short v, FBinOp f) {
-        return super.rOp(v, f);  // specialize
+        return super.rOpTemplate(v, f);  // specialize
     }
 
     @Override
@@ -700,35 +704,35 @@ final class Short128Vector extends ShortVector {
     @Override
     final
     ShortVector fromArray0(short[] a, int offset) {
-        return super.fromArray0(a, offset);  // specialize
+        return super.fromArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     ShortVector fromByteArray0(byte[] a, int offset) {
-        return super.fromByteArray0(a, offset);  // specialize
+        return super.fromByteArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     ShortVector fromByteBuffer0(ByteBuffer bb, int offset) {
-        return super.fromByteBuffer0(bb, offset);  // specialize
+        return super.fromByteBuffer0Template(bb, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoArray0(short[] a, int offset) {
-        super.intoArray0(a, offset);  // specialize
+        super.intoArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoByteArray0(byte[] a, int offset) {
-        super.intoByteArray0(a, offset);  // specialize
+        super.intoByteArray0Template(a, offset);  // specialize
     }
 
     // End of specialized low-level memory operations.

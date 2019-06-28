@@ -150,6 +150,8 @@ public class CovarOverrideTest {
         List<Method> badMethods = new ArrayList<>();
         List<Method> noForceInline = new ArrayList<>();
         for (var m : getInstanceMethods(c)) {
+            boolean pub = Modifier.isPublic(m.getModifiers());
+            boolean pri = Modifier.isPrivate(m.getModifiers());
             boolean abs = Modifier.isAbstract(m.getModifiers());
             boolean fin = Modifier.isFinal(m.getModifiers());
             boolean force = false;
@@ -158,6 +160,10 @@ public class CovarOverrideTest {
                 String name = getPublicSuper(a.getClass()).getSimpleName();
                 force |= name.equals("ForceInline");
                 depre |= name.equals("Deprecated");
+            }
+            fin |= pri; // privates are finals too
+            if (Throwable.class.isAssignableFrom(m.getReturnType())) {
+                continue;  // skip exception creators
             }
             if (depre) {
                 continue;  // skip @Deprecated
@@ -188,9 +194,16 @@ public class CovarOverrideTest {
     static List<Method> getInstanceMethods(Class<?> c) {
         var filteredMethods = Stream.of(c.getDeclaredMethods()).
                 filter(m -> !m.isBridge()).
-                filter(m -> Modifier.isPublic(m.getModifiers())).
-                filter(m -> !Modifier.isStatic(m.getModifiers()));
+                filter(m -> isInstanceMethod(m));
         return filteredMethods.collect(toList());
+    }
+
+    static boolean isInstanceMethod(Method m) {
+        if (Modifier.isStatic(m.getModifiers())) {
+            assert(!Modifier.isFinal(m.getModifiers())) : m;
+            return false;
+        }
+        return true;
     }
 
     static final String PKGP = Vector.class.getPackageName().replaceAll("[.]", "[.]") + "[.]";

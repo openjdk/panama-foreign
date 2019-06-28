@@ -164,13 +164,14 @@ final class Int64Vector extends IntVector {
 
     final @Override
     Int64Vector uOp(FUnOp f) {
-        return (Int64Vector) super.uOp(f);  // specialize
+        return (Int64Vector) super.uOpTemplate(f);  // specialize
     }
 
     @ForceInline
     final @Override
     Int64Vector uOp(VectorMask<Integer> m, FUnOp f) {
-        return (Int64Vector) super.uOp((Int64Mask)m, f);  // specialize
+        return (Int64Vector)
+            super.uOpTemplate((Int64Mask)m, f);  // specialize
     }
 
     // Binary operator
@@ -178,15 +179,16 @@ final class Int64Vector extends IntVector {
     @ForceInline
     final @Override
     Int64Vector bOp(Vector<Integer> v, FBinOp f) {
-        return (Int64Vector) super.bOp((Int64Vector)v, f);  // specialize
+        return (Int64Vector) super.bOpTemplate((Int64Vector)v, f);  // specialize
     }
 
     @ForceInline
     final @Override
     Int64Vector bOp(Vector<Integer> v,
                      VectorMask<Integer> m, FBinOp f) {
-        return (Int64Vector) super.bOp((Int64Vector)v, (Int64Mask)m,
-                                        f);  // specialize
+        return (Int64Vector)
+            super.bOpTemplate((Int64Vector)v, (Int64Mask)m,
+                              f);  // specialize
     }
 
     // Ternary operator
@@ -194,22 +196,24 @@ final class Int64Vector extends IntVector {
     @ForceInline
     final @Override
     Int64Vector tOp(Vector<Integer> v1, Vector<Integer> v2, FTriOp f) {
-        return (Int64Vector) super.tOp((Int64Vector)v1, (Int64Vector)v2,
-                                        f);  // specialize
+        return (Int64Vector)
+            super.tOpTemplate((Int64Vector)v1, (Int64Vector)v2,
+                              f);  // specialize
     }
 
     @ForceInline
     final @Override
     Int64Vector tOp(Vector<Integer> v1, Vector<Integer> v2,
                      VectorMask<Integer> m, FTriOp f) {
-        return (Int64Vector) super.tOp((Int64Vector)v1, (Int64Vector)v2,
-                                        (Int64Mask)m, f);  // specialize
+        return (Int64Vector)
+            super.tOpTemplate((Int64Vector)v1, (Int64Vector)v2,
+                              (Int64Mask)m, f);  // specialize
     }
 
     @ForceInline
     final @Override
     int rOp(int v, FBinOp f) {
-        return super.rOp(v, f);  // specialize
+        return super.rOpTemplate(v, f);  // specialize
     }
 
     @Override
@@ -700,35 +704,35 @@ final class Int64Vector extends IntVector {
     @Override
     final
     IntVector fromArray0(int[] a, int offset) {
-        return super.fromArray0(a, offset);  // specialize
+        return super.fromArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     IntVector fromByteArray0(byte[] a, int offset) {
-        return super.fromByteArray0(a, offset);  // specialize
+        return super.fromByteArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     IntVector fromByteBuffer0(ByteBuffer bb, int offset) {
-        return super.fromByteBuffer0(bb, offset);  // specialize
+        return super.fromByteBuffer0Template(bb, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoArray0(int[] a, int offset) {
-        super.intoArray0(a, offset);  // specialize
+        super.intoArray0Template(a, offset);  // specialize
     }
 
     @ForceInline
     @Override
     final
     void intoByteArray0(byte[] a, int offset) {
-        super.intoByteArray0(a, offset);  // specialize
+        super.intoByteArray0Template(a, offset);  // specialize
     }
 
     // End of specialized low-level memory operations.
