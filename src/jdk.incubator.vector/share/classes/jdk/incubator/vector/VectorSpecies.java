@@ -609,7 +609,7 @@ public interface VectorSpecies<E> {
      * <p> Care should be taken to ensure {@code VectorShuffle} values
      * produced from this method are consumed as constants to ensure
      * optimal generation of code.  For example, shuffle values can be
-     * held in static final fields or loop-invariant local variables.
+     * held in {@code static final} fields or loop-invariant local variables.
      *
      * <p> This method behaves as if a shuffle is created from an array of
      * mapped indexes as follows:

@@ -54,16 +54,16 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     static final int FORBID_OPCODE_KIND = VO_ONLYFP;
 
     @ForceInline
-    static final int opCode(Operator op) {
+    static int opCode(Operator op) {
         return VectorOperators.opCode(op, VO_OPCODE_VALID, FORBID_OPCODE_KIND);
     }
     @ForceInline
-    static final int opCode(Operator op, int requireKind) {
+    static int opCode(Operator op, int requireKind) {
         requireKind |= VO_OPCODE_VALID;
         return VectorOperators.opCode(op, requireKind, FORBID_OPCODE_KIND);
     }
     @ForceInline
-    static final boolean opKind(Operator op, int bit) {
+    static boolean opKind(Operator op, int bit) {
         return VectorOperators.opKind(op, bit);
     }
 
@@ -521,7 +521,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      */
     // FIXME: Does this carry its weight?
     @ForceInline
-    public static final ByteVector single(VectorSpecies<Byte> species, byte e) {
+    public static ByteVector single(VectorSpecies<Byte> species, byte e) {
         return zero(species).withLane(0, e);
     }
 
@@ -551,7 +551,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public abstract ByteVector lanewise(VectorOperators.Unary op);
+    public abstract
+    ByteVector lanewise(VectorOperators.Unary op);
 
     @ForceInline
     final
@@ -588,8 +589,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @ForceInline
-    public ByteVector lanewise(VectorOperators.Unary op,
-                                         VectorMask<Byte> m) {
+    public final
+    ByteVector lanewise(VectorOperators.Unary op,
+                                  VectorMask<Byte> m) {
         return blend(lanewise(op), m);
     }
 
@@ -601,8 +603,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
      */
     @Override
-    public abstract ByteVector lanewise(VectorOperators.Binary op,
-                                                  Vector<Byte> v);
+    public abstract
+    ByteVector lanewise(VectorOperators.Binary op,
+                                  Vector<Byte> v);
     @ForceInline
     final
     ByteVector lanewiseTemplate(VectorOperators.Binary op,
@@ -874,7 +877,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #lanewise(VectorOperators.Ternary,byte,Vector)
      */
     @Override
-    public abstract ByteVector lanewise(VectorOperators.Ternary op,
+    public abstract
+    ByteVector lanewise(VectorOperators.Ternary op,
                                                   Vector<Byte> v1,
                                                   Vector<Byte> v2);
     @ForceInline
@@ -1103,6 +1107,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #add(byte)
      */
     @Override
+    @ForceInline
     public final ByteVector add(Vector<Byte> v) {
         return lanewise(ADD, v);
     }
@@ -1127,7 +1132,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
      */
-    public final ByteVector add(byte e) {
+    @ForceInline
+    public final
+    ByteVector add(byte e) {
         return lanewise(ADD, e);
     }
 
@@ -1136,6 +1143,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #add(byte,VectorMask)
      */
     @Override
+    @ForceInline
     public final ByteVector add(Vector<Byte> v,
                                           VectorMask<Byte> m) {
         return lanewise(ADD, v, m);
@@ -1163,6 +1171,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
      */
+    @ForceInline
     public final ByteVector add(byte e,
                                           VectorMask<Byte> m) {
         return lanewise(ADD, e, m);
@@ -1173,6 +1182,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #sub(byte)
      */
     @Override
+    @ForceInline
     public final ByteVector sub(Vector<Byte> v) {
         return lanewise(SUB, v);
     }
@@ -1197,6 +1207,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
      */
+    @ForceInline
     public final ByteVector sub(byte e) {
         return lanewise(SUB, e);
     }
@@ -1206,6 +1217,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #sub(byte,VectorMask)
      */
     @Override
+    @ForceInline
     public final ByteVector sub(Vector<Byte> v,
                                           VectorMask<Byte> m) {
         return lanewise(SUB, v, m);
@@ -1233,6 +1245,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
      */
+    @ForceInline
     public final ByteVector sub(byte e,
                                           VectorMask<Byte> m) {
         return lanewise(SUB, e, m);
@@ -1243,6 +1256,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #mul(byte)
      */
     @Override
+    @ForceInline
     public final ByteVector mul(Vector<Byte> v) {
         return lanewise(MUL, v);
     }
@@ -1267,6 +1281,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
      */
+    @ForceInline
     public final ByteVector mul(byte e) {
         return lanewise(MUL, e);
     }
@@ -1276,6 +1291,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #mul(byte,VectorMask)
      */
     @Override
+    @ForceInline
     public final ByteVector mul(Vector<Byte> v,
                                           VectorMask<Byte> m) {
         return lanewise(MUL, v, m);
@@ -1303,6 +1319,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
      */
+    @ForceInline
     public final ByteVector mul(byte e,
                                           VectorMask<Byte> m) {
         return lanewise(MUL, e, m);
@@ -1313,6 +1330,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #div(byte)
      */
     @Override
+    @ForceInline
     public final ByteVector div(Vector<Byte> v) {
         return lanewise(DIV, v);
     }
@@ -1342,6 +1360,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
      */
+    @ForceInline
     public final ByteVector div(byte e) {
         return lanewise(DIV, e);
     }
@@ -1352,6 +1371,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #div(byte,VectorMask)
      */
     @Override
+    @ForceInline
     public final ByteVector div(Vector<Byte> v,
                                           VectorMask<Byte> m) {
         return lanewise(DIV, v, m);
@@ -1384,6 +1404,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
      */
+    @ForceInline
     public final ByteVector div(byte e,
                                           VectorMask<Byte> m) {
         return lanewise(DIV, e, m);
@@ -1399,6 +1420,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final ByteVector min(Vector<Byte> v) {
         return lanewise(MIN, v);
     }
@@ -1423,6 +1445,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#MIN
      * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
      */
+    @ForceInline
     public final ByteVector min(byte e) {
         return lanewise(MIN, e);
     }
@@ -1431,6 +1454,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final ByteVector max(Vector<Byte> v) {
         return lanewise(MAX, v);
     }
@@ -1454,6 +1478,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#MAX
      * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
      */
+    @ForceInline
     public final ByteVector max(byte e) {
         return lanewise(MAX, e);
     }
@@ -1487,6 +1512,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#AND
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final ByteVector and(Vector<Byte> v) {
         return lanewise(AND, v);
     }
@@ -1510,6 +1536,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#AND
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final ByteVector and(byte e) {
         return lanewise(AND, e);
     }
@@ -1542,6 +1569,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#OR
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final ByteVector or(Vector<Byte> v) {
         return lanewise(OR, v);
     }
@@ -1565,6 +1593,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#OR
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final ByteVector or(byte e) {
         return lanewise(OR, e);
     }
@@ -1577,6 +1606,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     ByteVector neg() {
         return lanewise(NEG);
@@ -1586,6 +1616,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     ByteVector abs() {
         return lanewise(ABS);
@@ -1617,6 +1648,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#NOT
      * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
      */
+    @ForceInline
     public final ByteVector not() {
         return lanewise(NOT);
     }
@@ -1628,6 +1660,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Byte> eq(Vector<Byte> v) {
         return compare(EQ, v);
@@ -1645,6 +1678,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *         is equal to {@code e}
      * @see #compare(VectorOperators.Comparison,byte)
      */
+    @ForceInline
     public final
     VectorMask<Byte> eq(byte e) {
         return compare(EQ, e);
@@ -1654,6 +1688,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Byte> lt(Vector<Byte> v) {
         return compare(LT, v);
@@ -1671,6 +1706,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *         is less than the input scalar
      * @see #compare(VectorOperators.Comparison,byte)
      */
+    @ForceInline
     public final
     VectorMask<Byte> lt(byte e) {
         return compare(LT, e);
@@ -1720,6 +1756,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Byte> compare(VectorOperators.Comparison op,
                                   Vector<Byte> v,
@@ -1778,6 +1815,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *         and only in the lanes selected by the mask
      * @see ByteVector#compare(VectorOperators.Comparison,Vector,VectorMask)
      */
+    @ForceInline
     public final VectorMask<Byte> compare(VectorOperators.Comparison op,
                                                byte e,
                                                VectorMask<Byte> m) {
@@ -1787,7 +1825,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     VectorMask<Byte> compare(Comparison op, long e);
 
     /*package-private*/
@@ -1800,7 +1839,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public final
+    @Override
+    @ForceInline
+    public final
     VectorMask<Byte> compare(Comparison op, long e, VectorMask<Byte> m) {
         return compare(op, broadcast(e), m);
     }
@@ -1866,6 +1907,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @return the result of blending the lane elements of this vector with
      *         the scalar value
      */
+    @ForceInline
     public final ByteVector blend(byte e,
                                             VectorMask<Byte> m) {
         return blend(broadcast(e), m);
@@ -1887,6 +1929,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @return the result of blending the lane elements of this vector with
      *         the scalar value
      */
+    @ForceInline
     public final ByteVector blend(long e,
                                             VectorMask<Byte> m) {
         return blend(broadcast(e), m);
@@ -1895,7 +1938,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     ByteVector slice(int origin, Vector<Byte> v1);
 
     /*package-private*/
@@ -1917,21 +1961,27 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public final ByteVector
-    slice(int origin, Vector<Byte> w, VectorMask<Byte> m) {
+    @Override
+    @ForceInline
+    public final
+    ByteVector slice(int origin,
+                               Vector<Byte> w,
+                               VectorMask<Byte> m) {
         return broadcast(0).blend(slice(origin, w), m);
     }
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     ByteVector slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     ByteVector unslice(int origin, Vector<Byte> w, int part);
 
     /*package-private*/
@@ -1974,13 +2024,15 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract ByteVector
-    unslice(int origin, Vector<Byte> w, int part, VectorMask<Byte> m);
+    @Override
+    public abstract
+    ByteVector unslice(int origin, Vector<Byte> w, int part, VectorMask<Byte> m);
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     ByteVector unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
@@ -1994,7 +2046,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract ByteVector rearrange(VectorShuffle<Byte> m);
+    public abstract
+    ByteVector rearrange(VectorShuffle<Byte> m);
 
     /*package-private*/
     @ForceInline
@@ -2014,8 +2067,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract ByteVector rearrange(VectorShuffle<Byte> s,
-                                                   VectorMask<Byte> m);
+    public abstract
+    ByteVector rearrange(VectorShuffle<Byte> s,
+                                   VectorMask<Byte> m);
 
     /*package-private*/
     @ForceInline
@@ -2043,8 +2097,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract ByteVector rearrange(VectorShuffle<Byte> s,
-                                                   Vector<Byte> v);
+    public abstract
+    ByteVector rearrange(VectorShuffle<Byte> s,
+                                   Vector<Byte> v);
 
     /*package-private*/
     @ForceInline
@@ -2077,7 +2132,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract ByteVector selectFrom(Vector<Byte> v);
+    public abstract
+    ByteVector selectFrom(Vector<Byte> v);
 
     /*package-private*/
     @ForceInline
@@ -2089,7 +2145,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract ByteVector selectFrom(Vector<Byte> s, VectorMask<Byte> m);
+    public abstract
+    ByteVector selectFrom(Vector<Byte> s, VectorMask<Byte> m);
 
     /*package-private*/
     @ForceInline
@@ -2124,6 +2181,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
      */
+    @ForceInline
     public final
     ByteVector bitwiseBlend(Vector<Byte> bits, Vector<Byte> mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2151,6 +2209,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
      */
+    @ForceInline
     public final
     ByteVector bitwiseBlend(byte bits, byte mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2178,6 +2237,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,byte,Vector,VectorMask)
      */
+    @ForceInline
     public final
     ByteVector bitwiseBlend(byte bits, Vector<Byte> mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2205,6 +2265,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,Vector,byte,VectorMask)
      */
+    @ForceInline
     public final
     ByteVector bitwiseBlend(Vector<Byte> bits, byte mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2850,7 +2911,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *         for any lane {@code N} in the vector
      */
     @ForceInline
-    public void intoArray(byte[] a, int offset) {
+    public final
+    void intoArray(byte[] a, int offset) {
         ByteSpecies vsp = vspecies();
         offset = checkFromIndexSize(offset,
                                     vsp.laneCount(),
@@ -2890,8 +2952,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *         where the mask is set
      */
     @ForceInline
-    public final void intoArray(byte[] a, int offset,
-                                VectorMask<Byte> m) {
+    public final
+    void intoArray(byte[] a, int offset,
+                   VectorMask<Byte> m) {
         if (m.allTrue()) {
             intoArray(a, offset);
         } else {
@@ -2928,8 +2991,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *         where the mask is set
      */
     @ForceInline
-    public void intoArray(byte[] a, int offset,
-                          int[] indexMap, int mapOffset) {
+    public final
+    void intoArray(byte[] a, int offset,
+                   int[] indexMap, int mapOffset) {
         ByteSpecies vsp = vspecies();
         if (length() == 1) {
             intoArray(a, offset + indexMap[mapOffset]);
@@ -2994,9 +3058,10 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *         where the mask is set
      */
     @ForceInline
-    public final void intoArray(byte[] a, int offset,
-                                int[] indexMap, int mapOffset,
-                                VectorMask<Byte> m) {
+    public final
+    void intoArray(byte[] a, int offset,
+                   int[] indexMap, int mapOffset,
+                   VectorMask<Byte> m) {
         ByteSpecies vsp = vspecies();
         if (m.allTrue()) {
             intoArray(a, offset, indexMap, mapOffset);
@@ -3010,7 +3075,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      */
     @Override
     @ForceInline
-    public void intoByteArray(byte[] a, int offset) {
+    public final
+    void intoByteArray(byte[] a, int offset) {
         offset = checkFromIndexSize(offset,
                                     bitSize() / Byte.SIZE,
                                     a.length);
@@ -3023,8 +3089,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      */
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int offset,
-                                    VectorMask<Byte> m) {
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       VectorMask<Byte> m) {
         if (m.allTrue()) {
             intoByteArray(a, offset);
             return;
@@ -3042,9 +3109,10 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      */
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int offset,
-                                    ByteOrder bo,
-                                    VectorMask<Byte> m) {
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       ByteOrder bo,
+                       VectorMask<Byte> m) {
         maybeSwap(bo).intoByteArray(a, offset, m);
     }
 
@@ -3053,8 +3121,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      */
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int offset,
-                               ByteOrder bo) {
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo) {
         maybeSwap(bo).intoByteBuffer0(bb, offset);
     }
 
@@ -3063,9 +3132,10 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      */
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int offset,
-                               ByteOrder bo,
-                               VectorMask<Byte> m) {
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo,
+                        VectorMask<Byte> m) {
         if (m.allTrue()) {
             intoByteBuffer(bb, offset, bo);
             return;
@@ -3302,7 +3372,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * reporting the lane values of this vector
      */
     @Override
-    public final String toString() {
+    @ForceInline
+    public final
+    String toString() {
         // now that toArray is strongly typed, we can define this
         return Arrays.toString(toArray());
     }
@@ -3312,7 +3384,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      */
     @Override
     @ForceInline
-    public boolean equals(Object obj) {
+    public final
+    boolean equals(Object obj) {
         if (obj instanceof Vector) {
             Vector<?> that = (Vector<?>) obj;
             if (this.species().equals(that.species())) {
@@ -3326,7 +3399,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public int hashCode() {
+    @ForceInline
+    public final
+    int hashCode() {
         // now that toArray is strongly typed, we can define this
         return Objects.hash(species(), Arrays.hashCode(toArray()));
     }

@@ -55,16 +55,16 @@ public abstract class FloatVector extends AbstractVector<Float> {
     static final int FORBID_OPCODE_KIND = VO_NOFP;
 
     @ForceInline
-    static final int opCode(Operator op) {
+    static int opCode(Operator op) {
         return VectorOperators.opCode(op, VO_OPCODE_VALID, FORBID_OPCODE_KIND);
     }
     @ForceInline
-    static final int opCode(Operator op, int requireKind) {
+    static int opCode(Operator op, int requireKind) {
         requireKind |= VO_OPCODE_VALID;
         return VectorOperators.opCode(op, requireKind, FORBID_OPCODE_KIND);
     }
     @ForceInline
-    static final boolean opKind(Operator op, int bit) {
+    static boolean opKind(Operator op, int bit) {
         return VectorOperators.opKind(op, bit);
     }
 
@@ -522,7 +522,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      */
     // FIXME: Does this carry its weight?
     @ForceInline
-    public static final FloatVector single(VectorSpecies<Float> species, float e) {
+    public static FloatVector single(VectorSpecies<Float> species, float e) {
         return zero(species).withLane(0, e);
     }
 
@@ -552,7 +552,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public abstract FloatVector lanewise(VectorOperators.Unary op);
+    public abstract
+    FloatVector lanewise(VectorOperators.Unary op);
 
     @ForceInline
     final
@@ -615,8 +616,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @ForceInline
-    public FloatVector lanewise(VectorOperators.Unary op,
-                                         VectorMask<Float> m) {
+    public final
+    FloatVector lanewise(VectorOperators.Unary op,
+                                  VectorMask<Float> m) {
         return blend(lanewise(op), m);
     }
 
@@ -628,8 +630,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #lanewise(VectorOperators.Binary,float,VectorMask)
      */
     @Override
-    public abstract FloatVector lanewise(VectorOperators.Binary op,
-                                                  Vector<Float> v);
+    public abstract
+    FloatVector lanewise(VectorOperators.Binary op,
+                                  Vector<Float> v);
     @ForceInline
     final
     FloatVector lanewiseTemplate(VectorOperators.Binary op,
@@ -813,7 +816,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #lanewise(VectorOperators.Ternary,float,Vector)
      */
     @Override
-    public abstract FloatVector lanewise(VectorOperators.Ternary op,
+    public abstract
+    FloatVector lanewise(VectorOperators.Ternary op,
                                                   Vector<Float> v1,
                                                   Vector<Float> v2);
     @ForceInline
@@ -1037,6 +1041,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #add(float)
      */
     @Override
+    @ForceInline
     public final FloatVector add(Vector<Float> v) {
         return lanewise(ADD, v);
     }
@@ -1061,7 +1066,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
      */
-    public final FloatVector add(float e) {
+    @ForceInline
+    public final
+    FloatVector add(float e) {
         return lanewise(ADD, e);
     }
 
@@ -1070,6 +1077,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #add(float,VectorMask)
      */
     @Override
+    @ForceInline
     public final FloatVector add(Vector<Float> v,
                                           VectorMask<Float> m) {
         return lanewise(ADD, v, m);
@@ -1097,6 +1105,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
      */
+    @ForceInline
     public final FloatVector add(float e,
                                           VectorMask<Float> m) {
         return lanewise(ADD, e, m);
@@ -1107,6 +1116,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #sub(float)
      */
     @Override
+    @ForceInline
     public final FloatVector sub(Vector<Float> v) {
         return lanewise(SUB, v);
     }
@@ -1131,6 +1141,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
      */
+    @ForceInline
     public final FloatVector sub(float e) {
         return lanewise(SUB, e);
     }
@@ -1140,6 +1151,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #sub(float,VectorMask)
      */
     @Override
+    @ForceInline
     public final FloatVector sub(Vector<Float> v,
                                           VectorMask<Float> m) {
         return lanewise(SUB, v, m);
@@ -1167,6 +1179,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
      */
+    @ForceInline
     public final FloatVector sub(float e,
                                           VectorMask<Float> m) {
         return lanewise(SUB, e, m);
@@ -1177,6 +1190,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #mul(float)
      */
     @Override
+    @ForceInline
     public final FloatVector mul(Vector<Float> v) {
         return lanewise(MUL, v);
     }
@@ -1201,6 +1215,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
      */
+    @ForceInline
     public final FloatVector mul(float e) {
         return lanewise(MUL, e);
     }
@@ -1210,6 +1225,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #mul(float,VectorMask)
      */
     @Override
+    @ForceInline
     public final FloatVector mul(Vector<Float> v,
                                           VectorMask<Float> m) {
         return lanewise(MUL, v, m);
@@ -1237,6 +1253,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
      */
+    @ForceInline
     public final FloatVector mul(float e,
                                           VectorMask<Float> m) {
         return lanewise(MUL, e, m);
@@ -1251,6 +1268,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * infinity or NaN.
      */
     @Override
+    @ForceInline
     public final FloatVector div(Vector<Float> v) {
         return lanewise(DIV, v);
     }
@@ -1284,6 +1302,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
      */
+    @ForceInline
     public final FloatVector div(float e) {
         return lanewise(DIV, e);
     }
@@ -1298,6 +1317,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * infinity or NaN.
      */
     @Override
+    @ForceInline
     public final FloatVector div(Vector<Float> v,
                                           VectorMask<Float> m) {
         return lanewise(DIV, v, m);
@@ -1334,6 +1354,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
      */
+    @ForceInline
     public final FloatVector div(float e,
                                           VectorMask<Float> m) {
         return lanewise(DIV, e, m);
@@ -1353,6 +1374,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * than, the default zero value.
      */
     @Override
+    @ForceInline
     public final FloatVector min(Vector<Float> v) {
         return lanewise(MIN, v);
     }
@@ -1381,6 +1403,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * zero {@code -0.0} is treated as a value distinct from, and less
      * than, the default zero value.
      */
+    @ForceInline
     public final FloatVector min(float e) {
         return lanewise(MIN, e);
     }
@@ -1392,6 +1415,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * less than the default value, positive zero.
      */
     @Override
+    @ForceInline
     public final FloatVector max(Vector<Float> v) {
         return lanewise(MAX, v);
     }
@@ -1418,6 +1442,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * For this method, negative floating-point zero compares
      * less than the default value, positive zero.
      */
+    @ForceInline
     public final FloatVector max(float e) {
         return lanewise(MAX, e);
     }
@@ -1449,6 +1474,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see VectorOperators#POW
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final FloatVector pow(Vector<Float> n) {
         return lanewise(POW, n);
     }
@@ -1471,6 +1497,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see VectorOperators#POW
      * @see #lanewise(VectorOperators.Binary,float,VectorMask)
      */
+    @ForceInline
     public final FloatVector pow(float n) {
         return lanewise(POW, n);
     }
@@ -1481,6 +1508,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     FloatVector neg() {
         return lanewise(NEG);
@@ -1490,6 +1518,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     FloatVector abs() {
         return lanewise(ABS);
@@ -1513,6 +1542,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see VectorOperators#SQRT
      * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
      */
+    @ForceInline
     public final FloatVector sqrt() {
         return lanewise(SQRT);
     }
@@ -1523,6 +1553,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Float> eq(Vector<Float> v) {
         return compare(EQ, v);
@@ -1540,6 +1571,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         is equal to {@code e}
      * @see #compare(VectorOperators.Comparison,float)
      */
+    @ForceInline
     public final
     VectorMask<Float> eq(float e) {
         return compare(EQ, e);
@@ -1549,6 +1581,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Float> lt(Vector<Float> v) {
         return compare(LT, v);
@@ -1566,6 +1599,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         is less than the input scalar
      * @see #compare(VectorOperators.Comparison,float)
      */
+    @ForceInline
     public final
     VectorMask<Float> lt(float e) {
         return compare(LT, e);
@@ -1615,6 +1649,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Float> compare(VectorOperators.Comparison op,
                                   Vector<Float> v,
@@ -1673,6 +1708,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         and only in the lanes selected by the mask
      * @see FloatVector#compare(VectorOperators.Comparison,Vector,VectorMask)
      */
+    @ForceInline
     public final VectorMask<Float> compare(VectorOperators.Comparison op,
                                                float e,
                                                VectorMask<Float> m) {
@@ -1682,7 +1718,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     VectorMask<Float> compare(Comparison op, long e);
 
     /*package-private*/
@@ -1695,7 +1732,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public final
+    @Override
+    @ForceInline
+    public final
     VectorMask<Float> compare(Comparison op, long e, VectorMask<Float> m) {
         return compare(op, broadcast(e), m);
     }
@@ -1761,6 +1800,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the result of blending the lane elements of this vector with
      *         the scalar value
      */
+    @ForceInline
     public final FloatVector blend(float e,
                                             VectorMask<Float> m) {
         return blend(broadcast(e), m);
@@ -1782,6 +1822,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the result of blending the lane elements of this vector with
      *         the scalar value
      */
+    @ForceInline
     public final FloatVector blend(long e,
                                             VectorMask<Float> m) {
         return blend(broadcast(e), m);
@@ -1790,7 +1831,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     FloatVector slice(int origin, Vector<Float> v1);
 
     /*package-private*/
@@ -1812,21 +1854,27 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public final FloatVector
-    slice(int origin, Vector<Float> w, VectorMask<Float> m) {
+    @Override
+    @ForceInline
+    public final
+    FloatVector slice(int origin,
+                               Vector<Float> w,
+                               VectorMask<Float> m) {
         return broadcast(0).blend(slice(origin, w), m);
     }
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     FloatVector slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     FloatVector unslice(int origin, Vector<Float> w, int part);
 
     /*package-private*/
@@ -1869,13 +1917,15 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract FloatVector
-    unslice(int origin, Vector<Float> w, int part, VectorMask<Float> m);
+    @Override
+    public abstract
+    FloatVector unslice(int origin, Vector<Float> w, int part, VectorMask<Float> m);
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     FloatVector unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
@@ -1889,7 +1939,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract FloatVector rearrange(VectorShuffle<Float> m);
+    public abstract
+    FloatVector rearrange(VectorShuffle<Float> m);
 
     /*package-private*/
     @ForceInline
@@ -1909,8 +1960,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract FloatVector rearrange(VectorShuffle<Float> s,
-                                                   VectorMask<Float> m);
+    public abstract
+    FloatVector rearrange(VectorShuffle<Float> s,
+                                   VectorMask<Float> m);
 
     /*package-private*/
     @ForceInline
@@ -1938,8 +1990,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract FloatVector rearrange(VectorShuffle<Float> s,
-                                                   Vector<Float> v);
+    public abstract
+    FloatVector rearrange(VectorShuffle<Float> s,
+                                   Vector<Float> v);
 
     /*package-private*/
     @ForceInline
@@ -1972,7 +2025,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract FloatVector selectFrom(Vector<Float> v);
+    public abstract
+    FloatVector selectFrom(Vector<Float> v);
 
     /*package-private*/
     @ForceInline
@@ -1984,7 +2038,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract FloatVector selectFrom(Vector<Float> s, VectorMask<Float> m);
+    public abstract
+    FloatVector selectFrom(Vector<Float> s, VectorMask<Float> m);
 
     /*package-private*/
     @ForceInline
@@ -2024,6 +2079,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see VectorOperators#FMA
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
      */
+    @ForceInline
     public final
     FloatVector fma(Vector<Float> b, Vector<Float> c) {
         return lanewise(FMA, b, c);
@@ -2057,6 +2113,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see VectorOperators#FMA
      * @see #lanewise(VectorOperators.Ternary,float,float,VectorMask)
      */
+    @ForceInline
     public final
     FloatVector fma(float b, float c) {
         return lanewise(FMA, b, c);
@@ -2769,7 +2826,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         for any lane {@code N} in the vector
      */
     @ForceInline
-    public void intoArray(float[] a, int offset) {
+    public final
+    void intoArray(float[] a, int offset) {
         FloatSpecies vsp = vspecies();
         offset = checkFromIndexSize(offset,
                                     vsp.laneCount(),
@@ -2809,8 +2867,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         where the mask is set
      */
     @ForceInline
-    public final void intoArray(float[] a, int offset,
-                                VectorMask<Float> m) {
+    public final
+    void intoArray(float[] a, int offset,
+                   VectorMask<Float> m) {
         if (m.allTrue()) {
             intoArray(a, offset);
         } else {
@@ -2847,8 +2906,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         where the mask is set
      */
     @ForceInline
-    public void intoArray(float[] a, int offset,
-                          int[] indexMap, int mapOffset) {
+    public final
+    void intoArray(float[] a, int offset,
+                   int[] indexMap, int mapOffset) {
         FloatSpecies vsp = vspecies();
         if (length() == 1) {
             intoArray(a, offset + indexMap[mapOffset]);
@@ -2913,9 +2973,10 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         where the mask is set
      */
     @ForceInline
-    public final void intoArray(float[] a, int offset,
-                                int[] indexMap, int mapOffset,
-                                VectorMask<Float> m) {
+    public final
+    void intoArray(float[] a, int offset,
+                   int[] indexMap, int mapOffset,
+                   VectorMask<Float> m) {
         FloatSpecies vsp = vspecies();
         if (m.allTrue()) {
             intoArray(a, offset, indexMap, mapOffset);
@@ -2929,7 +2990,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      */
     @Override
     @ForceInline
-    public void intoByteArray(byte[] a, int offset) {
+    public final
+    void intoByteArray(byte[] a, int offset) {
         offset = checkFromIndexSize(offset,
                                     bitSize() / Byte.SIZE,
                                     a.length);
@@ -2942,8 +3004,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      */
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int offset,
-                                    VectorMask<Float> m) {
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       VectorMask<Float> m) {
         if (m.allTrue()) {
             intoByteArray(a, offset);
             return;
@@ -2961,9 +3024,10 @@ public abstract class FloatVector extends AbstractVector<Float> {
      */
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int offset,
-                                    ByteOrder bo,
-                                    VectorMask<Float> m) {
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       ByteOrder bo,
+                       VectorMask<Float> m) {
         maybeSwap(bo).intoByteArray(a, offset, m);
     }
 
@@ -2972,8 +3036,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      */
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int offset,
-                               ByteOrder bo) {
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo) {
         maybeSwap(bo).intoByteBuffer0(bb, offset);
     }
 
@@ -2982,9 +3047,10 @@ public abstract class FloatVector extends AbstractVector<Float> {
      */
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int offset,
-                               ByteOrder bo,
-                               VectorMask<Float> m) {
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo,
+                        VectorMask<Float> m) {
         if (m.allTrue()) {
             intoByteBuffer(bb, offset, bo);
             return;
@@ -3222,7 +3288,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * reporting the lane values of this vector
      */
     @Override
-    public final String toString() {
+    @ForceInline
+    public final
+    String toString() {
         // now that toArray is strongly typed, we can define this
         return Arrays.toString(toArray());
     }
@@ -3232,7 +3300,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      */
     @Override
     @ForceInline
-    public boolean equals(Object obj) {
+    public final
+    boolean equals(Object obj) {
         if (obj instanceof Vector) {
             Vector<?> that = (Vector<?>) obj;
             if (this.species().equals(that.species())) {
@@ -3246,7 +3315,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public int hashCode() {
+    @ForceInline
+    public final
+    int hashCode() {
         // now that toArray is strongly typed, we can define this
         return Objects.hash(species(), Arrays.hashCode(toArray()));
     }

@@ -55,16 +55,16 @@ public abstract class LongVector extends AbstractVector<Long> {
     static final int FORBID_OPCODE_KIND = VO_ONLYFP;
 
     @ForceInline
-    static final int opCode(Operator op) {
+    static int opCode(Operator op) {
         return VectorOperators.opCode(op, VO_OPCODE_VALID, FORBID_OPCODE_KIND);
     }
     @ForceInline
-    static final int opCode(Operator op, int requireKind) {
+    static int opCode(Operator op, int requireKind) {
         requireKind |= VO_OPCODE_VALID;
         return VectorOperators.opCode(op, requireKind, FORBID_OPCODE_KIND);
     }
     @ForceInline
-    static final boolean opKind(Operator op, int bit) {
+    static boolean opKind(Operator op, int bit) {
         return VectorOperators.opKind(op, bit);
     }
 
@@ -481,7 +481,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      */
     // FIXME: Does this carry its weight?
     @ForceInline
-    public static final LongVector single(VectorSpecies<Long> species, long e) {
+    public static LongVector single(VectorSpecies<Long> species, long e) {
         return zero(species).withLane(0, e);
     }
 
@@ -511,7 +511,8 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public abstract LongVector lanewise(VectorOperators.Unary op);
+    public abstract
+    LongVector lanewise(VectorOperators.Unary op);
 
     @ForceInline
     final
@@ -548,8 +549,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @ForceInline
-    public LongVector lanewise(VectorOperators.Unary op,
-                                         VectorMask<Long> m) {
+    public final
+    LongVector lanewise(VectorOperators.Unary op,
+                                  VectorMask<Long> m) {
         return blend(lanewise(op), m);
     }
 
@@ -561,8 +563,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #lanewise(VectorOperators.Binary,long,VectorMask)
      */
     @Override
-    public abstract LongVector lanewise(VectorOperators.Binary op,
-                                                  Vector<Long> v);
+    public abstract
+    LongVector lanewise(VectorOperators.Binary op,
+                                  Vector<Long> v);
     @ForceInline
     final
     LongVector lanewiseTemplate(VectorOperators.Binary op,
@@ -793,7 +796,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #lanewise(VectorOperators.Ternary,long,Vector)
      */
     @Override
-    public abstract LongVector lanewise(VectorOperators.Ternary op,
+    public abstract
+    LongVector lanewise(VectorOperators.Ternary op,
                                                   Vector<Long> v1,
                                                   Vector<Long> v2);
     @ForceInline
@@ -1022,6 +1026,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #add(long)
      */
     @Override
+    @ForceInline
     public final LongVector add(Vector<Long> v) {
         return lanewise(ADD, v);
     }
@@ -1046,7 +1051,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
      */
-    public final LongVector add(long e) {
+    @ForceInline
+    public final
+    LongVector add(long e) {
         return lanewise(ADD, e);
     }
 
@@ -1055,6 +1062,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #add(long,VectorMask)
      */
     @Override
+    @ForceInline
     public final LongVector add(Vector<Long> v,
                                           VectorMask<Long> m) {
         return lanewise(ADD, v, m);
@@ -1082,6 +1090,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
      */
+    @ForceInline
     public final LongVector add(long e,
                                           VectorMask<Long> m) {
         return lanewise(ADD, e, m);
@@ -1092,6 +1101,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #sub(long)
      */
     @Override
+    @ForceInline
     public final LongVector sub(Vector<Long> v) {
         return lanewise(SUB, v);
     }
@@ -1116,6 +1126,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
      */
+    @ForceInline
     public final LongVector sub(long e) {
         return lanewise(SUB, e);
     }
@@ -1125,6 +1136,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #sub(long,VectorMask)
      */
     @Override
+    @ForceInline
     public final LongVector sub(Vector<Long> v,
                                           VectorMask<Long> m) {
         return lanewise(SUB, v, m);
@@ -1152,6 +1164,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
      */
+    @ForceInline
     public final LongVector sub(long e,
                                           VectorMask<Long> m) {
         return lanewise(SUB, e, m);
@@ -1162,6 +1175,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #mul(long)
      */
     @Override
+    @ForceInline
     public final LongVector mul(Vector<Long> v) {
         return lanewise(MUL, v);
     }
@@ -1186,6 +1200,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
      */
+    @ForceInline
     public final LongVector mul(long e) {
         return lanewise(MUL, e);
     }
@@ -1195,6 +1210,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #mul(long,VectorMask)
      */
     @Override
+    @ForceInline
     public final LongVector mul(Vector<Long> v,
                                           VectorMask<Long> m) {
         return lanewise(MUL, v, m);
@@ -1222,6 +1238,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
      */
+    @ForceInline
     public final LongVector mul(long e,
                                           VectorMask<Long> m) {
         return lanewise(MUL, e, m);
@@ -1232,6 +1249,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #div(long)
      */
     @Override
+    @ForceInline
     public final LongVector div(Vector<Long> v) {
         return lanewise(DIV, v);
     }
@@ -1261,6 +1279,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
      */
+    @ForceInline
     public final LongVector div(long e) {
         return lanewise(DIV, e);
     }
@@ -1271,6 +1290,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #div(long,VectorMask)
      */
     @Override
+    @ForceInline
     public final LongVector div(Vector<Long> v,
                                           VectorMask<Long> m) {
         return lanewise(DIV, v, m);
@@ -1303,6 +1323,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
      */
+    @ForceInline
     public final LongVector div(long e,
                                           VectorMask<Long> m) {
         return lanewise(DIV, e, m);
@@ -1318,6 +1339,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final LongVector min(Vector<Long> v) {
         return lanewise(MIN, v);
     }
@@ -1342,6 +1364,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#MIN
      * @see #lanewise(VectorOperators.Binary,long,VectorMask)
      */
+    @ForceInline
     public final LongVector min(long e) {
         return lanewise(MIN, e);
     }
@@ -1350,6 +1373,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final LongVector max(Vector<Long> v) {
         return lanewise(MAX, v);
     }
@@ -1373,6 +1397,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#MAX
      * @see #lanewise(VectorOperators.Binary,long,VectorMask)
      */
+    @ForceInline
     public final LongVector max(long e) {
         return lanewise(MAX, e);
     }
@@ -1406,6 +1431,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#AND
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final LongVector and(Vector<Long> v) {
         return lanewise(AND, v);
     }
@@ -1429,6 +1455,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#AND
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final LongVector and(long e) {
         return lanewise(AND, e);
     }
@@ -1461,6 +1488,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#OR
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final LongVector or(Vector<Long> v) {
         return lanewise(OR, v);
     }
@@ -1484,6 +1512,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#OR
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final LongVector or(long e) {
         return lanewise(OR, e);
     }
@@ -1496,6 +1525,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     LongVector neg() {
         return lanewise(NEG);
@@ -1505,6 +1535,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     LongVector abs() {
         return lanewise(ABS);
@@ -1536,6 +1567,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#NOT
      * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
      */
+    @ForceInline
     public final LongVector not() {
         return lanewise(NOT);
     }
@@ -1547,6 +1579,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Long> eq(Vector<Long> v) {
         return compare(EQ, v);
@@ -1564,6 +1597,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         is equal to {@code e}
      * @see #compare(VectorOperators.Comparison,long)
      */
+    @ForceInline
     public final
     VectorMask<Long> eq(long e) {
         return compare(EQ, e);
@@ -1573,6 +1607,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Long> lt(Vector<Long> v) {
         return compare(LT, v);
@@ -1590,6 +1625,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         is less than the input scalar
      * @see #compare(VectorOperators.Comparison,long)
      */
+    @ForceInline
     public final
     VectorMask<Long> lt(long e) {
         return compare(LT, e);
@@ -1639,6 +1675,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Long> compare(VectorOperators.Comparison op,
                                   Vector<Long> v,
@@ -1697,6 +1734,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         and only in the lanes selected by the mask
      * @see LongVector#compare(VectorOperators.Comparison,Vector,VectorMask)
      */
+    @ForceInline
     public final VectorMask<Long> compare(VectorOperators.Comparison op,
                                                long e,
                                                VectorMask<Long> m) {
@@ -1763,6 +1801,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the result of blending the lane elements of this vector with
      *         the scalar value
      */
+    @ForceInline
     public final LongVector blend(long e,
                                             VectorMask<Long> m) {
         return blend(broadcast(e), m);
@@ -1772,7 +1811,8 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     LongVector slice(int origin, Vector<Long> v1);
 
     /*package-private*/
@@ -1794,21 +1834,27 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public final LongVector
-    slice(int origin, Vector<Long> w, VectorMask<Long> m) {
+    @Override
+    @ForceInline
+    public final
+    LongVector slice(int origin,
+                               Vector<Long> w,
+                               VectorMask<Long> m) {
         return broadcast(0).blend(slice(origin, w), m);
     }
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     LongVector slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     LongVector unslice(int origin, Vector<Long> w, int part);
 
     /*package-private*/
@@ -1851,13 +1897,15 @@ public abstract class LongVector extends AbstractVector<Long> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract LongVector
-    unslice(int origin, Vector<Long> w, int part, VectorMask<Long> m);
+    @Override
+    public abstract
+    LongVector unslice(int origin, Vector<Long> w, int part, VectorMask<Long> m);
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     LongVector unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
@@ -1871,7 +1919,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract LongVector rearrange(VectorShuffle<Long> m);
+    public abstract
+    LongVector rearrange(VectorShuffle<Long> m);
 
     /*package-private*/
     @ForceInline
@@ -1891,8 +1940,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract LongVector rearrange(VectorShuffle<Long> s,
-                                                   VectorMask<Long> m);
+    public abstract
+    LongVector rearrange(VectorShuffle<Long> s,
+                                   VectorMask<Long> m);
 
     /*package-private*/
     @ForceInline
@@ -1920,8 +1970,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract LongVector rearrange(VectorShuffle<Long> s,
-                                                   Vector<Long> v);
+    public abstract
+    LongVector rearrange(VectorShuffle<Long> s,
+                                   Vector<Long> v);
 
     /*package-private*/
     @ForceInline
@@ -1954,7 +2005,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract LongVector selectFrom(Vector<Long> v);
+    public abstract
+    LongVector selectFrom(Vector<Long> v);
 
     /*package-private*/
     @ForceInline
@@ -1966,7 +2018,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract LongVector selectFrom(Vector<Long> s, VectorMask<Long> m);
+    public abstract
+    LongVector selectFrom(Vector<Long> s, VectorMask<Long> m);
 
     /*package-private*/
     @ForceInline
@@ -2001,6 +2054,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
      */
+    @ForceInline
     public final
     LongVector bitwiseBlend(Vector<Long> bits, Vector<Long> mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2028,6 +2082,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,long,long,VectorMask)
      */
+    @ForceInline
     public final
     LongVector bitwiseBlend(long bits, long mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2055,6 +2110,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,long,Vector,VectorMask)
      */
+    @ForceInline
     public final
     LongVector bitwiseBlend(long bits, Vector<Long> mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2082,6 +2138,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,Vector,long,VectorMask)
      */
+    @ForceInline
     public final
     LongVector bitwiseBlend(Vector<Long> bits, long mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2766,7 +2823,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         for any lane {@code N} in the vector
      */
     @ForceInline
-    public void intoArray(long[] a, int offset) {
+    public final
+    void intoArray(long[] a, int offset) {
         LongSpecies vsp = vspecies();
         offset = checkFromIndexSize(offset,
                                     vsp.laneCount(),
@@ -2806,8 +2864,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         where the mask is set
      */
     @ForceInline
-    public final void intoArray(long[] a, int offset,
-                                VectorMask<Long> m) {
+    public final
+    void intoArray(long[] a, int offset,
+                   VectorMask<Long> m) {
         if (m.allTrue()) {
             intoArray(a, offset);
         } else {
@@ -2844,8 +2903,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         where the mask is set
      */
     @ForceInline
-    public void intoArray(long[] a, int offset,
-                          int[] indexMap, int mapOffset) {
+    public final
+    void intoArray(long[] a, int offset,
+                   int[] indexMap, int mapOffset) {
         LongSpecies vsp = vspecies();
         if (length() == 1) {
             intoArray(a, offset + indexMap[mapOffset]);
@@ -2910,9 +2970,10 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         where the mask is set
      */
     @ForceInline
-    public final void intoArray(long[] a, int offset,
-                                int[] indexMap, int mapOffset,
-                                VectorMask<Long> m) {
+    public final
+    void intoArray(long[] a, int offset,
+                   int[] indexMap, int mapOffset,
+                   VectorMask<Long> m) {
         LongSpecies vsp = vspecies();
         if (m.allTrue()) {
             intoArray(a, offset, indexMap, mapOffset);
@@ -2926,7 +2987,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      */
     @Override
     @ForceInline
-    public void intoByteArray(byte[] a, int offset) {
+    public final
+    void intoByteArray(byte[] a, int offset) {
         offset = checkFromIndexSize(offset,
                                     bitSize() / Byte.SIZE,
                                     a.length);
@@ -2939,8 +3001,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      */
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int offset,
-                                    VectorMask<Long> m) {
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       VectorMask<Long> m) {
         if (m.allTrue()) {
             intoByteArray(a, offset);
             return;
@@ -2958,9 +3021,10 @@ public abstract class LongVector extends AbstractVector<Long> {
      */
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int offset,
-                                    ByteOrder bo,
-                                    VectorMask<Long> m) {
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       ByteOrder bo,
+                       VectorMask<Long> m) {
         maybeSwap(bo).intoByteArray(a, offset, m);
     }
 
@@ -2969,8 +3033,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      */
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int offset,
-                               ByteOrder bo) {
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo) {
         maybeSwap(bo).intoByteBuffer0(bb, offset);
     }
 
@@ -2979,9 +3044,10 @@ public abstract class LongVector extends AbstractVector<Long> {
      */
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int offset,
-                               ByteOrder bo,
-                               VectorMask<Long> m) {
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo,
+                        VectorMask<Long> m) {
         if (m.allTrue()) {
             intoByteBuffer(bb, offset, bo);
             return;
@@ -3219,7 +3285,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      * reporting the lane values of this vector
      */
     @Override
-    public final String toString() {
+    @ForceInline
+    public final
+    String toString() {
         // now that toArray is strongly typed, we can define this
         return Arrays.toString(toArray());
     }
@@ -3229,7 +3297,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      */
     @Override
     @ForceInline
-    public boolean equals(Object obj) {
+    public final
+    boolean equals(Object obj) {
         if (obj instanceof Vector) {
             Vector<?> that = (Vector<?>) obj;
             if (this.species().equals(that.species())) {
@@ -3243,7 +3312,9 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public int hashCode() {
+    @ForceInline
+    public final
+    int hashCode() {
         // now that toArray is strongly typed, we can define this
         return Objects.hash(species(), Arrays.hashCode(toArray()));
     }

@@ -74,17 +74,30 @@ public class CovarOverrideTest {
         String pkg = c.getPackageName();
         for (;;) {
             Class<?> superClass = c.getSuperclass();
-            if (superClass == Object.class) {
-                Class<?>[] ifcs = c.getInterfaces();
-                assert(ifcs.length == 1);
-                superClass = ifcs[0];
+            if (!superClass.getPackageName().equals(pkg)) {
+                Class<?> ifc = null;
+                for (Class<?> ifc1 : c.getInterfaces()) {
+                    if (ifc1 == java.lang.reflect.Proxy.class)
+                        continue;
+                    if (Modifier.isPublic(ifc1.getModifiers())) {
+                        assert(ifc == null) : ifc;
+                        ifc = ifc1;
+                    }
+                }
+                assert(ifc != null);
+                superClass = ifc;
             }
-            assert(superClass.getPackageName().equals(pkg)) : c;
             if (Modifier.isPublic(superClass.getModifiers()))
                 return superClass;
             // ByteVector <: package-private AbstractVector <: Vector
             c = superClass;
         }
+    }
+
+    static void assertSamePackage(Class<?> c, Class<?> d) {
+        String cp = c.getPackageName();
+        String dp = d.getPackageName();
+        assert cp.equals(dp) : cp + " != " + dp;
     }
 
     @Test(dataProvider = "classesProvider")
@@ -93,6 +106,7 @@ public class CovarOverrideTest {
                Vector.class.isAssignableFrom(c));
         Class<?> vectorClass = c;
         Class<?> superClass = getPublicSuper(c);
+        assertSamePackage(c, superClass);
         List<Method> notFound = new ArrayList<>();
         List<Method> notCovarientlyOverridden = new ArrayList<>();
         for (Method superMethod : getVectorReturningMethods(superClass)) {
@@ -109,12 +123,12 @@ public class CovarOverrideTest {
 
         if (!notFound.isEmpty()) {
             System.out.println("  Methods not found on sub-type " + c.getName());
-            notFound.forEach(m -> System.out.println("    " + m));
+            notFound.forEach(m -> System.out.println("    " + str(m)));
         }
 
         if (!notCovarientlyOverridden.isEmpty()) {
             System.out.println("  Methods not covariently overridden on sub-type " + c.getName());
-            notCovarientlyOverridden.forEach(m -> System.out.println("    " + m));
+            notCovarientlyOverridden.forEach(m -> System.out.println("    " + str(m)));
         }
 
         assertTrue(notFound.isEmpty() && notCovarientlyOverridden.isEmpty());
@@ -130,4 +144,62 @@ public class CovarOverrideTest {
         }
         return filteredMethods.collect(toList());
     }
+
+    @Test(dataProvider = "classesProvider")
+    public void testFinalOrAbstract(Class<?> c) {
+        List<Method> badMethods = new ArrayList<>();
+        List<Method> noForceInline = new ArrayList<>();
+        for (var m : getInstanceMethods(c)) {
+            boolean abs = Modifier.isAbstract(m.getModifiers());
+            boolean fin = Modifier.isFinal(m.getModifiers());
+            boolean force = false;
+            boolean depre = false;
+            for (var a : m.getDeclaredAnnotations()) {
+                String name = getPublicSuper(a.getClass()).getSimpleName();
+                force |= name.equals("ForceInline");
+                depre |= name.equals("Deprecated");
+            }
+            if (depre) {
+                continue;  // skip @Deprecated
+            }
+            if (abs == fin) {
+                badMethods.add(m);
+                continue;
+            }
+            if (fin != force) {
+                noForceInline.add(m);
+                continue;
+            }
+        }
+
+        if (!badMethods.isEmpty()) {
+            System.out.println("  Non-abstract, non-final methods of " + c.getName());
+            badMethods.forEach(m -> System.out.println("    " + str(m)));
+        }
+
+        if (!noForceInline.isEmpty()) {
+            System.out.println("  Misplaced @ForceInline on methods of " + c.getName());
+            noForceInline.forEach(m -> System.out.println("    " + str(m)));
+        }
+
+        assertTrue(badMethods.isEmpty() && noForceInline.isEmpty());
+    }
+
+    static List<Method> getInstanceMethods(Class<?> c) {
+        var filteredMethods = Stream.of(c.getDeclaredMethods()).
+                filter(m -> !m.isBridge()).
+                filter(m -> Modifier.isPublic(m.getModifiers())).
+                filter(m -> !Modifier.isStatic(m.getModifiers()));
+        return filteredMethods.collect(toList());
+    }
+
+    static final String PKGP = Vector.class.getPackageName().replaceAll("[.]", "[.]") + "[.]";
+    static final String INCP = "VectorOperators[$]";
+    static String str(Method m) {
+        String s = m.toString();
+        s = s.replaceAll(PKGP, "");
+        s = s.replaceAll(INCP, "");
+        return s;
+    }
+
 }

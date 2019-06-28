@@ -55,16 +55,16 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     static final int FORBID_OPCODE_KIND = VO_NOFP;
 
     @ForceInline
-    static final int opCode(Operator op) {
+    static int opCode(Operator op) {
         return VectorOperators.opCode(op, VO_OPCODE_VALID, FORBID_OPCODE_KIND);
     }
     @ForceInline
-    static final int opCode(Operator op, int requireKind) {
+    static int opCode(Operator op, int requireKind) {
         requireKind |= VO_OPCODE_VALID;
         return VectorOperators.opCode(op, requireKind, FORBID_OPCODE_KIND);
     }
     @ForceInline
-    static final boolean opKind(Operator op, int bit) {
+    static boolean opKind(Operator op, int bit) {
         return VectorOperators.opKind(op, bit);
     }
 
@@ -522,7 +522,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     // FIXME: Does this carry its weight?
     @ForceInline
-    public static final DoubleVector single(VectorSpecies<Double> species, double e) {
+    public static DoubleVector single(VectorSpecies<Double> species, double e) {
         return zero(species).withLane(0, e);
     }
 
@@ -552,7 +552,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public abstract DoubleVector lanewise(VectorOperators.Unary op);
+    public abstract
+    DoubleVector lanewise(VectorOperators.Unary op);
 
     @ForceInline
     final
@@ -615,8 +616,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @ForceInline
-    public DoubleVector lanewise(VectorOperators.Unary op,
-                                         VectorMask<Double> m) {
+    public final
+    DoubleVector lanewise(VectorOperators.Unary op,
+                                  VectorMask<Double> m) {
         return blend(lanewise(op), m);
     }
 
@@ -628,8 +630,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #lanewise(VectorOperators.Binary,double,VectorMask)
      */
     @Override
-    public abstract DoubleVector lanewise(VectorOperators.Binary op,
-                                                  Vector<Double> v);
+    public abstract
+    DoubleVector lanewise(VectorOperators.Binary op,
+                                  Vector<Double> v);
     @ForceInline
     final
     DoubleVector lanewiseTemplate(VectorOperators.Binary op,
@@ -813,7 +816,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #lanewise(VectorOperators.Ternary,double,Vector)
      */
     @Override
-    public abstract DoubleVector lanewise(VectorOperators.Ternary op,
+    public abstract
+    DoubleVector lanewise(VectorOperators.Ternary op,
                                                   Vector<Double> v1,
                                                   Vector<Double> v2);
     @ForceInline
@@ -1037,6 +1041,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #add(double)
      */
     @Override
+    @ForceInline
     public final DoubleVector add(Vector<Double> v) {
         return lanewise(ADD, v);
     }
@@ -1061,7 +1066,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,double)
      */
-    public final DoubleVector add(double e) {
+    @ForceInline
+    public final
+    DoubleVector add(double e) {
         return lanewise(ADD, e);
     }
 
@@ -1070,6 +1077,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #add(double,VectorMask)
      */
     @Override
+    @ForceInline
     public final DoubleVector add(Vector<Double> v,
                                           VectorMask<Double> m) {
         return lanewise(ADD, v, m);
@@ -1097,6 +1105,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,double)
      */
+    @ForceInline
     public final DoubleVector add(double e,
                                           VectorMask<Double> m) {
         return lanewise(ADD, e, m);
@@ -1107,6 +1116,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #sub(double)
      */
     @Override
+    @ForceInline
     public final DoubleVector sub(Vector<Double> v) {
         return lanewise(SUB, v);
     }
@@ -1131,6 +1141,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,double)
      */
+    @ForceInline
     public final DoubleVector sub(double e) {
         return lanewise(SUB, e);
     }
@@ -1140,6 +1151,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #sub(double,VectorMask)
      */
     @Override
+    @ForceInline
     public final DoubleVector sub(Vector<Double> v,
                                           VectorMask<Double> m) {
         return lanewise(SUB, v, m);
@@ -1167,6 +1179,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,double)
      */
+    @ForceInline
     public final DoubleVector sub(double e,
                                           VectorMask<Double> m) {
         return lanewise(SUB, e, m);
@@ -1177,6 +1190,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #mul(double)
      */
     @Override
+    @ForceInline
     public final DoubleVector mul(Vector<Double> v) {
         return lanewise(MUL, v);
     }
@@ -1201,6 +1215,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,double)
      */
+    @ForceInline
     public final DoubleVector mul(double e) {
         return lanewise(MUL, e);
     }
@@ -1210,6 +1225,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #mul(double,VectorMask)
      */
     @Override
+    @ForceInline
     public final DoubleVector mul(Vector<Double> v,
                                           VectorMask<Double> m) {
         return lanewise(MUL, v, m);
@@ -1237,6 +1253,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,double)
      */
+    @ForceInline
     public final DoubleVector mul(double e,
                                           VectorMask<Double> m) {
         return lanewise(MUL, e, m);
@@ -1251,6 +1268,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * infinity or NaN.
      */
     @Override
+    @ForceInline
     public final DoubleVector div(Vector<Double> v) {
         return lanewise(DIV, v);
     }
@@ -1284,6 +1302,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,double)
      */
+    @ForceInline
     public final DoubleVector div(double e) {
         return lanewise(DIV, e);
     }
@@ -1298,6 +1317,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * infinity or NaN.
      */
     @Override
+    @ForceInline
     public final DoubleVector div(Vector<Double> v,
                                           VectorMask<Double> m) {
         return lanewise(DIV, v, m);
@@ -1334,6 +1354,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,double)
      */
+    @ForceInline
     public final DoubleVector div(double e,
                                           VectorMask<Double> m) {
         return lanewise(DIV, e, m);
@@ -1353,6 +1374,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * than, the default zero value.
      */
     @Override
+    @ForceInline
     public final DoubleVector min(Vector<Double> v) {
         return lanewise(MIN, v);
     }
@@ -1381,6 +1403,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * zero {@code -0.0} is treated as a value distinct from, and less
      * than, the default zero value.
      */
+    @ForceInline
     public final DoubleVector min(double e) {
         return lanewise(MIN, e);
     }
@@ -1392,6 +1415,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * less than the default value, positive zero.
      */
     @Override
+    @ForceInline
     public final DoubleVector max(Vector<Double> v) {
         return lanewise(MAX, v);
     }
@@ -1418,6 +1442,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * For this method, negative floating-point zero compares
      * less than the default value, positive zero.
      */
+    @ForceInline
     public final DoubleVector max(double e) {
         return lanewise(MAX, e);
     }
@@ -1449,6 +1474,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see VectorOperators#POW
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final DoubleVector pow(Vector<Double> n) {
         return lanewise(POW, n);
     }
@@ -1471,6 +1497,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see VectorOperators#POW
      * @see #lanewise(VectorOperators.Binary,double,VectorMask)
      */
+    @ForceInline
     public final DoubleVector pow(double n) {
         return lanewise(POW, n);
     }
@@ -1481,6 +1508,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     DoubleVector neg() {
         return lanewise(NEG);
@@ -1490,6 +1518,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     DoubleVector abs() {
         return lanewise(ABS);
@@ -1513,6 +1542,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see VectorOperators#SQRT
      * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
      */
+    @ForceInline
     public final DoubleVector sqrt() {
         return lanewise(SQRT);
     }
@@ -1523,6 +1553,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Double> eq(Vector<Double> v) {
         return compare(EQ, v);
@@ -1540,6 +1571,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         is equal to {@code e}
      * @see #compare(VectorOperators.Comparison,double)
      */
+    @ForceInline
     public final
     VectorMask<Double> eq(double e) {
         return compare(EQ, e);
@@ -1549,6 +1581,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Double> lt(Vector<Double> v) {
         return compare(LT, v);
@@ -1566,6 +1599,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         is less than the input scalar
      * @see #compare(VectorOperators.Comparison,double)
      */
+    @ForceInline
     public final
     VectorMask<Double> lt(double e) {
         return compare(LT, e);
@@ -1615,6 +1649,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<Double> compare(VectorOperators.Comparison op,
                                   Vector<Double> v,
@@ -1673,6 +1708,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         and only in the lanes selected by the mask
      * @see DoubleVector#compare(VectorOperators.Comparison,Vector,VectorMask)
      */
+    @ForceInline
     public final VectorMask<Double> compare(VectorOperators.Comparison op,
                                                double e,
                                                VectorMask<Double> m) {
@@ -1682,7 +1718,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     VectorMask<Double> compare(Comparison op, long e);
 
     /*package-private*/
@@ -1695,7 +1732,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public final
+    @Override
+    @ForceInline
+    public final
     VectorMask<Double> compare(Comparison op, long e, VectorMask<Double> m) {
         return compare(op, broadcast(e), m);
     }
@@ -1761,6 +1800,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @return the result of blending the lane elements of this vector with
      *         the scalar value
      */
+    @ForceInline
     public final DoubleVector blend(double e,
                                             VectorMask<Double> m) {
         return blend(broadcast(e), m);
@@ -1782,6 +1822,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @return the result of blending the lane elements of this vector with
      *         the scalar value
      */
+    @ForceInline
     public final DoubleVector blend(long e,
                                             VectorMask<Double> m) {
         return blend(broadcast(e), m);
@@ -1790,7 +1831,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     DoubleVector slice(int origin, Vector<Double> v1);
 
     /*package-private*/
@@ -1812,21 +1854,27 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public final DoubleVector
-    slice(int origin, Vector<Double> w, VectorMask<Double> m) {
+    @Override
+    @ForceInline
+    public final
+    DoubleVector slice(int origin,
+                               Vector<Double> w,
+                               VectorMask<Double> m) {
         return broadcast(0).blend(slice(origin, w), m);
     }
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     DoubleVector slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     DoubleVector unslice(int origin, Vector<Double> w, int part);
 
     /*package-private*/
@@ -1869,13 +1917,15 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract DoubleVector
-    unslice(int origin, Vector<Double> w, int part, VectorMask<Double> m);
+    @Override
+    public abstract
+    DoubleVector unslice(int origin, Vector<Double> w, int part, VectorMask<Double> m);
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     DoubleVector unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
@@ -1889,7 +1939,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract DoubleVector rearrange(VectorShuffle<Double> m);
+    public abstract
+    DoubleVector rearrange(VectorShuffle<Double> m);
 
     /*package-private*/
     @ForceInline
@@ -1909,8 +1960,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract DoubleVector rearrange(VectorShuffle<Double> s,
-                                                   VectorMask<Double> m);
+    public abstract
+    DoubleVector rearrange(VectorShuffle<Double> s,
+                                   VectorMask<Double> m);
 
     /*package-private*/
     @ForceInline
@@ -1938,8 +1990,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract DoubleVector rearrange(VectorShuffle<Double> s,
-                                                   Vector<Double> v);
+    public abstract
+    DoubleVector rearrange(VectorShuffle<Double> s,
+                                   Vector<Double> v);
 
     /*package-private*/
     @ForceInline
@@ -1972,7 +2025,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract DoubleVector selectFrom(Vector<Double> v);
+    public abstract
+    DoubleVector selectFrom(Vector<Double> v);
 
     /*package-private*/
     @ForceInline
@@ -1984,7 +2038,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract DoubleVector selectFrom(Vector<Double> s, VectorMask<Double> m);
+    public abstract
+    DoubleVector selectFrom(Vector<Double> s, VectorMask<Double> m);
 
     /*package-private*/
     @ForceInline
@@ -2024,6 +2079,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see VectorOperators#FMA
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
      */
+    @ForceInline
     public final
     DoubleVector fma(Vector<Double> b, Vector<Double> c) {
         return lanewise(FMA, b, c);
@@ -2057,6 +2113,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see VectorOperators#FMA
      * @see #lanewise(VectorOperators.Ternary,double,double,VectorMask)
      */
+    @ForceInline
     public final
     DoubleVector fma(double b, double c) {
         return lanewise(FMA, b, c);
@@ -2768,7 +2825,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         for any lane {@code N} in the vector
      */
     @ForceInline
-    public void intoArray(double[] a, int offset) {
+    public final
+    void intoArray(double[] a, int offset) {
         DoubleSpecies vsp = vspecies();
         offset = checkFromIndexSize(offset,
                                     vsp.laneCount(),
@@ -2808,8 +2866,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         where the mask is set
      */
     @ForceInline
-    public final void intoArray(double[] a, int offset,
-                                VectorMask<Double> m) {
+    public final
+    void intoArray(double[] a, int offset,
+                   VectorMask<Double> m) {
         if (m.allTrue()) {
             intoArray(a, offset);
         } else {
@@ -2846,8 +2905,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         where the mask is set
      */
     @ForceInline
-    public void intoArray(double[] a, int offset,
-                          int[] indexMap, int mapOffset) {
+    public final
+    void intoArray(double[] a, int offset,
+                   int[] indexMap, int mapOffset) {
         DoubleSpecies vsp = vspecies();
         if (length() == 1) {
             intoArray(a, offset + indexMap[mapOffset]);
@@ -2912,9 +2972,10 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         where the mask is set
      */
     @ForceInline
-    public final void intoArray(double[] a, int offset,
-                                int[] indexMap, int mapOffset,
-                                VectorMask<Double> m) {
+    public final
+    void intoArray(double[] a, int offset,
+                   int[] indexMap, int mapOffset,
+                   VectorMask<Double> m) {
         DoubleSpecies vsp = vspecies();
         if (m.allTrue()) {
             intoArray(a, offset, indexMap, mapOffset);
@@ -2928,7 +2989,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     @Override
     @ForceInline
-    public void intoByteArray(byte[] a, int offset) {
+    public final
+    void intoByteArray(byte[] a, int offset) {
         offset = checkFromIndexSize(offset,
                                     bitSize() / Byte.SIZE,
                                     a.length);
@@ -2941,8 +3003,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int offset,
-                                    VectorMask<Double> m) {
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       VectorMask<Double> m) {
         if (m.allTrue()) {
             intoByteArray(a, offset);
             return;
@@ -2960,9 +3023,10 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int offset,
-                                    ByteOrder bo,
-                                    VectorMask<Double> m) {
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       ByteOrder bo,
+                       VectorMask<Double> m) {
         maybeSwap(bo).intoByteArray(a, offset, m);
     }
 
@@ -2971,8 +3035,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int offset,
-                               ByteOrder bo) {
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo) {
         maybeSwap(bo).intoByteBuffer0(bb, offset);
     }
 
@@ -2981,9 +3046,10 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int offset,
-                               ByteOrder bo,
-                               VectorMask<Double> m) {
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo,
+                        VectorMask<Double> m) {
         if (m.allTrue()) {
             intoByteBuffer(bb, offset, bo);
             return;
@@ -3221,7 +3287,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * reporting the lane values of this vector
      */
     @Override
-    public final String toString() {
+    @ForceInline
+    public final
+    String toString() {
         // now that toArray is strongly typed, we can define this
         return Arrays.toString(toArray());
     }
@@ -3231,7 +3299,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     @Override
     @ForceInline
-    public boolean equals(Object obj) {
+    public final
+    boolean equals(Object obj) {
         if (obj instanceof Vector) {
             Vector<?> that = (Vector<?>) obj;
             if (this.species().equals(that.species())) {
@@ -3245,7 +3314,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public int hashCode() {
+    @ForceInline
+    public final
+    int hashCode() {
         // now that toArray is strongly typed, we can define this
         return Objects.hash(species(), Arrays.hashCode(toArray()));
     }

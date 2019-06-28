@@ -191,7 +191,7 @@ abstract class AbstractShuffle<E> extends VectorShuffle<E> {
      */
     /*package-private*/
     @ForceInline
-    static final
+    static
     int partiallyWrapIndex(int index, int laneCount) {
         return checkIndex0(index, laneCount, (byte)-1);
     }

@@ -61,16 +61,16 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 #end[FP]
 
     @ForceInline
-    static final int opCode(Operator op) {
+    static int opCode(Operator op) {
         return VectorOperators.opCode(op, VO_OPCODE_VALID, FORBID_OPCODE_KIND);
     }
     @ForceInline
-    static final int opCode(Operator op, int requireKind) {
+    static int opCode(Operator op, int requireKind) {
         requireKind |= VO_OPCODE_VALID;
         return VectorOperators.opCode(op, requireKind, FORBID_OPCODE_KIND);
     }
     @ForceInline
-    static final boolean opKind(Operator op, int bit) {
+    static boolean opKind(Operator op, int bit) {
         return VectorOperators.opKind(op, bit);
     }
 
@@ -530,7 +530,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      */
     // FIXME: Does this carry its weight?
     @ForceInline
-    public static final $abstractvectortype$ single(VectorSpecies<$Boxtype$> species, $type$ e) {
+    public static $abstractvectortype$ single(VectorSpecies<$Boxtype$> species, $type$ e) {
         return zero(species).withLane(0, e);
     }
 
@@ -568,7 +568,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    public abstract $abstractvectortype$ lanewise(VectorOperators.Unary op);
+    public abstract
+    $abstractvectortype$ lanewise(VectorOperators.Unary op);
 
     @ForceInline
     final
@@ -643,8 +644,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @ForceInline
-    public $abstractvectortype$ lanewise(VectorOperators.Unary op,
-                                         VectorMask<$Boxtype$> m) {
+    public final
+    $abstractvectortype$ lanewise(VectorOperators.Unary op,
+                                  VectorMask<$Boxtype$> m) {
         return blend(lanewise(op), m);
     }
 
@@ -656,8 +658,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Binary,$type$,VectorMask)
      */
     @Override
-    public abstract $abstractvectortype$ lanewise(VectorOperators.Binary op,
-                                                  Vector<$Boxtype$> v);
+    public abstract
+    $abstractvectortype$ lanewise(VectorOperators.Binary op,
+                                  Vector<$Boxtype$> v);
     @ForceInline
     final
     $abstractvectortype$ lanewiseTemplate(VectorOperators.Binary op,
@@ -965,7 +968,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Ternary,$type$,Vector)
      */
     @Override
-    public abstract $abstractvectortype$ lanewise(VectorOperators.Ternary op,
+    public abstract
+    $abstractvectortype$ lanewise(VectorOperators.Ternary op,
                                                   Vector<$Boxtype$> v1,
                                                   Vector<$Boxtype$> v2);
     @ForceInline
@@ -1202,6 +1206,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #add($type$)
      */
     @Override
+    @ForceInline
     public final $abstractvectortype$ add(Vector<$Boxtype$> v) {
         return lanewise(ADD, v);
     }
@@ -1226,7 +1231,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,$type$)
      */
-    public final $abstractvectortype$ add($type$ e) {
+    @ForceInline
+    public final
+    $abstractvectortype$ add($type$ e) {
         return lanewise(ADD, e);
     }
 
@@ -1235,6 +1242,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #add($type$,VectorMask)
      */
     @Override
+    @ForceInline
     public final $abstractvectortype$ add(Vector<$Boxtype$> v,
                                           VectorMask<$Boxtype$> m) {
         return lanewise(ADD, v, m);
@@ -1262,6 +1270,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,$type$)
      */
+    @ForceInline
     public final $abstractvectortype$ add($type$ e,
                                           VectorMask<$Boxtype$> m) {
         return lanewise(ADD, e, m);
@@ -1272,6 +1281,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #sub($type$)
      */
     @Override
+    @ForceInline
     public final $abstractvectortype$ sub(Vector<$Boxtype$> v) {
         return lanewise(SUB, v);
     }
@@ -1296,6 +1306,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,$type$)
      */
+    @ForceInline
     public final $abstractvectortype$ sub($type$ e) {
         return lanewise(SUB, e);
     }
@@ -1305,6 +1316,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #sub($type$,VectorMask)
      */
     @Override
+    @ForceInline
     public final $abstractvectortype$ sub(Vector<$Boxtype$> v,
                                           VectorMask<$Boxtype$> m) {
         return lanewise(SUB, v, m);
@@ -1332,6 +1344,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,$type$)
      */
+    @ForceInline
     public final $abstractvectortype$ sub($type$ e,
                                           VectorMask<$Boxtype$> m) {
         return lanewise(SUB, e, m);
@@ -1342,6 +1355,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #mul($type$)
      */
     @Override
+    @ForceInline
     public final $abstractvectortype$ mul(Vector<$Boxtype$> v) {
         return lanewise(MUL, v);
     }
@@ -1366,6 +1380,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,$type$)
      */
+    @ForceInline
     public final $abstractvectortype$ mul($type$ e) {
         return lanewise(MUL, e);
     }
@@ -1375,6 +1390,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #mul($type$,VectorMask)
      */
     @Override
+    @ForceInline
     public final $abstractvectortype$ mul(Vector<$Boxtype$> v,
                                           VectorMask<$Boxtype$> m) {
         return lanewise(MUL, v, m);
@@ -1402,6 +1418,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,$type$)
      */
+    @ForceInline
     public final $abstractvectortype$ mul($type$ e,
                                           VectorMask<$Boxtype$> m) {
         return lanewise(MUL, e, m);
@@ -1418,6 +1435,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 #end[FP]
      */
     @Override
+    @ForceInline
     public final $abstractvectortype$ div(Vector<$Boxtype$> v) {
         return lanewise(DIV, v);
     }
@@ -1453,6 +1471,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,$type$)
      */
+    @ForceInline
     public final $abstractvectortype$ div($type$ e) {
         return lanewise(DIV, e);
     }
@@ -1469,6 +1488,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 #end[FP]
      */
     @Override
+    @ForceInline
     public final $abstractvectortype$ div(Vector<$Boxtype$> v,
                                           VectorMask<$Boxtype$> m) {
         return lanewise(DIV, v, m);
@@ -1507,6 +1527,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,$type$)
      */
+    @ForceInline
     public final $abstractvectortype$ div($type$ e,
                                           VectorMask<$Boxtype$> m) {
         return lanewise(DIV, e, m);
@@ -1528,6 +1549,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 #end[FP]
      */
     @Override
+    @ForceInline
     public final $abstractvectortype$ min(Vector<$Boxtype$> v) {
         return lanewise(MIN, v);
     }
@@ -1558,6 +1580,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * than, the default zero value.
 #end[FP]
      */
+    @ForceInline
     public final $abstractvectortype$ min($type$ e) {
         return lanewise(MIN, e);
     }
@@ -1571,6 +1594,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 #end[FP]
      */
     @Override
+    @ForceInline
     public final $abstractvectortype$ max(Vector<$Boxtype$> v) {
         return lanewise(MAX, v);
     }
@@ -1599,6 +1623,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * less than the default value, positive zero.
 #end[FP]
      */
+    @ForceInline
     public final $abstractvectortype$ max($type$ e) {
         return lanewise(MAX, e);
     }
@@ -1633,6 +1658,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#AND
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final $abstractvectortype$ and(Vector<$Boxtype$> v) {
         return lanewise(AND, v);
     }
@@ -1656,6 +1682,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#AND
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final $abstractvectortype$ and($type$ e) {
         return lanewise(AND, e);
     }
@@ -1688,6 +1715,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#OR
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final $abstractvectortype$ or(Vector<$Boxtype$> v) {
         return lanewise(OR, v);
     }
@@ -1711,6 +1739,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#OR
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final $abstractvectortype$ or($type$ e) {
         return lanewise(OR, e);
     }
@@ -1744,6 +1773,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#POW
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      */
+    @ForceInline
     public final $abstractvectortype$ pow(Vector<$Boxtype$> n) {
         return lanewise(POW, n);
     }
@@ -1766,6 +1796,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#POW
      * @see #lanewise(VectorOperators.Binary,$type$,VectorMask)
      */
+    @ForceInline
     public final $abstractvectortype$ pow($type$ n) {
         return lanewise(POW, n);
     }
@@ -1777,6 +1808,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     $abstractvectortype$ neg() {
         return lanewise(NEG);
@@ -1786,6 +1818,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     $abstractvectortype$ abs() {
         return lanewise(ABS);
@@ -1818,6 +1851,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#NOT
      * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
      */
+    @ForceInline
     public final $abstractvectortype$ not() {
         return lanewise(NOT);
     }
@@ -1841,6 +1875,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#SQRT
      * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
      */
+    @ForceInline
     public final $abstractvectortype$ sqrt() {
         return lanewise(SQRT);
     }
@@ -1852,6 +1887,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<$Boxtype$> eq(Vector<$Boxtype$> v) {
         return compare(EQ, v);
@@ -1869,6 +1905,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *         is equal to {@code e}
      * @see #compare(VectorOperators.Comparison,$type$)
      */
+    @ForceInline
     public final
     VectorMask<$Boxtype$> eq($type$ e) {
         return compare(EQ, e);
@@ -1878,6 +1915,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<$Boxtype$> lt(Vector<$Boxtype$> v) {
         return compare(LT, v);
@@ -1895,6 +1933,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *         is less than the input scalar
      * @see #compare(VectorOperators.Comparison,$type$)
      */
+    @ForceInline
     public final
     VectorMask<$Boxtype$> lt($type$ e) {
         return compare(LT, e);
@@ -1944,6 +1983,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
+    @ForceInline
     public final
     VectorMask<$Boxtype$> compare(VectorOperators.Comparison op,
                                   Vector<$Boxtype$> v,
@@ -2002,6 +2042,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *         and only in the lanes selected by the mask
      * @see $abstractvectortype$#compare(VectorOperators.Comparison,Vector,VectorMask)
      */
+    @ForceInline
     public final VectorMask<$Boxtype$> compare(VectorOperators.Comparison op,
                                                $type$ e,
                                                VectorMask<$Boxtype$> m) {
@@ -2012,7 +2053,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     VectorMask<$Boxtype$> compare(Comparison op, long e);
 
     /*package-private*/
@@ -2025,7 +2067,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public final
+    @Override
+    @ForceInline
+    public final
     VectorMask<$Boxtype$> compare(Comparison op, long e, VectorMask<$Boxtype$> m) {
         return compare(op, broadcast(e), m);
     }
@@ -2092,6 +2136,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @return the result of blending the lane elements of this vector with
      *         the scalar value
      */
+    @ForceInline
     public final $abstractvectortype$ blend($type$ e,
                                             VectorMask<$Boxtype$> m) {
         return blend(broadcast(e), m);
@@ -2114,6 +2159,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @return the result of blending the lane elements of this vector with
      *         the scalar value
      */
+    @ForceInline
     public final $abstractvectortype$ blend(long e,
                                             VectorMask<$Boxtype$> m) {
         return blend(broadcast(e), m);
@@ -2123,7 +2169,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     $abstractvectortype$ slice(int origin, Vector<$Boxtype$> v1);
 
     /*package-private*/
@@ -2145,21 +2192,27 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public final $abstractvectortype$
-    slice(int origin, Vector<$Boxtype$> w, VectorMask<$Boxtype$> m) {
+    @Override
+    @ForceInline
+    public final
+    $abstractvectortype$ slice(int origin,
+                               Vector<$Boxtype$> w,
+                               VectorMask<$Boxtype$> m) {
         return broadcast(0).blend(slice(origin, w), m);
     }
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     $abstractvectortype$ slice(int origin);
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     $abstractvectortype$ unslice(int origin, Vector<$Boxtype$> w, int part);
 
     /*package-private*/
@@ -2202,13 +2255,15 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract $abstractvectortype$
-    unslice(int origin, Vector<$Boxtype$> w, int part, VectorMask<$Boxtype$> m);
+    @Override
+    public abstract
+    $abstractvectortype$ unslice(int origin, Vector<$Boxtype$> w, int part, VectorMask<$Boxtype$> m);
 
     /**
      * {@inheritDoc} <!--workaround-->
      */
-    @Override public abstract
+    @Override
+    public abstract
     $abstractvectortype$ unslice(int origin); 
 
     private ArrayIndexOutOfBoundsException
@@ -2222,7 +2277,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract $abstractvectortype$ rearrange(VectorShuffle<$Boxtype$> m);
+    public abstract
+    $abstractvectortype$ rearrange(VectorShuffle<$Boxtype$> m);
 
     /*package-private*/
     @ForceInline
@@ -2242,8 +2298,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract $abstractvectortype$ rearrange(VectorShuffle<$Boxtype$> s,
-                                                   VectorMask<$Boxtype$> m);
+    public abstract
+    $abstractvectortype$ rearrange(VectorShuffle<$Boxtype$> s,
+                                   VectorMask<$Boxtype$> m);
 
     /*package-private*/
     @ForceInline
@@ -2271,8 +2328,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract $abstractvectortype$ rearrange(VectorShuffle<$Boxtype$> s,
-                                                   Vector<$Boxtype$> v);
+    public abstract
+    $abstractvectortype$ rearrange(VectorShuffle<$Boxtype$> s,
+                                   Vector<$Boxtype$> v);
 
     /*package-private*/
     @ForceInline
@@ -2305,7 +2363,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract $abstractvectortype$ selectFrom(Vector<$Boxtype$> v);
+    public abstract
+    $abstractvectortype$ selectFrom(Vector<$Boxtype$> v);
 
     /*package-private*/
     @ForceInline
@@ -2317,7 +2376,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract $abstractvectortype$ selectFrom(Vector<$Boxtype$> s, VectorMask<$Boxtype$> m);
+    public abstract
+    $abstractvectortype$ selectFrom(Vector<$Boxtype$> s, VectorMask<$Boxtype$> m);
 
     /*package-private*/
     @ForceInline
@@ -2353,6 +2413,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
      */
+    @ForceInline
     public final
     $abstractvectortype$ bitwiseBlend(Vector<$Boxtype$> bits, Vector<$Boxtype$> mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2380,6 +2441,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,$type$,$type$,VectorMask)
      */
+    @ForceInline
     public final
     $abstractvectortype$ bitwiseBlend($type$ bits, $type$ mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2407,6 +2469,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,$type$,Vector,VectorMask)
      */
+    @ForceInline
     public final
     $abstractvectortype$ bitwiseBlend($type$ bits, Vector<$Boxtype$> mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2434,6 +2497,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#BITWISE_BLEND
      * @see #lanewise(VectorOperators.Ternary,Vector,$type$,VectorMask)
      */
+    @ForceInline
     public final
     $abstractvectortype$ bitwiseBlend(Vector<$Boxtype$> bits, $type$ mask) {
         return lanewise(BITWISE_BLEND, bits, mask);
@@ -2469,6 +2533,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#FMA
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
      */
+    @ForceInline
     public final
     $abstractvectortype$ fma(Vector<$Boxtype$> b, Vector<$Boxtype$> c) {
         return lanewise(FMA, b, c);
@@ -2502,6 +2567,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see VectorOperators#FMA
      * @see #lanewise(VectorOperators.Ternary,$type$,$type$,VectorMask)
      */
+    @ForceInline
     public final
     $abstractvectortype$ fma($type$ b, $type$ c) {
         return lanewise(FMA, b, c);
@@ -3332,7 +3398,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *         for any lane {@code N} in the vector
      */
     @ForceInline
-    public void intoArray($type$[] a, int offset) {
+    public final
+    void intoArray($type$[] a, int offset) {
         $Type$Species vsp = vspecies();
         offset = checkFromIndexSize(offset,
                                     vsp.laneCount(),
@@ -3372,8 +3439,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *         where the mask is set
      */
     @ForceInline
-    public final void intoArray($type$[] a, int offset,
-                                VectorMask<$Boxtype$> m) {
+    public final
+    void intoArray($type$[] a, int offset,
+                   VectorMask<$Boxtype$> m) {
         if (m.allTrue()) {
             intoArray(a, offset);
         } else {
@@ -3410,8 +3478,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *         where the mask is set
      */
     @ForceInline
-    public void intoArray($type$[] a, int offset,
-                          int[] indexMap, int mapOffset) {
+    public final
+    void intoArray($type$[] a, int offset,
+                   int[] indexMap, int mapOffset) {
         $Type$Species vsp = vspecies();
         if (length() == 1) {
             intoArray(a, offset + indexMap[mapOffset]);
@@ -3476,9 +3545,10 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *         where the mask is set
      */
     @ForceInline
-    public final void intoArray($type$[] a, int offset,
-                                int[] indexMap, int mapOffset,
-                                VectorMask<$Boxtype$> m) {
+    public final
+    void intoArray($type$[] a, int offset,
+                   int[] indexMap, int mapOffset,
+                   VectorMask<$Boxtype$> m) {
         $Type$Species vsp = vspecies();
         if (m.allTrue()) {
             intoArray(a, offset, indexMap, mapOffset);
@@ -3492,7 +3562,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      */
     @Override
     @ForceInline
-    public void intoByteArray(byte[] a, int offset) {
+    public final
+    void intoByteArray(byte[] a, int offset) {
         offset = checkFromIndexSize(offset,
                                     bitSize() / Byte.SIZE,
                                     a.length);
@@ -3505,8 +3576,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      */
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int offset,
-                                    VectorMask<$Boxtype$> m) {
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       VectorMask<$Boxtype$> m) {
         if (m.allTrue()) {
             intoByteArray(a, offset);
             return;
@@ -3524,9 +3596,10 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      */
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int offset,
-                                    ByteOrder bo,
-                                    VectorMask<$Boxtype$> m) {
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       ByteOrder bo,
+                       VectorMask<$Boxtype$> m) {
         maybeSwap(bo).intoByteArray(a, offset, m);
     }
 
@@ -3535,8 +3608,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      */
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int offset,
-                               ByteOrder bo) {
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo) {
         maybeSwap(bo).intoByteBuffer0(bb, offset);
     }
 
@@ -3545,9 +3619,10 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      */
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int offset,
-                               ByteOrder bo,
-                               VectorMask<$Boxtype$> m) {
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo,
+                        VectorMask<$Boxtype$> m) {
         if (m.allTrue()) {
             intoByteBuffer(bb, offset, bo);
             return;
@@ -3813,7 +3888,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * reporting the lane values of this vector
      */
     @Override
-    public final String toString() {
+    @ForceInline
+    public final
+    String toString() {
         // now that toArray is strongly typed, we can define this
         return Arrays.toString(toArray());
     }
@@ -3823,7 +3900,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      */
     @Override
     @ForceInline
-    public boolean equals(Object obj) {
+    public final
+    boolean equals(Object obj) {
         if (obj instanceof Vector) {
             Vector<?> that = (Vector<?>) obj;
             if (this.species().equals(that.species())) {
@@ -3837,7 +3915,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public int hashCode() {
+    @ForceInline
+    public final
+    int hashCode() {
         // now that toArray is strongly typed, we can define this
         return Objects.hash(species(), Arrays.hashCode(toArray()));
     }
