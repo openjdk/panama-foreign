@@ -28,7 +28,17 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 /**
- * A padding layout specifies the size of extra space used to align struct fields around word boundaries.
+ * A padding layout. A padding layout specifies the size of extra space which is typically not accessed by applications,
+ * and is only used for aligning other layout elements around word boundaries.
+ * <p>
+ * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
+ * class; use of identity-sensitive operations (including reference equality
+ * ({@code ==}), identity hash code, or synchronization) on instances of
+ * {@code PaddingLayout} may have unpredictable results and should be avoided.
+ * The {@code equals} method should be used for comparisons.
+ *
+ * @implSpec
+ * This class is immutable and thread-safe.
  */
 public class PaddingLayout extends AbstractLayout implements Layout {
     private final long size;
@@ -39,7 +49,7 @@ public class PaddingLayout extends AbstractLayout implements Layout {
     }
 
     /**
-     * Create a new selector layout from given path expression.
+     * Create a new padding layout with given size.
      * @param size the padding size in bits.
      * @return the new selector layout.
      * @throws IllegalArgumentException if size is &le; 0.

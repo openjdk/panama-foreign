@@ -98,8 +98,8 @@ public class TestLayouts {
         FP_VALUE(ValueLayout.ofFloatingPoint(8)),
         PADDING(PaddingLayout.of(8)),
         SEQUENCE(SequenceLayout.of(1, PaddingLayout.of(8))),
-        STRUCT(GroupLayout.struct(PaddingLayout.of(8), PaddingLayout.of(8))),
-        UNION(GroupLayout.union(PaddingLayout.of(8), PaddingLayout.of(8)));
+        STRUCT(GroupLayout.ofStruct(PaddingLayout.of(8), PaddingLayout.of(8))),
+        UNION(GroupLayout.ofUnion(PaddingLayout.of(8), PaddingLayout.of(8)));
 
         final Layout layout;
 

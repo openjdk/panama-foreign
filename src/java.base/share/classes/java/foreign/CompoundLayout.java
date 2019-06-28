@@ -65,7 +65,7 @@ public interface CompoundLayout extends Layout {
      * <blockquote><pre>{@code
 SequenceLayout seq = SequenceLayout.of(5,
     GroupLayout.struct(
-        Padding.of(32),
+        PaddingLayout.of(32),
         ValueLayout.ofSignedInt(32).withName("value")
     ));
      * }</pre></blockquote>

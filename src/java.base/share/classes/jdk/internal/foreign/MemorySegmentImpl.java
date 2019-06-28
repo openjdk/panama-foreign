@@ -111,7 +111,7 @@ public final class MemorySegmentImpl implements MemorySegment {
     public final void close() throws UnsupportedOperationException {
         checkValidState();
         if (isPinned()) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("Cannot close a pinned segment");
         } else {
             scope.close();
         }

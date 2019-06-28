@@ -63,7 +63,7 @@ public class TestMemoryAlignment {
         ValueLayout layout = ValueLayout.ofSignedInt(32);
         assertEquals(layout.bitsAlignment(), 32);
         ValueLayout aligned = layout.alignTo(align);
-        Layout alignedGroup = GroupLayout.struct(PaddingLayout.of(8), aligned);
+        Layout alignedGroup = GroupLayout.ofStruct(PaddingLayout.of(8), aligned);
         assertEquals(alignedGroup.bitsAlignment(), align);
         VarHandle vh = aligned.dereferenceHandle(int.class);
         try (MemorySegment segment = MemorySegment.ofNative(alignedGroup)) {
@@ -79,7 +79,7 @@ public class TestMemoryAlignment {
     public void testUnalignedPath(long align) {
         Layout layout = ValueLayout.ofSignedInt(32);
         Layout aligned = layout.alignTo(align).withName("value");
-        GroupLayout alignedGroup = GroupLayout.struct(PaddingLayout.of(8), aligned);
+        GroupLayout alignedGroup = GroupLayout.ofStruct(PaddingLayout.of(8), aligned);
         try {
             alignedGroup.dereferenceHandle(int.class, path -> path.groupElement("value"));
             assertEquals(align, 8); //this is the only case where path is aligned
@@ -109,7 +109,7 @@ public class TestMemoryAlignment {
         ValueLayout vShort = ValueLayout.ofSignedInt(16);
         ValueLayout vInt = ValueLayout.ofSignedInt(32);
         //mimic pragma pack(1)
-        GroupLayout g = GroupLayout.struct(vChar.alignTo(8).withName("a"),
+        GroupLayout g = GroupLayout.ofStruct(vChar.alignTo(8).withName("a"),
                                vShort.alignTo(8).withName("b"),
                                vInt.alignTo(8).withName("c"));
         assertEquals(g.bitsAlignment(), 8);

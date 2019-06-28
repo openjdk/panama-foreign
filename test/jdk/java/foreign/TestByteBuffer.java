@@ -71,7 +71,7 @@ import static org.testng.Assert.*;
 public class TestByteBuffer {
 
     static SequenceLayout tuples = SequenceLayout.of(500,
-            GroupLayout.struct(
+            GroupLayout.ofStruct(
                     ValueLayout.ofSignedInt(32).withName("index"),
                     ValueLayout.ofFloatingPoint(32).withName("value")
             ));
@@ -142,7 +142,7 @@ public class TestByteBuffer {
                                               BiFunction<MemoryAddress, Long, Object> handleExtractor,
                                               Function<Z, Object> bufferExtractor) {
         long nelems = layout.elementsSize().getAsLong();
-        long elemSize = layout.elementLayout().bytesSize();
+        long elemSize = layout.element().bytesSize();
         for (long i = 0 ; i < nelems ; i++) {
             long limit = nelems - i;
             MemorySegment resizedSegment = base.segment().resize(i * elemSize, limit * elemSize);

@@ -94,7 +94,7 @@ public class TestSegments {
         SizedLayoutFactory[] layoutFactories = SizedLayoutFactory.values();
         Object[][] values = new Object[layoutFactories.length * 2][2];
         for (int i = 0; i < layoutFactories.length ; i++) {
-            values[i * 2] = new Object[] { GroupLayout.struct(layoutFactories[i].make(7), PaddingLayout.of(9)) }; // good size, bad align
+            values[i * 2] = new Object[] { GroupLayout.ofStruct(layoutFactories[i].make(7), PaddingLayout.of(9)) }; // good size, bad align
             values[(i * 2) + 1] = new Object[] { layoutFactories[i].make(15).alignTo(16) }; // bad size, good align
         }
         return values;

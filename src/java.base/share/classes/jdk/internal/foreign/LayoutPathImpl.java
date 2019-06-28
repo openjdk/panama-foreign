@@ -62,7 +62,7 @@ public class LayoutPathImpl implements CompoundLayout.Path {
     public CompoundLayout.Path sequenceElement() throws UnsupportedOperationException {
         check(SequenceLayout.class);
         SequenceLayout seq = (SequenceLayout)layout;
-        Layout elem = seq.elementLayout();
+        Layout elem = seq.element();
         List<Long> newScales = new ArrayList<>(scales);
         newScales.add(elem.bitsSize());
         return LayoutPathImpl.nestedPath(elem, offset, newScales, this);
@@ -75,7 +75,7 @@ public class LayoutPathImpl implements CompoundLayout.Path {
         if (index < 0 || (seq.elementsSize().isPresent() && index >= seq.elementsSize().getAsLong())) {
             throw new IllegalArgumentException("Sequence index out of bound; found: %d, size: %d");
         }
-        return LayoutPathImpl.nestedPath(seq.elementLayout(), offset, scales, this);
+        return LayoutPathImpl.nestedPath(seq.element(), offset, scales, this);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class LayoutPathImpl implements CompoundLayout.Path {
         long offset = 0;
         Layout elem = null;
         for (long i = 0; i < g.elementsSize(); i++) {
-            Layout l = g.elementLayout(i);
+            Layout l = g.elementAt(i);
             if (l.name().isPresent() &&
                 l.name().get().equals(name)) {
                 elem = l;
@@ -121,7 +121,7 @@ public class LayoutPathImpl implements CompoundLayout.Path {
         return JLI.memoryAddressViewVarHandle(
                 carrier,
                 layout.bytesAlignment(),
-                ((ValueLayout) layout).endianness(),
+                ((ValueLayout) layout).order(),
                 Utils.bitsToBytesOrThrow(offset, IllegalStateException::new),
                 scales.stream().mapToLong(s -> Utils.bitsToBytesOrThrow(s, IllegalStateException::new)).toArray());
     }

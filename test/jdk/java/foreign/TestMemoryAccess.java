@@ -51,7 +51,7 @@ public class TestMemoryAccess {
 
     @Test(dataProvider = "elements")
     public void testPaddedAccessByName(Function<MemorySegment, MemorySegment> viewFactory, Layout elemLayout, Class<?> carrier, Checker checker) {
-        GroupLayout layout = GroupLayout.struct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem"));
+        GroupLayout layout = GroupLayout.ofStruct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem"));
         testAccessInternal(viewFactory, layout, layout.dereferenceHandle(carrier, path -> path.groupElement("elem")), checker);
     }
 
@@ -69,7 +69,7 @@ public class TestMemoryAccess {
 
     @Test(dataProvider = "arrayElements")
     public void testPaddedArrayAccessByName(Function<MemorySegment, MemorySegment> viewFactory, Layout elemLayout, Class<?> carrier, ArrayChecker checker) {
-        SequenceLayout seq = SequenceLayout.of(10, GroupLayout.struct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem")));
+        SequenceLayout seq = SequenceLayout.of(10, GroupLayout.ofStruct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem")));
         testArrayAccessInternal(viewFactory, seq, seq.dereferenceHandle(carrier, path -> path.sequenceElement().groupElement("elem")), checker);
     }
 
@@ -153,7 +153,7 @@ public class TestMemoryAccess {
     @Test(dataProvider = "matrixElements")
     public void testPaddedMatrixAccessByName(Function<MemorySegment, MemorySegment> viewFactory, Layout elemLayout, Class<?> carrier, MatrixChecker checker) {
         SequenceLayout seq = SequenceLayout.of(20,
-                SequenceLayout.of(10, GroupLayout.struct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem"))));
+                SequenceLayout.of(10, GroupLayout.ofStruct(PaddingLayout.of(elemLayout.bitsSize()), elemLayout.withName("elem"))));
         testMatrixAccessInternal(viewFactory, seq,
                 seq.dereferenceHandle(carrier, path -> path.sequenceElement().sequenceElement().groupElement("elem")),
                 checker);
@@ -181,7 +181,7 @@ public class TestMemoryAccess {
             MemoryAddress addr = segment.baseAddress();
             try {
                 for (int i = 0; i < seq.elementsSize().getAsLong(); i++) {
-                    for (int j = 0; j < ((SequenceLayout) seq.elementLayout()).elementsSize().getAsLong(); j++) {
+                    for (int j = 0; j < ((SequenceLayout) seq.element()).elementsSize().getAsLong(); j++) {
                         checker.check(handle, addr, i, j);
                     }
                 }
@@ -196,7 +196,7 @@ public class TestMemoryAccess {
             } 
             try {
                 checker.check(handle, addr, seq.elementsSize().getAsLong(),
-                        ((SequenceLayout)seq.elementLayout()).elementsSize().getAsLong());
+                        ((SequenceLayout)seq.element()).elementsSize().getAsLong());
                 throw new AssertionError(); //not ok, out of bounds
             } catch (IllegalStateException ex) {
                 //ok, should fail (out of bounds)

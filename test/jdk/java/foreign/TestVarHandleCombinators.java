@@ -42,8 +42,8 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testElementAccess() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(byte.class);
-        vh = MemoryAccessVarHandles.elementHandle(vh, 1);
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(byte.class);
+        vh = MemoryAccessVarHandles.scaleAddress(vh, 1);
 
         byte[] arr = { 0, 0, -1, 0 };
         MemorySegment segment = MemorySegment.ofArray(arr);
@@ -54,30 +54,30 @@ public class TestVarHandleCombinators {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testUnalignedElement() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(byte.class, 4, ByteOrder.nativeOrder());
-        MemoryAccessVarHandles.elementHandle(vh, 2);
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(byte.class, 4, ByteOrder.nativeOrder());
+        MemoryAccessVarHandles.scaleAddress(vh, 2);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadScaleElement() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(int.class);
-        vh = MemoryAccessVarHandles.offsetHandle(vh, 4);
-        MemoryAccessVarHandles.elementHandle(vh, 4); //scale factor is too small - should be at least 8!
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(int.class);
+        vh = MemoryAccessVarHandles.offsetAddress(vh, 4);
+        MemoryAccessVarHandles.scaleAddress(vh, 4); //scale factor is too small - should be at least 8!
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testAlignNotPowerOf2() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(byte.class, 3, ByteOrder.nativeOrder());
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(byte.class, 3, ByteOrder.nativeOrder());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testAlignNegative() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(byte.class, -1, ByteOrder.nativeOrder());
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(byte.class, -1, ByteOrder.nativeOrder());
     }
 
     @Test
     public void testAlign() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(byte.class, 2, ByteOrder.nativeOrder());
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(byte.class, 2, ByteOrder.nativeOrder());
 
         MemorySegment segment = MemorySegment.ofNative(1, 2);
         MemoryAddress address = segment.baseAddress();
@@ -88,8 +88,8 @@ public class TestVarHandleCombinators {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testAlignBadAccess() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(byte.class, 2, ByteOrder.nativeOrder());
-        vh = MemoryAccessVarHandles.offsetHandle(vh, 1); // offset by 1 byte
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(byte.class, 2, ByteOrder.nativeOrder());
+        vh = MemoryAccessVarHandles.offsetAddress(vh, 1); // offset by 1 byte
 
         MemorySegment segment = MemorySegment.ofNative(2, 2);
         MemoryAddress address = segment.baseAddress();
@@ -99,20 +99,20 @@ public class TestVarHandleCombinators {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testOffsetNegative() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(byte.class);
-        MemoryAccessVarHandles.offsetHandle(vh, -1);
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(byte.class);
+        MemoryAccessVarHandles.offsetAddress(vh, -1);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testUnalignedOffset() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(byte.class, 4, ByteOrder.nativeOrder());
-        MemoryAccessVarHandles.offsetHandle(vh, 2);
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(byte.class, 4, ByteOrder.nativeOrder());
+        MemoryAccessVarHandles.offsetAddress(vh, 2);
     }
 
     @Test
     public void testOffset() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(byte.class);
-        vh = MemoryAccessVarHandles.offsetHandle(vh, 1);
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(byte.class);
+        vh = MemoryAccessVarHandles.offsetAddress(vh, 1);
 
         MemorySegment segment = MemorySegment.ofArray(new byte[2]);
         MemoryAddress address = segment.baseAddress();
@@ -123,7 +123,7 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testByteOrderLE() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(short.class, 2, ByteOrder.LITTLE_ENDIAN);
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(short.class, 2, ByteOrder.LITTLE_ENDIAN);
         byte[] arr = new byte[2];
         MemorySegment segment = MemorySegment.ofArray(arr);
         MemoryAddress address = segment.baseAddress();
@@ -135,7 +135,7 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testByteOrderBE() {
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(short.class, 2, ByteOrder.BIG_ENDIAN);
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(short.class, 2, ByteOrder.BIG_ENDIAN);
         byte[] arr = new byte[2];
         MemorySegment segment = MemorySegment.ofArray(arr);
         MemoryAddress address = segment.baseAddress();
@@ -152,10 +152,10 @@ public class TestVarHandleCombinators {
 
         //[10 : [5 : [x32 i32]]]
 
-        VarHandle vh = MemoryAccessVarHandles.dereferenceHandle(int.class);
-        vh = MemoryAccessVarHandles.offsetHandle(vh, 4);
-        VarHandle inner_vh = MemoryAccessVarHandles.elementHandle(vh, 8);
-        VarHandle outer_vh = MemoryAccessVarHandles.elementHandle(inner_vh, 5 * 8);
+        VarHandle vh = MemoryAccessVarHandles.dereferenceVarHandle(int.class);
+        vh = MemoryAccessVarHandles.offsetAddress(vh, 4);
+        VarHandle inner_vh = MemoryAccessVarHandles.scaleAddress(vh, 8);
+        VarHandle outer_vh = MemoryAccessVarHandles.scaleAddress(inner_vh, 5 * 8);
         int count = 0;
         try (MemorySegment segment = MemorySegment.ofNative(inner_size * outer_size * 8)) {
             for (long i = 0; i < outer_size; i++) {
@@ -172,7 +172,7 @@ public class TestVarHandleCombinators {
 
     @Test(dataProvider = "badCarriers", expectedExceptions = IllegalArgumentException.class)
     public void testBadCarrier(Class<?> carrier) {
-        MemoryAccessVarHandles.dereferenceHandle(carrier);
+        MemoryAccessVarHandles.dereferenceVarHandle(carrier);
     }
 
     @DataProvider(name = "badCarriers")

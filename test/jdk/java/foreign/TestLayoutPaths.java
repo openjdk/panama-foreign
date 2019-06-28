@@ -46,7 +46,7 @@ public class TestLayoutPaths {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testBadSelectFromStruct() {
-        GroupLayout g = GroupLayout.struct(ValueLayout.ofSignedInt(32));
+        GroupLayout g = GroupLayout.ofStruct(ValueLayout.ofSignedInt(32));
         g.offset(path -> path.sequenceElement());
     }
 
@@ -58,7 +58,7 @@ public class TestLayoutPaths {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testUnknownStructField() {
-        GroupLayout g = GroupLayout.struct(ValueLayout.ofSignedInt(32));
+        GroupLayout g = GroupLayout.ofStruct(ValueLayout.ofSignedInt(32));
         g.offset(path -> path.groupElement("foo"));
     }
 
@@ -76,13 +76,13 @@ public class TestLayoutPaths {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testIncompleteAccess() {
-        SequenceLayout seq = SequenceLayout.of(5, GroupLayout.struct(ValueLayout.ofSignedInt(32)));
+        SequenceLayout seq = SequenceLayout.of(5, GroupLayout.ofStruct(ValueLayout.ofSignedInt(32)));
         seq.dereferenceHandle(int.class, CompoundLayout.Path::sequenceElement);
     }
 
     @Test
     public void testBadContainerAlign() {
-        GroupLayout g = GroupLayout.struct(ValueLayout.ofSignedInt(32).alignTo(16).withName("foo")).alignTo(8);
+        GroupLayout g = GroupLayout.ofStruct(ValueLayout.ofSignedInt(32).alignTo(16).withName("foo")).alignTo(8);
         try {
             g.offset(path -> path.groupElement("foo"));
         } catch (Throwable ex) {
@@ -100,7 +100,7 @@ public class TestLayoutPaths {
 
     @Test
     public void testBadAlignOffset() {
-        GroupLayout g = GroupLayout.struct(PaddingLayout.of(8), ValueLayout.ofSignedInt(32).alignTo(16).withName("foo"));
+        GroupLayout g = GroupLayout.ofStruct(PaddingLayout.of(8), ValueLayout.ofSignedInt(32).alignTo(16).withName("foo"));
         try {
             g.offset(path -> path.groupElement("foo"));
         } catch (Throwable ex) {

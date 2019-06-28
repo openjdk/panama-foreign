@@ -34,35 +34,75 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
 /**
- * A class with several factory methods for constructing memory access VarHandles.
+ * This class defines several factory methods for constructing and combining memory access var handles.
+ * To obtain a memory access var handle, clients must start from one of the <em>leaves</em> methods
+ * (see {@link MemoryAccessVarHandles#dereferenceVarHandle(Class)},
+ * {@link MemoryAccessVarHandles#dereferenceVarHandle(Class, long, ByteOrder)}). This determines the variable type
+ * (all primitive types but {@code void} and {@code boolean} are supported), as well as the alignment constraints and the
+ * byte order associated to a memory access var handle.The resulting memory access var handle can then be combined in various ways
+ * to emulate different addressing modes. The var handles created by this class feature a <em>mandatory</em> coordinate type
+ * (of type {@link MemoryAddress}), and zero or more {@code long} coordinate types, which can be used to emulate
+ * multi-dimensional array indexing.
+ * <p>
+ * As an example, consider the memory layout expressed by a {@link SequenceLayout} instance constructed as follows:
+ * <blockquote><pre>{@code
+SequenceLayout seq = SequenceLayout.of(5,
+    GroupLayout.struct(
+        PaddingLayout.of(32),
+        ValueLayout.ofSignedInt(32).withName("value")
+    ));
+ * }</pre></blockquote>
+ * To access the layout element named {@code value}, we can construct a memory access var handle as follows:
+ * <blockquote><pre>{@code
+VarHandle handle = MemoryAccessVarHandles.dereferenceVarHandle(int.class); //(MemoryAddress) -> int
+handle = MemoryAccessVarHandles.offsetAddress(handle, 4); //(MemoryAddress) -> int
+handle = MemoryAccessVarHandles.scaleAddress(handle, 8); //(MemoryAddress, long) -> int
+ * }</pre></blockquote>
  *
- * The VarHandles created through this class access memory at the address represented by
- * a given {@link java.foreign.MemoryAddress} argument, plus an offset (which may also be zero).
+ * <h2>Addressing mode</h2>
  *
- * The offset is computed upon access by multiplying the set of given access coordinates by a set of
- * scale factors, and adding a fixed offset to the result.
+ * The final memory location accessed by a memory access var handle can be computed as follows:
+ *
+ * <blockquote><pre>{@code
+address = base + offset
+ * }</pre></blockquote>
+ *
+ * where {@code base} denotes the address expressed by the {@link MemoryAddress} access coordinate, and {@code offset}
+ * can be expressed in the following form:
+ *
+ * <blockquote><pre>{@code
+offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
+ * }</pre></blockquote>
+ *
+ * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided optional {@code long}
+ * access coordinates, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
+ * <em>static</em> constants which are can be acquired through the {@link MemoryAccessVarHandles#offsetAddress(VarHandle, long)}
+ * and the {@link MemoryAccessVarHandles#scaleAddress(VarHandle, long)} combinators, respectively.
  */
-public class MemoryAccessVarHandles {
+public final class MemoryAccessVarHandles {
 
     private static JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
+
+    private MemoryAccessVarHandles() {
+        //sorry, just the one!
+    }
 
     /**
      * Creates a memory access var handle with the given carrier type.
      *
-     * The resulting memory access var handle has a single {@link java.foreign.MemoryAddress} as a parameter
-     * and returns the carrier type.
+     * The resulting memory access var handle features a single {@link java.foreign.MemoryAddress} access coordinate,
+     * and its variable type is set by the given carrier type.
      *
      * The alignment constraint for the resulting memory access var handle is the same as the in memory size of the
-     * carrier type. The used byte order is the machine native byte order. The access offset is zero,
-     * and there are no access coordinates.
+     * carrier type, and the accessed offset is set at zero. The used byte order is the machine native byte order.
      *
      * @param carrier the carrier type. Valid carriers are {@code byte}, {@code short}, {@code char}, {@code int},
      * {@code float}, {@code long}, and {@code double}.
-     * @return the new memory access var handle
+     * @return the new memory access var handle.
      * @throws IllegalArgumentException when an illegal carrier type is used
      */
-    public static VarHandle dereferenceHandle(Class<?> carrier) throws IllegalArgumentException {
-        return dereferenceHandle(carrier,
+    public static VarHandle dereferenceVarHandle(Class<?> carrier) throws IllegalArgumentException {
+        return dereferenceVarHandle(carrier,
                 carrierSize(carrier),
                 ByteOrder.nativeOrder());
     }
@@ -70,19 +110,19 @@ public class MemoryAccessVarHandles {
     /**
      * Creates a memory access var handle with the given carrier type, alignment constraints and byte order.
      *
-     * The resulting memory access var handle has a single {@link java.foreign.MemoryAddress} as a parameter
-     * and returns the carrier type.
+     * The resulting memory access var handle features a single {@link java.foreign.MemoryAddress} access coordinate,
+     * and its variable type is set by the given carrier type.
      *
-     * The access offset is zero, and there are no access coordinates.
+     * The accessed offset is zero.
      *
      * @param carrier the carrier type. Valid carriers are {@code byte}, {@code short}, {@code char}, {@code int},
      * {@code float}, {@code long}, and {@code double}.
      * @param align the alignment constraints (in bytes). Must be a power of two.
      * @param byteOrder the required byte order.
-     * @return the new memory access var handle
+     * @return the new memory access var handle.
      * @throws IllegalArgumentException when an illegal carrier type is used
      */
-    public static VarHandle dereferenceHandle(Class<?> carrier, long align, ByteOrder byteOrder) throws IllegalArgumentException {
+    public static VarHandle dereferenceVarHandle(Class<?> carrier, long align, ByteOrder byteOrder) throws IllegalArgumentException {
         if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
             throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
         }
@@ -96,75 +136,80 @@ public class MemoryAccessVarHandles {
     }
 
     /**
-     * Creates a memory access var handle with a fixed offset added to the access offset.
+     * Creates a memory access var handle with a fixed offset added to the accessed offset. That is,
+     * if the target memory access var handle accesses a memory location at offset <em>O</em>, the new memory access var
+     * handle will access a memory location at offset <em>O' + O</em>.
      *
-     * @param handle the base handle to adapt
+     * The resulting memory access var handle will feature the same access coordinates as the ones in the target memory access var handle.
+     *
+     * @param target the target memory access handle to access after the offset adjustment.
      * @param offset the offset, in bytes. Must be positive or zero.
-     * @return the new memory access var handle
+     * @return the new memory access var handle.
      * @throws IllegalArgumentException when a memory access var handle is passed that is not a memory access var handle,
      * if the offset is negative, or incompatible with the alignment constraints.
      * or when a negative offset is passed.
      */
-    public static VarHandle offsetHandle(VarHandle handle, long offset) throws IllegalArgumentException {
+    public static VarHandle offsetAddress(VarHandle target, long offset) throws IllegalArgumentException {
         if (offset < 0) {
             throw new IllegalArgumentException("Illegal offset: " + offset);
         }
 
-        long align = JLI.memoryAddressAlignment(handle);
+        long align = JLI.memoryAddressAlignment(target);
 
         if (offset % align != 0) {
             throw new IllegalArgumentException("Offset " + offset + " does not conform to alignment " + align);
         }
 
         return JLI.memoryAddressViewVarHandle(
-                JLI.memoryAddressCarrier(handle),
+                JLI.memoryAddressCarrier(target),
                 align,
-                JLI.memoryAddressByteOrder(handle),
-                JLI.memoryAddressOffset(handle) + offset,
-                JLI.memoryAddressStrides(handle));
+                JLI.memoryAddressByteOrder(target),
+                JLI.memoryAddressOffset(target) + offset,
+                JLI.memoryAddressStrides(target));
     }
 
     /**
-     * Creates a memory access var handle with a variable offset added to the access offset.
+     * Creates a memory access var handle with a <em>variable</em> offset added to the accessed offset.
+     * That is, if the target memory access var handle accesses a memory location at offset <em>O</em>,
+     * the new memory access var handle will access a memory location at offset <em>(S * X) + O</em>, where <em>S</em>
+     * is a constant <em>scale factor</em>, whereas <em>X</em> is a dynamic value that will be provided as an additional access
+     * coordinate (of type {@code long}). The new access coordinate will be <em>prepended</em> to the ones available
+     * in the target memory access var handles (if any).
      *
-     * The variable offset is given as an additional {@code long} coordinate argument when calling an
-     * accessor method on the resulting memory access var handle. This coordinate is multiplied with the given
-     * fixed scale factor to compute the effective offset.
-     *
-     * @param handle the base handle to adapt
+     * @param target the target memory access handle to access after the scale adjustment.
      * @param scale the scale factor by which to multiply the coordinate value. Must be greater than zero.
-     * @return the new memory access var handle
+     * @return the new memory access var handle.
      * @throws IllegalArgumentException when a memory access var handle is passed that is not a memory access var handle,
      * if the scale factor is negative, or incompatible with the alignment constraints, or the current memory access var handle offset.
      * or when a negative scale or zero is passed.
      */
-    public static VarHandle elementHandle(VarHandle handle, long scale) throws IllegalArgumentException {
+    public static VarHandle scaleAddress(VarHandle target, long scale) throws IllegalArgumentException {
         if (scale <= 0) {
             throw new IllegalArgumentException("Scale factor must be positive: " + scale);
         }
 
-        long align = JLI.memoryAddressAlignment(handle);
+        long align = JLI.memoryAddressAlignment(target);
 
         if (scale % align != 0) {
             throw new IllegalArgumentException("Scale factor " + scale + " does not conform to alignment " + align);
         }
 
-        long offset = JLI.memoryAddressOffset(handle);
-        Class<?> carrier = JLI.memoryAddressCarrier(handle);
+        long offset = JLI.memoryAddressOffset(target);
+        Class<?> carrier = JLI.memoryAddressCarrier(target);
 
         if (scale < offset + carrierSize(carrier)) {
             throw new IllegalArgumentException("Scale factor " + scale + " is too small");
         }
 
-        long[] strides = JLI.memoryAddressStrides(handle);
+        long[] strides = JLI.memoryAddressStrides(target);
         long[] newStrides = new long[strides.length + 1];
         System.arraycopy(strides, 0, newStrides, 1, strides.length);
         newStrides[0] = scale;
 
         return JLI.memoryAddressViewVarHandle(
-                JLI.memoryAddressCarrier(handle),
+                JLI.memoryAddressCarrier(target),
                 align,
-                JLI.memoryAddressByteOrder(handle),
+                JLI.memoryAddressByteOrder(target),
                 offset,
                 newStrides);
     }

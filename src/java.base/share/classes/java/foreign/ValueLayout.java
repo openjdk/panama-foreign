@@ -32,19 +32,28 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 /**
- * A value layout. This layout is used to model basic native types, such as integral values and floating point numbers.
- * There are three kind of supported value layouts: integer signed, integer unsigned and floating point. Each
- * value layout also has a size and an endianness (which could be either big-endian or little-endian).
+ * A value layout. A value layout is used to model the memory layout associated with values of basic data types, such as <em>integral</em> types
+ * (either signed or unsigned) and <em>floating-point</em> types. Each value layout has a size and a byte order (see {@link ByteOrder}).
+ * Where it's not explicitly provided, a value layout's byte order is assumed to be compatible with the platform byte order (see {@link ByteOrder#nativeOrder()}).
+ * <p>
+ * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
+ * class; use of identity-sensitive operations (including reference equality
+ * ({@code ==}), identity hash code, or synchronization) on instances of
+ * {@code ValueLayout} may have unpredictable results and should be avoided.
+ * The {@code equals} method should be used for comparisons.
+ *
+ * @implSpec
+ * This class is immutable and thread-safe.
  */
 public class ValueLayout extends AbstractLayout implements Layout {
 
     /**
      * The value kind.
      */
-    public enum Kind {
-        /** Kind of signed integral. */
+    enum Kind {
+        /** Kind of unsigned integral value. */
         INTEGRAL_UNSIGNED("u"),
-        /** Kind of signed integral. */
+        /** Signed integral value. */
         INTEGRAL_SIGNED("i"),
         /** Kind of floating-point value. */
         FLOATING_POINT("f");
@@ -57,46 +66,39 @@ public class ValueLayout extends AbstractLayout implements Layout {
     }
 
     private final Kind kind;
-    private final ByteOrder endianness;
+    private final ByteOrder order;
     private final long size;
 
-    ValueLayout(Kind kind, ByteOrder endianness, long size, OptionalLong alignment, Optional<String> name) {
+    ValueLayout(Kind kind, ByteOrder order, long size, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.kind = kind;
-        this.endianness = endianness;
+        this.order = order;
         this.size = size;
     }
 
     /**
-     * Returns the value kind (e.g. integral vs. floating point).
-     * @return the value kind.
+     * Returns the value's byte order.
+     * @return the value's  byte order.
      */
-    public Kind kind() {
-        return kind;
+    public ByteOrder order() {
+        return order;
     }
 
     /**
-     * Returns the value endianness.
-     * @return the value endianness.
-     */
-    public ByteOrder endianness() {
-        return endianness;
-    }
-
-    /**
-     * Is this value a signed layout?
-     * @return true, if this value layout is signed.
+     * Is this layout associated with a signed integral value?
+     * @return true, this layout associated with a signed integral value.
      */
     public boolean isSigned() {
-        return kind != Kind.INTEGRAL_UNSIGNED;
+        return kind == Kind.INTEGRAL_SIGNED;
     }
 
     /**
-     * Returns true if the value endianness match native byte order
-     * @return true if endianness match system architecture.
+     * Is this layout associated with an integral value?
+     * @return true, this layout associated with an integral value (either signed or unsigned).
+     * @see ValueLayout#isSigned()
      */
-    public boolean isNativeByteOrder() {
-        return endianness == ByteOrder.nativeOrder();
+    public boolean isIntegral() {
+        return kind != Kind.FLOATING_POINT;
     }
 
     @Override
@@ -110,9 +112,10 @@ public class ValueLayout extends AbstractLayout implements Layout {
     }
 
     /**
-     * Create a floating-point value of given size.
-     * @param size the floating-polong size.
-     * @return the new value layout.
+     * Create a floating-point value layout of given size. The new layout's byte order is assumed to be
+     * {@link ByteOrder#nativeOrder()}).
+     * @param size the floating-point value layout size.
+     * @return a new floating-point value layout.
      * @throws IllegalArgumentException if size is &le; 0.
      */
     public static ValueLayout ofFloatingPoint(long size) throws IllegalArgumentException  {
@@ -121,21 +124,22 @@ public class ValueLayout extends AbstractLayout implements Layout {
     }
 
     /**
-     * Create a floating-point value of given endianness and size.
-     * @param endianness the floating-point endianness
-     * @param size the floating-point size.
-     * @return the new value layout.
+     * Create a floating-point value layout of given byte order and size.
+     * @param order the floating-point value layout's byte order.
+     * @param size the floating-point value layout size.
+     * @return a new floating-point value layout.
      * @throws IllegalArgumentException if size is &le; 0.
      */
-    public static ValueLayout ofFloatingPoint(ByteOrder endianness, long size) throws IllegalArgumentException {
+    public static ValueLayout ofFloatingPoint(ByteOrder order, long size) throws IllegalArgumentException {
         checkSize(size);
-        return new ValueLayout(Kind.FLOATING_POINT, endianness, size, OptionalLong.empty(), Optional.empty());
+        return new ValueLayout(Kind.FLOATING_POINT, order, size, OptionalLong.empty(), Optional.empty());
     }
 
     /**
-     * Create an unsigned integral value of given size.
-     * @param size the integral size.
-     * @return the new value layout.
+     * Create a unsigned integral value layout of given size. The new layout's byte order is assumed to be
+     * {@link ByteOrder#nativeOrder()}).
+     * @param size the unsigned integral layout size.
+     * @return a new unsigned integral layout.
      * @throws IllegalArgumentException if size is &le; 0.
      */
     public static ValueLayout ofUnsignedInt(long size) throws IllegalArgumentException {
@@ -144,21 +148,22 @@ public class ValueLayout extends AbstractLayout implements Layout {
     }
 
     /**
-     * Create an unsigned integral value of given endianness and size.
-     * @param endianness the integral endianness
-     * @param size the integral size.
-     * @return the new value layout.
+     * Create a unsigned integral value layout of given byte order and size.
+     * @param order the unsigned integral layout's byte order.
+     * @param size the unsigned integral layout size.
+     * @return a new unsigned integral layout.
      * @throws IllegalArgumentException if size is &le; 0.
      */
-    public static ValueLayout ofUnsignedInt(ByteOrder endianness, long size) throws IllegalArgumentException {
+    public static ValueLayout ofUnsignedInt(ByteOrder order, long size) throws IllegalArgumentException {
         checkSize(size);
-        return new ValueLayout(Kind.INTEGRAL_UNSIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
+        return new ValueLayout(Kind.INTEGRAL_UNSIGNED, order, size, OptionalLong.empty(), Optional.empty());
     }
 
     /**
-     * Create an signed integral value of given size.
-     * @param size the integral size.
-     * @return the new value layout.
+     * Create a signed integral value layout of given size. The new layout's byte order is assumed to be
+     * {@link ByteOrder#nativeOrder()}).
+     * @param size the signed integral layout size.
+     * @return a new signed integral layout.
      * @throws IllegalArgumentException if size is &le; 0.
      */
     public static ValueLayout ofSignedInt(long size) throws IllegalArgumentException  {
@@ -167,21 +172,21 @@ public class ValueLayout extends AbstractLayout implements Layout {
     }
 
     /**
-     * Create an signed integral value of given endianness and size.
-     * @param endianness the integral endianness
-     * @param size the integral size.
-     * @return the new value layout.
+     * Create a signed integral value layout of given byte order and size.
+     * @param order the signed integral layout's byte order.
+     * @param size the signed integral layout size.
+     * @return a new signed integral layout.
      * @throws IllegalArgumentException if size is &le; 0.
      */
-    public static ValueLayout ofSignedInt(ByteOrder endianness, long size) throws IllegalArgumentException  {
+    public static ValueLayout ofSignedInt(ByteOrder order, long size) throws IllegalArgumentException  {
         checkSize(size);
-        return new ValueLayout(Kind.INTEGRAL_SIGNED, endianness, size, OptionalLong.empty(), Optional.empty());
+        return new ValueLayout(Kind.INTEGRAL_SIGNED, order, size, OptionalLong.empty(), Optional.empty());
     }
 
     @Override
     public String toString() {
         return decorateLayoutString(String.format("%s%d",
-                endianness == ByteOrder.BIG_ENDIAN ?
+                order == ByteOrder.BIG_ENDIAN ?
                         kind.tag.toUpperCase() : kind.tag,
                 size));
     }
@@ -198,19 +203,19 @@ public class ValueLayout extends AbstractLayout implements Layout {
             return false;
         }
         ValueLayout v = (ValueLayout)other;
-        return kind.equals(v.kind) && endianness.equals(v.endianness) &&
+        return kind.equals(v.kind) && order.equals(v.order) &&
             size == v.size;
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ kind.hashCode() ^ endianness.hashCode() ^
+        return super.hashCode() ^ kind.hashCode() ^ order.hashCode() ^
             Long.hashCode(size);
     }
 
     @Override
     ValueLayout dup(OptionalLong alignment, Optional<String> name) {
-        return new ValueLayout(kind, endianness, size, alignment, name);
+        return new ValueLayout(kind, order, size, alignment, name);
     }
 
     /**

@@ -30,11 +30,35 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 /**
- * A sequence layout. A sequence layout is a special case of a group layout, made up of an element layout and a repetition count.
- * The repetition count can be zero if the sequence contains no elements. A finite sequence layout of the kind e.g. {@code [ 4:i32 ]},
- * can be thought of as a group layout e.g. {@code [i32 i32 i32 i32]} where a given layout element is repeated a number of times that
- * is equal to the sequence size. Unbounded sequence layouts can be thought of an infinite repetition of a layout element,
- * as in {@code [i32 i32 i32 i32, ...]}. In such cases the sequence layout will not have an associated size.
+ * A sequence layout. A sequence layout is a special case of a compound layout, made up of a layout element and a repetition count.
+ * The repetition count can be zero if the sequence contains no elements. A finite sequence layout can be thought of as a group layout
+ * where a given layout element is repeated a number of times that is equal to the sequence size. In other words this
+ * layout:
+ *
+ * <pre>{@code
+SequenceLayout.of(3, ValueLayout.ofSignedInt(32));
+ * }</pre>
+ *
+ * is equivalent to the following layout:
+ *
+ * <pre>{@code
+GroupLayout.struct(
+    ValueLayout.ofSignedInt(32),
+    ValueLayout.ofSignedInt(32),
+    ValueLayout.ofSignedInt(32));
+ * }</pre>
+ * <p>
+ * Unbounded sequence layouts can be thought of as a infinite repetitions of a layout element. In such cases the sequence
+ * layout will <em>not</em> have an associated size.
+ * <p>
+ * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
+ * class; use of identity-sensitive operations (including reference equality
+ * ({@code ==}), identity hash code, or synchronization) on instances of
+ * {@code SequenceLayout} may have unpredictable results and should be avoided.
+ * The {@code equals} method should be used for comparisons.
+ *
+ * @implSpec
+ * This class is immutable and thread-safe.
  */
 public class SequenceLayout extends AbstractLayout implements CompoundLayout {
 
@@ -63,14 +87,14 @@ public class SequenceLayout extends AbstractLayout implements CompoundLayout {
 
     @Override
     long naturalAlignmentBits() {
-        return elementLayout().bitsAlignment();
+        return element().bitsAlignment();
     }
 
     /**
-     * The element layout associated with this sequence layout.
-     * @return element layout.
+     * The layout element associated with this sequence layout.
+     * @return layout element.
      */
-    public Layout elementLayout() {
+    public Layout element() {
         return elementLayout;
     }
 
@@ -83,8 +107,8 @@ public class SequenceLayout extends AbstractLayout implements CompoundLayout {
     }
 
     /**
-     * Create a new sequence layout with given element layout and size.
-     * @param elementLayout the element layout.
+     * Create a new sequence layout with given layout element and size.
+     * @param elementLayout the layout element.
      * @param size the array repetition count.
      * @return the new sequence layout.
      * @throws IllegalArgumentException if size &lt; 0.
@@ -95,8 +119,8 @@ public class SequenceLayout extends AbstractLayout implements CompoundLayout {
     }
 
     /**
-     * Create a new sequence layout, with unbounded size and given element layout.
-     * @param elementLayout the element layout.
+     * Create a new sequence layout, with unbounded size and given layout element.
+     * @param elementLayout the layout element.
      * @return the new sequence layout.
      */
     public static SequenceLayout of(Layout elementLayout) {
