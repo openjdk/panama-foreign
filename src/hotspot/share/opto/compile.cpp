@@ -2628,96 +2628,98 @@ void Compile::scalarize_vbox_node(VectorBoxNode* vec_box) {
 
   // Process merged VBAs
 
-  Unique_Node_List calls(C->comp_arena());
-  for (DUIterator_Fast imax, i = vec_box->fast_outs(imax); i < imax; i++) {
-    Node* use = vec_box->fast_out(i);
-    if (use->is_CallJava()) {
-      CallJavaNode* call = use->as_CallJava();
-      if (call->has_non_debug_use(vec_box) && vec_box->in(VectorBoxNode::Box)->is_Phi()) {
-        calls.push(call);
-      }
-    }
-  }
-
-  while (VectorAPIAggressiveReboxing && calls.size() > 0) {
-    CallJavaNode* call = calls.pop()->as_CallJava();
-    // Attach new VBA to the call and use it instead of Phi (VBA ... VBA).
-
-    JVMState* jvms = clone_jvms(C, call);
-    GraphKit kit(jvms);
-    PhaseGVN& gvn = kit.gvn();
-
-    // Adjust JVMS from post-call to pre-call state: put args on stack
-    uint nargs = call->method()->arg_size();
-    kit.ensure_stack(kit.sp() + nargs);
-    for (uint i = TypeFunc::Parms; i < call->tf()->domain()->cnt(); i++) {
-      kit.push(call->in(i));
-    }
-    jvms = kit.sync_jvms();
-
-    Node* new_vbox = NULL;
-    {
-      PreserveReexecuteState prs(&kit);
-
-      kit.jvms()->set_should_reexecute(true);
-
-      const TypeInstPtr* vbox_type = vec_box->box_type();
-      const TypeVect* vect_type = vec_box->vec_type();
-      Node* vect = vec_box->in(VectorBoxNode::Value);
-
-      VectorBoxAllocateNode* alloc = new VectorBoxAllocateNode(C, vbox_type);
-      kit.set_edges_for_java_call(alloc, /*must_throw=*/false, /*separate_io_proj=*/true);
-      kit.make_slow_call_ex(alloc, env()->Throwable_klass(), /*separate_io_proj=*/true, /*deoptimize=*/true);
-      kit.set_i_o(gvn.transform( new ProjNode(alloc, TypeFunc::I_O) ));
-      kit.set_all_memory(gvn.transform( new ProjNode(alloc, TypeFunc::Memory) ));
-      Node* ret = gvn.transform(new ProjNode(alloc, TypeFunc::Parms));
-
-      new_vbox = gvn.transform(new VectorBoxNode(C, ret, vect, vbox_type, vect_type));
-
-      kit.replace_in_map(vec_box, new_vbox);
-    }
-
-    kit.dec_sp(nargs);
-    jvms = kit.sync_jvms();
-
-    bool found = false;
-    int cnt = _vector_reboxing_late_inlines.length();
-    for (int i = 0; i < cnt; i++) {
-      CallGenerator* cg = _vector_reboxing_late_inlines.at(i);
-      if (cg->call_node() == call) {
-        ciMethod* m = cg->method();
-        _vector_reboxing_late_inlines.remove(cg); // remove_at(i);
-        CallGenerator* new_cg = CallGenerator::for_vector_reboxing_late_inline(
-            m,
-            CallGenerator::for_inline(m, m->interpreter_invocation_count()));
-
-        JVMState* new_jvms = new_cg->generate(jvms);
-
-        Node* new_res = kit.top();
-        if (m->return_type()->basic_type() != T_VOID) {
-          new_res = new_cg->call_node()->proj_out(TypeFunc::Parms);
+  if (VectorAPIAggressiveReboxing) {
+    Unique_Node_List calls(C->comp_arena());
+    for (DUIterator_Fast imax, i = vec_box->fast_outs(imax); i < imax; i++) {
+      Node* use = vec_box->fast_out(i);
+      if (use->is_CallJava()) {
+        CallJavaNode* call = use->as_CallJava();
+        if (call->has_non_debug_use(vec_box) && vec_box->in(VectorBoxNode::Box)->is_Phi()) {
+          calls.push(call);
         }
-        kit.replace_call(call, new_res, /*do_replaced_nodes=*/true);
-
-        found = true;
-        break;
       }
     }
 
-    if (!found) {
-      // FIXME does it cover all cases?
-      CallJavaNode* new_call = call->clone()->as_CallJava();
-      new_call->set_req(TypeFunc::Control  , kit.control());
-      new_call->set_req(TypeFunc::I_O      , kit.i_o());
-      new_call->set_req(TypeFunc::Memory   , kit.reset_memory());
-      new_call->set_req(TypeFunc::FramePtr , kit.frameptr());
+    while (calls.size() > 0) {
+      CallJavaNode* call = calls.pop()->as_CallJava();
+      // Attach new VBA to the call and use it instead of Phi (VBA ... VBA).
 
-      new_call->replace_edge(vec_box, new_vbox);
-      new_call = gvn.transform(new_call)->as_CallJava();
+      JVMState* jvms = clone_jvms(C, call);
+      GraphKit kit(jvms);
+      PhaseGVN& gvn = kit.gvn();
 
-      C->gvn_replace_by(call, new_call);
+      // Adjust JVMS from post-call to pre-call state: put args on stack
+      uint nargs = call->method()->arg_size();
+      kit.ensure_stack(kit.sp() + nargs);
+      for (uint i = TypeFunc::Parms; i < call->tf()->domain()->cnt(); i++) {
+        kit.push(call->in(i));
+      }
+      jvms = kit.sync_jvms();
+
+      Node* new_vbox = NULL;
+      {
+        PreserveReexecuteState prs(&kit);
+
+        kit.jvms()->set_should_reexecute(true);
+
+        const TypeInstPtr* vbox_type = vec_box->box_type();
+        const TypeVect* vect_type = vec_box->vec_type();
+        Node* vect = vec_box->in(VectorBoxNode::Value);
+
+        VectorBoxAllocateNode* alloc = new VectorBoxAllocateNode(C, vbox_type);
+        kit.set_edges_for_java_call(alloc, /*must_throw=*/false, /*separate_io_proj=*/true);
+        kit.make_slow_call_ex(alloc, env()->Throwable_klass(), /*separate_io_proj=*/true, /*deoptimize=*/true);
+        kit.set_i_o(gvn.transform( new ProjNode(alloc, TypeFunc::I_O) ));
+        kit.set_all_memory(gvn.transform( new ProjNode(alloc, TypeFunc::Memory) ));
+        Node* ret = gvn.transform(new ProjNode(alloc, TypeFunc::Parms));
+
+        new_vbox = gvn.transform(new VectorBoxNode(C, ret, vect, vbox_type, vect_type));
+
+        kit.replace_in_map(vec_box, new_vbox);
+      }
+
+      kit.dec_sp(nargs);
+      jvms = kit.sync_jvms();
+
+      bool found = false;
+      int cnt = _vector_reboxing_late_inlines.length();
+      for (int i = 0; i < cnt; i++) {
+        CallGenerator* cg = _vector_reboxing_late_inlines.at(i);
+        if (cg->call_node() == call) {
+          ciMethod* m = cg->method();
+          _vector_reboxing_late_inlines.remove(cg); // remove_at(i);
+          CallGenerator* new_cg = CallGenerator::for_vector_reboxing_late_inline(
+              m,
+              CallGenerator::for_inline(m, m->interpreter_invocation_count()));
+
+          JVMState* new_jvms = new_cg->generate(jvms);
+
+          Node* new_res = kit.top();
+          if (m->return_type()->basic_type() != T_VOID) {
+            new_res = new_cg->call_node()->proj_out(TypeFunc::Parms);
+          }
+          kit.replace_call(call, new_res, /*do_replaced_nodes=*/true);
+
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        // FIXME does it cover all cases?
+        CallJavaNode* new_call = call->clone()->as_CallJava();
+        new_call->set_req(TypeFunc::Control  , kit.control());
+        new_call->set_req(TypeFunc::I_O      , kit.i_o());
+        new_call->set_req(TypeFunc::Memory   , kit.reset_memory());
+        new_call->set_req(TypeFunc::FramePtr , kit.frameptr());
+
+        new_call->replace_edge(vec_box, new_vbox);
+        new_call = gvn.transform(new_call)->as_CallJava();
+
+        C->gvn_replace_by(call, new_call);
+      }
+      call->disconnect_inputs(NULL, C);
     }
-    call->disconnect_inputs(NULL, C);
   }
 
   // Process debug uses at safepoints
@@ -2785,6 +2787,7 @@ Node* Compile::expand_vbox_node_helper(Node* vbox,
     VectorBoxAllocateNode* vbox_alloc = static_cast<VectorBoxAllocateNode*>(vbox->in(0));
     return expand_vbox_alloc_node(vbox_alloc, vect, box_type, vect_type);
   } else {
+    assert(!vbox->is_Phi(), "");
     // TODO: ensure that expanded vbox is initialized with the same value (vect).
     return vbox; // already expanded
   }
