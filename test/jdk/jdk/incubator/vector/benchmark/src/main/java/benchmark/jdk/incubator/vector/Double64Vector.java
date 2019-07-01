@@ -812,6 +812,34 @@ public class Double64Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void broadcast(Blackhole bh) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector.broadcast(SPECIES, a[i]).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void zero(Blackhole bh) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector.zero(SPECIES).intoArray(a, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
     public void single(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];

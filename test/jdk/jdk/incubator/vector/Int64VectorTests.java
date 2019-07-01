@@ -193,6 +193,23 @@ public class Int64VectorTests extends AbstractVectorTest {
         }
     }
 
+    static void assertBroadcastArraysEquals(int[]a, int[]r) {
+        int i = 0;
+        for (; i < a.length; i += SPECIES.length()) {
+            int idx = i;
+            for (int j = idx; j < (idx + SPECIES.length()); j++)
+                a[j]=a[idx];
+        }
+
+        try {
+            for (i = 0; i < a.length; i++) {
+                Assert.assertEquals(r[i], a[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(r[i], a[i], "at index #" + i + ", input = " + a[i]);
+        }
+    }
+
     interface FBinOp {
         int apply(int a, int b);
     }
@@ -2196,6 +2213,42 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, Int64VectorTests::get);
     }
+
+    @Test(dataProvider = "intUnaryOpProvider")
+    static void BroadcastInt64VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector.broadcast(SPECIES, a[i]).intoArray(r, i);
+            }
+        }
+
+        assertBroadcastArraysEquals(a, r);
+    }
+
+
+
+
+
+    @Test(dataProvider = "intUnaryOpProvider")
+    static void ZeroInt64VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector.zero(SPECIES).intoArray(a, i);
+            }
+        }
+
+        Assert.assertEquals(a, r);
+    }
+
+
+
+
     static int[] single(int val) {
         int[] res = new int[SPECIES.length()];
         res[0] = val;
