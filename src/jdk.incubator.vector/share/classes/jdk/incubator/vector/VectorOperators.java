@@ -439,9 +439,9 @@ public abstract class VectorOperators {
     /** Produce {@code a>>>(n&(ESIZE-1))}.  Integral only. */
     public static final /*bitwise*/ Binary LSHR = binary("LSHR", ">>>", VectorIntrinsics.VECTOR_OP_URSHIFT, VO_SHIFT);
     /** Produce {@code rotateLeft(a,n)}.  Integral only. */
-    public static final /*bitwise*/ Binary ROL = binary("ROL", "rotateLeft", -1 /*VectorIntrinsics.VECTOR_OP_LROTATE*/, VO_SHIFT);
+    public static final /*bitwise*/ Binary ROL = binary("ROL", "rotateLeft", VectorIntrinsics.VECTOR_OP_LROTATE, VO_SHIFT);
     /** Produce {@code rotateRight(a,n)}.  Integral only. */
-    public static final /*bitwise*/ Binary ROR = binary("ROR", "rotateRight", -1 /*VectorIntrinsics.VECTOR_OP_RROTATE*/, VO_SHIFT);
+    public static final /*bitwise*/ Binary ROR = binary("ROR", "rotateRight", VectorIntrinsics.VECTOR_OP_RROTATE, VO_SHIFT);
 
     /** Produce {@code atan2(a,b)}.  Floating only. */
     public static final /*float*/ Binary ATAN2 = binary("ATAN2", "atan2", VectorIntrinsics.VECTOR_OP_ATAN2, VO_ONLYFP);
