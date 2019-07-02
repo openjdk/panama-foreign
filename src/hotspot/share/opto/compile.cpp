@@ -2681,44 +2681,11 @@ void Compile::scalarize_vbox_node(VectorBoxNode* vec_box) {
       kit.dec_sp(nargs);
       jvms = kit.sync_jvms();
 
-      bool found = false;
-      int cnt = _vector_reboxing_late_inlines.length();
-      for (int i = 0; i < cnt; i++) {
-        CallGenerator* cg = _vector_reboxing_late_inlines.at(i);
-        if (cg->call_node() == call) {
-          ciMethod* m = cg->method();
-          _vector_reboxing_late_inlines.remove(cg); // remove_at(i);
-          CallGenerator* new_cg = CallGenerator::for_vector_reboxing_late_inline(
-              m,
-              CallGenerator::for_inline(m, m->interpreter_invocation_count()));
-
-          JVMState* new_jvms = new_cg->generate(jvms);
-
-          Node* new_res = kit.top();
-          if (m->return_type()->basic_type() != T_VOID) {
-            new_res = new_cg->call_node()->proj_out(TypeFunc::Parms);
-          }
-          kit.replace_call(call, new_res, /*do_replaced_nodes=*/true);
-
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        // FIXME does it cover all cases?
-        CallJavaNode* new_call = call->clone()->as_CallJava();
-        new_call->set_req(TypeFunc::Control  , kit.control());
-        new_call->set_req(TypeFunc::I_O      , kit.i_o());
-        new_call->set_req(TypeFunc::Memory   , kit.reset_memory());
-        new_call->set_req(TypeFunc::FramePtr , kit.frameptr());
-
-        new_call->replace_edge(vec_box, new_vbox);
-        new_call = gvn.transform(new_call)->as_CallJava();
-
-        C->gvn_replace_by(call, new_call);
-      }
-      call->disconnect_inputs(NULL, C);
+      call->set_req(TypeFunc::Control , kit.control());
+      call->set_req(TypeFunc::I_O     , kit.i_o());
+      call->set_req(TypeFunc::Memory  , kit.reset_memory());
+      call->set_req(TypeFunc::FramePtr, kit.frameptr());
+      call->replace_edge(vec_box, new_vbox);
     }
   }
 
