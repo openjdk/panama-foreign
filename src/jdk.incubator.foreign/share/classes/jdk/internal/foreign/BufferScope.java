@@ -28,7 +28,7 @@ package jdk.internal.foreign;
 
 import jdk.internal.misc.Unsafe;
 
-import java.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegment;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 

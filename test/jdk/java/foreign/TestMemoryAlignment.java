@@ -28,14 +28,14 @@
 
 import org.testng.annotations.*;
 
-import java.foreign.CompoundLayout;
-import java.foreign.GroupLayout;
-import java.foreign.Layout;
-import java.foreign.MemoryAddress;
-import java.foreign.MemorySegment;
-import java.foreign.PaddingLayout;
-import java.foreign.SequenceLayout;
-import java.foreign.ValueLayout;
+import jdk.incubator.foreign.CompoundLayout;
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.Layout;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.PaddingLayout;
+import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.util.stream.LongStream;
 

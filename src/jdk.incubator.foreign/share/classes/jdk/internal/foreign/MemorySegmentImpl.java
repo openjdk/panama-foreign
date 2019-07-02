@@ -26,10 +26,11 @@
 
 package jdk.internal.foreign;
 
-import java.foreign.MemoryAddress;
-import java.foreign.MemorySegment;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.access.foreign.MemorySegmentProxy;
 
-public final class MemorySegmentImpl implements MemorySegment {
+public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
 
     final long length;
     final int mask;

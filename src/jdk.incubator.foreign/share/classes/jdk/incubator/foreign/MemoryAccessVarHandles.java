@@ -23,7 +23,7 @@
  *  questions.
  *
  */
-package java.foreign;
+package jdk.incubator.foreign;
 
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
@@ -90,7 +90,7 @@ public final class MemoryAccessVarHandles {
     /**
      * Creates a memory access var handle with the given carrier type.
      *
-     * The resulting memory access var handle features a single {@link java.foreign.MemoryAddress} access coordinate,
+     * The resulting memory access var handle features a single {@link MemoryAddress} access coordinate,
      * and its variable type is set by the given carrier type.
      *
      * The alignment constraint for the resulting memory access var handle is the same as the in memory size of the
@@ -110,7 +110,7 @@ public final class MemoryAccessVarHandles {
     /**
      * Creates a memory access var handle with the given carrier type, alignment constraints and byte order.
      *
-     * The resulting memory access var handle features a single {@link java.foreign.MemoryAddress} access coordinate,
+     * The resulting memory access var handle features a single {@link MemoryAddress} access coordinate,
      * and its variable type is set by the given carrier type.
      *
      * The accessed offset is zero.

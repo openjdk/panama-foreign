@@ -25,17 +25,17 @@
 
 /*
  * @test
- * @modules java.base/jdk.internal.foreign
- *          java.base/sun.nio.ch
+ * @modules java.base/sun.nio.ch
+ *          jdk.incubator.foreign/jdk.internal.foreign
  * @run testng TestByteBuffer
  */
 
-import java.foreign.CompoundLayout;
-import java.foreign.GroupLayout;
-import java.foreign.MemoryAddress;
-import java.foreign.MemorySegment;
-import java.foreign.SequenceLayout;
-import java.foreign.ValueLayout;
+import jdk.incubator.foreign.CompoundLayout;
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.ValueLayout;
 import java.io.File;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.WeakReference;

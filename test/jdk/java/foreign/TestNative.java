@@ -25,17 +25,19 @@
 /*
  * @test
  * @modules java.base/jdk.internal.misc
+ *          jdk.incubator.foreign/jdk.incubator.foreign.unsafe
  * @run testng TestNative
  */
 
+import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import jdk.internal.misc.Unsafe;
 import org.testng.annotations.*;
 
-import java.foreign.CompoundLayout;
-import java.foreign.MemoryAddress;
-import java.foreign.MemorySegment;
-import java.foreign.SequenceLayout;
-import java.foreign.ValueLayout;
+import jdk.incubator.foreign.CompoundLayout;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -113,7 +115,7 @@ public class TestNative {
         for (long i = 0 ; i < nelems ; i++) {
             Object handleValue = handleExtractor.apply(base, i);
             Object bufferValue = nativeBufferExtractor.apply(z, (int)i);
-            Object rawValue = nativeRawExtractor.apply(UNSAFE.getOffset(base), (int)i);
+            Object rawValue = nativeRawExtractor.apply(ForeignUnsafe.getOffset(base), (int)i);
             if (handleValue instanceof Number) {
                 assertEquals(((Number)handleValue).longValue(), i);
                 assertEquals(((Number)bufferValue).longValue(), i);

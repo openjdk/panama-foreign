@@ -29,11 +29,11 @@ import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import sun.invoke.util.Wrapper;
 
-import java.foreign.CompoundLayout;
-import java.foreign.GroupLayout;
-import java.foreign.Layout;
-import java.foreign.SequenceLayout;
-import java.foreign.ValueLayout;
+import jdk.incubator.foreign.CompoundLayout;
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.Layout;
+import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;

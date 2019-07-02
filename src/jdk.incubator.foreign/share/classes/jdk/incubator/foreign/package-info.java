@@ -48,17 +48,17 @@ try (MemorySegment segment = MemorySegment.ofNative(10 * 4)) {
  * so that <em>s[i] = i</em>, again where 0 &le; <em>i</em> &lt; 10.
  *
  * <p>
- * The key abstractions introduced by this package are {@link java.foreign.MemorySegment} and {@link java.foreign.MemoryAddress}.
+ * The key abstractions introduced by this package are {@link jdk.incubator.foreign.MemorySegment} and {@link jdk.incubator.foreign.MemoryAddress}.
  * The first models a contiguous memory region, which can reside either inside or outside the Java heap; the latter models an address - that is,
  * an offset inside a given segment. Memory addresses represents the main access coordinate of memory access var handles, which can be obtained
- * using the combinator methods defined in the {@link java.foreign.MemoryAccessVarHandles} class. Finally, the {@link java.foreign.Layout} class
+ * using the combinator methods defined in the {@link jdk.incubator.foreign.MemoryAccessVarHandles} class. Finally, the {@link jdk.incubator.foreign.Layout} class
  * hierarchy allows to describe <em>memory layouts</em> and simplify operations such as computing the size in bytes of a given
  * layout, obtain its alignment requirements, and so on. Memory layouts also provide an alternate, more abstract way, to produce
- * memory access var handles, e.g. using <em>layout paths</em> (see {@link java.foreign.CompoundLayout.Path}).
+ * memory access var handles, e.g. using <em>layout paths</em> (see {@link jdk.incubator.foreign.CompoundLayout.Path}).
  *
  * <h2><a id="deallocation"></a>Deterministic deallocation</h2>
  * When writing code that manipulates memory segments, especially if backed by memory which resides outside the Java heap, it is
- * crucial that the client releases the resources associated with a memory segment, by calling the {@link java.foreign.MemorySegment#close()}
+ * crucial that the client releases the resources associated with a memory segment, by calling the {@link jdk.incubator.foreign.MemorySegment#close()}
  * method either explicitly, or implicitly, by relying on try-with-resources construct (as demonstrated in the example above).
  * Closing a given memory segment is an <em>atomic</em> operation which can either succeed - and result in the underlying
  * memory associated with the segment to be released, or <em>fail</em> with an exception.
@@ -83,4 +83,4 @@ try (MemorySegment segment = MemorySegment.ofNative(10 * 4)) {
  * Together, spatial and temporal safety ensure that each memory access operation either succeeds - and accesses a valid
  * memory location - or fails.
  */
-package java.foreign;
+package jdk.incubator.foreign;

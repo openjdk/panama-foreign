@@ -28,9 +28,9 @@ package java.nio;
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.Unsafe;
 
-import java.foreign.MemorySegment;
 import java.util.Spliterator;
 
 /**
@@ -754,7 +754,7 @@ public abstract class Buffer {
                 }
 
                 @Override
-                public ByteBuffer newScopedByteBuffer(MemorySegment segment, ByteBuffer bb) {
+                public ByteBuffer newScopedByteBuffer(MemorySegmentProxy segment, ByteBuffer bb) {
                     return ScopedByteBuffer.of(segment, bb);
                 }
             });

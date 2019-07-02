@@ -25,6 +25,7 @@
 
 package java.lang.invoke;
 
+import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -36,7 +37,6 @@ import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetBooleanAction;
 import sun.security.action.GetPropertyAction;
 
-import java.foreign.MemoryAddress;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -122,7 +122,7 @@ class AddressVarHandleGenerator {
         this.carrier = carrier;
         Class<?>[] components = new Class<?>[dimensions];
         Arrays.fill(components, long.class);
-        this.form = new VarForm(BASE_CLASS, MemoryAddress.class, carrier, components);
+        this.form = new VarForm(BASE_CLASS, MemoryAddressProxy.class, carrier, components);
         this.helperClass = helperClassCache.get(carrier);
         this.implClassName = helperClass.getSimpleName() + dimensions;
     }
@@ -137,7 +137,7 @@ class AddressVarHandleGenerator {
             Class<?>[] components = new Class<?>[dimensions];
             Arrays.fill(components, long.class);
 
-            VarForm form = new VarForm(implCls, MemoryAddress.class, carrier, components);
+            VarForm form = new VarForm(implCls, MemoryAddressProxy.class, carrier, components);
 
             MethodType constrType = MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class, long.class, long[].class);
             MethodHandle constr = MethodHandles.Lookup.IMPL_LOOKUP.findConstructor(implCls, constrType);
@@ -217,7 +217,7 @@ class AddressVarHandleGenerator {
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 1);
         mv.visitFieldInsn(GETFIELD, Type.getInternalName(VarHandle.AccessMode.class), "at", Type.getDescriptor(VarHandle.AccessType.class));
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(MemoryAddress.class));
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(MemoryAddressProxy.class));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
         mv.visitLdcInsn(cw.makeConstantPoolPatch(carrier));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));

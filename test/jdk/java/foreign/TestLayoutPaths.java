@@ -27,11 +27,11 @@
  * @run testng TestLayoutPaths
  */
 
-import java.foreign.CompoundLayout;
-import java.foreign.GroupLayout;
-import java.foreign.PaddingLayout;
-import java.foreign.SequenceLayout;
-import java.foreign.ValueLayout;
+import jdk.incubator.foreign.CompoundLayout;
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.PaddingLayout;
+import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.ValueLayout;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;

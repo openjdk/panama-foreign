@@ -25,7 +25,8 @@
 
 package jdk.internal.access;
 
-import java.foreign.MemorySegment;
+import jdk.internal.access.foreign.MemorySegmentProxy;
+
 import java.nio.ByteBuffer;
 
 public interface JavaNioAccess {
@@ -53,5 +54,5 @@ public interface JavaNioAccess {
      * by the given scope in {@code scope}. The created buffer could be direct or not, based on whether
      * {@code bb} is direct.
      */
-    ByteBuffer newScopedByteBuffer(MemorySegment segment, ByteBuffer bb);
+    ByteBuffer newScopedByteBuffer(MemorySegmentProxy bufferScope, ByteBuffer bb);
 }

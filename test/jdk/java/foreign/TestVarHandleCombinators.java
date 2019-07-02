@@ -30,9 +30,9 @@
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.foreign.MemoryAddress;
-import java.foreign.MemorySegment;
-import java.foreign.MemoryAccessVarHandles;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemoryAccessVarHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 

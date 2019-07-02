@@ -25,7 +25,6 @@
 
 package java.lang.invoke;
 
-import jdk.internal.foreign.Utils;
 import sun.invoke.util.Wrapper;
 
 import java.lang.reflect.Field;
@@ -295,7 +294,7 @@ final class VarHandles {
     /**
      * Creates a memory access VarHandle.
      *
-     * Resulting VarHandle will take a {@link java.foreign.MemoryAddress} as first argument,
+     * Resulting VarHandle will take a memory address as first argument,
      * and a certain number of coordinate {@code long} parameters, depending on the length
      * of the {@code strides} argument array.
      *
@@ -311,7 +310,10 @@ final class VarHandles {
      */
     static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, long alignment,
                                                  ByteOrder byteOrder, long offset, long[] strides) {
-        long size = Utils.bitsToBytesOrThrow(Wrapper.forPrimitiveType(carrier).bitWidth(), IllegalStateException::new);
+        if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
+            throw new IllegalArgumentException("Invalid carrier: " + carrier.getName());
+        }
+        long size = Wrapper.forPrimitiveType(carrier).bitWidth() / 8;
         boolean be = byteOrder == ByteOrder.BIG_ENDIAN;
 
         Map<Integer, MethodHandle> carrierFactory = addressFactories.get(carrier);

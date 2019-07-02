@@ -76,7 +76,6 @@
  */
 module java.base {
 
-    exports java.foreign;
     exports java.io;
     exports java.lang;
     exports java.lang.annotation;
@@ -145,7 +144,10 @@ module java.base {
         java.naming,
         java.rmi,
         jdk.jlink,
-        jdk.net;
+        jdk.net,
+        jdk.incubator.foreign;
+    exports jdk.internal.access.foreign to
+        jdk.incubator.foreign;
     exports jdk.internal.event to
         jdk.jfr;
     exports jdk.internal.jimage to
@@ -197,7 +199,8 @@ module java.base {
         jdk.scripting.nashorn,
         jdk.scripting.nashorn.shell,
         jdk.unsupported,
-        jdk.internal.vm.ci;
+        jdk.internal.vm.ci,
+        jdk.incubator.foreign;
     exports jdk.internal.module to
         java.instrument,
         java.management.rmi,
@@ -230,6 +233,8 @@ module java.base {
         jdk.jfr;
     exports jdk.internal.util.xml.impl to
         jdk.jfr;
+    exports sun.invoke.util to
+        jdk.incubator.foreign;
     exports sun.net to
         java.net.http,
         jdk.naming.dns;
