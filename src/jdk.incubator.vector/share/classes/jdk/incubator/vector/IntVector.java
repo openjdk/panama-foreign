@@ -425,7 +425,9 @@ public abstract class IntVector extends AbstractVector<Integer> {
     @ForceInline
     public static IntVector zero(VectorSpecies<Integer> species) {
         IntSpecies vsp = (IntSpecies) species;
-        return vsp.zero();
+        return VectorIntrinsics.broadcastCoerced(vsp.vectorType(), int.class, species.length(),
+                                0, vsp,
+                                ((bits_, s_) -> s_.rvOp(i -> bits_)));
     }
 
     /**

@@ -431,7 +431,15 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     @ForceInline
     public static $abstractvectortype$ zero(VectorSpecies<$Boxtype$> species) {
         $Type$Species vsp = ($Type$Species) species;
-        return vsp.zero();
+#if[FP]
+        return VectorIntrinsics.broadcastCoerced(vsp.vectorType(), $type$.class, species.length(),
+                        toBits(0.0f), vsp,
+                        ((bits_, s_) -> s_.rvOp(i -> bits_)));
+#else[FP]
+        return VectorIntrinsics.broadcastCoerced(vsp.vectorType(), $type$.class, species.length(),
+                                0, vsp,
+                                ((bits_, s_) -> s_.rvOp(i -> bits_)));
+#end[FP]
     }
 
     /**

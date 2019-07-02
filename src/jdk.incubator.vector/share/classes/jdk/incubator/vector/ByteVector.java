@@ -424,7 +424,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     @ForceInline
     public static ByteVector zero(VectorSpecies<Byte> species) {
         ByteSpecies vsp = (ByteSpecies) species;
-        return vsp.zero();
+        return VectorIntrinsics.broadcastCoerced(vsp.vectorType(), byte.class, species.length(),
+                                0, vsp,
+                                ((bits_, s_) -> s_.rvOp(i -> bits_)));
     }
 
     /**

@@ -425,7 +425,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     @ForceInline
     public static DoubleVector zero(VectorSpecies<Double> species) {
         DoubleSpecies vsp = (DoubleSpecies) species;
-        return vsp.zero();
+        return VectorIntrinsics.broadcastCoerced(vsp.vectorType(), double.class, species.length(),
+                        toBits(0.0f), vsp,
+                        ((bits_, s_) -> s_.rvOp(i -> bits_)));
     }
 
     /**

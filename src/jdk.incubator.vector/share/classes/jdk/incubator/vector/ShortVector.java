@@ -425,7 +425,9 @@ public abstract class ShortVector extends AbstractVector<Short> {
     @ForceInline
     public static ShortVector zero(VectorSpecies<Short> species) {
         ShortSpecies vsp = (ShortSpecies) species;
-        return vsp.zero();
+        return VectorIntrinsics.broadcastCoerced(vsp.vectorType(), short.class, species.length(),
+                                0, vsp,
+                                ((bits_, s_) -> s_.rvOp(i -> bits_)));
     }
 
     /**

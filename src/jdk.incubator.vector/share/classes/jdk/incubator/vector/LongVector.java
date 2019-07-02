@@ -425,7 +425,9 @@ public abstract class LongVector extends AbstractVector<Long> {
     @ForceInline
     public static LongVector zero(VectorSpecies<Long> species) {
         LongSpecies vsp = (LongSpecies) species;
-        return vsp.zero();
+        return VectorIntrinsics.broadcastCoerced(vsp.vectorType(), long.class, species.length(),
+                                0, vsp,
+                                ((bits_, s_) -> s_.rvOp(i -> bits_)));
     }
 
     /**

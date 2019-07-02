@@ -425,7 +425,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
     @ForceInline
     public static FloatVector zero(VectorSpecies<Float> species) {
         FloatSpecies vsp = (FloatSpecies) species;
-        return vsp.zero();
+        return VectorIntrinsics.broadcastCoerced(vsp.vectorType(), float.class, species.length(),
+                        toBits(0.0f), vsp,
+                        ((bits_, s_) -> s_.rvOp(i -> bits_)));
     }
 
     /**
