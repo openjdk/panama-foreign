@@ -240,8 +240,8 @@ public class Short128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i);
+                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -263,8 +263,8 @@ public class Short128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i);
+                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -288,8 +288,8 @@ public class Short128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i, vmask);
-                av.intoByteBuffer(r, i);
+                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN, vmask);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -302,8 +302,8 @@ public class Short128VectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i, vmask);
+                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN, vmask);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -328,8 +328,8 @@ public class Short128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i, vmask);
-                av.intoByteBuffer(r, i);
+                ShortVector av = ShortVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN, vmask);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");

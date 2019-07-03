@@ -354,7 +354,7 @@ final class Double128Vector extends DoubleVector {
        } else {
          Double128Shuffle Iota = iotaShuffle(origin);
          VectorMask<Double> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((double)(origin))));
-         Iota = iotaShuffle(origin);
+         Iota = (Double128Shuffle)iotaShuffle(origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -382,7 +382,7 @@ final class Double128Vector extends DoubleVector {
        } else {
          Double128Shuffle Iota = iotaShuffle(-origin);
          VectorMask<Double> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((double)(0))));
-         Iota = iotaShuffle(-origin);
+         Iota = (Double128Shuffle)iotaShuffle(-origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }

@@ -113,7 +113,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -149,7 +149,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -185,7 +185,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -223,7 +223,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -262,7 +262,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -302,7 +302,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -342,7 +342,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -382,7 +382,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -422,7 +422,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -462,7 +462,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -502,7 +502,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -541,7 +541,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -583,7 +583,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -625,7 +625,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -698,7 +698,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     public void ANDMaskedLanes(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
         int ra = -1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -734,7 +734,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     public void ORMaskedLanes(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
         int ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -770,7 +770,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     public void XORMaskedLanes(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
         int ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -803,7 +803,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     public void ADDMaskedLanes(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
         int ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -835,7 +835,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     public void MULMaskedLanes(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
         int ra = 1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -867,7 +867,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     public void MINMaskedLanes(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
         int ra = Integer.MAX_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -899,7 +899,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
     public void MAXMaskedLanes(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
         int ra = Integer.MIN_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -1087,7 +1087,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1336,7 +1336,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] c = fc.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1371,7 +1371,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1403,7 +1403,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1438,7 +1438,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1474,7 +1474,7 @@ public class Int64Vector extends AbstractVectorBenchmark {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<Integer> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

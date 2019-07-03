@@ -350,7 +350,7 @@ final class Long256Vector extends LongVector {
        } else {
          Long256Shuffle Iota = iotaShuffle(origin);
          VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(origin))));
-         Iota = iotaShuffle(origin);
+         Iota = (Long256Shuffle)iotaShuffle(origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -378,7 +378,7 @@ final class Long256Vector extends LongVector {
        } else {
          Long256Shuffle Iota = iotaShuffle(-origin);
          VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(0))));
-         Iota = iotaShuffle(-origin);
+         Iota = (Long256Shuffle)iotaShuffle(-origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }

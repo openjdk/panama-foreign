@@ -360,7 +360,7 @@ final class Int64Vector extends IntVector {
        } else {
          Int64Shuffle Iota = iotaShuffle(origin);
          VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((int)(origin))));
-         Iota = iotaShuffle(origin);
+         Iota = (Int64Shuffle)iotaShuffle(origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -388,7 +388,7 @@ final class Int64Vector extends IntVector {
        } else {
          Int64Shuffle Iota = iotaShuffle(-origin);
          VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((int)(0))));
-         Iota = iotaShuffle(-origin);
+         Iota = (Int64Shuffle)iotaShuffle(-origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }

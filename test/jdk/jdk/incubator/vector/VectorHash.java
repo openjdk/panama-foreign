@@ -26,11 +26,7 @@
  * @modules jdk.incubator.vector
  */
 
-import jdk.incubator.vector.ByteVector;
-import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.VectorShape;
-import jdk.incubator.vector.VectorSpecies;
-import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -122,8 +118,8 @@ public class VectorHash {
         int i = 0;
         for (; i < (a.length & ~(BYTE_64_SPECIES.length() - 1)); i += BYTE_64_SPECIES.length()) {
             ByteVector b = ByteVector.fromArray(BYTE_64_SPECIES, a, i);
-            IntVector x = (IntVector) b.cast(INT_256_SPECIES);
-            h = h * COEFF_31_TO_8 + x.mul(H_COEFF_8).addLanes();
+            IntVector x = (IntVector) b.castShape(INT_256_SPECIES, 0);
+            h = h * COEFF_31_TO_8 + x.mul(H_COEFF_8).reduceLanes(VectorOperators.ADD);
         }
 
         for (; i < a.length; i++) {
@@ -137,8 +133,8 @@ public class VectorHash {
         int i = 0;
         for (; i < (a.length & ~(BYTE_128_SPECIES.length() - 1)); i += BYTE_128_SPECIES.length()) {
             ByteVector b = ByteVector.fromArray(BYTE_128_SPECIES, a, i);
-            IntVector x = (IntVector) b.cast(INT_512_SPECIES);
-            h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).addLanes();
+            IntVector x = (IntVector) b.castShape(INT_512_SPECIES, 0);
+            h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).reduceLanes(VectorOperators.ADD);
         }
 
         for (; i < a.length; i++) {
@@ -171,11 +167,11 @@ public class VectorHash {
 
             for (int j = 0; j < byteSpecies.length() / intSpecies.length(); j++) {
                 // Reduce the size of the byte vector and then cast to int
-                IntVector x = (IntVector)(b.reshape(bytesForIntsSpecies)).cast(intSpecies);
+                IntVector x = (IntVector)(b.reinterpretShape(bytesForIntsSpecies, 0)).castShape(intSpecies, 0);
 
-                h = h * top_h_coeff + x.mul(v_h_coeff).addLanes();
+                h = h * top_h_coeff + x.mul(v_h_coeff).reduceLanes(VectorOperators.ADD);
 
-                b = b.shiftLanesLeft(intSpecies.length());
+                b = b.unslice(intSpecies.length());
             }
         }
 

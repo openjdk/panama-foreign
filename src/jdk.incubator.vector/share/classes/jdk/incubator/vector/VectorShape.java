@@ -223,8 +223,4 @@ public enum VectorShape {
 
     // MOVED preferredShape() back into this file
 
-    /** Renamed to {@link #vectorBitSize()}. */
-    @Deprecated
-    public final int bitSize() { return vectorBitSize(); }
-
 }

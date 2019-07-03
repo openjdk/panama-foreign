@@ -687,12 +687,4 @@ public interface VectorSpecies<E> {
     // * zero(), broadcast(long), from[Byte]Array(), loadMask() (convenience constructors)
     // * lanewise(op, [v], [m]), reduceLanesToLong(op, [m])
 
-    /** Renamed to {@link #vectorShape()}. */
-    @Deprecated
-    public default VectorShape shape() { return vectorShape(); }
-
-    /** Renamed to {@link #vectorBitSize()}. */
-    @Deprecated
-    public default int bitSize() { return vectorBitSize(); }
-
 }

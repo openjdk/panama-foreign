@@ -21,10 +21,7 @@
  * questions.
  */
 
-import jdk.incubator.vector.ByteVector;
-import jdk.incubator.vector.Vector;
-import jdk.incubator.vector.VectorSpecies;
-import jdk.incubator.vector.VectorMask;
+import jdk.incubator.vector.*;
 
 public class VectorArrays {
     static boolean equals(byte[] a, byte[] b) {
@@ -70,7 +67,7 @@ public class VectorArrays {
         for (; i < (length & ~(species.length() - 1)); i += species.length()) {
             Vector<Byte> va = ByteVector.fromArray(species, a, i);
             Vector<Byte> vb = ByteVector.fromArray(species, b, i);
-            VectorMask<Byte> m = va.notEqual(vb);
+            VectorMask<Byte> m = va.compare(VectorOperators.NE, vb);
             // @@@ count number of leading zeros with explicit method
             if (m.anyTrue()) {
                 break; // mismatch found

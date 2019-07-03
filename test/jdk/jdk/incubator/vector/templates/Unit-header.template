@@ -709,9 +709,9 @@ public class $vectorteststype$ extends AbstractVectorTest {
     static void smokeTest1() {
         $abstractvectortype$ three = $abstractvectortype$.broadcast(SPECIES, (byte)-3);
         $abstractvectortype$ three2 = ($abstractvectortype$) SPECIES.broadcast(-3);
-        assert(three.equal(three2).allTrue());
+        assert(three.eq(three2).allTrue());
         $abstractvectortype$ three3 = three2.broadcast(1).broadcast(-3);
-        assert(three.equal(three3).allTrue());
+        assert(three.eq(three3).allTrue());
         int scale = 2;
         Class<?> ETYPE = $type$.class;
         if (ETYPE == double.class || ETYPE == long.class)
@@ -721,6 +721,6 @@ public class $vectorteststype$ extends AbstractVectorTest {
         $abstractvectortype$ higher = three.addIndex(scale);
         VectorMask<$Boxtype$> m = three.compare(VectorOperators.LE, higher);
         assert(m.allTrue());
-        $type$ max = higher.maxLanes();
+        $type$ max = higher.reduceLanes(VectorOperators.MAX);
         assert(max == -3 + scale * (SPECIES.length()-1));
     }

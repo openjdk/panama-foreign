@@ -360,7 +360,7 @@ final class Short512Vector extends ShortVector {
        } else {
          Short512Shuffle Iota = iotaShuffle(origin);
          VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((short)(origin))));
-         Iota = iotaShuffle(origin);
+         Iota = (Short512Shuffle)iotaShuffle(origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -388,7 +388,7 @@ final class Short512Vector extends ShortVector {
        } else {
          Short512Shuffle Iota = iotaShuffle(-origin);
          VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((short)(0))));
-         Iota = iotaShuffle(-origin);
+         Iota = (Short512Shuffle)iotaShuffle(-origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }

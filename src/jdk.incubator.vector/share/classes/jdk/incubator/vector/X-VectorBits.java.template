@@ -400,7 +400,7 @@ final class $vectortype$ extends $abstractvectortype$ {
        } else {
          $shuffletype$ Iota = iotaShuffle(origin);
          VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast(($type$)(origin))));
-         Iota = iotaShuffle(origin);
+         Iota = ($shuffletype$)iotaShuffle(origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -428,7 +428,7 @@ final class $vectortype$ extends $abstractvectortype$ {
        } else {
          $shuffletype$ Iota = iotaShuffle(-origin);
          VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast(($type$)(0))));
-         Iota = iotaShuffle(-origin);
+         Iota = ($shuffletype$)iotaShuffle(-origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }

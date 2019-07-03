@@ -402,7 +402,7 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
-        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.vectorBitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
@@ -448,7 +448,7 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
-        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.vectorBitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
@@ -494,7 +494,7 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
-        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.vectorBitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
@@ -540,7 +540,7 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
-        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.vectorBitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
@@ -586,7 +586,7 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
-        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.vectorBitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
@@ -632,7 +632,7 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
-        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.vectorBitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
@@ -992,7 +992,7 @@ public class VectorReshapeTests {
 
     @Test(dataProvider = "byteUnaryOpProvider")
     static void testRebracketMax(IntFunction<byte[]> fa) {
-        byte[] barr = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
+        byte[] barr = fa.apply(S_Max_BIT.vectorBitSize()/Byte.SIZE);
         byte[] bout = new byte[barr.length];
         for (int i = 0; i < NUM_ITER; i++) {
             testVectorRebracket(bspecMax, bspecMax, barr, bout);
@@ -1046,7 +1046,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
-        FloatVector bv = (FloatVector) av.cast(b);
+        FloatVector bv = (FloatVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1064,7 +1064,7 @@ public class VectorReshapeTests {
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1079,7 +1079,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
-        FloatVector bv = (FloatVector) av.cast(b);
+        FloatVector bv = (FloatVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1097,7 +1097,7 @@ public class VectorReshapeTests {
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1112,7 +1112,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
-        FloatVector bv = (FloatVector) av.cast(b);
+        FloatVector bv = (FloatVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1130,7 +1130,7 @@ public class VectorReshapeTests {
 
         IntVector av = IntVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1145,7 +1145,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
-        FloatVector bv = (FloatVector) av.cast(b);
+        FloatVector bv = (FloatVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1163,7 +1163,7 @@ public class VectorReshapeTests {
 
         LongVector av = LongVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1178,7 +1178,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
-        FloatVector bv = (FloatVector) av.cast(b);
+        FloatVector bv = (FloatVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1196,7 +1196,7 @@ public class VectorReshapeTests {
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1211,7 +1211,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
-        FloatVector bv = (FloatVector) av.cast(b);
+        FloatVector bv = (FloatVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1229,7 +1229,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1244,7 +1244,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
-        ByteVector bv = (ByteVector) av.cast(b);
+        ByteVector bv = (ByteVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1262,7 +1262,7 @@ public class VectorReshapeTests {
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1277,7 +1277,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
-        ByteVector bv = (ByteVector) av.cast(b);
+        ByteVector bv = (ByteVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1295,7 +1295,7 @@ public class VectorReshapeTests {
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1310,7 +1310,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
-        ByteVector bv = (ByteVector) av.cast(b);
+        ByteVector bv = (ByteVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1328,7 +1328,7 @@ public class VectorReshapeTests {
 
         IntVector av = IntVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1343,7 +1343,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
-        ByteVector bv = (ByteVector) av.cast(b);
+        ByteVector bv = (ByteVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1361,7 +1361,7 @@ public class VectorReshapeTests {
 
         LongVector av = LongVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1376,7 +1376,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
-        ByteVector bv = (ByteVector) av.cast(b);
+        ByteVector bv = (ByteVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1394,7 +1394,7 @@ public class VectorReshapeTests {
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1409,7 +1409,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
-        ByteVector bv = (ByteVector) av.cast(b);
+        ByteVector bv = (ByteVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1427,7 +1427,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1442,7 +1442,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
-        ShortVector bv = (ShortVector) av.cast(b);
+        ShortVector bv = (ShortVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1460,7 +1460,7 @@ public class VectorReshapeTests {
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1475,7 +1475,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
-        ShortVector bv = (ShortVector) av.cast(b);
+        ShortVector bv = (ShortVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1493,7 +1493,7 @@ public class VectorReshapeTests {
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1508,7 +1508,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
-        ShortVector bv = (ShortVector) av.cast(b);
+        ShortVector bv = (ShortVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1526,7 +1526,7 @@ public class VectorReshapeTests {
 
         IntVector av = IntVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1541,7 +1541,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
-        ShortVector bv = (ShortVector) av.cast(b);
+        ShortVector bv = (ShortVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1559,7 +1559,7 @@ public class VectorReshapeTests {
 
         LongVector av = LongVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1574,7 +1574,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
-        ShortVector bv = (ShortVector) av.cast(b);
+        ShortVector bv = (ShortVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1592,7 +1592,7 @@ public class VectorReshapeTests {
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1607,7 +1607,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
-        ShortVector bv = (ShortVector) av.cast(b);
+        ShortVector bv = (ShortVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1625,7 +1625,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1640,7 +1640,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
-        IntVector bv = (IntVector) av.cast(b);
+        IntVector bv = (IntVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1658,7 +1658,7 @@ public class VectorReshapeTests {
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1673,7 +1673,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
-        IntVector bv = (IntVector) av.cast(b);
+        IntVector bv = (IntVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1691,7 +1691,7 @@ public class VectorReshapeTests {
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1706,7 +1706,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
-        IntVector bv = (IntVector) av.cast(b);
+        IntVector bv = (IntVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1724,7 +1724,7 @@ public class VectorReshapeTests {
 
         IntVector av = IntVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1739,7 +1739,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
-        IntVector bv = (IntVector) av.cast(b);
+        IntVector bv = (IntVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1757,7 +1757,7 @@ public class VectorReshapeTests {
 
         LongVector av = LongVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1772,7 +1772,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
-        IntVector bv = (IntVector) av.cast(b);
+        IntVector bv = (IntVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1790,7 +1790,7 @@ public class VectorReshapeTests {
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1805,7 +1805,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
-        IntVector bv = (IntVector) av.cast(b);
+        IntVector bv = (IntVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1823,7 +1823,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1838,7 +1838,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
-        LongVector bv = (LongVector) av.cast(b);
+        LongVector bv = (LongVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1856,7 +1856,7 @@ public class VectorReshapeTests {
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1871,7 +1871,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
-        LongVector bv = (LongVector) av.cast(b);
+        LongVector bv = (LongVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1889,7 +1889,7 @@ public class VectorReshapeTests {
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1904,7 +1904,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
-        LongVector bv = (LongVector) av.cast(b);
+        LongVector bv = (LongVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1922,7 +1922,7 @@ public class VectorReshapeTests {
 
         IntVector av = IntVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1937,7 +1937,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
-        LongVector bv = (LongVector) av.cast(b);
+        LongVector bv = (LongVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1955,7 +1955,7 @@ public class VectorReshapeTests {
 
         LongVector av = LongVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -1970,7 +1970,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
-        LongVector bv = (LongVector) av.cast(b);
+        LongVector bv = (LongVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1988,7 +1988,7 @@ public class VectorReshapeTests {
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -2003,7 +2003,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
-        LongVector bv = (LongVector) av.cast(b);
+        LongVector bv = (LongVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -2021,7 +2021,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -2036,7 +2036,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
-        DoubleVector bv = (DoubleVector) av.cast(b);
+        DoubleVector bv = (DoubleVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -2054,7 +2054,7 @@ public class VectorReshapeTests {
 
         ByteVector av = ByteVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -2069,7 +2069,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
-        DoubleVector bv = (DoubleVector) av.cast(b);
+        DoubleVector bv = (DoubleVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -2087,7 +2087,7 @@ public class VectorReshapeTests {
 
         ShortVector av = ShortVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -2102,7 +2102,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = IntVector.fromArray(a, input, 0);
-        DoubleVector bv = (DoubleVector) av.cast(b);
+        DoubleVector bv = (DoubleVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -2120,7 +2120,7 @@ public class VectorReshapeTests {
 
         IntVector av = IntVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -2135,7 +2135,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = LongVector.fromArray(a, input, 0);
-        DoubleVector bv = (DoubleVector) av.cast(b);
+        DoubleVector bv = (DoubleVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -2153,7 +2153,7 @@ public class VectorReshapeTests {
 
         LongVector av = LongVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -2168,7 +2168,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
-        DoubleVector bv = (DoubleVector) av.cast(b);
+        DoubleVector bv = (DoubleVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -2186,7 +2186,7 @@ public class VectorReshapeTests {
 
         FloatVector av = FloatVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -2201,7 +2201,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
-        DoubleVector bv = (DoubleVector) av.cast(b);
+        DoubleVector bv = (DoubleVector) av.castShape(b, 0);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -2219,7 +2219,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = DoubleVector.fromArray(a, input, 0);
         try {
-            av.cast(b);
+            av.castShape(b, 0);
             Assert.fail(String.format(
                     "Cast failed to throw ClassCastException for differing species lengths for %s and %s",
                     a, b));
@@ -3293,7 +3293,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastByteMaxToByte(VectorSpecies<Byte> a, VectorSpecies<Byte> b,
                                           byte[] input, byte[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToByte(a, b, input, output);
         } else {
             testVectorCastByteToByteFail(a, b, input);
@@ -3303,7 +3303,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastByteMaxToShort(VectorSpecies<Byte> a, VectorSpecies<Short> b,
                                            byte[] input, short[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToShort(a, b, input, output);
         } else {
             testVectorCastByteToShortFail(a, b, input);
@@ -3313,7 +3313,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastByteMaxToInt(VectorSpecies<Byte> a, VectorSpecies<Integer> b,
                                          byte[] input, int[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToInt(a, b, input, output);
         } else {
             testVectorCastByteToIntFail(a, b, input);
@@ -3323,7 +3323,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastByteMaxToLong(VectorSpecies<Byte> a, VectorSpecies<Long> b,
                                           byte[] input, long[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToLong(a, b, input, output);
         } else {
             testVectorCastByteToLongFail(a, b, input);
@@ -3333,7 +3333,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastByteMaxToFloat(VectorSpecies<Byte> a, VectorSpecies<Float> b,
                                            byte[] input, float[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToFloat(a, b, input, output);
         } else {
             testVectorCastByteToFloatFail(a, b, input);
@@ -3343,7 +3343,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastByteMaxToDouble(VectorSpecies<Byte> a, VectorSpecies<Double> b,
                                             byte[] input, double[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Byte.SIZE) {
             testVectorCastByteToDouble(a, b, input, output);
         } else {
             testVectorCastByteToDoubleFail(a, b, input);
@@ -3353,7 +3353,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastShortMaxToByte(VectorSpecies<Short> a, VectorSpecies<Byte> b,
                                            short[] input, byte[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToByte(a, b, input, output);
         } else {
             testVectorCastShortToByteFail(a, b, input);
@@ -3363,7 +3363,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastShortMaxToShort(VectorSpecies<Short> a, VectorSpecies<Short> b,
                                             short[] input, short[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToShort(a, b, input, output);
         } else {
             testVectorCastShortToShortFail(a, b, input);
@@ -3373,7 +3373,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastShortMaxToInt(VectorSpecies<Short> a, VectorSpecies<Integer> b,
                                           short[] input, int[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToInt(a, b, input, output);
         } else {
             testVectorCastShortToIntFail(a, b, input);
@@ -3383,7 +3383,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastShortMaxToLong(VectorSpecies<Short> a, VectorSpecies<Long> b,
                                            short[] input, long[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToLong(a, b, input, output);
         } else {
             testVectorCastShortToLongFail(a, b, input);
@@ -3393,7 +3393,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastShortMaxToFloat(VectorSpecies<Short> a, VectorSpecies<Float> b,
                                             short[] input, float[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToFloat(a, b, input, output);
         } else {
             testVectorCastShortToFloatFail(a, b, input);
@@ -3403,7 +3403,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastShortMaxToDouble(VectorSpecies<Short> a, VectorSpecies<Double> b,
                                              short[] input, double[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Short.SIZE) {
             testVectorCastShortToDouble(a, b, input, output);
         } else {
             testVectorCastShortToDoubleFail(a, b, input);
@@ -3413,7 +3413,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastIntMaxToByte(VectorSpecies<Integer> a, VectorSpecies<Byte> b,
                                          int[] input, byte[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToByte(a, b, input, output);
         } else {
             testVectorCastIntToByteFail(a, b, input);
@@ -3423,7 +3423,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastIntMaxToShort(VectorSpecies<Integer> a, VectorSpecies<Short> b,
                                           int[] input, short[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToShort(a, b, input, output);
         } else {
             testVectorCastIntToShortFail(a, b, input);
@@ -3433,7 +3433,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastIntMaxToInt(VectorSpecies<Integer> a, VectorSpecies<Integer> b,
                                         int[] input, int[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToInt(a, b, input, output);
         } else {
             testVectorCastIntToIntFail(a, b, input);
@@ -3443,7 +3443,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastIntMaxToLong(VectorSpecies<Integer> a, VectorSpecies<Long> b,
                                          int[] input, long[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToLong(a, b, input, output);
         } else {
             testVectorCastIntToLongFail(a, b, input);
@@ -3453,7 +3453,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastIntMaxToFloat(VectorSpecies<Integer> a, VectorSpecies<Float> b,
                                           int[] input, float[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToFloat(a, b, input, output);
         } else {
             testVectorCastIntToFloatFail(a, b, input);
@@ -3463,7 +3463,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastIntMaxToDouble(VectorSpecies<Integer> a, VectorSpecies<Double> b,
                                            int[] input, double[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Integer.SIZE) {
             testVectorCastIntToDouble(a, b, input, output);
         } else {
             testVectorCastIntToDoubleFail(a, b, input);
@@ -3473,7 +3473,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastLongMaxToByte(VectorSpecies<Long> a, VectorSpecies<Byte> b,
                                           long[] input, byte[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToByte(a, b, input, output);
         } else {
             testVectorCastLongToByteFail(a, b, input);
@@ -3483,7 +3483,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastLongMaxToShort(VectorSpecies<Long> a, VectorSpecies<Short> b,
                                            long[] input, short[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToShort(a, b, input, output);
         } else {
             testVectorCastLongToShortFail(a, b, input);
@@ -3493,7 +3493,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastLongMaxToInt(VectorSpecies<Long> a, VectorSpecies<Integer> b,
                                          long[] input, int[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToInt(a, b, input, output);
         } else {
             testVectorCastLongToIntFail(a, b, input);
@@ -3503,7 +3503,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastLongMaxToLong(VectorSpecies<Long> a, VectorSpecies<Long> b,
                                           long[] input, long[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToLong(a, b, input, output);
         } else {
             testVectorCastLongToLongFail(a, b, input);
@@ -3513,7 +3513,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastLongMaxToFloat(VectorSpecies<Long> a, VectorSpecies<Float> b,
                                            long[] input, float[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToFloat(a, b, input, output);
         } else {
             testVectorCastLongToFloatFail(a, b, input);
@@ -3523,7 +3523,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastLongMaxToDouble(VectorSpecies<Long> a, VectorSpecies<Double> b,
                                             long[] input, double[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Long.SIZE) {
             testVectorCastLongToDouble(a, b, input, output);
         } else {
             testVectorCastLongToDoubleFail(a, b, input);
@@ -3533,7 +3533,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastFloatMaxToByte(VectorSpecies<Float> a, VectorSpecies<Byte> b,
                                            float[] input, byte[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToByte(a, b, input, output);
         } else {
             testVectorCastFloatToByteFail(a, b, input);
@@ -3543,7 +3543,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastFloatMaxToShort(VectorSpecies<Float> a, VectorSpecies<Short> b,
                                             float[] input, short[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToShort(a, b, input, output);
         } else {
             testVectorCastFloatToShortFail(a, b, input);
@@ -3553,7 +3553,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastFloatMaxToInt(VectorSpecies<Float> a, VectorSpecies<Integer> b,
                                           float[] input, int[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToInt(a, b, input, output);
         } else {
             testVectorCastFloatToIntFail(a, b, input);
@@ -3563,7 +3563,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastFloatMaxToLong(VectorSpecies<Float> a, VectorSpecies<Long> b,
                                            float[] input, long[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToLong(a, b, input, output);
         } else {
             testVectorCastFloatToLongFail(a, b, input);
@@ -3573,7 +3573,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastFloatMaxToFloat(VectorSpecies<Float> a, VectorSpecies<Float> b,
                                             float[] input, float[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToFloat(a, b, input, output);
         } else {
             testVectorCastFloatToFloatFail(a, b, input);
@@ -3583,7 +3583,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastFloatMaxToDouble(VectorSpecies<Float> a, VectorSpecies<Double> b,
                                              float[] input, double[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Float.SIZE) {
             testVectorCastFloatToDouble(a, b, input, output);
         } else {
             testVectorCastFloatToDoubleFail(a, b, input);
@@ -3593,7 +3593,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastDoubleMaxToByte(VectorSpecies<Double> a, VectorSpecies<Byte> b,
                                             double[] input, byte[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToByte(a, b, input, output);
         } else {
             testVectorCastDoubleToByteFail(a, b, input);
@@ -3603,7 +3603,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastDoubleMaxToShort(VectorSpecies<Double> a, VectorSpecies<Short> b,
                                              double[] input, short[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToShort(a, b, input, output);
         } else {
             testVectorCastDoubleToShortFail(a, b, input);
@@ -3613,7 +3613,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastDoubleMaxToInt(VectorSpecies<Double> a, VectorSpecies<Integer> b,
                                            double[] input, int[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToInt(a, b, input, output);
         } else {
             testVectorCastDoubleToIntFail(a, b, input);
@@ -3623,7 +3623,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastDoubleMaxToLong(VectorSpecies<Double> a, VectorSpecies<Long> b,
                                             double[] input, long[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToLong(a, b, input, output);
         } else {
             testVectorCastDoubleToLongFail(a, b, input);
@@ -3633,7 +3633,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastDoubleMaxToFloat(VectorSpecies<Double> a, VectorSpecies<Float> b,
                                              double[] input, float[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToFloat(a, b, input, output);
         } else {
             testVectorCastDoubleToFloatFail(a, b, input);
@@ -3643,7 +3643,7 @@ public class VectorReshapeTests {
     static 
     void testVectorCastDoubleMaxToDouble(VectorSpecies<Double> a, VectorSpecies<Double> b,
                                               double[] input, double[] output) {
-        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+        if (S_Max_BIT.vectorBitSize() == b.length() * Double.SIZE) {
             testVectorCastDoubleToDouble(a, b, input, output);
         } else {
             testVectorCastDoubleToDoubleFail(a, b, input);

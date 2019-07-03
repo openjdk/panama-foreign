@@ -498,14 +498,6 @@ public abstract class VectorShuffle<E> {
     // * check(VectorSpecies) (static type-safety check)
     // * toString(), equals(Object), hashCode() (documented)
     // * checkIndex(int,byte), lane-index validator similar to loopBound()
-
-    /** Renamed to {@link #laneSource()}. */
-    @Deprecated
-    public final int lane(int i) { return laneSource(i); }
-
-    /** Renamed to {@link #vectorSpecies()}. */
-    @Deprecated
-    public final VectorSpecies<E> species() { return vectorSpecies(); }
-
     //FIXME: maybe add inversion, mask generation, index normalization
+
 }

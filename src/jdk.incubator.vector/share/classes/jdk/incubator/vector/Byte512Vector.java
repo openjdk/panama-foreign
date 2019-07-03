@@ -359,7 +359,7 @@ final class Byte512Vector extends ByteVector {
        } else {
          Byte512Shuffle Iota = iotaShuffle(origin);
          VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(origin))));
-         Iota = iotaShuffle(origin);
+         Iota = (Byte512Shuffle)iotaShuffle(origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -387,7 +387,7 @@ final class Byte512Vector extends ByteVector {
        } else {
          Byte512Shuffle Iota = iotaShuffle(-origin);
          VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(0))));
-         Iota = iotaShuffle(-origin);
+         Iota = (Byte512Shuffle)iotaShuffle(-origin).wrapIndexes();
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }

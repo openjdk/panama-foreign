@@ -597,28 +597,4 @@ public abstract class VectorMask<E> {
     // * toString(), equals(Object), hashCode() (documented)
     // * added <E> (not <?>) to toVector
 
-    /** Renamed to {@link #vectorSpecies()}. */
-    @Deprecated
-    public final VectorSpecies<E> species() { return vectorSpecies(); }
-
-    /** Renamed to {@link #laneIsSet(int)}. */
-    @Deprecated
-    public final boolean lane(int i) { return laneIsSet(i); }
-
-    /** Renamed to {@link #laneIsSet(int)}. */
-    @Deprecated
-    public final boolean isSet(int i) { return laneIsSet(i); }
-
-    /** Use {@link VectorSpecies#maskAll(boolean)}. */
-    @Deprecated
-    public static <E> VectorMask<E> maskAllTrue(VectorSpecies<E> species) { return fromBoolean(species, true); }
-
-    /** Use {@link VectorSpecies#maskAll(boolean)}. */
-    @Deprecated
-    public static <E> VectorMask<E> maskAllFalse(VectorSpecies<E> species) { return fromBoolean(species, false); }
-
-    /** Use {@link VectorSpecies#maskAll} */
-    public static <E> VectorMask<E> fromBoolean(VectorSpecies<E> species, boolean bit) {
-        return species.maskAll(bit);
-    }
 }

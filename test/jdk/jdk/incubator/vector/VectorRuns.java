@@ -21,11 +21,7 @@
  * questions.
  */
 
-import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.VectorMask;
-import jdk.incubator.vector.VectorShape;
-import jdk.incubator.vector.VectorSpecies;
-import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.*;
 
 import java.util.stream.IntStream;
 
@@ -77,7 +73,7 @@ public class VectorRuns {
         while (r < length) {
             IntVector vl = IntVector.fromArray(species, a, r - 1);
             IntVector vr = IntVector.fromArray(species, a, r);
-            VectorMask<Integer> m = vl.greaterThan(vr);
+            VectorMask<Integer> m = vl.compare(VectorOperators.GT, vr);
             if (m.anyTrue())
                 return r + Long.numberOfTrailingZeros(m.toLong());
             r += species.length();

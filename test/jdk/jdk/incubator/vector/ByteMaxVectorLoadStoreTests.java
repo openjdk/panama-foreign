@@ -247,8 +247,8 @@ public class ByteMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i);
+                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -270,8 +270,8 @@ public class ByteMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i);
+                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -295,8 +295,8 @@ public class ByteMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, vmask);
-                av.intoByteBuffer(r, i);
+                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN, vmask);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -309,8 +309,8 @@ public class ByteMaxVectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i, vmask);
+                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN, vmask);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -335,8 +335,8 @@ public class ByteMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, vmask);
-                av.intoByteBuffer(r, i);
+                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN, vmask);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
