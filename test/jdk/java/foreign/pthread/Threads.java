@@ -33,6 +33,7 @@ import java.lang.invoke.MethodHandles;
  * @test
  * @requires os.family != "windows"
  * @run main Threads
+ * @run main/othervm -Djdk.internal.foreign.NativeInvoker.FASTPATH=none Threads
  */
 
 public class Threads {

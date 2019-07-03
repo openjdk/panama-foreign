@@ -187,11 +187,11 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
 
   void *p_env = NULL;
 
-  JavaThread* thread = JavaThread::current();
+  Thread* thread = Thread::current_or_null();
   if (thread == NULL) {
     JavaVM_ *vm = (JavaVM *)(&main_vm);
     vm -> functions -> AttachCurrentThreadAsDaemon(vm, &p_env, NULL);
-    thread = JavaThread::current();
+    thread = Thread::current();
   }
 
   assert(thread->is_Java_thread(), "really?");
@@ -235,8 +235,9 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
     upcall_init();
   }
 
-  ThreadInVMfromNative __tiv(thread);
+  ThreadInVMfromNative __tiv((JavaThread *)thread);
 
+  ResourceMark rm;
   JavaValue result(T_VOID);
   JavaCallArguments args(7 * 2);
 
