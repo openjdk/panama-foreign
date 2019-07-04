@@ -471,9 +471,36 @@ MetaspaceChunkFreeListSummary MetaspaceUtils::chunk_free_list_summary(Metaspace:
   return cm->chunk_free_list_summary();
 }
 
-void MetaspaceUtils::print_metaspace_change(size_t prev_metadata_used) {
-  log_info(gc, metaspace)("Metaspace: "  SIZE_FORMAT "K->" SIZE_FORMAT "K("  SIZE_FORMAT "K)",
-                          prev_metadata_used/K, used_bytes()/K, reserved_bytes()/K);
+void MetaspaceUtils::print_metaspace_change(const metaspace::MetaspaceSizesSnapshot& pre_meta_values) {
+  const metaspace::MetaspaceSizesSnapshot meta_values;
+
+  if (Metaspace::using_class_space()) {
+    log_info(gc, metaspace)(HEAP_CHANGE_FORMAT" "
+                            HEAP_CHANGE_FORMAT" "
+                            HEAP_CHANGE_FORMAT,
+                            HEAP_CHANGE_FORMAT_ARGS("Metaspace",
+                                                    pre_meta_values.used(),
+                                                    pre_meta_values.committed(),
+                                                    meta_values.used(),
+                                                    meta_values.committed()),
+                            HEAP_CHANGE_FORMAT_ARGS("NonClass",
+                                                    pre_meta_values.non_class_used(),
+                                                    pre_meta_values.non_class_committed(),
+                                                    meta_values.non_class_used(),
+                                                    meta_values.non_class_committed()),
+                            HEAP_CHANGE_FORMAT_ARGS("Class",
+                                                    pre_meta_values.class_used(),
+                                                    pre_meta_values.class_committed(),
+                                                    meta_values.class_used(),
+                                                    meta_values.class_committed()));
+  } else {
+    log_info(gc, metaspace)(HEAP_CHANGE_FORMAT,
+                            HEAP_CHANGE_FORMAT_ARGS("Metaspace",
+                                                    pre_meta_values.used(),
+                                                    pre_meta_values.committed(),
+                                                    meta_values.used(),
+                                                    meta_values.committed()));
+  }
 }
 
 void MetaspaceUtils::print_on(outputStream* out) {
@@ -1587,71 +1614,6 @@ void ClassLoaderMetaspace::add_to_statistics(ClassLoaderMetaspaceStatistics* out
 }
 
 /////////////// Unit tests ///////////////
-
-#ifndef PRODUCT
-
-class TestMetaspaceUtilsTest : AllStatic {
- public:
-  static void test_reserved() {
-    size_t reserved = MetaspaceUtils::reserved_bytes();
-
-    assert(reserved > 0, "assert");
-
-    size_t committed  = MetaspaceUtils::committed_bytes();
-    assert(committed <= reserved, "assert");
-
-    size_t reserved_metadata = MetaspaceUtils::reserved_bytes(Metaspace::NonClassType);
-    assert(reserved_metadata > 0, "assert");
-    assert(reserved_metadata <= reserved, "assert");
-
-    if (UseCompressedClassPointers) {
-      size_t reserved_class    = MetaspaceUtils::reserved_bytes(Metaspace::ClassType);
-      assert(reserved_class > 0, "assert");
-      assert(reserved_class < reserved, "assert");
-    }
-  }
-
-  static void test_committed() {
-    size_t committed = MetaspaceUtils::committed_bytes();
-
-    assert(committed > 0, "assert");
-
-    size_t reserved  = MetaspaceUtils::reserved_bytes();
-    assert(committed <= reserved, "assert");
-
-    size_t committed_metadata = MetaspaceUtils::committed_bytes(Metaspace::NonClassType);
-    assert(committed_metadata > 0, "assert");
-    assert(committed_metadata <= committed, "assert");
-
-    if (UseCompressedClassPointers) {
-      size_t committed_class    = MetaspaceUtils::committed_bytes(Metaspace::ClassType);
-      assert(committed_class > 0, "assert");
-      assert(committed_class < committed, "assert");
-    }
-  }
-
-  static void test_virtual_space_list_large_chunk() {
-    VirtualSpaceList* vs_list = new VirtualSpaceList(os::vm_allocation_granularity());
-    MutexLocker cl(MetaspaceExpand_lock, Mutex::_no_safepoint_check_flag);
-    // A size larger than VirtualSpaceSize (256k) and add one page to make it _not_ be
-    // vm_allocation_granularity aligned on Windows.
-    size_t large_size = (size_t)(2*256*K + (os::vm_page_size()/BytesPerWord));
-    large_size += (os::vm_page_size()/BytesPerWord);
-    vs_list->get_new_chunk(large_size, 0);
-  }
-
-  static void test() {
-    test_reserved();
-    test_committed();
-    test_virtual_space_list_large_chunk();
-  }
-};
-
-void TestMetaspaceUtils_test() {
-  TestMetaspaceUtilsTest::test();
-}
-
-#endif // !PRODUCT
 
 struct chunkmanager_statistics_t {
   int num_specialized_chunks;
