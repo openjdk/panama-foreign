@@ -30,6 +30,9 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 
+import java.util.Objects;
+import java.util.Random;
+
 public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
 
     final long length;
@@ -40,6 +43,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     final static int READ_ONLY = 1;
     final static int PINNED = READ_ONLY << 1;
+    final static long NONCE = new Random().nextLong();
 
     public MemorySegmentImpl(long min, long length, int mask, Scope scope) {
         this.length = length;
@@ -148,6 +152,16 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     public Object base() {
         return scope.base();
+    }
+
+    @Override
+    public String toString() {
+        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + bytesSize() + " }";
+    }
+
+    private int id() {
+        //compute a stable and random id for this memory segment
+        return Math.abs(Objects.hash(scope.base(), min, NONCE));
     }
 
     static abstract class Scope {
