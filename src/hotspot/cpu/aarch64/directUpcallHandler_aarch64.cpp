@@ -135,13 +135,15 @@ struct upcall_context {
                                                                         \
   Method* meth = specialized_upcall_info[nlongs][ndoubles][rettag].meth;\
                                                                         \
-  JavaThread* thread = JavaThread::current();                           \
+  Thread* thread = Thread::current_or_null();                           \
   if (thread == NULL) {                                                 \
     JavaVM_ *vm = (JavaVM *)(&main_vm);                                 \
-    vm -> functions -> AttachCurrentThreadAsDaemon(vm, &p_env, NULL);           \
-    thread = JavaThread::current();                                     \
+    vm -> functions -> AttachCurrentThreadAsDaemon(vm, &p_env, NULL);   \
+    thread = Thread::current();                                         \
   }                                                                     \
-  ThreadInVMfromNative __tiv(thread);                                   \
+  assert(thread->is_Java_thread(), "must be");                          \
+                                                                        \
+  ThreadInVMfromNative __tiv((JavaThread *)thread);                     \
   JavaValue result(RES_T);                                              \
   JavaCalls::call(&result, meth, &args, thread);
 
