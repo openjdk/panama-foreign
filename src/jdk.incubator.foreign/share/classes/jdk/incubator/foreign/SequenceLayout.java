@@ -27,30 +27,25 @@ package jdk.incubator.foreign;
 
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.function.UnaryOperator;
-import java.util.stream.Stream;
 
 /**
- * A sequence layout. A sequence layout is a special case of a compound layout, made up of a layout element and a repetition count.
- * The repetition count can be zero if the sequence contains no elements. A finite sequence layout can be thought of as a group layout
- * where a given layout element is repeated a number of times that is equal to the sequence size. In other words this
- * layout:
+ * A sequence layout. A sequence layout is used to denote a repetition of a given layout, also called the sequence layout's <em>element layout</em>.
+ * The repetition count, where it exists (e.g. for <em>finite</em> sequence layouts) is said to be the the sequence layout's <em>element count</em>.
+ * A finite sequence layout can be thought of as a group layout where the sequence layout's element layout is repeated a number of times
+ * that is equal to the sequence layout's element count. In other words this layout:
  *
  * <pre>{@code
-SequenceLayout.of(3, ValueLayout.ofSignedInt(32));
+Layout.ofSequence(3, Layout.ofSignedInt(32));
  * }</pre>
  *
  * is equivalent to the following layout:
  *
  * <pre>{@code
-GroupLayout.struct(
-    ValueLayout.ofSignedInt(32),
-    ValueLayout.ofSignedInt(32),
-    ValueLayout.ofSignedInt(32));
+Layout.ofStruct(
+    Layout.ofSignedInt(32),
+    Layout.ofSignedInt(32),
+    Layout.ofSignedInt(32));
  * }</pre>
- * <p>
- * Unbounded sequence layouts can be thought of as a infinite repetitions of a layout element. In such cases the sequence
- * layout will <em>not</em> have an associated size.
  * <p>
  * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
  * class; use of identity-sensitive operations (including reference equality
@@ -61,12 +56,12 @@ GroupLayout.struct(
  * @implSpec
  * This class is immutable and thread-safe.
  */
-public class SequenceLayout extends AbstractLayout implements CompoundLayout {
+public class SequenceLayout extends AbstractLayout {
 
     private final OptionalLong size;
     private final Layout elementLayout;
 
-    private SequenceLayout(OptionalLong size, Layout elementLayout, OptionalLong alignment, Optional<String> name) {
+    SequenceLayout(OptionalLong size, Layout elementLayout, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.size = size;
         this.elementLayout = elementLayout;
@@ -75,7 +70,7 @@ public class SequenceLayout extends AbstractLayout implements CompoundLayout {
     /**
      * Computes the layout size, in bits. Since not all sequences have a finite size, this method can throw an exception.
      * @return the layout size (where defined).
-     * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementsSize()}).
+     * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementsCount()}).
      */
     @Override
     public long bitsSize() throws UnsupportedOperationException {
@@ -88,51 +83,22 @@ public class SequenceLayout extends AbstractLayout implements CompoundLayout {
 
     @Override
     long naturalAlignmentBits() {
-        return element().bitsAlignment();
+        return elementLayout().bitsAlignment();
     }
 
     /**
-     * The layout element associated with this sequence layout.
-     * @return layout element.
+     * The element layout associated with this sequence layout.
+     * @return The element layout associated with this sequence layout.
      */
-    public Layout element() {
+    public Layout elementLayout() {
         return elementLayout;
     }
 
-    @Override
-    public Stream<Layout> elements() {
-        Stream<Layout> elems = Stream.iterate(elementLayout, UnaryOperator.identity());
-        return size.isPresent() ?
-                elems.limit(size.getAsLong()) :
-                elems;
-    }
-
     /**
-     * Create a new sequence layout with given layout element and size.
-     * @param elementLayout the layout element.
-     * @param size the array repetition count.
-     * @return the new sequence layout.
-     * @throws IllegalArgumentException if size &lt; 0.
+     * Returns the element count of this sequence layout (if any).
+     * @return the element count of this sequence layout (if any).
      */
-    public static SequenceLayout of(long size, Layout elementLayout) throws IllegalArgumentException {
-        checkSize(size, true);
-        return new SequenceLayout(OptionalLong.of(size), elementLayout, OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a new sequence layout, with unbounded size and given layout element.
-     * @param elementLayout the layout element.
-     * @return the new sequence layout.
-     */
-    public static SequenceLayout of(Layout elementLayout) {
-        return new SequenceLayout(OptionalLong.empty(), elementLayout, OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Returns the repetition count associated with this sequence layout.
-     * @return the repetition count (can be zero if array size is unspecified).
-     */
-    public OptionalLong elementsSize() {
+    public OptionalLong elementsCount() {
         return size;
     }
 
@@ -164,7 +130,7 @@ public class SequenceLayout extends AbstractLayout implements CompoundLayout {
 
     @Override
     SequenceLayout dup(OptionalLong alignment, Optional<String> name) {
-        return new SequenceLayout(elementsSize(), elementLayout, alignment, name);
+        return new SequenceLayout(elementsCount(), elementLayout, alignment, name);
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout

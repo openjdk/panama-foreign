@@ -46,13 +46,13 @@ import java.nio.ByteOrder;
  * <p>
  * As an example, consider the memory layout expressed by a {@link SequenceLayout} instance constructed as follows:
  * <blockquote><pre>{@code
-SequenceLayout seq = SequenceLayout.of(5,
-    GroupLayout.struct(
-        PaddingLayout.of(32),
-        ValueLayout.ofSignedInt(32).withName("value")
+SequenceLayout seq = Layout.ofSequence(5,
+    Layout.ofStruct(
+        Layout.ofPadding(32),
+        Layout.ofSignedInt(32).withName("value")
     ));
  * }</pre></blockquote>
- * To access the layout element named {@code value}, we can construct a memory access var handle as follows:
+ * To access the member layout named {@code value}, we can construct a memory access var handle as follows:
  * <blockquote><pre>{@code
 VarHandle handle = MemoryAccessVarHandles.dereferenceVarHandle(int.class); //(MemoryAddress) -> int
 handle = MemoryAccessVarHandles.offsetAddress(handle, 4); //(MemoryAddress) -> int

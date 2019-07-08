@@ -25,19 +25,27 @@
  */
 package jdk.incubator.foreign;
 
+import jdk.internal.foreign.LayoutPathImpl;
 import jdk.internal.foreign.Utils;
 
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * A layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
  * There are two leaves in the layout hierarchy, <em>value layouts</em>, which are used to represent values of given size and kind (see
  * {@link ValueLayout}) and <em>padding layouts</em> which are used, as the name suggests, to represent a portion of a memory
- * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link PaddingLayout}).
+ * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link Layout#ofPadding(long)}).
  * <p>
  * More complex layouts can be derived from simpler ones: a <em>sequence layout</em> denotes a repetiton of one or more
- * layout element (see {@link SequenceLayout}); a <em>group layout</em> denotes an aggregation of (typically) heterogeneous
- * layout elements (see {@link GroupLayout}).
+ * element layout (see {@link SequenceLayout}); a <em>group layout</em> denotes an aggregation of (typically) heterogeneous
+ * member layouts (see {@link GroupLayout}).
  *
  * <h2>Size, alignment and byte order</h2>
  *
@@ -45,10 +53,10 @@ import java.util.Optional;
  * has always the same size in bits, regardless of the platform in which it is used. For derived layouts, the size is computed
  * as follows:
  * <ul>
- *     <li>for a <em>finite</em> sequence layout <em>S</em> whose layout element is <em>E</em> and size is L,
+ *     <li>for a <em>finite</em> sequence layout <em>S</em> whose element layout is <em>E</em> and size is L,
  *     the size of <em>S</em> is that of <em>E, multiplied by L</em></li>
  *     <li>the size of an <em>unbounded</em> sequence layout is <em>unknown</em></li>
- *     <li>for a group layout <em>G</em> with sub-elements <em>E1</em>, <em>E2</em>, ... <em>En</em> whose sizes are
+ *     <li>for a group layout <em>G</em> with member layouts <em>M1</em>, <em>M2</em>, ... <em>Mn</em> whose sizes are
  *     <em>S1</em>, <em>S2</em>, ... <em>Sn</em>, respectively, the size of <em>G</em> is either <em>S1 + S2 + ... + Sn</em> or
  *     <em>max(S1, S2, ... Sn)</em> depending on whether the group is a <em>struct</em> or an <em>union</em>, respectively</li>
  * </ul>
@@ -56,8 +64,8 @@ import java.util.Optional;
  * Furthermore, all layouts feature a <em>natural alignment</em> which can be inferred as follows:
  * <ul>
  *     <li>for value and padding layout <em>L</em> whose size is <em>N</em>, the natural alignment of <em>L</em> is <em>N</em></li>
- *     <li>for a sequence layout <em>S</em> whose layout element is <em>E</em>, the natural alignment of <em>S</em> is that of <em>E</em></li>
- *     <li>for a group layout <em>G</em> with sub-elements <em>E1</em>, <em>E2</em>, ... <em>En</em> whose alignments are
+ *     <li>for a sequence layout <em>S</em> whose element layout is <em>E</em>, the natural alignment of <em>S</em> is that of <em>E</em></li>
+ *     <li>for a group layout <em>G</em> with member layouts <em>M1</em>, <em>M2</em>, ... <em>Mn</em> whose alignments are
  *     <em>A1</em>, <em>A2</em>, ... <em>An</em>, respectively, the natural alignment of <em>G</em> is <em>max(A1, A2 ... An)</em></li>
  * </ul>
  * A layout's natural alignment can be overridden if needed (see {@link Layout#alignTo(long)}), which can be useful to describe
@@ -65,6 +73,37 @@ import java.util.Optional;
  * <p>
  * Where it's not explicitly provided, the byte order of value layouts is assumed to be compatible with the
  * platform byte order (see {@link java.nio.ByteOrder#nativeOrder()}).
+ *
+ * <h2><a id = "layout-paths">Layout paths</a></h2>
+ *
+ * A <em>layout path</em> originates from a <em>root</em> layout (typically a group or a sequence layout) and terminates
+ * at a layout nested within the root layout - this is the layout <em>selected</em> by the layout path.
+ * Layout paths are typically expressed as a sequence of one or more {@link PathElement} instances.
+ * <p>
+ * Layout paths are useful in order to e.g. to obtain offset of leaf elements inside arbitrarily nested layouts
+ * (see {@link Layout#offset(PathElement...)}), or to quickly obtain a memory access handle corresponding to the selected
+ * layout (see {@link Layout#dereferenceHandle(Class, PathElement...)}).
+ * <p>
+ * Such <em>layout paths</em> can be constructed programmatically using the instance methods in this class.
+ * For instance, given a layout constructed as follows:
+ * <blockquote><pre>{@code
+SequenceLayout seq = Layout.ofSequence(5,
+    Layout.ofStruct(
+        Layout.ofPadding(32),
+        Layout.ofSignedInt(32).withName("value")
+));
+ * }</pre></blockquote>
+ *
+ * We can obtain the offset of the member layout named <code>value</code> from <code>seq</code>, as follows:
+ * <blockquote><pre>{@code
+long valueOffset = seq.offset(PathElement.sequenceElement(), PathElement.groupElement("value"));
+ * }</pre></blockquote>
+ *
+ * Layout paths can feature one or more <em>free dimensions</em>. For instance, a layout path traversing
+ * an unspecified sequence element (that is, where one of the path component was obtained with the
+ * {@link PathElement#sequenceElement()} method) features an additional free dimension, which will have to be bound at runtime;
+ * that is, the memory access var handle associated with such a layout path expression will feature an extra {@code long}
+ * access coordinate. The layout path constructed in the above example features exactly one free dimension.
  */
 public interface Layout {
 
@@ -144,6 +183,103 @@ public interface Layout {
     Layout alignTo(long alignmentBits) throws IllegalArgumentException;
 
     /**
+     * The offset of the layout selected by a given layout path, where the path is considered rooted in this
+     * layout.
+     * @param elements an operator that can be used to generate the desired layout path.
+     * @return The offset of layout selected by a the layout path obtained by concatenating the path elements in {@code elements}.
+     *
+     * @apiNote if the layout path has one (or more) free dimensions,
+     * the offset is computed as if all the indices corresponding to such dimensions were set to {@code 0}.
+     */
+    default long offset(PathElement... elements) throws UnsupportedOperationException {
+        LayoutPathImpl path = LayoutPathImpl.rootPath(this);
+        for (PathElement e : elements) {
+            path = ((LayoutPathImpl.PathElementImpl)e).apply(path);
+        }
+        return path.offset();
+    }
+
+    /**
+     * A var handle that can be used to dereference memory at the layout selected by a given layout path,
+     * where the path is considered rooted in this layout.
+     * @param carrier the var handle carrier type.
+     * @param elements an operator that can be used to generate the desired layout path.
+     * @return a var handle which can be used to dereference memory at the layout denoted by given layout path.
+     * @throws UnsupportedOperationException if the layout targeted by this path is not a {@link ValueLayout} layout.
+     * @throws IllegalArgumentException if the carrier does not represent a primitive type, if the carrier is {@code void},
+     * {@code boolean}, or if the layout path obtained by concatenating the path elements in {@code elements}
+     * cannot be dereferenced; this can occur for the following reasons:
+     * <ul>
+     * <li>the layout path does not select a value layout (see {@link ValueLayout})</li>
+     * <li>the size of the value layout selected by the path does not match that of the specified carrier type</li>
+     * <li>the layout path has one or more path elements with incompatible alignment constraints</li>
+     * </ul>
+     *
+     * @apiNote the result var handle will feature an additional {@code long} access coordinate for every
+     * unspecified sequence access component contained in this layout path.
+     */
+    default VarHandle dereferenceHandle(Class<?> carrier, PathElement... elements) throws UnsupportedOperationException, IllegalArgumentException {
+        LayoutPathImpl path = LayoutPathImpl.rootPath(this);
+        for (PathElement e : elements) {
+            path = ((LayoutPathImpl.PathElementImpl)e).apply(path);
+        }
+        return path.dereferenceHandle(carrier);
+    }
+
+    /**
+     * Instances of this class are used to form <a href="Layout.html#layout-paths"><em>layout paths</em></a>. There
+     * are two kinds of path elements: <em>group path elements</em> and <em>sequence path elements</em>. Group
+     * path elements are used to select a given named member layout within a {@link GroupLayout}. Sequence
+     * path elements are used to select a sequence element layout within a {@link SequenceLayout}; selection
+     * of sequence element layout can be <em>explicit</em> (see {@link PathElement#sequenceElement(long)}) or
+     * <em>implicit</em> (see {@link PathElement#sequenceElement()}). When a path uses one or more implicit
+     * sequence path elements, it acquires additional <em>free dimensions</em>.
+     */
+    interface PathElement {
+
+        /**
+         * Returns a path element which selects a member layout with given name from a given group layout.
+         * The path element returned by this method does not alter the number of free dimensions of any path
+         * that is combined with such element.
+         * @param name the name of the group element to be selected.
+         * @return a path element which selects the group element with given name.
+         * @throws NullPointerException if the specified group element name is {@code null}.
+         *
+         * @implSpec in case multiple group elements with matching name exist, the path element returned by this
+         * method will select the first one; that is, the group element with lowest offset from current path is selected.
+         */
+        static PathElement groupElement(String name) {
+            Objects.requireNonNull(name);
+            return new LayoutPathImpl.PathElementImpl(path -> path.groupElement(name));
+        }
+
+        /**
+         * Returns a path element which selects the element layout at the specified position a given the sequence layout.
+         * The path element returned by this method does not alter the number of free dimensions of any path
+         * that is combined with such element.
+         * @param index the index of the sequence element to be selected.
+         * @return a path element which selects the sequence element layout with given index.
+         * @throws IllegalArgumentException if the index is &lt; 0.
+         */
+        static PathElement sequenceElement(long index) throws IllegalArgumentException {
+            if (index < 0) {
+                throw new IllegalArgumentException("Index must be positive: " + index);
+            }
+            return new LayoutPathImpl.PathElementImpl(path -> path.sequenceElement(index));
+        }
+
+        /**
+         * Returns a path element which selects an unspecified element layout from a given sequence layout.
+         * If a path with free dimensions {@code n} is combined with the path element returned by this method,
+         * the number of free dimensions of the resulting path will be {@code 1 + n}.
+         * @return a path element which selects an unspecified sequence element layout.
+         */
+        static PathElement sequenceElement() {
+            return new LayoutPathImpl.PathElementImpl(LayoutPathImpl::sequenceElement);
+        }
+    }
+
+    /**
      * Compares the specified object with this layout for equality. Returns {@code true} if and only if the specified
      * object is also a layout, and it is equal to this layout.
      *
@@ -164,4 +300,126 @@ public interface Layout {
      */
     @Override
     String toString();
+
+    /**
+     * Create a new padding layout with given size.
+     * @param size the padding size in bits.
+     * @return the new selector layout.
+     * @throws IllegalArgumentException if size is &le; 0.
+     */
+    static Layout ofPadding(long size) {
+        AbstractLayout.checkSize(size);
+        return new PaddingLayout(size, OptionalLong.empty(), Optional.empty());
+    }
+
+    /**
+     * Create a floating-point value layout of given size. The new layout's byte order is assumed to be
+     * {@link ByteOrder#nativeOrder()}).
+     * @param size the floating-point value layout size.
+     * @return a new floating-point value layout.
+     * @throws IllegalArgumentException if size is &le; 0.
+     */
+    static ValueLayout ofFloatingPoint(long size) throws IllegalArgumentException  {
+        AbstractLayout.checkSize(size);
+        return ofFloatingPoint(ByteOrder.nativeOrder(), size);
+    }
+
+    /**
+     * Create a floating-point value layout of given byte order and size.
+     * @param order the floating-point value layout's byte order.
+     * @param size the floating-point value layout size.
+     * @return a new floating-point value layout.
+     * @throws IllegalArgumentException if size is &le; 0.
+     */
+    static ValueLayout ofFloatingPoint(ByteOrder order, long size) throws IllegalArgumentException {
+        AbstractLayout.checkSize(size);
+        return new ValueLayout(ValueLayout.Kind.FLOATING_POINT, order, size, OptionalLong.empty(), Optional.empty());
+    }
+
+    /**
+     * Create a unsigned integral value layout of given size. The new layout's byte order is assumed to be
+     * {@link ByteOrder#nativeOrder()}).
+     * @param size the unsigned integral layout size.
+     * @return a new unsigned integral layout.
+     * @throws IllegalArgumentException if size is &le; 0.
+     */
+    static ValueLayout ofUnsignedInt(long size) throws IllegalArgumentException {
+        AbstractLayout.checkSize(size);
+        return ofUnsignedInt(ByteOrder.nativeOrder(), size);
+    }
+
+    /**
+     * Create a unsigned integral value layout of given byte order and size.
+     * @param order the unsigned integral layout's byte order.
+     * @param size the unsigned integral layout size.
+     * @return a new unsigned integral layout.
+     * @throws IllegalArgumentException if size is &le; 0.
+     */
+    static ValueLayout ofUnsignedInt(ByteOrder order, long size) throws IllegalArgumentException {
+        AbstractLayout.checkSize(size);
+        return new ValueLayout(ValueLayout.Kind.INTEGRAL_UNSIGNED, order, size, OptionalLong.empty(), Optional.empty());
+    }
+
+    /**
+     * Create a signed integral value layout of given byte order and size.
+     * @param order the signed integral layout's byte order.
+     * @param size the signed integral layout size.
+     * @return a new signed integral layout.
+     * @throws IllegalArgumentException if size is &le; 0.
+     */
+    static ValueLayout ofSignedInt(ByteOrder order, long size) throws IllegalArgumentException  {
+        AbstractLayout.checkSize(size);
+        return new ValueLayout(ValueLayout.Kind.INTEGRAL_SIGNED, order, size, OptionalLong.empty(), Optional.empty());
+    }
+
+    /**
+     * Create a signed integral value layout of given size. The new layout's byte order is assumed to be
+     * {@link ByteOrder#nativeOrder()}).
+     * @param size the signed integral layout size.
+     * @return a new signed integral layout.
+     * @throws IllegalArgumentException if size is &le; 0.
+     */
+    static ValueLayout ofSignedInt(long size) throws IllegalArgumentException  {
+        AbstractLayout.checkSize(size);
+        return ofSignedInt(ByteOrder.nativeOrder(), size);
+    }
+
+    /**
+     * Create a new sequence layout with given element layout and size.
+     * @param elementLayout the element layout.
+     * @param size the sequence layout size.
+     * @return the new sequence layout with given element layout and size.
+     * @throws IllegalArgumentException if size &lt; 0.
+     */
+    static SequenceLayout ofSequence(long size, Layout elementLayout) throws IllegalArgumentException {
+        AbstractLayout.checkSize(size, true);
+        return new SequenceLayout(OptionalLong.of(size), elementLayout, OptionalLong.empty(), Optional.empty());
+    }
+
+    /**
+     * Create a new sequence layout, with unbounded size and given element layout.
+     * @param elementLayout the element layout of the sequence layout.
+     * @return the new sequence layout with given element layout.
+     */
+    static SequenceLayout ofSequence(Layout elementLayout) {
+        return new SequenceLayout(OptionalLong.empty(), elementLayout, OptionalLong.empty(), Optional.empty());
+    }
+
+    /**
+     * Create a new <em>struct</em> group layout with given member layouts.
+     * @param elements The member layouts of the <em>struct</em> group layout.
+     * @return a new <em>struct</em> group layout with given member layouts.
+     */
+    static GroupLayout ofStruct(Layout... elements) {
+        return new GroupLayout(GroupLayout.Kind.STRUCT, List.of(elements), OptionalLong.empty(), Optional.empty());
+    }
+
+    /**
+     * Create a new <em>union</em> group layout with given member layouts.
+     * @param elements The member layouts of the <em>union</em> layout.
+     * @return a new <em>union</em> group layout with given member layouts.
+     */
+    static GroupLayout ofUnion(Layout... elements) {
+        return new GroupLayout(GroupLayout.Kind.UNION, List.of(elements), OptionalLong.empty(), Optional.empty());
+    }
 }

@@ -29,7 +29,6 @@ import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import sun.invoke.util.Wrapper;
 
-import jdk.incubator.foreign.CompoundLayout;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.Layout;
 import jdk.incubator.foreign.SequenceLayout;
@@ -37,8 +36,9 @@ import jdk.incubator.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
-public class LayoutPathImpl implements CompoundLayout.Path {
+public class LayoutPathImpl {
 
     private static JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
 
@@ -58,34 +58,31 @@ public class LayoutPathImpl implements CompoundLayout.Path {
         return offset;
     }
 
-    @Override
-    public CompoundLayout.Path sequenceElement() throws UnsupportedOperationException {
+    public LayoutPathImpl sequenceElement() throws UnsupportedOperationException {
         check(SequenceLayout.class);
         SequenceLayout seq = (SequenceLayout)layout;
-        Layout elem = seq.element();
+        Layout elem = seq.elementLayout();
         List<Long> newScales = new ArrayList<>(scales);
         newScales.add(elem.bitsSize());
         return LayoutPathImpl.nestedPath(elem, offset, newScales, this);
     }
 
-    @Override
-    public CompoundLayout.Path sequenceElement(long index) throws IllegalArgumentException, UnsupportedOperationException {
+    public LayoutPathImpl sequenceElement(long index) throws IllegalArgumentException, UnsupportedOperationException {
         check(SequenceLayout.class);
         SequenceLayout seq = (SequenceLayout)layout;
-        if (index < 0 || (seq.elementsSize().isPresent() && index >= seq.elementsSize().getAsLong())) {
+        if (seq.elementsCount().isPresent() && index >= seq.elementsCount().getAsLong()) {
             throw new IllegalArgumentException("Sequence index out of bound; found: %d, size: %d");
         }
-        return LayoutPathImpl.nestedPath(seq.element(), offset, scales, this);
+        return LayoutPathImpl.nestedPath(seq.elementLayout(), offset, scales, this);
     }
 
-    @Override
-    public CompoundLayout.Path groupElement(String name) throws IllegalArgumentException, UnsupportedOperationException {
+    public LayoutPathImpl groupElement(String name) throws IllegalArgumentException, UnsupportedOperationException {
         check(GroupLayout.class);
         GroupLayout g = (GroupLayout)layout;
         long offset = 0;
         Layout elem = null;
-        for (long i = 0; i < g.elementsSize(); i++) {
-            Layout l = g.elementAt(i);
+        for (int i = 0; i < g.memberLayouts().size(); i++) {
+            Layout l = g.memberLayouts().get(i);
             if (l.name().isPresent() &&
                 l.name().get().equals(name)) {
                 elem = l;
@@ -146,6 +143,20 @@ public class LayoutPathImpl implements CompoundLayout.Path {
                 throw new UnsupportedOperationException("Alignment requirements for layout " + layout + " do not match those for enclosing layout " + encl.layout);
             }
             checkAlignment(encl);
+        }
+    }
+
+    public static class PathElementImpl implements Layout.PathElement, UnaryOperator<LayoutPathImpl> {
+
+        final UnaryOperator<LayoutPathImpl> pathOp;
+
+        public PathElementImpl(UnaryOperator<LayoutPathImpl> pathOp) {
+            this.pathOp = pathOp;
+        }
+
+        @Override
+        public LayoutPathImpl apply(LayoutPathImpl layoutPath) {
+            return pathOp.apply(layoutPath);
         }
     }
 }

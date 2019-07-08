@@ -25,6 +25,7 @@
  */
 package jdk.incubator.foreign;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -35,10 +36,10 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /**
- * A group layout is used to combine together multiple <em>layout elements</em>. There are two ways in which layout elements
- * can be combined: if layout elements are laid out one after the other, the resulting compound layout is said to be a <em>struct</em>
- * (see {@link GroupLayout#ofStruct(Layout...)}); conversely, if all layout elements are laid out at the same starting offset,
- * the resulting compound layout is said to be a <em>union</em> (see {@link GroupLayout#ofUnion(Layout...)}).
+ * A group layout is used to combine together multiple <em>member layouts</em>. There are two ways in which member layouts
+ * can be combined: if member layouts are laid out one after the other, the resulting group layout is said to be a <em>struct</em>
+ * (see {@link Layout#ofStruct(Layout...)}); conversely, if all member layouts are laid out at the same starting offset,
+ * the resulting group layout is said to be a <em>union</em> (see {@link Layout#ofUnion(Layout...)}).
  * <p>
  * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
  * class; use of identity-sensitive operations (including reference equality
@@ -49,7 +50,7 @@ import java.util.stream.Stream;
  * @implSpec
  * This class is immutable and thread-safe.
  */
-public class GroupLayout extends AbstractLayout implements CompoundLayout, Iterable<Layout> {
+public class GroupLayout extends AbstractLayout {
 
     /**
      * The group kind.
@@ -85,15 +86,15 @@ public class GroupLayout extends AbstractLayout implements CompoundLayout, Itera
     }
 
     /**
-     * Returns the layout elements associated with this group.
-     * @return the layout elements.
+     * Returns the member layouts associated with this group.
+     * @return the member layouts associated with this group.
      *
-     * @apiNote the order in which layout elements are returned is the same order in which layout elements have
-     * been passed to one of the group layout factory methods (see {@link GroupLayout#ofStruct(Layout...)},
-     * {@link GroupLayout#ofUnion(Layout...)}).
+     * @apiNote the order in which member layouts are returned is the same order in which member layouts have
+     * been passed to one of the group layout factory methods (see {@link Layout#ofStruct(Layout...)},
+     * {@link Layout#ofUnion(Layout...)}).
      */
-    public Stream<Layout> elements() {
-        return elements.stream();
+    public List<Layout> memberLayouts() {
+        return Collections.unmodifiableList(elements);
     }
 
     @Override
@@ -117,36 +118,6 @@ public class GroupLayout extends AbstractLayout implements CompoundLayout, Itera
      */
     public boolean isUnion() {
         return kind == Kind.UNION;
-    }
-
-    /**
-     * Returns an iterator over the elements in this layout in proper sequence.
-     * @return an iterator over the elements in this list in proper sequence.
-     *
-     * @apiNote the iteration order of layout elements is the same as the specified in {@link GroupLayout#elements()}.
-     */
-    @Override
-    public Iterator<Layout> iterator() {
-        return elements().iterator();
-    }
-
-    /**
-     * The layout element at given position in this group layout.
-     * @param index the position of the layout element to be retrieved.
-     * @return the layout element at given position.
-     *
-     * @apiNote the specified position is interpreted relative to the iteration order specified in {@link GroupLayout#elements()}.
-     */
-    public Layout elementAt(long index) {
-        return elements.get((int)index);
-    }
-
-    /**
-     * Returns the number of elements in this compound layout.
-     * @return the number of elements in this compound layout.
-     */
-    public long elementsSize() {
-        return elements.size();
     }
 
     @Override
@@ -183,24 +154,6 @@ public class GroupLayout extends AbstractLayout implements CompoundLayout, Itera
             alignment = Kind.UNION.sizeFunc.applyAsLong(elements.stream().mapToLong(Layout::bitsAlignment));
         }
         return alignment;
-    }
-
-    /**
-     * Create a new <em>struct</em> group layout with given layout elements.
-     * @param elements The layout elements of the <em>struct</em> group layout.
-     * @return a new <em>struct</em> group layout with given layout elements.
-     */
-    public static GroupLayout ofStruct(Layout... elements) {
-        return new GroupLayout(Kind.STRUCT, List.of(elements), OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a new <em>union</em> group layout with given layout elements.
-     * @param elements The layout elements of the <em>union</em> group layout.
-     * @return a new <em>union</em> group layout with given layout elements.
-     */
-    public static GroupLayout ofUnion(Layout... elements) {
-        return new GroupLayout(Kind.UNION, List.of(elements), OptionalLong.empty(), Optional.empty());
     }
 
     @Override

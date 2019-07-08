@@ -54,7 +54,7 @@ try (MemorySegment segment = MemorySegment.ofNative(10 * 4)) {
  * using the combinator methods defined in the {@link jdk.incubator.foreign.MemoryAccessVarHandles} class. Finally, the {@link jdk.incubator.foreign.Layout} class
  * hierarchy allows to describe <em>memory layouts</em> and simplify operations such as computing the size in bytes of a given
  * layout, obtain its alignment requirements, and so on. Memory layouts also provide an alternate, more abstract way, to produce
- * memory access var handles, e.g. using <em>layout paths</em> (see {@link jdk.incubator.foreign.CompoundLayout.Path}).
+ * memory access var handles, e.g. using <a href="Layout.html#layout-paths"><em>layout paths</em></a>.
  *
  * <h2><a id="deallocation"></a>Deterministic deallocation</h2>
  * When writing code that manipulates memory segments, especially if backed by memory which resides outside the Java heap, it is

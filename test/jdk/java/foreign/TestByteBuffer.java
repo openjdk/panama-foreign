@@ -30,12 +30,12 @@
  * @run testng TestByteBuffer
  */
 
-import jdk.incubator.foreign.CompoundLayout;
-import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.Layout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.Layout.PathElement;
 import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.ValueLayout;
+
 import java.io.File;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.WeakReference;
@@ -70,54 +70,54 @@ import static org.testng.Assert.*;
 
 public class TestByteBuffer {
 
-    static SequenceLayout tuples = SequenceLayout.of(500,
-            GroupLayout.ofStruct(
-                    ValueLayout.ofSignedInt(32).withName("index"),
-                    ValueLayout.ofFloatingPoint(32).withName("value")
+    static SequenceLayout tuples = Layout.ofSequence(500,
+            Layout.ofStruct(
+                    Layout.ofSignedInt(32).withName("index"),
+                    Layout.ofFloatingPoint(32).withName("value")
             ));
 
-    static SequenceLayout bytes = SequenceLayout.of(100,
-            ValueLayout.ofSignedInt(8)
+    static SequenceLayout bytes = Layout.ofSequence(100,
+            Layout.ofSignedInt(8)
     );
 
-    static SequenceLayout chars = SequenceLayout.of(100,
-            ValueLayout.ofUnsignedInt(16)
+    static SequenceLayout chars = Layout.ofSequence(100,
+            Layout.ofUnsignedInt(16)
     );
 
-    static SequenceLayout shorts = SequenceLayout.of(100,
-            ValueLayout.ofSignedInt(16)
+    static SequenceLayout shorts = Layout.ofSequence(100,
+            Layout.ofSignedInt(16)
     );
 
-    static SequenceLayout ints = SequenceLayout.of(100,
-            ValueLayout.ofSignedInt(32)
+    static SequenceLayout ints = Layout.ofSequence(100,
+            Layout.ofSignedInt(32)
     );
 
-    static SequenceLayout floats = SequenceLayout.of(100,
-            ValueLayout.ofFloatingPoint(32)
+    static SequenceLayout floats = Layout.ofSequence(100,
+            Layout.ofFloatingPoint(32)
     );
 
-    static SequenceLayout longs = SequenceLayout.of(100,
-            ValueLayout.ofSignedInt(64)
+    static SequenceLayout longs = Layout.ofSequence(100,
+            Layout.ofSignedInt(64)
     );
 
-    static SequenceLayout doubles = SequenceLayout.of(100,
-            ValueLayout.ofFloatingPoint(64)
+    static SequenceLayout doubles = Layout.ofSequence(100,
+            Layout.ofFloatingPoint(64)
     );
 
-    static VarHandle indexHandle = tuples.dereferenceHandle(int.class, path -> path.sequenceElement().groupElement("index"));
-    static VarHandle valueHandle = tuples.dereferenceHandle(float.class, path -> path.sequenceElement().groupElement("value"));
+    static VarHandle indexHandle = tuples.dereferenceHandle(int.class, PathElement.sequenceElement(), PathElement.groupElement("index"));
+    static VarHandle valueHandle = tuples.dereferenceHandle(float.class, PathElement.sequenceElement(), PathElement.groupElement("value"));
 
-    static VarHandle byteHandle = bytes.dereferenceHandle(byte.class, CompoundLayout.Path::sequenceElement);
-    static VarHandle charHandle = chars.dereferenceHandle(char.class, CompoundLayout.Path::sequenceElement);
-    static VarHandle shortHandle = shorts.dereferenceHandle(short.class, CompoundLayout.Path::sequenceElement);
-    static VarHandle intHandle = ints.dereferenceHandle(int.class, CompoundLayout.Path::sequenceElement);
-    static VarHandle floatHandle = floats.dereferenceHandle(float.class, CompoundLayout.Path::sequenceElement);
-    static VarHandle longHandle = doubles.dereferenceHandle(long.class, CompoundLayout.Path::sequenceElement);
-    static VarHandle doubleHandle = longs.dereferenceHandle(double.class, CompoundLayout.Path::sequenceElement);
+    static VarHandle byteHandle = bytes.dereferenceHandle(byte.class, PathElement.sequenceElement());
+    static VarHandle charHandle = chars.dereferenceHandle(char.class, PathElement.sequenceElement());
+    static VarHandle shortHandle = shorts.dereferenceHandle(short.class, PathElement.sequenceElement());
+    static VarHandle intHandle = ints.dereferenceHandle(int.class, PathElement.sequenceElement());
+    static VarHandle floatHandle = floats.dereferenceHandle(float.class, PathElement.sequenceElement());
+    static VarHandle longHandle = doubles.dereferenceHandle(long.class, PathElement.sequenceElement());
+    static VarHandle doubleHandle = longs.dereferenceHandle(double.class, PathElement.sequenceElement());
 
 
     static void initTuples(MemoryAddress base) {
-        for (long i = 0; i < tuples.elementsSize().getAsLong() ; i++) {
+        for (long i = 0; i < tuples.elementsCount().getAsLong() ; i++) {
             indexHandle.set(base, i, (int)i);
             valueHandle.set(base, i, (float)(i / 500f));
         }
@@ -125,14 +125,14 @@ public class TestByteBuffer {
 
     static void checkTuples(MemoryAddress base, ByteBuffer bb) {
         bb = bb.order(ByteOrder.nativeOrder());
-        for (long i = 0; i < tuples.elementsSize().getAsLong() ; i++) {
+        for (long i = 0; i < tuples.elementsCount().getAsLong() ; i++) {
             assertEquals(bb.getInt(), (int)indexHandle.get(base, i));
             assertEquals(bb.getFloat(), (float)valueHandle.get(base, i));
         }
     }
 
     static void initBytes(MemoryAddress base, SequenceLayout seq, BiConsumer<MemoryAddress, Long> handleSetter) {
-        for (long i = 0; i < seq.elementsSize().getAsLong() ; i++) {
+        for (long i = 0; i < seq.elementsCount().getAsLong() ; i++) {
             handleSetter.accept(base, i);
         }
     }
@@ -141,8 +141,8 @@ public class TestByteBuffer {
                                               Function<ByteBuffer, Z> bufFactory,
                                               BiFunction<MemoryAddress, Long, Object> handleExtractor,
                                               Function<Z, Object> bufferExtractor) {
-        long nelems = layout.elementsSize().getAsLong();
-        long elemSize = layout.element().bytesSize();
+        long nelems = layout.elementsCount().getAsLong();
+        long elemSize = layout.elementLayout().bytesSize();
         for (long i = 0 ; i < nelems ; i++) {
             long limit = nelems - i;
             MemorySegment resizedSegment = base.segment().resize(i * elemSize, limit * elemSize);
@@ -316,14 +316,14 @@ public class TestByteBuffer {
         try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
             base = segment.baseAddress();
         }
-        base.asByteBuffer((int)bytes.elementsSize().getAsLong());
+        base.asByteBuffer((int)bytes.elementsCount().getAsLong());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBufferTooLarge() {
         try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
             MemoryAddress base = segment.baseAddress();
-            base.asByteBuffer((int)bytes.elementsSize().getAsLong() * 2);
+            base.asByteBuffer((int)bytes.elementsCount().getAsLong() * 2);
         }
     }
 

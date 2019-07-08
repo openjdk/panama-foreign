@@ -25,9 +25,6 @@
  */
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.LayoutPathImpl;
-
-import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -112,78 +109,6 @@ public class ValueLayout extends AbstractLayout implements Layout {
         return size;
     }
 
-    /**
-     * Create a floating-point value layout of given size. The new layout's byte order is assumed to be
-     * {@link ByteOrder#nativeOrder()}).
-     * @param size the floating-point value layout size.
-     * @return a new floating-point value layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    public static ValueLayout ofFloatingPoint(long size) throws IllegalArgumentException  {
-        checkSize(size);
-        return ofFloatingPoint(ByteOrder.nativeOrder(), size);
-    }
-
-    /**
-     * Create a floating-point value layout of given byte order and size.
-     * @param order the floating-point value layout's byte order.
-     * @param size the floating-point value layout size.
-     * @return a new floating-point value layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    public static ValueLayout ofFloatingPoint(ByteOrder order, long size) throws IllegalArgumentException {
-        checkSize(size);
-        return new ValueLayout(Kind.FLOATING_POINT, order, size, OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a unsigned integral value layout of given size. The new layout's byte order is assumed to be
-     * {@link ByteOrder#nativeOrder()}).
-     * @param size the unsigned integral layout size.
-     * @return a new unsigned integral layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    public static ValueLayout ofUnsignedInt(long size) throws IllegalArgumentException {
-        checkSize(size);
-        return ofUnsignedInt(ByteOrder.nativeOrder(), size);
-    }
-
-    /**
-     * Create a unsigned integral value layout of given byte order and size.
-     * @param order the unsigned integral layout's byte order.
-     * @param size the unsigned integral layout size.
-     * @return a new unsigned integral layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    public static ValueLayout ofUnsignedInt(ByteOrder order, long size) throws IllegalArgumentException {
-        checkSize(size);
-        return new ValueLayout(Kind.INTEGRAL_UNSIGNED, order, size, OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a signed integral value layout of given size. The new layout's byte order is assumed to be
-     * {@link ByteOrder#nativeOrder()}).
-     * @param size the signed integral layout size.
-     * @return a new signed integral layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    public static ValueLayout ofSignedInt(long size) throws IllegalArgumentException  {
-        checkSize(size);
-        return ofSignedInt(ByteOrder.nativeOrder(), size);
-    }
-
-    /**
-     * Create a signed integral value layout of given byte order and size.
-     * @param order the signed integral layout's byte order.
-     * @param size the signed integral layout size.
-     * @return a new signed integral layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    public static ValueLayout ofSignedInt(ByteOrder order, long size) throws IllegalArgumentException  {
-        checkSize(size);
-        return new ValueLayout(Kind.INTEGRAL_SIGNED, order, size, OptionalLong.empty(), Optional.empty());
-    }
-
     @Override
     public String toString() {
         return decorateLayoutString(String.format("%s%d",
@@ -217,17 +142,6 @@ public class ValueLayout extends AbstractLayout implements Layout {
     @Override
     ValueLayout dup(OptionalLong alignment, Optional<String> name) {
         return new ValueLayout(kind, order, size, alignment, name);
-    }
-
-    /**
-     * A var handle that can be used to dereference this value layout.
-     * @param carrier the var handle carrier type.
-     * @return a var handle which can be used to dereference this value layout.
-     * @throws IllegalArgumentException if the carrier does not represent a primitive type, if the carrier is {@code void},
-     * {@code boolean}, or if the size of the carrier type does not match that of the layout targeted by this layout path.
-     */
-    public VarHandle dereferenceHandle(Class<?> carrier) throws IllegalArgumentException {
-        return LayoutPathImpl.rootPath(this).dereferenceHandle(carrier);
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout

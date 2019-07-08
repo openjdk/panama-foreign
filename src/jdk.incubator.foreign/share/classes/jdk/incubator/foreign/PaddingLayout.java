@@ -30,7 +30,7 @@ import java.util.OptionalLong;
 
 /**
  * A padding layout. A padding layout specifies the size of extra space which is typically not accessed by applications,
- * and is only used for aligning other layout elements around word boundaries.
+ * and is typically used for aligning member layouts around word boundaries.
  * <p>
  * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
  * class; use of identity-sensitive operations (including reference equality
@@ -41,23 +41,12 @@ import java.util.OptionalLong;
  * @implSpec
  * This class is immutable and thread-safe.
  */
-public class PaddingLayout extends AbstractLayout implements Layout {
+/* package-private */ class PaddingLayout extends AbstractLayout implements Layout {
     private final long size;
 
     PaddingLayout(long size, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.size = size;
-    }
-
-    /**
-     * Create a new padding layout with given size.
-     * @param size the padding size in bits.
-     * @return the new selector layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    public static PaddingLayout of(long size) {
-        checkSize(size);
-        return new PaddingLayout(size, OptionalLong.empty(), Optional.empty());
     }
 
     @Override

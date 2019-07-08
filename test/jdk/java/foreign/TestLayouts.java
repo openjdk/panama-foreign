@@ -26,11 +26,8 @@
  * @run testng TestLayouts
  */
 
-import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.Layout;
-import jdk.incubator.foreign.PaddingLayout;
-import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.ValueLayout;
+
 import java.util.function.LongFunction;
 
 import org.testng.annotations.*;
@@ -75,11 +72,11 @@ public class TestLayouts {
     }
 
     enum SizedLayoutFactory {
-        U_VALUE(ValueLayout::ofUnsignedInt),
-        S_VALUE(ValueLayout::ofSignedInt),
-        FP_VALUE(ValueLayout::ofFloatingPoint),
-        PADDING(PaddingLayout::of),
-        SEQUENCE(size -> SequenceLayout.of(size, PaddingLayout.of(8)));
+        U_VALUE(Layout::ofUnsignedInt),
+        S_VALUE(Layout::ofSignedInt),
+        FP_VALUE(Layout::ofFloatingPoint),
+        PADDING(Layout::ofPadding),
+        SEQUENCE(size -> Layout.ofSequence(size, Layout.ofPadding(8)));
 
         private final LongFunction<Layout> factory;
 
@@ -93,13 +90,13 @@ public class TestLayouts {
     }
 
     enum LayoutKind {
-        U_VALUE(ValueLayout.ofUnsignedInt(8)),
-        S_VALUE(ValueLayout.ofSignedInt(8)),
-        FP_VALUE(ValueLayout.ofFloatingPoint(8)),
-        PADDING(PaddingLayout.of(8)),
-        SEQUENCE(SequenceLayout.of(1, PaddingLayout.of(8))),
-        STRUCT(GroupLayout.ofStruct(PaddingLayout.of(8), PaddingLayout.of(8))),
-        UNION(GroupLayout.ofUnion(PaddingLayout.of(8), PaddingLayout.of(8)));
+        U_VALUE(Layout.ofUnsignedInt(8)),
+        S_VALUE(Layout.ofSignedInt(8)),
+        FP_VALUE(Layout.ofFloatingPoint(8)),
+        PADDING(Layout.ofPadding(8)),
+        SEQUENCE(Layout.ofSequence(1, Layout.ofPadding(8))),
+        STRUCT(Layout.ofStruct(Layout.ofPadding(8), Layout.ofPadding(8))),
+        UNION(Layout.ofUnion(Layout.ofPadding(8), Layout.ofPadding(8)));
 
         final Layout layout;
 

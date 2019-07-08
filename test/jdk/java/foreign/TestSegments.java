@@ -26,11 +26,9 @@
  * @run testng TestSegments
  */
 
-import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.Layout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.PaddingLayout;
-import jdk.incubator.foreign.ValueLayout;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -94,17 +92,17 @@ public class TestSegments {
         SizedLayoutFactory[] layoutFactories = SizedLayoutFactory.values();
         Object[][] values = new Object[layoutFactories.length * 2][2];
         for (int i = 0; i < layoutFactories.length ; i++) {
-            values[i * 2] = new Object[] { GroupLayout.ofStruct(layoutFactories[i].make(7), PaddingLayout.of(9)) }; // good size, bad align
+            values[i * 2] = new Object[] { Layout.ofStruct(layoutFactories[i].make(7), Layout.ofPadding(9)) }; // good size, bad align
             values[(i * 2) + 1] = new Object[] { layoutFactories[i].make(15).alignTo(16) }; // bad size, good align
         }
         return values;
     }
 
     enum SizedLayoutFactory {
-        U_VALUE(ValueLayout::ofUnsignedInt),
-        S_VALUE(ValueLayout::ofSignedInt),
-        FP_VALUE(ValueLayout::ofFloatingPoint),
-        PADDING(PaddingLayout::of);
+        U_VALUE(Layout::ofUnsignedInt),
+        S_VALUE(Layout::ofSignedInt),
+        FP_VALUE(Layout::ofFloatingPoint),
+        PADDING(Layout::ofPadding);
 
         private final LongFunction<Layout> factory;
 
