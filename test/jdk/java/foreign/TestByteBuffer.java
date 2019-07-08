@@ -30,10 +30,10 @@
  * @run testng TestByteBuffer
  */
 
-import jdk.incubator.foreign.Layout;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.Layout.PathElement;
+import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SequenceLayout;
 
 import java.io.File;
@@ -70,50 +70,50 @@ import static org.testng.Assert.*;
 
 public class TestByteBuffer {
 
-    static SequenceLayout tuples = Layout.ofSequence(500,
-            Layout.ofStruct(
-                    Layout.ofSignedInt(32).withName("index"),
-                    Layout.ofFloatingPoint(32).withName("value")
+    static SequenceLayout tuples = MemoryLayout.ofSequence(500,
+            MemoryLayout.ofStruct(
+                    MemoryLayout.ofSignedInt(32).withName("index"),
+                    MemoryLayout.ofFloatingPoint(32).withName("value")
             ));
 
-    static SequenceLayout bytes = Layout.ofSequence(100,
-            Layout.ofSignedInt(8)
+    static SequenceLayout bytes = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofSignedInt(8)
     );
 
-    static SequenceLayout chars = Layout.ofSequence(100,
-            Layout.ofUnsignedInt(16)
+    static SequenceLayout chars = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofUnsignedInt(16)
     );
 
-    static SequenceLayout shorts = Layout.ofSequence(100,
-            Layout.ofSignedInt(16)
+    static SequenceLayout shorts = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofSignedInt(16)
     );
 
-    static SequenceLayout ints = Layout.ofSequence(100,
-            Layout.ofSignedInt(32)
+    static SequenceLayout ints = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofSignedInt(32)
     );
 
-    static SequenceLayout floats = Layout.ofSequence(100,
-            Layout.ofFloatingPoint(32)
+    static SequenceLayout floats = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofFloatingPoint(32)
     );
 
-    static SequenceLayout longs = Layout.ofSequence(100,
-            Layout.ofSignedInt(64)
+    static SequenceLayout longs = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofSignedInt(64)
     );
 
-    static SequenceLayout doubles = Layout.ofSequence(100,
-            Layout.ofFloatingPoint(64)
+    static SequenceLayout doubles = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofFloatingPoint(64)
     );
 
-    static VarHandle indexHandle = tuples.dereferenceHandle(int.class, PathElement.sequenceElement(), PathElement.groupElement("index"));
-    static VarHandle valueHandle = tuples.dereferenceHandle(float.class, PathElement.sequenceElement(), PathElement.groupElement("value"));
+    static VarHandle indexHandle = tuples.varHandle(int.class, PathElement.sequenceElement(), PathElement.groupElement("index"));
+    static VarHandle valueHandle = tuples.varHandle(float.class, PathElement.sequenceElement(), PathElement.groupElement("value"));
 
-    static VarHandle byteHandle = bytes.dereferenceHandle(byte.class, PathElement.sequenceElement());
-    static VarHandle charHandle = chars.dereferenceHandle(char.class, PathElement.sequenceElement());
-    static VarHandle shortHandle = shorts.dereferenceHandle(short.class, PathElement.sequenceElement());
-    static VarHandle intHandle = ints.dereferenceHandle(int.class, PathElement.sequenceElement());
-    static VarHandle floatHandle = floats.dereferenceHandle(float.class, PathElement.sequenceElement());
-    static VarHandle longHandle = doubles.dereferenceHandle(long.class, PathElement.sequenceElement());
-    static VarHandle doubleHandle = longs.dereferenceHandle(double.class, PathElement.sequenceElement());
+    static VarHandle byteHandle = bytes.varHandle(byte.class, PathElement.sequenceElement());
+    static VarHandle charHandle = chars.varHandle(char.class, PathElement.sequenceElement());
+    static VarHandle shortHandle = shorts.varHandle(short.class, PathElement.sequenceElement());
+    static VarHandle intHandle = ints.varHandle(int.class, PathElement.sequenceElement());
+    static VarHandle floatHandle = floats.varHandle(float.class, PathElement.sequenceElement());
+    static VarHandle longHandle = doubles.varHandle(long.class, PathElement.sequenceElement());
+    static VarHandle doubleHandle = longs.varHandle(double.class, PathElement.sequenceElement());
 
 
     static void initTuples(MemoryAddress base) {
@@ -142,10 +142,10 @@ public class TestByteBuffer {
                                               BiFunction<MemoryAddress, Long, Object> handleExtractor,
                                               Function<Z, Object> bufferExtractor) {
         long nelems = layout.elementsCount().getAsLong();
-        long elemSize = layout.elementLayout().bytesSize();
+        long elemSize = layout.elementLayout().byteSize();
         for (long i = 0 ; i < nelems ; i++) {
             long limit = nelems - i;
-            MemorySegment resizedSegment = base.segment().resize(i * elemSize, limit * elemSize);
+            MemorySegment resizedSegment = base.segment().slice(i * elemSize, limit * elemSize);
             ByteBuffer bb = resizedSegment.baseAddress().asByteBuffer((int)limit * (int)elemSize)
                     .order(ByteOrder.nativeOrder());
             Z z = bufFactory.apply(bb);
@@ -169,19 +169,19 @@ public class TestByteBuffer {
             MemoryAddress base = segment.baseAddress();
             initTuples(base);
 
-            ByteBuffer bb = base.asByteBuffer((int) tuples.bytesSize());
+            ByteBuffer bb = base.asByteBuffer((int) tuples.byteSize());
             checkTuples(base, bb);
         }
     }
 
     @Test
     public void testHeap() {
-        byte[] arr = new byte[(int) tuples.bytesSize()];
+        byte[] arr = new byte[(int) tuples.byteSize()];
         MemorySegment region = MemorySegment.ofArray(arr);
         MemoryAddress base = region.baseAddress();
         initTuples(base);
 
-        ByteBuffer bb = base.asByteBuffer((int) tuples.bytesSize());
+        ByteBuffer bb = base.asByteBuffer((int) tuples.byteSize());
         checkTuples(base, bb);
     }
 
@@ -193,7 +193,7 @@ public class TestByteBuffer {
 
         //write to channel
         try (FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-            withMappedBuffer(channel, FileChannel.MapMode.READ_WRITE, 0, tuples.bytesSize(), mbb -> {
+            withMappedBuffer(channel, FileChannel.MapMode.READ_WRITE, 0, tuples.byteSize(), mbb -> {
                 MemorySegment segment = MemorySegment.ofByteBuffer(mbb);
                 MemoryAddress base = segment.baseAddress();
                 initTuples(base);
@@ -203,7 +203,7 @@ public class TestByteBuffer {
 
         //read from channel
         try (FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.READ)) {
-            withMappedBuffer(channel, FileChannel.MapMode.READ_ONLY, 0, tuples.bytesSize(), mbb -> {
+            withMappedBuffer(channel, FileChannel.MapMode.READ_ONLY, 0, tuples.byteSize(), mbb -> {
                 MemorySegment segment = MemorySegment.ofByteBuffer(mbb);
                 MemoryAddress base = segment.baseAddress();
                 checkTuples(base, mbb);
@@ -228,7 +228,7 @@ public class TestByteBuffer {
         Buffer bb;
         try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
             MemoryAddress base = segment.baseAddress();
-            bb = bufferFactory.apply(base.asByteBuffer((int) bytes.bytesSize()));
+            bb = bufferFactory.apply(base.asByteBuffer((int) bytes.byteSize()));
         }
         //outside of scope!!
         for (Map.Entry<Method, Object[]> e : members.entrySet()) {
@@ -255,7 +255,7 @@ public class TestByteBuffer {
     public void testDirectBuffer(Function<ByteBuffer, Buffer> bufferFactory, Map<Method, Object[]> members) {
         try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
             MemoryAddress base = segment.baseAddress();
-            Buffer bb = bufferFactory.apply(base.asByteBuffer((int)bytes.bytesSize()));
+            Buffer bb = bufferFactory.apply(base.asByteBuffer((int)bytes.byteSize()));
             assertTrue(bb.isDirect());
             DirectBuffer directBuffer = ((DirectBuffer)bb);
             assertEquals(directBuffer.address(), MemoryAddressImpl.addressof(base));
@@ -275,7 +275,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        int capacity = (int)seq.bytesSize();
+        int capacity = (int)seq.byteSize();
         MemoryAddress base = MemorySegment.ofArray(new byte[capacity]).baseAddress();
         initializer.accept(base);
         checker.accept(base);
@@ -283,7 +283,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeBuffer(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        int capacity = (int)seq.bytesSize();
+        int capacity = (int)seq.byteSize();
         MemoryAddress base = MemorySegment.ofByteBuffer(ByteBuffer.wrap(new byte[capacity])).baseAddress();
         initializer.accept(base);
         checker.accept(base);
@@ -291,7 +291,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeRoundtripHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        int capacity = (int)seq.bytesSize();
+        int capacity = (int)seq.byteSize();
         byte[] arr = new byte[capacity];
         MemoryAddress first = MemorySegment.ofArray(arr).baseAddress();
         initializer.accept(first);
@@ -302,7 +302,7 @@ public class TestByteBuffer {
     @Test(dataProvider="resizeOps")
     public void testResizeRoundtripNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         try (MemorySegment segment = MemorySegment.ofNative(seq)) {
-            int capacity = (int) seq.bytesSize();
+            int capacity = (int) seq.byteSize();
             MemoryAddress first = segment.baseAddress();
             initializer.accept(first);
             MemoryAddress second = MemorySegment.ofByteBuffer(first.asByteBuffer(capacity)).baseAddress();
@@ -329,7 +329,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testCopyHeapToNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        int bytes = (int)seq.bytesSize();
+        int bytes = (int)seq.byteSize();
         try (MemorySegment nativeArray = MemorySegment.ofNative(bytes) ;
              MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
             initializer.accept(heapArray.baseAddress());
@@ -340,7 +340,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testCopyNativeToHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        int bytes = (int)seq.bytesSize();
+        int bytes = (int)seq.byteSize();
         try (MemorySegment nativeArray = MemorySegment.ofNative(seq) ;
              MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
             initializer.accept(nativeArray.baseAddress());

@@ -94,7 +94,7 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
     @Override
     public ByteBuffer asByteBuffer(int bytes) throws IllegalArgumentException, UnsupportedOperationException, IllegalStateException {
         boolean readOnly = segment.isReadOnly();
-        segment.resize(this.offset, bytes); //throws IAE if out of bounds, or ISE if not alive
+        segment.slice(this.offset, bytes); //throws IAE if out of bounds, or ISE if not alive
         checkAccess(0L, bytes, readOnly);
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
         Object base = unsafeGetBase();

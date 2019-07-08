@@ -34,16 +34,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.function.UnaryOperator;
-import java.util.stream.Stream;
 
 /**
- * A layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
+ * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
  * There are two leaves in the layout hierarchy, <em>value layouts</em>, which are used to represent values of given size and kind (see
  * {@link ValueLayout}) and <em>padding layouts</em> which are used, as the name suggests, to represent a portion of a memory
- * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link Layout#ofPadding(long)}).
+ * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link MemoryLayout#ofPadding(long)}).
  * <p>
- * More complex layouts can be derived from simpler ones: a <em>sequence layout</em> denotes a repetiton of one or more
+ * More complex layouts can be derived from simpler ones: a <em>sequence layout</em> denotes a repetition of one or more
  * element layout (see {@link SequenceLayout}); a <em>group layout</em> denotes an aggregation of (typically) heterogeneous
  * member layouts (see {@link GroupLayout}).
  *
@@ -68,7 +66,7 @@ import java.util.stream.Stream;
  *     <li>for a group layout <em>G</em> with member layouts <em>M1</em>, <em>M2</em>, ... <em>Mn</em> whose alignments are
  *     <em>A1</em>, <em>A2</em>, ... <em>An</em>, respectively, the natural alignment of <em>G</em> is <em>max(A1, A2 ... An)</em></li>
  * </ul>
- * A layout's natural alignment can be overridden if needed (see {@link Layout#alignTo(long)}), which can be useful to describe
+ * A layout's natural alignment can be overridden if needed (see {@link MemoryLayout#withBitAlignment(long)}), which can be useful to describe
  * hyper-aligned layouts.
  * <p>
  * Where it's not explicitly provided, the byte order of value layouts is assumed to be compatible with the
@@ -81,8 +79,8 @@ import java.util.stream.Stream;
  * Layout paths are typically expressed as a sequence of one or more {@link PathElement} instances.
  * <p>
  * Layout paths are useful in order to e.g. to obtain offset of leaf elements inside arbitrarily nested layouts
- * (see {@link Layout#offset(PathElement...)}), or to quickly obtain a memory access handle corresponding to the selected
- * layout (see {@link Layout#dereferenceHandle(Class, PathElement...)}).
+ * (see {@link MemoryLayout#offset(PathElement...)}), or to quickly obtain a memory access handle corresponding to the selected
+ * layout (see {@link MemoryLayout#varHandle(Class, PathElement...)}).
  * <p>
  * Such <em>layout paths</em> can be constructed programmatically using the instance methods in this class.
  * For instance, given a layout constructed as follows:
@@ -104,31 +102,35 @@ long valueOffset = seq.offset(PathElement.sequenceElement(), PathElement.groupEl
  * {@link PathElement#sequenceElement()} method) features an additional free dimension, which will have to be bound at runtime;
  * that is, the memory access var handle associated with such a layout path expression will feature an extra {@code long}
  * access coordinate. The layout path constructed in the above example features exactly one free dimension.
+ *
+ * @apiNote In the future, if the Java language permits, {@link MemoryLayout}
+ * may become a {@code sealed} interface, which would prohibit subclassing except by
+ * explicitly permitted types.
  */
-public interface Layout {
+public interface MemoryLayout {
 
     /**
      * Computes the layout size, in bits.
      * @return the layout size, in bits.
      * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}).
      */
-    long bitsSize() throws UnsupportedOperationException;
+    long bitSize() throws UnsupportedOperationException;
 
     /**
      * Computes the layout size, in bytes.
      * @return the layout size, in bytes.
      * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}),
-     * or if the bits size (see {@link Layout#bitsSize()} is not a multiple of 8.
+     * or if the bits size (see {@link MemoryLayout#bitSize()} is not a multiple of 8.
      */
-    default long bytesSize() throws UnsupportedOperationException {
-        return Utils.bitsToBytesOrThrow(bitsSize(),
+    default long byteSize() throws UnsupportedOperationException {
+        return Utils.bitsToBytesOrThrow(bitSize(),
                 () -> new UnsupportedOperationException("Cannot compute byte size; bit size is not a multiple of 8"));
     }
 
     /**
      * Return the <em>name</em> (if any) associated with this layout.
      * @return the layout <em>name</em> (if any).
-     * @see Layout#withName(String)
+     * @see MemoryLayout#withName(String)
      */
     Optional<String> name();
 
@@ -136,9 +138,9 @@ public interface Layout {
      * Attach a <em>name</em> to this layout.
      * @param name the layout name.
      * @return a new layout which is the same as this layout, except for the <em>name</em> associated to it.
-     * @see Layout#name()
+     * @see MemoryLayout#name()
      */
-    Layout withName(String name);
+    MemoryLayout withName(String name);
 
     /**
      * Returns the alignment constraints associated with this layout, expressed in bits. Layout alignment defines a power
@@ -153,7 +155,7 @@ public interface Layout {
      *
      * @return the layout alignment constraint, in bits.
      */
-    long bitsAlignment();
+    long bitAlignment();
 
     /**
      * Returns the alignment constraints associated with this layout, expressed in bytes. Layout alignment defines a power
@@ -168,19 +170,19 @@ public interface Layout {
      *
      * @return the layout alignment constraint, in bytes.
      */
-    default long bytesAlignment() {
-        return Utils.bitsToBytesOrThrow(bitsAlignment(),
+    default long byteAlignment() {
+        return Utils.bitsToBytesOrThrow(bitAlignment(),
                 () -> new UnsupportedOperationException("Cannot compute byte alignment; bit alignment is not a multiple of 8"));
     }
 
     /**
      * Creates a new layout which features the desired alignment.
      *
-     * @param alignmentBits the layout alignment, expressed in bits.
+     * @param bitAlignment the layout alignment, expressed in bits.
      * @return a new layout which is the same as this layout, except for the alignment associated to it.
      * @throws IllegalArgumentException if the supplied alignment is not a power of two, or if it's lower than 8.
      */
-    Layout alignTo(long alignmentBits) throws IllegalArgumentException;
+    MemoryLayout withBitAlignment(long bitAlignment) throws IllegalArgumentException;
 
     /**
      * The offset of the layout selected by a given layout path, where the path is considered rooted in this
@@ -218,7 +220,7 @@ public interface Layout {
      * @apiNote the result var handle will feature an additional {@code long} access coordinate for every
      * unspecified sequence access component contained in this layout path.
      */
-    default VarHandle dereferenceHandle(Class<?> carrier, PathElement... elements) throws UnsupportedOperationException, IllegalArgumentException {
+    default VarHandle varHandle(Class<?> carrier, PathElement... elements) throws UnsupportedOperationException, IllegalArgumentException {
         LayoutPathImpl path = LayoutPathImpl.rootPath(this);
         for (PathElement e : elements) {
             path = ((LayoutPathImpl.PathElementImpl)e).apply(path);
@@ -307,7 +309,7 @@ public interface Layout {
      * @return the new selector layout.
      * @throws IllegalArgumentException if size is &le; 0.
      */
-    static Layout ofPadding(long size) {
+    static MemoryLayout ofPadding(long size) {
         AbstractLayout.checkSize(size);
         return new PaddingLayout(size, OptionalLong.empty(), Optional.empty());
     }
@@ -391,7 +393,7 @@ public interface Layout {
      * @return the new sequence layout with given element layout and size.
      * @throws IllegalArgumentException if size &lt; 0.
      */
-    static SequenceLayout ofSequence(long size, Layout elementLayout) throws IllegalArgumentException {
+    static SequenceLayout ofSequence(long size, MemoryLayout elementLayout) throws IllegalArgumentException {
         AbstractLayout.checkSize(size, true);
         return new SequenceLayout(OptionalLong.of(size), elementLayout, OptionalLong.empty(), Optional.empty());
     }
@@ -401,7 +403,7 @@ public interface Layout {
      * @param elementLayout the element layout of the sequence layout.
      * @return the new sequence layout with given element layout.
      */
-    static SequenceLayout ofSequence(Layout elementLayout) {
+    static SequenceLayout ofSequence(MemoryLayout elementLayout) {
         return new SequenceLayout(OptionalLong.empty(), elementLayout, OptionalLong.empty(), Optional.empty());
     }
 
@@ -410,7 +412,7 @@ public interface Layout {
      * @param elements The member layouts of the <em>struct</em> group layout.
      * @return a new <em>struct</em> group layout with given member layouts.
      */
-    static GroupLayout ofStruct(Layout... elements) {
+    static GroupLayout ofStruct(MemoryLayout... elements) {
         return new GroupLayout(GroupLayout.Kind.STRUCT, List.of(elements), OptionalLong.empty(), Optional.empty());
     }
 
@@ -419,7 +421,7 @@ public interface Layout {
      * @param elements The member layouts of the <em>union</em> layout.
      * @return a new <em>union</em> group layout with given member layouts.
      */
-    static GroupLayout ofUnion(Layout... elements) {
+    static GroupLayout ofUnion(MemoryLayout... elements) {
         return new GroupLayout(GroupLayout.Kind.UNION, List.of(elements), OptionalLong.empty(), Optional.empty());
     }
 }

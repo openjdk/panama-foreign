@@ -26,20 +26,18 @@
 package jdk.incubator.foreign;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 /**
  * A group layout is used to combine together multiple <em>member layouts</em>. There are two ways in which member layouts
  * can be combined: if member layouts are laid out one after the other, the resulting group layout is said to be a <em>struct</em>
- * (see {@link Layout#ofStruct(Layout...)}); conversely, if all member layouts are laid out at the same starting offset,
- * the resulting group layout is said to be a <em>union</em> (see {@link Layout#ofUnion(Layout...)}).
+ * (see {@link MemoryLayout#ofStruct(MemoryLayout...)}); conversely, if all member layouts are laid out at the same starting offset,
+ * the resulting group layout is said to be a <em>union</em> (see {@link MemoryLayout#ofUnion(MemoryLayout...)}).
  * <p>
  * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
  * class; use of identity-sensitive operations (including reference equality
@@ -75,11 +73,11 @@ public class GroupLayout extends AbstractLayout {
     }
 
     private final Kind kind;
-    private final List<Layout> elements;
+    private final List<MemoryLayout> elements;
     private long size = -1L;
     private long alignment = -1L;
 
-    GroupLayout(Kind kind, List<Layout> elements, OptionalLong alignment, Optional<String> name) {
+    GroupLayout(Kind kind, List<MemoryLayout> elements, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.kind = kind;
         this.elements = elements;
@@ -90,10 +88,10 @@ public class GroupLayout extends AbstractLayout {
      * @return the member layouts associated with this group.
      *
      * @apiNote the order in which member layouts are returned is the same order in which member layouts have
-     * been passed to one of the group layout factory methods (see {@link Layout#ofStruct(Layout...)},
-     * {@link Layout#ofUnion(Layout...)}).
+     * been passed to one of the group layout factory methods (see {@link MemoryLayout#ofStruct(MemoryLayout...)},
+     * {@link MemoryLayout#ofUnion(MemoryLayout...)}).
      */
-    public List<Layout> memberLayouts() {
+    public List<MemoryLayout> memberLayouts() {
         return Collections.unmodifiableList(elements);
     }
 
@@ -141,9 +139,9 @@ public class GroupLayout extends AbstractLayout {
     }
 
     @Override
-    public long bitsSize() {
+    public long bitSize() {
         if (size == -1L) {
-            size = kind.sizeFunc.applyAsLong(elements.stream().mapToLong(Layout::bitsSize));
+            size = kind.sizeFunc.applyAsLong(elements.stream().mapToLong(MemoryLayout::bitSize));
         }
         return size;
     }
@@ -151,7 +149,7 @@ public class GroupLayout extends AbstractLayout {
     @Override
     long naturalAlignmentBits() {
         if (alignment == -1L) {
-            alignment = Kind.UNION.sizeFunc.applyAsLong(elements.stream().mapToLong(Layout::bitsAlignment));
+            alignment = Kind.UNION.sizeFunc.applyAsLong(elements.stream().mapToLong(MemoryLayout::bitAlignment));
         }
         return alignment;
     }
@@ -176,7 +174,7 @@ public class GroupLayout extends AbstractLayout {
      * {@inheritDoc}
      */
     @Override
-    public GroupLayout alignTo(long alignmentBits) throws IllegalArgumentException {
-        return (GroupLayout)super.alignTo(alignmentBits);
+    public GroupLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+        return (GroupLayout)super.withBitAlignment(alignmentBits);
     }
 }

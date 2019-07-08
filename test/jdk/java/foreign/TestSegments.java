@@ -26,7 +26,7 @@
  * @run testng TestSegments
  */
 
-import jdk.incubator.foreign.Layout;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 
 import java.lang.reflect.Method;
@@ -49,7 +49,7 @@ public class TestSegments {
     }
 
     @Test(dataProvider = "badLayouts", expectedExceptions = UnsupportedOperationException.class)
-    public void testBadAllocateLayout(Layout layout) {
+    public void testBadAllocateLayout(MemoryLayout layout) {
         MemorySegment.ofNative(layout);
     }
 
@@ -92,25 +92,25 @@ public class TestSegments {
         SizedLayoutFactory[] layoutFactories = SizedLayoutFactory.values();
         Object[][] values = new Object[layoutFactories.length * 2][2];
         for (int i = 0; i < layoutFactories.length ; i++) {
-            values[i * 2] = new Object[] { Layout.ofStruct(layoutFactories[i].make(7), Layout.ofPadding(9)) }; // good size, bad align
-            values[(i * 2) + 1] = new Object[] { layoutFactories[i].make(15).alignTo(16) }; // bad size, good align
+            values[i * 2] = new Object[] { MemoryLayout.ofStruct(layoutFactories[i].make(7), MemoryLayout.ofPadding(9)) }; // good size, bad align
+            values[(i * 2) + 1] = new Object[] { layoutFactories[i].make(15).withBitAlignment(16) }; // bad size, good align
         }
         return values;
     }
 
     enum SizedLayoutFactory {
-        U_VALUE(Layout::ofUnsignedInt),
-        S_VALUE(Layout::ofSignedInt),
-        FP_VALUE(Layout::ofFloatingPoint),
-        PADDING(Layout::ofPadding);
+        U_VALUE(MemoryLayout::ofUnsignedInt),
+        S_VALUE(MemoryLayout::ofSignedInt),
+        FP_VALUE(MemoryLayout::ofFloatingPoint),
+        PADDING(MemoryLayout::ofPadding);
 
-        private final LongFunction<Layout> factory;
+        private final LongFunction<MemoryLayout> factory;
 
-        SizedLayoutFactory(LongFunction<Layout> factory) {
+        SizedLayoutFactory(LongFunction<MemoryLayout> factory) {
             this.factory = factory;
         }
 
-        Layout make(long size) {
+        MemoryLayout make(long size) {
             return factory.apply(size);
         }
     }

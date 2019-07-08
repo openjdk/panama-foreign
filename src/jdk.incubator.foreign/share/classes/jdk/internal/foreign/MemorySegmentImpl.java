@@ -58,7 +58,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public final MemorySegment resize(long offset, long newSize) throws IllegalArgumentException {
+    public final MemorySegment slice(long offset, long newSize) throws IllegalArgumentException {
         checkValidState();
         if (outOfBounds(offset, newSize)) {
             throw new IllegalArgumentException();
@@ -73,7 +73,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public final long bytesSize() {
+    public final long byteSize() {
         checkValidState();
         return length;
     }
@@ -156,7 +156,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public String toString() {
-        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + bytesSize() + " }";
+        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + byteSize() + " }";
     }
 
     private int id() {

@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-abstract class AbstractLayout implements Layout {
+abstract class AbstractLayout implements MemoryLayout {
     private final OptionalLong alignment;
     private final Optional<String> name;
 
@@ -61,7 +61,7 @@ abstract class AbstractLayout implements Layout {
     abstract long naturalAlignmentBits();
 
     @Override
-    public AbstractLayout alignTo(long alignmentBits) throws IllegalArgumentException {
+    public AbstractLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
         checkAlignment(alignmentBits);
         return dup(OptionalLong.of(alignmentBits), name);
     }
@@ -85,7 +85,7 @@ abstract class AbstractLayout implements Layout {
     }
 
     @Override
-    public final long bitsAlignment() {
+    public final long bitAlignment() {
         return alignment.orElse(naturalAlignmentBits());
     }
 

@@ -66,7 +66,7 @@ public class NativeScope extends MemorySegmentImpl.Scope {
         MemorySegment segment = new MemorySegmentImpl(buf, alignedSize, 0, new NativeScope(buf));
         if (alignedBuf != buf) {
             long delta = alignedBuf - buf;
-            segment = segment.resize(delta, bytesSize);
+            segment = segment.slice(delta, bytesSize);
         }
         return segment;
     }

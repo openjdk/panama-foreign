@@ -43,7 +43,7 @@ import java.util.OptionalLong;
  * @implSpec
  * This class is immutable and thread-safe.
  */
-public class ValueLayout extends AbstractLayout implements Layout {
+public class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * The value kind.
@@ -100,7 +100,7 @@ public class ValueLayout extends AbstractLayout implements Layout {
     }
 
     @Override
-    public long bitsSize() {
+    public long bitSize() {
         return size;
     }
 
@@ -159,7 +159,7 @@ public class ValueLayout extends AbstractLayout implements Layout {
      * {@inheritDoc}
      */
     @Override
-    public ValueLayout alignTo(long alignmentBits) throws IllegalArgumentException {
-        return (ValueLayout)super.alignTo(alignmentBits);
+    public ValueLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+        return (ValueLayout)super.withBitAlignment(alignmentBits);
     }
 }

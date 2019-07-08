@@ -59,9 +59,9 @@ Layout.ofStruct(
 public class SequenceLayout extends AbstractLayout {
 
     private final OptionalLong size;
-    private final Layout elementLayout;
+    private final MemoryLayout elementLayout;
 
-    SequenceLayout(OptionalLong size, Layout elementLayout, OptionalLong alignment, Optional<String> name) {
+    SequenceLayout(OptionalLong size, MemoryLayout elementLayout, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
         this.size = size;
         this.elementLayout = elementLayout;
@@ -73,9 +73,9 @@ public class SequenceLayout extends AbstractLayout {
      * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementsCount()}).
      */
     @Override
-    public long bitsSize() throws UnsupportedOperationException {
+    public long bitSize() throws UnsupportedOperationException {
         if (size.isPresent()) {
-            return elementLayout.bitsSize() * size.getAsLong();
+            return elementLayout.bitSize() * size.getAsLong();
         } else {
             throw new UnsupportedOperationException("Cannot compute size of unbounded sequence");
         }
@@ -83,14 +83,14 @@ public class SequenceLayout extends AbstractLayout {
 
     @Override
     long naturalAlignmentBits() {
-        return elementLayout().bitsAlignment();
+        return elementLayout().bitAlignment();
     }
 
     /**
      * The element layout associated with this sequence layout.
      * @return The element layout associated with this sequence layout.
      */
-    public Layout elementLayout() {
+    public MemoryLayout elementLayout() {
         return elementLayout;
     }
 
@@ -148,7 +148,7 @@ public class SequenceLayout extends AbstractLayout {
      * {@inheritDoc}
      */
     @Override
-    public SequenceLayout alignTo(long alignmentBits) throws IllegalArgumentException {
-        return (SequenceLayout)super.alignTo(alignmentBits);
+    public SequenceLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+        return (SequenceLayout)super.withBitAlignment(alignmentBits);
     }
 }

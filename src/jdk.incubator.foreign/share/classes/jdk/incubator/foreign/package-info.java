@@ -51,7 +51,7 @@ try (MemorySegment segment = MemorySegment.ofNative(10 * 4)) {
  * The key abstractions introduced by this package are {@link jdk.incubator.foreign.MemorySegment} and {@link jdk.incubator.foreign.MemoryAddress}.
  * The first models a contiguous memory region, which can reside either inside or outside the Java heap; the latter models an address - that is,
  * an offset inside a given segment. Memory addresses represents the main access coordinate of memory access var handles, which can be obtained
- * using the combinator methods defined in the {@link jdk.incubator.foreign.MemoryAccessVarHandles} class. Finally, the {@link jdk.incubator.foreign.Layout} class
+ * using the combinator methods defined in the {@link jdk.incubator.foreign.MemoryHandles} class. Finally, the {@link jdk.incubator.foreign.MemoryLayout} class
  * hierarchy allows to describe <em>memory layouts</em> and simplify operations such as computing the size in bytes of a given
  * layout, obtain its alignment requirements, and so on. Memory layouts also provide an alternate, more abstract way, to produce
  * memory access var handles, e.g. using <a href="Layout.html#layout-paths"><em>layout paths</em></a>.

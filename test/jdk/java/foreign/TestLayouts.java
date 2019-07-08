@@ -26,7 +26,7 @@
  * @run testng TestLayouts
  */
 
-import jdk.incubator.foreign.Layout;
+import jdk.incubator.foreign.MemoryLayout;
 
 import java.util.function.LongFunction;
 
@@ -41,8 +41,8 @@ public class TestLayouts {
     }
 
     @Test(dataProvider = "badAlignments", expectedExceptions = IllegalArgumentException.class)
-    public void testBadLayoutAlignment(Layout layout, long alignment) {
-        layout.alignTo(alignment);
+    public void testBadLayoutAlignment(MemoryLayout layout, long alignment) {
+        layout.withBitAlignment(alignment);
     }
 
     @DataProvider(name = "badLayoutSizes")
@@ -72,35 +72,35 @@ public class TestLayouts {
     }
 
     enum SizedLayoutFactory {
-        U_VALUE(Layout::ofUnsignedInt),
-        S_VALUE(Layout::ofSignedInt),
-        FP_VALUE(Layout::ofFloatingPoint),
-        PADDING(Layout::ofPadding),
-        SEQUENCE(size -> Layout.ofSequence(size, Layout.ofPadding(8)));
+        U_VALUE(MemoryLayout::ofUnsignedInt),
+        S_VALUE(MemoryLayout::ofSignedInt),
+        FP_VALUE(MemoryLayout::ofFloatingPoint),
+        PADDING(MemoryLayout::ofPadding),
+        SEQUENCE(size -> MemoryLayout.ofSequence(size, MemoryLayout.ofPadding(8)));
 
-        private final LongFunction<Layout> factory;
+        private final LongFunction<MemoryLayout> factory;
 
-        SizedLayoutFactory(LongFunction<Layout> factory) {
+        SizedLayoutFactory(LongFunction<MemoryLayout> factory) {
             this.factory = factory;
         }
 
-        Layout make(long size) {
+        MemoryLayout make(long size) {
             return factory.apply(size);
         }
     }
 
     enum LayoutKind {
-        U_VALUE(Layout.ofUnsignedInt(8)),
-        S_VALUE(Layout.ofSignedInt(8)),
-        FP_VALUE(Layout.ofFloatingPoint(8)),
-        PADDING(Layout.ofPadding(8)),
-        SEQUENCE(Layout.ofSequence(1, Layout.ofPadding(8))),
-        STRUCT(Layout.ofStruct(Layout.ofPadding(8), Layout.ofPadding(8))),
-        UNION(Layout.ofUnion(Layout.ofPadding(8), Layout.ofPadding(8)));
+        U_VALUE(MemoryLayout.ofUnsignedInt(8)),
+        S_VALUE(MemoryLayout.ofSignedInt(8)),
+        FP_VALUE(MemoryLayout.ofFloatingPoint(8)),
+        PADDING(MemoryLayout.ofPadding(8)),
+        SEQUENCE(MemoryLayout.ofSequence(1, MemoryLayout.ofPadding(8))),
+        STRUCT(MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), MemoryLayout.ofPadding(8))),
+        UNION(MemoryLayout.ofUnion(MemoryLayout.ofPadding(8), MemoryLayout.ofPadding(8)));
 
-        final Layout layout;
+        final MemoryLayout layout;
 
-        LayoutKind(Layout layout) {
+        LayoutKind(MemoryLayout layout) {
             this.layout = layout;
         }
     }

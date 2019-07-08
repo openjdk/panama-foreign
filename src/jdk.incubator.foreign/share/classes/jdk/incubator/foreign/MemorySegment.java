@@ -47,7 +47,7 @@ import java.nio.ByteBuffer;
  * <h2>Constructing memory segments from different sources</h2>
  *
  * There are multiple ways to obtain a memory segment. First, memory segments backed by off-heap memory can
- * be allocated using one of the many factory methods provided (see {@link MemorySegment#ofNative(Layout)},
+ * be allocated using one of the many factory methods provided (see {@link MemorySegment#ofNative(MemoryLayout)},
  * {@link MemorySegment#ofNative(long)} and {@link MemorySegment#ofNative(long, long)}). Memory segments obtained
  * in this way are called <em>native memory segments</em>.
  * <p>
@@ -87,7 +87,7 @@ import java.nio.ByteBuffer;
  * (see {@link MemorySegment#asReadOnly()}) which does not support write operations. It is also possible
  * to create a <em>pinned</em> view of a memory segment (see {@link MemorySegment#asPinned()}), which cannot be
  * closed (see {@link MemorySegment#close()}). Finally, it is possible to create views whose spatial bounds
- * are stricter than the ones of the original segment (see {@link MemorySegment#resize(long, long)}).
+ * are stricter than the ones of the original segment (see {@link MemorySegment#slice(long, long)}).
  * <p>
  * Temporal bounds of the original segment are inherited by the view; that is, closing a resized segment view
  * will cause the whole segment to be closed; as such special care must be taken when sharing views
@@ -115,17 +115,17 @@ public interface MemorySegment extends AutoCloseable {
      * @throws IllegalArgumentException if the new segment bounds are illegal; this can happen because:
      * <ul>
      * <li>either {@code offset} or {@code newSize} are &lt; 0</li>
-     * <li>{@code offset} is bigger than the current segment size (see {@link #bytesSize()}
-     * <li>{@code newSize} is bigger than the current segment size (see {@link #bytesSize()}
+     * <li>{@code offset} is bigger than the current segment size (see {@link #byteSize()}
+     * <li>{@code newSize} is bigger than the current segment size (see {@link #byteSize()}
      * </ul>
      */
-    MemorySegment resize(long offset, long newSize) throws IllegalArgumentException;
+    MemorySegment slice(long offset, long newSize) throws IllegalArgumentException;
 
     /**
      * The size (in bytes) of this memory segment.
      * @return The size (in bytes) of this memory segment.
      */
-    long bytesSize();
+    long byteSize();
 
     /**
      * Obtains a read-only view of this segment. An attempt to write memory associated with a read-only memory segment
@@ -228,8 +228,8 @@ ofNative(layout.bytesSize(), layout.bytesAlignment());
      * @throws RuntimeException if the specified size is too large for the system runtime.
      * @throws OutOfMemoryError if the allocation of the off-heap memory block is refused by the system runtime.
      */
-    static MemorySegment ofNative(Layout layout) throws IllegalArgumentException {
-        return ofNative(layout.bytesSize(), layout.bytesAlignment());
+    static MemorySegment ofNative(MemoryLayout layout) throws IllegalArgumentException {
+        return ofNative(layout.byteSize(), layout.byteAlignment());
     }
 
     /**

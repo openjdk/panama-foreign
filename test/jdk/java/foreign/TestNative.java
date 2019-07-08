@@ -29,8 +29,8 @@
  * @run testng TestNative
  */
 
-import jdk.incubator.foreign.Layout;
-import jdk.incubator.foreign.Layout.PathElement;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import jdk.internal.misc.Unsafe;
 import org.testng.annotations.*;
@@ -63,41 +63,41 @@ public class TestNative {
         UNSAFE = Unsafe.getUnsafe();
     }
 
-    static SequenceLayout bytes = Layout.ofSequence(100,
-            Layout.ofSignedInt(8)
+    static SequenceLayout bytes = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofSignedInt(8)
     );
 
-    static SequenceLayout chars = Layout.ofSequence(100,
-            Layout.ofUnsignedInt(16)
+    static SequenceLayout chars = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofUnsignedInt(16)
     );
 
-    static SequenceLayout shorts = Layout.ofSequence(100,
-            Layout.ofSignedInt(16)
+    static SequenceLayout shorts = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofSignedInt(16)
     );
 
-    static SequenceLayout ints = Layout.ofSequence(100,
-            Layout.ofSignedInt(32)
+    static SequenceLayout ints = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofSignedInt(32)
     );
 
-    static SequenceLayout floats = Layout.ofSequence(100,
-            Layout.ofFloatingPoint(32)
+    static SequenceLayout floats = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofFloatingPoint(32)
     );
 
-    static SequenceLayout longs = Layout.ofSequence(100,
-            Layout.ofSignedInt(64)
+    static SequenceLayout longs = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofSignedInt(64)
     );
 
-    static SequenceLayout doubles = Layout.ofSequence(100,
-            Layout.ofFloatingPoint(64)
+    static SequenceLayout doubles = MemoryLayout.ofSequence(100,
+            MemoryLayout.ofFloatingPoint(64)
     );
 
-    static VarHandle byteHandle = bytes.dereferenceHandle(byte.class, PathElement.sequenceElement());
-    static VarHandle charHandle = chars.dereferenceHandle(char.class, PathElement.sequenceElement());
-    static VarHandle shortHandle = shorts.dereferenceHandle(short.class, PathElement.sequenceElement());
-    static VarHandle intHandle = ints.dereferenceHandle(int.class, PathElement.sequenceElement());
-    static VarHandle floatHandle = floats.dereferenceHandle(float.class, PathElement.sequenceElement());
-    static VarHandle longHandle = doubles.dereferenceHandle(long.class, PathElement.sequenceElement());
-    static VarHandle doubleHandle = longs.dereferenceHandle(double.class, PathElement.sequenceElement());
+    static VarHandle byteHandle = bytes.varHandle(byte.class, PathElement.sequenceElement());
+    static VarHandle charHandle = chars.varHandle(char.class, PathElement.sequenceElement());
+    static VarHandle shortHandle = shorts.varHandle(short.class, PathElement.sequenceElement());
+    static VarHandle intHandle = ints.varHandle(int.class, PathElement.sequenceElement());
+    static VarHandle floatHandle = floats.varHandle(float.class, PathElement.sequenceElement());
+    static VarHandle longHandle = doubles.varHandle(long.class, PathElement.sequenceElement());
+    static VarHandle doubleHandle = longs.varHandle(double.class, PathElement.sequenceElement());
 
     static void initBytes(MemoryAddress base, SequenceLayout seq, BiConsumer<MemoryAddress, Long> handleSetter) {
         for (long i = 0; i < seq.elementsCount().getAsLong() ; i++) {
@@ -111,7 +111,7 @@ public class TestNative {
                                               BiFunction<Z, Integer, Object> nativeBufferExtractor,
                                               BiFunction<Long, Integer, Object> nativeRawExtractor) {
         long nelems = layout.elementsCount().getAsLong();
-        ByteBuffer bb = base.asByteBuffer((int)layout.bytesSize());
+        ByteBuffer bb = base.asByteBuffer((int)layout.byteSize());
         Z z = bufferFactory.apply(bb);
         for (long i = 0 ; i < nelems ; i++) {
             Object handleValue = handleExtractor.apply(base, i);
@@ -158,10 +158,10 @@ public class TestNative {
 
     @Test(dataProvider="buffers")
     public void testNativeCapacity(Function<ByteBuffer, Buffer> bufferFunction, int elemSize) {
-        int capacity = (int)doubles.bytesSize();
+        int capacity = (int)doubles.byteSize();
         try (MemorySegment segment = MemorySegment.ofNative(doubles)) {
             MemoryAddress address = segment.baseAddress();
-            ByteBuffer bb = address.asByteBuffer((int)doubles.bytesSize());
+            ByteBuffer bb = address.asByteBuffer((int)doubles.byteSize());
             Buffer buf = bufferFunction.apply(bb);
             int expected = capacity / elemSize;
             assertEquals(buf.capacity(), expected);

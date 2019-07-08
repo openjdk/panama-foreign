@@ -25,12 +25,12 @@
  */
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import sun.invoke.util.Wrapper;
 
 import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.Layout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
@@ -42,12 +42,12 @@ public class LayoutPathImpl {
 
     private static JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
 
-    private final Layout layout;
+    private final MemoryLayout layout;
     private final long offset;
     private final LayoutPathImpl enclosing;
     private final List<Long> scales;
 
-    private LayoutPathImpl(Layout layout, long offset, List<Long> scales, LayoutPathImpl enclosing) {
+    private LayoutPathImpl(MemoryLayout layout, long offset, List<Long> scales, LayoutPathImpl enclosing) {
         this.layout = layout;
         this.offset = offset;
         this.scales = scales;
@@ -61,9 +61,9 @@ public class LayoutPathImpl {
     public LayoutPathImpl sequenceElement() throws UnsupportedOperationException {
         check(SequenceLayout.class);
         SequenceLayout seq = (SequenceLayout)layout;
-        Layout elem = seq.elementLayout();
+        MemoryLayout elem = seq.elementLayout();
         List<Long> newScales = new ArrayList<>(scales);
-        newScales.add(elem.bitsSize());
+        newScales.add(elem.bitSize());
         return LayoutPathImpl.nestedPath(elem, offset, newScales, this);
     }
 
@@ -80,15 +80,15 @@ public class LayoutPathImpl {
         check(GroupLayout.class);
         GroupLayout g = (GroupLayout)layout;
         long offset = 0;
-        Layout elem = null;
+        MemoryLayout elem = null;
         for (int i = 0; i < g.memberLayouts().size(); i++) {
-            Layout l = g.memberLayouts().get(i);
+            MemoryLayout l = g.memberLayouts().get(i);
             if (l.name().isPresent() &&
                 l.name().get().equals(name)) {
                 elem = l;
                 break;
             } else {
-                offset += l.bitsSize();
+                offset += l.bitSize();
             }
         }
         if (elem == null) {
@@ -109,7 +109,7 @@ public class LayoutPathImpl {
         }
 
         if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class // illegal carrier?
-                || Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitsSize()) { // carrier has the right size?
+                || Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitSize()) { // carrier has the right size?
             throw new IllegalArgumentException("Invalid carrier: " + carrier + ", for layout " + layout);
         }
 
@@ -117,36 +117,36 @@ public class LayoutPathImpl {
 
         return JLI.memoryAddressViewVarHandle(
                 carrier,
-                layout.bytesAlignment(),
+                layout.byteAlignment(),
                 ((ValueLayout) layout).order(),
                 Utils.bitsToBytesOrThrow(offset, IllegalStateException::new),
                 scales.stream().mapToLong(s -> Utils.bitsToBytesOrThrow(s, IllegalStateException::new)).toArray());
     }
 
-    public static LayoutPathImpl rootPath(Layout layout) {
+    public static LayoutPathImpl rootPath(MemoryLayout layout) {
         return new LayoutPathImpl(layout, 0L, List.of(), null);
     }
 
-    public static LayoutPathImpl nestedPath(Layout layout, long offset, List<Long> scales, LayoutPathImpl encl) {
+    public static LayoutPathImpl nestedPath(MemoryLayout layout, long offset, List<Long> scales, LayoutPathImpl encl) {
         return new LayoutPathImpl(layout, offset, scales, encl);
     }
 
     static void checkAlignment(LayoutPathImpl path) {
-        Layout layout = path.layout;
-        long alignment = layout.bitsAlignment();
+        MemoryLayout layout = path.layout;
+        long alignment = layout.bitAlignment();
         if (path.offset % alignment != 0) {
             throw new UnsupportedOperationException("Invalid alignment requirements for layout " + layout);
         }
         LayoutPathImpl encl = path.enclosing;
         if (encl != null) {
-            if (encl.layout.bitsAlignment() < alignment) {
+            if (encl.layout.bitAlignment() < alignment) {
                 throw new UnsupportedOperationException("Alignment requirements for layout " + layout + " do not match those for enclosing layout " + encl.layout);
             }
             checkAlignment(encl);
         }
     }
 
-    public static class PathElementImpl implements Layout.PathElement, UnaryOperator<LayoutPathImpl> {
+    public static class PathElementImpl implements MemoryLayout.PathElement, UnaryOperator<LayoutPathImpl> {
 
         final UnaryOperator<LayoutPathImpl> pathOp;
 

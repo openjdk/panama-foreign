@@ -41,7 +41,7 @@ import java.util.OptionalLong;
  * @implSpec
  * This class is immutable and thread-safe.
  */
-/* package-private */ class PaddingLayout extends AbstractLayout implements Layout {
+/* package-private */ class PaddingLayout extends AbstractLayout implements MemoryLayout {
     private final long size;
 
     PaddingLayout(long size, OptionalLong alignment, Optional<String> name) {
@@ -50,7 +50,7 @@ import java.util.OptionalLong;
     }
 
     @Override
-    public long bitsSize() {
+    public long bitSize() {
         return size;
     }
 
@@ -104,7 +104,7 @@ import java.util.OptionalLong;
      * {@inheritDoc}
      */
     @Override
-    public PaddingLayout alignTo(long alignmentBits) throws IllegalArgumentException {
-        return (PaddingLayout)super.alignTo(alignmentBits);
+    public PaddingLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+        return (PaddingLayout)super.withBitAlignment(alignmentBits);
     }
 }
