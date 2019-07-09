@@ -267,6 +267,7 @@ class AddressVarHandleGenerator {
             mv.visitFieldInsn(GETFIELD, Type.getInternalName(BASE_CLASS), "offset", "J");
             for (int i = 0 ; i < dimensions ; i++) {
                 mv.visitVarInsn(ALOAD, 0); // load recv
+                mv.visitTypeInsn(CHECKCAST, implClassName);
                 mv.visitFieldInsn(GETFIELD, implClassName, "dim" + i, "J");
                 mv.visitVarInsn(LLOAD, slot);
                 mv.visitInsn(LMUL);
