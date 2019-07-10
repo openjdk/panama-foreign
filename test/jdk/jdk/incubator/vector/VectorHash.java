@@ -174,7 +174,7 @@ public class VectorHash {
 
                 h = h * top_h_coeff + x.mul(v_h_coeff).addLanes();
 
-                b = b.shiftLanesLeft(intSpecies.length());
+                b = b.shiftLanesRight(intSpecies.length());
             }
         }
 
