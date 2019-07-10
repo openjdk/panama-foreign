@@ -1376,7 +1376,7 @@ public abstract class Vector<E> {
 
     // Note:  lanewise(Binary) has two rudimentary broadcast
     // operations from an approximate scalar type (long).
-    // We don both with that, here, for lanewise(Ternary).
+    // We do both with that, here, for lanewise(Ternary).
     // The vector subtypes supply a full suite of
     // broadcasting and masked lanewise operations
     // for their specific ETYPEs:
@@ -1730,7 +1730,7 @@ public abstract class Vector<E> {
      * @apiNote
      * This is not a full-service named operation like
      * {@link #add(Vector) add()}.  A masked version of
-     * version of this operation is not directly available
+     * this operation is not directly available
      * but may be obtained via the masked version of
      * {@code lanewise}.  Subclasses define an additional
      * scalar-broadcast overloading of this method.
@@ -1759,7 +1759,7 @@ public abstract class Vector<E> {
      * <p>
      * This is not a full-service named operation like
      * {@link #add(Vector) add()}.  A masked version of
-     * version of this operation is not directly available
+     * this operation is not directly available
      * but may be obtained via the masked version of
      * {@code lanewise}.  Subclasses define an additional
      * scalar-broadcast overloading of this method.
@@ -1961,7 +1961,6 @@ public abstract class Vector<E> {
     /**
      * Tests this vector by comparing it with an input scalar,
      * according to the given comparison operation,
-     * in lanes selected by a mask.
      *
      * This is a lane-wise binary test operation which applies
      * to each pair of corresponding lane values.
@@ -2845,7 +2844,7 @@ public abstract class Vector<E> {
      * contents, but a lane type that is not a floating-point type.
      *
      * This is a lane-wise reinterpretation cast on the lane values.
-     * As such, there this method does not change {@code VSHAPE} or
+     * As such, this method does not change {@code VSHAPE} or
      * {@code VLENGTH}, and there is no change to the bitwise contents
      * of the vector.  If the vector's {@code ETYPE} is already an
      * integral type, the same vector is returned unchanged.
@@ -3297,7 +3296,6 @@ public abstract class Vector<E> {
      * @param bb the byte buffer
      * @param offset the offset into the array
      * @param bo the intended byte order
-     * @param m the mask controlling lane selection
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*ESIZE < 0}
      *         or {@code offset+(N+1)*ESIZE > bb.limit()}

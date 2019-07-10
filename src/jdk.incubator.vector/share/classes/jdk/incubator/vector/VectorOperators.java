@@ -323,6 +323,7 @@ public abstract class VectorOperators {
     }
 
     /*package-private*/
+    @ForceInline
     static boolean opKind(Operator op, int bit) {
         return ((OperatorImpl)op).opKind(bit);
     }

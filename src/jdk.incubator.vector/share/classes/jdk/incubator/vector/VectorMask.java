@@ -446,7 +446,7 @@ public abstract class VectorMask<E> {
      * was out of range, and exception processing can be performed.
      *
      * <p> A mask which is a series of {@code N} set lanes followed by
-     * a series of series of unset lanes can be obtained by calling
+     * a series of unset lanes can be obtained by calling
      * {@code allTrue.indexInRange(0, N)}, where {@code allTrue} is a
      * mask of all true bits.  A mask of {@code N1} unset lanes
      * followed by {@code N2} set lanes can be obtained by calling
