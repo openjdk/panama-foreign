@@ -511,7 +511,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         if the given {@code long} value cannot
      *         be represented by the vector's {@code ETYPE}
      * @see #broadcast(VectorSpecies,double)
-     * @see VectorSpecies#checkValue(VectorSpecies,double)
+     * @see VectorSpecies#checkValue(VectorSpecies,long)
      */
     public static DoubleVector broadcast(VectorSpecies<Double> species, long e) {
         DoubleSpecies vsp = (DoubleSpecies) species;
@@ -1347,7 +1347,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     /**
-    /**
      * {@inheritDoc} <!--workaround-->
      * @see #div(double,VectorMask)
      * <p> Because the underlying scalar operator is an IEEE
@@ -1718,7 +1717,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         comparison operator
      * @see DoubleVector#compare(VectorOperators.Comparison,Vector)
      * @see #eq(double)
-     * @see #lessThan(double)
+     * @see #lt(double)
      */
     public abstract
     VectorMask<Double> compare(Comparison op, double e);
@@ -2553,7 +2552,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*ESIZE < 0}
      *         or {@code offset+(N+1)*ESIZE > a.length}
-     *         for any lane {@code N} in the vector
+     *         for any lane {@code N} in the vector where
+     *         the mask is set
      */
     @ForceInline
     public static
@@ -2789,7 +2789,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*8 < 0}
-     *         or {@code offset+N**8 >= bb.limit()}
+     *         or {@code offset+N*8 >= bb.limit()}
      *         for any lane {@code N} in the vector
      */
     @ForceInline
@@ -2835,7 +2835,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*8 < 0}
-     *         or {@code offset+N**8 >= bb.limit()}
+     *         or {@code offset+N*8 >= bb.limit()}
      *         for any lane {@code N} in the vector
      *         where the mask is set
      */

@@ -511,7 +511,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      *         if the given {@code long} value cannot
      *         be represented by the vector's {@code ETYPE}
      * @see #broadcast(VectorSpecies,int)
-     * @see VectorSpecies#checkValue(VectorSpecies,int)
+     * @see VectorSpecies#checkValue(VectorSpecies,long)
      */
     public static IntVector broadcast(VectorSpecies<Integer> species, long e) {
         IntSpecies vsp = (IntSpecies) species;
@@ -1405,7 +1405,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /**
-    /**
      * {@inheritDoc} <!--workaround-->
      * @see #div(int,VectorMask)
      */
@@ -1685,7 +1684,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * @return the bitwise complement {@code ~} of this vector
      * @see #and(Vector)
      * @see VectorOperators#NOT
-     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Unary,VectorMask)
      */
     @ForceInline
     public final IntVector not() {
@@ -1825,7 +1824,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      *         comparison operator
      * @see IntVector#compare(VectorOperators.Comparison,Vector)
      * @see #eq(int)
-     * @see #lessThan(int)
+     * @see #lt(int)
      */
     public abstract
     VectorMask<Integer> compare(Comparison op, int e);
@@ -2681,7 +2680,8 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*ESIZE < 0}
      *         or {@code offset+(N+1)*ESIZE > a.length}
-     *         for any lane {@code N} in the vector
+     *         for any lane {@code N} in the vector where
+     *         the mask is set
      */
     @ForceInline
     public static
@@ -2914,7 +2914,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*4 < 0}
-     *         or {@code offset+N**4 >= bb.limit()}
+     *         or {@code offset+N*4 >= bb.limit()}
      *         for any lane {@code N} in the vector
      */
     @ForceInline
@@ -2960,7 +2960,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*4 < 0}
-     *         or {@code offset+N**4 >= bb.limit()}
+     *         or {@code offset+N*4 >= bb.limit()}
      *         for any lane {@code N} in the vector
      *         where the mask is set
      */

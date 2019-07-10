@@ -511,7 +511,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         if the given {@code long} value cannot
      *         be represented by the vector's {@code ETYPE}
      * @see #broadcast(VectorSpecies,float)
-     * @see VectorSpecies#checkValue(VectorSpecies,float)
+     * @see VectorSpecies#checkValue(VectorSpecies,long)
      */
     public static FloatVector broadcast(VectorSpecies<Float> species, long e) {
         FloatSpecies vsp = (FloatSpecies) species;
@@ -1347,7 +1347,6 @@ public abstract class FloatVector extends AbstractVector<Float> {
     }
 
     /**
-    /**
      * {@inheritDoc} <!--workaround-->
      * @see #div(float,VectorMask)
      * <p> Because the underlying scalar operator is an IEEE
@@ -1718,7 +1717,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         comparison operator
      * @see FloatVector#compare(VectorOperators.Comparison,Vector)
      * @see #eq(float)
-     * @see #lessThan(float)
+     * @see #lt(float)
      */
     public abstract
     VectorMask<Float> compare(Comparison op, float e);
@@ -2557,7 +2556,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*ESIZE < 0}
      *         or {@code offset+(N+1)*ESIZE > a.length}
-     *         for any lane {@code N} in the vector
+     *         for any lane {@code N} in the vector where
+     *         the mask is set
      */
     @ForceInline
     public static
@@ -2790,7 +2790,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*4 < 0}
-     *         or {@code offset+N**4 >= bb.limit()}
+     *         or {@code offset+N*4 >= bb.limit()}
      *         for any lane {@code N} in the vector
      */
     @ForceInline
@@ -2836,7 +2836,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*4 < 0}
-     *         or {@code offset+N**4 >= bb.limit()}
+     *         or {@code offset+N*4 >= bb.limit()}
      *         for any lane {@code N} in the vector
      *         where the mask is set
      */

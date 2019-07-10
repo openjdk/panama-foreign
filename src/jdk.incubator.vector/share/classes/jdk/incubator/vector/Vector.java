@@ -138,7 +138,7 @@ import jdk.incubator.vector.*;
  * of that shape.  Thus, the {@linkplain #bitSize() size in bits} of
  * of a vector is determined by appealing to its vector shape.
  *
- * <p> Some Java platforms given special support to only one shape,
+ * <p> Some Java platforms give special support to only one shape,
  * while others support several.  A typical platform is not likely
  * to support all the shapes described by this API.  For this reason,
  * most vector operations work on a single input shape and
@@ -175,7 +175,7 @@ import jdk.incubator.vector.*;
  * {@linkplain #elementSize() bit-size of each lane}
  * must always match the bit-size of the vector's shape.
  *
- * Thus, {@link plain #reinterpretShape(VectorSpecies,int) reinterpreting} a
+ * Thus, {@linkplain #reinterpretShape(VectorSpecies,int) reinterpreting} a
  * vector via a cast may double its length if and only if it either
  * halves the lane size, or else changes the shape.  Likewise,
  * reinterpreting a vector may double the lane size if and only if it
@@ -203,14 +203,12 @@ import jdk.incubator.vector.*;
  * It is recommended that Species instances be held in {@code static final}
  * fields for optimal creation and usage of Vector values by the runtime compiler.
  *
- * <p> The various typed vector classes expose static constants
- * corresponding to their supported species, and static methods on these
- * types generally take a species as a parameter.  For example, the
+ * <p> As an example of static constants defined by the typed vector classes,
  * constant {@link FloatVector#SPECIES_256 FloatVector.SPECIES_256}
  * is the unique species whose lanes are {@code float}s and whose
  * vector size is 256 bits.  Again, the constant
- * {@link ShortVector#SPECIES_PREFERRED} is the species which
- * best supports processing of {@code short} vector lanes on
+ * {@link FloatVector#SPECIES_PREFERRED} is the species which
+ * best supports processing of {@code float} vector lanes on
  * the currently running Java platform.
  *
  * <p> As another example, a broadcast scalar value of
@@ -307,7 +305,7 @@ import jdk.incubator.vector.*;
  * a <em>lane-wise n-ary</em> operation takes {@code N} input vectors {@code v[j]},
  * distributing an n-ary scalar operator across the lanes,
  * and produces a result vector of the same type and shape.
- * Except for a few ternary operations, this API has no support
+ * Except for a few ternary operations, this API has no support for
  * lane-wise n-ary operations.
  *
  * For each lane of all of the input vectors {@code v[j]},
@@ -352,7 +350,7 @@ import jdk.incubator.vector.*;
  *
  * <p> The following pseudocode illustrates the behavior of this
  * operation category in the specific example of a conversion from
- * {@code int} to {@code double}:
+ * {@code int} to {@code double}, retaining lower lanes to maintain shape-invariance:
  *
  * <pre>{@code
  * IntVector a = ...;
@@ -425,7 +423,7 @@ import jdk.incubator.vector.*;
  *
  * <li>
  * A very special case of a masked lane-wise binary operation is a
- * {@linkplain blend(Vector,VectorMask) blend}, which operates
+ * {@linkplain #blend(Vector,VectorMask) blend}, which operates
  * lane-wise on two input vectors {@code a} and {@code b}, selecting lane
  * values from one input or the other depending on a mask {@code m}.
  * In lanes where {@code m} is set, the corresponding value from
@@ -483,7 +481,7 @@ import jdk.incubator.vector.*;
  * into the same lane structure as the first input.
  *
  * For example, to multiply all lanes of a {@code double} vector by
- * a scalar value{@code 1.1}, the expression {@code v.mul(1.1)} is
+ * a scalar value {@code 1.1}, the expression {@code v.mul(1.1)} is
  * easier to work with than an equivalent expression with an explicit
  * broadcast operation, such as {@code v.mul(v.broadcast(1.1))}
  * or {@code v.mul(DoubleVector.broadcast(v.species(), 1.1))}.
@@ -696,7 +694,7 @@ import jdk.incubator.vector.*;
  * changes.  The earliest byte is invariantly earliest across all lane
  * structure changes, but only if little-endian convention are used.
  * The root cause of this is that bytes in scalars are numbered from
- * the least significant (rightmost) to the omst significant
+ * the least significant (rightmost) to the most significant
  * (leftmost), and almost never vice-versa.  If we habitually numbered
  * sign bits as zero (as on some computers) then this API would reach
  * for big-endian fictions to create unified addressing of vector
@@ -734,7 +732,7 @@ import jdk.incubator.vector.*;
  * The first lane is loaded from {@code fa[i]} and the last lane
  * is initialized loaded from {@code fa[i+VL-1]}, where {@code VL}
  * is the length of the vector as derived from the species {@code fsp}.
- * Then, {@link FloatVector#add(Vector<Float>) fv=FloatVector.add(fv2)}
+ * Then, {@link FloatVector#add(Vector) fv=fv.add(fv2)}
  * will produce another float vector of that species {@code fsp},
  * given a vector {@code fv2} of the same species {@code fsp}.
  * Next, {@link FloatVector#compare(VectorOperators.Comparison,float)
@@ -1158,7 +1156,7 @@ public abstract class Vector<E> {
     /**
      * Operates on the lane values of this vector.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a lane-wise unary operation which applies
      * the selected operation to each lane.
      *
      * <p>FIXME: Write about the unary operators here.
@@ -1171,9 +1169,9 @@ public abstract class Vector<E> {
                to the input vector
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
-     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Unary,VectorMask)
      * @see #lanewise(VectorOperators.Binary,Vector)
-     * @see #lanewise(VectorOperators.Ternary,Vector)
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
      */
     public abstract Vector<E> lanewise(VectorOperators.Unary op);
 
@@ -1181,7 +1179,7 @@ public abstract class Vector<E> {
      * Operates on the lane values of this vector,
      * with selection of lane elements controlled by a mask.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a lane-wise unary operation which applies
      * the selected operation to each lane.
      *
      * @apiNote
@@ -1193,7 +1191,7 @@ public abstract class Vector<E> {
      *         to the input vector
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
-     * @see #lanewise(VectorOperators.Unary,Vector)
+     * @see #lanewise(VectorOperators.Unary)
      */
     public abstract Vector<E> lanewise(VectorOperators.Unary op,
                                        VectorMask<E> m);
@@ -1223,8 +1221,8 @@ public abstract class Vector<E> {
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
-     * @see #lanewise(VectorOperators.Unary,Vector)
-     * @see #lanewise(VectorOperators.Ternary,Vector)
+     * @see #lanewise(VectorOperators.Unary)
+     * @see #lanewise(VectorOperators.Ternary,Vector, Vector)
      */
     public abstract Vector<E> lanewise(VectorOperators.Binary op,
                                        Vector<E> v);
@@ -1343,7 +1341,7 @@ public abstract class Vector<E> {
      *         to the three input vectors
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
-     * @see #lanewise(VectorOperators.Unary,Vector)
+     * @see #lanewise(VectorOperators.Unary)
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
      */
@@ -1673,20 +1671,20 @@ public abstract class Vector<E> {
      * to each input lane.
      *
      * This method is also equivalent to the expression
-     * {@link #lanewise(VectorOperators.Unary,Vector)
+     * {@link #lanewise(VectorOperators.Unary)
      *    lanewise}{@code (}{@link VectorOperators#NEG
-     *    MIN}{@code)}.
+     *    NEG}{@code)}.
      *
      * @apiNote
      * This method has no masked variant, but the corresponding
      * masked operation can be obtained from the
-     * {@linkplain #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * {@linkplain #lanewise(VectorOperators.Unary,VectorMask)
      * lanewise method}.
      *
      * @return the negation of this vector
      * @see VectorOperators#NEG
-     * @see #lanewise(VectorOperators.Unary,Vector)
-     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Unary)
+     * @see #lanewise(VectorOperators.Unary,VectorMask)
      */
     public abstract Vector<E> neg();
 
@@ -1698,20 +1696,20 @@ public abstract class Vector<E> {
      * to each input lane.
      *
      * This method is also equivalent to the expression
-     * {@link #lanewise(VectorOperators.Unary,Vector)
+     * {@link #lanewise(VectorOperators.Unary)
      *    lanewise}{@code (}{@link VectorOperators#ABS
-     *    MIN}{@code)}.
+     *    ABS}{@code)}.
      *
-     * <p>
+     * @apiNote
      * This method has no masked variant, but the corresponding
      * masked operation can be obtained from the
-     * {@linkplain #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * {@linkplain #lanewise(VectorOperators.Unary,VectorMask)
      * lanewise method}.
      *
      * @return the absolute value of this vector
      * @see VectorOperators#ABS
-     * @see #lanewise(VectorOperators.Unary,Vector)
-     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Unary)
+     * @see #lanewise(VectorOperators.Unary,VectorMask)
      */
     public abstract Vector<E> abs();
 
@@ -1729,7 +1727,7 @@ public abstract class Vector<E> {
      *    lanewise}{@code (}{@link VectorOperators#MIN
      *    MIN}{@code , v)}.
      *
-     * <p>
+     * @apiNote
      * This is not a full-service named operation like
      * {@link #add(Vector) add()}.  A masked version of
      * version of this operation is not directly available
@@ -1842,13 +1840,13 @@ public abstract class Vector<E> {
      * of the vector's native {@code ETYPE}.
      * (In the case of floating point types, the value
      * {@code NEGATIVE_INFINITY} is used, and will appear
-     * after casting as {@code Long.MAX_VALUE}.
+     * after casting as {@code Long.MIN_VALUE}.
      * <li>
      * If the operation is {@code MIN},
-     * then the identity value is the {@code MIN_VALUE}
+     * then the identity value is the {@code MAX_VALUE}
      * of the vector's native {@code ETYPE}.
      * (In the case of floating point types, the value
-     * {@code NEGATIVE_INFINITY} is used, and will appear
+     * {@code POSITIVE_INFINITY} is used, and will appear
      * after casting as {@code Long.MAX_VALUE}.
      * </ul>
      *
@@ -1929,8 +1927,8 @@ public abstract class Vector<E> {
      * @return the mask result of testing lane-wise if this vector
      *         compares to the input, according to the selected
      *         comparison operator
-     * @see #equals(Vector)
-     * @see #lessThan(Vector)
+     * @see #eq(Vector)
+     * @see #lt(Vector)
      * @see VectorOperators.Comparison
      * @see #compare(VectorOperators.Comparison, Vector, VectorMask)
      */
@@ -2172,7 +2170,7 @@ public abstract class Vector<E> {
      * @apiNote
      *
      * This method may be regarded as the inverse of
-     * {@code #unslice(int,Vector,int) unslice()},
+     * {@link #unslice(int,Vector,int) unslice()},
      * in that the sliced value could be unsliced back into its
      * original position in the two input vectors, without
      * disturbing unrelated elements, as in the following
@@ -2474,7 +2472,7 @@ public abstract class Vector<E> {
      *
      * @param s the shuffle controlling lane index selection
      * @return the rearrangement of the lane elements of this vector
-     * @throw IndexOutOfBoundsException if there are any exceptional
+     * @throws IndexOutOfBoundsException if there are any exceptional
      *        source indexes in the shuffle
      * @see #rearrange(VectorShuffle,VectorMask)
      * @see #rearrange(VectorShuffle,Vector)
@@ -2498,13 +2496,15 @@ public abstract class Vector<E> {
      * <p> This method returns the value of this pseudocode:
      * <pre>{@code
      * Vector<E> r = this.rearrange(s.wrapIndexes());
-     * return broadcast(0).blend(r, s.laneIsValid());
+     * VectorMask<E> valid = s.laneIsValid();
+     * if (m.andNot(valid).anyTrue()) throw ...;
+     * return broadcast(0).blend(r, m);
      * }</pre>
      *
      * @param s the shuffle controlling lane index selection
      * @param m the mask controlling application of the shuffle
      * @return the rearrangement of the lane elements of this vector
-     * @throw IndexOutOfBoundsException if there are any exceptional
+     * @throws IndexOutOfBoundsException if there are any exceptional
      *        source indexes in the shuffle where the mask is set
      * @see #rearrange(VectorShuffle)
      * @see #rearrange(VectorShuffle,Vector)
@@ -2532,7 +2532,7 @@ public abstract class Vector<E> {
      * <p> This method returns the value of this pseudocode:
      * <pre>{@code
      * Vector<E> r1 = this.rearrange(s.wrapIndexes());
-     * // or else: r1 = this.rearrange(s, valid);
+     * // or else: r1 = this.rearrange(s, s.laneIsValid());
      * Vector<E> r2 = v.rearrange(s.wrapIndexes());
      * return r2.blend(r1,s.laneIsValid());
      * }</pre>
@@ -2769,8 +2769,8 @@ public abstract class Vector<E> {
      *
      * @return a {@code ByteVector} with the same shape and information content
      * @see Vector#reinterpretShape(VectorSpecies,int)
-     * @see ByteVector#toIntArray
-     * @see ByteVector#toFloatArray
+     * @see IntVector#intoByteArray(byte[], int)
+     * @see FloatVector#intoByteArray(byte[], int)
      * @see VectorSpecies#withLanes(Class)
      */
     public abstract ByteVector reinterpretAsBytes();
@@ -3045,8 +3045,8 @@ public abstract class Vector<E> {
      * @see VectorOperators#I2L
      * @see VectorOperators.Conversion#ofCast(Class,Class)
      * @see VectorSpecies#partLimit(VectorSpecies,boolean)
-     * @see #viewAsFloatingLanes(VectorSpecies,int)
-     * @see #viewAsIntegralLanes(VectorSpecies,int)
+     * @see #viewAsFloatingLanes()
+     * @see #viewAsIntegralLanes()
      * @see #convertShape(VectorOperators.Conversion,VectorSpecies,int)
      * @see #reinterpretShape(VectorSpecies,int)
      */

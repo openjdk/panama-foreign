@@ -163,7 +163,7 @@ public abstract class VectorMask<E> {
      *         {@code boolean} value
      * @throws IllegalArgumentException
      *         if {@code bits.length != species.length()}
-     * @see #fromLong(VectorSpecies, boolean...)
+     * @see #fromLong(VectorSpecies, long)
      * @see #fromArray(VectorSpecies, boolean[], int)
      * @see Vector#maskFromValues(boolean...)
      */
@@ -178,7 +178,7 @@ public abstract class VectorMask<E> {
      * Loads a mask from a {@code boolean} array starting at an offset.
      * <p>
      * For each mask lane, where {@code N} is the mask lane index,
-     * if the array element at index {@code ix + N} is {@code true} then the
+     * if the array element at index {@code offset + N} is {@code true} then the
      * mask lane at index {@code N} is set, otherwise it is unset.
      *
      * @param species vector species for the desired mask
@@ -187,7 +187,7 @@ public abstract class VectorMask<E> {
      * @return the mask loaded from the {@code boolean} array
      * @throws IndexOutOfBoundsException if {@code offset < 0}, or
      * {@code offset > bits.length - species.length()}
-     * @see #fromLong(VectorSpecies, boolean...)
+     * @see #fromLong(VectorSpecies, long)
      * @see #fromValues(VectorSpecies, boolean...)
      */
     @ForceInline
@@ -207,7 +207,7 @@ public abstract class VectorMask<E> {
     /**
      * Returns a mask where each lane is set or unset according to
      * the bits in the given bitmask, starting with the least
-     * significant bit, and continuing up through the sign bit.
+     * significant bit, and continuing up to the sign bit.
      * <p>
      * For each mask lane, where {@code N} is the mask lane index,
      * if the expression {@code (bits>>min(63,N))&1} is non-zero,
@@ -224,7 +224,6 @@ public abstract class VectorMask<E> {
      *         the bits in the given integer value
      * @see #fromValues(VectorSpecies, boolean...)
      * @see #fromArray(VectorSpecies, boolean[], int)
-     * @see Vector#maskFromBits(long)
      */
     @ForceInline
     public static <E> VectorMask<E> fromLong(VectorSpecies<E> species, long bits) {
@@ -280,7 +279,7 @@ public abstract class VectorMask<E> {
      * mask lane is set then the {@code N}th bit is set to one in the
      * resulting {@code long} value, otherwise the {@code N}th bit is set
      * to zero.
-     * The mask must no more than 64 lanes.
+     * The mask must have no more than 64 lanes.
      *
      * @return the lane elements of this mask packed into a {@code long}
      *         value.

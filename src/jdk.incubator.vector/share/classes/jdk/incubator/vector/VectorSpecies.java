@@ -243,7 +243,7 @@ public interface VectorSpecies<E> {
      * @return an indication of the size change, as a signed ratio or zero
      *
      * @see Vector#reinterpretShape(VectorSpecies,int)
-     * @see Vector#convertShape(VectorOperations.Conversion,VectorSpecies,int)
+     * @see Vector#convertShape(VectorOperators.Conversion,VectorSpecies,int)
      */
     public abstract int partLimit(VectorSpecies<?> outputSpecies, boolean lanewise);
 
@@ -325,7 +325,7 @@ public interface VectorSpecies<E> {
 
     /**
      * Finds the species preferred by the current platform
-     * for a given vector element type and the preferred shape.
+     * for a given vector element type.
      * This is the same value as
      * {@code VectorSpecies.of(etype, VectorShape.preferredShape())}.
      *
@@ -337,7 +337,7 @@ public interface VectorSpecies<E> {
      * will have the same underlying shape.
      * <li>All vectors created from preferred species will have a
      * common bit-size and information capacity.
-     * <li>{@linkplain Vector#reinterpret(VectorSpecies) Reinterpretation casts}.
+     * <li>{@linkplain Vector#reinterpretShape(VectorSpecies, int) Reinterpretation casts}
      * between vectors of preferred species will neither truncate
      * lanes nor fill them with default values.
      * <li>For any particular element type, some platform might possibly
@@ -358,7 +358,7 @@ public interface VectorSpecies<E> {
      * @throws IllegalArgumentException if no such species exists for the
      *         element type
      *         or if the given type is not a valid {@code ETYPE}
-     * @see Vector#reinterpretShape(VectorSpecies)
+     * @see Vector#reinterpretShape(VectorSpecies,int)
      * @see VectorShape#preferredShape()
      * @see VectorSpecies#ofLargestShape(Class)
      */
@@ -367,8 +367,8 @@ public interface VectorSpecies<E> {
     }
 
     /**
-     * Returns the bit-size the given vector element type ({@code
-     * ETYPE}).  The element type must be a valid {@code ETYPE}, not a
+     * Returns the bit-size of the given vector element type ({@code ETYPE}).
+     * The element type must be a valid {@code ETYPE}, not a
      * wrapper type or other object type.
      *
      * The element type argument must be a mirror for a valid vector
@@ -566,11 +566,9 @@ public interface VectorSpecies<E> {
      * range {@code [-VLENGTH..-1]}.
      *
      * @param sourceIndexes the source indexes which the shuffle will draw from
-     * @param offset the offset into the array
      * @return a shuffle where each lane's source index is set to the given
      *         {@code int} value, partially wrapped if exceptional
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
-     *         {@code offset > sourceIndexes.length - VLENGTH}
+     * @throws IndexOutOfBoundsException if {@code sourceIndexes.length != VLENGTH}
      * @see VectorShuffle#fromValues(VectorSpecies,int...)
      */
     public abstract VectorShuffle<E> shuffleFromValues(int... sourceIndexes);
@@ -614,14 +612,14 @@ public interface VectorSpecies<E> {
      * <p> This method behaves as if a shuffle is created from an array of
      * mapped indexes as follows:
      * <pre>{@code
-     *   int[] a = new int[species.length()];
+     *   int[] a = new int[VLENGTH];
      *   for (int i = 0; i < a.length; i++) {
-     *       a[i] = f.applyAsInt(i);
+     *       a[i] = fn.applyAsInt(i);
      *   }
      *   return VectorShuffle.fromArray(this, a, 0);
      * }</pre>
      *
-     * @param f the lane index mapping function
+     * @param fn the lane index mapping function
      * @return a shuffle of mapped indexes
      * @see VectorShuffle#fromOp(VectorSpecies,IntUnaryOperator)
      */

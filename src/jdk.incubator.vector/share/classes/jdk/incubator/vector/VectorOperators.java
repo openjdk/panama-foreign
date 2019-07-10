@@ -317,6 +317,7 @@ public abstract class VectorOperators {
     }
 
     /*package-private*/
+    @ForceInline
     static int opCode(Operator op, int requireKind, int forbidKind) {
         return ((OperatorImpl)op).opCode(requireKind, forbidKind);
     }
@@ -452,7 +453,7 @@ public abstract class VectorOperators {
 
     // Ternary operations
 
-    /** Produce {@code a^((a^b)&c), bitwise c?b:a)}.  Integral only. */
+    /** Produce {@code a^((a^b)&c), or bitwise (c?b:a)}.  Integral only. */
     public static final /*float*/ Ternary BITWISE_BLEND = ternary("BITWISE_BLEND", "a^((a^b)&c)", -1 /*VectorIntrinsics.VECTOR_OP_BITWISE_BLEND*/, VO_NOFP);
     /** Produce {@code fma(a,b,c)}.  Floating only. */
     public static final /*float*/ Ternary FMA = ternary("FMA", "fma", VectorIntrinsics.VECTOR_OP_FMA, VO_ONLYFP);

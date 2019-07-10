@@ -1324,7 +1324,6 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /**
-    /**
      * {@inheritDoc} <!--workaround-->
      * @see #div(long,VectorMask)
      */
@@ -1604,7 +1603,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the bitwise complement {@code ~} of this vector
      * @see #and(Vector)
      * @see VectorOperators#NOT
-     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Unary,VectorMask)
      */
     @ForceInline
     public final LongVector not() {
@@ -1744,7 +1743,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         comparison operator
      * @see LongVector#compare(VectorOperators.Comparison,Vector)
      * @see #eq(long)
-     * @see #lessThan(long)
+     * @see #lt(long)
      */
     public abstract
     VectorMask<Long> compare(Comparison op, long e);
@@ -2550,7 +2549,8 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*ESIZE < 0}
      *         or {@code offset+(N+1)*ESIZE > a.length}
-     *         for any lane {@code N} in the vector
+     *         for any lane {@code N} in the vector where
+     *         the mask is set
      */
     @ForceInline
     public static
@@ -2786,7 +2786,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*8 < 0}
-     *         or {@code offset+N**8 >= bb.limit()}
+     *         or {@code offset+N*8 >= bb.limit()}
      *         for any lane {@code N} in the vector
      */
     @ForceInline
@@ -2832,7 +2832,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*8 < 0}
-     *         or {@code offset+N**8 >= bb.limit()}
+     *         or {@code offset+N*8 >= bb.limit()}
      *         for any lane {@code N} in the vector
      *         where the mask is set
      */

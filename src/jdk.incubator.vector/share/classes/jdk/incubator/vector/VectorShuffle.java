@@ -154,7 +154,7 @@ public abstract class VectorShuffle<E> {
      * The various lane source indexes are unmodified, except that any
      * index that fails to validate against a changed {@code VLENGTH}
      * is partially wrapped to an exceptional index, whether it was
-     * originally normal or exception.
+     * originally normal or exceptional.
      *
      * @param species the species of desired shuffle
      * @param <F> the boxed element type of the species
@@ -263,11 +263,9 @@ public abstract class VectorShuffle<E> {
      *
      * @param species shuffle species
      * @param sourceIndexes the source indexes which the shuffle will draw from
-     * @param offset the offset into the array
      * @return a shuffle where each lane's source index is set to the given
      *         {@code int} value, partially wrapped if exceptional
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
-     *         {@code offset > sourceIndexes.length - VLENGTH}
+     * @throws IndexOutOfBoundsException if {@code sourceIndexes.length != VLENGTH}
      * @see VectorSpecies#shuffleFromValues(int...)
      */
     @ForceInline
@@ -283,7 +281,7 @@ public abstract class VectorShuffle<E> {
      * an {@code int} array starting at an offset.
      *
      * <p> For each shuffle lane, where {@code N} is the shuffle lane
-     * index, the array element at index {@code i + N} is validated
+     * index, the array element at index {@code offset + N} is validated
      * against the species {@code VLENGTH}, and (if invalid)
      * is partially wrapped to an exceptional index in the
      * range {@code [-VLENGTH..-1]}.
@@ -324,13 +322,13 @@ public abstract class VectorShuffle<E> {
      * <pre>{@code
      *   int[] a = new int[species.length()];
      *   for (int i = 0; i < a.length; i++) {
-     *       a[i] = f.applyAsInt(i);
+     *       a[i] = fn.applyAsInt(i);
      *   }
      *   return VectorShuffle.fromArray(a, 0);
      * }</pre>
      *
      * @param species shuffle species
-     * @param f the lane index mapping function
+     * @param fn the lane index mapping function
      * @return a shuffle of mapped indexes
      * @see VectorSpecies#shuffleFromOp(IntUnaryOperator)
      */
