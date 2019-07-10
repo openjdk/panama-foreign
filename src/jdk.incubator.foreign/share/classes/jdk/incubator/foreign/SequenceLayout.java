@@ -25,6 +25,8 @@
  */
 package jdk.incubator.foreign;
 
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.DynamicConstantDesc;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -120,7 +122,7 @@ public class SequenceLayout extends AbstractLayout {
             return false;
         }
         SequenceLayout s = (SequenceLayout)other;
-        return size == s.size && elementLayout.equals(s.elementLayout);
+        return size.equals(s.size) && elementLayout.equals(s.elementLayout);
     }
 
     @Override
@@ -131,6 +133,15 @@ public class SequenceLayout extends AbstractLayout {
     @Override
     SequenceLayout dup(OptionalLong alignment, Optional<String> name) {
         return new SequenceLayout(elementsCount(), elementLayout, alignment, name);
+    }
+
+    @Override
+    public Optional<DynamicConstantDesc<SequenceLayout>> describeConstable() {
+        return size.isPresent() ?
+                Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
+                        CD_SEQUENCE_LAYOUT, MH_SIZED_SEQUENCE, size.getAsLong(), elementLayout.describeConstable().get())) :
+                Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
+                        CD_SEQUENCE_LAYOUT, MH_UNSIZED_SEQUENCE, elementLayout.describeConstable().get()));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout

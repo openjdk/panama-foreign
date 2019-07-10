@@ -28,6 +28,9 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.LayoutPathImpl;
 import jdk.internal.foreign.Utils;
 
+import java.lang.constant.Constable;
+import java.lang.constant.ConstantDesc;
+import java.lang.constant.DynamicConstantDesc;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.List;
@@ -107,7 +110,10 @@ long valueOffset = seq.offset(PathElement.sequenceElement(), PathElement.groupEl
  * may become a {@code sealed} interface, which would prohibit subclassing except by
  * explicitly permitted types.
  */
-public interface MemoryLayout {
+public interface MemoryLayout extends Constable {
+
+    @Override
+    Optional<? extends DynamicConstantDesc<? extends MemoryLayout>> describeConstable();
 
     /**
      * Computes the layout size, in bits.

@@ -219,6 +219,11 @@ public final class ConstantDescs {
             = ofConstantBootstrap(CD_ConstantBootstraps, "invoke",
             CD_Object, CD_MethodHandle, CD_Object.arrayType());
 
+    /** {@link MethodHandleDesc} representing {@link ConstantBootstraps#getStaticFinal(Lookup, String, Class, Class) ConstantBootstraps.getStaticFinal} */
+    public static final DirectMethodHandleDesc BSM_GET_STATIC_FINAL
+            = ofConstantBootstrap(CD_ConstantBootstraps, "getStaticFinal",
+            CD_Object, CD_Class);
+
     /** {@link ClassDesc} representing the primitive type {@code int} */
     public static final ClassDesc CD_int = ClassDesc.ofDescriptor("I");
 

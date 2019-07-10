@@ -25,6 +25,14 @@
  */
 package jdk.incubator.foreign;
 
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDesc;
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.DirectMethodHandleDesc;
+import java.lang.constant.DynamicConstantDesc;
+import java.lang.constant.MethodHandleDesc;
+import java.lang.constant.MethodTypeDesc;
+import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -117,4 +125,44 @@ abstract class AbstractLayout implements MemoryLayout {
         return Objects.equals(name, ((AbstractLayout)other).name) &&
                 Objects.equals(alignment, ((AbstractLayout)other).alignment);
     }
+
+    /*** Helper constants for implementing Layout::describeConstable ***/
+
+    static final ClassDesc CD_LAYOUT = MemoryLayout.class.describeConstable().get();
+
+    static final ClassDesc CD_VALUE_LAYOUT = ValueLayout.class.describeConstable().get();
+
+    static final ClassDesc CD_SEQUENCE_LAYOUT = SequenceLayout.class.describeConstable().get();
+
+    static final ClassDesc CD_GROUP_LAYOUT = GroupLayout.class.describeConstable().get();
+
+    static final ClassDesc CD_BYTEORDER = ByteOrder.class.describeConstable().get();
+
+    static final ConstantDesc BIG_ENDIAN = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "BIG_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
+
+    static final ConstantDesc LITTLE_ENDIAN = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "LITTLE_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
+
+    static final MethodHandleDesc MH_PADDING = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofPadding",
+                MethodTypeDesc.of(CD_LAYOUT, ConstantDescs.CD_long));
+
+    static final MethodHandleDesc MH_SIGNED = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofSignedInt",
+                MethodTypeDesc.of(CD_VALUE_LAYOUT, CD_BYTEORDER, ConstantDescs.CD_long));
+
+    static final MethodHandleDesc MH_UNSIGNED = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofUnsignedInt",
+                MethodTypeDesc.of(CD_VALUE_LAYOUT, CD_BYTEORDER, ConstantDescs.CD_long));
+
+    static final MethodHandleDesc MH_FLOAT = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofFloatingPoint",
+                MethodTypeDesc.of(CD_VALUE_LAYOUT, CD_BYTEORDER, ConstantDescs.CD_long));
+
+    static final MethodHandleDesc MH_SIZED_SEQUENCE = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofSequence",
+                MethodTypeDesc.of(CD_SEQUENCE_LAYOUT, ConstantDescs.CD_long, CD_LAYOUT));
+
+    static final MethodHandleDesc MH_UNSIZED_SEQUENCE = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofSequence",
+                MethodTypeDesc.of(CD_SEQUENCE_LAYOUT, CD_LAYOUT));
+
+    static final MethodHandleDesc MH_STRUCT = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofStruct",
+                MethodTypeDesc.of(CD_GROUP_LAYOUT, CD_LAYOUT.arrayType()));
+
+    static final MethodHandleDesc MH_UNION = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofUnion",
+                MethodTypeDesc.of(CD_GROUP_LAYOUT, CD_LAYOUT.arrayType()));
 }

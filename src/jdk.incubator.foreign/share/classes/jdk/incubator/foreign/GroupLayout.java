@@ -25,6 +25,10 @@
  */
 package jdk.incubator.foreign;
 
+import java.lang.constant.ConstantDesc;
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.DynamicConstantDesc;
+import java.lang.constant.MethodHandleDesc;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -57,18 +61,20 @@ public class GroupLayout extends AbstractLayout {
         /**
          * A 'struct' kind.
          */
-        STRUCT(LongStream::sum, ""),
+        STRUCT(LongStream::sum, "", MH_STRUCT),
         /**
          * A 'union' kind.
          */
-        UNION(ls -> ls.max().getAsLong(), "|");
+        UNION(ls -> ls.max().getAsLong(), "|", MH_UNION);
 
         final ToLongFunction<LongStream> sizeFunc;
         final String delimTag;
+        final MethodHandleDesc mhDesc;
 
-        Kind(ToLongFunction<LongStream> sizeFunc, String delimTag) {
+        Kind(ToLongFunction<LongStream> sizeFunc, String delimTag, MethodHandleDesc mhDesc) {
             this.sizeFunc = sizeFunc;
             this.delimTag = delimTag;
+            this.mhDesc = mhDesc;
         }
     }
 
@@ -157,6 +163,18 @@ public class GroupLayout extends AbstractLayout {
     @Override
     GroupLayout dup(OptionalLong alignment, Optional<String> name) {
         return new GroupLayout(kind, elements, alignment, name);
+    }
+
+    @Override
+    public Optional<DynamicConstantDesc<GroupLayout>> describeConstable() {
+        ConstantDesc[] constants = new ConstantDesc[1 + elements.size()];
+        constants[0] = kind.mhDesc;
+        for (int i = 0 ; i < elements.size() ; i++) {
+            constants[i + 1] = elements.get(i).describeConstable().get();
+        }
+        return Optional.of(DynamicConstantDesc.ofNamed(
+                    ConstantDescs.BSM_INVOKE, kind.name().toLowerCase(),
+                CD_GROUP_LAYOUT, constants));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout

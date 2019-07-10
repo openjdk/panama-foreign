@@ -25,6 +25,8 @@
  */
 package jdk.incubator.foreign;
 
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.DynamicConstantDesc;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -87,6 +89,12 @@ import java.util.OptionalLong;
     @Override
     PaddingLayout dup(OptionalLong alignment, Optional<String> name) {
         return new PaddingLayout(size, alignment, name);
+    }
+
+    @Override
+    public Optional<DynamicConstantDesc<MemoryLayout>> describeConstable() {
+        return Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "padding",
+                CD_LAYOUT, MH_PADDING, size));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout

@@ -25,6 +25,9 @@
  */
 package jdk.incubator.foreign;
 
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.DynamicConstantDesc;
+import java.lang.constant.MethodHandleDesc;
 import java.nio.ByteOrder;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -50,16 +53,18 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
      */
     enum Kind {
         /** Kind of unsigned integral value. */
-        INTEGRAL_UNSIGNED("u"),
+        INTEGRAL_UNSIGNED("u", MH_UNSIGNED),
         /** Signed integral value. */
-        INTEGRAL_SIGNED("i"),
+        INTEGRAL_SIGNED("i", MH_SIGNED),
         /** Kind of floating-point value. */
-        FLOATING_POINT("f");
+        FLOATING_POINT("f", MH_FLOAT);
 
         String tag;
+        MethodHandleDesc mhDesc;
 
-        Kind(String tag) {
+        Kind(String tag, MethodHandleDesc mhDesc) {
             this.tag = tag;
+            this.mhDesc = mhDesc;
         }
     }
 
@@ -142,6 +147,12 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
     @Override
     ValueLayout dup(OptionalLong alignment, Optional<String> name) {
         return new ValueLayout(kind, order, size, alignment, name);
+    }
+
+    @Override
+    public Optional<DynamicConstantDesc<ValueLayout>> describeConstable() {
+        return Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
+                CD_VALUE_LAYOUT, kind.mhDesc, order == ByteOrder.BIG_ENDIAN ? BIG_ENDIAN : LITTLE_ENDIAN, size));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
