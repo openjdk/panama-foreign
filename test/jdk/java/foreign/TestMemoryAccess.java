@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @run testng TestMemoryAccess
+ * @run testng/othervm -Xverify:all TestMemoryAccess
  */
 
 import jdk.incubator.foreign.GroupLayout;

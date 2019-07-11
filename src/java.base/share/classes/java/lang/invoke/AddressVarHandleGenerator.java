@@ -47,6 +47,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
@@ -64,6 +65,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_5;
 import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_M1;
 import static jdk.internal.org.objectweb.asm.Opcodes.ILOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.LADD;
 import static jdk.internal.org.objectweb.asm.Opcodes.LALOAD;
@@ -124,7 +126,7 @@ class AddressVarHandleGenerator {
         Arrays.fill(components, long.class);
         this.form = new VarForm(BASE_CLASS, MemoryAddressProxy.class, carrier, components);
         this.helperClass = helperClassCache.get(carrier);
-        this.implClassName = helperClass.getSimpleName() + dimensions;
+        this.implClassName = helperClass.getName().replace('.', '/') + dimensions;
     }
 
     /*
@@ -163,7 +165,7 @@ class AddressVarHandleGenerator {
 
         //add dimension fields
         for (int i = 0; i < dimensions; i++) {
-            cw.visitField(ACC_FINAL, "dim" + i, "J", null, null);
+            cw.visitField(ACC_PRIVATE | ACC_FINAL, "dim" + i, "J", null, null);
         }
 
         addConstructor(cw);
@@ -246,17 +248,17 @@ class AddressVarHandleGenerator {
             if (dimensions > 0) {
                 helperType = helperType.dropParameterTypes(3, 3 + dimensions);
             }
-            MethodHandle mh = MethodHandles.Lookup.IMPL_LOOKUP
+            //try to resolve...
+            String helperMethodName = methName + "0";
+            MethodHandles.Lookup.IMPL_LOOKUP
                     .findStatic(helperClass,
-                            methName + "0",
+                            helperMethodName,
                             helperType);
 
 
             MethodVisitor mv = cw.visitMethod(ACC_STATIC, methName, methType.toMethodDescriptorString(), null, null);
             mv.visitAnnotation(Type.getDescriptor(ForceInline.class), true);
             mv.visitCode();
-            mv.visitLdcInsn(cw.makeConstantPoolPatch(mh));
-            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
 
             mv.visitVarInsn(ALOAD, 0); // handle impl
             mv.visitVarInsn(ALOAD, 1); // receiver
@@ -281,8 +283,8 @@ class AddressVarHandleGenerator {
                 slot += getSlotsForType(param);
             }
 
-            //call MH
-            mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
+            //call helper
+            mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(helperClass), helperMethodName,
                     helperType.toMethodDescriptorString(), false);
 
             mv.visitInsn(returnInsn(helperType.returnType()));
@@ -309,7 +311,7 @@ class AddressVarHandleGenerator {
         }
 
         mv.visitInsn(ARETURN);
-
+        mv.visitMaxs(0, 0);
         mv.visitEnd();
     }
 
@@ -317,7 +319,9 @@ class AddressVarHandleGenerator {
         MethodVisitor mv = cw.visitMethod(ACC_FINAL, "carrier", "()Ljava/lang/Class;", null, null);
         mv.visitCode();
         mv.visitLdcInsn(cw.makeConstantPoolPatch(carrier));
+        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
         mv.visitInsn(ARETURN);
+        mv.visitMaxs(0, 0);
         mv.visitEnd();
     }
 
@@ -330,7 +334,7 @@ class AddressVarHandleGenerator {
             Object[] patches = cw.resolvePatches(classBytes);
             Class<?> c = U.defineAnonymousClass(BASE_CLASS, classBytes, patches);
             return c;
-        } catch (VerifyError e) {
+        } catch (Throwable e) {
             debugPrintClass(classBytes);
             throw e;
         }
