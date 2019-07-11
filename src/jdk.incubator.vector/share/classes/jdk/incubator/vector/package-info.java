@@ -44,7 +44,6 @@
  * distributing some scalar operator (such as
  * {@linkplain Vector#add(Vector) addition})
  * across the lanes of the participating vectors,
- *
  * usually generating a vector result whose lanes contain the various
  * scalar results.  When run on a supporting platform, lane-wise
  * operations can be executed in parallel by the hardware.  This style

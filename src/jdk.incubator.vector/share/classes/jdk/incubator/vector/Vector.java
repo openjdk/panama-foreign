@@ -55,7 +55,6 @@ import jdk.incubator.vector.*;
  * distributing some scalar operator (such as
  * {@linkplain Vector#add(Vector) addition})
  * across the lanes of the participating vectors,
- *
  * usually generating a vector result whose lanes contain the various
  * scalar results.  When run on a supporting platform, lane-wise
  * operations can be executed in parallel by the hardware.  This style
@@ -737,7 +736,6 @@ import jdk.incubator.vector.*;
  * given a vector {@code fv2} of the same species {@code fsp}.
  * Next, {@link FloatVector#compare(VectorOperators.Comparison,float)
  * mnz=fv.compare(NE, 0.0f)} tests whether the result is zero,
- *
  * yielding a mask {@code mnz}.  The non-zero lanes (and only those
  * lanes) can then be stored back into the original array elements
  * using the statement
@@ -1960,7 +1958,7 @@ public abstract class Vector<E> {
 
     /**
      * Tests this vector by comparing it with an input scalar,
-     * according to the given comparison operation,
+     * according to the given comparison operation.
      *
      * This is a lane-wise binary test operation which applies
      * to each pair of corresponding lane values.
@@ -2526,7 +2524,7 @@ public abstract class Vector<E> {
      * the first vector at lane {@code I} if {@code I>=0}.
      * Otherwise, the exceptional index {@code I} is wrapped
      * by adding {@code VLENGTH} to it and used to index
-     * the <em>second</em> vector, at index {@code I+VLENGTH},
+     * the <em>second</em> vector, at index {@code I+VLENGTH}.
      *
      * <p> This method returns the value of this pseudocode:
      * <pre>{@code

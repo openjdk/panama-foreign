@@ -253,7 +253,7 @@ public interface VectorSpecies<E> {
      * Finds a species with the given element type and the
      * same shape as this species.
      * Returns the same value as
-     * {@code VectorSpecies.of(newType, this.vectorShape())}
+     * {@code VectorSpecies.of(newType, this.vectorShape())}.
      *
      * @param newType the new element type
      * @param <F> the boxed element type
@@ -270,7 +270,7 @@ public interface VectorSpecies<E> {
      * Finds a species with the given shape and the same
      * elementType as this species.
      * Returns the same value as
-     * {@code VectorSpecies.of(this.elementType(), newShape)}
+     * {@code VectorSpecies.of(this.elementType(), newShape)}.
      *
      * @param shape the new shape
      * @return a species for the same element type and the new shape

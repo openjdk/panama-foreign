@@ -97,7 +97,7 @@ public enum VectorShape {
      * Finds a vector species with the given element type
      * and the current shape.
      * Returns the same value as
-     * {@code VectorSpecies.of(elementType, this)}
+     * {@code VectorSpecies.of(elementType, this)}.
 
      * @param elementType the required element type
      * @param <E> the boxed element type
