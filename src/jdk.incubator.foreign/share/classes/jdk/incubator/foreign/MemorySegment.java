@@ -94,6 +94,11 @@ import java.nio.ByteBuffer;
  * between multiple clients. If a client want to protect itself against early closure of a segment by
  * another actor, it is the responsibility of that client to take protective measures, such as calling
  * {@link MemorySegment#asPinned()} before sharing the view with another client.
+ * <p>
+ * To allow for interoperability with existing code, a byte buffer view can be obtained from a memory segment
+ * (see {@link #asByteBuffer()}). This can be useful, for instance, for those clients that want to keep using the
+ * {@link ByteBuffer} API, but need to operate on large memory segments. Byte buffers obtained in such a way support
+ * the same spatial and temporal access restrictions associated to the memory address from which they originated.
  *
  * @implSpec
  * This class is immutable and thread-safe.
@@ -170,6 +175,28 @@ public interface MemorySegment extends AutoCloseable {
      * @see MemorySegment#isPinned()
      */
     void close() throws UnsupportedOperationException;
+
+    /**
+     * Wraps this segment in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
+     * the properties of this segment. For instance, if this segment is <em>immutable</em>
+     * (see {@link MemorySegment#asReadOnly()}, then the resulting buffer is <em>read-only</em>
+     * (see {@link ByteBuffer#isReadOnly()}. Additionally, if this is a native memory segment, the resulting buffer is
+     * <em>direct</em> (see {@link ByteBuffer#isDirect()}).
+     * <p>
+     * The life-cycle of the returned buffer will be tied to that of this segment. That means that if the this segment
+     * is closed (see {@link MemorySegment#close()}, accessing the returned
+     * buffer will throw an {@link IllegalStateException}.
+     * <p>
+     * The resulting buffer's byte order is {@link java.nio.ByteOrder#BIG_ENDIAN}; this can be changed using
+     * {@link ByteBuffer#order(java.nio.ByteOrder)}.
+     *
+     * @return the created {@link ByteBuffer}.
+     * @throws UnsupportedOperationException if this segment cannot be mapped onto a {@link ByteBuffer} instance,
+     * e.g. because it models an heap-based segment that is not based on a {@code byte[]}), or if its size is greater
+     * than {@link Integer#MAX_VALUE}.
+     * @throws IllegalStateException if the scope associated with this segment has been closed.
+     */
+    ByteBuffer asByteBuffer() throws UnsupportedOperationException, IllegalStateException;
 
     /**
      * Creates a new buffer memory segment that models the memory associated with the given byte

@@ -25,20 +25,16 @@
  */
 package jdk.internal.foreign;
 
-import jdk.internal.access.JavaNioAccess;
-import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.misc.Unsafe;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
-    private static final int BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
 
     private final MemorySegmentImpl segment;
     private final long offset;
@@ -65,6 +61,7 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
         return segment.length;
     }
 
+    @Override
     public long offset() {
         return offset;
     }
@@ -89,37 +86,6 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
 
     public Object unsafeGetBase() {
         return segment.base();
-    }
-
-    @Override
-    public ByteBuffer asByteBuffer(int bytes) throws IllegalArgumentException, UnsupportedOperationException, IllegalStateException {
-        boolean readOnly = segment.isReadOnly();
-        segment.slice(this.offset, bytes); //throws IAE if out of bounds, or ISE if not alive
-        checkAccess(0L, bytes, readOnly);
-        JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
-        Object base = unsafeGetBase();
-        long offset = unsafeGetOffset();
-        ByteBuffer _bb;
-        if (base != null) {
-            if (!(base instanceof byte[])) {
-                throw new UnsupportedOperationException("Not an address to an heap-allocated byte array");
-            } else if (offset > Integer.MAX_VALUE) {
-                //we should not get here
-                throw new AssertionError("Offset is too large");
-            }
-            _bb = ByteBuffer.wrap((byte[])base, (int)offset - BYTE_ARR_BASE, bytes);
-        } else {
-            _bb = nioAccess.newDirectByteBuffer(offset, bytes, null);
-        }
-        if (readOnly) {
-            //scope is IMMUTABLE - obtain a RO byte buffer
-            _bb = _bb.asReadOnlyBuffer();
-        }
-        if (!segment.isPinned()) {
-            //scope is not PINNED - need to wrap the buffer so that appropriate scope checks take place
-            _bb = nioAccess.newScopedByteBuffer(segment, _bb);
-        }
-        return _bb;
     }
 
     public static long addressof(MemoryAddress address) {

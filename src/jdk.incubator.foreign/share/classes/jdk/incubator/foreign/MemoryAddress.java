@@ -28,9 +28,6 @@ package jdk.incubator.foreign;
 
 import jdk.internal.foreign.MemoryAddressImpl;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 /**
  * A memory address encodes an offset within a given {@link MemorySegment}. Memory addresses are typically obtained
  * using the {@link MemorySegment#baseAddress()} method; such addresses can then be adjusted as required,
@@ -39,11 +36,6 @@ import java.nio.ByteOrder;
  * A memory address is typically used as the first argument in a memory access var handle call, to perform some operation
  * on the underlying memory backing a given memory segment. Since a memory address is always associated with a memory segment,
  * such access operations are always subject to spatial and temporal checks as enforced by the address' owning memory region.
- * <p>
- * To allow for interoperability with existing code, a byte buffer view can be obtained from a memory address
- * (see {@link MemoryAddress#asByteBuffer(int)}). This can be useful, for instance, for those clients that want to keep
- * using the {@link ByteBuffer} API, but need to operate on large memory segments. Byte buffers obtained in such a way support
- * the same spatial and temporal access restrictions associated to the memory address from which they originated.
  * <p>
  * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
  * class; use of identity-sensitive operations (including reference equality
@@ -63,33 +55,17 @@ public interface MemoryAddress {
     MemoryAddress offset(long l);
 
     /**
+     * The offset of this MemoryAddress into the underlying segment.
+     *
+     * @return the offset
+     */
+    long offset();
+
+    /**
      * The memory segment this address belongs to.
      * @return The memory segment this address belongs to.
      */
     MemorySegment segment();
-
-    /**
-     * Wraps this address in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
-     * the properties of this address. For instance, if this address is associated with an <em>immutable</em> segment
-     * (see {@link MemorySegment#asReadOnly()}, then the resulting buffer is <em>read-only</em> (see {@link ByteBuffer#isReadOnly()}.
-     * Additionally, if this address belongs to a native memory segment, the resulting buffer is <em>direct</em> (see
-     * {@link ByteBuffer#isDirect()}).
-     * <p>
-     * The life-cycle of the returned buffer will be tied to that of this address. That means that if the memory segment
-     * associated with this address is closed (see {@link MemorySegment#close()}, accessing the returned
-     * buffer will throw an {@link IllegalStateException}.
-     * <p>
-     * The resulting buffer's byte order is {@link java.nio.ByteOrder#BIG_ENDIAN}; this can be changed using
-     * {@link ByteBuffer#order(ByteOrder)}.
-     *
-     * @param bytes the size of the buffer in bytes.
-     * @return the created {@link ByteBuffer}.
-     * @throws IllegalArgumentException if bytes is larger than the segment covered by this address.
-     * @throws UnsupportedOperationException if this address cannot be mapped onto a {@link ByteBuffer} instance,
-     * e.g. because it models an heap-based address that is not based on a {@code byte[]}).
-     * @throws IllegalStateException if the scope associated with this address' segment has been closed.
-     */
-    ByteBuffer asByteBuffer(int bytes) throws IllegalArgumentException, UnsupportedOperationException, IllegalStateException;
 
     /**
      * Compares the specified object with this address for equality. Returns {@code true} if and only if the specified

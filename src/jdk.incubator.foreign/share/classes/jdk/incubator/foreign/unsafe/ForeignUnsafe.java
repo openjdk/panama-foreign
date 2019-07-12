@@ -42,27 +42,27 @@ public final class ForeignUnsafe {
 
     /**
      * Obtain the base object (if any) associated with this address. This can be used in conjunction with
-     * {@link #getOffset(MemoryAddress)} in order to obtain a base/offset addressing coordinate pair
+     * {@link #getUnsafeOffset(MemoryAddress)} in order to obtain a base/offset addressing coordinate pair
      * to be used with methods like {@link sun.misc.Unsafe#getInt(Object, long)} and the likes.
      *
      * @param address the address whose base object is to be obtained.
      * @return the base object associated with the address, or {@code null}.
      */
-    public static Object getBase(MemoryAddress address) {
+    public static Object getUnsafeBase(MemoryAddress address) {
         return ((MemoryAddressImpl)address).unsafeGetBase();
     }
 
     /**
-     * Obtain the offset associated with this address. If {@link #getBase(MemoryAddress)} returns {@null} on the passed
+     * Obtain the offset associated with this address. If {@link #getUnsafeBase(MemoryAddress)} returns {@null} on the passed
      * address, then the offset is to be interpreted as the (absolute) numerical value associated said address.
      * Alternatively, the offset represents the displacement of a field or an array element within the containing
-     * base object. This can be used in conjunction with {@link #getBase(MemoryAddress)} in order to obtain a base/offset
+     * base object. This can be used in conjunction with {@link #getUnsafeBase(MemoryAddress)} in order to obtain a base/offset
      * addressing coordinate pair to be used with methods like {@link sun.misc.Unsafe#getInt(Object, long)} and the likes.
      *
      * @param address the address whose offset is to be obtained.
      * @return the offset associated with the address.
      */
-    public static long getOffset(MemoryAddress address) {
+    public static long getUnsafeOffset(MemoryAddress address) {
         return ((MemoryAddressImpl)address).unsafeGetOffset();
     }
 }

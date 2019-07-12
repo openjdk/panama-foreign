@@ -28,12 +28,19 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.access.JavaNioAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
+import jdk.internal.misc.Unsafe;
 
+import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Random;
 
 public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
+
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
+    private static final int BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
 
     final long length;
     final int mask;
@@ -120,6 +127,33 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         } else {
             scope.close();
         }
+    }
+
+    @Override
+    public ByteBuffer asByteBuffer() throws UnsupportedOperationException, IllegalStateException {
+        checkValidState();
+        if (length > Integer.MAX_VALUE) {
+            throw new UnsupportedOperationException("Segment is too large to wrap as ByteBuffer. Size: " + length);
+        }
+        JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
+        ByteBuffer _bb;
+        if (base() != null) {
+            if (!(base() instanceof byte[])) {
+                throw new UnsupportedOperationException("Not an address to an heap-allocated byte array");
+            }
+            _bb = ByteBuffer.wrap((byte[]) base(), (int)min - BYTE_ARR_BASE, (int) length);
+        } else {
+            _bb = nioAccess.newDirectByteBuffer(min, (int) length, null);
+        }
+        if (isReadOnly()) {
+            //scope is IMMUTABLE - obtain a RO byte buffer
+            _bb = _bb.asReadOnlyBuffer();
+        }
+        if (!isPinned()) {
+            //scope is not PINNED - need to wrap the buffer so that appropriate scope checks take place
+            _bb = nioAccess.newScopedByteBuffer(this, _bb);
+        }
+        return _bb;
     }
 
     public final void checkValidState() {
