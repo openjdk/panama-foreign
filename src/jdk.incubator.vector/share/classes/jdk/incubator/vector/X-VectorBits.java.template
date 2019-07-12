@@ -94,13 +94,6 @@ final class $vectortype$ extends $abstractvectortype$ {
         return VSPECIES;
     }
 
-#if[extraOverrides]
-    // The following methods do not seem to help the JIT.  This is
-    // probably because once you have the VSPECIES you have everything
-    // else and can inline from its fields.  Add them back in later,
-    // maybe, if we think we need them.  By refraining from overriding
-    // them, we make them monomorphic, which also helps the JIT.
-
     @ForceInline
     @Override
     public final Class<$Boxtype$> elementType() { return $Boxtype$.class; }
@@ -124,8 +117,6 @@ final class $vectortype$ extends $abstractvectortype$ {
     @ForceInline
     @Override
     public final int byteSize() { return VSIZE / Byte.SIZE; }
-
-#end[extraOverrides]
 
     /*package-private*/
     @ForceInline

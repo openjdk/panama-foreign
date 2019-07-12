@@ -92,6 +92,29 @@ final class Short256Vector extends ShortVector {
         return VSPECIES;
     }
 
+    @ForceInline
+    @Override
+    public final Class<Short> elementType() { return Short.class; }
+
+    @ForceInline
+    @Override
+    public final int elementSize() { return Short.SIZE; }
+
+    @ForceInline
+    @Override
+    public final VectorShape shape() { return VSHAPE; }
+
+    @ForceInline
+    @Override
+    public final int length() { return VLENGTH; }
+
+    @ForceInline
+    @Override
+    public final int bitSize() { return VSIZE; }
+
+    @ForceInline
+    @Override
+    public final int byteSize() { return VSIZE / Byte.SIZE; }
 
     /*package-private*/
     @ForceInline

@@ -92,6 +92,29 @@ final class Double256Vector extends DoubleVector {
         return VSPECIES;
     }
 
+    @ForceInline
+    @Override
+    public final Class<Double> elementType() { return Double.class; }
+
+    @ForceInline
+    @Override
+    public final int elementSize() { return Double.SIZE; }
+
+    @ForceInline
+    @Override
+    public final VectorShape shape() { return VSHAPE; }
+
+    @ForceInline
+    @Override
+    public final int length() { return VLENGTH; }
+
+    @ForceInline
+    @Override
+    public final int bitSize() { return VSIZE; }
+
+    @ForceInline
+    @Override
+    public final int byteSize() { return VSIZE / Byte.SIZE; }
 
     /*package-private*/
     @ForceInline

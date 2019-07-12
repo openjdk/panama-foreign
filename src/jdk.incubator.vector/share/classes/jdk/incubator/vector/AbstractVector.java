@@ -81,46 +81,6 @@ abstract class AbstractVector<E> extends Vector<E> {
         return vspecies();
     }
 
-    // We could override these when they go constant,
-    // but that seems unnecessary, since we have @Stable
-    // fields for these values in the AbstractSpecies.
-
-    @Override
-    @ForceInline
-    public Class<E> elementType() {
-        return vspecies().elementType();
-    }
-
-    @Override
-    @ForceInline
-    public int elementSize() {
-        return vspecies().elementSize();
-    }
-
-    @Override
-    @ForceInline
-    public VectorShape shape() {
-        return vspecies().vectorShape();
-    }
-
-    @Override
-    @ForceInline
-    public int length() {
-        return vspecies().laneCount();
-    }
-
-    @Override
-    @ForceInline
-    public int bitSize() {
-        return vspecies().vectorBitSize();
-    }
-
-    @Override
-    @ForceInline
-    public int byteSize() {
-        return vspecies().vectorByteSize();
-    }
-
     // Something to make types match up better:
 
     @Override

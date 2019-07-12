@@ -91,6 +91,29 @@ final class Byte64Vector extends ByteVector {
         return VSPECIES;
     }
 
+    @ForceInline
+    @Override
+    public final Class<Byte> elementType() { return Byte.class; }
+
+    @ForceInline
+    @Override
+    public final int elementSize() { return Byte.SIZE; }
+
+    @ForceInline
+    @Override
+    public final VectorShape shape() { return VSHAPE; }
+
+    @ForceInline
+    @Override
+    public final int length() { return VLENGTH; }
+
+    @ForceInline
+    @Override
+    public final int bitSize() { return VSIZE; }
+
+    @ForceInline
+    @Override
+    public final int byteSize() { return VSIZE / Byte.SIZE; }
 
     /*package-private*/
     @ForceInline
