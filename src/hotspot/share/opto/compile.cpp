@@ -2080,7 +2080,7 @@ bool Compile::inline_incrementally_one() {
   _late_inlines.trunc_to(j);
   assert(inlining_progress() || _late_inlines.length() == 0, "");
 
-  bool needs_cleanup = do_cleanup() || over_inlining_cutoff();
+  bool needs_cleanup = true;
 
   set_inlining_progress(false);
   set_do_cleanup(false);

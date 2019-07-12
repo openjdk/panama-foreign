@@ -2819,6 +2819,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
      * or for any vector lane index {@code N} the result of
      * {@code offset + indexMap[mapOffset + N]} is {@code < 0} or {@code >= a.length}
      */
+    @ForceInline
     public static
     ShortVector fromArray(VectorSpecies<Short> species,
                                    short[] a, int offset,
@@ -2852,6 +2853,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
      * {@code N} is set the result of {@code offset + indexMap[mapOffset + N]} is
      * {@code < 0} or {@code >= a.length}
      */
+    @ForceInline
     public static
     ShortVector fromArray(VectorSpecies<Short> species,
                                    short[] a, int offset,

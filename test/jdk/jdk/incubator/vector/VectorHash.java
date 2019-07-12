@@ -57,7 +57,6 @@ public class VectorHash {
         assertEquals(hashCodeUnrollConstants(b), expected);
         assertEquals(hashCodeVector64(b), expected);
         assertEquals(hashCodeVector128(b), expected);
-        if (false)  // FIXME: enable and debug this unit test
         assertEquals(hashCodeVector512Shift(b), expected);
     }
 
@@ -171,7 +170,7 @@ public class VectorHash {
 
                 h = h * top_h_coeff + x.mul(v_h_coeff).reduceLanes(VectorOperators.ADD);
 
-                b = b.unslice(intSpecies.length());
+                b = b.slice(intSpecies.length());
             }
         }
 

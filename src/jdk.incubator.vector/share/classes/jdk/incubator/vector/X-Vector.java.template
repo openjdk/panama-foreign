@@ -3244,6 +3244,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@code offset + indexMap[mapOffset + N]} is {@code < 0} or {@code >= a.length}
      */
 #if[byteOrShort]
+    @ForceInline
     public static
     $abstractvectortype$ fromArray(VectorSpecies<$Boxtype$> species,
                                    $type$[] a, int offset,
@@ -3308,6 +3309,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@code N} is set the result of {@code offset + indexMap[mapOffset + N]} is
      * {@code < 0} or {@code >= a.length}
      */
+    @ForceInline
     public static
     $abstractvectortype$ fromArray(VectorSpecies<$Boxtype$> species,
                                    $type$[] a, int offset,

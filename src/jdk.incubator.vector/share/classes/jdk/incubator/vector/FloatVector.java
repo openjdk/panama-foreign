@@ -2744,6 +2744,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * {@code N} is set the result of {@code offset + indexMap[mapOffset + N]} is
      * {@code < 0} or {@code >= a.length}
      */
+    @ForceInline
     public static
     FloatVector fromArray(VectorSpecies<Float> species,
                                    float[] a, int offset,

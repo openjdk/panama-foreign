@@ -2868,6 +2868,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * {@code N} is set the result of {@code offset + indexMap[mapOffset + N]} is
      * {@code < 0} or {@code >= a.length}
      */
+    @ForceInline
     public static
     IntVector fromArray(VectorSpecies<Integer> species,
                                    int[] a, int offset,

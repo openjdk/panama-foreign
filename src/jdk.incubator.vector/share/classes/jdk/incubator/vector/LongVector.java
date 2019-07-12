@@ -2740,6 +2740,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * {@code N} is set the result of {@code offset + indexMap[mapOffset + N]} is
      * {@code < 0} or {@code >= a.length}
      */
+    @ForceInline
     public static
     LongVector fromArray(VectorSpecies<Long> species,
                                    long[] a, int offset,

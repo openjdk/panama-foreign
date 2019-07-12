@@ -2818,6 +2818,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * or for any vector lane index {@code N} the result of
      * {@code offset + indexMap[mapOffset + N]} is {@code < 0} or {@code >= a.length}
      */
+    @ForceInline
     public static
     ByteVector fromArray(VectorSpecies<Byte> species,
                                    byte[] a, int offset,
@@ -2851,6 +2852,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * {@code N} is set the result of {@code offset + indexMap[mapOffset + N]} is
      * {@code < 0} or {@code >= a.length}
      */
+    @ForceInline
     public static
     ByteVector fromArray(VectorSpecies<Byte> species,
                                    byte[] a, int offset,

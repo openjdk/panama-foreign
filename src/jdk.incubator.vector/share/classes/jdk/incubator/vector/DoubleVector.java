@@ -2743,6 +2743,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * {@code N} is set the result of {@code offset + indexMap[mapOffset + N]} is
      * {@code < 0} or {@code >= a.length}
      */
+    @ForceInline
     public static
     DoubleVector fromArray(VectorSpecies<Double> species,
                                    double[] a, int offset,
