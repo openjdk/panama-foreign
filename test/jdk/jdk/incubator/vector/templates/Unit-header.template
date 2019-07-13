@@ -480,6 +480,10 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 
+    static $bitstype$ bits($type$ e) {
+        return {#if[FP]? $Type$.$type$To$Bitstype$Bits(e): e};
+    }
+
     static final List<IntFunction<$type$[]>> $TYPE$_GENERATORS = List.of(
             withToString("$type$[-i * 5]", (int s) -> {
                 return fill(s * BUFFER_REPS,
@@ -632,6 +636,17 @@ public class $vectorteststype$ extends AbstractVectorTest {
             })
     );
 
+    static final List<List<IntFunction<$type$[]>>> $TYPE$_TEST_GENERATOR_ARGS =
+        $TYPE$_COMPARE_GENERATORS.stream().
+                map(fa -> List.of(fa)).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] $type$TestOpProvider() {
+        return $TYPE$_TEST_GENERATOR_ARGS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
     static final List<List<IntFunction<$type$[]>>> $TYPE$_COMPARE_GENERATOR_PAIRS =
         $TYPE$_COMPARE_GENERATORS.stream().
                 flatMap(fa -> $TYPE$_COMPARE_GENERATORS.stream().map(fb -> List.of(fa, fb))).
@@ -721,6 +736,12 @@ public class $vectorteststype$ extends AbstractVectorTest {
         $abstractvectortype$ higher = three.addIndex(scale);
         VectorMask<$Boxtype$> m = three.compare(VectorOperators.LE, higher);
         assert(m.allTrue());
+        m = higher.min(($type$)-1).test(VectorOperators.IS_NEGATIVE);
+        assert(m.allTrue());
+#if[FP]
+        m = higher.test(VectorOperators.IS_FINITE);
+        assert(m.allTrue());
+#end[FP]
         $type$ max = higher.reduceLanes(VectorOperators.MAX);
         assert(max == -3 + scale * (SPECIES.length()-1));
     }

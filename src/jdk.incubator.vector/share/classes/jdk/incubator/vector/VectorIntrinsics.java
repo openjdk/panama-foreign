@@ -55,7 +55,7 @@ import jdk.incubator.vector.Vector;
     static final int VECTOR_OP_FIRST_NONZERO = -9;  //a!=0?a:b  FIXME: Implement?
 
     static final int VECTOR_OP_AND  = 10;
-    static final int VECTOR_OP_ANDC2 = -10;  //&~ FIXME: Implement?
+    static final int VECTOR_OP_AND_NOT = -10;  //&~ FIXME: Implement?
     static final int VECTOR_OP_OR   = 11;
     static final int VECTOR_OP_XOR  = 12;
     static final int VECTOR_OP_EQV = -12;  //^~ FIXME: Implement?

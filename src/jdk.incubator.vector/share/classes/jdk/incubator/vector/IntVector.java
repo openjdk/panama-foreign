@@ -670,7 +670,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
                 IntVector hi = this.lanewise(LSHL, (op == ROR) ? neg : that);
                 IntVector lo = this.lanewise(LSHR, (op == ROR) ? that : neg);
                 return hi.lanewise(OR, lo);
-            } else if (op == ANDC2) {
+            } else if (op == AND_NOT) {
                 // FIXME: Support this in the JIT.
                 that = that.lanewise(NOT);
                 op = AND;
@@ -705,7 +705,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
                         v0.bOp(v1, (i, a, b) -> (int)(a & b));
                 case VECTOR_OP_OR: return (v0, v1) ->
                         v0.bOp(v1, (i, a, b) -> (int)(a | b));
-                case VECTOR_OP_ANDC2: return (v0, v1) ->
+                case VECTOR_OP_AND_NOT: return (v0, v1) ->
                         v0.bOp(v1, (i, a, b) -> (int)(a & ~b));
                 case VECTOR_OP_XOR: return (v0, v1) ->
                         v0.bOp(v1, (i, a, b) -> (int)(a ^ b));
@@ -774,7 +774,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
         if (opKind(op, VO_SHIFT) && (int)(int)e == e) {
             return lanewiseShift(op, (int) e);
         }
-        if (op == ANDC2) {
+        if (op == AND_NOT) {
             op = AND; e = (int) ~e;
         }
         return lanewise(op, broadcast(e));
@@ -1748,6 +1748,47 @@ public abstract class IntVector extends AbstractVector<Integer> {
     public final
     VectorMask<Integer> lt(int e) {
         return compare(LT, e);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    VectorMask<Integer> test(VectorOperators.Test op);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M extends VectorMask<Integer>>
+    M testTemplate(Class<M> maskType, Test op) {
+        IntSpecies vsp = vspecies();
+        if (opKind(op, VO_SPECIAL)) {
+            IntVector bits = this.viewAsIntegralLanes();
+            VectorMask<Integer> m;
+            if (op == IS_DEFAULT) {
+                m = bits.compare(EQ, (int) 0);
+            } else if (op == IS_NEGATIVE) {
+                m = bits.compare(LT, (int) 0);
+            }
+            else {
+                throw new AssertionError(op);
+            }
+            return maskType.cast(m);
+        }
+        int opc = opCode(op);
+        throw new AssertionError(op);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    VectorMask<Integer> test(VectorOperators.Test op,
+                                  VectorMask<Integer> m) {
+        return test(op).and(m);
     }
 
     /**

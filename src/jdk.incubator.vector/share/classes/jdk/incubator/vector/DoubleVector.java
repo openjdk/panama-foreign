@@ -1648,6 +1648,63 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     @Override
     public abstract
+    VectorMask<Double> test(VectorOperators.Test op);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M extends VectorMask<Double>>
+    M testTemplate(Class<M> maskType, Test op) {
+        DoubleSpecies vsp = vspecies();
+        if (opKind(op, VO_SPECIAL)) {
+            LongVector bits = this.viewAsIntegralLanes();
+            VectorMask<Long> m;
+            if (op == IS_DEFAULT) {
+                m = bits.compare(EQ, (long) 0);
+            } else if (op == IS_NEGATIVE) {
+                m = bits.compare(LT, (long) 0);
+            }
+            else if (op == IS_FINITE ||
+                     op == IS_NAN ||
+                     op == IS_INFINITE) {
+                // first kill the sign:
+                bits = bits.and(Long.MAX_VALUE);
+                // next find the bit pattern for infinity:
+                long infbits = (long) toBits(Double.POSITIVE_INFINITY);
+                // now compare:
+                if (op == IS_FINITE) {
+                    m = bits.compare(LT, infbits);
+                } else if (op == IS_NAN) {
+                    m = bits.compare(GT, infbits);
+                } else {
+                    m = bits.compare(EQ, infbits);
+                }
+            }
+            else {
+                throw new AssertionError(op);
+            }
+            return maskType.cast(m.cast(this.vspecies()));
+        }
+        int opc = opCode(op);
+        throw new AssertionError(op);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    VectorMask<Double> test(VectorOperators.Test op,
+                                  VectorMask<Double> m) {
+        return test(op).and(m);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
     VectorMask<Double> compare(VectorOperators.Comparison op, Vector<Double> v);
 
     /*package-private*/

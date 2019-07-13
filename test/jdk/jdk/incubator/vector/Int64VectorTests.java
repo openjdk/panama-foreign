@@ -401,6 +401,10 @@ public class Int64VectorTests extends AbstractVectorTest {
         }
     }
 
+    static int bits(int e) {
+        return  e;
+    }
+
     static final List<IntFunction<int[]>> INT_GENERATORS = List.of(
             withToString("int[-i * 5]", (int s) -> {
                 return fill(s * BUFFER_REPS,
@@ -553,6 +557,17 @@ public class Int64VectorTests extends AbstractVectorTest {
             })
     );
 
+    static final List<List<IntFunction<int[]>>> INT_TEST_GENERATOR_ARGS =
+        INT_COMPARE_GENERATORS.stream().
+                map(fa -> List.of(fa)).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] intTestOpProvider() {
+        return INT_TEST_GENERATOR_ARGS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
     static final List<List<IntFunction<int[]>>> INT_COMPARE_GENERATOR_PAIRS =
         INT_COMPARE_GENERATORS.stream().
                 flatMap(fa -> INT_COMPARE_GENERATORS.stream().map(fb -> List.of(fa, fb))).
@@ -622,6 +637,8 @@ public class Int64VectorTests extends AbstractVectorTest {
             scale = 1;
         IntVector higher = three.addIndex(scale);
         VectorMask<Integer> m = three.compare(VectorOperators.LE, higher);
+        assert(m.allTrue());
+        m = higher.min((int)-1).test(VectorOperators.IS_NEGATIVE);
         assert(m.allTrue());
         int max = higher.reduceLanes(VectorOperators.MAX);
         assert(max == -3 + scale * (SPECIES.length()-1));
@@ -973,12 +990,12 @@ public class Int64VectorTests extends AbstractVectorTest {
     }
 
 
-    static int ANDC2(int a, int b) {
+    static int AND_NOT(int a, int b) {
         return (int)(a & ~b);
     }
 
     @Test(dataProvider = "intBinaryOpProvider")
-    static void ANDC2Int64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+    static void AND_NOTInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -987,17 +1004,17 @@ public class Int64VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.lanewise(VectorOperators.ANDC2, bv).intoArray(r, i);
+                av.lanewise(VectorOperators.AND_NOT, bv).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, r, Int64VectorTests::ANDC2);
+        assertArraysEquals(a, b, r, Int64VectorTests::AND_NOT);
     }
 
 
 
     @Test(dataProvider = "intBinaryOpMaskProvider")
-    static void ANDC2Int64VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
+    static void AND_NOTInt64VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1009,11 +1026,11 @@ public class Int64VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector av = IntVector.fromArray(SPECIES, a, i);
                 IntVector bv = IntVector.fromArray(SPECIES, b, i);
-                av.lanewise(VectorOperators.ANDC2, bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.AND_NOT, bv, vmask).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, r, mask, Int64VectorTests::ANDC2);
+        assertArraysEquals(a, b, r, mask, Int64VectorTests::AND_NOT);
     }
 
 
@@ -2173,6 +2190,53 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         assertInsertArraysEquals(a, r, (int)4, 0);
     }
+    static boolean testIS_DEFAULT(int a) {
+        return bits(a)==0;
+    }
+
+    @Test(dataProvider = "intTestOpProvider")
+    static void IS_DEFAULTInt64VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                VectorMask<Integer> mv = av.test(VectorOperators.IS_DEFAULT);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_DEFAULT(a[i + j]));
+                }
+            }
+        }
+    }
+
+    static boolean testIS_NEGATIVE(int a) {
+        return bits(a)<0;
+    }
+
+    @Test(dataProvider = "intTestOpProvider")
+    static void IS_NEGATIVEInt64VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector av = IntVector.fromArray(SPECIES, a, i);
+                VectorMask<Integer> mv = av.test(VectorOperators.IS_NEGATIVE);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_NEGATIVE(a[i + j]));
+                }
+            }
+        }
+    }
+
+
+
+
 
     @Test(dataProvider = "intCompareOpProvider")
     static void LTInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {

@@ -406,6 +406,10 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         }
     }
 
+    static byte bits(byte e) {
+        return  e;
+    }
+
     static final List<IntFunction<byte[]>> BYTE_GENERATORS = List.of(
             withToString("byte[-i * 5]", (int s) -> {
                 return fill(s * BUFFER_REPS,
@@ -558,6 +562,17 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
             })
     );
 
+    static final List<List<IntFunction<byte[]>>> BYTE_TEST_GENERATOR_ARGS =
+        BYTE_COMPARE_GENERATORS.stream().
+                map(fa -> List.of(fa)).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] byteTestOpProvider() {
+        return BYTE_TEST_GENERATOR_ARGS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
     static final List<List<IntFunction<byte[]>>> BYTE_COMPARE_GENERATOR_PAIRS =
         BYTE_COMPARE_GENERATORS.stream().
                 flatMap(fa -> BYTE_COMPARE_GENERATORS.stream().map(fb -> List.of(fa, fb))).
@@ -627,6 +642,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
             scale = 1;
         ByteVector higher = three.addIndex(scale);
         VectorMask<Byte> m = three.compare(VectorOperators.LE, higher);
+        assert(m.allTrue());
+        m = higher.min((byte)-1).test(VectorOperators.IS_NEGATIVE);
         assert(m.allTrue());
         byte max = higher.reduceLanes(VectorOperators.MAX);
         assert(max == -3 + scale * (SPECIES.length()-1));
@@ -978,12 +995,12 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     }
 
 
-    static byte ANDC2(byte a, byte b) {
+    static byte AND_NOT(byte a, byte b) {
         return (byte)(a & ~b);
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")
-    static void ANDC2ByteMaxVectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
+    static void AND_NOTByteMaxVectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -992,17 +1009,17 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
-                av.lanewise(VectorOperators.ANDC2, bv).intoArray(r, i);
+                av.lanewise(VectorOperators.AND_NOT, bv).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, r, ByteMaxVectorTests::ANDC2);
+        assertArraysEquals(a, b, r, ByteMaxVectorTests::AND_NOT);
     }
 
 
 
     @Test(dataProvider = "byteBinaryOpMaskProvider")
-    static void ANDC2ByteMaxVectorTestsMasked(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
+    static void AND_NOTByteMaxVectorTestsMasked(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
                                           IntFunction<boolean[]> fm) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
@@ -1014,11 +1031,11 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ByteVector av = ByteVector.fromArray(SPECIES, a, i);
                 ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
-                av.lanewise(VectorOperators.ANDC2, bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.AND_NOT, bv, vmask).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, r, mask, ByteMaxVectorTests::ANDC2);
+        assertArraysEquals(a, b, r, mask, ByteMaxVectorTests::AND_NOT);
     }
 
 
@@ -2052,6 +2069,53 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         assertInsertArraysEquals(a, r, (byte)4, 0);
     }
+    static boolean testIS_DEFAULT(byte a) {
+        return bits(a)==0;
+    }
+
+    @Test(dataProvider = "byteTestOpProvider")
+    static void IS_DEFAULTByteMaxVectorTests(IntFunction<byte[]> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                VectorMask<Byte> mv = av.test(VectorOperators.IS_DEFAULT);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_DEFAULT(a[i + j]));
+                }
+            }
+        }
+    }
+
+    static boolean testIS_NEGATIVE(byte a) {
+        return bits(a)<0;
+    }
+
+    @Test(dataProvider = "byteTestOpProvider")
+    static void IS_NEGATIVEByteMaxVectorTests(IntFunction<byte[]> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                VectorMask<Byte> mv = av.test(VectorOperators.IS_NEGATIVE);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_NEGATIVE(a[i + j]));
+                }
+            }
+        }
+    }
+
+
+
+
 
     @Test(dataProvider = "byteCompareOpProvider")
     static void LTByteMaxVectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {

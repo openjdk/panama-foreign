@@ -278,7 +278,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void ANDC2(Blackhole bh) {
+    public void AND_NOT(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
@@ -287,7 +287,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 ShortVector bv = ShortVector.fromArray(SPECIES, b, i);
-                av.lanewise(VectorOperators.ANDC2, bv).intoArray(r, i);
+                av.lanewise(VectorOperators.AND_NOT, bv).intoArray(r, i);
             }
         }
 
@@ -297,7 +297,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void ANDC2Masked(Blackhole bh) {
+    public void AND_NOTMasked(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
@@ -308,7 +308,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 ShortVector bv = ShortVector.fromArray(SPECIES, b, i);
-                av.lanewise(VectorOperators.ANDC2, bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.AND_NOT, bv, vmask).intoArray(r, i);
             }
         }
 
@@ -846,6 +846,45 @@ public class Short256Vector extends AbstractVectorBenchmark {
 
         bh.consume(r);
     }
+
+    @Benchmark
+    public Object IS_DEFAULT() {
+        short[] a = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        VectorMask<Short> m = VectorMask.fromArray(SPECIES, ms, 0);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
+                VectorMask<Short> mv = av.test(VectorOperators.IS_DEFAULT);
+
+                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+            }
+        }
+        return m;
+    }
+
+
+    @Benchmark
+    public Object IS_NEGATIVE() {
+        short[] a = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        VectorMask<Short> m = VectorMask.fromArray(SPECIES, ms, 0);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
+                VectorMask<Short> mv = av.test(VectorOperators.IS_NEGATIVE);
+
+                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+            }
+        }
+        return m;
+    }
+
+
+
+
 
     @Benchmark
     public Object LT() {

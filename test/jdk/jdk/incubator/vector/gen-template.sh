@@ -37,6 +37,7 @@ binary="Binary-op"
 binary_masked="Binary-Masked-op"
 binary_scalar="Binary-Scalar-op"
 blend="Blend-op"
+test_template="Test"
 compare_template="Compare"
 reduction_scalar="Reduction-Scalar-op"
 reduction_scalar_min="Reduction-Scalar-Min-op"
@@ -308,7 +309,7 @@ gen_binary_alu_op "MUL+mul+withMask" "a \* b" $unit_output $perf_output $perf_sc
 gen_binary_alu_op "DIV+div+withMask" "a \/ b" $unit_output $perf_output $perf_scalar_output "FP"
 gen_binary_alu_op "FIRST_NONZERO" "{#if[FP]?Double.doubleToLongBits}(a)!=0?a:b" $unit_output $perf_output $perf_scalar_output
 gen_binary_alu_op "AND+and"   "a \& b"  $unit_output $perf_output $perf_scalar_output "BITWISE"
-gen_binary_alu_op "ANDC2" "a \& ~b" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_binary_alu_op "AND_NOT" "a \& ~b" $unit_output $perf_output $perf_scalar_output "BITWISE"
 gen_binary_alu_op "OR"    "a | b"   $unit_output $perf_output $perf_scalar_output "BITWISE"
 # Missing:        "OR_UNCHECKED"
 gen_binary_alu_op "XOR"   "a ^ b"   $unit_output $perf_output $perf_scalar_output "BITWISE"
@@ -353,6 +354,13 @@ gen_bool_reduction_op "allTrue" "\&" $unit_output $perf_output $perf_scalar_outp
 
 #Insert
 gen_with_op "withLane" "" $unit_output $perf_output $perf_scalar_output "" ""
+
+# Tests
+gen_op_tmpl $test_template "IS_DEFAULT" "bits(a)==0" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $test_template "IS_NEGATIVE" "bits(a)<0" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $test_template "IS_FINITE" "\$Boxtype\$.isFinite(a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $test_template "IS_NAN" "\$Boxtype\$.isNaN(a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $test_template "IS_INFINITE" "\$Boxtype\$.isInfinite(a)" $unit_output $perf_output $perf_scalar_output "FP"
 
 # Compares
 gen_op_tmpl $compare_template "LT+lt" "<" $unit_output $perf_output $perf_scalar_output

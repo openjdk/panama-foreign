@@ -401,6 +401,10 @@ public class Short128VectorTests extends AbstractVectorTest {
         }
     }
 
+    static short bits(short e) {
+        return  e;
+    }
+
     static final List<IntFunction<short[]>> SHORT_GENERATORS = List.of(
             withToString("short[-i * 5]", (int s) -> {
                 return fill(s * BUFFER_REPS,
@@ -553,6 +557,17 @@ public class Short128VectorTests extends AbstractVectorTest {
             })
     );
 
+    static final List<List<IntFunction<short[]>>> SHORT_TEST_GENERATOR_ARGS =
+        SHORT_COMPARE_GENERATORS.stream().
+                map(fa -> List.of(fa)).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] shortTestOpProvider() {
+        return SHORT_TEST_GENERATOR_ARGS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
     static final List<List<IntFunction<short[]>>> SHORT_COMPARE_GENERATOR_PAIRS =
         SHORT_COMPARE_GENERATORS.stream().
                 flatMap(fa -> SHORT_COMPARE_GENERATORS.stream().map(fb -> List.of(fa, fb))).
@@ -622,6 +637,8 @@ public class Short128VectorTests extends AbstractVectorTest {
             scale = 1;
         ShortVector higher = three.addIndex(scale);
         VectorMask<Short> m = three.compare(VectorOperators.LE, higher);
+        assert(m.allTrue());
+        m = higher.min((short)-1).test(VectorOperators.IS_NEGATIVE);
         assert(m.allTrue());
         short max = higher.reduceLanes(VectorOperators.MAX);
         assert(max == -3 + scale * (SPECIES.length()-1));
@@ -973,12 +990,12 @@ public class Short128VectorTests extends AbstractVectorTest {
     }
 
 
-    static short ANDC2(short a, short b) {
+    static short AND_NOT(short a, short b) {
         return (short)(a & ~b);
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")
-    static void ANDC2Short128VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
+    static void AND_NOTShort128VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
@@ -987,17 +1004,17 @@ public class Short128VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 ShortVector bv = ShortVector.fromArray(SPECIES, b, i);
-                av.lanewise(VectorOperators.ANDC2, bv).intoArray(r, i);
+                av.lanewise(VectorOperators.AND_NOT, bv).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, r, Short128VectorTests::ANDC2);
+        assertArraysEquals(a, b, r, Short128VectorTests::AND_NOT);
     }
 
 
 
     @Test(dataProvider = "shortBinaryOpMaskProvider")
-    static void ANDC2Short128VectorTestsMasked(IntFunction<short[]> fa, IntFunction<short[]> fb,
+    static void AND_NOTShort128VectorTestsMasked(IntFunction<short[]> fa, IntFunction<short[]> fb,
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
@@ -1009,11 +1026,11 @@ public class Short128VectorTests extends AbstractVectorTest {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = ShortVector.fromArray(SPECIES, a, i);
                 ShortVector bv = ShortVector.fromArray(SPECIES, b, i);
-                av.lanewise(VectorOperators.ANDC2, bv, vmask).intoArray(r, i);
+                av.lanewise(VectorOperators.AND_NOT, bv, vmask).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, b, r, mask, Short128VectorTests::ANDC2);
+        assertArraysEquals(a, b, r, mask, Short128VectorTests::AND_NOT);
     }
 
 
@@ -2047,6 +2064,53 @@ public class Short128VectorTests extends AbstractVectorTest {
 
         assertInsertArraysEquals(a, r, (short)4, 0);
     }
+    static boolean testIS_DEFAULT(short a) {
+        return bits(a)==0;
+    }
+
+    @Test(dataProvider = "shortTestOpProvider")
+    static void IS_DEFAULTShort128VectorTests(IntFunction<short[]> fa) {
+        short[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
+                VectorMask<Short> mv = av.test(VectorOperators.IS_DEFAULT);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_DEFAULT(a[i + j]));
+                }
+            }
+        }
+    }
+
+    static boolean testIS_NEGATIVE(short a) {
+        return bits(a)<0;
+    }
+
+    @Test(dataProvider = "shortTestOpProvider")
+    static void IS_NEGATIVEShort128VectorTests(IntFunction<short[]> fa) {
+        short[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = ShortVector.fromArray(SPECIES, a, i);
+                VectorMask<Short> mv = av.test(VectorOperators.IS_NEGATIVE);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_NEGATIVE(a[i + j]));
+                }
+            }
+        }
+    }
+
+
+
+
 
     @Test(dataProvider = "shortCompareOpProvider")
     static void LTShort128VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {

@@ -670,7 +670,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
                 ShortVector hi = this.lanewise(LSHL, (op == ROR) ? neg : that);
                 ShortVector lo = this.lanewise(LSHR, (op == ROR) ? that : neg);
                 return hi.lanewise(OR, lo);
-            } else if (op == ANDC2) {
+            } else if (op == AND_NOT) {
                 // FIXME: Support this in the JIT.
                 that = that.lanewise(NOT);
                 op = AND;
@@ -705,7 +705,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
                         v0.bOp(v1, (i, a, b) -> (short)(a & b));
                 case VECTOR_OP_OR: return (v0, v1) ->
                         v0.bOp(v1, (i, a, b) -> (short)(a | b));
-                case VECTOR_OP_ANDC2: return (v0, v1) ->
+                case VECTOR_OP_AND_NOT: return (v0, v1) ->
                         v0.bOp(v1, (i, a, b) -> (short)(a & ~b));
                 case VECTOR_OP_XOR: return (v0, v1) ->
                         v0.bOp(v1, (i, a, b) -> (short)(a ^ b));
@@ -774,7 +774,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
         if (opKind(op, VO_SHIFT) && (short)(int)e == e) {
             return lanewiseShift(op, (int) e);
         }
-        if (op == ANDC2) {
+        if (op == AND_NOT) {
             op = AND; e = (short) ~e;
         }
         return lanewise(op, broadcast(e));
@@ -1749,6 +1749,47 @@ public abstract class ShortVector extends AbstractVector<Short> {
     public final
     VectorMask<Short> lt(short e) {
         return compare(LT, e);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    VectorMask<Short> test(VectorOperators.Test op);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M extends VectorMask<Short>>
+    M testTemplate(Class<M> maskType, Test op) {
+        ShortSpecies vsp = vspecies();
+        if (opKind(op, VO_SPECIAL)) {
+            ShortVector bits = this.viewAsIntegralLanes();
+            VectorMask<Short> m;
+            if (op == IS_DEFAULT) {
+                m = bits.compare(EQ, (short) 0);
+            } else if (op == IS_NEGATIVE) {
+                m = bits.compare(LT, (short) 0);
+            }
+            else {
+                throw new AssertionError(op);
+            }
+            return maskType.cast(m);
+        }
+        int opc = opCode(op);
+        throw new AssertionError(op);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    VectorMask<Short> test(VectorOperators.Test op,
+                                  VectorMask<Short> m) {
+        return test(op).and(m);
     }
 
     /**

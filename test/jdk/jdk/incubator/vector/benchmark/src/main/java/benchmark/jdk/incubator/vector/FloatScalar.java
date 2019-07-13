@@ -457,6 +457,97 @@ public class FloatScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
+    public void IS_DEFAULT(Blackhole bh) {
+        float[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                float a = as[i];
+                boolean m = bits(a)==0;
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void IS_NEGATIVE(Blackhole bh) {
+        float[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                float a = as[i];
+                boolean m = bits(a)<0;
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+    @Benchmark
+    public void IS_FINITE(Blackhole bh) {
+        float[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                float a = as[i];
+                boolean m = Float.isFinite(a);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void IS_NAN(Blackhole bh) {
+        float[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                float a = as[i];
+                boolean m = Float.isNaN(a);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void IS_INFINITE(Blackhole bh) {
+        float[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                float a = as[i];
+                boolean m = Float.isInfinite(a);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+    @Benchmark
     public void LT(Blackhole bh) {
         float[] as = fa.apply(size);
         float[] bs = fb.apply(size);

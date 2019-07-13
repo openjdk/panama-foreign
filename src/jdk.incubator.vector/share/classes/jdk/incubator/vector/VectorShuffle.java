@@ -151,10 +151,9 @@ public abstract class VectorShuffle<E> {
      * Converts this shuffle to a shuffle of the given species of
      * element type {@code F}.
      *
-     * The various lane source indexes are unmodified, except that any
-     * index that fails to validate against a changed {@code VLENGTH}
-     * is partially wrapped to an exceptional index, whether it was
-     * originally normal or exceptional.
+     * The various lane source indexes are unmodified.  Exceptional
+     * source indexes remain exceptional and valid indexes remain
+     * valid.
      *
      * @param species the species of desired shuffle
      * @param <F> the boxed element type of the species
@@ -342,21 +341,34 @@ public abstract class VectorShuffle<E> {
      * Loads a shuffle using source indexes set to sequential
      * values starting from {@code start} and stepping
      * by the given {@code step}.
+     * If {@code wrap} is true, also reduce each index (as if
+     * by {@link VectorShuffle#wrapIndex(int) wrapIndex})
+     * to the valid range {@code [0..VLENGTH-1]}.
      * <p>
      * This method returns the value of the expression
-     * {@code VectorShuffle.fromOp(species, i -> start + i * step)}.
+     * {@code VectorShuffle.fromOp(species, i -> R(start + i * step))},
+     * where {@code R} is {@code wrapIndex} if {@code wrap} is true,
+     * and is the identity function otherwise.
+     *
+     * @apiNote The {@code wrap} parameter should be set to {@code
+     * true} if invalid source indexes should be wrapped.  Otherwise,
+     * setting it to {@code false} allows invalid source indexes to be
+     * range-checked by later operations such as
+     * {@link Vector#rearrange(VectorShuffle) unary rearrange}.
      *
      * @param species shuffle species
      * @param start the starting value of the source index sequence
      * @param step the difference between adjacent source indexes 
-     * @return a shuffle of sequential lane indexes
-     * @see VectorSpecies#iotaShuffle(int,int)
+     * @param wrap whether to wrap resulting indexes
+     * @return a shuffle of sequential lane indexes, possibly wrapped
+     * @see VectorSpecies#iotaShuffle(int,int,boolean)
      */
     @ForceInline
     public static <E> VectorShuffle<E> iota(VectorSpecies<E> species,
-                                            int start, int step) {
+                                            int start, int step,
+                                            boolean wrap) {
         AbstractSpecies<E> vsp = (AbstractSpecies<E>) species;
-        return vsp.iotaShuffle(start, step);
+        return vsp.iotaShuffle(start, step, wrap);
     }
 
     /**

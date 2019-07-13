@@ -449,6 +449,10 @@ public class Float256VectorTests extends AbstractVectorTest {
         }
     }
 
+    static int bits(float e) {
+        return  Float.floatToIntBits(e);
+    }
+
     static final List<IntFunction<float[]>> FLOAT_GENERATORS = List.of(
             withToString("float[-i * 5]", (int s) -> {
                 return fill(s * BUFFER_REPS,
@@ -601,6 +605,17 @@ public class Float256VectorTests extends AbstractVectorTest {
             })
     );
 
+    static final List<List<IntFunction<float[]>>> FLOAT_TEST_GENERATOR_ARGS =
+        FLOAT_COMPARE_GENERATORS.stream().
+                map(fa -> List.of(fa)).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] floatTestOpProvider() {
+        return FLOAT_TEST_GENERATOR_ARGS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
     static final List<List<IntFunction<float[]>>> FLOAT_COMPARE_GENERATOR_PAIRS =
         FLOAT_COMPARE_GENERATORS.stream().
                 flatMap(fa -> FLOAT_COMPARE_GENERATORS.stream().map(fb -> List.of(fa, fb))).
@@ -674,6 +689,10 @@ public class Float256VectorTests extends AbstractVectorTest {
             scale = 1;
         FloatVector higher = three.addIndex(scale);
         VectorMask<Float> m = three.compare(VectorOperators.LE, higher);
+        assert(m.allTrue());
+        m = higher.min((float)-1).test(VectorOperators.IS_NEGATIVE);
+        assert(m.allTrue());
+        m = higher.test(VectorOperators.IS_FINITE);
         assert(m.allTrue());
         float max = higher.reduceLanes(VectorOperators.MAX);
         assert(max == -3 + scale * (SPECIES.length()-1));
@@ -1537,6 +1556,122 @@ public class Float256VectorTests extends AbstractVectorTest {
 
         assertInsertArraysEquals(a, r, (float)4, 0);
     }
+    static boolean testIS_DEFAULT(float a) {
+        return bits(a)==0;
+    }
+
+    @Test(dataProvider = "floatTestOpProvider")
+    static void IS_DEFAULTFloat256VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                VectorMask<Float> mv = av.test(VectorOperators.IS_DEFAULT);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_DEFAULT(a[i + j]));
+                }
+            }
+        }
+    }
+
+    static boolean testIS_NEGATIVE(float a) {
+        return bits(a)<0;
+    }
+
+    @Test(dataProvider = "floatTestOpProvider")
+    static void IS_NEGATIVEFloat256VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                VectorMask<Float> mv = av.test(VectorOperators.IS_NEGATIVE);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_NEGATIVE(a[i + j]));
+                }
+            }
+        }
+    }
+
+
+    static boolean testIS_FINITE(float a) {
+        return Float.isFinite(a);
+    }
+
+    @Test(dataProvider = "floatTestOpProvider")
+    static void IS_FINITEFloat256VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                VectorMask<Float> mv = av.test(VectorOperators.IS_FINITE);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_FINITE(a[i + j]));
+                }
+            }
+        }
+    }
+
+
+
+    static boolean testIS_NAN(float a) {
+        return Float.isNaN(a);
+    }
+
+    @Test(dataProvider = "floatTestOpProvider")
+    static void IS_NANFloat256VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                VectorMask<Float> mv = av.test(VectorOperators.IS_NAN);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_NAN(a[i + j]));
+                }
+            }
+        }
+    }
+
+
+
+    static boolean testIS_INFINITE(float a) {
+        return Float.isInfinite(a);
+    }
+
+    @Test(dataProvider = "floatTestOpProvider")
+    static void IS_INFINITEFloat256VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                VectorMask<Float> mv = av.test(VectorOperators.IS_INFINITE);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_INFINITE(a[i + j]));
+                }
+            }
+        }
+    }
+
+
 
     @Test(dataProvider = "floatCompareOpProvider")
     static void LTFloat256VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {

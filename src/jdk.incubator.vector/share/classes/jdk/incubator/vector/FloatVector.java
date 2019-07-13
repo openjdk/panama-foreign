@@ -1648,6 +1648,63 @@ public abstract class FloatVector extends AbstractVector<Float> {
      */
     @Override
     public abstract
+    VectorMask<Float> test(VectorOperators.Test op);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M extends VectorMask<Float>>
+    M testTemplate(Class<M> maskType, Test op) {
+        FloatSpecies vsp = vspecies();
+        if (opKind(op, VO_SPECIAL)) {
+            IntVector bits = this.viewAsIntegralLanes();
+            VectorMask<Integer> m;
+            if (op == IS_DEFAULT) {
+                m = bits.compare(EQ, (int) 0);
+            } else if (op == IS_NEGATIVE) {
+                m = bits.compare(LT, (int) 0);
+            }
+            else if (op == IS_FINITE ||
+                     op == IS_NAN ||
+                     op == IS_INFINITE) {
+                // first kill the sign:
+                bits = bits.and(Integer.MAX_VALUE);
+                // next find the bit pattern for infinity:
+                int infbits = (int) toBits(Float.POSITIVE_INFINITY);
+                // now compare:
+                if (op == IS_FINITE) {
+                    m = bits.compare(LT, infbits);
+                } else if (op == IS_NAN) {
+                    m = bits.compare(GT, infbits);
+                } else {
+                    m = bits.compare(EQ, infbits);
+                }
+            }
+            else {
+                throw new AssertionError(op);
+            }
+            return maskType.cast(m.cast(this.vspecies()));
+        }
+        int opc = opCode(op);
+        throw new AssertionError(op);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    VectorMask<Float> test(VectorOperators.Test op,
+                                  VectorMask<Float> m) {
+        return test(op).and(m);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
     VectorMask<Float> compare(VectorOperators.Comparison op, Vector<Float> v);
 
     /*package-private*/

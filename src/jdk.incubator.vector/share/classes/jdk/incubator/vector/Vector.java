@@ -464,6 +464,13 @@ import jdk.incubator.vector.*;
  * }</pre>
  * </li>
  *
+ * <li>
+ * Similarly to a binary comparison, a <em>lane-wise unary test</em>
+ * operation takes one input vector, distributing a scalar predicate
+ * (a test function) across the lanes, and produces a
+ * {@linkplain VectorMask vector mask}.
+ * </li>
+ *
  * </ul>
  *
  * <p>
@@ -1163,8 +1170,9 @@ public abstract class Vector<E> {
      * Subtypes improve on this method by sharpening
      * the method return type.
      *
+     * @param op the operation used to process lane values
      * @return the result of applying the operation lane-wise
-               to the input vector
+     *         to the input vector
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
      * @see #lanewise(VectorOperators.Unary,VectorMask)
@@ -1184,6 +1192,7 @@ public abstract class Vector<E> {
      * Subtypes improve on this method by sharpening
      * the method return type.
      *
+     * @param op the operation used to process lane values
      * @param m the mask controlling lane selection
      * @return the result of applying the operation lane-wise
      *         to the input vector
@@ -1213,6 +1222,7 @@ public abstract class Vector<E> {
      * Subtypes improve on this method by sharpening
      * the method return type.
      *
+     * @param op the operation used to combine lane values
      * @param v the input vector
      * @return the result of applying the operation lane-wise
      *         to the two input vectors
@@ -1237,6 +1247,7 @@ public abstract class Vector<E> {
      * Subtypes improve on this method by sharpening
      * the method return type.
      *
+     * @param op the operation used to combine lane values
      * @param v the second input vector
      * @param m the mask controlling lane selection
      * @return the result of applying the operation lane-wise
@@ -1267,6 +1278,7 @@ public abstract class Vector<E> {
      * the method return type and
      * the type of the scalar parameter {@code e}.
      *
+     * @param op the operation used to combine lane values
      * @param e the input scalar
      * @return the result of applying the operation lane-wise
      *         to the input vector and the scalar
@@ -1303,6 +1315,7 @@ public abstract class Vector<E> {
      * the method return type and
      * the type of the scalar parameter {@code e}.
      *
+     * @param op the operation used to combine lane values
      * @param e the input scalar
      * @param m the mask controlling lane selection
      * @return the result of applying the operation lane-wise
@@ -1333,6 +1346,7 @@ public abstract class Vector<E> {
      * Subtypes improve on this method by sharpening
      * the method return type.
      *
+     * @param op the operation used to combine lane values
      * @param v1 the second input vector
      * @param v2 the third input vector
      * @return the result of applying the operation lane-wise
@@ -1359,6 +1373,7 @@ public abstract class Vector<E> {
      * Subtypes improve on this method by sharpening
      * the method return type.
      *
+     * @param op the operation used to combine lane values
      * @param v1 the second input vector
      * @param v2 the third input vector
      * @param m the mask controlling lane selection
@@ -1880,6 +1895,43 @@ public abstract class Vector<E> {
     public abstract long reduceLanesToLong(VectorOperators.Associative op,
                                            VectorMask<E> m);
 
+    // Lanewise unary tests
+
+    /**
+     * Tests the lanes of this vector
+     * according to the given operation.
+     *
+     * This is a lane-wise unary test operation which applies
+     * the given test operation
+     * to each lane value.
+     * @return the mask result of testing the lanes of this vector,
+     *         according to the selected test operator
+     * @see VectorOperators.Comparison
+     * @see #test(VectorOperators.Test, VectorMask)
+     * @see #compare(VectorOperators.Comparison, Vector)
+     */
+    public abstract VectorMask<E> test(VectorOperators.Test op);
+
+    /**
+     * Test selected lanes of this vector,
+     * according to the given operation.
+     *
+     * This is a masked lane-wise unary test operation which applies
+     * the given test operation
+     * to each lane value.
+     *
+     * The returned result is equal to the expression
+     * {@code test(op).and(m)}.
+     *
+     * @param op the operation used to test lane values
+     * @param m the mask controlling lane selection
+     * @return the mask result of testing the lanes of this vector,
+     *         according to the selected test operator,
+     *         and only in the lanes selected by the mask
+     * @see #test(VectorOperators.Test)
+     */
+    public abstract VectorMask<E> test(VectorOperators.Test op,
+                                       VectorMask<E> m);
 
     // Comparisons
 
@@ -1919,6 +1971,7 @@ public abstract class Vector<E> {
      * according to the given comparison operation.
      *
      * This is a lane-wise binary test operation which applies
+     * the given comparison operation
      * to each pair of corresponding lane values.
      *
      * @param v a second input vector
@@ -1929,6 +1982,7 @@ public abstract class Vector<E> {
      * @see #lt(Vector)
      * @see VectorOperators.Comparison
      * @see #compare(VectorOperators.Comparison, Vector, VectorMask)
+     * @see #test(VectorOperators.Test, Vector)
      */
     public abstract VectorMask<E> compare(VectorOperators.Comparison op,
                                           Vector<E> v);
@@ -1939,6 +1993,7 @@ public abstract class Vector<E> {
      * in lanes selected by a mask.
      *
      * This is a masked lane-wise binary test operation which applies
+     * the given comparison operation
      * to each pair of corresponding lane values.
      *
      * The returned result is equal to the expression
@@ -1961,7 +2016,8 @@ public abstract class Vector<E> {
      * according to the given comparison operation.
      *
      * This is a lane-wise binary test operation which applies
-     * to each pair of corresponding lane values.
+     * the given comparison operation
+     * to each lane value, paired with the broadcast value.
      *
      * <p>
      * The result is the same as
@@ -1999,7 +2055,8 @@ public abstract class Vector<E> {
      * in lanes selected by a mask.
      *
      * This is a masked lane-wise binary test operation which applies
-     * to each pair of corresponding lane values.
+     * the given comparison operation
+     * to each lane value, paired with the broadcast value.
      *
      * The returned result is equal to the expression
      * {@code compare(op,s).and(m)}.

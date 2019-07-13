@@ -492,6 +492,102 @@ public class Double128Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public Object IS_DEFAULT() {
+        double[] a = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                VectorMask<Double> mv = av.test(VectorOperators.IS_DEFAULT);
+
+                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+            }
+        }
+        return m;
+    }
+
+
+    @Benchmark
+    public Object IS_NEGATIVE() {
+        double[] a = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                VectorMask<Double> mv = av.test(VectorOperators.IS_NEGATIVE);
+
+                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+            }
+        }
+        return m;
+    }
+
+
+
+    @Benchmark
+    public Object IS_FINITE() {
+        double[] a = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                VectorMask<Double> mv = av.test(VectorOperators.IS_FINITE);
+
+                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+            }
+        }
+        return m;
+    }
+
+
+
+
+    @Benchmark
+    public Object IS_NAN() {
+        double[] a = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                VectorMask<Double> mv = av.test(VectorOperators.IS_NAN);
+
+                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+            }
+        }
+        return m;
+    }
+
+
+
+
+    @Benchmark
+    public Object IS_INFINITE() {
+        double[] a = fa.apply(size);
+        boolean[] ms = fm.apply(size);
+        VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                VectorMask<Double> mv = av.test(VectorOperators.IS_INFINITE);
+
+                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+            }
+        }
+        return m;
+    }
+
+
+
+    @Benchmark
     public Object LT() {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);

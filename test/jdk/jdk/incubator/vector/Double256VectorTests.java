@@ -449,6 +449,10 @@ public class Double256VectorTests extends AbstractVectorTest {
         }
     }
 
+    static long bits(double e) {
+        return  Double.doubleToLongBits(e);
+    }
+
     static final List<IntFunction<double[]>> DOUBLE_GENERATORS = List.of(
             withToString("double[-i * 5]", (int s) -> {
                 return fill(s * BUFFER_REPS,
@@ -601,6 +605,17 @@ public class Double256VectorTests extends AbstractVectorTest {
             })
     );
 
+    static final List<List<IntFunction<double[]>>> DOUBLE_TEST_GENERATOR_ARGS =
+        DOUBLE_COMPARE_GENERATORS.stream().
+                map(fa -> List.of(fa)).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] doubleTestOpProvider() {
+        return DOUBLE_TEST_GENERATOR_ARGS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
     static final List<List<IntFunction<double[]>>> DOUBLE_COMPARE_GENERATOR_PAIRS =
         DOUBLE_COMPARE_GENERATORS.stream().
                 flatMap(fa -> DOUBLE_COMPARE_GENERATORS.stream().map(fb -> List.of(fa, fb))).
@@ -674,6 +689,10 @@ public class Double256VectorTests extends AbstractVectorTest {
             scale = 1;
         DoubleVector higher = three.addIndex(scale);
         VectorMask<Double> m = three.compare(VectorOperators.LE, higher);
+        assert(m.allTrue());
+        m = higher.min((double)-1).test(VectorOperators.IS_NEGATIVE);
+        assert(m.allTrue());
+        m = higher.test(VectorOperators.IS_FINITE);
         assert(m.allTrue());
         double max = higher.reduceLanes(VectorOperators.MAX);
         assert(max == -3 + scale * (SPECIES.length()-1));
@@ -1537,6 +1556,122 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertInsertArraysEquals(a, r, (double)4, 0);
     }
+    static boolean testIS_DEFAULT(double a) {
+        return bits(a)==0;
+    }
+
+    @Test(dataProvider = "doubleTestOpProvider")
+    static void IS_DEFAULTDouble256VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                VectorMask<Double> mv = av.test(VectorOperators.IS_DEFAULT);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_DEFAULT(a[i + j]));
+                }
+            }
+        }
+    }
+
+    static boolean testIS_NEGATIVE(double a) {
+        return bits(a)<0;
+    }
+
+    @Test(dataProvider = "doubleTestOpProvider")
+    static void IS_NEGATIVEDouble256VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                VectorMask<Double> mv = av.test(VectorOperators.IS_NEGATIVE);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_NEGATIVE(a[i + j]));
+                }
+            }
+        }
+    }
+
+
+    static boolean testIS_FINITE(double a) {
+        return Double.isFinite(a);
+    }
+
+    @Test(dataProvider = "doubleTestOpProvider")
+    static void IS_FINITEDouble256VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                VectorMask<Double> mv = av.test(VectorOperators.IS_FINITE);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_FINITE(a[i + j]));
+                }
+            }
+        }
+    }
+
+
+
+    static boolean testIS_NAN(double a) {
+        return Double.isNaN(a);
+    }
+
+    @Test(dataProvider = "doubleTestOpProvider")
+    static void IS_NANDouble256VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                VectorMask<Double> mv = av.test(VectorOperators.IS_NAN);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_NAN(a[i + j]));
+                }
+            }
+        }
+    }
+
+
+
+    static boolean testIS_INFINITE(double a) {
+        return Double.isInfinite(a);
+    }
+
+    @Test(dataProvider = "doubleTestOpProvider")
+    static void IS_INFINITEDouble256VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                VectorMask<Double> mv = av.test(VectorOperators.IS_INFINITE);
+
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+   
+                 Assert.assertEquals(mv.laneIsSet(j), testIS_INFINITE(a[i + j]));
+                }
+            }
+        }
+    }
+
+
 
     @Test(dataProvider = "doubleCompareOpProvider")
     static void LTDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {

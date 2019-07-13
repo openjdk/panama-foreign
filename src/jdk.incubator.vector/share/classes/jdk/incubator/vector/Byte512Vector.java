@@ -339,6 +339,14 @@ final class Byte512Vector extends ByteVector {
         return VectorShuffle.fromArray(VSPECIES, sa, 0);
     }
 
+    // Specialized unary testing
+
+    @Override
+    @ForceInline
+    public final Byte512Mask test(Test op) {
+        return super.testTemplate(Byte512Mask.class, op);  // specialize
+    }
+
     // Specialized comparisons
 
     @Override
@@ -684,7 +692,7 @@ final class Byte512Vector extends ByteVector {
         public <F> VectorShuffle<F> cast(VectorSpecies<F> s) {
             AbstractSpecies<F> species = (AbstractSpecies<F>) s;
             if (length() != species.laneCount())
-                throw new AssertionError("NYI: Shuffle length and species length differ");
+                throw new IllegalArgumentException("VectorShuffle length and species length differ");
             int[] shuffleArray = toArray();
             // enum-switches don't optimize properly JDK-8161245
             switch (species.laneType.switchKey) {

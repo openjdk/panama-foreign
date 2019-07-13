@@ -185,8 +185,20 @@ public abstract class VectorOperators {
     }
 
     /**
+     * Unary lane-wise predicates that are
+     * applicable to vector lane values of some or all lane types.
+     *
+     * @apiNote
+     * User code should not implement this interface.  A future release of
+     * this type may restrict implementations to be members of the same
+     * package.
+     */
+    public interface Test extends Operator {
+    }
+
+    /**
      * Binary lane-wise comparisons that are
-     * applicable to vector lane values of all lane types.
+     * applicable to vector lane values of some or all lane types.
      *
      * @apiNote
      * User code should not implement this interface.  A future release of
@@ -194,14 +206,6 @@ public abstract class VectorOperators {
      * package.
      */
     public interface Comparison extends Operator {
-        /** Evaluates this comparison relation against
-         *  a pair of long arguments.
-         *  @param a the first argument
-         *  @param b the second argument
-         *  @returns whether this comparison relation
-         *           holds between {@code a} and {@code b}
-         */
-        public boolean test(long a, long b);
     }
 
     /**
@@ -426,7 +430,7 @@ public abstract class VectorOperators {
     /** Produce {@code a&b}.  Integral only. */
     public static final Associative AND = assoc("AND", "&", VectorIntrinsics.VECTOR_OP_AND, VO_NOFP+VO_ASSOC);
     /** Produce {@code a&~b}.  Integral only. */
-    public static final /*bitwise*/ Binary ANDC2 = binary("ANDC2", "&~", -1 /*VectorIntrinsics.VECTOR_OP_ANDC2*/, VO_NOFP); // FIXME
+    public static final /*bitwise*/ Binary AND_NOT = binary("AND_NOT", "&~", -1 /*VectorIntrinsics.VECTOR_OP_AND_NOT*/, VO_NOFP); // FIXME
     /** Produce {@code a|b}.  Integral only. */
     public static final /*bitwise*/ Associative OR = assoc("OR", "|", VectorIntrinsics.VECTOR_OP_OR, VO_NOFP+VO_ASSOC);
     /*package-private*/ /** Version of OR which works on float and double too. */
@@ -458,6 +462,18 @@ public abstract class VectorOperators {
     public static final /*float*/ Ternary BITWISE_BLEND = ternary("BITWISE_BLEND", "a^((a^b)&c)", -1 /*VectorIntrinsics.VECTOR_OP_BITWISE_BLEND*/, VO_NOFP);
     /** Produce {@code fma(a,b,c)}.  Floating only. */
     public static final /*float*/ Ternary FMA = ternary("FMA", "fma", VectorIntrinsics.VECTOR_OP_FMA, VO_ONLYFP);
+
+    // Unary boolean operations
+    /** Test bits for zero, as if by {@code bits(a)==0}.  Not true of {@code -0.0}. */
+    public static final Test IS_DEFAULT = predicate("IS_DEFAULT", "bits(a)==0", -1 /*VectorIntrinsics.VECTOR_OP_TEST_DEFAULT*/, VO_ALL);
+    /** Test sign bit, as if by {@code a<0}.  Also true of {@code -0.0}. */
+    public static final Test IS_NEGATIVE = predicate("IS_NEGATIVE", "bits(a)<0", -1 /*VectorIntrinsics.VECTOR_OP_TEST_NEGATIVE*/, VO_ALL);
+    /** Test for finite value, {@code isFinite(a)}.  Floating only. */
+    public static final Test IS_FINITE = predicate("IS_FINITE", "isFinite", -1 /*VectorIntrinsics.VECTOR_OP_TEST_FINITE*/, VO_ONLYFP);
+    /** Test for NaN value, {@code isNaN(a)}.  Floating only. */
+    public static final Test IS_NAN = predicate("IS_NAN", "isNaN", -1 /*VectorIntrinsics.VECTOR_OP_TEST_NAN*/, VO_ONLYFP);
+    /** Test for infinite value, {@code isInfinite(a)}.  Floating only. */
+    public static final Test IS_INFINITE = predicate("IS_INFINITE", "isInfinite", -1 /*VectorIntrinsics.VECTOR_OP_TEST_INFINITE*/, VO_ONLYFP);
 
     // Binary boolean operations
 
@@ -648,6 +664,12 @@ public abstract class VectorOperators {
         return new AssociativeImpl(name, opName, opInfo(opCode, flags | VO_BINARY | VO_ASSOC));
     }
 
+    private static Test predicate(String name, String opName, int opCode, int flags) {
+        if (opCode >= 0 && (flags & VO_PRIVATE) == 0)
+            CMP_OPC_NAME.put(opCode, name);
+        return new TestImpl(name, opName, opInfo(opCode, flags | VO_UNARY | VO_BOOL));
+    }
+
     private static Comparison compare(String name, String opName, int opCode, int flags) {
         if (opCode >= 0 && (flags & VO_PRIVATE) == 0)
             CMP_OPC_NAME.put(opCode, name);
@@ -801,18 +823,21 @@ public abstract class VectorOperators {
     private static class UnaryImpl extends OperatorImpl implements Unary {
         private UnaryImpl(String symName, String opName, int opInfo) {
             super(symName, opName, opInfo);
+            assert((opInfo & VO_ARITY_MASK) == VO_UNARY);
         }
     }
 
     private static class BinaryImpl extends OperatorImpl implements Binary {
         private BinaryImpl(String symName, String opName, int opInfo) {
             super(symName, opName, opInfo);
+            assert((opInfo & VO_ARITY_MASK) == VO_BINARY);
         }
     }
 
     private static class TernaryImpl extends OperatorImpl implements Ternary {
         private TernaryImpl(String symName, String opName, int opInfo) {
             super(symName, opName, opInfo);
+            assert((opInfo & VO_ARITY_MASK) == VO_TERNARY);
         }
     }
 
@@ -829,6 +854,7 @@ public abstract class VectorOperators {
         private ConversionImpl(String symName, String opName, int opInfo,
                                char kind, Class<E> dom, Class<F> ran) {
             super(symName, opName, opInfo);
+            assert((opInfo & VO_ARITY_MASK) == VO_UNARY);
             this.kind = kind;
             this.dom = LaneType.of(dom);
             this.ran = LaneType.of(ran);
@@ -1124,15 +1150,28 @@ public abstract class VectorOperators {
         }
     }
 
-    private static class ComparisonImpl extends OperatorImpl implements Comparison {
-        private ComparisonImpl(String symName, String opName, int opInfo) {
+    private static class TestImpl extends OperatorImpl implements Test {
+        private TestImpl(String symName, String opName, int opInfo) {
             super(symName, opName, opInfo);
+            assert((opInfo & VO_ARITY_MASK) == VO_UNARY);
         }
         @Override
         public Class<?> rangeType() {
             return boolean.class;
         }
-        public boolean test(long a, long b) {
+    }
+
+    private static class ComparisonImpl extends OperatorImpl implements Comparison {
+        private ComparisonImpl(String symName, String opName, int opInfo) {
+            super(symName, opName, opInfo);
+            assert((opInfo & VO_ARITY_MASK) == VO_BINARY);
+        }
+        @Override
+        public Class<?> rangeType() {
+            return boolean.class;
+        }
+        /* --- *
+        boolean test(long a, long b) {
             switch (opInfo() >> VO_OPCODE_SHIFT) {
             case VectorIntrinsics.BT_eq:  return a == b;
             case VectorIntrinsics.BT_ne:  return a != b;
@@ -1143,6 +1182,7 @@ public abstract class VectorOperators {
             }
             throw new AssertionError();
         }
+        * --- */
     }
 
     static {
@@ -1163,8 +1203,10 @@ public abstract class VectorOperators {
             }
             assert(op.name().equals(f.getName())) : op;
             assert(op.isAssociative() == (ft == Associative.class)) : op;
-            assert(op.isBoolean() == (ft == Comparison.class)) : op;
-            if (ft == Unary.class || ft == Conversion.class) {
+            if (op.isBoolean()) {
+                assert(ft == (op.arity() == 2 ? Comparison.class : Test.class)) : op;
+            }
+            if (ft == Unary.class || ft == Conversion.class || ft == Test.class) {
                 assert(op.arity() == 1) : op;
             } else if (ft == Ternary.class) {
                 assert(op.arity() == 3) : op;
@@ -1188,9 +1230,11 @@ public abstract class VectorOperators {
                 // These are all the "-1" opcode guys we know about:
                 assert(op == ZOMO ||
                        op == FIRST_NONZERO ||
-                       op == ANDC2 ||
+                       op == AND_NOT ||
                        op == ROL ||
                        op == ROR ||
+                       op == IS_DEFAULT || op == IS_NEGATIVE ||
+                       op == IS_FINITE || op == IS_NAN || op == IS_INFINITE ||
                        op == BITWISE_BLEND) : op;
             }
         }

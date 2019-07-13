@@ -274,7 +274,7 @@ public class IntScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void ANDC2(Blackhole bh) {
+    public void AND_NOT(Blackhole bh) {
         int[] as = fa.apply(size);
         int[] bs = fb.apply(size);
         int[] rs = fr.apply(size);
@@ -293,7 +293,7 @@ public class IntScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void ANDC2Masked(Blackhole bh) {
+    public void AND_NOTMasked(Blackhole bh) {
         int[] as = fa.apply(size);
         int[] bs = fb.apply(size);
         int[] rs = fr.apply(size);
@@ -926,6 +926,43 @@ public class IntScalar extends AbstractVectorBenchmark {
         }
         bh.consume(r);
     }
+
+
+    @Benchmark
+    public void IS_DEFAULT(Blackhole bh) {
+        int[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                int a = as[i];
+                boolean m = bits(a)==0;
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void IS_NEGATIVE(Blackhole bh) {
+        int[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                int a = as[i];
+                boolean m = bits(a)<0;
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
 
 
     @Benchmark

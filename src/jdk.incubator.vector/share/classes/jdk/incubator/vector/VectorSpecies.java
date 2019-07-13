@@ -629,16 +629,28 @@ public interface VectorSpecies<E> {
      * Loads a shuffle using source indexes set to sequential
      * values starting from {@code start} and stepping
      * by the given {@code step}.
+     * If {@code wrap} is true, also reduce each index, as if
+     * by {@link VectorShuffle#wrapIndex(int) wrapIndex},
+     * to the valid range {@code [0..VLENGTH-1]}.
      * <p>
      * This method returns the value of the expression
-     * {@code VectorShuffle.fromOp(this, i -> start + i * step)}.
+     * {@code VectorShuffle.fromOp(species, i -> R(start + i * step))},
+     * where {@code R} is {@code wrapIndex} if {@code wrap} is true,
+     * and is the identity function otherwise.
      *
-     * @param start the starting value of the source index sequence
-     * @param step the difference between adjacent source indexes 
+     * @apiNote The {@code wrap} parameter should be set to {@code
+     * true} if invalid source indexes should be wrapped.  Otherwise,
+     * setting it to {@code false} allows invalid source indexes to be
+     * range-checked by later operations such as
+     * {@link Vector#rearrange(VectorShuffle) unary rearrange}.
+     *
+     * @param start the starting value of the source index sequence, typically {@code 0}
+     * @param step the difference between adjacent source indexes, typically {@code 1}
+     * @param wrap whether to wrap resulting indexes modulo {@code VLENGTH}
      * @return a shuffle of sequential lane indexes
-     * @see VectorShuffle#iota(VectorSpecies,int,int)
+     * @see VectorShuffle#iota(VectorSpecies,int,int,boolean)
      */
-    public abstract VectorShuffle<E> iotaShuffle(int start, int step);
+    public abstract VectorShuffle<E> iotaShuffle(int start, int step, boolean wrap);
 
     /**
      * Returns a string of the form "Species[ETYPE, VLENGTH, SHAPE]",
