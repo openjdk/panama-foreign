@@ -39,15 +39,66 @@ import jdk.internal.vm.annotation.Stable;
  * This class consists solely of static constants
  * that describe lane-wise vector operations, plus nested interfaces
  * which classify them.
+ * The static constants serve as tokens denoting specifically
+ * requested lane operations in vector expressions, such
+ * as the token {@code ADD} in
+ * {@code v = v0.}{@link
+ * Vector#lanewise(VectorOperators.Binary,Vector)
+ * lanewise}{@code (ADD, v1)}.
+ *
+ * <p>
+ *
+ * The documentation for each individual operator token is very brief,
+ * giving a symbolic Java expression for the operation that the token
+ * requests.  Those symbolic expression use the following conventional
+ * elements:
+ * <ul>
+ * <li>{@code a}, {@code b}, {@code c} &mdash; names of lane values
+ *
+ * <li>Java operators like {@code +}, {@code ?:}, etc. &mdash;
+ * expression operators
+ *
+ * <li>Java method names like {@code max}, {@code sin}, etc. &mdash;
+ * methods in standard classes like {@code Math}, {@code Double}, etc.
+ * Unqualified method names should be read as if in the context of a
+ * static import, and with resolution of overloading.
+ *
+ * <li>{@code bits(x)} &mdash; a function call which produces the
+ * underlying bits of the value {@code x}.  If {@code x} is a floating
+ * point value, this is either {@code doubleToLongBits(x)} or
+ * {@code floatToIntBits(x)}.  Otherwise, the value is just {@code x}.
+ *
+ * <li>{@code ESIZE} &mdash; the size in bytes of the operand type
+ *
+ * <li>{@code intVal}, {@code byteVal}, etc. &mdash; the operand of a
+ * conversion, with the indicated type
+ * </ul>
+ *
+ * <p> Note that a particular operator token may apply to several
+ * different lane types.  Thus, these tokens behave like overloaded
+ * operators or methods, not like type-specific method handles or
+ * lambdas.  Also unlike method handles or lambdas, these operators do
+ * not possess operational semantics; they have no {@code apply} or
+ * {@code invoke} method.  They are used only to request lane
+ * operations from vector objects, and cannot (by themselves) perform
+ * operations on individual lane values.
+ *
  */
 public abstract class VectorOperators {
     private VectorOperators() { }
 
     /**
-     * Lane-wise operations that are applicable to vector lane values
-     * of some or all lane types.  Subtypes are {@link Unary},
-     * {@link Binary}, {@link Ternary}, {@link Associative},
-     * {@link Comparison}, and {@link Conversion}.
+     * Root type for all operator tokens, providing queries for common
+     * properties such as arity, argument and return types, symbolic
+     * name, and operator name.
+     *
+     * @see VectorOperators.Unary Unary
+     * @see VectorOperators.Binary Binary
+     * @see VectorOperators.Ternary Ternary
+     * @see VectorOperators.Associative Associative
+     * @see VectorOperators.Comparison Comparison
+     * @see VectorOperators.Test Test
+     * @see VectorOperators.Conversion Conversion
      *
      * @apiNote
      * User code should not implement this interface.  A future release of
@@ -56,24 +107,27 @@ public abstract class VectorOperators {
      */
     public interface Operator {
         /**
-         * Returns the symbolic name of this operation,
+         * Returns the symbolic name of this operator,
          * as a constant in {@link VectorOperators}.
          *
-         * The operator symbol or Java method name,
-         * such as {@code "+"} or {@code "max"},
+         * The operator symbol, Java method name,
+         * or example expression,
+         * such as {@code "+"}, {@code "max"} or {@code "-a"},
          * is also available as {@link #operatorName()}.
          * 
-         * @return the symbolic name of this operation,
+         * @return the symbolic name of this operator,
          *         such as {@code "ADD"}
          */
         public abstract String name();
 
         /**
          * Returns the Java operator symbol or method
-         * name corresponding to this operation.
+         * name corresponding to this operator.
          * If there is no symbol or method, return a
          * string containing a representative expression
-         * for the operation.
+         * for the operator, using operand names
+         * {@code a}, {@code b} (for non-unary operators),
+         * and {@code c} (for ternary operators).
          * 
          * The symbolic name of the constant,
          * such as {@code "ADD"},
@@ -81,7 +135,7 @@ public abstract class VectorOperators {
          *
          * @return an operator token, such as {@code "+"},
          *         or a method name, such as {@code "max"},
-         *         or a representative expression, such as {@code "a^((a^b)&c)"}
+         *         or a representative expression, such as {@code "-a"}
          */
         public abstract String operatorName();
 
@@ -93,6 +147,8 @@ public abstract class VectorOperators {
 
         /**
          * Reports whether this operator returns a boolean (a mask).
+         * A boolean operator also reports {@code boolean} as the
+         * {@code rangeType
          * @return whether this operator returns a boolean
          */
         public abstract boolean isBoolean();
@@ -118,23 +174,23 @@ public abstract class VectorOperators {
         public abstract boolean isAssociative();
 
         /**
-         * Reports whether this operation is compatible with
+         * Reports whether this operator is compatible with
          * the proposed element type.
          * 
-         * First, unrestricted operations are compatible with all element
+         * First, unrestricted operators are compatible with all element
          * types.
          *
          * Next, if the element type is {@code double} or {@code float}
-         * and the operation is restricted to floating point types, it is
+         * and the operator is restricted to floating point types, it is
          * compatible.
          *
          * Otherwise, if the element type is neither {@code double} nor
-         * {@code float} and the operation is restricted to integral
-         * types, it is compatible.  Otherwise, the operation is not
+         * {@code float} and the operator is restricted to integral
+         * types, it is compatible.  Otherwise, the operator is not
          * compatible.
          *
-         * @param elementType the proposed operand type for the operation
-         * @return whether the proposed type is compatible with this operation
+         * @param elementType the proposed operand type for the operator
+         * @return whether the proposed type is compatible with this operator
          */
         public abstract boolean compatibleWith(Class<?> elementType);
 
@@ -142,27 +198,28 @@ public abstract class VectorOperators {
     }
 
     /**
-     * Unary lane-wise operations that are applicable to
-     * vector lane values of some or all lane types.
-     */
-    public interface Unary extends Operator {
-    }
-
-    /**
-     * Ternary lane-wise operations that are applicable to
-     * vector lane values of some or all lane types.
+     * Type for all
+     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * unary operators,
+     * usable in expressions like {@code w = v0.}{@link
+     * Vector#lanewise(VectorOperators.Unary)
+     * lanewise}{@code (NEG)}.
      *
      * @apiNote
      * User code should not implement this interface.  A future release of
      * this type may restrict implementations to be members of the same
      * package.
      */
-    public interface Ternary extends Operator {
+    public interface Unary extends Operator {
     }
 
     /**
-     * Binary lane-wise operations that are applicable to
-     * vector lane values of some or all lane types.
+     * Type for all
+     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * binary operators,
+     * usable in expressions like {@code w = v0.}{@link
+     * Vector#lanewise(VectorOperators.Binary,Vector)
+     * lanewise}{@code (ADD, v1)}.
      *
      * @apiNote
      * User code should not implement this interface.  A future release of
@@ -173,8 +230,28 @@ public abstract class VectorOperators {
     }
 
     /**
-     * Binary associative lane-wise operations that are
-     * applicable to vector lane values of some or all lane types.
+     * Type for all
+     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * ternary operators,
+     * usable in expressions like {@code w = v0.}{@link
+     * Vector#lanewise(VectorOperators.Ternary,Vector,Vector)
+     * lanewise}{@code (FMA, v1, v2)}.
+     *
+     * @apiNote
+     * User code should not implement this interface.  A future release of
+     * this type may restrict implementations to be members of the same
+     * package.
+     */
+    public interface Ternary extends Operator {
+    }
+
+    /**
+     * Type for all reassociating
+     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * binary operators,
+     * usable in expressions like {@code e = v0.}{@link
+     * IntVector#reduceLanes(VectorOperators.Associative)
+     * reduceLanes}{@code (ADD)}.
      *
      * @apiNote
      * User code should not implement this interface.  A future release of
@@ -185,8 +262,12 @@ public abstract class VectorOperators {
     }
 
     /**
-     * Unary lane-wise predicates that are
-     * applicable to vector lane values of some or all lane types.
+     * Type for all unary
+     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * boolean tests on lane values,
+     * usable in expressions like {@code m = v0.}{@link
+     * FloatVector#test(VectorOperators.Test)
+     * test}{@code (IS_FINITE)}.
      *
      * @apiNote
      * User code should not implement this interface.  A future release of
@@ -197,8 +278,12 @@ public abstract class VectorOperators {
     }
 
     /**
-     * Binary lane-wise comparisons that are
-     * applicable to vector lane values of some or all lane types.
+     * Type for all binary
+     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * boolean comparisons on lane values,
+     * usable in expressions like {@code m = v0.}{@link
+     * Vector#compare(VectorOperators.Comparison,Vector)
+     * compare}{@code (LT, v1)}.
      *
      * @apiNote
      * User code should not implement this interface.  A future release of
@@ -209,8 +294,12 @@ public abstract class VectorOperators {
     }
 
     /**
-     * Conversion operations that are applicable to
-     * vector lane values of specific lane types.
+     * Type for all
+     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * conversions on lane values,
+     * usable in expressions like {@code w1 = v0.}{@link
+     * FloatVector#convert(VectorOperators.Conversion,int)
+     * convert}{@code (F2D, 1)}.
      *
      * @param <E> the boxed element type for the conversion
      *        domain type (the input lane type)
@@ -364,7 +453,7 @@ public abstract class VectorOperators {
     private static final HashMap<Integer, String> CONV_OPC_NAME
         = new HashMap<>();
 
-    // Unary operations
+    // Unary operators
 
     /** Produce {@code ~a}.  Integral only. */
     public static final /*bitwise*/ Unary NOT = unary("NOT", "~", VectorIntrinsics.VECTOR_OP_NOT, VO_NOFP);
@@ -410,7 +499,7 @@ public abstract class VectorOperators {
     /** Produce {@code log1p(a)}.  Floating only. */
     public static final /*float*/ Unary LOG1P = unary("LOG1P", "log1p", VectorIntrinsics.VECTOR_OP_LOG1P, VO_ONLYFP);
 
-    // Binary operations
+    // Binary operators
 
     /** Produce {@code a+b}. */
     public static final Associative ADD = assoc("ADD", "+", VectorIntrinsics.VECTOR_OP_ADD, VO_ALL+VO_ASSOC);
@@ -424,7 +513,7 @@ public abstract class VectorOperators {
     public static final Associative MIN = assoc("MIN", "min", VectorIntrinsics.VECTOR_OP_MIN, VO_ALL+VO_ASSOC);
     /** Produce {@code max(a,b)}. */
     public static final Associative MAX = assoc("MAX", "max", VectorIntrinsics.VECTOR_OP_MAX, VO_ALL+VO_ASSOC);
-    /** Produce {@code a!=0?a:b}. */
+    /** Produce {@code bits(a)!=0?a:b}. */
     public static final Associative FIRST_NONZERO = assoc("FIRST_NONZERO", "a!=0?a:b", -1 /*VectorIntrinsics.VECTOR_OP_FIRST_NONZERO*/, VO_ALL+VO_ASSOC);
 
     /** Produce {@code a&b}.  Integral only. */
@@ -438,11 +527,11 @@ public abstract class VectorOperators {
     /** Produce {@code a^b}.  Integral only. */
     public static final /*bitwise*/ Associative XOR = assoc("XOR", "^", VectorIntrinsics.VECTOR_OP_XOR, VO_NOFP+VO_ASSOC);
 
-    /** Produce {@code a<<(n&(ESIZE-1))}.  Integral only. */
+    /** Produce {@code a<<(n&(ESIZE*8-1))}.  Integral only. */
     public static final /*bitwise*/ Binary LSHL = binary("LSHL", "<<", VectorIntrinsics.VECTOR_OP_LSHIFT, VO_SHIFT);
-    /** Produce {@code a>>(n&(ESIZE-1))}.  Integral only. */
+    /** Produce {@code a>>(n&(ESIZE*8-1))}.  Integral only. */
     public static final /*bitwise*/ Binary ASHR = binary("ASHR", ">>", VectorIntrinsics.VECTOR_OP_RSHIFT, VO_SHIFT);
-    /** Produce {@code a>>>(n&(ESIZE-1))}.  Integral only. */
+    /** Produce {@code a>>>(n&(ESIZE*8-1))}.  Integral only. */
     public static final /*bitwise*/ Binary LSHR = binary("LSHR", ">>>", VectorIntrinsics.VECTOR_OP_URSHIFT, VO_SHIFT);
     /** Produce {@code rotateLeft(a,n)}.  Integral only. */
     public static final /*bitwise*/ Binary ROL = binary("ROL", "rotateLeft", VectorIntrinsics.VECTOR_OP_LROTATE, VO_SHIFT);
@@ -456,26 +545,26 @@ public abstract class VectorOperators {
     /** Produce {@code hypot(a,b)}.  Floating only. */
     public static final /*float*/ Binary HYPOT = binary("HYPOT", "hypot", VectorIntrinsics.VECTOR_OP_HYPOT, VO_ONLYFP);
 
-    // Ternary operations
+    // Ternary operators
 
-    /** Produce {@code a^((a^b)&c), or bitwise (c?b:a)}.  Integral only. */
+    /** Produce {@code a^((a^b)&c)}.  (Bitwise {@code (c(i)?b(i):a(i))}.)  Integral only. */
     public static final /*float*/ Ternary BITWISE_BLEND = ternary("BITWISE_BLEND", "a^((a^b)&c)", -1 /*VectorIntrinsics.VECTOR_OP_BITWISE_BLEND*/, VO_NOFP);
     /** Produce {@code fma(a,b,c)}.  Floating only. */
     public static final /*float*/ Ternary FMA = ternary("FMA", "fma", VectorIntrinsics.VECTOR_OP_FMA, VO_ONLYFP);
 
-    // Unary boolean operations
-    /** Test bits for zero, as if by {@code bits(a)==0}.  Not true of {@code -0.0}. */
+    // Unary boolean operators
+    /** Test {@code bits(a)==0}.  (Not true of {@code -0.0}.) */
     public static final Test IS_DEFAULT = predicate("IS_DEFAULT", "bits(a)==0", -1 /*VectorIntrinsics.VECTOR_OP_TEST_DEFAULT*/, VO_ALL);
-    /** Test sign bit, as if by {@code a<0}.  Also true of {@code -0.0}. */
+    /** Test {@code bits(a)<0}.  (True of {@code -0.0}.) */
     public static final Test IS_NEGATIVE = predicate("IS_NEGATIVE", "bits(a)<0", -1 /*VectorIntrinsics.VECTOR_OP_TEST_NEGATIVE*/, VO_ALL);
-    /** Test for finite value, {@code isFinite(a)}.  Floating only. */
+    /** Test {@code isFinite(a)}.  Floating only. */
     public static final Test IS_FINITE = predicate("IS_FINITE", "isFinite", -1 /*VectorIntrinsics.VECTOR_OP_TEST_FINITE*/, VO_ONLYFP);
-    /** Test for NaN value, {@code isNaN(a)}.  Floating only. */
+    /** Test {@code isNaN(a)}.  Floating only. */
     public static final Test IS_NAN = predicate("IS_NAN", "isNaN", -1 /*VectorIntrinsics.VECTOR_OP_TEST_NAN*/, VO_ONLYFP);
-    /** Test for infinite value, {@code isInfinite(a)}.  Floating only. */
+    /** Test {@code isInfinite(a)}.  Floating only. */
     public static final Test IS_INFINITE = predicate("IS_INFINITE", "isInfinite", -1 /*VectorIntrinsics.VECTOR_OP_TEST_INFINITE*/, VO_ONLYFP);
 
-    // Binary boolean operations
+    // Binary boolean operators
 
     /** Compare {@code a==b}. */
     public static final Comparison EQ = compare("EQ", "==", VectorIntrinsics.BT_eq, VO_ALL);
@@ -491,7 +580,7 @@ public abstract class VectorOperators {
     public static final Comparison GE = compare("GE", ">=", VectorIntrinsics.BT_ge, VO_ALL);
     // FIXME: add unsigned comparisons
 
-    // Conversion operations
+    // Conversion operators
 
     /** Convert {@code byteVal} to {@code (double)byteVal}. */
     public static final Conversion<Byte,Double> B2D = convert("B2D", 'C', byte.class, double.class, VO_KIND_CAST, VO_ALL);
@@ -771,17 +860,17 @@ public abstract class VectorOperators {
             String msg1 = "";
             requireKind &=~ VO_OPCODE_VALID;
             switch (requireKind) {
-            case VO_ONLYFP:  msg1 = "floating point operation required here"; break;
-            case VO_NOFP:    msg1 = "integral/bitwise operation required here"; break;
-            case VO_ASSOC:   msg1 = "associative operation required here"; break;
+            case VO_ONLYFP:  msg1 = "floating point operator required here"; break;
+            case VO_NOFP:    msg1 = "integral/bitwise operator required here"; break;
+            case VO_ASSOC:   msg1 = "associative operator required here"; break;
             }
             String msg2 = "";
             switch (forbidKind) {
-            case VO_ONLYFP:  msg2 = "inapplicable floating point operation"; break;
-            case VO_NOFP:    msg2 = "inapplicable integral/bitwise operation"; break;
+            case VO_ONLYFP:  msg2 = "inapplicable floating point operator"; break;
+            case VO_NOFP:    msg2 = "inapplicable integral/bitwise operator"; break;
             }
             if ((opInfo & VO_OPCODE_VALID) == 0) {
-                msg2 = "operation is not implemented";
+                msg2 = "operator is not implemented";
             }
             return illegalOperation(msg1, msg2);
         }
@@ -794,7 +883,7 @@ public abstract class VectorOperators {
                 dot = "; ";
             } else if (msg1.isEmpty() && msg2.isEmpty()) {
                 // Couldn't decode the *kind bits.
-                msg1 = "illegal operation";
+                msg1 = "illegal operator";
             }
             String msg = String.format("%s: %s%s%s", this, msg1, dot, msg2);
             return new UnsupportedOperationException(msg);
@@ -1154,6 +1243,7 @@ public abstract class VectorOperators {
         private TestImpl(String symName, String opName, int opInfo) {
             super(symName, opName, opInfo);
             assert((opInfo & VO_ARITY_MASK) == VO_UNARY);
+            assert((opInfo & VO_BOOL) == VO_BOOL);
         }
         @Override
         public Class<?> rangeType() {
@@ -1165,6 +1255,7 @@ public abstract class VectorOperators {
         private ComparisonImpl(String symName, String opName, int opInfo) {
             super(symName, opName, opInfo);
             assert((opInfo & VO_ARITY_MASK) == VO_BINARY);
+            assert((opInfo & VO_BOOL) == VO_BOOL);
         }
         @Override
         public Class<?> rangeType() {
