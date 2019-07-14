@@ -407,6 +407,20 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
     }
 
     /*package-private*/
+    static
+    final IllegalArgumentException badArrayBits(Object iv,
+                                                boolean isInt,
+                                                long cv) {
+        String msg = String.format("Array creation failed: "+
+                                   "lane value %s cannot be represented in %s %s"+
+                                   "; result of cast is %s",
+                                   iv,
+                                   (isInt ? "int" : "long"),
+                                   cv);
+        return new IllegalArgumentException(msg);
+    }
+
+    /*package-private*/
     Object iotaArray() {
         // Create an iota array.  It's OK if this is really slow,
         // because it happens only once per species.

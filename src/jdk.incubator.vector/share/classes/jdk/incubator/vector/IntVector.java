@@ -2588,11 +2588,26 @@ public abstract class IntVector extends AbstractVector<Integer> {
         return a;
     }
 
+    /**
+     * {@inheritDoc} <!--workaround-->
+     * This is an alias for {@link #toArray()}
+     * When this method is used on used on vectors
+     * of type {@code IntVector},
+     * there will be no loss of range or precision.
+     */
+    @ForceInline
+    @Override
+    public final int[] toIntArray() {
+        return toArray();
+    }
+
     /** {@inheritDoc} <!--workaround-->
      * @implNote
      * When this method is used on used on vectors
      * of type {@code IntVector},
-     * there will be no loss of precision or range.
+     * there will be no loss of precision or range,
+     * and so no {@code IllegalArgumentException} will
+     * be thrown.
      */
     @ForceInline
     @Override
@@ -2600,7 +2615,8 @@ public abstract class IntVector extends AbstractVector<Integer> {
         int[] a = toArray();
         long[] res = new long[a.length];
         for (int i = 0; i < a.length; i++) {
-            res[i] = (long) a[i];
+            int e = a[i];
+            res[i] = IntSpecies.toIntegralChecked(e, false);
         }
         return res;
     }
@@ -2838,13 +2854,19 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /**
-     * FIXME: EDIT THIS
-     * Loads a vector from an array using indexes obtained from an index
-     * map.
+     * Gathers a new vector composed of elements from an array of type
+     * {@code int[]},
+     * using indexes obtained by adding a fixed {@code offset} to a
+     * series of secondary offsets from an <em>index map</em>.
+     * The index map is a contiguous sequence of {@code VLENGTH}
+     * elements in a second array of {@code int}s, starting at a given
+     * {@code mapOffset}.
      * <p>
-     * For each vector lane, where {@code N} is the vector lane index, the
-     * array element at index {@code offset + indexMap[mapOffset + N]} is placed into the
-     * resulting vector at lane index {@code N}.
+     * For each vector lane, where {@code N} is the vector lane index,
+     * the lane is loaded from the array
+     * element {@code a[f(N)]}, where {@code f(N)} is the
+     * index mapping expression
+     * {@code offset + indexMap[mapOffset + N]]}.
      *
      * @param species species of desired vector
      * @param a the array
@@ -2853,11 +2875,14 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * array bounds
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
-     * @return the vector loaded from an array
-     * @throws IndexOutOfBoundsException if {@code mapOffset < 0}, or
-     * {@code mapOffset > indexMap.length - species.length()},
-     * or for any vector lane index {@code N} the result of
-     * {@code offset + indexMap[mapOffset + N]} is {@code < 0} or {@code >= a.length}
+     * @return the vector loaded from the indexed elements of the array
+     * @throws IndexOutOfBoundsException
+     *         if {@code mapOffset+N < 0}
+     *         or if {@code mapOffset+N >= indexMap.length},
+     *         or if {@code f(N)=offset+indexMap[mapOffset+N]}
+     *         is an invalid index into {@code a},
+     *         for any lane {@code N} in the vector
+     * @see IntVector#toIntArray()
      */
     @ForceInline
     public static
@@ -2885,14 +2910,22 @@ public abstract class IntVector extends AbstractVector<Integer> {
         }
 
     /**
-     * Loads a vector from an array using indexes obtained from an index
-     * map and using a mask.
-     * FIXME: EDIT THIS
+     * Gathers a new vector composed of elements from an array of type
+     * {@code int[]},
+     * under the control of a mask, and
+     * using indexes obtained by adding a fixed {@code offset} to a
+     * series of secondary offsets from an <em>index map</em>.
+     * The index map is a contiguous sequence of {@code VLENGTH}
+     * elements in a second array of {@code int}s, starting at a given
+     * {@code mapOffset}.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
-     * if the mask lane at index {@code N} is set then the array element at
-     * index {@code offset + indexMap[mapOffset + N]} is placed into the resulting vector
-     * at lane index {@code N}.
+     * if the lane is set in the mask,
+     * the lane is loaded from the array
+     * element {@code a[f(N)]}, where {@code f(N)} is the
+     * index mapping expression
+     * {@code offset + indexMap[mapOffset + N]]}.
+     * Unset lanes in the resulting vector are set to zero.
      *
      * @param species species of desired vector
      * @param a the array
@@ -2902,12 +2935,15 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
      * @param m the mask controlling lane selection
-     * @return the vector loaded from an array
-     * @throws IndexOutOfBoundsException if {@code mapOffset < 0}, or
-     * {@code mapOffset > indexMap.length - species.length()},
-     * or for any vector lane index {@code N} where the mask at lane
-     * {@code N} is set the result of {@code offset + indexMap[mapOffset + N]} is
-     * {@code < 0} or {@code >= a.length}
+     * @return the vector loaded from the indexed elements of the array
+     * @throws IndexOutOfBoundsException
+     *         if {@code mapOffset+N < 0}
+     *         or if {@code mapOffset+N >= indexMap.length},
+     *         or if {@code f(N)=offset+indexMap[mapOffset+N]}
+     *         is an invalid index into {@code a},
+     *         for any lane {@code N} in the vector
+     *         where the mask is set
+     * @see IntVector#toIntArray()
      */
     @ForceInline
     public static
@@ -3094,12 +3130,14 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /**
-     * Stores this vector into an array of type {@code int[]}
-     * using indexes obtained from an index map
-     * and using a mask.
+     * Scatters this vector into an array of type {@code int[]}
+     * using indexes obtained by adding a fixed {@code offset} to a
+     * series of secondary offsets from an <em>index map</em>.
+     * The index map is a contiguous sequence of {@code VLENGTH}
+     * elements in a second array of {@code int}s, starting at a given
+     * {@code mapOffset}.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
-     * if the mask lane at index {@code N} is set then
      * the lane element at index {@code N} is stored into the array
      * element {@code a[f(N)]}, where {@code f(N)} is the
      * index mapping expression
@@ -3109,8 +3147,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * @param offset an offset to combine with the index map offsets
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
-     * @param m the mask
-     * @returns a vector of the values {@code m ? a[f(N)] : 0},
+     * @returns a vector of the values {@code a[f(N)]}, where
      *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
@@ -3118,7 +3155,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      *         or if {@code f(N)=offset+indexMap[mapOffset+N]}
      *         is an invalid index into {@code a},
      *         for any lane {@code N} in the vector
-     *         where the mask is set
+     * @see IntVector#toIntArray()
      */
     @ForceInline
     public final
@@ -3161,9 +3198,13 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /**
-     * Stores this vector into an array of type {@code int[]}
-     * using indexes obtained from an index map
-     * and using a mask.
+     * Scatters this vector into an array of type {@code int[]},
+     * under the control of a mask, and
+     * using indexes obtained by adding a fixed {@code offset} to a
+     * series of secondary offsets from an <em>index map</em>.
+     * The index map is a contiguous sequence of {@code VLENGTH}
+     * elements in a second array of {@code int}s, starting at a given
+     * {@code mapOffset}.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then
@@ -3186,6 +3227,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      *         is an invalid index into {@code a},
      *         for any lane {@code N} in the vector
      *         where the mask is set
+     * @see IntVector#toIntArray()
      */
     @ForceInline
     public final
@@ -3642,6 +3684,16 @@ public abstract class IntVector extends AbstractVector<Integer> {
                 throw badElementBits(value, e);
             }
             return toBits(e);
+        }
+
+        /*package-private*/
+        @ForceInline
+        static long toIntegralChecked(int e, boolean convertToInt) {
+            long value = convertToInt ? (int) e : (long) e;
+            if ((int) value != e) {
+                throw badArrayBits(e, convertToInt, value);
+            }
+            return value;
         }
 
         @Override

@@ -42,7 +42,7 @@ import jdk.internal.vm.annotation.Stable;
  * The static constants serve as tokens denoting specifically
  * requested lane operations in vector expressions, such
  * as the token {@code ADD} in
- * {@code v = v0.}{@link
+ * {@code w = v0.}{@link
  * Vector#lanewise(VectorOperators.Binary,Vector)
  * lanewise}{@code (ADD, v1)}.
  *
@@ -199,7 +199,7 @@ public abstract class VectorOperators {
 
     /**
      * Type for all
-     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * <a href="Vector.html#lane-wise">lane-wise</a>
      * unary operators,
      * usable in expressions like {@code w = v0.}{@link
      * Vector#lanewise(VectorOperators.Unary)
@@ -215,7 +215,7 @@ public abstract class VectorOperators {
 
     /**
      * Type for all
-     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * <a href="Vector.html#lane-wise">lane-wise</a>
      * binary operators,
      * usable in expressions like {@code w = v0.}{@link
      * Vector#lanewise(VectorOperators.Binary,Vector)
@@ -231,7 +231,7 @@ public abstract class VectorOperators {
 
     /**
      * Type for all
-     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * <a href="Vector.html#lane-wise">lane-wise</a>
      * ternary operators,
      * usable in expressions like {@code w = v0.}{@link
      * Vector#lanewise(VectorOperators.Ternary,Vector,Vector)
@@ -247,7 +247,7 @@ public abstract class VectorOperators {
 
     /**
      * Type for all reassociating
-     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * <a href="Vector.html#lane-wise">lane-wise</a>
      * binary operators,
      * usable in expressions like {@code e = v0.}{@link
      * IntVector#reduceLanes(VectorOperators.Associative)
@@ -263,7 +263,7 @@ public abstract class VectorOperators {
 
     /**
      * Type for all unary
-     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * <a href="Vector.html#lane-wise">lane-wise</a>
      * boolean tests on lane values,
      * usable in expressions like {@code m = v0.}{@link
      * FloatVector#test(VectorOperators.Test)
@@ -279,7 +279,7 @@ public abstract class VectorOperators {
 
     /**
      * Type for all binary
-     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * <a href="Vector.html#lane-wise">lane-wise</a>
      * boolean comparisons on lane values,
      * usable in expressions like {@code m = v0.}{@link
      * Vector#compare(VectorOperators.Comparison,Vector)
@@ -295,11 +295,11 @@ public abstract class VectorOperators {
 
     /**
      * Type for all
-     * <a href="Vector.html#lane-wise">lane-wise</a>,
+     * <a href="Vector.html#lane-wise">lane-wise</a>
      * conversions on lane values,
      * usable in expressions like {@code w1 = v0.}{@link
-     * FloatVector#convert(VectorOperators.Conversion,int)
-     * convert}{@code (F2D, 1)}.
+     * Vector#convert(VectorOperators.Conversion,int)
+     * convert}{@code (I2D, 1)}.
      *
      * @param <E> the boxed element type for the conversion
      *        domain type (the input lane type)

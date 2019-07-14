@@ -253,7 +253,9 @@ import jdk.incubator.vector.*;
  *
  * <ul>
  * <li>
- * A <em>lane-wise unary</em> operation takes one input vector,
+ * A <em>lane-wise unary</em> operation, such as
+ * {@code w = v0.}{@link Vector#neg() neg}{@code ()},
+ * takes one input vector,
  * distributing a unary scalar operator across the lanes, 
  * and produces a result vector of the same type and shape.
  *
@@ -275,7 +277,9 @@ import jdk.incubator.vector.*;
  * }</pre>
  *
  * <li>
- * A <em>lane-wise binary</em> operation takes two input vectors,
+ * A <em>lane-wise binary</em> operation, such as
+ * {@code w = v0.}{@link Vector#add(Vector) add}{@code (v1)},
+ * takes two input vectors,
  * distributing a binary scalar operator across the lanes, 
  * and produces a result vector of the same type and shape.
  * 
@@ -304,7 +308,9 @@ import jdk.incubator.vector.*;
  * a <em>lane-wise n-ary</em> operation takes {@code N} input vectors {@code v[j]},
  * distributing an n-ary scalar operator across the lanes,
  * and produces a result vector of the same type and shape.
- * Except for a few ternary operations, this API has no support for
+ * Except for a few ternary operations, such as
+ * {@code w = v0.}{@link FloatVector#fma(Vector,Vector) fma}{@code (v1,v2)},
+ * this API has no support for
  * lane-wise n-ary operations.
  *
  * For each lane of all of the input vectors {@code v[j]},
@@ -334,7 +340,11 @@ import jdk.incubator.vector.*;
  * </li>
  *
  * <li>
- * A <em>lane-wise conversion</em> operation takes one input vector,
+ * A <em>lane-wise conversion</em> operation, such as
+ * {@code w0 = v0.}{@link
+ * Vector#convert(VectorOperators.Conversion,int)
+ * convert}{@code (VectorOperators.I2D, 0)},
+ * takes one input vector,
  * distributing a unary scalar conversion operator across the lanes,
  * and produces a logical result of the converted values.  The logical
  * result (or at least a part of it) is presented in a vector of the
@@ -346,14 +356,19 @@ import jdk.incubator.vector.*;
  * size changes, lane-wise conversion methods can product <em>partial
  * results</em>, under the control of a {@code part} parameter, which
  * is <a href="Vector.html#expansion">explained elsewhere</a>.
+ * (Following the example above, the second group of converted lane
+ * values could be obtained as
+ * {@code w1 = v0.convert(VectorOperators.I2D, 1)}.)
  *
  * <p> The following pseudocode illustrates the behavior of this
  * operation category in the specific example of a conversion from
- * {@code int} to {@code double}, retaining lower lanes to maintain shape-invariance:
+ * {@code int} to {@code double}, retaining either lower or upper
+ * lanes (depending on {@code part}) to maintain shape-invariance:
  *
  * <pre>{@code
  * IntVector a = ...;
  * int VLENGTH = a.length();
+ * int part = ...;  // 0 or 1
  * VectorShape VSHAPE = a.shape();
  * double[] arlogical = new double[VLENGTH];
  * for (int i = 0; i < limit; i++) {
@@ -361,14 +376,19 @@ import jdk.incubator.vector.*;
  *     arlogical[i] = (double) e;
  * }
  * VectorSpecies<Double> rs = VSHAPE.withLanes(double.class);
- * DoubleVector r = DoubleVector.fromArray(rs, arlogical, 0);
  * int M = Double.BITS / Integer.BITS;  // expansion factor
+ * int offset = part * (VLENGTH / M);
+ * DoubleVector r = DoubleVector.fromArray(rs, arlogical, offset);
  * assert r.length() == VLENGTH / M;
  * }</pre>
  * </li>
  *
  * <li>
- * A <em>cross-lane reduction</em> operation operates on all
+ * A <em>cross-lane reduction</em> operation, such as
+ * {@code e = v0.}{@link
+ * IntVector#reduceLanes(VectorOperators.Associative)
+ * reduceLanes}{@code (VectorOperators.ADD)},
+ * operates on all
  * the lane elements of an input vector.
  * An accumulation function is applied to all the
  * lane elements to produce a scalar result.
@@ -389,7 +409,10 @@ import jdk.incubator.vector.*;
  * </li>
  *
  * <li>
- * A <em>cross-lane movement</em> operation operates on all
+ * A <em>cross-lane movement</em> operation, such as
+ * {@code w = v0.}{@link
+ * Vector#rearrange(VectorShuffle) rearrange}{@code (shuffle)}
+ * operates on all
  * the lane elements of an input vector and moves them
  * in a data-dependent manner into <em>different lanes</em>
  * in an output vector.
@@ -440,7 +463,9 @@ import jdk.incubator.vector.*;
  * </li>
  *
  * <li>
- * A <em>lane-wise binary test</em> operation takes two input vectors,
+ * A <em>lane-wise binary test</em> operation, such as
+ * {@code m = v0.}{@link Vector#lt(Vector) lt}{@code (v1)},
+ * takes two input vectors,
  * distributing a binary scalar comparison across the lanes, 
  * and produces, not a vector of booleans, but rather a
  * {@linkplain VectorMask vector mask}.
@@ -466,7 +491,10 @@ import jdk.incubator.vector.*;
  *
  * <li>
  * Similarly to a binary comparison, a <em>lane-wise unary test</em>
- * operation takes one input vector, distributing a scalar predicate
+ * operation, such as
+ * {@code m = v0.}{@link Vector#test(VectorOperators.Test)
+ * test}{@code (IS_FINITE)},
+ * takes one input vector, distributing a scalar predicate
  * (a test function) across the lanes, and produces a
  * {@linkplain VectorMask vector mask}.
  * </li>
@@ -1161,10 +1189,9 @@ public abstract class Vector<E> {
     /**
      * Operates on the lane values of this vector.
      *
-     * This is a lane-wise unary operation which applies
+     * This is a <a href="Vector.html#lane-wise">lane-wise</a>
+     * unary operation which applies
      * the selected operation to each lane.
-     *
-     * <p>FIXME: Write about the unary operators here.
      *
      * @apiNote
      * Subtypes improve on this method by sharpening
@@ -1175,6 +1202,9 @@ public abstract class Vector<E> {
      *         to the input vector
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
+     * @see VectorOperators#NEG
+     * @see VectorOperators#NOT
+     * @see VectorOperators#SIN
      * @see #lanewise(VectorOperators.Unary,VectorMask)
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
@@ -1207,16 +1237,9 @@ public abstract class Vector<E> {
      * Combines the corresponding lane values of this vector
      * with those of a second input vector.
      *
-     * This is a lane-wise binary operation which applies
+     * This is a <a href="Vector.html#lane-wise">lane-wise</a>
+     * binary operation which applies
      * the selected operation to each lane.
-     *
-     * <p>FIXME: Write about the binary operators here.
-     * Shift counts are reduced (as unsigned values) modulo
-     * {@code ESIZE}, so the shift is always in the range
-     * {@code [0..ESIZE-1]}.
-     * It is as if the shift value were subjected to a
-     * bitwise logical {@code AND} operator ({@code &})
-     * with the mask value {@code ESIZE-1}.
      *
      * @apiNote
      * Subtypes improve on this method by sharpening
@@ -1228,6 +1251,9 @@ public abstract class Vector<E> {
      *         to the two input vectors
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
+     * @see VectorOperators#ADD
+     * @see VectorOperators#XOR
+     * @see VectorOperators#ATAN2
      * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
      * @see #lanewise(VectorOperators.Unary)
      * @see #lanewise(VectorOperators.Ternary,Vector, Vector)
@@ -1336,11 +1362,9 @@ public abstract class Vector<E> {
      * Combines the corresponding lane values of this vector
      * with the lanes of a second and a third input vector.
      *
-     * This is a lane-wise ternary operation which applies
+     * This is a <a href="Vector.html#lane-wise">lane-wise</a>
+     * ternary operation which applies
      * the selected operation to each lane.
-     *
-     * <p>FIXME: Write about the ternary operators here.
-     * For now it's only {@code FMA} and {@code BITWISE_BLEND}.
      *
      * @apiNote
      * Subtypes improve on this method by sharpening
@@ -1353,6 +1377,8 @@ public abstract class Vector<E> {
      *         to the three input vectors
      * @throws UnsupportedOperationException if this vector does
      *         not support the requested operation
+     * @see VectorOperators#BITWISE_BLEND
+     * @see VectorOperators#FMA
      * @see #lanewise(VectorOperators.Unary)
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
@@ -2334,7 +2360,9 @@ public abstract class Vector<E> {
      * @see #slice(int,Vector)
      * @see #unslice(int,Vector,int,VectorMask)
      */
-    // FIXME: does this pull its weight?  It's symmetrical with masked unslice.
+    // This doesn't pull its weight, but its symmetrical with
+    // masked unslice, and might cause questions if missing.
+    // It could make for clearer code.
     public abstract Vector<E> slice(int origin, Vector<E> v1, VectorMask<E> m);
 
     /**
@@ -2362,8 +2390,8 @@ public abstract class Vector<E> {
      * @see #slice(int,Vector)
      * @see #unslice(int,Vector,int)
      */
-    // FIXME: does this pull its weight?
-    // It's a one-off and broadcast(0) is easy.  It's here as a teaching aid.
+    // This API point pulls its weight as a teaching aid,
+    // though it's a one-off and broadcast(0) is easy.
     public abstract Vector<E> slice(int origin);
 
     /**
@@ -2498,8 +2526,8 @@ public abstract class Vector<E> {
      * @see #unslice(int,Vector,int)
      * @see #slice(int)
      */
-    // FIXME: does this pull its weight?
-    // It's a one-off and broadcast(0) is easy.  It's here as a teaching aid.
+    // This API point pulls its weight as a teaching aid,
+    // though it's a one-off and broadcast(0) is easy.
     public abstract Vector<E> unslice(int origin);
 
     // ISSUE: Add a slice which uses a mask instead of an origin?
@@ -3201,7 +3229,7 @@ public abstract class Vector<E> {
      * @see VectorOperators.Conversion#ofCast(Class,Class)
      * @see Vector#convertShape(VectorOperators.Conversion,VectorSpecies,int)
      */
-    // FIXME: Does this carry its weight?
+    // Does this carry its weight?
     public abstract <F> Vector<F> castShape(VectorSpecies<F> rsp, int part);
 
     /**
@@ -3417,7 +3445,7 @@ public abstract class Vector<E> {
      * array result.
      *
      * @apiNote
-     * Usually {@linkplain IntVector#toArray() strongly typed access}
+     * Usually {@linkplain FloatVector#toArray() strongly typed access}
      * is preferable, if you are working with a vector
      * subtype that has a known element type.
      *
@@ -3430,24 +3458,60 @@ public abstract class Vector<E> {
     public abstract Object toArray();
 
     /**
+     * Returns an {@code int[]} array containing all
+     * the lane values, converted to the type {@code int}.
+     * The array length is the same as the vector length.
+     * The array elements are converted as if by casting
+     * and stored in lane order.
+     *
+     * This operation may fail if the vector element type is {@code
+     * float} or {@code double}, when lanes contain fractional or
+     * out-of-range values.  If any vector lane value is not
+     * representable as an {@code int}, an exception is thrown.
+     *
+     * @apiNote
+     * Usually {@linkplain FloatVector#toArray() strongly typed access}
+     * is preferable, if you are working with a vector
+     * subtype that has a known element type.
+     *
+     * @return an {@code int[]} array containing
+     *         the lane values of this vector
+     * @throws IllegalArgumentException
+     *         if any lane value cannot be represented as an
+     *         {@code int} array element
+     * @see #toArray()
+     * @see #toLongArray()
+     * @see #toDoubleArray()
+     * @see IntVector#toArray()
+     */
+    public abstract int[] toIntArray();
+
+    /**
      * Returns a {@code long[]} array containing all
      * the lane values, converted to the type {@code long}.
      * The array length is the same as the vector length.
      * The array elements are converted as if by casting
      * and stored in lane order.
-     * This operation can lose precision and/or range
-     * if the vector element type is {@code float}
-     * or {@code double}.
+     *
+     * This operation may fail if the vector element type is {@code
+     * float} or {@code double}, when lanes contain fractional or
+     * out-of-range values.  If any vector lane value is not
+     * representable as a {@code long}, an exception is thrown.
      *
      * @apiNote
-     * Usually {@linkplain IntVector#toArray() strongly typed access}
+     * Usually {@linkplain FloatVector#toArray() strongly typed access}
      * is preferable, if you are working with a vector
      * subtype that has a known element type.
      *
      * @return a {@code long[]} array containing
      *         the lane values of this vector
+     * @throws IllegalArgumentException
+     *         if any lane value cannot be represented as a
+     *         {@code long} array element
      * @see #toArray()
-     * @see LongVector#toArray
+     * @see #toIntArray()
+     * @see #toDoubleArray()
+     * @see LongVector#toArray()
      */
     public abstract long[] toLongArray();
 
@@ -3461,14 +3525,18 @@ public abstract class Vector<E> {
      * if the vector element type is {@code long}.
      *
      * @apiNote
-     * Usually {@link IntVector#toArray() strongly typed access}
+     * Usually {@link FloatVector#toArray() strongly typed access}
      * is preferable, if you are working with a vector
      * subtype that has a known element type.
      *
      * @return a {@code double[]} array containing
-     *         the lane values of this vector
+     *         the lane values of this vector,
+     *         possibly rounded to representable
+     *         {@code double} values
      * @see #toArray()
-     * @see DoubleVector#toArray
+     * @see #toIntArray()
+     * @see #toLongArray()
+     * @see DoubleVector#toArray()
      */
     public abstract double[] toDoubleArray();
 
@@ -3527,8 +3595,8 @@ public abstract class Vector<E> {
      *
      * @return a list containing the lane values of this vector
      */
-    // FIXME:  Does this pull its weight?  Probably not.
-    // Perhaps it's fine to rely on the {@code toArray()} methods.
+    // Does this pull its weight?  Perhaps not.
+    // It might be OK to rely on the {@code toArray()} methods.
     public abstract List<E> toList();
 
     // ==== JROSE NAME CHANGES ====
