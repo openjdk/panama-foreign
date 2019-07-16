@@ -2653,11 +2653,17 @@ public abstract class LongVector extends AbstractVector<Long> {
                                        VectorMask<Long> m) {
         LongSpecies vsp = (LongSpecies) species;
         LongVector zero = vsp.zero();
+
+        if (offset >= 0 && offset <= (a.length - vsp.length() * 8)) {
+            LongVector v = zero.fromByteArray0(a, offset);
+            return zero.blend(v.maybeSwap(bo), m);
+        }
         LongVector iota = zero.addIndex(1);
         ((AbstractMask<Long>)m)
             .checkIndexByLane(offset, a.length, iota, 8);
-        LongVector v = zero.fromByteArray0(a, offset);
-        return zero.blend(v.maybeSwap(bo), m);
+        LongBuffer tb = wrapper(a, offset, bo);
+        return vsp.ldOp(tb, 0, (AbstractMask<Long>)m,
+                   (tb_, __, i)  -> tb_.get(i));
     }
 
     /**
@@ -2713,11 +2719,14 @@ public abstract class LongVector extends AbstractVector<Long> {
                                    long[] a, int offset,
                                    VectorMask<Long> m) {
         LongSpecies vsp = (LongSpecies) species;
-        LongVector zero = vsp.zero();
+        if (offset >= 0 && offset <= (a.length - species.length())) {
+            LongVector zero = vsp.zero();
+            return zero.blend(zero.fromArray0(a, offset), m);
+        }
         LongVector iota = vsp.iota();
         ((AbstractMask<Long>)m)
             .checkIndexByLane(offset, a.length, iota, 1);
-        return zero.blend(zero.fromArray0(a, offset), m);
+        return vsp.vOp(m, i -> a[offset + i]);
     }
 
     /**
@@ -3139,11 +3148,15 @@ public abstract class LongVector extends AbstractVector<Long> {
             return;
         }
         LongSpecies vsp = vspecies();
-        checkMaskFromIndexSize(offset, vsp, m, 8, a.length);
-        conditionalStoreNYI(offset, vsp, m, 8, a.length);
-        var oldVal = fromByteArray0(a, offset);
-        var newVal = oldVal.blend(this, m);
-        newVal.intoByteArray0(a, offset);
+        if (offset >= 0 && offset <= (a.length - vsp.length() * 8)) {
+            var oldVal = fromByteArray0(a, offset);
+            var newVal = oldVal.blend(this, m);
+            newVal.intoByteArray0(a, offset);
+        } else {
+            checkMaskFromIndexSize(offset, vsp, m, 8, a.length);
+            LongBuffer tb = wrapper(a, offset, NATIVE_ENDIAN);
+            this.stOp(tb, 0, m, (tb_, __, i, e) -> tb_.put(i, e));
+        }
     }
 
     /**

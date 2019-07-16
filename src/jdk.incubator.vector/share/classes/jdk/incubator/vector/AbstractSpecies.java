@@ -218,6 +218,12 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
 
     @Override
     @ForceInline
+    public final VectorMask<E> indexInRange(int offset, int limit) {
+        return maskAll(true).indexInRange(offset, limit);
+    }
+
+    @Override
+    @ForceInline
     public final <F> VectorSpecies<F> withLanes(Class<F> newType) {
         return withLanes(LaneType.of(newType)).check(newType);
     }

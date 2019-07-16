@@ -170,6 +170,23 @@ public interface VectorSpecies<E> {
     public abstract int loopBound(int length);
 
     /**
+     * Returns a mask of this species where only
+     * the lanes at index N such that the adjusted index
+     * {@code N+offset} is in the range {@code [0..limit-1]}
+     * are set.
+     *
+     * <p>
+     * This method returns the value of the expression
+     * {@code maskAll(true).indexInRange(offset, limit)}
+     *
+     * @param offset the starting index
+     * @param limit the upper-bound (exlusive) of index range
+     * @return a mask with out-of-range lanes unset
+     * @see VectorMask#indexInRange(int, int)
+     */
+    public abstract VectorMask<E> indexInRange(int offset, int limit);
+
+    /**
      * Checks that this species has the given element type,
      * and returns this species unchanged.
      * The effect is similar to this pseudocode:

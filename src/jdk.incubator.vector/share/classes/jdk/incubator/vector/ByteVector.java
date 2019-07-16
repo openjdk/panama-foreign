@@ -2793,11 +2793,17 @@ public abstract class ByteVector extends AbstractVector<Byte> {
                                        VectorMask<Byte> m) {
         ByteSpecies vsp = (ByteSpecies) species;
         ByteVector zero = vsp.zero();
+
+        if (offset >= 0 && offset <= (a.length - vsp.length() * 1)) {
+            ByteVector v = zero.fromByteArray0(a, offset);
+            return zero.blend(v.maybeSwap(bo), m);
+        }
         ByteVector iota = zero.addIndex(1);
         ((AbstractMask<Byte>)m)
             .checkIndexByLane(offset, a.length, iota, 1);
-        ByteVector v = zero.fromByteArray0(a, offset);
-        return zero.blend(v.maybeSwap(bo), m);
+        ByteBuffer tb = wrapper(a, offset, bo);
+        return vsp.ldOp(tb, 0, (AbstractMask<Byte>)m,
+                   (tb_, __, i)  -> tb_.get(i));
     }
 
     /**
@@ -2853,11 +2859,14 @@ public abstract class ByteVector extends AbstractVector<Byte> {
                                    byte[] a, int offset,
                                    VectorMask<Byte> m) {
         ByteSpecies vsp = (ByteSpecies) species;
-        ByteVector zero = vsp.zero();
+        if (offset >= 0 && offset <= (a.length - species.length())) {
+            ByteVector zero = vsp.zero();
+            return zero.blend(zero.fromArray0(a, offset), m);
+        }
         ByteVector iota = vsp.iota();
         ((AbstractMask<Byte>)m)
             .checkIndexByLane(offset, a.length, iota, 1);
-        return zero.blend(zero.fromArray0(a, offset), m);
+        return vsp.vOp(m, i -> a[offset + i]);
     }
 
     /**
@@ -3238,11 +3247,15 @@ public abstract class ByteVector extends AbstractVector<Byte> {
             return;
         }
         ByteSpecies vsp = vspecies();
-        checkMaskFromIndexSize(offset, vsp, m, 1, a.length);
-        conditionalStoreNYI(offset, vsp, m, 1, a.length);
-        var oldVal = fromByteArray0(a, offset);
-        var newVal = oldVal.blend(this, m);
-        newVal.intoByteArray0(a, offset);
+        if (offset >= 0 && offset <= (a.length - vsp.length() * 1)) {
+            var oldVal = fromByteArray0(a, offset);
+            var newVal = oldVal.blend(this, m);
+            newVal.intoByteArray0(a, offset);
+        } else {
+            checkMaskFromIndexSize(offset, vsp, m, 1, a.length);
+            ByteBuffer tb = wrapper(a, offset, NATIVE_ENDIAN);
+            this.stOp(tb, 0, m, (tb_, __, i, e) -> tb_.put(i, e));
+        }
     }
 
     /**

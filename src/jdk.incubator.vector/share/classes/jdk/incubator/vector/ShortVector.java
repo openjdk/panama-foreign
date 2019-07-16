@@ -2794,11 +2794,17 @@ public abstract class ShortVector extends AbstractVector<Short> {
                                        VectorMask<Short> m) {
         ShortSpecies vsp = (ShortSpecies) species;
         ShortVector zero = vsp.zero();
+
+        if (offset >= 0 && offset <= (a.length - vsp.length() * 2)) {
+            ShortVector v = zero.fromByteArray0(a, offset);
+            return zero.blend(v.maybeSwap(bo), m);
+        }
         ShortVector iota = zero.addIndex(1);
         ((AbstractMask<Short>)m)
             .checkIndexByLane(offset, a.length, iota, 2);
-        ShortVector v = zero.fromByteArray0(a, offset);
-        return zero.blend(v.maybeSwap(bo), m);
+        ShortBuffer tb = wrapper(a, offset, bo);
+        return vsp.ldOp(tb, 0, (AbstractMask<Short>)m,
+                   (tb_, __, i)  -> tb_.get(i));
     }
 
     /**
@@ -2854,11 +2860,14 @@ public abstract class ShortVector extends AbstractVector<Short> {
                                    short[] a, int offset,
                                    VectorMask<Short> m) {
         ShortSpecies vsp = (ShortSpecies) species;
-        ShortVector zero = vsp.zero();
+        if (offset >= 0 && offset <= (a.length - species.length())) {
+            ShortVector zero = vsp.zero();
+            return zero.blend(zero.fromArray0(a, offset), m);
+        }
         ShortVector iota = vsp.iota();
         ((AbstractMask<Short>)m)
             .checkIndexByLane(offset, a.length, iota, 1);
-        return zero.blend(zero.fromArray0(a, offset), m);
+        return vsp.vOp(m, i -> a[offset + i]);
     }
 
     /**
@@ -3255,11 +3264,15 @@ public abstract class ShortVector extends AbstractVector<Short> {
             return;
         }
         ShortSpecies vsp = vspecies();
-        checkMaskFromIndexSize(offset, vsp, m, 2, a.length);
-        conditionalStoreNYI(offset, vsp, m, 2, a.length);
-        var oldVal = fromByteArray0(a, offset);
-        var newVal = oldVal.blend(this, m);
-        newVal.intoByteArray0(a, offset);
+        if (offset >= 0 && offset <= (a.length - vsp.length() * 2)) {
+            var oldVal = fromByteArray0(a, offset);
+            var newVal = oldVal.blend(this, m);
+            newVal.intoByteArray0(a, offset);
+        } else {
+            checkMaskFromIndexSize(offset, vsp, m, 2, a.length);
+            ShortBuffer tb = wrapper(a, offset, NATIVE_ENDIAN);
+            this.stOp(tb, 0, m, (tb_, __, i, e) -> tb_.put(i, e));
+        }
     }
 
     /**

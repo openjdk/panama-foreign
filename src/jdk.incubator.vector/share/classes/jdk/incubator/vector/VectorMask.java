@@ -452,7 +452,10 @@ public abstract class VectorMask<E> {
      * followed by {@code N2} set lanes can be obtained by calling
      * {@code allTrue.indexInRange(-N1, N2)}.
      *
+     * @param offset the starting index
+     * @param limit the upper-bound (exlusive) of index range
      * @return the original mask, with out-of-range lanes unset
+     * @see VectorSpecies#indexInRange(int, int)
      */
     public abstract VectorMask<E> indexInRange(int offset, int limit);
 
