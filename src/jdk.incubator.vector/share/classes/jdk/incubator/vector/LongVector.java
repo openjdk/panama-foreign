@@ -1724,10 +1724,12 @@ public abstract class LongVector extends AbstractVector<Long> {
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Long> v) {
         Objects.requireNonNull(v);
         LongSpecies vsp = vspecies();
+        LongVector that = (LongVector) v;
+        that.check(this);
         int opc = opCode(op);
         return VectorIntrinsics.compare(
             opc, getClass(), maskType, long.class, length(),
-            this, (LongVector) v,
+            this, that,
             (cond, v0, v1) -> {
                 AbstractMask<Long> m
                     = v0.bTest(cond, v1, (cond_, i, a, b)

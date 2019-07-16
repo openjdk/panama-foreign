@@ -1805,10 +1805,12 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Byte> v) {
         Objects.requireNonNull(v);
         ByteSpecies vsp = vspecies();
+        ByteVector that = (ByteVector) v;
+        that.check(this);
         int opc = opCode(op);
         return VectorIntrinsics.compare(
             opc, getClass(), maskType, byte.class, length(),
-            this, (ByteVector) v,
+            this, that,
             (cond, v0, v1) -> {
                 AbstractMask<Byte> m
                     = v0.bTest(cond, v1, (cond_, i, a, b)

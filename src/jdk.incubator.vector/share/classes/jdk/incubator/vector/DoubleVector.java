@@ -1714,10 +1714,12 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Double> v) {
         Objects.requireNonNull(v);
         DoubleSpecies vsp = vspecies();
+        DoubleVector that = (DoubleVector) v;
+        that.check(this);
         int opc = opCode(op);
         return VectorIntrinsics.compare(
             opc, getClass(), maskType, double.class, length(),
-            this, (DoubleVector) v,
+            this, that,
             (cond, v0, v1) -> {
                 AbstractMask<Double> m
                     = v0.bTest(cond, v1, (cond_, i, a, b)

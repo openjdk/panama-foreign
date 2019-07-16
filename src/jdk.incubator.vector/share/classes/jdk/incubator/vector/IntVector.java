@@ -1805,10 +1805,12 @@ public abstract class IntVector extends AbstractVector<Integer> {
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Integer> v) {
         Objects.requireNonNull(v);
         IntSpecies vsp = vspecies();
+        IntVector that = (IntVector) v;
+        that.check(this);
         int opc = opCode(op);
         return VectorIntrinsics.compare(
             opc, getClass(), maskType, int.class, length(),
-            this, (IntVector) v,
+            this, that,
             (cond, v0, v1) -> {
                 AbstractMask<Integer> m
                     = v0.bTest(cond, v1, (cond_, i, a, b)

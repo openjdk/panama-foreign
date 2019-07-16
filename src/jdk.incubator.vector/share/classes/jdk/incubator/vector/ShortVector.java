@@ -1806,10 +1806,12 @@ public abstract class ShortVector extends AbstractVector<Short> {
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Short> v) {
         Objects.requireNonNull(v);
         ShortSpecies vsp = vspecies();
+        ShortVector that = (ShortVector) v;
+        that.check(this);
         int opc = opCode(op);
         return VectorIntrinsics.compare(
             opc, getClass(), maskType, short.class, length(),
-            this, (ShortVector) v,
+            this, that,
             (cond, v0, v1) -> {
                 AbstractMask<Short> m
                     = v0.bTest(cond, v1, (cond_, i, a, b)

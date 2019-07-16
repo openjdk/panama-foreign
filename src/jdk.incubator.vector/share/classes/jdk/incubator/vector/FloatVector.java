@@ -1714,10 +1714,12 @@ public abstract class FloatVector extends AbstractVector<Float> {
     M compareTemplate(Class<M> maskType, Comparison op, Vector<Float> v) {
         Objects.requireNonNull(v);
         FloatSpecies vsp = vspecies();
+        FloatVector that = (FloatVector) v;
+        that.check(this);
         int opc = opCode(op);
         return VectorIntrinsics.compare(
             opc, getClass(), maskType, float.class, length(),
-            this, (FloatVector) v,
+            this, that,
             (cond, v0, v1) -> {
                 AbstractMask<Float> m
                     = v0.bTest(cond, v1, (cond_, i, a, b)
