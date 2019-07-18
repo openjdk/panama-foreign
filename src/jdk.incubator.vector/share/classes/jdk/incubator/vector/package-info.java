@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,71 +26,111 @@
 /**
  * {@Incubating}
  * <p>
- * Classes to express vector computations that, given suitable hardware
+ * This package provides
+ * classes to express vector computations that, given suitable hardware
  * and runtime ability, are accelerated using vector hardware instructions.
- * <p>
- * Vector computations consist of a sequence of operations on vectors.
- * A vector is a fixed sequence of scalar values; a scalar value is
- * a single unit of value such as an int, a long, a float and so on.
- * Operations on vectors typically perform the equivalent scalar operation on all
- * scalar values of the participating vectors, usually generating a vector result.
- * When run on a supporting platform, these operations can be
- * executed in parallel by the hardware.
- * This style of parallelism is called <em>Single Instruction Multiple Data</em> (SIMD)
- * parallelism.
  *
- * <p>The abstract class {@link jdk.incubator.vector.Vector} represents an ordered immutable sequence of
- * values of the same element type 'e' that is one of the following primitive types -
- * byte, short, int, long, float, or double. The type variable E corresponds to the
- * boxed element type, specifically the class that wraps a value of e in an object
- * (such as Integer class that wraps a value of int).
+ * <p> A {@linkplain Vector <em>vector</em>} is a
  *
- * <p>Vector declares a set of vector operations (methods) that are common to
- * all element types (such as addition). Subclasses of Vector corresponding to
- * a specific element type declare further operations that are specific to that element type
- * (such as access to element values in lanes, logical operations on values of integral
- * elements types, or transcendental operations on values of floating point element
- * types). There are six abstract subclasses of {@link jdk.incubator.vector.Vector} corresponding to the supported set of
- * element types: {@link jdk.incubator.vector.ByteVector}, {@link jdk.incubator.vector.ShortVector},
- * {@link jdk.incubator.vector.IntVector}, {@link jdk.incubator.vector.LongVector},
- * {@link jdk.incubator.vector.FloatVector}, and {@link jdk.incubator.vector.DoubleVector}.
+ * <!-- The following paragraphs are shared verbatim
+ *   -- between Vector.java and package-info.java -->
+ * sequence of a fixed number of <em>lanes</em>,
+ * all of some fixed
+ * {@linkplain Vector#elementType() <em>element type</em>}
+ * such as {@code byte}, {@code long}, or {@code float}.
+ * Each lane contains an independent value of the element type.
+ * Operations on vectors are typically
+ * <a href="Vector.html#lane-wise"><em>lane-wise</em></a>,
+ * distributing some scalar operator (such as
+ * {@linkplain Vector#add(Vector) addition})
+ * across the lanes of the participating vectors,
+ * usually generating a vector result whose lanes contain the various
+ * scalar results.  When run on a supporting platform, lane-wise
+ * operations can be executed in parallel by the hardware.  This style
+ * of parallelism is called <em>Single Instruction Multiple Data</em>
+ * (SIMD) parallelism.
  *
- * In addition to element type, vectors are parameterized by their <em>shape</em>,
- * which is their length.  The supported shapes are
- * represented by the enum {@link jdk.incubator.vector.VectorShape}.
- * The combination of element type and shape determines a <em>vector species</em>,
- * represented by {@link jdk.incubator.vector.VectorSpecies}.  The various typed
- * vector classes expose static constants corresponding to the supported species,
- * and static methods on these types generally take a species as a parameter.
- * For example,
- * {@link jdk.incubator.vector.FloatVector#fromArray(VectorSpecies, float[], int) FloatVector.fromArray()}
- * creates and returns a float vector of the specified species, with elements
- * loaded from the specified float array.
+ * <p> In the SIMD style of programming, most of the operations within
+ * a vector lane are unconditional, but the effect of conditional
+ * execution may be achieved using
+ * <a href="Vector.html#masking"><em>masked operations</em></a>
+ * such as {@link Vector#blend(Vector,VectorMask) blend()},
+ * under the control of an associated {@link VectorMask}.
+ * Data motion other than strictly lane-wise flow is achieved using
+ * <a href="Vector.html#cross-lane"><em>cross-lane</em></a>
+ * operations, often under the control of an associated
+ * {@link VectorShuffle}.
+ * Lane data and/or whole vectors can be reformatted using various
+ * kinds of lane-wise
+ * {@linkplain Vector#convert(VectorOperators.Conversion,int) conversions},
+ * and byte-wise reformatting
+ * {@linkplain Vector#reinterpretShape(VectorSpecies,int) reinterpretations},
+ * often under the control of a reflective {@link VectorSpecies}
+ * object which selects an alternative vector format different
+ * from that of the input vector.
+ *
+ * <p> {@code Vector<E>} declares a set of vector operations (methods)
+ * that are common to all element types.  These common operations
+ * include generic access to lane values, data selection and movement,
+ * reformatting, and certain arithmetic and logical operations (such as addition
+ * or comparison) that are common to all primitive types.
+ *
+ * <p> <a href="Vector.html#subtypes">Public subtypes of {@code Vector}</a>
+ * correspond to specific
+ * element types.  These declare further operations that are specific
+ * to that element type, including unboxed access to lane values,
+ * bitwise operations on values of integral element types, or
+ * transcendental operations on values of floating point element
+ * types.
+ *
+ * <p>This package contains a public subtype of {@link Vector}
+ * corresponding to each supported element type:
+ * {@link ByteVector}, {@link ShortVector},
+ * {@link IntVector}, {@link LongVector},
+ * {@link FloatVector}, and {@link DoubleVector}.
+ *
+ * <!-- The preceding paragraphs are shared verbatim
+ *   -- between Vector.java and package-info.java -->
  *
  * <p>
- * The species instance for a specific combination of element type and shape
- * can be obtained by reading the appropriate static field, as follows:
- * <p>
- * {@code VectorSpecies<Float> s = FloatVector.SPECIES_256};
- * <p>
- *
- * Code that is agnostic to species can request the "preferred" species for a
- * given element type, where the optimal size is selected for the current platform:
- * <p>
- * {@code VectorSpecies<Float> s = FloatVector.SPECIES_PREFERRED};
- * <p>
- *
- * <p>
- * Here is an example of multiplying elements of two float arrays {@code a and b} using vector computation
+ * Here is an example of multiplying elements of two float arrays
+ * {@code a} and {@code b} using vector computation
  * and storing result in array {@code c}.
+ *
+ * <pre>{@code
+ * static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_512;
+ *
+ * void vectorMultiply(float[] a, float[] b, float[] c) {
+ *   // It is assumed array arguments are of the same size
+ *   for (int i = 0; i < a.length; i += SPECIES.length()) {
+ *         VectorMask<Float> m = SPECIES.indexInRange(i, a.length);
+ *         FloatVector va = FloatVector.fromArray(SPECIES, a, i, m);
+ *         FloatVector vb = FloatVector.fromArray(SPECIES, b, i, m);
+ *         FloatVector vc = va.mul(vb)
+ *         vc.intoArray(c, i, m);
+ *   }
+ * }
+ * }</pre>
+ *
+ * In the above example, we use masks, generated by
+ * {@link VectorSpecies#indexInRange indexInRange()},
+ * to prevent reading/writing past the array length.
+ * The first {@code a.length / SPECIES.length()} iterations will have a mask
+ * with all lanes set. Only the final iteration (if {@code a.length}
+ * is not a multiple of {@code SPECIES.length()} will have a mask with
+ * the first {@code a.length % SPECIES.length()} lanes set.
+ *
+ * Since a mask is used in all iterations, the above implementation
+ * may not achieve optimal performance(for large array lengths). The
+ * same computation can be implemented without masks as follows:
+ *
  * <pre>{@code
  * static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_512;
  *
  * void vectorMultiply(float[] a, float[] b, float[] c) {
  *   int i = 0;
  *   // It is assumed array arguments are of the same size
- *   for (; i < (a.length & ~(SPECIES.length() - 1));
- *            i += SPECIES.length()) {
+ *   for (; i < SPECIES.loopBound(a.length); i += SPECIES.length()) {
  *         FloatVector va = FloatVector.fromArray(SPECIES, a, i);
  *         FloatVector vb = FloatVector.fromArray(SPECIES, b, i);
  *         FloatVector vc = va.mul(vb)
@@ -103,197 +143,90 @@
  * }
  * }</pre>
  *
- * The scalar computation after the vector computation is required to process the tail of
- * elements, the length of which is smaller than the species length. {@code VectorSpecies} also defines a
- * {@link jdk.incubator.vector.VectorSpecies#loopBound(int) loopBound()} helper method which can be used in place of
- * {@code (a.length & ~(SPECIES.length() - 1))} in the above code to determine the terminating condition.
+ * The scalar computation after the vector computation is required to
+ * process a <em>tail</em> of {@code TLENGTH} array elements, where
+ * {@code TLENGTH <= VLENGTH} for the vector species.
  *
- * The example above uses vectors hardcoded to a concrete shape (512-bit). Instead, we could use preferred
- * species as shown below, to make the code dynamically adapt to optimal shape for the platform on which it runs.
+ * The example above uses vectors hardcoded to a concrete shape
+ * (512-bit). Instead, we could use preferred species as shown below,
+ * to make the code dynamically adapt to optimal shape for the
+ * platform on which it runs.
  *
  * <pre>{@code
  * static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
  * }</pre>
  *
- * <h2>Vector operations</h2>
- * We use the term <em>lanes</em> when defining operations on vectors. The number of lanes
- * in a vector is the number of scalar elements it holds. For example, a vector of
- * type {@code Float} and shape {@code VectorShape.S_256_BIT} has eight lanes.
- * Vector operations can be grouped into various categories and their behavior
- * generally specified as follows:
- * <ul>
- * <li>
- * A lane-wise unary operation operates on one input vector and produce a
- * result vector.
- * For each lane of the input vector the
- * lane element is operated on using the specified scalar unary operation and
- * the element result is placed into the vector result at the same lane.
- * The following pseudocode expresses the behavior of this operation category,
- * where {@code e} is the element type and {@code EVector} corresponds to the
- * primitive Vector type:
+ * <p> The helper method {@link VectorSpecies#loopBound(int) loopBound()}
+ * is used in the above code to find the end of the vector loop.
+ * A primitive masking expression such as
+ * {@code (a.length & ~(SPECIES.length() - 1))} might also be used
+ * here, since the species {@code VLENGTH} is known to be 8, which
+ * is a power of two.  But this is not always a correct assumption.
+ * For example, if the {@code FloatVector.SPECIES_PREFERRED} turns
+ * out to have the platform-dependent shape
+ * {@link VectorShape#S_Max_BIT S_Max_BIT},
+ * and that shape has some odd hypothetical size such as 384 (which is
+ * a valid vector size according to some architectures), then the
+ * hand-tweaked primitive masking expression may produce surprising
+ * results.
  *
- * <pre>{@code
- * EVector a = ...;
- * e[] ar = new e[a.length()];
- * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_unary_op(a.lane(i));
- * }
- * EVector r = EVector.fromArray(a.species(), ar, 0);
- * }</pre>
+ * <h1> Performance notes </h1>
  *
- * Unless otherwise specified the input and result vectors will have the same
- * element type and shape.
+ * This package depends on the runtime's ability to dynamically
+ * compile vector operations into optimal vector hardware
+ * instructions. There is a default scalar implementation for each
+ * operation which is used if the operation cannot be compiled to
+ * vector instructions.
  *
- * <li>
- * A lane-wise binary operation operates on two input
- * vectors to produce a result vector.
- * For each lane of the two input vectors,
- * a and b say, the corresponding lane elements from a and b are operated on
- * using the specified scalar binary operation and the element result is placed
- * into the vector result at the same lane.
- * The following pseudocode expresses the behavior of this operation category:
- *
- * <pre>{@code
- * EVector a = ...;
- * EVector b = ...;
- * e[] ar = new e[a.length()];
- * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_binary_op(a.lane(i), b.lane(i));
- * }
- * EVector r = EVector.fromArray(a.species(), ar, 0);
- * }</pre>
- *
- * Unless otherwise specified the two input and result vectors will have the
- * same element type and shape.
- *
- * <li>
- * Generalizing from unary and binary operations, a lane-wise n-ary
- * operation operates on n input vectors to produce a
- * result vector.
- * N lane elements from each input vector are operated on
- * using the specified n-ary scalar operation and the element result is placed
- * into the vector result at the same lane.
- *
- * Unless otherwise specified the n input and result vectors will have the same
- * element type and shape.
- *
- * <li>
- * A vector reduction operation operates on all the lane
- * elements of an input vector, and applies an accumulation function to all the
- * lane elements to produce a scalar result.
- * If the reduction operation is associative then the result may be accumulated
- * by operating on the lane elements in any order using a specified associative
- * scalar binary operation and identity value.  Otherwise, the reduction
- * operation specifies the behavior of the accumulation function.
- * The following pseudocode expresses the behavior of this operation category
- * if it is associative:
- * <pre>{@code
- * EVector a = ...;
- * e r = <identity value>;
- * for (int i = 0; i < a.length(); i++) {
- *     r = assoc_scalar_binary_op(r, a.lane(i));
- * }
- * }</pre>
- *
- * Unless otherwise specified the scalar result type and element type will be
- * the same.
- *
- * <li>
- * A lane-wise binary test operation operates on two input vectors to produce a
- * result mask.  For each lane of the two input vectors, a and b say, the
- * the corresponding lane elements from a and b are operated on using the
- * specified scalar binary test operation and the boolean result is placed
- * into the mask at the same lane.
- * The following pseudocode expresses the behavior of this operation category:
- * <pre>{@code
- * EVector a = ...;
- * EVector b = ...;
- * boolean[] ar = new boolean[a.length()];
- * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_binary_test_op(a.lane(i), b.lane(i));
- * }
- * VectorMask<E> r = VectorMask.fromArray(a.species(), ar, 0);
- * }</pre>
- *
- * Unless otherwise specified the two input vectors and result mask will have
- * the same element type and shape.
- *
- * <li>
- * The prior categories of operation can be said to operate within the vector
- * lanes, where lane access is uniformly applied to all vectors, specifically
- * the scalar operation is applied to elements taken from input vectors at the
- * same lane, and if appropriate applied to the result vector at the same lane.
- * A further category of operation is a cross-lane vector operation where lane
- * access is defined by the arguments to the operation.  Cross-lane operations
- * generally rearrange lane elements, for example by permutation (commonly
- * controlled by a {@link jdk.incubator.vector.VectorShuffle}) or by blending (commonly controlled by a
- * {@link jdk.incubator.vector.VectorMask}). Such an operation explicitly specifies how it rearranges lane
- * elements.
- * </ul>
- *
- * <p>
- * If a vector operation does not belong to one of the above categories then
- * the operation explicitly specifies how it processes the lane elements of
- * input vectors, and where appropriate expresses the behavior using
- * pseudocode.
- *
- * <p>
- * Many vector operations provide an additional {@link jdk.incubator.vector.VectorMask mask}-accepting
- * variant.
- * The mask controls which lanes are selected for application of the scalar
- * operation.  Masks are a key component for the support of control flow in
- * vector computations.
- * <p>
- * For certain operation categories the mask accepting variants can be specified
- * in generic terms.  If a lane of the mask is set then the scalar operation is
- * applied to corresponding lane elements, otherwise if a lane of a mask is not
- * set then a default scalar operation is applied and its result is placed into
- * the vector result at the same lane. The default operation is specified as follows:
- * <ul>
- * <li>
- * For a lane-wise n-ary operation the default operation is a function that returns
- * it's first argument, specifically the lane element of the first input vector.
- * <li>
- * For an associative vector reduction operation the default operation is a
- * function that returns the identity value.
- * <li>
- * For lane-wise binary test operation the default operation is a function that
- * returns false.
- * </ul>
- * Otherwise, the mask accepting variant of the operation explicitly specifies
- * how it processes the lane elements of input vectors, and where appropriate
- * expresses the behavior using pseudocode.
- *
- * <p>
- * For convenience, many vector operations of arity greater than one provide
- * an additional scalar-accepting variant (such as adding a constant scalar
- * value to all lanes of a vector).  This variant accepts compatible
- * scalar values instead of vectors for the second and subsequent input vectors,
- * if any.
- * Unless otherwise specified the scalar variant behaves as if each scalar value
- * is transformed to a vector using the appropriate vector {@code broadcast} operation, and
- * then the vector accepting vector operation is applied using the transformed
- * values.
- *
- * <h2> Performance notes </h2>
- * This package depends on the runtime's ability to dynamically compile vector operations
- * into optimal vector hardware instructions. There is a default scalar implementation
- * for each operation which is used if the operation cannot be compiled to vector instructions.
- *
- * <p>There are certain things users need to pay attention to for generating optimal vector machine code:
+ * <p>There are certain things users need to pay attention to for
+ * generating optimal vector machine code:
  *
  * <ul>
- * <li>The shape of vectors used should be supported by the underlying platform. For example,
- * code written using {@code IntVector} of Shape S_512_BIT will not be compiled to vector
- * instructions on a platform which supports only 256 bit vectors. Instead, the default
- * scalar implementation will be used.
- * For this reason, it is recommended to use the preferred species as shown above to write
- * generically sized vector computations.
- * <li>Classes defined in this package should be treated as
+
+ * <li> The shape of vectors used should be supported by the underlying
+ * platform. For example, code written using {@link IntVector} of
+ * {@link Shape} {@link Shape#S_512_BIT S_512_BIT} will not be
+ * compiled to vector instructions on a platform which supports only
+ * 256 bit vectors. Instead, the default scalar implementation will be
+ * used.  For this reason, it is recommended to use the preferred
+ * species as shown above to write generically sized vector
+ * computations.
+ *
+ * <li> Most classes defined in this package should be treated as
  * <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a> classes.
- * Use of identity-sensitive operations (including reference equality
- * ({@code ==}), identity hash code, or synchronization) will limit generation of
- * optimal vector instructions.
+ * This classification applies to {@link Vector} and its subtypes,
+ * {@link VectorMask}, {@link VectorShuffle}, and {@link VectorSpecies}.
+ *
+ * With these types,
+ *
+ * <!-- The following paragraph is shared verbatim
+ *   -- between Vector.java and package-info.java -->
+ * identity-sensitive operations such as {@code ==} may yield
+ * unpredictable results, or reduced performance.  Oddly enough,
+ * {@link Vector#equals(Object) v.equals(w)} is likely to be faster
+ * than {@code v==w}, since {@code equals} is <em>not</em> an identity
+ * sensitive method.  It is also reasonable to use, on vectors, the
+ * {@code toString} and {@code hashCode} methods of {@code Object}.
+ *
+ * Also, these objects can be stored in locals and parameters and as
+ * {@code static final} constants, but storing them in other Java
+ * fields or in array elements, while semantically valid, will may
+ * incur performance risks.
+ * <!-- The preceding paragraph is shared verbatim
+ *   -- between Vector.java and package-info.java -->
+ *
+ * <li> Unless specified otherwise, any method arguments of reference
+ * type must not be {@code null}, and any {@code null} argument will
+ * elicit a {@code NullPointerException}.  This fact is not
+ * individually documented for methods in this package.
+ *
  * </ul>
+ *
+ * <p>
+ * For every class in this package,
+ * unless specified otherwise, any method arguments of reference
+ * type must not be null, and any null argument will elicit a
+ * {@code NullPointerException}.  This fact is not individually
+ * documented for methods of this API.
  */
 package jdk.incubator.vector;

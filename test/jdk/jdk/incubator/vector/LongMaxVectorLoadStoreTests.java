@@ -29,6 +29,8 @@
  *
  */
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 import jdk.incubator.vector.VectorShape;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorMask;
@@ -58,6 +60,12 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
     static VectorShape getMaxBit() {
         return VectorShape.S_Max_BIT;
     }
+
+    private static final int Max = 256;  // juts so we can do N/Max
+
+    static final int BUFFER_REPS = Integer.getInteger("jdk.incubator.vector.test.buffer-vectors", 25000 / Max);
+
+    static final int BUFFER_SIZE = Integer.getInteger("jdk.incubator.vector.test.buffer-size", BUFFER_REPS * (Max / 8));
 
     static void assertArraysEquals(long[] a, long[] r, boolean[] mask) {
         int i = 0;
@@ -94,11 +102,11 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
 
     static final List<IntFunction<long[]>> LONG_GENERATORS = List.of(
             withToString("long[i * 5]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (long)(i * 5));
             }),
             withToString("long[i + 1]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (((long)(i + 1) == 0) ? 1 : (long)(i + 1)));
             })
     );
@@ -254,8 +262,8 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i);
+                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -277,8 +285,8 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i);
+                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -302,8 +310,8 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i, vmask);
-                av.intoByteBuffer(r, i);
+                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN, vmask);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -316,8 +324,8 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i, vmask);
+                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN, vmask);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -342,8 +350,8 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i, vmask);
-                av.intoByteBuffer(r, i);
+                LongVector av = LongVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN, vmask);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");

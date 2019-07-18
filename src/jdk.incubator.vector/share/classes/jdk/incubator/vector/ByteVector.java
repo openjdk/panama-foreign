@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,379 +26,501 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.BinaryOperator;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
-import static jdk.incubator.vector.VectorIntrinsics.*;
 
+import static jdk.incubator.vector.VectorIntrinsics.*;
+import static jdk.incubator.vector.VectorOperators.*;
+
+// -- This file was mechanically generated: Do not edit! -- //
 
 /**
  * A specialized {@link Vector} representing an ordered immutable sequence of
  * {@code byte} values.
  */
-@SuppressWarnings("cast")
-public abstract class ByteVector extends Vector<Byte> {
+@SuppressWarnings("cast")  // warning: redundant cast
+public abstract class ByteVector extends AbstractVector<Byte> {
 
     ByteVector() {}
 
-    private static final int ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_BYTE_INDEX_SCALE);
+    static final int FORBID_OPCODE_KIND = VO_ONLYFP;
+
+    @ForceInline
+    static int opCode(Operator op) {
+        return VectorOperators.opCode(op, VO_OPCODE_VALID, FORBID_OPCODE_KIND);
+    }
+    @ForceInline
+    static int opCode(Operator op, int requireKind) {
+        requireKind |= VO_OPCODE_VALID;
+        return VectorOperators.opCode(op, requireKind, FORBID_OPCODE_KIND);
+    }
+    @ForceInline
+    static boolean opKind(Operator op, int bit) {
+        return VectorOperators.opKind(op, bit);
+    }
+
+    // Virtualized factories and operators,
+    // coded with portable definitions.
+    // These are all @ForceInline in case
+    // they need to be used performantly.
+    // The various shape-specific subclasses
+    // also specialize them by wrapping
+    // them in a call like this:
+    //    return (Byte128Vector)
+    //       super.bOp((Byte128Vector) o);
+    // The purpose of that is to forcibly inline
+    // the generic definition from this file
+    // into a sharply type- and size-specific
+    // wrapper in the subclass file, so that
+    // the JIT can specialize the code.
+    // The code is only inlined and expanded
+    // if it gets hot.  Think of it as a cheap
+    // and lazy version of C++ templates.
+
+    // Virtualized getter
+
+    /*package-private*/
+    abstract byte[] getElements();
+
+    // Virtualized constructors
+
+    /**
+     * Build a vector directly using my own constructor.
+     * It is an error if the array is aliased elsewhere.
+     */
+    /*package-private*/
+    abstract ByteVector vectorFactory(byte[] vec);
+
+    /**
+     * Build a mask directly using my species.
+     * It is an error if the array is aliased elsewhere.
+     */
+    /*package-private*/
+    @ForceInline
+    final
+    AbstractMask<Byte> maskFactory(boolean[] bits) {
+        return vspecies().maskFactory(bits);
+    }
+
+    // Constant loader (takes dummy as vector arg)
+    interface FVOp {
+        byte apply(int i);
+    }
+
+    /*package-private*/
+    @ForceInline
+    final
+    ByteVector vOp(FVOp f) {
+        byte[] res = new byte[length()];
+        for (int i = 0; i < res.length; i++) {
+            res[i] = f.apply(i);
+        }
+        return vectorFactory(res);
+    }
+
+    @ForceInline
+    final
+    ByteVector vOp(VectorMask<Byte> m, FVOp f) {
+        byte[] res = new byte[length()];
+        boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
+        for (int i = 0; i < res.length; i++) {
+            if (mbits[i]) {
+                res[i] = f.apply(i);
+            }
+        }
+        return vectorFactory(res);
+    }
 
     // Unary operator
 
+    /*package-private*/
     interface FUnOp {
         byte apply(int i, byte a);
     }
 
-    abstract ByteVector uOp(FUnOp f);
+    /*package-private*/
+    abstract
+    ByteVector uOp(FUnOp f);
+    @ForceInline
+    final
+    ByteVector uOpTemplate(FUnOp f) {
+        byte[] vec = getElements();
+        byte[] res = new byte[length()];
+        for (int i = 0; i < res.length; i++) {
+            res[i] = f.apply(i, vec[i]);
+        }
+        return vectorFactory(res);
+    }
 
-    abstract ByteVector uOp(VectorMask<Byte> m, FUnOp f);
+    /*package-private*/
+    abstract
+    ByteVector uOp(VectorMask<Byte> m,
+                             FUnOp f);
+    @ForceInline
+    final
+    ByteVector uOpTemplate(VectorMask<Byte> m,
+                                     FUnOp f) {
+        byte[] vec = getElements();
+        byte[] res = new byte[length()];
+        boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
+        for (int i = 0; i < res.length; i++) {
+            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
+        }
+        return vectorFactory(res);
+    }
 
     // Binary operator
 
+    /*package-private*/
     interface FBinOp {
         byte apply(int i, byte a, byte b);
     }
 
-    abstract ByteVector bOp(Vector<Byte> v, FBinOp f);
+    /*package-private*/
+    abstract
+    ByteVector bOp(Vector<Byte> o,
+                             FBinOp f);
+    @ForceInline
+    final
+    ByteVector bOpTemplate(Vector<Byte> o,
+                                     FBinOp f) {
+        byte[] res = new byte[length()];
+        byte[] vec1 = this.getElements();
+        byte[] vec2 = ((ByteVector)o).getElements();
+        for (int i = 0; i < res.length; i++) {
+            res[i] = f.apply(i, vec1[i], vec2[i]);
+        }
+        return vectorFactory(res);
+    }
 
-    abstract ByteVector bOp(Vector<Byte> v, VectorMask<Byte> m, FBinOp f);
+    /*package-private*/
+    abstract
+    ByteVector bOp(Vector<Byte> o,
+                             VectorMask<Byte> m,
+                             FBinOp f);
+    @ForceInline
+    final
+    ByteVector bOpTemplate(Vector<Byte> o,
+                                     VectorMask<Byte> m,
+                                     FBinOp f) {
+        byte[] res = new byte[length()];
+        byte[] vec1 = this.getElements();
+        byte[] vec2 = ((ByteVector)o).getElements();
+        boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
+        for (int i = 0; i < res.length; i++) {
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
+        }
+        return vectorFactory(res);
+    }
 
-    // Trinary operator
+    // Ternary operator
 
+    /*package-private*/
     interface FTriOp {
         byte apply(int i, byte a, byte b, byte c);
     }
 
-    abstract ByteVector tOp(Vector<Byte> v1, Vector<Byte> v2, FTriOp f);
+    /*package-private*/
+    abstract
+    ByteVector tOp(Vector<Byte> o1,
+                             Vector<Byte> o2,
+                             FTriOp f);
+    @ForceInline
+    final
+    ByteVector tOpTemplate(Vector<Byte> o1,
+                                     Vector<Byte> o2,
+                                     FTriOp f) {
+        byte[] res = new byte[length()];
+        byte[] vec1 = this.getElements();
+        byte[] vec2 = ((ByteVector)o1).getElements();
+        byte[] vec3 = ((ByteVector)o2).getElements();
+        for (int i = 0; i < res.length; i++) {
+            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
+        }
+        return vectorFactory(res);
+    }
 
-    abstract ByteVector tOp(Vector<Byte> v1, Vector<Byte> v2, VectorMask<Byte> m, FTriOp f);
+    /*package-private*/
+    abstract
+    ByteVector tOp(Vector<Byte> o1,
+                             Vector<Byte> o2,
+                             VectorMask<Byte> m,
+                             FTriOp f);
+    @ForceInline
+    final
+    ByteVector tOpTemplate(Vector<Byte> o1,
+                                     Vector<Byte> o2,
+                                     VectorMask<Byte> m,
+                                     FTriOp f) {
+        byte[] res = new byte[length()];
+        byte[] vec1 = this.getElements();
+        byte[] vec2 = ((ByteVector)o1).getElements();
+        byte[] vec3 = ((ByteVector)o2).getElements();
+        boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
+        for (int i = 0; i < res.length; i++) {
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
+        }
+        return vectorFactory(res);
+    }
 
     // Reduction operator
 
-    abstract byte rOp(byte v, FBinOp f);
+    /*package-private*/
+    abstract
+    byte rOp(byte v, FBinOp f);
+    @ForceInline
+    final
+    byte rOpTemplate(byte v, FBinOp f) {
+        byte[] vec = getElements();
+        for (int i = 0; i < vec.length; i++) {
+            v = f.apply(i, v, vec[i]);
+        }
+        return v;
+    }
+
+    // Memory reference
+
+    /*package-private*/
+    interface FLdOp<M> {
+        byte apply(M memory, int offset, int i);
+    }
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M> ByteVector ldOp(M memory, int offset,
+                                  FLdOp<M> f) {
+        //dummy; no vec = getElements();
+        byte[] res = new byte[length()];
+        for (int i = 0; i < res.length; i++) {
+            res[i] = f.apply(memory, offset, i);
+        }
+        return vectorFactory(res);
+    }
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M> ByteVector ldOp(M memory, int offset,
+                                  VectorMask<Byte> m,
+                                  FLdOp<M> f) {
+        //byte[] vec = getElements();
+        byte[] res = new byte[length()];
+        boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
+        for (int i = 0; i < res.length; i++) {
+            if (mbits[i]) {
+                res[i] = f.apply(memory, offset, i);
+            }
+        }
+        return vectorFactory(res);
+    }
+
+    interface FStOp<M> {
+        void apply(M memory, int offset, int i, byte a);
+    }
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M> void stOp(M memory, int offset,
+                  FStOp<M> f) {
+        byte[] vec = getElements();
+        for (int i = 0; i < vec.length; i++) {
+            f.apply(memory, offset, i, vec[i]);
+        }
+    }
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M> void stOp(M memory, int offset,
+                  VectorMask<Byte> m,
+                  FStOp<M> f) {
+        byte[] vec = getElements();
+        boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
+        for (int i = 0; i < vec.length; i++) {
+            if (mbits[i]) {
+                f.apply(memory, offset, i, vec[i]);
+            }
+        }
+    }
 
     // Binary test
 
+    /*package-private*/
     interface FBinTest {
-        boolean apply(int i, byte a, byte b);
+        boolean apply(int cond, int i, byte a, byte b);
     }
 
-    abstract VectorMask<Byte> bTest(Vector<Byte> v, FBinTest f);
-
-    // Foreach
-
-    interface FUnCon {
-        void apply(int i, byte a);
+    /*package-private*/
+    @ForceInline
+    final
+    AbstractMask<Byte> bTest(int cond,
+                                  Vector<Byte> o,
+                                  FBinTest f) {
+        byte[] vec1 = getElements();
+        byte[] vec2 = ((ByteVector)o).getElements();
+        boolean[] bits = new boolean[length()];
+        for (int i = 0; i < length(); i++){
+            bits[i] = f.apply(cond, i, vec1[i], vec2[i]);
+        }
+        return maskFactory(bits);
     }
 
-    abstract void forEach(FUnCon f);
+    /*package-private*/
+    @ForceInline
+    static boolean doBinTest(int cond, byte a, byte b) {
+        switch (cond) {
+        case BT_eq:  return a == b;
+        case BT_ne:  return a != b;
+        case BT_lt:  return a < b;
+        case BT_le:  return a <= b;
+        case BT_gt:  return a > b;
+        case BT_ge:  return a >= b;
+        }
+        throw new AssertionError(Integer.toHexString(cond));
+    }
 
-    abstract void forEach(VectorMask<Byte> m, FUnCon f);
+    /*package-private*/
+    @Override
+    abstract ByteSpecies vspecies();
 
-    // Static factories
+    /*package-private*/
+    @ForceInline
+    static long toBits(byte e) {
+        return  e;
+    }
+
+    /*package-private*/
+    @ForceInline
+    static byte fromBits(long bits) {
+        return ((byte)bits);
+    }
+
+    // Static factories (other than memory operations)
+
+    // Note: A surprising behavior in javadoc
+    // sometimes makes a lone /** {@inheritDoc} */
+    // comment drop the method altogether,
+    // apparently if the method mentions an
+    // parameter or return type of Vector<Byte>
+    // instead of Vector<E> as originally specified.
+    // Adding an empty HTML fragment appears to
+    // nudge javadoc into providing the desired
+    // inherited documentation.  We use the HTML
+    // comment <!--workaround--> for this.
 
     /**
-     * Returns a vector where all lane elements are set to the default
-     * primitive value.
-     *
-     * @param species species of desired vector
-     * @return a zero vector of given species
+     * {@inheritDoc} <!--workaround-->
      */
     @ForceInline
-    @SuppressWarnings("unchecked")
     public static ByteVector zero(VectorSpecies<Byte> species) {
-        return VectorIntrinsics.broadcastCoerced((Class<ByteVector>) species.vectorType(), byte.class, species.length(),
-                                                 0, species,
-                                                 ((bits, s) -> ((ByteSpecies)s).op(i -> (byte)bits)));
-    }
-
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    static VectorShuffle<Byte> shuffleIotaHelper(VectorSpecies<Byte> species, int step) {
-        switch (species.bitSize()) {
-            case 64: return VectorIntrinsics.shuffleIota(byte.class, Byte64Vector.Byte64Shuffle.class, species,
-                                                        64 / Byte.SIZE, step,
-                                                        (val, l) -> new Byte64Vector.Byte64Shuffle(i -> ((i + val) & (l-1))));
-            case 128: return VectorIntrinsics.shuffleIota(byte.class, Byte128Vector.Byte128Shuffle.class, species,
-                                                        128/ Byte.SIZE, step,
-                                                        (val, l) -> new Byte128Vector.Byte128Shuffle(i -> ((i + val) & (l-1))));
-            case 256: return VectorIntrinsics.shuffleIota(byte.class, Byte256Vector.Byte256Shuffle.class, species,
-                                                        256/ Byte.SIZE, step,
-                                                        (val, l) -> new Byte256Vector.Byte256Shuffle(i -> ((i + val) & (l-1))));
-            case 512: return VectorIntrinsics.shuffleIota(byte.class, Byte512Vector.Byte512Shuffle.class, species,
-                                                        512 / Byte.SIZE, step,
-                                                        (val, l) -> new Byte512Vector.Byte512Shuffle(i -> ((i + val) & (l-1))));
-            default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-        }
+        ByteSpecies vsp = (ByteSpecies) species;
+        return VectorIntrinsics.broadcastCoerced(vsp.vectorType(), byte.class, species.length(),
+                                0, vsp,
+                                ((bits_, s_) -> s_.rvOp(i -> bits_)));
     }
 
     /**
-     * Loads a vector from a byte array starting at an offset.
-     * <p>
-     * Bytes are composed into primitive lane elements according to the
-     * native byte order of the underlying platform
-     * <p>
-     * This method behaves as if it returns the result of calling the
-     * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(VectorSpecies, ByteBuffer, int, VectorMask) method} as follows:
-     * <pre>{@code
-     * return fromByteBuffer(species, ByteBuffer.wrap(a), offset, VectorMask.allTrue());
-     * }</pre>
+     * Returns a vector of the same species as this one
+     * where all lane elements are set to
+     * the primitive value {@code e}.
      *
-     * @param species species of desired vector
-     * @param a the byte array
-     * @param offset the offset into the array
-     * @return a vector loaded from a byte array
-     * @throws IndexOutOfBoundsException if {@code i < 0} or
-     * {@code offset > a.length - (species.length() * species.elementSize() / Byte.SIZE)}
-     */
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public static ByteVector fromByteArray(VectorSpecies<Byte> species, byte[] a, int offset) {
-        Objects.requireNonNull(a);
-        offset = VectorIntrinsics.checkIndex(offset, a.length, species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<ByteVector>) species.vectorType(), byte.class, species.length(),
-                                     a, ((long) offset) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                                     a, offset, species,
-                                     (c, idx, s) -> {
-                                         ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
-                                         ByteBuffer tb = bbc;
-                                         return ((ByteSpecies)s).op(i -> tb.get());
-                                     });
-    }
-
-    /**
-     * Loads a vector from a byte array starting at an offset and using a
-     * mask.
-     * <p>
-     * Bytes are composed into primitive lane elements according to the
-     * native byte order of the underlying platform.
-     * <p>
-     * This method behaves as if it returns the result of calling the
-     * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(VectorSpecies, ByteBuffer, int, VectorMask) method} as follows:
-     * <pre>{@code
-     * return fromByteBuffer(species, ByteBuffer.wrap(a), offset, m);
-     * }</pre>
+     * The contents of the current vector are discarded;
+     * only the species is relevant to this operation.
      *
-     * @param species species of desired vector
-     * @param a the byte array
-     * @param offset the offset into the array
-     * @param m the mask
-     * @return a vector loaded from a byte array
-     * @throws IndexOutOfBoundsException if {@code offset < 0} or
-     * for any vector lane index {@code N} where the mask at lane {@code N}
-     * is set
-     * {@code offset >= a.length - (N * species.elementSize() / Byte.SIZE)}
-     */
-    @ForceInline
-    public static ByteVector fromByteArray(VectorSpecies<Byte> species, byte[] a, int offset, VectorMask<Byte> m) {
-        return zero(species).blend(fromByteArray(species, a, offset), m);
-    }
-
-    /**
-     * Loads a vector from an array starting at offset.
-     * <p>
-     * For each vector lane, where {@code N} is the vector lane index, the
-     * array element at index {@code offset + N} is placed into the
-     * resulting vector at lane index {@code N}.
+     * <p> This method returns the value of this expression:
+     * {@code ByteVector.broadcast(this.species(), e)}.
      *
-     * @param species species of desired vector
-     * @param a the array
-     * @param offset the offset into the array
-     * @return the vector loaded from an array
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
-     * {@code offset > a.length - species.length()}
-     */
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public static ByteVector fromArray(VectorSpecies<Byte> species, byte[] a, int offset){
-        Objects.requireNonNull(a);
-        offset = VectorIntrinsics.checkIndex(offset, a.length, species.length());
-        return VectorIntrinsics.load((Class<ByteVector>) species.vectorType(), byte.class, species.length(),
-                                     a, (((long) offset) << ARRAY_SHIFT) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                                     a, offset, species,
-                                     (c, idx, s) -> ((ByteSpecies)s).op(n -> c[idx + n]));
-    }
-
-
-    /**
-     * Loads a vector from an array starting at offset and using a mask.
-     * <p>
-     * For each vector lane, where {@code N} is the vector lane index,
-     * if the mask lane at index {@code N} is set then the array element at
-     * index {@code offset + N} is placed into the resulting vector at lane index
-     * {@code N}, otherwise the default element value is placed into the
-     * resulting vector at lane index {@code N}.
+     * @apiNote
+     * Unlike the similar method named {@code broadcast()}
+     * in the supertype {@code Vector}, this method does not
+     * need to validate its argument, and cannot throw
+     * {@code IllegalArgumentException}.  This method is
+     * therefore preferable to the supertype method.
      *
-     * @param species species of desired vector
-     * @param a the array
-     * @param offset the offset into the array
-     * @param m the mask
-     * @return the vector loaded from an array
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
-     * for any vector lane index {@code N} where the mask at lane {@code N}
-     * is set {@code offset > a.length - N}
+     * @param e the value to broadcast
+     * @return a vector where all lane elements are set to
+     *         the primitive value {@code e}
+     * @see #broadcast(VectorSpecies,long)
+     * @see Vector#broadcast(long)
+     * @see VectorSpecies#broadcast(long)
      */
-    @ForceInline
-    public static ByteVector fromArray(VectorSpecies<Byte> species, byte[] a, int offset, VectorMask<Byte> m) {
-        return zero(species).blend(fromArray(species, a, offset), m);
-    }
+    public abstract ByteVector broadcast(byte e);
 
     /**
-     * Loads a vector from an array using indexes obtained from an index
-     * map.
-     * <p>
-     * For each vector lane, where {@code N} is the vector lane index, the
-     * array element at index {@code a_offset + indexMap[i_offset + N]} is placed into the
-     * resulting vector at lane index {@code N}.
-     *
-     * @param species species of desired vector
-     * @param a the array
-     * @param a_offset the offset into the array, may be negative if relative
-     * indexes in the index map compensate to produce a value within the
-     * array bounds
-     * @param indexMap the index map
-     * @param i_offset the offset into the index map
-     * @return the vector loaded from an array
-     * @throws IndexOutOfBoundsException if {@code i_offset < 0}, or
-     * {@code i_offset > indexMap.length - species.length()},
-     * or for any vector lane index {@code N} the result of
-     * {@code a_offset + indexMap[i_offset + N]} is {@code < 0} or {@code >= a.length}
-     */
-    public static ByteVector fromArray(VectorSpecies<Byte> species, byte[] a, int a_offset, int[] indexMap, int i_offset) {
-        return ((ByteSpecies)species).op(n -> a[a_offset + indexMap[i_offset + n]]);
-    }
-    /**
-     * Loads a vector from an array using indexes obtained from an index
-     * map and using a mask.
-     * <p>
-     * For each vector lane, where {@code N} is the vector lane index,
-     * if the mask lane at index {@code N} is set then the array element at
-     * index {@code a_offset + indexMap[i_offset + N]} is placed into the resulting vector
-     * at lane index {@code N}.
-     *
-     * @param species species of desired vector
-     * @param a the array
-     * @param a_offset the offset into the array, may be negative if relative
-     * indexes in the index map compensate to produce a value within the
-     * array bounds
-     * @param m the mask
-     * @param indexMap the index map
-     * @param i_offset the offset into the index map
-     * @return the vector loaded from an array
-     * @throws IndexOutOfBoundsException if {@code i_offset < 0}, or
-     * {@code i_offset > indexMap.length - species.length()},
-     * or for any vector lane index {@code N} where the mask at lane
-     * {@code N} is set the result of {@code a_offset + indexMap[i_offset + N]} is
-     * {@code < 0} or {@code >= a.length}
-     */
-    public static ByteVector fromArray(VectorSpecies<Byte> species, byte[] a, int a_offset, VectorMask<Byte> m, int[] indexMap, int i_offset) {
-        return ((ByteSpecies)species).op(m, n -> a[a_offset + indexMap[i_offset + n]]);
-    }
-
-    /**
-     * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
-     * offset into the byte buffer.
-     * <p>
-     * Bytes are composed into primitive lane elements according to the
-     * native byte order of the underlying platform.
-     * <p>
-     * This method behaves as if it returns the result of calling the
-     * byte buffer, offset, and mask accepting
-     * {@link #fromByteBuffer(VectorSpecies, ByteBuffer, int, VectorMask)} method} as follows:
-     * <pre>{@code
-     *   return fromByteBuffer(b, offset, VectorMask.allTrue())
-     * }</pre>
-     *
-     * @param species species of desired vector
-     * @param bb the byte buffer
-     * @param offset the offset into the byte buffer
-     * @return a vector loaded from a byte buffer
-     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
-     * or {@code > b.limit()},
-     * or if there are fewer than
-     * {@code species.length() * species.elementSize() / Byte.SIZE} bytes
-     * remaining in the byte buffer from the given offset
-     */
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public static ByteVector fromByteBuffer(VectorSpecies<Byte> species, ByteBuffer bb, int offset) {
-        if (bb.order() != ByteOrder.nativeOrder()) {
-            throw new IllegalArgumentException();
-        }
-        offset = VectorIntrinsics.checkIndex(offset, bb.limit(), species.bitSize() / Byte.SIZE);
-        return VectorIntrinsics.load((Class<ByteVector>) species.vectorType(), byte.class, species.length(),
-                                     U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + offset,
-                                     bb, offset, species,
-                                     (c, idx, s) -> {
-                                         ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
-                                         ByteBuffer tb = bbc;
-                                         return ((ByteSpecies)s).op(i -> tb.get());
-                                     });
-    }
-
-    /**
-     * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
-     * offset into the byte buffer and using a mask.
-     * <p>
-     * This method behaves as if the byte buffer is viewed as a primitive
-     * {@link java.nio.Buffer buffer} for the primitive element type,
-     * according to the native byte order of the underlying platform, and
-     * the returned vector is loaded with a mask from a primitive array
-     * obtained from the primitive buffer.
-     * The following pseudocode expresses the behaviour, where
-     * {@code EBuffer} is the primitive buffer type, {@code e} is the
-     * primitive element type, and {@code ESpecies} is the primitive
-     * species for {@code e}:
-     * <pre>{@code
-     * EBuffer eb = b.duplicate().
-     *     order(ByteOrder.nativeOrder()).position(offset).
-     *     asEBuffer();
-     * e[] es = new e[species.length()];
-     * for (int n = 0; n < t.length; n++) {
-     *     if (m.isSet(n))
-     *         es[n] = eb.get(n);
-     * }
-     * EVector r = EVector.fromArray(es, 0, m);
-     * }</pre>
-     *
-     * @param species species of desired vector
-     * @param bb the byte buffer
-     * @param offset the offset into the byte buffer
-     * @param m the mask
-     * @return a vector loaded from a byte buffer
-     * @throws IndexOutOfBoundsException if the offset is {@code < 0},
-     * or {@code > b.limit()},
-     * for any vector lane index {@code N} where the mask at lane {@code N}
-     * is set
-     * {@code offset >= b.limit() - (N * species.elementSize() / Byte.SIZE)}
-     */
-    @ForceInline
-    public static ByteVector fromByteBuffer(VectorSpecies<Byte> species, ByteBuffer bb, int offset, VectorMask<Byte> m) {
-        return zero(species).blend(fromByteBuffer(species, bb, offset), m);
-    }
-
-    /**
-     * Returns a vector where all lane elements are set to the primitive
-     * value {@code e}.
+     * Returns a vector of the given species
+     * where all lane elements are set to
+     * the primitive value {@code e}.
      *
      * @param species species of the desired vector
-     * @param e the value to be broadcasted
-     * @return a vector of vector where all lane elements are set to
-     * the primitive value {@code e}
+     * @param e the value to broadcast
+     * @return a vector where all lane elements are set to
+     *         the primitive value {@code e}
+     * @see #broadcast(long)
+     * @see Vector#broadcast(long)
+     * @see VectorSpecies#broadcast(long)
      */
-    @ForceInline
-    @SuppressWarnings("unchecked")
     public static ByteVector broadcast(VectorSpecies<Byte> species, byte e) {
-        return VectorIntrinsics.broadcastCoerced(
-            (Class<ByteVector>) species.vectorType(), byte.class, species.length(),
-            e, species,
-            ((bits, sp) -> ((ByteSpecies)sp).op(i -> (byte)bits)));
+        ByteSpecies vsp = (ByteSpecies) species;
+        return vsp.broadcast(e);
+    }
+
+    /*package-private*/
+    @ForceInline
+    final ByteVector broadcastTemplate(byte e) {
+        ByteSpecies vsp = vspecies();
+        return vsp.broadcast(e);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like {@code ByteVector},
+     * {@linkplain #broadcast(byte) the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.broadcast((byte)e)}.
+     * The two expressions will produce numerically identical results.
+     */
+    @Override
+    public abstract ByteVector broadcast(long e);
+
+    /**
+     * Returns a vector of the given species
+     * where all lane elements are set to
+     * the primitive value {@code e}.
+     *
+     * The {@code long} value must be accurately representable
+     * by the {@code ETYPE} of the vector species, so that
+     * {@code e==(long)(ETYPE)e}.
+     *
+     * @param species species of the desired vector
+     * @param e the value to broadcast
+     * @return a vector where all lane elements are set to
+     *         the primitive value {@code e}
+     * @throws IllegalArgumentException
+     *         if the given {@code long} value cannot
+     *         be represented by the vector's {@code ETYPE}
+     * @see #broadcast(VectorSpecies,byte)
+     * @see VectorSpecies#checkValue(VectorSpecies,long)
+     */
+    public static ByteVector broadcast(VectorSpecies<Byte> species, long e) {
+        ByteSpecies vsp = (ByteSpecies) species;
+        return vsp.broadcast(e);
+    }
+
+    /*package-private*/
+    @ForceInline
+    final ByteVector broadcastTemplate(long e) {
+        return vspecies().broadcast(e);
     }
 
     /**
@@ -413,17 +535,17 @@ public abstract class ByteVector extends Vector<Byte> {
      * @param es the given primitive values
      * @return a vector where each lane element is set to given primitive
      * values
-     * @throws IndexOutOfBoundsException if {@code es.length < species.length()}
+     * @throws IllegalArgumentException
+     *         if {@code es.length != species.length()}
      */
     @ForceInline
     @SuppressWarnings("unchecked")
-    public static ByteVector scalars(VectorSpecies<Byte> species, byte... es) {
-        Objects.requireNonNull(es);
-        int ix = VectorIntrinsics.checkIndex(0, es.length, species.length());
-        return VectorIntrinsics.load((Class<ByteVector>) species.vectorType(), byte.class, species.length(),
-                                     es, Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                                     es, ix, species,
-                                     (c, idx, sp) -> ((ByteSpecies)sp).op(n -> c[idx + n]));
+    public static ByteVector fromValues(VectorSpecies<Byte> species, byte... es) {
+        ByteSpecies vsp = (ByteSpecies) species;
+        int vlength = vsp.laneCount();
+        VectorIntrinsics.requireLength(es.length, vlength);
+        // Get an unaliased copy and use it directly:
+        return vsp.vectorFactory(Arrays.copyOf(es, vlength));
     }
 
     /**
@@ -436,9 +558,10 @@ public abstract class ByteVector extends Vector<Byte> {
      * @return a vector where the first lane element is set to the primitive
      * value {@code e}
      */
+    // FIXME: Does this carry its weight?
     @ForceInline
-    public static final ByteVector single(VectorSpecies<Byte> species, byte e) {
-        return zero(species).with(0, e);
+    public static ByteVector single(VectorSpecies<Byte> species, byte e) {
+        return zero(species).withLane(0, e);
     }
 
     /**
@@ -446,1042 +569,1968 @@ public abstract class ByteVector extends Vector<Byte> {
      * generated primitive value.
      *
      * The semantics are equivalent to calling
-     * (byte){@link ThreadLocalRandom#nextInt()}
+     * {@code (byte)}{@link ThreadLocalRandom#nextInt()}
+     * for each lane, from first to last.
      *
      * @param species species of the desired vector
      * @return a vector where each lane elements is set to a randomly
      * generated primitive value
      */
     public static ByteVector random(VectorSpecies<Byte> species) {
+        ByteSpecies vsp = (ByteSpecies) species;
         ThreadLocalRandom r = ThreadLocalRandom.current();
-        return ((ByteSpecies)species).op(i -> (byte) r.nextInt());
+        return vsp.vOp(i -> nextRandom(r));
+    }
+    private static byte nextRandom(ThreadLocalRandom r) {
+        return (byte) r.nextInt();
     }
 
-    // Ops
+    // Unary lanewise support
 
     /**
-     * {@inheritDoc}
+     * {@inheritDoc} <!--workaround-->
+     */
+    public abstract
+    ByteVector lanewise(VectorOperators.Unary op);
+
+    @ForceInline
+    final
+    ByteVector lanewiseTemplate(VectorOperators.Unary op) {
+        if (opKind(op, VO_SPECIAL)) {
+            if (op == ZOMO) {
+                return blend(broadcast(-1), compare(NE, 0));
+            }
+            if (op == NEG) {
+                // FIXME: Support this in the JIT.
+                return broadcast(0).lanewiseTemplate(SUB, this);
+            }
+        }
+        int opc = opCode(op);
+        return VectorIntrinsics.unaryOp(
+            opc, getClass(), byte.class, length(),
+            this,
+            UN_IMPL.find(op, opc, (opc_) -> {
+              switch (opc_) {
+                case VECTOR_OP_NEG: return v0 ->
+                        v0.uOp((i, a) -> (byte) -a);
+                case VECTOR_OP_ABS: return v0 ->
+                        v0.uOp((i, a) -> (byte) Math.abs(a));
+                case VECTOR_OP_NOT: return v0 ->
+                        v0.uOp((i, a) -> (byte) ~a);
+                default: return null;
+              }}));
+    }
+    private static final
+    ImplCache<Unary,UnaryOperator<ByteVector>> UN_IMPL
+        = new ImplCache<>(Unary.class, ByteVector.class);
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Unary op,
+                                  VectorMask<Byte> m) {
+        return blend(lanewise(op), m);
+    }
+
+    // Binary lanewise support
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     * @see #lanewise(VectorOperators.Binary,byte)
+     * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
      */
     @Override
-    public abstract ByteVector add(Vector<Byte> v);
+    public abstract
+    ByteVector lanewise(VectorOperators.Binary op,
+                                  Vector<Byte> v);
+    @ForceInline
+    final
+    ByteVector lanewiseTemplate(VectorOperators.Binary op,
+                                          Vector<Byte> v) {
+        ByteVector that = (ByteVector) v;
+        that.check(this);
+        if (opKind(op, VO_SPECIAL  | VO_SHIFT)) {
+            if (op == FIRST_NONZERO) {
+                // FIXME: Support this in the JIT.
+                VectorMask<Byte> thisNZ
+                    = this.viewAsIntegralLanes().compare(NE, (byte) 0);
+                that = that.blend((byte) 0, thisNZ.cast(vspecies()));
+                op = OR_UNCHECKED;
+            }
+            if (opKind(op, VO_SHIFT)) {
+                // As per shift specification for Java, mask the shift count.
+                // This allows the JIT to ignore some ISA details.
+                that = that.lanewise(AND, SHIFT_MASK);
+            }
+            if (op == ROR || op == ROL) {  // FIXME: JIT should do this
+                ByteVector neg = that.lanewise(NEG);
+                ByteVector hi = this.lanewise(LSHL, (op == ROR) ? neg : that);
+                ByteVector lo = this.lanewise(LSHR, (op == ROR) ? that : neg);
+                return hi.lanewise(OR, lo);
+            } else if (op == AND_NOT) {
+                // FIXME: Support this in the JIT.
+                that = that.lanewise(NOT);
+                op = AND;
+            } else if (op == DIV) {
+                VectorMask<Byte> eqz = that.eq((byte)0);
+                if (eqz.anyTrue()) {
+                    throw that.divZeroException();
+                }
+            }
+        }
+        int opc = opCode(op);
+        return VectorIntrinsics.binaryOp(
+            opc, getClass(), byte.class, length(),
+            this, that,
+            BIN_IMPL.find(op, opc, (opc_) -> {
+              switch (opc_) {
+                case VECTOR_OP_ADD: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> (byte)(a + b));
+                case VECTOR_OP_SUB: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> (byte)(a - b));
+                case VECTOR_OP_MUL: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> (byte)(a * b));
+                case VECTOR_OP_DIV: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> (byte)(a / b));
+                case VECTOR_OP_MAX: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> (byte)Math.max(a, b));
+                case VECTOR_OP_MIN: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> (byte)Math.min(a, b));
+                case VECTOR_OP_FIRST_NONZERO: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> toBits(a) != 0 ? a : b);
+                case VECTOR_OP_AND: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> (byte)(a & b));
+                case VECTOR_OP_OR: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> (byte)(a | b));
+                case VECTOR_OP_AND_NOT: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> (byte)(a & ~b));
+                case VECTOR_OP_XOR: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, b) -> (byte)(a ^ b));
+                case VECTOR_OP_LSHIFT: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, n) -> (byte)(a << n));
+                case VECTOR_OP_RSHIFT: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, n) -> (byte)(a >> n));
+                case VECTOR_OP_URSHIFT: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, n) -> (byte)((a & LSHR_SETUP_MASK) >>> n));
+                case VECTOR_OP_LROTATE: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, n) -> (byte)((a << n)|(a >> -n)));
+                case VECTOR_OP_RROTATE: return (v0, v1) ->
+                        v0.bOp(v1, (i, a, n) -> (byte)((a >> n)|(a << -n)));
+                default: return null;
+                }}));
+    }
+    private static final
+    ImplCache<Binary,BinaryOperator<ByteVector>> BIN_IMPL
+        = new ImplCache<>(Binary.class, ByteVector.class);
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Binary op,
+                                  Vector<Byte> v,
+                                  VectorMask<Byte> m) {
+        ByteVector that = (ByteVector) v;
+        if (op == DIV) {
+            // suppress div/0 exceptions in unset lanes
+            that = that.lanewise(NOT, that.eq((byte)0));
+            return blend(lanewise(DIV, that), m);
+        }
+        return blend(lanewise(op, v), m);
+    }
+    // FIXME: Maybe all of the public final methods in this file (the
+    // simple ones that just call lanewise) should be pushed down to
+    // the X-VectorBits template.  They can't optimize properly at
+    // this level, and must rely on inlining.  Does it work?
+    // (If it works, of course keep the code here.)
+
+    /**
+     * Combines the lane values of this vector
+     * with the value of a broadcast scalar.
+     *
+     * This is a lane-wise binary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e))}.
+     *
+     * @param e the input scalar
+     * @return the result of applying the operation lane-wise
+     *         to the two input vectors
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Binary op,
+                                  byte e) {
+        int opc = opCode(op);
+        if (opKind(op, VO_SHIFT) && (byte)(int)e == e) {
+            return lanewiseShift(op, (int) e);
+        }
+        if (op == AND_NOT) {
+            op = AND; e = (byte) ~e;
+        }
+        return lanewise(op, broadcast(e));
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the value of a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     *
+     * This is a masked lane-wise binary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e), m)}.
+     *
+     * @param e the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vector and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Binary,byte)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Binary op,
+                                  byte e,
+                                  VectorMask<Byte> m) {
+        return blend(lanewise(op, e), m);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like {@code ByteVector},
+     * {@linkplain #lanewise(VectorOperators.Binary,byte)
+     * the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.lanewise(op,(byte)e)}.
+     * The two expressions will produce numerically identical results.
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Binary op,
+                                  long e) {
+        byte e1 = (byte) e;
+        if ((long)e1 != e
+            // allow shift ops to clip down their int parameters
+            && !(opKind(op, VO_SHIFT) && (int)e1 == e)
+            ) {
+            vspecies().checkValue(e);  // for exception
+        }
+        return lanewise(op, e1);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     * @apiNote
+     * When working with vector subtypes like {@code ByteVector},
+     * {@linkplain #lanewise(VectorOperators.Binary,byte,VectorMask)
+     * the more strongly typed method}
+     * is typically selected.  It can be explicitly selected
+     * using a cast: {@code v.lanewise(op,(byte)e,m)}.
+     * The two expressions will produce numerically identical results.
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Binary op,
+                                  long e, VectorMask<Byte> m) {
+        return blend(lanewise(op, e), m);
+    }
+
+    /*package-private*/
+    abstract ByteVector
+    lanewiseShift(VectorOperators.Binary op, int e);
+
+    /*package-private*/
+    @ForceInline
+    final ByteVector
+    lanewiseShiftTemplate(VectorOperators.Binary op, int e) {
+        // Special handling for these.  FIXME: Refactor?
+        int opc = opCode(op);
+        assert(opKind(op, VO_SHIFT));
+        // As per shift specification for Java, mask the shift count.
+        e &= SHIFT_MASK;
+        if (op == ROR || op == ROL) {  // FIXME: JIT should do this
+            ByteVector hi = this.lanewise(LSHL, (op == ROR) ? -e : e);
+            ByteVector lo = this.lanewise(LSHR, (op == ROR) ? e : -e);
+            return hi.lanewise(OR, lo);
+        }
+        return VectorIntrinsics.broadcastInt(
+            opc, getClass(), byte.class, length(),
+            this, e,
+            BIN_INT_IMPL.find(op, opc, (opc_) -> {
+              switch (opc_) {
+                case VECTOR_OP_LSHIFT: return (v, n) ->
+                        v.uOp((i, a) -> (byte)(a << n));
+                case VECTOR_OP_RSHIFT: return (v, n) ->
+                        v.uOp((i, a) -> (byte)(a >> n));
+                case VECTOR_OP_URSHIFT: return (v, n) ->
+                        v.uOp((i, a) -> (byte)((a & LSHR_SETUP_MASK) >>> n));
+                case VECTOR_OP_LROTATE: return (v, n) ->
+                        v.uOp((i, a) -> (byte)((a << n)|(a >> -n)));
+                case VECTOR_OP_RROTATE: return (v, n) ->
+                        v.uOp((i, a) -> (byte)((a >> n)|(a << -n)));
+                default: return null;
+                }}));
+    }
+    private static final
+    ImplCache<Binary,VectorBroadcastIntOp<ByteVector>> BIN_INT_IMPL
+        = new ImplCache<>(Binary.class, ByteVector.class);
+
+    // As per shift specification for Java, mask the shift count.
+    // We mask 0X3F (long), 0X1F (int), 0x0F (short), 0x7 (byte).
+    // The latter two maskings go beyond the JLS, but seem reasonable
+    // since our lane types are first-class types, not just dressed
+    // up ints.
+    private static final int SHIFT_MASK = (Byte.SIZE - 1);
+    // Also simulate >>> on sub-word variables with a mask.
+    private static final int LSHR_SETUP_MASK = ((1 << Byte.SIZE) - 1);
+
+    // Ternary lanewise support
+
+    // Ternary operators come in eight variations:
+    //   lanewise(op, [broadcast(e1)|v1], [broadcast(e2)|v2])
+    //   lanewise(op, [broadcast(e1)|v1], [broadcast(e2)|v2], mask)
+
+    // It is annoying to support all of these variations of masking
+    // and broadcast, but it would be more surprising not to continue
+    // the obvious pattern started by unary and binary.
+
+   /**
+     * {@inheritDoc} <!--workaround-->
+     * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,byte,byte)
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte)
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector)
+     */
+    @Override
+    public abstract
+    ByteVector lanewise(VectorOperators.Ternary op,
+                                                  Vector<Byte> v1,
+                                                  Vector<Byte> v2);
+    @ForceInline
+    final
+    ByteVector lanewiseTemplate(VectorOperators.Ternary op,
+                                          Vector<Byte> v1,
+                                          Vector<Byte> v2) {
+        ByteVector that = (ByteVector) v1;
+        ByteVector tother = (ByteVector) v2;
+        // It's a word: https://www.dictionary.com/browse/tother
+        // See also Chapter 11 of Dickens, Our Mutual Friend:
+        // "Totherest Governor," replied Mr Riderhood...
+        that.check(this);
+        tother.check(this);
+        if (op == BITWISE_BLEND) {
+            // FIXME: Support this in the JIT.
+            that = this.lanewise(XOR, that).lanewise(AND, tother);
+            return this.lanewise(XOR, that);
+        }
+        int opc = opCode(op);
+        return VectorIntrinsics.ternaryOp(
+            opc, getClass(), byte.class, length(),
+            this, that, tother,
+            TERN_IMPL.find(op, opc, (opc_) -> {
+              switch (opc_) {
+                case VECTOR_OP_BITWISE_BLEND: return (v0, v1_, v2_) ->
+                        v0.tOp(v1_, v2_, (i, a, b, c) -> (byte)(a^((a^b)&c)));
+                default: return null;
+                }}));
+    }
+    private static final
+    ImplCache<Ternary,TernaryOperation<ByteVector>> TERN_IMPL
+        = new ImplCache<>(Ternary.class, ByteVector.class);
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector,VectorMask)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op,
+                                  Vector<Byte> v1,
+                                  Vector<Byte> v2,
+                                  VectorMask<Byte> m) {
+        return blend(lanewise(op, v1, v2), m);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of two broadcast scalars.
+     *
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2))}.
+     *
+     * @param e1 the first input scalar
+     * @param e2 the second input scalar
+     * @return the result of applying the operation lane-wise
+     *         to the input vector and the scalars
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
+                                  byte e1,
+                                  byte e2) {
+        return lanewise(op, broadcast(e1), broadcast(e1));
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of two broadcast scalars,
+     * with selection of lane elements controlled by a mask.
+     *
+     * This is a masked lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2), m)}.
+     *
+     * @param e1 the first input scalar
+     * @param e2 the second input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vector and the scalars
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,byte,byte)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,e1,e2,m)
+                                  byte e1,
+                                  byte e2,
+                                  VectorMask<Byte> m) {
+        return blend(lanewise(op, e1, e2), m);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar.
+     *
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, v1, this.broadcast(e2))}.
+     *
+     * @param v1 the other input vector
+     * @param e2 the input scalar
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,byte,byte)
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte,VectorMask)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,v1,e2)
+                                  Vector<Byte> v1,
+                                  byte e2) {
+        return lanewise(op, v1, broadcast(e2));
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     *
+     * This is a masked lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
+     *
+     * @param v1 the other input vector
+     * @param e2 the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,v1,e2,m)
+                                  Vector<Byte> v1,
+                                  byte e2,
+                                  VectorMask<Byte> m) {
+        return blend(lanewise(op, v1, e2), m);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar.
+     *
+     * This is a lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), v2)}.
+     *
+     * @param e1 the input scalar
+     * @param v2 the other input vector
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector)
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector,VectorMask)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,e1,v2)
+                                  byte e1,
+                                  Vector<Byte> v2) {
+        return lanewise(op, broadcast(e1), v2);
+    }
+
+    /**
+     * Combines the lane values of this vector
+     * with the values of another vector and a broadcast scalar,
+     * with selection of lane elements controlled by a mask.
+     *
+     * This is a masked lane-wise ternary operation which applies
+     * the selected operation to each lane.
+     * The return value will be equal to this expression:
+     * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
+     *
+     * @param e1 the input scalar
+     * @param v2 the other input vector
+     * @param m the mask controlling lane selection
+     * @return the result of applying the operation lane-wise
+     *         to the input vectors and the scalar
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector)
+     */
+    @ForceInline
+    public final
+    ByteVector lanewise(VectorOperators.Ternary op, //(op,e1,v2,m)
+                                  byte e1,
+                                  Vector<Byte> v2,
+                                  VectorMask<Byte> m) {
+        return blend(lanewise(op, e1, v2), m);
+    }
+
+    // (Thus endeth the Great and Mighty Ternary Ogdoad.)
+    // https://en.wikipedia.org/wiki/Ogdoad
+
+    /// FULL-SERVICE BINARY METHODS: ADD, SUB, MUL, DIV
+    //
+    // These include masked and non-masked versions.
+    // This subclass adds broadcast (masked or not).
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     * @see #add(byte)
+     */
+    @Override
+    @ForceInline
+    public final ByteVector add(Vector<Byte> v) {
+        return lanewise(ADD, v);
+    }
 
     /**
      * Adds this vector to the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive addition operation
-     * ({@code +}) to each lane.
      *
-     * @param s the input scalar
-     * @return the result of adding this vector to the broadcast of an input
-     * scalar
+     * This is a lane-wise binary operation which applies
+     * the primitive addition operation ({@code +}) to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte)
+     *    lanewise}{@code (}{@link VectorOperators#ADD
+     *    ADD}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of adding each lane of this vector to the scalar
+     * @see #add(Vector)
+     * @see #broadcast(byte)
+     * @see #add(int,VectorMask)
+     * @see VectorOperators#ADD
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,byte)
      */
-    public abstract ByteVector add(byte s);
+    @ForceInline
+    public final
+    ByteVector add(byte e) {
+        return lanewise(ADD, e);
+    }
 
     /**
-     * {@inheritDoc}
+     * {@inheritDoc} <!--workaround-->
+     * @see #add(byte,VectorMask)
      */
     @Override
-    public abstract ByteVector add(Vector<Byte> v, VectorMask<Byte> m);
+    @ForceInline
+    public final ByteVector add(Vector<Byte> v,
+                                          VectorMask<Byte> m) {
+        return lanewise(ADD, v, m);
+    }
 
     /**
-     * Adds this vector to broadcast of an input scalar,
+     * Adds this vector to the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive addition operation
-     * ({@code +}) to each lane.
      *
-     * @param s the input scalar
+     * This is a masked lane-wise binary operation which applies
+     * the primitive addition operation ({@code +}) to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte,VectorMask)
+     *    lanewise}{@code (}{@link VectorOperators#ADD
+     *    ADD}{@code , s, m)}.
+     *
+     * @param e the input scalar
      * @param m the mask controlling lane selection
-     * @return the result of adding this vector to the broadcast of an input
-     * scalar
+     * @return the result of adding each lane of this vector to the scalar
+     * @see #add(Vector,VectorMask)
+     * @see #broadcast(byte)
+     * @see #add(int)
+     * @see VectorOperators#ADD
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,byte)
      */
-    public abstract ByteVector add(byte s, VectorMask<Byte> m);
+    @ForceInline
+    public final ByteVector add(byte e,
+                                          VectorMask<Byte> m) {
+        return lanewise(ADD, e, m);
+    }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector sub(Vector<Byte> v);
-
-    /**
-     * Subtracts the broadcast of an input scalar from this vector.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive subtraction
-     * operation ({@code -}) to each lane.
-     *
-     * @param s the input scalar
-     * @return the result of subtracting the broadcast of an input
-     * scalar from this vector
-     */
-    public abstract ByteVector sub(byte s);
-
-    /**
-     * {@inheritDoc}
+     * {@inheritDoc} <!--workaround-->
+     * @see #sub(byte)
      */
     @Override
-    public abstract ByteVector sub(Vector<Byte> v, VectorMask<Byte> m);
+    @ForceInline
+    public final ByteVector sub(Vector<Byte> v) {
+        return lanewise(SUB, v);
+    }
 
     /**
-     * Subtracts the broadcast of an input scalar from this vector, selecting
-     * lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive subtraction
-     * operation ({@code -}) to each lane.
+     * Subtracts an input scalar from this vector.
      *
-     * @param s the input scalar
+     * This is a masked lane-wise binary operation which applies
+     * the primitive subtraction operation ({@code -}) to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte)
+     *    lanewise}{@code (}{@link VectorOperators#SUB
+     *    SUB}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of subtracting the scalar from each lane of this vector
+     * @see #sub(Vector)
+     * @see #broadcast(byte)
+     * @see #sub(int,VectorMask)
+     * @see VectorOperators#SUB
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,byte)
+     */
+    @ForceInline
+    public final ByteVector sub(byte e) {
+        return lanewise(SUB, e);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     * @see #sub(byte,VectorMask)
+     */
+    @Override
+    @ForceInline
+    public final ByteVector sub(Vector<Byte> v,
+                                          VectorMask<Byte> m) {
+        return lanewise(SUB, v, m);
+    }
+
+    /**
+     * Subtracts an input scalar from this vector
+     * under the control of a mask.
+     *
+     * This is a masked lane-wise binary operation which applies
+     * the primitive subtraction operation ({@code -}) to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte,VectorMask)
+     *    lanewise}{@code (}{@link VectorOperators#SUB
+     *    SUB}{@code , s, m)}.
+     *
+     * @param e the input scalar
      * @param m the mask controlling lane selection
-     * @return the result of subtracting the broadcast of an input
-     * scalar from this vector
+     * @return the result of subtracting the scalar from each lane of this vector
+     * @see #sub(Vector,VectorMask)
+     * @see #broadcast(byte)
+     * @see #sub(int)
+     * @see VectorOperators#SUB
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,byte)
      */
-    public abstract ByteVector sub(byte s, VectorMask<Byte> m);
+    @ForceInline
+    public final ByteVector sub(byte e,
+                                          VectorMask<Byte> m) {
+        return lanewise(SUB, e, m);
+    }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector mul(Vector<Byte> v);
-
-    /**
-     * Multiplies this vector with the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive multiplication
-     * operation ({@code *}) to each lane.
-     *
-     * @param s the input scalar
-     * @return the result of multiplying this vector with the broadcast of an
-     * input scalar
-     */
-    public abstract ByteVector mul(byte s);
-
-    /**
-     * {@inheritDoc}
+     * {@inheritDoc} <!--workaround-->
+     * @see #mul(byte)
      */
     @Override
-    public abstract ByteVector mul(Vector<Byte> v, VectorMask<Byte> m);
+    @ForceInline
+    public final ByteVector mul(Vector<Byte> v) {
+        return lanewise(MUL, v);
+    }
 
     /**
-     * Multiplies this vector with the broadcast of an input scalar, selecting
-     * lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive multiplication
-     * operation ({@code *}) to each lane.
+     * Multiplies this vector by the broadcast of an input scalar.
      *
-     * @param s the input scalar
+     * This is a lane-wise binary operation which applies
+     * the primitive multiplication operation ({@code *}) to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte)
+     *    lanewise}{@code (}{@link VectorOperators#MUL
+     *    MUL}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #mul(Vector)
+     * @see #broadcast(byte)
+     * @see #mul(int,VectorMask)
+     * @see VectorOperators#MUL
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,byte)
+     */
+    @ForceInline
+    public final ByteVector mul(byte e) {
+        return lanewise(MUL, e);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     * @see #mul(byte,VectorMask)
+     */
+    @Override
+    @ForceInline
+    public final ByteVector mul(Vector<Byte> v,
+                                          VectorMask<Byte> m) {
+        return lanewise(MUL, v, m);
+    }
+
+    /**
+     * Multiplies this vector by the broadcast of an input scalar,
+     * selecting lane elements controlled by a mask.
+     *
+     * This is a masked lane-wise binary operation which applies
+     * the primitive multiplication operation ({@code *}) to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte,VectorMask)
+     *    lanewise}{@code (}{@link VectorOperators#MUL
+     *    MUL}{@code , s, m)}.
+     *
+     * @param e the input scalar
      * @param m the mask controlling lane selection
-     * @return the result of multiplying this vector with the broadcast of an
-     * input scalar
+     * @return the result of muling each lane of this vector to the scalar
+     * @see #mul(Vector,VectorMask)
+     * @see #broadcast(byte)
+     * @see #mul(int)
+     * @see VectorOperators#MUL
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,byte)
      */
-    public abstract ByteVector mul(byte s, VectorMask<Byte> m);
+    @ForceInline
+    public final ByteVector mul(byte e,
+                                          VectorMask<Byte> m) {
+        return lanewise(MUL, e, m);
+    }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector neg();
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector neg(VectorMask<Byte> m);
-
-    /**
-     * {@inheritDoc}
+     * {@inheritDoc} <!--workaround-->
+     * @see #div(byte)
      */
     @Override
-    public abstract ByteVector abs();
+    @ForceInline
+    public final ByteVector div(Vector<Byte> v) {
+        return lanewise(DIV, v);
+    }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector abs(VectorMask<Byte> m);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector min(Vector<Byte> v);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector min(Vector<Byte> v, VectorMask<Byte> m);
-
-    /**
-     * Returns the minimum of this vector and the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the operation
-     * {@code (a, b) -> Math.min(a, b)} to each lane.
+     * Divides this vector by the broadcast of an input scalar.
      *
-     * @param s the input scalar
-     * @return the minimum of this vector and the broadcast of an input scalar
-     */
-    public abstract ByteVector min(byte s);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector max(Vector<Byte> v);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector max(Vector<Byte> v, VectorMask<Byte> m);
-
-    /**
-     * Returns the maximum of this vector and the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the operation
-     * {@code (a, b) -> Math.max(a, b)} to each lane.
+     * This is a lane-wise binary operation which applies
+     * the primitive division operation ({@code /}) to each lane.
      *
-     * @param s the input scalar
-     * @return the maximum of this vector and the broadcast of an input scalar
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte)
+     *    lanewise}{@code (}{@link VectorOperators#DIV
+     *    DIV}{@code , e)}.
+     *
+     * <p>
+     * If the underlying scalar operator does not support
+     * division by zero, but is presented with a zero divisor,
+     * an {@code ArithmeticException} will be thrown.
+     *
+     * @param e the input scalar
+     * @return the result of dividing each lane of this vector by the scalar
+     * @see #div(Vector)
+     * @see #broadcast(byte)
+     * @see #div(int,VectorMask)
+     * @see VectorOperators#DIV
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,byte)
      */
-    public abstract ByteVector max(byte s);
+    @ForceInline
+    public final ByteVector div(byte e) {
+        return lanewise(DIV, e);
+    }
 
     /**
-     * {@inheritDoc}
+     * {@inheritDoc} <!--workaround-->
+     * @see #div(byte,VectorMask)
      */
     @Override
-    public abstract VectorMask<Byte> equal(Vector<Byte> v);
+    @ForceInline
+    public final ByteVector div(Vector<Byte> v,
+                                          VectorMask<Byte> m) {
+        return lanewise(DIV, v, m);
+    }
 
     /**
-     * Tests if this vector is equal to the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary test operation which applies the primitive equals
-     * operation ({@code ==}) each lane.
+     * Divides this vector by the broadcast of an input scalar,
+     * selecting lane elements controlled by a mask.
      *
-     * @param s the input scalar
-     * @return the result mask of testing if this vector is equal to the
-     * broadcast of an input scalar
-     */
-    public abstract VectorMask<Byte> equal(byte s);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract VectorMask<Byte> notEqual(Vector<Byte> v);
-
-    /**
-     * Tests if this vector is not equal to the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary test operation which applies the primitive not equals
-     * operation ({@code !=}) to each lane.
+     * This is a masked lane-wise binary operation which applies
+     * the primitive division operation ({@code /}) to each lane.
      *
-     * @param s the input scalar
-     * @return the result mask of testing if this vector is not equal to the
-     * broadcast of an input scalar
-     */
-    public abstract VectorMask<Byte> notEqual(byte s);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract VectorMask<Byte> lessThan(Vector<Byte> v);
-
-    /**
-     * Tests if this vector is less than the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary test operation which applies the primitive less than
-     * operation ({@code <}) to each lane.
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte,VectorMask)
+     *    lanewise}{@code (}{@link VectorOperators#DIV
+     *    DIV}{@code , s, m)}.
      *
-     * @param s the input scalar
-     * @return the mask result of testing if this vector is less than the
-     * broadcast of an input scalar
-     */
-    public abstract VectorMask<Byte> lessThan(byte s);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract VectorMask<Byte> lessThanEq(Vector<Byte> v);
-
-    /**
-     * Tests if this vector is less or equal to the broadcast of an input scalar.
      * <p>
-     * This is a lane-wise binary test operation which applies the primitive less than
-     * or equal to operation ({@code <=}) to each lane.
+     * If the underlying scalar operator does not support
+     * division by zero, but is presented with a zero divisor,
+     * an {@code ArithmeticException} will be thrown.
      *
-     * @param s the input scalar
-     * @return the mask result of testing if this vector is less than or equal
-     * to the broadcast of an input scalar
-     */
-    public abstract VectorMask<Byte> lessThanEq(byte s);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract VectorMask<Byte> greaterThan(Vector<Byte> v);
-
-    /**
-     * Tests if this vector is greater than the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary test operation which applies the primitive greater than
-     * operation ({@code >}) to each lane.
-     *
-     * @param s the input scalar
-     * @return the mask result of testing if this vector is greater than the
-     * broadcast of an input scalar
-     */
-    public abstract VectorMask<Byte> greaterThan(byte s);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract VectorMask<Byte> greaterThanEq(Vector<Byte> v);
-
-    /**
-     * Tests if this vector is greater than or equal to the broadcast of an
-     * input scalar.
-     * <p>
-     * This is a lane-wise binary test operation which applies the primitive greater than
-     * or equal to operation ({@code >=}) to each lane.
-     *
-     * @param s the input scalar
-     * @return the mask result of testing if this vector is greater than or
-     * equal to the broadcast of an input scalar
-     */
-    public abstract VectorMask<Byte> greaterThanEq(byte s);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector blend(Vector<Byte> v, VectorMask<Byte> m);
-
-    /**
-     * Blends the lane elements of this vector with those of the broadcast of an
-     * input scalar, selecting lanes controlled by a mask.
-     * <p>
-     * For each lane of the mask, at lane index {@code N}, if the mask lane
-     * is set then the lane element at {@code N} from the input vector is
-     * selected and placed into the resulting vector at {@code N},
-     * otherwise the the lane element at {@code N} from this input vector is
-     * selected and placed into the resulting vector at {@code N}.
-     *
-     * @param s the input scalar
+     * @param e the input scalar
      * @param m the mask controlling lane selection
+     * @return the result of dividing each lane of this vector by the scalar
+     * @see #div(Vector,VectorMask)
+     * @see #broadcast(byte)
+     * @see #div(int)
+     * @see VectorOperators#DIV
+     * @see #lanewise(VectorOperators.Binary,Vector)
+     * @see #lanewise(VectorOperators.Binary,byte)
+     */
+    @ForceInline
+    public final ByteVector div(byte e,
+                                          VectorMask<Byte> m) {
+        return lanewise(DIV, e, m);
+    }
+
+    /// END OF FULL-SERVICE BINARY METHODS
+
+    /// SECOND-TIER BINARY METHODS
+    //
+    // There are no masked versions.
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final ByteVector min(Vector<Byte> v) {
+        return lanewise(MIN, v);
+    }
+
+    // FIXME:  "broadcast of an input scalar" is really wordy.  Reduce?
+    /**
+     * Computes the smaller of this vector and the broadcast of an input scalar.
+     *
+     * This is a lane-wise binary operation which appliesthe
+     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte)
+     *    lanewise}{@code (}{@link VectorOperators#MIN
+     *    MIN}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #min(Vector)
+     * @see #broadcast(byte)
+     * @see VectorOperators#MIN
+     * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
+     */
+    @ForceInline
+    public final ByteVector min(byte e) {
+        return lanewise(MIN, e);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final ByteVector max(Vector<Byte> v) {
+        return lanewise(MAX, v);
+    }
+
+    /**
+     * Computes the larger of this vector and the broadcast of an input scalar.
+     *
+     * This is a lane-wise binary operation which appliesthe
+     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,byte)
+     *    lanewise}{@code (}{@link VectorOperators#MAX
+     *    MAX}{@code , e)}.
+     *
+     * @param e the input scalar
+     * @return the result of multiplying this vector by the given scalar
+     * @see #max(Vector)
+     * @see #broadcast(byte)
+     * @see VectorOperators#MAX
+     * @see #lanewise(VectorOperators.Binary,byte,VectorMask)
+     */
+    @ForceInline
+    public final ByteVector max(byte e) {
+        return lanewise(MAX, e);
+    }
+
+    // common bitwise operators: and, or, not (with scalar versions)
+    /**
+     * Computes the bitwise logical conjunction ({@code &})
+     * of this vector and a second input vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "and" operation ({@code &})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#AND
+     *    AND}{@code , v)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @param v a second input vector
+     * @return the bitwise {@code &} of this vector and the second input vector
+     * @see #and(byte)
+     * @see #or(Vector)
+     * @see #not()
+     * @see VectorOperators#AND
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    @ForceInline
+    public final ByteVector and(Vector<Byte> v) {
+        return lanewise(AND, v);
+    }
+
+    /**
+     * Computes the bitwise logical conjunction ({@code &})
+     * of this vector and a scalar.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "and" operation ({@code &})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#AND
+     *    AND}{@code , e)}.
+     *
+     * @param e an input scalar
+     * @return the bitwise {@code &} of this vector and scalar
+     * @see #and(Vector)
+     * @see VectorOperators#AND
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    @ForceInline
+    public final ByteVector and(byte e) {
+        return lanewise(AND, e);
+    }
+
+    /**
+     * Computes the bitwise logical disjunction ({@code |})
+     * of this vector and a second input vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "or" operation ({@code |})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#OR
+     *    AND}{@code , v)}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @param v a second input vector
+     * @return the bitwise {@code |} of this vector and the second input vector
+     * @see #or(byte)
+     * @see #and(Vector)
+     * @see #not()
+     * @see VectorOperators#OR
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    @ForceInline
+    public final ByteVector or(Vector<Byte> v) {
+        return lanewise(OR, v);
+    }
+
+    /**
+     * Computes the bitwise logical disjunction ({@code |})
+     * of this vector and a scalar.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "or" operation ({@code |})
+     * to each pair of corresponding lane values.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Binary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#OR
+     *    OR}{@code , e)}.
+     *
+     * @param e an input scalar
+     * @return the bitwise {@code |} of this vector and scalar
+     * @see #or(Vector)
+     * @see VectorOperators#OR
+     * @see #lanewise(VectorOperators.Binary,Vector,VectorMask)
+     */
+    @ForceInline
+    public final ByteVector or(byte e) {
+        return lanewise(OR, e);
+    }
+
+
+
+    /// UNARY METHODS
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    ByteVector neg() {
+        return lanewise(NEG);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    ByteVector abs() {
+        return lanewise(ABS);
+    }
+
+    // not (~)
+    /**
+     * Computes the bitwise logical complement ({@code ~})
+     * of this vector.
+     *
+     * This is a lane-wise binary operation which applies the
+     * the primitive bitwise "not" operation ({@code ~})
+     * to each lane value.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Unary,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#NOT
+     *    NOT}{@code )}.
+     *
+     * <p>
+     * This is not a full-service named operation like
+     * {@link #add(Vector) add}.  A masked version of
+     * version of this operation is not directly available
+     * but may be obtained via the masked version of
+     * {@code lanewise}.
+     *
+     * @return the bitwise complement {@code ~} of this vector
+     * @see #and(Vector)
+     * @see VectorOperators#NOT
+     * @see #lanewise(VectorOperators.Unary,VectorMask)
+     */
+    @ForceInline
+    public final ByteVector not() {
+        return lanewise(NOT);
+    }
+
+
+    /// COMPARISONS
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    VectorMask<Byte> eq(Vector<Byte> v) {
+        return compare(EQ, v);
+    }
+
+    /**
+     * Tests if this vector is equal to an input scalar.
+     *
+     * This is a lane-wise binary test operation which applies
+     * the primitive equals operation ({@code ==}) to each lane.
+     * The result is the same as {@code compare(VectorOperators.Comparison.EQ, e)}.
+     *
+     * @param e the input scalar
+     * @return the result mask of testing if this vector
+     *         is equal to {@code e}
+     * @see #compare(VectorOperators.Comparison,byte)
+     */
+    @ForceInline
+    public final
+    VectorMask<Byte> eq(byte e) {
+        return compare(EQ, e);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    VectorMask<Byte> lt(Vector<Byte> v) {
+        return compare(LT, v);
+    }
+
+    /**
+     * Tests if this vector is less than an input scalar.
+     *
+     * This is a lane-wise binary test operation which applies
+     * the primitive less than operation ({@code <}) to each lane.
+     * The result is the same as {@code compare(VectorOperators.LT, e)}.
+     *
+     * @param e the input scalar
+     * @return the mask result of testing if this vector
+     *         is less than the input scalar
+     * @see #compare(VectorOperators.Comparison,byte)
+     */
+    @ForceInline
+    public final
+    VectorMask<Byte> lt(byte e) {
+        return compare(LT, e);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    VectorMask<Byte> test(VectorOperators.Test op);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M extends VectorMask<Byte>>
+    M testTemplate(Class<M> maskType, Test op) {
+        ByteSpecies vsp = vspecies();
+        if (opKind(op, VO_SPECIAL)) {
+            ByteVector bits = this.viewAsIntegralLanes();
+            VectorMask<Byte> m;
+            if (op == IS_DEFAULT) {
+                m = bits.compare(EQ, (byte) 0);
+            } else if (op == IS_NEGATIVE) {
+                m = bits.compare(LT, (byte) 0);
+            }
+            else {
+                throw new AssertionError(op);
+            }
+            return maskType.cast(m);
+        }
+        int opc = opCode(op);
+        throw new AssertionError(op);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    VectorMask<Byte> test(VectorOperators.Test op,
+                                  VectorMask<Byte> m) {
+        return test(op).and(m);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    VectorMask<Byte> compare(VectorOperators.Comparison op, Vector<Byte> v);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M extends VectorMask<Byte>>
+    M compareTemplate(Class<M> maskType, Comparison op, Vector<Byte> v) {
+        Objects.requireNonNull(v);
+        ByteSpecies vsp = vspecies();
+        ByteVector that = (ByteVector) v;
+        that.check(this);
+        int opc = opCode(op);
+        return VectorIntrinsics.compare(
+            opc, getClass(), maskType, byte.class, length(),
+            this, that,
+            (cond, v0, v1) -> {
+                AbstractMask<Byte> m
+                    = v0.bTest(cond, v1, (cond_, i, a, b)
+                               -> compareWithOp(cond, a, b));
+                @SuppressWarnings("unchecked")
+                M m2 = (M) m;
+                return m2;
+            });
+    }
+
+    @ForceInline
+    private static
+    boolean compareWithOp(int cond, byte a, byte b) {
+        switch (cond) {
+        case VectorIntrinsics.BT_eq:  return a == b;
+        case VectorIntrinsics.BT_ne:  return a != b;
+        case VectorIntrinsics.BT_lt:  return a <  b;
+        case VectorIntrinsics.BT_le:  return a <= b;
+        case VectorIntrinsics.BT_gt:  return a >  b;
+        case VectorIntrinsics.BT_ge:  return a >= b;
+        }
+        throw new AssertionError();
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    VectorMask<Byte> compare(VectorOperators.Comparison op,
+                                  Vector<Byte> v,
+                                  VectorMask<Byte> m) {
+        return compare(op, v).and(m);
+    }
+
+    /**
+     * Tests this vector by comparing it with an input scalar,
+     * according to the given comparison operation.
+     *
+     * This is a lane-wise binary test operation which applies
+     * the comparison operation to each lane.
+     * <p>
+     * The result is the same as
+     * {@code compare(op, broadcast(species(), e))}.
+     * That is, the scalar may be regarded as broadcast to
+     * a vector of the same species, and then compared
+     * against the original vector, using the selected
+     * comparison operation.
+     *
+     * @param e the input scalar
+     * @return the mask result of testing lane-wise if this vector
+     *         compares to the input, according to the selected
+     *         comparison operator
+     * @see ByteVector#compare(VectorOperators.Comparison,Vector)
+     * @see #eq(byte)
+     * @see #lt(byte)
+     */
+    public abstract
+    VectorMask<Byte> compare(Comparison op, byte e);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M extends VectorMask<Byte>>
+    M compareTemplate(Class<M> maskType, Comparison op, byte e) {
+        return compareTemplate(maskType, op, broadcast(e));
+    }
+
+    /**
+     * Tests this vector by comparing it with an input scalar,
+     * according to the given comparison operation,
+     * in lanes selected by a mask.
+     *
+     * This is a masked lane-wise binary test operation which applies
+     * to each pair of corresponding lane values.
+     *
+     * The returned result is equal to the expression
+     * {@code compare(op,s).and(m)}.
+     *
+     * @param e the input scalar
+     * @param m the mask controlling lane selection
+     * @return the mask result of testing lane-wise if this vector
+     *         compares to the input, according to the selected
+     *         comparison operator,
+     *         and only in the lanes selected by the mask
+     * @see ByteVector#compare(VectorOperators.Comparison,Vector,VectorMask)
+     */
+    @ForceInline
+    public final VectorMask<Byte> compare(VectorOperators.Comparison op,
+                                               byte e,
+                                               VectorMask<Byte> m) {
+        return compare(op, e).and(m);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    VectorMask<Byte> compare(Comparison op, long e);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M extends VectorMask<Byte>>
+    M compareTemplate(Class<M> maskType, Comparison op, long e) {
+        return compareTemplate(maskType, op, broadcast(e));
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    VectorMask<Byte> compare(Comparison op, long e, VectorMask<Byte> m) {
+        return compare(op, broadcast(e), m);
+    }
+
+
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override public abstract
+    ByteVector blend(Vector<Byte> v, VectorMask<Byte> m);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <M extends VectorMask<Byte>>
+    ByteVector
+    blendTemplate(Class<M> maskType, ByteVector v, M m) {
+        v.check(this);
+        return VectorIntrinsics.blend(
+            getClass(), maskType, byte.class, length(),
+            this, v, m,
+            (v0, v1, m_) -> v0.bOp(v1, m_, (i, a, b) -> b));
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override public abstract ByteVector addIndex(int scale);
+
+    /*package-private*/
+    @ForceInline
+    final ByteVector addIndexTemplate(int scale) {
+        ByteSpecies vsp = vspecies();
+        // make sure VLENGTH*scale doesn't overflow:
+        vsp.checkScale(scale);
+        return VectorIntrinsics.indexVector(
+            getClass(), byte.class, length(),
+            this, scale, vsp,
+            (v, scale_, s)
+            -> {
+                // If the platform doesn't support an INDEX
+                // instruction directly, load IOTA from memory
+                // and multiply.
+                ByteVector iota = s.iota();
+                byte sc = (byte) scale_;
+                return v.add(sc == 1 ? iota : iota.mul(sc));
+            });
+    }
+
+    /**
+     * Replaces selected lanes of this vector with
+     * a scalar value
+     * under the control of a mask.
+     *
+     * This is a masked lane-wise binary operation which
+     * selects each lane value from one or the other input.
+     *
+     * The returned result is equal to the expression
+     * {@code blend(broadcast(e),m)}.
+     *
+     * @param e the input scalar, containing the replacement lane value
+     * @param m the mask controlling lane selection of the scalar
      * @return the result of blending the lane elements of this vector with
-     * those of the broadcast of an input scalar
-     */
-    public abstract ByteVector blend(byte s, VectorMask<Byte> m);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector rearrange(Vector<Byte> v,
-                                                      VectorShuffle<Byte> s, VectorMask<Byte> m);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector rearrange(VectorShuffle<Byte> m);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector reshape(VectorSpecies<Byte> s);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector rotateLanesLeft(int i);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector rotateLanesRight(int i);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector shiftLanesLeft(int i);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract ByteVector shiftLanesRight(int i);
-
-
-
-    /**
-     * Bitwise ANDs this vector with an input vector.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise AND
-     * operation ({@code &}) to each lane.
-     *
-     * @param v the input vector
-     * @return the bitwise AND of this vector with the input vector
-     */
-    public abstract ByteVector and(Vector<Byte> v);
-
-    /**
-     * Bitwise ANDs this vector with the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise AND
-     * operation ({@code &}) to each lane.
-     *
-     * @param s the input scalar
-     * @return the bitwise AND of this vector with the broadcast of an input
-     * scalar
-     */
-    public abstract ByteVector and(byte s);
-
-    /**
-     * Bitwise ANDs this vector with an input vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise AND
-     * operation ({@code &}) to each lane.
-     *
-     * @param v the input vector
-     * @param m the mask controlling lane selection
-     * @return the bitwise AND of this vector with the input vector
-     */
-    public abstract ByteVector and(Vector<Byte> v, VectorMask<Byte> m);
-
-    /**
-     * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
-     * lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise AND
-     * operation ({@code &}) to each lane.
-     *
-     * @param s the input scalar
-     * @param m the mask controlling lane selection
-     * @return the bitwise AND of this vector with the broadcast of an input
-     * scalar
-     */
-    public abstract ByteVector and(byte s, VectorMask<Byte> m);
-
-    /**
-     * Bitwise ORs this vector with an input vector.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise OR
-     * operation ({@code |}) to each lane.
-     *
-     * @param v the input vector
-     * @return the bitwise OR of this vector with the input vector
-     */
-    public abstract ByteVector or(Vector<Byte> v);
-
-    /**
-     * Bitwise ORs this vector with the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise OR
-     * operation ({@code |}) to each lane.
-     *
-     * @param s the input scalar
-     * @return the bitwise OR of this vector with the broadcast of an input
-     * scalar
-     */
-    public abstract ByteVector or(byte s);
-
-    /**
-     * Bitwise ORs this vector with an input vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise OR
-     * operation ({@code |}) to each lane.
-     *
-     * @param v the input vector
-     * @param m the mask controlling lane selection
-     * @return the bitwise OR of this vector with the input vector
-     */
-    public abstract ByteVector or(Vector<Byte> v, VectorMask<Byte> m);
-
-    /**
-     * Bitwise ORs this vector with the broadcast of an input scalar, selecting
-     * lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise OR
-     * operation ({@code |}) to each lane.
-     *
-     * @param s the input scalar
-     * @param m the mask controlling lane selection
-     * @return the bitwise OR of this vector with the broadcast of an input
-     * scalar
-     */
-    public abstract ByteVector or(byte s, VectorMask<Byte> m);
-
-    /**
-     * Bitwise XORs this vector with an input vector.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise XOR
-     * operation ({@code ^}) to each lane.
-     *
-     * @param v the input vector
-     * @return the bitwise XOR of this vector with the input vector
-     */
-    public abstract ByteVector xor(Vector<Byte> v);
-
-    /**
-     * Bitwise XORs this vector with the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise XOR
-     * operation ({@code ^}) to each lane.
-     *
-     * @param s the input scalar
-     * @return the bitwise XOR of this vector with the broadcast of an input
-     * scalar
-     */
-    public abstract ByteVector xor(byte s);
-
-    /**
-     * Bitwise XORs this vector with an input vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise XOR
-     * operation ({@code ^}) to each lane.
-     *
-     * @param v the input vector
-     * @param m the mask controlling lane selection
-     * @return the bitwise XOR of this vector with the input vector
-     */
-    public abstract ByteVector xor(Vector<Byte> v, VectorMask<Byte> m);
-
-    /**
-     * Bitwise XORs this vector with the broadcast of an input scalar, selecting
-     * lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive bitwise XOR
-     * operation ({@code ^}) to each lane.
-     *
-     * @param s the input scalar
-     * @param m the mask controlling lane selection
-     * @return the bitwise XOR of this vector with the broadcast of an input
-     * scalar
-     */
-    public abstract ByteVector xor(byte s, VectorMask<Byte> m);
-
-    /**
-     * Bitwise NOTs this vector.
-     * <p>
-     * This is a lane-wise unary operation which applies the primitive bitwise NOT
-     * operation ({@code ~}) to each lane.
-     *
-     * @return the bitwise NOT of this vector
-     */
-    public abstract ByteVector not();
-
-    /**
-     * Bitwise NOTs this vector, selecting lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise unary operation which applies the primitive bitwise NOT
-     * operation ({@code ~}) to each lane.
-     *
-     * @param m the mask controlling lane selection
-     * @return the bitwise NOT of this vector
-     */
-    public abstract ByteVector not(VectorMask<Byte> m);
-
-    /**
-     * Logically left shifts this vector by the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane to left shift the
-     * element by shift value as specified by the input scalar.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
-     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to left shift
-     * @return the result of logically left shifting this vector by the
-     * broadcast of an input scalar
-     */
-    public abstract ByteVector shiftLeft(int s);
-
-    /**
-     * Logically left shifts this vector by the broadcast of an input scalar,
-     * selecting lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane to left shift the
-     * element by shift value as specified by the input scalar.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
-     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to left shift
-     * @param m the mask controlling lane selection
-     * @return the result of logically left shifting this vector by the
-     * broadcast of an input scalar
-     */
-    public abstract ByteVector shiftLeft(int s, VectorMask<Byte> m);
-
-    /**
-     * Logically left shifts this vector by an input vector.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane. For each lane of this vector, the
-     * shift value is the corresponding lane of input vector.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
-     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param v the input vector
-     * @return the result of logically left shifting this vector by the input
-     * vector
-     */
-    public abstract ByteVector shiftLeft(Vector<Byte> v);
-
-    /**
-     * Logically left shifts this vector by an input vector, selecting lane
-     * elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical left shift
-     * operation ({@code <<}) to each lane. For each lane of this vector, the
-     * shift value is the corresponding lane of input vector.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
-     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param v the input vector
-     * @param m the mask controlling lane selection
-     * @return the result of logically left shifting this vector by the input
-     * vector
-     */
-    public ByteVector shiftLeft(Vector<Byte> v, VectorMask<Byte> m) {
-        return blend(shiftLeft(v), m);
-    }
-
-    // logical, or unsigned, shift right
-
-     /**
-     * Logically right shifts (or unsigned right shifts) this vector by the
-     * broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane to logically right shift the
-     * element by shift value as specified by the input scalar.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
-     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @return the result of logically right shifting this vector by the
-     * broadcast of an input scalar
-     */
-    public abstract ByteVector shiftRight(int s);
-
-     /**
-     * Logically right shifts (or unsigned right shifts) this vector by the
-     * broadcast of an input scalar, selecting lane elements controlled by a
-     * mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>}) to each lane to logically right shift the
-     * element by shift value as specified by the input scalar.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
-     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @param m the mask controlling lane selection
-     * @return the result of logically right shifting this vector by the
-     * broadcast of an input scalar
-     */
-    public abstract ByteVector shiftRight(int s, VectorMask<Byte> m);
-
-    /**
-     * Logically right shifts (or unsigned right shifts) this vector by an
-     * input vector.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane. For each lane of this vector, the
-     * shift value is the corresponding lane of input vector.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
-     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param v the input vector
-     * @return the result of logically right shifting this vector by the
-     * input vector
-     */
-    public abstract ByteVector shiftRight(Vector<Byte> v);
-
-    /**
-     * Logically right shifts (or unsigned right shifts) this vector by an
-     * input vector, selecting lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive logical right shift
-     * operation ({@code >>>}) to each lane. For each lane of this vector, the
-     * shift value is the corresponding lane of input vector.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift value
-     * were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param v the input vector
-     * @param m the mask controlling lane selection
-     * @return the result of logically right shifting this vector by the
-     * input vector
-     */
-    public ByteVector shiftRight(Vector<Byte> v, VectorMask<Byte> m) {
-        return blend(shiftRight(v), m);
-    }
-
-    /**
-     * Arithmetically right shifts (or signed right shifts) this vector by the
-     * broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane to arithmetically
-     * right shift the element by shift value as specified by the input scalar.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift
-     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @return the result of arithmetically right shifting this vector by the
-     * broadcast of an input scalar
-     */
-    public abstract ByteVector shiftArithmeticRight(int s);
-
-    /**
-     * Arithmetically right shifts (or signed right shifts) this vector by the
-     * broadcast of an input scalar, selecting lane elements controlled by a
-     * mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane to arithmetically
-     * right shift the element by shift value as specified by the input scalar.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift
-     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param s the input scalar; the number of the bits to right shift
-     * @param m the mask controlling lane selection
-     * @return the result of arithmetically right shifting this vector by the
-     * broadcast of an input scalar
-     */
-    public abstract ByteVector shiftArithmeticRight(int s, VectorMask<Byte> m);
-
-    /**
-     * Arithmetically right shifts (or signed right shifts) this vector by an
-     * input vector.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
-     * shift value is the corresponding lane of input vector.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift
-     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param v the input vector
-     * @return the result of arithmetically right shifting this vector by the
-     * input vector
-     */
-    public abstract ByteVector shiftArithmeticRight(Vector<Byte> v);
-
-    /**
-     * Arithmetically right shifts (or signed right shifts) this vector by an
-     * input vector, selecting lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which applies the primitive arithmetic right
-     * shift operation ({@code >>}) to each lane. For each lane of this vector, the
-     * shift value is the corresponding lane of input vector.
-     * Only the 3 lowest-order bits of shift value are used. It is as if the shift
-     * value were subjected to a bitwise logical AND operator ({@code &}) with the mask value 0x7.
-     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
-     *
-     * @param v the input vector
-     * @param m the mask controlling lane selection
-     * @return the result of arithmetically right shifting this vector by the
-     * input vector
-     */
-    public ByteVector shiftArithmeticRight(Vector<Byte> v, VectorMask<Byte> m) {
-        return blend(shiftArithmeticRight(v), m);
-    }
-
-    /**
-     * Rotates left this vector by the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which produces the result of rotating left the two's
-     * complement binary representation of each lane of first operand (this vector) by input scalar.
-     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
-     * It is as if the input value were subjected to a bitwise logical
-     * AND operator ({@code &}) with the mask value 0x7.
-     *
-     * @param s the input scalar; the number of the bits to rotate left
-     * @return the result of rotating left this vector by the broadcast of an
-     * input scalar
+     *         the scalar value
      */
     @ForceInline
-    public final ByteVector rotateLeft(int s) {
-        return shiftLeft(s).or(shiftRight(-s));
+    public final ByteVector blend(byte e,
+                                            VectorMask<Byte> m) {
+        return blend(broadcast(e), m);
     }
 
     /**
-     * Rotates left this vector by the broadcast of an input scalar, selecting
-     * lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which produces the result of rotating left the two's
-     * complement binary representation of each lane of first operand (this vector) by input scalar.
-     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
-     * It is as if the input value were subjected to a bitwise logical
-     * AND operator ({@code &}) with the mask value 0x7.
+     * Replaces selected lanes of this vector with
+     * a scalar value
+     * under the control of a mask.
      *
-     * @param s the input scalar; the number of the bits to rotate left
-     * @param m the mask controlling lane selection
-     * @return the result of rotating left this vector by the broadcast of an
-     * input scalar
+     * This is a masked lane-wise binary operation which
+     * selects each lane value from one or the other input.
+     *
+     * The returned result is equal to the expression
+     * {@code blend(broadcast(e),m)}.
+     *
+     * @param e the input scalar, containing the replacement lane value
+     * @param m the mask controlling lane selection of the scalar
+     * @return the result of blending the lane elements of this vector with
+     *         the scalar value
      */
     @ForceInline
-    public final ByteVector rotateLeft(int s, VectorMask<Byte> m) {
-        return shiftLeft(s, m).or(shiftRight(-s, m), m);
+    public final ByteVector blend(long e,
+                                            VectorMask<Byte> m) {
+        return blend(broadcast(e), m);
     }
 
     /**
-     * Rotates right this vector by the broadcast of an input scalar.
-     * <p>
-     * This is a lane-wise binary operation which produces the result of rotating right the two's
-     * complement binary representation of each lane of first operand (this vector) by input scalar.
-     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
-     * It is as if the input value were subjected to a bitwise logical
-     * AND operator ({@code &}) with the mask value 0x7.
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    ByteVector slice(int origin, Vector<Byte> v1);
+
+    /*package-private*/
+    final
+    @ForceInline
+    ByteVector sliceTemplate(int origin, Vector<Byte> v1) {
+        ByteVector that = (ByteVector) v1;
+        that.check(this);
+        byte[] a0 = this.getElements();
+        byte[] a1 = that.getElements();
+        byte[] res = new byte[a0.length];
+        int vlen = res.length;
+        int firstPart = vlen - origin;
+        System.arraycopy(a0, origin, res, 0, firstPart);
+        System.arraycopy(a1, 0, res, firstPart, origin);
+        return vectorFactory(res);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    ByteVector slice(int origin,
+                               Vector<Byte> w,
+                               VectorMask<Byte> m) {
+        return broadcast(0).blend(slice(origin, w), m);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    ByteVector slice(int origin);
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    ByteVector unslice(int origin, Vector<Byte> w, int part);
+
+    /*package-private*/
+    final
+    @ForceInline
+    ByteVector
+    unsliceTemplate(int origin, Vector<Byte> w, int part) {
+        ByteVector that = (ByteVector) w;
+        that.check(this);
+        byte[] slice = this.getElements();
+        byte[] res = that.getElements();
+        int vlen = res.length;
+        int firstPart = vlen - origin;
+        switch (part) {
+        case 0:
+            System.arraycopy(slice, 0, res, origin, firstPart);
+            break;
+        case 1:
+            System.arraycopy(slice, firstPart, res, 0, origin);
+            break;
+        default:
+            throw wrongPartForSlice(part);
+        }
+        return vectorFactory(res);
+    }
+
+    /*package-private*/
+    final
+    @ForceInline
+    <M extends VectorMask<Byte>>
+    ByteVector
+    unsliceTemplate(Class<M> maskType, int origin, Vector<Byte> w, int part, M m) {
+        ByteVector that = (ByteVector) w;
+        that.check(this);
+        ByteVector slice = that.sliceTemplate(origin, that);
+        slice = slice.blendTemplate(maskType, this, m);
+        return slice.unsliceTemplate(origin, w, part);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    ByteVector unslice(int origin, Vector<Byte> w, int part, VectorMask<Byte> m);
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    ByteVector unslice(int origin); 
+
+    private ArrayIndexOutOfBoundsException
+    wrongPartForSlice(int part) {
+        String msg = String.format("bad part number %d for slice operation",
+                                   part);
+        return new ArrayIndexOutOfBoundsException(msg);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    ByteVector rearrange(VectorShuffle<Byte> m);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <S extends VectorShuffle<Byte>>
+    ByteVector rearrangeTemplate(Class<S> shuffletype, S shuffle) {
+        shuffle.checkIndexes();
+        return VectorIntrinsics.rearrangeOp(
+            getClass(), shuffletype, byte.class, length(),
+            this, shuffle,
+            (v1, s_) -> v1.uOp((i, a) -> {
+                int ei = s_.laneSource(i);
+                return v1.lane(ei);
+            }));
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    ByteVector rearrange(VectorShuffle<Byte> s,
+                                   VectorMask<Byte> m);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <S extends VectorShuffle<Byte>>
+    ByteVector rearrangeTemplate(Class<S> shuffletype,
+                                           S shuffle,
+                                           VectorMask<Byte> m) {
+        ByteVector unmasked =
+            VectorIntrinsics.rearrangeOp(
+                getClass(), shuffletype, byte.class, length(),
+                this, shuffle,
+                (v1, s_) -> v1.uOp((i, a) -> {
+                    int ei = s_.laneSource(i);
+                    return ei < 0 ? 0 : v1.lane(ei);
+                }));
+        VectorMask<Byte> valid = shuffle.laneIsValid();
+        if (m.andNot(valid).anyTrue()) {
+            shuffle.checkIndexes();
+            throw new AssertionError();
+        }
+        return broadcast((byte)0).blend(unmasked, valid);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    ByteVector rearrange(VectorShuffle<Byte> s,
+                                   Vector<Byte> v);
+
+    /*package-private*/
+    @ForceInline
+    final
+    <S extends VectorShuffle<Byte>>
+    ByteVector rearrangeTemplate(Class<S> shuffletype,
+                                           S shuffle,
+                                           ByteVector v) {
+        VectorMask<Byte> valid = shuffle.laneIsValid();
+        S ws = shuffletype.cast(shuffle.wrapIndexes());
+        ByteVector r0 =
+            VectorIntrinsics.rearrangeOp(
+                getClass(), shuffletype, byte.class, length(),
+                this, ws,
+                (v0, s_) -> v0.uOp((i, a) -> {
+                    int ei = s_.laneSource(i);
+                    return v0.lane(ei);
+                }));
+        ByteVector r1 =
+            VectorIntrinsics.rearrangeOp(
+                getClass(), shuffletype, byte.class, length(),
+                v, ws,
+                (v1, s_) -> v1.uOp((i, a) -> {
+                    int ei = s_.laneSource(i);
+                    return v1.lane(ei);
+                }));
+        return r1.blend(r0, valid);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    ByteVector selectFrom(Vector<Byte> v);
+
+    /*package-private*/
+    @ForceInline
+    final ByteVector selectFromTemplate(ByteVector v) {
+        return v.rearrange(this.toShuffle());
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    public abstract
+    ByteVector selectFrom(Vector<Byte> s, VectorMask<Byte> m);
+
+    /*package-private*/
+    @ForceInline
+    final ByteVector selectFromTemplate(ByteVector v,
+                                                  AbstractMask<Byte> m) {
+        return v.rearrange(this.toShuffle(), m);
+    }
+
+    /// Ternary operations
+
+    /**
+     * Blends together the bits of two vectors under
+     * the control of a third, which supplies mask bits.
      *
-     * @param s the input scalar; the number of the bits to rotate right
-     * @return the result of rotating right this vector by the broadcast of an
-     * input scalar
+     *
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(byte,byte)
+     * @see #bitwiseBlend(byte,Vector)
+     * @see #bitwiseBlend(Vector,byte)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,Vector,Vector,VectorMask)
      */
     @ForceInline
-    public final ByteVector rotateRight(int s) {
-        return shiftRight(s).or(shiftLeft(-s));
+    public final
+    ByteVector bitwiseBlend(Vector<Byte> bits, Vector<Byte> mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
     }
 
     /**
-     * Rotates right this vector by the broadcast of an input scalar, selecting
-     * lane elements controlled by a mask.
-     * <p>
-     * This is a lane-wise binary operation which produces the result of rotating right the two's
-     * complement binary representation of each lane of first operand (this vector) by input scalar.
-     * Rotation by any multiple of 8 is a no-op, so only the 3 lowest-order bits of input value are used.
-     * It is as if the input value were subjected to a bitwise logical
-     * AND operator ({@code &}) with the mask value 0x7.
+     * Blends together the bits of a vector and a scalar under
+     * the control of another scalar, which supplies mask bits.
      *
-     * @param s the input scalar; the number of the bits to rotate right
-     * @param m the mask controlling lane selection
-     * @return the result of rotating right this vector by the broadcast of an
-     * input scalar
+     *
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,byte,byte,VectorMask)
      */
     @ForceInline
-    public final ByteVector rotateRight(int s, VectorMask<Byte> m) {
-        return shiftRight(s, m).or(shiftLeft(-s, m), m);
+    public final
+    ByteVector bitwiseBlend(byte bits, byte mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
     }
 
     /**
-     * {@inheritDoc}
+     * Blends together the bits of a vector and a scalar under
+     * the control of another vector, which supplies mask bits.
+     *
+     *
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,byte,Vector,VectorMask)
      */
-    @Override
-    public abstract void intoByteArray(byte[] a, int ix);
+    @ForceInline
+    public final
+    ByteVector bitwiseBlend(byte bits, Vector<Byte> mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
 
     /**
-     * {@inheritDoc}
+     * Blends together the bits of two vectors scalar under
+     * the control of a scalar, which supplies mask bits.
+     *
+     *
+     * This is a lane-wise ternary operation which performs
+     * a bitwise blending operation {@code (a&~c)|(b&c)}
+     * to each lane.
+     *
+     * This method is also equivalent to the expression
+     * {@link #lanewise(VectorOperators.Ternary,Vector,Vector)
+     *    lanewise}{@code (}{@link VectorOperators#BITWISE_BLEND
+     *    BITWISE_BLEND}{@code , bits, mask)}.
+     *
+     * @param bits input bits to blend into the current vector
+     * @param mask a bitwise mask to enable blending of the input bits
+     * @return the bitwise blend of the given bits into the current vector,
+     *         under control of the bitwise mask
+     * @see #bitwiseBlend(Vector,Vector)
+     * @see VectorOperators#BITWISE_BLEND
+     * @see #lanewise(VectorOperators.Ternary,Vector,byte,VectorMask)
      */
-    @Override
-    public abstract void intoByteArray(byte[] a, int ix, VectorMask<Byte> m);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract void intoByteBuffer(ByteBuffer bb, int ix);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract void intoByteBuffer(ByteBuffer bb, int ix, VectorMask<Byte> m);
+    @ForceInline
+    public final
+    ByteVector bitwiseBlend(Vector<Byte> bits, byte mask) {
+        return lanewise(BITWISE_BLEND, bits, mask);
+    }
 
 
     // Type specific horizontal reductions
-    /**
-     * Adds all lane elements of this vector.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the addition
-     * operation ({@code +}) to lane elements,
-     * and the identity value is {@code 0}.
-     *
-     * @return the addition of all the lane elements of this vector
-     */
-    public abstract byte addLanes();
 
     /**
-     * Adds all lane elements of this vector, selecting lane elements
+     * Returns a value accumulated from all the lanes of this vector.
+     *
+     * This is an associative cross-lane reduction operation which
+     * applies the specified operation to all the lane elements.
+     *
+     * <p>
+     * A few reduction operations do not support arbitrary reordering
+     * of their operands, yet are included here because of their
+     * usefulness.
+     *
+     * <ul>
+     * <li>
+     * In the case of {@code FIRST_NONZERO}, the reduction returns
+     * the value from the lowest-numbered non-zero lane.
+     *
+     *
+     * <li>
+     * In the case of floating point addition and multiplication, the
+     * precise result will reflect the choice of an arbitrary order
+     * of operations, which may even vary over time.
+     *
+     * <li>
+     * All other reduction operations are fully commutative and
+     * associative.  The implementation can choose any order of
+     * processing, yet it will always produce the same result.
+     *
+     * </ul>
+     *
+     *
+     * @param op the operation used to combine lane values
+     * @return the accumulated result
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #reduceLanes(VectorOperators.Associative,VectorMask)
+     * @see #add(Vector)
+     * @see #mul(Vector)
+     * @see #min(Vector)
+     * @see #max(Vector)
+     * @see #and(Vector)
+     * @see #or(Vector)
+     * @see VectorOperators#XOR
+     * @see VectorOperators#FIRST_NONZERO
+     */
+    public abstract byte reduceLanes(VectorOperators.Associative op);
+
+    /**
+     * Returns a value accumulated from selected lanes of this vector,
      * controlled by a mask.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the addition
-     * operation ({@code +}) to lane elements,
-     * and the identity value is {@code 0}.
      *
+     * This is an associative cross-lane reduction operation which
+     * applies the specified operation to the selected lane elements.
+     * <p>
+     * If no elements are selected, an operation-specific identity
+     * value is returned.
+     * <ul>
+     * <li>
+     * If the operation is
+     *  {@code ADD}, {@code XOR}, {@code OR},
+     * or {@code FIRST_NONZERO},
+     * then the identity value is zero, the default {@code byte} value.
+     * <li>
+     * If the operation is {@code MUL},
+     * then the identity value is one.
+     * <li>
+     * If the operation is {@code AND},
+     * then the identity value is minus one (all bits set).
+     * <li>
+     * If the operation is {@code MAX},
+     * then the identity value is {@code Byte.MIN_VALUE}.
+     * <li>
+     * If the operation is {@code MIN},
+     * then the identity value is {@code Byte.MAX_VALUE}.
+     * </ul>
+     *
+     * @param op the operation used to combine lane values
      * @param m the mask controlling lane selection
-     * @return the addition of the selected lane elements of this vector
+     * @return the reduced result accumulated from the selected lane values
+     * @throws UnsupportedOperationException if this vector does
+     *         not support the requested operation
+     * @see #reduceLanes(VectorOperators.Associative)
      */
-    public abstract byte addLanes(VectorMask<Byte> m);
+    public abstract byte reduceLanes(VectorOperators.Associative op,
+                                       VectorMask<Byte> m);
 
-    /**
-     * Multiplies all lane elements of this vector.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the
-     * multiplication operation ({@code *}) to lane elements,
-     * and the identity value is {@code 1}.
-     *
-     * @return the multiplication of all the lane elements of this vector
-     */
-    public abstract byte mulLanes();
+    /*package-private*/
+    @ForceInline
+    final
+    byte reduceLanesTemplate(VectorOperators.Associative op,
+                               VectorMask<Byte> m) {
+        ByteVector v = reduceIdentityVector(op).blend(this, m);
+        return v.reduceLanesTemplate(op);
+    }
 
-    /**
-     * Multiplies all lane elements of this vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the
-     * multiplication operation ({@code *}) to lane elements,
-     * and the identity value is {@code 1}.
-     *
-     * @param m the mask controlling lane selection
-     * @return the multiplication of all the lane elements of this vector
-     */
-    public abstract byte mulLanes(VectorMask<Byte> m);
+    /*package-private*/
+    @ForceInline
+    final
+    byte reduceLanesTemplate(VectorOperators.Associative op) {
+        if (op == FIRST_NONZERO) {
+            // FIXME:  The JIT should handle this, and other scan ops alos.
+            VectorMask<Byte> thisNZ
+                = this.viewAsIntegralLanes().compare(NE, (byte) 0);
+            return this.lane(thisNZ.firstTrue());
+        }
+        int opc = opCode(op);
+        return fromBits(VectorIntrinsics.reductionCoerced(
+            opc, getClass(), byte.class, length(),
+            this,
+            REDUCE_IMPL.find(op, opc, (opc_) -> {
+              switch (opc_) {
+              case VECTOR_OP_ADD: return v ->
+                      toBits(v.rOp((byte)0, (i, a, b) -> (byte)(a + b)));
+              case VECTOR_OP_MUL: return v ->
+                      toBits(v.rOp((byte)1, (i, a, b) -> (byte)(a * b)));
+              case VECTOR_OP_MIN: return v ->
+                      toBits(v.rOp(MAX_OR_INF, (i, a, b) -> (byte) Math.min(a, b)));
+              case VECTOR_OP_MAX: return v ->
+                      toBits(v.rOp(MIN_OR_INF, (i, a, b) -> (byte) Math.max(a, b)));
+              case VECTOR_OP_FIRST_NONZERO: return v ->
+                      toBits(v.rOp((byte)0, (i, a, b) -> toBits(a) != 0 ? a : b));
+              case VECTOR_OP_AND: return v ->
+                      toBits(v.rOp((byte)-1, (i, a, b) -> (byte)(a & b)));
+              case VECTOR_OP_OR: return v ->
+                      toBits(v.rOp((byte)0, (i, a, b) -> (byte)(a | b)));
+              case VECTOR_OP_XOR: return v ->
+                      toBits(v.rOp((byte)0, (i, a, b) -> (byte)(a ^ b)));
+              default: return null;
+              }})));
+    }
+    private static final
+    ImplCache<Associative,Function<ByteVector,Long>> REDUCE_IMPL
+        = new ImplCache<>(Associative.class, ByteVector.class);
 
-    /**
-     * Returns the minimum lane element of this vector.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the operation
-     * {@code (a, b) -> Math.min(a, b)} to lane elements,
-     * and the identity value is
-     * {@link Byte#MAX_VALUE}.
-     *
-     * @return the minimum lane element of this vector
-     */
-    public abstract byte minLanes();
+    private
+    @ForceInline
+    ByteVector reduceIdentityVector(VectorOperators.Associative op) {
+        int opc = opCode(op);
+        UnaryOperator<ByteVector> fn
+            = REDUCE_ID_IMPL.find(op, opc, (opc_) -> {
+                switch (opc_) {
+                case VECTOR_OP_ADD:
+                case VECTOR_OP_OR:
+                case VECTOR_OP_XOR:
+                case VECTOR_OP_FIRST_NONZERO:
+                    return v -> v.broadcast(0);
+                case VECTOR_OP_MUL:
+                    return v -> v.broadcast(1);
+                case VECTOR_OP_AND:
+                    return v -> v.broadcast(-1);
+                case VECTOR_OP_MIN:
+                    return v -> v.broadcast(MAX_OR_INF);
+                case VECTOR_OP_MAX:
+                    return v -> v.broadcast(MIN_OR_INF);
+                default: return null;
+                }
+            });
+        return fn.apply(this);
+    }
+    private static final
+    ImplCache<Associative,UnaryOperator<ByteVector>> REDUCE_ID_IMPL
+        = new ImplCache<>(Associative.class, ByteVector.class);
 
-    /**
-     * Returns the minimum lane element of this vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the operation
-     * {@code (a, b) -> Math.min(a, b)} to lane elements,
-     * and the identity value is
-     * {@link Byte#MAX_VALUE}.
-     *
-     * @param m the mask controlling lane selection
-     * @return the minimum lane element of this vector
-     */
-    public abstract byte minLanes(VectorMask<Byte> m);
+    private static final byte MIN_OR_INF = Byte.MIN_VALUE;
+    private static final byte MAX_OR_INF = Byte.MAX_VALUE;
 
-    /**
-     * Returns the maximum lane element of this vector.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the operation
-     * {@code (a, b) -> Math.max(a, b)} to lane elements,
-     * and the identity value is
-     * {@link Byte#MIN_VALUE}.
-     *
-     * @return the maximum lane element of this vector
-     */
-    public abstract byte maxLanes();
-
-    /**
-     * Returns the maximum lane element of this vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the operation
-     * {@code (a, b) -> Math.max(a, b)} to lane elements,
-     * and the identity value is
-     * {@link Byte#MIN_VALUE}.
-     *
-     * @param m the mask controlling lane selection
-     * @return the maximum lane element of this vector
-     */
-    public abstract byte maxLanes(VectorMask<Byte> m);
-
-    /**
-     * Logically ORs all lane elements of this vector.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the logical OR
-     * operation ({@code |}) to lane elements,
-     * and the identity value is {@code 0}.
-     *
-     * @return the logical OR all the lane elements of this vector
-     */
-    public abstract byte orLanes();
-
-    /**
-     * Logically ORs all lane elements of this vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the logical OR
-     * operation ({@code |}) to lane elements,
-     * and the identity value is {@code 0}.
-     *
-     * @param m the mask controlling lane selection
-     * @return the logical OR all the lane elements of this vector
-     */
-    public abstract byte orLanes(VectorMask<Byte> m);
-
-    /**
-     * Logically ANDs all lane elements of this vector.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the logical AND
-     * operation ({@code |}) to lane elements,
-     * and the identity value is {@code -1}.
-     *
-     * @return the logical AND all the lane elements of this vector
-     */
-    public abstract byte andLanes();
-
-    /**
-     * Logically ANDs all lane elements of this vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the logical AND
-     * operation ({@code |}) to lane elements,
-     * and the identity value is {@code -1}.
-     *
-     * @param m the mask controlling lane selection
-     * @return the logical AND all the lane elements of this vector
-     */
-    public abstract byte andLanes(VectorMask<Byte> m);
-
-    /**
-     * Logically XORs all lane elements of this vector.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the logical XOR
-     * operation ({@code ^}) to lane elements,
-     * and the identity value is {@code 0}.
-     *
-     * @return the logical XOR all the lane elements of this vector
-     */
-    public abstract byte xorLanes();
-
-    /**
-     * Logically XORs all lane elements of this vector, selecting lane elements
-     * controlled by a mask.
-     * <p>
-     * This is an associative cross-lane reduction operation which applies the logical XOR
-     * operation ({@code ^}) to lane elements,
-     * and the identity value is {@code 0}.
-     *
-     * @param m the mask controlling lane selection
-     * @return the logical XOR all the lane elements of this vector
-     */
-    public abstract byte xorLanes(VectorMask<Byte> m);
+    public @Override abstract long reduceLanesToLong(VectorOperators.Associative op);
+    public @Override abstract long reduceLanesToLong(VectorOperators.Associative op,
+                                                     VectorMask<Byte> m);
 
     // Type specific accessors
 
@@ -1498,7 +2547,7 @@ public abstract class ByteVector extends Vector<Byte> {
     /**
      * Replaces the lane element of this vector at lane index {@code i} with
      * value {@code e}.
-     * <p>
+     *
      * This is a cross-lane operation and behaves as if it returns the result
      * of blending this vector with an input vector that is the result of
      * broadcasting {@code e} and a mask that has only one lane set at lane
@@ -1511,170 +2560,1290 @@ public abstract class ByteVector extends Vector<Byte> {
      * @throws IllegalArgumentException if the index is is out of range
      * ({@code < 0 || >= length()})
      */
-    public abstract ByteVector with(int i, byte e);
+    public abstract ByteVector withLane(int i, byte e);
 
-    // Type specific extractors
+    // Memory load operations
 
     /**
-     * Returns an array containing the lane elements of this vector.
+     * Returns an array of type {@code byte[]}
+     * containing all the lane values.
+     * The array length is the same as the vector length.
+     * The array elements are stored in lane order.
      * <p>
-     * This method behaves as if it {@link #intoArray(byte[], int)} stores}
-     * this vector into an allocated array and returns the array as follows:
+     * This method behaves as if it stores
+     * this vector into an allocated array
+     * (using {@link #intoArray(byte[], int) intoArray})
+     * and returns the array as follows:
      * <pre>{@code
      *   byte[] a = new byte[this.length()];
      *   this.intoArray(a, 0);
      *   return a;
      * }</pre>
      *
-     * @return an array containing the the lane elements of this vector
+     * @return an array containing the lane values of this vector
      */
     @ForceInline
+    @Override
     public final byte[] toArray() {
-        byte[] a = new byte[species().length()];
+        byte[] a = new byte[vspecies().laneCount()];
         intoArray(a, 0);
         return a;
     }
 
-    /**
-     * Stores this vector into an array starting at offset.
-     * <p>
-     * For each vector lane, where {@code N} is the vector lane index,
-     * the lane element at index {@code N} is stored into the array at index
-     * {@code offset + N}.
-     *
-     * @param a the array
-     * @param offset the offset into the array
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
-     * {@code offset > a.length - this.length()}
+    /** {@inheritDoc} <!--workaround-->
+     * @implNote
+     * When this method is used on used on vectors
+     * of type {@code ByteVector},
+     * there will be no loss of precision or range,
+     * and so no {@code IllegalArgumentException} will
+     * be thrown.
      */
-    public abstract void intoArray(byte[] a, int offset);
+    @ForceInline
+    @Override
+    public final int[] toIntArray() {
+        byte[] a = toArray();
+        int[] res = new int[a.length];
+        for (int i = 0; i < a.length; i++) {
+            byte e = a[i];
+            res[i] = (int) ByteSpecies.toIntegralChecked(e, true);
+        }
+        return res;
+    }
+
+    /** {@inheritDoc} <!--workaround-->
+     * @implNote
+     * When this method is used on used on vectors
+     * of type {@code ByteVector},
+     * there will be no loss of precision or range,
+     * and so no {@code IllegalArgumentException} will
+     * be thrown.
+     */
+    @ForceInline
+    @Override
+    public final long[] toLongArray() {
+        byte[] a = toArray();
+        long[] res = new long[a.length];
+        for (int i = 0; i < a.length; i++) {
+            byte e = a[i];
+            res[i] = ByteSpecies.toIntegralChecked(e, false);
+        }
+        return res;
+    }
+
+    /** {@inheritDoc} <!--workaround-->
+     * @implNote
+     * When this method is used on used on vectors
+     * of type {@code ByteVector},
+     * there will be no loss of precision.
+     */
+    @ForceInline
+    @Override
+    public final double[] toDoubleArray() {
+        byte[] a = toArray();
+        double[] res = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            res[i] = (double) a[i];
+        }
+        return res;
+    }
 
     /**
-     * Stores this vector into an array starting at offset and using a mask.
+     * Loads a vector from a byte array starting at an offset.
+     * Bytes are composed into primitive lane elements according
+     * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
-     * For each vector lane, where {@code N} is the vector lane index,
-     * if the mask lane at index {@code N} is set then the lane element at
-     * index {@code N} is stored into the array index {@code offset + N}.
+     * This method behaves as if it returns the result of calling
+     * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
+     * fromByteBuffer()} as follows:
+     * <pre>{@code
+     * var bb = ByteBuffer.wrap(a);
+     * var bo = ByteOrder.LITTLE_ENDIAN;
+     * var m = species.maskAll(true);
+     * return fromByteBuffer(species, bb, offset, m, bo);
+     * }</pre>
      *
-     * @param a the array
+     * @param species species of desired vector
+     * @param a the byte array
      * @param offset the offset into the array
-     * @param m the mask
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, or
-     * for any vector lane index {@code N} where the mask at lane {@code N}
-     * is set {@code offset >= a.length - N}
+     * @return a vector loaded from a byte array
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*ESIZE < 0}
+     *         or {@code offset+(N+1)*ESIZE > a.length}
+     *         for any lane {@code N} in the vector
      */
-    public abstract void intoArray(byte[] a, int offset, VectorMask<Byte> m);
+    @ForceInline
+    public static
+    ByteVector fromByteArray(VectorSpecies<Byte> species,
+                                       byte[] a, int offset) {
+        return fromByteArray(species, a, offset, ByteOrder.LITTLE_ENDIAN);
+    }
 
     /**
-     * Stores this vector into an array using indexes obtained from an index
-     * map.
+     * Loads a vector from a byte array starting at an offset.
+     * Bytes are composed into primitive lane elements according
+     * to the specified byte order.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
+     * This method behaves as if it returns the result of calling
+     * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
+     * fromByteBuffer()} as follows:
+     * <pre>{@code
+     * var bb = ByteBuffer.wrap(a);
+     * var m = species.maskAll(true);
+     * return fromByteBuffer(species, bb, offset, m, bo);
+     * }</pre>
+     *
+     * @param species species of desired vector
+     * @param a the byte array
+     * @param offset the offset into the array
+     * @param bo the intended byte order
+     * @return a vector loaded from a byte array
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*ESIZE < 0}
+     *         or {@code offset+(N+1)*ESIZE > a.length}
+     *         for any lane {@code N} in the vector
+     */
+    @ForceInline
+    public static
+    ByteVector fromByteArray(VectorSpecies<Byte> species,
+                                       byte[] a, int offset,
+                                       ByteOrder bo) {
+        ByteSpecies vsp = (ByteSpecies) species;
+        offset = checkFromIndexSize(offset,
+                                    vsp.vectorBitSize() / Byte.SIZE,
+                                    a.length);
+        return vsp.dummyVector()
+            .fromByteArray0(a, offset).maybeSwap(bo);
+    }
+
+    /**
+     * Loads a vector from a byte array starting at an offset
+     * and using a mask.
+     * Lanes where the mask is unset are filled with the default
+     * value of {@code byte} (zero).
+     * Bytes are composed into primitive lane elements according
+     * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
+     * <p>
+     * This method behaves as if it returns the result of calling
+     * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
+     * fromByteBuffer()} as follows:
+     * <pre>{@code
+     * var bb = ByteBuffer.wrap(a);
+     * var bo = ByteOrder.LITTLE_ENDIAN;
+     * return fromByteBuffer(species, bb, offset, bo, m);
+     * }</pre>
+     *
+     * @param species species of desired vector
+     * @param a the byte array
+     * @param offset the offset into the array
+     * @param m the mask controlling lane selection
+     * @return a vector loaded from a byte array
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*ESIZE < 0}
+     *         or {@code offset+(N+1)*ESIZE > a.length}
+     *         for any lane {@code N} in the vector where
+     *         the mask is set
+     */
+    @ForceInline
+    public static
+    ByteVector fromByteArray(VectorSpecies<Byte> species,
+                                       byte[] a, int offset,
+                                       VectorMask<Byte> m) {
+        return fromByteArray(species, a, offset, ByteOrder.LITTLE_ENDIAN, m);
+    }
+
+    /**
+     * Loads a vector from a byte array starting at an offset
+     * and using a mask.
+     * Lanes where the mask is unset are filled with the default
+     * value of {@code byte} (zero).
+     * Bytes are composed into primitive lane elements according
+     * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
+     * <p>
+     * This method behaves as if it returns the result of calling
+     * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
+     * fromByteBuffer()} as follows:
+     * <pre>{@code
+     * var bb = ByteBuffer.wrap(a);
+     * return fromByteBuffer(species, bb, offset, m, bo);
+     * }</pre>
+     *
+     * @param species species of desired vector
+     * @param a the byte array
+     * @param offset the offset into the array
+     * @param bo the intended byte order
+     * @param m the mask controlling lane selection
+     * @return a vector loaded from a byte array
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*ESIZE < 0}
+     *         or {@code offset+(N+1)*ESIZE > a.length}
+     *         for any lane {@code N} in the vector
+     *         where the mask is set
+     */
+    @ForceInline
+    public static
+    ByteVector fromByteArray(VectorSpecies<Byte> species,
+                                       byte[] a, int offset,
+                                       ByteOrder bo,
+                                       VectorMask<Byte> m) {
+        ByteSpecies vsp = (ByteSpecies) species;
+        ByteVector zero = vsp.zero();
+
+        if (offset >= 0 && offset <= (a.length - vsp.length() * 1)) {
+            ByteVector v = zero.fromByteArray0(a, offset);
+            return zero.blend(v.maybeSwap(bo), m);
+        }
+        ByteVector iota = zero.addIndex(1);
+        ((AbstractMask<Byte>)m)
+            .checkIndexByLane(offset, a.length, iota, 1);
+        ByteBuffer tb = wrapper(a, offset, bo);
+        return vsp.ldOp(tb, 0, (AbstractMask<Byte>)m,
+                   (tb_, __, i)  -> tb_.get(i));
+    }
+
+    /**
+     * Loads a vector from an array of type {@code byte[]}
+     * starting at an offset.
      * For each vector lane, where {@code N} is the vector lane index, the
-     * lane element at index {@code N} is stored into the array at index
-     * {@code a_offset + indexMap[i_offset + N]}.
+     * array element at index {@code offset + N} is placed into the
+     * resulting vector at lane index {@code N}.
      *
+     * @param species species of desired vector
      * @param a the array
-     * @param a_offset the offset into the array, may be negative if relative
-     * indexes in the index map compensate to produce a value within the
-     * array bounds
-     * @param indexMap the index map
-     * @param i_offset the offset into the index map
-     * @throws IndexOutOfBoundsException if {@code i_offset < 0}, or
-     * {@code i_offset > indexMap.length - this.length()},
-     * or for any vector lane index {@code N} the result of
-     * {@code a_offset + indexMap[i_offset + N]} is {@code < 0} or {@code >= a.length}
+     * @param offset the offset into the array
+     * @return the vector loaded from an array
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N < 0} or {@code offset+N >= a.length}
+     *         for any lane {@code N} in the vector
      */
-    public void intoArray(byte[] a, int a_offset, int[] indexMap, int i_offset) {
-        forEach((n, e) -> a[a_offset + indexMap[i_offset + n]] = e);
+    @ForceInline
+    public static
+    ByteVector fromArray(VectorSpecies<Byte> species,
+                                   byte[] a, int offset) {
+        ByteSpecies vsp = (ByteSpecies) species;
+        offset = checkFromIndexSize(offset,
+                                    vsp.laneCount(),
+                                    a.length);
+        return vsp.dummyVector().fromArray0(a, offset);
     }
 
     /**
-     * Stores this vector into an array using indexes obtained from an index
-     * map and using a mask.
+     * Loads a vector from an array of type {@code byte[]}
+     * starting at an offset and using a mask.
+     * Lanes where the mask is unset are filled with the default
+     * value of {@code byte} (zero).
+     * For each vector lane, where {@code N} is the vector lane index,
+     * if the mask lane at index {@code N} is set then the array element at
+     * index {@code offset + N} is placed into the resulting vector at lane index
+     * {@code N}, otherwise the default element value is placed into the
+     * resulting vector at lane index {@code N}.
+     *
+     * @param species species of desired vector
+     * @param a the array
+     * @param offset the offset into the array
+     * @param m the mask controlling lane selection
+     * @return the vector loaded from an array
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N < 0} or {@code offset+N >= a.length}
+     *         for any lane {@code N} in the vector
+     *         where the mask is set
+     */
+    @ForceInline
+    public static
+    ByteVector fromArray(VectorSpecies<Byte> species,
+                                   byte[] a, int offset,
+                                   VectorMask<Byte> m) {
+        ByteSpecies vsp = (ByteSpecies) species;
+        if (offset >= 0 && offset <= (a.length - species.length())) {
+            ByteVector zero = vsp.zero();
+            return zero.blend(zero.fromArray0(a, offset), m);
+        }
+        ByteVector iota = vsp.iota();
+        ((AbstractMask<Byte>)m)
+            .checkIndexByLane(offset, a.length, iota, 1);
+        return vsp.vOp(m, i -> a[offset + i]);
+    }
+
+    /**
+     * Gathers a new vector composed of elements from an array of type
+     * {@code byte[]},
+     * using indexes obtained by adding a fixed {@code offset} to a
+     * series of secondary offsets from an <em>index map</em>.
+     * The index map is a contiguous sequence of {@code VLENGTH}
+     * elements in a second array of {@code int}s, starting at a given
+     * {@code mapOffset}.
      * <p>
      * For each vector lane, where {@code N} is the vector lane index,
-     * if the mask lane at index {@code N} is set then the lane element at
-     * index {@code N} is stored into the array at index
-     * {@code a_offset + indexMap[i_offset + N]}.
+     * the lane is loaded from the array
+     * element {@code a[f(N)]}, where {@code f(N)} is the
+     * index mapping expression
+     * {@code offset + indexMap[mapOffset + N]]}.
      *
+     * @param species species of desired vector
      * @param a the array
-     * @param a_offset the offset into the array, may be negative if relative
+     * @param offset the offset into the array, may be negative if relative
      * indexes in the index map compensate to produce a value within the
      * array bounds
-     * @param m the mask
      * @param indexMap the index map
-     * @param i_offset the offset into the index map
-     * @throws IndexOutOfBoundsException if {@code j < 0}, or
-     * {@code i_offset > indexMap.length - this.length()},
-     * or for any vector lane index {@code N} where the mask at lane
-     * {@code N} is set the result of {@code a_offset + indexMap[i_offset + N]} is
-     * {@code < 0} or {@code >= a.length}
+     * @param mapOffset the offset into the index map
+     * @return the vector loaded from the indexed elements of the array
+     * @throws IndexOutOfBoundsException
+     *         if {@code mapOffset+N < 0}
+     *         or if {@code mapOffset+N >= indexMap.length},
+     *         or if {@code f(N)=offset+indexMap[mapOffset+N]}
+     *         is an invalid index into {@code a},
+     *         for any lane {@code N} in the vector
+     * @see ByteVector#toIntArray()
      */
-    public void intoArray(byte[] a, int a_offset, VectorMask<Byte> m, int[] indexMap, int i_offset) {
-        forEach(m, (n, e) -> a[a_offset + indexMap[i_offset + n]] = e);
+    @ForceInline
+    public static
+    ByteVector fromArray(VectorSpecies<Byte> species,
+                                   byte[] a, int offset,
+                                   int[] indexMap, int mapOffset) {
+        ByteSpecies vsp = (ByteSpecies) species;
+        return vsp.vOp(n -> a[offset + indexMap[mapOffset + n]]);
     }
-    // Species
 
     /**
-     * {@inheritDoc}
+     * Gathers a new vector composed of elements from an array of type
+     * {@code byte[]},
+     * under the control of a mask, and
+     * using indexes obtained by adding a fixed {@code offset} to a
+     * series of secondary offsets from an <em>index map</em>.
+     * The index map is a contiguous sequence of {@code VLENGTH}
+     * elements in a second array of {@code int}s, starting at a given
+     * {@code mapOffset}.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * if the lane is set in the mask,
+     * the lane is loaded from the array
+     * element {@code a[f(N)]}, where {@code f(N)} is the
+     * index mapping expression
+     * {@code offset + indexMap[mapOffset + N]]}.
+     * Unset lanes in the resulting vector are set to zero.
+     *
+     * @param species species of desired vector
+     * @param a the array
+     * @param offset the offset into the array, may be negative if relative
+     * indexes in the index map compensate to produce a value within the
+     * array bounds
+     * @param indexMap the index map
+     * @param mapOffset the offset into the index map
+     * @param m the mask controlling lane selection
+     * @return the vector loaded from the indexed elements of the array
+     * @throws IndexOutOfBoundsException
+     *         if {@code mapOffset+N < 0}
+     *         or if {@code mapOffset+N >= indexMap.length},
+     *         or if {@code f(N)=offset+indexMap[mapOffset+N]}
+     *         is an invalid index into {@code a},
+     *         for any lane {@code N} in the vector
+     *         where the mask is set
+     * @see ByteVector#toIntArray()
+     */
+    @ForceInline
+    public static
+    ByteVector fromArray(VectorSpecies<Byte> species,
+                                   byte[] a, int offset,
+                                   int[] indexMap, int mapOffset,
+                                   VectorMask<Byte> m) {
+        ByteSpecies vsp = (ByteSpecies) species;
+
+        // Do it the slow way.
+        return vsp.vOp(m, n -> a[offset + indexMap[mapOffset + n]]);
+
+    }
+
+    /**
+     * Loads a vector from a {@linkplain ByteBuffer byte buffer}
+     * starting at an offset into the byte buffer.
+     * <p>
+     * This method behaves as if it returns the result of calling
+     * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
+     * fromByteBuffer()} as follows:
+     * <pre>{@code
+     * var bb = ByteBuffer.wrap(a);
+     * var bo = ByteOrder.LITTLE_ENDIAN;
+     * var m = species.maskAll(true);
+     * return fromByteBuffer(species, bb, offset, m, bo);
+     * }</pre>
+     *
+     * @param species species of desired vector
+     * @param bb the byte buffer
+     * @param offset the offset into the byte buffer
+     * @return a vector loaded from a byte buffer
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*1 < 0}
+     *         or {@code offset+N*1 >= bb.limit()}
+     *         for any lane {@code N} in the vector
+     */
+    @ForceInline
+    public static
+    ByteVector fromByteBuffer(VectorSpecies<Byte> species,
+                                        ByteBuffer bb, int offset,
+                                        ByteOrder bo) {
+        ByteSpecies vsp = (ByteSpecies) species;
+        offset = checkFromIndexSize(offset,
+                                    vsp.laneCount(),
+                                    bb.limit());
+        return vsp.dummyVector()
+            .fromByteBuffer0(bb, offset).maybeSwap(bo);
+    }
+
+    /**
+     * Loads a vector from a {@linkplain ByteBuffer byte buffer}
+     * starting at an offset into the byte buffer
+     * and using a mask.
+     * <p>
+     * This method behaves as if it returns the result of calling
+     * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
+     * fromByteBuffer()} as follows:
+     * <pre>{@code
+     * var bb = ByteBuffer.wrap(a);
+     * var bo = ByteOrder.LITTLE_ENDIAN;
+     * var m = species.maskAll(true);
+     * return fromByteBuffer(species, bb, offset, m, bo);
+     * }</pre>
+     *
+     * @param species species of desired vector
+     * @param bb the byte buffer
+     * @param offset the offset into the byte buffer
+     * @param m the mask controlling lane selection
+     * @return a vector loaded from a byte buffer
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N*1 < 0}
+     *         or {@code offset+N*1 >= bb.limit()}
+     *         for any lane {@code N} in the vector
+     *         where the mask is set
+     */
+    @ForceInline
+    public static
+    ByteVector fromByteBuffer(VectorSpecies<Byte> species,
+                                        ByteBuffer bb, int offset,
+                                        ByteOrder bo,
+                                        VectorMask<Byte> m) {
+        if (m.allTrue()) {
+            return fromByteBuffer(species, bb, offset, bo);
+        }
+        ByteSpecies vsp = (ByteSpecies) species;
+        checkMaskFromIndexSize(offset,
+                               vsp, m, 1,
+                               bb.limit());
+        ByteVector zero = zero(vsp);
+        ByteVector v = zero.fromByteBuffer0(bb, offset);
+        return zero.blend(v.maybeSwap(bo), m);
+    }
+
+    // Memory store operations
+
+    /**
+     * Stores this vector into an array of type {@code byte[]}
+     * starting at an offset.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * the lane element at index {@code N} is stored into the array
+     * element {@code a[offset+N]}.
+     *
+     * @param a the array, of type {@code byte[]}
+     * @param offset the offset into the array
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N < 0} or {@code offset+N >= a.length}
+     *         for any lane {@code N} in the vector
+     */
+    @ForceInline
+    public final
+    void intoArray(byte[] a, int offset) {
+        ByteSpecies vsp = vspecies();
+        offset = checkFromIndexSize(offset,
+                                    vsp.laneCount(),
+                                    a.length);
+        VectorIntrinsics.store(
+            vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
+            a, arrayAddress(a, offset),
+            this,
+            a, offset,
+            (arr, off, v)
+            -> v.stOp(arr, off,
+                      (arr_, off_, i, e) -> arr_[off_ + i] = e));
+    }
+
+    /**
+     * Stores this vector into an array of {@code byte}
+     * starting at offset and using a mask.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * the lane element at index {@code N} is stored into the array
+     * element {@code a[offset+N]}.
+     * If the mask lane at {@code N} is unset then the corresponding
+     * array element {@code a[offset+N]} is left unchanged.
+     * <p>
+     * Array range checking is done for lanes where the mask is set.
+     * Lanes where the mask is unset are not stored and do not need
+     * to correspond to legitimate elements of {@code a}.
+     * That is, unset lanes may correspond to array indexes less than
+     * zero or beyond the end of the array.
+     *
+     * @param a the array, of type {@code byte[]}
+     * @param offset the offset into the array
+     * @param m the mask controlling lane storage
+     * @throws IndexOutOfBoundsException
+     *         if {@code offset+N < 0} or {@code offset+N >= a.length}
+     *         for any lane {@code N} in the vector
+     *         where the mask is set
+     */
+    @ForceInline
+    public final
+    void intoArray(byte[] a, int offset,
+                   VectorMask<Byte> m) {
+        if (m.allTrue()) {
+            intoArray(a, offset);
+        } else {
+            // FIXME: Cannot vectorize yet, if there's a mask.
+            stOp(a, offset, m, (arr, off, i, v) -> arr[off+i] = v);
+        }
+    }
+
+    /**
+     * Scatters this vector into an array of type {@code byte[]}
+     * using indexes obtained by adding a fixed {@code offset} to a
+     * series of secondary offsets from an <em>index map</em>.
+     * The index map is a contiguous sequence of {@code VLENGTH}
+     * elements in a second array of {@code int}s, starting at a given
+     * {@code mapOffset}.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * the lane element at index {@code N} is stored into the array
+     * element {@code a[f(N)]}, where {@code f(N)} is the
+     * index mapping expression
+     * {@code offset + indexMap[mapOffset + N]]}.
+     *
+     * @param a the array
+     * @param offset an offset to combine with the index map offsets
+     * @param indexMap the index map
+     * @param mapOffset the offset into the index map
+     * @returns a vector of the values {@code a[f(N)]}, where
+     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
+     * @throws IndexOutOfBoundsException
+     *         if {@code mapOffset+N < 0}
+     *         or if {@code mapOffset+N >= indexMap.length},
+     *         or if {@code f(N)=offset+indexMap[mapOffset+N]}
+     *         is an invalid index into {@code a},
+     *         for any lane {@code N} in the vector
+     * @see ByteVector#toIntArray()
+     */
+    @ForceInline
+    public final
+    void intoArray(byte[] a, int offset,
+                   int[] indexMap, int mapOffset) {
+        ByteSpecies vsp = vspecies();
+        if (length() == 1) {
+            intoArray(a, offset + indexMap[mapOffset]);
+            return;
+        }
+        IntVector.IntSpecies isp = (IntVector.IntSpecies) vsp.indexSpecies();
+        if (isp.laneCount() != vsp.laneCount()) {
+            stOp(a, offset,
+                 (arr, off, i, e) -> {
+                     int j = indexMap[mapOffset + i];
+                     arr[off + j] = e;
+                 });
+            return;
+        }
+
+        // Index vector: vix[0:n] = i -> offset + indexMap[mo + i]
+        IntVector vix = IntVector
+            .fromArray(isp, indexMap, mapOffset)
+            .add(offset);
+
+        vix = VectorIntrinsics.checkIndex(vix, a.length);
+
+        VectorIntrinsics.storeWithMap(
+            vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
+            isp.vectorType(),
+            a, arrayAddress(a, 0), vix,
+            this,
+            a, offset, indexMap, mapOffset,
+            (arr, off, v, map, mo)
+            -> v.stOp(arr, off,
+                      (arr_, off_, i, e) -> {
+                          int j = map[mo + i];
+                          arr[off + j] = e;
+                      }));
+    }
+
+    /**
+     * Scatters this vector into an array of type {@code byte[]},
+     * under the control of a mask, and
+     * using indexes obtained by adding a fixed {@code offset} to a
+     * series of secondary offsets from an <em>index map</em>.
+     * The index map is a contiguous sequence of {@code VLENGTH}
+     * elements in a second array of {@code int}s, starting at a given
+     * {@code mapOffset}.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * if the mask lane at index {@code N} is set then
+     * the lane element at index {@code N} is stored into the array
+     * element {@code a[f(N)]}, where {@code f(N)} is the
+     * index mapping expression
+     * {@code offset + indexMap[mapOffset + N]]}.
+     *
+     * @param a the array
+     * @param offset an offset to combine with the index map offsets
+     * @param indexMap the index map
+     * @param mapOffset the offset into the index map
+     * @param m the mask
+     * @returns a vector of the values {@code m ? a[f(N)] : 0},
+     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
+     * @throws IndexOutOfBoundsException
+     *         if {@code mapOffset+N < 0}
+     *         or if {@code mapOffset+N >= indexMap.length},
+     *         or if {@code f(N)=offset+indexMap[mapOffset+N]}
+     *         is an invalid index into {@code a},
+     *         for any lane {@code N} in the vector
+     *         where the mask is set
+     * @see ByteVector#toIntArray()
+     */
+    @ForceInline
+    public final
+    void intoArray(byte[] a, int offset,
+                   int[] indexMap, int mapOffset,
+                   VectorMask<Byte> m) {
+        ByteSpecies vsp = vspecies();
+        if (m.allTrue()) {
+            intoArray(a, offset, indexMap, mapOffset);
+            return;
+        }
+        throw new AssertionError("fixme");
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
      */
     @Override
-    public abstract VectorSpecies<Byte> species();
+    @ForceInline
+    public final
+    void intoByteArray(byte[] a, int offset) {
+        offset = checkFromIndexSize(offset,
+                                    bitSize() / Byte.SIZE,
+                                    a.length);
+        this.maybeSwap(ByteOrder.LITTLE_ENDIAN)
+            .intoByteArray0(a, offset);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       VectorMask<Byte> m) {
+        if (m.allTrue()) {
+            intoByteArray(a, offset);
+            return;
+        }
+        ByteSpecies vsp = vspecies();
+        if (offset >= 0 && offset <= (a.length - vsp.length() * 1)) {
+            var oldVal = fromByteArray0(a, offset);
+            var newVal = oldVal.blend(this, m);
+            newVal.intoByteArray0(a, offset);
+        } else {
+            checkMaskFromIndexSize(offset, vsp, m, 1, a.length);
+            ByteBuffer tb = wrapper(a, offset, NATIVE_ENDIAN);
+            this.stOp(tb, 0, m, (tb_, __, i, e) -> tb_.put(i, e));
+        }
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    void intoByteArray(byte[] a, int offset,
+                       ByteOrder bo,
+                       VectorMask<Byte> m) {
+        maybeSwap(bo).intoByteArray(a, offset, m);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo) {
+        maybeSwap(bo).intoByteBuffer0(bb, offset);
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    void intoByteBuffer(ByteBuffer bb, int offset,
+                        ByteOrder bo,
+                        VectorMask<Byte> m) {
+        if (m.allTrue()) {
+            intoByteBuffer(bb, offset, bo);
+            return;
+        }
+        ByteSpecies vsp = vspecies();
+        checkMaskFromIndexSize(offset, vsp, m, 1, bb.limit());
+        conditionalStoreNYI(offset, vsp, m, 1, bb.limit());
+        var oldVal = fromByteBuffer0(bb, offset);
+        var newVal = oldVal.blend(this.maybeSwap(bo), m);
+        newVal.intoByteBuffer0(bb, offset);
+    }
+
+    // ================================================
+
+    // Low-level memory operations.
+    //
+    // Note that all of these operations *must* inline into a context
+    // where the exact species of the involved vector is a
+    // compile-time constant.  Otherwise, the intrinsic generation
+    // will fail and performance will suffer.
+    //
+    // In many cases this is achieved by re-deriving a version of the
+    // method in each concrete subclass (per species).  The re-derived
+    // method simply calls one of these generic methods, with exact
+    // parameters for the controlling metadata, which is either a
+    // typed vector or constant species instance.
+
+    // Unchecked loading operations in native byte order.
+    // Caller is reponsible for applying index checks, masking, and
+    // byte swapping.
+
+    /*package-private*/
+    abstract
+    ByteVector fromArray0(byte[] a, int offset);
+    @ForceInline
+    final
+    ByteVector fromArray0Template(byte[] a, int offset) {
+        ByteSpecies vsp = vspecies();
+        return VectorIntrinsics.load(
+            vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
+            a, arrayAddress(a, offset),
+            a, offset, vsp,
+            (arr, off, s) -> s.ldOp(arr, off,
+                                    (arr_, off_, i) -> arr_[off_ + i]));
+    }
+
+    @Override
+    abstract
+    ByteVector fromByteArray0(byte[] a, int offset);
+    @ForceInline
+    final
+    ByteVector fromByteArray0Template(byte[] a, int offset) {
+        ByteSpecies vsp = vspecies();
+        return VectorIntrinsics.load(
+            vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
+            a, byteArrayAddress(a, offset),
+            a, offset, vsp,
+            (arr, off, s) -> {
+                ByteBuffer tb = wrapper(arr, off, NATIVE_ENDIAN);
+                return s.ldOp(tb, 0, (tb_, __, i) -> tb_.get(i));
+            });
+    }
+
+    abstract
+    ByteVector fromByteBuffer0(ByteBuffer bb, int offset);
+    @ForceInline
+    final
+    ByteVector fromByteBuffer0Template(ByteBuffer bb, int offset) {
+        ByteSpecies vsp = vspecies();
+        return VectorIntrinsics.load(
+            vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
+            bufferBase(bb), bufferAddress(bb, offset),
+            bb, offset, vsp,
+            (buf, off, s) -> {
+                ByteBuffer tb = wrapper(buf, off, NATIVE_ENDIAN);
+                return s.ldOp(tb, 0, (tb_, __, i) -> tb_.get(i));
+           });
+    }
+
+    // Unchecked storing operations in native byte order.
+    // Caller is reponsible for applying index checks, masking, and
+    // byte swapping.
+
+    abstract
+    void intoArray0(byte[] a, int offset);
+    @ForceInline
+    final
+    void intoArray0Template(byte[] a, int offset) {
+        ByteSpecies vsp = vspecies();
+        VectorIntrinsics.store(
+            vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
+            a, arrayAddress(a, offset),
+            this, a, offset,
+            (arr, off, v)
+            -> v.stOp(arr, off,
+                      (arr_, off_, i, e) -> arr_[off_+i] = e));
+    }
+
+    abstract
+    void intoByteArray0(byte[] a, int offset);
+    @ForceInline
+    final
+    void intoByteArray0Template(byte[] a, int offset) {
+        ByteSpecies vsp = vspecies();
+        VectorIntrinsics.store(
+            vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
+            a, byteArrayAddress(a, offset),
+            this, a, offset,
+            (arr, off, v) -> {
+                ByteBuffer tb = wrapper(arr, off, NATIVE_ENDIAN);
+                v.stOp(tb, 0, (tb_, __, i, e) -> tb_.put(i, e));
+            });
+    }
+
+    @ForceInline
+    final
+    void intoByteBuffer0(ByteBuffer bb, int offset) {
+        ByteSpecies vsp = vspecies();
+        VectorIntrinsics.store(
+            vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
+            bufferBase(bb), bufferAddress(bb, offset),
+            this, bb, offset,
+            (buf, off, v) -> {
+                ByteBuffer tb = wrapper(buf, off, NATIVE_ENDIAN);
+                v.stOp(tb, 0, (tb_, __, i, e) -> tb_.put(i, e));
+            });
+    }
+
+    // End of low-level memory operations.
+
+    private static
+    void checkMaskFromIndexSize(int offset,
+                                ByteSpecies vsp,
+                                VectorMask<Byte> m,
+                                int scale,
+                                int limit) {
+        ((AbstractMask<Byte>)m)
+            .checkIndexByLane(offset, limit, vsp.iota(), scale);
+    }
+
+    @ForceInline
+    private void conditionalStoreNYI(int offset,
+                                     ByteSpecies vsp,
+                                     VectorMask<Byte> m,
+                                     int scale,
+                                     int limit) {
+        if (offset < 0 || offset + vsp.laneCount() * scale > limit) {
+            String msg =
+                String.format("unimplemented: store @%d in [0..%d), %s in %s",
+                              offset, limit, m, vsp);
+            throw new AssertionError(msg);
+        }
+    }
+
+    /*package-private*/
+    @Override
+    @ForceInline
+    final
+    ByteVector maybeSwap(ByteOrder bo) {
+        return this;
+    }
+
+    static final int ARRAY_SHIFT =
+        31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_BYTE_INDEX_SCALE);
+    static final long ARRAY_BASE =
+        Unsafe.ARRAY_BYTE_BASE_OFFSET;
+
+    @ForceInline
+    static long arrayAddress(byte[] a, int index) {
+        return ARRAY_BASE + (((long)index) << ARRAY_SHIFT);
+    }
+
+    @ForceInline
+    static long byteArrayAddress(byte[] a, int index) {
+        return Unsafe.ARRAY_BYTE_BASE_OFFSET + index;
+    }
+
+    // Byte buffer wrappers.
+    private static ByteBuffer wrapper(ByteBuffer bb, int offset,
+                                        ByteOrder bo) {
+        return bb.duplicate().position(offset).slice()
+            .order(bo);
+    }
+    private static ByteBuffer wrapper(byte[] a, int offset,
+                                        ByteOrder bo) {
+        return ByteBuffer.wrap(a, offset, a.length - offset)
+            .order(bo);
+    }
+
+    // ================================================
+
+    /// Reinterpreting view methods:
+    //   lanewise reinterpret: viewAsXVector()
+    //   keep shape, redraw lanes: reinterpretAsEs()
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @ForceInline
+    @Override
+    public final ByteVector reinterpretAsBytes() {
+        return this;
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @ForceInline
+    @Override
+    public final ByteVector viewAsIntegralLanes() {
+        return this;
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     *
+     * @implNote This method always throws
+     * {@code IllegalArgumentException}, because there is no floating
+     * point type of the same size as {@code byte}.  The return type
+     * of this method is arbitrarily designated as
+     * {@code Vector<?>}.  Future versions of this API may change the return
+     * type if additional floating point types become available.
+     */
+    @ForceInline
+    @Override
+    public final
+    Vector<?>
+    viewAsFloatingLanes() {
+        LaneType flt = LaneType.BYTE.asFloating();
+        throw new AssertionError();  // should already throw IAE
+    }
+
+    // ================================================
+
+    /// Object methods: toString, equals, hashCode
+    //
+    // Object methods are defined as if via Arrays.toString, etc.,
+    // is applied to the array of elements.  Two equal vectors
+    // are required to have equal species and equal lane values.
+
+    /**
+     * Returns a string representation of this vector, of the form
+     * {@code "[0,1,2...]"}, reporting the lane values of this vector,
+     * in lane order.
+     *
+     * The string is produced as if by a call to {@link
+     * java.util.Arrays#toString(byte[]) Arrays.toString()},
+     * as appropriate to the {@code byte} array returned by
+     * {@link #toArray this.toArray()}.
+     *
+     * @return a string of the form {@code "[0,1,2...]"}
+     * reporting the lane values of this vector
+     */
+    @Override
+    @ForceInline
+    public final
+    String toString() {
+        // now that toArray is strongly typed, we can define this
+        return Arrays.toString(toArray());
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    boolean equals(Object obj) {
+        if (obj instanceof Vector) {
+            Vector<?> that = (Vector<?>) obj;
+            if (this.species().equals(that.species())) {
+                return this.eq(that.check(this.species())).allTrue();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * {@inheritDoc} <!--workaround-->
+     */
+    @Override
+    @ForceInline
+    public final
+    int hashCode() {
+        // now that toArray is strongly typed, we can define this
+        return Objects.hash(species(), Arrays.hashCode(toArray()));
+    }
+
+    // ================================================
+
+    // Species
 
     /**
      * Class representing {@link ByteVector}'s of the same {@link VectorShape VectorShape}.
      */
+    /*package-private*/
     static final class ByteSpecies extends AbstractSpecies<Byte> {
-        final Function<byte[], ByteVector> vectorFactory;
-
         private ByteSpecies(VectorShape shape,
-                          Class<?> vectorType,
-                          Class<?> maskType,
-                          Function<byte[], ByteVector> vectorFactory,
-                          Function<boolean[], VectorMask<Byte>> maskFactory,
-                          Function<IntUnaryOperator, VectorShuffle<Byte>> shuffleFromArrayFactory,
-                          fShuffleFromArray<Byte> shuffleFromOpFactory) {
-            super(shape, byte.class, Byte.SIZE, vectorType, maskType, maskFactory,
-                  shuffleFromArrayFactory, shuffleFromOpFactory);
-            this.vectorFactory = vectorFactory;
+                Class<? extends ByteVector> vectorType,
+                Class<? extends AbstractMask<Byte>> maskType,
+                Function<Object, ByteVector> vectorFactory) {
+            super(shape, LaneType.of(byte.class),
+                  vectorType, maskType,
+                  vectorFactory);
+            assert(this.elementSize() == Byte.SIZE);
         }
 
-        interface FOp {
-            byte apply(int i);
+        // Specializing overrides:
+
+        @Override
+        @ForceInline
+        public final Class<Byte> elementType() {
+            return byte.class;
         }
 
-        ByteVector op(FOp f) {
-            byte[] res = new byte[length()];
-            for (int i = 0; i < length(); i++) {
+        @Override
+        @ForceInline
+        public final Class<Byte> genericElementType() {
+            return Byte.class;
+        }
+
+        @Override
+        @ForceInline
+        public final Class<byte[]> arrayType() {
+            return byte[].class;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        @ForceInline
+        public final Class<? extends ByteVector> vectorType() {
+            return (Class<? extends ByteVector>) vectorType;
+        }
+
+        @Override
+        @ForceInline
+        public final long checkValue(long e) {
+            longToElementBits(e);  // only for exception
+            return e;
+        }
+
+        /*package-private*/
+        @Override
+        @ForceInline
+        final ByteVector broadcastBits(long bits) {
+            return (ByteVector)
+                VectorIntrinsics.broadcastCoerced(
+                    vectorType, byte.class, laneCount,
+                    bits, this,
+                    (bits_, s_) -> s_.rvOp(i -> bits_));
+        }
+
+        /*package-private*/
+        @ForceInline
+        
+        final ByteVector broadcast(byte e) {
+            return broadcastBits(toBits(e));
+        }
+
+        @Override
+        @ForceInline
+        public final ByteVector broadcast(long e) {
+            return broadcastBits(longToElementBits(e));
+        }
+
+        /*package-private*/
+        final @Override
+        @ForceInline
+        long longToElementBits(long value) {
+            // Do the conversion, and then test it for failure.
+            byte e = (byte) value;
+            if ((long) e != value) {
+                throw badElementBits(value, e);
+            }
+            return toBits(e);
+        }
+
+        /*package-private*/
+        @ForceInline
+        static long toIntegralChecked(byte e, boolean convertToInt) {
+            long value = convertToInt ? (int) e : (long) e;
+            if ((byte) value != e) {
+                throw badArrayBits(e, convertToInt, value);
+            }
+            return value;
+        }
+
+        @Override
+        @ForceInline
+        public final ByteVector fromValues(long... values) {
+            VectorIntrinsics.requireLength(values.length, laneCount);
+            byte[] va = new byte[laneCount()];
+            for (int i = 0; i < va.length; i++) {
+                long lv = values[i];
+                byte v = (byte) lv;
+                va[i] = v;
+                if ((long)v != lv) {
+                    throw badElementBits(lv, v);
+                }
+            }
+            return dummyVector().fromArray0(va, 0);
+        }
+
+        /* this non-public one is for internal conversions */
+        @Override
+        @ForceInline
+        final ByteVector fromIntValues(int[] values) {
+            VectorIntrinsics.requireLength(values.length, laneCount);
+            byte[] va = new byte[laneCount()];
+            for (int i = 0; i < va.length; i++) {
+                int lv = values[i];
+                byte v = (byte) lv;
+                va[i] = v;
+                if ((int)v != lv) {
+                    throw badElementBits(lv, v);
+                }
+            }
+            return dummyVector().fromArray0(va, 0);
+        }
+
+        // Virtual constructors
+
+        @ForceInline
+        @Override final
+        public ByteVector fromArray(Object a, int offset) {
+            // User entry point:  Be careful with inputs.
+            return ByteVector
+                .fromArray(this, (byte[]) a, offset);
+        }
+
+        @Override final
+        ByteVector dummyVector() {
+            return (ByteVector) super.dummyVector();
+        }
+
+        final
+        ByteVector vectorFactory(byte[] vec) {
+            // Species delegates all factory requests to its dummy
+            // vector.  The dummy knows all about it.
+            return dummyVector().vectorFactory(vec);
+        }
+
+        /*package-private*/
+        final @Override
+        @ForceInline
+        ByteVector rvOp(RVOp f) {
+            byte[] res = new byte[laneCount()];
+            for (int i = 0; i < res.length; i++) {
+                byte bits = (byte) f.apply(i);
+                res[i] = fromBits(bits);
+            }
+            return dummyVector().vectorFactory(res);
+        }
+
+        ByteVector vOp(FVOp f) {
+            byte[] res = new byte[laneCount()];
+            for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i);
             }
-            return vectorFactory.apply(res);
+            return dummyVector().vectorFactory(res);
         }
 
-        ByteVector op(VectorMask<Byte> o, FOp f) {
-            byte[] res = new byte[length()];
-            boolean[] mbits = ((AbstractMask<Byte>)o).getBits();
-            for (int i = 0; i < length(); i++) {
+        ByteVector vOp(VectorMask<Byte> m, FVOp f) {
+            byte[] res = new byte[laneCount()];
+            boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
+            for (int i = 0; i < res.length; i++) {
                 if (mbits[i]) {
                     res[i] = f.apply(i);
                 }
             }
-            return vectorFactory.apply(res);
+            return dummyVector().vectorFactory(res);
         }
-    }
 
-    /**
-     * Finds the preferred species for an element type of {@code byte}.
-     * <p>
-     * A preferred species is a species chosen by the platform that has a
-     * shape of maximal bit size.  A preferred species for different element
-     * types will have the same shape, and therefore vectors, masks, and
-     * shuffles created from such species will be shape compatible.
-     *
-     * @return the preferred species for an element type of {@code byte}
-     */
-    private static ByteSpecies preferredSpecies() {
-        return (ByteSpecies) VectorSpecies.ofPreferred(byte.class);
+        /*package-private*/
+        @ForceInline
+        <M> ByteVector ldOp(M memory, int offset,
+                                      FLdOp<M> f) {
+            return dummyVector().ldOp(memory, offset, f);
+        }
+
+        /*package-private*/
+        @ForceInline
+        <M> ByteVector ldOp(M memory, int offset,
+                                      AbstractMask<Byte> m,
+                                      FLdOp<M> f) {
+            return dummyVector().ldOp(memory, offset, m, f);
+        }
+
+        /*package-private*/
+        @ForceInline
+        <M> void stOp(M memory, int offset, FStOp<M> f) {
+            dummyVector().stOp(memory, offset, f);
+        }
+
+        /*package-private*/
+        @ForceInline
+        <M> void stOp(M memory, int offset,
+                      AbstractMask<Byte> m,
+                      FStOp<M> f) {
+            dummyVector().stOp(memory, offset, m, f);
+        }
+
+        // N.B. Make sure these constant vectors and
+        // masks load up correctly into registers.
+        //
+        // Also, see if we can avoid all that switching.
+        // Could we cache both vectors and both masks in
+        // this species object?
+
+        // Zero and iota vector access
+        @Override
+        @ForceInline
+        public final ByteVector zero() {
+            if ((Class<?>) vectorType() == ByteMaxVector.class)
+                return ByteMaxVector.ZERO;
+            switch (vectorBitSize()) {
+                case 64: return Byte64Vector.ZERO;
+                case 128: return Byte128Vector.ZERO;
+                case 256: return Byte256Vector.ZERO;
+                case 512: return Byte512Vector.ZERO;
+            }
+            throw new AssertionError();
+        }        
+
+        @Override
+        @ForceInline
+        public final ByteVector iota() {
+            if ((Class<?>) vectorType() == ByteMaxVector.class)
+                return ByteMaxVector.IOTA;
+            switch (vectorBitSize()) {
+                case 64: return Byte64Vector.IOTA;
+                case 128: return Byte128Vector.IOTA;
+                case 256: return Byte256Vector.IOTA;
+                case 512: return Byte512Vector.IOTA;
+            }
+            throw new AssertionError();
+        }
+
+        // Mask access
+        @Override
+        @ForceInline
+        public final VectorMask<Byte> maskAll(boolean bit) {
+            if ((Class<?>) vectorType() == ByteMaxVector.class)
+                return ByteMaxVector.ByteMaxMask.maskAll(bit);
+            switch (vectorBitSize()) {
+                case 64: return Byte64Vector.Byte64Mask.maskAll(bit);
+                case 128: return Byte128Vector.Byte128Mask.maskAll(bit);
+                case 256: return Byte256Vector.Byte256Mask.maskAll(bit);
+                case 512: return Byte512Vector.Byte512Mask.maskAll(bit);
+            }
+            throw new AssertionError();
+        }
     }
 
     /**
@@ -1697,33 +3866,44 @@ public abstract class ByteVector extends Vector<Byte> {
     }
 
     /** Species representing {@link ByteVector}s of {@link VectorShape#S_64_BIT VectorShape.S_64_BIT}. */
-    public static final VectorSpecies<Byte> SPECIES_64 = new ByteSpecies(VectorShape.S_64_BIT, Byte64Vector.class, Byte64Vector.Byte64Mask.class,
-                                                                     Byte64Vector::new, Byte64Vector.Byte64Mask::new,
-                                                                     Byte64Vector.Byte64Shuffle::new, Byte64Vector.Byte64Shuffle::new);
+    public static final VectorSpecies<Byte> SPECIES_64
+        = new ByteSpecies(VectorShape.S_64_BIT,
+                            Byte64Vector.class,
+                            Byte64Vector.Byte64Mask.class,
+                            Byte64Vector::new);
 
     /** Species representing {@link ByteVector}s of {@link VectorShape#S_128_BIT VectorShape.S_128_BIT}. */
-    public static final VectorSpecies<Byte> SPECIES_128 = new ByteSpecies(VectorShape.S_128_BIT, Byte128Vector.class, Byte128Vector.Byte128Mask.class,
-                                                                      Byte128Vector::new, Byte128Vector.Byte128Mask::new,
-                                                                      Byte128Vector.Byte128Shuffle::new, Byte128Vector.Byte128Shuffle::new);
+    public static final VectorSpecies<Byte> SPECIES_128
+        = new ByteSpecies(VectorShape.S_128_BIT,
+                            Byte128Vector.class,
+                            Byte128Vector.Byte128Mask.class,
+                            Byte128Vector::new);
 
     /** Species representing {@link ByteVector}s of {@link VectorShape#S_256_BIT VectorShape.S_256_BIT}. */
-    public static final VectorSpecies<Byte> SPECIES_256 = new ByteSpecies(VectorShape.S_256_BIT, Byte256Vector.class, Byte256Vector.Byte256Mask.class,
-                                                                      Byte256Vector::new, Byte256Vector.Byte256Mask::new,
-                                                                      Byte256Vector.Byte256Shuffle::new, Byte256Vector.Byte256Shuffle::new);
+    public static final VectorSpecies<Byte> SPECIES_256
+        = new ByteSpecies(VectorShape.S_256_BIT,
+                            Byte256Vector.class,
+                            Byte256Vector.Byte256Mask.class,
+                            Byte256Vector::new);
 
     /** Species representing {@link ByteVector}s of {@link VectorShape#S_512_BIT VectorShape.S_512_BIT}. */
-    public static final VectorSpecies<Byte> SPECIES_512 = new ByteSpecies(VectorShape.S_512_BIT, Byte512Vector.class, Byte512Vector.Byte512Mask.class,
-                                                                      Byte512Vector::new, Byte512Vector.Byte512Mask::new,
-                                                                      Byte512Vector.Byte512Shuffle::new, Byte512Vector.Byte512Shuffle::new);
+    public static final VectorSpecies<Byte> SPECIES_512
+        = new ByteSpecies(VectorShape.S_512_BIT,
+                            Byte512Vector.class,
+                            Byte512Vector.Byte512Mask.class,
+                            Byte512Vector::new);
 
     /** Species representing {@link ByteVector}s of {@link VectorShape#S_Max_BIT VectorShape.S_Max_BIT}. */
-    public static final VectorSpecies<Byte> SPECIES_MAX = new ByteSpecies(VectorShape.S_Max_BIT, ByteMaxVector.class, ByteMaxVector.ByteMaxMask.class,
-                                                                      ByteMaxVector::new, ByteMaxVector.ByteMaxMask::new,
-                                                                      ByteMaxVector.ByteMaxShuffle::new, ByteMaxVector.ByteMaxShuffle::new);
+    public static final VectorSpecies<Byte> SPECIES_MAX
+        = new ByteSpecies(VectorShape.S_Max_BIT,
+                            ByteMaxVector.class,
+                            ByteMaxVector.ByteMaxMask.class,
+                            ByteMaxVector::new);
 
     /**
      * Preferred species for {@link ByteVector}s.
-     * A preferred species is a species of maximal bit size for the platform.
+     * A preferred species is a species of maximal bit-size for the platform.
      */
-    public static final VectorSpecies<Byte> SPECIES_PREFERRED = (VectorSpecies<Byte>) preferredSpecies();
+    public static final VectorSpecies<Byte> SPECIES_PREFERRED
+        = (ByteSpecies) VectorSpecies.ofPreferred(byte.class);
 }

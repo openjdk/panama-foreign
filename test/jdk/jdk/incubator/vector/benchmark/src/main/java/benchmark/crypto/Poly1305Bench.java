@@ -90,7 +90,7 @@ public class Poly1305Bench {
         public Poly1305Vector(VectorShape shape) {
 
             this.longSpecies = VectorSpecies.of(long.class, shape);
-            int intSize = shape.bitSize() / 2;
+            int intSize = shape.vectorBitSize() / 2;
             VectorShape intShape = VectorShape.forBitSize(intSize);
             this.intSpecies = VectorSpecies.of(int.class, intShape);
             this.vectorWidth = longSpecies.length();
@@ -291,21 +291,21 @@ public class Poly1305Bench {
                 LongVector.fromByteArray(longSpecies, msg, vectorWidth * 8);
 
             LongVector inAlign0 =
-                longMsg0.rearrange(longMsg1, inShuffle0, inMask);
+            longMsg0.rearrange(inShuffle0).blend(longMsg1.rearrange(inShuffle0), inMask);
             LongVector inAlign1 =
-                longMsg0.rearrange(longMsg1, inShuffle1, inMask);
+            longMsg0.rearrange(inShuffle1).blend(longMsg1.rearrange(inShuffle1), inMask);
 
             IntVector a0 = (IntVector)
-                inAlign0.and(LIMB_MASK).cast(intSpecies);
+                inAlign0.and(LIMB_MASK).castShape(intSpecies, 0);
             IntVector a1 = (IntVector)
-                inAlign0.shiftRight(26).and(LIMB_MASK).cast(intSpecies);
+                inAlign0.lanewise(VectorOperators.LSHR,26).and(LIMB_MASK).castShape(intSpecies, 0);
             IntVector a2 = (IntVector)
-                inAlign0.shiftRight(52).and(0xFFF).cast(intSpecies);
-            a2 = a2.or(inAlign1.and(0x3FFF).shiftLeft(12).cast(intSpecies));
+                inAlign0.lanewise(VectorOperators.LSHR,52).and(0xFFF).castShape(intSpecies, 0);
+            a2 = a2.or(inAlign1.and(0x3FFF).lanewise(VectorOperators.LSHL,12).castShape(intSpecies, 0));
             IntVector a3 = (IntVector)
-                inAlign1.shiftRight(14).and(LIMB_MASK).cast(intSpecies);
+                inAlign1.lanewise(VectorOperators.LSHR,14).and(LIMB_MASK).castShape(intSpecies, 0);
             IntVector a4 = (IntVector)
-                inAlign1.shiftRight(40).and(0xFFFFFF).cast(intSpecies);
+                inAlign1.lanewise(VectorOperators.LSHR,40).and(0xFFFFFF).castShape(intSpecies, 0);
             a4 = a4.or(1 << 24);
 
             int numParBlocks = msg.length / parBlockCount - 1;
@@ -313,60 +313,60 @@ public class Poly1305Bench {
 
                 // multiply and reduce
                 LongVector c0 = (LongVector)
-                    a0.cast(longSpecies).mul(rUp0_int.cast(longSpecies))
-                    .add(a1.cast(longSpecies).mul(r5Up4_int.cast(longSpecies)))
-                    .add(a2.cast(longSpecies).mul(r5Up3_int.cast(longSpecies)))
-                    .add(a3.cast(longSpecies).mul(r5Up2_int.cast(longSpecies)))
-                    .add(a4.cast(longSpecies).mul(r5Up1_int.cast(longSpecies)));
+                    a0.castShape(longSpecies, 0).mul(rUp0_int.castShape(longSpecies, 0))
+                    .add(a1.castShape(longSpecies, 0).mul(r5Up4_int.castShape(longSpecies, 0)))
+                    .add(a2.castShape(longSpecies, 0).mul(r5Up3_int.castShape(longSpecies, 0)))
+                    .add(a3.castShape(longSpecies, 0).mul(r5Up2_int.castShape(longSpecies, 0)))
+                    .add(a4.castShape(longSpecies, 0).mul(r5Up1_int.castShape(longSpecies, 0)));
 
                 LongVector c1 = (LongVector)
-                    a0.cast(longSpecies).mul(rUp1_int.cast(longSpecies))
-                    .add(a1.cast(longSpecies).mul(rUp0_int.cast(longSpecies)))
-                    .add(a2.cast(longSpecies).mul(r5Up4_int.cast(longSpecies)))
-                    .add(a3.cast(longSpecies).mul(r5Up3_int.cast(longSpecies)))
-                    .add(a4.cast(longSpecies).mul(r5Up2_int.cast(longSpecies)));
+                    a0.castShape(longSpecies, 0).mul(rUp1_int.castShape(longSpecies, 0))
+                    .add(a1.castShape(longSpecies, 0).mul(rUp0_int.castShape(longSpecies, 0)))
+                    .add(a2.castShape(longSpecies, 0).mul(r5Up4_int.castShape(longSpecies, 0)))
+                    .add(a3.castShape(longSpecies, 0).mul(r5Up3_int.castShape(longSpecies, 0)))
+                    .add(a4.castShape(longSpecies, 0).mul(r5Up2_int.castShape(longSpecies, 0)));
 
                 LongVector c2 = (LongVector)
-                    a0.cast(longSpecies).mul(rUp2_int.cast(longSpecies))
-                    .add(a1.cast(longSpecies).mul(rUp1_int.cast(longSpecies)))
-                    .add(a2.cast(longSpecies).mul(rUp0_int.cast(longSpecies)))
-                    .add(a3.cast(longSpecies).mul(r5Up4_int.cast(longSpecies)))
-                    .add(a4.cast(longSpecies).mul(r5Up3_int.cast(longSpecies)));
+                    a0.castShape(longSpecies, 0).mul(rUp2_int.castShape(longSpecies, 0))
+                    .add(a1.castShape(longSpecies, 0).mul(rUp1_int.castShape(longSpecies, 0)))
+                    .add(a2.castShape(longSpecies, 0).mul(rUp0_int.castShape(longSpecies, 0)))
+                    .add(a3.castShape(longSpecies, 0).mul(r5Up4_int.castShape(longSpecies, 0)))
+                    .add(a4.castShape(longSpecies, 0).mul(r5Up3_int.castShape(longSpecies, 0)));
 
                 LongVector c3 = (LongVector)
-                    a0.cast(longSpecies).mul(rUp3_int.cast(longSpecies))
-                    .add(a1.cast(longSpecies).mul(rUp2_int.cast(longSpecies)))
-                    .add(a2.cast(longSpecies).mul(rUp1_int.cast(longSpecies)))
-                    .add(a3.cast(longSpecies).mul(rUp0_int.cast(longSpecies)))
-                    .add(a4.cast(longSpecies).mul(r5Up4_int.cast(longSpecies)));
+                    a0.castShape(longSpecies, 0).mul(rUp3_int.castShape(longSpecies, 0))
+                    .add(a1.castShape(longSpecies, 0).mul(rUp2_int.castShape(longSpecies, 0)))
+                    .add(a2.castShape(longSpecies, 0).mul(rUp1_int.castShape(longSpecies, 0)))
+                    .add(a3.castShape(longSpecies, 0).mul(rUp0_int.castShape(longSpecies, 0)))
+                    .add(a4.castShape(longSpecies, 0).mul(r5Up4_int.castShape(longSpecies, 0)));
 
                 LongVector c4 = (LongVector)
-                    a0.cast(longSpecies).mul(rUp4_int.cast(longSpecies))
-                    .add(a1.cast(longSpecies).mul(rUp3_int.cast(longSpecies)))
-                    .add(a2.cast(longSpecies).mul(rUp2_int.cast(longSpecies)))
-                    .add(a3.cast(longSpecies).mul(rUp1_int.cast(longSpecies)))
-                    .add(a4.cast(longSpecies).mul(rUp0_int.cast(longSpecies)));
+                    a0.castShape(longSpecies, 0).mul(rUp4_int.castShape(longSpecies, 0))
+                    .add(a1.castShape(longSpecies, 0).mul(rUp3_int.castShape(longSpecies, 0)))
+                    .add(a2.castShape(longSpecies, 0).mul(rUp2_int.castShape(longSpecies, 0)))
+                    .add(a3.castShape(longSpecies, 0).mul(rUp1_int.castShape(longSpecies, 0)))
+                    .add(a4.castShape(longSpecies, 0).mul(rUp0_int.castShape(longSpecies, 0)));
 
                 // carry/reduce
                 // Note: this carry/reduce sequence might not be correct
-                c4 = c4.add(c3.shiftRight(BITS_PER_LIMB));
+                c4 = c4.add(c3.lanewise(VectorOperators.LSHR, BITS_PER_LIMB));
                 c3 = c3.and(LIMB_MASK);
-                c0 = c0.add(c4.shiftRight(BITS_PER_LIMB).mul(5));
+                c0 = c0.add(c4.lanewise(VectorOperators.LSHR, BITS_PER_LIMB).mul(5));
                 c4 = c4.and(LIMB_MASK);
-                c1 = c1.add(c0.shiftRight(BITS_PER_LIMB));
+                c1 = c1.add(c0.lanewise(VectorOperators.LSHR, BITS_PER_LIMB));
                 c0 = c0.and(LIMB_MASK);
-                c2 = c2.add(c1.shiftRight(BITS_PER_LIMB));
+                c2 = c2.add(c1.lanewise(VectorOperators.LSHR, BITS_PER_LIMB));
                 c1 = c1.and(LIMB_MASK);
-                c3 = c3.add(c2.shiftRight(BITS_PER_LIMB));
+                c3 = c3.add(c2.lanewise(VectorOperators.LSHR, BITS_PER_LIMB));
                 c2 = c2.and(LIMB_MASK);
-                c4 = c4.add(c3.shiftRight(BITS_PER_LIMB));
+                c4 = c4.add(c3.lanewise(VectorOperators.LSHR, BITS_PER_LIMB));
                 c3 = c3.and(LIMB_MASK);
 
-                a0 = (IntVector) c0.cast(intSpecies);
-                a1 = (IntVector) c1.cast(intSpecies);
-                a2 = (IntVector) c2.cast(intSpecies);
-                a3 = (IntVector) c3.cast(intSpecies);
-                a4 = (IntVector) c4.cast(intSpecies);
+                a0 = (IntVector) c0.castShape(intSpecies, 0);
+                a1 = (IntVector) c1.castShape(intSpecies, 0);
+                a2 = (IntVector) c2.castShape(intSpecies, 0);
+                a3 = (IntVector) c3.castShape(intSpecies, 0);
+                a4 = (IntVector) c4.castShape(intSpecies, 0);
 
                 // fromByteArray and add next part of message
                 int start = parBlockCount * (i + 1);
@@ -375,20 +375,22 @@ public class Poly1305Bench {
                 longMsg1 = LongVector.fromByteArray(longSpecies, msg,
                     start + vectorWidth * 8);
 
-                inAlign0 = longMsg0.rearrange(longMsg1, inShuffle0, inMask);
-                inAlign1 = longMsg0.rearrange(longMsg1, inShuffle1, inMask);
+                inAlign0 =
+                        longMsg0.rearrange(inShuffle0).blend(longMsg1.rearrange(inShuffle0), inMask);
+                inAlign1 =
+                        longMsg0.rearrange(inShuffle1).blend(longMsg1.rearrange(inShuffle1), inMask);
 
                 IntVector in0 = (IntVector)
-                    inAlign0.and(LIMB_MASK).cast(intSpecies);
+                    inAlign0.and(LIMB_MASK).castShape(intSpecies, 0);
                 IntVector in1 = (IntVector)
-                    inAlign0.shiftRight(26).and(LIMB_MASK).cast(intSpecies);
+                    inAlign0.lanewise(VectorOperators.LSHR, 26).and(LIMB_MASK).castShape(intSpecies, 0);
                 IntVector in2 = (IntVector)
-                    inAlign0.shiftRight(52).and(0xFFF).cast(intSpecies);
-                in2 = in2.or(inAlign1.and(0x3FFF).shiftLeft(12).cast(intSpecies));
+                    inAlign0.lanewise(VectorOperators.LSHR, 52).and(0xFFF).castShape(intSpecies, 0);
+                in2 = in2.or(inAlign1.and(0x3FFF).lanewise(VectorOperators.LSHL, 12).castShape(intSpecies, 0));
                 IntVector in3 = (IntVector)
-                    inAlign1.shiftRight(14).and(LIMB_MASK).cast(intSpecies);
+                    inAlign1.lanewise(VectorOperators.LSHR, 14).and(LIMB_MASK).castShape(intSpecies, 0);
                 IntVector in4 = (IntVector)
-                    inAlign1.shiftRight(40).and(0xFFFFFF).cast(intSpecies);
+                    inAlign1.lanewise(VectorOperators.LSHR, 40).and(0xFFFFFF).castShape(intSpecies, 0);
                 in4 = in4.or(1 << 24);
 
                 a0 = a0.add(in0);
@@ -411,57 +413,57 @@ public class Poly1305Bench {
             LongVector r5Fin_3 = rFin3.mul(5);
             LongVector r5Fin_4 = rFin4.mul(5);
 
-            LongVector c0 = (LongVector) a0.cast(longSpecies).mul(rFin0)
-                .add(a1.cast(longSpecies).mul(r5Fin_4))
-                .add(a2.cast(longSpecies).mul(r5Fin_3))
-                .add(a3.cast(longSpecies).mul(r5Fin_2))
-                .add(a4.cast(longSpecies).mul(r5Fin_1));
-            LongVector c1 = (LongVector) a0.cast(longSpecies).mul(rFin1)
-                .add(a1.cast(longSpecies).mul(rFin0))
-                .add(a2.cast(longSpecies).mul(r5Fin_4))
-                .add(a3.cast(longSpecies).mul(r5Fin_3))
-                .add(a4.cast(longSpecies).mul(r5Fin_2));
-            LongVector c2 = (LongVector) a0.cast(longSpecies).mul(rFin2)
-                .add(a1.cast(longSpecies).mul(rFin1))
-                .add(a2.cast(longSpecies).mul(rFin0))
-                .add(a3.cast(longSpecies).mul(r5Fin_4))
-                .add(a4.cast(longSpecies).mul(r5Fin_3));
-            LongVector c3 = (LongVector) a0.cast(longSpecies).mul(rFin3)
-                .add(a1.cast(longSpecies).mul(rFin2))
-                .add(a2.cast(longSpecies).mul(rFin1))
-                .add(a3.cast(longSpecies).mul(rFin0))
-                .add(a4.cast(longSpecies).mul(r5Fin_4));
-            LongVector c4 = (LongVector) a0.cast(longSpecies).mul(rFin4)
-                .add(a1.cast(longSpecies).mul(rFin3))
-                .add(a2.cast(longSpecies).mul(rFin2))
-                .add(a3.cast(longSpecies).mul(rFin1))
-                .add(a4.cast(longSpecies).mul(rFin0));
+            LongVector c0 = (LongVector) a0.castShape(longSpecies, 0).mul(rFin0)
+                .add(a1.castShape(longSpecies, 0).mul(r5Fin_4))
+                .add(a2.castShape(longSpecies, 0).mul(r5Fin_3))
+                .add(a3.castShape(longSpecies, 0).mul(r5Fin_2))
+                .add(a4.castShape(longSpecies, 0).mul(r5Fin_1));
+            LongVector c1 = (LongVector) a0.castShape(longSpecies, 0).mul(rFin1)
+                .add(a1.castShape(longSpecies, 0).mul(rFin0))
+                .add(a2.castShape(longSpecies, 0).mul(r5Fin_4))
+                .add(a3.castShape(longSpecies, 0).mul(r5Fin_3))
+                .add(a4.castShape(longSpecies, 0).mul(r5Fin_2));
+            LongVector c2 = (LongVector) a0.castShape(longSpecies, 0).mul(rFin2)
+                .add(a1.castShape(longSpecies, 0).mul(rFin1))
+                .add(a2.castShape(longSpecies, 0).mul(rFin0))
+                .add(a3.castShape(longSpecies, 0).mul(r5Fin_4))
+                .add(a4.castShape(longSpecies, 0).mul(r5Fin_3));
+            LongVector c3 = (LongVector) a0.castShape(longSpecies, 0).mul(rFin3)
+                .add(a1.castShape(longSpecies, 0).mul(rFin2))
+                .add(a2.castShape(longSpecies, 0).mul(rFin1))
+                .add(a3.castShape(longSpecies, 0).mul(rFin0))
+                .add(a4.castShape(longSpecies, 0).mul(r5Fin_4));
+            LongVector c4 = (LongVector) a0.castShape(longSpecies, 0).mul(rFin4)
+                .add(a1.castShape(longSpecies, 0).mul(rFin3))
+                .add(a2.castShape(longSpecies, 0).mul(rFin2))
+                .add(a3.castShape(longSpecies, 0).mul(rFin1))
+                .add(a4.castShape(longSpecies, 0).mul(rFin0));
 
-            c4 = c4.add(c3.shiftRight(BITS_PER_LIMB));
+            c4 = c4.add(c3.lanewise(VectorOperators.LSHR, BITS_PER_LIMB));
             c3 = c3.and(LIMB_MASK);
-            c0 = c0.add(c4.shiftRight(BITS_PER_LIMB).mul(5));
+            c0 = c0.add(c4.lanewise(VectorOperators.LSHR, BITS_PER_LIMB).mul(5));
             c4 = c4.and(LIMB_MASK);
-            c1 = c1.add(c0.shiftRight(BITS_PER_LIMB));
+            c1 = c1.add(c0.lanewise(VectorOperators.LSHR, BITS_PER_LIMB));
             c0 = c0.and(LIMB_MASK);
-            c2 = c2.add(c1.shiftRight(BITS_PER_LIMB));
+            c2 = c2.add(c1.lanewise(VectorOperators.LSHR, BITS_PER_LIMB));
             c1 = c1.and(LIMB_MASK);
-            c3 = c3.add(c2.shiftRight(BITS_PER_LIMB));
+            c3 = c3.add(c2.lanewise(VectorOperators.LSHR, BITS_PER_LIMB));
             c2 = c2.and(LIMB_MASK);
-            c4 = c4.add(c3.shiftRight(BITS_PER_LIMB));
+            c4 = c4.add(c3.lanewise(VectorOperators.LSHR, BITS_PER_LIMB));
             c3 = c3.and(LIMB_MASK);
 
-            a0 = (IntVector) c0.cast(intSpecies);
-            a1 = (IntVector) c1.cast(intSpecies);
-            a2 = (IntVector) c2.cast(intSpecies);
-            a3 = (IntVector) c3.cast(intSpecies);
-            a4 = (IntVector) c4.cast(intSpecies);
+            a0 = (IntVector) c0.castShape(intSpecies, 0);
+            a1 = (IntVector) c1.castShape(intSpecies, 0);
+            a2 = (IntVector) c2.castShape(intSpecies, 0);
+            a3 = (IntVector) c3.castShape(intSpecies, 0);
+            a4 = (IntVector) c4.castShape(intSpecies, 0);
 
             // collect lanes and calculate tag
-            long a0Fin = a0.addLanes();
-            long a1Fin = a1.addLanes();
-            long a2Fin = a2.addLanes();
-            long a3Fin = a3.addLanes();
-            long a4Fin = a4.addLanes();
+            long a0Fin = a0.reduceLanes(VectorOperators.ADD);
+            long a1Fin = a1.reduceLanes(VectorOperators.ADD);
+            long a2Fin = a2.reduceLanes(VectorOperators.ADD);
+            long a3Fin = a3.reduceLanes(VectorOperators.ADD);
+            long a4Fin = a4.reduceLanes(VectorOperators.ADD);
 
             // carry/reduce the result
             a4Fin = a4Fin + (a3Fin >>> BITS_PER_LIMB);

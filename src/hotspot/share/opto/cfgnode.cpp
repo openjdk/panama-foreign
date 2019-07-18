@@ -2269,11 +2269,17 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         break;
       }
       // Check that vector type of vboxes is equivalent
-      if (i != 1 &&
-          Type::cmp(in(i-1)->in(VectorBoxNode::Value)->bottom_type(),
-                    in(i)->in(VectorBoxNode::Value)->bottom_type()) != 0) {
-        all_inputs_are_equiv_vboxes = false;
-        break;
+      if (i != 1) {
+        if (Type::cmp(in(i-0)->in(VectorBoxNode::Value)->bottom_type(),
+                      in(i-1)->in(VectorBoxNode::Value)->bottom_type()) != 0) {
+          all_inputs_are_equiv_vboxes = false;
+          break;
+        }
+        if (Type::cmp(in(i-0)->in(VectorBoxNode::Box)->bottom_type(),
+                      in(i-1)->in(VectorBoxNode::Box)->bottom_type()) != 0) {
+          all_inputs_are_equiv_vboxes = false;
+          break;
+        }
       }
     }
 

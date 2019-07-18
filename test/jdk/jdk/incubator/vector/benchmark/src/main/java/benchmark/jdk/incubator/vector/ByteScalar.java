@@ -23,6 +23,8 @@
 
 package benchmark.jdk.incubator.vector;
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
@@ -75,7 +77,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void add(Blackhole bh) {
+    public void ADD(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -92,7 +94,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void addMasked(Blackhole bh) {
+    public void ADDMasked(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -113,7 +115,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void sub(Blackhole bh) {
+    public void SUB(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -130,7 +132,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void subMasked(Blackhole bh) {
+    public void SUBMasked(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -150,10 +152,8 @@ public class ByteScalar extends AbstractVectorBenchmark {
         bh.consume(rs);
     }
 
-
-
     @Benchmark
-    public void mul(Blackhole bh) {
+    public void MUL(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -170,7 +170,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void mulMasked(Blackhole bh) {
+    public void MULMasked(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -191,8 +191,48 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
 
+
     @Benchmark
-    public void and(Blackhole bh) {
+    public void FIRST_NONZERO(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        byte[] bs = fb.apply(size);
+        byte[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                byte a = as[i];
+                byte b = bs[i];
+                rs[i] = (byte)((a)!=0?a:b);
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void FIRST_NONZEROMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        byte[] bs = fb.apply(size);
+        byte[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                byte a = as[i];
+                byte b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (byte)((a)!=0?a:b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+    @Benchmark
+    public void AND(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -211,7 +251,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void andMasked(Blackhole bh) {
+    public void ANDMasked(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -234,7 +274,49 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void or(Blackhole bh) {
+    public void AND_NOT(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        byte[] bs = fb.apply(size);
+        byte[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                byte a = as[i];
+                byte b = bs[i];
+                rs[i] = (byte)(a & ~b);
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void AND_NOTMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        byte[] bs = fb.apply(size);
+        byte[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                byte a = as[i];
+                byte b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (byte)(a & ~b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void OR(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -253,7 +335,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void orMasked(Blackhole bh) {
+    public void ORMasked(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -276,7 +358,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void xor(Blackhole bh) {
+    public void XOR(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -295,7 +377,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void xorMasked(Blackhole bh) {
+    public void XORMasked(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -319,46 +401,6 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
 
-    @Benchmark
-    public void shiftLeft(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                rs[i] = (byte)((a << (b & 0x7)));
-            }
-        }
-
-        bh.consume(rs);
-    }
-
-
-
-    @Benchmark
-    public void shiftLeftMasked(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                if (ms[i % ms.length]) {
-                    rs[i] = (byte)((a << (b & 0x7)));
-                } else {
-                    rs[i] = a;
-                }
-            }
-        }
-        bh.consume(rs);
-    }
-
 
 
 
@@ -366,99 +408,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftRight(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                rs[i] = (byte)((a >>> (b & 0x7)));
-            }
-        }
-
-        bh.consume(rs);
-    }
-
-
-
-    @Benchmark
-    public void shiftRightMasked(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                if (ms[i % ms.length]) {
-                    rs[i] = (byte)((a >>> (b & 0x7)));
-                } else {
-                    rs[i] = a;
-                }
-            }
-        }
-        bh.consume(rs);
-    }
-
-
-
-
-
-
-
-    @Benchmark
-    public void shiftArithmeticRight(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                rs[i] = (byte)((a >> (b & 0x7)));
-            }
-        }
-
-        bh.consume(rs);
-    }
-
-
-
-    @Benchmark
-    public void shiftArithmeticRightMasked(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                if (ms[i % ms.length]) {
-                    rs[i] = (byte)((a >> (b & 0x7)));
-                } else {
-                    rs[i] = a;
-                }
-            }
-        }
-        bh.consume(rs);
-    }
-
-
-
-
-
-
-
-    @Benchmark
-    public void shiftLeftShift(Blackhole bh) {
+    public void LSHLShift(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -477,7 +427,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftLeftMaskedShift(Blackhole bh) {
+    public void LSHLMaskedShift(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -502,7 +452,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftRightShift(Blackhole bh) {
+    public void LSHRShift(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -521,7 +471,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftRightMaskedShift(Blackhole bh) {
+    public void LSHRMaskedShift(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -546,7 +496,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftArithmeticRightShift(Blackhole bh) {
+    public void ASHRShift(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -565,7 +515,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void shiftArithmeticRightMaskedShift(Blackhole bh) {
+    public void ASHRMaskedShift(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -587,45 +537,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void max(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                rs[i] = (byte)(Math.max(a, b));
-            }
-        }
-
-        bh.consume(rs);
-    }
-
-    @Benchmark
-    public void maxMasked(Blackhole bh) {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                byte a = as[i];
-                byte b = bs[i];
-                if (ms[i % ms.length]) {
-                    rs[i] = (byte)(Math.max(a, b));
-                } else {
-                    rs[i] = a;
-                }
-            }
-        }
-        bh.consume(rs);
-    }
-
-    @Benchmark
-    public void min(Blackhole bh) {
+    public void MIN(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
@@ -642,29 +554,25 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void minMasked(Blackhole bh) {
+    public void MAX(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
         byte[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < as.length; i++) {
                 byte a = as[i];
                 byte b = bs[i];
-                if (ms[i % ms.length]) {
-                    rs[i] = (byte)(Math.min(a, b));
-                } else {
-                    rs[i] = a;
-                }
+                rs[i] = (byte)(Math.max(a, b));
             }
         }
+
         bh.consume(rs);
     }
 
 
     @Benchmark
-    public void andLanes(Blackhole bh) {
+    public void ANDLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = -1;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -679,7 +587,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void andLanesMasked(Blackhole bh) {
+    public void ANDMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = -1;
@@ -696,7 +604,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void orLanes(Blackhole bh) {
+    public void ORLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -711,7 +619,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void orLanesMasked(Blackhole bh) {
+    public void ORMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = 0;
@@ -728,7 +636,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void xorLanes(Blackhole bh) {
+    public void XORLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -743,7 +651,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void xorLanesMasked(Blackhole bh) {
+    public void XORMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = 0;
@@ -759,7 +667,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void addLanes(Blackhole bh) {
+    public void ADDLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -772,7 +680,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void addLanesMasked(Blackhole bh) {
+    public void ADDMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = 0;
@@ -787,7 +695,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void mulLanes(Blackhole bh) {
+    public void MULLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = 1;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -800,7 +708,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void mulLanesMasked(Blackhole bh) {
+    public void MULMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = 1;
@@ -815,7 +723,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void minLanes(Blackhole bh) {
+    public void MINLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = Byte.MAX_VALUE;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -828,7 +736,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void minLanesMasked(Blackhole bh) {
+    public void MINMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = Byte.MAX_VALUE;
@@ -843,7 +751,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void maxLanes(Blackhole bh) {
+    public void MAXLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte r = Byte.MIN_VALUE;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -856,7 +764,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void maxLanesMasked(Blackhole bh) {
+    public void MAXMaskedLanes(Blackhole bh) {
         byte[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         byte r = Byte.MIN_VALUE;
@@ -901,7 +809,44 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void lessThan(Blackhole bh) {
+    public void IS_DEFAULT(Blackhole bh) {
+        byte[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                byte a = as[i];
+                boolean m = bits(a)==0;
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void IS_NEGATIVE(Blackhole bh) {
+        byte[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                byte a = as[i];
+                boolean m = bits(a)<0;
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+
+
+    @Benchmark
+    public void LT(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
 
@@ -918,7 +863,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void greaterThan(Blackhole bh) {
+    public void GT(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
 
@@ -935,7 +880,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void equal(Blackhole bh) {
+    public void EQ(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
 
@@ -952,7 +897,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void notEqual(Blackhole bh) {
+    public void NE(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
 
@@ -969,7 +914,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void lessThanEq(Blackhole bh) {
+    public void LE(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
 
@@ -986,7 +931,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void greaterThanEq(Blackhole bh) {
+    public void GE(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] bs = fb.apply(size);
 
@@ -1134,8 +1079,55 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
 
+
     @Benchmark
-    public void neg(Blackhole bh) {
+    public void BITWISE_BLEND(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        byte[] bs = fb.apply(size);
+        byte[] cs = fc.apply(size);
+        byte[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                byte a = as[i];
+                byte b = bs[i];
+                byte c = cs[i];
+                rs[i] = (byte)((a&~(c))|(b&c));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+
+    @Benchmark
+    public void BITWISE_BLENDMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        byte[] bs = fb.apply(size);
+        byte[] cs = fc.apply(size);
+        byte[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                byte a = as[i];
+                byte b = bs[i];
+                byte c = cs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (byte)((a&~(c))|(b&c));
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+    @Benchmark
+    public void NEG(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] rs = fr.apply(size);
 
@@ -1150,7 +1142,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void negMasked(Blackhole bh) {
+    public void NEGMasked(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
@@ -1167,7 +1159,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void abs(Blackhole bh) {
+    public void ABS(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] rs = fr.apply(size);
 
@@ -1182,7 +1174,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void absMasked(Blackhole bh) {
+    public void ABSMasked(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
@@ -1200,7 +1192,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void not(Blackhole bh) {
+    public void NOT(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] rs = fr.apply(size);
 
@@ -1217,7 +1209,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void notMasked(Blackhole bh) {
+    public void NOTMasked(Blackhole bh) {
         byte[] as = fa.apply(size);
         byte[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
@@ -1227,6 +1219,42 @@ public class ByteScalar extends AbstractVectorBenchmark {
                 byte a = as[i];
                 boolean m = ms[i % ms.length];
                 rs[i] = (m ? (byte)(~((byte)a)) : a);
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void ZOMO(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        byte[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                byte a = as[i];
+                rs[i] = (byte)((a==0?0:-1));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void ZOMOMasked(Blackhole bh) {
+        byte[] as = fa.apply(size);
+        byte[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                byte a = as[i];
+                boolean m = ms[i % ms.length];
+                rs[i] = (m ? (byte)((a==0?0:-1)) : a);
             }
         }
 

@@ -1,16 +1,40 @@
 #!/bin/bash
 
+# For manual invocation.
+# You can regenerate the source files,
+# and you can clean them up.
+# FIXME: Move this script under $REPO/make/gensrc/
+list_mech_gen() {
+    ( # List MG files physically present
+      grep -il 'mechanically generated.*do not edit' *.java
+      # List MG files currently deleted (via --clean)
+      hg status -nd .
+    ) | grep '.Vector\.java$'
+}
+case $* in
+'')             CLASS_FILTER='*';;
+--generate*)    CLASS_FILTER=${2-'*'};;
+--clean)        MG=$(list_mech_gen); set -x; rm -f $MG; exit;;
+--revert)       MG=$(list_mech_gen); set -x; hg revert $MG; exit;;
+--list)         list_mech_gen; exit;;
+--help|*)       echo "Usage: $0 [--generate [file] | --clean | --revert | --list]"; exit 1;;
+esac
+
 javac -d . ../../../../../../../make/jdk/src/classes/build/tools/spp/Spp.java
 
 SPP=build.tools.spp.Spp
 
 typeprefix=
 
+globalArgs=""
+#globalArgs="$globalArgs -KextraOverrides"
+
 for type in byte short int long float double
 do
   Type="$(tr '[:lower:]' '[:upper:]' <<< ${type:0:1})${type:1}"
   TYPE="$(tr '[:lower:]' '[:upper:]' <<< ${type})"
-  args="-K$type -Dtype=$type -DType=$Type -DTYPE=$TYPE"
+  args=$globalArgs
+  args="$args -K$type -Dtype=$type -DType=$Type -DTYPE=$TYPE"
 
   Boxtype=$Type
   Wideboxtype=$Boxtype
@@ -39,6 +63,7 @@ do
     int)
       Boxtype=Integer
       Wideboxtype=Integer
+      Boxbitstype=Integer
       fptype=float
       Fptype=Float
       Boxfptype=Float
@@ -73,21 +98,26 @@ do
   args="$args -K$kind -DBoxtype=$Boxtype -DWideboxtype=$Wideboxtype"
   args="$args -Dbitstype=$bitstype -DBitstype=$Bitstype -DBoxbitstype=$Boxbitstype"
   args="$args -Dfptype=$fptype -DFptype=$Fptype -DBoxfptype=$Boxfptype"
+  args="$args -DsizeInBytes=$sizeInBytes"
 
   abstractvectortype=${typeprefix}${Type}Vector
   abstractbitsvectortype=${typeprefix}${Bitstype}Vector
   abstractfpvectortype=${typeprefix}${Fptype}Vector
   args="$args -Dabstractvectortype=$abstractvectortype -Dabstractbitsvectortype=$abstractbitsvectortype -Dabstractfpvectortype=$abstractfpvectortype"
-  echo $args
-  rm -f $abstractvectortype.java
-  java $SPP -nel $args \
-     -iX-Vector.java.template \
-     -o$abstractvectortype.java
+  case $abstractvectortype in
+  $CLASS_FILTER)
+    echo $abstractvectortype.java : $args
+    rm -f $abstractvectortype.java
+    java $SPP -nel $args \
+       -iX-Vector.java.template \
+       -o$abstractvectortype.java
+    [ -f $abstractvectortype.java ] || exit 1
 
-  if [ VAR_OS_ENV==windows.cygwin ]; then
-    tr -d '\r' < $abstractvectortype.java > temp
-    mv temp $abstractvectortype.java
-  fi
+    if [ VAR_OS_ENV==windows.cygwin ]; then
+      tr -d '\r' < $abstractvectortype.java > temp
+      mv temp $abstractvectortype.java
+    fi
+  esac
 
   old_args="$args"
   for bits in 64 128 256 512 Max
@@ -119,16 +149,20 @@ do
     fi
     bitargs="$args -Dbits=$bits -DBITS=$BITS -Dvectortype=$vectortype -Dmasktype=$masktype -Dshuffletype=$shuffletype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dvectorindextype=$vectorindextype -Dshape=$shape -DShape=$Shape"
 
-    echo $bitargs
-    rm -f $vectortype.java
-    java $SPP -nel $bitargs \
-       -iX-VectorBits.java.template \
-       -o$vectortype.java
+    case $vectortype in
+    $CLASS_FILTER)
+      echo $vectortype.java : $bitargs
+      rm -f $vectortype.java
+      java $SPP -nel $bitargs \
+         -iX-VectorBits.java.template \
+         -o$vectortype.java
+      [ -f $vectortype.java ] || exit 1
 
-    if [ VAR_OS_ENV==windows.cygwin ]; then
-      tr -d  '\r' < $vectortype.java > temp
-      mv temp $vectortype.java
-    fi
+      if [ VAR_OS_ENV==windows.cygwin ]; then
+        tr -d  '\r' < $vectortype.java > temp
+        mv temp $vectortype.java
+      fi
+    esac
   done
 
 done

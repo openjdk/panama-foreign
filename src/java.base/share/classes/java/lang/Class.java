@@ -76,6 +76,7 @@ import jdk.internal.reflect.ConstantPool;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.ReflectionFactory;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
 import sun.invoke.util.Wrapper;
 import sun.reflect.generics.factory.CoreReflectionFactory;
 import sun.reflect.generics.factory.GenericsFactory;
@@ -802,6 +803,7 @@ public final class Class<T> implements java.io.Serializable,
 
     // Cache the name to reduce the number of calls into the VM.
     // This field would be set by VM itself during initClassName call.
+    @Stable
     private transient String name;
     private native String initClassName();
 
@@ -864,11 +866,13 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     // set by VM
+    @Stable
     private transient Module module;
 
     // Initialized in JVM not by private constructor
     // This field is filtered from reflection access, i.e. getDeclaredField
     // will throw NoSuchFieldException
+    @Stable
     private final ClassLoader classLoader;
 
     /**
@@ -1022,6 +1026,7 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     // cached package name
+    @Stable
     private transient String packageName;
 
     /**
@@ -1164,6 +1169,7 @@ public final class Class<T> implements java.io.Serializable,
         }
     }
 
+    @Stable
     private final Class<?> componentType;
 
 
@@ -3812,6 +3818,7 @@ public final class Class<T> implements java.io.Serializable,
     /* Backing store of user-defined values pertaining to this class.
      * Maintained by the ClassValue class.
      */
+    @Stable
     transient ClassValue.ClassValueMap classValueMap;
 
     /**

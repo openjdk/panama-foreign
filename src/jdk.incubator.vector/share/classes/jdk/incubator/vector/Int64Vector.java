@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,825 +34,299 @@ import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
+
 import static jdk.incubator.vector.VectorIntrinsics.*;
+import static jdk.incubator.vector.VectorOperators.*;
 
-@SuppressWarnings("cast")
+// -- This file was mechanically generated: Do not edit! -- //
+
+@SuppressWarnings("cast")  // warning: redundant cast
 final class Int64Vector extends IntVector {
-    private static final VectorSpecies<Integer> SPECIES = IntVector.SPECIES_64;
+    static final IntSpecies VSPECIES =
+        (IntSpecies) IntVector.SPECIES_64;
 
-    static final Int64Vector ZERO = new Int64Vector();
+    static final VectorShape VSHAPE =
+        VSPECIES.vectorShape();
 
-    static final int LENGTH = SPECIES.length();
+    static final Class<Int64Vector> VCLASS = Int64Vector.class;
 
-    // Index vector species
-    private static final IntVector.IntSpecies INDEX_SPECIES;
+    static final int VSIZE = VSPECIES.vectorBitSize();
 
-    static {
-        int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
-        INDEX_SPECIES = (IntVector.IntSpecies) IntVector.species(VectorShape.forBitSize(bitSize));
-    }
+    static final int VLENGTH = VSPECIES.laneCount();
 
+    static final Class<Integer> ETYPE = int.class;
+
+    // The JVM expects to find the state here.
     private final int[] vec; // Don't access directly, use getElements() instead.
-
-    private int[] getElements() {
-        return VectorIntrinsics.maybeRebox(this).vec;
-    }
-
-    Int64Vector() {
-        vec = new int[SPECIES.length()];
-    }
 
     Int64Vector(int[] v) {
         vec = v;
     }
 
-    @Override
-    public int length() { return LENGTH; }
+    // For compatibility as Int64Vector::new,
+    // stored into species.vectorFactory.
+    Int64Vector(Object v) {
+        this((int[]) v);
+    }
 
-    // Unary operator
+    static final Int64Vector ZERO = new Int64Vector(new int[VLENGTH]);
+    static final Int64Vector IOTA = new Int64Vector(VSPECIES.iotaArray());
+
+    static {
+        // Warm up a few species caches.
+        // If we do this too much we will
+        // get NPEs from bootstrap circularity.
+        VSPECIES.dummyVector();
+        VSPECIES.withLanes(LaneType.BYTE);
+    }
+
+    // Specialized extractors
+
+    @ForceInline
+    final @Override
+    public IntSpecies vspecies() {
+        // ISSUE:  This should probably be a @Stable
+        // field inside AbstractVector, rather than
+        // a megamorphic method.
+        return VSPECIES;
+    }
+
+    @ForceInline
+    @Override
+    public final Class<Integer> elementType() { return Integer.class; }
+
+    @ForceInline
+    @Override
+    public final int elementSize() { return Integer.SIZE; }
+
+    @ForceInline
+    @Override
+    public final VectorShape shape() { return VSHAPE; }
+
+    @ForceInline
+    @Override
+    public final int length() { return VLENGTH; }
+
+    @ForceInline
+    @Override
+    public final int bitSize() { return VSIZE; }
+
+    @ForceInline
+    @Override
+    public final int byteSize() { return VSIZE / Byte.SIZE; }
+
+    /*package-private*/
+    @ForceInline
+    final @Override
+    int[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
+
+    // Virtualized constructors
 
     @Override
-    Int64Vector uOp(FUnOp f) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i]);
-        }
-        return new Int64Vector(res);
+    @ForceInline
+    public final Int64Vector broadcast(int e) {
+        return (Int64Vector) super.broadcastTemplate(e);  // specialize
     }
 
     @Override
-    Int64Vector uOp(VectorMask<Integer> o, FUnOp f) {
-        int[] vec = getElements();
-        int[] res = new int[length()];
-        boolean[] mbits = ((Int64Mask)o).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
-        }
-        return new Int64Vector(res);
+    @ForceInline
+    public final Int64Vector broadcast(long e) {
+        return (Int64Vector) super.broadcastTemplate(e);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    Int64Mask maskFromArray(boolean[] bits) {
+        return new Int64Mask(bits);
+    }
+
+    @Override
+    @ForceInline
+    Int64Shuffle iotaShuffle() { return Int64Shuffle.IOTA; }
+
+    @ForceInline
+    Int64Shuffle iotaShuffle(int start) { 
+        return (Int64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Int64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Int64Shuffle(i -> (Int64Shuffle.partiallyWrapIndex(i + val, l))));
+    }
+
+    @Override
+    @ForceInline
+    Int64Shuffle shuffleFromBytes(byte[] reorder) { return new Int64Shuffle(reorder); }
+
+    @Override
+    @ForceInline
+    Int64Shuffle shuffleFromArray(int[] indexes, int i) { return new Int64Shuffle(indexes, i); }
+
+    @Override
+    @ForceInline
+    Int64Shuffle shuffleFromOp(IntUnaryOperator fn) { return new Int64Shuffle(fn); }
+
+    // Make a vector of the same species but the given elements:
+    @ForceInline
+    final @Override
+    Int64Vector vectorFactory(int[] vec) {
+        return new Int64Vector(vec);
+    }
+
+    @ForceInline
+    final @Override
+    Byte64Vector asByteVectorRaw() {
+        return (Byte64Vector) super.asByteVectorRawTemplate();  // specialize
+    }
+
+    @ForceInline
+    final @Override
+    AbstractVector<?> asVectorRaw(LaneType laneType) {
+        return super.asVectorRawTemplate(laneType);  // specialize
+    }
+
+    // Unary operator
+
+    final @Override
+    Int64Vector uOp(FUnOp f) {
+        return (Int64Vector) super.uOpTemplate(f);  // specialize
+    }
+
+    @ForceInline
+    final @Override
+    Int64Vector uOp(VectorMask<Integer> m, FUnOp f) {
+        return (Int64Vector)
+            super.uOpTemplate((Int64Mask)m, f);  // specialize
     }
 
     // Binary operator
 
-    @Override
-    Int64Vector bOp(Vector<Integer> o, FBinOp f) {
-        int[] res = new int[length()];
-        int[] vec1 = this.getElements();
-        int[] vec2 = ((Int64Vector)o).getElements();
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec1[i], vec2[i]);
-        }
-        return new Int64Vector(res);
+    @ForceInline
+    final @Override
+    Int64Vector bOp(Vector<Integer> v, FBinOp f) {
+        return (Int64Vector) super.bOpTemplate((Int64Vector)v, f);  // specialize
     }
 
-    @Override
-    Int64Vector bOp(Vector<Integer> o1, VectorMask<Integer> o2, FBinOp f) {
-        int[] res = new int[length()];
-        int[] vec1 = this.getElements();
-        int[] vec2 = ((Int64Vector)o1).getElements();
-        boolean[] mbits = ((Int64Mask)o2).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
-        }
-        return new Int64Vector(res);
+    @ForceInline
+    final @Override
+    Int64Vector bOp(Vector<Integer> v,
+                     VectorMask<Integer> m, FBinOp f) {
+        return (Int64Vector)
+            super.bOpTemplate((Int64Vector)v, (Int64Mask)m,
+                              f);  // specialize
     }
 
-    // Trinary operator
+    // Ternary operator
 
-    @Override
-    Int64Vector tOp(Vector<Integer> o1, Vector<Integer> o2, FTriOp f) {
-        int[] res = new int[length()];
-        int[] vec1 = this.getElements();
-        int[] vec2 = ((Int64Vector)o1).getElements();
-        int[] vec3 = ((Int64Vector)o2).getElements();
-        for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
-        }
-        return new Int64Vector(res);
+    @ForceInline
+    final @Override
+    Int64Vector tOp(Vector<Integer> v1, Vector<Integer> v2, FTriOp f) {
+        return (Int64Vector)
+            super.tOpTemplate((Int64Vector)v1, (Int64Vector)v2,
+                              f);  // specialize
     }
 
-    @Override
-    Int64Vector tOp(Vector<Integer> o1, Vector<Integer> o2, VectorMask<Integer> o3, FTriOp f) {
-        int[] res = new int[length()];
-        int[] vec1 = getElements();
-        int[] vec2 = ((Int64Vector)o1).getElements();
-        int[] vec3 = ((Int64Vector)o2).getElements();
-        boolean[] mbits = ((Int64Mask)o3).getBits();
-        for (int i = 0; i < length(); i++) {
-            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
-        }
-        return new Int64Vector(res);
+    @ForceInline
+    final @Override
+    Int64Vector tOp(Vector<Integer> v1, Vector<Integer> v2,
+                     VectorMask<Integer> m, FTriOp f) {
+        return (Int64Vector)
+            super.tOpTemplate((Int64Vector)v1, (Int64Vector)v2,
+                              (Int64Mask)m, f);  // specialize
     }
 
-    @Override
+    @ForceInline
+    final @Override
     int rOp(int v, FBinOp f) {
-        int[] vec = getElements();
-        for (int i = 0; i < length(); i++) {
-            v = f.apply(i, v, vec[i]);
-        }
-        return v;
+        return super.rOpTemplate(v, f);  // specialize
     }
 
     @Override
     @ForceInline
-    public <F> Vector<F> cast(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
-        if (s.length() != LENGTH)
-            throw new IllegalArgumentException("Vector length this species length differ");
-
-        return VectorIntrinsics.cast(
-            Int64Vector.class,
-            int.class, LENGTH,
-            s.vectorType(),
-            s.elementType(), LENGTH,
-            this, s,
-            (species, vector) -> vector.castDefault(species)
-        );
-    }
-
-    @SuppressWarnings("unchecked")
-    @ForceInline
-    private <F> Vector<F> castDefault(VectorSpecies<F> s) {
-        int limit = s.length();
-
-        Class<?> stype = s.elementType();
-        if (stype == byte.class) {
-            byte[] a = new byte[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (byte) this.lane(i);
-            }
-            return (Vector) ByteVector.fromArray((VectorSpecies<Byte>) s, a, 0);
-        } else if (stype == short.class) {
-            short[] a = new short[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (short) this.lane(i);
-            }
-            return (Vector) ShortVector.fromArray((VectorSpecies<Short>) s, a, 0);
-        } else if (stype == int.class) {
-            int[] a = new int[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (int) this.lane(i);
-            }
-            return (Vector) IntVector.fromArray((VectorSpecies<Integer>) s, a, 0);
-        } else if (stype == long.class) {
-            long[] a = new long[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (long) this.lane(i);
-            }
-            return (Vector) LongVector.fromArray((VectorSpecies<Long>) s, a, 0);
-        } else if (stype == float.class) {
-            float[] a = new float[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (float) this.lane(i);
-            }
-            return (Vector) FloatVector.fromArray((VectorSpecies<Float>) s, a, 0);
-        } else if (stype == double.class) {
-            double[] a = new double[limit];
-            for (int i = 0; i < limit; i++) {
-                a[i] = (double) this.lane(i);
-            }
-            return (Vector) DoubleVector.fromArray((VectorSpecies<Double>) s, a, 0);
-        } else {
-            throw new UnsupportedOperationException("Bad lane type for casting.");
-        }
+    public final <F>
+    Vector<F> convertShape(VectorOperators.Conversion<Integer,F> conv,
+                           VectorSpecies<F> rsp, int part) {
+        return super.convertShapeTemplate(conv, rsp, part);  // specialize
     }
 
     @Override
     @ForceInline
-    @SuppressWarnings("unchecked")
-    public <F> Vector<F> reinterpret(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
-
-        if(s.elementType().equals(int.class)) {
-            return (Vector<F>) reshape((VectorSpecies<Integer>)s);
-        }
-        if(s.bitSize() == bitSize()) {
-            return reinterpretType(s);
-        }
-
-        return defaultReinterpret(s);
+    public final <F>
+    Vector<F> reinterpretShape(VectorSpecies<F> toSpecies, int part) {
+        return super.reinterpretShapeTemplate(toSpecies, part);  // specialize
     }
 
-    @ForceInline
-    private <F> Vector<F> reinterpretType(VectorSpecies<F> s) {
-        Objects.requireNonNull(s);
+    // Specialized algebraic operations:
 
-        Class<?> stype = s.elementType();
-        if (stype == byte.class) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                Byte64Vector.class,
-                byte.class, Byte64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == short.class) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                Short64Vector.class,
-                short.class, Short64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == int.class) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                Int64Vector.class,
-                int.class, Int64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == long.class) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                Long64Vector.class,
-                long.class, Long64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == float.class) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                Float64Vector.class,
-                float.class, Float64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else if (stype == double.class) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                Double64Vector.class,
-                double.class, Double64Vector.LENGTH,
-                this, s,
-                (species, vector) -> vector.defaultReinterpret(species)
-            );
-        } else {
-            throw new UnsupportedOperationException("Bad lane type for casting.");
-        }
+    // The following definition forces a specialized version of this
+    // crucial method into the v-table of this class.  A call to add()
+    // will inline to a call to lanewise(ADD,), at which point the JIT
+    // intrinsic will have the opcode of ADD, plus all the metadata
+    // for this particular class, enabling it to generate precise
+    // code.
+    //
+    // There is probably no benefit to the JIT to specialize the
+    // masked or broadcast versions of the lanewise method.
+
+    @Override
+    @ForceInline
+    public Int64Vector lanewise(Unary op) {
+        return (Int64Vector) super.lanewiseTemplate(op);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntVector reshape(VectorSpecies<Integer> s) {
-        Objects.requireNonNull(s);
-        if (s.bitSize() == 64 && (s.vectorType() == Int64Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                Int64Vector.class,
-                int.class, Int64Vector.LENGTH,
-                this, s,
-                (species, vector) -> (IntVector) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 128 && (s.vectorType() == Int128Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                Int128Vector.class,
-                int.class, Int128Vector.LENGTH,
-                this, s,
-                (species, vector) -> (IntVector) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 256 && (s.vectorType() == Int256Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                Int256Vector.class,
-                int.class, Int256Vector.LENGTH,
-                this, s,
-                (species, vector) -> (IntVector) vector.defaultReinterpret(species)
-            );
-        } else if (s.bitSize() == 512 && (s.vectorType() == Int512Vector.class)) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                Int512Vector.class,
-                int.class, Int512Vector.LENGTH,
-                this, s,
-                (species, vector) -> (IntVector) vector.defaultReinterpret(species)
-            );
-        } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
-                && (s.bitSize() % 128 == 0) && (s.vectorType() == IntMaxVector.class)) {
-            return VectorIntrinsics.reinterpret(
-                Int64Vector.class,
-                int.class, LENGTH,
-                IntMaxVector.class,
-                int.class, IntMaxVector.LENGTH,
-                this, s,
-                (species, vector) -> (IntVector) vector.defaultReinterpret(species)
-            );
-        } else {
-            throw new InternalError("Unimplemented size");
-        }
+    public Int64Vector lanewise(Binary op, Vector<Integer> v) {
+        return (Int64Vector) super.lanewiseTemplate(op, v);  // specialize
     }
 
-    // Binary operations with scalars
+    /*package-private*/
+    @Override
+    @ForceInline Int64Vector
+    lanewiseShift(VectorOperators.Binary op, int e) {
+        return (Int64Vector) super.lanewiseShiftTemplate(op, e);  // specialize
+    }
 
+    /*package-private*/
     @Override
     @ForceInline
-    public IntVector add(int o) {
-        return add((Int64Vector)IntVector.broadcast(SPECIES, o));
+    public final
+    Int64Vector
+    lanewise(VectorOperators.Ternary op, Vector<Integer> v1, Vector<Integer> v2) {
+        return (Int64Vector) super.lanewiseTemplate(op, v1, v2);  // specialize
     }
 
     @Override
     @ForceInline
-    public IntVector add(int o, VectorMask<Integer> m) {
-        return add((Int64Vector)IntVector.broadcast(SPECIES, o), m);
+    public final
+    Int64Vector addIndex(int scale) {
+        return (Int64Vector) super.addIndexTemplate(scale);  // specialize
     }
-
-    @Override
-    @ForceInline
-    public IntVector sub(int o) {
-        return sub((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector sub(int o, VectorMask<Integer> m) {
-        return sub((Int64Vector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector mul(int o) {
-        return mul((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector mul(int o, VectorMask<Integer> m) {
-        return mul((Int64Vector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector min(int o) {
-        return min((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector max(int o) {
-        return max((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> equal(int o) {
-        return equal((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> notEqual(int o) {
-        return notEqual((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> lessThan(int o) {
-        return lessThan((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> lessThanEq(int o) {
-        return lessThanEq((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> greaterThan(int o) {
-        return greaterThan((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public VectorMask<Integer> greaterThanEq(int o) {
-        return greaterThanEq((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector blend(int o, VectorMask<Integer> m) {
-        return blend((Int64Vector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-
-    @Override
-    @ForceInline
-    public IntVector and(int o) {
-        return and((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector and(int o, VectorMask<Integer> m) {
-        return and((Int64Vector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector or(int o) {
-        return or((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector or(int o, VectorMask<Integer> m) {
-        return or((Int64Vector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector xor(int o) {
-        return xor((Int64Vector)IntVector.broadcast(SPECIES, o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector xor(int o, VectorMask<Integer> m) {
-        return xor((Int64Vector)IntVector.broadcast(SPECIES, o), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector neg() {
-        return (Int64Vector)zero(SPECIES).sub(this);
-    }
-
-    // Unary operations
-
-    @ForceInline
-    @Override
-    public Int64Vector neg(VectorMask<Integer> m) {
-        return blend(neg(), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector abs() {
-        return VectorIntrinsics.unaryOp(
-            VECTOR_OP_ABS, Int64Vector.class, int.class, LENGTH,
-            this,
-            v1 -> v1.uOp((i, a) -> (int) Math.abs(a)));
-    }
-
-    @ForceInline
-    @Override
-    public Int64Vector abs(VectorMask<Integer> m) {
-        return blend(abs(), m);
-    }
-
-
-    @Override
-    @ForceInline
-    public Int64Vector not() {
-        return VectorIntrinsics.unaryOp(
-            VECTOR_OP_NOT, Int64Vector.class, int.class, LENGTH,
-            this,
-            v1 -> v1.uOp((i, a) -> (int) ~a));
-    }
-
-    @ForceInline
-    @Override
-    public Int64Vector not(VectorMask<Integer> m) {
-        return blend(not(), m);
-    }
-    // Binary operations
-
-    @Override
-    @ForceInline
-    public Int64Vector add(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_ADD, Int64Vector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a + b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector add(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(add(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector sub(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_SUB, Int64Vector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a - b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector sub(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(sub(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector mul(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_MUL, Int64Vector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector mul(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(mul(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector min(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-        return (Int64Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_MIN, Int64Vector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) Math.min(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector min(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(min(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector max(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_MAX, Int64Vector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) Math.max(a, b)));
-        }
-
-    @Override
-    @ForceInline
-    public Int64Vector max(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(max(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector and(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_AND, Int64Vector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a & b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector or(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_OR, Int64Vector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a | b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector xor(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_XOR, Int64Vector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a ^ b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector and(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(and(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector or(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(or(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector xor(Vector<Integer> v, VectorMask<Integer> m) {
-        return blend(xor(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector shiftLeft(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, Int64Vector.class, int.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (int) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector shiftLeft(int s, VectorMask<Integer> m) {
-        return blend(shiftLeft(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector shiftRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, Int64Vector.class, int.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (int) (a >>> i)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector shiftRight(int s, VectorMask<Integer> m) {
-        return blend(shiftRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector shiftArithmeticRight(int s) {
-        return VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, Int64Vector.class, int.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (int) (a >> i)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector shiftArithmeticRight(int s, VectorMask<Integer> m) {
-        return blend(shiftArithmeticRight(s), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector shiftLeft(Vector<Integer> s) {
-        Int64Vector shiftv = (Int64Vector)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(IntVector.broadcast(SPECIES, 0x1f));
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_LSHIFT, Int64Vector.class, int.class, LENGTH,
-            this, shiftv,
-            (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a << b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector shiftRight(Vector<Integer> s) {
-        Int64Vector shiftv = (Int64Vector)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(IntVector.broadcast(SPECIES, 0x1f));
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_URSHIFT, Int64Vector.class, int.class, LENGTH,
-            this, shiftv,
-            (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a >>> b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector shiftArithmeticRight(Vector<Integer> s) {
-        Int64Vector shiftv = (Int64Vector)s;
-        // As per shift specification for Java, mask the shift count.
-        shiftv = shiftv.and(IntVector.broadcast(SPECIES, 0x1f));
-        return VectorIntrinsics.binaryOp(
-            VECTOR_OP_RSHIFT, Int64Vector.class, int.class, LENGTH,
-            this, shiftv,
-            (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a >> b)));
-    }
-    // Ternary operations
-
 
     // Type specific horizontal reductions
 
     @Override
     @ForceInline
-    public int addLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_ADD, Int64Vector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a + b)));
+    public final int reduceLanes(VectorOperators.Associative op) {
+        return super.reduceLanesTemplate(op);  // specialized
     }
 
     @Override
     @ForceInline
-    public int andLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_AND, Int64Vector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) -1, (i, a, b) -> (int) (a & b)));
+    public final int reduceLanes(VectorOperators.Associative op,
+                                    VectorMask<Integer> m) {
+        return super.reduceLanesTemplate(op, m);  // specialized
     }
 
     @Override
     @ForceInline
-    public int andLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) -1).blend(this, m).andLanes();
+    public final long reduceLanesToLong(VectorOperators.Associative op) {
+        return (long) super.reduceLanesTemplate(op);  // specialized
     }
 
     @Override
     @ForceInline
-    public int minLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MIN, Int64Vector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp(Integer.MAX_VALUE , (i, a, b) -> (int) Math.min(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public int maxLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MAX, Int64Vector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp(Integer.MIN_VALUE , (i, a, b) -> (int) Math.max(a, b)));
-    }
-
-    @Override
-    @ForceInline
-    public int mulLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MUL, Int64Vector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) 1, (i, a, b) -> (int) (a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public int orLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_OR, Int64Vector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a | b)));
-    }
-
-    @Override
-    @ForceInline
-    public int orLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).orLanes();
-    }
-
-    @Override
-    @ForceInline
-    public int xorLanes() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_XOR, Int64Vector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a ^ b)));
-    }
-
-    @Override
-    @ForceInline
-    public int xorLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).xorLanes();
-    }
-
-
-    @Override
-    @ForceInline
-    public int addLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 0).blend(this, m).addLanes();
-    }
-
-
-    @Override
-    @ForceInline
-    public int mulLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, (int) 1).blend(this, m).mulLanes();
-    }
-
-    @Override
-    @ForceInline
-    public int minLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, Integer.MAX_VALUE).blend(this, m).minLanes();
-    }
-
-    @Override
-    @ForceInline
-    public int maxLanes(VectorMask<Integer> m) {
-        return IntVector.broadcast(SPECIES, Integer.MIN_VALUE).blend(this, m).maxLanes();
+    public final long reduceLanesToLong(VectorOperators.Associative op,
+                                        VectorMask<Integer> m) {
+        return (long) super.reduceLanesTemplate(op, m);  // specialized
     }
 
     @Override
@@ -863,354 +337,145 @@ final class Int64Vector extends IntVector {
         for (int i = 0; i < a.length; i++) {
             sa[i] = (int) a[i];
         }
-        return VectorShuffle.fromArray(SPECIES, sa, 0);
+        return VectorShuffle.fromArray(VSPECIES, sa, 0);
     }
 
-    // Memory operations
-
-    private static final int ARRAY_SHIFT         = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_INT_INDEX_SCALE);
-    private static final int BOOLEAN_ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_BOOLEAN_INDEX_SCALE);
+    // Specialized unary testing
 
     @Override
     @ForceInline
-    public void intoArray(int[] a, int ix) {
-        Objects.requireNonNull(a);
-        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
-        VectorIntrinsics.store(Int64Vector.class, int.class, LENGTH,
-                               a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_INT_BASE_OFFSET,
-                               this,
-                               a, ix,
-                               (arr, idx, v) -> v.forEach((i, e) -> arr[idx + i] = e));
+    public final Int64Mask test(Test op) {
+        return super.testTemplate(Int64Mask.class, op);  // specialize
     }
+
+    // Specialized comparisons
 
     @Override
     @ForceInline
-    public final void intoArray(int[] a, int ax, VectorMask<Integer> m) {
-        IntVector oldVal = IntVector.fromArray(SPECIES, a, ax);
-        IntVector newVal = oldVal.blend(this, m);
-        newVal.intoArray(a, ax);
-    }
-    @Override
-    @ForceInline
-    public void intoArray(int[] a, int ix, int[] b, int iy) {
-        Objects.requireNonNull(a);
-        Objects.requireNonNull(b);
-
-        // Index vector: vix[0:n] = i -> ix + indexMap[iy + i]
-        IntVector vix = IntVector.fromArray(INDEX_SPECIES, b, iy).add(ix);
-
-        vix = VectorIntrinsics.checkIndex(vix, a.length);
-
-        VectorIntrinsics.storeWithMap(Int64Vector.class, int.class, LENGTH, Int64Vector.class,
-                               a, Unsafe.ARRAY_INT_BASE_OFFSET, vix,
-                               this,
-                               a, ix, b, iy,
-                               (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));
-    }
-
-     @Override
-     @ForceInline
-     public final void intoArray(int[] a, int ax, VectorMask<Integer> m, int[] b, int iy) {
-         // @@@ This can result in out of bounds errors for unset mask lanes
-         IntVector oldVal = IntVector.fromArray(SPECIES, a, ax, b, iy);
-         IntVector newVal = oldVal.blend(this, m);
-         newVal.intoArray(a, ax, b, iy);
-     }
-
-    @Override
-    @ForceInline
-    public void intoByteArray(byte[] a, int ix) {
-        Objects.requireNonNull(a);
-        ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
-        VectorIntrinsics.store(Int64Vector.class, int.class, LENGTH,
-                               a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
-                               this,
-                               a, ix,
-                               (c, idx, v) -> {
-                                   ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
-                                   IntBuffer tb = bbc.asIntBuffer();
-                                   v.forEach((i, e) -> tb.put(e));
-                               });
+    public final Int64Mask compare(Comparison op, Vector<Integer> v) {
+        return super.compareTemplate(Int64Mask.class, op, v);  // specialize
     }
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, VectorMask<Integer> m) {
-        Int64Vector oldVal = (Int64Vector) IntVector.fromByteArray(SPECIES, a, ix);
-        Int64Vector newVal = oldVal.blend(this, m);
-        newVal.intoByteArray(a, ix);
+    public final Int64Mask compare(Comparison op, int s) {
+        return super.compareTemplate(Int64Mask.class, op, s);  // specialize
     }
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix) {
-        if (bb.order() != ByteOrder.nativeOrder()) {
-            throw new IllegalArgumentException();
-        }
-        if (bb.isReadOnly()) {
-            throw new ReadOnlyBufferException();
-        }
-        ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
-        VectorIntrinsics.store(Int64Vector.class, int.class, LENGTH,
-                               U.getReference(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
-                               this,
-                               bb, ix,
-                               (c, idx, v) -> {
-                                   ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
-                                   IntBuffer tb = bbc.asIntBuffer();
-                                   v.forEach((i, e) -> tb.put(e));
-                               });
+    public final Int64Mask compare(Comparison op, long s) {
+        return super.compareTemplate(Int64Mask.class, op, s);  // specialize
     }
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, VectorMask<Integer> m) {
-        Int64Vector oldVal = (Int64Vector) IntVector.fromByteBuffer(SPECIES, bb, ix);
-        Int64Vector newVal = oldVal.blend(this, m);
-        newVal.intoByteBuffer(bb, ix);
-    }
-
-    //
-
-    @Override
-    public String toString() {
-        return Arrays.toString(getElements());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || this.getClass() != o.getClass()) return false;
-
-        Int64Vector that = (Int64Vector) o;
-        return this.equal(that).allTrue();
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(vec);
-    }
-
-    // Binary test
-
-    @Override
-    Int64Mask bTest(Vector<Integer> o, FBinTest f) {
-        int[] vec1 = getElements();
-        int[] vec2 = ((Int64Vector)o).getElements();
-        boolean[] bits = new boolean[length()];
-        for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec1[i], vec2[i]);
-        }
-        return new Int64Mask(bits);
-    }
-
-    // Comparisons
-
-    @Override
-    @ForceInline
-    public Int64Mask equal(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-
-        return VectorIntrinsics.compare(
-            BT_eq, Int64Vector.class, Int64Mask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    public Int64Vector blend(Vector<Integer> v, VectorMask<Integer> m) {
+        return (Int64Vector)
+            super.blendTemplate(Int64Mask.class,
+                                (Int64Vector) v,
+                                (Int64Mask) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public Int64Mask notEqual(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-
-        return VectorIntrinsics.compare(
-            BT_ne, Int64Vector.class, Int64Mask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    public Int64Vector slice(int origin, Vector<Integer> v) {
+        return (Int64Vector) super.sliceTemplate(origin, v);  // specialize
     }
 
     @Override
     @ForceInline
-    public Int64Mask lessThan(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-
-        return VectorIntrinsics.compare(
-            BT_lt, Int64Vector.class, Int64Mask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Mask lessThanEq(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-
-        return VectorIntrinsics.compare(
-            BT_le, Int64Vector.class, Int64Mask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Mask greaterThan(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-
-        return (Int64Mask) VectorIntrinsics.compare(
-            BT_gt, Int64Vector.class, Int64Mask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Mask greaterThanEq(Vector<Integer> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-
-        return VectorIntrinsics.compare(
-            BT_ge, Int64Vector.class, Int64Mask.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
-    }
-
-    // Foreach
-
-    @Override
-    void forEach(FUnCon f) {
-        int[] vec = getElements();
-        for (int i = 0; i < length(); i++) {
-            f.apply(i, vec[i]);
-        }
-    }
-
-    @Override
-    void forEach(VectorMask<Integer> o, FUnCon f) {
-        boolean[] mbits = ((Int64Mask)o).getBits();
-        forEach((i, a) -> {
-            if (mbits[i]) { f.apply(i, a); }
-        });
-    }
-
-
-    Float64Vector toFP() {
-        int[] vec = getElements();
-        float[] res = new float[this.species().length()];
-        for(int i = 0; i < this.species().length(); i++){
-            res[i] = Float.intBitsToFloat(vec[i]);
-        }
-        return new Float64Vector(res);
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector rotateLanesLeft(int j) {
-      int L = length();
-      if (j < 0) {
-         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
-      } else {
-        j = j & (L-1);
-        VectorShuffle<Integer> PermMask  = VectorShuffle.shuffleIota(SPECIES, L - j);
-        return this.rearrange(PermMask);
-      }
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector rotateLanesRight(int j) {
-      int L = length();
-      if (j < 0) {
-         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
-      } else {
-        j = j & (L-1);
-        VectorShuffle<Integer> PermMask = VectorShuffle.shuffleIota(SPECIES, j);
-        return this.rearrange(PermMask);
-      }
-    }
-
-    @Override
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public Int64Vector shiftLanesLeft(int j) {
-       int L = length();
-       if (j < 0) {
-         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
-       } else if ( j >= L ) {
-         return ZERO;
+    public Int64Vector slice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Int64Shuffle     Iota    = (Int64Shuffle)(VectorShuffle.shuffleIota(SPECIES, L-j));
-         VectorMask<Integer> BlendMask = Iota.toVector().lessThan(Int64Vector.broadcast(SPECIES, (int)(L-j)));
-         Iota    = (Int64Shuffle)(VectorShuffle.shuffleIota(SPECIES, L -j));
-         return ZERO.blend(this.rearrange(Iota),BlendMask);
+         Int64Shuffle Iota = iotaShuffle(origin);
+         VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((int)(origin))));
+         Iota = (Int64Shuffle)iotaShuffle(origin).wrapIndexes();
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
 
     @Override
     @ForceInline
-    @SuppressWarnings("unchecked")
-    public Int64Vector shiftLanesRight(int j) {
-       int L = length();
-       if (j < 0) {
-         throw new IllegalArgumentException("Index " + j + " must be zero or positive");
-       } else if ( j >= L ) {
-         return ZERO;
+    public Int64Vector unslice(int origin, Vector<Integer> w, int part) {
+        return (Int64Vector) super.unsliceTemplate(origin, w, part);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public Int64Vector unslice(int origin, Vector<Integer> w, int part, VectorMask<Integer> m) {
+        return (Int64Vector)
+            super.unsliceTemplate(Int64Mask.class,
+                                  origin, w, part,
+                                  (Int64Mask) m);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public Int64Vector unslice(int origin) {
+       if ((origin < 0) || (origin >= VLENGTH)) {
+         throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Int64Shuffle     Iota    = (Int64Shuffle)(VectorShuffle.shuffleIota(SPECIES, j));
-         VectorMask<Integer> BlendMask = Iota.toVector().greaterThanEq(Int64Vector.broadcast(SPECIES, (int)(j)));
-         Iota    = (Int64Shuffle)(VectorShuffle.shuffleIota(SPECIES, j));
-         return ZERO.blend(this.rearrange(Iota),BlendMask);
+         Int64Shuffle Iota = iotaShuffle(-origin);
+         VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((int)(0))));
+         Iota = (Int64Shuffle)iotaShuffle(-origin).wrapIndexes();
+         return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
 
     @Override
     @ForceInline
-    public Int64Vector rearrange(Vector<Integer> v,
-                                  VectorShuffle<Integer> s, VectorMask<Integer> m) {
-        return this.rearrange(s).blend(v.rearrange(s), m);
+    public Int64Vector rearrange(VectorShuffle<Integer> s) {
+        return (Int64Vector)
+            super.rearrangeTemplate(Int64Shuffle.class,
+                                    (Int64Shuffle) s);  // specialize
     }
 
     @Override
     @ForceInline
-    public Int64Vector rearrange(VectorShuffle<Integer> o1) {
-        Objects.requireNonNull(o1);
-        Int64Shuffle s =  (Int64Shuffle)o1;
-
-        return VectorIntrinsics.rearrangeOp(
-            Int64Vector.class, Int64Shuffle.class, int.class, LENGTH,
-            this, s,
-            (v1, s_) -> v1.uOp((i, a) -> {
-                int ei = s_.lane(i);
-                return v1.lane(ei);
-            }));
+    public Int64Vector rearrange(VectorShuffle<Integer> shuffle,
+                                  VectorMask<Integer> m) {
+        return (Int64Vector)
+            super.rearrangeTemplate(Int64Shuffle.class,
+                                    (Int64Shuffle) shuffle,
+                                    (Int64Mask) m);  // specialize
     }
 
     @Override
     @ForceInline
-    public Int64Vector blend(Vector<Integer> o1, VectorMask<Integer> o2) {
-        Objects.requireNonNull(o1);
-        Objects.requireNonNull(o2);
-        Int64Vector v = (Int64Vector)o1;
-        Int64Mask   m = (Int64Mask)o2;
-
-        return VectorIntrinsics.blend(
-            Int64Vector.class, Int64Mask.class, int.class, LENGTH,
-            this, v, m,
-            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.lane(i) ? b : a));
+    public Int64Vector rearrange(VectorShuffle<Integer> s,
+                                  Vector<Integer> v) {
+        return (Int64Vector)
+            super.rearrangeTemplate(Int64Shuffle.class,
+                                    (Int64Shuffle) s,
+                                    (Int64Vector) v);  // specialize
     }
 
-    // Accessors
+    @Override
+    @ForceInline
+    public Int64Vector selectFrom(Vector<Integer> v) {
+        return (Int64Vector)
+            super.selectFromTemplate((Int64Vector) v);  // specialize
+    }
+
+    @Override
+    @ForceInline
+    public Int64Vector selectFrom(Vector<Integer> v,
+                                   VectorMask<Integer> m) {
+        return (Int64Vector)
+            super.selectFromTemplate((Int64Vector) v,
+                                     (Int64Mask) m);  // specialize
+    }
+
 
     @Override
     public int lane(int i) {
-        if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        if (i < 0 || i >= VLENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + VLENGTH);
         }
         return (int) VectorIntrinsics.extract(
-                                Int64Vector.class, int.class, LENGTH,
+                                VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
                                     int[] vecarr = vec.getElements();
@@ -1219,25 +484,23 @@ final class Int64Vector extends IntVector {
     }
 
     @Override
-    public Int64Vector with(int i, int e) {
-        if (i < 0 || i >= LENGTH) {
-            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+    public Int64Vector withLane(int i, int e) {
+        if (i < 0 || i >= VLENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + VLENGTH);
         }
         return VectorIntrinsics.insert(
-                                Int64Vector.class, int.class, LENGTH,
+                                VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
                                     int[] res = v.getElements().clone();
                                     res[ix] = (int)bits;
-                                    return new Int64Vector(res);
+                                    return v.vectorFactory(res);
                                 });
     }
 
     // Mask
 
     static final class Int64Mask extends AbstractMask<Integer> {
-        static final Int64Mask TRUE_MASK = new Int64Mask(true);
-        static final Int64Mask FALSE_MASK = new Int64Mask(false);
 
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
@@ -1246,7 +509,7 @@ final class Int64Vector extends IntVector {
         }
 
         public Int64Mask(boolean[] bits, int offset) {
-            boolean[] a = new boolean[species().length()];
+            boolean[] a = new boolean[vspecies().laneCount()];
             for (int i = 0; i < a.length; i++) {
                 a[i] = bits[offset + i];
             }
@@ -1254,9 +517,18 @@ final class Int64Vector extends IntVector {
         }
 
         public Int64Mask(boolean val) {
-            boolean[] bits = new boolean[species().length()];
+            boolean[] bits = new boolean[vspecies().laneCount()];
             Arrays.fill(bits, val);
             this.bits = bits;
+        }
+
+        @ForceInline
+        final @Override
+        public IntSpecies vspecies() {
+            // ISSUE:  This should probably be a @Stable
+            // field inside AbstractMask, rather than
+            // a megamorphic method.
+            return VSPECIES;
         }
 
         boolean[] getBits() {
@@ -1265,65 +537,57 @@ final class Int64Vector extends IntVector {
 
         @Override
         Int64Mask uOp(MUnOp f) {
-            boolean[] res = new boolean[species().length()];
+            boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            for (int i = 0; i < species().length(); i++) {
+            for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i]);
             }
             return new Int64Mask(res);
         }
 
         @Override
-        Int64Mask bOp(VectorMask<Integer> o, MBinOp f) {
-            boolean[] res = new boolean[species().length()];
+        Int64Mask bOp(VectorMask<Integer> m, MBinOp f) {
+            boolean[] res = new boolean[vspecies().laneCount()];
             boolean[] bits = getBits();
-            boolean[] mbits = ((Int64Mask)o).getBits();
-            for (int i = 0; i < species().length(); i++) {
+            boolean[] mbits = ((Int64Mask)m).getBits();
+            for (int i = 0; i < res.length; i++) {
                 res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new Int64Mask(res);
         }
 
+        @ForceInline
         @Override
-        public VectorSpecies<Integer> species() {
-            return SPECIES;
-        }
-
-        @Override
-        public Int64Vector toVector() {
-            int[] res = new int[species().length()];
-            boolean[] bits = getBits();
-            for (int i = 0; i < species().length(); i++) {
-                // -1 will result in the most significant bit being set in
-                // addition to some or all other bits
-                res[i] = (int) (bits[i] ? -1 : 0);
-            }
-            return new Int64Vector(res);
+        public final
+        Int64Vector toVector() {
+            return (Int64Vector) super.toVectorTemplate();  // specialize
         }
 
         @Override
         @ForceInline
-        @SuppressWarnings("unchecked")
-        public <E> VectorMask<E> cast(VectorSpecies<E> species) {
-            if (length() != species.length())
+        public <E> VectorMask<E> cast(VectorSpecies<E> s) {
+            AbstractSpecies<E> species = (AbstractSpecies<E>) s;
+            if (length() != species.laneCount())
                 throw new IllegalArgumentException("VectorMask length and species length differ");
-            Class<?> stype = species.elementType();
-            boolean [] maskArray = toArray();
-            if (stype == byte.class) {
-                return (VectorMask <E>) new Byte64Vector.Byte64Mask(maskArray);
-            } else if (stype == short.class) {
-                return (VectorMask <E>) new Short64Vector.Short64Mask(maskArray);
-            } else if (stype == int.class) {
-                return (VectorMask <E>) new Int64Vector.Int64Mask(maskArray);
-            } else if (stype == long.class) {
-                return (VectorMask <E>) new Long64Vector.Long64Mask(maskArray);
-            } else if (stype == float.class) {
-                return (VectorMask <E>) new Float64Vector.Float64Mask(maskArray);
-            } else if (stype == double.class) {
-                return (VectorMask <E>) new Double64Vector.Double64Mask(maskArray);
-            } else {
-                throw new UnsupportedOperationException("Bad lane type for casting.");
+            boolean[] maskArray = toArray();
+            // enum-switches don't optimize properly JDK-8161245
+            switch (species.laneType.switchKey) {
+            case LaneType.SK_BYTE:
+                return new Byte64Vector.Byte64Mask(maskArray).check(species);
+            case LaneType.SK_SHORT:
+                return new Short64Vector.Short64Mask(maskArray).check(species);
+            case LaneType.SK_INT:
+                return new Int64Vector.Int64Mask(maskArray).check(species);
+            case LaneType.SK_LONG:
+                return new Long64Vector.Long64Mask(maskArray).check(species);
+            case LaneType.SK_FLOAT:
+                return new Float64Vector.Float64Mask(maskArray).check(species);
+            case LaneType.SK_DOUBLE:
+                return new Double64Vector.Double64Mask(maskArray).check(species);
             }
+
+            // Should not reach here.
+            throw new AssertionError(species);
         }
 
         // Unary operations
@@ -1332,7 +596,7 @@ final class Int64Vector extends IntVector {
         @ForceInline
         public Int64Mask not() {
             return (Int64Mask) VectorIntrinsics.unaryOp(
-                                             VECTOR_OP_NOT, Int64Mask.class, int.class, LENGTH,
+                                             VECTOR_OP_NOT, Int64Mask.class, int.class, VLENGTH,
                                              this,
                                              (m1) -> m1.uOp((i, a) -> !a));
         }
@@ -1341,20 +605,20 @@ final class Int64Vector extends IntVector {
 
         @Override
         @ForceInline
-        public Int64Mask and(VectorMask<Integer> o) {
-            Objects.requireNonNull(o);
-            Int64Mask m = (Int64Mask)o;
-            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Int64Mask.class, int.class, LENGTH,
+        public Int64Mask and(VectorMask<Integer> mask) {
+            Objects.requireNonNull(mask);
+            Int64Mask m = (Int64Mask)mask;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Int64Mask.class, int.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
         @ForceInline
-        public Int64Mask or(VectorMask<Integer> o) {
-            Objects.requireNonNull(o);
-            Int64Mask m = (Int64Mask)o;
-            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Int64Mask.class, int.class, LENGTH,
+        public Int64Mask or(VectorMask<Integer> mask) {
+            Objects.requireNonNull(mask);
+            Int64Mask m = (Int64Mask)mask;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Int64Mask.class, int.class, VLENGTH,
                                              this, m,
                                              (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
@@ -1364,7 +628,7 @@ final class Int64Vector extends IntVector {
         @Override
         @ForceInline
         public boolean anyTrue() {
-            return VectorIntrinsics.test(BT_ne, Int64Mask.class, int.class, LENGTH,
+            return VectorIntrinsics.test(BT_ne, Int64Mask.class, int.class, VLENGTH,
                                          this, this,
                                          (m, __) -> anyTrueHelper(((Int64Mask)m).getBits()));
         }
@@ -1372,10 +636,17 @@ final class Int64Vector extends IntVector {
         @Override
         @ForceInline
         public boolean allTrue() {
-            return VectorIntrinsics.test(BT_overflow, Int64Mask.class, int.class, LENGTH,
-                                         this, VectorMask.maskAllTrue(species()),
+            return VectorIntrinsics.test(BT_overflow, Int64Mask.class, int.class, VLENGTH,
+                                         this, vspecies().maskAll(true),
                                          (m, __) -> allTrueHelper(((Int64Mask)m).getBits()));
         }
+
+        /*package-private*/
+        static Int64Mask maskAll(boolean bit) {
+            return bit ? TRUE_MASK : FALSE_MASK;
+        }
+        static final Int64Mask TRUE_MASK = new Int64Mask(true);
+        static final Int64Mask FALSE_MASK = new Int64Mask(false);
     }
 
     // Shuffle
@@ -1393,72 +664,110 @@ final class Int64Vector extends IntVector {
             super(reorder, i);
         }
 
-        public Int64Shuffle(IntUnaryOperator f) {
-            super(f);
+        public Int64Shuffle(IntUnaryOperator fn) {
+            super(fn);
         }
 
         @Override
-        public VectorSpecies<Integer> species() {
-            return SPECIES;
+        public IntSpecies vspecies() {
+            return VSPECIES;
         }
 
-        private IntVector toVector_helper() {
-            int[] va = new int[SPECIES.length()];
-            for (int i = 0; i < va.length; i++) {
-              va[i] = (int) lane(i);
-            }
-            return IntVector.fromArray(SPECIES, va, 0);
+        static {
+            // There must be enough bits in the shuffle lanes to encode
+            // VLENGTH valid indexes and VLENGTH exceptional ones.
+            assert(VLENGTH < Byte.MAX_VALUE);
+            assert(Byte.MIN_VALUE <= -VLENGTH);
+        }
+        static final Int64Shuffle IOTA = new Int64Shuffle(IDENTITY);
+
+        @Override
+        @ForceInline
+        public Int64Vector toVector() {
+            return VectorIntrinsics.shuffleToVector(VCLASS, ETYPE, Int64Shuffle.class, this, VLENGTH,
+                                                    (s) -> ((Int64Vector)(((AbstractShuffle<Integer>)(s)).toVectorTemplate())));
         }
 
         @Override
         @ForceInline
-        public IntVector toVector() {
-            return VectorIntrinsics.shuffleToVector(Int64Vector.class, int.class, Int64Shuffle.class, this,
-                                                    SPECIES.length(), 
-                                                    (s) -> (((Int64Shuffle)(s)).toVector_helper()));
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        public <F> VectorShuffle<F> cast(VectorSpecies<F> species) {
-            if (length() != species.length())
-                throw new IllegalArgumentException("Shuffle length and species length differ");
-            Class<?> stype = species.elementType();
-            int [] shuffleArray = toArray();
-            if (stype == byte.class) {
-                return (VectorShuffle<F>) new Byte64Vector.Byte64Shuffle(shuffleArray);
-            } else if (stype == short.class) {
-                return (VectorShuffle<F>) new Short64Vector.Short64Shuffle(shuffleArray);
-            } else if (stype == int.class) {
-                return (VectorShuffle<F>) new Int64Vector.Int64Shuffle(shuffleArray);
-            } else if (stype == long.class) {
-                return (VectorShuffle<F>) new Long64Vector.Long64Shuffle(shuffleArray);
-            } else if (stype == float.class) {
-                return (VectorShuffle<F>) new Float64Vector.Float64Shuffle(shuffleArray);
-            } else if (stype == double.class) {
-                return (VectorShuffle<F>) new Double64Vector.Double64Shuffle(shuffleArray);
-            } else {
-                throw new UnsupportedOperationException("Bad lane type for casting.");
+        public <F> VectorShuffle<F> cast(VectorSpecies<F> s) {
+            AbstractSpecies<F> species = (AbstractSpecies<F>) s;
+            if (length() != species.laneCount())
+                throw new IllegalArgumentException("VectorShuffle length and species length differ");
+            int[] shuffleArray = toArray();
+            // enum-switches don't optimize properly JDK-8161245
+            switch (species.laneType.switchKey) {
+            case LaneType.SK_BYTE:
+                return new Byte64Vector.Byte64Shuffle(shuffleArray).check(species);
+            case LaneType.SK_SHORT:
+                return new Short64Vector.Short64Shuffle(shuffleArray).check(species);
+            case LaneType.SK_INT:
+                return new Int64Vector.Int64Shuffle(shuffleArray).check(species);
+            case LaneType.SK_LONG:
+                return new Long64Vector.Long64Shuffle(shuffleArray).check(species);
+            case LaneType.SK_FLOAT:
+                return new Float64Vector.Float64Shuffle(shuffleArray).check(species);
+            case LaneType.SK_DOUBLE:
+                return new Double64Vector.Double64Shuffle(shuffleArray).check(species);
             }
+
+            // Should not reach here.
+            throw new AssertionError(species);
         }
 
-
         @Override
-        public Int64Shuffle rearrange(VectorShuffle<Integer> o) {
-            Int64Shuffle s = (Int64Shuffle) o;
+        public Int64Shuffle rearrange(VectorShuffle<Integer> shuffle) {
+            Int64Shuffle s = (Int64Shuffle) shuffle;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
-                r[i] = reorder[s.reorder[i]];
+                int ssi = s.reorder[i];
+                r[i] = this.reorder[ssi];  // throws on exceptional index
             }
             return new Int64Shuffle(r);
         }
     }
 
-    // VectorSpecies
+    // ================================================
 
+    // Specialized low-level memory operations.
+
+    @ForceInline
     @Override
-    public VectorSpecies<Integer> species() {
-        return SPECIES;
+    final
+    IntVector fromArray0(int[] a, int offset) {
+        return super.fromArray0Template(a, offset);  // specialize
     }
+
+    @ForceInline
+    @Override
+    final
+    IntVector fromByteArray0(byte[] a, int offset) {
+        return super.fromByteArray0Template(a, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    IntVector fromByteBuffer0(ByteBuffer bb, int offset) {
+        return super.fromByteBuffer0Template(bb, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    void intoArray0(int[] a, int offset) {
+        super.intoArray0Template(a, offset);  // specialize
+    }
+
+    @ForceInline
+    @Override
+    final
+    void intoByteArray0(byte[] a, int offset) {
+        super.intoByteArray0Template(a, offset);  // specialize
+    }
+
+    // End of specialized low-level memory operations.
+
+    // ================================================
+
 }

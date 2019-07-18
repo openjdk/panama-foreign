@@ -27,10 +27,13 @@
  * @run testng/othervm -ea -esa $vectorteststype$
  */
 
+#warn This file is preprocessed before being compiled
+
 import jdk.incubator.vector.VectorShape;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorShuffle;
 import jdk.incubator.vector.VectorMask;
+import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.Vector;
 
 #if[Byte]
@@ -82,7 +85,13 @@ public class $vectorteststype$ extends AbstractVectorTest {
         return VectorShape.S_Max_BIT;
     }
 
+    private static final int Max = 256;  // juts so we can do N/$bits$
 #end[MaxBit]
+
+    static final int BUFFER_REPS = Integer.getInteger("jdk.incubator.vector.test.buffer-vectors", 25000 / $bits$);
+
+    static final int BUFFER_SIZE = Integer.getInteger("jdk.incubator.vector.test.buffer-size", BUFFER_REPS * ($bits$ / 8));
+
     interface FUnOp {
         $type$ apply($type$ a);
     }
@@ -181,10 +190,10 @@ public class $vectorteststype$ extends AbstractVectorTest {
         int i = 0;
         try {
             for (; i < a.length; i += SPECIES.length()) {
-                Assert.assertEquals(f.apply(a, i), b[i]);
+                Assert.assertEquals(b[i], f.apply(a, i));
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+            Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
         }
     }
 
@@ -257,7 +266,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
                 Assert.assertEquals(r[i], f.apply(a[i], b[i]));
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(f.apply(a[i], b[i]), r[i], "(" + a[i] + ", " + b[i] + ") at index #" + i);
+            Assert.assertEquals(r[i], f.apply(a[i], b[i]), "(" + a[i] + ", " + b[i] + ") at index #" + i);
         }
     }
 
@@ -282,11 +291,11 @@ public class $vectorteststype$ extends AbstractVectorTest {
         try {
             for (; j < a.length; j += SPECIES.length()) {
                 for (i = 0; i < SPECIES.length(); i++) {
-                    Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
+                    Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j]));
                 }
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j], "at index #" + i + ", " + j);
+            Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j]), "at index #" + i + ", " + j);
         }
     }
 
@@ -308,7 +317,6 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 
-#if[FP]
     interface FTernOp {
         $type$ apply($type$ a, $type$ b, $type$ c);
     }
@@ -348,6 +356,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 
+#if[FP]
     static boolean isWithin1Ulp($type$ actual, $type$ expected) {
         if ($Type$.isNaN(expected) && !$Type$.isNaN(actual)) {
             return false;
@@ -406,10 +415,10 @@ public class $vectorteststype$ extends AbstractVectorTest {
         int i = 0;
         try {
             for (; i < a.length; i++) {
-                Assert.assertEquals(f.apply(a, i), r[i]);
+                Assert.assertEquals(r[i], f.apply(a, i));
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
+            Assert.assertEquals(r[i], f.apply(a,i), "at index #" + i);
         }
     }
 
@@ -427,7 +436,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         } catch (AssertionError e) {
             $type$[] ref = f.apply(a, i, b, i);
             $type$[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
-            Assert.assertEquals(ref, res,
+            Assert.assertEquals(res, ref,
               "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
               + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
               + ", b: "
@@ -488,21 +497,25 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 
+    static $bitstype$ bits($type$ e) {
+        return {#if[FP]? $Type$.$type$To$Bitstype$Bits(e): e};
+    }
+
     static final List<IntFunction<$type$[]>> $TYPE$_GENERATORS = List.of(
             withToString("$type$[-i * 5]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> ($type$)(-i * 5));
             }),
             withToString("$type$[i * 5]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> ($type$)(i * 5));
             }),
             withToString("$type$[i + 1]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> ((($type$)(i + 1) == 0) ? 1 : ($type$)(i + 1)));
             }),
             withToString("$type$[cornerCaseValue(i)]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> cornerCaseValue(i));
             })
     );
@@ -521,12 +534,10 @@ public class $vectorteststype$ extends AbstractVectorTest {
                 toArray(Object[][]::new);
     }
 
-#if[FP]
     static final List<List<IntFunction<$type$[]>>> $TYPE$_GENERATOR_TRIPLES =
         $TYPE$_GENERATOR_PAIRS.stream().
                 flatMap(pair -> $TYPE$_GENERATORS.stream().map(f -> List.of(pair.get(0), pair.get(1), f))).
                 collect(Collectors.toList());
-#end[FP]
 
     @DataProvider
     public Object[][] $type$BinaryOpProvider() {
@@ -549,7 +560,6 @@ public class $vectorteststype$ extends AbstractVectorTest {
                 toArray(Object[][]::new);
     }
 
-#if[FP]
     @DataProvider
     public Object[][] $type$TernaryOpProvider() {
         return $TYPE$_GENERATOR_TRIPLES.stream().map(List::toArray).
@@ -564,7 +574,6 @@ public class $vectorteststype$ extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
-#end[FP]
 
     @DataProvider
     public Object[][] $type$UnaryOpProvider() {
@@ -623,26 +632,37 @@ public class $vectorteststype$ extends AbstractVectorTest {
 
     static final List<IntFunction<$type$[]>> $TYPE$_COMPARE_GENERATORS = List.of(
             withToString("$type$[i]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> ($type$)i);
             }),
             withToString("$type$[i + 1]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> ($type$)(i + 1));
             }),
             withToString("$type$[i - 2]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> ($type$)(i - 2));
             }),
             withToString("$type$[zigZag(i)]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> i%3 == 0 ? ($type$)i : (i%3 == 1 ? ($type$)(i + 1) : ($type$)(i - 2)));
             }),
             withToString("$type$[cornerCaseValue(i)]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> cornerCaseValue(i));
             })
     );
+
+    static final List<List<IntFunction<$type$[]>>> $TYPE$_TEST_GENERATOR_ARGS =
+        $TYPE$_COMPARE_GENERATORS.stream().
+                map(fa -> List.of(fa)).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] $type$TestOpProvider() {
+        return $TYPE$_TEST_GENERATOR_ARGS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
 
     static final List<List<IntFunction<$type$[]>>> $TYPE$_COMPARE_GENERATOR_PAIRS =
         $TYPE$_COMPARE_GENERATORS.stream().
@@ -708,11 +728,74 @@ public class $vectorteststype$ extends AbstractVectorTest {
    }
 
    static final IntFunction<$type$[]> fr = (vl) -> {
-        int length = 1000 * vl;
+        int length = BUFFER_REPS * vl;
         return new $type$[length];
     };
 
     static final IntFunction<boolean[]> fmr = (vl) -> {
-        int length = 1000 * vl;
+        int length = BUFFER_REPS * vl;
         return new boolean[length];
     };
+
+    @Test
+    static void smokeTest1() {
+        $abstractvectortype$ three = $abstractvectortype$.broadcast(SPECIES, (byte)-3);
+        $abstractvectortype$ three2 = ($abstractvectortype$) SPECIES.broadcast(-3);
+        assert(three.eq(three2).allTrue());
+        $abstractvectortype$ three3 = three2.broadcast(1).broadcast(-3);
+        assert(three.eq(three3).allTrue());
+        int scale = 2;
+        Class<?> ETYPE = $type$.class;
+        if (ETYPE == double.class || ETYPE == long.class)
+            scale = 1000000;
+        else if (ETYPE == byte.class && SPECIES.length() >= 64)
+            scale = 1;
+        $abstractvectortype$ higher = three.addIndex(scale);
+        VectorMask<$Boxtype$> m = three.compare(VectorOperators.LE, higher);
+        assert(m.allTrue());
+        m = higher.min(($type$)-1).test(VectorOperators.IS_NEGATIVE);
+        assert(m.allTrue());
+#if[FP]
+        m = higher.test(VectorOperators.IS_FINITE);
+        assert(m.allTrue());
+#end[FP]
+        $type$ max = higher.reduceLanes(VectorOperators.MAX);
+        assert(max == -3 + scale * (SPECIES.length()-1));
+    }
+
+    private static $type$[]
+    bothToArray($abstractvectortype$ a, $abstractvectortype$ b) {
+        $type$[] r = new $type$[a.length() + b.length()];
+        a.intoArray(r, 0);
+        b.intoArray(r, a.length());
+        return r;
+    }   
+
+    @Test
+    static void smokeTest2() {
+        // Do some zipping and shuffling.
+        $abstractvectortype$ io = ($abstractvectortype$) SPECIES.broadcast(0).addIndex(1);
+        $abstractvectortype$ io2 = ($abstractvectortype$) VectorShuffle.iota(SPECIES,0,1,false).toVector();
+        Assert.assertEquals(io, io2);
+        $abstractvectortype$ a = io.add(($type$)1); //[1,2]
+        $abstractvectortype$ b = a.neg();  //[-1,-2]
+        $type$[] abValues = bothToArray(a,b); //[1,2,-1,-2]
+        VectorShuffle<$Boxtype$> zip0 = VectorShuffle.makeZip(SPECIES, 0);
+        VectorShuffle<$Boxtype$> zip1 = VectorShuffle.makeZip(SPECIES, 1);
+        $abstractvectortype$ zab0 = a.rearrange(zip0,b); //[1,-1]
+        $abstractvectortype$ zab1 = a.rearrange(zip1,b); //[2,-2]
+        $type$[] zabValues = bothToArray(zab0, zab1); //[1,-1,2,-2]
+        // manually zip
+        $type$[] manual = new $type$[zabValues.length];
+        for (int i = 0; i < manual.length; i += 2) {
+            manual[i+0] = abValues[i/2];
+            manual[i+1] = abValues[a.length() + i/2];
+        }
+        Assert.assertEquals(Arrays.toString(zabValues), Arrays.toString(manual));
+        VectorShuffle<$Boxtype$> unz0 = VectorShuffle.makeUnzip(SPECIES, 0);
+        VectorShuffle<$Boxtype$> unz1 = VectorShuffle.makeUnzip(SPECIES, 1);
+        $abstractvectortype$ uab0 = zab0.rearrange(unz0,zab1);
+        $abstractvectortype$ uab1 = zab0.rearrange(unz1,zab1);
+        $type$[] abValues1 = bothToArray(uab0, uab1);
+        Assert.assertEquals(Arrays.toString(abValues), Arrays.toString(abValues1));
+    }

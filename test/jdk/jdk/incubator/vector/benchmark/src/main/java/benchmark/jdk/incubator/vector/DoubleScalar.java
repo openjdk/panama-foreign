@@ -23,6 +23,8 @@
 
 package benchmark.jdk.incubator.vector;
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
@@ -75,7 +77,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void add(Blackhole bh) {
+    public void ADD(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -92,7 +94,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void addMasked(Blackhole bh) {
+    public void ADDMasked(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -113,7 +115,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void sub(Blackhole bh) {
+    public void SUB(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -130,7 +132,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void subMasked(Blackhole bh) {
+    public void SUBMasked(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -150,9 +152,47 @@ public class DoubleScalar extends AbstractVectorBenchmark {
         bh.consume(rs);
     }
 
+    @Benchmark
+    public void MUL(Blackhole bh) {
+        double[] as = fa.apply(size);
+        double[] bs = fb.apply(size);
+        double[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                double a = as[i];
+                double b = bs[i];
+                rs[i] = (double)(a * b);
+            }
+        }
+
+        bh.consume(rs);
+    }
 
     @Benchmark
-    public void div(Blackhole bh) {
+    public void MULMasked(Blackhole bh) {
+        double[] as = fa.apply(size);
+        double[] bs = fb.apply(size);
+        double[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                double a = as[i];
+                double b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (double)(a * b);
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+    @Benchmark
+    public void DIV(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -171,7 +211,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void divMasked(Blackhole bh) {
+    public void DIVMasked(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -193,7 +233,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void mul(Blackhole bh) {
+    public void FIRST_NONZERO(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -202,7 +242,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 double a = as[i];
                 double b = bs[i];
-                rs[i] = (double)(a * b);
+                rs[i] = (double)(Double.doubleToLongBits(a)!=0?a:b);
             }
         }
 
@@ -210,7 +250,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void mulMasked(Blackhole bh) {
+    public void FIRST_NONZEROMasked(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -221,7 +261,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
                 double a = as[i];
                 double b = bs[i];
                 if (ms[i % ms.length]) {
-                    rs[i] = (double)(a * b);
+                    rs[i] = (double)(Double.doubleToLongBits(a)!=0?a:b);
                 } else {
                     rs[i] = a;
                 }
@@ -262,56 +302,8 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
 
-
-
-
-
-
-
-
-
-
-
     @Benchmark
-    public void max(Blackhole bh) {
-        double[] as = fa.apply(size);
-        double[] bs = fb.apply(size);
-        double[] rs = fr.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                double a = as[i];
-                double b = bs[i];
-                rs[i] = (double)(Math.max(a, b));
-            }
-        }
-
-        bh.consume(rs);
-    }
-
-    @Benchmark
-    public void maxMasked(Blackhole bh) {
-        double[] as = fa.apply(size);
-        double[] bs = fb.apply(size);
-        double[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < as.length; i++) {
-                double a = as[i];
-                double b = bs[i];
-                if (ms[i % ms.length]) {
-                    rs[i] = (double)(Math.max(a, b));
-                } else {
-                    rs[i] = a;
-                }
-            }
-        }
-        bh.consume(rs);
-    }
-
-    @Benchmark
-    public void min(Blackhole bh) {
+    public void MIN(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -328,23 +320,19 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void minMasked(Blackhole bh) {
+    public void MAX(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < as.length; i++) {
                 double a = as[i];
                 double b = bs[i];
-                if (ms[i % ms.length]) {
-                    rs[i] = (double)(Math.min(a, b));
-                } else {
-                    rs[i] = a;
-                }
+                rs[i] = (double)(Math.max(a, b));
             }
         }
+
         bh.consume(rs);
     }
 
@@ -355,7 +343,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void addLanes(Blackhole bh) {
+    public void ADDLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         double r = 0;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -368,7 +356,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void addLanesMasked(Blackhole bh) {
+    public void ADDMaskedLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         double r = 0;
@@ -383,7 +371,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void mulLanes(Blackhole bh) {
+    public void MULLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         double r = 1;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -396,7 +384,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void mulLanesMasked(Blackhole bh) {
+    public void MULMaskedLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         double r = 1;
@@ -411,7 +399,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void minLanes(Blackhole bh) {
+    public void MINLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         double r = Double.POSITIVE_INFINITY;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -424,7 +412,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void minLanesMasked(Blackhole bh) {
+    public void MINMaskedLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         double r = Double.POSITIVE_INFINITY;
@@ -439,7 +427,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void maxLanes(Blackhole bh) {
+    public void MAXLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         double r = Double.NEGATIVE_INFINITY;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -452,7 +440,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void maxLanesMasked(Blackhole bh) {
+    public void MAXMaskedLanes(Blackhole bh) {
         double[] as = fa.apply(size);
         boolean[] ms = fm.apply(size);
         double r = Double.NEGATIVE_INFINITY;
@@ -469,7 +457,98 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void lessThan(Blackhole bh) {
+    public void IS_DEFAULT(Blackhole bh) {
+        double[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                double a = as[i];
+                boolean m = bits(a)==0;
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void IS_NEGATIVE(Blackhole bh) {
+        double[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                double a = as[i];
+                boolean m = bits(a)<0;
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+    @Benchmark
+    public void IS_FINITE(Blackhole bh) {
+        double[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                double a = as[i];
+                boolean m = Double.isFinite(a);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void IS_NAN(Blackhole bh) {
+        double[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                double a = as[i];
+                boolean m = Double.isNaN(a);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+
+    @Benchmark
+    public void IS_INFINITE(Blackhole bh) {
+        double[] as = fa.apply(size);
+
+        boolean r = false;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            r = false;
+            for (int i = 0; i < as.length; i++) {
+                double a = as[i];
+                boolean m = Double.isInfinite(a);
+                r |= m; // accumulate so JIT can't eliminate the computation
+            }
+        }
+
+        bh.consume(r);
+    }
+
+
+    @Benchmark
+    public void LT(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
 
@@ -486,7 +565,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void greaterThan(Blackhole bh) {
+    public void GT(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
 
@@ -503,7 +582,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void equal(Blackhole bh) {
+    public void EQ(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
 
@@ -520,7 +599,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void notEqual(Blackhole bh) {
+    public void NE(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
 
@@ -537,7 +616,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void lessThanEq(Blackhole bh) {
+    public void LE(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
 
@@ -554,7 +633,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void greaterThanEq(Blackhole bh) {
+    public void GE(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
 
@@ -684,7 +763,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void sin(Blackhole bh) {
+    public void SIN(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -701,7 +780,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void exp(Blackhole bh) {
+    public void EXP(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -718,7 +797,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void log1p(Blackhole bh) {
+    public void LOG1P(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -735,7 +814,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void log(Blackhole bh) {
+    public void LOG(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -752,7 +831,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void log10(Blackhole bh) {
+    public void LOG10(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -769,7 +848,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void expm1(Blackhole bh) {
+    public void EXPM1(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -786,7 +865,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void cos(Blackhole bh) {
+    public void COS(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -803,7 +882,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void tan(Blackhole bh) {
+    public void TAN(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -820,7 +899,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void sinh(Blackhole bh) {
+    public void SINH(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -837,7 +916,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void cosh(Blackhole bh) {
+    public void COSH(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -854,7 +933,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void tanh(Blackhole bh) {
+    public void TANH(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -871,7 +950,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void asin(Blackhole bh) {
+    public void ASIN(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -888,7 +967,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void acos(Blackhole bh) {
+    public void ACOS(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -905,7 +984,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void atan(Blackhole bh) {
+    public void ATAN(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -922,7 +1001,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void cbrt(Blackhole bh) {
+    public void CBRT(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -939,7 +1018,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void hypot(Blackhole bh) {
+    public void HYPOT(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -958,7 +1037,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void pow(Blackhole bh) {
+    public void POW(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -977,7 +1056,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void atan2(Blackhole bh) {
+    public void ATAN2(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] rs = fr.apply(size);
@@ -996,7 +1075,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void fma(Blackhole bh) {
+    public void FMA(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] cs = fc.apply(size);
@@ -1018,7 +1097,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void fmaMasked(Blackhole bh) {
+    public void FMAMasked(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] bs = fb.apply(size);
         double[] cs = fc.apply(size);
@@ -1041,8 +1120,10 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
 
+
+
     @Benchmark
-    public void neg(Blackhole bh) {
+    public void NEG(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -1057,7 +1138,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void negMasked(Blackhole bh) {
+    public void NEGMasked(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
@@ -1074,7 +1155,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void abs(Blackhole bh) {
+    public void ABS(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -1089,7 +1170,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void absMasked(Blackhole bh) {
+    public void ABSMasked(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);
@@ -1108,8 +1189,10 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
 
+
+
     @Benchmark
-    public void sqrt(Blackhole bh) {
+    public void SQRT(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
 
@@ -1126,7 +1209,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public void sqrtMasked(Blackhole bh) {
+    public void SQRTMasked(Blackhole bh) {
         double[] as = fa.apply(size);
         double[] rs = fr.apply(size);
         boolean[] ms = fm.apply(size);

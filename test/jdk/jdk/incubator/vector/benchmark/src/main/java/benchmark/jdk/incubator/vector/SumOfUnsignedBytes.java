@@ -25,6 +25,7 @@
 package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.*;
+
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;
@@ -78,13 +79,13 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
         var acc = IntVector.zero(I256);
         for (int i = 0; i < data.length; i += B256.length()) {
             var vb = ByteVector.fromArray(B256, data, i);
-            var vi = (IntVector)vb.reinterpret(I256);
+            var vi = (IntVector)vb.reinterpretAsInts();
             for (int j = 0; j < 4; j++) {
-                var tj = vi.shiftRight(j * 8).and(lobyte_mask);
+                var tj = vi.lanewise(VectorOperators.LSHR, j * 8).and(lobyte_mask);
                 acc = acc.add(tj);
             }
         }
-        return (int)Integer.toUnsignedLong(acc.addLanes());
+        return (int)Integer.toUnsignedLong(acc.reduceLanes(VectorOperators.ADD));
     }
 
     // 2. 16-bit accumulators
@@ -96,17 +97,17 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
         var acc = ShortVector.zero(S256);
         for (int i = 0; i < data.length; i += B256.length()) {
             var vb = ByteVector.fromArray(B256, data, i);
-            var vs = (ShortVector)vb.reinterpret(S256);
+            var vs = (ShortVector)vb.reinterpretAsShorts();
             for (int j = 0; j < 2; j++) {
-                var tj = vs.shiftRight(j * 8).and(lobyte_mask);
+                var tj = vs.lanewise(VectorOperators.LSHR, j * 8).and(lobyte_mask);
                 acc = acc.add(tj);
             }
         }
 
         int mid = S128.length();
-        var accLo = ((IntVector)(acc             .reshape(S128).cast(I256))).and(0xFFFF); // low half as ints
-        var accHi = ((IntVector)(acc.shiftLanesLeft(mid).reshape(S128).cast(I256))).and(0xFFFF); // high half as ints
-        return accLo.addLanes() + accHi.addLanes();
+        var accLo = ((IntVector)(acc.reinterpretShape(S128, 0).castShape(I256, 0))).and(0xFFFF); // low half as ints
+        var accHi = ((IntVector)(acc.reinterpretShape(S128, 1).castShape(I256, 0))).and(0xFFFF); // high half as ints
+        return accLo.reduceLanes(VectorOperators.ADD) + accHi.reduceLanes(VectorOperators.ADD);
     }
 
     /*
@@ -153,9 +154,9 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
         var vc = ByteVector.zero(B256);
         for (int i = 0; i < B256.length(); i++) {
             if ((va.get(i) & 0xFF) + (vb.get(i) & 0xFF) < 0xFF) {
-                vc = vc.with(i, (byte)(va.get(i) + vb.get(i)));
+                vc = vc.withLane(i, (byte)(va.get(i) + vb.get(i)));
             } else {
-                vc = vc.with(i, (byte)0xFF);
+                vc = vc.withLane(i, (byte)0xFF);
             }
         }
         return vc;
@@ -164,9 +165,9 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
         var vc = ByteVector.zero(B256);
         for (int i = 0; i < B256.length(); i++) {
             if ((va.get(i) & 0xFF) > (vb.get(i) & 0xFF)) {
-                vc = vc.with(i, (byte)(va.get(i) - vb.get(i)));
+                vc = vc.withLane(i, (byte)(va.get(i) - vb.get(i)));
             } else {
-                vc = vc.with(i, (byte)(vb.get(i) - va.get(i)));
+                vc = vc.withLane(i, (byte)(vb.get(i) - va.get(i)));
             }
         }
         return sum(vc);

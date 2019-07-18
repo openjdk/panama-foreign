@@ -8,11 +8,11 @@
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 $abstractvectortype$ av = $abstractvectortype$.fromArray(SPECIES, a, i);
                 $abstractvectortype$ bv = $abstractvectortype$.fromArray(SPECIES, b, i);
-                VectorMask<$Wideboxtype$> mv = av.[[TEST]](bv);
+                VectorMask<$Wideboxtype$> mv = av.compare(VectorOperators.[[TEST]], bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
-                    Assert.assertEquals(mv.lane(j), a[i + j] [[TEST_OP]] b[i + j]);
+                    Assert.assertEquals(mv.laneIsSet(j), a[i + j] [[TEST_OP]] b[i + j]);
                 }
             }
         }

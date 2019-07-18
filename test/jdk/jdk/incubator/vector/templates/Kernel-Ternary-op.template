@@ -8,7 +8,7 @@
                 $abstractvectortype$ av = $abstractvectortype$.fromArray(SPECIES, a, i);
                 $abstractvectortype$ bv = $abstractvectortype$.fromArray(SPECIES, b, i);
                 $abstractvectortype$ cv = $abstractvectortype$.fromArray(SPECIES, c, i);
-                av.[[TEST]](bv, cv).intoArray(r, i);
+                av.lanewise(VectorOperators.[[TEST]], bv, cv).intoArray(r, i);
             }
         }
 

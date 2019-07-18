@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,12 @@
 package jdk.incubator.vector;
 
 import java.util.Arrays;
+import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
+
+import static jdk.incubator.vector.VectorOperators.*;
 
 abstract class AbstractMask<E> extends VectorMask<E> {
-
     /*package-private*/
     abstract boolean[] getBits();
 
@@ -47,22 +50,30 @@ abstract class AbstractMask<E> extends VectorMask<E> {
 
     abstract AbstractMask<E> bOp(VectorMask<E> o, MBinOp f);
 
+    /*package-private*/
+    abstract AbstractSpecies<E> vspecies();
+
     @Override
-    public String toString() {
-        return Arrays.toString(getBits());
+    @ForceInline
+    public final VectorSpecies<E> vectorSpecies() {
+        return vspecies();
     }
 
     @Override
-    public boolean lane(int i) {
+    public boolean laneIsSet(int i) {
         return getBits()[i];
     }
 
     @Override
     public long toLong() {
+        // FIXME: This should be an intrinsic.
+        if (length() > Long.SIZE) {
+            throw new IllegalArgumentException("too many lanes for one long");
+        }
         long res = 0;
         long set = 1;
         boolean[] bits = getBits();
-        for (int i = 0; i < species().length(); i++) {
+        for (int i = 0; i < bits.length; i++) {
             res = bits[i] ? res | set : res;
             set = set << 1;
         }
@@ -71,7 +82,7 @@ abstract class AbstractMask<E> extends VectorMask<E> {
 
     @Override
     public void intoArray(boolean[] bits, int i) {
-        System.arraycopy(getBits(), 0, bits, i, species().length());
+        System.arraycopy(getBits(), 0, bits, i, length());
     }
 
     @Override
@@ -80,7 +91,30 @@ abstract class AbstractMask<E> extends VectorMask<E> {
     }
 
     @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public
+    <F> VectorMask<F> check(Class<F> elementType) {
+        if (vectorSpecies().elementType() != elementType) {
+            throw AbstractSpecies.checkFailed(this, elementType);
+        }
+        return (VectorMask<F>) this;
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public
+    <F> VectorMask<F> check(VectorSpecies<F> species) {
+        if (species != vectorSpecies()) {
+            throw AbstractSpecies.checkFailed(this, species);
+        }
+        return (VectorMask<F>) this;
+    }
+
+    @Override
     public int trueCount() {
+        //FIXME: use a population count intrinsic here
         int c = 0;
         for (boolean i : getBits()) {
             if (i) c++;
@@ -89,22 +123,58 @@ abstract class AbstractMask<E> extends VectorMask<E> {
     }
 
     @Override
-    public AbstractMask<E> and(VectorMask<E> o) {
-        return bOp(o, (i, a, b) -> a && b);
+    public int firstTrue() {
+        //FIXME: use a count trailing zeros intrinsic here
+        boolean[] bits = getBits();
+        for (int i = 0; i < bits.length; i++) {
+            if (bits[i])  return i;
+        }
+        return bits.length;
     }
 
     @Override
-    public AbstractMask<E> or(VectorMask<E> o) {
-        return bOp(o, (i, a, b) -> a || b);
+    public int lastTrue() {
+        //FIXME: use a count leading zeros intrinsic here
+        boolean[] bits = getBits();
+        for (int i = bits.length-1; i >= 0; i--) {
+            if (bits[i])  return i;
+        }
+        return -1;
+    }
+
+    @Override
+    public AbstractMask<E> and(VectorMask<E> m) {
+        // FIXME: Generate good code here.
+        return bOp(m, (i, a, b) -> a && b);
+    }
+
+    @Override
+    public AbstractMask<E> or(VectorMask<E> m) {
+        // FIXME: Generate good code here.
+        return bOp(m, (i, a, b) -> a || b);
+    }
+
+    @Override
+    public AbstractMask<E> equal(VectorMask<E> m) {
+        // FIXME: Generate good code here.
+        return bOp(m, (i, a, b) -> a == b);
+    }
+
+    @Override
+    public AbstractMask<E> andNot(VectorMask<E> m) {
+        // FIXME: Generate good code here.
+        return bOp(m, (i, a, b) -> a && !b);
     }
 
     @Override
     public AbstractMask<E> not() {
+        // FIXME: Generate good code here.
         return uOp((i, a) -> !a);
     }
 
     /*package-private*/
     static boolean anyTrueHelper(boolean[] bits) {
+        // FIXME: Maybe use toLong() != 0 here.
         for (boolean i : bits) {
             if (i) return true;
         }
@@ -113,149 +183,124 @@ abstract class AbstractMask<E> extends VectorMask<E> {
 
     /*package-private*/
     static boolean allTrueHelper(boolean[] bits) {
+        // FIXME: Maybe use not().toLong() == 0 here.
         for (boolean i : bits) {
             if (!i) return false;
         }
         return true;
     }
 
-    // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
-    @SuppressWarnings("unchecked")
-    static <E> VectorMask<E> trueMask(VectorSpecies<E> species) {
-        Class<?> eType = species.elementType();
+    @Override
+    @ForceInline
+    public AbstractMask<E> indexInRange(int offset, int limit) {
+        int vlength = length();
+        Vector<E> iota = vectorSpecies().zero().addIndex(1);
+        VectorMask<E> badMask = checkIndex0(offset, limit, iota, vlength);
+        return this.andNot(badMask);
+    }
 
-        if (eType == byte.class) {
-            if (species.vectorType() == ByteMaxVector.class)
-                return (VectorMask<E>) ByteMaxVector.ByteMaxMask.TRUE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Byte64Vector.Byte64Mask.TRUE_MASK;
-                case 128: return (VectorMask<E>) Byte128Vector.Byte128Mask.TRUE_MASK;
-                case 256: return (VectorMask<E>) Byte256Vector.Byte256Mask.TRUE_MASK;
-                case 512: return (VectorMask<E>) Byte512Vector.Byte512Mask.TRUE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
-        } else if (eType == short.class) {
-            if (species.vectorType() == ShortMaxVector.class)
-                return (VectorMask<E>) ShortMaxVector.ShortMaxMask.TRUE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Short64Vector.Short64Mask.TRUE_MASK;
-                case 128: return (VectorMask<E>) Short128Vector.Short128Mask.TRUE_MASK;
-                case 256: return (VectorMask<E>) Short256Vector.Short256Mask.TRUE_MASK;
-                case 512: return (VectorMask<E>) Short512Vector.Short512Mask.TRUE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
-        } else if (eType == int.class) {
-            if (species.vectorType() == IntMaxVector.class)
-                return (VectorMask<E>) IntMaxVector.IntMaxMask.TRUE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Int64Vector.Int64Mask.TRUE_MASK;
-                case 128: return (VectorMask<E>) Int128Vector.Int128Mask.TRUE_MASK;
-                case 256: return (VectorMask<E>) Int256Vector.Int256Mask.TRUE_MASK;
-                case 512: return (VectorMask<E>) Int512Vector.Int512Mask.TRUE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
-        } else if (eType == long.class) {
-            if (species.vectorType() == LongMaxVector.class)
-                return (VectorMask<E>) LongMaxVector.LongMaxMask.TRUE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Long64Vector.Long64Mask.TRUE_MASK;
-                case 128: return (VectorMask<E>) Long128Vector.Long128Mask.TRUE_MASK;
-                case 256: return (VectorMask<E>) Long256Vector.Long256Mask.TRUE_MASK;
-                case 512: return (VectorMask<E>) Long512Vector.Long512Mask.TRUE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
-        } else if (eType == float.class) {
-            if (species.vectorType() == FloatMaxVector.class)
-                return (VectorMask<E>) FloatMaxVector.FloatMaxMask.TRUE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Float64Vector.Float64Mask.TRUE_MASK;
-                case 128: return (VectorMask<E>) Float128Vector.Float128Mask.TRUE_MASK;
-                case 256: return (VectorMask<E>) Float256Vector.Float256Mask.TRUE_MASK;
-                case 512: return (VectorMask<E>) Float512Vector.Float512Mask.TRUE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
-        } else if (eType == double.class) {
-            if (species.vectorType() == DoubleMaxVector.class)
-                return (VectorMask<E>) DoubleMaxVector.DoubleMaxMask.TRUE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Double64Vector.Double64Mask.TRUE_MASK;
-                case 128: return (VectorMask<E>) Double128Vector.Double128Mask.TRUE_MASK;
-                case 256: return (VectorMask<E>) Double256Vector.Double256Mask.TRUE_MASK;
-                case 512: return (VectorMask<E>) Double512Vector.Double512Mask.TRUE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
+    /*package-private*/
+    @ForceInline
+    AbstractVector<E>
+    toVectorTemplate() {
+        AbstractSpecies<E> vsp = vspecies();
+        AbstractVector<E> zero = vsp.broadcast(0);
+        AbstractVector<E> mone = vsp.broadcast(-1);
+        // -1 will result in the most significant bit being set in
+        // addition to some or all other lane bits.
+        // For integral types, *all* lane bits will be set.
+        // The bits for -1.0 are like {0b10111*0000*}.
+        // FIXME: Use a conversion intrinsic for this operation.
+        // https://bugs.openjdk.java.net/browse/JDK-8225740
+        return (AbstractVector<E>) zero.blend(mone, this);
+    }
+
+    /**
+     * Test if a masked memory access at a given offset into an array
+     * of the given length will stay within the array.
+     * The per-lane offsets are iota*esize.
+     */
+    /*package-private*/
+    @ForceInline
+    void checkIndexByLane(int offset, int alength,
+                          Vector<E> iota,
+                          int esize) {
+        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK == 0) {
+            return;
+        }
+        // Although the specification is simple, the implementation is
+        // tricky, because the value iota*esize might possibly
+        // overflow.  So we calculate our test values as scalars,
+        // clipping to the range [-1..VLENGTH], and test them against
+        // the unscaled iota vector, whose values are in [0..VLENGTH-1].
+        int vlength = length();
+        VectorMask<E> badMask;
+        if (esize == 1) {
+            badMask = checkIndex0(offset, alength, iota, vlength);
+        } else if (offset >= 0) {
+            // Masked access to multi-byte lanes in byte array.
+            // It could be aligned anywhere.
+            int elemCount = Math.min(vlength, (alength - offset) / esize);
+            badMask = checkIndex0(0, elemCount, iota, vlength);
         } else {
-            throw new IllegalArgumentException("Bad element type of species");
+            // This requires a split test.
+            int clipOffset = Math.max(offset, -(vlength * esize));
+            int elemCount = Math.min(vlength, (alength - clipOffset) / esize);
+            badMask = checkIndex0(0, elemCount, iota, vlength);
+            clipOffset &= (esize - 1);  // power of two, so OK
+            VectorMask<E> badMask2 = checkIndex0(clipOffset / esize, vlength,
+                                                 iota, vlength);
+            badMask = badMask.or(badMask2);
+        }
+        badMask = badMask.and(this);
+        if (badMask.anyTrue()) {
+            int badLane = badMask.firstTrue();
+            throw ((AbstractMask<E>)badMask)
+                   .checkIndexFailed(offset, badLane, alength, esize);
         }
     }
 
-    // @@@ This is a bad implementation -- makes lambdas capturing -- fix this
-    @SuppressWarnings("unchecked")
-    static <E> VectorMask<E> falseMask(VectorSpecies<E> species) {
-        Class<?> eType = species.elementType();
-
-        if (eType == byte.class) {
-            if (species.vectorType() == ByteMaxVector.class)
-                return (VectorMask<E>) ByteMaxVector.ByteMaxMask.FALSE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Byte64Vector.Byte64Mask.FALSE_MASK;
-                case 128: return (VectorMask<E>) Byte128Vector.Byte128Mask.FALSE_MASK;
-                case 256: return (VectorMask<E>) Byte256Vector.Byte256Mask.FALSE_MASK;
-                case 512: return (VectorMask<E>) Byte512Vector.Byte512Mask.FALSE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
+    private
+    @ForceInline
+    VectorMask<E> checkIndex0(int offset, int alength,
+                              Vector<E> iota, int vlength) {
+        // An active lane is bad if its number is greater than
+        // alength-offset, since when added to offset it will step off
+        // of the end of the array.  To avoid overflow when
+        // converting, clip the comparison value to [0..vlength]
+        // inclusive.
+        int indexLimit = Math.max(0, Math.min(alength - offset, vlength));
+        VectorMask<E> badMask =
+            iota.compare(GE, iota.broadcast(indexLimit));
+        if (offset < 0) {
+            // An active lane is bad if its number is less than
+            // -offset, because when added to offset it will then
+            // address an array element at a negative index.  To avoid
+            // overflow when converting, clip the comparison value at
+            // vlength.  This specific expression works correctly even
+            // when offset is Integer.MIN_VALUE.
+            int firstGoodIndex = -Math.max(offset, -vlength);
+            VectorMask<E> badMask2 =
+                iota.compare(LT, iota.broadcast(firstGoodIndex));
+            if (indexLimit >= vlength) {
+                badMask = badMask2;  // 1st badMask is all true
+            } else {
+                badMask = badMask.or(badMask2);
             }
-        } else if (eType == short.class) {
-            if (species.vectorType() == ShortMaxVector.class)
-                return (VectorMask<E>) ShortMaxVector.ShortMaxMask.FALSE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Short64Vector.Short64Mask.FALSE_MASK;
-                case 128: return (VectorMask<E>) Short128Vector.Short128Mask.FALSE_MASK;
-                case 256: return (VectorMask<E>) Short256Vector.Short256Mask.FALSE_MASK;
-                case 512: return (VectorMask<E>) Short512Vector.Short512Mask.FALSE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
-        } else if (eType == int.class) {
-            if (species.vectorType() == IntMaxVector.class)
-                return (VectorMask<E>) IntMaxVector.IntMaxMask.FALSE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Int64Vector.Int64Mask.FALSE_MASK;
-                case 128: return (VectorMask<E>) Int128Vector.Int128Mask.FALSE_MASK;
-                case 256: return (VectorMask<E>) Int256Vector.Int256Mask.FALSE_MASK;
-                case 512: return (VectorMask<E>) Int512Vector.Int512Mask.FALSE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
-        } else if (eType == long.class) {
-            if (species.vectorType() == LongMaxVector.class)
-                return (VectorMask<E>) LongMaxVector.LongMaxMask.FALSE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Long64Vector.Long64Mask.FALSE_MASK;
-                case 128: return (VectorMask<E>) Long128Vector.Long128Mask.FALSE_MASK;
-                case 256: return (VectorMask<E>) Long256Vector.Long256Mask.FALSE_MASK;
-                case 512: return (VectorMask<E>) Long512Vector.Long512Mask.FALSE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
-        } else if (eType == float.class) {
-            if (species.vectorType() == FloatMaxVector.class)
-                return (VectorMask<E>) FloatMaxVector.FloatMaxMask.FALSE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Float64Vector.Float64Mask.FALSE_MASK;
-                case 128: return (VectorMask<E>) Float128Vector.Float128Mask.FALSE_MASK;
-                case 256: return (VectorMask<E>) Float256Vector.Float256Mask.FALSE_MASK;
-                case 512: return (VectorMask<E>) Float512Vector.Float512Mask.FALSE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
-        } else if (eType == double.class) {
-            if (species.vectorType() == DoubleMaxVector.class)
-                return (VectorMask<E>) DoubleMaxVector.DoubleMaxMask.FALSE_MASK;
-            switch (species.bitSize()) {
-                case 64: return (VectorMask<E>) Double64Vector.Double64Mask.FALSE_MASK;
-                case 128: return (VectorMask<E>) Double128Vector.Double128Mask.FALSE_MASK;
-                case 256: return (VectorMask<E>) Double256Vector.Double256Mask.FALSE_MASK;
-                case 512: return (VectorMask<E>) Double512Vector.Double512Mask.FALSE_MASK;
-                default: throw new IllegalArgumentException(Integer.toString(species.bitSize()));
-            }
-        } else {
-            throw new IllegalArgumentException("Bad element type of species");
         }
+        return badMask;
     }
+
+    private IndexOutOfBoundsException checkIndexFailed(int offset, int lane,
+                                                       int alength, int esize) {
+        String msg = String.format("Masked range check failed: "+
+                                   "vector mask %s out of bounds at "+
+                                   "index %d+%d in array of length %d",
+                                   this, offset, lane * esize, alength);
+        if (esize != 1) {
+            msg += String.format(" (each lane spans %d array elements)", esize);
+        }
+        throw new IndexOutOfBoundsException(msg);
+    }
+
 }

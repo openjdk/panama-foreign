@@ -103,7 +103,7 @@ public class ChaChaBench {
         private final int[] state;
 
         public ChaChaVector(VectorShape shape) {
-            this.intSpecies = VectorSpecies.of(Integer.class, shape);
+            this.intSpecies = VectorSpecies.of(int.class, shape);
             this.numBlocks = intSpecies.length() / 4;
 
             this.rot1 = makeRotate(1);
@@ -242,20 +242,20 @@ public class ChaChaBench {
                 for (int i = 0; i < 10; i++) {
                     // first round
                     a = a.add(b);
-                    d = d.xor(a);
-                    d = d.rotateLeft(16);
+                    d = d.lanewise(VectorOperators.XOR, a);
+                    d = d.lanewise(VectorOperators.ROL, 16);
 
                     c = c.add(d);
-                    b = b.xor(c);
-                    b = b.rotateLeft(12);
+                    b = b.lanewise(VectorOperators.XOR, c);
+                    b = b.lanewise(VectorOperators.ROL,12);
 
                     a = a.add(b);
-                    d = d.xor(a);
-                    d = d.rotateLeft(8);
+                    d = d.lanewise(VectorOperators.XOR, a);
+                    d = d.lanewise(VectorOperators.ROL,8);
 
                     c = c.add(d);
-                    b = b.xor(c);
-                    b = b.rotateLeft(7);
+                    b = b.lanewise(VectorOperators.XOR, c);
+                    b = b.lanewise(VectorOperators.ROL,7);
 
                     // makeRotate
                     b = b.rearrange(rot1);
@@ -264,20 +264,20 @@ public class ChaChaBench {
 
                     // second round
                     a = a.add(b);
-                    d = d.xor(a);
-                    d = d.rotateLeft(16);
+                    d = d.lanewise(VectorOperators.XOR, a);
+                    d = d.lanewise(VectorOperators.ROL,16);
 
                     c = c.add(d);
-                    b = b.xor(c);
-                    b = b.rotateLeft(12);
+                    b = b.lanewise(VectorOperators.XOR, c);
+                    b = b.lanewise(VectorOperators.ROL,12);
 
                     a = a.add(b);
-                    d = d.xor(a);
-                    d = d.rotateLeft(8);
+                    d = d.lanewise(VectorOperators.XOR, a);
+                    d = d.lanewise(VectorOperators.ROL,8);
 
                     c = c.add(d);
-                    b = b.xor(c);
-                    b = b.rotateLeft(7);
+                    b = b.lanewise(VectorOperators.XOR, c);
+                    b = b.lanewise(VectorOperators.ROL,7);
 
                     // makeRotate
                     b = b.rearrange(rot3);
@@ -294,10 +294,14 @@ public class ChaChaBench {
                 if (intSpecies.length() == 4) {
                     // no rearrange needed
                 } else if (intSpecies.length() == 8) {
-                    IntVector a_r = a.rearrange(b, shuf0, mask1);
-                    IntVector b_r = c.rearrange(d, shuf0, mask1);
-                    IntVector c_r = a.rearrange(b, shuf1, mask1);
-                    IntVector d_r = c.rearrange(d, shuf1, mask1);
+                    IntVector a_r =
+                            a.rearrange(shuf0).blend(b.rearrange(shuf0), mask1);
+                    IntVector b_r =
+                            c.rearrange(shuf0).blend(d.rearrange(shuf0), mask1);
+                    IntVector c_r =
+                            a.rearrange(shuf1).blend(b.rearrange(shuf1), mask1);
+                    IntVector d_r =
+                            c.rearrange(shuf1).blend(d.rearrange(shuf1), mask1);
 
                     a = a_r;
                     b = b_r;
@@ -339,10 +343,10 @@ public class ChaChaBench {
                 IntVector inc = IntVector.fromByteArray(intSpecies, in, inOff + 8 * len);
                 IntVector ind = IntVector.fromByteArray(intSpecies, in, inOff + 12 * len);
 
-                ina.xor(a).intoByteArray(out, inOff);
-                inb.xor(b).intoByteArray(out, inOff + 4 * len);
-                inc.xor(c).intoByteArray(out, inOff + 8 * len);
-                ind.xor(d).intoByteArray(out, inOff + 12 * len);
+                ina.lanewise(VectorOperators.XOR, a).intoByteArray(out, inOff);
+                inb.lanewise(VectorOperators.XOR, b).intoByteArray(out, inOff + 4 * len);
+                inc.lanewise(VectorOperators.XOR, c).intoByteArray(out, inOff + 8 * len);
+                ind.lanewise(VectorOperators.XOR, d).intoByteArray(out, inOff + 12 * len);
 
                 // increment counter
                 sd = sd.add(counterAdd);

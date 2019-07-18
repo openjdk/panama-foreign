@@ -106,7 +106,7 @@ public class Spp {
     static final String LNSEP = System.getProperty("line.separator");
     static final String KEY = "([a-zA-Z0-9]+)";
     static final String VAR = "([a-zA-Z0-9_\\-]+)";
-    static final String TEXT = "([a-zA-Z0-9&;,.<>/#() \\?\\[\\]\\$]+)"; // $ -- hack embedded $var$
+    static final String TEXT = "([\\p{Print}&&[^{#:}]]+)";
 
     static final int GN_NOT = 1;
     static final int GN_KEY = 2;

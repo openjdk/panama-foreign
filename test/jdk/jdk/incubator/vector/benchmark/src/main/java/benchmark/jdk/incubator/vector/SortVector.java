@@ -24,11 +24,8 @@
  */
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.Vector;
-import jdk.incubator.vector.VectorMask;
-import jdk.incubator.vector.VectorSpecies;
-import jdk.incubator.vector.VectorShuffle;
+import jdk.incubator.vector.*;
+
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;
@@ -78,7 +75,7 @@ public class SortVector extends AbstractVectorBenchmark {
 
 
     void sort(VectorSpecies<Integer> spec) {
-        var iota = (IntVector) VectorShuffle.shuffleIota(spec).toVector(); // [ 0 1 ... n ]
+        var iota = (IntVector) VectorShuffle.iota(spec, 0, 1).toVector(); // [ 0 1 ... n ]
 
         var result = IntVector.broadcast(spec, 0);
         var index = IntVector.broadcast(spec, 0);
@@ -88,19 +85,19 @@ public class SortVector extends AbstractVectorBenchmark {
             var input = IntVector.fromArray(spec, in, i);
 
             for (int j = 0; j < input.length(); j++) {
-                var shuf = index.toShuffle();
+                var shuf = index.toShuffle().wrapIndexes();
                 var b = input.rearrange(shuf); // broadcast j-th element
-                var lt = input.lessThan(b).trueCount();
-                var eq = input.equal(b).trueCount();
+                var lt = input.lt(b).trueCount();
+                var eq = input.eq(b).trueCount();
 
                 // int/long -> mask?
                 // int m = (1 << (lt + eq)) - (1 << lt);
-                // var mask = masks[lt + eq].xor(masks[lt]);
+                // var mask = masks[lt + eq].lanewise(VectorOperators.XOR, masks[lt]);
                 // var mask = masks[lt + eq].and(masks[lt].not());
                 //
                 // masks[i] =  [ 0 0 ... 0 1 ... 1 ]
                 //                      i-th
-                var m = iota.lessThan(lt + eq).and(iota.lessThan(lt).not());
+                var m = iota.lt(spec.broadcast(lt + eq)).and(iota.lt(spec.broadcast(lt)).not());
 
                 result = result.blend(b, m);
                 index = index.add(incr);

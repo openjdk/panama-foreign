@@ -470,6 +470,7 @@ JVMState* LibraryIntrinsic::generate(JVMState* jvms) {
   }
   C->gather_intrinsic_statistics(intrinsic_id(), is_virtual(), Compile::_intrinsic_failed);
   C->print_inlining_update(this);
+
   return NULL;
 }
 
@@ -6919,10 +6920,20 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   const TypeInt* vlen             = gvn().type(argument(3))->is_int();
 
   if (!opr->is_con() || vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: opr=%s vclass=%s etype=%s vlen=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
@@ -6933,11 +6944,19 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
   if (opc == Op_CallLeafVector && !Matcher::supports_vector_calling_convention()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** cannot support vector calling convention");
+    }
     return false;
   }
 
   // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
   if (!arch_supports_vector(sopc, num_elem, elem_bt, vbox_klass->is_vectormask() ? VecMaskUseAll : VecMaskNotUsed, n)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=%d opc=%d vlen=%d etype=%s ismask=%d",
+                    n, sopc, num_elem, type2name(elem_bt),
+                    vbox_klass->is_vectormask() ? 1 : 0);
+    }
     return false; // not supported
   }
 
@@ -6946,6 +6965,10 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
     case 3: {
       opd3 = unbox_vector(argument(6), vbox_type, elem_bt, num_elem);
       if (opd3 == NULL) {
+        if (C->print_intrinsics()) {
+          tty->print_cr("  ** unbox failed v3=%s",
+                        NodeClassNames[argument(6)->Opcode()]);
+        }
         return false;
       }
       // fall-through
@@ -6953,6 +6976,10 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
     case 2: {
       opd2 = unbox_vector(argument(5), vbox_type, elem_bt, num_elem);
       if (opd2 == NULL) {
+        if (C->print_intrinsics()) {
+          tty->print_cr("  ** unbox failed v2=%s",
+                        NodeClassNames[argument(5)->Opcode()]);
+        }
         return false;
       }
       // fall-through
@@ -6960,6 +6987,10 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
     case 1: {
       opd1 = unbox_vector(argument(4), vbox_type, elem_bt, num_elem);
       if (opd1 == NULL) {
+        if (C->print_intrinsics()) {
+          tty->print_cr("  ** unbox failed v1=%s",
+                        NodeClassNames[argument(4)->Opcode()]);
+        }
         return false;
       }
       break;
@@ -6971,6 +7002,9 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   if (sopc == Op_CallLeafVector) {
     operation = gen_call_to_svml(opr->get_con(), elem_bt, num_elem, opd1, opd2);
     if (operation == NULL) {
+      if (C->print_intrinsics()) {
+        tty->print_cr("  ** svml call failed");
+      }
       return false;
     }
   } else {
@@ -7026,13 +7060,16 @@ bool LibraryCallKit::inline_vector_shuffle_iota() {
   const TypeVect * vt = TypeVect::make(Type::get_const_basic_type(elem_bt), num_elem);
 
   Node* iota =  _gvn.transform(new VectorLoadConstNode(gvn().makecon(TypeInt::ZERO), vt));
+
   Node* bcast_step = _gvn.transform(VectorNode::scalar2vector(step, num_elem, Type::get_const_basic_type(elem_bt)));
 
-  Node* bcast_mod  = _gvn.transform(VectorNode::scalar2vector(gvn().makecon(TypeInt::make(num_elem-1)),
-                                             num_elem, Type::get_const_basic_type(elem_bt)));
-  Node* add = _gvn.transform(VectorNode::make(Op_AddI, iota, bcast_step, num_elem, elem_bt));
-  Node* res = _gvn.transform(VectorNode::make(Op_AndI, add,  bcast_mod, num_elem, elem_bt));
+  // TBD: Need to correct to match the new partiallyWrapIndex
+//  Node* bcast_mod  = _gvn.transform(VectorNode::scalar2vector(gvn().makecon(TypeInt::make(num_elem-1)),
+//                                             num_elem, Type::get_const_basic_type(elem_bt)));
+//  Node* add = _gvn.transform(VectorNode::make(Op_AddI, iota, bcast_step, num_elem, elem_bt));
+//  Node* res = _gvn.transform(VectorNode::make(Op_AndI, add,  bcast_mod, num_elem, elem_bt));
 
+  Node* res = _gvn.transform(VectorNode::make(Op_AddI, iota, bcast_step, num_elem, elem_bt));
   ciKlass* sbox_klass = shuffle_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* shuffle_box_type = TypeInstPtr::make_exact(TypePtr::NotNull, sbox_klass);
 
@@ -7096,11 +7133,20 @@ bool LibraryCallKit::inline_vector_broadcast_coerced() {
   const TypeInt* vlen             = gvn().type(argument(2))->is_int();
 
   if (vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: vclass=%s etype=%s vlen=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
 
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
@@ -7111,6 +7157,11 @@ bool LibraryCallKit::inline_vector_broadcast_coerced() {
   // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
   if (!arch_supports_vector(VectorNode::replicate_opcode(elem_bt), num_elem, elem_bt,
                             vbox_klass->is_vectormask() ? VecMaskUseStore : VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=0 op=broadcast vlen=%d etype=%s ismask=%d",
+                    num_elem, type2name(elem_bt),
+                    vbox_klass->is_vectormask() ? 1 : 0);
+    }
     return false; // not supported
   }
 
@@ -7171,11 +7222,20 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
   const TypeInt* vlen             = gvn().type(argument(2))->is_int();
 
   if (vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: vclass=%s etype=%s vlen=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
 
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
@@ -7183,6 +7243,11 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
 
   // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
   if (!arch_supports_vector(is_store ? Op_StoreVector : Op_LoadVector, num_elem, elem_bt, VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=%d op=%s vlen=%d etype=%s ismask=no",
+                    is_store, is_store ? "store" : "load",
+                    num_elem, type2name(elem_bt));
+    }
     return false; // not supported
   }
 
@@ -7211,11 +7276,21 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
   if (using_byte_array) {
     int byte_num_elem = num_elem * type2aelembytes(elem_bt);
     if (!arch_supports_vector(is_store ? Op_StoreVector : Op_LoadVector, byte_num_elem, T_BYTE, VecMaskNotUsed)) {
+      if (C->print_intrinsics()) {
+        tty->print_cr("  ** not supported: arity=%d op=%s vlen=%d*8 etype=%s/8 ismask=no",
+                      is_store, is_store ? "store" : "load",
+                      byte_num_elem, type2name(elem_bt));
+      }
       return false; // not supported
     }
   }
   if (is_mask) {
     if (!arch_supports_vector(Op_LoadVector, num_elem, T_BOOLEAN, VecMaskNotUsed)) {
+      if (C->print_intrinsics()) {
+        tty->print_cr("  ** not supported: arity=%d op=%s/mask vlen=%d etype=bit ismask=no",
+                      is_store, is_store ? "store" : "load",
+                      num_elem);
+      }
       return false; // not supported
     }
   }
@@ -7288,22 +7363,42 @@ bool LibraryCallKit::inline_vector_gather_scatter(bool is_scatter) {
   const TypeInstPtr* vector_idx_klass = gvn().type(argument(3))->is_instptr();
 
   if (vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || vector_idx_klass->const_oop() == NULL || !vlen->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: vclass=%s etype=%s vlen=%s viclass=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
 
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
 
   if (!arch_supports_vector(is_scatter ? Op_StoreVectorScatter : Op_LoadVectorGather, num_elem, elem_bt, VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=%d op=%s vlen=%d etype=%s ismask=no",
+                    is_scatter, is_scatter ? "scatter" : "gather",
+                    num_elem, type2name(elem_bt));
+    }
     return false; // not supported
   }
 
   // Check that the vector holding indices is supported by architecture
   if (!arch_supports_vector(Op_LoadVector, num_elem, T_INT, VecMaskNotUsed)) {
+      if (C->print_intrinsics()) {
+        tty->print_cr("  ** not supported: arity=%d op=%s/loadindex vlen=%d etype=int ismask=no",
+                      is_scatter, is_scatter ? "scatter" : "gather",
+                      num_elem);
+      }
       return false; // not supported
     }
 
@@ -7366,11 +7461,21 @@ bool LibraryCallKit::inline_vector_reduction() {
   const TypeInstPtr* elem_klass   = gvn().type(argument(2))->is_instptr();
   const TypeInt* vlen             = gvn().type(argument(3))->is_int();
 
-  if (vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con()) {
+  if (!opr->is_con() || vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: opr=%s vclass=%s etype=%s vlen=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
@@ -7391,6 +7496,10 @@ bool LibraryCallKit::inline_vector_reduction() {
 
   // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
   if (!arch_supports_vector(sopc, num_elem, elem_bt, VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=1 op=%d/reduce vlen=%d etype=%s ismask=no",
+                    sopc, num_elem, type2name(elem_bt));
+    }
     return false;
   }
 
@@ -7444,10 +7553,20 @@ bool LibraryCallKit::inline_vector_test() {
   const TypeInt* vlen             = gvn().type(argument(3))->is_int();
 
   if (!cond->is_con() || vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: cond=%s vclass=%s etype=%s vlen=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
@@ -7457,6 +7576,11 @@ bool LibraryCallKit::inline_vector_test() {
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
   if (!arch_supports_vector(Op_VectorTest, num_elem, elem_bt, vbox_klass->is_vectormask() ? VecMaskUseLoad : VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=2 op=test/%d vlen=%d etype=%s ismask=%d",
+                    cond->get_con(), num_elem, type2name(elem_bt),
+                    vbox_klass->is_vectormask());
+    }
     return false;
   }
 
@@ -7486,10 +7610,20 @@ bool LibraryCallKit::inline_vector_blend() {
 
   if (mask_klass->const_oop() == NULL || vector_klass->const_oop() == NULL ||
       elem_klass->const_oop() == NULL || !vlen->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: vclass=%s mclass=%s etype=%s vlen=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
@@ -7497,6 +7631,10 @@ bool LibraryCallKit::inline_vector_blend() {
   int num_elem = vlen->get_con();
 
   if (!arch_supports_vector(Op_VectorBlend, num_elem, elem_bt, VecMaskUseLoad)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=2 op=blend vlen=%d etype=%s ismask=useload",
+                    num_elem, type2name(elem_bt));
+    }
     return false; // not supported
   }
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
@@ -7537,10 +7675,21 @@ bool LibraryCallKit::inline_vector_compare() {
 
   if (!cond->is_con() || vector_klass->const_oop() == NULL || mask_klass->const_oop() == NULL ||
       elem_klass->const_oop() == NULL || !vlen->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: cond=%s vclass=%s mclass=%s etype=%s vlen=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()],
+                    NodeClassNames[argument(4)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
 
@@ -7549,6 +7698,10 @@ bool LibraryCallKit::inline_vector_compare() {
   BasicType mask_bt = elem_bt;
 
   if (!arch_supports_vector(Op_VectorMaskCmp, num_elem, elem_bt, VecMaskUseStore)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=2 op=comp/%d vlen=%d etype=%s ismask=usestore",
+                    cond->get_con(), num_elem, type2name(elem_bt));
+    }
     return false;
   }
 
@@ -7590,9 +7743,19 @@ bool LibraryCallKit::inline_vector_rearrange() {
   if (shuffle_klass->const_oop() == NULL || vector_klass->const_oop() == NULL ||
     elem_klass->const_oop() == NULL || !vlen->is_con()) {
     return false; // not enough info for intrinsification
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: vclass=%s sclass=%s etype=%s vlen=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()]);
+    }
   }
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
@@ -7600,9 +7763,17 @@ bool LibraryCallKit::inline_vector_rearrange() {
   int num_elem = vlen->get_con();
 
   if (!arch_supports_vector(Op_VectorLoadShuffle, num_elem, elem_bt, VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=0 op=load/shuffle vlen=%d etype=%s ismask=no",
+                    num_elem, type2name(elem_bt));
+    }
     return false; // not supported
   }
   if (!arch_supports_vector(Op_VectorRearrange, num_elem, elem_bt, VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=2 op=shuffle/rearrange vlen=%d etype=%s ismask=no",
+                    num_elem, type2name(elem_bt));
+    }
     return false; // not supported
   }
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
@@ -8057,10 +8228,20 @@ bool LibraryCallKit::inline_vector_broadcast_int() {
   const TypeInt* vlen             = gvn().type(argument(3))->is_int();
 
   if (!opr->is_con() || vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: opr=%s vclass=%s etype=%s vlen=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
@@ -8071,6 +8252,10 @@ bool LibraryCallKit::inline_vector_broadcast_int() {
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
   if (!arch_supports_vector(sopc, num_elem, elem_bt, VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=0 op=int/%d vlen=%d etype=%s ismask=no",
+                    sopc, num_elem, type2name(elem_bt));
+    }
     return false; // not supported
   }
   Node* opd1 = unbox_vector(argument(4), vbox_type, elem_bt, num_elem);
@@ -8129,6 +8314,11 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
                             num_elem_from,
                             elem_bt_from,
                             is_mask ? VecMaskUseAll : VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=1 op=%s/1 vlen1=%d etype1=%s ismask=%d",
+                    is_cast ? "cast" : "reinterpret",
+                    num_elem_from, type2name(elem_bt_from), is_mask);
+    }
     return false;
   }
 
@@ -8137,6 +8327,11 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
                             num_elem_to,
                             elem_bt_to,
                             is_mask ? VecMaskUseAll : VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=1 op=%s/2 vlen2=%d etype2=%s ismask=%d",
+                    is_cast ? "cast" : "reinterpret",
+                    num_elem_to, type2name(elem_bt_to), is_mask);
+    }
     return false;
   }
 
@@ -8163,6 +8358,11 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
     int cast_vopc = VectorCastNode::opcode(elem_bt_from);
     // Make sure that cast is implemented to particular type/size combination.
     if (!arch_supports_vector(cast_vopc, num_elem_to, elem_bt_to, VecMaskNotUsed)) {
+      if (C->print_intrinsics()) {
+        tty->print_cr("  ** not supported: arity=1 op=cast#%d/3 vlen2=%d etype2=%s ismask=%d",
+                      cast_vopc,
+                      num_elem_to, type2name(elem_bt_to), is_mask);
+      }
       return false;
     }
 
@@ -8175,6 +8375,11 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
       // It is possible that arch does not support this intermediate vector size
       // TODO More complex logic required here to handle this corner case for the sizes.
       if (!arch_supports_vector(cast_vopc, num_elem_for_cast, elem_bt_to, VecMaskNotUsed)) {
+        if (C->print_intrinsics()) {
+          tty->print_cr("  ** not supported: arity=1 op=cast#%d/4 vlen1=%d etype2=%s ismask=%d",
+                        cast_vopc,
+                        num_elem_for_cast, type2name(elem_bt_to), is_mask);
+        }
         return false;
       }
 
@@ -8192,6 +8397,10 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
                                 num_elem_for_resize,
                                 elem_bt_from,
                                 VecMaskNotUsed)) {
+        if (C->print_intrinsics()) {
+          tty->print_cr("  ** not supported: arity=1 op=cast/5 vlen2=%d etype1=%s ismask=%d",
+                        num_elem_for_resize, type2name(elem_bt_from), is_mask);
+        }
         return false;
       }
 
@@ -8224,15 +8433,29 @@ bool LibraryCallKit::inline_vector_insert() {
   const TypeInt* idx              = gvn().type(argument(4))->is_int();
 
   if (vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con() || !idx->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: vclass=%s etype=%s vlen=%s idx=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
   if (!arch_supports_vector(Op_VectorInsert, num_elem, elem_bt, VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=1 op=insert vlen=%d etype=%s ismask=no",
+                    num_elem, type2name(elem_bt));
+    }
     return false; // not supported
   }
 
@@ -8288,16 +8511,30 @@ bool LibraryCallKit::inline_vector_extract() {
   const TypeInt* idx              = gvn().type(argument(4))->is_int();
 
   if (vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con() || !idx->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: vclass=%s etype=%s vlen=%s idx=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
   ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
   if (!elem_type->is_primitive_type()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not a primitive bt=%d", elem_type->basic_type());
+    }
     return false; // should be primitive type
   }
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
   int vopc = ExtractNode::opcode(elem_bt);
   if (!arch_supports_vector(vopc, num_elem, elem_bt, VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=1 op=extract vlen=%d etype=%s ismask=no",
+                    num_elem, type2name(elem_bt));
+    }
     return false; // not supported
   }
 

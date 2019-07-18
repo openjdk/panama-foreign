@@ -1,16 +1,16 @@
 
     @Benchmark
-    public void [[TEST]][[TEST_TYPE]][[OP_NAME]](Blackhole bh) {
+    public void [[TEST]][[TEST_TYPE]][[OP_NAME]]Lanes(Blackhole bh) {
         $type$[] a = fa.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        VectorMask<$Wideboxtype$> vmask = VectorMask.fromValues(SPECIES, mask);
+        VectorMask<$Wideboxtype$> vmask = VectorMask.fromArray(SPECIES, mask, 0);
         $type$ ra = [[TEST_INIT]];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             ra = [[TEST_INIT]];
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 $abstractvectortype$ av = $abstractvectortype$.fromArray(SPECIES, a, i);
-                ra = ($type$)Math.min(ra, av.[[TEST]](vmask));
+                ra = ($type$)Math.min(ra, av.reduceLanes(VectorOperators.[[TEST]], vmask));
             }
         }
         bh.consume(ra);

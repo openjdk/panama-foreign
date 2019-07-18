@@ -28,6 +28,8 @@
  *
  */
 
+// -- This file was mechanically generated: Do not edit! -- //
+
 import jdk.incubator.vector.VectorShape;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorMask;
@@ -50,6 +52,11 @@ public class Byte256VectorLoadStoreTests extends AbstractVectorTest {
                 ByteVector.SPECIES_256;
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
+
+
+    static final int BUFFER_REPS = Integer.getInteger("jdk.incubator.vector.test.buffer-vectors", 25000 / 256);
+
+    static final int BUFFER_SIZE = Integer.getInteger("jdk.incubator.vector.test.buffer-size", BUFFER_REPS * (256 / 8));
 
     static void assertArraysEquals(byte[] a, byte[] r, boolean[] mask) {
         int i = 0;
@@ -86,11 +93,11 @@ public class Byte256VectorLoadStoreTests extends AbstractVectorTest {
 
     static final List<IntFunction<byte[]>> BYTE_GENERATORS = List.of(
             withToString("byte[i * 5]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (byte)(i * 5));
             }),
             withToString("byte[i + 1]", (int s) -> {
-                return fill(s * 1000,
+                return fill(s * BUFFER_REPS,
                             i -> (((byte)(i + 1) == 0) ? 1 : (byte)(i + 1)));
             })
     );
@@ -246,8 +253,8 @@ public class Byte256VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i);
+                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -269,8 +276,8 @@ public class Byte256VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i);
+                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -294,8 +301,8 @@ public class Byte256VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, vmask);
-                av.intoByteBuffer(r, i);
+                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN, vmask);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -308,8 +315,8 @@ public class Byte256VectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i);
-                av.intoByteBuffer(r, i, vmask);
+                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN, vmask);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");
@@ -334,8 +341,8 @@ public class Byte256VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, vmask);
-                av.intoByteBuffer(r, i);
+                ByteVector av = ByteVector.fromByteBuffer(SPECIES, a, i, ByteOrder.LITTLE_ENDIAN, vmask);
+                av.intoByteBuffer(r, i, ByteOrder.LITTLE_ENDIAN);
             }
         }
         Assert.assertEquals(a.position(), 0, "Input buffer position changed");

@@ -23,14 +23,7 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.ByteVector;
-import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.ShortVector;
-import jdk.incubator.vector.LongVector;
-import jdk.incubator.vector.Vector;
-import jdk.incubator.vector.VectorShape;
-import jdk.incubator.vector.VectorSpecies;
-import jdk.incubator.vector.VectorMask;
+import jdk.incubator.vector.*;
 
 import java.util.Random;
 import java.util.function.IntFunction;
@@ -77,11 +70,11 @@ public class AbstractVectorBenchmark {
     }
 
     static <E> VectorSpecies<E> widen(VectorSpecies<E> s) {
-        return VectorSpecies.of(s.elementType(), widen(s.shape()));
+        return VectorSpecies.of(s.elementType(), widen(s.vectorShape()));
     }
 
     static <E> VectorSpecies<E> narrow(VectorSpecies<E> s) {
-        return VectorSpecies.of(s.elementType(), narrow(s.shape()));
+        return VectorSpecies.of(s.elementType(), narrow(s.vectorShape()));
     }
 
     static IntVector join(VectorSpecies<Integer> from, VectorSpecies<Integer> to, IntVector lo, IntVector hi) {
@@ -90,18 +83,18 @@ public class AbstractVectorBenchmark {
         int vlen = from.length();
         var lo_mask = mask(from, to, 0);
 
-        var v1 = lo.reshape(to);
-        var v2 = hi.reshape(to).shiftLanesRight(vlen);
+        var v1 = lo.reinterpretShape(to, 0);
+        var v2 = hi.reinterpretShape(to, 0).unslice(vlen);
         var r = v2.blend(v1, lo_mask);
-        return r;
+        return (IntVector)r;
     }
 
     static VectorMask<Integer> mask(VectorSpecies<Integer> from, VectorSpecies<Integer> to, int i) {
         int vlen = from.length();
-        var v1 = IntVector.broadcast(from, 1);    //                         [1 1 ... 1]
-        var v2 = v1.reshape(to);                  // [0 0 ... 0 |   ...     | 1 1 ... 1]
-        var v3 = v2.shiftLanesRight(i * vlen);            // [0 0 ... 0 | 1 1 ... 1 | 0 0 ... 0]
-        return v3.notEqual(0);                    // [F F ... F | T T ... T | F F ... F]
+        var v1 = IntVector.broadcast(from, 1);                   //                         [1 1 ... 1]
+        var v2 = v1.reinterpretShape(to, 0);                     // [0 0 ... 0 |   ...     | 1 1 ... 1]
+        var v3 = v2.unslice(i * vlen);                           // [0 0 ... 0 | 1 1 ... 1 | 0 0 ... 0]
+        return v3.compare(VectorOperators.NE, to.broadcast(0));  // [F F ... F | T T ... T | F F ... F]
     }
 
     static <E> IntVector sum(ByteVector va) {
@@ -109,7 +102,7 @@ public class AbstractVectorBenchmark {
         var acc = IntVector.zero(species);
         int limit = va.length() / species.length();
         for (int k = 0; k < limit; k++) {
-            var vb = ((IntVector)(va.shiftLanesLeft(k * B64.length()).reshape(B64).cast(species))).and(0xFF);
+            var vb = ((IntVector)(va.slice(k * B64.length()).reinterpretShape(B64, 0).castShape(species, 0))).and(0xFF);
             acc = acc.add(vb);
         }
         return acc;

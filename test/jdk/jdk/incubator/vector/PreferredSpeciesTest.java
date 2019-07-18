@@ -66,7 +66,10 @@ public class PreferredSpeciesTest {
         } else {
             throw new IllegalArgumentException("Bad vector element type: " + c.getName());
         }
+        VectorShape shape = VectorShape.preferredShape();
 
-        Assert.assertEquals(species.length(), U.getMaxVectorSize(c));
+        System.out.println("class = "+c+"; preferred shape"+shape+"; preferred species = "+species+"; maxSize="+U.getMaxVectorSize(c));
+        Assert.assertEquals(species.vectorShape(), shape);
+        Assert.assertEquals(species.length(), Math.min(species.length(), U.getMaxVectorSize(c)));
     }
 }
