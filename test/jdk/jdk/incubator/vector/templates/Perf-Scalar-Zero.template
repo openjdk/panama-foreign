@@ -1,0 +1,13 @@
+    
+    @Benchmark
+    public void zero(Blackhole bh) {
+        $type$[] as = fa.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                as[i] = ($type$)0;
+            }
+        }
+
+        bh.consume(as);
+    }

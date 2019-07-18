@@ -1006,6 +1006,58 @@ public class ByteScalar extends AbstractVectorBenchmark {
         int window = 512 / Byte.SIZE;
         rearrangeShared(window, bh);
     }
+    void broadcastShared(int window, Blackhole bh) {
+        byte[] as = fa.apply(size);
+        byte[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i += window) {
+                int idx = i;
+                for (int j = 0; j < window; j++) {
+                    rs[j] = a[idx];
+                }
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void broadcast064(Blackhole bh) {
+        int window = 64 / Byte.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast128(Blackhole bh) {
+        int window = 128 / Byte.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast256(Blackhole bh) {
+        int window = 256 / Byte.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast512(Blackhole bh) {
+        int window = 512 / Byte.SIZE;
+        broadcastShared(window, bh);
+    }
+    
+    @Benchmark
+    public void zero(Blackhole bh) {
+        byte[] as = fa.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                as[i] = (byte)0;
+            }
+        }
+
+        bh.consume(as);
+    }
 
 
 

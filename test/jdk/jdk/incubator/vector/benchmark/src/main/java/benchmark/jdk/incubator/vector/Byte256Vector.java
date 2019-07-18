@@ -1198,6 +1198,34 @@ public class Byte256Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void broadcast(Blackhole bh) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector.broadcast(SPECIES, a[i]).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void zero(Blackhole bh) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector.zero(SPECIES).intoArray(a, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
     public void single(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];

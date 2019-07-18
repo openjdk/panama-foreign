@@ -65,6 +65,8 @@ scatter_masked_template="Scatter-Masked-op"
 single_template="Single-op"
 get_template="Get-op"
 rearrange_template="Rearrange"
+broadcast_template="Broadcast"
+zero_template="Zero"
 
 function replace_variables {
   local filename=$1
@@ -378,6 +380,12 @@ gen_op_tmpl $rearrange_template "rearrange" "" $unit_output $perf_output $perf_s
 
 # Get
 gen_get_op "" "" $unit_output $perf_output $perf_scalar_output
+
+# Broadcast
+gen_op_tmpl $broadcast_template "broadcast" "" $unit_output $perf_output $perf_scalar_output
+
+# Zero
+gen_op_tmpl $zero_template "zero" "" $unit_output $perf_output $perf_scalar_output
 
 # Single
 gen_op_tmpl $single_template "single" "" $unit_output $perf_output $perf_scalar_output

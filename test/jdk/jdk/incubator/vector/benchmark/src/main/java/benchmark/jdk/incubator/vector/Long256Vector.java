@@ -1312,6 +1312,34 @@ public class Long256Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void broadcast(Blackhole bh) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector.broadcast(SPECIES, a[i]).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void zero(Blackhole bh) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector.zero(SPECIES).intoArray(a, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
     public void single(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = new long[a.length];

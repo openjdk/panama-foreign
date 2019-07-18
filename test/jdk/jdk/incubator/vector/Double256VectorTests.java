@@ -201,6 +201,23 @@ public class Double256VectorTests extends AbstractVectorTest {
         }
     }
 
+    static void assertBroadcastArraysEquals(double[]a, double[]r) {
+        int i = 0;
+        for (; i < a.length; i += SPECIES.length()) {
+            int idx = i;
+            for (int j = idx; j < (idx + SPECIES.length()); j++)
+                a[j]=a[idx];
+        }
+
+        try {
+            for (i = 0; i < a.length; i++) {
+                Assert.assertEquals(r[i], a[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(r[i], a[i], "at index #" + i + ", input = " + a[i]);
+        }
+    }
+
     interface FBinOp {
         double apply(double a, double b);
     }
@@ -2069,6 +2086,42 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, Double256VectorTests::get);
     }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void BroadcastDouble256VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector.broadcast(SPECIES, a[i]).intoArray(r, i);
+            }
+        }
+
+        assertBroadcastArraysEquals(a, r);
+    }
+
+
+
+
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void ZeroDouble256VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector.zero(SPECIES).intoArray(a, i);
+            }
+        }
+
+        Assert.assertEquals(a, r);
+    }
+
+
+
+
     static double[] single(double val) {
         double[] res = new double[SPECIES.length()];
         res[0] = val;

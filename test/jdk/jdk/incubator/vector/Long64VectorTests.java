@@ -201,6 +201,23 @@ public class Long64VectorTests extends AbstractVectorTest {
         }
     }
 
+    static void assertBroadcastArraysEquals(long[]a, long[]r) {
+        int i = 0;
+        for (; i < a.length; i += SPECIES.length()) {
+            int idx = i;
+            for (int j = idx; j < (idx + SPECIES.length()); j++)
+                a[j]=a[idx];
+        }
+
+        try {
+            for (i = 0; i < a.length; i++) {
+                Assert.assertEquals(r[i], a[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(r[i], a[i], "at index #" + i + ", input = " + a[i]);
+        }
+    }
+
     interface FBinOp {
         long apply(long a, long b);
     }
@@ -2634,6 +2651,42 @@ public class Long64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, Long64VectorTests::get);
     }
+
+    @Test(dataProvider = "longUnaryOpProvider")
+    static void BroadcastLong64VectorTests(IntFunction<long[]> fa) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector.broadcast(SPECIES, a[i]).intoArray(r, i);
+            }
+        }
+
+        assertBroadcastArraysEquals(a, r);
+    }
+
+
+
+
+
+    @Test(dataProvider = "longUnaryOpProvider")
+    static void ZeroLong64VectorTests(IntFunction<long[]> fa) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector.zero(SPECIES).intoArray(a, i);
+            }
+        }
+
+        Assert.assertEquals(a, r);
+    }
+
+
+
+
     static long[] single(long val) {
         long[] res = new long[SPECIES.length()];
         res[0] = val;

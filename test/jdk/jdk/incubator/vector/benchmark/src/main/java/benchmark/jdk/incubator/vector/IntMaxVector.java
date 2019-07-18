@@ -1312,6 +1312,34 @@ public class IntMaxVector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
+    public void broadcast(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector.broadcast(SPECIES, a[i]).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
+    public void zero(Blackhole bh) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector.zero(SPECIES).intoArray(a, i);
+            }
+        }
+
+        bh.consume(r);
+    }
+
+    @Benchmark
     public void single(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];

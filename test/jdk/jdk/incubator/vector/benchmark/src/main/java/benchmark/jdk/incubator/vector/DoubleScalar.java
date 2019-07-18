@@ -708,6 +708,58 @@ public class DoubleScalar extends AbstractVectorBenchmark {
         int window = 512 / Double.SIZE;
         rearrangeShared(window, bh);
     }
+    void broadcastShared(int window, Blackhole bh) {
+        double[] as = fa.apply(size);
+        double[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i += window) {
+                int idx = i;
+                for (int j = 0; j < window; j++) {
+                    rs[j] = a[idx];
+                }
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void broadcast064(Blackhole bh) {
+        int window = 64 / Double.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast128(Blackhole bh) {
+        int window = 128 / Double.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast256(Blackhole bh) {
+        int window = 256 / Double.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast512(Blackhole bh) {
+        int window = 512 / Double.SIZE;
+        broadcastShared(window, bh);
+    }
+    
+    @Benchmark
+    public void zero(Blackhole bh) {
+        double[] as = fa.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                as[i] = (double)0;
+            }
+        }
+
+        bh.consume(as);
+    }
 
 
     @Benchmark

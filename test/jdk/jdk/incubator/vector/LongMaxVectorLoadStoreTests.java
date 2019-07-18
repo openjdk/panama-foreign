@@ -236,6 +236,20 @@ public class LongMaxVectorLoadStoreTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask);
     }
 
+    @Test(dataProvider = "longMaskProvider")
+    static void loadStoreMask(IntFunction<long[]> fa,
+                              IntFunction<boolean[]> fm) {
+        boolean[] mask = fm.apply(SPECIES.length());
+        boolean[] r = new boolean[mask.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < mask.length; i += SPECIES.length()) {
+                VectorMask<Long> vmask = VectorMask.fromArray(SPECIES, mask, i);
+                vmask.intoArray(r, i);
+            }
+        }
+        Assert.assertEquals(mask, r);
+    }
 
     @Test(dataProvider = "longByteBufferProvider")
     static void loadStoreByteBuffer(IntFunction<long[]> fa,

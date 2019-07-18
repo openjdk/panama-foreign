@@ -201,6 +201,23 @@ public class Float256VectorTests extends AbstractVectorTest {
         }
     }
 
+    static void assertBroadcastArraysEquals(float[]a, float[]r) {
+        int i = 0;
+        for (; i < a.length; i += SPECIES.length()) {
+            int idx = i;
+            for (int j = idx; j < (idx + SPECIES.length()); j++)
+                a[j]=a[idx];
+        }
+
+        try {
+            for (i = 0; i < a.length; i++) {
+                Assert.assertEquals(r[i], a[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(r[i], a[i], "at index #" + i + ", input = " + a[i]);
+        }
+    }
+
     interface FBinOp {
         float apply(float a, float b);
     }
@@ -2069,6 +2086,42 @@ public class Float256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, Float256VectorTests::get);
     }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void BroadcastFloat256VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector.broadcast(SPECIES, a[i]).intoArray(r, i);
+            }
+        }
+
+        assertBroadcastArraysEquals(a, r);
+    }
+
+
+
+
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void ZeroFloat256VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector.zero(SPECIES).intoArray(a, i);
+            }
+        }
+
+        Assert.assertEquals(a, r);
+    }
+
+
+
+
     static float[] single(float val) {
         float[] res = new float[SPECIES.length()];
         res[0] = val;

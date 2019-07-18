@@ -228,6 +228,20 @@ public class Int64VectorLoadStoreTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask);
     }
 
+    @Test(dataProvider = "intMaskProvider")
+    static void loadStoreMask(IntFunction<int[]> fa,
+                              IntFunction<boolean[]> fm) {
+        boolean[] mask = fm.apply(SPECIES.length());
+        boolean[] r = new boolean[mask.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < mask.length; i += SPECIES.length()) {
+                VectorMask<Integer> vmask = VectorMask.fromArray(SPECIES, mask, i);
+                vmask.intoArray(r, i);
+            }
+        }
+        Assert.assertEquals(mask, r);
+    }
 
     @Test(dataProvider = "intByteBufferProvider")
     static void loadStoreByteBuffer(IntFunction<int[]> fa,

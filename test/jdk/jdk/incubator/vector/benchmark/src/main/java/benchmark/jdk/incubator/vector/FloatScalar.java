@@ -708,6 +708,58 @@ public class FloatScalar extends AbstractVectorBenchmark {
         int window = 512 / Float.SIZE;
         rearrangeShared(window, bh);
     }
+    void broadcastShared(int window, Blackhole bh) {
+        float[] as = fa.apply(size);
+        float[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i += window) {
+                int idx = i;
+                for (int j = 0; j < window; j++) {
+                    rs[j] = a[idx];
+                }
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void broadcast064(Blackhole bh) {
+        int window = 64 / Float.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast128(Blackhole bh) {
+        int window = 128 / Float.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast256(Blackhole bh) {
+        int window = 256 / Float.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast512(Blackhole bh) {
+        int window = 512 / Float.SIZE;
+        broadcastShared(window, bh);
+    }
+    
+    @Benchmark
+    public void zero(Blackhole bh) {
+        float[] as = fa.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                as[i] = (float)0;
+            }
+        }
+
+        bh.consume(as);
+    }
 
 
     @Benchmark

@@ -236,6 +236,20 @@ public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask);
     }
 
+    @Test(dataProvider = "doubleMaskProvider")
+    static void loadStoreMask(IntFunction<double[]> fa,
+                              IntFunction<boolean[]> fm) {
+        boolean[] mask = fm.apply(SPECIES.length());
+        boolean[] r = new boolean[mask.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < mask.length; i += SPECIES.length()) {
+                VectorMask<Double> vmask = VectorMask.fromArray(SPECIES, mask, i);
+                vmask.intoArray(r, i);
+            }
+        }
+        Assert.assertEquals(mask, r);
+    }
 
     @Test(dataProvider = "doubleByteBufferProvider")
     static void loadStoreByteBuffer(IntFunction<double[]> fa,

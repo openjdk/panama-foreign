@@ -1126,6 +1126,58 @@ public class IntScalar extends AbstractVectorBenchmark {
         int window = 512 / Integer.SIZE;
         rearrangeShared(window, bh);
     }
+    void broadcastShared(int window, Blackhole bh) {
+        int[] as = fa.apply(size);
+        int[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i += window) {
+                int idx = i;
+                for (int j = 0; j < window; j++) {
+                    rs[j] = a[idx];
+                }
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+    @Benchmark
+    public void broadcast064(Blackhole bh) {
+        int window = 64 / Integer.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast128(Blackhole bh) {
+        int window = 128 / Integer.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast256(Blackhole bh) {
+        int window = 256 / Integer.SIZE;
+        broadcastShared(window, bh);
+    }
+
+    @Benchmark
+    public void broadcast512(Blackhole bh) {
+        int window = 512 / Integer.SIZE;
+        broadcastShared(window, bh);
+    }
+    
+    @Benchmark
+    public void zero(Blackhole bh) {
+        int[] as = fa.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                as[i] = (int)0;
+            }
+        }
+
+        bh.consume(as);
+    }
 
 
 
