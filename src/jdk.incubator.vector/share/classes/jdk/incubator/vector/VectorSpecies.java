@@ -573,7 +573,7 @@ public interface VectorSpecies<E> {
     public abstract long checkValue(long e);
 
     /**
-     * Loads a shuffle for this species from
+     * Creates a shuffle for this species from
      * a series of source indexes.
      *
      * <p> For each shuffle lane, where {@code N} is the shuffle lane
@@ -591,7 +591,7 @@ public interface VectorSpecies<E> {
     public abstract VectorShuffle<E> shuffleFromValues(int... sourceIndexes);
 
     /**
-     * Loads a shuffle for this species from
+     * Creates a shuffle for this species from
      * an {@code int} array starting at an offset.
      *
      * <p> For each shuffle lane, where {@code N} is the shuffle lane
@@ -611,7 +611,7 @@ public interface VectorSpecies<E> {
     public abstract VectorShuffle<E> shuffleFromArray(int[] sourceIndexes, int offset);
 
     /**
-     * Loads a shuffle for this species from
+     * Creates a shuffle for this species from
      * the successive values of an operator applied to
      * the range {@code [0..VLENGTH-1]}.
      *
@@ -643,7 +643,7 @@ public interface VectorSpecies<E> {
     public abstract VectorShuffle<E> shuffleFromOp(IntUnaryOperator fn);
 
     /**
-     * Loads a shuffle using source indexes set to sequential
+     * Creates a shuffle using source indexes set to sequential
      * values starting from {@code start} and stepping
      * by the given {@code step}.
      * If {@code wrap} is true, also reduce each index, as if
@@ -651,7 +651,7 @@ public interface VectorSpecies<E> {
      * to the valid range {@code [0..VLENGTH-1]}.
      * <p>
      * This method returns the value of the expression
-     * {@code VectorShuffle.fromOp(species, i -> R(start + i * step))},
+     * {@code shuffleFromOp(i -> R(start + i * step))},
      * where {@code R} is {@code wrapIndex} if {@code wrap} is true,
      * and is the identity function otherwise.
      *

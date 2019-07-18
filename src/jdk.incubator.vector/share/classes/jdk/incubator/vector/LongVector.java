@@ -2069,24 +2069,24 @@ public abstract class LongVector extends AbstractVector<Long> {
                                            S shuffle,
                                            LongVector v) {
         VectorMask<Long> valid = shuffle.laneIsValid();
-        VectorShuffle<Long> ws = shuffle.wrapIndexes();
+        S ws = shuffletype.cast(shuffle.wrapIndexes());
+        LongVector r0 =
+            VectorIntrinsics.rearrangeOp(
+                getClass(), shuffletype, long.class, length(),
+                this, ws,
+                (v0, s_) -> v0.uOp((i, a) -> {
+                    int ei = s_.laneSource(i);
+                    return v0.lane(ei);
+                }));
         LongVector r1 =
             VectorIntrinsics.rearrangeOp(
                 getClass(), shuffletype, long.class, length(),
-                this, shuffle,
+                v, ws,
                 (v1, s_) -> v1.uOp((i, a) -> {
                     int ei = s_.laneSource(i);
                     return v1.lane(ei);
                 }));
-        LongVector r2 =
-            VectorIntrinsics.rearrangeOp(
-                getClass(), shuffletype, long.class, length(),
-                v, shuffle,
-                (v1, s_) -> v1.uOp((i, a) -> {
-                    int ei = s_.laneSource(i);
-                    return v1.lane(ei);
-                }));
-        return r2.blend(r1, valid);
+        return r1.blend(r0, valid);
     }
 
     /**

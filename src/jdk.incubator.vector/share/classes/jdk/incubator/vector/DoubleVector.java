@@ -2106,24 +2106,24 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                                            S shuffle,
                                            DoubleVector v) {
         VectorMask<Double> valid = shuffle.laneIsValid();
-        VectorShuffle<Double> ws = shuffle.wrapIndexes();
+        S ws = shuffletype.cast(shuffle.wrapIndexes());
+        DoubleVector r0 =
+            VectorIntrinsics.rearrangeOp(
+                getClass(), shuffletype, double.class, length(),
+                this, ws,
+                (v0, s_) -> v0.uOp((i, a) -> {
+                    int ei = s_.laneSource(i);
+                    return v0.lane(ei);
+                }));
         DoubleVector r1 =
             VectorIntrinsics.rearrangeOp(
                 getClass(), shuffletype, double.class, length(),
-                this, shuffle,
+                v, ws,
                 (v1, s_) -> v1.uOp((i, a) -> {
                     int ei = s_.laneSource(i);
                     return v1.lane(ei);
                 }));
-        DoubleVector r2 =
-            VectorIntrinsics.rearrangeOp(
-                getClass(), shuffletype, double.class, length(),
-                v, shuffle,
-                (v1, s_) -> v1.uOp((i, a) -> {
-                    int ei = s_.laneSource(i);
-                    return v1.lane(ei);
-                }));
-        return r2.blend(r1, valid);
+        return r1.blend(r0, valid);
     }
 
     /**

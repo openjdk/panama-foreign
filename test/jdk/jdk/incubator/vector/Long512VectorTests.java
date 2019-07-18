@@ -643,6 +643,43 @@ public class Long512VectorTests extends AbstractVectorTest {
         long max = higher.reduceLanes(VectorOperators.MAX);
         assert(max == -3 + scale * (SPECIES.length()-1));
     }
+
+    private static long[]
+    bothToArray(LongVector a, LongVector b) {
+        long[] r = new long[a.length() + b.length()];
+        a.intoArray(r, 0);
+        b.intoArray(r, a.length());
+        return r;
+    }   
+
+    @Test
+    static void smokeTest2() {
+        // Do some zipping and shuffling.
+        LongVector io = (LongVector) SPECIES.broadcast(0).addIndex(1);
+        LongVector io2 = (LongVector) VectorShuffle.iota(SPECIES,0,1,false).toVector();
+        Assert.assertEquals(io, io2);
+        LongVector a = io.add((long)1); //[1,2]
+        LongVector b = a.neg();  //[-1,-2]
+        long[] abValues = bothToArray(a,b); //[1,2,-1,-2]
+        VectorShuffle<Long> zip0 = VectorShuffle.makeZip(SPECIES, 0);
+        VectorShuffle<Long> zip1 = VectorShuffle.makeZip(SPECIES, 1);
+        LongVector zab0 = a.rearrange(zip0,b); //[1,-1]
+        LongVector zab1 = a.rearrange(zip1,b); //[2,-2]
+        long[] zabValues = bothToArray(zab0, zab1); //[1,-1,2,-2]
+        // manually zip
+        long[] manual = new long[zabValues.length];
+        for (int i = 0; i < manual.length; i += 2) {
+            manual[i+0] = abValues[i/2];
+            manual[i+1] = abValues[a.length() + i/2];
+        }
+        Assert.assertEquals(Arrays.toString(zabValues), Arrays.toString(manual));
+        VectorShuffle<Long> unz0 = VectorShuffle.makeUnzip(SPECIES, 0);
+        VectorShuffle<Long> unz1 = VectorShuffle.makeUnzip(SPECIES, 1);
+        LongVector uab0 = zab0.rearrange(unz0,zab1);
+        LongVector uab1 = zab0.rearrange(unz1,zab1);
+        long[] abValues1 = bothToArray(uab0, uab1);
+        Assert.assertEquals(Arrays.toString(abValues), Arrays.toString(abValues1));
+    }
     static long ADD(long a, long b) {
         return (long)(a + b);
     }

@@ -2197,24 +2197,24 @@ public abstract class IntVector extends AbstractVector<Integer> {
                                            S shuffle,
                                            IntVector v) {
         VectorMask<Integer> valid = shuffle.laneIsValid();
-        VectorShuffle<Integer> ws = shuffle.wrapIndexes();
+        S ws = shuffletype.cast(shuffle.wrapIndexes());
+        IntVector r0 =
+            VectorIntrinsics.rearrangeOp(
+                getClass(), shuffletype, int.class, length(),
+                this, ws,
+                (v0, s_) -> v0.uOp((i, a) -> {
+                    int ei = s_.laneSource(i);
+                    return v0.lane(ei);
+                }));
         IntVector r1 =
             VectorIntrinsics.rearrangeOp(
                 getClass(), shuffletype, int.class, length(),
-                this, shuffle,
+                v, ws,
                 (v1, s_) -> v1.uOp((i, a) -> {
                     int ei = s_.laneSource(i);
                     return v1.lane(ei);
                 }));
-        IntVector r2 =
-            VectorIntrinsics.rearrangeOp(
-                getClass(), shuffletype, int.class, length(),
-                v, shuffle,
-                (v1, s_) -> v1.uOp((i, a) -> {
-                    int ei = s_.laneSource(i);
-                    return v1.lane(ei);
-                }));
-        return r2.blend(r1, valid);
+        return r1.blend(r0, valid);
     }
 
     /**

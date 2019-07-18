@@ -2197,24 +2197,24 @@ public abstract class ByteVector extends AbstractVector<Byte> {
                                            S shuffle,
                                            ByteVector v) {
         VectorMask<Byte> valid = shuffle.laneIsValid();
-        VectorShuffle<Byte> ws = shuffle.wrapIndexes();
+        S ws = shuffletype.cast(shuffle.wrapIndexes());
+        ByteVector r0 =
+            VectorIntrinsics.rearrangeOp(
+                getClass(), shuffletype, byte.class, length(),
+                this, ws,
+                (v0, s_) -> v0.uOp((i, a) -> {
+                    int ei = s_.laneSource(i);
+                    return v0.lane(ei);
+                }));
         ByteVector r1 =
             VectorIntrinsics.rearrangeOp(
                 getClass(), shuffletype, byte.class, length(),
-                this, shuffle,
+                v, ws,
                 (v1, s_) -> v1.uOp((i, a) -> {
                     int ei = s_.laneSource(i);
                     return v1.lane(ei);
                 }));
-        ByteVector r2 =
-            VectorIntrinsics.rearrangeOp(
-                getClass(), shuffletype, byte.class, length(),
-                v, shuffle,
-                (v1, s_) -> v1.uOp((i, a) -> {
-                    int ei = s_.laneSource(i);
-                    return v1.lane(ei);
-                }));
-        return r2.blend(r1, valid);
+        return r1.blend(r0, valid);
     }
 
     /**

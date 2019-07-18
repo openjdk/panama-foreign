@@ -702,6 +702,43 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float max = higher.reduceLanes(VectorOperators.MAX);
         assert(max == -3 + scale * (SPECIES.length()-1));
     }
+
+    private static float[]
+    bothToArray(FloatVector a, FloatVector b) {
+        float[] r = new float[a.length() + b.length()];
+        a.intoArray(r, 0);
+        b.intoArray(r, a.length());
+        return r;
+    }   
+
+    @Test
+    static void smokeTest2() {
+        // Do some zipping and shuffling.
+        FloatVector io = (FloatVector) SPECIES.broadcast(0).addIndex(1);
+        FloatVector io2 = (FloatVector) VectorShuffle.iota(SPECIES,0,1,false).toVector();
+        Assert.assertEquals(io, io2);
+        FloatVector a = io.add((float)1); //[1,2]
+        FloatVector b = a.neg();  //[-1,-2]
+        float[] abValues = bothToArray(a,b); //[1,2,-1,-2]
+        VectorShuffle<Float> zip0 = VectorShuffle.makeZip(SPECIES, 0);
+        VectorShuffle<Float> zip1 = VectorShuffle.makeZip(SPECIES, 1);
+        FloatVector zab0 = a.rearrange(zip0,b); //[1,-1]
+        FloatVector zab1 = a.rearrange(zip1,b); //[2,-2]
+        float[] zabValues = bothToArray(zab0, zab1); //[1,-1,2,-2]
+        // manually zip
+        float[] manual = new float[zabValues.length];
+        for (int i = 0; i < manual.length; i += 2) {
+            manual[i+0] = abValues[i/2];
+            manual[i+1] = abValues[a.length() + i/2];
+        }
+        Assert.assertEquals(Arrays.toString(zabValues), Arrays.toString(manual));
+        VectorShuffle<Float> unz0 = VectorShuffle.makeUnzip(SPECIES, 0);
+        VectorShuffle<Float> unz1 = VectorShuffle.makeUnzip(SPECIES, 1);
+        FloatVector uab0 = zab0.rearrange(unz0,zab1);
+        FloatVector uab1 = zab0.rearrange(unz1,zab1);
+        float[] abValues1 = bothToArray(uab0, uab1);
+        Assert.assertEquals(Arrays.toString(abValues), Arrays.toString(abValues1));
+    }
     static float ADD(float a, float b) {
         return (float)(a + b);
     }

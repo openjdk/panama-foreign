@@ -2198,24 +2198,24 @@ public abstract class ShortVector extends AbstractVector<Short> {
                                            S shuffle,
                                            ShortVector v) {
         VectorMask<Short> valid = shuffle.laneIsValid();
-        VectorShuffle<Short> ws = shuffle.wrapIndexes();
+        S ws = shuffletype.cast(shuffle.wrapIndexes());
+        ShortVector r0 =
+            VectorIntrinsics.rearrangeOp(
+                getClass(), shuffletype, short.class, length(),
+                this, ws,
+                (v0, s_) -> v0.uOp((i, a) -> {
+                    int ei = s_.laneSource(i);
+                    return v0.lane(ei);
+                }));
         ShortVector r1 =
             VectorIntrinsics.rearrangeOp(
                 getClass(), shuffletype, short.class, length(),
-                this, shuffle,
+                v, ws,
                 (v1, s_) -> v1.uOp((i, a) -> {
                     int ei = s_.laneSource(i);
                     return v1.lane(ei);
                 }));
-        ShortVector r2 =
-            VectorIntrinsics.rearrangeOp(
-                getClass(), shuffletype, short.class, length(),
-                v, shuffle,
-                (v1, s_) -> v1.uOp((i, a) -> {
-                    int ei = s_.laneSource(i);
-                    return v1.lane(ei);
-                }));
-        return r2.blend(r1, valid);
+        return r1.blend(r0, valid);
     }
 
     /**

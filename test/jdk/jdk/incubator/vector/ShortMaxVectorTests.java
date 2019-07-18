@@ -648,6 +648,43 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
         short max = higher.reduceLanes(VectorOperators.MAX);
         assert(max == -3 + scale * (SPECIES.length()-1));
     }
+
+    private static short[]
+    bothToArray(ShortVector a, ShortVector b) {
+        short[] r = new short[a.length() + b.length()];
+        a.intoArray(r, 0);
+        b.intoArray(r, a.length());
+        return r;
+    }   
+
+    @Test
+    static void smokeTest2() {
+        // Do some zipping and shuffling.
+        ShortVector io = (ShortVector) SPECIES.broadcast(0).addIndex(1);
+        ShortVector io2 = (ShortVector) VectorShuffle.iota(SPECIES,0,1,false).toVector();
+        Assert.assertEquals(io, io2);
+        ShortVector a = io.add((short)1); //[1,2]
+        ShortVector b = a.neg();  //[-1,-2]
+        short[] abValues = bothToArray(a,b); //[1,2,-1,-2]
+        VectorShuffle<Short> zip0 = VectorShuffle.makeZip(SPECIES, 0);
+        VectorShuffle<Short> zip1 = VectorShuffle.makeZip(SPECIES, 1);
+        ShortVector zab0 = a.rearrange(zip0,b); //[1,-1]
+        ShortVector zab1 = a.rearrange(zip1,b); //[2,-2]
+        short[] zabValues = bothToArray(zab0, zab1); //[1,-1,2,-2]
+        // manually zip
+        short[] manual = new short[zabValues.length];
+        for (int i = 0; i < manual.length; i += 2) {
+            manual[i+0] = abValues[i/2];
+            manual[i+1] = abValues[a.length() + i/2];
+        }
+        Assert.assertEquals(Arrays.toString(zabValues), Arrays.toString(manual));
+        VectorShuffle<Short> unz0 = VectorShuffle.makeUnzip(SPECIES, 0);
+        VectorShuffle<Short> unz1 = VectorShuffle.makeUnzip(SPECIES, 1);
+        ShortVector uab0 = zab0.rearrange(unz0,zab1);
+        ShortVector uab1 = zab0.rearrange(unz1,zab1);
+        short[] abValues1 = bothToArray(uab0, uab1);
+        Assert.assertEquals(Arrays.toString(abValues), Arrays.toString(abValues1));
+    }
     static short ADD(short a, short b) {
         return (short)(a + b);
     }

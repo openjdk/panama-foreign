@@ -251,7 +251,7 @@ public abstract class VectorShuffle<E> {
     public abstract VectorMask<E> laneIsValid();
 
     /**
-     * Loads a shuffle for a given species from
+     * Creates a shuffle for a given species from
      * a series of source indexes.
      *
      * <p> For each shuffle lane, where {@code N} is the shuffle lane
@@ -276,7 +276,7 @@ public abstract class VectorShuffle<E> {
     }
 
     /**
-     * Loads a shuffle for a given species from
+     * Creates a shuffle for a given species from
      * an {@code int} array starting at an offset.
      *
      * <p> For each shuffle lane, where {@code N} is the shuffle lane
@@ -301,7 +301,7 @@ public abstract class VectorShuffle<E> {
     }
      
     /**
-     * Loads a shuffle for a given species from
+     * Creates a shuffle for a given species from
      * the successive values of an operator applied to
      * the range {@code [0..VLENGTH-1]}.
      *
@@ -338,7 +338,7 @@ public abstract class VectorShuffle<E> {
     }
 
     /**
-     * Loads a shuffle using source indexes set to sequential
+     * Creates a shuffle using source indexes set to sequential
      * values starting from {@code start} and stepping
      * by the given {@code step}.
      * If {@code wrap} is true, also reduce each index (as if
@@ -369,6 +369,91 @@ public abstract class VectorShuffle<E> {
                                             boolean wrap) {
         AbstractSpecies<E> vsp = (AbstractSpecies<E>) species;
         return vsp.iotaShuffle(start, step, wrap);
+    }
+
+    /**
+     * Creates a shuffle which will zip together two vectors,
+     * alternatively selecting lanes from one or the other.
+     * The logical result of a zip is twice the size of either
+     * input, and so the
+     * <a href="Vector.html#expansion">expanded result</a>
+     * is broken into two physical parts, selected by
+     * a part number.
+     * For example, zipping two vectors {@code [a,b,c,d]} and
+     * {@code [1,2,3,4]} will yield the expanded logical result
+     * {@code [a,1,b,2,c,3,d,4]} which must be obtained in two
+     * parts, {@code [a,1,b,2]} and {@code [c,3,d,4]}.
+     * <p>
+     * This method returns the value of the expression
+     * {@code VectorShuffle.fromOp(species, i -> i/2 + (i%2)*VLENGTH + P},
+     * where {@code P} is {@code part*VLENGTH/2}.
+     * <p>s
+     * Note that the source indexes in the odd lanes of the shuffle
+     * will be invalid indexes ({@code >= VLENGTH}, or {@code < 0}
+     * after partial normalization), which will select from the second
+     * vector.
+     *
+     * @param part the part number of the result (either zero or one)
+     * @return a shuffle which zips two vectors into {@code 2*VLENGTH} lanes, returning the selected part
+     * @throws ArrayIndexOutOfBoundsException if {@code part} is not zero or one
+     * @see #makeUnzip(int)
+     * @see Vector#rearrange(VectorShuffle,Vector)
+     */
+    public static <E> VectorShuffle<E> makeZip(VectorSpecies<E> species,
+                                               int part) {
+        if ((part & 1) != part)
+            throw wrongPartForZip(part, false);
+        AbstractSpecies<E> vsp = (AbstractSpecies<E>) species;
+        return vsp.shuffleFromOp(i -> zipIndex(i, vsp.laneCount(), part));
+    }
+
+    /**
+     * Creates a shuffle which will unzip the concatenation of two
+     * vectors, alternatively storing input lanes into one or the
+     * other output vector.
+     * Since the logical result of an unzip is twice the size of
+     * either input, the
+     * <a href="Vector.html#expansion">expanded result</a>
+     * is broken into two physical parts, selected by
+     * a part number.
+     * For example, unzipping two vectors {@code [a,1,b,2][c,3,d,4]}
+     * will yield a result in two parts, {@code [a,b,c,d]} and
+     * {@code [1,2,3,4]}.
+     * <p>
+     * This method returns the value of the expression
+     * {@code VectorShuffle.fromOp(species, i -> i*2+part}.
+     * <p>
+     * Note that the source indexes in upper half of the shuffle will
+     * be invalid indexes ({@code >= VLENGTH}, or {@code < 0} after
+     * partial normalization), which will select from the second
+     * vector.
+     *
+     * @param part the part number of the result (either zero or one)
+     * @return a shuffle which unzips {@code 2*VLENGTH} lanes into two vectors, returning the selected part
+     * @throws ArrayIndexOutOfBoundsException if {@code part} is not zero or one
+     * @see #makeZip(int)
+     * @see Vector#rearrange(VectorShuffle,Vector)
+     */
+    public static <E> VectorShuffle<E> makeUnzip(VectorSpecies<E> species,
+                                                 int part) {
+        if ((part & 1) != part)
+            throw wrongPartForZip(part, true);
+        AbstractSpecies<E> vsp = (AbstractSpecies<E>) species;
+        return vsp.shuffleFromOp(i -> unzipIndex(i, vsp.laneCount(), part));
+    }
+
+    private static int zipIndex(int i, int vlen, int part) {
+        int offset = part * ((vlen+1) >> 1);
+        return (i/2) + ((i&1) * vlen) + offset;
+    }
+    private static int unzipIndex(int i, int vlen, int part) {
+        return (i*2) + part;
+    }
+    private static ArrayIndexOutOfBoundsException
+    wrongPartForZip(int part, boolean unzip) {
+        String msg = String.format("bad part number %d for %szip",
+                                   part, unzip ? "un" : "");
+        return new ArrayIndexOutOfBoundsException(msg);
     }
 
     /**

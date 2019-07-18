@@ -2106,24 +2106,24 @@ public abstract class FloatVector extends AbstractVector<Float> {
                                            S shuffle,
                                            FloatVector v) {
         VectorMask<Float> valid = shuffle.laneIsValid();
-        VectorShuffle<Float> ws = shuffle.wrapIndexes();
+        S ws = shuffletype.cast(shuffle.wrapIndexes());
+        FloatVector r0 =
+            VectorIntrinsics.rearrangeOp(
+                getClass(), shuffletype, float.class, length(),
+                this, ws,
+                (v0, s_) -> v0.uOp((i, a) -> {
+                    int ei = s_.laneSource(i);
+                    return v0.lane(ei);
+                }));
         FloatVector r1 =
             VectorIntrinsics.rearrangeOp(
                 getClass(), shuffletype, float.class, length(),
-                this, shuffle,
+                v, ws,
                 (v1, s_) -> v1.uOp((i, a) -> {
                     int ei = s_.laneSource(i);
                     return v1.lane(ei);
                 }));
-        FloatVector r2 =
-            VectorIntrinsics.rearrangeOp(
-                getClass(), shuffletype, float.class, length(),
-                v, shuffle,
-                (v1, s_) -> v1.uOp((i, a) -> {
-                    int ei = s_.laneSource(i);
-                    return v1.lane(ei);
-                }));
-        return r2.blend(r1, valid);
+        return r1.blend(r0, valid);
     }
 
     /**

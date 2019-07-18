@@ -2452,24 +2452,24 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
                                            S shuffle,
                                            $abstractvectortype$ v) {
         VectorMask<$Boxtype$> valid = shuffle.laneIsValid();
-        VectorShuffle<$Boxtype$> ws = shuffle.wrapIndexes();
+        S ws = shuffletype.cast(shuffle.wrapIndexes());
+        $abstractvectortype$ r0 =
+            VectorIntrinsics.rearrangeOp(
+                getClass(), shuffletype, $type$.class, length(),
+                this, ws,
+                (v0, s_) -> v0.uOp((i, a) -> {
+                    int ei = s_.laneSource(i);
+                    return v0.lane(ei);
+                }));
         $abstractvectortype$ r1 =
             VectorIntrinsics.rearrangeOp(
                 getClass(), shuffletype, $type$.class, length(),
-                this, shuffle,
+                v, ws,
                 (v1, s_) -> v1.uOp((i, a) -> {
                     int ei = s_.laneSource(i);
                     return v1.lane(ei);
                 }));
-        $abstractvectortype$ r2 =
-            VectorIntrinsics.rearrangeOp(
-                getClass(), shuffletype, $type$.class, length(),
-                v, shuffle,
-                (v1, s_) -> v1.uOp((i, a) -> {
-                    int ei = s_.laneSource(i);
-                    return v1.lane(ei);
-                }));
-        return r2.blend(r1, valid);
+        return r1.blend(r0, valid);
     }
 
     /**
