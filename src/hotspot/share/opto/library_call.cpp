@@ -7293,6 +7293,15 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
       }
       return false; // not supported
     }
+    if (!is_store) {
+      if (!arch_supports_vector(Op_LoadVector, num_elem, elem_bt, VecMaskUseLoad)) {
+        return false; // not supported
+      }
+    } else {
+         if (!arch_supports_vector(Op_StoreVector, num_elem, elem_bt, VecMaskUseStore)) {
+           return false; // not supported
+         }
+    }
   }
 
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
