@@ -106,7 +106,7 @@ import java.util.function.IntUnaryOperator;
  * 
  * </ul>
  
- * <h1>Value-based classes and identity operations</h1>
+ * <h2>Value-based classes and identity operations</h2>
  *
  * {@code VectorShuffle}, along with {@code Vector} is a
  * <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
@@ -187,6 +187,7 @@ public abstract class VectorShuffle<E> {
      *
      * Otherwise, an {@code IndexOutOfBoundsException} is thrown.
      *
+     * @param index the lane index
      * @return {@code index}
      * @throws IndexOutOfBoundsException if the {@code index} is
      *         not less than {@code VLENGTH}, or is negative
@@ -208,6 +209,7 @@ public abstract class VectorShuffle<E> {
      * As long as {@code VLENGTH} is a power of two, then the
      * reduced index also equal to {@code index & (VLENGTH - 1)}.
      *
+     * @param index the lane index
      * @return {@code index}, adjusted to the range {@code [0..VLENGTH-1}}
      *         by an appropriate multiple of {@code VLENGTH}
      * @see VectorSpecies#loopBound(int)
@@ -262,6 +264,7 @@ public abstract class VectorShuffle<E> {
      *
      * @param species shuffle species
      * @param sourceIndexes the source indexes which the shuffle will draw from
+     * @param <E> the boxed element type
      * @return a shuffle where each lane's source index is set to the given
      *         {@code int} value, partially wrapped if exceptional
      * @throws IndexOutOfBoundsException if {@code sourceIndexes.length != VLENGTH}
@@ -288,6 +291,7 @@ public abstract class VectorShuffle<E> {
      * @param species shuffle species
      * @param sourceIndexes the source indexes which the shuffle will draw from
      * @param offset the offset into the array
+     * @param <E> the boxed element type
      * @return a shuffle where each lane's source index is set to the given
      *         {@code int} value, partially wrapped if exceptional
      * @throws IndexOutOfBoundsException if {@code offset < 0}, or
@@ -328,6 +332,7 @@ public abstract class VectorShuffle<E> {
      *
      * @param species shuffle species
      * @param fn the lane index mapping function
+     * @param <E> the boxed element type
      * @return a shuffle of mapped indexes
      * @see VectorSpecies#shuffleFromOp(IntUnaryOperator)
      */
@@ -360,6 +365,7 @@ public abstract class VectorShuffle<E> {
      * @param start the starting value of the source index sequence
      * @param step the difference between adjacent source indexes 
      * @param wrap whether to wrap resulting indexes
+     * @param <E> the boxed element type
      * @return a shuffle of sequential lane indexes, possibly wrapped
      * @see VectorSpecies#iotaShuffle(int,int,boolean)
      */
@@ -393,10 +399,12 @@ public abstract class VectorShuffle<E> {
      * after partial normalization), which will select from the second
      * vector.
      *
+     * @param species the shuffle species
      * @param part the part number of the result (either zero or one)
+     * @param <E> the boxed element type
      * @return a shuffle which zips two vectors into {@code 2*VLENGTH} lanes, returning the selected part
      * @throws ArrayIndexOutOfBoundsException if {@code part} is not zero or one
-     * @see #makeUnzip(int)
+     * @see #makeUnzip(VectorSpecies, int)
      * @see Vector#rearrange(VectorShuffle,Vector)
      */
     public static <E> VectorShuffle<E> makeZip(VectorSpecies<E> species,
@@ -428,10 +436,12 @@ public abstract class VectorShuffle<E> {
      * partial normalization), which will select from the second
      * vector.
      *
+     * @param species the shuffle species
      * @param part the part number of the result (either zero or one)
+     * @param <E> the boxed element type
      * @return a shuffle which unzips {@code 2*VLENGTH} lanes into two vectors, returning the selected part
      * @throws ArrayIndexOutOfBoundsException if {@code part} is not zero or one
-     * @see #makeZip(int)
+     * @see #makeZip(VectorSpecies,int)
      * @see Vector#rearrange(VectorShuffle,Vector)
      */
     public static <E> VectorShuffle<E> makeUnzip(VectorSpecies<E> species,

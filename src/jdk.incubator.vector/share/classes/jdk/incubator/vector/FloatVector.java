@@ -511,7 +511,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         if the given {@code long} value cannot
      *         be represented by the vector's {@code ETYPE}
      * @see #broadcast(VectorSpecies,float)
-     * @see VectorSpecies#checkValue(VectorSpecies,long)
+     * @see VectorSpecies#checkValue(long)
      */
     public static FloatVector broadcast(VectorSpecies<Float> species, long e) {
         FloatSpecies vsp = (FloatSpecies) species;
@@ -752,6 +752,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e))}.
      *
+     * @param op the operation used to process lane values
      * @param e the input scalar
      * @return the result of applying the operation lane-wise
      *         to the two input vectors
@@ -778,6 +779,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e), m)}.
      *
+     * @param op the operation used to process lane values
      * @param e the input scalar
      * @param m the mask controlling lane selection
      * @return the result of applying the operation lane-wise
@@ -910,6 +912,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2))}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the first input scalar
      * @param e2 the second input scalar
      * @return the result of applying the operation lane-wise
@@ -937,6 +940,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2), m)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the first input scalar
      * @param e2 the second input scalar
      * @param m the mask controlling lane selection
@@ -965,6 +969,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, v1, this.broadcast(e2))}.
      *
+     * @param op the operation used to combine lane values
      * @param v1 the other input vector
      * @param e2 the input scalar
      * @return the result of applying the operation lane-wise
@@ -992,6 +997,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
      *
+     * @param op the operation used to combine lane values
      * @param v1 the other input vector
      * @param e2 the input scalar
      * @param m the mask controlling lane selection
@@ -1021,6 +1027,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), v2)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the input scalar
      * @param v2 the other input vector
      * @return the result of applying the operation lane-wise
@@ -1048,6 +1055,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the input scalar
      * @param v2 the other input vector
      * @param m the mask controlling lane selection
@@ -1100,7 +1108,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the result of adding each lane of this vector to the scalar
      * @see #add(Vector)
      * @see #broadcast(float)
-     * @see #add(int,VectorMask)
+     * @see #add(float,VectorMask)
      * @see VectorOperators#ADD
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
@@ -1139,7 +1147,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the result of adding each lane of this vector to the scalar
      * @see #add(Vector,VectorMask)
      * @see #broadcast(float)
-     * @see #add(int)
+     * @see #add(float)
      * @see VectorOperators#ADD
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
@@ -1175,7 +1183,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the result of subtracting the scalar from each lane of this vector
      * @see #sub(Vector)
      * @see #broadcast(float)
-     * @see #sub(int,VectorMask)
+     * @see #sub(float,VectorMask)
      * @see VectorOperators#SUB
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
@@ -1213,7 +1221,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the result of subtracting the scalar from each lane of this vector
      * @see #sub(Vector,VectorMask)
      * @see #broadcast(float)
-     * @see #sub(int)
+     * @see #sub(float)
      * @see VectorOperators#SUB
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
@@ -1249,7 +1257,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the result of multiplying this vector by the given scalar
      * @see #mul(Vector)
      * @see #broadcast(float)
-     * @see #mul(int,VectorMask)
+     * @see #mul(float,VectorMask)
      * @see VectorOperators#MUL
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
@@ -1287,7 +1295,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the result of muling each lane of this vector to the scalar
      * @see #mul(Vector,VectorMask)
      * @see #broadcast(float)
-     * @see #mul(int)
+     * @see #mul(float)
      * @see VectorOperators#MUL
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
@@ -1336,7 +1344,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the result of dividing each lane of this vector by the scalar
      * @see #div(Vector)
      * @see #broadcast(float)
-     * @see #div(int,VectorMask)
+     * @see #div(float,VectorMask)
      * @see VectorOperators#DIV
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
@@ -1387,7 +1395,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @return the result of dividing each lane of this vector by the scalar
      * @see #div(Vector,VectorMask)
      * @see #broadcast(float)
-     * @see #div(int)
+     * @see #div(float)
      * @see VectorOperators#DIV
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,float)
@@ -1572,13 +1580,13 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * to each lane value.
      *
      * This method is also equivalent to the expression
-     * {@link #lanewise(VectorOperators.Unary,Vector)
+     * {@link #lanewise(VectorOperators.Unary)
      *    lanewise}{@code (}{@link VectorOperators#SQRT
      *    SQRT}{@code )}.
      *
      * @return the square root of this vector
      * @see VectorOperators#SQRT
-     * @see #lanewise(VectorOperators.Unary,Vector,VectorMask)
+     * @see #lanewise(VectorOperators.Unary,VectorMask)
      */
     @ForceInline
     public final FloatVector sqrt() {
@@ -1770,6 +1778,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * against the original vector, using the selected
      * comparison operation.
      *
+     * @param op the operation used to compare lane values
      * @param e the input scalar
      * @return the mask result of testing lane-wise if this vector
      *         compares to the input, according to the selected
@@ -1800,6 +1809,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * The returned result is equal to the expression
      * {@code compare(op,s).and(m)}.
      *
+     * @param op the operation used to compare lane values
      * @param e the input scalar
      * @param m the mask controlling lane selection
      * @return the mask result of testing lane-wise if this vector
@@ -2176,7 +2186,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *    FMA}{@code , b, c)}.
      *
      * @param b the second input vector, supplying multiplier values
-     * @param b the third input vector, supplying addend values
+     * @param c the third input vector, supplying addend values
      * @return the product of this vector and the second input vector
      *         summed with the third input vector, using extended precision
      *         for the intermediate result
@@ -2882,6 +2892,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @param species species of desired vector
      * @param bb the byte buffer
      * @param offset the offset into the byte buffer
+     * @param bo the intended byte order
      * @return a vector loaded from a byte buffer
      * @throws IllegalArgumentException if byte order of bb
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
@@ -2927,6 +2938,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @param species species of desired vector
      * @param bb the byte buffer
      * @param offset the offset into the byte buffer
+     * @param bo the intended byte order
      * @param m the mask controlling lane selection
      * @return a vector loaded from a byte buffer
      * @throws IllegalArgumentException if byte order of bb

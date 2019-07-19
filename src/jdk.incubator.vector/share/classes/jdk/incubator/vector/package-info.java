@@ -170,7 +170,7 @@
  * hand-tweaked primitive masking expression may produce surprising
  * results.
  *
- * <h1> Performance notes </h1>
+ * <h2> Performance notes </h2>
  *
  * This package depends on the runtime's ability to dynamically
  * compile vector operations into optimal vector hardware
@@ -185,7 +185,7 @@
 
  * <li> The shape of vectors used should be supported by the underlying
  * platform. For example, code written using {@link IntVector} of
- * {@link Shape} {@link Shape#S_512_BIT S_512_BIT} will not be
+ * {@link VectorShape} {@link VectorShape#S_512_BIT S_512_BIT} will not be
  * compiled to vector instructions on a platform which supports only
  * 256 bit vectors. Instead, the default scalar implementation will be
  * used.  For this reason, it is recommended to use the preferred

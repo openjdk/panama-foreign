@@ -181,7 +181,7 @@ public enum VectorShape {
      * The preferred shape by the platform has the largest possible
      * bit-size, under the constraint that all lane sizes are
      * supported, from {@code byte} to {@code double}.  Thus, all the
-     * {@linkplain #ofPreferred(Class) preferred vector species}
+     * {@linkplain VectorSpecies#ofPreferred(Class) preferred vector species}
      * for various lane types will have a common underlying shape.
      *
      * @return a preferred shape for all element types

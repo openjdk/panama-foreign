@@ -717,6 +717,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e))}.
      *
+     * @param op the operation used to process lane values
      * @param e the input scalar
      * @return the result of applying the operation lane-wise
      *         to the two input vectors
@@ -749,6 +750,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e), m)}.
      *
+     * @param op the operation used to process lane values
      * @param e the input scalar
      * @param m the mask controlling lane selection
      * @return the result of applying the operation lane-wise
@@ -895,6 +897,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2))}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the first input scalar
      * @param e2 the second input scalar
      * @return the result of applying the operation lane-wise
@@ -922,6 +925,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2), m)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the first input scalar
      * @param e2 the second input scalar
      * @param m the mask controlling lane selection
@@ -950,6 +954,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, v1, this.broadcast(e2))}.
      *
+     * @param op the operation used to combine lane values
      * @param v1 the other input vector
      * @param e2 the input scalar
      * @return the result of applying the operation lane-wise
@@ -977,6 +982,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
      *
+     * @param op the operation used to combine lane values
      * @param v1 the other input vector
      * @param e2 the input scalar
      * @param m the mask controlling lane selection
@@ -1006,6 +1012,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), v2)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the input scalar
      * @param v2 the other input vector
      * @return the result of applying the operation lane-wise
@@ -1033,6 +1040,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the input scalar
      * @param v2 the other input vector
      * @param m the mask controlling lane selection
@@ -1085,7 +1093,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the result of adding each lane of this vector to the scalar
      * @see #add(Vector)
      * @see #broadcast(long)
-     * @see #add(int,VectorMask)
+     * @see #add(long,VectorMask)
      * @see VectorOperators#ADD
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
@@ -1124,7 +1132,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the result of adding each lane of this vector to the scalar
      * @see #add(Vector,VectorMask)
      * @see #broadcast(long)
-     * @see #add(int)
+     * @see #add(long)
      * @see VectorOperators#ADD
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
@@ -1160,7 +1168,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the result of subtracting the scalar from each lane of this vector
      * @see #sub(Vector)
      * @see #broadcast(long)
-     * @see #sub(int,VectorMask)
+     * @see #sub(long,VectorMask)
      * @see VectorOperators#SUB
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
@@ -1198,7 +1206,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the result of subtracting the scalar from each lane of this vector
      * @see #sub(Vector,VectorMask)
      * @see #broadcast(long)
-     * @see #sub(int)
+     * @see #sub(long)
      * @see VectorOperators#SUB
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
@@ -1234,7 +1242,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the result of multiplying this vector by the given scalar
      * @see #mul(Vector)
      * @see #broadcast(long)
-     * @see #mul(int,VectorMask)
+     * @see #mul(long,VectorMask)
      * @see VectorOperators#MUL
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
@@ -1272,7 +1280,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the result of muling each lane of this vector to the scalar
      * @see #mul(Vector,VectorMask)
      * @see #broadcast(long)
-     * @see #mul(int)
+     * @see #mul(long)
      * @see VectorOperators#MUL
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
@@ -1313,7 +1321,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the result of dividing each lane of this vector by the scalar
      * @see #div(Vector)
      * @see #broadcast(long)
-     * @see #div(int,VectorMask)
+     * @see #div(long,VectorMask)
      * @see VectorOperators#DIV
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
@@ -1356,7 +1364,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @return the result of dividing each lane of this vector by the scalar
      * @see #div(Vector,VectorMask)
      * @see #broadcast(long)
-     * @see #div(int)
+     * @see #div(long)
      * @see VectorOperators#DIV
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,long)
@@ -1589,7 +1597,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * to each lane value.
      *
      * This method is also equivalent to the expression
-     * {@link #lanewise(VectorOperators.Unary,Vector)
+     * {@link #lanewise(VectorOperators.Unary)
      *    lanewise}{@code (}{@link VectorOperators#NOT
      *    NOT}{@code )}.
      *
@@ -1780,6 +1788,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * against the original vector, using the selected
      * comparison operation.
      *
+     * @param op the operation used to compare lane values
      * @param e the input scalar
      * @return the mask result of testing lane-wise if this vector
      *         compares to the input, according to the selected
@@ -1810,6 +1819,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * The returned result is equal to the expression
      * {@code compare(op,s).and(m)}.
      *
+     * @param op the operation used to compare lane values
      * @param e the input scalar
      * @param m the mask controlling lane selection
      * @return the mask result of testing lane-wise if this vector
@@ -2868,6 +2878,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @param species species of desired vector
      * @param bb the byte buffer
      * @param offset the offset into the byte buffer
+     * @param bo the intended byte order
      * @return a vector loaded from a byte buffer
      * @throws IllegalArgumentException if byte order of bb
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
@@ -2913,6 +2924,7 @@ public abstract class LongVector extends AbstractVector<Long> {
      * @param species species of desired vector
      * @param bb the byte buffer
      * @param offset the offset into the byte buffer
+     * @param bo the intended byte order
      * @param m the mask controlling lane selection
      * @return a vector loaded from a byte buffer
      * @throws IllegalArgumentException if byte order of bb

@@ -510,7 +510,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *         if the given {@code long} value cannot
      *         be represented by the vector's {@code ETYPE}
      * @see #broadcast(VectorSpecies,byte)
-     * @see VectorSpecies#checkValue(VectorSpecies,long)
+     * @see VectorSpecies#checkValue(long)
      */
     public static ByteVector broadcast(VectorSpecies<Byte> species, long e) {
         ByteSpecies vsp = (ByteSpecies) species;
@@ -757,6 +757,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e))}.
      *
+     * @param op the operation used to process lane values
      * @param e the input scalar
      * @return the result of applying the operation lane-wise
      *         to the two input vectors
@@ -789,6 +790,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e), m)}.
      *
+     * @param op the operation used to process lane values
      * @param e the input scalar
      * @param m the mask controlling lane selection
      * @return the result of applying the operation lane-wise
@@ -976,6 +978,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2))}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the first input scalar
      * @param e2 the second input scalar
      * @return the result of applying the operation lane-wise
@@ -1003,6 +1006,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2), m)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the first input scalar
      * @param e2 the second input scalar
      * @param m the mask controlling lane selection
@@ -1031,6 +1035,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, v1, this.broadcast(e2))}.
      *
+     * @param op the operation used to combine lane values
      * @param v1 the other input vector
      * @param e2 the input scalar
      * @return the result of applying the operation lane-wise
@@ -1058,6 +1063,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
      *
+     * @param op the operation used to combine lane values
      * @param v1 the other input vector
      * @param e2 the input scalar
      * @param m the mask controlling lane selection
@@ -1087,6 +1093,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), v2)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the input scalar
      * @param v2 the other input vector
      * @return the result of applying the operation lane-wise
@@ -1114,6 +1121,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the input scalar
      * @param v2 the other input vector
      * @param m the mask controlling lane selection
@@ -1166,7 +1174,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @return the result of adding each lane of this vector to the scalar
      * @see #add(Vector)
      * @see #broadcast(byte)
-     * @see #add(int,VectorMask)
+     * @see #add(byte,VectorMask)
      * @see VectorOperators#ADD
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
@@ -1205,7 +1213,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @return the result of adding each lane of this vector to the scalar
      * @see #add(Vector,VectorMask)
      * @see #broadcast(byte)
-     * @see #add(int)
+     * @see #add(byte)
      * @see VectorOperators#ADD
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
@@ -1241,7 +1249,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @return the result of subtracting the scalar from each lane of this vector
      * @see #sub(Vector)
      * @see #broadcast(byte)
-     * @see #sub(int,VectorMask)
+     * @see #sub(byte,VectorMask)
      * @see VectorOperators#SUB
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
@@ -1279,7 +1287,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @return the result of subtracting the scalar from each lane of this vector
      * @see #sub(Vector,VectorMask)
      * @see #broadcast(byte)
-     * @see #sub(int)
+     * @see #sub(byte)
      * @see VectorOperators#SUB
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
@@ -1315,7 +1323,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @return the result of multiplying this vector by the given scalar
      * @see #mul(Vector)
      * @see #broadcast(byte)
-     * @see #mul(int,VectorMask)
+     * @see #mul(byte,VectorMask)
      * @see VectorOperators#MUL
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
@@ -1353,7 +1361,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @return the result of muling each lane of this vector to the scalar
      * @see #mul(Vector,VectorMask)
      * @see #broadcast(byte)
-     * @see #mul(int)
+     * @see #mul(byte)
      * @see VectorOperators#MUL
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
@@ -1394,7 +1402,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @return the result of dividing each lane of this vector by the scalar
      * @see #div(Vector)
      * @see #broadcast(byte)
-     * @see #div(int,VectorMask)
+     * @see #div(byte,VectorMask)
      * @see VectorOperators#DIV
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
@@ -1437,7 +1445,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @return the result of dividing each lane of this vector by the scalar
      * @see #div(Vector,VectorMask)
      * @see #broadcast(byte)
-     * @see #div(int)
+     * @see #div(byte)
      * @see VectorOperators#DIV
      * @see #lanewise(VectorOperators.Binary,Vector)
      * @see #lanewise(VectorOperators.Binary,byte)
@@ -1670,7 +1678,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * to each lane value.
      *
      * This method is also equivalent to the expression
-     * {@link #lanewise(VectorOperators.Unary,Vector)
+     * {@link #lanewise(VectorOperators.Unary)
      *    lanewise}{@code (}{@link VectorOperators#NOT
      *    NOT}{@code )}.
      *
@@ -1861,6 +1869,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * against the original vector, using the selected
      * comparison operation.
      *
+     * @param op the operation used to compare lane values
      * @param e the input scalar
      * @return the mask result of testing lane-wise if this vector
      *         compares to the input, according to the selected
@@ -1891,6 +1900,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * The returned result is equal to the expression
      * {@code compare(op,s).and(m)}.
      *
+     * @param op the operation used to compare lane values
      * @param e the input scalar
      * @param m the mask controlling lane selection
      * @return the mask result of testing lane-wise if this vector
@@ -2977,6 +2987,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @param species species of desired vector
      * @param bb the byte buffer
      * @param offset the offset into the byte buffer
+     * @param bo the intended byte order
      * @return a vector loaded from a byte buffer
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*1 < 0}
@@ -3014,6 +3025,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @param species species of desired vector
      * @param bb the byte buffer
      * @param offset the offset into the byte buffer
+     * @param bo the intended byte order
      * @param m the mask controlling lane selection
      * @return a vector loaded from a byte buffer
      * @throws IndexOutOfBoundsException

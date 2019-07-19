@@ -127,7 +127,7 @@ import jdk.incubator.vector.*;
  * as compared to scalar execution of the {@code VLENGTH} scalar
  * operators which underly the vector operation.
  *
- * <h1><a id="species"></a>Shapes and species</h1>
+ * <h2><a id="species"></a>Shapes and species</h2>
  *
  * The information capacity of a vector is determined by its
  * {@linkplain #shape() <em>vector shape</em>}, also called its
@@ -180,7 +180,7 @@ import jdk.incubator.vector.*;
  * reinterpreting a vector may double the lane size if and only if it
  * either halves the length, or else changes the shape of the vector.
  *
- * <h1><a id="subtypes"></a>Vector subtypes</h1>
+ * <h2><a id="subtypes"></a>Vector subtypes</h2>
  *
  * Vector declares a set of vector operations (methods) that are common to all
  * element types (such as addition).  Sub-classes of Vector with a concrete
@@ -217,7 +217,7 @@ import jdk.incubator.vector.*;
  * required to select the species (and hence the shape and length) of
  * the resulting vector.
  *
- * <h1><a id="lane-wise"></a>Lane-wise operations</h1>
+ * <h2><a id="lane-wise"></a>Lane-wise operations</h2>
  *
  * We use the term <em>lanes</em> when defining operations on
  * vectors. The number of lanes in a vector is the number of scalar
@@ -442,6 +442,7 @@ import jdk.incubator.vector.*;
  * underlying scalar operation is suppressed.
  * Masked operations are explained in
  * <a href="Vector.html#masking">greater detail elsewhere</a>.
+ * </li>
  *
  * <li>
  * A very special case of a masked lane-wise binary operation is a
@@ -525,7 +526,7 @@ import jdk.incubator.vector.*;
  * species as the first vector input, using the appropriate
  * {@code broadcast} operation.
  * 
- * <h1><a id="masking"></a>Masked operations</h1>
+ * <h2><a id="masking"></a>Masked operations</h2>
  *
  * <p> Many vector operations accept an optional
  * {@link VectorMask mask} argument, selecting which lanes participate
@@ -574,14 +575,15 @@ import jdk.incubator.vector.*;
  *
  * <li>If the masked operation is a memory store or an {@code unslice()} into
  * another vector, suppressed lanes are not stored, and the
- * corresponding memory or vector locations (if any) are unchanged.</li>
+ * corresponding memory or vector locations (if any) are unchanged.
  *
  * <p> (Note: Memory effects such as race conditions never occur for
  * suppressed lanes.  That is, implementations will not secretly
  * re-write the existing value for unset lanes.  In the Java Memory
  * Model, reassigning a memory variable to its current value is not a
  * no-op; it may quietly undo a racing store from another
- * thread.)</li>
+ * thread.)</p>
+ * </li>
  *
  * <li>If the masked operation is a reduction, suppressed lanes are ignored
  * in the reduction.  If all lanes are suppressed, a suitable neutral
@@ -627,7 +629,7 @@ import jdk.incubator.vector.*;
  * EVector r = EVector.fromArray(species, ar, 0);
  * }</pre>
  *
- * <h1><a id="lane-order">Lane order and byte order</h1>
+ * <h2><a id="lane-order"></a>Lane order and byte order</h2>
  *
  * The number of lane values stored in a given vector is referred to
  * as its {@linkplain #length() vector length} or {@code VLENGTH}.
@@ -734,7 +736,7 @@ import jdk.incubator.vector.*;
  * for big-endian fictions to create unified addressing of vector
  * bytes.
  *
- * <h1><a id="memory">Memory operations</h1>
+ * <h2><a id="memory"></a>Memory operations</h2>
  *
  * As was already mentioned, vectors can be loaded from memory and
  * stored back.  An optional mask can control which individual memory
@@ -776,7 +778,7 @@ import jdk.incubator.vector.*;
  * using the statement
  * {@link FloatVector#intoArray(float[],int,VectorMask) fv.intoArray(fa,i,mnz)}.
  * 
- * <h1><a id="expansion">Expansions, contractions, and partial results</h1>
+ * <h2><a id="expansion"></a>Expansions, contractions, and partial results</h2>
  *
  * Since vectors are fixed in size, occasions often arise where the
  * logical result of an operation is not the same as the physical size
@@ -1001,7 +1003,7 @@ import jdk.incubator.vector.*;
  * for part numbers, while for contractions the {@code partLimit()}
  * value {@code -M} is the exclusive <em>lower</em> limit.
  * 
- * <h1><a id="cross-lane">Moving data across lane boundaries</h1>
+ * <h2><a id="cross-lane"></a>Moving data across lane boundaries</h2>
  * The cross-lane methods which do not redraw lanes or change species
  * are more regularly structured and easier to reason about.
  * These operations are:
@@ -1066,7 +1068,7 @@ import jdk.incubator.vector.*;
  *
  * @implNote
  *
- * <h1>Hardware platform dependencies</h1>
+ * <h2>Hardware platform dependencies</h2>
  * 
  * The Vector API is to accelerate computations in style of Single
  * Instruction Multiple Data (SIMD), using available hardware
@@ -1079,7 +1081,7 @@ import jdk.incubator.vector.*;
  * The Vector API is not likely to provide any special performance
  * benefit on such platforms.
  *
- * <h1>No boxing of primitives</h1>
+ * <h2>No boxing of primitives</h2>
  *
  * Although a vector type like {@code Vector<Integer>} may seem to
  * work with boxed {@code Integer} values, the overheads associated
@@ -1089,7 +1091,7 @@ import jdk.incubator.vector.*;
  * methods}, are specified to work on boxed values.  These are
  * documented as <em>not</em> for use in inner loops.
  *
- * <h1>Value-based classes and identity operations</h1>
+ * <h2>Value-based classes and identity operations</h2>
  *
  * {@code Vector}, along with all of its subtypes and many of its
  * helper types like {@code VectorMask} and {@code VectorShuffle}, is a
@@ -1930,6 +1932,7 @@ public abstract class Vector<E> {
      * This is a lane-wise unary test operation which applies
      * the given test operation
      * to each lane value.
+     * @param op the operation used to test lane values
      * @return the mask result of testing the lanes of this vector,
      *         according to the selected test operator
      * @see VectorOperators.Comparison
@@ -2000,6 +2003,7 @@ public abstract class Vector<E> {
      * the given comparison operation
      * to each pair of corresponding lane values.
      *
+     * @param op the operation used to compare lane values
      * @param v a second input vector
      * @return the mask result of testing lane-wise if this vector
      *         compares to the input, according to the selected
@@ -2008,7 +2012,7 @@ public abstract class Vector<E> {
      * @see #lt(Vector)
      * @see VectorOperators.Comparison
      * @see #compare(VectorOperators.Comparison, Vector, VectorMask)
-     * @see #test(VectorOperators.Test, Vector)
+     * @see #test(VectorOperators.Test)
      */
     public abstract VectorMask<E> compare(VectorOperators.Comparison op,
                                           Vector<E> v);
@@ -2025,6 +2029,7 @@ public abstract class Vector<E> {
      * The returned result is equal to the expression
      * {@code compare(op,v).and(m)}.
      *
+     * @param op the operation used to compare lane values
      * @param v a second input vector
      * @param m the mask controlling lane selection
      * @return the mask result of testing lane-wise if this vector
@@ -2062,6 +2067,7 @@ public abstract class Vector<E> {
      * Subtypes improve on this method by sharpening
      * the type of the scalar parameter {@code e}.
      *
+     * @param op the operation used to compare lane values
      * @param e the input scalar
      * @return the mask result of testing lane-wise if this vector
      *         compares to the input, according to the selected
@@ -2096,6 +2102,7 @@ public abstract class Vector<E> {
      * Subtypes improve on this method by sharpening
      * the type of the scalar parameter {@code e}.
      *
+     * @param op the operation used to compare lane values
      * @param e the input scalar
      * @param m the mask controlling lane selection
      * @return the mask result of testing lane-wise if this vector

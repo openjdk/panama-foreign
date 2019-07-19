@@ -148,7 +148,7 @@ public abstract class VectorOperators {
         /**
          * Reports whether this operator returns a boolean (a mask).
          * A boolean operator also reports {@code boolean} as the
-         * {@code rangeType
+         * {@code rangeType}.
          * @return whether this operator returns a boolean
          */
         public abstract boolean isBoolean();
@@ -314,13 +314,13 @@ public abstract class VectorOperators {
     public interface Conversion<E,F> extends Operator {
         /**
          * The domain of this conversion, a primitive type.
-         * @returns the domain of this conversion
+         * @return the domain of this conversion
          */
         public abstract Class<E> domainType();
 
         /**
          * The range of this conversion, a primitive type.
-         * @returns the range of this conversion
+         * @return the range of this conversion
          */
         @Override
         public abstract Class<F> rangeType();
@@ -332,7 +332,7 @@ public abstract class VectorOperators {
          * @param to the desired range type
          * @param <E> the desired domain type
          * @param <F> the desired range type
-         * @returns this conversion object, with validated domain and range 
+         * @return this conversion object, with validated domain and range
          */
         public abstract
         <E,F> Conversion<E,F> check(Class<E> from, Class<F> to);
@@ -345,7 +345,7 @@ public abstract class VectorOperators {
          * @param <F> the range type (boxed version of a lane type)
          * @param from the type of the value to convert
          * @param to the desired type after conversion
-         * @returns a Java assignment or casting conversion
+         * @return a Java assignment or casting conversion
          */
         @ForceInline
         public static <E,F> Conversion<E,F> ofCast(Class<E> from, Class<F> to) {
@@ -360,7 +360,7 @@ public abstract class VectorOperators {
          * @param <F> the range type (boxed version of a lane type)
          * @param from the type of the value to reinterpret
          * @param to the desired type after reinterpretation
-         * @returns a bitwise reinterpretation conversion
+         * @return a bitwise reinterpretation conversion
          */
         @ForceInline
         public static <E,F> Conversion<E,F> ofReinterpret(Class<E> from, Class<F> to) {
@@ -378,8 +378,7 @@ public abstract class VectorOperators {
          * overwritten by zero bits (not a copied sign bit).
          * @param <E> the domain and range type (boxed version of a lane type)
          * @param conv the narrowing conversion to treat in-place
-         * @param to the desired type after the narrowing conversion
-         * @returns a Java narrowing conversion,
+         * @return a Java narrowing conversion,
          *          stored back to the original lane of type {@code E}
          */
         @ForceInline
@@ -397,8 +396,7 @@ public abstract class VectorOperators {
          * overwritten by the result.
          * @param <E> the domain and range type (boxed version of a lane type)
          * @param conv the widening conversion to treat in-place
-         * @param to the desired type after the widening conversion
-         * @returns a Java widening conversion,
+         * @return a Java widening conversion,
          *          loading its input from same lane of type {@code E}
          */
         @ForceInline

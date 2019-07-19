@@ -161,6 +161,7 @@ public interface VectorSpecies<E> {
      * As long as {@code VLENGTH} is a power of two, then the result
      * is also equal to {@code length & ~(VLENGTH - 1)}.
      *
+     * @param length the input length
      * @return the largest multiple of the vector length not greater
      *         than the given length
      * @throws IllegalArgumentException if the {@code length} is
@@ -289,7 +290,7 @@ public interface VectorSpecies<E> {
      * Returns the same value as
      * {@code VectorSpecies.of(this.elementType(), newShape)}.
      *
-     * @param shape the new shape
+     * @param newShape the new shape
      * @return a species for the same element type and the new shape
      * @throws IllegalArgumentException if no such species exists for the
      *         given combination of element type and shape
@@ -308,8 +309,8 @@ public interface VectorSpecies<E> {
      * @throws IllegalArgumentException if no such species exists for the
      *         given combination of element type and shape
      *         or if the given type is not a valid {@code ETYPE}
-     * @see withE(VectorShape)
-     * @see withShape(VectorShape)
+     * @see #withLanes(Class)
+     * @see #withShape(VectorShape)
      */
     public static <E> VectorSpecies<E> of(Class<E> elementType, VectorShape shape) {
         LaneType laneType = LaneType.of(elementType);
@@ -323,7 +324,7 @@ public interface VectorSpecies<E> {
      * shape with the largest possible bit-size for the given element type.
      * The underlying vector shape might not support other lane types
      * on some platforms, which may limit the applicability of
-     * {@linkplain Vector#reinterpret(VectorSpecies) reinterpretation casts}.
+     * {@linkplain Vector#reinterpretShape(VectorSpecies,int) reinterpretation casts}.
      * Vector algorithms which require reinterpretation casts will
      * be more portable if they use the platform's
      * {@linkplain #ofPreferred(Class) preferred species}.
