@@ -59,6 +59,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import jdk.internal.access.foreign.NativeLibraryProxy;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.perf.PerfCounter;
 import jdk.internal.loader.BootLoader;
@@ -2403,7 +2404,7 @@ public abstract class ClassLoader {
      * @see      ClassLoader
      * @since    1.2
      */
-    static class NativeLibrary {
+    static class NativeLibrary implements NativeLibraryProxy {
         // the class from which the library is loaded, also indicates
         // the loader this native library belongs.
         final Class<?> fromClass;
@@ -2420,12 +2421,28 @@ public abstract class ClassLoader {
 
         native boolean load0(String name, boolean isBuiltin);
 
-        native long findEntry(String name);
+        private native long findEntry0(String name);
+
+        // used by default library
+        private static native long findEntryInProcess(String name);
+
+        long findEntry(String name) {
+            return findEntry0(name);
+        }
 
         NativeLibrary(Class<?> fromClass, String name, boolean isBuiltin) {
             this.name = name;
             this.fromClass = fromClass;
             this.isBuiltin = isBuiltin;
+        }
+
+        @Override
+        public long lookup(String name) throws NoSuchMethodException {
+            long addr = findEntry(name);
+            if (0 == addr) {
+                throw new NoSuchMethodException("Cannot find symbol " + name + " in library " + this.name);
+            }
+            return addr;
         }
 
         /*
@@ -2451,15 +2468,30 @@ public abstract class ClassLoader {
             return true;
         }
 
-        static boolean loadLibrary(Class<?> fromClass, String name, boolean isBuiltin) {
+        static NativeLibrary defaultLibrary = new NativeLibrary(Object.class, "<default>", true) {
+
+            @Override
+            boolean load() {
+                throw new UnsupportedOperationException("Cannot load default library");
+            }
+
+            @Override
+            long findEntry(String name) {
+                return NativeLibrary.findEntryInProcess(name);
+            }
+            
+        };
+
+        static NativeLibrary loadLibrary(Class<?> fromClass, String name, boolean isBuiltin) {
             ClassLoader loader =
                 fromClass == null ? null : fromClass.getClassLoader();
 
             synchronized (loadedLibraryNames) {
                 Map<String, NativeLibrary> libs =
                     loader != null ? loader.nativeLibraries() : systemNativeLibraries();
-                if (libs.containsKey(name)) {
-                    return true;
+                NativeLibrary cached = libs.get(name);
+                if (cached != null) {
+                    return cached;
                 }
 
                 if (loadedLibraryNames.contains(name)) {
@@ -2483,7 +2515,7 @@ public abstract class ClassLoader {
                 for (NativeLibrary lib : nativeLibraryContext) {
                     if (name.equals(lib.name)) {
                         if (loader == lib.fromClass.getClassLoader()) {
-                            return true;
+                            return lib;
                         } else {
                             throw new UnsatisfiedLinkError("Native Library " +
                                 name + " is being loaded in another classloader");
@@ -2494,20 +2526,23 @@ public abstract class ClassLoader {
                 // load the native library
                 nativeLibraryContext.push(lib);
                 try {
-                    if (!lib.load()) return false;
+                    if (!lib.load()) return null;
                 } finally {
                     nativeLibraryContext.pop();
                 }
                 // register the loaded native library
                 loadedLibraryNames.add(name);
                 libs.put(name, lib);
+                return lib;
             }
-            return true;
         }
 
         // Invoked in the VM to determine the context class in JNI_OnLoad
         // and JNI_OnUnload
         static Class<?> getFromClass() {
+            if(nativeLibraryContext.isEmpty()) { // only default library 
+                return defaultLibrary.fromClass;
+            }
             return nativeLibraryContext.peek().fromClass;
         }
 
@@ -2615,8 +2650,8 @@ public abstract class ClassLoader {
     }
 
     // Invoked in the java.lang.Runtime class to implement load and loadLibrary.
-    static void loadLibrary(Class<?> fromClass, String name,
-                            boolean isAbsolute) {
+    static NativeLibrary loadLibrary(Class<?> fromClass, String name,
+                                     boolean isAbsolute) {
         ClassLoader loader =
             (fromClass == null) ? null : fromClass.getClassLoader();
         if (sys_paths == null) {
@@ -2624,8 +2659,9 @@ public abstract class ClassLoader {
             sys_paths = initializePath("sun.boot.library.path");
         }
         if (isAbsolute) {
-            if (loadLibrary0(fromClass, new File(name))) {
-                return;
+            NativeLibrary nl = loadLibrary0(fromClass, new File(name));
+            if (nl != null) {
+                return nl;
             }
             throw new UnsatisfiedLinkError("Can't load library: " + name);
         }
@@ -2637,31 +2673,40 @@ public abstract class ClassLoader {
                     throw new UnsatisfiedLinkError(
                         "ClassLoader.findLibrary failed to return an absolute path: " + libfilename);
                 }
-                if (loadLibrary0(fromClass, libfile)) {
-                    return;
+                NativeLibrary nl = loadLibrary0(fromClass, libfile);
+                if (nl != null) {
+                    return nl;
                 }
                 throw new UnsatisfiedLinkError("Can't load " + libfilename);
             }
         }
         for (String sys_path : sys_paths) {
             File libfile = new File(sys_path, System.mapLibraryName(name));
-            if (loadLibrary0(fromClass, libfile)) {
-                return;
+            NativeLibrary nl = loadLibrary0(fromClass, libfile);
+            if (nl != null) {
+                return nl;
             }
             libfile = ClassLoaderHelper.mapAlternativeName(libfile);
-            if (libfile != null && loadLibrary0(fromClass, libfile)) {
-                return;
+            if (libfile != null) {
+                nl = loadLibrary0(fromClass, libfile);
+                if (nl != null) {
+                    return nl;
+                }
             }
         }
         if (loader != null) {
             for (String usr_path : usr_paths) {
                 File libfile = new File(usr_path, System.mapLibraryName(name));
-                if (loadLibrary0(fromClass, libfile)) {
-                    return;
+                NativeLibrary nl = loadLibrary0(fromClass, libfile);
+                if (nl != null) {
+                    return nl;
                 }
                 libfile = ClassLoaderHelper.mapAlternativeName(libfile);
-                if (libfile != null && loadLibrary0(fromClass, libfile)) {
-                    return;
+                if (libfile != null) {
+                    nl = loadLibrary0(fromClass, libfile);
+                    if (nl != null) {
+                        return nl;
+                    }
                 }
             }
         }
@@ -2672,7 +2717,7 @@ public abstract class ClassLoader {
 
     private static native String findBuiltinLib(String name);
 
-    private static boolean loadLibrary0(Class<?> fromClass, final File file) {
+    private static NativeLibrary loadLibrary0(Class<?> fromClass, final File file) {
         // Check to see if we're attempting to access a static library
         String name = findBuiltinLib(file.getName());
         boolean isBuiltin = (name != null);
@@ -2688,7 +2733,7 @@ public abstract class ClassLoader {
                     }
                 });
             if (name == null) {
-                return false;
+                return null;
             }
         }
         return NativeLibrary.loadLibrary(fromClass, name, isBuiltin);

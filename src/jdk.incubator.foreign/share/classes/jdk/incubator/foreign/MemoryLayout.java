@@ -430,4 +430,36 @@ public interface MemoryLayout extends Constable {
     static GroupLayout ofUnion(MemoryLayout... elements) {
         return new GroupLayout(GroupLayout.Kind.UNION, List.of(elements), OptionalLong.empty(), Optional.empty());
     }
+
+    /**
+     * Create a new address of given size.
+     * @param size address size.
+     * @return the new address
+     */
+    static AddressLayout ofAddress(long size) {
+        return new AddressLayout(AddressLayout.PointeeKind.VOID, null, ValueLayout.Kind.INTEGRAL_UNSIGNED,
+                ByteOrder.nativeOrder(), size, OptionalLong.empty(), Optional.empty());
+    }
+
+    /**
+     * Create a new address of given size and addressee
+     * @param size address size.
+     * @param layout addressee
+     * @return the new address
+     */
+    static AddressLayout ofAddress(long size, MemoryLayout layout) {
+        return new AddressLayout(AddressLayout.PointeeKind.LAYOUT, layout, ValueLayout.Kind.INTEGRAL_UNSIGNED,
+                ByteOrder.nativeOrder(), size, OptionalLong.empty(), Optional.empty());
+    }
+
+    /**
+     * Create a new address of given size and addressee function.
+     * @param size address size.
+     * @param function addressee function.
+     * @return the new address
+     */
+    static AddressLayout ofAddress(long size, FunctionDescriptor function) {
+        return new AddressLayout(AddressLayout.PointeeKind.FUNCTION, function, ValueLayout.Kind.INTEGRAL_UNSIGNED,
+                ByteOrder.nativeOrder(), size, OptionalLong.empty(), Optional.empty());
+    }
 }

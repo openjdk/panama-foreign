@@ -26,9 +26,21 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.MemoryLayout;
+
 import java.util.function.Supplier;
 
 public final class Utils {
+
+    static final Class<?> PADDING_CLASS;
+
+    static {
+        try {
+            PADDING_CLASS = Class.forName("jdk.incubator.foreign.PaddingLayout");
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
 
     public static long alignUp(long n, long alignment) {
         return (n + alignment - 1) & -alignment;
@@ -40,5 +52,9 @@ public final class Utils {
         } else {
             throw exFactory.get();
         }
+    }
+
+    public static boolean isPadding(MemoryLayout layout) {
+        return layout.getClass() == PADDING_CLASS;
     }
 }

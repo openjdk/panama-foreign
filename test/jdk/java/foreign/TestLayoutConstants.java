@@ -26,6 +26,8 @@
  * @run testng TestLayoutConstants
  */
 
+import jdk.incubator.foreign.AddressLayout;
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
 
 import java.lang.invoke.MethodHandles;
@@ -38,6 +40,31 @@ public class TestLayoutConstants {
 
     @Test(dataProvider = "layouts")
     public void testDescribeResolve(MemoryLayout expected) {
+        try {
+            MemoryLayout actual = expected.describeConstable().get()
+                    .resolveConstantDesc(MethodHandles.lookup());
+            assertEquals(actual, expected);
+        } catch (ReflectiveOperationException ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    @Test(dataProvider = "functions")
+    public void testDescribeResolveFunction(MemoryLayout layout, boolean isVoid, boolean hasVarargs) {
+        FunctionDescriptor expected = isVoid ?
+                FunctionDescriptor.ofVoid(hasVarargs, layout) :
+                FunctionDescriptor.of(layout, hasVarargs, layout);
+        try {
+            FunctionDescriptor actual = expected.describeConstable().get()
+                    .resolveConstantDesc(MethodHandles.lookup());
+            assertEquals(actual, expected);
+        } catch (ReflectiveOperationException ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    @Test(dataProvider = "addresses")
+    public void testDescribeResolveAddress(AddressLayout expected) {
         try {
             MemoryLayout actual = expected.describeConstable().get()
                     .resolveConstantDesc(MethodHandles.lookup());
@@ -86,5 +113,49 @@ public class TestLayoutConstants {
                 { MemoryLayout.ofSequence(MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), MemoryLayout.ofSignedInt(32))) },
                 { MemoryLayout.ofSequence(5, MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), MemoryLayout.ofSignedInt(32))) },
         };
+    }
+
+    @DataProvider(name = "functions")
+    public Object[][] createFunctions() {
+        Object[][] layouts = createLayouts();
+        Object[][] functions = new Object[layouts.length * 4][];
+        boolean[] values = new boolean[] { true, false };
+        for (int i = 0 ; i < layouts.length ; i++) {
+            for (boolean hasVarargs : values) {
+                for (boolean isVoid : values) {
+                    int offset = 0;
+                    if (hasVarargs) {
+                        offset += 1;
+                    }
+                    if (isVoid) {
+                        offset += 2;
+                    }
+                    functions[i * 4 + offset] = new Object[] { layouts[i][0], isVoid, hasVarargs };
+                }
+            }
+        }
+        return functions;
+    }
+
+    @DataProvider(name = "addresses")
+    public Object[][] createAddresses() {
+        Object[][] layouts = createLayouts();
+        Object[][] functions = createFunctions();
+        Object[][] addresses = new Object[layouts.length + functions.length + 1][];
+        for (int i = 0 ; i < layouts.length ; i++) {
+            MemoryLayout layout = (MemoryLayout)layouts[i][0];
+            addresses[i] = new Object[] { MemoryLayout.ofAddress(64, layout) };
+        }
+        for (int i = 0 ; i < functions.length ; i++) {
+            MemoryLayout layout = (MemoryLayout)functions[i][0];
+            boolean isVoid = (Boolean)functions[i][1];
+            boolean hasVarargs = (Boolean)functions[i][2];
+            FunctionDescriptor function = isVoid ?
+                FunctionDescriptor.ofVoid(hasVarargs, layout) :
+                FunctionDescriptor.of(layout, hasVarargs, layout);
+            addresses[i + layouts.length] = new Object[] { MemoryLayout.ofAddress(64, function) };
+        }
+        addresses[layouts.length + functions.length] = new Object[] { MemoryLayout.ofAddress(64) };
+        return addresses;
     }
 }

@@ -138,9 +138,17 @@ abstract class AbstractLayout implements MemoryLayout {
 
     static final ClassDesc CD_BYTEORDER = ByteOrder.class.describeConstable().get();
 
+    static final ClassDesc CD_FUNCTION_DESC = FunctionDescriptor.class.describeConstable().get();
+
+    static final ClassDesc CD_ADDRESS_LAYOUT = AddressLayout.class.describeConstable().get();
+
     static final ConstantDesc BIG_ENDIAN = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "BIG_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
 
     static final ConstantDesc LITTLE_ENDIAN = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "LITTLE_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
+
+    static final ConstantDesc TRUE = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "TRUE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
+
+    static final ConstantDesc FALSE = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "FALSE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
 
     static final MethodHandleDesc MH_PADDING = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofPadding",
                 MethodTypeDesc.of(CD_LAYOUT, ConstantDescs.CD_long));
@@ -165,4 +173,19 @@ abstract class AbstractLayout implements MemoryLayout {
 
     static final MethodHandleDesc MH_UNION = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofUnion",
                 MethodTypeDesc.of(CD_GROUP_LAYOUT, CD_LAYOUT.arrayType()));
+
+    static final MethodHandleDesc MH_VOID_FUNCTION = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_FUNCTION_DESC, "ofVoid",
+                MethodTypeDesc.of(CD_FUNCTION_DESC, ConstantDescs.CD_boolean, CD_LAYOUT.arrayType()));
+
+    static final MethodHandleDesc MH_FUNCTION = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_FUNCTION_DESC, "of",
+                MethodTypeDesc.of(CD_FUNCTION_DESC, CD_LAYOUT, ConstantDescs.CD_boolean, CD_LAYOUT.arrayType()));
+
+    static final MethodHandleDesc MH_VOID_ADDRESS = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofAddress",
+                MethodTypeDesc.of(CD_ADDRESS_LAYOUT, ConstantDescs.CD_long));
+
+    static final MethodHandleDesc MH_LAYOUT_ADDRESS = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofAddress",
+                MethodTypeDesc.of(CD_ADDRESS_LAYOUT, ConstantDescs.CD_long, CD_LAYOUT));
+
+    static final MethodHandleDesc MH_FUNCTION_ADDRESS = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofAddress",
+                MethodTypeDesc.of(CD_ADDRESS_LAYOUT, ConstantDescs.CD_long, CD_FUNCTION_DESC));
 }

@@ -68,7 +68,7 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
         }
     }
 
-    private final Kind kind;
+    final Kind kind;
     private final ByteOrder order;
     private final long size;
 

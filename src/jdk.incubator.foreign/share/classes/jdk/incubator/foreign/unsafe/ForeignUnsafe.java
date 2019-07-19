@@ -65,4 +65,13 @@ public final class ForeignUnsafe {
     public static long getUnsafeOffset(MemoryAddress address) {
         return ((MemoryAddressImpl)address).unsafeGetOffset();
     }
+
+    /**
+     * Obtain a new memory address instance from given long address.
+     * @param addr the long address.
+     * @return the new memory address instance.
+     */
+    public static MemoryAddress ofLong(long addr) {
+        return MemoryAddressImpl.ofNative(addr);
+    }
 }

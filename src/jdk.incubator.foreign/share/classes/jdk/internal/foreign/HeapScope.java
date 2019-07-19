@@ -44,7 +44,7 @@ public class HeapScope extends MemorySegmentImpl.Scope {
     }
 
     @Override
-    void close() {
+    public void close() {
         super.close();
         base = null;
     }

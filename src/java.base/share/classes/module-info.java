@@ -226,7 +226,8 @@ module java.base {
         jdk.management.agent;
     exports jdk.internal.vm.annotation to
         jdk.internal.vm.ci,
-        jdk.unsupported;
+        jdk.unsupported,
+        jdk.incubator.foreign;
     exports jdk.internal.util.jar to
         jdk.jartool;
     exports jdk.internal.util.xml to
@@ -272,7 +273,8 @@ module java.base {
         java.sql.rowset;
     exports sun.security.action to
         java.desktop,
-        java.security.jgss;
+        java.security.jgss,
+        jdk.incubator.foreign;
     exports sun.security.internal.interfaces to
         jdk.crypto.cryptoki;
     exports sun.security.internal.spec to

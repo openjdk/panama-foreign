@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandles;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
@@ -60,6 +61,7 @@ import java.util.function.Supplier;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import jdk.internal.access.foreign.NativeLibraryProxy;
 import jdk.internal.util.StaticProperty;
 import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.ServicesCatalog;
@@ -2278,6 +2280,20 @@ public final class System {
             public void loadLibrary(Class<?> caller, String library) {
                 assert library.indexOf(java.io.File.separatorChar) < 0;
                 ClassLoader.loadLibrary(caller, library, false);
+            }
+
+            //Panama
+            @Override
+            public NativeLibraryProxy loadLibrary(MethodHandles.Lookup lookup, String libname) {
+                return Runtime.getRuntime().loadLibrary(lookup, libname);
+            }
+            @Override
+            public NativeLibraryProxy load(MethodHandles.Lookup lookup, String libname) {
+                return Runtime.getRuntime().load0(lookup.lookupClass(), libname);
+            }
+            @Override
+            public NativeLibraryProxy defaultLibrary() {
+                return Runtime.getRuntime().defaultLibrary();
             }
         });
     }

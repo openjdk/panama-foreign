@@ -26,6 +26,7 @@
 package jdk.internal.access;
 
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandles;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
@@ -40,6 +41,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import jdk.internal.access.foreign.NativeLibraryProxy;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.ConstantPool;
 import sun.reflect.annotation.AnnotationType;
@@ -319,4 +321,36 @@ public interface JavaLangAccess {
      * @param library name of the library to load
      */
     void loadLibrary(Class<?> caller, String library);
+
+    //Panama
+
+    /**
+     * Panama: load a native library.
+     * @param lookup the lookup object.
+     * @param libname the name of the library.
+     * @return the found library
+     * @throws     UnsatisfiedLinkError if either the libname argument
+     *             contains a file path, the native library is not statically
+     *             linked with the VM,  or the library cannot be mapped to a
+     *             native library image by the host system.
+     */
+    NativeLibraryProxy loadLibrary(MethodHandles.Lookup lookup, String libname);
+
+    /**
+     * Panama: load a native library.
+     * @param lookup the lookup object.
+     * @param libname the absolute path of the library.
+     * @return the loaded library
+     * @throws     UnsatisfiedLinkError if either the libname argument is not an
+     *             absolute path name, the native library is not statically
+     *             linked with the VM, or the library cannot be mapped to
+     *             a native library image by the host system.
+     */
+    NativeLibraryProxy load(MethodHandles.Lookup lookup, String libname);
+
+    /**
+     * Panama: lookup default library
+     * @return defauult library.
+     */
+    NativeLibraryProxy defaultLibrary();
 }

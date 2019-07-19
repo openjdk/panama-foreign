@@ -35,6 +35,8 @@
 #include "logging/logTag.hpp"
 #include "memory/universe.hpp"
 #include "prims/methodHandles.hpp"
+#include "prims/universalNativeInvoker.hpp"
+#include "runtime/globals.hpp"
 #include "runtime/flags/jvmFlag.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/icache.hpp"
@@ -154,6 +156,7 @@ jint init_globals() {
   }
   stubRoutines_init2(); // note: StubRoutines need 2-phase init
   MethodHandles::generate_adapters();
+  UniversalNativeInvoker::generate_adapter();
 
 #if INCLUDE_NMT
   // Solaris stack is walkable only after stubRoutines are set up.

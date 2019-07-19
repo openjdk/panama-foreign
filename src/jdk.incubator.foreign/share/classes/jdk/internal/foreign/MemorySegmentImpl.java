@@ -52,6 +52,15 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final static int PINNED = READ_ONLY << 1;
     final static long NONCE = new Random().nextLong();
 
+    public static MemorySegmentImpl everything() {
+        return new MemorySegmentImpl(0, Long.MAX_VALUE, 0, new MemorySegmentImpl.Scope() {
+            @Override
+            public Object base() {
+                return null;
+            }
+        });
+    }
+
     public MemorySegmentImpl(long min, long length, int mask, Scope scope) {
         this.length = length;
         this.mask = mask;
@@ -198,14 +207,14 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return Math.abs(Objects.hash(scope.base(), min, NONCE));
     }
 
-    static abstract class Scope {
+    public static abstract class Scope {
         boolean isAlive = true;
         final boolean isAlive() {
             return isAlive;
         }
-        void close() {
+        public void close() {
             isAlive = false;
         }
-        abstract Object base();
+        public abstract Object base();
     }
 }

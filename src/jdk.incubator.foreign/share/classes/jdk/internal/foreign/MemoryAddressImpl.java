@@ -39,6 +39,14 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
     private final MemorySegmentImpl segment;
     private final long offset;
 
+    public static MemoryAddress ofNull() {
+        return MemorySegmentImpl.everything().baseAddress();
+    }
+
+    public static MemoryAddress ofNative(long addr) {
+        return MemorySegmentImpl.everything().baseAddress().offset(addr);
+    }
+
     public MemoryAddressImpl(MemorySegmentImpl segment) {
         this(segment, 0);
     }
