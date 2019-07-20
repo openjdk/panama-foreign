@@ -1534,17 +1534,10 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           if (size_in_bits <= 128 && UseSSE < 4) { ret_value = false; }
           else if (size_in_bits > 256 && UseAVX < 2) { ret_value = false; }
           break;
-        case Op_LShiftVI:
-        case Op_RShiftVI:
-        case Op_URShiftVI:
-          if (op_arity == 2 && UseAVX <= 1)
-            ret_value  = false;
-          break;
-        case Op_LShiftVL:
-        case Op_RShiftVL:
-        case Op_URShiftVL:
-          if (op_arity == 2 && UseAVX <= 1)
-            ret_value  = false;
+        case Op_VLShiftV:
+        case Op_VRShiftV:
+        case Op_VURShiftV:
+          if (UseAVX <= 1) ret_value  = false;
           break;
         case Op_MulVS:
         case Op_AddVS:
@@ -17087,8 +17080,8 @@ instruct vsra8L_reg_evex(vecZ dst, vecZ src, vecS shift) %{
 // ------------------- Variable Bit Shift Left Logical -----------------------------
 //Integer Variable left shift
 instruct vsllv2I(vecD dst, vecD src, vecD shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVI src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvd  $dst,$src,$shift\t! variable bit shift left shift packed2I" %}
   ins_encode %{
     int vector_len = 0;
@@ -17098,8 +17091,8 @@ instruct vsllv2I(vecD dst, vecD src, vecD shift) %{
 %}
 
 instruct vsllv4I_reg(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVI src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvd  $dst,$src,$shift\t! variable bit shift left shift packed4I" %}
   ins_encode %{
     int vector_len = 0;
@@ -17109,8 +17102,8 @@ instruct vsllv4I_reg(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsllv4I_reg_evex(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVI src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvd  $dst,$src,$shift\t! variable bit shift left shift packed4I" %}
   ins_encode %{
     int vector_len = 0;
@@ -17120,8 +17113,8 @@ instruct vsllv4I_reg_evex(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsllv8I_reg(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVI src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvd  $dst,$src,$shift\t! variable bit shift left shift packed8I" %}
   ins_encode %{
     int vector_len = 1;
@@ -17131,8 +17124,8 @@ instruct vsllv8I_reg(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsllv8I_reg_evex(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVI src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvd  $dst,$src,$shift\t! variable bit shift left shift packed8I" %}
   ins_encode %{
     int vector_len = 1;
@@ -17142,8 +17135,8 @@ instruct vsllv8I_reg_evex(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsllv16I_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVI src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvd  $dst,$src,$shift\t! variable bit shift left shift packed16I" %}
   ins_encode %{
     int vector_len = 2;
@@ -17154,8 +17147,8 @@ instruct vsllv16I_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
 
 //Long Variable left shift
 instruct vsllv1L_reg(vecD dst, vecD src, vecD shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 1 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVL src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvq  $dst,$src,$shift\t! variable bit shift left shift packed1L" %}
   ins_encode %{
     int vector_len = 0;
@@ -17165,8 +17158,8 @@ instruct vsllv1L_reg(vecD dst, vecD src, vecD shift) %{
 %}
 
 instruct vsllv2L_reg(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVL src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvq  $dst,$src,$shift\t! variable bit shift left shift packed2L" %}
   ins_encode %{
     int vector_len = 0;
@@ -17176,8 +17169,8 @@ instruct vsllv2L_reg(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsllv2L_reg_evex(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVL src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvq  $dst,$src,$shift\t! variable bit shift left shift packed2L" %}
   ins_encode %{
     int vector_len = 0;
@@ -17187,8 +17180,8 @@ instruct vsllv2L_reg_evex(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsllv4L_reg(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVL src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvq  $dst,$src,$shift\t! variable bit shift left shift packed4L" %}
   ins_encode %{
     int vector_len = 1;
@@ -17198,8 +17191,8 @@ instruct vsllv4L_reg(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsllv4L_reg_evex(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVL src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvq  $dst,$src,$shift\t! variable bit shift left shift packed4L" %}
   ins_encode %{
     int vector_len = 1;
@@ -17209,8 +17202,8 @@ instruct vsllv4L_reg_evex(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsllv8L_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_LShiftCntV);
-  match(Set dst (LShiftVL src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VLShiftV src shift));
   format %{ "vpsllvq  $dst,$src,$shift\t! variable bit shift left shift packed16I" %}
   ins_encode %{
     int vector_len = 2;
@@ -17222,8 +17215,8 @@ instruct vsllv8L_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
 // ------------------- Variable Bit Shift Right Logical -----------------------------
 //Integer Variable right shift
 instruct vsrlv2I_reg(vecD dst, vecD src, vecD shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVI src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvd  $dst,$src,$shift\t! variable bit shift right shift packed2I" %}
   ins_encode %{
     int vector_len = 0;
@@ -17233,8 +17226,8 @@ instruct vsrlv2I_reg(vecD dst, vecD src, vecD shift) %{
 %}
 
 instruct vsrlv4I_reg(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVI src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvd  $dst,$src,$shift\t! variable bit shift right shift packed4I" %}
   ins_encode %{
     int vector_len = 0;
@@ -17244,8 +17237,8 @@ instruct vsrlv4I_reg(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsrlv4I_reg_evex(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVI src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvd  $dst,$src,$shift\t! variable bit shift right shift packed4I" %}
   ins_encode %{
     int vector_len = 0;
@@ -17255,8 +17248,8 @@ instruct vsrlv4I_reg_evex(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsrlv8I_reg(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVI src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvd  $dst,$src,$shift\t! variable bit shift right shift packed8I" %}
   ins_encode %{
     int vector_len = 1;
@@ -17266,8 +17259,8 @@ instruct vsrlv8I_reg(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsrlv8I_reg_evex(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVI src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvd  $dst,$src,$shift\t! variable bit shift right shift packed8I" %}
   ins_encode %{
     int vector_len = 1;
@@ -17277,8 +17270,8 @@ instruct vsrlv8I_reg_evex(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsrlv16I_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVI src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvd  $dst,$src,$shift\t! variable bit shift right shift packed16I" %}
   ins_encode %{
     int vector_len = 2;
@@ -17289,8 +17282,8 @@ instruct vsrlv16I_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
 
 //Long Variable right shift
 instruct vsrlv1L_reg(vecD dst, vecD src, vecD shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 1 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVL src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvq  $dst,$src,$shift\t! variable bit shift right shift packed1L" %}
   ins_encode %{
     int vector_len = 0;
@@ -17300,8 +17293,8 @@ instruct vsrlv1L_reg(vecD dst, vecD src, vecD shift) %{
 %}
 
 instruct vsrlv2L_reg(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVL src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvq  $dst,$src,$shift\t! variable bit shift right shift packed2L" %}
   ins_encode %{
     int vector_len = 0;
@@ -17311,8 +17304,8 @@ instruct vsrlv2L_reg(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsrlv2L_reg_evex(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVL src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvq  $dst,$src,$shift\t! variable bit shift right shift packed2L" %}
   ins_encode %{
     int vector_len = 0;
@@ -17322,8 +17315,8 @@ instruct vsrlv2L_reg_evex(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsrlv4L_reg(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVL src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvq  $dst,$src,$shift\t! variable bit shift right shift packed4L" %}
   ins_encode %{
     int vector_len = 1;
@@ -17333,8 +17326,8 @@ instruct vsrlv4L_reg(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsrlv4L_reg_evex(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVL src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvq  $dst,$src,$shift\t! variable bit shift right shift packed4L" %}
   ins_encode %{
     int vector_len = 1;
@@ -17344,8 +17337,8 @@ instruct vsrlv4L_reg_evex(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsrlv8L_reg(vecZ dst, vecZ src, vecZ shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (URShiftVL src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VURShiftV src shift));
   format %{ "vpsrlvq  $dst,$src,$shift\t! variable bit shift right shift packed8L" %}
   ins_encode %{
     int vector_len = 2;
@@ -17357,8 +17350,8 @@ instruct vsrlv8L_reg(vecZ dst, vecZ src, vecZ shift) %{
 // ------------------- Variable Bit Shift Right Arithmetic -----------------------------
 //Integer Variable right shift
 instruct vsrav2I_reg(vecD dst, vecD src, vecD shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVI src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VRShiftV src shift));
   format %{ "vpsravd  $dst,$src,$shift\t! variable bit shift right shift packed2I" %}
   ins_encode %{
     int vector_len = 0;
@@ -17368,8 +17361,8 @@ instruct vsrav2I_reg(vecD dst, vecD src, vecD shift) %{
 %}
 
 instruct vsrav4I_reg(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVI src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VRShiftV src shift));
   format %{ "vpsravd  $dst,$src,$shift\t! variable bit shift right shift packed4I" %}
   ins_encode %{
     int vector_len = 0;
@@ -17379,8 +17372,8 @@ instruct vsrav4I_reg(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsrav4I_reg_evex(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVI src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VRShiftV src shift));
   format %{ "vpsravd  $dst,$src,$shift\t! variable bit shift right shift packed4I" %}
   ins_encode %{
     int vector_len = 0;
@@ -17390,8 +17383,8 @@ instruct vsrav4I_reg_evex(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsrav8I_reg(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVI src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VRShiftV src shift));
   format %{ "vpsravd  $dst,$src,$shift\t! variable bit shift right shift packed8I" %}
   ins_encode %{
     int vector_len = 1;
@@ -17401,8 +17394,8 @@ instruct vsrav8I_reg(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsrav8I_reg_evex(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVI src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VRShiftV src shift));
   format %{ "vpsravd  $dst,$src,$shift\t! variable bit shift right shift packed8I" %}
   ins_encode %{
     int vector_len = 1;
@@ -17412,8 +17405,8 @@ instruct vsrav8I_reg_evex(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsrav16I_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVI src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VRShiftV src shift));
   format %{ "vpsravd  $dst,$src,$shift\t! variable bit shift right shift packed16I" %}
   ins_encode %{
     int vector_len = 2;
@@ -17424,8 +17417,8 @@ instruct vsrav16I_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
 
 //Long Variable right shift arithmetic
 instruct vsrav1L_reg(vecD dst, vecD src, vecD shift, vecD tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVL src shift));
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VRShiftV src shift));
   effect(TEMP dst, TEMP tmp);
   format %{ "vpsrlvq   $dst,$src,$shift\n\t"
             "vmovdqu   $tmp,[0x8000000000000000]\n\t"
@@ -17444,8 +17437,8 @@ instruct vsrav1L_reg(vecD dst, vecD src, vecD shift, vecD tmp) %{
  %}
 
 instruct vsrav1L_reg_evex(vecD dst, vecD src, vecD shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 1 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVL src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VRShiftV src shift));
   format %{ "evpsravq  $dst,$src,$shift\t! variable arithmetic right shift packed1L" %}
   ins_encode %{
     int vector_len = 0;
@@ -17455,8 +17448,8 @@ instruct vsrav1L_reg_evex(vecD dst, vecD src, vecD shift) %{
 %}
 
 instruct vsrav2L_reg(vecX dst, vecX src, vecX shift, vecX tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVL src shift));
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VRShiftV src shift));
   effect(TEMP dst, TEMP tmp);
   format %{ "vpsrlvq   $dst,$src,$shift\n\t"
             "vmovdqu   $tmp,[0x8000000000000000]\n\t"
@@ -17475,8 +17468,8 @@ instruct vsrav2L_reg(vecX dst, vecX src, vecX shift, vecX tmp) %{
 %}
 
 instruct vsrav2L_reg_evex(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVL src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VRShiftV src shift));
   format %{ "evpsravq  $dst,$src,$shift\t! variable arithmetic right shift packed2L" %}
   ins_encode %{
     int vector_len = 0;
@@ -17486,8 +17479,8 @@ instruct vsrav2L_reg_evex(vecX dst, vecX src, vecX shift) %{
 %}
 
 instruct vsrav4L_reg(vecY dst, vecY src, vecY shift, vecY tmp) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVL src shift));
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VRShiftV src shift));
   effect(TEMP dst, TEMP tmp);
   format %{ "vpsrlvq   $dst,$src,$shift\n\t"
             "vmovdqu   $tmp,[0x8000000000000000]\n\t"
@@ -17506,8 +17499,8 @@ instruct vsrav4L_reg(vecY dst, vecY src, vecY shift, vecY tmp) %{
 %}
 
 instruct vsrav4L_reg_evex(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVL src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VRShiftV src shift));
   format %{ "evpsravq  $dst,$src,$shift\t! variable bit shift right shift packed4L" %}
   ins_encode %{
     int vector_len = 1;
@@ -17517,8 +17510,8 @@ instruct vsrav4L_reg_evex(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsrav8L_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_RShiftCntV);
-  match(Set dst (RShiftVL src shift));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VRShiftV src shift));
   format %{ "evpsravq  $dst,$src,$shift\t! variable bit shift right shift packed8L" %}
   ins_encode %{
     int vector_len = 2;

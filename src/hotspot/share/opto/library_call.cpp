@@ -6857,8 +6857,29 @@ static int get_opc(jint op, BasicType bt) {
   return 0; // Unimplemented
 }
 
-static int get_sopc(int opc, BasicType elem_bt) {
+static int get_sopc(int opc, BasicType elem_bt, int arity) {
   int sopc = 0;
+#ifdef X86
+  // Variable shit handling
+  if (arity == 2) {
+    switch (opc) {
+      case Op_LShiftI:
+      case Op_LShiftL:
+        return Op_VLShiftV;
+        break;
+      case Op_RShiftI:
+      case Op_RShiftL:
+        return Op_VRShiftV;
+        break;
+      case Op_URShiftI:
+      case Op_URShiftL:
+        return Op_VURShiftV;
+        break;
+      default:
+        break;
+    }
+  }
+#endif
   switch (opc) {
     case Op_CallLeafVector:
       sopc = Op_CallLeafVector;
@@ -6869,6 +6890,7 @@ static int get_sopc(int opc, BasicType elem_bt) {
   }
   return sopc;
 }
+
 Node* LibraryCallKit::box_vector(Node* vector, const TypeInstPtr* vbox_type,
                                  BasicType elem_bt, int num_elem) {
 
@@ -6939,7 +6961,7 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
   int opc = get_opc(opr->get_con(), elem_bt);
-  int sopc = get_sopc(opc, elem_bt);
+  int sopc = get_sopc(opc, elem_bt, n);
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
@@ -7008,14 +7030,15 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
       return false;
     }
   } else {
+    const TypeVect* vt = TypeVect::make(elem_bt, num_elem);
     switch (n) {
       case 1:
       case 2: {
-        operation = _gvn.transform(VectorNode::make(opc, opd1, opd2, num_elem, elem_bt));
+        operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, vt));
         break;
       }
       case 3: {
-        operation = _gvn.transform(VectorNode::make(opc, opd1, opd2, opd3, num_elem, elem_bt));
+        operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, opd3, vt));
         break;
       }
       default: fatal("unsupported arity: %d", n);
@@ -8256,7 +8279,7 @@ bool LibraryCallKit::inline_vector_broadcast_int() {
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
   int opc = get_opc(opr->get_con(), elem_bt);
-  int sopc = get_sopc(opc, elem_bt); // get_node_id(opr->get_con(), elem_bt);
+  int sopc = get_sopc(opc, elem_bt, 1); // get_node_id(opr->get_con(), elem_bt);
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 

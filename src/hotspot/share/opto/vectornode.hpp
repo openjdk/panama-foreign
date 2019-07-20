@@ -64,7 +64,9 @@ class VectorNode : public TypeNode {
   static VectorNode* scalar2vector(Node* s, uint vlen, const Type* opd_t);
   static VectorNode* shift_count(int opc, Node* cnt, uint vlen, BasicType bt);
   static VectorNode* make(int opc, Node* n1, Node* n2, uint vlen, BasicType bt);
+  static VectorNode* make(int vopc, Node* n1, Node* n2, const TypeVect* vt);
   static VectorNode* make(int opc, Node* n1, Node* n2, Node* n3, uint vlen, BasicType bt);
+  static VectorNode* make(int vopc, Node* n1, Node* n2, Node* n3, const TypeVect* vt);
 
   static int  opcode(int opc, BasicType bt);
   static int replicate_opcode(BasicType bt);
@@ -648,6 +650,30 @@ class RShiftCntVNode : public VectorNode {
   virtual uint ideal_reg() const { return Matcher::vector_shift_count_ideal_reg(vect_type()->length_in_bytes()); }
 };
 
+
+//------------------------------VLShiftVNode-----------------------------------
+// Variable vector left shift bytes
+class VLShiftVNode : public VectorNode {
+ public:
+  VLShiftVNode(Node* in1, Node* in2, const TypeVect* vt) : VectorNode(in1,in2,vt) {}
+  virtual int Opcode() const;
+};
+
+//------------------------------VRShiftVNode-----------------------------------
+// Variable vector right shift bytes
+class VRShiftVNode : public VectorNode {
+ public:
+  VRShiftVNode(Node* in1, Node* in2, const TypeVect* vt) : VectorNode(in1,in2,vt) {}
+  virtual int Opcode() const;
+};
+
+//------------------------------VURShiftVNode-----------------------------------
+// Variable vector unsigned right shift bytes
+class VURShiftVNode : public VectorNode {
+ public:
+  VURShiftVNode(Node* in1, Node* in2, const TypeVect* vt) : VectorNode(in1,in2,vt) {}
+  virtual int Opcode() const;
+};
 
 //------------------------------AndVNode---------------------------------------
 // Vector and integer
