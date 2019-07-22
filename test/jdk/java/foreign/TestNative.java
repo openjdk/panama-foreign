@@ -29,6 +29,7 @@
  * @run testng TestNative
  */
 
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.unsafe.ForeignUnsafe;
@@ -42,6 +43,7 @@ import jdk.incubator.foreign.SequenceLayout;
 import java.lang.invoke.VarHandle;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
@@ -64,31 +66,31 @@ public class TestNative {
     }
 
     static SequenceLayout bytes = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofSignedInt(8)
+            MemoryLayouts.JAVA_BYTE.withOrder(ByteOrder.nativeOrder())
     );
 
     static SequenceLayout chars = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofUnsignedInt(16)
+            MemoryLayouts.JAVA_CHAR.withOrder(ByteOrder.nativeOrder())
     );
 
     static SequenceLayout shorts = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofSignedInt(16)
+            MemoryLayouts.JAVA_SHORT.withOrder(ByteOrder.nativeOrder())
     );
 
     static SequenceLayout ints = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofSignedInt(32)
+            MemoryLayouts.JAVA_INT.withOrder(ByteOrder.nativeOrder())
     );
 
     static SequenceLayout floats = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofFloatingPoint(32)
+            MemoryLayouts.JAVA_FLOAT.withOrder(ByteOrder.nativeOrder())
     );
 
     static SequenceLayout longs = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofSignedInt(64)
+            MemoryLayouts.JAVA_LONG.withOrder(ByteOrder.nativeOrder())
     );
 
     static SequenceLayout doubles = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofFloatingPoint(64)
+            MemoryLayouts.JAVA_DOUBLE.withOrder(ByteOrder.nativeOrder())
     );
 
     static VarHandle byteHandle = bytes.varHandle(byte.class, PathElement.sequenceElement());

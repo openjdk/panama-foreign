@@ -145,14 +145,8 @@ abstract class AbstractLayout implements MemoryLayout {
     static final MethodHandleDesc MH_PADDING = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofPadding",
                 MethodTypeDesc.of(CD_LAYOUT, ConstantDescs.CD_long));
 
-    static final MethodHandleDesc MH_SIGNED = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofSignedInt",
-                MethodTypeDesc.of(CD_VALUE_LAYOUT, CD_BYTEORDER, ConstantDescs.CD_long));
-
-    static final MethodHandleDesc MH_UNSIGNED = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofUnsignedInt",
-                MethodTypeDesc.of(CD_VALUE_LAYOUT, CD_BYTEORDER, ConstantDescs.CD_long));
-
-    static final MethodHandleDesc MH_FLOAT = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofFloatingPoint",
-                MethodTypeDesc.of(CD_VALUE_LAYOUT, CD_BYTEORDER, ConstantDescs.CD_long));
+    static final MethodHandleDesc MH_VALUE = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofValue",
+                MethodTypeDesc.of(CD_VALUE_LAYOUT, ConstantDescs.CD_long, CD_BYTEORDER));
 
     static final MethodHandleDesc MH_SIZED_SEQUENCE = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofSequence",
                 MethodTypeDesc.of(CD_SEQUENCE_LAYOUT, ConstantDescs.CD_long, CD_LAYOUT));

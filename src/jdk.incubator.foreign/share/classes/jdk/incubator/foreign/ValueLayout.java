@@ -29,6 +29,7 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.nio.ByteOrder;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -48,33 +49,11 @@ import java.util.OptionalLong;
  */
 public class ValueLayout extends AbstractLayout implements MemoryLayout {
 
-    /**
-     * The value kind.
-     */
-    enum Kind {
-        /** Kind of unsigned integral value. */
-        INTEGRAL_UNSIGNED("u", MH_UNSIGNED),
-        /** Signed integral value. */
-        INTEGRAL_SIGNED("i", MH_SIGNED),
-        /** Kind of floating-point value. */
-        FLOATING_POINT("f", MH_FLOAT);
-
-        String tag;
-        MethodHandleDesc mhDesc;
-
-        Kind(String tag, MethodHandleDesc mhDesc) {
-            this.tag = tag;
-            this.mhDesc = mhDesc;
-        }
-    }
-
-    private final Kind kind;
     private final ByteOrder order;
     private final long size;
 
-    ValueLayout(Kind kind, ByteOrder order, long size, OptionalLong alignment, Optional<String> name) {
+    ValueLayout(ByteOrder order, long size, OptionalLong alignment, Optional<String> name) {
         super(alignment, name);
-        this.kind = kind;
         this.order = order;
         this.size = size;
     }
@@ -88,20 +67,12 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     /**
-     * Is this layout associated with a signed integral value?
-     * @return true, this layout associated with a signed integral value.
+     * Returns a new value layout with given byte order.
+     * @param order the desired byte order.
+     * @return a new value layout with given byte order.
      */
-    public boolean isSigned() {
-        return kind == Kind.INTEGRAL_SIGNED;
-    }
-
-    /**
-     * Is this layout associated with an integral value?
-     * @return true, this layout associated with an integral value (either signed or unsigned).
-     * @see ValueLayout#isSigned()
-     */
-    public boolean isIntegral() {
-        return kind != Kind.FLOATING_POINT;
+    public ValueLayout withOrder(ByteOrder order) {
+        return new ValueLayout(order, size, optAlignment(), optName());
     }
 
     @Override
@@ -117,8 +88,7 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
     @Override
     public String toString() {
         return decorateLayoutString(String.format("%s%d",
-                order == ByteOrder.BIG_ENDIAN ?
-                        kind.tag.toUpperCase() : kind.tag,
+                order == ByteOrder.BIG_ENDIAN ? "B" : "b",
                 size));
     }
 
@@ -134,25 +104,26 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
             return false;
         }
         ValueLayout v = (ValueLayout)other;
-        return kind.equals(v.kind) && order.equals(v.order) &&
-            size == v.size;
+        return order.equals(v.order) &&
+            size == v.size &&
+            bitAlignment() == v.bitAlignment();
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ kind.hashCode() ^ order.hashCode() ^
-            Long.hashCode(size);
+        return super.hashCode()^ order.hashCode() ^
+            Long.hashCode(size) ^ Long.hashCode(bitAlignment());
     }
 
     @Override
     ValueLayout dup(OptionalLong alignment, Optional<String> name) {
-        return new ValueLayout(kind, order, size, alignment, name);
+        return new ValueLayout(order, size, alignment, name);
     }
 
     @Override
     public Optional<DynamicConstantDesc<ValueLayout>> describeConstable() {
         return Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
-                CD_VALUE_LAYOUT, kind.mhDesc, order == ByteOrder.BIG_ENDIAN ? BIG_ENDIAN : LITTLE_ENDIAN, size));
+                CD_VALUE_LAYOUT, MH_VALUE, size, order == ByteOrder.BIG_ENDIAN ? BIG_ENDIAN : LITTLE_ENDIAN));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout

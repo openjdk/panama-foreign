@@ -30,6 +30,7 @@
  * @run testng TestByteBuffer
  */
 
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
@@ -44,7 +45,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
@@ -72,36 +72,36 @@ public class TestByteBuffer {
 
     static SequenceLayout tuples = MemoryLayout.ofSequence(500,
             MemoryLayout.ofStruct(
-                    MemoryLayout.ofSignedInt(32).withName("index"),
-                    MemoryLayout.ofFloatingPoint(32).withName("value")
+                    MemoryLayouts.JAVA_INT.withName("index"),
+                    MemoryLayouts.JAVA_FLOAT.withName("value")
             ));
 
     static SequenceLayout bytes = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofSignedInt(8)
+            MemoryLayouts.JAVA_BYTE
     );
 
     static SequenceLayout chars = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofUnsignedInt(16)
+            MemoryLayouts.JAVA_CHAR
     );
 
     static SequenceLayout shorts = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofSignedInt(16)
+            MemoryLayouts.JAVA_SHORT
     );
 
     static SequenceLayout ints = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofSignedInt(32)
+            MemoryLayouts.JAVA_INT
     );
 
     static SequenceLayout floats = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofFloatingPoint(32)
+            MemoryLayouts.JAVA_FLOAT
     );
 
     static SequenceLayout longs = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofSignedInt(64)
+            MemoryLayouts.JAVA_LONG
     );
 
     static SequenceLayout doubles = MemoryLayout.ofSequence(100,
-            MemoryLayout.ofFloatingPoint(64)
+            MemoryLayouts.JAVA_DOUBLE
     );
 
     static VarHandle indexHandle = tuples.varHandle(int.class, PathElement.sequenceElement(), PathElement.groupElement("index"));
@@ -124,7 +124,6 @@ public class TestByteBuffer {
     }
 
     static void checkTuples(MemoryAddress base, ByteBuffer bb) {
-        bb = bb.order(ByteOrder.nativeOrder());
         for (long i = 0; i < tuples.elementsCount().getAsLong() ; i++) {
             assertEquals(bb.getInt(), (int)indexHandle.get(base, i));
             assertEquals(bb.getFloat(), (float)valueHandle.get(base, i));
@@ -146,8 +145,7 @@ public class TestByteBuffer {
         for (long i = 0 ; i < nelems ; i++) {
             long limit = nelems - i;
             MemorySegment resizedSegment = base.segment().slice(i * elemSize, limit * elemSize);
-            ByteBuffer bb = resizedSegment.asByteBuffer()
-                    .order(ByteOrder.nativeOrder());
+            ByteBuffer bb = resizedSegment.asByteBuffer();
             Z z = bufFactory.apply(bb);
             for (long j = i ; j < limit ; j++) {
                 Object handleValue = handleExtractor.apply(resizedSegment.baseAddress(), j - i);

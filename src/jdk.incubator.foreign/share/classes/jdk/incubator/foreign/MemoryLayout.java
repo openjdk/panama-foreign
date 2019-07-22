@@ -29,7 +29,6 @@ import jdk.internal.foreign.LayoutPathImpl;
 import jdk.internal.foreign.Utils;
 
 import java.lang.constant.Constable;
-import java.lang.constant.ConstantDesc;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
@@ -43,6 +42,7 @@ import java.util.OptionalLong;
  * There are two leaves in the layout hierarchy, <em>value layouts</em>, which are used to represent values of given size and kind (see
  * {@link ValueLayout}) and <em>padding layouts</em> which are used, as the name suggests, to represent a portion of a memory
  * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link MemoryLayout#ofPadding(long)}).
+ * Some common value layout constants are defined in the {@link MemoryLayouts} class.
  * <p>
  * More complex layouts can be derived from simpler ones: a <em>sequence layout</em> denotes a repetition of one or more
  * element layout (see {@link SequenceLayout}); a <em>group layout</em> denotes an aggregation of (typically) heterogeneous
@@ -72,8 +72,7 @@ import java.util.OptionalLong;
  * A layout's natural alignment can be overridden if needed (see {@link MemoryLayout#withBitAlignment(long)}), which can be useful to describe
  * hyper-aligned layouts.
  * <p>
- * Where it's not explicitly provided, the byte order of value layouts is assumed to be compatible with the
- * platform byte order (see {@link java.nio.ByteOrder#nativeOrder()}).
+ * All value layouts have an <em>explicit</em> byte order (see {@link java.nio.ByteOrder}) which is set when the layout is created.
  *
  * <h2><a id = "layout-paths">Layout paths</a></h2>
  *
@@ -321,75 +320,15 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * Create a floating-point value layout of given size. The new layout's byte order is assumed to be
-     * {@link ByteOrder#nativeOrder()}).
-     * @param size the floating-point value layout size.
-     * @return a new floating-point value layout.
+     * Create a value layout of given byte order and size.
+     * @param size the value layout size.
+     * @param order the value layout's byte order.
+     * @return a new value layout.
      * @throws IllegalArgumentException if size is &le; 0.
      */
-    static ValueLayout ofFloatingPoint(long size) throws IllegalArgumentException  {
+    static ValueLayout ofValue(long size, ByteOrder order) throws IllegalArgumentException {
         AbstractLayout.checkSize(size);
-        return ofFloatingPoint(ByteOrder.nativeOrder(), size);
-    }
-
-    /**
-     * Create a floating-point value layout of given byte order and size.
-     * @param order the floating-point value layout's byte order.
-     * @param size the floating-point value layout size.
-     * @return a new floating-point value layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    static ValueLayout ofFloatingPoint(ByteOrder order, long size) throws IllegalArgumentException {
-        AbstractLayout.checkSize(size);
-        return new ValueLayout(ValueLayout.Kind.FLOATING_POINT, order, size, OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a unsigned integral value layout of given size. The new layout's byte order is assumed to be
-     * {@link ByteOrder#nativeOrder()}).
-     * @param size the unsigned integral layout size.
-     * @return a new unsigned integral layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    static ValueLayout ofUnsignedInt(long size) throws IllegalArgumentException {
-        AbstractLayout.checkSize(size);
-        return ofUnsignedInt(ByteOrder.nativeOrder(), size);
-    }
-
-    /**
-     * Create a unsigned integral value layout of given byte order and size.
-     * @param order the unsigned integral layout's byte order.
-     * @param size the unsigned integral layout size.
-     * @return a new unsigned integral layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    static ValueLayout ofUnsignedInt(ByteOrder order, long size) throws IllegalArgumentException {
-        AbstractLayout.checkSize(size);
-        return new ValueLayout(ValueLayout.Kind.INTEGRAL_UNSIGNED, order, size, OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a signed integral value layout of given byte order and size.
-     * @param order the signed integral layout's byte order.
-     * @param size the signed integral layout size.
-     * @return a new signed integral layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    static ValueLayout ofSignedInt(ByteOrder order, long size) throws IllegalArgumentException  {
-        AbstractLayout.checkSize(size);
-        return new ValueLayout(ValueLayout.Kind.INTEGRAL_SIGNED, order, size, OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a signed integral value layout of given size. The new layout's byte order is assumed to be
-     * {@link ByteOrder#nativeOrder()}).
-     * @param size the signed integral layout size.
-     * @return a new signed integral layout.
-     * @throws IllegalArgumentException if size is &le; 0.
-     */
-    static ValueLayout ofSignedInt(long size) throws IllegalArgumentException  {
-        AbstractLayout.checkSize(size);
-        return ofSignedInt(ByteOrder.nativeOrder(), size);
+        return new ValueLayout(order, size, OptionalLong.empty(), Optional.empty());
     }
 
     /**
