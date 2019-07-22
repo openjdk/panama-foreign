@@ -31,6 +31,7 @@ import jdk.incubator.foreign.MemorySegment;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -99,9 +100,8 @@ public class TestSegments {
     }
 
     enum SizedLayoutFactory {
-        U_VALUE(MemoryLayout::ofUnsignedInt),
-        S_VALUE(MemoryLayout::ofSignedInt),
-        FP_VALUE(MemoryLayout::ofFloatingPoint),
+        VALUE_BE(size -> MemoryLayout.ofValue(size, ByteOrder.BIG_ENDIAN)),
+        VALUE_LE(size -> MemoryLayout.ofValue(size, ByteOrder.LITTLE_ENDIAN)),
         PADDING(MemoryLayout::ofPadding);
 
         private final LongFunction<MemoryLayout> factory;

@@ -28,6 +28,7 @@
  */
 
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SequenceLayout;
@@ -39,55 +40,55 @@ public class TestLayoutPaths {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testBadSelectFromSeq() {
-        SequenceLayout seq = MemoryLayout.ofSequence(MemoryLayout.ofSignedInt(32));
+        SequenceLayout seq = MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT);
         seq.offset(PathElement.groupElement("foo"));
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testBadSelectFromStruct() {
-        GroupLayout g = MemoryLayout.ofStruct(MemoryLayout.ofSignedInt(32));
+        GroupLayout g = MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT);
         g.offset(PathElement.sequenceElement());
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testBadSelectFromValue() {
-        SequenceLayout seq = MemoryLayout.ofSequence(MemoryLayout.ofSignedInt(32));
+        SequenceLayout seq = MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT);
         seq.offset(PathElement.sequenceElement(), PathElement.sequenceElement());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testUnknownStructField() {
-        GroupLayout g = MemoryLayout.ofStruct(MemoryLayout.ofSignedInt(32));
+        GroupLayout g = MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT);
         g.offset(PathElement.groupElement("foo"));
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testNullGroupElementName() {
-        GroupLayout g = MemoryLayout.ofStruct(MemoryLayout.ofSignedInt(32));
+        GroupLayout g = MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT);
         g.offset(PathElement.groupElement(null));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testOutOfBoundsSeqIndex() {
-        SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayout.ofSignedInt(32));
+        SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayouts.JAVA_INT);
         seq.offset(PathElement.sequenceElement(6));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNegativeSeqIndex() {
-        SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayout.ofSignedInt(32));
+        SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayouts.JAVA_INT);
         seq.offset(PathElement.sequenceElement(-2));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testIncompleteAccess() {
-        SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayout.ofStruct(MemoryLayout.ofSignedInt(32)));
+        SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT));
         seq.varHandle(int.class, PathElement.sequenceElement());
     }
 
     @Test
     public void testBadContainerAlign() {
-        GroupLayout g = MemoryLayout.ofStruct(MemoryLayout.ofSignedInt(32).withBitAlignment(16).withName("foo")).withBitAlignment(8);
+        GroupLayout g = MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT.withBitAlignment(16).withName("foo")).withBitAlignment(8);
         try {
             g.offset(PathElement.groupElement("foo"));
         } catch (Throwable ex) {
@@ -105,7 +106,7 @@ public class TestLayoutPaths {
 
     @Test
     public void testBadAlignOffset() {
-        GroupLayout g = MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), MemoryLayout.ofSignedInt(32).withBitAlignment(16).withName("foo"));
+        GroupLayout g = MemoryLayout.ofStruct(MemoryLayouts.PAD_8, MemoryLayouts.JAVA_INT.withBitAlignment(16).withName("foo"));
         try {
             g.offset(PathElement.groupElement("foo"));
         } catch (Throwable ex) {

@@ -26,8 +26,10 @@
  * @run testng TestLayouts
  */
 
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 
+import java.nio.ByteOrder;
 import java.util.function.LongFunction;
 
 import org.testng.annotations.*;
@@ -48,12 +50,10 @@ public class TestLayouts {
     @DataProvider(name = "badLayoutSizes")
     public Object[][] factoriesAndSizes() {
         return new Object[][] {
-                { SizedLayoutFactory.U_VALUE, 0 },
-                { SizedLayoutFactory.U_VALUE, -1 },
-                { SizedLayoutFactory.S_VALUE, 0 },
-                { SizedLayoutFactory.S_VALUE, -1 },
-                { SizedLayoutFactory.FP_VALUE, 0 },
-                { SizedLayoutFactory.FP_VALUE, -1 },
+                { SizedLayoutFactory.VALUE_BE, 0 },
+                { SizedLayoutFactory.VALUE_BE, -1 },
+                { SizedLayoutFactory.VALUE_LE, 0 },
+                { SizedLayoutFactory.VALUE_LE, -1 },
                 { SizedLayoutFactory.PADDING, 0 },
                 { SizedLayoutFactory.PADDING, -1 },
                 { SizedLayoutFactory.SEQUENCE, -1 }
@@ -72,11 +72,10 @@ public class TestLayouts {
     }
 
     enum SizedLayoutFactory {
-        U_VALUE(MemoryLayout::ofUnsignedInt),
-        S_VALUE(MemoryLayout::ofSignedInt),
-        FP_VALUE(MemoryLayout::ofFloatingPoint),
+        VALUE_LE(size -> MemoryLayout.ofValue(size, ByteOrder.LITTLE_ENDIAN)),
+        VALUE_BE(size -> MemoryLayout.ofValue(size, ByteOrder.BIG_ENDIAN)),
         PADDING(MemoryLayout::ofPadding),
-        SEQUENCE(size -> MemoryLayout.ofSequence(size, MemoryLayout.ofPadding(8)));
+        SEQUENCE(size -> MemoryLayout.ofSequence(size, MemoryLayouts.PAD_8));
 
         private final LongFunction<MemoryLayout> factory;
 
@@ -90,13 +89,12 @@ public class TestLayouts {
     }
 
     enum LayoutKind {
-        U_VALUE(MemoryLayout.ofUnsignedInt(8)),
-        S_VALUE(MemoryLayout.ofSignedInt(8)),
-        FP_VALUE(MemoryLayout.ofFloatingPoint(8)),
-        PADDING(MemoryLayout.ofPadding(8)),
-        SEQUENCE(MemoryLayout.ofSequence(1, MemoryLayout.ofPadding(8))),
-        STRUCT(MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), MemoryLayout.ofPadding(8))),
-        UNION(MemoryLayout.ofUnion(MemoryLayout.ofPadding(8), MemoryLayout.ofPadding(8)));
+        VALUE_LE(MemoryLayouts.BITS_8_LE),
+        VALUE_BE(MemoryLayouts.BITS_8_BE),
+        PADDING(MemoryLayouts.PAD_8),
+        SEQUENCE(MemoryLayout.ofSequence(1, MemoryLayouts.PAD_8)),
+        STRUCT(MemoryLayout.ofStruct(MemoryLayouts.PAD_8, MemoryLayouts.PAD_8)),
+        UNION(MemoryLayout.ofUnion(MemoryLayouts.PAD_8, MemoryLayouts.PAD_8));
 
         final MemoryLayout layout;
 

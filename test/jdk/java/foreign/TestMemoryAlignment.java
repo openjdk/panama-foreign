@@ -26,8 +26,8 @@
  * @run testng TestMemoryAlignment
  */
 
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
-import org.testng.annotations.*;
 
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
@@ -38,13 +38,14 @@ import jdk.incubator.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
 import java.util.stream.LongStream;
 
+import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
 public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testAlignedAccess(long align) {
-        ValueLayout layout = MemoryLayout.ofSignedInt(32);
+        ValueLayout layout = MemoryLayouts.BITS_32_BE;
         assertEquals(layout.bitAlignment(), 32);
         ValueLayout aligned = layout.withBitAlignment(align);
         assertEquals(aligned.bitAlignment(), align); //unreasonable alignment here, to make sure access throws
@@ -59,10 +60,10 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testUnalignedAccess(long align) {
-        ValueLayout layout = MemoryLayout.ofSignedInt(32);
+        ValueLayout layout = MemoryLayouts.BITS_32_BE;
         assertEquals(layout.bitAlignment(), 32);
         ValueLayout aligned = layout.withBitAlignment(align);
-        MemoryLayout alignedGroup = MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), aligned);
+        MemoryLayout alignedGroup = MemoryLayout.ofStruct(MemoryLayouts.PAD_8, aligned);
         assertEquals(alignedGroup.bitAlignment(), align);
         VarHandle vh = aligned.varHandle(int.class);
         try (MemorySegment segment = MemorySegment.ofNative(alignedGroup)) {
@@ -76,9 +77,9 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testUnalignedPath(long align) {
-        MemoryLayout layout = MemoryLayout.ofSignedInt(32);
+        MemoryLayout layout = MemoryLayouts.BITS_32_BE;
         MemoryLayout aligned = layout.withBitAlignment(align).withName("value");
-        GroupLayout alignedGroup = MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), aligned);
+        GroupLayout alignedGroup = MemoryLayout.ofStruct(MemoryLayouts.PAD_8, aligned);
         try {
             alignedGroup.varHandle(int.class, PathElement.groupElement("value"));
             assertEquals(align, 8); //this is the only case where path is aligned
@@ -89,7 +90,7 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testUnalignedSequence(long align) {
-        SequenceLayout layout = MemoryLayout.ofSequence(5, MemoryLayout.ofSignedInt(32).withBitAlignment(align));
+        SequenceLayout layout = MemoryLayout.ofSequence(5, MemoryLayouts.BITS_32_BE.withBitAlignment(align));
         VarHandle vh = layout.varHandle(int.class, PathElement.sequenceElement());
         try (MemorySegment segment = MemorySegment.ofNative(layout)) {
             MemoryAddress addr = segment.baseAddress();
@@ -104,9 +105,9 @@ public class TestMemoryAlignment {
 
     @Test
     public void testPackedAccess() {
-        ValueLayout vChar = MemoryLayout.ofSignedInt(8);
-        ValueLayout vShort = MemoryLayout.ofSignedInt(16);
-        ValueLayout vInt = MemoryLayout.ofSignedInt(32);
+        ValueLayout vChar = MemoryLayouts.BITS_8_BE;
+        ValueLayout vShort = MemoryLayouts.BITS_16_BE;
+        ValueLayout vInt = MemoryLayouts.BITS_32_BE;
         //mimic pragma pack(1)
         GroupLayout g = MemoryLayout.ofStruct(vChar.withBitAlignment(8).withName("a"),
                                vShort.withBitAlignment(8).withName("b"),

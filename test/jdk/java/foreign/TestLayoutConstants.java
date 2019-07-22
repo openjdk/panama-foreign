@@ -28,10 +28,10 @@
 
 import jdk.incubator.foreign.AddressLayout;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 
 import java.lang.invoke.MethodHandles;
-import java.nio.ByteOrder;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
@@ -78,40 +78,46 @@ public class TestLayoutConstants {
     public Object[][] createLayouts() {
         return new Object[][] {
                 //padding
-                { MemoryLayout.ofPadding(32) },
-                { MemoryLayout.ofSequence(MemoryLayout.ofPadding(32)) },
-                { MemoryLayout.ofSequence(5, MemoryLayout.ofPadding(32)) },
-                { MemoryLayout.ofStruct(MemoryLayout.ofPadding(32), MemoryLayout.ofPadding(32)) },
-                { MemoryLayout.ofUnion(MemoryLayout.ofPadding(32), MemoryLayout.ofPadding(32)) },
-                //values, floating point
-                { MemoryLayout.ofFloatingPoint(32) },
-                { MemoryLayout.ofFloatingPoint(ByteOrder.LITTLE_ENDIAN, 32) },
-                { MemoryLayout.ofFloatingPoint(ByteOrder.BIG_ENDIAN, 32) },
-                { MemoryLayout.ofSequence(MemoryLayout.ofFloatingPoint(32)) },
-                { MemoryLayout.ofSequence(5, MemoryLayout.ofFloatingPoint(32)) },
-                { MemoryLayout.ofStruct(MemoryLayout.ofFloatingPoint(32), MemoryLayout.ofFloatingPoint(32)) },
-                { MemoryLayout.ofUnion(MemoryLayout.ofFloatingPoint(32), MemoryLayout.ofFloatingPoint(32)) },
-                //values, signed int
-                { MemoryLayout.ofSignedInt(32) },
-                { MemoryLayout.ofSignedInt(ByteOrder.LITTLE_ENDIAN, 32) },
-                { MemoryLayout.ofSignedInt(ByteOrder.BIG_ENDIAN, 32) },
-                { MemoryLayout.ofSequence(MemoryLayout.ofSignedInt(32)) },
-                { MemoryLayout.ofSequence(5, MemoryLayout.ofSignedInt(32)) },
-                { MemoryLayout.ofStruct(MemoryLayout.ofSignedInt(32), MemoryLayout.ofSignedInt(32)) },
-                { MemoryLayout.ofUnion(MemoryLayout.ofSignedInt(32), MemoryLayout.ofSignedInt(32)) },
-                //values, unsigned int
-                { MemoryLayout.ofUnsignedInt(32) },
-                { MemoryLayout.ofUnsignedInt(ByteOrder.LITTLE_ENDIAN, 32) },
-                { MemoryLayout.ofUnsignedInt(ByteOrder.BIG_ENDIAN, 32) },
-                { MemoryLayout.ofSequence(MemoryLayout.ofUnsignedInt(32)) },
-                { MemoryLayout.ofSequence(5, MemoryLayout.ofUnsignedInt(32)) },
-                { MemoryLayout.ofStruct(MemoryLayout.ofUnsignedInt(32), MemoryLayout.ofUnsignedInt(32)) },
-                { MemoryLayout.ofUnion(MemoryLayout.ofUnsignedInt(32), MemoryLayout.ofUnsignedInt(32)) },
+                { MemoryLayouts.PAD_32 },
+                { MemoryLayout.ofSequence(MemoryLayouts.PAD_32) },
+                { MemoryLayout.ofSequence(5, MemoryLayouts.PAD_32) },
+                { MemoryLayout.ofStruct(MemoryLayouts.PAD_32, MemoryLayouts.PAD_32) },
+                { MemoryLayout.ofUnion(MemoryLayouts.PAD_32, MemoryLayouts.PAD_32) },
+                //values, big endian
+                { MemoryLayouts.BITS_32_BE },
+                { MemoryLayout.ofStruct(
+                        MemoryLayouts.BITS_32_BE,
+                        MemoryLayouts.BITS_32_BE) },
+                { MemoryLayout.ofUnion(
+                        MemoryLayouts.BITS_32_BE,
+                        MemoryLayouts.BITS_32_BE) },
+                //values, little endian
+                { MemoryLayouts.BITS_32_LE },
+                { MemoryLayout.ofStruct(
+                        MemoryLayouts.BITS_32_LE,
+                        MemoryLayouts.BITS_32_LE) },
+                { MemoryLayout.ofUnion(
+                        MemoryLayouts.BITS_32_LE,
+                        MemoryLayouts.BITS_32_LE) },
                 //deeply nested
-                { MemoryLayout.ofStruct(MemoryLayout.ofPadding(16), MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), MemoryLayout.ofSignedInt(32))) },
-                { MemoryLayout.ofUnion(MemoryLayout.ofPadding(16), MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), MemoryLayout.ofSignedInt(32))) },
-                { MemoryLayout.ofSequence(MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), MemoryLayout.ofSignedInt(32))) },
-                { MemoryLayout.ofSequence(5, MemoryLayout.ofStruct(MemoryLayout.ofPadding(8), MemoryLayout.ofSignedInt(32))) },
+                { MemoryLayout.ofStruct(
+                        MemoryLayouts.PAD_16,
+                        MemoryLayout.ofStruct(
+                                MemoryLayouts.PAD_8,
+                                MemoryLayouts.BITS_32_BE)) },
+                { MemoryLayout.ofUnion(
+                        MemoryLayouts.PAD_16,
+                        MemoryLayout.ofStruct(
+                                MemoryLayouts.PAD_8,
+                                MemoryLayouts.BITS_32_BE)) },
+                { MemoryLayout.ofSequence(
+                        MemoryLayout.ofStruct(
+                                MemoryLayouts.PAD_8,
+                                MemoryLayouts.BITS_32_BE)) },
+                { MemoryLayout.ofSequence(5,
+                        MemoryLayout.ofStruct(
+                                MemoryLayouts.PAD_8,
+                                MemoryLayouts.BITS_32_BE)) },
         };
     }
 
