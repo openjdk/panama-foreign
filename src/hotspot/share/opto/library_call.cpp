@@ -6860,7 +6860,7 @@ static int get_opc(jint op, BasicType bt) {
 static int get_sopc(int opc, BasicType elem_bt, int arity) {
   int sopc = 0;
 #ifdef X86
-  // Variable shit handling
+  // Variable shift handling
   if (arity == 2) {
     switch (opc) {
       case Op_LShiftI:
