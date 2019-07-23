@@ -1,4 +1,4 @@
-    
+
     @Benchmark
     public void zero(Blackhole bh) {
         $type$[] as = fa.apply(size);

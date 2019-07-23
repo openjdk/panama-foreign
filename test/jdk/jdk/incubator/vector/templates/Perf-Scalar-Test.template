@@ -9,7 +9,7 @@
             for (int i = 0; i < as.length; i++) {
                 $type$ a = as[i];
                 boolean m = [[TEST_OP]];
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 

@@ -51,6 +51,10 @@ public class ByteScalar extends AbstractVectorBenchmark {
         return array;
     }
 
+    static byte bits(byte e) {
+        return e;
+    }
+
     byte[] as, bs, cs, rs;
     boolean[] ms, rms;
     int[] ss;
@@ -818,7 +822,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 byte a = as[i];
                 boolean m = bits(a)==0;
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -835,7 +839,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 byte a = as[i];
                 boolean m = bits(a)<0;
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -855,7 +859,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] < bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -872,7 +876,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] > bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -889,7 +893,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] == bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -906,7 +910,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] != bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -923,7 +927,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] <= bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -940,7 +944,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] >= bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -1014,7 +1018,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i += window) {
                 int idx = i;
                 for (int j = 0; j < window; j++) {
-                    rs[j] = a[idx];
+                    rs[j] = as[idx];
                 }
             }
         }
@@ -1045,7 +1049,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
         int window = 512 / Byte.SIZE;
         broadcastShared(window, bh);
     }
-    
+
     @Benchmark
     public void zero(Blackhole bh) {
         byte[] as = fa.apply(size);

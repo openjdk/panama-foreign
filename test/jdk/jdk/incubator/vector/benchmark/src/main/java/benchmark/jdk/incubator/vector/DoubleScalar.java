@@ -51,6 +51,10 @@ public class DoubleScalar extends AbstractVectorBenchmark {
         return array;
     }
 
+    static long bits(double e) {
+        return Double.doubleToLongBits(e);
+    }
+
     double[] as, bs, cs, rs;
     boolean[] ms, rms;
     int[] ss;
@@ -466,7 +470,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 double a = as[i];
                 boolean m = bits(a)==0;
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -483,7 +487,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 double a = as[i];
                 boolean m = bits(a)<0;
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -501,7 +505,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 double a = as[i];
                 boolean m = Double.isFinite(a);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -520,7 +524,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 double a = as[i];
                 boolean m = Double.isNaN(a);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -539,7 +543,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 double a = as[i];
                 boolean m = Double.isInfinite(a);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -557,7 +561,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] < bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -574,7 +578,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] > bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -591,7 +595,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] == bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -608,7 +612,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] != bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -625,7 +629,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] <= bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -642,7 +646,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] >= bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -716,7 +720,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i += window) {
                 int idx = i;
                 for (int j = 0; j < window; j++) {
-                    rs[j] = a[idx];
+                    rs[j] = as[idx];
                 }
             }
         }
@@ -747,7 +751,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
         int window = 512 / Double.SIZE;
         broadcastShared(window, bh);
     }
-    
+
     @Benchmark
     public void zero(Blackhole bh) {
         double[] as = fa.apply(size);

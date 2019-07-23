@@ -6,7 +6,7 @@
             for (int i = 0; i < as.length; i += window) {
                 int idx = i;
                 for (int j = 0; j < window; j++) {
-                    rs[j] = a[idx];
+                    rs[j] = as[idx];
                 }
             }
         }
