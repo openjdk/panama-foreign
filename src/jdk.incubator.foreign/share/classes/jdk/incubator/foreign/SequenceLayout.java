@@ -37,16 +37,16 @@ import java.util.OptionalLong;
  * that is equal to the sequence layout's element count. In other words this layout:
  *
  * <pre>{@code
-Layout.ofSequence(3, Layout.ofSignedInt(32));
+MemoryLayout.ofSequence(3, MemoryLayout.ofValueBits(32));
  * }</pre>
  *
  * is equivalent to the following layout:
  *
  * <pre>{@code
-Layout.ofStruct(
-    Layout.ofSignedInt(32),
-    Layout.ofSignedInt(32),
-    Layout.ofSignedInt(32));
+MemoryLayout.ofStruct(
+    MemoryLayout.ofValueBits(32),
+    MemoryLayout.ofValueBits(32),
+    MemoryLayout.ofValueBits(32));
  * }</pre>
  * <p>
  * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
