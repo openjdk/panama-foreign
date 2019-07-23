@@ -93,16 +93,16 @@ public class TestSegments {
         SizedLayoutFactory[] layoutFactories = SizedLayoutFactory.values();
         Object[][] values = new Object[layoutFactories.length * 2][2];
         for (int i = 0; i < layoutFactories.length ; i++) {
-            values[i * 2] = new Object[] { MemoryLayout.ofStruct(layoutFactories[i].make(7), MemoryLayout.ofPadding(9)) }; // good size, bad align
+            values[i * 2] = new Object[] { MemoryLayout.ofStruct(layoutFactories[i].make(7), MemoryLayout.ofPaddingBits(9)) }; // good size, bad align
             values[(i * 2) + 1] = new Object[] { layoutFactories[i].make(15).withBitAlignment(16) }; // bad size, good align
         }
         return values;
     }
 
     enum SizedLayoutFactory {
-        VALUE_BE(size -> MemoryLayout.ofValue(size, ByteOrder.BIG_ENDIAN)),
-        VALUE_LE(size -> MemoryLayout.ofValue(size, ByteOrder.LITTLE_ENDIAN)),
-        PADDING(MemoryLayout::ofPadding);
+        VALUE_BE(size -> MemoryLayout.ofValueBits(size, ByteOrder.BIG_ENDIAN)),
+        VALUE_LE(size -> MemoryLayout.ofValueBits(size, ByteOrder.LITTLE_ENDIAN)),
+        PADDING(MemoryLayout::ofPaddingBits);
 
         private final LongFunction<MemoryLayout> factory;
 

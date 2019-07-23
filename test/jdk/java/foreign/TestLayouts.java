@@ -72,9 +72,9 @@ public class TestLayouts {
     }
 
     enum SizedLayoutFactory {
-        VALUE_LE(size -> MemoryLayout.ofValue(size, ByteOrder.LITTLE_ENDIAN)),
-        VALUE_BE(size -> MemoryLayout.ofValue(size, ByteOrder.BIG_ENDIAN)),
-        PADDING(MemoryLayout::ofPadding),
+        VALUE_LE(size -> MemoryLayout.ofValueBits(size, ByteOrder.LITTLE_ENDIAN)),
+        VALUE_BE(size -> MemoryLayout.ofValueBits(size, ByteOrder.BIG_ENDIAN)),
+        PADDING(MemoryLayout::ofPaddingBits),
         SEQUENCE(size -> MemoryLayout.ofSequence(size, MemoryLayouts.PAD_8));
 
         private final LongFunction<MemoryLayout> factory;

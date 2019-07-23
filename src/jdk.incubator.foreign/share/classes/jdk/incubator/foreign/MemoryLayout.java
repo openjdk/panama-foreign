@@ -41,7 +41,7 @@ import java.util.OptionalLong;
  * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
  * There are two leaves in the layout hierarchy, <em>value layouts</em>, which are used to represent values of given size and kind (see
  * {@link ValueLayout}) and <em>padding layouts</em> which are used, as the name suggests, to represent a portion of a memory
- * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link MemoryLayout#ofPadding(long)}).
+ * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link MemoryLayout#ofPaddingBits(long)}).
  * Some common value layout constants are defined in the {@link MemoryLayouts} class.
  * <p>
  * More complex layouts can be derived from simpler ones: a <em>sequence layout</em> denotes a repetition of one or more
@@ -87,10 +87,10 @@ import java.util.OptionalLong;
  * Such <em>layout paths</em> can be constructed programmatically using the instance methods in this class.
  * For instance, given a layout constructed as follows:
  * <blockquote><pre>{@code
-SequenceLayout seq = Layout.ofSequence(5,
-    Layout.ofStruct(
-        Layout.ofPadding(32),
-        Layout.ofSignedInt(32).withName("value")
+SequenceLayout seq = MemoryLayout.ofSequence(5,
+    MemoryLayout.ofStruct(
+        MemoryLayout.ofPaddingBits(32),
+        MemoryLayout.ofValueBits(32).withName("value")
 ));
  * }</pre></blockquote>
  *
@@ -314,7 +314,7 @@ public interface MemoryLayout extends Constable {
      * @return the new selector layout.
      * @throws IllegalArgumentException if size is &le; 0.
      */
-    static MemoryLayout ofPadding(long size) {
+    static MemoryLayout ofPaddingBits(long size) {
         AbstractLayout.checkSize(size);
         return new PaddingLayout(size, OptionalLong.empty(), Optional.empty());
     }
@@ -326,25 +326,25 @@ public interface MemoryLayout extends Constable {
      * @return a new value layout.
      * @throws IllegalArgumentException if size is &le; 0.
      */
-    static ValueLayout ofValue(long size, ByteOrder order) throws IllegalArgumentException {
+    static ValueLayout ofValueBits(long size, ByteOrder order) throws IllegalArgumentException {
         AbstractLayout.checkSize(size);
         return new ValueLayout(order, size, OptionalLong.empty(), Optional.empty());
     }
 
     /**
-     * Create a new sequence layout with given element layout and size.
-     * @param elementLayout the element layout.
-     * @param size the sequence layout size.
+     * Create a new sequence layout with given element layout and element count.
+     * @param elementLayout the sequence element layout.
+     * @param elementCount the sequence element count.
      * @return the new sequence layout with given element layout and size.
      * @throws IllegalArgumentException if size &lt; 0.
      */
-    static SequenceLayout ofSequence(long size, MemoryLayout elementLayout) throws IllegalArgumentException {
-        AbstractLayout.checkSize(size, true);
-        return new SequenceLayout(OptionalLong.of(size), elementLayout, OptionalLong.empty(), Optional.empty());
+    static SequenceLayout ofSequence(long elementCount, MemoryLayout elementLayout) throws IllegalArgumentException {
+        AbstractLayout.checkSize(elementCount, true);
+        return new SequenceLayout(OptionalLong.of(elementCount), elementLayout, OptionalLong.empty(), Optional.empty());
     }
 
     /**
-     * Create a new sequence layout, with unbounded size and given element layout.
+     * Create a new sequence layout, with unbounded element count and given element layout.
      * @param elementLayout the element layout of the sequence layout.
      * @return the new sequence layout with given element layout.
      */
