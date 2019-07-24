@@ -26,6 +26,7 @@
 package jdk.incubator.foreign;
 
 import java.lang.constant.ClassDesc;
+import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DirectMethodHandleDesc;
@@ -33,17 +34,24 @@ import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.nio.ByteOrder;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
 abstract class AbstractLayout implements MemoryLayout {
     private final OptionalLong alignment;
-    private final Optional<String> name;
+    private final Map<String, Constable> annotations;
 
-    public AbstractLayout(OptionalLong alignment, Optional<String> name) {
+    public AbstractLayout(OptionalLong alignment, Map<String, Constable> annotations) {
         this.alignment = alignment;
-        this.name = name;
+        this.annotations = Collections.unmodifiableMap(annotations);
+    }
+
+    Map<String, Constable> annotations() {
+        return annotations;
     }
 
     OptionalLong optAlignment() {
@@ -51,27 +59,34 @@ abstract class AbstractLayout implements MemoryLayout {
     }
 
     Optional<String> optName() {
-        return name;
+        return Optional.ofNullable((String)annotations.get(NAME));
     }
 
     @Override
     public AbstractLayout withName(String name) {
-        return dup(alignment, Optional.of(name));
+        return withAnnotation(NAME, name);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <Z extends AbstractLayout> Z withAnnotation(String name, Constable value) {
+        Map<String, Constable> new_annos = new HashMap<>(annotations);
+        new_annos.put(name, value);
+        return (Z)dup(alignment, new_annos);
     }
 
     @Override
     public final Optional<String> name() {
-        return name;
+        return optName();
     }
 
-    abstract AbstractLayout dup(OptionalLong alignment, Optional<String> name);
+    abstract AbstractLayout dup(OptionalLong alignment, Map<String, Constable> name);
 
     abstract long naturalAlignmentBits();
 
     @Override
     public AbstractLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
         checkAlignment(alignmentBits);
-        return dup(OptionalLong.of(alignmentBits), name);
+        return dup(OptionalLong.of(alignmentBits), annotations);
     }
 
     void checkAlignment(long alignmentBitCount) {
@@ -98,8 +113,8 @@ abstract class AbstractLayout implements MemoryLayout {
     }
 
     String decorateLayoutString(String s) {
-        if (name.isPresent()) {
-            s = String.format("%s(%s)", s, name.get());
+        if (optName().isPresent()) {
+            s = String.format("%s(%s)", s, optName().get());
         }
         if (alignment.isPresent()) {
             s = alignment.getAsLong() + "%" + s;
@@ -109,7 +124,7 @@ abstract class AbstractLayout implements MemoryLayout {
 
     @Override
     public int hashCode() {
-        return name.hashCode() << alignment.orElse(0L);
+        return optName().hashCode() << alignment.orElse(0L);
     }
 
     @Override
@@ -122,9 +137,11 @@ abstract class AbstractLayout implements MemoryLayout {
             return false;
         }
 
-        return Objects.equals(name, ((AbstractLayout)other).name) &&
-                Objects.equals(alignment, ((AbstractLayout)other).alignment);
+        return Objects.equals(alignment, ((AbstractLayout)other).alignment) &&
+                Objects.equals(annotations, ((AbstractLayout)other).annotations);
     }
+
+    static final String NAME = "name";
 
     /*** Helper constants for implementing Layout::describeConstable ***/
 
@@ -139,8 +156,6 @@ abstract class AbstractLayout implements MemoryLayout {
     static final ClassDesc CD_BYTEORDER = ByteOrder.class.describeConstable().get();
 
     static final ClassDesc CD_FUNCTION_DESC = FunctionDescriptor.class.describeConstable().get();
-
-    static final ClassDesc CD_ADDRESS_LAYOUT = AddressLayout.class.describeConstable().get();
 
     static final ConstantDesc BIG_ENDIAN = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "BIG_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
 
@@ -173,13 +188,4 @@ abstract class AbstractLayout implements MemoryLayout {
 
     static final MethodHandleDesc MH_FUNCTION = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_FUNCTION_DESC, "of",
                 MethodTypeDesc.of(CD_FUNCTION_DESC, CD_LAYOUT, ConstantDescs.CD_boolean, CD_LAYOUT.arrayType()));
-
-    static final MethodHandleDesc MH_VOID_ADDRESS = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofAddress",
-                MethodTypeDesc.of(CD_ADDRESS_LAYOUT, ConstantDescs.CD_long));
-
-    static final MethodHandleDesc MH_LAYOUT_ADDRESS = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofAddress",
-                MethodTypeDesc.of(CD_ADDRESS_LAYOUT, ConstantDescs.CD_long, CD_LAYOUT));
-
-    static final MethodHandleDesc MH_FUNCTION_ADDRESS = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofAddress",
-                MethodTypeDesc.of(CD_ADDRESS_LAYOUT, ConstantDescs.CD_long, CD_FUNCTION_DESC));
 }

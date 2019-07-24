@@ -24,7 +24,6 @@
  */
 package jdk.internal.foreign.abi.x64;
 
-import jdk.incubator.foreign.AddressLayout;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.Storage;
 
@@ -69,8 +68,6 @@ public class SharedUtils {
             return alignmentOfArray((SequenceLayout) t, isVar);
         } else if (t instanceof GroupLayout) {
             return alignmentOfContainer((GroupLayout) t);
-        } else if (t instanceof AddressLayout) {
-            return 8;
         } else if (Utils.isPadding(t)) {
             return 1;
         } else {

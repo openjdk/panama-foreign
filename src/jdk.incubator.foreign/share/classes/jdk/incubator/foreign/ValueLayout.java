@@ -25,10 +25,12 @@
  */
 package jdk.incubator.foreign;
 
+import java.lang.constant.Constable;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.nio.ByteOrder;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -52,8 +54,8 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
     private final ByteOrder order;
     private final long size;
 
-    ValueLayout(ByteOrder order, long size, OptionalLong alignment, Optional<String> name) {
-        super(alignment, name);
+    ValueLayout(ByteOrder order, long size, OptionalLong alignment, Map<String, Constable> annotations) {
+        super(alignment, annotations);
         this.order = order;
         this.size = size;
     }
@@ -72,7 +74,7 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @return a new value layout with given byte order.
      */
     public ValueLayout withOrder(ByteOrder order) {
-        return new ValueLayout(order, size, optAlignment(), optName());
+        return new ValueLayout(order, size, optAlignment(), annotations());
     }
 
     @Override
@@ -116,8 +118,8 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     @Override
-    ValueLayout dup(OptionalLong alignment, Optional<String> name) {
-        return new ValueLayout(order, size, alignment, name);
+    ValueLayout dup(OptionalLong alignment, Map<String, Constable> annotations) {
+        return new ValueLayout(order, size, alignment, annotations);
     }
 
     @Override

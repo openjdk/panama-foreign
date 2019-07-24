@@ -22,7 +22,6 @@
  *
  */
 
-import jdk.incubator.foreign.AddressLayout;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -42,7 +41,7 @@ import java.util.stream.IntStream;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
-public class CallGeneratorHelper {
+public class CallGeneratorHelper extends NativeTestHelper {
     
 	static final int MAX_FIELDS = 3;
 	static final int MAX_PARAMS = 3;
@@ -56,10 +55,10 @@ public class CallGeneratorHelper {
     }
 
     enum StructFieldType {
-        INT("int", MemoryLayout.ofSignedInt(32)),
-        FLOAT("float", MemoryLayout.ofFloatingPoint(32)),
-        DOUBLE("double", MemoryLayout.ofFloatingPoint(64)),
-        POINTER("void*", MemoryLayout.ofAddress(64));
+        INT("int", C_INT),
+        FLOAT("float", C_FLOAT),
+        DOUBLE("double", C_DOUBLE),
+        POINTER("void*", C_POINTER);
 
         final String typeStr;
         final MemoryLayout layout;
@@ -85,10 +84,10 @@ public class CallGeneratorHelper {
     }
 
     enum ParamType {
-        INT("int", MemoryLayout.ofSignedInt(32)),
-        FLOAT("float", MemoryLayout.ofFloatingPoint(32)),
-        DOUBLE("double", MemoryLayout.ofFloatingPoint(64)),
-        POINTER("void*", MemoryLayout.ofAddress(64)),
+        INT("int", C_INT),
+        FLOAT("float", C_FLOAT),
+        DOUBLE("double", C_DOUBLE),
+        POINTER("void*", C_POINTER),
         STRUCT("struct S", null);
 
         private final String typeStr;
@@ -113,7 +112,7 @@ public class CallGeneratorHelper {
                     MemoryLayout l = field.layout();
                     long padding = offset % l.bitSize();
                     if (padding != 0) {
-                        layouts.add(MemoryLayout.ofPadding(padding));
+                        layouts.add(MemoryLayout.ofPaddingBits(padding));
                         offset += padding;
                     }
                     layouts.add(l.withName("field" + offset));
@@ -344,7 +343,7 @@ public class CallGeneratorHelper {
             MemorySegment segment = MemorySegment.ofNative(layout);
             initStruct(segment, (GroupLayout)layout, checks, check);
             return segment;
-        } else if (layout instanceof AddressLayout) {
+        } else if (isPointer(layout)) {
             MemorySegment segment = MemorySegment.ofNative(1);
             if (check) {
                 checks.add(o -> {
@@ -357,13 +356,12 @@ public class CallGeneratorHelper {
             }
             return segment.baseAddress();
         } else if (layout instanceof ValueLayout) {
-            ValueLayout value = (ValueLayout)layout;
-            if (value.isIntegral()) {
+            if (isIntegral(layout)) {
                 if (check) {
                     checks.add(o -> assertEquals(o, 42));
                 }
                 return 42;
-            } else if (value.bitSize() == 32) {
+            } else if (layout.bitSize() == 32) {
                 if (check) {
                     checks.add(o -> assertEquals(o, 12f));
                 }
@@ -385,7 +383,7 @@ public class CallGeneratorHelper {
             VarHandle accessor = g.varHandle(structFieldCarrier(l), MemoryLayout.PathElement.groupElement(l.name().get()));
             List<Consumer<Object>> fieldsCheck = new ArrayList<>();
             Object value = makeArg(l, fieldsCheck, check);
-            if (l instanceof AddressLayout) {
+            if (isPointer(l)) {
                 value = ForeignUnsafe.getUnsafeOffset((MemoryAddress)value);
             }
             //set value
@@ -395,7 +393,7 @@ public class CallGeneratorHelper {
                 assertTrue(fieldsCheck.size() == 1);
                 checks.add(o -> {
                     try {
-                        if (l instanceof AddressLayout) {
+                        if (isPointer(l)) {
                             fieldsCheck.get(0).accept(ForeignUnsafe.ofLong((long)accessor.get(str.baseAddress())));
                         } else {
                             fieldsCheck.get(0).accept(accessor.get(str.baseAddress()));
@@ -409,13 +407,12 @@ public class CallGeneratorHelper {
     }
 
     static Class<?> structFieldCarrier(MemoryLayout layout) {
-        if (layout instanceof AddressLayout) {
+        if (isPointer(layout)) {
             return long.class;
         } else if (layout instanceof ValueLayout) {
-            ValueLayout value = (ValueLayout)layout;
-            if (value.isIntegral()) {
+            if (isIntegral(layout)) {
                 return int.class;
-            } else if (value.bitSize() == 32) {
+            } else if (layout.bitSize() == 32) {
                 return float.class;
             } else {
                 return double.class;
@@ -428,13 +425,12 @@ public class CallGeneratorHelper {
     static Class<?> paramCarrier(MemoryLayout layout) {
         if (layout instanceof GroupLayout) {
             return MemorySegment.class;
-        } if (layout instanceof AddressLayout) {
+        } if (isPointer(layout)) {
             return MemoryAddress.class;
         } else if (layout instanceof ValueLayout) {
-            ValueLayout value = (ValueLayout)layout;
-            if (value.isIntegral()) {
+            if (isIntegral(layout)) {
                 return int.class;
-            } else if (value.bitSize() == 32) {
+            } else if (layout.bitSize() == 32) {
                 return float.class;
             } else {
                 return double.class;

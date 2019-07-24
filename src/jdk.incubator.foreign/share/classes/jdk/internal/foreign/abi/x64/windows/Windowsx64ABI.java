@@ -24,7 +24,6 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
-import jdk.incubator.foreign.AddressLayout;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -111,7 +110,7 @@ public class Windowsx64ABI implements SystemABI {
                     VarHandle longHandle = MemoryHandles.varHandle(long.class);
                     longHandle.set(dst, MemoryAddressImpl.addressof(copy));
                 }
-            } else if (layout instanceof AddressLayout) {
+            } else if (carrier == MemoryAddress.class) {
                 assert bindings.size() <= 2;
                 VarHandle vh = MemoryHandles.varHandle(long.class);
                 MemoryAddress dst = dstPtrFunc.apply(bindings.get(0));
@@ -148,7 +147,7 @@ public class Windowsx64ABI implements SystemABI {
                 }
 
                 return rtmp.segment();
-            } else if (layout instanceof AddressLayout) {
+            } else if (carrier == MemoryAddress.class) {
                 assert bindings.size() <= 2;
                 VarHandle vh = MemoryHandles.varHandle(long.class);
                 return MemoryAddressImpl.ofNative((long)vh.get(srcPtrFunc.apply(bindings.get(0))));

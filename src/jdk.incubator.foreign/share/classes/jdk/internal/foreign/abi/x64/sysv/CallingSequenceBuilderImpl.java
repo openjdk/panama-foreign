@@ -22,9 +22,9 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
-import jdk.incubator.foreign.AddressLayout;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ import jdk.internal.foreign.abi.ArgumentBinding;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.Storage;
 import jdk.internal.foreign.abi.StorageClass;
-import jdk.internal.foreign.abi.x64.ArgumentClass;
+import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
 import jdk.internal.foreign.abi.x64.SharedUtils;
 
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
@@ -59,14 +59,14 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
     // Although AMD64 0.99.6 states 4 eightbytes
     private static final int MAX_AGGREGATE_REGS_SIZE = 8;
 
-    private static final ArrayList<ArgumentClass> COMPLEX_X87_CLASSES;
+    private static final ArrayList<ArgumentClassImpl> COMPLEX_X87_CLASSES;
 
     static {
         COMPLEX_X87_CLASSES = new ArrayList<>();
-        COMPLEX_X87_CLASSES.add(ArgumentClass.X87);
-        COMPLEX_X87_CLASSES.add(ArgumentClass.X87UP);
-        COMPLEX_X87_CLASSES.add(ArgumentClass.X87);
-        COMPLEX_X87_CLASSES.add(ArgumentClass.X87UP);
+        COMPLEX_X87_CLASSES.add(ArgumentClassImpl.X87);
+        COMPLEX_X87_CLASSES.add(ArgumentClassImpl.X87UP);
+        COMPLEX_X87_CLASSES.add(ArgumentClassImpl.X87);
+        COMPLEX_X87_CLASSES.add(ArgumentClassImpl.X87UP);
     }
 
     public CallingSequenceBuilderImpl(MemoryLayout layout) {
@@ -74,7 +74,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
     }
 
     private CallingSequenceBuilderImpl(MemoryLayout layout, StorageCalculator retCalculator, StorageCalculator argCalculator) {
-        super(layout, retCalculator::addBindings, argCalculator::addBindings, argCalculator::addBindings);
+        super(MemoryLayouts.SysV.C_POINTER, layout, retCalculator::addBindings, argCalculator::addBindings, argCalculator::addBindings);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
     }
 
     static class ArgumentInfo extends Argument {
-        private final List<ArgumentClass> classes;
+        private final List<ArgumentClassImpl> classes;
 
         public ArgumentInfo(MemoryLayout layout, int argumentIndex, String debugName) {
             super(layout, argumentIndex, debugName);
@@ -92,13 +92,13 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
 
         public int getIntegerRegs() {
             return (int)classes.stream()
-                    .filter(cl -> cl == ArgumentClass.INTEGER)
+                    .filter(cl -> cl == ArgumentClassImpl.INTEGER)
                     .count();
         }
 
         public int getVectorRegs() {
             return (int)classes.stream()
-                    .filter(cl -> cl == ArgumentClass.SSE)
+                    .filter(cl -> cl == ArgumentClassImpl.SSE)
                     .count();
         }
 
@@ -107,51 +107,54 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
             return classes.stream().allMatch(this::isMemoryClass);
         }
 
-        private boolean isMemoryClass(ArgumentClass cl) {
-            return cl == ArgumentClass.MEMORY ||
+        private boolean isMemoryClass(ArgumentClassImpl cl) {
+            return cl == ArgumentClassImpl.MEMORY ||
                     (argumentIndex() != -1 &&
-                            (cl == ArgumentClass.X87 || cl == ArgumentClass.X87UP));
+                            (cl == ArgumentClassImpl.X87 || cl == ArgumentClassImpl.X87UP));
         }
 
-        public List<ArgumentClass> getClasses() {
+        public List<ArgumentClassImpl> getClasses() {
             return classes;
         }
     }
 
-    private static List<ArgumentClass> classifyValueType(ValueLayout type) {
-        ArrayList<ArgumentClass> classes = new ArrayList<>();
+    private static List<ArgumentClassImpl> classifyValueType(ValueLayout type) {
+        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
 
-        if (type.isIntegral()) {
-            classes.add(ArgumentClass.INTEGER);
+        ArgumentClassImpl clazz = (ArgumentClassImpl)Utils.getAnnotation(type, ArgumentClassImpl.ABI_CLASS);
+        if (clazz == null) {
+            //padding not allowed here
+            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
+        }
+        if (clazz == ArgumentClassImpl.POINTER) {
+            clazz = ArgumentClassImpl.INTEGER;
+        }
+        classes.add(clazz);
+        if (clazz == ArgumentClassImpl.INTEGER) {
             // int128
             long left = (type.byteSize()) - 8;
             while (left > 0) {
-                classes.add(ArgumentClass.INTEGER);
+                classes.add(ArgumentClassImpl.INTEGER);
                 left -= 8;
             }
             return classes;
-        } else {
-            if ((type.byteSize()) > 8) {
-                classes.add(ArgumentClass.X87);
-                classes.add(ArgumentClass.X87UP);
-                return classes;
-            } else {
-                classes.add(ArgumentClass.SSE);
-                return classes;
-            }
+        } else if (clazz == ArgumentClassImpl.X87) {
+            classes.add(ArgumentClassImpl.X87UP);
         }
+
+        return classes;
     }
 
-    private static List<ArgumentClass> classifyArrayType(SequenceLayout type) {
+    private static List<ArgumentClassImpl> classifyArrayType(SequenceLayout type) {
         long nWords = Utils.alignUp((type.byteSize()), 8) / 8;
         if (nWords > MAX_AGGREGATE_REGS_SIZE) {
             return createMemoryClassArray(nWords);
         }
 
-        ArrayList<ArgumentClass> classes = new ArrayList<>();
+        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
 
         for (long i = 0; i < nWords; i++) {
-            classes.add(ArgumentClass.NO_CLASS);
+            classes.add(ArgumentClassImpl.NO_CLASS);
         }
 
         long offset = 0;
@@ -159,14 +162,14 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         for (long idx = 0; idx < count; idx++) {
             MemoryLayout t = type.elementLayout();
             offset = SharedUtils.align(t, false, offset);
-            List<ArgumentClass> subclasses = classifyType(t);
+            List<ArgumentClassImpl> subclasses = classifyType(t);
             if (subclasses.isEmpty()) {
                 return classes;
             }
 
             for (int i = 0; i < subclasses.size(); i++) {
                 int pos = (int)(offset / 8);
-                ArgumentClass newClass = classes.get(i + pos).merge(subclasses.get(i));
+                ArgumentClassImpl newClass = classes.get(i + pos).merge(subclasses.get(i));
                 classes.set(i + pos, newClass);
             }
 
@@ -174,30 +177,30 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         }
 
         for (int i = 0; i < classes.size(); i++) {
-            ArgumentClass c = classes.get(i);
+            ArgumentClassImpl c = classes.get(i);
 
-            if (c == ArgumentClass.MEMORY) {
+            if (c == ArgumentClassImpl.MEMORY) {
                 return createMemoryClassArray(classes.size());
             }
 
-            if (c == ArgumentClass.X87UP) {
+            if (c == ArgumentClassImpl.X87UP) {
                 if (i == 0) {
                     throw new IllegalArgumentException("Unexpected leading X87UP class");
                 }
 
-                if (classes.get(i - 1) != ArgumentClass.X87) {
+                if (classes.get(i - 1) != ArgumentClassImpl.X87) {
                     return createMemoryClassArray(classes.size());
                 }
             }
         }
 
         if (classes.size() > 2) {
-            if (classes.get(0) != ArgumentClass.SSE) {
+            if (classes.get(0) != ArgumentClassImpl.SSE) {
                 return createMemoryClassArray(classes.size());
             }
 
             for (int i = 1; i < classes.size(); i++) {
-                if (classes.get(i) != ArgumentClass.SSEUP) {
+                if (classes.get(i) != ArgumentClassImpl.SSEUP) {
                     return createMemoryClassArray(classes.size());
                 }
             }
@@ -208,16 +211,21 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
 
     // TODO: handle zero length arrays
     // TODO: Handle nested structs (and primitives)
-    private static List<ArgumentClass> classifyStructType(GroupLayout type) {
+    private static List<ArgumentClassImpl> classifyStructType(GroupLayout type) {
+        ArgumentClassImpl clazz = (ArgumentClassImpl)Utils.getAnnotation(type, ArgumentClassImpl.ABI_CLASS);
+        if (clazz == ArgumentClassImpl.COMPLEX_X87) {
+            return COMPLEX_X87_CLASSES;
+        }
+
         long nWords = Utils.alignUp((type.byteSize()), 8) / 8;
         if (nWords > MAX_AGGREGATE_REGS_SIZE) {
             return createMemoryClassArray(nWords);
         }
 
-        ArrayList<ArgumentClass> classes = new ArrayList<>();
+        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
 
         for (long i = 0; i < nWords; i++) {
-            classes.add(ArgumentClass.NO_CLASS);
+            classes.add(ArgumentClassImpl.NO_CLASS);
         }
 
         long offset = 0;
@@ -235,14 +243,14 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                 }
             }
             offset = SharedUtils.align(t, false, offset);
-            List<ArgumentClass> subclasses = classifyType(t);
+            List<ArgumentClassImpl> subclasses = classifyType(t);
             if (subclasses.isEmpty()) {
                 return classes;
             }
 
             for (int i = 0; i < subclasses.size(); i++) {
                 int pos = (int)(offset / 8);
-                ArgumentClass newClass = classes.get(i + pos).merge(subclasses.get(i));
+                ArgumentClassImpl newClass = classes.get(i + pos).merge(subclasses.get(i));
                 classes.set(i + pos, newClass);
             }
 
@@ -253,30 +261,30 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         }
 
         for (int i = 0; i < classes.size(); i++) {
-            ArgumentClass c = classes.get(i);
+            ArgumentClassImpl c = classes.get(i);
 
-            if (c == ArgumentClass.MEMORY) {
+            if (c == ArgumentClassImpl.MEMORY) {
                 return createMemoryClassArray(classes.size());
             }
 
-            if (c == ArgumentClass.X87UP) {
+            if (c == ArgumentClassImpl.X87UP) {
                 if (i == 0) {
                     throw new IllegalArgumentException("Unexpected leading X87UP class");
                 }
 
-                if (classes.get(i - 1) != ArgumentClass.X87) {
+                if (classes.get(i - 1) != ArgumentClassImpl.X87) {
                     return createMemoryClassArray(classes.size());
                 }
             }
         }
 
         if (classes.size() > 2) {
-            if (classes.get(0) != ArgumentClass.SSE) {
+            if (classes.get(0) != ArgumentClassImpl.SSE) {
                 return createMemoryClassArray(classes.size());
             }
 
             for (int i = 1; i < classes.size(); i++) {
-                if (classes.get(i) != ArgumentClass.SSEUP) {
+                if (classes.get(i) != ArgumentClassImpl.SSEUP) {
                     return createMemoryClassArray(classes.size());
                 }
             }
@@ -285,20 +293,14 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         return classes;
     }
 
-    private static List<ArgumentClass> classifyType(MemoryLayout type) {
+    private static List<ArgumentClassImpl> classifyType(MemoryLayout type) {
         try {
             if (type instanceof ValueLayout) {
                 return classifyValueType((ValueLayout) type);
-            } else if (type instanceof AddressLayout) {
-                ArrayList<ArgumentClass> classes = new ArrayList<>();
-                classes.add(ArgumentClass.INTEGER);
-                return classes;
             } else if (type instanceof SequenceLayout) {
                 return classifyArrayType((SequenceLayout) type);
             } else if (type instanceof GroupLayout) {
-                return type.name().isPresent() && type.name().get().equals("LongDoubleComplex") ?
-                        COMPLEX_X87_CLASSES :
-                        classifyStructType((GroupLayout) type);
+                return classifyStructType((GroupLayout) type);
             } else {
                 throw new IllegalArgumentException("Unhandled type " + type);
             }
@@ -308,10 +310,10 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         }
     }
 
-    private static List<ArgumentClass> createMemoryClassArray(long n) {
-        ArrayList<ArgumentClass> classes = new ArrayList<>();
+    private static List<ArgumentClassImpl> createMemoryClassArray(long n) {
+        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            classes.add(ArgumentClass.MEMORY);
+            classes.add(ArgumentClassImpl.MEMORY);
         }
 
         return classes;
@@ -359,7 +361,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                 for (int i = 0; i < info.getClasses().size(); i++) {
                     Storage storage;
 
-                    ArgumentClass c = info.getClasses().get(i);
+                    ArgumentClassImpl c = info.getClasses().get(i);
 
                     switch (c) {
                     case INTEGER:
@@ -376,7 +378,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                         int width = 8;
 
                         for (int j = i + 1; j < info.getClasses().size(); j++) {
-                            if (info.getClasses().get(j) == ArgumentClass.SSEUP) {
+                            if (info.getClasses().get(j) == ArgumentClassImpl.SSEUP) {
                                 width += 8;
                             }
                         }
@@ -403,7 +405,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                     case X87: {
                         int width = 8;
 
-                        if (i < info.getClasses().size() && info.getClasses().get(i + 1) == ArgumentClass.X87UP) {
+                        if (i < info.getClasses().size() && info.getClasses().get(i + 1) == ArgumentClassImpl.X87UP) {
                             width += 8;
                         }
 

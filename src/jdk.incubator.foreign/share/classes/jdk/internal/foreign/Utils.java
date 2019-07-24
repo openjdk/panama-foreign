@@ -27,7 +27,11 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.ValueLayout;
 
+import java.lang.constant.Constable;
+import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.function.Supplier;
 
 public final class Utils {
@@ -56,5 +60,20 @@ public final class Utils {
 
     public static boolean isPadding(MemoryLayout layout) {
         return layout.getClass() == PADDING_CLASS;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, Constable> getAnnotations(MemoryLayout layout) {
+        try {
+            Field f = ValueLayout.class.getSuperclass().getDeclaredField("annotations");
+            f.setAccessible(true);
+            return (Map<String, Constable>)f.get(layout);
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    public static Constable getAnnotation(MemoryLayout layout, String name) {
+        return getAnnotations(layout).get(name);
     }
 }

@@ -25,6 +25,11 @@
 
 /*
  * @test
+  * @modules jdk.incubator.foreign/jdk.incubator.foreign.unsafe
+ *          jdk.incubator.foreign/jdk.internal.foreign
+ *          jdk.incubator.foreign/jdk.internal.foreign.abi
+ *          java.base/sun.security.action
+ * @build NativeTestHelper StdLibTest
  * @run testng StdLibTest
  * @run testng/othervm -Djdk.internal.foreign.NativeInvoker.FASTPATH=none -Djdk.internal.foreign.UpcallHandler.FASTPATH=none StdLibTest
  */
@@ -61,21 +66,15 @@ import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
 @Test
-public class StdLibTest {
+public class StdLibTest extends NativeTestHelper {
 
     final static SystemABI abi = SystemABI.getInstance();
-
-    final static MemoryLayout longLayout = MemoryLayout.ofUnsignedInt(64);
-    final static MemoryLayout intLayout = MemoryLayout.ofSignedInt(32);
-    final static MemoryLayout intPtrLayout = MemoryLayout.ofAddress(64, intLayout);
-    final static MemoryLayout byteLayout = MemoryLayout.ofUnsignedInt(8);
-    final static MemoryLayout bytePtrLayout = MemoryLayout.ofAddress(64, byteLayout);
 
     final static VarHandle byteHandle = MemoryHandles.varHandle(byte.class);
     final static VarHandle intHandle = MemoryHandles.varHandle(int.class);
     final static VarHandle longHandle = MemoryHandles.varHandle(long.class);
-    final static VarHandle byteArrHandle = arrayHandle(byteLayout, byte.class);
-    final static VarHandle intArrHandle = arrayHandle(intLayout, int.class);
+    final static VarHandle byteArrHandle = arrayHandle(C_CHAR, byte.class);
+    final static VarHandle intArrHandle = arrayHandle(C_INT, int.class);
 
     static VarHandle arrayHandle(MemoryLayout elemLayout, Class<?> elemCarrier) {
         return MemoryLayout.ofSequence(1, elemLayout)
@@ -179,31 +178,30 @@ public class StdLibTest {
 
                 strcat = abi.downcallHandle(lookup.lookup("strcat"),
                         MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(MemoryLayout.ofAddress(64), false, MemoryLayout.ofAddress(64), MemoryLayout.ofAddress(64)));
+                        FunctionDescriptor.of(C_POINTER, false, C_POINTER, C_POINTER));
 
                 strcmp = abi.downcallHandle(lookup.lookup("strcmp"),
                         MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(MemoryLayout.ofSignedInt(32), false, MemoryLayout.ofAddress(64), MemoryLayout.ofAddress(64)));
+                        FunctionDescriptor.of(C_INT, false, C_POINTER, C_POINTER));
 
                 puts = abi.downcallHandle(lookup.lookup("puts"),
                         MethodType.methodType(int.class, MemoryAddress.class),
-                        FunctionDescriptor.of(MemoryLayout.ofSignedInt(32), false, MemoryLayout.ofAddress(64)));
+                        FunctionDescriptor.of(C_INT, false, C_POINTER));
 
                 strlen = abi.downcallHandle(lookup.lookup("strlen"),
                         MethodType.methodType(int.class, MemoryAddress.class),
-                        FunctionDescriptor.of(MemoryLayout.ofSignedInt(32), false, MemoryLayout.ofAddress(64)));
+                        FunctionDescriptor.of(C_INT, false, C_POINTER));
 
                 gmtime = abi.downcallHandle(lookup.lookup("gmtime"),
                         MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(MemoryLayout.ofAddress(64), false, MemoryLayout.ofAddress(64)));
+                        FunctionDescriptor.of(C_POINTER, false, C_POINTER));
 
-                FunctionDescriptor qsortFunction = FunctionDescriptor.of(MemoryLayout.ofSignedInt(32), false,
-                        MemoryLayout.ofAddress(64), MemoryLayout.ofAddress(64));
+                FunctionDescriptor qsortFunction = FunctionDescriptor.of(C_INT, false,
+                        C_POINTER, C_POINTER);
 
                 qsort = abi.downcallHandle(lookup.lookup("qsort"),
                         MethodType.methodType(void.class, MemoryAddress.class, long.class, long.class, MemoryAddress.class),
-                        FunctionDescriptor.ofVoid(false, MemoryLayout.ofAddress(64), MemoryLayout.ofUnsignedInt(64),
-                                MemoryLayout.ofUnsignedInt(64), MemoryLayout.ofAddress(64, qsortFunction)));
+                        FunctionDescriptor.ofVoid(false, C_POINTER, C_ULONG, C_ULONG, C_POINTER));
 
                 //qsort upcall handle
                 MethodHandle compar = MethodHandles.lookup().findStatic(StdLibTest.class, "qsortCompare",
@@ -212,7 +210,7 @@ public class StdLibTest {
 
                 rand = abi.downcallHandle(lookup.lookup("rand"),
                         MethodType.methodType(int.class),
-                        FunctionDescriptor.of(MemoryLayout.ofSignedInt(32), false));
+                        FunctionDescriptor.of(C_INT, false));
 
                 printfAddr = lookup.lookup("printf");
             } catch (Throwable ex) {
@@ -303,7 +301,7 @@ public class StdLibTest {
 
         int[] qsort(int[] arr) throws Throwable {
             //init native array
-            SequenceLayout seq = MemoryLayout.ofSequence(arr.length, intLayout);
+            SequenceLayout seq = MemoryLayout.ofSequence(arr.length, C_INT);
 
             try (MemorySegment nativeArr = MemorySegment.ofNative(seq)) {
 
@@ -311,7 +309,7 @@ public class StdLibTest {
                         .forEach(i -> intArrHandle.set(nativeArr.baseAddress(), i, arr[i]));
 
                 //call qsort
-                qsort.invokeExact(nativeArr.baseAddress(), seq.elementsCount().getAsLong(), intLayout.byteSize(), qsortUpcallAddr);
+                qsort.invokeExact(nativeArr.baseAddress(), seq.elementsCount().getAsLong(), C_INT.byteSize(), qsortUpcallAddr);
 
                 //convert back to Java array
                 return LongStream.range(0, arr.length)
@@ -343,12 +341,12 @@ public class StdLibTest {
             }
             //function
             List<MemoryLayout> argLayouts = new ArrayList<>();
-            argLayouts.add(MemoryLayout.ofAddress(64)); //format
+            argLayouts.add(C_POINTER); //format
             for (PrintfArg arg : args) {
                 argLayouts.add(arg.layout);
             }
             MethodHandle mh = abi.downcallHandle(printfAddr, mt,
-                    FunctionDescriptor.of(MemoryLayout.ofSignedInt(32), false, argLayouts.toArray(new MemoryLayout[0])));
+                    FunctionDescriptor.of(C_INT, false, argLayouts.toArray(new MemoryLayout[0])));
             return mh.asSpreader(1, Object[].class, args.size());
         }
     }
@@ -408,10 +406,10 @@ public class StdLibTest {
     }
 
     enum PrintfArg {
-        INTEGRAL(int.class, MemoryLayout.ofSignedInt(32), "%d", 42, 42),
-        STRING(MemoryAddress.class, MemoryLayout.ofAddress(64), "%s", makeNativeString("str").baseAddress(), "str"),
-        CHAR(char.class, MemoryLayout.ofUnsignedInt(8), "%c", 'h', 'h'),
-        DOUBLE(double.class, MemoryLayout.ofFloatingPoint(64), "%.4f", 1.2345d, 1.2345d);
+        INTEGRAL(int.class, C_INT, "%d", 42, 42),
+        STRING(MemoryAddress.class, C_POINTER, "%s", makeNativeString("str").baseAddress(), "str"),
+        CHAR(char.class, C_CHAR, "%c", 'h', 'h'),
+        DOUBLE(double.class, C_DOUBLE, "%.4f", 1.2345d, 1.2345d);
 
         final Class<?> carrier;
         final MemoryLayout layout;
@@ -457,7 +455,7 @@ public class StdLibTest {
     }
 
     static MemorySegment makeNativeString(String value, int length) {
-        MemoryLayout strLayout = MemoryLayout.ofSequence(length, byteLayout);
+        MemoryLayout strLayout = MemoryLayout.ofSequence(length, C_CHAR);
         MemorySegment segment = MemorySegment.ofNative(strLayout);
         MemoryAddress addr = segment.baseAddress();
         for (int i = 0 ; i < value.length() ; i++) {

@@ -24,7 +24,7 @@ package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.*;
-import jdk.internal.foreign.abi.x64.ArgumentClass;
+import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
 import jdk.internal.foreign.abi.x64.SharedUtils;
 
 import jdk.incubator.foreign.*;
@@ -52,7 +52,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
     }
 
     private CallingSequenceBuilderImpl(MemoryLayout layout, StorageCalculator retCalculator, StorageCalculator argCalculator) {
-        super(layout,
+        super(MemoryLayouts.WinABI.C_POINTER, layout,
                 (a, c) -> retCalculator.addBindings(a, c, false),
                 (a, c) -> argCalculator.addBindings(a, c, false),
                 (a, c) -> argCalculator.addBindings(a, c, true));
@@ -64,7 +64,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
     }
 
     static class ArgumentInfo extends Argument {
-        private final List<ArgumentClass> classes;
+        private final List<ArgumentClassImpl> classes;
         
         ArgumentInfo(MemoryLayout layout, int argumentIndex, String debugName) {
             super(layout, argumentIndex, debugName);
@@ -82,45 +82,47 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
             return classes.stream().allMatch(this::isMemoryClass);
         }
 
-        private boolean isMemoryClass(ArgumentClass cl) {
-            return cl == ArgumentClass.MEMORY ||
-                    cl == ArgumentClass.X87 ||
-                    cl == ArgumentClass.X87UP;
+        private boolean isMemoryClass(ArgumentClassImpl cl) {
+            return cl == ArgumentClassImpl.MEMORY ||
+                    cl == ArgumentClassImpl.X87 ||
+                    cl == ArgumentClassImpl.X87UP;
         }
 
-        private boolean isRegisterClass(ArgumentClass cl) {
-            return cl == ArgumentClass.INTEGER ||
-                    cl == ArgumentClass.SSE;
+        private boolean isRegisterClass(ArgumentClassImpl cl) {
+            return cl == ArgumentClassImpl.INTEGER ||
+                    cl == ArgumentClassImpl.SSE;
         }
 
-        public List<ArgumentClass> getClasses() {
+        public List<ArgumentClassImpl> getClasses() {
             return classes;
         }
     }
 
-    static List<ArgumentClass> classifyValueType(ValueLayout type) {
-        ArrayList<ArgumentClass> classes = new ArrayList<>();
+    static List<ArgumentClassImpl> classifyValueType(ValueLayout type) {
+        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
 
-
-        if (type.isIntegral()) {
-            classes.add(ArgumentClass.INTEGER);
+        ArgumentClassImpl clazz = (ArgumentClassImpl)Utils.getAnnotation(type, ArgumentClassImpl.ABI_CLASS);
+        if (clazz == null) {
+            //padding not allowed here
+            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
+        }
+        if (clazz == ArgumentClassImpl.POINTER) {
+            clazz = ArgumentClassImpl.INTEGER;
+        }
+        classes.add(clazz);
+        if (clazz == ArgumentClassImpl.INTEGER) {
             // int128
             long left = (type.byteSize()) - 8;
             while (left > 0) {
-                classes.add(ArgumentClass.INTEGER);
+                classes.add(ArgumentClassImpl.INTEGER);
                 left -= 8;
             }
             return classes;
-        } else {
-            if ((type.byteSize()) > 8) {
-                classes.add(ArgumentClass.X87);
-                classes.add(ArgumentClass.X87UP);
-                return classes;
-            } else {
-                classes.add(ArgumentClass.SSE);
-                return classes;
-            }
+        } else if (clazz == ArgumentClassImpl.X87) {
+            classes.add(ArgumentClassImpl.X87UP);
         }
+
+        return classes;
     }
 
     static boolean isRegisterAggregate(MemoryLayout type) {
@@ -132,41 +134,37 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
             || size == 8;
     }
     
-    private static List<ArgumentClass> createMemoryClassArray(long n) {
-        ArrayList<ArgumentClass> classes = new ArrayList<>();
+    private static List<ArgumentClassImpl> createMemoryClassArray(long n) {
+        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            classes.add(ArgumentClass.MEMORY);
+            classes.add(ArgumentClassImpl.MEMORY);
         }
 
         return classes;
     }
 
-    private static List<ArgumentClass> classifyStructType(GroupLayout type, boolean isReturn) {
-        ArrayList<ArgumentClass> classes = new ArrayList<>();
+    private static List<ArgumentClassImpl> classifyStructType(GroupLayout type, boolean isReturn) {
+        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
         
         if(isRegisterAggregate(type)) {
-            classes.add(ArgumentClass.INTEGER);
+            classes.add(ArgumentClassImpl.INTEGER);
         } else {
             if(isReturn) {
                 return createMemoryClassArray(Utils.alignUp((type.byteSize()), 8));
             } else {
-                classes.add(ArgumentClass.INTEGER);
+                classes.add(ArgumentClassImpl.INTEGER);
             }
         }
 
         return classes;
     }
 
-    private static List<ArgumentClass> classifyType(MemoryLayout type, boolean isReturn) {
+    private static List<ArgumentClassImpl> classifyType(MemoryLayout type, boolean isReturn) {
         if (type instanceof ValueLayout) {
             return classifyValueType((ValueLayout) type);
-        } else if (type instanceof AddressLayout) {
-            ArrayList<ArgumentClass> classes = new ArrayList<>();
-            classes.add(ArgumentClass.INTEGER);
-            return classes;
         } else if (type instanceof SequenceLayout) {
-            ArrayList<ArgumentClass> classes = new ArrayList<>();
-            classes.add(ArgumentClass.INTEGER); // arrrays are always passed as pointers
+            ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
+            classes.add(ArgumentClassImpl.INTEGER); // arrrays are always passed as pointers
             return classes;
         } else if (type instanceof GroupLayout) {
             return classifyStructType((GroupLayout) type, isReturn);
@@ -214,7 +212,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                 for (int i = 0; i < info.getClasses().size(); i++) {
                     Storage storage;
 
-                    ArgumentClass c = info.getClasses().get(i);
+                    ArgumentClassImpl c = info.getClasses().get(i);
 
                     switch (c) {
                     case INTEGER:
@@ -231,7 +229,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                         int width = 8;
 
                         for (int j = i + 1; j < info.getClasses().size(); j++) {
-                            if (info.getClasses().get(j) == ArgumentClass.SSEUP) {
+                            if (info.getClasses().get(j) == ArgumentClassImpl.SSEUP) {
                                 width += 8;
                             }
                         }

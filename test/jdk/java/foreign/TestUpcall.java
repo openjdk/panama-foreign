@@ -24,9 +24,11 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.incubator.foreign.unsafe
+  * @modules jdk.incubator.foreign/jdk.incubator.foreign.unsafe
  *          jdk.incubator.foreign/jdk.internal.foreign
- * @build CallGeneratorHelper TestUpcall
+ *          jdk.incubator.foreign/jdk.internal.foreign.abi
+ *          java.base/sun.security.action
+ * @build NativeTestHelper CallGeneratorHelper TestUpcall
  *
  * @run testng/othervm -Djdk.internal.foreign.UpcallHandler.FASTPATH=none TestUpcall
  * @run testng/othervm TestUpcall
@@ -94,7 +96,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
     static FunctionDescriptor function(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
         List<MemoryLayout> paramLayouts = params.stream().map(p -> p.layout(fields)).collect(Collectors.toList());
-        paramLayouts.add(MemoryLayout.ofAddress(64)); // the callback
+        paramLayouts.add(C_POINTER); // the callback
         MemoryLayout[] layouts = paramLayouts.toArray(new MemoryLayout[0]);
         return ret == Ret.VOID ?
                 FunctionDescriptor.ofVoid(false, layouts) :

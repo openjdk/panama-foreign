@@ -33,6 +33,7 @@ import java.lang.constant.DynamicConstantDesc;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -316,7 +317,7 @@ public interface MemoryLayout extends Constable {
      */
     static MemoryLayout ofPaddingBits(long size) {
         AbstractLayout.checkSize(size);
-        return new PaddingLayout(size, OptionalLong.empty(), Optional.empty());
+        return new PaddingLayout(size, OptionalLong.empty(), Map.of());
     }
 
     /**
@@ -328,7 +329,7 @@ public interface MemoryLayout extends Constable {
      */
     static ValueLayout ofValueBits(long size, ByteOrder order) throws IllegalArgumentException {
         AbstractLayout.checkSize(size);
-        return new ValueLayout(order, size, OptionalLong.empty(), Optional.empty());
+        return new ValueLayout(order, size, OptionalLong.empty(), Map.of());
     }
 
     /**
@@ -340,7 +341,7 @@ public interface MemoryLayout extends Constable {
      */
     static SequenceLayout ofSequence(long elementCount, MemoryLayout elementLayout) throws IllegalArgumentException {
         AbstractLayout.checkSize(elementCount, true);
-        return new SequenceLayout(OptionalLong.of(elementCount), elementLayout, OptionalLong.empty(), Optional.empty());
+        return new SequenceLayout(OptionalLong.of(elementCount), elementLayout, OptionalLong.empty(), Map.of());
     }
 
     /**
@@ -349,7 +350,7 @@ public interface MemoryLayout extends Constable {
      * @return the new sequence layout with given element layout.
      */
     static SequenceLayout ofSequence(MemoryLayout elementLayout) {
-        return new SequenceLayout(OptionalLong.empty(), elementLayout, OptionalLong.empty(), Optional.empty());
+        return new SequenceLayout(OptionalLong.empty(), elementLayout, OptionalLong.empty(), Map.of());
     }
 
     /**
@@ -358,7 +359,7 @@ public interface MemoryLayout extends Constable {
      * @return a new <em>struct</em> group layout with given member layouts.
      */
     static GroupLayout ofStruct(MemoryLayout... elements) {
-        return new GroupLayout(GroupLayout.Kind.STRUCT, List.of(elements), OptionalLong.empty(), Optional.empty());
+        return new GroupLayout(GroupLayout.Kind.STRUCT, List.of(elements), OptionalLong.empty(), Map.of());
     }
 
     /**
@@ -367,38 +368,6 @@ public interface MemoryLayout extends Constable {
      * @return a new <em>union</em> group layout with given member layouts.
      */
     static GroupLayout ofUnion(MemoryLayout... elements) {
-        return new GroupLayout(GroupLayout.Kind.UNION, List.of(elements), OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a new address of given size.
-     * @param size address size.
-     * @return the new address
-     */
-    static AddressLayout ofAddress(long size) {
-        return new AddressLayout(AddressLayout.PointeeKind.VOID, null, ValueLayout.Kind.INTEGRAL_UNSIGNED,
-                ByteOrder.nativeOrder(), size, OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a new address of given size and addressee
-     * @param size address size.
-     * @param layout addressee
-     * @return the new address
-     */
-    static AddressLayout ofAddress(long size, MemoryLayout layout) {
-        return new AddressLayout(AddressLayout.PointeeKind.LAYOUT, layout, ValueLayout.Kind.INTEGRAL_UNSIGNED,
-                ByteOrder.nativeOrder(), size, OptionalLong.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a new address of given size and addressee function.
-     * @param size address size.
-     * @param function addressee function.
-     * @return the new address
-     */
-    static AddressLayout ofAddress(long size, FunctionDescriptor function) {
-        return new AddressLayout(AddressLayout.PointeeKind.FUNCTION, function, ValueLayout.Kind.INTEGRAL_UNSIGNED,
-                ByteOrder.nativeOrder(), size, OptionalLong.empty(), Optional.empty());
+        return new GroupLayout(GroupLayout.Kind.UNION, List.of(elements), OptionalLong.empty(), Map.of());
     }
 }

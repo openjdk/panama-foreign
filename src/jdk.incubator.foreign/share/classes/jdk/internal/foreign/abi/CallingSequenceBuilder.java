@@ -24,6 +24,8 @@
 package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -40,7 +42,8 @@ public abstract class CallingSequenceBuilder {
     private final BindingsComputer argumentBindgingsComputer;
     private final BindingsComputer varargsBindgingsComputer;
 
-    protected CallingSequenceBuilder(MemoryLayout ret,
+    protected CallingSequenceBuilder(MemoryLayout ptrLayout,
+                                     MemoryLayout ret,
                                      BindingsComputer returnBindgingsComputer,
                                      BindingsComputer argumentBindgingsComputer,
                                      BindingsComputer varargsBindgingsComputer) {
@@ -51,7 +54,7 @@ public abstract class CallingSequenceBuilder {
             Argument retInfo = makeArgument(ret, -1, "__retval");
             this.returnsInMemory = retInfo.inMemory();
             if (returnsInMemory) {
-                retInfo = makeArgument(MemoryLayout.ofAddress(64, ret), -1, "__retval");
+                retInfo = makeArgument(ptrLayout, -1, "__retval");
                 addArgumentBindings(retInfo, false);
             }
             addReturnBindings(retInfo);

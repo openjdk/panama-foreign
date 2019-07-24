@@ -27,6 +27,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,13 +35,10 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jdk.incubator.foreign.AddressLayout;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.MemoryAddressImpl;
 
 /**
@@ -81,13 +79,14 @@ public class DirectSignatureShuffler {
             LONG_TO_STRUCT = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "longToStruct", MethodType.methodType(MemorySegment.class, long.class));
             DOUBLE_TO_STRUCT = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "doubleToStruct", MethodType.methodType(MemorySegment.class, double.class));
 
-            BYTE_ADDR_VH = MemoryLayout.ofUnsignedInt(8).varHandle(byte.class);
-            SHORT_ADDR_VH = MemoryLayout.ofUnsignedInt(16).varHandle(short.class);
-            INT_ADDR_VH = MemoryLayout.ofUnsignedInt(32).varHandle(int.class);
-            LONG_ADDR_VH = MemoryLayout.ofUnsignedInt(64).varHandle(long.class);
+            BYTE_ADDR_VH = MemoryLayouts.JAVA_BYTE.withOrder(ByteOrder.nativeOrder()).varHandle(byte.class);
+            SHORT_ADDR_VH = MemoryLayouts.JAVA_SHORT.withOrder(ByteOrder.nativeOrder()).varHandle(short.class);
+            INT_ADDR_VH = MemoryLayouts.JAVA_INT.withOrder(ByteOrder.nativeOrder()).varHandle(int.class);
+            LONG_ADDR_VH = MemoryLayouts.JAVA_LONG.withOrder(ByteOrder.nativeOrder()).varHandle(long.class);
 
-            FLOAT_ADDR_VH = MemoryLayout.ofUnsignedInt(32).varHandle(float.class);
-            DOUBLE_ADDR_VH = MemoryLayout.ofUnsignedInt(64).varHandle(double.class);
+
+            FLOAT_ADDR_VH = MemoryLayouts.JAVA_FLOAT.withOrder(ByteOrder.nativeOrder()).varHandle(float.class);
+            DOUBLE_ADDR_VH = MemoryLayouts.JAVA_DOUBLE.withOrder(ByteOrder.nativeOrder()).varHandle(double.class);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

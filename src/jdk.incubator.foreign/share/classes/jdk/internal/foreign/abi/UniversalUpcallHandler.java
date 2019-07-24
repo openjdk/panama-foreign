@@ -29,6 +29,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import jdk.internal.foreign.MemoryAddressImpl;
@@ -49,7 +50,7 @@ public class UniversalUpcallHandler implements UpcallHandler {
         privilegedGetProperty("jdk.internal.foreign.UpcallHandler.DEBUG");
 
     private static final VarHandle PTR_HANDLE =
-            MemoryLayout.ofUnsignedInt(64).varHandle(long.class);
+            MemoryLayout.ofValueBits(64, ByteOrder.nativeOrder()).varHandle(long.class);
 
     @Stable
     private final MethodHandle mh;

@@ -26,11 +26,13 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.MemoryAddressImpl;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.nio.ByteOrder;
 import java.util.List;
 
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
@@ -47,6 +49,8 @@ public class UniversalNativeInvoker {
     // Unbound MH for the invoke() method
     private static final MethodHandle INVOKE_MH;
     private static final MethodHandle INVOKE_NATIVE_MH;
+
+    private static final ValueLayout PTR_LAYOUT = MemoryLayout.ofValueBits(64, ByteOrder.nativeOrder());
 
     static {
         try {
@@ -100,7 +104,7 @@ public class UniversalNativeInvoker {
             // FIXME (STRUCT-LIFECYCLE):
             // Leak the allocated structs for now until the life cycle has been figured out
             retPtr = MemorySegment.ofNative(function.returnLayout().get().withBitAlignment(64)).baseAddress();
-            adapter.unboxValue(retPtr, MemoryAddress.class, MemoryLayout.ofAddress(64), b -> shuffleRecipe.offset(argsPtr, b),
+            adapter.unboxValue(retPtr, MemoryAddress.class, PTR_LAYOUT, b -> shuffleRecipe.offset(argsPtr, b),
                     List.of(callingSequence.returnInMemoryBinding()));
         } else if (!isVoid && returnValues.length != 0) {
             retPtr = MemorySegment.ofArray(returnValues).baseAddress();

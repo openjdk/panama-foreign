@@ -25,8 +25,10 @@
  */
 package jdk.incubator.foreign;
 
+import java.lang.constant.Constable;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -46,8 +48,8 @@ import java.util.OptionalLong;
 /* package-private */ class PaddingLayout extends AbstractLayout implements MemoryLayout {
     private final long size;
 
-    PaddingLayout(long size, OptionalLong alignment, Optional<String> name) {
-        super(alignment, name);
+    PaddingLayout(long size, OptionalLong alignment, Map<String, Constable> annotations) {
+        super(alignment, annotations);
         this.size = size;
     }
 
@@ -87,8 +89,8 @@ import java.util.OptionalLong;
     }
 
     @Override
-    PaddingLayout dup(OptionalLong alignment, Optional<String> name) {
-        return new PaddingLayout(size, alignment, name);
+    PaddingLayout dup(OptionalLong alignment, Map<String, Constable> annotations) {
+        return new PaddingLayout(size, alignment, annotations);
     }
 
     @Override

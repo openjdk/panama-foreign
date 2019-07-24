@@ -25,8 +25,10 @@
  */
 package jdk.incubator.foreign;
 
+import java.lang.constant.Constable;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -63,8 +65,8 @@ public class SequenceLayout extends AbstractLayout {
     private final OptionalLong size;
     private final MemoryLayout elementLayout;
 
-    SequenceLayout(OptionalLong size, MemoryLayout elementLayout, OptionalLong alignment, Optional<String> name) {
-        super(alignment, name);
+    SequenceLayout(OptionalLong size, MemoryLayout elementLayout, OptionalLong alignment, Map<String, Constable> annotations) {
+        super(alignment, annotations);
         this.size = size;
         this.elementLayout = elementLayout;
     }
@@ -131,8 +133,8 @@ public class SequenceLayout extends AbstractLayout {
     }
 
     @Override
-    SequenceLayout dup(OptionalLong alignment, Optional<String> name) {
-        return new SequenceLayout(elementsCount(), elementLayout, alignment, name);
+    SequenceLayout dup(OptionalLong alignment, Map<String, Constable> annotations) {
+        return new SequenceLayout(elementsCount(), elementLayout, alignment, annotations);
     }
 
     @Override

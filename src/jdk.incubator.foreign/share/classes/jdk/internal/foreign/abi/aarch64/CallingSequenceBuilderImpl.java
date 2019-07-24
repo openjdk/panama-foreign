@@ -23,9 +23,9 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
-import jdk.incubator.foreign.AddressLayout;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
 
     private CallingSequenceBuilderImpl(MemoryLayout layout, StorageCalculator retCalculator,
                                        StorageCalculator argCalculator) {
-        super(layout, retCalculator::addBindings, argCalculator::addBindings,
+        super(MemoryLayouts.AArch64ABI.C_POINTER, layout, retCalculator::addBindings, argCalculator::addBindings,
               argCalculator::addBindings);
     }
 
@@ -71,7 +71,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
     }
 
     static class ArgumentInfo extends Argument {
-        private final List<ArgumentClass> classes;
+        private final List<ArgumentClassImpl> classes;
 
         public ArgumentInfo(MemoryLayout layout, int argumentIndex, String debugName) {
             super(layout, argumentIndex, debugName);
@@ -80,13 +80,13 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
 
         public int getIntegerRegs() {
             return (int)classes.stream()
-                    .filter(cl -> cl == ArgumentClass.INTEGER)
+                    .filter(cl -> cl == ArgumentClassImpl.INTEGER)
                     .count();
         }
 
         public int getVectorRegs() {
             return (int)classes.stream()
-                    .filter(cl -> cl == ArgumentClass.VECTOR || cl == ArgumentClass.HFA)
+                    .filter(cl -> cl == ArgumentClassImpl.VECTOR || cl == ArgumentClassImpl.HFA)
                     .count();
         }
 
@@ -95,31 +95,38 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
             return classes.stream().allMatch(this::isMemoryClass);
         }
 
-        private boolean isMemoryClass(ArgumentClass cl) {
-            return cl == ArgumentClass.MEMORY;
+        private boolean isMemoryClass(ArgumentClassImpl cl) {
+            return cl == ArgumentClassImpl.MEMORY;
         }
 
-        public List<ArgumentClass> getClasses() {
+        public List<ArgumentClassImpl> getClasses() {
             return classes;
         }
     }
 
-    private static List<ArgumentClass> classifyValueType(ValueLayout type) {
-        ArrayList<ArgumentClass> classes = new ArrayList<>();
+    private static List<ArgumentClassImpl> classifyValueType(ValueLayout type) {
+        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
 
-        if (type.isIntegral()) {
-            classes.add(ArgumentClass.INTEGER);
+        ArgumentClassImpl clazz = (ArgumentClassImpl)Utils.getAnnotation(type, ArgumentClassImpl.ABI_CLASS);
+        if (clazz == null) {
+            //padding not allowed here
+            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
+        }
+        if (clazz == ArgumentClassImpl.POINTER) {
+            clazz = ArgumentClassImpl.INTEGER;
+        }
+        classes.add(clazz);
+        if (clazz == ArgumentClassImpl.INTEGER) {
             // int128
             long left = (type.byteSize()) - 8;
             while (left > 0) {
-                classes.add(ArgumentClass.INTEGER);
+                classes.add(ArgumentClassImpl.INTEGER);
                 left -= 8;
             }
             return classes;
-        } else {
-            classes.add(ArgumentClass.VECTOR);
-            return classes;
         }
+
+        return classes;
     }
 
     static boolean isRegisterAggregate(MemoryLayout type) {
@@ -136,19 +143,25 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         if (numElements > 4 || numElements == 0)
             return false;
 
-        //Todo: need to strip names
         MemoryLayout baseType = groupLayout.memberLayouts().get(0);
 
         if (!(baseType instanceof ValueLayout))
             return false;
 
-        if (((ValueLayout)baseType).isIntegral())
-            return false;
+        ArgumentClassImpl baseArgClass =
+            (ArgumentClassImpl)Utils.getAnnotation(baseType, ArgumentClassImpl.ABI_CLASS);
+        if (baseArgClass != ArgumentClassImpl.VECTOR)
+           return false;
 
         for (MemoryLayout elem : groupLayout.memberLayouts()) {
-            //Todo: need to strip names
-            if (!elem.equals(baseType))
+            ArgumentClassImpl argClass =
+                    (ArgumentClassImpl)Utils.getAnnotation(elem, ArgumentClassImpl.ABI_CLASS);
+            if (!(elem instanceof ValueLayout) ||
+                    elem.bitSize() != baseType.bitSize() ||
+                    elem.bitAlignment() != baseType.bitAlignment() ||
+                    baseArgClass != argClass) {
                 return false;
+            }
         }
 
         return true;
@@ -158,39 +171,35 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         return Utils.alignUp((type.byteSize()), 8) / 8;
     }
 
-    private static List<ArgumentClass> classifyCompositeType(MemoryLayout type,
-                                                             boolean isReturn) {
-        ArrayList<ArgumentClass> classes = new ArrayList<>();
+    private static List<ArgumentClassImpl> classifyCompositeType(MemoryLayout type,
+                                                                 boolean isReturn) {
+        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
         long nWords = countWords(type);
 
         if (isHomogeneousFloatAggregate(type)) {
             for (MemoryLayout elem : ((GroupLayout)type).memberLayouts()) {
-                classes.add(ArgumentClass.HFA);
+                classes.add(ArgumentClassImpl.HFA);
             }
         } else if (isRegisterAggregate(type)) {
             for (long i = 0; i < nWords; i++) {
-                classes.add(ArgumentClass.INTEGER);
+                classes.add(ArgumentClassImpl.INTEGER);
             }
         } else {
             if (isReturn) {
                 return createMemoryClassArray(nWords);
             } else {
                 // Pass a pointer to a copy of the struct
-                classes.add(ArgumentClass.INTEGER);
+                classes.add(ArgumentClassImpl.INTEGER);
             }
         }
 
         return classes;
     }
 
-    private static List<ArgumentClass> classifyType(MemoryLayout type, boolean isReturn) {
+    private static List<ArgumentClassImpl> classifyType(MemoryLayout type, boolean isReturn) {
         try {
             if (type instanceof ValueLayout) {
                 return classifyValueType((ValueLayout) type);
-            } else if (type instanceof AddressLayout) {
-                ArrayList<ArgumentClass> classes = new ArrayList<>();
-                classes.add(ArgumentClass.INTEGER);
-                return classes;
             } else if (type instanceof SequenceLayout) {
                 return classifyCompositeType((SequenceLayout) type, isReturn);
             } else if (type instanceof GroupLayout) {
@@ -204,10 +213,10 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
         }
     }
 
-    private static List<ArgumentClass> createMemoryClassArray(long n) {
-        ArrayList<ArgumentClass> classes = new ArrayList<>();
+    private static List<ArgumentClassImpl> createMemoryClassArray(long n) {
+        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            classes.add(ArgumentClass.MEMORY);
+            classes.add(ArgumentClassImpl.MEMORY);
         }
 
         return classes;
@@ -233,7 +242,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                 // only time an argument binding will have index -1.
 
                 assert info.getClasses().size() == 1;
-                assert info.getClasses().get(0) == ArgumentClass.INTEGER;
+                assert info.getClasses().get(0) == ArgumentClassImpl.INTEGER;
 
                 Storage storage = new Storage(StorageClass.INDIRECT_RESULT_REGISTER, 0,
                                               SharedUtils.INTEGER_REGISTER_SIZE);
@@ -254,9 +263,9 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                 long newStackOffset = Utils.alignUp(stackOffset, alignment);
                 stackOffset = newStackOffset;
 
-                List<ArgumentClass> classes = info.getClasses();
+                List<ArgumentClassImpl> classes = info.getClasses();
 
-                if (!classes.isEmpty() && classes.get(0) == ArgumentClass.HFA) {
+                if (!classes.isEmpty() && classes.get(0) == ArgumentClassImpl.HFA) {
                     // This argument was supposed to be passed with each
                     // element in a separate vector register but there aren't
                     // enough free registers so it must be pased on the stack
@@ -287,7 +296,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
             } else {
                 // Pass in registers
                 long offset = 0;
-                for (ArgumentClass c : info.getClasses()) {
+                for (ArgumentClassImpl c : info.getClasses()) {
                     Storage storage;
                     switch (c) {
                     case INTEGER:
@@ -307,7 +316,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
                         bindingConsumer.accept(storage.getStorageClass(),
                                                new ArgumentBinding(storage, info, offset));
 
-                        if (c == ArgumentClass.HFA) {
+                        if (c == ArgumentClassImpl.HFA) {
                             // All members in the composite type are passed in
                             // separate vector registers and must be the same
                             // size

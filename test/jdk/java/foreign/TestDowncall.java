@@ -28,7 +28,9 @@
  * @test
  * @modules jdk.incubator.foreign/jdk.incubator.foreign.unsafe
  *          jdk.incubator.foreign/jdk.internal.foreign
- * @build CallGeneratorHelper TestDowncall
+ *          jdk.incubator.foreign/jdk.internal.foreign.abi
+ *          java.base/sun.security.action
+ * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
  * @run testng/othervm -Djdk.internal.foreign.NativeInvoker.FASTPATH=none TestDowncall
  * @run testng/othervm TestDowncall

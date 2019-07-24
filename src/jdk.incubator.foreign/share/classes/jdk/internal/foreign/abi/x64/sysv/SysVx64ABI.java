@@ -24,7 +24,6 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
-import jdk.incubator.foreign.AddressLayout;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -33,7 +32,9 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.*;
+import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -121,7 +122,7 @@ public class SysVx64ABI implements SystemABI {
                                 Math.min(binding.storage().getSize(), srcPtr.size() - srcPtr.offset()));
                     }
                 }
-            } else if (layout instanceof AddressLayout) {
+            } else if (carrier == MemoryAddress.class) {
                 assert bindings.size() <= 2;
                 VarHandle vh = MemoryHandles.varHandle(long.class);
                 MemoryAddress dst = dstPtrFunc.apply(bindings.get(0));
@@ -158,7 +159,7 @@ public class SysVx64ABI implements SystemABI {
                 }
 
                 return rtmp.segment();
-            } else if (layout instanceof AddressLayout) {
+            } else if (carrier == MemoryAddress.class) {
                 assert bindings.size() <= 2;
                 VarHandle vh = MemoryHandles.varHandle(long.class);
                 return MemoryAddressImpl.ofNative((long)vh.get(srcPtrFunc.apply(bindings.get(0))));
@@ -177,7 +178,6 @@ public class SysVx64ABI implements SystemABI {
     };
 
     private boolean isX87(MemoryLayout layout) {
-        //todo
-        return false;
+        return Utils.getAnnotation(layout, ArgumentClassImpl.ABI_CLASS) == ArgumentClassImpl.X87;
     }
 }

@@ -24,6 +24,8 @@ package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.MemoryLayout;
 
+import java.util.List;
+
 public abstract class Argument {
     private final int argumentIndex; // index of argument (in argument list)
     private final MemoryLayout layout;
@@ -53,4 +55,6 @@ public abstract class Argument {
     public String toString() {
         return "[" + layout.toString() + " " + name() + "]";
     }
+
+    public abstract List<? extends ArgumentClass> getClasses();
 }

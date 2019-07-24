@@ -25,12 +25,14 @@
  */
 package jdk.incubator.foreign;
 
+import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.ToLongFunction;
@@ -83,8 +85,8 @@ public class GroupLayout extends AbstractLayout {
     private long size = -1L;
     private long alignment = -1L;
 
-    GroupLayout(Kind kind, List<MemoryLayout> elements, OptionalLong alignment, Optional<String> name) {
-        super(alignment, name);
+    GroupLayout(Kind kind, List<MemoryLayout> elements, OptionalLong alignment, Map<String, Constable> annotations) {
+        super(alignment, annotations);
         this.kind = kind;
         this.elements = elements;
     }
@@ -161,8 +163,8 @@ public class GroupLayout extends AbstractLayout {
     }
 
     @Override
-    GroupLayout dup(OptionalLong alignment, Optional<String> name) {
-        return new GroupLayout(kind, elements, alignment, name);
+    GroupLayout dup(OptionalLong alignment, Map<String, Constable> annotations) {
+        return new GroupLayout(kind, elements, alignment, annotations);
     }
 
     @Override

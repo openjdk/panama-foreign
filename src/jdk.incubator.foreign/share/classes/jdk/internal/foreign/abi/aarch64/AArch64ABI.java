@@ -25,7 +25,6 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
-import jdk.incubator.foreign.AddressLayout;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
@@ -176,7 +175,7 @@ public class AArch64ABI implements SystemABI {
                     VarHandle vh = MemoryHandles.varHandle(long.class);
                     vh.set(dst, MemoryAddressImpl.addressof(copy));
                 }
-            } else if (layout instanceof AddressLayout) {
+            } else if (carrier == MemoryAddress.class) {
                 assert bindings.size() <= 2;
                 VarHandle vh = MemoryHandles.varHandle(long.class);
                 MemoryAddress dst = dstPtrFunc.apply(bindings.get(0));
@@ -235,7 +234,7 @@ public class AArch64ABI implements SystemABI {
                 }
 
                 return rtmp.segment();
-            } else if (layout instanceof AddressLayout) {
+            } else if (carrier == MemoryAddress.class) {
                 assert bindings.size() <= 2;
                 VarHandle vh = MemoryHandles.varHandle(long.class);
                 return MemoryAddressImpl.ofNative((long)vh.get(srcPtrFunc.apply(bindings.get(0))));
