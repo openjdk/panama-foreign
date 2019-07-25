@@ -94,7 +94,7 @@ final class IntMaxVector extends IntVector {
 
     @ForceInline
     @Override
-    public final Class<Integer> elementType() { return Integer.class; }
+    public final Class<Integer> elementType() { return int.class; }
 
     @ForceInline
     @Override

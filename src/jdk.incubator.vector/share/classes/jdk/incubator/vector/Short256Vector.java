@@ -94,7 +94,7 @@ final class Short256Vector extends ShortVector {
 
     @ForceInline
     @Override
-    public final Class<Short> elementType() { return Short.class; }
+    public final Class<Short> elementType() { return short.class; }
 
     @ForceInline
     @Override

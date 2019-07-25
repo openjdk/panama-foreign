@@ -2344,7 +2344,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     }
 
     /**
-     * Blends together the bits of two vectors scalar under
+     * Blends together the bits of two vectors under
      * the control of a scalar, which supplies mask bits.
      *
      *

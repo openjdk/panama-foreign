@@ -2343,7 +2343,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     }
 
     /**
-     * Blends together the bits of two vectors scalar under
+     * Blends together the bits of two vectors under
      * the control of a scalar, which supplies mask bits.
      *
      *

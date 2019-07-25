@@ -2343,7 +2343,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /**
-     * Blends together the bits of two vectors scalar under
+     * Blends together the bits of two vectors under
      * the control of a scalar, which supplies mask bits.
      *
      *
