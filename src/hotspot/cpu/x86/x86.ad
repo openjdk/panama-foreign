@@ -1537,7 +1537,8 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_VLShiftV:
         case Op_VRShiftV:
         case Op_VURShiftV:
-          ret_value  = false;
+          if (bt == T_BYTE || bt == T_SHORT)
+            ret_value  = false;
           break;
         case Op_MulVS:
         case Op_AddVS:
