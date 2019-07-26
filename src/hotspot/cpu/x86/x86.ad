@@ -1537,7 +1537,7 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_VLShiftV:
         case Op_VRShiftV:
         case Op_VURShiftV:
-          if (UseAVX <= 1) ret_value  = false;
+          ret_value  = false;
           break;
         case Op_MulVS:
         case Op_AddVS:
