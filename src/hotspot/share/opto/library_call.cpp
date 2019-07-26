@@ -6871,6 +6871,8 @@ static int get_sopc(int opc, BasicType elem_bt, int arity) {
       case Op_RShiftL:
         return Op_VRShiftV;
         break;
+      case Op_URShiftB:
+      case Op_URShiftS:
       case Op_URShiftI:
       case Op_URShiftL:
         return Op_VURShiftV;

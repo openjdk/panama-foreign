@@ -445,6 +445,10 @@ public class LongScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
     @Benchmark
     public void ASHR(Blackhole bh) {
         long[] as = fa.apply(size);
@@ -487,6 +491,10 @@ public class LongScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
     @Benchmark
     public void LSHR(Blackhole bh) {
         long[] as = fa.apply(size);
@@ -526,6 +534,10 @@ public class LongScalar extends AbstractVectorBenchmark {
         }
         bh.consume(rs);
     }
+
+
+
+
 
 
 

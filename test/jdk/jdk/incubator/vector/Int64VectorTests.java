@@ -1220,6 +1220,10 @@ public class Int64VectorTests extends AbstractVectorTest {
     }
 
 
+
+
+
+
     static int ASHR(int a, int b) {
         return (int)((a >> b));
     }
@@ -1264,6 +1268,10 @@ public class Int64VectorTests extends AbstractVectorTest {
     }
 
 
+
+
+
+
     static int LSHR(int a, int b) {
         return (int)((a >>> b));
     }
@@ -1306,6 +1314,10 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, mask, Int64VectorTests::LSHR);
     }
+
+
+
+
 
 
     static int LSHL_unary(int a, int b) {

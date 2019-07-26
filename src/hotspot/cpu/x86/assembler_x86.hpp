@@ -2254,6 +2254,7 @@ private:
   void vpsrad(XMMRegister dst, XMMRegister src, int shift, int vector_len);
   void vpsraw(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
   void vpsrad(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+  void evpsravw(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpsraq(XMMRegister dst, XMMRegister src, int shift, int vector_len);
   void evpsraq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
 

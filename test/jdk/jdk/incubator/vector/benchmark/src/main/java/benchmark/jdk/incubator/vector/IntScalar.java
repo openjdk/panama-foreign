@@ -445,6 +445,10 @@ public class IntScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
     @Benchmark
     public void ASHR(Blackhole bh) {
         int[] as = fa.apply(size);
@@ -487,6 +491,10 @@ public class IntScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
     @Benchmark
     public void LSHR(Blackhole bh) {
         int[] as = fa.apply(size);
@@ -526,6 +534,10 @@ public class IntScalar extends AbstractVectorBenchmark {
         }
         bh.consume(rs);
     }
+
+
+
+
 
 
 

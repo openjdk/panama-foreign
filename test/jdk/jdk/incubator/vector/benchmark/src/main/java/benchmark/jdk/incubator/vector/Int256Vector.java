@@ -437,6 +437,10 @@ public class Int256Vector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
     @Benchmark
     public void ASHR(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
@@ -477,6 +481,10 @@ public class Int256Vector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
     @Benchmark
     public void LSHR(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
@@ -514,6 +522,10 @@ public class Int256Vector extends AbstractVectorBenchmark {
 
         bh.consume(r);
     }
+
+
+
+
 
 
 
