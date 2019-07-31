@@ -669,6 +669,12 @@ class Assembler : public AbstractAssembler  {
     TRUE_US =0x1F
   };
 
+  enum Width {
+    B = 0,
+    W = 1,
+    D = 2,
+    Q = 3
+  };
 
   // NOTE: The general philopsophy of the declarations here is that 64bit versions
   // of instructions are freely declared without the need for wrapping them an ifdef.
@@ -879,6 +885,9 @@ private:
   Assembler(CodeBuffer* code) : AbstractAssembler(code) {
     init_attributes();
   }
+
+  static ComparisonPredicate booltest_pred_to_comparison_pred(int bt);
+  static ComparisonPredicateFP booltest_pred_to_comparison_pred_fp(int bt);
 
   // Decoding
   static address locate_operand(address inst, WhichOperand which);
@@ -1693,6 +1702,8 @@ private:
   void pcmpestri(XMMRegister xmm1, Address src, int imm8);
 
   void pcmpeqb(XMMRegister dst, XMMRegister src);
+  void vpcmpCCbwd(XMMRegister dst, XMMRegister nds, XMMRegister src, int cond_encoding, int vector_len);
+
   void vpcmpeqb(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqb(KRegister kdst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqb(KRegister kdst, XMMRegister nds, Address src, int vector_len);
@@ -1719,6 +1730,7 @@ private:
   void evpcmpeqd(KRegister kdst, KRegister mask, XMMRegister nds, Address src, int vector_len);
 
   void pcmpeqq(XMMRegister dst, XMMRegister src);
+  void vpcmpCCq(XMMRegister dst, XMMRegister nds, XMMRegister src, int cond_encoding, int vector_len);
   void vpcmpeqq(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqq(KRegister kdst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqq(KRegister kdst, XMMRegister nds, Address src, int vector_len);

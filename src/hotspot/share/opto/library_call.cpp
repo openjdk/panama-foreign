@@ -7752,8 +7752,10 @@ bool LibraryCallKit::inline_vector_compare() {
     return false; // operand unboxing failed
   }
   BoolTest::mask pred = (BoolTest::mask)cond->get_con();
+  ConINode* pred_node = (ConINode*)_gvn.makecon(cond);
+
   const TypeVect* vt = TypeVect::make(mask_bt, num_elem);
-  Node* operation = _gvn.transform(new VectorMaskCmpNode(pred, v1, v2, vt));
+  Node* operation = _gvn.transform(new VectorMaskCmpNode(pred, v1, v2, pred_node, vt));
 
   Node* box = box_vector(operation, mbox_type, mask_bt, num_elem);
   set_vector_result(box);

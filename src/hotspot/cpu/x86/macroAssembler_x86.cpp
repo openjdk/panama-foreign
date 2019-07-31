@@ -3989,6 +3989,67 @@ void MacroAssembler::evpcmpw(KRegister kdst, KRegister mask, XMMRegister nds, Ad
   }
 }
 
+void MacroAssembler::vpcmpCCbwd(XMMRegister dst, XMMRegister nds, XMMRegister src, ComparisonPredicate cond, Width width, int vector_len, Register scratch_reg) {
+  assert (width != Assembler::Q, "this function does not accept quadword width");
+  int eq_cond_enc = 0x74 + width;
+  int gt_cond_enc = 0x64 + width;
+  switch (cond) {
+  case eq:
+    Assembler::vpcmpCCbwd(dst, nds, src, eq_cond_enc, vector_len);
+    break;
+  case neq:
+    Assembler::vpcmpCCbwd(dst, nds, src, eq_cond_enc, vector_len);
+    vpxor(dst, dst, ExternalAddress(StubRoutines::x86::vector_all_bits_set()), vector_len, scratch_reg);
+    break;
+  case le:
+    Assembler::vpcmpCCbwd(dst, nds, src, gt_cond_enc, vector_len);
+    vpxor(dst, dst, ExternalAddress(StubRoutines::x86::vector_all_bits_set()), vector_len, scratch_reg);
+    break;
+  case nlt:
+    Assembler::vpcmpCCbwd(dst, src, nds, gt_cond_enc, vector_len);
+    vpxor(dst, dst, ExternalAddress(StubRoutines::x86::vector_all_bits_set()), vector_len, scratch_reg);
+    break;
+  case lt:
+    Assembler::vpcmpCCbwd(dst, src, nds, gt_cond_enc, vector_len);
+    break;
+  case nle:
+    Assembler::vpcmpCCbwd(dst, nds, src, gt_cond_enc, vector_len);
+    break;
+  default:
+    assert(false, "Should not reach here");
+  }
+}
+
+void MacroAssembler::vpcmpCCq(XMMRegister dst, XMMRegister nds, XMMRegister src, ComparisonPredicate cond, int vector_len, Register scratch_reg) {
+  int eq_cond_enc = 0x29;
+  int gt_cond_enc = 0x37;
+  switch (cond) {
+  case eq:
+    Assembler::vpcmpCCq(dst, nds, src, eq_cond_enc, vector_len);
+    break;
+  case neq:
+    Assembler::vpcmpCCq(dst, nds, src, eq_cond_enc, vector_len);
+    vpxor(dst, dst, ExternalAddress(StubRoutines::x86::vector_all_bits_set()), vector_len, scratch_reg);
+    break;
+  case le:
+    Assembler::vpcmpCCq(dst, nds, src, gt_cond_enc, vector_len);
+    vpxor(dst, dst, ExternalAddress(StubRoutines::x86::vector_all_bits_set()), vector_len, scratch_reg);
+    break;
+  case nlt:
+    Assembler::vpcmpCCq(dst, src, nds, gt_cond_enc, vector_len);
+    vpxor(dst, dst, ExternalAddress(StubRoutines::x86::vector_all_bits_set()), vector_len, scratch_reg);
+    break;
+  case lt:
+    Assembler::vpcmpCCq(dst, src, nds, gt_cond_enc, vector_len);
+    break;
+  case nle:
+    Assembler::vpcmpCCq(dst, nds, src, gt_cond_enc, vector_len);
+    break;
+  default:
+    assert(false, "Should not reach here");
+  }
+}
+
 void MacroAssembler::vpmovzxbw(XMMRegister dst, Address src, int vector_len) {
   assert(((dst->encoding() < 16) || VM_Version::supports_avx512vlbw()),"XMM register should be 0-15");
   Assembler::vpmovzxbw(dst, src, vector_len);

@@ -1294,6 +1294,10 @@ public:
   void evpcmpw(KRegister kdst, KRegister mask, XMMRegister nds, AddressLiteral src,
                int comparison, int vector_len, Register scratch_reg);
 
+  // Emit comparison instruction for the specified comparison predicate.
+  void vpcmpCCbwd(XMMRegister dst, XMMRegister nds, XMMRegister src, ComparisonPredicate cond, Width width, int vector_len, Register scratch_reg);
+  void vpcmpCCq(XMMRegister dst, XMMRegister nds, XMMRegister src, ComparisonPredicate cond, int vector_len, Register scratch_reg);
+
   void vpmovzxbw(XMMRegister dst, Address src, int vector_len);
   void vpmovzxbw(XMMRegister dst, XMMRegister src, int vector_len) { Assembler::vpmovzxbw(dst, src, vector_len); }
 
