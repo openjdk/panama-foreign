@@ -360,91 +360,91 @@ public final class MemoryLayouts {
         /**
          * The {@code _Bool} native type.
          */
-        public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_BE
+        public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code unsigned char} native type.
          */
-        public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_BE
+        public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code signed char} native type.
          */
-        public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_BE
+        public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_BE
+        public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code short} native type.
          */
-        public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_BE
+        public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code unsigned short} native type.
          */
-        public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_BE
+        public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code int} native type.
          */
-        public static final ValueLayout C_INT = MemoryLayouts.BITS_32_BE
+        public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code unsigned int} native type.
          */
-        public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_BE
+        public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code long} native type.
          */
-        public static final ValueLayout C_LONG = MemoryLayouts.BITS_64_BE
+        public static final ValueLayout C_LONG = MemoryLayouts.BITS_64_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code unsigned long} native type.
          */
-        public static final ValueLayout C_ULONG = MemoryLayouts.BITS_64_BE
+        public static final ValueLayout C_ULONG = MemoryLayouts.BITS_64_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code long long} native type.
          */
-        public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_BE
+        public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code unsigned long long} native type.
          */
-        public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_BE
+        public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code float} native type.
          */
-        public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_BE
+        public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.VECTOR);
 
         /**
          * The {@code double} native type.
          */
-        public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_BE
+        public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.VECTOR);
 
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_BE
+        public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.POINTER);
     }
 }

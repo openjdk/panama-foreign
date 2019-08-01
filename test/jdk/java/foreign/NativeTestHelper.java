@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -16,7 +16,7 @@
  *  2 along with this work; if not, write to the Free Software Foundation,
  *  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *   Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ *  Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  *  or visit www.oracle.com if you need additional information or have any
  *  questions.
  *
@@ -50,6 +50,8 @@ public class NativeTestHelper {
     public static final ValueLayout C_ULONG = pick(MemoryLayouts.SysV.C_ULONG, MemoryLayouts.WinABI.C_ULONG, MemoryLayouts.AArch64ABI.C_ULONG);
     public static final ValueLayout C_DOUBLE = pick(MemoryLayouts.SysV.C_DOUBLE, MemoryLayouts.WinABI.C_DOUBLE, MemoryLayouts.AArch64ABI.C_DOUBLE);
     public static final ValueLayout C_POINTER = pick(MemoryLayouts.SysV.C_POINTER, MemoryLayouts.WinABI.C_POINTER, MemoryLayouts.AArch64ABI.C_POINTER);
+    public static final ValueLayout C_LONGLONG = pick(MemoryLayouts.SysV.C_LONGLONG, MemoryLayouts.WinABI.C_LONGLONG, MemoryLayouts.AArch64ABI.C_LONGLONG);
+    public static final ValueLayout C_ULONGLONG = pick(MemoryLayouts.SysV.C_ULONGLONG, MemoryLayouts.WinABI.C_ULONGLONG, MemoryLayouts.AArch64ABI.C_ULONGLONG);
 
     private static ValueLayout pick(ValueLayout sysv, ValueLayout win, ValueLayout aarch) {
         if (isX86) {
