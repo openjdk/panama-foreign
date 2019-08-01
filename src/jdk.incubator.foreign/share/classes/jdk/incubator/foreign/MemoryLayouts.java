@@ -28,6 +28,7 @@ package jdk.incubator.foreign;
 
 import jdk.internal.foreign.abi.ArgumentClass;
 import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
 import java.nio.ByteOrder;
 
@@ -346,6 +347,10 @@ public final class MemoryLayouts {
          */
         public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
                 .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.POINTER);
+
+        public static ValueLayout asVarArg(ValueLayout l) {
+           return l.withAnnotation(Windowsx64ABI.VARARGS_ANNOTATION_NAME, "true");
+        }
     }
 
     /**

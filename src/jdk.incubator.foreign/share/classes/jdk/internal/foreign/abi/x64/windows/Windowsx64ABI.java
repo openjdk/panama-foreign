@@ -32,6 +32,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.*;
 
 import java.lang.invoke.MethodHandle;
@@ -50,6 +51,8 @@ public class Windowsx64ABI implements SystemABI {
     public static final int MAX_VECTOR_RETURN_REGISTERS = 1;
     public static final int MAX_REGISTER_ARGUMENTS = 4;
     public static final int MAX_REGISTER_RETURNS = 1;
+
+    public static final String VARARGS_ANNOTATION_NAME = "isVarArg";
 
     private static Windowsx64ABI instance;
 
@@ -117,9 +120,11 @@ public class Windowsx64ABI implements SystemABI {
                 vh.set(dst, MemoryAddressImpl.addressof((MemoryAddress)o));
             } else {
                 assert bindings.size() <= 2;
-                MemoryAddress dst = dstPtrFunc.apply(bindings.get(0));
-                VarHandle primHandle = MemoryHandles.varHandle(carrier);
-                primHandle.set(dst, o);
+                for (ArgumentBinding ab : bindings) { // varargs can have 2
+                    MemoryAddress dst = dstPtrFunc.apply(ab);
+                    VarHandle primHandle = MemoryHandles.varHandle(carrier);
+                    primHandle.set(dst, o);
+                }
             }
         }
 

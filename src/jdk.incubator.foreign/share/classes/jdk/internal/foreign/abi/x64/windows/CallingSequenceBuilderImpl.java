@@ -28,10 +28,12 @@ import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
 import jdk.internal.foreign.abi.x64.SharedUtils;
 
 import jdk.incubator.foreign.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import static jdk.internal.foreign.abi.x64.windows.Windowsx64ABI.VARARGS_ANNOTATION_NAME;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
@@ -47,15 +49,15 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
     private static final boolean DEBUG =
             privilegedGetProperty("jdk.internal.foreign.abi.windows.x64.DEBUG");
 
-    public CallingSequenceBuilderImpl(MemoryLayout layout) {
+    private static final int SSE_ARGUMENT_SIZE = 8;
+    private static final int STACK_ARGUMENT_SLOT_SIZE = 8;
+
+    CallingSequenceBuilderImpl(MemoryLayout layout) {
         this(layout, new StorageCalculator(false), new StorageCalculator(true));
     }
 
     private CallingSequenceBuilderImpl(MemoryLayout layout, StorageCalculator retCalculator, StorageCalculator argCalculator) {
-        super(MemoryLayouts.WinABI.C_POINTER, layout,
-                (a, c) -> retCalculator.addBindings(a, c, false),
-                (a, c) -> argCalculator.addBindings(a, c, false),
-                (a, c) -> argCalculator.addBindings(a, c, true));
+        super(MemoryLayouts.WinABI.C_POINTER, layout, retCalculator::addBindings, argCalculator::addBindings);
     }
 
     @Override
@@ -64,69 +66,42 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
     }
 
     static class ArgumentInfo extends Argument {
-        private final List<ArgumentClassImpl> classes;
+        private final ArgumentClassImpl argumentClass;
+        private final boolean isVarArg;
         
         ArgumentInfo(MemoryLayout layout, int argumentIndex, String debugName) {
             super(layout, argumentIndex, debugName);
-            this.classes = classifyType(layout, argumentIndex == -1);
-        }
-
-        public int getRegs() {
-            return (int)classes.stream()
-                    .filter(this::isRegisterClass)
-                    .count();
+            this.argumentClass = classifyType(layout, argumentIndex == -1);
+            // null will result in false
+            this.isVarArg = Boolean.parseBoolean((String) Utils.getAnnotation(layout, VARARGS_ANNOTATION_NAME));
         }
 
         @Override
         public boolean inMemory() {
-            return classes.stream().allMatch(this::isMemoryClass);
-        }
-
-        private boolean isMemoryClass(ArgumentClassImpl cl) {
-            return cl == ArgumentClassImpl.MEMORY ||
-                    cl == ArgumentClassImpl.X87 ||
-                    cl == ArgumentClassImpl.X87UP;
-        }
-
-        private boolean isRegisterClass(ArgumentClassImpl cl) {
-            return cl == ArgumentClassImpl.INTEGER ||
-                    cl == ArgumentClassImpl.SSE;
-        }
-
-        public List<ArgumentClassImpl> getClasses() {
-            return classes;
+            return argumentClass == ArgumentClassImpl.MEMORY;
         }
     }
 
-    static List<ArgumentClassImpl> classifyValueType(ValueLayout type) {
-        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
-
+    private static ArgumentClassImpl classifyValueType(ValueLayout type) {
         ArgumentClassImpl clazz = (ArgumentClassImpl)Utils.getAnnotation(type, ArgumentClassImpl.ABI_CLASS);
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
         }
-        if (clazz == ArgumentClassImpl.POINTER) {
-            clazz = ArgumentClassImpl.INTEGER;
-        }
-        classes.add(clazz);
-        if (clazz == ArgumentClassImpl.INTEGER) {
-            // int128
-            long left = (type.byteSize()) - 8;
-            while (left > 0) {
-                classes.add(ArgumentClassImpl.INTEGER);
-                left -= 8;
-            }
-            return classes;
-        } else if (clazz == ArgumentClassImpl.X87) {
-            classes.add(ArgumentClassImpl.X87UP);
-        }
 
-        return classes;
+        // No 128 bit integers in the Windows C ABI. There are __m128(i|d) intrinsic types but they act just
+        // like a struct when passing as an argument (passed by pointer).
+        // https://docs.microsoft.com/en-us/cpp/cpp/m128?view=vs-2019
+
+        // x87 is ignored on Windows:
+        // "The x87 register stack is unused, and may be used by the callee,
+        // but must be considered volatile across function calls."
+        // https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=vs-2019
+
+        return clazz;
     }
 
     static boolean isRegisterAggregate(MemoryLayout type) {
-        // FIXME handle bit size 1, 2, 4
         long size = type.byteSize();
         return size == 1
             || size == 2
@@ -134,42 +109,31 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
             || size == 8;
     }
     
-    private static List<ArgumentClassImpl> createMemoryClassArray(long n) {
-        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            classes.add(ArgumentClassImpl.MEMORY);
+    private static ArgumentClassImpl classifyStructType(GroupLayout type, boolean isReturn) {
+        if(!isRegisterAggregate(type) && isReturn) {
+            return ArgumentClassImpl.MEMORY; // used to signal super class
         }
 
-        return classes;
+        return ArgumentClassImpl.INTEGER;
     }
 
-    private static List<ArgumentClassImpl> classifyStructType(GroupLayout type, boolean isReturn) {
-        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
-        
-        if(isRegisterAggregate(type)) {
-            classes.add(ArgumentClassImpl.INTEGER);
-        } else {
-            if(isReturn) {
-                return createMemoryClassArray(Utils.alignUp((type.byteSize()), 8));
-            } else {
-                classes.add(ArgumentClassImpl.INTEGER);
-            }
-        }
-
-        return classes;
-    }
-
-    private static List<ArgumentClassImpl> classifyType(MemoryLayout type, boolean isReturn) {
+    private static ArgumentClassImpl classifyType(MemoryLayout type, boolean isReturn) {
         if (type instanceof ValueLayout) {
             return classifyValueType((ValueLayout) type);
         } else if (type instanceof SequenceLayout) {
-            ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
-            classes.add(ArgumentClassImpl.INTEGER); // arrrays are always passed as pointers
-            return classes;
+            return ArgumentClassImpl.INTEGER;
         } else if (type instanceof GroupLayout) {
             return classifyStructType((GroupLayout) type, isReturn);
         } else {
             throw new IllegalArgumentException("Unhandled type " + type);
+        }
+    }
+
+    private static void debugBinding(ArgumentBinding ab) {
+        if (DEBUG) {
+            System.out.println("Argument: " + ab.argument()
+                    + " has the binding: (" + storageDbgHelper.getStorageName(ab.storage()) + ") "
+                    + ab.storage() + " at offset: " + ab.offset());
         }
     }
 
@@ -183,89 +147,65 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
             this.forArguments = forArguments;
         }
 
-        void addBindings(Argument arg, BiConsumer<StorageClass, ArgumentBinding> bindingConsumer, boolean forVarargs) {
-            ArgumentInfo info = (ArgumentInfo)arg;
-            if (info.inMemory() ||
-                nRegs + info.getRegs() > (forArguments ? Windowsx64ABI.MAX_REGISTER_ARGUMENTS : Windowsx64ABI.MAX_REGISTER_RETURNS)) {
+        void addBindings(Argument arg, BiConsumer<StorageClass, ArgumentBinding> bindingConsumer) {
+            ArgumentInfo info = (ArgumentInfo) arg;
+            if (nRegs >= Windowsx64ABI.MAX_REGISTER_ARGUMENTS) {
+                assert forArguments : "no stack returns";
                 // stack
 
-                long alignment = Math.max(SharedUtils.alignment(info.layout(), true), 8);
+                long alignment = Math.max(SharedUtils.alignment(info.layout(), true), STACK_ARGUMENT_SLOT_SIZE);
+                stackOffset = Utils.alignUp(stackOffset, alignment);
 
-                long newStackOffset = Utils.alignUp(stackOffset, alignment);
-                stackOffset = newStackOffset;
-
-                long tmpStackOffset = stackOffset;
-                for (int i = 0; i < info.getClasses().size(); i++) {
-                    Storage storage = new Storage(StorageClass.STACK_ARGUMENT_SLOT, tmpStackOffset / 8, 8);
-                    bindingConsumer.accept(StorageClass.STACK_ARGUMENT_SLOT, new ArgumentBinding(storage, info, i * 8));
-
-                    if (DEBUG) {
-                        System.out.println("Argument " + info.name() + " will be passed on stack at offset " + tmpStackOffset);
-                    }
-
-                    tmpStackOffset += 8;
-                }
-
+                Storage storage = new Storage(
+                        StorageClass.STACK_ARGUMENT_SLOT,
+                        stackOffset / STACK_ARGUMENT_SLOT_SIZE,
+                        STACK_ARGUMENT_SLOT_SIZE);
+                ArgumentBinding binding = new ArgumentBinding(storage, info, 0);
+                debugBinding(binding);
+                bindingConsumer.accept(StorageClass.STACK_ARGUMENT_SLOT, binding);
                 stackOffset += info.layout().byteSize();
             } else {
                 // regs
-                for (int i = 0; i < info.getClasses().size(); i++) {
-                    Storage storage;
-
-                    ArgumentClassImpl c = info.getClasses().get(i);
-
-                    switch (c) {
+                Storage storage;
+                ArgumentBinding binding;
+                switch (info.argumentClass) {
                     case INTEGER:
-                        storage = new Storage(forArguments ? StorageClass.INTEGER_ARGUMENT_REGISTER : StorageClass.INTEGER_RETURN_REGISTER, nRegs++, SharedUtils.INTEGER_REGISTER_SIZE);
-                        bindingConsumer.accept(storage.getStorageClass(), new ArgumentBinding(storage, info, i * 8));
-
-                        if (DEBUG) {
-                            System.out.println("Argument " + info.name() + " will be passed in register " +
-                                    storageDbgHelper.getStorageName(storage));
-                        }
+                    case POINTER:
+                        storage = new Storage(
+                                forArguments
+                                    ? StorageClass.INTEGER_ARGUMENT_REGISTER
+                                    : StorageClass.INTEGER_RETURN_REGISTER,
+                                nRegs++,
+                                SharedUtils.INTEGER_REGISTER_SIZE);
+                        binding = new ArgumentBinding(storage, info, 0);
+                        debugBinding(binding);
+                        bindingConsumer.accept(storage.getStorageClass(), binding);
                         break;
-
                     case SSE:
-                        int width = 8;
+                        storage = new Storage(
+                                forArguments
+                                    ? StorageClass.VECTOR_ARGUMENT_REGISTER
+                                    : StorageClass.VECTOR_RETURN_REGISTER,
+                                nRegs,
+                                SSE_ARGUMENT_SIZE,
+                                SharedUtils.VECTOR_REGISTER_SIZE);
+                        binding = new ArgumentBinding(storage, info, 0);
+                        debugBinding(binding);
+                        bindingConsumer.accept(storage.getStorageClass(), binding);
 
-                        for (int j = i + 1; j < info.getClasses().size(); j++) {
-                            if (info.getClasses().get(j) == ArgumentClassImpl.SSEUP) {
-                                width += 8;
-                            }
+                        if(info.isVarArg) {
+                            Storage extraStorage = new Storage(
+                                    StorageClass.INTEGER_ARGUMENT_REGISTER,
+                                    nRegs,
+                                    SharedUtils.INTEGER_REGISTER_SIZE);
+                            ArgumentBinding extraBinding = new ArgumentBinding(extraStorage, info, 0);
+                            debugBinding(extraBinding);
+                            bindingConsumer.accept(extraStorage.getStorageClass(), extraBinding);
                         }
-
-                        if (width > 64) {
-                            throw new IllegalArgumentException((width * 8) + "-bit vector arguments not supported");
-                        }
-
-                        storage = new Storage(forArguments ? StorageClass.VECTOR_ARGUMENT_REGISTER : StorageClass.VECTOR_RETURN_REGISTER,
-                                nRegs, width, SharedUtils.VECTOR_REGISTER_SIZE);
-                        bindingConsumer.accept(storage.getStorageClass(), new ArgumentBinding(storage, info, i * 8));
-
-                        if (DEBUG) {
-                            System.out.println("Argument " + info.name() + " will be passed in register " +
-                                    storageDbgHelper.getStorageName(storage));
-                        }
-
-                        if(width == 8 && storage.getStorageClass() == StorageClass.VECTOR_ARGUMENT_REGISTER && forVarargs) {
-                            Storage extraStorage = new Storage(StorageClass.INTEGER_ARGUMENT_REGISTER, nRegs, SharedUtils.INTEGER_REGISTER_SIZE);
-                            bindingConsumer.accept(extraStorage.getStorageClass(), new ArgumentBinding(extraStorage, info, i * 8));
-
-                            if (DEBUG) {
-                                System.out.println("Argument " + info.name() + " will be passed in register " +
-                                        storageDbgHelper.getStorageName(extraStorage));
-                            }
-                        }
-
                         nRegs++;
                         break;
-
-                    case SSEUP:
-                        break;
-
                     default:
-                        throw new UnsupportedOperationException("Unhandled class " + c);
-                    }
+                        throw new UnsupportedOperationException("Unhandled class " + info.argumentClass);
                 }
             }
         }

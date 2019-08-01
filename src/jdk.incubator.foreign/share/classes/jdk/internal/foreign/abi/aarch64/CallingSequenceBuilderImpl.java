@@ -61,8 +61,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
 
     private CallingSequenceBuilderImpl(MemoryLayout layout, StorageCalculator retCalculator,
                                        StorageCalculator argCalculator) {
-        super(MemoryLayouts.AArch64ABI.C_POINTER, layout, retCalculator::addBindings, argCalculator::addBindings,
-              argCalculator::addBindings);
+        super(MemoryLayouts.AArch64ABI.C_POINTER, layout, retCalculator::addBindings, argCalculator::addBindings);
     }
 
     @Override

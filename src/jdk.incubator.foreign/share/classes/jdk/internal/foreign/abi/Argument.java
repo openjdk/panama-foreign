@@ -55,6 +55,4 @@ public abstract class Argument {
     public String toString() {
         return "[" + layout.toString() + " " + name() + "]";
     }
-
-    public abstract List<? extends ArgumentClass> getClasses();
 }

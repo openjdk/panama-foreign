@@ -406,10 +406,10 @@ public class StdLibTest extends NativeTestHelper {
     }
 
     enum PrintfArg {
-        INTEGRAL(int.class, C_INT, "%d", 42, 42),
-        STRING(MemoryAddress.class, C_POINTER, "%s", makeNativeString("str").baseAddress(), "str"),
-        CHAR(char.class, C_CHAR, "%c", 'h', 'h'),
-        DOUBLE(double.class, C_DOUBLE, "%.4f", 1.2345d, 1.2345d);
+        INTEGRAL(int.class, asVarArg(C_INT), "%d", 42, 42),
+        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", makeNativeString("str").baseAddress(), "str"),
+        CHAR(char.class, asVarArg(C_CHAR), "%c", 'h', 'h'),
+        DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", 1.2345d, 1.2345d);
 
         final Class<?> carrier;
         final MemoryLayout layout;

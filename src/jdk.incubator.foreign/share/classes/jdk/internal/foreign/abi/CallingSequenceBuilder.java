@@ -40,22 +40,19 @@ public abstract class CallingSequenceBuilder {
 
     private final BindingsComputer returnBindgingsComputer;
     private final BindingsComputer argumentBindgingsComputer;
-    private final BindingsComputer varargsBindgingsComputer;
 
     protected CallingSequenceBuilder(MemoryLayout ptrLayout,
                                      MemoryLayout ret,
                                      BindingsComputer returnBindgingsComputer,
-                                     BindingsComputer argumentBindgingsComputer,
-                                     BindingsComputer varargsBindgingsComputer) {
+                                     BindingsComputer argumentBindgingsComputer) {
         this.returnBindgingsComputer = returnBindgingsComputer;
         this.argumentBindgingsComputer = argumentBindgingsComputer;
-        this.varargsBindgingsComputer = varargsBindgingsComputer;
         if (ret != null) {
             Argument retInfo = makeArgument(ret, -1, "__retval");
             this.returnsInMemory = retInfo.inMemory();
             if (returnsInMemory) {
                 retInfo = makeArgument(ptrLayout, -1, "__retval");
-                addArgumentBindings(retInfo, false);
+                addArgumentBindings(retInfo);
             }
             addReturnBindings(retInfo);
         } else {
@@ -64,11 +61,7 @@ public abstract class CallingSequenceBuilder {
     }
 
     public final CallingSequenceBuilder addArgument(MemoryLayout l) {
-        return addArgument(l, false);
-    }
-
-    public final CallingSequenceBuilder addArgument(MemoryLayout l, boolean isVarargs) {
-        addArgumentBindings(makeArgument(l, argIndex, "arg" + argIndex), isVarargs);
+        addArgumentBindings(makeArgument(l, argIndex, "arg" + argIndex));
         argIndex++;
         return this;
     }
@@ -83,12 +76,8 @@ public abstract class CallingSequenceBuilder {
         returnBindgingsComputer.computeBindings(a, this::addBinding);
     }
 
-    private void addArgumentBindings(Argument a, boolean isVarargs) {
-        if (isVarargs) {
-            varargsBindgingsComputer.computeBindings(a, this::addBinding);
-        } else {
-            argumentBindgingsComputer.computeBindings(a, this::addBinding);
-        }
+    private void addArgumentBindings(Argument a) {
+        argumentBindgingsComputer.computeBindings(a, this::addBinding);
     }
 
     private void addBinding(StorageClass storageClass, ArgumentBinding binding) {

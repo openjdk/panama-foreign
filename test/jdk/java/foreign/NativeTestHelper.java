@@ -68,4 +68,8 @@ public class NativeTestHelper {
     public static boolean isPointer(MemoryLayout layout) {
         return ((ArgumentClass)Utils.getAnnotation(layout, ArgumentClass.ABI_CLASS)).isPointer();
     }
+
+    public static ValueLayout asVarArg(ValueLayout layout) {
+        return isWindows ? MemoryLayouts.WinABI.asVarArg(layout) : layout;
+    }
 }
