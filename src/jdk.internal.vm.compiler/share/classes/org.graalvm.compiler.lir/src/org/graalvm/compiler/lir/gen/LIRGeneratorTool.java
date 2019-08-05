@@ -24,9 +24,6 @@
 
 package org.graalvm.compiler.lir.gen;
 
-import java.util.BitSet;
-import java.util.List;
-
 import org.graalvm.compiler.core.common.CompressEncoding;
 import org.graalvm.compiler.core.common.LIRKind;
 import org.graalvm.compiler.core.common.calc.Condition;
@@ -269,17 +266,12 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
     Variable emitArrayEquals(JavaKind kind, Value array1, Value array2, Value length, int constantLength, boolean directPointers);
 
     @SuppressWarnings("unused")
-    default ForeignCallLinkage lookupArrayEqualsStub(JavaKind kind, int constantLength) {
-        return null;
-    }
-
-    @SuppressWarnings("unused")
     default Variable emitArrayEquals(JavaKind kind1, JavaKind kind2, Value array1, Value array2, Value length, int constantLength, boolean directPointers) {
         throw GraalError.unimplemented("Array.equals with different types substitution is not implemented on this architecture");
     }
 
     @SuppressWarnings("unused")
-    default Variable emitArrayIndexOf(JavaKind kind, boolean findTwoConsecutive, Value sourcePointer, Value sourceCount, Value... searchValues) {
+    default Variable emitArrayIndexOf(JavaKind arrayKind, JavaKind valueKind, boolean findTwoConsecutive, Value sourcePointer, Value sourceCount, Value fromIndex, Value... searchValues) {
         throw GraalError.unimplemented("String.indexOf substitution is not implemented on this architecture");
     }
 
@@ -329,8 +321,8 @@ public interface LIRGeneratorTool extends DiagnosticLIRGeneratorTool, ValueKindF
      */
     void emitSpeculationFence();
 
-    default VirtualStackSlot allocateStackSlots(int slots, BitSet objects, List<VirtualStackSlot> outObjectStackSlots) {
-        return getResult().getFrameMapBuilder().allocateStackSlots(slots, objects, outObjectStackSlots);
+    default VirtualStackSlot allocateStackSlots(int slots) {
+        return getResult().getFrameMapBuilder().allocateStackSlots(slots);
     }
 
     default Value emitReadCallerStackPointer(Stamp wordStamp) {

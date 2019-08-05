@@ -402,16 +402,17 @@ public class Extern {
                         moduleItems.put(moduleName, item);
                     } else {
                         DocPath pkgPath = DocPath.create(elemname.replace('.', '/'));
-                        if (configuration.useModuleDirectories && moduleName != null) {
+                        if (moduleName != null) {
                             elempath = elempath.resolve(DocPath.create(moduleName).resolve(pkgPath));
                         } else {
                             elempath = elempath.resolve(pkgPath);
                         }
                         checkLinkCompatibility(elemname, moduleName, path);
                         Item item = new Item(elemname, elempath, relative);
-                        packageItems.computeIfAbsent(moduleName == null ?
-                            DocletConstants.DEFAULT_ELEMENT_NAME : moduleName, k -> new TreeMap<>())
-                            .put(elemname, item);
+                        packageItems.computeIfAbsent(
+                                moduleName == null ? DocletConstants.DEFAULT_ELEMENT_NAME : moduleName,
+                                k -> new TreeMap<>())
+                            .putIfAbsent(elemname, item); // first-one-wins semantics
                     }
                 }
             }

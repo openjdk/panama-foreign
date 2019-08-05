@@ -30,6 +30,7 @@
 #include "memory/metaspace.hpp"
 #include "oops/oopHandle.hpp"
 #include "oops/weakHandle.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/mutex.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"
@@ -159,7 +160,7 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   JFR_ONLY(DEFINE_TRACE_ID_FIELD;)
 
   void set_next(ClassLoaderData* next) { _next = next; }
-  ClassLoaderData* next() const        { return _next; }
+  ClassLoaderData* next() const        { return Atomic::load(&_next); }
 
   ClassLoaderData(Handle h_class_loader, bool is_unsafe_anonymous);
   ~ClassLoaderData();
@@ -205,16 +206,17 @@ class ClassLoaderData : public CHeapObj<mtClass> {
 
   // The "claim" is typically used to check if oops_do needs to be applied on
   // the CLD or not. Most GCs only perform strong marking during the marking phase.
-  enum {
-    _claim_none        = 0,
-    _claim_finalizable = 2,
-    _claim_strong      = 3
+  enum Claim {
+    _claim_none         = 0,
+    _claim_finalizable  = 2,
+    _claim_strong       = 3,
+    _claim_other        = 4
   };
   void clear_claim() { _claim = 0; }
+  void clear_claim(int claim);
   bool claimed() const { return _claim != 0; }
+  bool claimed(int claim) const { return (_claim & claim) == claim; }
   bool try_claim(int claim);
-  int get_claim() const { return _claim; }
-  void set_claim(int claim) { _claim = claim; }
 
   // Computes if the CLD is alive or not. This is safe to call in concurrent
   // contexts.
@@ -282,9 +284,9 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   JNIMethodBlock* jmethod_ids() const              { return _jmethod_ids; }
   void set_jmethod_ids(JNIMethodBlock* new_block)  { _jmethod_ids = new_block; }
 
-  void print()                                     { print_on(tty); }
+  void print() const;
   void print_on(outputStream* out) const PRODUCT_RETURN;
-  void print_value()                               { print_value_on(tty); }
+  void print_value() const;
   void print_value_on(outputStream* out) const;
   void verify();
 
@@ -299,6 +301,10 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   ModuleEntry* unnamed_module() { return _unnamed_module; }
   ModuleEntryTable* modules();
   bool modules_defined() { return (_modules != NULL); }
+
+  // Offsets
+  static ByteSize holder_offset()     { return in_ByteSize(offset_of(ClassLoaderData, _holder)); }
+  static ByteSize keep_alive_offset() { return in_ByteSize(offset_of(ClassLoaderData, _keep_alive)); }
 
   // Loaded class dictionary
   Dictionary* dictionary() const { return _dictionary; }

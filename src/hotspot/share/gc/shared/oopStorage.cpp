@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 #include "runtime/mutex.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/orderAccess.hpp"
+#include "runtime/os.hpp"
 #include "runtime/safepoint.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.hpp"
@@ -412,15 +413,7 @@ OopStorage::Block::block_for_ptr(const OopStorage* owner, const oop* ptr) {
 // is empty, for ease of empty block deletion processing.
 
 oop* OopStorage::allocate() {
-  MutexLockerEx ml(_allocation_mutex, Mutex::_no_safepoint_check_flag);
-
-  // Note: Without this we might never perform cleanup.  As it is,
-  // cleanup is only requested here, when completing a concurrent
-  // iteration, or when someone entirely else wakes up the service
-  // thread, which isn't ideal.  But we can't notify in release().
-  if (reduce_deferred_updates()) {
-    notify_needs_cleanup();
-  }
+  MutexLocker ml(_allocation_mutex, Mutex::_no_safepoint_check_flag);
 
   Block* block = block_for_allocation();
   if (block == NULL) return NULL; // Block allocation failed.
@@ -447,7 +440,7 @@ bool OopStorage::try_add_block() {
   assert_lock_strong(_allocation_mutex);
   Block* block;
   {
-    MutexUnlockerEx ul(_allocation_mutex, Mutex::_no_safepoint_check_flag);
+    MutexUnlocker ul(_allocation_mutex, Mutex::_no_safepoint_check_flag);
     block = Block::new_block(this);
   }
   if (block == NULL) return false;
@@ -474,23 +467,20 @@ bool OopStorage::try_add_block() {
 
 OopStorage::Block* OopStorage::block_for_allocation() {
   assert_lock_strong(_allocation_mutex);
-
   while (true) {
     // Use the first block in _allocation_list for the allocation.
     Block* block = _allocation_list.head();
     if (block != NULL) {
       return block;
     } else if (reduce_deferred_updates()) {
-      MutexUnlockerEx ul(_allocation_mutex, Mutex::_no_safepoint_check_flag);
-      notify_needs_cleanup();
+      // Might have added a block to the _allocation_list, so retry.
     } else if (try_add_block()) {
-      block = _allocation_list.head();
-      assert(block != NULL, "invariant");
-      return block;
-    } else if (reduce_deferred_updates()) { // Once more before failure.
-      MutexUnlockerEx ul(_allocation_mutex, Mutex::_no_safepoint_check_flag);
-      notify_needs_cleanup();
-    } else {
+      // Successfully added a new block to the list, so retry.
+      assert(_allocation_list.chead() != NULL, "invariant");
+    } else if (_allocation_list.chead() != NULL) {
+      // Trying to add a block failed, but some other thread added to the
+      // list while we'd dropped the lock over the new block allocation.
+    } else if (!reduce_deferred_updates()) { // Once more before failure.
       // Attempt to add a block failed, no other thread added a block,
       // and no deferred updated added a block, then allocation failed.
       log_debug(oopstorage, blocks)("%s: failed block allocation", name());
@@ -635,7 +625,14 @@ void OopStorage::Block::release_entries(uintx releasing, OopStorage* owner) {
         if (fetched == head) break; // Successful update.
         head = fetched;             // Retry with updated head.
       }
-      owner->record_needs_cleanup();
+      // Only request cleanup for to-empty transitions, not for from-full.
+      // There isn't any rush to process from-full transitions.  Allocation
+      // will reduce deferrals before allocating new blocks, so may process
+      // some.  And the service thread will drain the entire deferred list
+      // if there are any pending to-empty transitions.
+      if (releasing == old_allocated) {
+        owner->record_needs_cleanup();
+      }
       log_debug(oopstorage, blocks)("%s: deferred update " PTR_FORMAT,
                                     _owner->name(), p2i(this));
     }
@@ -684,7 +681,6 @@ bool OopStorage::reduce_deferred_updates() {
   if (is_empty_bitmask(allocated)) {
     _allocation_list.unlink(*block);
     _allocation_list.push_back(*block);
-    notify_needs_cleanup();
   }
 
   log_debug(oopstorage, blocks)("%s: processed deferred update " PTR_FORMAT,
@@ -734,23 +730,12 @@ void OopStorage::release(const oop* const* ptrs, size_t size) {
   }
 }
 
-const char* dup_name(const char* name) {
-  char* dup = NEW_C_HEAP_ARRAY(char, strlen(name) + 1, mtGC);
-  strcpy(dup, name);
-  return dup;
-}
-
-// Possible values for OopStorage::_needs_cleanup.
-const uint needs_cleanup_none = 0;     // No cleanup needed.
-const uint needs_cleanup_marked = 1;   // Requested, but no notification made.
-const uint needs_cleanup_notified = 2; // Requested and Service thread notified.
-
 const size_t initial_active_array_size = 8;
 
 OopStorage::OopStorage(const char* name,
                        Mutex* allocation_mutex,
                        Mutex* active_mutex) :
-  _name(dup_name(name)),
+  _name(os::strdup(name)),
   _active_array(ActiveArray::create(initial_active_array_size)),
   _allocation_list(),
   _deferred_updates(NULL),
@@ -758,17 +743,17 @@ OopStorage::OopStorage(const char* name,
   _active_mutex(active_mutex),
   _allocation_count(0),
   _concurrent_iteration_count(0),
-  _needs_cleanup(needs_cleanup_none)
+  _needs_cleanup(false)
 {
   _active_array->increment_refcount();
   assert(_active_mutex->rank() < _allocation_mutex->rank(),
          "%s: active_mutex must have lower rank than allocation_mutex", _name);
   assert(Service_lock->rank() < _active_mutex->rank(),
          "%s: active_mutex must have higher rank than Service_lock", _name);
-  assert(_active_mutex->_safepoint_check_required != Mutex::_safepoint_check_always,
-         "%s: active mutex requires safepoint check", _name);
-  assert(_allocation_mutex->_safepoint_check_required != Mutex::_safepoint_check_always,
-         "%s: allocation mutex requires safepoint check", _name);
+  assert(_active_mutex->_safepoint_check_required == Mutex::_safepoint_check_never,
+         "%s: active mutex requires never safepoint check", _name);
+  assert(_allocation_mutex->_safepoint_check_required == Mutex::_safepoint_check_never,
+         "%s: allocation mutex requires never safepoint check", _name);
 }
 
 void OopStorage::delete_empty_block(const Block& block) {
@@ -793,43 +778,92 @@ OopStorage::~OopStorage() {
     Block::delete_block(*block);
   }
   ActiveArray::destroy(_active_array);
-  FREE_C_HEAP_ARRAY(char, _name);
+  os::free(const_cast<char*>(_name));
 }
 
-// Called by service thread to check for pending work.
-bool OopStorage::needs_delete_empty_blocks() const {
-  return Atomic::load(&_needs_cleanup) != needs_cleanup_none;
+// Managing service thread notifications.
+//
+// We don't want cleanup work to linger indefinitely, but we also don't want
+// to run the service thread too often.  We're also very limited in what we
+// can do in a release operation, where cleanup work is created.
+//
+// When a release operation changes a block's state to empty, it records the
+// need for cleanup in both the associated storage object and in the global
+// request state.  A safepoint cleanup task notifies the service thread when
+// there may be cleanup work for any storage object, based on the global
+// request state.  But that notification is deferred if the service thread
+// has run recently, and we also avoid duplicate notifications.  The service
+// thread updates the timestamp and resets the state flags on every iteration.
+
+// Global cleanup request state.
+static volatile bool needs_cleanup_requested = false;
+
+// Flag for avoiding duplicate notifications.
+static bool needs_cleanup_triggered = false;
+
+// Time after which a notification can be made.
+static jlong cleanup_trigger_permit_time = 0;
+
+// Minimum time since last service thread check before notification is
+// permitted.  The value of 500ms was an arbitrary choice; frequent, but not
+// too frequent.
+const jlong cleanup_trigger_defer_period = 500 * NANOSECS_PER_MILLISEC;
+
+void OopStorage::trigger_cleanup_if_needed() {
+  MonitorLocker ml(Service_lock, Monitor::_no_safepoint_check_flag);
+  if (Atomic::load(&needs_cleanup_requested) &&
+      !needs_cleanup_triggered &&
+      (os::javaTimeNanos() > cleanup_trigger_permit_time)) {
+    needs_cleanup_triggered = true;
+    ml.notify_all();
+  }
+}
+
+bool OopStorage::has_cleanup_work_and_reset() {
+  assert_lock_strong(Service_lock);
+  cleanup_trigger_permit_time =
+    os::javaTimeNanos() + cleanup_trigger_defer_period;
+  needs_cleanup_triggered = false;
+  // Set the request flag false and return its old value.
+  // Needs to be atomic to avoid dropping a concurrent request.
+  // Can't use Atomic::xchg, which may not support bool.
+  return Atomic::cmpxchg(false, &needs_cleanup_requested, true);
 }
 
 // Record that cleanup is needed, without notifying the Service thread.
 // Used by release(), where we can't lock even Service_lock.
 void OopStorage::record_needs_cleanup() {
-  Atomic::cmpxchg(needs_cleanup_marked, &_needs_cleanup, needs_cleanup_none);
-}
-
-// Record that cleanup is needed, and notify the Service thread.
-void OopStorage::notify_needs_cleanup() {
-  // Avoid re-notification if already notified.
-  const uint notified = needs_cleanup_notified;
-  if (Atomic::xchg(notified, &_needs_cleanup) != notified) {
-    MonitorLockerEx ml(Service_lock, Monitor::_no_safepoint_check_flag);
-    ml.notify_all();
-  }
+  // Set local flag first, else service thread could wake up and miss
+  // the request.  This order may instead (rarely) unnecessarily notify.
+  OrderAccess::release_store(&_needs_cleanup, true);
+  OrderAccess::release_store_fence(&needs_cleanup_requested, true);
 }
 
 bool OopStorage::delete_empty_blocks() {
-  MutexLockerEx ml(_allocation_mutex, Mutex::_no_safepoint_check_flag);
+  // Service thread might have oopstorage work, but not for this object.
+  // Check for deferred updates even though that's not a service thread
+  // trigger; since we're here, we might as well process them.
+  if (!OrderAccess::load_acquire(&_needs_cleanup) &&
+      (OrderAccess::load_acquire(&_deferred_updates) == NULL)) {
+    return false;
+  }
+
+  MutexLocker ml(_allocation_mutex, Mutex::_no_safepoint_check_flag);
 
   // Clear the request before processing.
-  Atomic::store(needs_cleanup_none, &_needs_cleanup);
-  OrderAccess::fence();
+  OrderAccess::release_store_fence(&_needs_cleanup, false);
 
   // Other threads could be adding to the empty block count or the
   // deferred update list while we're working.  Set an upper bound on
   // how many updates we'll process and blocks we'll try to release,
   // so other threads can't cause an unbounded stay in this function.
-  size_t limit = block_count();
-  if (limit == 0) return false; // Empty storage; nothing at all to do.
+  // We add a bit of slop because the reduce_deferred_updates clause
+  // can cause blocks to be double counted.  If there are few blocks
+  // and many of them are deferred and empty, we might hit the limit
+  // and spin the caller without doing very much work.  Otherwise,
+  // we don't normally hit the limit anyway, instead running out of
+  // work to do.
+  size_t limit = block_count() + 10;
 
   for (size_t i = 0; i < limit; ++i) {
     // Process deferred updates, which might make empty blocks available.
@@ -837,7 +871,7 @@ bool OopStorage::delete_empty_blocks() {
     // might become available while we're working.
     if (reduce_deferred_updates()) {
       // Be safepoint-polite while looping.
-      MutexUnlockerEx ul(_allocation_mutex, Mutex::_no_safepoint_check_flag);
+      MutexUnlocker ul(_allocation_mutex, Mutex::_no_safepoint_check_flag);
       ThreadBlockInVM tbiv(JavaThread::current());
     } else {
       Block* block = _allocation_list.tail();
@@ -850,7 +884,7 @@ bool OopStorage::delete_empty_blocks() {
 
       // Try to delete the block.  First, try to remove from _active_array.
       {
-        MutexLockerEx aml(_active_mutex, Mutex::_no_safepoint_check_flag);
+        MutexLocker aml(_active_mutex, Mutex::_no_safepoint_check_flag);
         // Don't interfere with an active concurrent iteration.
         // Instead, give up immediately.  There is more work to do,
         // but don't re-notify, to avoid useless spinning of the
@@ -861,7 +895,7 @@ bool OopStorage::delete_empty_blocks() {
       // Remove block from _allocation_list and delete it.
       _allocation_list.unlink(*block);
       // Be safepoint-polite while deleting and looping.
-      MutexUnlockerEx ul(_allocation_mutex, Mutex::_no_safepoint_check_flag);
+      MutexUnlocker ul(_allocation_mutex, Mutex::_no_safepoint_check_flag);
       delete_empty_block(*block);
       ThreadBlockInVM tbiv(JavaThread::current());
     }
@@ -878,7 +912,7 @@ OopStorage::EntryStatus OopStorage::allocation_status(const oop* ptr) const {
   const Block* block = find_block_or_null(ptr);
   if (block != NULL) {
     // Prevent block deletion and _active_array modification.
-    MutexLockerEx ml(_allocation_mutex, Mutex::_no_safepoint_check_flag);
+    MutexLocker ml(_allocation_mutex, Mutex::_no_safepoint_check_flag);
     // Block could be a false positive, so get index carefully.
     size_t index = Block::active_index_safe(block);
     if ((index < _active_array->block_count()) &&
@@ -946,14 +980,14 @@ OopStorage::BasicParState::~BasicParState() {
   _storage->relinquish_block_array(_active_array);
   update_concurrent_iteration_count(-1);
   if (_concurrent) {
-    // We may have deferred some work.
-    const_cast<OopStorage*>(_storage)->notify_needs_cleanup();
+    // We may have deferred some cleanup work.
+    const_cast<OopStorage*>(_storage)->record_needs_cleanup();
   }
 }
 
 void OopStorage::BasicParState::update_concurrent_iteration_count(int value) {
   if (_concurrent) {
-    MutexLockerEx ml(_storage->_active_mutex, Mutex::_no_safepoint_check_flag);
+    MutexLocker ml(_storage->_active_mutex, Mutex::_no_safepoint_check_flag);
     _storage->_concurrent_iteration_count += value;
     assert(_storage->_concurrent_iteration_count >= 0, "invariant");
   }

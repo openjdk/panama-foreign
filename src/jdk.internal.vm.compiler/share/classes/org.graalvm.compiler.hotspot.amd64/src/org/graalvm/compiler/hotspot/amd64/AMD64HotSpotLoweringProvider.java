@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import org.graalvm.compiler.nodes.calc.FloatConvertNode;
 import org.graalvm.compiler.nodes.extended.ForeignCallNode;
 import org.graalvm.compiler.nodes.spi.LoweringTool;
 import org.graalvm.compiler.options.OptionValues;
+import org.graalvm.compiler.replacements.amd64.AMD64ArrayIndexOfDispatchNode;
 import org.graalvm.compiler.replacements.amd64.AMD64ConvertSnippets;
 import org.graalvm.compiler.replacements.nodes.UnaryMathIntrinsicNode;
 import org.graalvm.compiler.replacements.nodes.UnaryMathIntrinsicNode.UnaryOperation;
@@ -66,9 +67,12 @@ public class AMD64HotSpotLoweringProvider extends DefaultHotSpotLoweringProvider
     @Override
     public void initialize(OptionValues options, Iterable<DebugHandlersFactory> factories, HotSpotProviders providers, GraalHotSpotVMConfig config) {
         convertSnippets = new AMD64ConvertSnippets.Templates(options, factories, providers, providers.getSnippetReflection(), providers.getCodeCache().getTarget());
-        profileSnippets = ProfileNode.Options.ProbabilisticProfiling.getValue(options) && !JavaVersionUtil.Java8OrEarlier
-                        ? new ProbabilisticProfileSnippets.Templates(options, factories, providers, providers.getCodeCache().getTarget())
-                        : null;
+        if (JavaVersionUtil.JAVA_SPEC <= 8) {
+            // AOT only introduced in JDK 9
+            profileSnippets = null;
+        } else {
+            profileSnippets = new ProbabilisticProfileSnippets.Templates(options, factories, providers, providers.getCodeCache().getTarget());
+        }
         mathSnippets = new AMD64X87MathSnippets.Templates(options, factories, providers, providers.getSnippetReflection(), providers.getCodeCache().getTarget());
         super.initialize(options, factories, providers, config);
     }
@@ -81,6 +85,8 @@ public class AMD64HotSpotLoweringProvider extends DefaultHotSpotLoweringProvider
             profileSnippets.lower((ProfileNode) n, tool);
         } else if (n instanceof UnaryMathIntrinsicNode) {
             lowerUnaryMath((UnaryMathIntrinsicNode) n, tool);
+        } else if (n instanceof AMD64ArrayIndexOfDispatchNode) {
+            lowerArrayIndexOf((AMD64ArrayIndexOfDispatchNode) n);
         } else {
             super.lower(n, tool);
         }
@@ -124,8 +130,19 @@ public class AMD64HotSpotLoweringProvider extends DefaultHotSpotLoweringProvider
         math.replaceAtUsages(call);
     }
 
+    private void lowerArrayIndexOf(AMD64ArrayIndexOfDispatchNode dispatchNode) {
+        StructuredGraph graph = dispatchNode.graph();
+        ForeignCallNode call = graph.add(new ForeignCallNode(foreignCalls, dispatchNode.getStubCallDescriptor(), dispatchNode.getStubCallArgs()));
+        graph.replaceFixed(dispatchNode, call);
+    }
+
     @Override
     public Integer smallestCompareWidth() {
         return 8;
+    }
+
+    @Override
+    public boolean supportBulkZeroing() {
+        return true;
     }
 }

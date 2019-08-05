@@ -58,7 +58,7 @@ InstanceKlass* KlassFactory::check_shared_class_file_load_hook(
     // Post the CFLH
     JvmtiCachedClassFileData* cached_class_file = NULL;
     if (cfs == NULL) {
-      cfs = FileMapInfo::open_stream_for_jvmti(ik, CHECK_NULL);
+      cfs = FileMapInfo::open_stream_for_jvmti(ik, class_loader, CHECK_NULL);
     }
     unsigned char* ptr = (unsigned char*)cfs->buffer();
     unsigned char* end_ptr = ptr + cfs->length();
@@ -218,7 +218,7 @@ InstanceKlass* KlassFactory::create_from_stream(ClassFileStream* stream,
   JFR_ONLY(ON_KLASS_CREATION(result, parser, THREAD);)
 
 #if INCLUDE_CDS
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     ClassLoader::record_result(result, stream, THREAD);
   }
 #endif // INCLUDE_CDS

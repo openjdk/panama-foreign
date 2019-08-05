@@ -34,7 +34,9 @@
 #include "classfile/modules.hpp"
 #include "classfile/packageEntry.hpp"
 #include "classfile/klassFactory.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "classfile/systemDictionaryShared.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "compiler/compileBroker.hpp"
 #include "interpreter/bytecodeStream.hpp"
@@ -243,7 +245,7 @@ PackageEntry* ClassLoader::get_package_entry(const char* class_name, ClassLoader
     return NULL;
   }
   PackageEntryTable* pkgEntryTable = loader_data->packages();
-  TempNewSymbol pkg_symbol = SymbolTable::new_symbol(pkg_name, CHECK_NULL);
+  TempNewSymbol pkg_symbol = SymbolTable::new_symbol(pkg_name);
   return pkgEntryTable->lookup_only(pkg_symbol);
 }
 
@@ -290,11 +292,13 @@ ClassFileStream* ClassPathDirEntry::open_stream(const char* name, TRAPS) {
   return NULL;
 }
 
-ClassPathZipEntry::ClassPathZipEntry(jzfile* zip, const char* zip_name, bool is_boot_append) : ClassPathEntry() {
+ClassPathZipEntry::ClassPathZipEntry(jzfile* zip, const char* zip_name,
+                                     bool is_boot_append, bool from_class_path_attr) : ClassPathEntry() {
   _zip = zip;
   char *copy = NEW_C_HEAP_ARRAY(char, strlen(zip_name)+1, mtClass);
   strcpy(copy, zip_name);
   _zip_name = copy;
+  _from_class_path_attr = from_class_path_attr;
 }
 
 ClassPathZipEntry::~ClassPathZipEntry() {
@@ -396,6 +400,10 @@ ClassPathImageEntry::~ClassPathImageEntry() {
   }
 }
 
+ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
+  return open_stream_for_loader(name, ClassLoaderData::the_null_class_loader_data(), THREAD);
+}
+
 // For a class in a named module, look it up in the jimage file using this syntax:
 //    /<module-name>/<package-name>/<base-class>
 //
@@ -403,7 +411,7 @@ ClassPathImageEntry::~ClassPathImageEntry() {
 //     1. There are no unnamed modules in the jimage file.
 //     2. A package is in at most one module in the jimage file.
 //
-ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
+ClassFileStream* ClassPathImageEntry::open_stream_for_loader(const char* name, ClassLoaderData* loader_data, TRAPS) {
   jlong size;
   JImageLocationRef location = (*JImageFindResource)(_jimage, "", get_jimage_version_string(), name, &size);
 
@@ -414,20 +422,8 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
     if (pkg_name != NULL) {
       if (!Universe::is_module_initialized()) {
         location = (*JImageFindResource)(_jimage, JAVA_BASE_NAME, get_jimage_version_string(), name, &size);
-#if INCLUDE_CDS
-        // CDS uses the boot class loader to load classes whose packages are in
-        // modules defined for other class loaders.  So, for now, get their module
-        // names from the "modules" jimage file.
-        if (DumpSharedSpaces && location == 0) {
-          const char* module_name = (*JImagePackageToModule)(_jimage, pkg_name);
-          if (module_name != NULL) {
-            location = (*JImageFindResource)(_jimage, module_name, get_jimage_version_string(), name, &size);
-          }
-        }
-#endif
-
       } else {
-        PackageEntry* package_entry = ClassLoader::get_package_entry(name, ClassLoaderData::the_null_class_loader_data(), CHECK_NULL);
+        PackageEntry* package_entry = ClassLoader::get_package_entry(name, loader_data, CHECK_NULL);
         if (package_entry != NULL) {
           ResourceMark rm;
           // Get the module name
@@ -475,7 +471,7 @@ bool ClassPathImageEntry::is_modules_image() const {
 
 #if INCLUDE_CDS
 void ClassLoader::exit_with_path_failure(const char* error, const char* message) {
-  assert(DumpSharedSpaces, "only called at dump time");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "only called at dump time");
   tty->print_cr("Hint: enable -Xlog:class+path=info to diagnose the failure");
   vm_exit_during_initialization(error, message);
 }
@@ -541,7 +537,7 @@ void ClassLoader::setup_bootstrap_search_path() {
     trace_class_path("bootstrap loader class path=", sys_class_path);
   }
 #if INCLUDE_CDS
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     _shared_paths_misc_info->add_boot_classpath(sys_class_path);
   }
 #endif
@@ -557,16 +553,16 @@ void* ClassLoader::get_shared_paths_misc_info() {
   return _shared_paths_misc_info->buffer();
 }
 
-bool ClassLoader::check_shared_paths_misc_info(void *buf, int size) {
+bool ClassLoader::check_shared_paths_misc_info(void *buf, int size, bool is_static) {
   SharedPathsMiscInfo* checker = new SharedPathsMiscInfo((char*)buf, size);
-  bool result = checker->check();
+  bool result = checker->check(is_static);
   delete checker;
   return result;
 }
 
 void ClassLoader::setup_app_search_path(const char *class_path) {
 
-  assert(DumpSharedSpaces, "Sanity");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "Sanity");
 
   Thread* THREAD = Thread::current();
   int len = (int)strlen(class_path);
@@ -583,7 +579,7 @@ void ClassLoader::setup_app_search_path(const char *class_path) {
     strncpy(path, &class_path[start], end - start);
     path[end - start] = '\0';
 
-    update_class_path_entry_list(path, false, false);
+    update_class_path_entry_list(path, false, false, false);
 
     while (class_path[end] == os::path_separator()[0]) {
       end++;
@@ -594,7 +590,7 @@ void ClassLoader::setup_app_search_path(const char *class_path) {
 void ClassLoader::add_to_module_path_entries(const char* path,
                                              ClassPathEntry* entry) {
   assert(entry != NULL, "ClassPathEntry should not be NULL");
-  assert(DumpSharedSpaces, "dump time only");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "dump time only");
 
   // The entry does not exist, add to the list
   if (_module_path_entries == NULL) {
@@ -608,7 +604,7 @@ void ClassLoader::add_to_module_path_entries(const char* path,
 
 // Add a module path to the _module_path_entries list.
 void ClassLoader::update_module_path_entry_list(const char *path, TRAPS) {
-  assert(DumpSharedSpaces, "dump time only");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "dump time only");
   struct stat st;
   if (os::stat(path, &st) != 0) {
     tty->print_cr("os::stat error %d (%s). CDS dump aborted (path was \"%s\").",
@@ -618,7 +614,7 @@ void ClassLoader::update_module_path_entry_list(const char *path, TRAPS) {
   // File or directory found
   ClassPathEntry* new_entry = NULL;
   new_entry = create_class_path_entry(path, &st, true /* throw_exception */,
-                                      false /*is_boot_append */, CHECK);
+                                      false /*is_boot_append */, false /* from_class_path_attr */, CHECK);
   if (new_entry == NULL) {
     return;
   }
@@ -653,7 +649,7 @@ void ClassLoader::setup_patch_mod_entries() {
 
   for (int i = 0; i < num_of_entries; i++) {
     const char* module_name = (patch_mod_args->at(i))->module_name();
-    Symbol* const module_sym = SymbolTable::lookup(module_name, (int)strlen(module_name), CHECK);
+    Symbol* const module_sym = SymbolTable::new_symbol(module_name);
     assert(module_sym != NULL, "Failed to obtain Symbol for module name");
     ModuleClassPathList* module_cpl = new ModuleClassPathList(module_sym);
 
@@ -674,7 +670,7 @@ void ClassLoader::setup_patch_mod_entries() {
       struct stat st;
       if (os::stat(path, &st) == 0) {
         // File or directory found
-        ClassPathEntry* new_entry = create_class_path_entry(path, &st, false, false, CHECK);
+        ClassPathEntry* new_entry = create_class_path_entry(path, &st, false, false, false, CHECK);
         // If the path specification is valid, enter it into this module's list
         if (new_entry != NULL) {
           module_cpl->add_to_list(new_entry);
@@ -716,7 +712,7 @@ void ClassLoader::setup_boot_search_path(const char *class_path) {
   bool set_base_piece = true;
 
 #if INCLUDE_CDS
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     if (!Arguments::has_jimage()) {
       vm_exit_during_initialization("CDS is not supported in exploded JDK build", NULL);
     }
@@ -743,7 +739,7 @@ void ClassLoader::setup_boot_search_path(const char *class_path) {
       struct stat st;
       if (os::stat(path, &st) == 0) {
         // Directory found
-        ClassPathEntry* new_entry = create_class_path_entry(path, &st, false, false, CHECK);
+        ClassPathEntry* new_entry = create_class_path_entry(path, &st, false, false, false, CHECK);
 
         // Check for a jimage
         if (Arguments::has_jimage()) {
@@ -760,7 +756,7 @@ void ClassLoader::setup_boot_search_path(const char *class_path) {
     } else {
       // Every entry on the system boot class path after the initial base piece,
       // which is set by os::set_boot_path(), is considered an appended entry.
-      update_class_path_entry_list(path, false, true);
+      update_class_path_entry_list(path, false, true, false);
     }
 
     while (class_path[end] == os::path_separator()[0]) {
@@ -788,7 +784,7 @@ void ClassLoader::add_to_exploded_build_list(Symbol* module_sym, TRAPS) {
   struct stat st;
   if (os::stat(path, &st) == 0) {
     // Directory found
-    ClassPathEntry* new_entry = create_class_path_entry(path, &st, false, false, CHECK);
+    ClassPathEntry* new_entry = create_class_path_entry(path, &st, false, false, false, CHECK);
 
     // If the path specification is valid, enter it into this module's list.
     // There is no need to check for duplicate modules in the exploded entry list,
@@ -808,7 +804,9 @@ void ClassLoader::add_to_exploded_build_list(Symbol* module_sym, TRAPS) {
 
 ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const struct stat* st,
                                                      bool throw_exception,
-                                                     bool is_boot_append, TRAPS) {
+                                                     bool is_boot_append,
+                                                     bool from_class_path_attr,
+                                                     TRAPS) {
   JavaThread* thread = JavaThread::current();
   ClassPathEntry* new_entry = NULL;
   if ((st->st_mode & S_IFMT) == S_IFREG) {
@@ -838,7 +836,7 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
         zip = (*ZipOpen)(canonical_path, &error_msg);
       }
       if (zip != NULL && error_msg == NULL) {
-        new_entry = new ClassPathZipEntry(zip, path, is_boot_append);
+        new_entry = new ClassPathZipEntry(zip, path, is_boot_append, from_class_path_attr);
       } else {
         char *msg;
         if (error_msg == NULL) {
@@ -888,7 +886,7 @@ ClassPathZipEntry* ClassLoader::create_class_path_zip_entry(const char *path, bo
         }
         if (zip != NULL && error_msg == NULL) {
           // create using canonical path
-          return new ClassPathZipEntry(zip, canonical_path, is_boot_append);
+          return new ClassPathZipEntry(zip, canonical_path, is_boot_append, false);
         }
       }
     }
@@ -962,13 +960,14 @@ void ClassLoader::add_to_app_classpath_entries(const char* path,
 bool ClassLoader::update_class_path_entry_list(const char *path,
                                                bool check_for_duplicates,
                                                bool is_boot_append,
+                                               bool from_class_path_attr,
                                                bool throw_exception) {
   struct stat st;
   if (os::stat(path, &st) == 0) {
     // File or directory found
     ClassPathEntry* new_entry = NULL;
     Thread* THREAD = Thread::current();
-    new_entry = create_class_path_entry(path, &st, throw_exception, is_boot_append, CHECK_(false));
+    new_entry = create_class_path_entry(path, &st, throw_exception, is_boot_append, from_class_path_attr, CHECK_(false));
     if (new_entry == NULL) {
       return false;
     }
@@ -983,7 +982,7 @@ bool ClassLoader::update_class_path_entry_list(const char *path,
     return true;
   } else {
 #if INCLUDE_CDS
-    if (DumpSharedSpaces) {
+    if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
       _shared_paths_misc_info->add_nonexist_path(path);
     }
 #endif
@@ -1133,7 +1132,7 @@ bool ClassLoader::add_package(const char *fullq_class_name, s2 classpath_index, 
   const char *cp = package_from_name(fullq_class_name);
   if (cp != NULL) {
     PackageEntryTable* pkg_entry_tbl = ClassLoaderData::the_null_class_loader_data()->packages();
-    TempNewSymbol pkg_symbol = SymbolTable::new_symbol(cp, CHECK_false);
+    TempNewSymbol pkg_symbol = SymbolTable::new_symbol(cp);
     PackageEntry* pkg_entry = pkg_entry_tbl->lookup_only(pkg_symbol);
     if (pkg_entry != NULL) {
       assert(classpath_index != -1, "Unexpected classpath_index");
@@ -1148,7 +1147,7 @@ bool ClassLoader::add_package(const char *fullq_class_name, s2 classpath_index, 
 oop ClassLoader::get_system_package(const char* name, TRAPS) {
   // Look up the name in the boot loader's package entry table.
   if (name != NULL) {
-    TempNewSymbol package_sym = SymbolTable::new_symbol(name, (int)strlen(name), CHECK_NULL);
+    TempNewSymbol package_sym = SymbolTable::new_symbol(name);
     // Look for the package entry in the boot loader's package entry table.
     PackageEntry* package =
       ClassLoaderData::the_null_class_loader_data()->packages()->lookup_only(package_sym);
@@ -1341,6 +1340,10 @@ InstanceKlass* ClassLoader::load_class(Symbol* name, bool search_append_only, TR
     // appear in the _patch_mod_entries. The runtime shared class visibility
     // check will determine if a shared class is visible based on the runtime
     // environemnt, including the runtime --patch-module setting.
+    //
+    // DynamicDumpSharedSpaces requires UseSharedSpaces to be enabled. Since --patch-module
+    // is not supported with UseSharedSpaces, it is not supported with DynamicDumpSharedSpaces.
+    assert(!DynamicDumpSharedSpaces, "sanity");
     if (!DumpSharedSpaces) {
       stream = search_module_entries(_patch_mod_entries, class_name, file_name, CHECK_NULL);
     }
@@ -1430,7 +1433,7 @@ char* ClassLoader::skip_uri_protocol(char* source) {
 // Record the shared classpath index and loader type for classes loaded
 // by the builtin loaders at dump time.
 void ClassLoader::record_result(InstanceKlass* ik, const ClassFileStream* stream, TRAPS) {
-  assert(DumpSharedSpaces, "sanity");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "sanity");
   assert(stream != NULL, "sanity");
 
   if (ik->is_unsafe_anonymous()) {
@@ -1520,6 +1523,8 @@ void ClassLoader::record_result(InstanceKlass* ik, const ClassFileStream* stream
     // user defined classloader.
     if (classpath_index < 0) {
       assert(ik->shared_classpath_index() < 0, "Sanity");
+      ik->set_shared_classpath_index(UNREGISTERED_INDEX);
+      SystemDictionaryShared::set_shared_class_misc_info(ik, (ClassFileStream*)stream);
       return;
     }
   } else {
@@ -1602,7 +1607,7 @@ void ClassLoader::initialize() {
   load_jimage_library();
 #if INCLUDE_CDS
   // initialize search path
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     _shared_paths_misc_info = new SharedPathsMiscInfo();
   }
 #endif
@@ -1611,14 +1616,14 @@ void ClassLoader::initialize() {
 
 #if INCLUDE_CDS
 void ClassLoader::initialize_shared_path() {
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     ClassLoaderExt::setup_search_paths();
     _shared_paths_misc_info->write_jint(0); // see comments in SharedPathsMiscInfo::check()
   }
 }
 
 void ClassLoader::initialize_module_path(TRAPS) {
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     ClassLoaderExt::setup_module_paths(THREAD);
     FileMapInfo::allocate_shared_path_table();
   }
@@ -1684,6 +1689,7 @@ void ClassLoader::classLoader_init2(TRAPS) {
   // entries will be added to the exploded build array.
   if (!has_jrt_entry()) {
     assert(!DumpSharedSpaces, "DumpSharedSpaces not supported with exploded module builds");
+    assert(!DynamicDumpSharedSpaces, "DynamicDumpSharedSpaces not supported with exploded module builds");
     assert(!UseSharedSpaces, "UsedSharedSpaces not supported with exploded module builds");
     // Set up the boot loader's _exploded_entries list.  Note that this gets
     // done before loading any classes, by the same thread that will

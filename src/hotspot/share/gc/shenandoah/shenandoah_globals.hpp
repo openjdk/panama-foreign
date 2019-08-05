@@ -65,12 +65,17 @@
           " *) static  -  start concurrent GC when static free heap "       \
           "               threshold and static allocation threshold are "   \
           "               tripped;"                                         \
-          " *) passive -  do not start concurrent GC, wait for Full GC; "   \
           " *) aggressive - run concurrent GC continuously, evacuate "      \
           "               everything;"                                      \
           " *) compact - run GC with lower footprint target, may end up "   \
           "               doing continuous GC, evacuate lots of live "      \
           "               objects, uncommit heap aggressively;")            \
+                                                                            \
+  experimental(ccstr, ShenandoahGCMode, "normal",                           \
+          "The GC mode to use in Shenandoah GC. Possible values"            \
+          " *) normal    - normal GC (mark-evac-update)"                    \
+          " *) traversal - traversal GC (single-pass)"                      \
+          " *) passive   - disable concurrent GC, do stop-the-world GC")    \
                                                                             \
   experimental(ccstr, ShenandoahUpdateRefsEarly, "adaptive",                \
           "Run a separate concurrent reference updating phase after"        \
@@ -244,7 +249,7 @@
           "Time is in microseconds.")                                       \
                                                                             \
   experimental(uintx, ShenandoahEvacAssist, 10,                             \
-          "How many objects to evacuate on WB assist path. "                \
+          "How many objects to evacuate on LRB assist path. "               \
           "Use zero to disable.")                                           \
                                                                             \
   experimental(bool, ShenandoahPacing, true,                                \
@@ -352,30 +357,17 @@
   diagnostic(bool, ShenandoahKeepAliveBarrier, true,                        \
           "Turn on/off keep alive barriers in Shenandoah")                  \
                                                                             \
-  diagnostic(bool, ShenandoahWriteBarrier, true,                            \
-          "Turn on/off write barriers in Shenandoah")                       \
-                                                                            \
-  diagnostic(bool, ShenandoahReadBarrier, true,                             \
-          "Turn on/off read barriers in Shenandoah")                        \
-                                                                            \
   diagnostic(bool, ShenandoahStoreValEnqueueBarrier, false,                 \
           "Turn on/off enqueuing of oops for storeval barriers")            \
-                                                                            \
-  diagnostic(bool, ShenandoahStoreValReadBarrier, true,                     \
-          "Turn on/off store val read barriers in Shenandoah")              \
                                                                             \
   diagnostic(bool, ShenandoahCASBarrier, true,                              \
           "Turn on/off CAS barriers in Shenandoah")                         \
                                                                             \
-  diagnostic(bool, ShenandoahAcmpBarrier, true,                             \
-          "Turn on/off acmp barriers in Shenandoah")                        \
-                                                                            \
   diagnostic(bool, ShenandoahCloneBarrier, true,                            \
           "Turn on/off clone barriers in Shenandoah")                       \
                                                                             \
-  diagnostic(bool, ShenandoahStoreCheck, false,                             \
-          "Emit additional code that checks objects are written to only"    \
-          " in to-space")                                                   \
+  diagnostic(bool, ShenandoahLoadRefBarrier, true,                          \
+          "Turn on/off load-reference barriers in Shenandoah")              \
                                                                             \
   experimental(bool, ShenandoahConcurrentScanCodeRoots, true,               \
           "Scan code roots concurrently, instead of during a pause")        \
@@ -401,20 +393,13 @@
           "Turn it off for maximum compatibility with reflection or JNI "   \
           "code that manipulates final fields.")                            \
                                                                             \
-  diagnostic(bool, ShenandoahDecreaseRegisterPressure, false,               \
-          "Try to reuse after-barrier values to reduce register pressure")  \
-                                                                            \
   experimental(bool, ShenandoahCommonGCStateLoads, false,                   \
          "Enable commonming for GC state loads in generated code.")         \
                                                                             \
   develop(bool, ShenandoahVerifyOptoBarriers, false,                        \
           "Verify no missing barriers in C2")                               \
                                                                             \
-  experimental(bool, ShenandoahDontIncreaseWBFreq, true,                    \
-          "Common 2 WriteBarriers or WriteBarrier and a ReadBarrier only "  \
-          "if the resulting WriteBarrier isn't executed more frequently")   \
-                                                                            \
   experimental(bool, ShenandoahLoopOptsAfterExpansion, true,                \
-          "Attempt more loop opts after write barrier expansion")           \
+          "Attempt more loop opts after barrier expansion")                 \
 
 #endif // SHARE_GC_SHENANDOAH_SHENANDOAH_GLOBALS_HPP

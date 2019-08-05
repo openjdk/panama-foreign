@@ -27,6 +27,7 @@
 #define CPU_AARCH64_MACROASSEMBLER_AARCH64_HPP
 
 #include "asm/assembler.hpp"
+#include "oops/compressedOops.hpp"
 
 // MacroAssembler extends Assembler by frequently used macros.
 //
@@ -85,10 +86,10 @@ class MacroAssembler: public Assembler {
  public:
   MacroAssembler(CodeBuffer* code) : Assembler(code) {
     use_XOR_for_compressed_class_base
-      = (operand_valid_for_logical_immediate(false /*is32*/,
-                                             (uint64_t)Universe::narrow_klass_base())
-         && ((uint64_t)Universe::narrow_klass_base()
-             > (1UL << log2_intptr(Universe::narrow_klass_range()))));
+      = operand_valid_for_logical_immediate
+           (/*is32*/false, (uint64_t)CompressedKlassPointers::base())
+         && ((uint64_t)CompressedKlassPointers::base()
+             > (1UL << log2_intptr(CompressedKlassPointers::range())));
   }
 
  // These routines should emit JVMTI PopFrame and ForceEarlyReturn handling code.
@@ -607,6 +608,7 @@ public:
   static int patch_narrow_klass(address insn_addr, narrowKlass n);
 
   address emit_trampoline_stub(int insts_call_instruction_offset, address target);
+  void emit_static_call_stub();
 
   // The following 4 methods return the offset of the appropriate move instruction
 
@@ -786,6 +788,8 @@ public:
   // C 'boolean' to Java boolean: x == 0 ? 0 : 1
   void c2bool(Register x);
 
+  void load_method_holder(Register holder, Register method);
+
   // oop manipulations
   void load_klass(Register dst, Register src);
   void store_klass(Register dst, Register src);
@@ -923,6 +927,11 @@ public:
                            Register super_klass,
                            Register temp_reg,
                            Label& L_success);
+
+  void clinit_barrier(Register klass,
+                      Register thread,
+                      Label* L_fast_path = NULL,
+                      Label* L_slow_path = NULL);
 
   Address argument_address(RegisterOrConstant arg_slot, int extra_slot_offset = 0);
 

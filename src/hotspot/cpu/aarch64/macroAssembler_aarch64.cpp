@@ -36,6 +36,7 @@
 #include "interpreter/interpreter.hpp"
 #include "compiler/disassembler.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "nativeInst_aarch64.hpp"
 #include "oops/accessDecorators.hpp"
 #include "oops/compressedOops.inline.hpp"
@@ -812,6 +813,18 @@ address MacroAssembler::emit_trampoline_stub(int insts_call_instruction_offset,
   return stub_start_addr;
 }
 
+void MacroAssembler::emit_static_call_stub() {
+  // CompiledDirectStaticCall::set_to_interpreted knows the
+  // exact layout of this stub.
+
+  isb();
+  mov_metadata(rmethod, (Metadata*)NULL);
+
+  // Jump to the entry point of the i2c stub.
+  movptr(rscratch1, 0);
+  br(rscratch1);
+}
+
 void MacroAssembler::c2bool(Register x) {
   // implements x == 0 ? 0 : 1
   // note: must only look at least-significant byte of x
@@ -1294,6 +1307,35 @@ void MacroAssembler::check_klass_subtype_slow_path(Register sub_klass,
   bind(L_fallthrough);
 }
 
+void MacroAssembler::clinit_barrier(Register klass, Register scratch, Label* L_fast_path, Label* L_slow_path) {
+  assert(L_fast_path != NULL || L_slow_path != NULL, "at least one is required");
+  assert_different_registers(klass, rthread, scratch);
+
+  Label L_fallthrough, L_tmp;
+  if (L_fast_path == NULL) {
+    L_fast_path = &L_fallthrough;
+  } else if (L_slow_path == NULL) {
+    L_slow_path = &L_fallthrough;
+  }
+  // Fast path check: class is fully initialized
+  ldrb(scratch, Address(klass, InstanceKlass::init_state_offset()));
+  subs(zr, scratch, InstanceKlass::fully_initialized);
+  br(Assembler::EQ, *L_fast_path);
+
+  // Fast path check: current thread is initializer thread
+  ldr(scratch, Address(klass, InstanceKlass::init_thread_offset()));
+  cmp(rthread, scratch);
+
+  if (L_slow_path == &L_fallthrough) {
+    br(Assembler::EQ, *L_fast_path);
+    bind(*L_slow_path);
+  } else if (L_fast_path == &L_fallthrough) {
+    br(Assembler::NE, *L_slow_path);
+    bind(*L_fast_path);
+  } else {
+    Unimplemented();
+  }
+}
 
 void MacroAssembler::verify_oop(Register reg, const char* s) {
   if (!VerifyOops) return;
@@ -2119,7 +2161,7 @@ void MacroAssembler::verify_heapbase(const char* msg) {
   if (CheckCompressedOops) {
     Label ok;
     push(1 << rscratch1->encoding(), sp); // cmpptr trashes rscratch1
-    cmpptr(rheapbase, ExternalAddress((address)Universe::narrow_ptrs_base_addr()));
+    cmpptr(rheapbase, ExternalAddress((address)CompressedOops::ptrs_base_addr()));
     br(Assembler::EQ, ok);
     stop(msg);
     bind(ok);
@@ -2252,9 +2294,9 @@ void MacroAssembler::reinit_heapbase()
 {
   if (UseCompressedOops) {
     if (Universe::is_fully_initialized()) {
-      mov(rheapbase, Universe::narrow_ptrs_base());
+      mov(rheapbase, CompressedOops::ptrs_base());
     } else {
-      lea(rheapbase, ExternalAddress((address)Universe::narrow_ptrs_base_addr()));
+      lea(rheapbase, ExternalAddress((address)CompressedOops::ptrs_base_addr()));
       ldr(rheapbase, Address(rheapbase));
     }
   }
@@ -2668,7 +2710,7 @@ Address MacroAssembler::spill_address(int size, int offset, Register tmp)
   if ((offset & (size-1)) && offset >= (1<<8)) {
     add(tmp, base, offset & ((1<<12)-1));
     base = tmp;
-    offset &= -1<<12;
+    offset &= -1u<<12;
   }
 
   if (offset >= (1<<12) * size) {
@@ -3670,6 +3712,12 @@ void MacroAssembler::cmpoop(Register obj1, Register obj2) {
   bs->obj_equals(this, obj1, obj2);
 }
 
+void MacroAssembler::load_method_holder(Register holder, Register method) {
+  ldr(holder, Address(method, Method::const_offset()));                      // ConstMethod*
+  ldr(holder, Address(holder, ConstMethod::constants_offset()));             // ConstantPool*
+  ldr(holder, Address(holder, ConstantPool::pool_holder_offset_in_bytes())); // InstanceKlass*
+}
+
 void MacroAssembler::load_klass(Register dst, Register src) {
   if (UseCompressedClassPointers) {
     ldrw(dst, Address(src, oopDesc::klass_offset_in_bytes()));
@@ -3697,11 +3745,11 @@ void MacroAssembler::load_mirror(Register dst, Register method, Register tmp) {
 void MacroAssembler::cmp_klass(Register oop, Register trial_klass, Register tmp) {
   if (UseCompressedClassPointers) {
     ldrw(tmp, Address(oop, oopDesc::klass_offset_in_bytes()));
-    if (Universe::narrow_klass_base() == NULL) {
-      cmp(trial_klass, tmp, LSL, Universe::narrow_klass_shift());
+    if (CompressedKlassPointers::base() == NULL) {
+      cmp(trial_klass, tmp, LSL, CompressedKlassPointers::shift());
       return;
-    } else if (((uint64_t)Universe::narrow_klass_base() & 0xffffffff) == 0
-               && Universe::narrow_klass_shift() == 0) {
+    } else if (((uint64_t)CompressedKlassPointers::base() & 0xffffffff) == 0
+               && CompressedKlassPointers::shift() == 0) {
       // Only the bottom 32 bits matter
       cmpw(trial_klass, tmp);
       return;
@@ -3742,9 +3790,9 @@ void MacroAssembler::encode_heap_oop(Register d, Register s) {
   verify_heapbase("MacroAssembler::encode_heap_oop: heap base corrupted?");
 #endif
   verify_oop(s, "broken oop in encode_heap_oop");
-  if (Universe::narrow_oop_base() == NULL) {
-    if (Universe::narrow_oop_shift() != 0) {
-      assert (LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
+  if (CompressedOops::base() == NULL) {
+    if (CompressedOops::shift() != 0) {
+      assert (LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
       lsr(d, s, LogMinObjAlignmentInBytes);
     } else {
       mov(d, s);
@@ -3775,11 +3823,11 @@ void MacroAssembler::encode_heap_oop_not_null(Register r) {
   }
 #endif
   verify_oop(r, "broken oop in encode_heap_oop_not_null");
-  if (Universe::narrow_oop_base() != NULL) {
+  if (CompressedOops::base() != NULL) {
     sub(r, r, rheapbase);
   }
-  if (Universe::narrow_oop_shift() != 0) {
-    assert (LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
+  if (CompressedOops::shift() != 0) {
+    assert (LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
     lsr(r, r, LogMinObjAlignmentInBytes);
   }
 }
@@ -3797,12 +3845,12 @@ void MacroAssembler::encode_heap_oop_not_null(Register dst, Register src) {
   verify_oop(src, "broken oop in encode_heap_oop_not_null2");
 
   Register data = src;
-  if (Universe::narrow_oop_base() != NULL) {
+  if (CompressedOops::base() != NULL) {
     sub(dst, src, rheapbase);
     data = dst;
   }
-  if (Universe::narrow_oop_shift() != 0) {
-    assert (LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
+  if (CompressedOops::shift() != 0) {
+    assert (LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
     lsr(dst, data, LogMinObjAlignmentInBytes);
     data = dst;
   }
@@ -3814,9 +3862,9 @@ void  MacroAssembler::decode_heap_oop(Register d, Register s) {
 #ifdef ASSERT
   verify_heapbase("MacroAssembler::decode_heap_oop: heap base corrupted?");
 #endif
-  if (Universe::narrow_oop_base() == NULL) {
-    if (Universe::narrow_oop_shift() != 0 || d != s) {
-      lsl(d, s, Universe::narrow_oop_shift());
+  if (CompressedOops::base() == NULL) {
+    if (CompressedOops::shift() != 0 || d != s) {
+      lsl(d, s, CompressedOops::shift());
     }
   } else {
     Label done;
@@ -3835,15 +3883,15 @@ void  MacroAssembler::decode_heap_oop_not_null(Register r) {
   // Cannot assert, unverified entry point counts instructions (see .ad file)
   // vtableStubs also counts instructions in pd_code_size_limit.
   // Also do not verify_oop as this is called by verify_oop.
-  if (Universe::narrow_oop_shift() != 0) {
-    assert(LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
-    if (Universe::narrow_oop_base() != NULL) {
+  if (CompressedOops::shift() != 0) {
+    assert(LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
+    if (CompressedOops::base() != NULL) {
       add(r, rheapbase, r, Assembler::LSL, LogMinObjAlignmentInBytes);
     } else {
       add(r, zr, r, Assembler::LSL, LogMinObjAlignmentInBytes);
     }
   } else {
-    assert (Universe::narrow_oop_base() == NULL, "sanity");
+    assert (CompressedOops::base() == NULL, "sanity");
   }
 }
 
@@ -3853,15 +3901,15 @@ void  MacroAssembler::decode_heap_oop_not_null(Register dst, Register src) {
   // Cannot assert, unverified entry point counts instructions (see .ad file)
   // vtableStubs also counts instructions in pd_code_size_limit.
   // Also do not verify_oop as this is called by verify_oop.
-  if (Universe::narrow_oop_shift() != 0) {
-    assert(LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
-    if (Universe::narrow_oop_base() != NULL) {
+  if (CompressedOops::shift() != 0) {
+    assert(LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
+    if (CompressedOops::base() != NULL) {
       add(dst, rheapbase, src, Assembler::LSL, LogMinObjAlignmentInBytes);
     } else {
       add(dst, zr, src, Assembler::LSL, LogMinObjAlignmentInBytes);
     }
   } else {
-    assert (Universe::narrow_oop_base() == NULL, "sanity");
+    assert (CompressedOops::base() == NULL, "sanity");
     if (dst != src) {
       mov(dst, src);
     }
@@ -3869,9 +3917,9 @@ void  MacroAssembler::decode_heap_oop_not_null(Register dst, Register src) {
 }
 
 void MacroAssembler::encode_klass_not_null(Register dst, Register src) {
-  if (Universe::narrow_klass_base() == NULL) {
-    if (Universe::narrow_klass_shift() != 0) {
-      assert (LogKlassAlignmentInBytes == Universe::narrow_klass_shift(), "decode alg wrong");
+  if (CompressedKlassPointers::base() == NULL) {
+    if (CompressedKlassPointers::shift() != 0) {
+      assert (LogKlassAlignmentInBytes == CompressedKlassPointers::shift(), "decode alg wrong");
       lsr(dst, src, LogKlassAlignmentInBytes);
     } else {
       if (dst != src) mov(dst, src);
@@ -3880,17 +3928,17 @@ void MacroAssembler::encode_klass_not_null(Register dst, Register src) {
   }
 
   if (use_XOR_for_compressed_class_base) {
-    if (Universe::narrow_klass_shift() != 0) {
-      eor(dst, src, (uint64_t)Universe::narrow_klass_base());
+    if (CompressedKlassPointers::shift() != 0) {
+      eor(dst, src, (uint64_t)CompressedKlassPointers::base());
       lsr(dst, dst, LogKlassAlignmentInBytes);
     } else {
-      eor(dst, src, (uint64_t)Universe::narrow_klass_base());
+      eor(dst, src, (uint64_t)CompressedKlassPointers::base());
     }
     return;
   }
 
-  if (((uint64_t)Universe::narrow_klass_base() & 0xffffffff) == 0
-      && Universe::narrow_klass_shift() == 0) {
+  if (((uint64_t)CompressedKlassPointers::base() & 0xffffffff) == 0
+      && CompressedKlassPointers::shift() == 0) {
     movw(dst, src);
     return;
   }
@@ -3901,10 +3949,10 @@ void MacroAssembler::encode_klass_not_null(Register dst, Register src) {
 
   Register rbase = dst;
   if (dst == src) rbase = rheapbase;
-  mov(rbase, (uint64_t)Universe::narrow_klass_base());
+  mov(rbase, (uint64_t)CompressedKlassPointers::base());
   sub(dst, src, rbase);
-  if (Universe::narrow_klass_shift() != 0) {
-    assert (LogKlassAlignmentInBytes == Universe::narrow_klass_shift(), "decode alg wrong");
+  if (CompressedKlassPointers::shift() != 0) {
+    assert (LogKlassAlignmentInBytes == CompressedKlassPointers::shift(), "decode alg wrong");
     lsr(dst, dst, LogKlassAlignmentInBytes);
   }
   if (dst == src) reinit_heapbase();
@@ -3918,9 +3966,9 @@ void  MacroAssembler::decode_klass_not_null(Register dst, Register src) {
   Register rbase = dst;
   assert (UseCompressedClassPointers, "should only be used for compressed headers");
 
-  if (Universe::narrow_klass_base() == NULL) {
-    if (Universe::narrow_klass_shift() != 0) {
-      assert(LogKlassAlignmentInBytes == Universe::narrow_klass_shift(), "decode alg wrong");
+  if (CompressedKlassPointers::base() == NULL) {
+    if (CompressedKlassPointers::shift() != 0) {
+      assert(LogKlassAlignmentInBytes == CompressedKlassPointers::shift(), "decode alg wrong");
       lsl(dst, src, LogKlassAlignmentInBytes);
     } else {
       if (dst != src) mov(dst, src);
@@ -3929,20 +3977,20 @@ void  MacroAssembler::decode_klass_not_null(Register dst, Register src) {
   }
 
   if (use_XOR_for_compressed_class_base) {
-    if (Universe::narrow_klass_shift() != 0) {
+    if (CompressedKlassPointers::shift() != 0) {
       lsl(dst, src, LogKlassAlignmentInBytes);
-      eor(dst, dst, (uint64_t)Universe::narrow_klass_base());
+      eor(dst, dst, (uint64_t)CompressedKlassPointers::base());
     } else {
-      eor(dst, src, (uint64_t)Universe::narrow_klass_base());
+      eor(dst, src, (uint64_t)CompressedKlassPointers::base());
     }
     return;
   }
 
-  if (((uint64_t)Universe::narrow_klass_base() & 0xffffffff) == 0
-      && Universe::narrow_klass_shift() == 0) {
+  if (((uint64_t)CompressedKlassPointers::base() & 0xffffffff) == 0
+      && CompressedKlassPointers::shift() == 0) {
     if (dst != src)
       movw(dst, src);
-    movk(dst, (uint64_t)Universe::narrow_klass_base() >> 32, 32);
+    movk(dst, (uint64_t)CompressedKlassPointers::base() >> 32, 32);
     return;
   }
 
@@ -3950,9 +3998,9 @@ void  MacroAssembler::decode_klass_not_null(Register dst, Register src) {
   // vtableStubs also counts instructions in pd_code_size_limit.
   // Also do not verify_oop as this is called by verify_oop.
   if (dst == src) rbase = rheapbase;
-  mov(rbase, (uint64_t)Universe::narrow_klass_base());
-  if (Universe::narrow_klass_shift() != 0) {
-    assert(LogKlassAlignmentInBytes == Universe::narrow_klass_shift(), "decode alg wrong");
+  mov(rbase, (uint64_t)CompressedKlassPointers::base());
+  if (CompressedKlassPointers::shift() != 0) {
+    assert(LogKlassAlignmentInBytes == CompressedKlassPointers::shift(), "decode alg wrong");
     add(dst, rbase, src, Assembler::LSL, LogKlassAlignmentInBytes);
   } else {
     add(dst, rbase, src);
@@ -3991,7 +4039,7 @@ void  MacroAssembler::set_narrow_klass(Register dst, Klass* k) {
   InstructionMark im(this);
   RelocationHolder rspec = metadata_Relocation::spec(index);
   code_section()->relocate(inst_mark(), rspec);
-  narrowKlass nk = Klass::encode_klass(k);
+  narrowKlass nk = CompressedKlassPointers::encode(k);
   movz(dst, (nk >> 16), 16);
   movk(dst, nk & 0xffff);
 }

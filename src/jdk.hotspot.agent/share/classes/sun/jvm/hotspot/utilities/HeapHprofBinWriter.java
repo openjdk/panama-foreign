@@ -708,8 +708,8 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
         int frameSerialNum = 0;
         int numThreads = 0;
         Threads threads = VM.getVM().getThreads();
-
-        for (JavaThread thread = threads.first(); thread != null; thread = thread.next()) {
+        for (int i = 0; i < threads.getNumberOfThreads(); i++) {
+            JavaThread thread = threads.getJavaThreadAt(i);
             Oop threadObj = thread.getThreadObj();
             if (threadObj != null && !thread.isExiting() && !thread.isHiddenFromExternalView()) {
 
@@ -1098,10 +1098,15 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
     private void writeSymbol(Symbol sym) throws IOException {
         // If name is already written don't write it again.
         if (names.add(sym)) {
-            byte[] buf = sym.asString().getBytes("UTF-8");
-            writeHeader(HPROF_UTF8, buf.length + OBJ_ID_SIZE);
-            writeSymbolID(sym);
-            out.write(buf);
+            if(sym != null) {
+              byte[] buf = sym.asString().getBytes("UTF-8");
+              writeHeader(HPROF_UTF8, buf.length + OBJ_ID_SIZE);
+              writeSymbolID(sym);
+              out.write(buf);
+           } else {
+              writeHeader(HPROF_UTF8, 0 + OBJ_ID_SIZE);
+              writeSymbolID(null);
+           }
         }
     }
 
@@ -1152,7 +1157,8 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
 
     private void writeSymbolID(Symbol sym) throws IOException {
         assert names.contains(sym);
-        writeObjectID(getAddressValue(sym.getAddress()));
+        long address = (sym != null) ? getAddressValue(sym.getAddress()) : getAddressValue(null);
+        writeObjectID(address);
     }
 
     private void writeObjectID(long address) throws IOException {

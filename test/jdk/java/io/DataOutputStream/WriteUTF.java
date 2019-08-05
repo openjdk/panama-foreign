@@ -22,9 +22,10 @@
  */
 
 /* @test
- * @bug 4260284 8219196
+ * @bug 4260284 8219196 8223254
  * @summary Test if DataOutputStream will overcount written field.
- * @run testng/othervm -Xmx2g WriteUTF
+ * @requires (sun.arch.data.model == "64" & os.maxMemory >= 4g)
+ * @run testng/othervm -Xmx4g WriteUTF
  */
 
 import java.io.ByteArrayOutputStream;
@@ -59,7 +60,7 @@ public class WriteUTF {
     }
 
     // Without 8219196 fix, throws ArrayIndexOutOfBoundsException instead of
-    // expected UTFDataFormatException. Requires 2GB of heap (-Xmx2g) to run
+    // expected UTFDataFormatException. Requires 4GB of heap (-Xmx4g) to run
     // without throwing an OutOfMemoryError.
     @Test(expectedExceptions = UTFDataFormatException.class)
     public void arrayIndexOutOfBoundsException() throws IOException {

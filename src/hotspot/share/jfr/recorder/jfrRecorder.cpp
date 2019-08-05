@@ -57,7 +57,7 @@ static bool _enabled = false;
 
 static bool enable() {
   assert(!_enabled, "invariant");
-  FLAG_SET_MGMT(bool, FlightRecorder, true);
+  FLAG_SET_MGMT(FlightRecorder, true);
   _enabled = FlightRecorder;
   assert(_enabled, "invariant");
   return _enabled;
@@ -168,7 +168,7 @@ static void log_jdk_jfr_module_resolution_error(TRAPS) {
 
 static bool is_cds_dump_requested() {
   // we will not be able to launch recordings if a cds dump is being requested
-  if (DumpSharedSpaces && (JfrOptionSet::startup_recording_options() != NULL)) {
+  if ((DumpSharedSpaces || DynamicDumpSharedSpaces) && (JfrOptionSet::startup_recording_options() != NULL)) {
     warning("JFR will be disabled during CDS dumping");
     teardown_startup_support();
     return true;
@@ -192,9 +192,6 @@ bool JfrRecorder::on_vm_start() {
 
   if (in_graph) {
     if (!validate_recording_options(thread)) {
-      return false;
-    }
-    if (!JfrJavaEventWriter::initialize()) {
       return false;
     }
     if (!JfrOptionSet::configure(thread)) {
@@ -246,6 +243,9 @@ bool JfrRecorder::create_components() {
   ResourceMark rm;
   HandleMark hm;
 
+  if (!create_java_event_writer()) {
+    return false;
+  }
   if (!create_jvmti_agent()) {
     return false;
   }
@@ -286,6 +286,10 @@ static JfrStackTraceRepository* _stack_trace_repository;
 static JfrStringPool* _stringpool = NULL;
 static JfrOSInterface* _os_interface = NULL;
 static JfrThreadSampling* _thread_sampling = NULL;
+
+bool JfrRecorder::create_java_event_writer() {
+  return JfrJavaEventWriter::initialize();
+}
 
 bool JfrRecorder::create_jvmti_agent() {
   return JfrOptionSet::allow_retransforms() ? JfrJvmtiAgent::create() : true;

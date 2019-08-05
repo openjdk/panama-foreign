@@ -25,7 +25,7 @@
  * @test TestEvilSyncBug
  * @summary Tests for crash/assert when attaching init thread during shutdown
  * @key gc
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
@@ -61,7 +61,6 @@ public class TestEvilSyncBug {
                             "-XX:+UnlockDiagnosticVMOptions",
                             "-XX:+UseShenandoahGC",
                             "-XX:ShenandoahGCHeuristics=aggressive",
-                            "-XX:+ShenandoahStoreCheck",
                             "TestEvilSyncBug", "test");
                     OutputAnalyzer output = new OutputAnalyzer(pb.start());
                     output.shouldHaveExitValue(0);

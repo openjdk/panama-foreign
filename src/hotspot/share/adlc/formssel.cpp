@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -759,7 +759,6 @@ int InstructForm::memory_operand(FormDict &globals) const {
   return NO_MEMORY_OPERAND;
 }
 
-
 // This instruction captures the machine-independent bottom_type
 // Expected use is for pointer vs oop determination for LoadP
 bool InstructForm::captures_bottom_type(FormDict &globals) const {
@@ -776,11 +775,17 @@ bool InstructForm::captures_bottom_type(FormDict &globals) const {
        !strcmp(_matrule->_rChild->_opType,"CheckCastPP")  ||
        !strcmp(_matrule->_rChild->_opType,"GetAndSetP")   ||
        !strcmp(_matrule->_rChild->_opType,"GetAndSetN")   ||
-       !strcmp(_matrule->_rChild->_opType,"CompareAndExchangeP") ||
-       !strcmp(_matrule->_rChild->_opType,"CompareAndExchangeN") ||
+#if INCLUDE_ZGC
+       !strcmp(_matrule->_rChild->_opType,"ZGetAndSetP") ||
+       !strcmp(_matrule->_rChild->_opType,"ZCompareAndExchangeP") ||
+       !strcmp(_matrule->_rChild->_opType,"LoadBarrierSlowReg") ||
+#endif
+#if INCLUDE_SHENANDOAHGC
        !strcmp(_matrule->_rChild->_opType,"ShenandoahCompareAndExchangeP") ||
        !strcmp(_matrule->_rChild->_opType,"ShenandoahCompareAndExchangeN") ||
-       !strcmp(_matrule->_rChild->_opType,"ShenandoahReadBarrier")))  return true;
+#endif
+       !strcmp(_matrule->_rChild->_opType,"CompareAndExchangeP") ||
+       !strcmp(_matrule->_rChild->_opType,"CompareAndExchangeN"))) return true;
   else if ( is_ideal_load() == Form::idealP )                return true;
   else if ( is_ideal_store() != Form::none  )                return true;
 
@@ -1510,7 +1515,7 @@ Predicate *InstructForm::build_predicate() {
 
   MatchNode *mnode =
     strcmp(_matrule->_opType, "Set") ? _matrule : _matrule->_rChild;
-  mnode->count_instr_names(names);
+  if (mnode != NULL) mnode->count_instr_names(names);
 
   uint first = 1;
   // Start with the predicate supplied in the .ad file.
@@ -1723,26 +1728,25 @@ bool Opcode::print_opcode(FILE *fp, Opcode::opcode_type desired_opcode) {
   const char *description = NULL;
   const char *value       = NULL;
   // Check if user provided any opcode definitions
-  if( this != NULL ) {
-    // Update 'value' if user provided a definition in the instruction
-    switch (desired_opcode) {
-    case PRIMARY:
-      description = "primary()";
-      if( _primary   != NULL)  { value = _primary;     }
-      break;
-    case SECONDARY:
-      description = "secondary()";
-      if( _secondary != NULL ) { value = _secondary;   }
-      break;
-    case TERTIARY:
-      description = "tertiary()";
-      if( _tertiary  != NULL ) { value = _tertiary;    }
-      break;
-    default:
-      assert( false, "ShouldNotReachHere();");
-      break;
-    }
+  // Update 'value' if user provided a definition in the instruction
+  switch (desired_opcode) {
+  case PRIMARY:
+    description = "primary()";
+    if( _primary   != NULL)  { value = _primary;     }
+    break;
+  case SECONDARY:
+    description = "secondary()";
+    if( _secondary != NULL ) { value = _secondary;   }
+    break;
+  case TERTIARY:
+    description = "tertiary()";
+    if( _tertiary  != NULL ) { value = _tertiary;    }
+    break;
+  default:
+    assert( false, "ShouldNotReachHere();");
+    break;
   }
+
   if (value != NULL) {
     fprintf(fp, "(%s /*%s*/)", value, description);
   }
@@ -3410,7 +3414,6 @@ const char *MatchNode::reduce_left(FormDict &globals) const {
 // Count occurrences of operands names in the leaves of the instruction
 // match rule.
 void MatchNode::count_instr_names( Dict &names ) {
-  if( this == NULL ) return;
   if( _lChild ) _lChild->count_instr_names(names);
   if( _rChild ) _rChild->count_instr_names(names);
   if( !_lChild && !_rChild ) {
@@ -3503,13 +3506,16 @@ int MatchNode::needs_ideal_memory_edge(FormDict &globals) const {
     "CompareAndSwapB", "CompareAndSwapS", "CompareAndSwapI", "CompareAndSwapL", "CompareAndSwapP", "CompareAndSwapN",
     "WeakCompareAndSwapB", "WeakCompareAndSwapS", "WeakCompareAndSwapI", "WeakCompareAndSwapL", "WeakCompareAndSwapP", "WeakCompareAndSwapN",
     "CompareAndExchangeB", "CompareAndExchangeS", "CompareAndExchangeI", "CompareAndExchangeL", "CompareAndExchangeP", "CompareAndExchangeN",
+#if INCLUDE_SHENANDOAHGC
     "ShenandoahCompareAndSwapN", "ShenandoahCompareAndSwapP", "ShenandoahWeakCompareAndSwapP", "ShenandoahWeakCompareAndSwapN", "ShenandoahCompareAndExchangeP", "ShenandoahCompareAndExchangeN",
+#endif
     "StoreCM",
-    "ClearArray",
     "GetAndSetB", "GetAndSetS", "GetAndAddI", "GetAndSetI", "GetAndSetP",
     "GetAndAddB", "GetAndAddS", "GetAndAddL", "GetAndSetL", "GetAndSetN",
-    "ShenandoahReadBarrier",
-    "LoadBarrierSlowReg", "LoadBarrierWeakSlowReg"
+#if INCLUDE_ZGC
+    "ZGetAndSetP", "ZCompareAndSwapP", "ZCompareAndExchangeP", "ZWeakCompareAndSwapP",
+#endif
+    "ClearArray"
   };
   int cnt = sizeof(needs_ideal_memory_list)/sizeof(char*);
   if( strcmp(_opType,"PrefetchAllocation")==0 )
@@ -4184,7 +4190,7 @@ bool MatchRule::is_vector() const {
     "CMoveVD", "CMoveVF",
     "DivVF","DivVD",
     "MinV","MaxV",
-    "AbsVF","AbsVD","AbsV",
+    "AbsVB","AbsVS","AbsVI","AbsVL","AbsVF","AbsVD",
     "NegVF","NegVD","NegVI",
     "SqrtVD","SqrtVF",
     "AndV" ,"XorV" ,"OrV", "NotV",
@@ -4202,7 +4208,6 @@ bool MatchRule::is_vector() const {
     "RShiftVB","RShiftVS","RShiftVI","RShiftVL",
     "URShiftVB","URShiftVS","URShiftVI","URShiftVL",
     "VLShiftV","VRShiftV","VURShiftV",
-    "MaxReductionV", "MinReductionV",
     "ReplicateB","ReplicateS","ReplicateI","ReplicateL","ReplicateF","ReplicateD",
     "LoadVector","StoreVector","LoadVectorGather", "StoreVectorScatter",
     "VectorLoadMask", "VectorStoreMask", "VectorBlend", "VectorInsert",

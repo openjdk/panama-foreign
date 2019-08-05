@@ -165,9 +165,7 @@ class JvmtiExport : public AllStatic {
   // DynamicCodeGenerated events for a given environment.
   friend class JvmtiCodeBlobEvents;
 
-  static void post_compiled_method_load(JvmtiEnv* env, const jmethodID method, const jint length,
-                                        const void *code_begin, const jint map_length,
-                                        const jvmtiAddrLocationMap* map) NOT_JVMTI_RETURN;
+  static void post_compiled_method_load(JvmtiEnv* env, nmethod *nm) NOT_JVMTI_RETURN;
   static void post_dynamic_code_generated(JvmtiEnv* env, const char *name, const void *code_begin,
                                           const void *code_end) NOT_JVMTI_RETURN;
 
@@ -390,7 +388,6 @@ class JvmtiExport : public AllStatic {
 
   static void oops_do(OopClosure* f) NOT_JVMTI_RETURN;
   static void weak_oops_do(BoolObjectClosure* b, OopClosure* f) NOT_JVMTI_RETURN;
-  static void gc_epilogue() NOT_JVMTI_RETURN;
 
   static void transition_pending_onload_raw_monitors() NOT_JVMTI_RETURN;
 
@@ -422,7 +419,7 @@ class JvmtiCodeBlobDesc : public CHeapObj<mtInternal> {
  public:
   JvmtiCodeBlobDesc(const char *name, address code_begin, address code_end) {
     assert(name != NULL, "all code blobs must be named");
-    strncpy(_name, name, sizeof(_name));
+    strncpy(_name, name, sizeof(_name) - 1);
     _name[sizeof(_name)-1] = '\0';
     _code_begin = code_begin;
     _code_end = code_end;

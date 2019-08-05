@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2018 SAP SE. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -271,8 +271,9 @@ JVM_handle_linux_signal(int sig,
 
 #ifdef CAN_SHOW_REGISTERS_ON_ASSERT
   if ((sig == SIGSEGV || sig == SIGBUS) && info != NULL && info->si_addr == g_assert_poison) {
-    handle_assert_poison_fault(ucVoid, info->si_addr);
-    return 1;
+    if (handle_assert_poison_fault(ucVoid, info->si_addr)) {
+      return 1;
+    }
   }
 #endif
 
@@ -302,7 +303,6 @@ JVM_handle_linux_signal(int sig,
   address stub = NULL;
   address pc   = NULL;
 
-  //%note os_trap_1
   if (info != NULL && uc != NULL && thread != NULL) {
     pc = (address) os::Linux::ucontext_get_pc(uc);
 
@@ -311,17 +311,17 @@ JVM_handle_linux_signal(int sig,
       // si_addr may not be valid due to a bug in the linux-ppc64 kernel (see
       // comment below). Use get_stack_bang_address instead of si_addr.
       // If SIGSEGV is caused due to a branch to an invalid address an
-      // "Instruction Storage" interruption is generated and 'pc' (NIP) already
+      // "Instruction Storage Interrupt" is generated and 'pc' (NIP) already
       // contains the invalid address. Otherwise, the SIGSEGV is caused due to
       // load/store instruction trying to load/store from/to an invalid address
-      // and causing a "Data Storage" interruption, so we inspect the intruction
+      // and causing a "Data Storage Interrupt", so we inspect the intruction
       // in order to extract the faulty data addresss.
       address addr;
       if ((ucontext_get_trap(uc) & 0x0F00 /* no IRQ reply bits */) == 0x0400) {
-        // Instruction interruption
+        // Instruction Storage Interrupt (ISI)
         addr = pc;
       } else {
-        // Data interruption (0x0300): extract faulty data address
+        // Data Storage Interrupt (DSI), i.e. 0x0300: extract faulty data address
         addr = ((NativeInstruction*)pc)->get_stack_bang_address(uc);
       }
 
@@ -470,8 +470,12 @@ JVM_handle_linux_signal(int sig,
         // underlying file has been truncated. Do not crash the VM in such a case.
         CodeBlob* cb = CodeCache::find_blob_unsafe(pc);
         CompiledMethod* nm = (cb != NULL) ? cb->as_compiled_method_or_null() : NULL;
-        if (nm != NULL && nm->has_unsafe_access()) {
+        bool is_unsafe_arraycopy = (thread->doing_unsafe_access() && UnsafeCopyMemory::contains_pc(pc));
+        if ((nm != NULL && nm->has_unsafe_access()) || is_unsafe_arraycopy) {
           address next_pc = pc + 4;
+          if (is_unsafe_arraycopy) {
+            next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);
+          }
           next_pc = SharedRuntime::handle_unsafe_access(thread, next_pc);
           os::Linux::ucontext_set_pc(uc, next_pc);
           return true;
@@ -486,11 +490,15 @@ JVM_handle_linux_signal(int sig,
                         // flushing of icache is not necessary.
         stub = pc + 4;  // continue with next instruction.
       }
-      else if (thread->thread_state() == _thread_in_vm &&
+      else if ((thread->thread_state() == _thread_in_vm ||
+                thread->thread_state() == _thread_in_native) &&
                sig == SIGBUS && thread->doing_unsafe_access()) {
         address next_pc = pc + 4;
+        if (UnsafeCopyMemory::contains_pc(pc)) {
+          next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);
+        }
         next_pc = SharedRuntime::handle_unsafe_access(thread, next_pc);
-        os::Linux::ucontext_set_pc(uc, pc + 4);
+        os::Linux::ucontext_set_pc(uc, next_pc);
         return true;
       }
     }

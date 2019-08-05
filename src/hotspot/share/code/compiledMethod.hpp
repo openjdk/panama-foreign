@@ -208,9 +208,9 @@ public:
          not_used      = 1,  // not entrant, but revivable
          not_entrant   = 2,  // marked for deoptimization but activations may still exist,
                              // will be transformed to zombie when all activations are gone
-         zombie        = 3,  // no activations exist, nmethod is ready for purge
-         unloaded      = 4   // there should be no activations, should not be called,
-                             // will be transformed to zombie immediately
+         unloaded      = 3,  // there should be no activations, should not be called, will be
+                             // transformed to zombie by the sweeper, when not "locked in vm".
+         zombie        = 4   // no activations exist, nmethod is ready for purge
   };
 
   virtual bool  is_in_use() const = 0;
@@ -349,13 +349,16 @@ public:
   void preserve_callee_argument_oops(frame fr, const RegisterMap *reg_map, OopClosure* f);
 
   // implicit exceptions support
-  virtual address continuation_for_implicit_exception(address pc) { return NULL; }
+  address continuation_for_implicit_div0_exception(address pc) { return continuation_for_implicit_exception(pc, true); }
+  address continuation_for_implicit_null_exception(address pc) { return continuation_for_implicit_exception(pc, false); }
 
   static address get_deopt_original_pc(const frame* fr);
 
   // Inline cache support for class unloading and nmethod unloading
  private:
   bool cleanup_inline_caches_impl(bool unloading_occurred, bool clean_all);
+
+  address continuation_for_implicit_exception(address pc, bool for_div0_check);
 
  public:
   // Serial version used by sweeper and whitebox test
@@ -368,7 +371,6 @@ public:
   int  verify_icholder_relocations();
   void verify_oop_relocations();
 
-  virtual bool is_evol_dependent() = 0;
   bool has_evol_metadata();
 
   // Fast breakpoint support. Tells if this compiled method is
@@ -395,8 +397,6 @@ public:
 
  private:
   bool static clean_ic_if_metadata_is_dead(CompiledIC *ic);
-
-  void clean_ic_stubs();
 
  public:
   // GC unloading support

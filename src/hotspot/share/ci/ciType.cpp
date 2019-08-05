@@ -28,6 +28,7 @@
 #include "ci/ciUtilities.inline.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 #ifdef COMPILER2
 #include "opto/matcher.hpp"

@@ -43,6 +43,7 @@
 #include "memory/metaspaceGCThresholdUpdater.hpp"
 #include "memory/referenceType.hpp"
 #include "memory/universe.hpp"
+#include "oops/compressedOops.hpp"
 #include "runtime/flags/jvmFlag.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/osThread.hpp"
@@ -258,11 +259,11 @@ void ReferenceTypeConstant::serialize(JfrCheckpointWriter& writer) {
 }
 
 void NarrowOopModeConstant::serialize(JfrCheckpointWriter& writer) {
-  static const u4 nof_entries = Universe::HeapBasedNarrowOop + 1;
+  static const u4 nof_entries = CompressedOops::HeapBasedNarrowOop + 1;
   writer.write_count(nof_entries);
   for (u4 i = 0; i < nof_entries; ++i) {
     writer.write_key(i);
-    writer.write(Universe::narrow_oop_mode_to_string((Universe::NARROW_OOP_MODE)i));
+    writer.write(CompressedOops::mode_to_string((CompressedOops::Mode)i));
   }
 }
 
@@ -310,7 +311,7 @@ void ClassUnloadTypeSet::serialize(JfrCheckpointWriter& writer) {
   if (LeakProfiler::is_running()) {
     JfrCheckpointWriter leakp_writer(false, true, Thread::current());
     type_set.write(writer, &leakp_writer);
-    ObjectSampleCheckpoint::install(leakp_writer, true, true);
+    ObjectSampleCheckpoint::install(leakp_writer, true);
     return;
   }
   type_set.write(writer, NULL);
@@ -318,10 +319,10 @@ void ClassUnloadTypeSet::serialize(JfrCheckpointWriter& writer) {
 
 void TypeSet::serialize(JfrCheckpointWriter& writer) {
   TypeSetSerialization type_set(false);
-  if (LeakProfiler::is_suspended()) {
+  if (LeakProfiler::is_running()) {
     JfrCheckpointWriter leakp_writer(false, true, Thread::current());
     type_set.write(writer, &leakp_writer);
-    ObjectSampleCheckpoint::install(leakp_writer, false, true);
+    ObjectSampleCheckpoint::install(leakp_writer, false);
     return;
   }
   type_set.write(writer, NULL);

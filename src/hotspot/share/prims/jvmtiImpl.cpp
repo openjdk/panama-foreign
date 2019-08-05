@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/oopMapCache.hpp"
@@ -224,13 +225,6 @@ void GrowableCache::metadata_do(void f(Metadata*)) {
   }
 }
 
-void GrowableCache::gc_epilogue() {
-  int len = _elements->length();
-  for (int i=0; i<len; i++) {
-    _cache[i] = _elements->at(i)->getCacheValue();
-  }
-}
-
 //
 // class JvmtiBreakpoint
 //
@@ -388,10 +382,6 @@ void  JvmtiBreakpoints::metadata_do(void f(Metadata*)) {
   _bps.metadata_do(f);
 }
 
-void JvmtiBreakpoints::gc_epilogue() {
-  _bps.gc_epilogue();
-}
-
 void JvmtiBreakpoints::print() {
 #ifndef PRODUCT
   LogTarget(Trace, jvmti) log;
@@ -513,12 +503,6 @@ void JvmtiCurrentBreakpoints::metadata_do(void f(Metadata*)) {
   }
 }
 
-void JvmtiCurrentBreakpoints::gc_epilogue() {
-  if (_jvmti_breakpoints != NULL) {
-    _jvmti_breakpoints->gc_epilogue();
-  }
-}
-
 ///////////////////////////////////////////////////////////////
 //
 // class VM_GetOrSetLocal
@@ -608,7 +592,7 @@ bool VM_GetOrSetLocal::is_assignable(const char* ty_sign, Klass* klass, Thread* 
     ty_sign++;
     len -= 2;
   }
-  TempNewSymbol ty_sym = SymbolTable::new_symbol(ty_sign, len, thread);
+  TempNewSymbol ty_sym = SymbolTable::new_symbol(ty_sign, len);
   if (klass->name() == ty_sym) {
     return true;
   }
@@ -748,10 +732,11 @@ bool VM_GetOrSetLocal::doit_prologue() {
     }
   }
 
+  if (!check_slot_type_no_lvt(_jvf)) {
+    return false;
+  }
   if (method_oop->has_localvariable_table()) {
     return check_slot_type_lvt(_jvf);
-  } else {
-    return check_slot_type_no_lvt(_jvf);
   }
   return true;
 }

@@ -278,7 +278,7 @@ $(eval $(call SetTestOpt,TIMEOUT_FACTOR,JTREG))
 
 $(eval $(call ParseKeywordVariable, JTREG, \
     SINGLE_KEYWORDS := JOBS TIMEOUT_FACTOR TEST_MODE ASSERT VERBOSE RETAIN \
-        MAX_MEM, \
+        MAX_MEM RUN_PROBLEM_LISTS, \
     STRING_KEYWORDS := OPTIONS JAVA_OPTIONS VM_OPTIONS KEYWORDS \
         EXTRA_PROBLEM_LISTS AOT_MODULES, \
 ))
@@ -828,6 +828,7 @@ define SetupRunJtregTestBody
   endif
   JTREG_VERBOSE ?= fail,error,summary
   JTREG_RETAIN ?= fail,error
+  JTREG_RUN_PROBLEM_LISTS ?= false
 
   ifneq ($$($1_JTREG_MAX_MEM), 0)
     $1_JTREG_BASIC_OPTIONS += -vmoption:-Xmx$$($1_JTREG_MAX_MEM)
@@ -865,13 +866,19 @@ define SetupRunJtregTestBody
     $1_JTREG_BASIC_OPTIONS += -nativepath:$$($1_JTREG_NATIVEPATH)
   endif
 
+  ifeq ($$(JTREG_RUN_PROBLEM_LISTS), true)
+    JTREG_PROBLEM_LIST_PREFIX := -match:
+  else
+    JTREG_PROBLEM_LIST_PREFIX := -exclude:
+  endif
+
   ifneq ($$($1_JTREG_PROBLEM_LIST), )
-    $1_JTREG_BASIC_OPTIONS += $$(addprefix -exclude:, $$($1_JTREG_PROBLEM_LIST))
+    $1_JTREG_BASIC_OPTIONS += $$(addprefix $$(JTREG_PROBLEM_LIST_PREFIX), $$($1_JTREG_PROBLEM_LIST))
   endif
 
   ifneq ($$(JTREG_EXTRA_PROBLEM_LISTS), )
     # Accept both absolute paths as well as relative to the current test root.
-    $1_JTREG_BASIC_OPTIONS += $$(addprefix -exclude:, $$(wildcard \
+    $1_JTREG_BASIC_OPTIONS += $$(addprefix $$(JTREG_PROBLEM_LIST_PREFIX), $$(wildcard \
         $$(JTREG_EXTRA_PROBLEM_LISTS) \
         $$(addprefix $$($1_TEST_ROOT)/, $$(JTREG_EXTRA_PROBLEM_LISTS)) \
     ))
@@ -881,7 +888,8 @@ define SetupRunJtregTestBody
     $1_JTREG_BASIC_OPTIONS += -e:JIB_HOME=$$(JIB_HOME)
   endif
 
-  $1_JTREG_BASIC_OPTIONS += -e:TEST_IMAGE_GRAAL_DIR=${TEST_IMAGE_DIR}/hotspot/jtreg/graal
+  $1_JTREG_BASIC_OPTIONS += -e:TEST_IMAGE_DIR=$(TEST_IMAGE_DIR)
+  $1_JTREG_BASIC_OPTIONS += -e:TEST_IMAGE_GRAAL_DIR=$(TEST_IMAGE_DIR)/hotspot/jtreg/graal
 
   ifneq ($$(JTREG_FAILURE_HANDLER_OPTIONS), )
     $1_JTREG_LAUNCHER_OPTIONS += -Djava.library.path="$(JTREG_FAILURE_HANDLER_DIR)"
@@ -1194,10 +1202,18 @@ ifeq ($(TEST_OPTS_JCOV), true)
 	$(call LogWarn, Stopping JCov Grabber...)
 	$(JAVA) -jar $(JCOV_HOME)/lib/jcov.jar GrabberManager -stop -stoptimeout 3600
 
+  JCOV_REPORT_TITLE := JDK code coverage report<br/>
+  ifneq ($(JCOV_FILTERS), )
+    JCOV_REPORT_TITLE += Code filters: $(JCOV_FILTERS)<br>
+  endif
+  JCOV_REPORT_TITLE += Tests: $(TEST)
+
   jcov-gen-report: jcov-stop-grabber
 	$(call LogWarn, Generating JCov report ...)
 	$(JAVA) -Xmx4g -jar $(JCOV_HOME)/lib/jcov.jar RepGen -sourcepath \
 	    `$(ECHO) $(TOPDIR)/src/*/share/classes/ | $(TR) ' ' ':'` -fmt html \
+	    $(JCOV_FILTERS) \
+	    -mainReportTitle "$(JCOV_REPORT_TITLE)" \
 	    -o $(JCOV_REPORT) $(JCOV_RESULT_FILE)
 
   TARGETS += jcov-do-start-grabber jcov-start-grabber jcov-stop-grabber \

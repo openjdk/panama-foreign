@@ -31,6 +31,7 @@
 #include "classfile/systemDictionary.hpp"
 #include "code/codeCache.hpp"
 #include "gc/parallel/gcTaskManager.hpp"
+#include "gc/parallel/parallelArguments.hpp"
 #include "gc/parallel/parallelScavengeHeap.inline.hpp"
 #include "gc/parallel/parMarkBitMap.inline.hpp"
 #include "gc/parallel/pcTasks.hpp"
@@ -57,6 +58,7 @@
 #include "logging/log.hpp"
 #include "memory/iterator.inline.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/instanceClassLoaderKlass.inline.hpp"
 #include "oops/instanceKlass.inline.hpp"
@@ -77,6 +79,9 @@
 #include "utilities/formatBuffer.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/stack.inline.hpp"
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci.hpp"
+#endif
 
 #include <math.h>
 
@@ -1059,7 +1064,6 @@ void PSParallelCompact::post_compact()
   MetaspaceUtils::verify_metrics();
 
   heap->prune_scavengable_nmethods();
-  JvmtiExport::gc_epilogue();
 
 #if COMPILER2_OR_JVMCI
   DerivedPointerTable::update_pointers();
@@ -1709,7 +1713,7 @@ void PSParallelCompact::summary_phase(ParCompactionManager* cm,
 // Note that this method should only be called from the vm_thread while at a
 // safepoint.
 //
-// Note that the all_soft_refs_clear flag in the collector policy
+// Note that the all_soft_refs_clear flag in the soft ref policy
 // may be true because this method can be called without intervening
 // activity.  For example when the heap space is tight and full measure
 // are being taken to free space.
@@ -1762,7 +1766,7 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   PSAdaptiveSizePolicy* size_policy = heap->size_policy();
 
   // The scope of casr should end after code that can change
-  // CollectorPolicy::_should_clear_all_soft_refs.
+  // SoftRefPolicy::_should_clear_all_soft_refs.
   ClearedAllSoftRefs casr(maximum_heap_compaction,
                           heap->soft_ref_policy());
 
@@ -1775,7 +1779,7 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   // miscellaneous bookkeeping.
   pre_compact();
 
-  PreGCValues pre_gc_values(heap);
+  const PreGCValues pre_gc_values(heap);
 
   // Get the compaction manager reserved for the VM thread.
   ParCompactionManager* const vmthread_cm =
@@ -1921,7 +1925,7 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
 
     young_gen->print_used_change(pre_gc_values.young_gen_used());
     old_gen->print_used_change(pre_gc_values.old_gen_used());
-    MetaspaceUtils::print_metaspace_change(pre_gc_values.metadata_used());
+    MetaspaceUtils::print_metaspace_change(pre_gc_values.metaspace_sizes());
 
     // Track memory usage and detect low memory
     MemoryService::track_memory_usage();
@@ -1992,7 +1996,7 @@ bool PSParallelCompact::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_po
   // We also return false when it's a heterogenous heap because old generation cannot absorb data from eden
   // when it is allocated on different memory (example, nv-dimm) than young.
   if (!(UseAdaptiveSizePolicy && UseAdaptiveGCBoundary) ||
-      ParallelScavengeHeap::heap()->ps_collector_policy()->is_hetero_heap()) {
+      ParallelArguments::is_heterogeneous_heap()) {
     return false;
   }
 
@@ -2176,6 +2180,9 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
     // Prune dead klasses from subklass/sibling/implementor lists.
     Klass::clean_weak_klass_links(purged_class);
+
+    // Clean JVMCI metadata handles.
+    JVMCI_ONLY(JVMCI::do_unloading(purged_class));
   }
 
   _gc_tracer.report_object_count_after_gc(is_alive_closure());
@@ -2207,7 +2214,8 @@ void PSParallelCompact::adjust_roots(ParCompactionManager* cm) {
 
   CodeBlobToOopClosure adjust_from_blobs(&oop_closure, CodeBlobToOopClosure::FixRelocations);
   CodeCache::blobs_do(&adjust_from_blobs);
-  AOTLoader::oops_do(&oop_closure);
+  AOT_ONLY(AOTLoader::oops_do(&oop_closure);)
+
   ref_processor()->weak_oops_do(&oop_closure);
   // Roots were visited so references into the young gen in roots
   // may have been scanned.  Process them also.

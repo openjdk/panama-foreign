@@ -39,6 +39,7 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/iterator.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/orderAccess.hpp"
 #include "utilities/debug.hpp"
@@ -260,6 +261,24 @@ private:
     Atomic::store(true, &_failed);
   }
 
+  void unlink(nmethod* nm) {
+    // Unlinking of the dependencies must happen before the
+    // handshake separating unlink and purge.
+    nm->flush_dependencies(false /* delete_immediately */);
+
+    // We don't need to take the lock when unlinking nmethods from
+    // the Method, because it is only concurrently unlinked by
+    // the entry barrier, which acquires the per nmethod lock.
+    nm->unlink_from_method(false /* acquire_lock */);
+
+    if (nm->is_osr_method()) {
+      // Invalidate the osr nmethod before the handshake. The nmethod
+      // will be made unloaded after the handshake. Then invalidate_osr_method()
+      // will be called again, which will be a no-op.
+      nm->invalidate_osr_method();
+    }
+  }
+
 public:
   ZNMethodUnlinkClosure(bool unloading_occurred) :
       _unloading_occurred(unloading_occurred),
@@ -277,14 +296,7 @@ public:
     ZLocker<ZReentrantLock> locker(ZNMethod::lock_for_nmethod(nm));
 
     if (nm->is_unloading()) {
-      // Unlinking of the dependencies must happen before the
-      // handshake separating unlink and purge.
-      nm->flush_dependencies(false /* delete_immediately */);
-
-      // We don't need to take the lock when unlinking nmethods from
-      // the Method, because it is only concurrently unlinked by
-      // the entry barrier, which acquires the per nmethod lock.
-      nm->unlink_from_method(false /* acquire_lock */);
+      unlink(nm);
       return;
     }
 

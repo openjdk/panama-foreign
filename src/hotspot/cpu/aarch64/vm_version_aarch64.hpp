@@ -67,7 +67,11 @@ public:
     return false;
   }
 
+  // The CPU implementer codes can be found in
+  // ARM Architecture Reference Manual ARMv8, for ARMv8-A architecture profile
+  // https://developer.arm.com/docs/ddi0487/latest
   enum Family {
+    CPU_AMPERE    = 0xC0,
     CPU_ARM       = 'A',
     CPU_BROADCOM  = 'B',
     CPU_CAVIUM    = 'C',
@@ -120,6 +124,7 @@ public:
   static int dcache_line_size() {
     return (1 << ((_psr_info.ctr_el0 >> 16) & 0x0f)) * 4;
   }
+  static bool supports_fast_class_init_checks() { return true; }
 };
 
 #endif // CPU_AARCH64_VM_VERSION_AARCH64_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -65,6 +66,7 @@ import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration.Plugins;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins;
+import org.graalvm.compiler.nodes.spi.CoreProviders;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.OptimisticOptimizations;
 import org.graalvm.compiler.phases.PhaseSuite;
@@ -72,9 +74,9 @@ import org.graalvm.compiler.phases.VerifyPhase;
 import org.graalvm.compiler.phases.VerifyPhase.VerificationError;
 import org.graalvm.compiler.phases.contract.VerifyNodeCosts;
 import org.graalvm.compiler.phases.tiers.HighTierContext;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 import org.graalvm.compiler.phases.util.Providers;
 import org.graalvm.compiler.runtime.RuntimeProvider;
+import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
 import jdk.internal.vm.compiler.word.LocationIdentity;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -126,7 +128,7 @@ public class CheckGraalInvariants extends GraalCompilerTest {
 
         protected String getClassPath() {
             String bootclasspath;
-            if (Java8OrEarlier) {
+            if (JavaVersionUtil.JAVA_SPEC <= 8) {
                 bootclasspath = System.getProperty("sun.boot.class.path");
             } else {
                 bootclasspath = System.getProperty("jdk.module.path") + File.pathSeparatorChar + System.getProperty("jdk.module.upgrade.path");
@@ -138,7 +140,7 @@ public class CheckGraalInvariants extends GraalCompilerTest {
             if (className.equals("module-info") || className.startsWith("META-INF.versions.")) {
                 return false;
             }
-            if (!Java8OrEarlier) {
+            if (JavaVersionUtil.JAVA_SPEC > 8) {
                 // @formatter:off
                 /*
                  * Work around to prevent:
@@ -246,7 +248,7 @@ public class CheckGraalInvariants extends GraalCompilerTest {
 
         List<String> errors = Collections.synchronizedList(new ArrayList<>());
 
-        List<VerifyPhase<PhaseContext>> verifiers = new ArrayList<>();
+        List<VerifyPhase<CoreProviders>> verifiers = new ArrayList<>();
 
         // If you add a new type to test here, be sure to add appropriate
         // methods to the BadUsageWithEquals class below
@@ -266,9 +268,12 @@ public class CheckGraalInvariants extends GraalCompilerTest {
         verifiers.add(new VerifyVirtualizableUsage());
         verifiers.add(new VerifyUpdateUsages());
         verifiers.add(new VerifyBailoutUsage());
+        verifiers.add(new VerifySystemPropertyUsage());
         verifiers.add(new VerifyInstanceOfUsage());
         verifiers.add(new VerifyGraphAddUsage());
+        verifiers.add(new VerifyBufferUsage());
         verifiers.add(new VerifyGetOptionsUsage());
+        verifiers.add(new VerifyUnsafeAccess());
 
         VerifyFoldableMethods foldableMethodsVerifier = new VerifyFoldableMethods();
         if (tool.shouldVerifyFoldableMethods()) {
@@ -301,21 +306,29 @@ public class CheckGraalInvariants extends GraalCompilerTest {
                 String className = c.getName();
                 executor.execute(() -> {
                     try {
-                        checkClass(c, metaAccess);
+                        checkClass(c, metaAccess, verifiers);
                     } catch (Throwable e) {
                         errors.add(String.format("Error while checking %s:%n%s", className, printStackTraceToString(e)));
                     }
                 });
 
-                for (Method m : c.getDeclaredMethods()) {
-                    if (Modifier.isNative(m.getModifiers()) || Modifier.isAbstract(m.getModifiers())) {
+                ResolvedJavaType type = metaAccess.lookupJavaType(c);
+                List<ResolvedJavaMethod> methods = new ArrayList<>();
+                methods.addAll(Arrays.asList(type.getDeclaredMethods()));
+                methods.addAll(Arrays.asList(type.getDeclaredConstructors()));
+                ResolvedJavaMethod clinit = type.getClassInitializer();
+                if (clinit != null) {
+                    methods.add(clinit);
+                }
+
+                for (ResolvedJavaMethod method : methods) {
+                    if (Modifier.isNative(method.getModifiers()) || Modifier.isAbstract(method.getModifiers())) {
                         // ignore
                     } else {
-                        String methodName = className + "." + m.getName();
+                        String methodName = className + "." + method.getName();
                         if (matches(filters, methodName)) {
                             executor.execute(() -> {
                                 try (DebugContext debug = DebugContext.create(options, DebugHandlersFactory.LOADER)) {
-                                    ResolvedJavaMethod method = metaAccess.lookupJavaMethod(m);
                                     boolean isSubstitution = method.getAnnotation(Snippet.class) != null || method.getAnnotation(MethodSubstitution.class) != null;
                                     StructuredGraph graph = new StructuredGraph.Builder(options, debug).method(method).setIsSubstitution(isSubstitution).build();
                                     try (DebugCloseable s = debug.disableIntercept(); DebugContext.Scope ds = debug.scope("CheckingGraph", graph, method)) {
@@ -400,13 +413,17 @@ public class CheckGraalInvariants extends GraalCompilerTest {
 
     /**
      * @param metaAccess
+     * @param verifiers
      */
-    private static void checkClass(Class<?> c, MetaAccessProvider metaAccess) {
+    private static void checkClass(Class<?> c, MetaAccessProvider metaAccess, List<VerifyPhase<CoreProviders>> verifiers) {
         if (Node.class.isAssignableFrom(c)) {
             if (c.getAnnotation(NodeInfo.class) == null) {
                 throw new AssertionError(String.format("Node subclass %s requires %s annotation", c.getName(), NodeClass.class.getSimpleName()));
             }
             VerifyNodeCosts.verifyNodeClass(c);
+        }
+        for (VerifyPhase<CoreProviders> verifier : verifiers) {
+            verifier.verifyClass(c, metaAccess);
         }
     }
 
@@ -430,8 +447,8 @@ public class CheckGraalInvariants extends GraalCompilerTest {
     /**
      * Checks the invariants for a single graph.
      */
-    private static void checkGraph(List<VerifyPhase<PhaseContext>> verifiers, HighTierContext context, StructuredGraph graph) {
-        for (VerifyPhase<PhaseContext> verifier : verifiers) {
+    private static void checkGraph(List<VerifyPhase<CoreProviders>> verifiers, HighTierContext context, StructuredGraph graph) {
+        for (VerifyPhase<CoreProviders> verifier : verifiers) {
             if (!(verifier instanceof VerifyUsageWithEquals) || shouldVerifyEquals(graph.method())) {
                 verifier.apply(graph, context);
             } else {

@@ -180,8 +180,8 @@ class Method : public Metadata {
   }
 
   // Helper routine: get klass name + "." + method name + signature as
-  // C string, for the purpose of providing more useful NoSuchMethodErrors
-  // and fatal error handling. The string is allocated in resource
+  // C string, for the purpose of providing more useful
+  // fatal error handling. The string is allocated in resource
   // area if a buffer is not provided by the caller.
   char* name_and_sig_as_C_string() const;
   char* name_and_sig_as_C_string(char* buf, int size) const;
@@ -189,6 +189,18 @@ class Method : public Metadata {
   // Static routine in the situations we don't have a Method*
   static char* name_and_sig_as_C_string(Klass* klass, Symbol* method_name, Symbol* signature);
   static char* name_and_sig_as_C_string(Klass* klass, Symbol* method_name, Symbol* signature, char* buf, int size);
+
+  // Get return type + klass name + "." + method name + ( parameters types )
+  // as a C string or print it to an outputStream.
+  // This is to be used to assemble strings passed to Java, so that
+  // the text more resembles Java code. Used in exception messages.
+  // Memory is allocated in the resource area; the caller needs
+  // a ResourceMark.
+  const char* external_name() const;
+  void  print_external_name(outputStream *os) const;
+
+  static const char* external_name(                  Klass* klass, Symbol* method_name, Symbol* signature);
+  static void  print_external_name(outputStream *os, Klass* klass, Symbol* method_name, Symbol* signature);
 
   Bytecodes::Code java_code_at(int bci) const {
     return Bytecodes::java_code_at(this, bcp_from(bci));
@@ -456,13 +468,20 @@ class Method : public Metadata {
   void set_adapter_entry(AdapterHandlerEntry* adapter) {
     constMethod()->set_adapter_entry(adapter);
   }
+  void set_adapter_trampoline(AdapterHandlerEntry** trampoline) {
+    constMethod()->set_adapter_trampoline(trampoline);
+  }
   void update_adapter_trampoline(AdapterHandlerEntry* adapter) {
     constMethod()->update_adapter_trampoline(adapter);
+  }
+  void set_from_compiled_entry(address entry) {
+    _from_compiled_entry =  entry;
   }
 
   address get_i2c_entry();
   address get_c2i_entry();
   address get_c2i_unverified_entry();
+  address get_c2i_no_clinit_check_entry();
   AdapterHandlerEntry* adapter() const {
     return constMethod()->adapter();
   }
@@ -499,7 +518,8 @@ class Method : public Metadata {
   address interpreter_entry() const              { return _i2i_entry; }
   // Only used when first initialize so we can set _i2i_entry and _from_interpreted_entry
   void set_interpreter_entry(address entry) {
-    assert(!is_shared(), "shared method's interpreter entry should not be changed at run time");
+    assert(!is_shared(),
+           "shared method's interpreter entry should not be changed at run time");
     if (_i2i_entry != entry) {
       _i2i_entry = entry;
     }
@@ -607,6 +627,7 @@ class Method : public Metadata {
 
   // true if method needs no dynamic dispatch (final and/or no vtable entry)
   bool can_be_statically_bound() const;
+  bool can_be_statically_bound(InstanceKlass* context) const;
   bool can_be_statically_bound(AccessFlags class_access_flags) const;
 
   // returns true if the method has any backward branches.
@@ -668,6 +689,8 @@ class Method : public Metadata {
 #ifdef TIERED
   bool has_aot_code() const                      { return aot_code() != NULL; }
 #endif
+
+  bool needs_clinit_barrier() const;
 
   // sizing
   static int header_size()                       {
@@ -913,14 +936,14 @@ class Method : public Metadata {
   // whether it is not compilable for another reason like having a
   // breakpoint set in it.
   bool  is_not_compilable(int comp_level = CompLevel_any) const;
-  void set_not_compilable(int comp_level = CompLevel_all, bool report = true, const char* reason = NULL);
-  void set_not_compilable_quietly(int comp_level = CompLevel_all) {
-    set_not_compilable(comp_level, false);
+  void set_not_compilable(const char* reason, int comp_level = CompLevel_all, bool report = true);
+  void set_not_compilable_quietly(const char* reason, int comp_level = CompLevel_all) {
+    set_not_compilable(reason, comp_level, false);
   }
   bool  is_not_osr_compilable(int comp_level = CompLevel_any) const;
-  void set_not_osr_compilable(int comp_level = CompLevel_all, bool report = true, const char* reason = NULL);
-  void set_not_osr_compilable_quietly(int comp_level = CompLevel_all) {
-    set_not_osr_compilable(comp_level, false);
+  void set_not_osr_compilable(const char* reason, int comp_level = CompLevel_all, bool report = true);
+  void set_not_osr_compilable_quietly(const char* reason, int comp_level = CompLevel_all) {
+    set_not_osr_compilable(reason, comp_level, false);
   }
   bool is_always_compilable() const;
 

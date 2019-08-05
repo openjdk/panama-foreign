@@ -31,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
 /**
@@ -50,9 +49,12 @@ public class ProcessHelper implements sun.tools.common.ProcessHelper {
 
     /**
      * Gets the main class name for the given Java process by parsing the
-     * process command line.
+     * process command line. If the application was started with the <em>-jar</em>
+     * option this method returns the name of the jar file. If the application
+     * was started with <em>-m</em> or <em>--module</em> option, the method returns
+     * the module name and the main class name.
      * @param pid - process ID (pid)
-     * @return main class name or null if the process no longer exists or
+     * @return the main class name or null if the process no longer exists or
      * was started with a native launcher (e.g. jcmd etc)
      */
 
@@ -64,7 +66,7 @@ public class ProcessHelper implements sun.tools.common.ProcessHelper {
         if (cmdLine.startsWith(CMD_PREFIX)) {
             cmdLine = cmdLine.substring(CMD_PREFIX.length());
         }
-        String[] parts = cmdLine.split(" ");
+        String[] parts = cmdLine.split("\0");
         String mainClass = null;
 
         if(parts.length == 0) {
@@ -81,26 +83,27 @@ public class ProcessHelper implements sun.tools.common.ProcessHelper {
             }
         }
 
-        // If -jar option is used then read the main class name from the manifest file.
-        // Otherwise, the main class name is either specified in -m or --module options or it
-        // is the first part that is not a Java option (doesn't start with '-' and is not a
-        // classpath or a module path).
+        // To be consistent with the behavior on other platforms, if -jar, -m, or --module
+        // options are used then just return the value (the path to the jar file or module
+        // name with a main class). Otherwise, the main class name is the first part that
+        // is not a Java option (doesn't start with '-' and is not a classpath or a module
+        // whitespace option).
 
         for (int i = 1; i < parts.length && mainClass == null; i++) {
             if (i < parts.length - 1) {
-                // Check if the module is executed with explicitly specified main class
-                if ((parts[i].equals("-m") || parts[i].equals("--module"))) {
-                    return getMainClassFromModuleArg(parts[i + 1]);
-                }
-                // Check if the main class needs to be read from the manifest.mf in a JAR file
-                if (parts[i].equals("-jar")) {
-                    return getMainClassFromJar(parts[i + 1], pid);
+                if (parts[i].equals("-m") || parts[i].equals("--module") || parts[i].equals("-jar")) {
+                    return parts[i + 1];
                 }
             }
-            // If this is a classpath or a module path option then skip the next part
-            // (the classpath or the module path itself)
+
+            if (parts[i].startsWith("--module=")) {
+                return parts[i].substring("--module=".length());
+            }
+
+            // If this is a classpath or a module whitespace option then skip the next part
+            // (the classpath or the option value itself)
             if (parts[i].equals("-cp") || parts[i].equals("-classpath") ||  parts[i].equals("--class-path") ||
-                    parts[i].equals("-p") || parts[i].equals("--module-path")) {
+                    isModuleWhiteSpaceOption(parts[i])) {
                 i++;
                 continue;
             }
@@ -108,48 +111,39 @@ public class ProcessHelper implements sun.tools.common.ProcessHelper {
             if (parts[i].startsWith("-")) {
                 continue;
             }
+
+            // If it is a source-file mode then return null
+            if (parts[i].endsWith(".java")) {
+                return null;
+            }
+
             mainClass = parts[i];
         }
         return mainClass;
 
     }
 
-    private String getMainClassFromModuleArg(String moduleArg) {
-        int pos = moduleArg.lastIndexOf("/");
-        return (pos > 0 && pos < moduleArg.length()-1) ? moduleArg.substring(pos + 1) : null;
-    }
-
-    private String getMainClassFromJar(String jar, String pid) {
-        if (!jar.startsWith("/")) {
-            String cwd = getCurrentWorkingDir(pid);
-            if (cwd != null) {
-                jar = cwd + "/" + jar;
-            }
-        }
-        try (JarFile jarFile = new JarFile(jar)) {
-            Manifest mf = jarFile.getManifest();
-            if (mf != null) {
-                Attributes mainAttributes = mf.getMainAttributes();
-                return mainAttributes.getValue("Main-Class");
-            }
-        } catch (IOException e) {
-            return null;
-        }
-        return null;
-    }
-
-    private static String getCurrentWorkingDir(String pid) {
-        return ("/proc/" + pid + "/cwd");
-    }
-
     private static String getCommandLine(String pid) {
         try (Stream<String> lines =
                      Files.lines(Paths.get("/proc/" + pid + "/cmdline"))) {
-            return lines.map(x -> x.replaceAll("\0", " ")).findFirst().orElse(null);
+            return lines.findFirst().orElse(null);
         } catch (IOException | UncheckedIOException e) {
             return null;
         }
     }
+
+    private static boolean isModuleWhiteSpaceOption(String option) {
+        return option.equals("-p") ||
+                option.equals("--module-path") ||
+                option.equals("--upgrade-module-path") ||
+                option.equals("--add-modules") ||
+                option.equals("--limit-modules") ||
+                option.equals("--add-exports") ||
+                option.equals("--add-opens") ||
+                option.equals("--add-reads") ||
+                option.equals("--patch-module");
+    }
+
 }
 
 

@@ -83,7 +83,7 @@ public class AllPackagesIndexWriter extends HtmlDocletWriter {
      */
     protected void buildAllPackagesFile() throws DocFileIOException {
         String label = resources.getText("doclet.All_Packages");
-        HtmlTree bodyTree = getBody(true, getWindowTitle(label));
+        HtmlTree bodyTree = getBody(getWindowTitle(label));
         HtmlTree header = HtmlTree.HEADER();
         addTop(header);
         navBar.setUserHeader(getUserHeaderFooter(true));
@@ -125,7 +125,6 @@ public class AllPackagesIndexWriter extends HtmlDocletWriter {
                 table.addRow(pkg, packageLinkContent, summaryContent);
             }
         }
-        HtmlTree li = HtmlTree.LI(HtmlStyle.blockList, table.toContent());
-        content.add(HtmlTree.UL(HtmlStyle.blockList, li));
+        content.add(table.toContent());
     }
 }

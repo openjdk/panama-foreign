@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,8 @@ import jdk.test.lib.Asserts;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,11 +61,32 @@ public final class OutputAnalyzer {
     /**
      * Create an OutputAnalyzer, a utility class for verifying output
      *
+     * @param file File to analyze
+     */
+    public OutputAnalyzer(Path file) throws IOException {
+        this(Files.readString(file));
+    }
+
+    /**
+     * Create an OutputAnalyzer, a utility class for verifying output
+     *
      * @param stdout stdout buffer to analyze
      * @param stderr stderr buffer to analyze
      */
     public OutputAnalyzer(String stdout, String stderr) {
         buffer = OutputBuffer.of(stdout, stderr);
+    }
+
+    /**
+     * Create an OutputAnalyzer, a utility class for verifying output
+     *
+     * @param stdout stdout buffer to analyze
+     * @param stderr stderr buffer to analyze
+     * @param stderr exitValue result to analyze
+     */
+    public OutputAnalyzer(String stdout, String stderr, int exitValue)
+    {
+        buffer = OutputBuffer.of(stdout, stderr, exitValue);
     }
 
     /**
@@ -612,10 +635,10 @@ public final class OutputAnalyzer {
      * just a subset of it.
      *
      * @param from
-     *            The line from where output will be matched.
+     *            The line (excluded) from where output will be matched.
      *            Set {@code from} to null for matching from the first line.
      * @param to
-     *            The line until where output will be matched.
+     *            The line (excluded) until where output will be matched.
      *            Set {@code to} to null for matching until the last line.
      * @param pattern
      *            Matching pattern
@@ -630,10 +653,10 @@ public final class OutputAnalyzer {
      * just a subset of it.
      *
      * @param from
-     *            The line from where stdout will be matched.
+     *            The line (excluded) from where stdout will be matched.
      *            Set {@code from} to null for matching from the first line.
      * @param to
-     *            The line until where stdout will be matched.
+     *            The line (excluded) until where stdout will be matched.
      *            Set {@code to} to null for matching until the last line.
      * @param pattern
      *            Matching pattern
@@ -647,25 +670,26 @@ public final class OutputAnalyzer {
 
         int fromIndex = 0;
         if (from != null) {
-            fromIndex = indexOf(lines, from);
-            Asserts.assertGreaterThan(fromIndex, -1,
+            fromIndex = indexOf(lines, from, 0) + 1; // + 1 -> apply 'pattern' to lines after 'from' match
+            Asserts.assertGreaterThan(fromIndex, 0,
                     "The line/pattern '" + from + "' from where the output should match can not be found");
         }
 
         int toIndex = lines.size();
         if (to != null) {
-            toIndex = indexOf(lines, to);
-            Asserts.assertGreaterThan(toIndex, -1,
+            toIndex = indexOf(lines, to, fromIndex);
+            Asserts.assertGreaterThan(toIndex, fromIndex,
                     "The line/pattern '" + to + "' until where the output should match can not be found");
         }
 
         List<String> subList = lines.subList(fromIndex, toIndex);
-        Asserts.assertFalse(subList.isEmpty(), "There are no lines to check");
+        Asserts.assertFalse(subList.isEmpty(), "There are no lines to check:"
+                + " range " + fromIndex + ".." + toIndex + ", subList = " + subList);
 
         subList.stream()
                .filter(Pattern.compile(pattern).asPredicate().negate())
                .findAny()
-               .ifPresent(line -> Asserts.assertTrue(false,
+               .ifPresent(line -> Asserts.fail(
                        "The line '" + line + "' does not match pattern '" + pattern + "'"));
 
         return this;
@@ -675,11 +699,12 @@ public final class OutputAnalyzer {
      * Check if there is a line matching {@code regexp} and return its index
      *
      * @param regexp Matching pattern
+     * @param fromIndex Start matching after so many lines skipped
      * @return Index of first matching line
      */
-    private int indexOf(List<String> lines, String regexp) {
+    private int indexOf(List<String> lines, String regexp, int fromIndex) {
         Pattern pattern = Pattern.compile(regexp);
-        for (int i = 0; i < lines.size(); i++) {
+        for (int i = fromIndex; i < lines.size(); i++) {
             if (pattern.matcher(lines.get(i)).matches()) {
                 return i;
             }

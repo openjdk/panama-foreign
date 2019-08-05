@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
  * @modules jdk.internal.vm.ci/jdk.vm.ci.meta
  *          jdk.internal.vm.ci/jdk.vm.ci.runtime
  *          java.base/jdk.internal.misc
- * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI -Djvmci.Compiler=null jdk.vm.ci.runtime.test.TestMetaAccessProvider
+ * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI -XX:-UseJVMCICompiler jdk.vm.ci.runtime.test.TestMetaAccessProvider
  */
 
 package jdk.vm.ci.runtime.test;
@@ -68,16 +68,22 @@ public class TestMetaAccessProvider extends TypeUniverse {
                     metaAccess.encodeDeoptActionAndReason(DEOPT_ACTION, DEOPT_REASON, DEBUG_IDS[3]).asInt()
     };
 
+    private static boolean isUnsafeAnoymous(ResolvedJavaType type) {
+        return type.getHostClass() != null;
+    }
+
     @Test
     public void lookupJavaTypeTest() {
         for (Class<?> c : classes) {
             ResolvedJavaType type = metaAccess.lookupJavaType(c);
             assertNotNull(c.toString(), type);
-            assertEquals(c.toString(), type.getName(), toInternalName(c.getName()));
-            assertEquals(c.toString(), type.getName(), toInternalName(type.toJavaName()));
-            assertEquals(c.toString(), c.getName(), type.toClassName());
-            if (!type.isArray()) {
-                assertEquals(c.toString(), c.getName(), type.toJavaName());
+            if (!isUnsafeAnoymous(type)) {
+                assertEquals(c.toString(), type.getName(), toInternalName(c.getName()));
+                assertEquals(c.toString(), type.getName(), toInternalName(type.toJavaName()));
+                assertEquals(c.toString(), c.getName(), type.toClassName());
+                if (!type.isArray()) {
+                    assertEquals(c.toString(), c.getName(), type.toJavaName());
+                }
             }
         }
     }
@@ -92,7 +98,9 @@ public class TestMetaAccessProvider extends TypeUniverse {
         ResolvedJavaType[] result = metaAccess.lookupJavaTypes(classes.toArray(new Class<?>[classes.size()]));
         int counter = 0;
         for (Class<?> aClass : classes) {
-            assertEquals("Unexpected javaType: " + result[counter] + " while expecting of class: " + aClass, result[counter].toClassName(), aClass.getName());
+            if (!isUnsafeAnoymous(result[counter])) {
+                assertEquals("Unexpected javaType: " + result[counter] + " while expecting of class: " + aClass, result[counter].toClassName(), aClass.getName());
+            }
             counter++;
         }
     }

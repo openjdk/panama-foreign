@@ -41,10 +41,12 @@
 #include "memory/metaspaceShared.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/constMethod.hpp"
 #include "oops/constantPool.hpp"
 #include "oops/method.inline.hpp"
 #include "oops/methodData.hpp"
+#include "oops/objArrayKlass.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/symbol.hpp"
@@ -116,6 +118,11 @@ Method::Method(ConstMethod* xconst, AccessFlags access_flags) {
 void Method::deallocate_contents(ClassLoaderData* loader_data) {
   MetadataFactory::free_metadata(loader_data, constMethod());
   set_constMethod(NULL);
+#if INCLUDE_JVMCI
+  if (method_data()) {
+    FailedSpeculation::free_failed_speculations(method_data()->get_failed_speculations_address());
+  }
+#endif
   MetadataFactory::free_metadata(loader_data, method_data());
   set_method_data(NULL);
   MetadataFactory::free_metadata(loader_data, method_counters());
@@ -137,6 +144,12 @@ address Method::get_c2i_entry() {
 address Method::get_c2i_unverified_entry() {
   assert(adapter() != NULL, "must have");
   return adapter()->get_c2i_unverified_entry();
+}
+
+address Method::get_c2i_no_clinit_check_entry() {
+  assert(VM_Version::supports_fast_class_init_checks(), "");
+  assert(adapter() != NULL, "must have");
+  return adapter()->get_c2i_no_clinit_check_entry();
 }
 
 char* Method::name_and_sig_as_C_string() const {
@@ -176,6 +189,27 @@ char* Method::name_and_sig_as_C_string(Klass* klass, Symbol* method_name, Symbol
   }
 
   return buf;
+}
+
+const char* Method::external_name() const {
+  return external_name(constants()->pool_holder(), name(), signature());
+}
+
+void Method::print_external_name(outputStream *os) const {
+  print_external_name(os, constants()->pool_holder(), name(), signature());
+}
+
+const char* Method::external_name(Klass* klass, Symbol* method_name, Symbol* signature) {
+  stringStream ss;
+  print_external_name(&ss, klass, method_name, signature);
+  return ss.as_string();
+}
+
+void Method::print_external_name(outputStream *os, Klass* klass, Symbol* method_name, Symbol* signature) {
+  signature->print_as_signature_external_return_type(os);
+  os->print(" %s.%s(", klass->external_name(), method_name->as_C_string());
+  signature->print_as_signature_external_parameters(os);
+  os->print(")");
 }
 
 int Method::fast_exception_handler_bci_for(const methodHandle& mh, Klass* ex_klass, int throw_bci, TRAPS) {
@@ -598,6 +632,10 @@ bool Method::can_be_statically_bound() const {
   return can_be_statically_bound(method_holder()->access_flags());
 }
 
+bool Method::can_be_statically_bound(InstanceKlass* context) const {
+  return (method_holder() == context) && can_be_statically_bound();
+}
+
 bool Method::is_accessor() const {
   return is_getter() || is_setter();
 }
@@ -670,6 +708,10 @@ bool Method::is_static_initializer() const {
 
 bool Method::is_object_initializer() const {
    return name() == vmSymbols::object_initializer_name();
+}
+
+bool Method::needs_clinit_barrier() const {
+  return is_static() && !method_holder()->is_initialized();
 }
 
 objArrayHandle Method::resolved_checked_exceptions_impl(Method* method, TRAPS) {
@@ -799,16 +841,14 @@ void Method::set_signature_handler(address handler) {
 
 
 void Method::print_made_not_compilable(int comp_level, bool is_osr, bool report, const char* reason) {
+  assert(reason != NULL, "must provide a reason");
   if (PrintCompilation && report) {
     ttyLocker ttyl;
     tty->print("made not %scompilable on ", is_osr ? "OSR " : "");
     if (comp_level == CompLevel_all) {
       tty->print("all levels ");
     } else {
-      tty->print("levels ");
-      for (int i = (int)CompLevel_none; i <= comp_level; i++) {
-        tty->print("%d ", i);
-      }
+      tty->print("level %d ", comp_level);
     }
     this->print_short_name(tty);
     int size = this->code_size();
@@ -859,7 +899,7 @@ bool Method::is_not_compilable(int comp_level) const {
 }
 
 // call this when compiler finds that this method is not compilable
-void Method::set_not_compilable(int comp_level, bool report, const char* reason) {
+void Method::set_not_compilable(const char* reason, int comp_level, bool report) {
   if (is_always_compilable()) {
     // Don't mark a method which should be always compilable
     return;
@@ -890,7 +930,7 @@ bool Method::is_not_osr_compilable(int comp_level) const {
   return false;
 }
 
-void Method::set_not_osr_compilable(int comp_level, bool report, const char* reason) {
+void Method::set_not_osr_compilable(const char* reason, int comp_level, bool report) {
   print_made_not_compilable(comp_level, /*is_osr*/ true, report, reason);
   if (comp_level == CompLevel_all) {
     set_not_c1_osr_compilable();
@@ -907,7 +947,7 @@ void Method::set_not_osr_compilable(int comp_level, bool report, const char* rea
 
 // Revert to using the interpreter and clear out the nmethod
 void Method::clear_code(bool acquire_lock /* = true */) {
-  MutexLockerEx pl(acquire_lock ? Patching_lock : NULL, Mutex::_no_safepoint_check_flag);
+  MutexLocker pl(acquire_lock ? Patching_lock : NULL, Mutex::_no_safepoint_check_flag);
   // this may be NULL if c2i adapters have not been made yet
   // Only should happen at allocate time.
   if (adapter() == NULL) {
@@ -926,22 +966,29 @@ void Method::clear_code(bool acquire_lock /* = true */) {
 void Method::unlink_method() {
   _code = NULL;
 
-  assert(DumpSharedSpaces, "dump time only");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "dump time only");
   // Set the values to what they should be at run time. Note that
   // this Method can no longer be executed during dump time.
   _i2i_entry = Interpreter::entry_for_cds_method(this);
   _from_interpreted_entry = _i2i_entry;
+
+  if (DynamicDumpSharedSpaces) {
+    assert(_from_compiled_entry != NULL, "sanity");
+  } else {
+    // TODO: Simplify the adapter trampoline allocation for static archiving.
+    //       Remove the use of CDSAdapterHandlerEntry.
+    CDSAdapterHandlerEntry* cds_adapter = (CDSAdapterHandlerEntry*)adapter();
+    constMethod()->set_adapter_trampoline(cds_adapter->get_adapter_trampoline());
+    _from_compiled_entry = cds_adapter->get_c2i_entry_trampoline();
+    assert(*((int*)_from_compiled_entry) == 0,
+           "must be NULL during dump time, to be initialized at run time");
+  }
 
   if (is_native()) {
     *native_function_addr() = NULL;
     set_signature_handler(NULL);
   }
   NOT_PRODUCT(set_compiled_invocation_count(0);)
-
-  CDSAdapterHandlerEntry* cds_adapter = (CDSAdapterHandlerEntry*)adapter();
-  constMethod()->set_adapter_trampoline(cds_adapter->get_adapter_trampoline());
-  _from_compiled_entry = cds_adapter->get_c2i_entry_trampoline();
-  assert(*((int*)_from_compiled_entry) == 0, "must be NULL during dump time, to be initialized at run time");
 
   set_method_data(NULL);
   clear_method_counters();
@@ -1004,7 +1051,7 @@ void Method::unlink_method() {
                                                               _c2i_entry ---------------------------------+->[c2i entry..]
  _i2i_entry  -------------+                                   _i2c_entry ---------------+-> [i2c entry..] |
  _from_interpreted_entry  |                                   _c2i_unverified_entry     |                 |
-         |                |                                                             |                 |
+         |                |                                   _c2i_no_clinit_check_entry|                 |
          |                |  (_cds_entry_table: CODE)                                   |                 |
          |                +->[0]: jmp _entry_table[0] --> (i2i_entry_for "zero_locals") |                 |
          |                |                               (allocated at run time)       |                 |
@@ -1140,7 +1187,7 @@ bool Method::check_code() const {
 
 // Install compiled code.  Instantly it can execute.
 void Method::set_code(const methodHandle& mh, CompiledMethod *code) {
-  MutexLockerEx pl(Patching_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker pl(Patching_lock, Mutex::_no_safepoint_check_flag);
   assert( code, "use clear_code to remove code" );
   assert( mh->check_code(), "" );
 
@@ -1547,7 +1594,7 @@ bool Method::load_signature_classes(const methodHandle& m, TRAPS) {
   Symbol*  signature = m->signature();
   for(SignatureStream ss(signature); !ss.is_done(); ss.next()) {
     if (ss.is_object()) {
-      Symbol* sym = ss.as_symbol(CHECK_(false));
+      Symbol* sym = ss.as_symbol();
       Symbol*  name  = sym;
       Klass* klass = SystemDictionary::resolve_or_null(name, class_loader,
                                              protection_domain, THREAD);
@@ -1876,7 +1923,6 @@ void BreakpointInfo::set(Method* method) {
   Thread *thread = Thread::current();
   *method->bcp_from(_bci) = Bytecodes::_breakpoint;
   method->incr_number_of_breakpoints(thread);
-  SystemDictionary::notice_modification();
   {
     // Deoptimize all dependents on this method
     HandleMark hm(thread);
@@ -2043,7 +2089,7 @@ void Method::ensure_jmethod_ids(ClassLoaderData* loader_data, int capacity) {
     // Have to add jmethod_ids() to class loader data thread-safely.
     // Also have to add the method to the list safely, which the cld lock
     // protects as well.
-    MutexLockerEx ml(cld->metaspace_lock(),  Mutex::_no_safepoint_check_flag);
+    MutexLocker ml(cld->metaspace_lock(),  Mutex::_no_safepoint_check_flag);
     if (cld->jmethod_ids() == NULL) {
       cld->set_jmethod_ids(new JNIMethodBlock(capacity));
     } else {
@@ -2067,7 +2113,7 @@ jmethodID Method::make_jmethod_id(ClassLoaderData* loader_data, Method* m) {
     // Have to add jmethod_ids() to class loader data thread-safely.
     // Also have to add the method to the list safely, which the cld lock
     // protects as well.
-    MutexLockerEx ml(cld->metaspace_lock(),  Mutex::_no_safepoint_check_flag);
+    MutexLocker ml(cld->metaspace_lock(),  Mutex::_no_safepoint_check_flag);
     if (cld->jmethod_ids() == NULL) {
       cld->set_jmethod_ids(new JNIMethodBlock());
     }
@@ -2361,7 +2407,7 @@ void Method::log_touched(TRAPS) {
 }
 
 void Method::print_touched_methods(outputStream* out) {
-  MutexLockerEx ml(Thread::current()->is_VM_thread() ? NULL : TouchedMethodLog_lock);
+  MutexLocker ml(Thread::current()->is_VM_thread() ? NULL : TouchedMethodLog_lock);
   out->print_cr("# Method::print_touched_methods version 1");
   if (_touched_method_table) {
     for (int i = 0; i < TOUCHED_METHOD_TABLE_SIZE; i++) {

@@ -45,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.Arrays;
 
 import jdk.internal.access.JavaNetInetAddressAccess;
 import jdk.internal.access.SharedSecrets;
@@ -289,7 +290,7 @@ class InetAddress implements java.io.Serializable {
     }
 
     /* Used to store the name service provider */
-    private static transient NameService nameService = null;
+    private static transient NameService nameService;
 
     /**
      * Used to store the best available hostname.
@@ -304,8 +305,7 @@ class InetAddress implements java.io.Serializable {
      * Load net library into runtime, and perform initializations.
      */
     static {
-        String str = java.security.AccessController.doPrivileged(
-                new GetPropertyAction("java.net.preferIPv6Addresses"));
+        String str = GetPropertyAction.privilegedGetProperty("java.net.preferIPv6Addresses");
         if (str == null) {
             preferIPv6Address = PREFER_IPV4_VALUE;
         } else if (str.equalsIgnoreCase("true")) {
@@ -317,13 +317,7 @@ class InetAddress implements java.io.Serializable {
         } else {
             preferIPv6Address = PREFER_IPV4_VALUE;
         }
-        AccessController.doPrivileged(
-            new java.security.PrivilegedAction<>() {
-                public Void run() {
-                    System.loadLibrary("net");
-                    return null;
-                }
-            });
+        jdk.internal.loader.BootLoader.loadLibrary("net");
         SharedSecrets.setJavaNetInetAddressAccess(
                 new JavaNetInetAddressAccess() {
                     public String getOriginalHostName(InetAddress ia) {
@@ -989,29 +983,28 @@ class InetAddress implements java.io.Serializable {
             String hostEntry;
             String host = null;
 
-            String addrString = addrToString(addr);
             try (Scanner hostsFileScanner = new Scanner(new File(hostsFile), "UTF-8")) {
                 while (hostsFileScanner.hasNextLine()) {
                     hostEntry = hostsFileScanner.nextLine();
                     if (!hostEntry.startsWith("#")) {
                         hostEntry = removeComments(hostEntry);
-                        if (hostEntry.contains(addrString)) {
-                            host = extractHost(hostEntry, addrString);
-                            if (host != null) {
-                                break;
-                            }
+                        String[] mapping = hostEntry.split("\\s+");
+                        if (mapping.length >= 2 &&
+                            Arrays.equals(addr, createAddressByteArray(mapping[0]))) {
+                            host = mapping[1];
+                            break;
                         }
                     }
                 }
             } catch (FileNotFoundException e) {
                 throw new UnknownHostException("Unable to resolve address "
-                        + addrString + " as hosts file " + hostsFile
+                        + Arrays.toString(addr) + " as hosts file " + hostsFile
                         + " not found ");
             }
 
             if ((host == null) || (host.isEmpty()) || (host.equals(" "))) {
                 throw new UnknownHostException("Requested address "
-                        + addrString
+                        + Arrays.toString(addr)
                         + " resolves to an invalid entry in hosts file "
                         + hostsFile);
             }
@@ -1106,22 +1099,6 @@ class InetAddress implements java.io.Serializable {
                 }
             }
             return hostAddr;
-        }
-
-        /**
-         * IP Address to host mapping
-         * use first host alias in list
-         */
-        private String extractHost(String hostEntry, String addrString) {
-            String[] mapping = hostEntry.split("\\s+");
-            String host = null;
-
-            if (mapping.length >= 2) {
-                if (mapping[0].equalsIgnoreCase(addrString)) {
-                    host = mapping[1];
-                }
-            }
-            return host;
         }
     }
 

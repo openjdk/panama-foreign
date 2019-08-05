@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,7 @@ public class MetricsTester {
                 String mountPoint = paths[1];
                 if (root != null && cgroupPath != null) {
                     if (root.equals("/")) {
-                        if (cgroupPath.equals("/")) {
+                        if (!cgroupPath.equals("/")) {
                             finalPath = mountPoint + cgroupPath;
                         } else {
                             finalPath = mountPoint;
@@ -94,7 +94,7 @@ public class MetricsTester {
                         if (root.equals(cgroupPath)) {
                             finalPath = mountPoint;
                         } else {
-                            if (root.indexOf(cgroupPath) == 0) {
+                            if (cgroupPath.startsWith(root)) {
                                 if (cgroupPath.length() > root.length()) {
                                     String cgroupSubstr = cgroupPath.substring(root.length());
                                     finalPath = mountPoint + cgroupSubstr;
@@ -103,7 +103,7 @@ public class MetricsTester {
                         }
                     }
                 }
-                subSystemPaths.put(subSystem, new String[]{finalPath});
+                subSystemPaths.put(subSystem, new String[]{finalPath, mountPoint});
             }
         }
     }
@@ -531,16 +531,20 @@ public class MetricsTester {
         long newUsage = metrics.getCpuUsage();
         long[] newPerCpu = metrics.getPerCpuUsage();
 
-        if (newSysVal <= startSysVal) {
+        // system/user CPU usage counters may be slowly increasing.
+        // allow for equal values for a pass
+        if (newSysVal < startSysVal) {
             fail(SubSystem.CPU, "getCpuSystemUsage", newSysVal, startSysVal);
         }
 
-        if (newUserVal <= startUserVal) {
+        // system/user CPU usage counters may be slowly increasing.
+        // allow for equal values for a pass
+        if (newUserVal < startUserVal) {
             fail(SubSystem.CPU, "getCpuUserUsage", newUserVal, startUserVal);
         }
 
         if (newUsage <= startUsage) {
-            fail(SubSystem.CPU, "getCpuUserUsage", newUsage, startUsage);
+            fail(SubSystem.CPU, "getCpuUsage", newUsage, startUsage);
         }
 
         boolean success = false;
@@ -560,7 +564,7 @@ public class MetricsTester {
         long memoryMaxUsage = metrics.getMemoryMaxUsage();
         long memoryUsage = metrics.getMemoryUsage();
 
-        long[] ll = new long[64*1024*1024]; // 64M
+        byte[] bb = new byte[64*1024*1024]; // 64M
 
         long newMemoryMaxUsage = metrics.getMemoryMaxUsage();
         long newMemoryUsage = metrics.getMemoryUsage();

@@ -22,6 +22,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/classLoaderDataGraph.hpp"
 #include "gc/z/zBarrier.inline.hpp"
 #include "gc/z/zMark.inline.hpp"
 #include "gc/z/zMarkCache.inline.hpp"
@@ -200,7 +201,7 @@ void ZMark::finish_work() {
 }
 
 bool ZMark::is_array(uintptr_t addr) const {
-  return ZOop::to_oop(addr)->is_objArray();
+  return ZOop::from_address(addr)->is_objArray();
 }
 
 void ZMark::push_partial_array(uintptr_t addr, size_t size, bool finalizable) {
@@ -347,9 +348,9 @@ void ZMark::mark_and_follow(ZMarkCache* cache, ZMarkStackEntry entry) {
   }
 
   if (is_array(addr)) {
-    follow_array_object(objArrayOop(ZOop::to_oop(addr)), finalizable);
+    follow_array_object(objArrayOop(ZOop::from_address(addr)), finalizable);
   } else {
-    follow_object(ZOop::to_oop(addr), finalizable);
+    follow_object(ZOop::from_address(addr), finalizable);
   }
 }
 
@@ -632,14 +633,23 @@ public:
 
 class ZMarkConcurrentRootsTask : public ZTask {
 private:
+  SuspendibleThreadSetJoiner          _sts_joiner;
   ZConcurrentRootsIterator            _roots;
   ZMarkConcurrentRootsIteratorClosure _cl;
 
 public:
   ZMarkConcurrentRootsTask(ZMark* mark) :
       ZTask("ZMarkConcurrentRootsTask"),
-      _roots(true /* marking */),
-      _cl() {}
+      _sts_joiner(true /* active */),
+      _roots(ClassLoaderData::_claim_strong),
+      _cl() {
+    ClassLoaderDataGraph_lock->lock();
+    ClassLoaderDataGraph::clear_claimed_marks();
+  }
+
+  ~ZMarkConcurrentRootsTask() {
+    ClassLoaderDataGraph_lock->unlock();
+  }
 
   virtual void work() {
     _roots.oops_do(&_cl);

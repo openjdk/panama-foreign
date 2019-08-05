@@ -440,6 +440,22 @@ class DivVDNode : public VectorNode {
   virtual int Opcode() const;
 };
 
+//------------------------------AbsVBNode--------------------------------------
+// Vector Abs byte
+class AbsVBNode : public VectorNode {
+public:
+  AbsVBNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  virtual int Opcode() const;
+};
+
+//------------------------------AbsVSNode--------------------------------------
+// Vector Abs short
+class AbsVSNode : public VectorNode {
+public:
+  AbsVSNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  virtual int Opcode() const;
+};
+
 //------------------------------MinVNode--------------------------------------
 // Vector Min
 class MinVNode : public VectorNode {
@@ -461,6 +477,22 @@ public:
 class AbsVNode : public VectorNode {
 public:
   AbsVNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  virtual int Opcode() const;
+};
+
+//------------------------------AbsVINode--------------------------------------
+// Vector Abs int
+class AbsVINode : public VectorNode {
+public:
+  AbsVINode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  virtual int Opcode() const;
+};
+
+//------------------------------AbsVLNode--------------------------------------
+// Vector Abs long
+class AbsVLNode : public VectorNode {
+public:
+  AbsVLNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
   virtual int Opcode() const;
 };
 
@@ -1289,7 +1321,7 @@ class VectorMaskCmpNode : public VectorNode {
 
   virtual int Opcode() const;
   virtual uint hash() const { return VectorNode::hash() + _predicate; }
-  virtual uint cmp( const Node &n ) const {
+  virtual bool cmp( const Node &n ) const {
     return VectorNode::cmp(n) && _predicate == ((VectorMaskCmpNode&)n)._predicate;
   }
   BoolTest::mask get_predicate() { return _predicate; }
@@ -1329,7 +1361,7 @@ class VectorTestNode : public Node {
   }
   virtual int Opcode() const;
   virtual uint hash() const { return Node::hash() + _predicate; }
-  virtual uint cmp( const Node &n ) const {
+  virtual bool cmp( const Node &n ) const {
     return Node::cmp(n) && _predicate == ((VectorTestNode&)n)._predicate;
   }
   virtual const Type *bottom_type() const { return TypeInt::BOOL; }
@@ -1401,7 +1433,7 @@ class VectorStoreMaskNode : public VectorNode {
   }
 
   virtual uint hash() const { return VectorNode::hash() + _mask_size; }
-  virtual uint cmp( const Node &n ) const {
+  virtual bool cmp( const Node &n ) const {
     return VectorNode::cmp(n) && _mask_size == ((VectorStoreMaskNode&)n)._mask_size;
   }
   int GetInputMaskSize() const { return _mask_size; }
@@ -1419,7 +1451,7 @@ class VectorReinterpretNode : public VectorNode {
       : VectorNode(in, dst_vt), _src_vt(src_vt) { }
 
   virtual uint hash() const { return VectorNode::hash() + _src_vt->hash(); }
-  virtual uint cmp( const Node &n ) const {
+  virtual bool cmp( const Node &n ) const {
     return VectorNode::cmp(n) && !Type::cmp(_src_vt,((VectorReinterpretNode&)n)._src_vt);
   }
   virtual Node *Identity(PhaseGVN *phase);

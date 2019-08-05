@@ -135,8 +135,7 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_
   int frame_size_in_words = frame_size_in_bytes / wordSize;
   *total_frame_words = frame_size_in_words;
 
-  // Save registers, fpu state, and flags.
-
+  // Save Integer and Float registers.
   __ enter();
   __ push_CPU_state(save_vectors);
 
@@ -800,10 +799,29 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
   }
 #endif
 
+  // Class initialization barrier for static methods
+  address c2i_no_clinit_check_entry = NULL;
+  if (VM_Version::supports_fast_class_init_checks()) {
+    Label L_skip_barrier;
+
+    { // Bypass the barrier for non-static methods
+      __ ldrw(rscratch1, Address(rmethod, Method::access_flags_offset()));
+      __ andsw(zr, rscratch1, JVM_ACC_STATIC);
+      __ br(Assembler::EQ, L_skip_barrier); // non-static
+    }
+
+    __ load_method_holder(rscratch2, rmethod);
+    __ clinit_barrier(rscratch2, rscratch1, &L_skip_barrier);
+    __ far_jump(RuntimeAddress(SharedRuntime::get_handle_wrong_method_stub()));
+
+    __ bind(L_skip_barrier);
+    c2i_no_clinit_check_entry = __ pc();
+  }
+
   gen_c2i_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs, skip_fixup);
 
   __ flush();
-  return AdapterHandlerLibrary::new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry);
+  return AdapterHandlerLibrary::new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry, c2i_no_clinit_check_entry);
 }
 
 int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
@@ -1421,7 +1439,6 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
       out_sig_bt[argc++] = in_sig_bt[i];
     }
   } else {
-    Thread* THREAD = Thread::current();
     in_elem_bt = NEW_RESOURCE_ARRAY(BasicType, total_in_args);
     SignatureStream ss(method->signature());
     for (int i = 0; i < total_in_args ; i++ ) {
@@ -1429,7 +1446,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
         // Arrays are passed as int, elem* pair
         out_sig_bt[argc++] = T_INT;
         out_sig_bt[argc++] = T_ADDRESS;
-        Symbol* atype = ss.as_symbol(CHECK_NULL);
+        Symbol* atype = ss.as_symbol();
         const char* at = atype->as_C_string();
         if (strlen(at) == 2) {
           assert(at[0] == '[', "must be");
@@ -1589,6 +1606,15 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   // must ensure that this first instruction is a B, BL, NOP, BKPT,
   // SVC, HVC, or SMC.  Make it a NOP.
   __ nop();
+
+  if (VM_Version::supports_fast_class_init_checks() && method->needs_clinit_barrier()) {
+    Label L_skip_barrier;
+    __ mov_metadata(rscratch2, method->method_holder()); // InstanceKlass*
+    __ clinit_barrier(rscratch2, rscratch1, &L_skip_barrier);
+    __ far_jump(RuntimeAddress(SharedRuntime::get_handle_wrong_method_stub()));
+
+    __ bind(L_skip_barrier);
+  }
 
   // Generate stack overflow check
   if (UseStackBanging) {
@@ -2889,7 +2915,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   bool cause_return = (poll_type == POLL_AT_RETURN);
   bool save_vectors = (poll_type == POLL_AT_VECTOR_LOOP);
 
-  // Save registers, fpu state, and flags
+  // Save Integer and Float registers.
   map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, save_vectors);
 
   // The following is basically a call_VM.  However, we need the precise

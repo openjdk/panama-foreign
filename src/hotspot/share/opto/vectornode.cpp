@@ -71,7 +71,7 @@ int VectorNode::opcode(int sopc, BasicType bt) {
     return Op_SubVD;
   case Op_MulI:
     switch (bt) {
-    case T_BOOLEAN:
+    case T_BOOLEAN:return 0;
     case T_BYTE:   return Op_MulVB;
     case T_CHAR:
     case T_SHORT:  return Op_MulVS;
@@ -105,6 +105,18 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_DivD:
     assert(bt == T_DOUBLE, "must be");
     return Op_DivVD;
+  case Op_AbsI:
+    switch (bt) {
+    case T_BOOLEAN:
+    case T_CHAR:  return 0; // abs does not make sense for unsigned
+    case T_BYTE:  return Op_AbsVB;
+    case T_SHORT: return Op_AbsVS;
+    case T_INT:   return Op_AbsVI;
+    default: ShouldNotReachHere(); return 0;
+    }
+  case Op_AbsL:
+    assert(bt == T_LONG, "must be");
+    return Op_AbsVL;
   case Op_MinI:
     switch (bt) {
     case T_BOOLEAN:
@@ -141,16 +153,6 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_MaxD:
     assert(bt == T_DOUBLE, "must be");
     return Op_MaxV;
-  case Op_AbsI:
-    switch (bt) {
-    case T_BOOLEAN:
-    case T_CHAR:  return 0; // abs does not make sense for unsigned
-    case T_BYTE:
-    case T_SHORT:
-    case T_INT:
-    case T_LONG:  return Op_AbsV;
-    default: ShouldNotReachHere(); return 0;
-    }
   case Op_AbsF:
     assert(bt == T_FLOAT, "must be");
     return Op_AbsVF;
@@ -386,8 +388,6 @@ void VectorNode::vector_operands(Node* n, uint* start, uint* end) {
   case Op_LoadI:   case Op_LoadL:
   case Op_LoadF:   case Op_LoadD:
   case Op_LoadP:   case Op_LoadN:
-  case Op_LoadBarrierSlowReg:
-  case Op_LoadBarrierWeakSlowReg:
     *start = 0;
     *end   = 0; // no vector operands
     break;
@@ -465,6 +465,10 @@ VectorNode* VectorNode::make(int vopc, Node* n1, Node* n2, const TypeVect* vt) {
   case Op_AbsV: return new AbsVNode(n1, vt);
   case Op_AbsVF: return new AbsVFNode(n1, vt);
   case Op_AbsVD: return new AbsVDNode(n1, vt);
+  case Op_AbsVB: return new AbsVBNode(n1, vt);
+  case Op_AbsVS: return new AbsVSNode(n1, vt);
+  case Op_AbsVI: return new AbsVINode(n1, vt);
+  case Op_AbsVL: return new AbsVLNode(n1, vt);
 
   case Op_NegVI: return new NegVINode(n1, vt);
   case Op_NegVF: return new NegVFNode(n1, vt);

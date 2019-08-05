@@ -39,8 +39,6 @@ import org.graalvm.compiler.hotspot.HotSpotInstructionProfiling;
 import org.graalvm.compiler.hotspot.lir.VerifyMaxRegisterSizePhase;
 import org.graalvm.compiler.hotspot.phases.AheadOfTimeVerificationPhase;
 import org.graalvm.compiler.hotspot.phases.LoadJavaMirrorWithKlassPhase;
-import org.graalvm.compiler.hotspot.phases.WriteBarrierAdditionPhase;
-import org.graalvm.compiler.hotspot.phases.WriteBarrierVerificationPhase;
 import org.graalvm.compiler.hotspot.phases.aot.AOTInliningPolicy;
 import org.graalvm.compiler.hotspot.phases.aot.EliminateRedundantInitializationPhase;
 import org.graalvm.compiler.hotspot.phases.aot.ReplaceConstantNodesPhase;
@@ -112,11 +110,6 @@ public class HotSpotSuitesProvider extends SuitesProviderBase {
             }
         }
 
-        ret.getMidTier().appendPhase(new WriteBarrierAdditionPhase(config));
-        if (VerifyPhases.getValue(options)) {
-            ret.getMidTier().appendPhase(new WriteBarrierVerificationPhase(config));
-        }
-
         return ret;
     }
 
@@ -142,8 +135,7 @@ public class HotSpotSuitesProvider extends SuitesProviderBase {
 
                 StructuredGraph targetGraph = new StructuredGraph.Builder(graph.getOptions(), graph.getDebug(), AllowAssumptions.YES).method(graph.method()).trackNodeSourcePosition(
                                 graph.trackNodeSourcePosition()).build();
-                SimplifyingGraphDecoder graphDecoder = new SimplifyingGraphDecoder(runtime.getTarget().arch, targetGraph, context.getMetaAccess(), context.getConstantReflection(),
-                                context.getConstantFieldProvider(), context.getStampProvider(), !ImmutableCode.getValue(graph.getOptions()));
+                SimplifyingGraphDecoder graphDecoder = new SimplifyingGraphDecoder(runtime.getTarget().arch, targetGraph, context, !ImmutableCode.getValue(graph.getOptions()));
                 graphDecoder.decode(encodedGraph);
             }
 
