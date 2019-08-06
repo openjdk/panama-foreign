@@ -17974,6 +17974,34 @@ instruct vmul4I(vecX dst, vecX src1, vecX src2)
   ins_pipe(vmul128);
 %}
 
+instruct vmul2L(vecX dst, vecX src1, vecX src2, iRegLNoSp tmp1, iRegLNoSp tmp2)
+%{
+  predicate(n->as_Vector()->length() == 2);
+  match(Set dst (MulVL src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP tmp1, TEMP tmp2);
+  format %{ "umov   $tmp1, $src1, D, 0\n\t"
+            "umov   $tmp2, $src2, D, 0\n\t"
+            "mul    $tmp2, $tmp2, $tmp1\n\t"
+            "mov    $dst,  T2D,   0, $tmp2\t# insert into vector(2L)\n\t"
+            "umov   $tmp1, $src1, D, 1\n\t"
+            "umov   $tmp2, $src2, D, 1\n\t"
+            "mul    $tmp2, $tmp2, $tmp1\n\t"
+            "mov    $dst,  T2D,   1, $tmp2\t# insert into vector(2L)\n\t"
+  %}
+  ins_encode %{
+    __ umov($tmp1$$Register, as_FloatRegister($src1$$reg), __ D, 0);
+    __ umov($tmp2$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ mul(as_Register($tmp2$$reg), as_Register($tmp2$$reg), as_Register($tmp1$$reg));
+    __ mov(as_FloatRegister($dst$$reg), __ T2D, 0, $tmp2$$Register);
+    __ umov($tmp1$$Register, as_FloatRegister($src1$$reg), __ D, 1);
+    __ umov($tmp2$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ mul(as_Register($tmp2$$reg), as_Register($tmp2$$reg), as_Register($tmp1$$reg));
+    __ mov(as_FloatRegister($dst$$reg), __ T2D, 1, $tmp2$$Register);
+  %}
+  ins_pipe(pipe_slow);
+%}
+
 instruct vmul2F(vecD dst, vecD src1, vecD src2)
 %{
   predicate(n->as_Vector()->length() == 2);
