@@ -256,7 +256,8 @@ module java.base {
         java.management,
         jdk.crypto.cryptoki,
         jdk.net,
-        jdk.sctp;
+        jdk.sctp,
+        jdk.incubator.foreign;
     exports sun.nio.cs to
         jdk.charsets;
     exports sun.reflect.annotation to

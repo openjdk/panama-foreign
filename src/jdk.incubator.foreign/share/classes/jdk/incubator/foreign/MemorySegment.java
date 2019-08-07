@@ -29,9 +29,12 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.BufferScope;
 import jdk.internal.foreign.HeapScope;
 import jdk.internal.foreign.NativeScope;
+import jdk.internal.foreign.MappedMemoryScope;
 
 import java.nio.ByteBuffer;
-
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.io.IOException;
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
  * and temporal bounds. Spatial bounds make sure that memory access operatons on a memory segment cannot affect a memory location
@@ -55,13 +58,16 @@ import java.nio.ByteBuffer;
  * using the corresponding factory method {@link MemorySegment#ofArray(Object)}. Memory segments obtained
  * in this way are called <em>array memory segments</em>.
  * <p>
- * Finally, it is also possible to obtain a memory segment backed by an existing Java byte buffer (see {@link ByteBuffer}),
+ * It is possible to obtain a memory segment backed by an existing Java byte buffer (see {@link ByteBuffer}),
  * using the factory method {@link MemorySegment#ofByteBuffer(ByteBuffer)}.
  * Memory segments obtained in this way are called <em>buffer memory segments</em>. Note that buffer memory segments might
  * be backed by native memory (as in the case of native memory segments), heap memory (as in the case of array memory segments)
  * depending on the characteristics of the byte buffer instance the segment is associated with. For instance, a buffer memory
  * segment obtained from a byte buffer created with the {@link ByteBuffer#allocateDirect(int)} method will be backed
  * by native memory.
+ * <p>
+ * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
+ * {@link MemorySegment#ofPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>.
  * <p>
  * Typically, when a memory segment is closed (see {@link MemorySegment#close()}, all resources associated with it
  * are released; this has different meanings depending on the kind of memory segment being considered:
@@ -70,6 +76,7 @@ import java.nio.ByteBuffer;
  *     <li>closing an array memory segment can result in the backing Java array to be garbage collected</li>
  *     <li>closing an buffer memory segment can result in the backing byte buffer to be garbage collected (which,
  *     depending on the byte buffer kind, might trigger further cleanup actions)</li>
+ *     <li>closing a mapped memory segment results in the backing memory-mapped file to be unmapped</li>
  * </ul>
  *
  * <h2><a id = "thread-confinement">Thread confinement</a></h2>
@@ -280,6 +287,23 @@ ofNative(bitsSize, 1);
      */
     static MemorySegment ofNative(long bytesSize) throws IllegalArgumentException {
         return ofNative(bytesSize, 1);
+    }
+
+    /**
+     * Creates a new mapped memory segment that models a newly allocated block of memory of the given size, mapped from the given path.
+     *
+     * @param path the path to the resource to memory map.
+     * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
+     * @return a new mapped memory segment.
+     * @throws IllegalArgumentException if specified size is &lt; 0.
+     * @throws UnsupportedOperationException if an unsupported map mode is specified.
+     * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
+     *
+     * @implNote When obtaining a mapped segment from a newly created file, the initialization state of the contents of the block
+     * of mapped memory associated with the returned mapped memory segment is unspecified and should not be relied upon.
+     */
+    static MemorySegment ofPath(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IllegalArgumentException, IOException {
+        return MappedMemoryScope.of(path, bytesSize, mapMode);
     }
 
     /**
