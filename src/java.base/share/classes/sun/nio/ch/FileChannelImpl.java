@@ -46,6 +46,7 @@ import java.nio.channels.WritableByteChannel;
 import jdk.internal.access.JavaIOFileDescriptorAccess;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.ref.Cleaner;
 import jdk.internal.ref.CleanerFactory;
 
@@ -861,7 +862,7 @@ public class FileChannelImpl
     // -- Memory-mapped buffers --
 
     private static class Unmapper
-        implements Runnable
+        implements Runnable, UnmapperProxy
     {
         // may be required to close file
         private static final NativeDispatcher nd = new FileDispatcherImpl();
@@ -873,23 +874,35 @@ public class FileChannelImpl
 
         private volatile long address;
         private final long size;
-        private final int cap;
+        private final long cap;
         private final FileDescriptor fd;
+        private final int pagePosition;
 
-        private Unmapper(long address, long size, int cap,
-                         FileDescriptor fd)
+        private Unmapper(long address, long size, long cap,
+                         FileDescriptor fd, int pagePosition)
         {
             assert (address != 0);
             this.address = address;
             this.size = size;
             this.cap = cap;
             this.fd = fd;
+            this.pagePosition = pagePosition;
 
             synchronized (Unmapper.class) {
                 count++;
                 totalSize += size;
                 totalCapacity += cap;
             }
+        }
+
+        @Override
+        public long address() {
+            return address;
+        }
+
+        @Override
+        public void unmap() {
+            run();
         }
 
         public void run() {
@@ -925,34 +938,42 @@ public class FileChannelImpl
     private static final int MAP_RW = 1;
     private static final int MAP_PV = 2;
 
-    public MappedByteBuffer map(MapMode mode, long position, long size)
+    public MappedByteBuffer map(MapMode mode, long position, long size) throws IOException {
+        if (size > Integer.MAX_VALUE)
+            throw new IllegalArgumentException("Size exceeds Integer.MAX_VALUE");
+        int imode = imode(mode);
+        Unmapper unmapper = mapInternal(imode, position, size);
+        if (unmapper == null) {
+            // a valid file descriptor is not required
+            FileDescriptor dummy = new FileDescriptor();
+            if ((!writable) || (imode == MAP_RO))
+                return Util.newMappedByteBufferR(0, 0, dummy, null);
+            else
+                return Util.newMappedByteBuffer(0, 0, dummy, null);
+        }
+        else if ((!writable) || (imode == MAP_RO)) {
+            return Util.newMappedByteBufferR((int)unmapper.cap,
+                    unmapper.address + unmapper.pagePosition,
+                    unmapper.fd,
+                    unmapper);
+        } else {
+            return Util.newMappedByteBuffer((int)unmapper.cap,
+                    unmapper.address + unmapper.pagePosition,
+                    unmapper.fd,
+                    unmapper);
+        }
+    }
+
+    public Unmapper mapInternal(int imode, long position, long size)
         throws IOException
     {
         ensureOpen();
-        if (mode == null)
-            throw new NullPointerException("Mode is null");
         if (position < 0L)
             throw new IllegalArgumentException("Negative position");
         if (size < 0L)
             throw new IllegalArgumentException("Negative size");
         if (position + size < 0)
             throw new IllegalArgumentException("Position + size overflow");
-        if (size > Integer.MAX_VALUE)
-            throw new IllegalArgumentException("Size exceeds Integer.MAX_VALUE");
-
-        int imode;
-        if (mode == MapMode.READ_ONLY)
-            imode = MAP_RO;
-        else if (mode == MapMode.READ_WRITE)
-            imode = MAP_RW;
-        else if (mode == MapMode.PRIVATE)
-            imode = MAP_PV;
-        else
-            throw new UnsupportedOperationException();
-        if ((mode != MapMode.READ_ONLY) && !writable)
-            throw new NonWritableChannelException();
-        if (!readable)
-            throw new NonReadableChannelException();
 
         long addr = -1;
         int ti = -1;
@@ -986,13 +1007,7 @@ public class FileChannelImpl
                 }
 
                 if (size == 0) {
-                    addr = 0;
-                    // a valid file descriptor is not required
-                    FileDescriptor dummy = new FileDescriptor();
-                    if ((!writable) || (imode == MAP_RO))
-                        return Util.newMappedByteBufferR(0, 0, dummy, null);
-                    else
-                        return Util.newMappedByteBuffer(0, 0, dummy, null);
+                    return null;
                 }
 
                 pagePosition = (int)(position % allocationGranularity);
@@ -1031,23 +1046,32 @@ public class FileChannelImpl
 
             assert (IOStatus.checkAll(addr));
             assert (addr % allocationGranularity == 0);
-            int isize = (int)size;
-            Unmapper um = new Unmapper(addr, mapSize, isize, mfd);
-            if ((!writable) || (imode == MAP_RO)) {
-                return Util.newMappedByteBufferR(isize,
-                                                 addr + pagePosition,
-                                                 mfd,
-                                                 um);
-            } else {
-                return Util.newMappedByteBuffer(isize,
-                                                addr + pagePosition,
-                                                mfd,
-                                                um);
-            }
+            Unmapper um = new Unmapper(addr, mapSize, size, mfd, pagePosition);
+            return um;
         } finally {
             threads.remove(ti);
             endBlocking(IOStatus.checkAll(addr));
         }
+    }
+
+    public int imode(MapMode mode) {
+        int imode;
+
+        if (mode == null)
+            throw new NullPointerException("Mode is null");
+        else if (mode == MapMode.READ_ONLY)
+            imode = MAP_RO;
+        else if (mode == MapMode.READ_WRITE)
+            imode = MAP_RW;
+        else if (mode == MapMode.PRIVATE)
+            imode = MAP_PV;
+        else
+            throw new UnsupportedOperationException();
+        if ((mode != MapMode.READ_ONLY) && !writable)
+            throw new NonWritableChannelException();
+        if (!readable)
+            throw new NonReadableChannelException();
+        return imode;
     }
 
     /**

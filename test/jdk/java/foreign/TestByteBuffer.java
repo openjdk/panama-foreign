@@ -30,6 +30,7 @@
  * @run testng TestByteBuffer
  */
 
+
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -206,6 +207,25 @@ public class TestByteBuffer {
                 MemoryAddress base = segment.baseAddress();
                 checkTuples(base, mbb);
             });
+        }
+    }
+
+    @Test
+    public void testMappedSegment() throws Throwable {
+        File f = new File("test2.out");
+        f.createNewFile();
+        f.deleteOnExit();
+
+        //write to channel
+        try (MemorySegment segment = MemorySegment.ofPath(f.toPath(), tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
+            MemoryAddress base = segment.baseAddress();
+            initTuples(base);
+        }
+
+        //read from channel
+        try (MemorySegment segment = MemorySegment.ofPath(f.toPath(), tuples.byteSize(), FileChannel.MapMode.READ_ONLY)) {
+            MemoryAddress base = segment.baseAddress();
+            checkTuples(base, segment.asByteBuffer());
         }
     }
 
