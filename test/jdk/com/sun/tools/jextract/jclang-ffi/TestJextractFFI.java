@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 /*
  * @test
  * @modules jdk.jextract
+ * @library ..
+ * @build MacConfig
  * @run main TestJextractFFI
  */
 public class TestJextractFFI {
@@ -82,14 +84,22 @@ public class TestJextractFFI {
         return err;
     }
 
+
     public void jextractJNI() throws IOException, InterruptedException {
-        List<String> command = List.of(jextract_cmd,
+        List<String> command = new ArrayList<>();
+        command.add(jextract_cmd);
+        if (MacConfig.MAC_WITH_NO_USR_INCLUDE) {
+            command.add("-I");
+            command.add(MacConfig.MAC_INCLUDE_ROOT + "/usr/include");
+        }
+        command.addAll(List.of(
                 "-I", clang_header_path.toString(),
                 "-t", "clang",
                 "-o", CLANG_JAR,
                 "-d", CLANG_JNI_PATH,
                 clang_header_path
-                        .resolve("clang-c").resolve("Index.h").toString());
+                        .resolve("clang-c").resolve("Index.h").toString()));
+
         launch(command);
     }
 
@@ -106,7 +116,13 @@ public class TestJextractFFI {
     }
 
     public void jextractFFI() throws IOException, InterruptedException {
-        List<String> command = List.of(jextract_cmd,
+        List<String> command = new ArrayList<>();
+        command.add(jextract_cmd);
+        if (MacConfig.MAC_WITH_NO_USR_INCLUDE) {
+            command.add("-I");
+            command.add(MacConfig.MAC_INCLUDE_ROOT + "/usr/include");
+        }
+        command.addAll(List.of(
                 "-I", clang_header_path.toString(),
                 "-t", "clang",
                 "-d", CLANG_FFI_PATH,
@@ -118,7 +134,7 @@ public class TestJextractFFI {
                 "-J--add-reads=jdk.internal.clang=clang",
                 "-J--patch-module=jdk.internal.clang=" + JCLANG_PATH,
                 clang_header_path
-                        .resolve("clang-c").resolve("Index.h").toString());
+                        .resolve("clang-c").resolve("Index.h").toString()));
         File err = launch(command);
         if (! Files.lines(err.toPath())
                 .anyMatch(s -> s.contains("FFI"))) {

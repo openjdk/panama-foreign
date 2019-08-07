@@ -26,8 +26,7 @@
  * @requires os.family != "windows"
  * @library ..
  * @modules jdk.jextract
- * @build SystemHeadersTest
- *
+ * @build SystemHeadersTest MacConfig
  * @run testng/othervm SystemHeadersTest
  */
 
@@ -36,16 +35,23 @@ import org.testng.annotations.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.testng.Assert.*;
 
 public class SystemHeadersTest extends JextractToolRunner {
-
     @Test
     public void testNoFollowSystemHeaders() throws IOException {
         Path clzPath = getOutputFilePath("out");
-        run("--static-forwarder", "false", "-d", clzPath.toString(),
+
+        if (MacConfig.MAC_WITH_NO_USR_INCLUDE) {
+            // Mac OS Mojave does not have /usr/include, try in alternate path
+            run("-I", MacConfig.MAC_INCLUDE_ROOT + "/usr/include", "--static-forwarder", "false",
+                "-d", clzPath.toString(), getInputFilePath("foo.h").toString()).checkSuccess();
+        } else {
+            run("--static-forwarder", "false", "-d", clzPath.toString(),
                 getInputFilePath("foo.h").toString()).checkSuccess();
+        }
         assertEquals(Files.list(clzPath).
                 filter(p -> p.toString().endsWith("class")).count(), 1);
     }
