@@ -44,7 +44,7 @@ import static org.testng.Assert.assertTrue;
  * @test
  * @modules jdk.jextract
  * @bug 8225630
- * @build JextractToolRunner
+ * @build JextractToolRunner MacConfig
  * @run testng/othervm -Duser.language=en JextractToolProviderTest
  */
 public class JextractToolProviderTest extends JextractToolRunner {
@@ -601,7 +601,12 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Files.write(tmpSrc, List.of("#include <" + name + ">;"));
         Path fileJar = getOutputFilePath(name.replace(".", "_") + ".jar");
         deleteFile(fileJar);
-        JextractResult result = run("-o", fileJar.toString(), tmpSrc.toString());
+        JextractResult result;
+        if (MacConfig.MAC_WITH_NO_USR_INCLUDE) {
+            result = run("-I", MacConfig.MAC_INCLUDE_ROOT + "/usr/include", "-o", fileJar.toString(), tmpSrc.toString());
+        } else {
+            result = run("-o", fileJar.toString(), tmpSrc.toString());
+        }
         validation.accept(result, fileJar);
         deleteFile(fileJar);
     }

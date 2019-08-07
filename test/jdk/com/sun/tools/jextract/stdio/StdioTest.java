@@ -21,6 +21,7 @@
  * questions.
  */
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.spi.ToolProvider;
@@ -29,6 +30,8 @@ import org.testng.annotations.Test;
 /*
  * @test
  * @requires os.family != "windows"
+ * @library ..
+ * @build MacConfig
  * @run testng StdioTest
  */
 public class StdioTest {
@@ -41,8 +44,18 @@ public class StdioTest {
     public void stdioJextractTest() throws Exception {
         Path outputDir = Paths.get(System.getProperty("test.classes", "."),  "stdio");
         outputDir.toFile().mkdirs();
-        int result = JEXTRACT.run(System.out, System.err, new String[] {
+
+        int result = 1;
+        if (Files.isDirectory(Paths.get("/usr/include"))) {
+            result = JEXTRACT.run(System.out, System.err, new String[] {
             "-d", outputDir.toString(), "/usr/include/stdio.h" });
+        } else if (MacConfig.MAC_WITH_NO_USR_INCLUDE) {
+            // Mac OS Mojave does not have /usr/include, try in alternate path
+            result = JEXTRACT.run(System.out, System.err, new String[] {
+                "-I", MacConfig.MAC_INCLUDE_ROOT + "/usr/include", "-d", outputDir.toString(),
+                MacConfig.MAC_INCLUDE_ROOT + "/usr/include/stdio.h" });
+        }
+
         if (result != 0) {
             throw new RuntimeException(JEXTRACT.name() + " returns non-zero value");
         }
