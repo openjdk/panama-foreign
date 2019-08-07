@@ -2258,11 +2258,11 @@ public:
   INSN(ushl,   1, 0b010001, true);  // accepted arrangements: T8B, T16B, T4H, T8H, T2S, T4S, T2D
   INSN(umullv, 1, 0b110000, false); // accepted arrangements: T8B, T16B, T4H, T8H, T2S, T4S
   INSN(umlalv, 1, 0b100000, false); // accepted arrangements: T8B, T16B, T4H, T8H, T2S, T4S
-  INSN(maxv,   0, 0b011001, false); // VERIFY MERGE
-  INSN(minv,   0, 0b011011, false); // VERIFY MERGE
-  INSN(cmeq,   1, 0b100011, false); // VERIFY MERGE
-  INSN(cmgt,   0, 0b001101, false); // VERIFY MERGE
-  INSN(cmge,   0, 0b001111, false); // VERIFY MERGE
+  INSN(maxv,   0, 0b011001, false); // accepted arrangements: T8B, T16B, T4H, T8H, T2S, T4S
+  INSN(minv,   0, 0b011011, false); // accepted arrangements: T8B, T16B, T4H, T8H, T2S, T4S
+  INSN(cmeq,   1, 0b100011, true);  // accepted arrangements: T8B, T16B, T4H, T8H, T2S, T4S, T2D
+  INSN(cmgt,   0, 0b001101, true);  // accepted arrangements: T8B, T16B, T4H, T8H, T2S, T4S, T2D
+  INSN(cmge,   0, 0b001111, true);  // accepted arrangements: T8B, T16B, T4H, T8H, T2S, T4S, T2D
 
 #undef INSN
 
@@ -2281,8 +2281,8 @@ public:
   INSN(negr,   1, 0b100000101110, 2); // accepted arrangements: T8B, T16B, T4H, T8H, T2S, T4S, T2D
   INSN(notr,   1, 0b100000010110, 0); // accepted arrangements: T8B, T16B
   INSN(addv,   0, 0b110001101110, 1); // accepted arrangements: T8B, T16B, T4H, T8H,      T4S
-  INSN(smaxv,  0, 0b110000101010, 0); // VERIFY MERGE
-  INSN(sminv,  0, 0b110001101010, 0); // VERIFY MERGE
+  INSN(smaxv,  0, 0b110000101010, 1); // accepted arrangements: T8B, T16B, T4H, T8H,      T4S
+  INSN(sminv,  0, 0b110001101010, 1); // accepted arrangements: T8B, T16B, T4H, T8H,      T4S
   INSN(cls,    0, 0b100000010010, 1); // accepted arrangements: T8B, T16B, T4H, T8H,      T4S
   INSN(clz,    1, 0b100000010010, 1); // accepted arrangements: T8B, T16B, T4H, T8H,      T4S
   INSN(cnt,    0, 0b100000010110, 0); // accepted arrangements: T8B, T16B
