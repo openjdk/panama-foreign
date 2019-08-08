@@ -40,6 +40,7 @@ ifeq ($(ENABLE_PANDOC), false)
 endif
 
 GLOBAL_SPECS_DEFAULT_CSS_FILE := $(TOPDIR)/make/data/docs-resources/resources/jdk-default.css
+GLOBAL_SPECS_PANAMA_CSS_FILE := $(TOPDIR)/make/data/docs-resources/resources/panama-default.css
 
 ################################################################################
 
@@ -72,7 +73,7 @@ TARGETS += $(ide)
 $(eval $(call SetupProcessMarkdown, panama_foreign, \
   FILES := $(DOCS_DIR)/panama_foreign.md, \
   DEST := $(DOCS_DIR), \
-  CSS := $(GLOBAL_SPECS_DEFAULT_CSS_FILE), \
+  CSS := $(GLOBAL_SPECS_PANAMA_CSS_FILE), \
   OPTIONS := --toc, \
 ))
 TARGETS += $(panama_foreign)
