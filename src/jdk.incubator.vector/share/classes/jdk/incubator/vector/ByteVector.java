@@ -993,7 +993,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     ByteVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
                                   byte e1,
                                   byte e2) {
-        return lanewise(op, broadcast(e1), broadcast(e1));
+        return lanewise(op, broadcast(e1), broadcast(e2));
     }
 
     /**

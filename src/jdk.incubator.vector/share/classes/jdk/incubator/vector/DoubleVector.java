@@ -927,7 +927,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     DoubleVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
                                   double e1,
                                   double e2) {
-        return lanewise(op, broadcast(e1), broadcast(e1));
+        return lanewise(op, broadcast(e1), broadcast(e2));
     }
 
     /**

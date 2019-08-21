@@ -993,7 +993,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     IntVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
                                   int e1,
                                   int e2) {
-        return lanewise(op, broadcast(e1), broadcast(e1));
+        return lanewise(op, broadcast(e1), broadcast(e2));
     }
 
     /**

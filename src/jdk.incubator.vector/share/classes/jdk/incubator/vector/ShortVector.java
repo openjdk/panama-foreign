@@ -994,7 +994,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     ShortVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
                                   short e1,
                                   short e2) {
-        return lanewise(op, broadcast(e1), broadcast(e1));
+        return lanewise(op, broadcast(e1), broadcast(e2));
     }
 
     /**

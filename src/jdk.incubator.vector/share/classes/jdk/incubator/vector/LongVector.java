@@ -912,7 +912,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     LongVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
                                   long e1,
                                   long e2) {
-        return lanewise(op, broadcast(e1), broadcast(e1));
+        return lanewise(op, broadcast(e1), broadcast(e2));
     }
 
     /**

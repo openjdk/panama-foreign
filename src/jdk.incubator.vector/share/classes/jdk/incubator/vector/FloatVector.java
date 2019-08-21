@@ -927,7 +927,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     FloatVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
                                   float e1,
                                   float e2) {
-        return lanewise(op, broadcast(e1), broadcast(e1));
+        return lanewise(op, broadcast(e1), broadcast(e2));
     }
 
     /**
