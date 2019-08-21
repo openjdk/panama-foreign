@@ -52,7 +52,7 @@ public class CallingSequenceBuilderImpl extends CallingSequenceBuilder {
     private static final int SSE_ARGUMENT_SIZE = 8;
     private static final int STACK_ARGUMENT_SLOT_SIZE = 8;
 
-    CallingSequenceBuilderImpl(MemoryLayout layout) {
+    public CallingSequenceBuilderImpl(MemoryLayout layout) {
         this(layout, new StorageCalculator(false), new StorageCalculator(true));
     }
 

@@ -98,12 +98,12 @@ public class CallingSequenceTest extends CallingSequenceTestBase {
                         binding(INTEGER_ARGUMENT_REGISTER, 0))
                 .arg(C_DOUBLE,
                         binding(VECTOR_ARGUMENT_REGISTER, 0))
-                .vararg(C_INT,
+                .arg(MemoryLayouts.WinABI.asVarArg(C_INT),
                         binding(INTEGER_ARGUMENT_REGISTER, 0))
-                .vararg(C_DOUBLE,
+                .arg(MemoryLayouts.WinABI.asVarArg(C_DOUBLE),
                         binding(INTEGER_ARGUMENT_REGISTER, 0),
                         binding(VECTOR_ARGUMENT_REGISTER, 0))
-                .vararg(C_DOUBLE,
+                .arg(MemoryLayouts.WinABI.asVarArg(C_DOUBLE),
                         binding(STACK_ARGUMENT_SLOT, 0))
                 .check(false);
     }

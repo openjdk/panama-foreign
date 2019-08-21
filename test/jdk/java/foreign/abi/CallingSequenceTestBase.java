@@ -58,10 +58,6 @@ public class CallingSequenceTestBase {
             this.csb = csb;
         }
 
-        public Verifier vararg(MemoryLayout arg, Binding...bindings) {
-            return argInternal(arg, true, bindings);
-        }
-
         public Verifier args(int repeats, MemoryLayout arg, Binding...bindings) {
             for(int i = 0; i < repeats; i++) {
                 arg(arg, bindings);
@@ -70,11 +66,11 @@ public class CallingSequenceTestBase {
         }
 
         public Verifier arg(MemoryLayout arg, Binding...bindings) {
-            return argInternal(arg, false, bindings);
+            return argInternal(arg, bindings);
         }
 
-        private Verifier argInternal(MemoryLayout arg, boolean varargs, Binding...bindings) {
-            csb.addArgument(arg, varargs);
+        private Verifier argInternal(MemoryLayout arg, Binding...bindings) {
+            csb.addArgument(arg);
             for(Binding binding : bindings) {
                 StorageClass cls = binding.cls;
                 long offset = binding.offset;
