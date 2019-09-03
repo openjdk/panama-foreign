@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,3 +53,20 @@ JVM_ENTRY(void, JVM_RegisterUniversalUpcallHandlerMethods(JNIEnv *env, jclass UU
   }
 }
 JVM_END
+
+JavaThread *UniversalUpcallHandler::current_thread()
+{
+  Thread* thread = Thread::current_or_null();
+  if (thread == NULL) {
+    // If the current thread is NULL then this upcall was from a thread
+    // started by native code: attach it to the VM as a daemon
+    extern struct JavaVM_ main_vm;
+    JavaVM_ *vm = (JavaVM *)(&main_vm);
+    void *p_env = NULL;
+    vm -> functions -> AttachCurrentThreadAsDaemon(vm, &p_env, NULL);
+    thread = Thread::current();
+  }
+
+  assert(thread->is_Java_thread(), "really?");
+  return (JavaThread *)thread;
+}

@@ -38,8 +38,6 @@
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniHandles.inline.hpp"
 
-extern struct JavaVM_ main_vm;
-
 static struct {
   bool inited;
   struct {
@@ -114,14 +112,7 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
 
    void *p_env = NULL;
 
-  Thread* thread = Thread::current_or_null();
-  if (thread == NULL) {
-    JavaVM_ *vm = (JavaVM *)(&main_vm);
-    vm -> functions -> AttachCurrentThreadAsDaemon(vm, &p_env, NULL);
-    thread = Thread::current();
-  }
-
-  assert(thread->is_Java_thread(), "really?");
+  JavaThread* thread = UniversalUpcallHandler::current_thread();
 
 #if 0
   fprintf(stderr, "args.integer: %p\n", context->args.integer);

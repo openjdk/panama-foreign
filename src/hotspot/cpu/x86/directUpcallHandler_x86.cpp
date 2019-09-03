@@ -31,6 +31,7 @@
 #include "memory/resourceArea.hpp"
 #include "include/jvm.h"
 #include "prims/directUpcallHandler.hpp"
+#include "prims/universalUpcallHandler.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniHandles.inline.hpp"
@@ -162,7 +163,7 @@ static void restore_upcall_context(MacroAssembler* _masm, int upcall_context_off
 }
 
 void DirectUpcallHandler::save_java_frame_anchor(MacroAssembler* _masm, int upcall_context_offset, Register thread) {
-  int thread_base_offset = JavaThread::frame_anchor_offset();
+  int thread_base_offset = in_bytes(JavaThread::frame_anchor_offset());
   int upcall_base_offset = upcall_context_offset + offsetof(struct upcall_context, preserved.jfa);
 
   int last_Java_fp_offset = offsetof(JavaFrameAnchor, _last_Java_fp);
@@ -183,7 +184,7 @@ void DirectUpcallHandler::save_java_frame_anchor(MacroAssembler* _masm, int upca
 }
 
 void DirectUpcallHandler::restore_java_frame_anchor(MacroAssembler* _masm, int upcall_context_offset, Register thread) {
-  int thread_base_offset = JavaThread::frame_anchor_offset();
+  int thread_base_offset = in_bytes(JavaThread::frame_anchor_offset());
   int upcall_base_offset = upcall_context_offset + offsetof(struct upcall_context, preserved.jfa);
 
   int last_Java_fp_offset = offsetof(JavaFrameAnchor, _last_Java_fp);
@@ -420,7 +421,6 @@ static void shuffle_arguments(MacroAssembler* _masm, GrowableArray<ArgMove>* arg
   }
 }
 
-// TODO: how to handle AttachCurrentThreadAsDaemon before upcall?
 address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver, Method* entry, TRAPS) {
   CodeBuffer buffer("upcall_stub_linkToNative", 1024, 1024);
 
@@ -444,7 +444,12 @@ address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver,
 
   save_upcall_context(_masm, upcall_context_offset);
 
-  __ get_thread(r15_thread);
+  // Cannot call MacroAssembler::get_thread here as the current thread
+  // may not be attached to the VM
+  save_native_arguments(_masm);
+  __ call_VM_leaf0(CAST_FROM_FN_PTR(address, UniversalUpcallHandler::current_thread));
+  __ mov(r15_thread, rax);
+  restore_native_arguments(_masm);
 
   __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.thread)), r15_thread);
 

@@ -43,6 +43,9 @@ public class Threads {
         @NativeFunction("(u64:u64 u64:u64 u64:(u64:v)u64:v u64:v)i32")
         int pthread_create(Pointer<Long> thread, Pointer<Long> attr, Callback<pthread_cb> start_routine, Pointer<?> arg);
 
+        @NativeFunction("(u64 u64:v)i32")
+        int pthread_join(long thread, Pointer<?> retval);
+
         @NativeCallback("(u64:v)u64:v")
         interface pthread_cb {
             Pointer<?> run(Pointer<?> arg);
@@ -53,12 +56,18 @@ public class Threads {
         pthread_lib lib = Libraries.bind(MethodHandles.lookup(), pthread_lib.class);
         try (Scope s = Scope.globalScope().fork()) {
             Pointer<Long> buf = s.allocate(NativeTypes.LONG);
-            lib.pthread_create(buf, Pointer.ofNull(),
+            int rc = lib.pthread_create(buf, Pointer.ofNull(),
                     s.allocateCallback(pthread_lib.pthread_cb.class, x -> {
                             System.out.println("thread!");
                             return Pointer.ofNull();
                     }),
                     Pointer.ofNull());
+            if (rc != 0)
+                throw new RuntimeException("pthread_create failed");
+
+            rc = lib.pthread_join(buf.get(), Pointer.ofNull());
+            if (rc != 0)
+                throw new RuntimeException("pthread_join failed");
         }
     }
 }

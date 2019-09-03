@@ -38,8 +38,6 @@
 #include "oops/arrayOop.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
 
-extern struct JavaVM_ main_vm;
-
 static struct {
   bool inited;
   struct {
@@ -164,7 +162,7 @@ struct upcall_context {
 #ifdef _LP64
 #ifndef _WIN64
         VectorRegister xmm1;
-#endif  
+#endif
 #endif
       } reg;
       VectorRegister regs[VECTOR_RETURN_REGISTERS_NOOF];
@@ -185,16 +183,7 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
   ::fprintf(stderr, "upcall_helper(%p, %p)\n", rec, context);
 #endif
 
-  void *p_env = NULL;
-
-  Thread* thread = Thread::current_or_null();
-  if (thread == NULL) {
-    JavaVM_ *vm = (JavaVM *)(&main_vm);
-    vm -> functions -> AttachCurrentThreadAsDaemon(vm, &p_env, NULL);
-    thread = Thread::current();
-  }
-
-  assert(thread->is_Java_thread(), "really?");
+  JavaThread* thread = UniversalUpcallHandler::current_thread();
 
 #if 0
   fprintf(stderr, "args.integer.regs: %p\n", context->args.integer.regs);
@@ -235,7 +224,7 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
     upcall_init();
   }
 
-  ThreadInVMfromNative __tiv((JavaThread *)thread);
+  ThreadInVMfromNative __tiv(thread);
 
   ResourceMark rm;
   JavaValue result(T_VOID);

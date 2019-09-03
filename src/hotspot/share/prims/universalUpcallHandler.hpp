@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include "include/jvm.h"
 #include "runtime/frame.inline.hpp"
 #include "runtime/globals.hpp"
+#include "runtime/thread.hpp"
 #include "utilities/macros.hpp"
 #include CPU_HEADER(foreign_globals)
 
@@ -36,6 +37,8 @@ class UniversalUpcallHandler: AllStatic {
 
 public:
   static address generate_upcall_stub(Handle& rec);
+
+  static JavaThread *current_thread();
 };
 
 #endif // SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP

@@ -33,10 +33,9 @@
 #include "memory/resourceArea.hpp"
 #include "oops/arrayOop.inline.hpp"
 #include "prims/directUpcallHandler.hpp"
+#include "prims/universalUpcallHandler.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
-
-extern struct JavaVM_ main_vm;
 
 static struct SpecializedUpcallInfo {
   bool inited;
@@ -135,15 +134,8 @@ struct upcall_context {
                                                                         \
   Method* meth = specialized_upcall_info[nlongs][ndoubles][rettag].meth;\
                                                                         \
-  Thread* thread = Thread::current_or_null();                           \
-  if (thread == NULL) {                                                 \
-    JavaVM_ *vm = (JavaVM *)(&main_vm);                                 \
-    vm -> functions -> AttachCurrentThreadAsDaemon(vm, &p_env, NULL);   \
-    thread = Thread::current();                                         \
-  }                                                                     \
-  assert(thread->is_Java_thread(), "must be");                          \
-                                                                        \
-  ThreadInVMfromNative __tiv((JavaThread *)thread);                     \
+  JavaThread* thread = UniversalUpcallHandler::current_thread();        \
+  ThreadInVMfromNative __tiv(thread);                                   \
   JavaValue result(RES_T);                                              \
   JavaCalls::call(&result, meth, &args, thread);
 
