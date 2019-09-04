@@ -67,13 +67,28 @@ public class LayoutPathImpl {
         return LayoutPathImpl.nestedPath(elem, offset, newScales, this);
     }
 
+    public LayoutPathImpl sequenceElement(long start, long step) throws IllegalArgumentException, UnsupportedOperationException {
+        check(SequenceLayout.class);
+        SequenceLayout seq = (SequenceLayout)layout;
+        checkSequenceBounds(seq, start);
+        MemoryLayout elem = seq.elementLayout();
+        List<Long> newScales = new ArrayList<>(scales);
+        long elemSize = elem.bitSize();
+        newScales.add(elemSize * step);
+        return LayoutPathImpl.nestedPath(elem, offset + (start * elemSize), newScales, this);
+    }
+
     public LayoutPathImpl sequenceElement(long index) throws IllegalArgumentException, UnsupportedOperationException {
         check(SequenceLayout.class);
         SequenceLayout seq = (SequenceLayout)layout;
-        if (seq.elementsCount().isPresent() && index >= seq.elementsCount().getAsLong()) {
-            throw new IllegalArgumentException("Sequence index out of bound; found: %d, size: %d");
-        }
+        checkSequenceBounds(seq, index);
         return LayoutPathImpl.nestedPath(seq.elementLayout(), offset, scales, this);
+    }
+
+    private void checkSequenceBounds(SequenceLayout seq, long index) {
+        if (seq.elementsCount().isPresent() && index >= seq.elementsCount().getAsLong()) {
+            throw new IllegalArgumentException(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementsCount().getAsLong()));
+        }
     }
 
     public LayoutPathImpl groupElement(String name) throws IllegalArgumentException, UnsupportedOperationException {

@@ -262,7 +262,7 @@ public interface MemoryLayout extends Constable {
         }
 
         /**
-         * Returns a path element which selects the element layout at the specified position a given the sequence layout.
+         * Returns a path element which selects the element layout at the specified position in a given the sequence layout.
          * The path element returned by this method does not alter the number of free dimensions of any path
          * that is combined with such element.
          * @param index the index of the sequence element to be selected.
@@ -274,6 +274,34 @@ public interface MemoryLayout extends Constable {
                 throw new IllegalArgumentException("Index must be positive: " + index);
             }
             return new LayoutPathImpl.PathElementImpl(path -> path.sequenceElement(index));
+        }
+
+        /**
+         * Returns a path element which selects the element layout in a <em>range</em> of positions in a given the sequence layout,
+         * where the range is expressed as a pair of starting index (inclusive) {@code S} and step factor (which can also be negative)
+         * {@code F}.
+         * If a path with free dimensions {@code n} is combined with the path element returned by this method,
+         * the number of free dimensions of the resulting path will be {@code 1 + n}. If the free dimension associated
+         * with this path is bound by an index {@code I}, the resulting accessed offset can be obtained with the following
+         * formula:
+         * <blockquote><pre>{@code
+E * (S + I * F)
+         * }</pre></blockquote>
+         * where {@code E} is the size (in bytes) of the sequence element layout.
+         * @param start the index of the first sequence element to be selected.
+         * @param step the step factor at which subsequence sequence elements are to be selected.
+         * @return a path element which selects the sequence element layout with given index.
+         * @throws IllegalArgumentException if the start index is out of the bounds of the selected sequence layout,
+         * or if the step factor is 0, or otherwise incompatible with the selected sequence layout size.
+         */
+        static PathElement sequenceElement(long start, long step) throws IllegalArgumentException {
+            if (start < 0) {
+                throw new IllegalArgumentException("Start index must be positive: " + start);
+            }
+            if (step == 0) {
+                throw new IllegalArgumentException("Step must be != 0: " + step);
+            }
+            return new LayoutPathImpl.PathElementImpl(path -> path.sequenceElement(start, step));
         }
 
         /**
