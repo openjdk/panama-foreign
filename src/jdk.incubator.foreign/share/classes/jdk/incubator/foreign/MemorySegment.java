@@ -294,6 +294,7 @@ ofNative(bitsSize, 1);
      *
      * @param path the path to the resource to memory map.
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
+     * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}.
      * @return a new mapped memory segment.
      * @throws IllegalArgumentException if specified size is &lt; 0.
      * @throws UnsupportedOperationException if an unsupported map mode is specified.

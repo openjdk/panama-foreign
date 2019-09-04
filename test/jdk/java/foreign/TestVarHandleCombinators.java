@@ -60,10 +60,9 @@ public class TestVarHandleCombinators {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testBadScaleElement() {
+    public void testBadStrideElement() {
         VarHandle vh = MemoryHandles.varHandle(int.class);
-        vh = MemoryHandles.withOffset(vh, 4);
-        MemoryHandles.withStride(vh, 4); //scale factor is too small - should be at least 8!
+        MemoryHandles.withStride(vh, 0); //scale factor cant be zero
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)

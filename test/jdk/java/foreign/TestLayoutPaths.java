@@ -81,6 +81,18 @@ public class TestLayoutPaths {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testOutOfBoundsSeqRange() {
+        SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayouts.JAVA_INT);
+        seq.offset(PathElement.sequenceElement(6, 2));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNegativeSeqRange() {
+        SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayouts.JAVA_INT);
+        seq.offset(PathElement.sequenceElement(-2, 2));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testIncompleteAccess() {
         SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT));
         seq.varHandle(int.class, PathElement.sequenceElement());

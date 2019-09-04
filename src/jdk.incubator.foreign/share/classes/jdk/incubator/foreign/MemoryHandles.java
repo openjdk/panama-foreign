@@ -180,11 +180,10 @@ public final class MemoryHandles {
      * @param stride the stride by which to multiply the coordinate value. Must be greater than zero.
      * @return the new memory access var handle.
      * @throws IllegalArgumentException when a memory access var handle is passed that is not a memory access var handle,
-     * if the stride is negative, or incompatible with the alignment constraints, or the current memory access var handle offset.
-     * or when a negative scale or zero is passed.
+     * if the stride is zero, or otherwise incompatible with the alignment constraints.
      */
     public static VarHandle withStride(VarHandle target, long stride) throws IllegalArgumentException {
-        if (stride <= 0) {
+        if (stride == 0) {
             throw new IllegalArgumentException("Stride must be positive: " + stride);
         }
 
@@ -196,10 +195,6 @@ public final class MemoryHandles {
 
         long offset = JLI.memoryAddressOffset(target);
         Class<?> carrier = JLI.memoryAddressCarrier(target);
-
-        if (stride < offset + carrierSize(carrier)) {
-            throw new IllegalArgumentException("Stride " + stride + " is too small");
-        }
 
         long[] strides = JLI.memoryAddressStrides(target);
         long[] newStrides = new long[strides.length + 1];
