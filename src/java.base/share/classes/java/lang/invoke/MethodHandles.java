@@ -5727,7 +5727,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         // Step 2: determine parameter lists.
         final List<Class<?>> commonParameterSequence = new ArrayList<>(commonPrefix);
         commonParameterSequence.addAll(commonSuffix);
-        loopChecks2(step, pred,fini, commonParameterSequence);
+        loopChecks2(step, pred, fini, commonParameterSequence);
 
         // Step 3: fill in omitted functions.
         for (int i = 0; i < nclauses; ++i) {
