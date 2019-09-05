@@ -121,10 +121,8 @@ public class TestOrdering extends JavadocTester {
             javadoc("-d", "out-1",
                     "-sourcepath", testSrc,
                     "-use",
-                    "--frames",
                     "pkg1");
             checkExit(Exit.OK);
-            checkFiles(false, "allclasses-noframe.html");
 
             checkClassUseOrdering("pkg1/class-use/UsedClass.html");
 
@@ -174,20 +172,6 @@ public class TestOrdering extends JavadocTester {
             checkOrder("pkg1/OverrideOrdering.html",
                     "<dd><code>iterator</code>&nbsp;in interface&nbsp;<code>java.util.Collection&lt;",
                     "<dd><code>iterator</code>&nbsp;in interface&nbsp;<code>java.lang.Iterable&lt;");
-
-            checkOrder("allclasses-frame.html",
-                    "pkg1/A.html\" title=\"class in pkg1",
-                    "pkg1/A.C.html\" title=\"class in pkg1",
-                    "pkg1/B.html\" title=\"class in pkg1",
-                    "pkg1/B.A.html\" title=\"class in pkg1",
-                    "pkg1/C1.html\" title=\"class in pkg1",
-                    "pkg1/C2.html\" title=\"class in pkg1",
-                    "pkg1/C3.html\" title=\"class in pkg1",
-                    "pkg1/C4.html\" title=\"class in pkg1",
-                    "pkg1/ImplementsOrdering.html\" title=\"interface in pkg1",
-                    "pkg1/MethodOrder.html\" title=\"class in pkg1",
-                    "pkg1/OverrideOrdering.html\" title=\"class in pkg1",
-                    "pkg1/UsedClass.html\" title=\"class in pkg1");
         }
 
         void checkClassUseOrdering(String usePage) {
@@ -359,7 +343,6 @@ public class TestOrdering extends JavadocTester {
             List<String> cmdArgs = new ArrayList();
             cmdArgs.add("-d");
             cmdArgs.add("out-2");
-            cmdArgs.add("--frames");
             cmdArgs.add("-sourcepath");
             cmdArgs.add("src");
             cmdArgs.add("-package");
@@ -419,25 +402,6 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"add3/add/Add.ADD.html\" title=\"enum in add3.add\">",
                     "<a href=\"add3/add/add/Add.ADD.html\" title=\"enum in add3.add.add\">",
                     "<a href=\"add3/add/add/add/Add.ADD.html\" title=\"enum in add3.add.add.add\">");
-
-            checkOrder("overview-frame.html",
-                    "<a href=\"package-frame.html\" target=\"packageFrame\">&lt;unnamed package&gt;</a>",
-                    "<a href=\"add0/package-frame.html\" target=\"packageFrame\">add0</a>",
-                    "<a href=\"add0/add/package-frame.html\" target=\"packageFrame\">add0.add</a>",
-                    "<a href=\"add0/add/add/package-frame.html\" target=\"packageFrame\">add0.add.add</a>",
-                    "<a href=\"add0/add/add/add/package-frame.html\" target=\"packageFrame\">add0.add.add.add</a>",
-                    "<a href=\"add1/package-frame.html\" target=\"packageFrame\">add1</a>",
-                    "<a href=\"add1/add/package-frame.html\" target=\"packageFrame\">add1.add</a>",
-                    "<a href=\"add1/add/add/package-frame.html\" target=\"packageFrame\">add1.add.add</a>",
-                    "<a href=\"add1/add/add/add/package-frame.html\" target=\"packageFrame\">add1.add.add.add</a>",
-                    "<a href=\"add2/package-frame.html\" target=\"packageFrame\">add2</a>",
-                    "<a href=\"add2/add/package-frame.html\" target=\"packageFrame\">add2.add</a>",
-                    "<a href=\"add2/add/add/package-frame.html\" target=\"packageFrame\">add2.add.add</a>",
-                    "<a href=\"add2/add/add/add/package-frame.html\" target=\"packageFrame\">add2.add.add.add</a>",
-                    "<a href=\"add3/package-frame.html\" target=\"packageFrame\">add3</a>",
-                    "<a href=\"add3/add/package-frame.html\" target=\"packageFrame\">add3.add</a>",
-                    "<a href=\"add3/add/add/package-frame.html\" target=\"packageFrame\">add3.add.add</a>",
-                    "<a href=\"add3/add/add/add/package-frame.html\" target=\"packageFrame\">add3.add.add.add</a></li>");
         }
 
         void emitFile(String pkgname, String clsname, ListOrder order) throws IOException {
@@ -551,11 +515,15 @@ public class TestOrdering extends JavadocTester {
             checkExit(Exit.OK);
 
             checkOrder("pkg5/AnnoFieldTest.html",
-                    "<h2>Field Detail</h2>",
-                    "<pre>static final&nbsp;int&nbsp;one</pre>",
-                    "<pre>static final&nbsp;int&nbsp;two</pre>",
-                    "<pre>static final&nbsp;int&nbsp;three</pre>",
-                    "<pre>static final&nbsp;int&nbsp;four</pre>");
+                    "<h2>Field Details</h2>",
+                    "<div class=\"memberSignature\"><span class=\"modifiers\">static final</span>&nbsp;"
+                    + "<span class=\"returnType\">int</span>&nbsp;<span class=\"memberName\">one</span></div>",
+                    "<div class=\"memberSignature\"><span class=\"modifiers\">static final</span>&nbsp;"
+                    + "<span class=\"returnType\">int</span>&nbsp;<span class=\"memberName\">two</span></div>",
+                    "<div class=\"memberSignature\"><span class=\"modifiers\">static final</span>&nbsp;"
+                    + "<span class=\"returnType\">int</span>&nbsp;<span class=\"memberName\">three</span></div>",
+                    "<div class=\"memberSignature\"><span class=\"modifiers\">static final</span>&nbsp;"
+                    + "<span class=\"returnType\">int</span>&nbsp;<span class=\"memberName\">four</span></div>");
 
             checkOrder("pkg5/AnnoOptionalTest.html",
                     "<h2>Optional Element Summary</h2>",
@@ -563,11 +531,11 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#one()\">one</a>",
                     "<a href=\"#three()\">three</a>",
                     "<a href=\"#two()\">two</a>",
-                    "<h2>Element Detail</h2>",
-                    "<h3>one</h3>",
-                    "<h3>two</h3>",
-                    "<h3>three</h3>",
-                    "<h3>four</h3>");
+                    "<h2>Element Details</h2>",
+                    "<h3><a id=\"one()\">one</a></h3>",
+                    "<h3><a id=\"two()\">two</a></h3>",
+                    "<h3><a id=\"three()\">three</a></h3>",
+                    "<h3><a id=\"four()\">four</a></h3>");
 
             checkOrder("pkg5/AnnoRequiredTest.html",
                     "<h2>Required Element Summary</h2>",
@@ -575,11 +543,11 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#one()\">one</a>",
                     "<a href=\"#three()\">three</a>",
                     "<a href=\"#two()\">two</a>",
-                    "<h2>Element Detail</h2>",
-                    "<h3>one</h3>",
-                    "<h3>two</h3>",
-                    "<h3>three</h3>",
-                    "<h3>four</h3>");
+                    "<h2>Element Details</h2>",
+                    "<h3><a id=\"one()\">one</a></h3>",
+                    "<h3><a id=\"two()\">two</a></h3>",
+                    "<h3><a id=\"three()\">three</a></h3>",
+                    "<h3><a id=\"four()\">four</a></h3>");
 
             checkOrder("pkg5/CtorTest.html",
                     "<h2>Constructor Summary</h2>",
@@ -587,7 +555,7 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#%3Cinit%3E(int,int)\"",
                     "<a href=\"#%3Cinit%3E(int,int,int)\"",
                     "<a href=\"#%3Cinit%3E(int,int,int,int)\"",
-                    "<h2>Constructor Detail</h2>",
+                    "<h2>Constructor Details</h2>",
                     "<a id=\"&lt;init&gt;(int,int,int,int)\">",
                     "<a id=\"&lt;init&gt;(int,int,int)\">",
                     "<a id=\"&lt;init&gt;(int,int)\">",
@@ -599,11 +567,11 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#ONE\">ONE</a>",
                     "<a href=\"#THREE\">THREE</a>",
                     "<a href=\"#TWO\">TWO</a>",
-                    "<h2>Enum Constant Detail</h2>",
-                    "<h3>ONE</h3>",
-                    "<h3>TWO</h3>",
-                    "<h3>THREE</h3>",
-                    "<h3>FOUR</h3>");
+                    "<h2>Enum Constant Details</h2>",
+                    "<h3><a id=\"ONE\">ONE</a></h3>",
+                    "<h3><a id=\"TWO\">TWO</a></h3>",
+                    "<h3><a id=\"THREE\">THREE</a></h3>",
+                    "<h3><a id=\"FOUR\">FOUR</a></h3>");
 
             checkOrder("pkg5/FieldTest.html",
                     "<h2>Field Summary</h2>",
@@ -611,11 +579,11 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#one\">one</a>",
                     "<a href=\"#three\">three</a>",
                     "<a href=\"#two\">two</a>",
-                    "<h2>Field Detail</h2>",
-                    "<h3>one</h3>",
-                    "<h3>two</h3>",
-                    "<h3>three</h3>",
-                    "<h3>four</h3>");
+                    "<h2>Field Details</h2>",
+                    "<h3><a id=\"one\">one</a></h3>",
+                    "<h3><a id=\"two\">two</a></h3>",
+                    "<h3><a id=\"three\">three</a></h3>",
+                    "<h3><a id=\"four\">four</a></h3>");
 
             checkOrder("pkg5/IntfTest.html",
                     "<h2>Method Summary</h2>",
@@ -623,11 +591,11 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#one()\">one</a>",
                     "<a href=\"#three()\">three</a>",
                     "<a href=\"#two()\">two</a>",
-                    "<h2>Method Detail</h2>",
-                    "<h3>one</h3>",
-                    "<h3>two</h3>",
-                    "<h3>three</h3>",
-                    "<h3>four</h3>");
+                    "<h2>Method Details</h2>",
+                    "<h3><a id=\"one()\">one</a></h3>",
+                    "<h3><a id=\"two()\">two</a></h3>",
+                    "<h3><a id=\"three()\">three</a></h3>",
+                    "<h3><a id=\"four()\">four</a></h3>");
 
             checkOrder("pkg5/MethodTest.html",
                     "<h2>Method Summary</h2>",
@@ -635,11 +603,11 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#one()\">one</a>",
                     "<a href=\"#three()\">three</a>",
                     "<a href=\"#two()\">two</a>",
-                    "<h2>Method Detail</h2>",
-                    "<h3>one</h3>",
-                    "<h3>two</h3>",
-                    "<h3>three</h3>",
-                    "<h3>four</h3>");
+                    "<h2>Method Details</h2>",
+                    "<h3><a id=\"one()\">one</a></h3>",
+                    "<h3><a id=\"two()\">two</a></h3>",
+                    "<h3><a id=\"three()\">three</a></h3>",
+                    "<h3><a id=\"four()\">four</a></h3>");
 
             checkOrder("pkg5/PropertyTest.html",
                     "<h2>Property Summary</h2>",
@@ -647,11 +615,11 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#oneProperty\">one</a>",
                     "<a href=\"#threeProperty\">three</a>",
                     "<a href=\"#twoProperty\">two</a>",
-                    "<h2>Property Detail</h2>",
-                    "<h3>oneProperty</h3>",
-                    "<h3>twoProperty</h3>",
-                    "<h3>threeProperty</h3>",
-                    "<h3>fourProperty</h3>");
+                    "<h2>Property Details</h2>",
+                    "<h3><a id=\"oneProperty()\">oneProperty</a></h3>",
+                    "<h3><a id=\"twoProperty()\">twoProperty</a></h3>",
+                    "<h3><a id=\"threeProperty()\">threeProperty</a></h3>",
+                    "<h3><a id=\"fourProperty()\">fourProperty</a></h3>");
 
         }
     }

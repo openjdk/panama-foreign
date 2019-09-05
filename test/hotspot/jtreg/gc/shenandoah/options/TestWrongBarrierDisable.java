@@ -24,7 +24,7 @@
 /* @test TestWrongBarrierDisable
  * @summary Test that disabling wrong barriers fails early
  * @key gc
- * @requires vm.gc.Shenandoah
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
  * @library /test/lib
  * @run main/othervm TestWrongBarrierDisable
  */
@@ -38,31 +38,26 @@ public class TestWrongBarrierDisable {
 
     public static void main(String[] args) throws Exception {
         String[] concurrent = {
-                "ShenandoahReadBarrier",
-                "ShenandoahWriteBarrier",
+                "ShenandoahLoadRefBarrier",
                 "ShenandoahCASBarrier",
-                "ShenandoahAcmpBarrier",
                 "ShenandoahCloneBarrier",
                 "ShenandoahSATBBarrier",
                 "ShenandoahKeepAliveBarrier",
-                "ShenandoahStoreValReadBarrier",
         };
 
         String[] traversal = {
-                "ShenandoahReadBarrier",
-                "ShenandoahWriteBarrier",
+                "ShenandoahLoadRefBarrier",
                 "ShenandoahCASBarrier",
-                "ShenandoahAcmpBarrier",
                 "ShenandoahCloneBarrier",
         };
 
-        shouldFailAll("adaptive",   concurrent);
-        shouldFailAll("static",     concurrent);
-        shouldFailAll("compact",    concurrent);
-        shouldFailAll("aggressive", concurrent);
-        shouldFailAll("traversal",  traversal);
-        shouldPassAll("passive",    concurrent);
-        shouldPassAll("passive",    traversal);
+        shouldFailAll("-XX:ShenandoahGCHeuristics=adaptive",   concurrent);
+        shouldFailAll("-XX:ShenandoahGCHeuristics=static",     concurrent);
+        shouldFailAll("-XX:ShenandoahGCHeuristics=compact",    concurrent);
+        shouldFailAll("-XX:ShenandoahGCHeuristics=aggressive", concurrent);
+        shouldFailAll("-XX:ShenandoahGCMode=traversal",        traversal);
+        shouldPassAll("-XX:ShenandoahGCMode=passive",          concurrent);
+        shouldPassAll("-XX:ShenandoahGCMode=passive",          traversal);
     }
 
     private static void shouldFailAll(String h, String[] barriers) throws Exception {
@@ -71,7 +66,7 @@ public class TestWrongBarrierDisable {
                     "-XX:+UnlockDiagnosticVMOptions",
                     "-XX:+UnlockExperimentalVMOptions",
                     "-XX:+UseShenandoahGC",
-                    "-XX:ShenandoahGCHeuristics=" + h,
+                    h,
                     "-XX:-" + b,
                     "-version"
             );
@@ -88,7 +83,7 @@ public class TestWrongBarrierDisable {
                     "-XX:+UnlockDiagnosticVMOptions",
                     "-XX:+UnlockExperimentalVMOptions",
                     "-XX:+UseShenandoahGC",
-                    "-XX:ShenandoahGCHeuristics=" + h,
+                    h,
                     "-XX:-" + b,
                     "-version"
             );

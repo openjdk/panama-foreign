@@ -9,7 +9,7 @@
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] [[TEST_OP]] bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 

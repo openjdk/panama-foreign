@@ -27,6 +27,7 @@
 #include "gc/z/zAddress.inline.hpp"
 #include "gc/z/zForwarding.inline.hpp"
 #include "gc/z/zForwardingTable.inline.hpp"
+#include "gc/z/zHash.inline.hpp"
 #include "gc/z/zHeap.hpp"
 #include "gc/z/zMark.inline.hpp"
 #include "gc/z/zOop.inline.hpp"
@@ -42,6 +43,11 @@ inline ZHeap* ZHeap::heap() {
 
 inline ReferenceDiscoverer* ZHeap::reference_discoverer() {
   return &_reference_processor;
+}
+
+inline uint32_t ZHeap::hash_oop(oop obj) const {
+  const uintptr_t offset = ZAddress::offset(ZOop::to_address(obj));
+  return ZHash::address_to_uint32(offset);
 }
 
 inline bool ZHeap::is_object_live(uintptr_t addr) const {
@@ -129,7 +135,11 @@ inline void ZHeap::check_out_of_memory() {
 }
 
 inline bool ZHeap::is_oop(oop object) const {
-  return ZOop::is_good(object);
+  // Verify that we have a good address. Note that ZAddress::is_good()
+  // would not be a strong enough verification, since it only verifies
+  // that the metadata bits are good.
+  const uintptr_t addr = ZOop::to_address(object);
+  return ZAddress::good(addr) == addr;
 }
 
 #endif // SHARE_GC_Z_ZHEAP_INLINE_HPP

@@ -645,7 +645,7 @@ public:
 class CodeHeapAnalyticsDCmd : public DCmdWithParser {
 protected:
   DCmdArgument<char*> _function;
-  DCmdArgument<char*> _granularity;
+  DCmdArgument<jlong> _granularity;
 public:
   CodeHeapAnalyticsDCmd(outputStream* output, bool heap);
   static const char* name() {
@@ -880,12 +880,36 @@ public:
     return "High: Switches the VM into Java debug mode.";
   }
   static const JavaPermission permission() {
-    JavaPermission p = { "java.lang.management.ManagementPermission", "monitor", NULL };
+    JavaPermission p = { "java.lang.management.ManagementPermission", "control", NULL };
     return p;
   }
   static int num_arguments() { return 0; }
   virtual void execute(DCmdSource source, TRAPS);
 };
 #endif // INCLUDE_JVMTI
+
+class EventLogDCmd : public DCmdWithParser {
+protected:
+  DCmdArgument<char*> _log;
+  DCmdArgument<char*> _max;
+public:
+  EventLogDCmd(outputStream* output, bool heap);
+  static const char* name() {
+    return "VM.events";
+  }
+  static const char* description() {
+    return "Print VM event logs";
+  }
+  static const char* impact() {
+    return "Low: Depends on event log size. ";
+  }
+  static const JavaPermission permission() {
+    JavaPermission p = {"java.lang.management.ManagementPermission",
+                        "monitor", NULL};
+    return p;
+  }
+  static int num_arguments();
+  virtual void execute(DCmdSource source, TRAPS);
+};
 
 #endif // SHARE_SERVICES_DIAGNOSTICCOMMAND_HPP

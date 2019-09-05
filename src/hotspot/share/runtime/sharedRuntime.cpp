@@ -764,18 +764,9 @@ void SharedRuntime::throw_StackOverflowError_common(JavaThread* thread, bool del
   throw_and_post_jvmti_exception(thread, exception);
 }
 
-#if INCLUDE_JVMCI
-address SharedRuntime::deoptimize_for_implicit_exception(JavaThread* thread, address pc, CompiledMethod* nm, int deopt_reason) {
-  assert(deopt_reason > Deoptimization::Reason_none && deopt_reason < Deoptimization::Reason_LIMIT, "invalid deopt reason");
-  thread->set_jvmci_implicit_exception_pc(pc);
-  thread->set_pending_deoptimization(Deoptimization::make_trap_request((Deoptimization::DeoptReason)deopt_reason, Deoptimization::Action_reinterpret));
-  return (SharedRuntime::deopt_blob()->implicit_exception_uncommon_trap());
-}
-#endif // INCLUDE_JVMCI
-
 address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
                                                            address pc,
-                                                           SharedRuntime::ImplicitExceptionKind exception_kind)
+                                                           ImplicitExceptionKind exception_kind)
 {
   address target_pc = NULL;
 
@@ -876,19 +867,7 @@ address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
 #ifndef PRODUCT
           _implicit_null_throws++;
 #endif
-#if INCLUDE_JVMCI
-          if (cm->is_compiled_by_jvmci() && cm->pc_desc_at(pc) != NULL) {
-            // If there's no PcDesc then we'll die way down inside of
-            // deopt instead of just getting normal error reporting,
-            // so only go there if it will succeed.
-            return deoptimize_for_implicit_exception(thread, pc, cm, Deoptimization::Reason_null_check);
-          } else {
-#endif // INCLUDE_JVMCI
-          assert (cm->is_nmethod(), "Expect nmethod");
-          target_pc = ((nmethod*)cm)->continuation_for_implicit_exception(pc);
-#if INCLUDE_JVMCI
-          }
-#endif // INCLUDE_JVMCI
+          target_pc = cm->continuation_for_implicit_null_exception(pc);
           // If there's an unexpected fault, target_pc might be NULL,
           // in which case we want to fall through into the normal
           // error handling code.
@@ -904,15 +883,7 @@ address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
 #ifndef PRODUCT
         _implicit_div0_throws++;
 #endif
-#if INCLUDE_JVMCI
-        if (cm->is_compiled_by_jvmci() && cm->pc_desc_at(pc) != NULL) {
-          return deoptimize_for_implicit_exception(thread, pc, cm, Deoptimization::Reason_div0_check);
-        } else {
-#endif // INCLUDE_JVMCI
-        target_pc = cm->continuation_for_implicit_exception(pc);
-#if INCLUDE_JVMCI
-        }
-#endif // INCLUDE_JVMCI
+        target_pc = cm->continuation_for_implicit_div0_exception(pc);
         // If there's an unexpected fault, target_pc might be NULL,
         // in which case we want to fall through into the normal
         // error handling code.
@@ -1314,6 +1285,12 @@ bool SharedRuntime::resolve_sub_helper_internal(methodHandle callee_method, cons
           }
         }
       } else {
+        if (VM_Version::supports_fast_class_init_checks() &&
+            invoke_code == Bytecodes::_invokestatic &&
+            callee_method->needs_clinit_barrier() &&
+            callee != NULL && (callee->is_compiled_by_jvmci() || callee->is_aot())) {
+          return true; // skip patching for JVMCI or AOT code
+        }
         CompiledStaticCall* ssc = caller_nm->compiledStaticCall_before(caller_frame.pc());
         if (ssc->is_clean()) ssc->set(static_call_info);
       }
@@ -1376,17 +1353,19 @@ methodHandle SharedRuntime::resolve_sub_helper(JavaThread *thread,
   }
 #endif
 
-  // Do not patch call site for static call to another class
-  // when the class is not fully initialized.
   if (invoke_code == Bytecodes::_invokestatic) {
-    if (!callee_method->method_holder()->is_initialized() &&
-        callee_method->method_holder() != caller_nm->method()->method_holder()) {
+    assert(callee_method->method_holder()->is_initialized() ||
+           callee_method->method_holder()->is_reentrant_initialization(thread),
+           "invalid class initialization state for invoke_static");
+    if (!VM_Version::supports_fast_class_init_checks() && callee_method->needs_clinit_barrier()) {
+      // In order to keep class initialization check, do not patch call
+      // site for static call when the class is not fully initialized.
+      // Proper check is enforced by call site re-resolution on every invocation.
+      //
+      // When fast class initialization checks are supported (VM_Version::supports_fast_class_init_checks() == true),
+      // explicit class initialization check is put in nmethod entry (VEP).
       assert(callee_method->method_holder()->is_linked(), "must be");
       return callee_method;
-    } else {
-      assert(callee_method->method_holder()->is_initialized() ||
-             callee_method->method_holder()->is_reentrant_initialization(thread),
-             "invalid class initialization state for invoke_static");
     }
   }
 
@@ -1467,7 +1446,19 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::handle_wrong_method(JavaThread* thread))
     guarantee(callee != NULL && callee->is_method(), "bad handshake");
     thread->set_vm_result_2(callee);
     thread->set_callee_target(NULL);
-    return callee->get_c2i_entry();
+    if (caller_frame.is_entry_frame() && VM_Version::supports_fast_class_init_checks()) {
+      // Bypass class initialization checks in c2i when caller is in native.
+      // JNI calls to static methods don't have class initialization checks.
+      // Fast class initialization checks are present in c2i adapters and call into
+      // SharedRuntime::handle_wrong_method() on the slow path.
+      //
+      // JVM upcalls may land here as well, but there's a proper check present in
+      // LinkResolver::resolve_static_call (called from JavaCalls::call_static),
+      // so bypassing it in c2i adapter is benign.
+      return callee->get_c2i_no_clinit_check_entry();
+    } else {
+      return callee->get_c2i_entry();
+    }
   }
 
   // Must be compiled to compiled path which is safe to stackwalk
@@ -1918,7 +1909,7 @@ bool SharedRuntime::should_fixup_call_destination(address destination, address e
 // where we went int -> i2c -> c2i and so the caller could in fact be
 // interpreted. If the caller is compiled we attempt to patch the caller
 // so he no longer calls into the interpreter.
-IRT_LEAF(void, SharedRuntime::fixup_callers_callsite(Method* method, address caller_pc))
+JRT_LEAF(void, SharedRuntime::fixup_callers_callsite(Method* method, address caller_pc))
   Method* moop(method);
 
   address entry_point = moop->from_compiled_entry_no_trampoline();
@@ -1987,7 +1978,7 @@ IRT_LEAF(void, SharedRuntime::fixup_callers_callsite(Method* method, address cal
       }
     }
   }
-IRT_END
+JRT_END
 
 
 // same as JVM_Arraycopy, but called directly from compiled code
@@ -2041,7 +2032,7 @@ char* SharedRuntime::generate_class_cast_message(
   const char* caster_name = caster_klass->external_name();
 
   assert(target_klass != NULL || target_klass_name != NULL, "one must be provided");
-  const char* target_name = target_klass == NULL ? target_klass_name->as_C_string() :
+  const char* target_name = target_klass == NULL ? target_klass_name->as_klass_external_name() :
                                                    target_klass->external_name();
 
   size_t msglen = strlen(caster_name) + strlen("class ") + strlen(" cannot be cast to class ") + strlen(target_name) + 1;
@@ -2256,7 +2247,7 @@ class MethodArityHistogram {
 
  public:
   MethodArityHistogram() {
-    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     _max_arity = _max_size = 0;
     for (int i = 0; i < MAX_ARITY; i++) _arity_histogram[i] = _size_histogram[i] = 0;
     CodeCache::nmethods_do(add_method_to_histogram);
@@ -2471,9 +2462,9 @@ class AdapterHandlerTable : public BasicHashtable<mtCode> {
     : BasicHashtable<mtCode>(293, (DumpSharedSpaces ? sizeof(CDSAdapterHandlerEntry) : sizeof(AdapterHandlerEntry))) { }
 
   // Create a new entry suitable for insertion in the table
-  AdapterHandlerEntry* new_entry(AdapterFingerPrint* fingerprint, address i2c_entry, address c2i_entry, address c2i_unverified_entry) {
+  AdapterHandlerEntry* new_entry(AdapterFingerPrint* fingerprint, address i2c_entry, address c2i_entry, address c2i_unverified_entry, address c2i_no_clinit_check_entry) {
     AdapterHandlerEntry* entry = (AdapterHandlerEntry*)BasicHashtable<mtCode>::new_entry(fingerprint->compute_hash());
-    entry->init(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry);
+    entry->init(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry, c2i_no_clinit_check_entry);
     if (DumpSharedSpaces) {
       ((CDSAdapterHandlerEntry*)entry)->init();
     }
@@ -2622,8 +2613,9 @@ void AdapterHandlerLibrary::initialize() {
 AdapterHandlerEntry* AdapterHandlerLibrary::new_entry(AdapterFingerPrint* fingerprint,
                                                       address i2c_entry,
                                                       address c2i_entry,
-                                                      address c2i_unverified_entry) {
-  return _adapters->new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry);
+                                                      address c2i_unverified_entry,
+                                                      address c2i_no_clinit_check_entry) {
+  return _adapters->new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry, c2i_no_clinit_check_entry);
 }
 
 AdapterHandlerEntry* AdapterHandlerLibrary::get_adapter(const methodHandle& method) {
@@ -2799,6 +2791,7 @@ address AdapterHandlerEntry::base_address() {
   if (base == NULL)  base = _c2i_entry;
   assert(base <= _c2i_entry || _c2i_entry == NULL, "");
   assert(base <= _c2i_unverified_entry || _c2i_unverified_entry == NULL, "");
+  assert(base <= _c2i_no_clinit_check_entry || _c2i_no_clinit_check_entry == NULL, "");
   return base;
 }
 
@@ -2812,6 +2805,8 @@ void AdapterHandlerEntry::relocate(address new_base) {
     _c2i_entry += delta;
   if (_c2i_unverified_entry != NULL)
     _c2i_unverified_entry += delta;
+  if (_c2i_no_clinit_check_entry != NULL)
+    _c2i_no_clinit_check_entry += delta;
   assert(base_address() == new_base, "");
 }
 
@@ -3150,10 +3145,20 @@ void AdapterHandlerLibrary::print_handler_on(outputStream* st, const CodeBlob* b
 }
 
 void AdapterHandlerEntry::print_adapter_on(outputStream* st) const {
-  st->print_cr("AHE@" INTPTR_FORMAT ": %s i2c: " INTPTR_FORMAT " c2i: " INTPTR_FORMAT " c2iUV: " INTPTR_FORMAT,
-               p2i(this), fingerprint()->as_string(),
-               p2i(get_i2c_entry()), p2i(get_c2i_entry()), p2i(get_c2i_unverified_entry()));
-
+  st->print("AHE@" INTPTR_FORMAT ": %s", p2i(this), fingerprint()->as_string());
+  if (get_i2c_entry() != NULL) {
+    st->print(" i2c: " INTPTR_FORMAT, p2i(get_i2c_entry()));
+  }
+  if (get_c2i_entry() != NULL) {
+    st->print(" c2i: " INTPTR_FORMAT, p2i(get_c2i_entry()));
+  }
+  if (get_c2i_unverified_entry() != NULL) {
+    st->print(" c2iUV: " INTPTR_FORMAT, p2i(get_c2i_unverified_entry()));
+  }
+  if (get_c2i_no_clinit_check_entry() != NULL) {
+    st->print(" c2iNCI: " INTPTR_FORMAT, p2i(get_c2i_no_clinit_check_entry()));
+  }
+  st->cr();
 }
 
 #if INCLUDE_CDS

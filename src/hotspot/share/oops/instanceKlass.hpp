@@ -25,10 +25,7 @@
 #ifndef SHARE_OOPS_INSTANCEKLASS_HPP
 #define SHARE_OOPS_INSTANCEKLASS_HPP
 
-#include "classfile/classLoader.hpp"
 #include "classfile/classLoaderData.hpp"
-#include "classfile/moduleEntry.hpp"
-#include "classfile/packageEntry.hpp"
 #include "memory/referenceType.hpp"
 #include "oops/annotations.hpp"
 #include "oops/constMethod.hpp"
@@ -63,6 +60,7 @@
 class BreakpointInfo;
 #endif
 class ClassFileParser;
+class ClassFileStream;
 class KlassDepChange;
 class DependencyContext;
 class fieldDescriptor;
@@ -70,9 +68,10 @@ class jniIdMapBase;
 class JNIid;
 class JvmtiCachedClassFieldMap;
 class nmethodBucket;
-class SuperTypeClosure;
 class OopMapCache;
 class InterpreterOopMap;
+class PackageEntry;
+class ModuleEntry;
 
 // This is used in iterators below.
 class FieldClosure: public StackObj {
@@ -248,7 +247,7 @@ class InstanceKlass: public Klass {
   u2              _misc_flags;
   u2              _minor_version;        // minor version number of class file
   u2              _major_version;        // major version number of class file
-  Thread*         _init_thread;          // Pointer to current thread doing initialization (to handle recusive initialization)
+  Thread*         _init_thread;          // Pointer to current thread doing initialization (to handle recursive initialization)
   OopMapCache*    volatile _oop_map_cache;   // OopMapCache for all methods in the klass (allocated lazily)
   JNIid*          _jni_ids;              // First JNI identifier for static fields in this class
   jmethodID*      volatile _methods_jmethod_ids;  // jmethodIDs corresponding to method_idnum, or NULL if none
@@ -349,22 +348,7 @@ class InstanceKlass: public Klass {
     _misc_flags &= ~loader_type_bits();
   }
 
-  void set_class_loader_type(s2 loader_type) {
-    switch (loader_type) {
-    case ClassLoader::BOOT_LOADER:
-      _misc_flags |= _misc_is_shared_boot_class;
-       break;
-    case ClassLoader::PLATFORM_LOADER:
-      _misc_flags |= _misc_is_shared_platform_class;
-      break;
-    case ClassLoader::APP_LOADER:
-      _misc_flags |= _misc_is_shared_app_class;
-      break;
-    default:
-      ShouldNotReachHere();
-      break;
-    }
-  }
+  void set_class_loader_type(s2 loader_type);
 
   bool has_nonstatic_fields() const        {
     return (_misc_flags & _misc_has_nonstatic_fields) != 0;
@@ -1025,7 +1009,6 @@ public:
   void methods_do(void f(Method* method));
   void array_klasses_do(void f(Klass* k));
   void array_klasses_do(void f(Klass* k, TRAPS), TRAPS);
-  bool super_types_do(SuperTypeClosure* blk);
 
   static InstanceKlass* cast(Klass* k) {
     return const_cast<InstanceKlass*>(cast(const_cast<const Klass*>(k)));

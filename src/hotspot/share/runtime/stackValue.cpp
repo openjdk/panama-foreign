@@ -34,6 +34,10 @@
 #if INCLUDE_ZGC
 #include "gc/z/zBarrier.inline.hpp"
 #endif
+#if INCLUDE_SHENANDOAHGC
+#include "gc/shenandoah/shenandoahBarrierSet.hpp"
+#endif
+
 #ifdef COMPILER2
 #include "opto/matcher.hpp"
 #endif
@@ -223,6 +227,7 @@ static int klass2bytes(InstanceKlass* ik) {
       fatal("unknown klass: %s", ik->name()->as_utf8());
       return -1;
 #endif
+
     default:
       fatal("unknown klass: %s", ik->name()->as_utf8());
       return -1;
@@ -231,7 +236,6 @@ static int klass2bytes(InstanceKlass* ik) {
 
 static void init_vector_array(typeArrayOop arr, BasicType elem_bt, int num_elem, address value_addr) {
   int elem_size = type2aelembytes(elem_bt);
-
   for (int i = 0; i < num_elem; i++) {
     switch (elem_bt) {
       case T_BYTE: {
@@ -398,15 +402,22 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
       } else {
         value.noop = *(narrowOop*) value_addr;
       }
-      // Decode narrowoop and wrap a handle around the oop
-      Handle h(Thread::current(), CompressedOops::decode(value.noop));
+      // Decode narrowoop
+      oop val = CompressedOops::decode(value.noop);
+      // Deoptimization must make sure all oops have passed load barriers
+#if INCLUDE_SHENANDOAHGC
+      if (UseShenandoahGC) {
+        val = ShenandoahBarrierSet::barrier_set()->load_reference_barrier(val);
+      }
+#endif
+      Handle h(Thread::current(), val); // Wrap a handle around the oop
       return new StackValue(h);
     }
 #endif
     case Location::oop: {
       oop val = *(oop *)value_addr;
 #ifdef _LP64
-      if (Universe::is_narrow_oop_base(val)) {
+      if (CompressedOops::is_base(val)) {
          // Compiled code may produce decoded oop = narrow_oop_base
          // when a narrow oop implicit null check is used.
          // The narrow_oop_base could be NULL or be the address
@@ -414,13 +425,13 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
          val = (oop)NULL;
       }
 #endif
-#if INCLUDE_ZGC
-      // Deoptimization must make sure all oop have passed load barrier
-      if (UseZGC) {
-        val = ZBarrier::load_barrier_on_oop_field_preloaded((oop*)value_addr, val);
+      // Deoptimization must make sure all oops have passed load barriers
+#if INCLUDE_SHENANDOAHGC
+      if (UseShenandoahGC) {
+        val = ShenandoahBarrierSet::barrier_set()->load_reference_barrier(val);
       }
 #endif
-
+      assert(oopDesc::is_oop_or_null(val, false), "bad oop found");
       Handle h(Thread::current(), val); // Wrap a handle around the oop
       return new StackValue(h);
     }

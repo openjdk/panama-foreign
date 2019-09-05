@@ -37,6 +37,7 @@
 extern char* g_assert_poison;
 #define TOUCH_ASSERT_POISON (*g_assert_poison) = 'X';
 void initialize_assert_poison();
+void disarm_assert_poison();
 bool handle_assert_poison_fault(const void* ucVoid, const void* faulting_address);
 #else
 #define TOUCH_ASSERT_POISON
@@ -62,6 +63,9 @@ do {                                                                           \
 
 // For backward compatibility.
 #define assert(p, ...) vmassert(p, __VA_ARGS__)
+
+#define precond(p)   assert(p, "precond")
+#define postcond(p)  assert(p, "postcond")
 
 #ifndef ASSERT
 #define vmassert_status(p, status, msg)

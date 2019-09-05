@@ -94,7 +94,7 @@ final class Long256Vector extends LongVector {
 
     @ForceInline
     @Override
-    public final Class<Long> elementType() { return Long.class; }
+    public final Class<Long> elementType() { return long.class; }
 
     @ForceInline
     @Override

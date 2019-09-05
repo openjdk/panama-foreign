@@ -64,7 +64,9 @@ class VectorNode : public TypeNode {
   static VectorNode* scalar2vector(Node* s, uint vlen, const Type* opd_t);
   static VectorNode* shift_count(int opc, Node* cnt, uint vlen, BasicType bt);
   static VectorNode* make(int opc, Node* n1, Node* n2, uint vlen, BasicType bt);
+  static VectorNode* make(int vopc, Node* n1, Node* n2, const TypeVect* vt);
   static VectorNode* make(int opc, Node* n1, Node* n2, Node* n3, uint vlen, BasicType bt);
+  static VectorNode* make(int vopc, Node* n1, Node* n2, Node* n3, const TypeVect* vt);
 
   static int  opcode(int opc, BasicType bt);
   static int replicate_opcode(BasicType bt);
@@ -438,6 +440,22 @@ class DivVDNode : public VectorNode {
   virtual int Opcode() const;
 };
 
+//------------------------------AbsVBNode--------------------------------------
+// Vector Abs byte
+class AbsVBNode : public VectorNode {
+public:
+  AbsVBNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  virtual int Opcode() const;
+};
+
+//------------------------------AbsVSNode--------------------------------------
+// Vector Abs short
+class AbsVSNode : public VectorNode {
+public:
+  AbsVSNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  virtual int Opcode() const;
+};
+
 //------------------------------MinVNode--------------------------------------
 // Vector Min
 class MinVNode : public VectorNode {
@@ -459,6 +477,22 @@ public:
 class AbsVNode : public VectorNode {
 public:
   AbsVNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  virtual int Opcode() const;
+};
+
+//------------------------------AbsVINode--------------------------------------
+// Vector Abs int
+class AbsVINode : public VectorNode {
+public:
+  AbsVINode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  virtual int Opcode() const;
+};
+
+//------------------------------AbsVLNode--------------------------------------
+// Vector Abs long
+class AbsVLNode : public VectorNode {
+public:
+  AbsVLNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
   virtual int Opcode() const;
 };
 
@@ -648,6 +682,30 @@ class RShiftCntVNode : public VectorNode {
   virtual uint ideal_reg() const { return Matcher::vector_shift_count_ideal_reg(vect_type()->length_in_bytes()); }
 };
 
+
+//------------------------------VLShiftVNode-----------------------------------
+// Variable vector left shift bytes
+class VLShiftVNode : public VectorNode {
+ public:
+  VLShiftVNode(Node* in1, Node* in2, const TypeVect* vt) : VectorNode(in1,in2,vt) {}
+  virtual int Opcode() const;
+};
+
+//------------------------------VRShiftVNode-----------------------------------
+// Variable vector right shift bytes
+class VRShiftVNode : public VectorNode {
+ public:
+  VRShiftVNode(Node* in1, Node* in2, const TypeVect* vt) : VectorNode(in1,in2,vt) {}
+  virtual int Opcode() const;
+};
+
+//------------------------------VURShiftVNode-----------------------------------
+// Variable vector unsigned right shift bytes
+class VURShiftVNode : public VectorNode {
+ public:
+  VURShiftVNode(Node* in1, Node* in2, const TypeVect* vt) : VectorNode(in1,in2,vt) {}
+  virtual int Opcode() const;
+};
 
 //------------------------------AndVNode---------------------------------------
 // Vector and integer
@@ -1247,8 +1305,13 @@ class VectorMaskCmpNode : public VectorNode {
   uint size_of() const { return sizeof(*this); }
 
  public:
-  VectorMaskCmpNode(BoolTest::mask predicate, Node* in1, Node* in2, const TypeVect* vt) :
-      VectorNode(in1, in2, vt), _predicate(predicate) {
+  VectorMaskCmpNode(BoolTest::mask predicate, Node* in1, Node* in2, ConINode* predicate_node, const TypeVect* vt) :
+#ifdef X86
+      VectorNode(in1, in2, predicate_node, vt),
+#else
+      VectorNode(in1, in2, vt),
+#endif
+      _predicate(predicate) {
     assert(in1->bottom_type()->is_vect()->element_basic_type() == in2->bottom_type()->is_vect()->element_basic_type(),
            "VectorMaskCmp inputs must have same type for elements");
     assert(in1->bottom_type()->is_vect()->length() == in2->bottom_type()->is_vect()->length(),
@@ -1258,7 +1321,7 @@ class VectorMaskCmpNode : public VectorNode {
 
   virtual int Opcode() const;
   virtual uint hash() const { return VectorNode::hash() + _predicate; }
-  virtual uint cmp( const Node &n ) const {
+  virtual bool cmp( const Node &n ) const {
     return VectorNode::cmp(n) && _predicate == ((VectorMaskCmpNode&)n)._predicate;
   }
   BoolTest::mask get_predicate() { return _predicate; }
@@ -1298,7 +1361,7 @@ class VectorTestNode : public Node {
   }
   virtual int Opcode() const;
   virtual uint hash() const { return Node::hash() + _predicate; }
-  virtual uint cmp( const Node &n ) const {
+  virtual bool cmp( const Node &n ) const {
     return Node::cmp(n) && _predicate == ((VectorTestNode&)n)._predicate;
   }
   virtual const Type *bottom_type() const { return TypeInt::BOOL; }
@@ -1370,7 +1433,7 @@ class VectorStoreMaskNode : public VectorNode {
   }
 
   virtual uint hash() const { return VectorNode::hash() + _mask_size; }
-  virtual uint cmp( const Node &n ) const {
+  virtual bool cmp( const Node &n ) const {
     return VectorNode::cmp(n) && _mask_size == ((VectorStoreMaskNode&)n)._mask_size;
   }
   int GetInputMaskSize() const { return _mask_size; }
@@ -1388,7 +1451,7 @@ class VectorReinterpretNode : public VectorNode {
       : VectorNode(in, dst_vt), _src_vt(src_vt) { }
 
   virtual uint hash() const { return VectorNode::hash() + _src_vt->hash(); }
-  virtual uint cmp( const Node &n ) const {
+  virtual bool cmp( const Node &n ) const {
     return VectorNode::cmp(n) && !Type::cmp(_src_vt,((VectorReinterpretNode&)n)._src_vt);
   }
   virtual Node *Identity(PhaseGVN *phase);

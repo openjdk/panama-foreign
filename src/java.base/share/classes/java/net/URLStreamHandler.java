@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,8 +76,14 @@ public abstract class URLStreamHandler {
      * support proxying will ignore the proxy parameter and make a
      * normal connection.
      *
-     * Calling this method preempts the system's default
+     * <p> Calling this method preempts the system's default
      * {@link java.net.ProxySelector ProxySelector} settings.
+     *
+     * @implSpec
+     * The default implementation of this method first checks that the given
+     * {@code URL} and {@code Proxy} are not null, then throws {@code
+     * UnsupportedOperationException}. Subclasses should override this method
+     * with an appropriate implementation.
      *
      * @param      u   the URL that this connects to.
      * @param      p   the proxy through which the connection will be made.
@@ -93,6 +99,8 @@ public abstract class URLStreamHandler {
      * @since      1.5
      */
     protected URLConnection openConnection(URL u, Proxy p) throws IOException {
+        if (u == null || p == null)
+            throw new IllegalArgumentException("null " + (u == null ? "url" : "proxy"));
         throw new UnsupportedOperationException("Method not implemented.");
     }
 
@@ -508,12 +516,15 @@ public abstract class URLStreamHandler {
      *                                  different from this one
      * @since 1.3
      */
-       protected void setURL(URL u, String protocol, String host, int port,
+    protected void setURL(URL u, String protocol, String host, int port,
                              String authority, String userInfo, String path,
                              String query, String ref) {
         if (this != u.handler) {
             throw new SecurityException("handler for url different from " +
                                         "this handler");
+        } else if (host != null && u.isBuiltinStreamHandler(this)) {
+            String s = IPAddressUtil.checkHostString(host);
+            if (s != null) throw new IllegalArgumentException(s);
         }
         // ensure that no one can reset the protocol on a given URL.
         u.set(u.getProtocol(), host, port, authority, userInfo, path, query, ref);

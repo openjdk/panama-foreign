@@ -24,10 +24,12 @@
 #ifndef SHARE_GC_Z_ZBARRIER_INLINE_HPP
 #define SHARE_GC_Z_ZBARRIER_INLINE_HPP
 
+#include "classfile/javaClasses.hpp"
 #include "gc/z/zAddress.inline.hpp"
 #include "gc/z/zBarrier.hpp"
 #include "gc/z/zOop.inline.hpp"
 #include "gc/z/zResurrection.inline.hpp"
+#include "oops/oop.hpp"
 #include "runtime/atomic.hpp"
 
 template <ZBarrierFastPath fast_path, ZBarrierSlowPath slow_path>
@@ -37,7 +39,7 @@ inline oop ZBarrier::barrier(volatile oop* p, oop o) {
 retry:
   // Fast path
   if (fast_path(addr)) {
-    return ZOop::to_oop(addr);
+    return ZOop::from_address(addr);
   }
 
   // Slow path
@@ -56,7 +58,7 @@ retry:
     }
   }
 
-  return ZOop::to_oop(good_addr);
+  return ZOop::from_address(good_addr);
 }
 
 template <ZBarrierFastPath fast_path, ZBarrierSlowPath slow_path>
@@ -67,7 +69,7 @@ inline oop ZBarrier::weak_barrier(volatile oop* p, oop o) {
   if (fast_path(addr)) {
     // Return the good address instead of the weak good address
     // to ensure that the currently active heap view is used.
-    return ZOop::to_oop(ZAddress::good_or_null(addr));
+    return ZOop::from_address(ZAddress::good_or_null(addr));
   }
 
   // Slow path
@@ -95,7 +97,7 @@ inline oop ZBarrier::weak_barrier(volatile oop* p, oop o) {
     }
   }
 
-  return ZOop::to_oop(good_addr);
+  return ZOop::from_address(good_addr);
 }
 
 template <ZBarrierFastPath fast_path, ZBarrierSlowPath slow_path>
@@ -117,7 +119,7 @@ inline void ZBarrier::root_barrier(oop* p, oop o) {
   // to heal the same root if it is aligned, since they would always heal
   // the root in the same way and it does not matter in which order it
   // happens. For misaligned oops, there needs to be mutual exclusion.
-  *p = ZOop::to_oop(good_addr);
+  *p = ZOop::from_address(good_addr);
 }
 
 inline bool ZBarrier::is_null_fast_path(uintptr_t addr) {
@@ -173,7 +175,21 @@ inline void ZBarrier::load_barrier_on_oop_array(volatile oop* p, size_t length) 
   }
 }
 
+// ON_WEAK barriers should only ever be applied to j.l.r.Reference.referents.
+inline void verify_on_weak(volatile oop* referent_addr) {
+#ifdef ASSERT
+  if (referent_addr != NULL) {
+    uintptr_t base = (uintptr_t)referent_addr - java_lang_ref_Reference::referent_offset;
+    oop obj = cast_to_oop(base);
+    assert(oopDesc::is_oop(obj), "Verification failed for: ref " PTR_FORMAT " obj: " PTR_FORMAT, (uintptr_t)referent_addr, base);
+    assert(java_lang_ref_Reference::is_referent_field(obj, java_lang_ref_Reference::referent_offset), "Sanity");
+  }
+#endif
+}
+
 inline oop ZBarrier::load_barrier_on_weak_oop_field_preloaded(volatile oop* p, oop o) {
+  verify_on_weak(p);
+
   if (is_resurrection_blocked(p, &o)) {
     return weak_barrier<is_good_or_null_fast_path, weak_load_barrier_on_weak_oop_slow_path>(p, o);
   }
@@ -217,6 +233,8 @@ inline oop ZBarrier::weak_load_barrier_on_weak_oop_field(volatile oop* p) {
 }
 
 inline oop ZBarrier::weak_load_barrier_on_weak_oop_field_preloaded(volatile oop* p, oop o) {
+  verify_on_weak(p);
+
   if (is_resurrection_blocked(p, &o)) {
     return weak_barrier<is_good_or_null_fast_path, weak_load_barrier_on_weak_oop_slow_path>(p, o);
   }

@@ -71,7 +71,7 @@ int VectorNode::opcode(int sopc, BasicType bt) {
     return Op_SubVD;
   case Op_MulI:
     switch (bt) {
-    case T_BOOLEAN:
+    case T_BOOLEAN:return 0;
     case T_BYTE:   return Op_MulVB;
     case T_CHAR:
     case T_SHORT:  return Op_MulVS;
@@ -105,6 +105,18 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_DivD:
     assert(bt == T_DOUBLE, "must be");
     return Op_DivVD;
+  case Op_AbsI:
+    switch (bt) {
+    case T_BOOLEAN:
+    case T_CHAR:  return 0; // abs does not make sense for unsigned
+    case T_BYTE:  return Op_AbsVB;
+    case T_SHORT: return Op_AbsVS;
+    case T_INT:   return Op_AbsVI;
+    default: ShouldNotReachHere(); return 0;
+    }
+  case Op_AbsL:
+    assert(bt == T_LONG, "must be");
+    return Op_AbsVL;
   case Op_MinI:
     switch (bt) {
     case T_BOOLEAN:
@@ -141,16 +153,6 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_MaxD:
     assert(bt == T_DOUBLE, "must be");
     return Op_MaxV;
-  case Op_AbsI:
-    switch (bt) {
-    case T_BOOLEAN:
-    case T_CHAR:  return 0; // abs does not make sense for unsigned
-    case T_BYTE:
-    case T_SHORT:
-    case T_INT:
-    case T_LONG:  return Op_AbsV;
-    default: ShouldNotReachHere(); return 0;
-    }
   case Op_AbsF:
     assert(bt == T_FLOAT, "must be");
     return Op_AbsVF;
@@ -386,8 +388,6 @@ void VectorNode::vector_operands(Node* n, uint* start, uint* end) {
   case Op_LoadI:   case Op_LoadL:
   case Op_LoadF:   case Op_LoadD:
   case Op_LoadP:   case Op_LoadN:
-  case Op_LoadBarrierSlowReg:
-  case Op_LoadBarrierWeakSlowReg:
     *start = 0;
     *end   = 0; // no vector operands
     break;
@@ -430,12 +430,10 @@ void VectorNode::vector_operands(Node* n, uint* start, uint* end) {
   }
 }
 
-// Return the vector version of a scalar operation node.
-VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType bt) {
-  const TypeVect* vt = TypeVect::make(bt, vlen);
-  int vopc = VectorNode::opcode(opc, bt);
+// Make a vector node for binary operation
+VectorNode* VectorNode::make(int vopc, Node* n1, Node* n2, const TypeVect* vt) {
   // This method should not be called for unimplemented vectors.
-  guarantee(vopc > 0, "Vector for '%s' is not implemented", NodeClassNames[opc]);
+  guarantee(vopc > 0, "vopc must be > 0");
   switch (vopc) {
   case Op_AddVB: return new AddVBNode(n1, n2, vt);
   case Op_AddVS: return new AddVSNode(n1, n2, vt);
@@ -467,6 +465,10 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_AbsV: return new AbsVNode(n1, vt);
   case Op_AbsVF: return new AbsVFNode(n1, vt);
   case Op_AbsVD: return new AbsVDNode(n1, vt);
+  case Op_AbsVB: return new AbsVBNode(n1, vt);
+  case Op_AbsVS: return new AbsVSNode(n1, vt);
+  case Op_AbsVI: return new AbsVINode(n1, vt);
+  case Op_AbsVL: return new AbsVLNode(n1, vt);
 
   case Op_NegVI: return new NegVINode(n1, vt);
   case Op_NegVF: return new NegVFNode(n1, vt);
@@ -493,6 +495,11 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_URShiftVI: return new URShiftVINode(n1, n2, vt);
   case Op_URShiftVL: return new URShiftVLNode(n1, n2, vt);
 
+  // Variable shift left 
+  case Op_VLShiftV: return new VLShiftVNode(n1, n2, vt);
+  case Op_VRShiftV: return new VRShiftVNode(n1, n2, vt);
+  case Op_VURShiftV: return new VURShiftVNode(n1, n2, vt);
+
   case Op_AndV: return new AndVNode(n1, n2, vt);
   case Op_OrV:  return new OrVNode (n1, n2, vt);
   case Op_XorV: return new XorVNode(n1, n2, vt);
@@ -504,11 +511,19 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   }
 }
 
-VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, Node* n3, uint vlen, BasicType bt) {
+// Return the vector version of a scalar binary operation node.
+VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType bt) {
   const TypeVect* vt = TypeVect::make(bt, vlen);
   int vopc = VectorNode::opcode(opc, bt);
   // This method should not be called for unimplemented vectors.
   guarantee(vopc > 0, "Vector for '%s' is not implemented", NodeClassNames[opc]);
+  return make(vopc, n1, n2, vt);
+}
+
+// Make a vector node for ternary operation
+VectorNode* VectorNode::make(int vopc, Node* n1, Node* n2, Node* n3, const TypeVect* vt) {
+  // This method should not be called for unimplemented vectors.
+  guarantee(vopc > 0, "vopc must be > 0");
   switch (vopc) {
   case Op_FmaVD: return new FmaVDNode(n1, n2, n3, vt);
   case Op_FmaVF: return new FmaVFNode(n1, n2, n3, vt);
@@ -516,6 +531,15 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, Node* n3, uint vlen, B
     fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
     return NULL;
   }
+}
+
+// Return the vector version of a scalar ternary operation node.
+VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, Node* n3, uint vlen, BasicType bt) {
+  const TypeVect* vt = TypeVect::make(bt, vlen);
+  int vopc = VectorNode::opcode(opc, bt);
+  // This method should not be called for unimplemented vectors.
+  guarantee(vopc > 0, "Vector for '%s' is not implemented", NodeClassNames[opc]);
+  return make(vopc, n1, n2, n3, vt);
 }
 
 // Scalar promotion

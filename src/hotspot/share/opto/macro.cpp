@@ -26,6 +26,7 @@
 #include "compiler/compileLog.hpp"
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "libadt/vectset.hpp"
+#include "memory/universe.hpp"
 #include "opto/addnode.hpp"
 #include "opto/arraycopynode.hpp"
 #include "opto/callnode.hpp"
@@ -348,14 +349,15 @@ Node* PhaseMacroExpand::make_arraycopy_load(ArrayCopyNode* ac, intptr_t offset, 
   }
   Node* res = NULL;
   if (ac->is_clonebasic()) {
+    assert(ac->in(ArrayCopyNode::Src) != ac->in(ArrayCopyNode::Dest), "clone source equals destination");
     Node* base = ac->in(ArrayCopyNode::Src)->in(AddPNode::Base);
     Node* adr = _igvn.transform(new AddPNode(base, base, MakeConX(offset)));
     const TypePtr* adr_type = _igvn.type(base)->is_ptr()->add_offset(offset);
-    res = LoadNode::make(_igvn, ctl, mem, adr, adr_type, type, bt, MemNode::unordered, LoadNode::Pinned);
+    res = LoadNode::make(_igvn, ctl, mem, adr, adr_type, type, bt, MemNode::unordered, LoadNode::UnknownControl);
   } else {
     if (ac->modifies(offset, offset, &_igvn, true)) {
       assert(ac->in(ArrayCopyNode::Dest) == alloc->result_cast(), "arraycopy destination should be allocation's result");
-      uint shift  = exact_log2(type2aelembytes(bt));
+      uint shift = exact_log2(type2aelembytes(bt));
       Node* diff = _igvn.transform(new SubINode(ac->in(ArrayCopyNode::SrcPos), ac->in(ArrayCopyNode::DestPos)));
 #ifdef _LP64
       diff = _igvn.transform(new ConvI2LNode(diff));
@@ -366,7 +368,11 @@ Node* PhaseMacroExpand::make_arraycopy_load(ArrayCopyNode* ac, intptr_t offset, 
       Node* base = ac->in(ArrayCopyNode::Src);
       Node* adr = _igvn.transform(new AddPNode(base, base, off));
       const TypePtr* adr_type = _igvn.type(base)->is_ptr()->add_offset(offset);
-      res = LoadNode::make(_igvn, ctl, mem, adr, adr_type, type, bt, MemNode::unordered, LoadNode::Pinned);
+      if (ac->in(ArrayCopyNode::Src) == ac->in(ArrayCopyNode::Dest)) {
+        // Don't emit a new load from src if src == dst but try to get the value from memory instead
+        return value_from_mem(ac->in(TypeFunc::Memory), ctl, ft, ftype, adr_type->isa_oopptr(), alloc);
+      }
+      res = LoadNode::make(_igvn, ctl, mem, adr, adr_type, type, bt, MemNode::unordered, LoadNode::UnknownControl);
     }
   }
   if (res != NULL) {
@@ -496,7 +502,6 @@ Node *PhaseMacroExpand::value_from_mem(Node *sfpt_mem, Node *sfpt_ctl, BasicType
   Node *alloc_mem = alloc->in(TypeFunc::Memory);
   Arena *a = Thread::current()->resource_area();
   VectorSet visited(a);
-
 
   bool done = sfpt_mem == alloc_mem;
   Node *mem = sfpt_mem;
@@ -1008,8 +1013,17 @@ void PhaseMacroExpand::process_users_of_allocation(CallNode *alloc) {
         assert(init->outcnt() <= 2, "only a control and memory projection expected");
         Node *ctrl_proj = init->proj_out_or_null(TypeFunc::Control);
         if (ctrl_proj != NULL) {
-           assert(init->in(TypeFunc::Control) == _fallthroughcatchproj, "allocation control projection");
-          _igvn.replace_node(ctrl_proj, _fallthroughcatchproj);
+          _igvn.replace_node(ctrl_proj, init->in(TypeFunc::Control));
+#ifdef ASSERT
+          BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
+          Node* tmp = init->in(TypeFunc::Control);
+          while (bs->is_gc_barrier_node(tmp)) {
+            Node* tmp2 = bs->step_over_gc_barrier_ctrl(tmp);
+            assert(tmp != tmp2, "Must make progress");
+            tmp = tmp2;
+          }
+          assert(tmp == _fallthroughcatchproj, "allocation control projection");
+#endif
         }
         Node *mem_proj = init->proj_out_or_null(TypeFunc::Memory);
         if (mem_proj != NULL) {

@@ -145,7 +145,7 @@ void SuperWord::transform_loop(IdealLoopTree* lpt, bool do_optimization) {
   // Skip any loops already optimized by slp
   if (cl->is_vectorized_loop()) return;
 
-  if (cl->do_unroll_only()) return;
+  if (cl->is_unroll_only()) return;
 
   if (cl->is_main_loop()) {
     // Check for pre-loop ending with CountedLoopEnd(Bool(Cmp(x,Opaque1(limit))))
@@ -2453,6 +2453,7 @@ void SuperWord::output() {
         }
       } else if (opc == Op_SqrtF || opc == Op_SqrtD ||
                  opc == Op_AbsF || opc == Op_AbsD ||
+                 opc == Op_AbsI || opc == Op_AbsL ||
                  opc == Op_NegF || opc == Op_NegD ||
                  opc == Op_PopCountI) {
         assert(n->req() == 2, "only one input expected");
@@ -3286,7 +3287,14 @@ LoadNode::ControlDependency SuperWord::control_dependency(Node_List* p) {
     Node* n = p->at(i);
     assert(n->is_Load(), "only meaningful for loads");
     if (!n->depends_only_on_test()) {
-      dep = LoadNode::Pinned;
+      if (n->as_Load()->has_unknown_control_dependency() &&
+          dep != LoadNode::Pinned) {
+        // Upgrade to unknown control...
+        dep = LoadNode::UnknownControl;
+      } else {
+        // Otherwise, we must pin it.
+        dep = LoadNode::Pinned;
+      }
     }
   }
   return dep;

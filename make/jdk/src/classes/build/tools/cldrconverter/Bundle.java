@@ -50,7 +50,8 @@ class Bundle {
     private final static String[] NUMBER_PATTERN_KEYS = {
         "NumberPatterns/decimal",
         "NumberPatterns/currency",
-        "NumberPatterns/percent"
+        "NumberPatterns/percent",
+        "NumberPatterns/accounting"
     };
 
     private final static String[] COMPACT_NUMBER_PATTERN_KEYS = {
@@ -222,8 +223,12 @@ class Bundle {
                     if (value == null) {
                         value = (String) parentsMap.remove(key);
                     }
-                    if (value.length() == 0) {
-                        CLDRConverter.warning("empty pattern for " + key);
+                    if (value == null || value.isEmpty()) {
+                        if (!key.endsWith("accounting")) {
+                            // print warning unless it is for "accounting",
+                            // which may be missing.
+                            CLDRConverter.warning("empty pattern for " + key);
+                        }
                     }
                     numberPatterns[i] = value;
                 }
@@ -246,12 +251,6 @@ class Bundle {
         String defaultScript = (String) myMap.get("DefaultNumberingSystem");
         @SuppressWarnings("unchecked")
         List<String> scripts = (List<String>) myMap.get("numberingScripts");
-        if (defaultScript == null && scripts != null) {
-            // Some locale data has no default script for numbering even with mutiple scripts.
-            // Take the first one as default in that case.
-            defaultScript = scripts.get(0);
-            myMap.put("DefaultNumberingSystem", defaultScript);
-        }
         if (scripts != null) {
             for (String script : scripts) {
                 for (String k : NUMBER_ELEMENT_KEYS) {
@@ -490,6 +489,11 @@ class Bundle {
                         }
                         System.arraycopy(value, 0, newValue, 1, value.length);
                         value = newValue;
+
+                        // fix up 'Reiwa' era, which can be missing in some locales
+                        if (value[value.length - 1] == null) {
+                            value[value.length - 1] = (key.startsWith("narrow.") ? "R" : "Reiwa");
+                        }
                     }
                     break;
 
@@ -505,6 +509,7 @@ class Bundle {
                 }
                 if (!key.equals(realKey)) {
                     map.put(realKey, value);
+                    map.put("java.time." + realKey, value);
                 }
             }
             realKeys[index] = realKey;

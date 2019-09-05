@@ -34,7 +34,6 @@
 #include "gc/parallel/psPromotionManager.inline.hpp"
 #include "gc/parallel/psScavenge.inline.hpp"
 #include "gc/parallel/psTasks.hpp"
-#include "gc/shared/collectorPolicy.hpp"
 #include "gc/shared/gcCause.hpp"
 #include "gc/shared/gcHeapSummary.hpp"
 #include "gc/shared/gcId.hpp"
@@ -49,6 +48,7 @@
 #include "gc/shared/spaceDecorator.hpp"
 #include "gc/shared/weakProcessor.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "logging/log.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/compressedOops.inline.hpp"
@@ -328,7 +328,7 @@ bool PSScavenge::invoke_no_policy() {
     reference_processor()->enable_discovery();
     reference_processor()->setup_policy(false);
 
-    PreGCValues pre_gc_values(heap);
+    const PreGenGCValues pre_gc_values = heap->get_pre_gc_values();
 
     // Reset our survivor overflow.
     set_survivor_overflow(false);
@@ -598,9 +598,7 @@ bool PSScavenge::invoke_no_policy() {
       accumulated_time()->stop();
     }
 
-    young_gen->print_used_change(pre_gc_values.young_gen_used());
-    old_gen->print_used_change(pre_gc_values.old_gen_used());
-    MetaspaceUtils::print_metaspace_change(pre_gc_values.metadata_used());
+    heap->print_heap_change(pre_gc_values);
 
     // Track memory usage and detect low memory
     MemoryService::track_memory_usage();

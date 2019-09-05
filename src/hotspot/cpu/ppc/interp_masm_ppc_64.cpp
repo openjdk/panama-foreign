@@ -516,6 +516,18 @@ void InterpreterMacroAssembler::load_resolved_klass_at_offset(Register Rcpool, R
   ldx(Rklass, Rklass, Roffset);
 }
 
+void InterpreterMacroAssembler::load_resolved_method_at_index(int byte_no,
+                                                              Register cache,
+                                                              Register method) {
+  const int method_offset = in_bytes(
+    ConstantPoolCache::base_offset() +
+      ((byte_no == TemplateTable::f2_byte)
+       ? ConstantPoolCacheEntry::f2_offset()
+       : ConstantPoolCacheEntry::f1_offset()));
+
+  ld(method, method_offset, cache); // get f1 Method*
+}
+
 // Generate a subtype check: branch to ok_is_subtype if sub_klass is
 // a subtype of super_klass. Blows registers Rsub_klass, tmp1, tmp2.
 void InterpreterMacroAssembler::gen_subtype_check(Register Rsub_klass, Register Rsuper_klass, Register Rtmp1,
@@ -756,16 +768,6 @@ void InterpreterMacroAssembler::merge_frames(Register Rsender_sp, Register retur
   ld(Rscratch1, 0, R1_SP); // *SP
   ld(Rsender_sp, _ijava_state_neg(sender_sp), Rscratch1); // top_frame_sp
   ld(Rscratch2, 0, Rscratch1); // **SP
-#ifdef ASSERT
-  {
-    Label Lok;
-    ld(R0, _ijava_state_neg(ijava_reserved), Rscratch1);
-    cmpdi(CCR0, R0, 0x5afe);
-    beq(CCR0, Lok);
-    stop("frame corrupted (remove activation)", 0x5afe);
-    bind(Lok);
-  }
-#endif
   if (return_pc!=noreg) {
     ld(return_pc, _abi(lr), Rscratch1); // LR
   }
@@ -2249,14 +2251,6 @@ void InterpreterMacroAssembler::restore_interpreter_state(Register scratch, bool
     cmpdi(CCR0, R0, frame::abi_reg_args_size + frame::ijava_state_size);
     bge(CCR0, Lok);
     stop("frame too small (restore istate)", 0x5432);
-    bind(Lok);
-  }
-  {
-    Label Lok;
-    ld(R0, _ijava_state_neg(ijava_reserved), scratch);
-    cmpdi(CCR0, R0, 0x5afe);
-    beq(CCR0, Lok);
-    stop("frame corrupted (restore istate)", 0x5afe);
     bind(Lok);
   }
 #endif

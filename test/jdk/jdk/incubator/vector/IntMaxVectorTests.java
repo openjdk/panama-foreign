@@ -1225,6 +1225,10 @@ public class IntMaxVectorTests extends AbstractVectorTest {
     }
 
 
+
+
+
+
     static int ASHR(int a, int b) {
         return (int)((a >> b));
     }
@@ -1269,6 +1273,10 @@ public class IntMaxVectorTests extends AbstractVectorTest {
     }
 
 
+
+
+
+
     static int LSHR(int a, int b) {
         return (int)((a >>> b));
     }
@@ -1311,6 +1319,10 @@ public class IntMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, mask, IntMaxVectorTests::LSHR);
     }
+
+
+
+
 
 
     static int LSHL_unary(int a, int b) {

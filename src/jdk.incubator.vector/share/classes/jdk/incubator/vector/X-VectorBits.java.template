@@ -96,7 +96,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @ForceInline
     @Override
-    public final Class<$Boxtype$> elementType() { return $Boxtype$.class; }
+    public final Class<$Boxtype$> elementType() { return $type$.class; }
 
     @ForceInline
     @Override

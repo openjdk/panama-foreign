@@ -511,7 +511,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      *         if the given {@code long} value cannot
      *         be represented by the vector's {@code ETYPE}
      * @see #broadcast(VectorSpecies,int)
-     * @see VectorSpecies#checkValue(VectorSpecies,long)
+     * @see VectorSpecies#checkValue(long)
      */
     public static IntVector broadcast(VectorSpecies<Integer> species, long e) {
         IntSpecies vsp = (IntSpecies) species;
@@ -758,6 +758,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e))}.
      *
+     * @param op the operation used to process lane values
      * @param e the input scalar
      * @return the result of applying the operation lane-wise
      *         to the two input vectors
@@ -790,6 +791,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e), m)}.
      *
+     * @param op the operation used to process lane values
      * @param e the input scalar
      * @param m the mask controlling lane selection
      * @return the result of applying the operation lane-wise
@@ -976,6 +978,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2))}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the first input scalar
      * @param e2 the second input scalar
      * @return the result of applying the operation lane-wise
@@ -990,7 +993,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     IntVector lanewise(VectorOperators.Ternary op, //(op,e1,e2)
                                   int e1,
                                   int e2) {
-        return lanewise(op, broadcast(e1), broadcast(e1));
+        return lanewise(op, broadcast(e1), broadcast(e2));
     }
 
     /**
@@ -1003,6 +1006,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), this.broadcast(e2), m)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the first input scalar
      * @param e2 the second input scalar
      * @param m the mask controlling lane selection
@@ -1031,6 +1035,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, v1, this.broadcast(e2))}.
      *
+     * @param op the operation used to combine lane values
      * @param v1 the other input vector
      * @param e2 the input scalar
      * @return the result of applying the operation lane-wise
@@ -1058,6 +1063,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, v1, this.broadcast(e2), m)}.
      *
+     * @param op the operation used to combine lane values
      * @param v1 the other input vector
      * @param e2 the input scalar
      * @param m the mask controlling lane selection
@@ -1087,6 +1093,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), v2)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the input scalar
      * @param v2 the other input vector
      * @return the result of applying the operation lane-wise
@@ -1114,6 +1121,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * The return value will be equal to this expression:
      * {@code this.lanewise(op, this.broadcast(e1), v2, m)}.
      *
+     * @param op the operation used to combine lane values
      * @param e1 the input scalar
      * @param v2 the other input vector
      * @param m the mask controlling lane selection
@@ -1670,7 +1678,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * to each lane value.
      *
      * This method is also equivalent to the expression
-     * {@link #lanewise(VectorOperators.Unary,Vector)
+     * {@link #lanewise(VectorOperators.Unary)
      *    lanewise}{@code (}{@link VectorOperators#NOT
      *    NOT}{@code )}.
      *
@@ -1861,6 +1869,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * against the original vector, using the selected
      * comparison operation.
      *
+     * @param op the operation used to compare lane values
      * @param e the input scalar
      * @return the mask result of testing lane-wise if this vector
      *         compares to the input, according to the selected
@@ -1891,6 +1900,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * The returned result is equal to the expression
      * {@code compare(op,s).and(m)}.
      *
+     * @param op the operation used to compare lane values
      * @param e the input scalar
      * @param m the mask controlling lane selection
      * @return the mask result of testing lane-wise if this vector
@@ -2333,7 +2343,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     }
 
     /**
-     * Blends together the bits of two vectors scalar under
+     * Blends together the bits of two vectors under
      * the control of a scalar, which supplies mask bits.
      *
      *
@@ -2998,6 +3008,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * @param species species of desired vector
      * @param bb the byte buffer
      * @param offset the offset into the byte buffer
+     * @param bo the intended byte order
      * @return a vector loaded from a byte buffer
      * @throws IllegalArgumentException if byte order of bb
      *         is not {@link ByteOrder#LITTLE_ENDIAN}
@@ -3043,6 +3054,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * @param species species of desired vector
      * @param bb the byte buffer
      * @param offset the offset into the byte buffer
+     * @param bo the intended byte order
      * @param m the mask controlling lane selection
      * @return a vector loaded from a byte buffer
      * @throws IllegalArgumentException if byte order of bb

@@ -51,6 +51,10 @@ public class $Type$Scalar extends AbstractVectorBenchmark {
         return array;
     }
 
+    static $bitstype$ bits($type$ e) {
+        return {#if[FP]?$Type$.$type$To$Bitstype$Bits(e):e};
+    }
+
     $type$[] as, bs, cs, rs;
     boolean[] ms, rms;
     int[] ss;

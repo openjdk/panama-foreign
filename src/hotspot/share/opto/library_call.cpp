@@ -228,6 +228,7 @@ class LibraryCallKit : public GraphKit {
   bool runtime_math(const TypeFunc* call_type, address funcAddr, const char* funcName);
   bool inline_math_native(vmIntrinsics::ID id);
   bool inline_math(vmIntrinsics::ID id);
+  bool inline_double_math(vmIntrinsics::ID id);
   template <typename OverflowOp>
   bool inline_math_overflow(Node* arg1, Node* arg2);
   void inline_math_mathExact(Node* math, Node* test);
@@ -557,6 +558,9 @@ bool LibraryCallKit::try_to_inline(int predicate) {
   case vmIntrinsics::_dcos:
   case vmIntrinsics::_dtan:
   case vmIntrinsics::_dabs:
+  case vmIntrinsics::_fabs:
+  case vmIntrinsics::_iabs:
+  case vmIntrinsics::_labs:
   case vmIntrinsics::_datan2:
   case vmIntrinsics::_dsqrt:
   case vmIntrinsics::_dexp:
@@ -1858,12 +1862,29 @@ Node* LibraryCallKit::round_double_node(Node* n) {
 // public static double Math.sqrt(double)
 // public static double Math.log(double)
 // public static double Math.log10(double)
-bool LibraryCallKit::inline_math(vmIntrinsics::ID id) {
+bool LibraryCallKit::inline_double_math(vmIntrinsics::ID id) {
   Node* arg = round_double_node(argument(0));
   Node* n = NULL;
   switch (id) {
   case vmIntrinsics::_dabs:   n = new AbsDNode(                arg);  break;
   case vmIntrinsics::_dsqrt:  n = new SqrtDNode(C, control(),  arg);  break;
+  default:  fatal_unexpected_iid(id);  break;
+  }
+  set_result(_gvn.transform(n));
+  return true;
+}
+
+//------------------------------inline_math-----------------------------------
+// public static float Math.abs(float)
+// public static int Math.abs(int)
+// public static long Math.abs(long)
+bool LibraryCallKit::inline_math(vmIntrinsics::ID id) {
+  Node* arg = argument(0);
+  Node* n = NULL;
+  switch (id) {
+  case vmIntrinsics::_fabs:   n = new AbsFNode(                arg);  break;
+  case vmIntrinsics::_iabs:   n = new AbsINode(                arg);  break;
+  case vmIntrinsics::_labs:   n = new AbsLNode(                arg);  break;
   default:  fatal_unexpected_iid(id);  break;
   }
   set_result(_gvn.transform(n));
@@ -1920,8 +1941,11 @@ bool LibraryCallKit::inline_math_native(vmIntrinsics::ID id) {
       runtime_math(OptoRuntime::Math_D_D_Type(), FN_PTR(SharedRuntime::dlog10), "LOG10");
 
     // These intrinsics are supported on all hardware
-  case vmIntrinsics::_dsqrt:  return Matcher::match_rule_supported(Op_SqrtD) ? inline_math(id) : false;
-  case vmIntrinsics::_dabs:   return Matcher::has_match_rule(Op_AbsD)   ? inline_math(id) : false;
+  case vmIntrinsics::_dsqrt:  return Matcher::match_rule_supported(Op_SqrtD) ? inline_double_math(id) : false;
+  case vmIntrinsics::_dabs:   return Matcher::has_match_rule(Op_AbsD)   ? inline_double_math(id) : false;
+  case vmIntrinsics::_fabs:   return Matcher::match_rule_supported(Op_AbsF)   ? inline_math(id) : false;
+  case vmIntrinsics::_iabs:   return Matcher::match_rule_supported(Op_AbsI)   ? inline_math(id) : false;
+  case vmIntrinsics::_labs:   return Matcher::match_rule_supported(Op_AbsL)   ? inline_math(id) : false;
 
   case vmIntrinsics::_dexp:
     return StubRoutines::dexp() != NULL ?
@@ -2480,7 +2504,10 @@ bool LibraryCallKit::inline_unsafe_access(bool is_store, const BasicType type, c
 
   val = is_store ? argument(4) : NULL;
 
-  const TypePtr *adr_type = _gvn.type(adr)->isa_ptr();
+  const TypePtr* adr_type = _gvn.type(adr)->isa_ptr();
+  if (adr_type == TypePtr::NULL_PTR) {
+    return false; // off-heap access with zero address
+  }
 
   // Try to categorize the address.
   Compile::AliasType* alias_type = C->alias_type(adr_type);
@@ -4278,6 +4305,14 @@ bool LibraryCallKit::inline_unsafe_copyMemory() {
   // Do not let writes of the copy source or destination float below the copy.
   insert_mem_bar(Op_MemBarCPUOrder);
 
+  Node* thread = _gvn.transform(new ThreadLocalNode());
+  Node* doing_unsafe_access_addr = basic_plus_adr(top(), thread, in_bytes(JavaThread::doing_unsafe_access_offset()));
+  BasicType doing_unsafe_access_bt = T_BYTE;
+  assert((sizeof(bool) * CHAR_BIT) == 8, "not implemented");
+
+  // update volatile field
+  store_to_memory(control(), doing_unsafe_access_addr, intcon(1), doing_unsafe_access_bt, Compile::AliasIdxRaw, MemNode::unordered);
+
   // Call it.  Note that the length argument is not scaled.
   make_runtime_call(RC_LEAF|RC_NO_FP,
                     OptoRuntime::fast_arraycopy_Type(),
@@ -4285,6 +4320,8 @@ bool LibraryCallKit::inline_unsafe_copyMemory() {
                     "unsafe_arraycopy",
                     TypeRawPtr::BOTTOM,
                     src, dst, size XTOP);
+
+  store_to_memory(control(), doing_unsafe_access_addr, intcon(0), doing_unsafe_access_bt, Compile::AliasIdxRaw, MemNode::unordered);
 
   // Do not let reads of the copy destination float above the copy.
   insert_mem_bar(Op_MemBarCPUOrder);
@@ -4539,8 +4576,8 @@ JVMState* LibraryCallKit::arraycopy_restore_alloc_state(AllocateArrayNode* alloc
     ciMethod* trap_method = alloc->jvms()->method();
     int trap_bci = alloc->jvms()->bci();
 
-    if (!C->too_many_traps(trap_method, trap_bci, Deoptimization::Reason_intrinsic) &
-          !C->too_many_traps(trap_method, trap_bci, Deoptimization::Reason_null_check)) {
+    if (!C->too_many_traps(trap_method, trap_bci, Deoptimization::Reason_intrinsic) &&
+        !C->too_many_traps(trap_method, trap_bci, Deoptimization::Reason_null_check)) {
       // Make sure there's no store between the allocation and the
       // arraycopy otherwise visible side effects could be rexecuted
       // in case of deoptimization and cause incorrect execution.
@@ -4550,7 +4587,7 @@ JVMState* LibraryCallKit::arraycopy_restore_alloc_state(AllocateArrayNode* alloc
         for (MergeMemStream mms(merged_memory(), mem->as_MergeMem()); mms.next_non_empty2(); ) {
           Node* n = mms.memory();
           if (n != mms.memory2() && !(n->is_Proj() && n->in(0) == alloc->initialization())) {
-            assert(n->is_Store() || n->Opcode() == Op_ShenandoahWBMemProj, "what else?");
+            assert(n->is_Store(), "what else?");
             no_interfering_store = false;
             break;
           }
@@ -4559,7 +4596,7 @@ JVMState* LibraryCallKit::arraycopy_restore_alloc_state(AllocateArrayNode* alloc
         for (MergeMemStream mms(merged_memory()); mms.next_non_empty(); ) {
           Node* n = mms.memory();
           if (n != mem && !(n->is_Proj() && n->in(0) == alloc->initialization())) {
-            assert(n->is_Store() || n->Opcode() == Op_ShenandoahWBMemProj, "what else?");
+            assert(n->is_Store(), "what else?");
             no_interfering_store = false;
             break;
           }
@@ -6728,8 +6765,8 @@ static int get_opc(jint op, BasicType bt) {
       switch (bt) {
         case T_BYTE:   // fall-through
         case T_SHORT:  // fall-through
-        case T_LONG:   // fall-through
         case T_INT:    return Op_AbsI;
+        case T_LONG:   return Op_AbsL;
         case T_FLOAT:  return Op_AbsF;
         case T_DOUBLE: return Op_AbsD;
         default: fatal("ABS: %s", type2name(bt));
@@ -6857,8 +6894,31 @@ static int get_opc(jint op, BasicType bt) {
   return 0; // Unimplemented
 }
 
-static int get_sopc(int opc, BasicType elem_bt) {
+static int get_sopc(int opc, BasicType elem_bt, int arity) {
   int sopc = 0;
+#ifdef X86
+  // Variable shift handling
+  if (arity == 2) {
+    switch (opc) {
+      case Op_LShiftI:
+      case Op_LShiftL:
+        return Op_VLShiftV;
+        break;
+      case Op_RShiftI:
+      case Op_RShiftL:
+        return Op_VRShiftV;
+        break;
+      case Op_URShiftB:
+      case Op_URShiftS:
+      case Op_URShiftI:
+      case Op_URShiftL:
+        return Op_VURShiftV;
+        break;
+      default:
+        break;
+    }
+  }
+#endif
   switch (opc) {
     case Op_CallLeafVector:
       sopc = Op_CallLeafVector;
@@ -6869,6 +6929,7 @@ static int get_sopc(int opc, BasicType elem_bt) {
   }
   return sopc;
 }
+
 Node* LibraryCallKit::box_vector(Node* vector, const TypeInstPtr* vbox_type,
                                  BasicType elem_bt, int num_elem) {
 
@@ -6939,7 +7000,7 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
   int opc = get_opc(opr->get_con(), elem_bt);
-  int sopc = get_sopc(opc, elem_bt);
+  int sopc = get_sopc(opc, elem_bt, n);
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
@@ -7008,14 +7069,15 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
       return false;
     }
   } else {
+    const TypeVect* vt = TypeVect::make(elem_bt, num_elem);
     switch (n) {
       case 1:
       case 2: {
-        operation = _gvn.transform(VectorNode::make(opc, opd1, opd2, num_elem, elem_bt));
+        operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, vt));
         break;
       }
       case 3: {
-        operation = _gvn.transform(VectorNode::make(opc, opd1, opd2, opd3, num_elem, elem_bt));
+        operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, opd3, vt));
         break;
       }
       default: fatal("unsupported arity: %d", n);
@@ -7292,6 +7354,15 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
                       num_elem);
       }
       return false; // not supported
+    }
+    if (!is_store) {
+      if (!arch_supports_vector(Op_LoadVector, num_elem, elem_bt, VecMaskUseLoad)) {
+        return false; // not supported
+      }
+    } else {
+         if (!arch_supports_vector(Op_StoreVector, num_elem, elem_bt, VecMaskUseStore)) {
+           return false; // not supported
+         }
     }
   }
 
@@ -7718,8 +7789,10 @@ bool LibraryCallKit::inline_vector_compare() {
     return false; // operand unboxing failed
   }
   BoolTest::mask pred = (BoolTest::mask)cond->get_con();
+  ConINode* pred_node = (ConINode*)_gvn.makecon(cond);
+
   const TypeVect* vt = TypeVect::make(mask_bt, num_elem);
-  Node* operation = _gvn.transform(new VectorMaskCmpNode(pred, v1, v2, vt));
+  Node* operation = _gvn.transform(new VectorMaskCmpNode(pred, v1, v2, pred_node, vt));
 
   Node* box = box_vector(operation, mbox_type, mask_bt, num_elem);
   set_vector_result(box);
@@ -8247,7 +8320,7 @@ bool LibraryCallKit::inline_vector_broadcast_int() {
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
   int opc = get_opc(opr->get_con(), elem_bt);
-  int sopc = get_sopc(opc, elem_bt); // get_node_id(opr->get_con(), elem_bt);
+  int sopc = get_sopc(opc, elem_bt, 1); // get_node_id(opr->get_con(), elem_bt);
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
@@ -8282,6 +8355,15 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
 
   if (vector_klass_from->const_oop() == NULL || elem_klass_from->const_oop() == NULL || !vlen_from->is_con() ||
       vector_klass_to->const_oop() == NULL || elem_klass_to->const_oop() == NULL || !vlen_to->is_con()) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** missing constant: vclass_from=%s etype_from=%s vlen_from=%s vclass_to=%s etype_to=%s vlen_to=%s",
+                    NodeClassNames[argument(0)->Opcode()],
+                    NodeClassNames[argument(1)->Opcode()],
+                    NodeClassNames[argument(2)->Opcode()],
+                    NodeClassNames[argument(3)->Opcode()],
+                    NodeClassNames[argument(4)->Opcode()],
+                    NodeClassNames[argument(5)->Opcode()]);
+    }
     return false; // not enough info for intrinsification
   }
 
@@ -8772,9 +8854,6 @@ bool LibraryCallKit::inline_fp_min_max(vmIntrinsics::ID id) {
   default:
     fatal_unexpected_iid(id);
     break;
-  }
-  if (a->is_Con() || b->is_Con()) {
-    return false;
   }
   switch (id) {
   case vmIntrinsics::_maxF:  n = new MaxFNode(a, b);  break;

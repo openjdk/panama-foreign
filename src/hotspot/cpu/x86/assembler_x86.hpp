@@ -669,6 +669,24 @@ class Assembler : public AbstractAssembler  {
     TRUE_US =0x1F
   };
 
+  enum Width {
+    B = 0,
+    W = 1,
+    D = 2,
+    Q = 3
+  };
+
+  //---<  calculate length of instruction  >---
+  // As instruction size can't be found out easily on x86/x64,
+  // we just use '4' for len and maxlen.
+  // instruction must start at passed address
+  static unsigned int instr_len(unsigned char *instr) { return 4; }
+
+  //---<  longest instructions  >---
+  // Max instruction length is not specified in architecture documentation.
+  // We could use a "safe enough" estimate (15), but just default to
+  // instruction length guess from above.
+  static unsigned int instr_maxlen() { return 4; }
 
   // NOTE: The general philopsophy of the declarations here is that 64bit versions
   // of instructions are freely declared without the need for wrapping them an ifdef.
@@ -753,7 +771,6 @@ private:
                     int disp,
                     RelocationHolder const& rspec,
                     int rip_relative_correction = 0, bool xmmindexVal = false);
-
   void emit_operand(XMMRegister reg, Register base, XMMRegister index,
                     Address::ScaleFactor scale,
                     int disp, RelocationHolder const& rspec);
@@ -774,7 +791,6 @@ private:
 
   // workaround gcc (3.2.1-7) bug
   void emit_operand(Address adr, MMXRegister reg);
-
 
   // Immediate-to-memory forms
   void emit_arith_operand(int op1, Register rm, Address adr, int32_t imm32);
@@ -879,6 +895,9 @@ private:
   Assembler(CodeBuffer* code) : AbstractAssembler(code) {
     init_attributes();
   }
+
+  static ComparisonPredicate booltest_pred_to_comparison_pred(int bt);
+  static ComparisonPredicateFP booltest_pred_to_comparison_pred_fp(int bt);
 
   // Decoding
   static address locate_operand(address inst, WhichOperand which);
@@ -1693,6 +1712,8 @@ private:
   void pcmpestri(XMMRegister xmm1, Address src, int imm8);
 
   void pcmpeqb(XMMRegister dst, XMMRegister src);
+  void vpcmpCCbwd(XMMRegister dst, XMMRegister nds, XMMRegister src, int cond_encoding, int vector_len);
+
   void vpcmpeqb(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqb(KRegister kdst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqb(KRegister kdst, XMMRegister nds, Address src, int vector_len);
@@ -1719,6 +1740,7 @@ private:
   void evpcmpeqd(KRegister kdst, KRegister mask, XMMRegister nds, Address src, int vector_len);
 
   void pcmpeqq(XMMRegister dst, XMMRegister src);
+  void vpcmpCCq(XMMRegister dst, XMMRegister nds, XMMRegister src, int cond_encoding, int vector_len);
   void vpcmpeqq(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqq(KRegister kdst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqq(KRegister kdst, XMMRegister nds, Address src, int vector_len);
@@ -2254,6 +2276,7 @@ private:
   void vpsrad(XMMRegister dst, XMMRegister src, int shift, int vector_len);
   void vpsraw(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
   void vpsrad(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+  void evpsravw(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpsraq(XMMRegister dst, XMMRegister src, int shift, int vector_len);
   void evpsraq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
 

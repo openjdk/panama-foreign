@@ -44,6 +44,26 @@
 #define ATTRIBUTE_ALIGNED(x)
 #endif
 
+// These are #defines to selectively turn on/off the Print(Opto)Assembly
+// capabilities. Choices should be led by a tradeoff between
+// code size and improved supportability.
+// if PRINT_ASSEMBLY then PRINT_ABSTRACT_ASSEMBLY must be true as well
+// to have a fallback in case hsdis is not available.
+#if defined(PRODUCT)
+  #define SUPPORT_ABSTRACT_ASSEMBLY
+  #define SUPPORT_ASSEMBLY
+  #undef  SUPPORT_OPTO_ASSEMBLY      // Can't activate. In PRODUCT, many dump methods are missing.
+  #undef  SUPPORT_DATA_STRUCTS       // Of limited use. In PRODUCT, many print methods are empty.
+#else
+  #define SUPPORT_ABSTRACT_ASSEMBLY
+  #define SUPPORT_ASSEMBLY
+  #define SUPPORT_OPTO_ASSEMBLY
+  #define SUPPORT_DATA_STRUCTS
+#endif
+#if defined(SUPPORT_ASSEMBLY) && !defined(SUPPORT_ABSTRACT_ASSEMBLY)
+  #define SUPPORT_ABSTRACT_ASSEMBLY
+#endif
+
 // This file holds all globally used constants & types, class (forward)
 // declarations and a few frequently used utility functions.
 
@@ -77,6 +97,9 @@
 // Format jlong, if necessary
 #ifndef JLONG_FORMAT
 #define JLONG_FORMAT           INT64_FORMAT
+#endif
+#ifndef JLONG_FORMAT_W
+#define JLONG_FORMAT_W(width)  INT64_FORMAT_W(width)
 #endif
 #ifndef JULONG_FORMAT
 #define JULONG_FORMAT          UINT64_FORMAT
@@ -295,6 +318,13 @@ inline size_t byte_size_in_exact_unit(size_t s) {
   }
   return s;
 }
+
+// Memory size transition formatting.
+
+#define HEAP_CHANGE_FORMAT "%s: " SIZE_FORMAT "K(" SIZE_FORMAT "K)->" SIZE_FORMAT "K(" SIZE_FORMAT "K)"
+
+#define HEAP_CHANGE_FORMAT_ARGS(_name_, _prev_used_, _prev_capacity_, _used_, _capacity_) \
+  (_name_), (_prev_used_) / K, (_prev_capacity_) / K, (_used_) / K, (_capacity_) / K
 
 //----------------------------------------------------------------------------------------------------
 // VM type definitions
@@ -1081,6 +1111,28 @@ JAVA_INTEGER_OP(-, java_subtract, jlong, julong)
 JAVA_INTEGER_OP(*, java_multiply, jlong, julong)
 
 #undef JAVA_INTEGER_OP
+
+//----------------------------------------------------------------------------------------------------
+// The goal of this code is to provide saturating operations for int/uint.
+// Checks overflow conditions and saturates the result to min_jint/max_jint.
+#define SATURATED_INTEGER_OP(OP, NAME, TYPE1, TYPE2) \
+inline int NAME (TYPE1 in1, TYPE2 in2) {             \
+  jlong res = static_cast<jlong>(in1);               \
+  res OP ## = static_cast<jlong>(in2);               \
+  if (res > max_jint) {                              \
+    res = max_jint;                                  \
+  } else if (res < min_jint) {                       \
+    res = min_jint;                                  \
+  }                                                  \
+  return static_cast<int>(res);                      \
+}
+
+SATURATED_INTEGER_OP(+, saturated_add, int, int)
+SATURATED_INTEGER_OP(+, saturated_add, int, uint)
+SATURATED_INTEGER_OP(+, saturated_add, uint, int)
+SATURATED_INTEGER_OP(+, saturated_add, uint, uint)
+
+#undef SATURATED_INTEGER_OP
 
 // Dereference vptr
 // All C++ compilers that we know of have the vtbl pointer in the first

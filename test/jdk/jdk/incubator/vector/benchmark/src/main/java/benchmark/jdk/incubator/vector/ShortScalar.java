@@ -51,6 +51,10 @@ public class ShortScalar extends AbstractVectorBenchmark {
         return array;
     }
 
+    static short bits(short e) {
+        return e;
+    }
+
     short[] as, bs, cs, rs;
     boolean[] ms, rms;
     int[] ss;
@@ -402,6 +406,138 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
 
+
+    @Benchmark
+    public void LSHL(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)((a << (b & 0xF)));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void LSHLMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)((a << (b & 0xF)));
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+
+
+
+
+
+    @Benchmark
+    public void ASHR(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)((a >> (b & 0xF)));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void ASHRMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)((a >> (b & 0xF)));
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
+
+
+
+
+
+
+
+    @Benchmark
+    public void LSHR(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                rs[i] = (short)(((a & 0xFFFF) >>> (b & 0xF)));
+            }
+        }
+
+        bh.consume(rs);
+    }
+
+
+
+    @Benchmark
+    public void LSHRMasked(Blackhole bh) {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < as.length; i++) {
+                short a = as[i];
+                short b = bs[i];
+                if (ms[i % ms.length]) {
+                    rs[i] = (short)(((a & 0xFFFF) >>> (b & 0xF)));
+                } else {
+                    rs[i] = a;
+                }
+            }
+        }
+        bh.consume(rs);
+    }
 
 
 
@@ -818,7 +954,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 short a = as[i];
                 boolean m = bits(a)==0;
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -835,7 +971,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i++) {
                 short a = as[i];
                 boolean m = bits(a)<0;
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -855,7 +991,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] < bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -872,7 +1008,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] > bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -889,7 +1025,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] == bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -906,7 +1042,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] != bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -923,7 +1059,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] <= bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -940,7 +1076,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             r = false;
             for (int i = 0; i < as.length; i++) {
                 boolean m = (as[i] >= bs[i]);
-                r |= m; // accumulate so JIT can't eliminate the computation
+                r &= m; // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -1014,7 +1150,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             for (int i = 0; i < as.length; i += window) {
                 int idx = i;
                 for (int j = 0; j < window; j++) {
-                    rs[j] = a[idx];
+                    rs[j] = as[idx];
                 }
             }
         }
@@ -1045,7 +1181,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
         int window = 512 / Short.SIZE;
         broadcastShared(window, bh);
     }
-    
+
     @Benchmark
     public void zero(Blackhole bh) {
         short[] as = fa.apply(size);

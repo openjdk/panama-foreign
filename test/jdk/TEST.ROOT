@@ -37,12 +37,15 @@ groups=TEST.groups
 # to determine additional characteristics of the system for use with the @requires tag.
 # Note: compiled bootlibs code will be located in the folder 'bootClasses'
 requires.extraPropDefns = ../jtreg-ext/requires/VMProps.java
-requires.extraPropDefns.bootlibs = ../lib/sun ../lib/jdk/test/lib/Platform.java
+requires.extraPropDefns.bootlibs = ../lib/sun \
+    ../lib/jdk/test/lib/Platform.java \
+    ../lib/jdk/test/lib/Container.java
 requires.extraPropDefns.vmOpts = -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:bootClasses
 requires.properties= \
     sun.arch.data.model \
     java.runtime.name \
     vm.gc.Z \
+    vm.gc.Shenandoah \
     vm.graal.enabled \
     vm.compiler1.enabled \
     vm.compiler2.enabled \

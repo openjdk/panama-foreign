@@ -1225,6 +1225,10 @@ public class LongMaxVectorTests extends AbstractVectorTest {
     }
 
 
+
+
+
+
     static long ASHR(long a, long b) {
         return (long)((a >> b));
     }
@@ -1269,6 +1273,10 @@ public class LongMaxVectorTests extends AbstractVectorTest {
     }
 
 
+
+
+
+
     static long LSHR(long a, long b) {
         return (long)((a >>> b));
     }
@@ -1311,6 +1319,10 @@ public class LongMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, mask, LongMaxVectorTests::LSHR);
     }
+
+
+
+
 
 
     static long LSHL_unary(long a, long b) {

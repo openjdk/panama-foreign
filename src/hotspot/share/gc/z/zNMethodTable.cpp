@@ -113,8 +113,8 @@ void ZNMethodTable::rebuild(size_t new_size) {
 
   log_debug(gc, nmethod)("Rebuilding NMethod Table: "
                          SIZE_FORMAT "->" SIZE_FORMAT " entries, "
-                         SIZE_FORMAT "(%.0lf%%->%.0lf%%) registered, "
-                         SIZE_FORMAT "(%.0lf%%->%.0lf%%) unregistered",
+                         SIZE_FORMAT "(%.0f%%->%.0f%%) registered, "
+                         SIZE_FORMAT "(%.0f%%->%.0f%%) unregistered",
                          _size, new_size,
                          _nregistered, percent_of(_nregistered, _size), percent_of(_nregistered, new_size),
                          _nunregistered, percent_of(_nunregistered, _size), 0.0);
@@ -195,7 +195,7 @@ void ZNMethodTable::wait_until_iteration_done() {
   assert(CodeCache_lock->owned_by_self(), "Lock must be held");
 
   while (_iteration.in_progress()) {
-    CodeCache_lock->wait(Monitor::_no_safepoint_check_flag);
+    CodeCache_lock->wait_without_safepoint_check();
   }
 }
 
@@ -209,7 +209,7 @@ void ZNMethodTable::unregister_nmethod(nmethod* nm) {
 }
 
 void ZNMethodTable::nmethods_do_begin() {
-  MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
 
   // Do not allow the table to be deleted while iterating
   _safe_delete.enable_deferred_delete();
@@ -219,7 +219,7 @@ void ZNMethodTable::nmethods_do_begin() {
 }
 
 void ZNMethodTable::nmethods_do_end() {
-  MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+  MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
 
   // Finish iteration
   _iteration.nmethods_do_end();

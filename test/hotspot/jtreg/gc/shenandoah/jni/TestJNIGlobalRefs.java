@@ -24,9 +24,22 @@
 /* @test TestJNIGlobalRefs
  * @summary Test JNI Global Refs with Shenandoah
  * @key gc
- * @requires vm.gc.Shenandoah
- * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -Xlog:gc -XX:ShenandoahGCHeuristics=aggressive -XX:+ShenandoahVerify TestJNIGlobalRefs
- * @run main/othervm/native -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -Xlog:gc -XX:ShenandoahGCHeuristics=aggressive                       TestJNIGlobalRefs
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
+ *
+ * @run main/othervm/native -Xmx1g -Xlog:gc -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=aggressive
+ *      -XX:+ShenandoahVerify
+ *      TestJNIGlobalRefs
+ */
+
+/* @test TestJNIGlobalRefs
+ * @summary Test JNI Global Refs with Shenandoah
+ * @key gc
+ * @requires vm.gc.Shenandoah & !vm.graal.enabled
+ *
+ * @run main/othervm/native -Xmx1g -Xlog:gc -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
+ *      -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=aggressive
+ *      TestJNIGlobalRefs
  */
 
 import java.util.Arrays;

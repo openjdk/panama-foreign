@@ -34,12 +34,8 @@
 
 #include OS_HEADER_INLINE(os)
 
-#ifndef BUILTIN_SIM
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
-#else
-#define getauxval(hwcap) 0
-#endif
 
 #ifndef HWCAP_AES
 #define HWCAP_AES   (1<<3)
@@ -92,10 +88,6 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
 #   define __ _masm->
     address start = __ pc();
 
-#ifdef BUILTIN_SIM
-    __ c_stub_prolog(1, 0, MacroAssembler::ret_type_void);
-#endif
-
     // void getPsrInfo(VM_Version::PsrInfo* psr_info);
 
     address entry = __ pc();
@@ -129,8 +121,11 @@ void VM_Version::get_processor_features() {
 
   int dcache_line = VM_Version::dcache_line_size();
 
+  // Limit AllocatePrefetchDistance so that it does not exceed the
+  // constraint in AllocatePrefetchDistanceConstraintFunc.
   if (FLAG_IS_DEFAULT(AllocatePrefetchDistance))
-    FLAG_SET_DEFAULT(AllocatePrefetchDistance, 3*dcache_line);
+    FLAG_SET_DEFAULT(AllocatePrefetchDistance, MIN2(512, 3*dcache_line));
+
   if (FLAG_IS_DEFAULT(AllocatePrefetchStepSize))
     FLAG_SET_DEFAULT(AllocatePrefetchStepSize, dcache_line);
   if (FLAG_IS_DEFAULT(PrefetchScanIntervalInBytes))
@@ -174,7 +169,7 @@ void VM_Version::get_processor_features() {
   if (FILE *f = fopen("/proc/cpuinfo", "r")) {
     char buf[128], *p;
     while (fgets(buf, sizeof (buf), f) != NULL) {
-      if (p = strchr(buf, ':')) {
+      if ((p = strchr(buf, ':')) != NULL) {
         long v = strtol(p+1, NULL, 0);
         if (strncmp(buf, "CPU implementer", sizeof "CPU implementer" - 1) == 0) {
           _cpu = v;

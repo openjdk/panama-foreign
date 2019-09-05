@@ -201,7 +201,7 @@ void os::init_system_properties_values() {
     char *home_path;
     char *dll_path;
     char *pslash;
-    char *bin = "\\bin";
+    const char *bin = "\\bin";
     char home_dir[MAX_PATH + 1];
     char *alt_home_dir = ::getenv("_ALT_JAVA_HOME_DIR");
 
@@ -1365,14 +1365,24 @@ static int _print_module(const char* fname, address base_address,
 // in case of error it checks if .dll/.so was built for the
 // same architecture as Hotspot is running on
 void * os::dll_load(const char *name, char *ebuf, int ebuflen) {
+  log_info(os)("attempting shared library load of %s", name);
+
   void * result = LoadLibrary(name);
   if (result != NULL) {
+    Events::log(NULL, "Loaded shared library %s", name);
     // Recalculate pdb search path if a DLL was loaded successfully.
     SymbolEngine::recalc_search_path();
+    log_info(os)("shared library load of %s was successful", name);
     return result;
   }
-
   DWORD errcode = GetLastError();
+  // Read system error message into ebuf
+  // It may or may not be overwritten below (in the for loop and just above)
+  lasterror(ebuf, (size_t) ebuflen);
+  ebuf[ebuflen - 1] = '\0';
+  Events::log(NULL, "Loading shared library %s failed, error code %lu", name, errcode);
+  log_info(os)("shared library load of %s failed, error code %lu", name, errcode);
+
   if (errcode == ERROR_MOD_NOT_FOUND) {
     strncpy(ebuf, "Can't find dependent libraries", ebuflen - 1);
     ebuf[ebuflen - 1] = '\0';
@@ -1384,11 +1394,6 @@ void * os::dll_load(const char *name, char *ebuf, int ebuflen) {
   // for an architecture other than Hotspot is running in
   // - then print to buffer "DLL was built for a different architecture"
   // else call os::lasterror to obtain system error message
-
-  // Read system error message into ebuf
-  // It may or may not be overwritten below (in the for loop and just above)
-  lasterror(ebuf, (size_t) ebuflen);
-  ebuf[ebuflen - 1] = '\0';
   int fd = ::open(name, O_RDONLY | O_BINARY, 0);
   if (fd < 0) {
     return NULL;
@@ -1601,6 +1606,10 @@ void os::print_os_info(outputStream* st) {
 #endif
   st->print("OS:");
   os::win32::print_windows_version(st);
+
+#ifdef _LP64
+  VM_Version::print_platform_virtualization_info(st);
+#endif
 }
 
 void os::win32::print_windows_version(outputStream* st) {
@@ -2181,7 +2190,7 @@ extern "C" void events();
 
 #define def_excpt(val) { #val, (val) }
 
-static const struct { char* name; uint number; } exceptlabels[] = {
+static const struct { const char* name; uint number; } exceptlabels[] = {
     def_excpt(EXCEPTION_ACCESS_VIOLATION),
     def_excpt(EXCEPTION_DATATYPE_MISALIGNMENT),
     def_excpt(EXCEPTION_BREAKPOINT),
@@ -2576,10 +2585,18 @@ LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo) {
         CodeBlob* cb = CodeCache::find_blob_unsafe(pc);
         nm = (cb != NULL) ? cb->as_compiled_method_or_null() : NULL;
       }
-      if ((thread->thread_state() == _thread_in_vm &&
+
+      bool is_unsafe_arraycopy = (thread->thread_state() == _thread_in_native || in_java) && UnsafeCopyMemory::contains_pc(pc);
+      if (((thread->thread_state() == _thread_in_vm ||
+           thread->thread_state() == _thread_in_native ||
+           is_unsafe_arraycopy) &&
           thread->doing_unsafe_access()) ||
           (nm != NULL && nm->has_unsafe_access())) {
-        return Handle_Exception(exceptionInfo, SharedRuntime::handle_unsafe_access(thread, (address)Assembler::locate_next_instruction(pc)));
+        address next_pc =  Assembler::locate_next_instruction(pc);
+        if (is_unsafe_arraycopy) {
+          next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);
+        }
+        return Handle_Exception(exceptionInfo, SharedRuntime::handle_unsafe_access(thread, next_pc));
       }
     }
 
@@ -3554,41 +3571,19 @@ void os::naked_short_sleep(jlong ms) {
   Sleep(ms);
 }
 
+// Windows does not provide sleep functionality with nanosecond resolution, so we
+// try to approximate this with spinning combined with yielding if another thread
+// is ready to run on the current processor.
 void os::naked_short_nanosleep(jlong ns) {
   assert(ns > -1 && ns < NANOUNITS, "Un-interruptable sleep, short time use only");
-  LARGE_INTEGER hundreds_nanos = { 0 };
-  HANDLE wait_timer = ::CreateWaitableTimer(NULL /* attributes*/,
-                                            true /* manual reset */,
-                                            NULL /* name */ );
-  if (wait_timer == NULL) {
-    log_warning(os)("Failed to CreateWaitableTimer: %u", GetLastError());
-    return;
-  }
 
-  // We need a minimum of one hundred nanos.
-  ns = ns > 100 ? ns : 100;
-
-  // Round ns to the nearst hundred of nanos.
-  // Negative values indicate relative time.
-  hundreds_nanos.QuadPart = -((ns + 50) / 100);
-
-  if (::SetWaitableTimer(wait_timer /* handle */,
-                         &hundreds_nanos /* due time */,
-                         0 /* period */,
-                         NULL /* comp func */,
-                         NULL /* comp func args */,
-                         FALSE /* resume */)) {
-    DWORD res = ::WaitForSingleObject(wait_timer /* handle */, INFINITE /* timeout */);
-    if (res != WAIT_OBJECT_0) {
-      if (res == WAIT_FAILED) {
-        log_warning(os)("Failed to WaitForSingleObject: %u", GetLastError());
-      } else {
-        log_warning(os)("Unexpected return from WaitForSingleObject: %s",
-                        res == WAIT_ABANDONED ? "WAIT_ABANDONED" : "WAIT_TIMEOUT");
-      }
+  int64_t start = os::javaTimeNanos();
+  do {
+    if (SwitchToThread() == 0) {
+      // Nothing else is ready to run on this cpu, spin a little
+      SpinPause();
     }
-  }
-  ::CloseHandle(wait_timer /* handle */);
+  } while (os::javaTimeNanos() - start < ns);
 }
 
 // Sleep forever; naked call to OS-specific sleep; use with CAUTION
@@ -4090,7 +4085,7 @@ void os::init(void) {
   init_page_sizes((size_t) win32::vm_page_size());
 
   // This may be overridden later when argument processing is done.
-  FLAG_SET_ERGO(bool, UseLargePagesIndividualAllocation, false);
+  FLAG_SET_ERGO(UseLargePagesIndividualAllocation, false);
 
   // Initialize main_process and main_thread
   main_process = GetCurrentProcess();  // Remember main_process is a pseudo handle
@@ -4374,6 +4369,88 @@ int os::stat(const char *path, struct stat *sbuf) {
   }
   os::free(pathbuf);
   return ret;
+}
+
+static HANDLE create_read_only_file_handle(const char* file) {
+  if (file == NULL) {
+    return INVALID_HANDLE_VALUE;
+  }
+
+  char* nativepath = (char*)os::strdup(file, mtInternal);
+  if (nativepath == NULL) {
+    errno = ENOMEM;
+    return INVALID_HANDLE_VALUE;
+  }
+  os::native_path(nativepath);
+
+  size_t len = strlen(nativepath);
+  HANDLE handle = INVALID_HANDLE_VALUE;
+
+  if (len < MAX_PATH) {
+    handle = ::CreateFile(nativepath, 0, FILE_SHARE_READ,
+                          NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  } else {
+    errno_t err = ERROR_SUCCESS;
+    wchar_t* wfile = create_unc_path(nativepath, err);
+    if (err != ERROR_SUCCESS) {
+      if (wfile != NULL) {
+        destroy_unc_path(wfile);
+      }
+      os::free(nativepath);
+      return INVALID_HANDLE_VALUE;
+    }
+    handle = ::CreateFileW(wfile, 0, FILE_SHARE_READ,
+                           NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    destroy_unc_path(wfile);
+  }
+
+  os::free(nativepath);
+  return handle;
+}
+
+bool os::same_files(const char* file1, const char* file2) {
+
+  if (file1 == NULL && file2 == NULL) {
+    return true;
+  }
+
+  if (file1 == NULL || file2 == NULL) {
+    return false;
+  }
+
+  if (strcmp(file1, file2) == 0) {
+    return true;
+  }
+
+  HANDLE handle1 = create_read_only_file_handle(file1);
+  HANDLE handle2 = create_read_only_file_handle(file2);
+  bool result = false;
+
+  // if we could open both paths...
+  if (handle1 != INVALID_HANDLE_VALUE && handle2 != INVALID_HANDLE_VALUE) {
+    BY_HANDLE_FILE_INFORMATION fileInfo1;
+    BY_HANDLE_FILE_INFORMATION fileInfo2;
+    if (::GetFileInformationByHandle(handle1, &fileInfo1) &&
+      ::GetFileInformationByHandle(handle2, &fileInfo2)) {
+      // the paths are the same if they refer to the same file (fileindex) on the same volume (volume serial number)
+      if (fileInfo1.dwVolumeSerialNumber == fileInfo2.dwVolumeSerialNumber &&
+        fileInfo1.nFileIndexHigh == fileInfo2.nFileIndexHigh &&
+        fileInfo1.nFileIndexLow == fileInfo2.nFileIndexLow) {
+        result = true;
+      }
+    }
+  }
+
+  //free the handles
+  if (handle1 != INVALID_HANDLE_VALUE) {
+    ::CloseHandle(handle1);
+  }
+
+  if (handle2 != INVALID_HANDLE_VALUE) {
+    ::CloseHandle(handle2);
+  }
+
+  return result;
 }
 
 
@@ -4928,6 +5005,9 @@ char* os::pd_map_memory(int fd, const char* file_name, size_t file_offset,
       return NULL;
     }
 
+    // Record virtual memory allocation
+    MemTracker::record_virtual_memory_reserve_and_commit((address)addr, bytes, CALLER_PC);
+
     DWORD bytes_read;
     OVERLAPPED overlapped;
     overlapped.Offset = (DWORD)file_offset;
@@ -4996,17 +5076,13 @@ char* os::pd_remap_memory(int fd, const char* file_name, size_t file_offset,
                           char *addr, size_t bytes, bool read_only,
                           bool allow_exec) {
   // This OS does not allow existing memory maps to be remapped so we
-  // have to unmap the memory before we remap it.
-  if (!os::unmap_memory(addr, bytes)) {
-    return NULL;
-  }
+  // would have to unmap the memory before we remap it.
 
-  // There is a very small theoretical window between the unmap_memory()
-  // call above and the map_memory() call below where a thread in native
-  // code may be able to access an address that is no longer mapped.
-
-  return os::map_memory(fd, file_name, file_offset, addr, bytes,
-                        read_only, allow_exec);
+  // Because there is a small window between unmapping memory and mapping
+  // it in again with different protections, CDS archives are mapped RW
+  // on windows, so this function isn't called.
+  ShouldNotReachHere();
+  return NULL;
 }
 
 
@@ -5357,7 +5433,7 @@ int os::fork_and_exec(char* cmd, bool use_vfork_if_available) {
   DWORD exit_code;
 
   char * cmd_string;
-  char * cmd_prefix = "cmd /C ";
+  const char * cmd_prefix = "cmd /C ";
   size_t len = strlen(cmd) + strlen(cmd_prefix) + 1;
   cmd_string = NEW_C_HEAP_ARRAY_RETURN_NULL(char, len, mtInternal);
   if (cmd_string == NULL) {
@@ -5696,8 +5772,8 @@ void TestReserveMemorySpecial_test() {
 */
 int os::get_signal_number(const char* name) {
   static const struct {
-    char* name;
-    int   number;
+    const char* name;
+    int         number;
   } siglabels [] =
     // derived from version 6.0 VC98/include/signal.h
   {"ABRT",      SIGABRT,        // abnormal termination triggered by abort cl

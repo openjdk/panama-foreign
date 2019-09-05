@@ -245,7 +245,7 @@ public class MemberEnter extends JCTree.Visitor {
                                                              tree.sym.type.getReturnType());
         }
         if ((tree.mods.flags & STATIC) != 0) localEnv.info.staticLevel++;
-        localEnv.info.breakResult = null;
+        localEnv.info.yieldResult = null;
         return localEnv;
     }
 
@@ -298,6 +298,8 @@ public class MemberEnter extends JCTree.Visitor {
         }
         if (chk.checkUnique(tree.pos(), v, enclScope)) {
             chk.checkTransparentVar(tree.pos(), v, enclScope);
+            enclScope.enter(v);
+        } else if (v.owner.kind == MTH) {
             enclScope.enter(v);
         }
 

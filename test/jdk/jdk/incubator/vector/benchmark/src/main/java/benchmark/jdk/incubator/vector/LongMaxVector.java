@@ -437,6 +437,10 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
     @Benchmark
     public void ASHR(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
@@ -477,6 +481,10 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
     @Benchmark
     public void LSHR(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
@@ -514,6 +522,10 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
         bh.consume(r);
     }
+
+
+
+
 
 
 

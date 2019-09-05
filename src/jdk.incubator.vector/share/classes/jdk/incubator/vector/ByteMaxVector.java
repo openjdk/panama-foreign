@@ -93,7 +93,7 @@ final class ByteMaxVector extends ByteVector {
 
     @ForceInline
     @Override
-    public final Class<Byte> elementType() { return Byte.class; }
+    public final Class<Byte> elementType() { return byte.class; }
 
     @ForceInline
     @Override

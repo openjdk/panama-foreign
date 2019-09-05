@@ -24,7 +24,6 @@
 #include "precompiled.hpp"
 
 #include "gc/shared/gcCause.hpp"
-#include "gc/shenandoah/shenandoahBrooksPointer.hpp"
 #include "gc/shenandoah/shenandoahCollectionSet.inline.hpp"
 #include "gc/shenandoah/shenandoahCollectorPolicy.hpp"
 #include "gc/shenandoah/shenandoahHeap.inline.hpp"
@@ -164,7 +163,7 @@ void ShenandoahHeuristics::choose_collection_set(ShenandoahCollectionSet* collec
       // Reclaim humongous regions here, and count them as the immediate garbage
 #ifdef ASSERT
       bool reg_live = region->has_live();
-      bool bm_live = ctx->is_marked(oop(region->bottom() + ShenandoahBrooksPointer::word_size()));
+      bool bm_live = ctx->is_marked(oop(region->bottom()));
       assert(reg_live == bm_live,
              "Humongous liveness and marks should agree. Region live: %s; Bitmap live: %s; Region Live Words: " SIZE_FORMAT,
              BOOL_TO_STR(reg_live), BOOL_TO_STR(bm_live), region->get_live_data_words());
@@ -229,7 +228,7 @@ bool ShenandoahHeuristics::should_start_update_refs() {
   return _update_refs_early;
 }
 
-bool ShenandoahHeuristics::should_start_normal_gc() const {
+bool ShenandoahHeuristics::should_start_gc() const {
   // Perform GC to cleanup metaspace
   if (has_metaspace_oom()) {
     // Some of vmTestbase/metaspace tests depend on following line to count GC cycles
@@ -244,14 +243,6 @@ bool ShenandoahHeuristics::should_start_normal_gc() const {
                   last_time_ms, ShenandoahGuaranteedGCInterval);
   }
   return periodic_gc;
-}
-
-bool ShenandoahHeuristics::should_start_traversal_gc() {
-  return false;
-}
-
-bool ShenandoahHeuristics::can_do_traversal_gc() {
-  return false;
 }
 
 bool ShenandoahHeuristics::should_degenerate_cycle() {

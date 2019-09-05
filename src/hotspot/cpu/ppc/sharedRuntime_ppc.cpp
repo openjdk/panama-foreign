@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2012, 2018 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -1282,9 +1282,34 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
 
   // entry: c2i
 
-  c2i_entry = gen_c2i_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs, call_interpreter, ientry);
+  c2i_entry = __ pc();
 
-  return AdapterHandlerLibrary::new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry);
+  // Class initialization barrier for static methods
+  address c2i_no_clinit_check_entry = NULL;
+  if (VM_Version::supports_fast_class_init_checks()) {
+    Label L_skip_barrier;
+
+    { // Bypass the barrier for non-static methods
+      __ lwz(R0, in_bytes(Method::access_flags_offset()), R19_method);
+      __ andi_(R0, R0, JVM_ACC_STATIC);
+      __ beq(CCR0, L_skip_barrier); // non-static
+    }
+
+    Register klass = R11_scratch1;
+    __ load_method_holder(klass, R19_method);
+    __ clinit_barrier(klass, R16_thread, &L_skip_barrier /*L_fast_path*/);
+
+    __ load_const_optimized(klass, SharedRuntime::get_handle_wrong_method_stub(), R0);
+    __ mtctr(klass);
+    __ bctr();
+
+    __ bind(L_skip_barrier);
+    c2i_no_clinit_check_entry = __ pc();
+  }
+
+  gen_c2i_adapter(masm, total_args_passed, comp_args_on_stack, sig_bt, regs, call_interpreter, ientry);
+
+  return AdapterHandlerLibrary::new_entry(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry, c2i_no_clinit_check_entry);
 }
 
 #ifdef COMPILER2
@@ -1916,14 +1941,13 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
       out_sig_bt[argc++] = in_sig_bt[i];
     }
   } else {
-    Thread* THREAD = Thread::current();
     in_elem_bt = NEW_RESOURCE_ARRAY(BasicType, total_c_args);
     SignatureStream ss(method->signature());
     int o = 0;
     for (int i = 0; i < total_in_args ; i++, o++) {
       if (in_sig_bt[i] == T_ARRAY) {
         // Arrays are passed as int, elem* pair
-        Symbol* atype = ss.as_symbol(CHECK_NULL);
+        Symbol* atype = ss.as_symbol();
         const char* at = atype->as_C_string();
         if (strlen(at) == 2) {
           assert(at[0] == '[', "must be");
@@ -2113,6 +2137,21 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     // because critical section can be large and
     // abort anyway. Also nmethod can be deoptimized.
     __ tabort_();
+  }
+
+  if (VM_Version::supports_fast_class_init_checks() && method->needs_clinit_barrier()) {
+    Label L_skip_barrier;
+    Register klass = r_temp_1;
+    // Notify OOP recorder (don't need the relocation)
+    AddressLiteral md = __ constant_metadata_address(method->method_holder());
+    __ load_const_optimized(klass, md.value(), R0);
+    __ clinit_barrier(klass, R16_thread, &L_skip_barrier /*L_fast_path*/);
+
+    __ load_const_optimized(klass, SharedRuntime::get_handle_wrong_method_stub(), R0);
+    __ mtctr(klass);
+    __ bctr();
+
+    __ bind(L_skip_barrier);
   }
 
   __ save_LR_CR(r_temp_1);
@@ -2688,10 +2727,6 @@ static void push_skeleton_frame(MacroAssembler* masm, bool deopt,
   __ ld(frame_size_reg, 0, frame_sizes_reg);
   __ std(pc_reg, _abi(lr), R1_SP);
   __ push_frame(frame_size_reg, R0/*tmp*/);
-#ifdef ASSERT
-  __ load_const_optimized(pc_reg, 0x5afe);
-  __ std(pc_reg, _ijava_state_neg(ijava_reserved), R1_SP);
-#endif
   __ std(R1_SP, _ijava_state_neg(sender_sp), R1_SP);
   __ addi(number_of_frames_reg, number_of_frames_reg, -1);
   __ addi(frame_sizes_reg, frame_sizes_reg, wordSize);
@@ -2764,10 +2799,6 @@ static void push_skeleton_frames(MacroAssembler* masm, bool deopt,
   __ std(R12_scratch2, _abi(lr), R1_SP);
 
   // Initialize initial_caller_sp.
-#ifdef ASSERT
- __ load_const_optimized(pc_reg, 0x5afe);
- __ std(pc_reg, _ijava_state_neg(ijava_reserved), R1_SP);
-#endif
  __ std(frame_size_reg, _ijava_state_neg(sender_sp), R1_SP);
 
 #ifdef ASSERT

@@ -411,18 +411,8 @@ int Type::uhash( const Type *const t ) {
 }
 
 #define SMALLINT ((juint)3)  // a value too insignificant to consider widening
-
-static double pos_dinf() {
-  union { int64_t i; double d; } v;
-  v.i = CONST64(0x7ff0000000000000);
-  return v.d;
-}
-
-static float pos_finf() {
-  union { int32_t i; float f; } v;
-  v.i = 0x7f800000;
-  return v.f;
-}
+#define POSITIVE_INFINITE_F 0x7f800000 // hex representation for IEEE 754 single precision positive infinite
+#define POSITIVE_INFINITE_D 0x7ff0000000000000 // hex representation for IEEE 754 double precision positive infinite
 
 //--------------------------Initialize_shared----------------------------------
 void Type::Initialize_shared(Compile* current) {
@@ -455,15 +445,15 @@ void Type::Initialize_shared(Compile* current) {
   TypeF::MIN = TypeF::make(min_jfloat);  // Float MIN
   TypeF::ZERO = TypeF::make(0.0); // Float 0 (positive zero)
   TypeF::ONE  = TypeF::make(1.0); // Float 1
-  TypeF::POS_INF = TypeF::make(pos_finf());
-  TypeF::NEG_INF = TypeF::make(-pos_finf());
+  TypeF::POS_INF = TypeF::make(jfloat_cast(POSITIVE_INFINITE_F));
+  TypeF::NEG_INF = TypeF::make(-jfloat_cast(POSITIVE_INFINITE_F));
 
   TypeD::MAX = TypeD::make(max_jdouble);  // Double MAX
   TypeD::MIN = TypeD::make(min_jdouble);  // Double MIN
   TypeD::ZERO = TypeD::make(0.0); // Double 0 (positive zero)
   TypeD::ONE  = TypeD::make(1.0); // Double 1
-  TypeD::POS_INF = TypeD::make(pos_dinf());
-  TypeD::NEG_INF = TypeD::make(-pos_dinf());
+  TypeD::POS_INF = TypeD::make(jdouble_cast(POSITIVE_INFINITE_D));
+  TypeD::NEG_INF = TypeD::make(-jdouble_cast(POSITIVE_INFINITE_D));
 
   TypeInt::MAX = TypeInt::make(max_jint);   // Int MAX
   TypeInt::MIN = TypeInt::make(min_jint);  // Int MIN
@@ -738,8 +728,11 @@ const Type *Type::hashcons(void) {
   // Since we just discovered a new Type, compute its dual right now.
   assert( !_dual, "" );         // No dual yet
   _dual = xdual();              // Compute the dual
-  if( cmp(this,_dual)==0 ) {    // Handle self-symmetric
-    _dual = this;
+  if (cmp(this, _dual) == 0) {  // Handle self-symmetric
+    if (_dual != this) {
+      delete _dual;
+      _dual = this;
+    }
     return this;
   }
   assert( !_dual->_dual, "" );  // No reverse dual yet
@@ -2126,7 +2119,7 @@ const Type *TypeAry::xmeet( const Type *t ) const {
     const TypeAry *a = t->is_ary();
     return TypeAry::make(_elem->meet_speculative(a->_elem),
                          _size->xmeet(a->_size)->is_int(),
-                         _stable & a->_stable);
+                         _stable && a->_stable);
   }
   case Top:
     break;
@@ -3925,7 +3918,7 @@ const Type *TypeInstPtr::xmeet_helper(const Type *t) const {
     bool subtype_exact = false;
     if( tinst_klass->equals(this_klass) ) {
       subtype = this_klass;
-      subtype_exact = below_centerline(ptr) ? (this_xk & tinst_xk) : (this_xk | tinst_xk);
+      subtype_exact = below_centerline(ptr) ? (this_xk && tinst_xk) : (this_xk || tinst_xk);
     } else if( !tinst_xk && this_klass->is_subtype_of( tinst_klass ) ) {
       subtype = this_klass;     // Pick subtyping class
       subtype_exact = this_xk;
@@ -4407,7 +4400,7 @@ const Type *TypeAryPtr::xmeet_helper(const Type *t) const {
       if (below_centerline(this->_ptr)) {
         xk = this->_klass_is_exact;
       } else {
-        xk = (tap->_klass_is_exact | this->_klass_is_exact);
+        xk = (tap->_klass_is_exact || this->_klass_is_exact);
       }
       return make(ptr, const_oop(), tary, lazy_klass, xk, off, instance_id, speculative, depth);
     case Constant: {

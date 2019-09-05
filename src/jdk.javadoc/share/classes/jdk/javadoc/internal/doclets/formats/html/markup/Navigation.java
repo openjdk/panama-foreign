@@ -429,7 +429,7 @@ public class Navigation {
                 }
                 if (!listContents.isEmpty()) {
                     Content li = HtmlTree.LI(contents.summaryLabel);
-                    li.add(Contents.SPACE);
+                    li.add(Entity.NO_BREAK_SPACE);
                     tree.add(li);
                     addListToNav(listContents, tree);
                 }
@@ -461,7 +461,7 @@ public class Navigation {
                 }
                 if (!listContents.isEmpty()) {
                     Content li = HtmlTree.LI(contents.moduleSubNavLabel);
-                    li.add(Contents.SPACE);
+                    li.add(Entity.NO_BREAK_SPACE);
                     tree.add(li);
                     addListToNav(listContents, tree);
                 }
@@ -665,7 +665,7 @@ public class Navigation {
                 }
                 if (!listContents.isEmpty()) {
                     Content li = HtmlTree.LI(contents.detailLabel);
-                    li.add(Contents.SPACE);
+                    li.add(Entity.NO_BREAK_SPACE);
                     tree.add(li);
                     addListToNav(listContents, tree);
                 }
@@ -801,9 +801,9 @@ public class Navigation {
         int count = 0;
         for (Content liContent : listContents) {
             if (count < listContents.size() - 1) {
-                liContent.add(Contents.SPACE);
+                liContent.add(Entity.NO_BREAK_SPACE);
                 liContent.add("|");
-                liContent.add(Contents.SPACE);
+                liContent.add(Entity.NO_BREAK_SPACE);
             }
             tree.add(liContent);
             count++;
@@ -824,7 +824,7 @@ public class Navigation {
 
     private void addOverviewLink(Content tree) {
         if (configuration.createoverview) {
-            tree.add(HtmlTree.LI(links.createLink(pathToRoot.resolve(DocPaths.overviewSummary(configuration.frames)),
+            tree.add(HtmlTree.LI(links.createLink(pathToRoot.resolve(DocPaths.INDEX),
                     contents.overviewLabel, "", "")));
         }
     }
@@ -930,37 +930,15 @@ public class Navigation {
         }
     }
 
-    /**
-     * Add "FRAMES" link, to switch to the frame version of the output.
-     *
-     * @param tree the content tree to which the link will be added
-     */
-    private void addNavShowLists(Content tree) {
-        DocLink dl = new DocLink(pathToRoot.resolve(DocPaths.INDEX), path.getPath(), null);
-        Content framesContent = links.createLink(dl, contents.framesLabel, "", "_top");
-        tree.add(HtmlTree.LI(framesContent));
-    }
-
-    /**
-     * Add "NO FRAMES" link, to switch to the non-frame version of the output.
-     *
-     * @param tree the content tree to which the link will be added
-     */
-    private void addNavHideLists(Content tree) {
-        Content noFramesContent = links.createLink(path.basename(), contents.noFramesLabel, "", "_top");
-        tree.add(HtmlTree.LI(noFramesContent));
-    }
-
     private void addSearch(Content tree) {
         String searchValueId = "search";
         String reset = "reset";
         HtmlTree inputText = HtmlTree.INPUT("text", searchValueId, searchValueId);
         HtmlTree inputReset = HtmlTree.INPUT(reset, reset, reset);
-        HtmlTree liInput = HtmlTree.LI(HtmlTree.LABEL(searchValueId, searchLabel));
-        liInput.add(inputText);
-        liInput.add(inputReset);
-        HtmlTree ulSearch = HtmlTree.UL(HtmlStyle.navListSearch, liInput);
-        tree.add(ulSearch);
+        HtmlTree searchDiv = HtmlTree.DIV(HtmlStyle.navListSearch, HtmlTree.LABEL(searchValueId, searchLabel));
+        searchDiv.add(inputText);
+        searchDiv.add(inputReset);
+        tree.add(searchDiv);
     }
 
     private void addFixedNavScript(Content tree) {
@@ -1018,15 +996,6 @@ public class Navigation {
             ulNavDetail.setStyle(HtmlStyle.subNavList);
             addDetailLinks(ulNavDetail);
             div.add(ulNavDetail);
-            HtmlTree ulFrames = new HtmlTree(HtmlTag.UL);
-            ulFrames.setStyle(HtmlStyle.navList);
-            if (!configuration.nonavbar) {
-                if (configuration.frames) {
-                    addNavShowLists(ulFrames);
-                    addNavHideLists(ulFrames);
-                }
-            }
-            div.add(ulFrames);
             subDiv.add(div);
             if (top && configuration.createindex) {
                 addSearch(subDiv);
@@ -1036,7 +1005,7 @@ public class Navigation {
                 fixedNavDiv.add(queue.poll());
                 fixedNavDiv.add(Position.TOP.endOfNav());
                 tree.add(fixedNavDiv);
-                HtmlTree paddingDiv = HtmlTree.DIV(HtmlStyle.navPadding, Contents.SPACE);
+                HtmlTree paddingDiv = HtmlTree.DIV(HtmlStyle.navPadding, Entity.NO_BREAK_SPACE);
                 tree.add(paddingDiv);
                 addFixedNavScript(tree);
             } else {

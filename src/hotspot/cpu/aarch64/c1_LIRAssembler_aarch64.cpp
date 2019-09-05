@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,6 +34,7 @@
 #include "c1/c1_ValueStack.hpp"
 #include "ci/ciArrayKlass.hpp"
 #include "ci/ciInstance.hpp"
+#include "code/compiledIC.hpp"
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/collectedHeap.hpp"
@@ -315,6 +316,17 @@ int LIR_Assembler::check_icache() {
   return start_offset;
 }
 
+void LIR_Assembler::clinit_barrier(ciMethod* method) {
+  assert(VM_Version::supports_fast_class_init_checks(), "sanity");
+  assert(!method->holder()->is_not_initialized(), "initialization should have been started");
+
+  Label L_skip_barrier;
+
+  __ mov_metadata(rscratch2, method->holder()->constant_encoding());
+  __ clinit_barrier(rscratch2, rscratch1, &L_skip_barrier /*L_fast_path*/);
+  __ far_jump(RuntimeAddress(SharedRuntime::get_handle_wrong_method_stub()));
+  __ bind(L_skip_barrier);
+}
 
 void LIR_Assembler::jobject2reg(jobject o, Register reg) {
   if (o == NULL) {
@@ -1011,7 +1023,11 @@ void LIR_Assembler::mem2reg(LIR_Opr src, LIR_Opr dest, BasicType type, LIR_Patch
     if (UseCompressedOops && !wide) {
       __ decode_heap_oop(dest->as_register());
     }
-    __ verify_oop(dest->as_register());
+
+    if (!UseZGC) {
+      // Load barrier has not yet been applied, so ZGC can't verify the oop here
+      __ verify_oop(dest->as_register());
+    }
   } else if (type == T_ADDRESS && addr->disp() == oopDesc::klass_offset_in_bytes()) {
     if (UseCompressedClassPointers) {
       __ decode_klass_not_null(dest->as_register());
@@ -1070,8 +1086,8 @@ void LIR_Assembler::emit_opBranch(LIR_OpBranch* op) {
       // Assembler::EQ does not permit unordered branches, so we add
       // another branch here.  Likewise, Assembler::NE does not permit
       // ordered branches.
-      if (is_unordered && op->cond() == lir_cond_equal
-          || !is_unordered && op->cond() == lir_cond_notEqual)
+      if ((is_unordered && op->cond() == lir_cond_equal)
+          || (!is_unordered && op->cond() == lir_cond_notEqual))
         __ br(Assembler::VS, *(op->ublock()->label()));
       switch(op->cond()) {
       case lir_cond_equal:        acond = Assembler::EQ; break;
@@ -1781,18 +1797,22 @@ void LIR_Assembler::arith_op(LIR_Code code, LIR_Opr left, LIR_Opr right, LIR_Opr
     switch (code) {
     case lir_add: __ fadds (dest->as_float_reg(), left->as_float_reg(), right->as_float_reg()); break;
     case lir_sub: __ fsubs (dest->as_float_reg(), left->as_float_reg(), right->as_float_reg()); break;
+    case lir_mul_strictfp: // fall through
     case lir_mul: __ fmuls (dest->as_float_reg(), left->as_float_reg(), right->as_float_reg()); break;
+    case lir_div_strictfp: // fall through
     case lir_div: __ fdivs (dest->as_float_reg(), left->as_float_reg(), right->as_float_reg()); break;
     default:
       ShouldNotReachHere();
     }
   } else if (left->is_double_fpu()) {
     if (right->is_double_fpu()) {
-      // cpu register - cpu register
+      // fpu register - fpu register
       switch (code) {
       case lir_add: __ faddd (dest->as_double_reg(), left->as_double_reg(), right->as_double_reg()); break;
       case lir_sub: __ fsubd (dest->as_double_reg(), left->as_double_reg(), right->as_double_reg()); break;
+      case lir_mul_strictfp: // fall through
       case lir_mul: __ fmuld (dest->as_double_reg(), left->as_double_reg(), right->as_double_reg()); break;
+      case lir_div_strictfp: // fall through
       case lir_div: __ fdivd (dest->as_double_reg(), left->as_double_reg(), right->as_double_reg()); break;
       default:
         ShouldNotReachHere();
@@ -2063,11 +2083,10 @@ void LIR_Assembler::emit_static_call_stub() {
   int start = __ offset();
 
   __ relocate(static_stub_Relocation::spec(call_pc));
-  __ mov_metadata(rmethod, (Metadata*)NULL);
-  __ movptr(rscratch1, 0);
-  __ br(rscratch1);
+  __ emit_static_call_stub();
 
-  assert(__ offset() - start <= call_stub_size(), "stub too big");
+  assert(__ offset() - start + CompiledStaticCall::to_trampoline_stub_size()
+        <= call_stub_size(), "stub too big");
   __ end_a_stub();
 }
 
@@ -2268,7 +2287,7 @@ void LIR_Assembler::emit_arraycopy(LIR_OpArrayCopy* op) {
     __ ldr(src,              Address(sp, 4*BytesPerWord));
 
     // r0 is -1^K where K == partial copied count
-    __ eonw(rscratch1, r0, 0);
+    __ eonw(rscratch1, r0, zr);
     // adjust length down and src/end pos up by partial copied count
     __ subw(length, length, rscratch1);
     __ addw(src_pos, src_pos, rscratch1);
@@ -2866,7 +2885,11 @@ void LIR_Assembler::negate(LIR_Opr left, LIR_Opr dest, LIR_Opr tmp) {
 
 
 void LIR_Assembler::leal(LIR_Opr addr, LIR_Opr dest, LIR_PatchCode patch_code, CodeEmitInfo* info) {
-  assert(patch_code == lir_patch_none, "Patch code not supported");
+  if (patch_code != lir_patch_none) {
+    deoptimize_trap(info);
+    return;
+  }
+
   __ lea(dest->as_register_lo(), as_Address(addr->as_address_ptr()));
 }
 
@@ -2879,40 +2902,7 @@ void LIR_Assembler::rt_call(LIR_Opr result, address dest, const LIR_OprList* arg
     __ far_call(RuntimeAddress(dest));
   } else {
     __ mov(rscratch1, RuntimeAddress(dest));
-    int len = args->length();
-    int type = 0;
-    if (! result->is_illegal()) {
-      switch (result->type()) {
-      case T_VOID:
-        type = 0;
-        break;
-      case T_INT:
-      case T_LONG:
-      case T_OBJECT:
-        type = 1;
-        break;
-      case T_FLOAT:
-        type = 2;
-        break;
-      case T_DOUBLE:
-        type = 3;
-        break;
-      default:
-        ShouldNotReachHere();
-        break;
-      }
-    }
-    int num_gpargs = 0;
-    int num_fpargs = 0;
-    for (int i = 0; i < args->length(); i++) {
-      LIR_Opr arg = args->at(i);
-      if (arg->type() == T_FLOAT || arg->type() == T_DOUBLE) {
-        num_fpargs++;
-      } else {
-        num_gpargs++;
-      }
-    }
-    __ blrt(rscratch1, num_gpargs, num_fpargs, type);
+    __ blr(rscratch1);
   }
 
   if (info != NULL) {

@@ -25,11 +25,11 @@
 #ifndef SHARE_CLASSFILE_SYSTEMDICTIONARY_HPP
 #define SHARE_CLASSFILE_SYSTEMDICTIONARY_HPP
 
-#include "classfile/classLoader.hpp"
-#include "jvmci/systemDictionary_jvmci.hpp"
+#include "classfile/classLoaderData.hpp"
 #include "oops/objArrayOop.hpp"
 #include "oops/symbol.hpp"
 #include "runtime/java.hpp"
+#include "runtime/mutexLocker.hpp"
 #include "runtime/reflectionUtils.hpp"
 #include "runtime/signature.hpp"
 #include "utilities/hashtable.hpp"
@@ -73,6 +73,7 @@
 // of placeholders must hold the SystemDictionary_lock.
 //
 
+class BootstrapInfo;
 class ClassFileStream;
 class Dictionary;
 class PlaceholderTable;
@@ -176,6 +177,7 @@ class OopStorage;
   do_klass(AssertionStatusDirectives_klass,             java_lang_AssertionStatusDirectives                   ) \
   do_klass(StringBuffer_klass,                          java_lang_StringBuffer                                ) \
   do_klass(StringBuilder_klass,                         java_lang_StringBuilder                               ) \
+  do_klass(UnsafeConstants_klass,                       jdk_internal_misc_UnsafeConstants                     ) \
   do_klass(internal_Unsafe_klass,                       jdk_internal_misc_Unsafe                              ) \
   do_klass(module_Modules_klass,                        jdk_internal_module_Modules                           ) \
                                                                                                                 \
@@ -212,13 +214,14 @@ class OopStorage;
   do_klass(Integer_klass,                               java_lang_Integer                                     ) \
   do_klass(Long_klass,                                  java_lang_Long                                        ) \
                                                                                                                 \
-  /* JVMCI classes. These are loaded on-demand. */                                                              \
-  JVMCI_WK_KLASSES_DO(do_klass)                                                                                 \
+  /* force inline of iterators */                                                                               \
+  do_klass(Iterator_klass,                              java_util_Iterator                                    ) \
                                                                                                                 \
   /*end*/
 
 
 class SystemDictionary : AllStatic {
+  friend class BootstrapInfo;
   friend class VMStructs;
   friend class SystemDictionaryHandles;
 
@@ -231,11 +234,6 @@ class SystemDictionary : AllStatic {
     #undef WK_KLASS_ENUM
 
     WKID_LIMIT,
-
-#if INCLUDE_JVMCI
-    FIRST_JVMCI_WKID = WK_KLASS_ENUM_NAME(JVMCI_klass),
-    LAST_JVMCI_WKID  = WK_KLASS_ENUM_NAME(Value_klass),
-#endif
 
     FIRST_WKID = NO_WKID + 1
   };
@@ -350,7 +348,9 @@ public:
   static bool do_unloading(GCTimer* gc_timer);
 
   // Applies "f->do_oop" to all root oops in the system dictionary.
-  static void oops_do(OopClosure* f);
+  // If include_handles is true (the default), then the handles in the
+  // storage object returned by vm_global_oop_storage() are included.
+  static void oops_do(OopClosure* f, bool include_handles = true);
 
   // System loader lock
   static oop system_loader_lock()           { return _system_loader_lock_obj; }
@@ -360,16 +360,9 @@ public:
 
 public:
   // Printing
-  static void print() { return print_on(tty); }
+  static void print();
   static void print_on(outputStream* st);
   static void dump(outputStream* st, bool verbose);
-
-  // Monotonically increasing counter which grows as classes are
-  // loaded or modifications such as hot-swapping or setting/removing
-  // of breakpoints are performed
-  static inline int number_of_modifications()     { assert_locked_or_safepoint(Compile_lock); return _number_of_modifications; }
-  // Needed by evolution and breakpoint code
-  static inline void notice_modification()        { assert_locked_or_safepoint(Compile_lock); ++_number_of_modifications;      }
 
   // Verification
   static void verify();
@@ -529,21 +522,7 @@ public:
                                                TRAPS);
 
   // ask Java to compute a constant by invoking a BSM given a Dynamic_info CP entry
-  static Handle    link_dynamic_constant(Klass* caller,
-                                         int condy_index,
-                                         Handle bootstrap_specifier,
-                                         Symbol* name,
-                                         Symbol* type,
-                                         TRAPS);
-
-  // ask Java to create a dynamic call site, while linking an invokedynamic op
-  static methodHandle find_dynamic_call_site_invoker(Klass* caller,
-                                                     int indy_index,
-                                                     Handle bootstrap_method,
-                                                     Symbol* name,
-                                                     Symbol* type,
-                                                     Handle *appendix_result,
-                                                     TRAPS);
+  static void      invoke_bootstrap_method(BootstrapInfo& bootstrap_specifier, TRAPS);
 
   // Record the error when the first attempt to resolve a reference from a constant
   // pool entry to a class fails.
@@ -571,11 +550,6 @@ public:
   // Hashtable holding placeholders for classes being loaded.
   static PlaceholderTable*       _placeholders;
 
-  // Monotonically increasing counter which grows with
-  // loading classes as well as hot-swapping and breakpoint setting
-  // and removal.
-  static int                     _number_of_modifications;
-
   // Lock object for system class loader
   static oop                     _system_loader_lock_obj;
 
@@ -591,7 +565,8 @@ public:
   // ProtectionDomain cache
   static ProtectionDomainCacheTable*   _pd_cache_table;
 
-  // VM weak OopStorage object.
+  // VM OopStorage objects.
+  static OopStorage*             _vm_global_oop_storage;
   static OopStorage*             _vm_weak_oop_storage;
 
 protected:
@@ -649,6 +624,7 @@ public:
   }
 
   static void initialize_oop_storage();
+  static OopStorage* vm_global_oop_storage();
   static OopStorage* vm_weak_oop_storage();
 
 protected:
@@ -700,6 +676,11 @@ private:
   static oop  _java_platform_loader;
 
   static bool _has_checkPackageAccess;
+
+public:
+  static TableStatistics placeholders_statistics();
+  static TableStatistics loader_constraints_statistics();
+  static TableStatistics protection_domain_cache_statistics();
 };
 
 #endif // SHARE_CLASSFILE_SYSTEMDICTIONARY_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 #include "memory/metadataFactory.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/method.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/symbol.hpp"
@@ -51,8 +52,7 @@
 CompiledICLocker::CompiledICLocker(CompiledMethod* method)
   : _method(method),
     _behaviour(CompiledICProtectionBehaviour::current()),
-    _locked(_behaviour->lock(_method)),
-    _nsv(true, !SafepointSynchronize::is_at_safepoint()) {
+    _locked(_behaviour->lock(_method)) {
 }
 
 CompiledICLocker::~CompiledICLocker() {

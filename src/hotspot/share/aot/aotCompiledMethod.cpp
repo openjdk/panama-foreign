@@ -32,8 +32,6 @@
 #include "compiler/compilerOracle.hpp"
 #include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/collectedHeap.hpp"
-#include "jvmci/compilerRuntime.hpp"
-#include "jvmci/jvmciRuntime.hpp"
 #include "oops/method.inline.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -167,7 +165,7 @@ bool AOTCompiledMethod::make_not_entrant_helper(int new_state) {
 
   {
     // Enter critical section.  Does not block for safepoint.
-    MutexLockerEx pl(Patching_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker pl(Patching_lock, Mutex::_no_safepoint_check_flag);
 
     if (*_state_adr == new_state) {
       // another thread already performed this transition so nothing
@@ -218,7 +216,7 @@ bool AOTCompiledMethod::make_entrant() {
 
   {
     // Enter critical section.  Does not block for safepoint.
-    MutexLockerEx pl(Patching_lock, Mutex::_no_safepoint_check_flag);
+    MutexLocker pl(Patching_lock, Mutex::_no_safepoint_check_flag);
 
     if (*_state_adr == in_use) {
       // another thread already performed this transition so nothing
@@ -280,7 +278,7 @@ void AOTCompiledMethod::metadata_do(MetadataClosure* f) {
           }
         }
       } else if (iter.type() == relocInfo::static_call_type ||
-                 iter.type() == relocInfo::opt_virtual_call_type){
+                 iter.type() == relocInfo::opt_virtual_call_type) {
         // Check Method* in AOT c2i stub for other calls.
         Metadata* meta = (Metadata*)nativeLoadGot_at(nativePltCall_at(iter.addr())->plt_c2i_stub())->data();
         if (meta != NULL) {

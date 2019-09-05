@@ -306,6 +306,18 @@ public class Float512Vector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public void MIN(Blackhole bh) {
         float[] a = fa.apply(SPECIES.length());

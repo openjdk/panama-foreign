@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.GraphUtils.DependencyKind;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
-import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.comp.Attr.ResultInfo;
 import com.sun.tools.javac.comp.Resolve.MethodResolutionPhase;
 import com.sun.tools.javac.resources.CompilerProperties.Errors;
@@ -501,7 +500,7 @@ public class DeferredAttr extends JCTree.Visitor {
             attr.attribTree(newTree, speculativeEnv, resultInfo);
             return newTree;
         } finally {
-            new UnenterScanner(env.toplevel.modle).scan(newTree);
+            enter.unenter(env.toplevel, newTree);
             log.popDiagnosticHandler(deferredDiagnosticHandler);
             if (localCache != null) {
                 localCache.leave();
@@ -509,29 +508,6 @@ public class DeferredAttr extends JCTree.Visitor {
         }
     }
     //where
-
-        class UnenterScanner extends TreeScanner {
-            private final ModuleSymbol msym;
-
-            public UnenterScanner(ModuleSymbol msym) {
-                this.msym = msym;
-            }
-
-            @Override
-            public void visitClassDef(JCClassDecl tree) {
-                ClassSymbol csym = tree.sym;
-                //if something went wrong during method applicability check
-                //it is possible that nested expressions inside argument expression
-                //are left unchecked - in such cases there's nothing to clean up.
-                if (csym == null) return;
-                typeEnvs.remove(csym);
-                chk.removeCompiled(csym);
-                chk.clearLocalClassNameIndexes(csym);
-                syms.removeClass(msym, csym.flatname);
-                super.visitClassDef(tree);
-            }
-        }
-
         static class DeferredAttrDiagHandler extends Log.DeferredDiagnosticHandler {
 
             static class PosScanner extends TreeScanner {
@@ -1161,7 +1137,7 @@ public class DeferredAttr extends JCTree.Visitor {
 
         SwitchExpressionScanner() {
             super(EnumSet.of(BLOCK, CASE, CATCH, DOLOOP, FOREACHLOOP,
-                    FORLOOP, IF, BREAK, SYNCHRONIZED, SWITCH, TRY, WHILELOOP));
+                    FORLOOP, IF, SYNCHRONIZED, SWITCH, TRY, WHILELOOP, YIELD));
         }
     }
 

@@ -94,7 +94,7 @@ final class FloatMaxVector extends FloatVector {
 
     @ForceInline
     @Override
-    public final Class<Float> elementType() { return Float.class; }
+    public final Class<Float> elementType() { return float.class; }
 
     @ForceInline
     @Override

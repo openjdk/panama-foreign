@@ -39,7 +39,7 @@ LIBAWT_DEFAULT_HEADER_DIRS := \
 
 # We must not include java.desktop/unix/native/libmlib_image, which is only
 # for usage by solaris-sparc in libmlib_image_v.
-BUILD_LIBMLIB_EXCLUDE_SRC_PATTERNS := unix
+BUILD_LIBMLIB_EXCLUDE_SRC_PATTERNS := /unix/
 
 BUILD_LIBMLIB_CFLAGS := -D__USE_J2D_NAMES -D__MEDIALIB_OLD_NAMES -DMLIB_NO_LIBSUNMATH
 
@@ -378,7 +378,6 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBLCMS, \
     OPTIMIZATION := HIGHEST, \
     CFLAGS := $(CFLAGS_JDKLIB) \
         $(LCMS_CFLAGS), \
-    CFLAGS_solaris := -xc99=no_lib, \
     CFLAGS_windows := -DCMS_IS_WINDOWS_, \
     EXTRA_HEADER_DIRS := \
         common/awt/debug \
@@ -472,7 +471,6 @@ ifeq ($(call isTargetOs, windows macosx), false)
           $(LIBAWT_HEADLESS_CFLAGS), \
       EXTRA_HEADER_DIRS := $(LIBAWT_HEADLESS_EXTRA_HEADER_DIRS), \
       DISABLED_WARNINGS_gcc := unused-function, \
-      DISABLED_WARNINGS_xlc := 1506-356, \
       DISABLED_WARNINGS_solstudio := E_EMPTY_TRANSLATION_UNIT, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -481,10 +479,6 @@ ifeq ($(call isTargetOs, windows macosx), false)
       LIBS_linux := $(LIBM) $(LIBDL), \
       LIBS_solaris := $(LIBM) $(LIBDL) $(LIBCXX), \
   ))
-
-  # AIX warning explanation:
-  # 1506-356 : (W) Compilation unit is empty.
-  #            This happens during the headless build
 
   $(BUILD_LIBAWT_HEADLESS): $(BUILD_LIBAWT)
 
@@ -506,6 +500,8 @@ else
   LIBFREETYPE_CFLAGS := -I$(BUILD_LIBFREETYPE_HEADER_DIRS)
   ifeq ($(call isTargetOs, windows), true)
     LIBFREETYPE_LIBS := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libfreetype/freetype.lib
+    # freetype now requires you to manually define this (see ftconfig.h)
+    BUILD_LIBFREETYPE_CFLAGS += -DDLL_EXPORT
   else
     LIBFREETYPE_LIBS := -lfreetype
   endif
@@ -519,8 +515,8 @@ else
       DISABLED_WARNINGS_solstudio := \
          E_STATEMENT_NOT_REACHED \
          E_END_OF_LOOP_CODE_NOT_REACHED, \
-      DISABLED_WARNINGS_microsoft := 4267 4244 4312 4819, \
-      DISABLED_WARNINGS_gcc := implicit-fallthrough, \
+      DISABLED_WARNINGS_microsoft := 4018 4267 4244 4312 4819, \
+      DISABLED_WARNINGS_gcc := implicit-fallthrough cast-function-type bad-function-cast, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
   ))
@@ -697,7 +693,7 @@ else # not windows
 
   ifeq ($(call isTargetOs, macosx), true)
     # libjawt on macosx do not use the unix code
-    LIBJAWT_EXCLUDE_SRC_PATTERNS := unix
+    LIBJAWT_EXCLUDE_SRC_PATTERNS := /unix/
   endif
 
   ifeq ($(call isTargetOs, macosx), true)
@@ -787,10 +783,11 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
 
   ifeq ($(call isTargetOs, macosx), true)
     # libsplashscreen on macosx do not use the unix code
-    LIBSPLASHSCREEN_EXCLUDE_SRC_PATTERNS := unix
+    LIBSPLASHSCREEN_EXCLUDE_SRC_PATTERNS := /unix/
   endif
 
-  LIBSPLASHSCREEN_CFLAGS += -DSPLASHSCREEN -DPNG_NO_MMX_CODE -DPNG_ARM_NEON_OPT=0
+  LIBSPLASHSCREEN_CFLAGS += -DSPLASHSCREEN -DPNG_NO_MMX_CODE \
+                            -DPNG_ARM_NEON_OPT=0 -DPNG_ARM_NEON_IMPLEMENTATION=0
 
   ifeq ($(call isTargetOs, linux), true)
     ifeq ($(call isTargetCpuArch, ppc), true)
@@ -822,6 +819,7 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
         $(LIBM) -lpthread -liconv -losxapp \
         -framework ApplicationServices \
         -framework Foundation \
+        -framework Security \
         -framework Cocoa \
         -framework JavaNativeFoundation
   else ifeq ($(call isTargetOs, windows), true)

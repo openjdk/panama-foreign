@@ -103,7 +103,7 @@ import java.util.Objects;
  * </ul>
  * @param <E> the boxed element type of this mask
  *
- * <h1>Value-based classes and identity operations</h1>
+ * <h2>Value-based classes and identity operations</h2>
  *
  * {@code VectorMask}, along with {@link Vector}, is a
  * <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
@@ -159,13 +159,13 @@ public abstract class VectorMask<E> {
      *
      * @param species vector species for the desired mask
      * @param bits the given {@code boolean} values
+     * @param <E> the boxed element type
      * @return a mask where each lane is set or unset according to the given
      *         {@code boolean} value
      * @throws IllegalArgumentException
      *         if {@code bits.length != species.length()}
      * @see #fromLong(VectorSpecies, long)
      * @see #fromArray(VectorSpecies, boolean[], int)
-     * @see Vector#maskFromValues(boolean...)
      */
     @ForceInline
     public static <E> VectorMask<E> fromValues(VectorSpecies<E> species, boolean... bits) {
@@ -184,6 +184,7 @@ public abstract class VectorMask<E> {
      * @param species vector species for the desired mask
      * @param bits the {@code boolean} array
      * @param offset the offset into the array
+     * @param <E> the boxed element type
      * @return the mask loaded from the {@code boolean} array
      * @throws IndexOutOfBoundsException if {@code offset < 0}, or
      * {@code offset > bits.length - species.length()}
@@ -220,6 +221,7 @@ public abstract class VectorMask<E> {
      *
      * @param species vector species for the desired mask
      * @param bits the given mask bits, as a 64-bit signed integer
+     * @param <E> the boxed element type
      * @return a mask where each lane is set or unset according to
      *         the bits in the given integer value
      * @see #fromValues(VectorSpecies, boolean...)

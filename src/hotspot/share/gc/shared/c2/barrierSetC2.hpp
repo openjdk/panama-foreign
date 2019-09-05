@@ -42,8 +42,8 @@ const DecoratorSet C2_UNALIGNED              = DECORATOR_LAST << 2;
 const DecoratorSet C2_WEAK_CMPXCHG           = DECORATOR_LAST << 3;
 // This denotes that a load has control dependency.
 const DecoratorSet C2_CONTROL_DEPENDENT_LOAD = DECORATOR_LAST << 4;
-// This denotes that a load that must be pinned.
-const DecoratorSet C2_PINNED_LOAD            = DECORATOR_LAST << 5;
+// This denotes that a load that must be pinned, but may float above safepoints.
+const DecoratorSet C2_UNKNOWN_CONTROL_LOAD   = DECORATOR_LAST << 5;
 // This denotes that the access is produced from the sun.misc.Unsafe intrinsics.
 const DecoratorSet C2_UNSAFE_ACCESS          = DECORATOR_LAST << 6;
 // This denotes that the access mutates state.
@@ -259,6 +259,7 @@ public:
     Optimization,
     Expansion
   };
+
   virtual bool array_copy_requires_gc_barriers(bool tightly_coupled_alloc, BasicType type, bool is_clone, ArrayCopyPhase phase) const { return false; }
   virtual void clone_barrier_at_expansion(ArrayCopyNode* ac, Node* call, PhaseIterGVN& igvn) const;
 
@@ -266,6 +267,7 @@ public:
   virtual bool has_load_barriers() const { return false; }
   virtual bool is_gc_barrier_node(Node* node) const { return false; }
   virtual Node* step_over_gc_barrier(Node* c) const { return c; }
+  virtual Node* step_over_gc_barrier_ctrl(Node* c) const { return c; }
 
   // Support for macro expanded GC barriers
   virtual void register_potential_barrier_node(Node* node) const { }
@@ -273,7 +275,6 @@ public:
   virtual void eliminate_gc_barrier(PhaseMacroExpand* macro, Node* node) const { }
   virtual void enqueue_useful_gc_barrier(PhaseIterGVN* igvn, Node* node) const {}
   virtual void eliminate_useless_gc_barriers(Unique_Node_List &useful, Compile* C) const {}
-  virtual void add_users_to_worklist(Unique_Node_List* worklist) const {}
 
   // Allow barrier sets to have shared state that is preserved across a compilation unit.
   // This could for example comprise macro nodes to be expanded during macro expansion.
@@ -286,17 +287,21 @@ public:
   virtual bool is_gc_specific_loop_opts_pass(LoopOptsMode mode) const { return false; }
 
   virtual bool has_special_unique_user(const Node* node) const { return false; }
+  virtual bool needs_anti_dependence_check(const Node* node) const { return true; }
+
+  virtual void barrier_insertion_phase(Compile* C, PhaseIterGVN &igvn) const { }
 
   enum CompilePhase {
-    BeforeOptimize, /* post_parse = true */
-    BeforeExpand, /* post_parse = false */
+    BeforeOptimize,
+    BeforeLateInsertion,
+    BeforeMacroExpand,
     BeforeCodeGen
   };
-  virtual void verify_gc_barriers(Compile* compile, CompilePhase phase) const {}
 
   virtual bool flatten_gc_alias_type(const TypePtr*& adr_type) const { return false; }
 #ifdef ASSERT
   virtual bool verify_gc_alias_type(const TypePtr* adr_type, int offset) const { return false; }
+  virtual void verify_gc_barriers(Compile* compile, CompilePhase phase) const {}
 #endif
 
   virtual bool final_graph_reshaping(Compile* compile, Node* n, uint opcode) const { return false; }
@@ -304,14 +309,13 @@ public:
   virtual bool escape_add_to_con_graph(ConnectionGraph* conn_graph, PhaseGVN* gvn, Unique_Node_List* delayed_worklist, Node* n, uint opcode) const { return false; }
   virtual bool escape_add_final_edges(ConnectionGraph* conn_graph, PhaseGVN* gvn, Node* n, uint opcode) const { return false; }
   virtual bool escape_has_out_with_unsafe_object(Node* n) const { return false; }
-  virtual bool escape_is_barrier_node(Node* n) const { return false; }
 
   virtual bool matcher_find_shared_visit(Matcher* matcher, Matcher::MStack& mstack, Node* n, uint opcode, bool& mem_op, int& mem_addr_idx) const { return false; };
   virtual bool matcher_find_shared_post_visit(Matcher* matcher, Node* n, uint opcode) const { return false; };
   virtual bool matcher_is_store_load_barrier(Node* x, uint xop) const { return false; }
 
-  virtual void igvn_add_users_to_worklist(PhaseIterGVN* igvn, Node* use) const {}
-  virtual void ccp_analyze(PhaseCCP* ccp, Unique_Node_List& worklist, Node* use) const {}
+  virtual void igvn_add_users_to_worklist(PhaseIterGVN* igvn, Node* use) const { }
+  virtual void ccp_analyze(PhaseCCP* ccp, Unique_Node_List& worklist, Node* use) const { }
 
   virtual Node* split_if_pre(PhaseIdealLoop* phase, Node* n) const { return NULL; }
   virtual bool build_loop_late_post(PhaseIdealLoop* phase, Node* n) const { return false; }
