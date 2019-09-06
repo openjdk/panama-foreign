@@ -84,6 +84,9 @@ public:
       _t_barrierExpand,
       _t_graphReshaping,
     _t_matcher,
+#ifdef X86
+    _t_postselect_cleanup,
+#endif
     _t_scheduler,
     _t_registerAllocation,
       _t_ctorChaitin,

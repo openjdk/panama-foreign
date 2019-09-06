@@ -1577,6 +1577,9 @@ void ArchDesc::declareClasses(FILE *fp) {
     fprintf(fp,"    assert(operand_index < _num_opnds, \"invalid _opnd_array index\");\n");
     fprintf(fp,"    _opnd_array[operand_index] = operand;\n");
     fprintf(fp,"  }\n");
+    fprintf(fp,"  virtual uint           rule() const { return %s_rule; }\n",
+            instr->_ident);
+
     fprintf(fp,"private:\n");
     if ( instr->is_ideal_jump() ) {
       fprintf(fp,"  virtual void           add_case_label(int index_num, Label* blockLabel) {\n");
@@ -1588,8 +1591,6 @@ void ArchDesc::declareClasses(FILE *fp) {
     }
 
     out_RegMask(fp);                      // output register mask
-    fprintf(fp,"  virtual uint           rule() const { return %s_rule; }\n",
-            instr->_ident);
 
     // If this instruction contains a labelOper
     // Declare Node::methods that set operand Label's contents
@@ -1899,10 +1900,19 @@ void ArchDesc::declareClasses(FILE *fp) {
       // as is done for pointers
       //
       // Construct appropriate constant type containing the constant value.
+      bool isVector = false;
+      OperandForm * output = (OperandForm*)(instr->_localNames[instr->_parameters.name(0)]);
+      if (output) {
+        const char * outputOperand = output->_ident;
+        isVector = 0 == strcmp(outputOperand, "vecG") || 0 == strcmp(outputOperand, "legVecG");
+      }
       fprintf(fp,"  virtual const class Type *bottom_type() const {\n");
       switch( data_type ) {
       case Form::idealI:
-        fprintf(fp,"    return  TypeInt::make(opnd_array(1)->constant());\n");
+        if (isVector)
+          fprintf(fp,"    return  TypeVect::VECTS;\n");
+        else
+          fprintf(fp,"    return  TypeInt::make(opnd_array(1)->constant());\n");
         break;
       case Form::idealP:
       case Form::idealN:
@@ -1910,13 +1920,22 @@ void ArchDesc::declareClasses(FILE *fp) {
         fprintf(fp,"    return  opnd_array(1)->type();\n");
         break;
       case Form::idealD:
-        fprintf(fp,"    return  TypeD::make(opnd_array(1)->constantD());\n");
+        if (isVector)
+          fprintf(fp,"    return  TypeVect::VECTD;\n");
+        else
+          fprintf(fp,"    return  TypeD::make(opnd_array(1)->constantD());\n");
         break;
       case Form::idealF:
-        fprintf(fp,"    return  TypeF::make(opnd_array(1)->constantF());\n");
+        if (isVector)
+          fprintf(fp,"    return  TypeVect::VECTS;\n");
+        else
+          fprintf(fp,"    return  TypeF::make(opnd_array(1)->constantF());\n");
         break;
       case Form::idealL:
-        fprintf(fp,"    return  TypeLong::make(opnd_array(1)->constantL());\n");
+        if (isVector)
+          fprintf(fp,"    return  TypeVect::VECTD;\n");
+        else
+          fprintf(fp,"    return  TypeLong::make(opnd_array(1)->constantL());\n");
         break;
       default:
         assert( false, "Unimplemented()" );

@@ -198,6 +198,7 @@ public:
   // temporary registers.
   bool _allocation_started;
 
+
   // Machine register names
   static const char *regName[];
   // Machine register encodings
@@ -215,6 +216,10 @@ public:
   // Always Save   = 'A' (same as SOE + SOC)
   const char *_register_save_policy;
   const char *_c_reg_save_policy;
+  char _require_postselect_cleanup;
+  int  _vec_nodes;
+
+
   // Convert a machine register to a machine register type, so-as to
   // properly match spill code.
   const int *_register_save_type;
@@ -558,6 +563,20 @@ public:
   Node* find_old_node(Node* new_node) {
     return _new2old_map[new_node->_idx];
   }
+#endif
+
+#ifdef X86
+  // Enables post selection phase for machine graph cleanup.
+  // Currently this is needed only for X86 target to remove
+  // generic vector operands.
+
+  void enable_postselect_cleanup(const Node * n);
+
+  void reset_postselect_cleanup() { _require_postselect_cleanup = 0;}
+
+  bool require_postselect_cleanup() { return _require_postselect_cleanup & (1 << 0x2);}
+
+  void do_post_selection_processing(Compile*, Node *);
 #endif
 };
 

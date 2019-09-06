@@ -2884,7 +2884,7 @@ frame
       RAX_H_num     // Op_RegL
     };
     // Excluded flags and vector registers.
-    assert(ARRAY_SIZE(hi) == _last_machine_leaf - 6, "missing type");
+    assert(ARRAY_SIZE(hi) == _last_machine_leaf - 7, "missing type");
     return OptoRegPair(hi[ideal_reg], lo[ideal_reg]);
   %}
 %}
@@ -3703,6 +3703,32 @@ operand vlRegD() %{
    format %{ %}
    interface(REG_INTER);
 %}
+
+// Generic vector operands.
+operand vecG() %{
+  constraint(ALLOC_IN_RC(vectorg_reg));
+  match(VecX);
+  match(VecY);
+  match(VecZ);
+  match(VecS);
+  match(VecD);
+
+  format %{ %}
+  interface(REG_INTER);
+%}
+
+operand legVecG() %{
+  constraint(ALLOC_IN_RC(vectorg_reg));
+  match(VecX);
+  match(VecY);
+  match(VecZ);
+  match(VecS);
+  match(VecD);
+
+  format %{ %}
+  interface(REG_INTER);
+%}
+
 
 // Vectors
 operand vecS() %{

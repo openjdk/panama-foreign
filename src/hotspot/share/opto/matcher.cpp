@@ -75,6 +75,8 @@ Matcher::Matcher()
   _ruleName(ruleName),
   _register_save_policy(register_save_policy),
   _c_reg_save_policy(c_reg_save_policy),
+  _require_postselect_cleanup(1),
+  _vec_nodes(0),
   _register_save_type(register_save_type) {
   C->set_matcher(this);
 
@@ -185,6 +187,10 @@ void Matcher::match( ) {
 #ifdef _LP64
   // Pointers take 2 slots in 64-bit land
   _return_addr_mask.Insert(OptoReg::add(return_addr(),1));
+#endif
+
+#ifdef X86
+  reset_postselect_cleanup();
 #endif
 
   // Map a Java-signature return type into return register-value
@@ -395,6 +401,7 @@ void Matcher::match( ) {
   // Set up save-on-entry registers
   Fixup_Save_On_Entry( );
 }
+
 
 
 //------------------------------Fixup_Save_On_Entry----------------------------
@@ -1727,6 +1734,10 @@ MachNode *Matcher::ReduceInst( State *s, int rule, Node *&mem ) {
   mach->_opnds[0] = s->MachOperGenerator(_reduceOp[rule]);
   assert( mach->_opnds[0] != NULL, "Missing result operand" );
   Node *leaf = s->_leaf;
+#ifdef X86
+  enable_postselect_cleanup(leaf);
+#endif
+
   // Check for instruction or instruction chain rule
   if( rule >= _END_INST_CHAIN_RULE || rule < _BEGIN_INST_CHAIN_RULE ) {
     assert(C->node_arena()->contains(s->_leaf) || !has_new_node(s->_leaf),
@@ -2091,6 +2102,21 @@ bool Matcher::is_bmi_pattern(Node *n, Node *m) {
   }
   return false;
 }
+
+void Matcher::enable_postselect_cleanup(const Node * n) {
+  // 0th bit is set till we begin matching over ideal graph. 
+  // Before starting matching, 0th bit is reset by calling  
+  // reset_postselect_cleanup().
+  if (_require_postselect_cleanup & 0x1)
+    return;
+
+  // Return if already found a vector node during matching.
+  if (_require_postselect_cleanup & (0x1 << 2))
+    return;
+
+  _require_postselect_cleanup |= 1 << (n->bottom_type()->isa_vect() != NULL ? 2 : 1);
+}
+
 #endif // X86
 
 bool Matcher::is_vshift_con(Node *n, Node *m) {

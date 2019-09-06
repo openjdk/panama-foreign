@@ -3960,6 +3960,7 @@ bool MatchRule::is_base_register(FormDict &globals) const {
          strcmp(opType,"VecX")==0 ||
          strcmp(opType,"VecY")==0 ||
          strcmp(opType,"VecZ")==0 ||
+         strcmp(opType,"VecG")==0 ||
          strcmp(opType,"Reg" )==0) ) {
       return 1;
     }
