@@ -171,6 +171,7 @@ CallGenerator* Compile::find_intrinsic(ciMethod* m, bool is_virtual) {
 // in library_call.cpp.
 
 
+int    Compile::_vec_nodes = 0;
 #ifndef PRODUCT
 // statistics gathering...
 
@@ -2939,8 +2940,16 @@ void Compile::Code_Gen() {
   {
     TracePhase tp("matcher", &timers[_t_matcher]);
     matcher.match();
+#ifdef X86
+    if (matcher.require_postselect_cleanup()) {
+       TracePhase tp("postselect_cleanup", &timers[_t_postselect_cleanup]);
+       matcher.do_post_selection_processing(this, root());
+       Compile::_vec_nodes += matcher._vec_nodes;
+    }
+#endif
     print_method(PHASE_AFTER_MATCHING, 3);
   }
+
   // In debug mode can dump m._nodes.dump() for mapping of ideal to machine
   // nodes.  Mapping is only valid at the root of each matched subtree.
   NOT_PRODUCT( verify_graph_edges(); )

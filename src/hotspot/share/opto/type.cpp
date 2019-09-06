@@ -84,6 +84,7 @@ const Type::TypeInfo Type::_type_info[Type::lastype] = {
   { Bad,             T_ILLEGAL,    "vectorx:",      false, Op_VecX,              relocInfo::none          },  // VectorX
   { Bad,             T_ILLEGAL,    "vectory:",      false, Op_VecY,              relocInfo::none          },  // VectorY
   { Bad,             T_ILLEGAL,    "vectorz:",      false, Op_VecZ,              relocInfo::none          },  // VectorZ
+  { Bad,             T_ILLEGAL,    "vectorg:",      false, Op_VecG,              relocInfo::none          },  // VectorG
 #endif
   { Bad,             T_ADDRESS,    "anyptr:",       false, Op_RegP,              relocInfo::none          },  // AnyPtr
   { Bad,             T_ADDRESS,    "rawptr:",       false, Op_RegP,              relocInfo::none          },  // RawPtr
@@ -675,11 +676,19 @@ void Type::Initialize_shared(Compile* current) {
   if (Matcher::vector_size_supported(T_FLOAT,16)) {
     TypeVect::VECTZ = TypeVect::make(T_FLOAT,16);
   }
+
+  TypeVect::VECTG = NULL != TypeVect::VECTZ
+                         ? TypeVect::VECTZ
+                         : (NULL != TypeVect::VECTY ? TypeVect::VECTY
+                            : TypeVect::VECTX);
+
   mreg2type[Op_VecS] = TypeVect::VECTS;
   mreg2type[Op_VecD] = TypeVect::VECTD;
   mreg2type[Op_VecX] = TypeVect::VECTX;
   mreg2type[Op_VecY] = TypeVect::VECTY;
   mreg2type[Op_VecZ] = TypeVect::VECTZ;
+  mreg2type[Op_VecG] = TypeVect::VECTG;
+
 
   // Restore working type arena.
   current->set_type_arena(save);
@@ -2256,14 +2265,18 @@ const TypeVect *TypeVect::VECTD = NULL; //  64-bit vectors
 const TypeVect *TypeVect::VECTX = NULL; // 128-bit vectors
 const TypeVect *TypeVect::VECTY = NULL; // 256-bit vectors
 const TypeVect *TypeVect::VECTZ = NULL; // 512-bit vectors
+const TypeVect *TypeVect::VECTG = NULL; // generic vectors
+
 
 //------------------------------make-------------------------------------------
-const TypeVect* TypeVect::make(const Type *elem, uint length) {
+const TypeVect* TypeVect::make(const Type *elem, uint length, bool isGeneric) {
   BasicType elem_bt = elem->array_element_basic_type();
   assert(is_java_primitive(elem_bt), "only primitive types in vector");
   assert(length > 1 && is_power_of_2(length), "vector length is power of 2");
   assert(Matcher::vector_size_supported(elem_bt, length), "length in range");
   int size = length * type2aelembytes(elem_bt);
+  if (isGeneric)
+    return (TypeVect*)(new TypeVectG(elem, length))->hashcons();
   switch (Matcher::vector_ideal_reg(size)) {
   case Op_VecS:
     return (TypeVect*)(new TypeVectS(elem, length))->hashcons();

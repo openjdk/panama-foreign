@@ -58,6 +58,7 @@ class     TypeVectD;
 class     TypeVectX;
 class     TypeVectY;
 class     TypeVectZ;
+class     TypeVectG;
 class   TypePtr;
 class     TypeRawPtr;
 class     TypeOopPtr;
@@ -92,6 +93,8 @@ public:
     VectorX,                    // 128bit Vector types
     VectorY,                    // 256bit Vector types
     VectorZ,                    // 512bit Vector types
+    VectorG,                    // Generic Vector types
+
 
     AnyPtr,                     // Any old raw, klass, inst, or array pointer
     RawPtr,                     // Raw (non-oop) pointers
@@ -758,7 +761,7 @@ public:
     return make(get_const_basic_type(elem_bt), length);
   }
   // Used directly by Replicate nodes to construct singleton vector.
-  static const TypeVect *make(const Type* elem, uint length);
+  static const TypeVect *make(const Type* elem, uint length, bool isGeneric=false);
 
   virtual const Type *xmeet( const Type *t) const;
   virtual const Type *xdual() const;     // Compute dual right now.
@@ -768,11 +771,19 @@ public:
   static const TypeVect *VECTX;
   static const TypeVect *VECTY;
   static const TypeVect *VECTZ;
+  static const TypeVect *VECTG;
+
 
 #ifndef PRODUCT
   virtual void dump2(Dict &d, uint, outputStream *st) const; // Specialized per-Type dumping
 #endif
 };
+
+class TypeVectG : public TypeVect {
+  friend class TypeVect;
+  TypeVectG(const Type* elem, uint length) : TypeVect(VectorG, elem, length) {}
+};
+
 
 class TypeVectS : public TypeVect {
   friend class TypeVect;
@@ -1624,12 +1635,12 @@ inline const TypeAry *Type::is_ary() const {
 }
 
 inline const TypeVect *Type::is_vect() const {
-  assert( _base >= VectorS && _base <= VectorZ, "Not a Vector" );
+  assert( _base >= VectorS && _base <= VectorG, "Not a Vector" );
   return (TypeVect*)this;
 }
 
 inline const TypeVect *Type::isa_vect() const {
-  return (_base >= VectorS && _base <= VectorZ) ? (TypeVect*)this : NULL;
+  return (_base >= VectorS && _base <= VectorG) ? (TypeVect*)this : NULL;
 }
 
 inline const TypePtr *Type::is_ptr() const {

@@ -172,6 +172,7 @@ class Compile : public Phase {
   friend class VMStructs;
 
  public:
+  static int _vec_nodes;
   // Fixed alias indexes.  (See also MergeMemNode.)
   enum {
     AliasIdxTop = 1,  // pseudo-index, aliases to nothing (used as sentinel value)

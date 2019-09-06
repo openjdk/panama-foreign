@@ -241,6 +241,9 @@ public:
   int  operand_index(uint operand) const;
   int  operand_index(const MachOper *oper) const;
 
+  virtual int oprnd_index(int param_index) const {return -1;}
+
+
   // Register class input is expected in
   virtual const RegMask &in_RegMask(uint) const;
 
@@ -1029,7 +1032,8 @@ private:
 
 public:
   virtual const RegMask &out_RegMask() const { return *_opnds[0]->in_RegMask(0); }
-  virtual uint rule() const { return 9999999; }
+  virtual uint rule() const { return 9999998; }
+
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {}
 
   MachTempNode(MachOper* oper) {
