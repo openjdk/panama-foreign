@@ -32,6 +32,7 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
+import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.MemorySegmentImpl;
 import jdk.internal.foreign.Utils;
@@ -185,7 +186,7 @@ public class UniversalUpcallHandler implements UpcallHandler {
                             callingSequence.returnBindings());
                 } else {
                     MemoryAddress inMemPtr = context.inMemoryPtr();
-                    MemoryAddress.copy(((MemoryAddress)o), inMemPtr, function.returnLayout().get().byteSize());
+                    MemoryAddress.copy(((MemorySegment)o).baseAddress(), inMemPtr, function.returnLayout().get().byteSize());
                     context.setReturnPtr(MemoryAddressImpl.addressof(inMemPtr)); // Write to RAX
                 }
             }

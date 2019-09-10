@@ -35,33 +35,42 @@
  */
 
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import jdk.incubator.foreign.ValueLayout;
 import org.testng.annotations.*;
-import static org.testng.Assert.*;
+
+import static java.lang.invoke.MethodHandles.insertArguments;
+import static org.testng.Assert.assertEquals;
 
 
 public class TestUpcall extends CallGeneratorHelper {
 
-    static LibraryLookup lib = LibraryLookup.ofLibrary(MethodHandles.lookup(), "TestDowncall");
+    static LibraryLookup lib = LibraryLookup.ofLibrary(MethodHandles.lookup(), "TestUpcall");
     static SystemABI abi = SystemABI.getInstance();
 
     static MethodHandle DUMMY;
+    static MethodHandle PASS_AND_SAVE;
 
     static {
         try {
             DUMMY = MethodHandles.lookup().findStatic(TestUpcall.class, "dummy", MethodType.methodType(void.class));
+            PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcall.class, "passAndSave", MethodType.methodType(Object.class, Object.class, AtomicReference.class));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -108,23 +117,66 @@ public class TestUpcall extends CallGeneratorHelper {
         for (int i = 0 ; i < params.size() ; i++) {
             args[i] = makeArg(params.get(i).layout(fields), checks, i == 0);
         }
-        args[params.size()] = makeCallback(params.size() > 0 ? params.get(0) : null, fields);
+        args[params.size()] = makeCallback(params.size() > 0 ? params.get(0) : null, fields, checks);
         return args;
     }
 
     @SuppressWarnings("unchecked")
-    static MemoryAddress makeCallback(ParamType param, List<StructFieldType> fields) {
+    static MemoryAddress makeCallback(ParamType param, List<StructFieldType> fields, List<Consumer<Object>> checks) {
         MemoryLayout layout = null;
         if (param != null) {
             layout = param.layout(fields);
         }
-        MethodHandle mh = layout != null ?
-                MethodHandles.identity(paramCarrier(layout)) :
-                DUMMY;
+
+        MethodHandle mh = DUMMY;
+        MemoryLayout finalLayout = layout;
+        if (layout != null) {
+            AtomicReference<Object> box = new AtomicReference<>();
+            mh = insertArguments(PASS_AND_SAVE, 1, box);
+            Class<?> paramType = paramCarrier(layout);
+            mh = mh.asType(MethodType.methodType(paramType, paramType));
+            if (paramType == MemorySegment.class) {
+                checks.add(o -> assertStructEquals((MemorySegment) o, (MemorySegment) box.get(), finalLayout));
+            } else {
+                checks.add(o -> assertEquals(o, box.get()));
+            }
+        }
         FunctionDescriptor func = layout != null ?
                 FunctionDescriptor.of(layout, false, layout) :
                 FunctionDescriptor.ofVoid(false);
         return abi.upcallStub(mh, func);
+    }
+
+    private static void assertStructEquals(MemorySegment s1, MemorySegment s2, MemoryLayout layout) {
+        assertEquals(s1.byteSize(), s2.byteSize());
+        GroupLayout g = (GroupLayout) layout;
+        for (MemoryLayout field : g.memberLayouts()) {
+            if (field instanceof ValueLayout) {
+                VarHandle vh = g.varHandle(vhCarrier(field), MemoryLayout.PathElement.groupElement(field.name().orElseThrow()));
+                assertEquals(vh.get(s1.baseAddress()), vh.get(s2.baseAddress()));
+            }
+        }
+    }
+
+    private static Class<?> vhCarrier(MemoryLayout layout) {
+        if (layout instanceof ValueLayout) {
+            if (isIntegral(layout)) {
+                if (layout.bitSize() == 64) {
+                    return long.class;
+                }
+                return int.class;
+            } else if (layout.bitSize() == 32) {
+                return float.class;
+            }
+            return double.class;
+        } else {
+            throw new IllegalStateException("Unexpected layout: " + layout);
+        }
+    }
+
+    static Object passAndSave(Object o, AtomicReference<Object> ref) {
+        ref.set(o);
+        return o;
     }
 
     static void dummy() {
