@@ -472,7 +472,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg,
     counters = BiasedLocking::counters();
 
   assert_different_registers(lock_reg, obj_reg, swap_reg, tmp_reg, rscratch1, rscratch2, noreg);
-  assert(markOopDesc::age_shift == markOopDesc::lock_bits + markOopDesc::biased_lock_bits, "biased locking makes assumptions about bit layout");
+  assert(markWord::age_shift == markWord::lock_bits + markWord::biased_lock_bits, "biased locking makes assumptions about bit layout");
   Address mark_addr      (obj_reg, oopDesc::mark_offset_in_bytes());
   Address klass_addr     (obj_reg, oopDesc::klass_offset_in_bytes());
   Address saved_mark_addr(lock_reg, 0);
@@ -489,15 +489,15 @@ int MacroAssembler::biased_locking_enter(Register lock_reg,
     null_check_offset = offset();
     ldr(swap_reg, mark_addr);
   }
-  andr(tmp_reg, swap_reg, markOopDesc::biased_lock_mask_in_place);
-  cmp(tmp_reg, (u1)markOopDesc::biased_lock_pattern);
+  andr(tmp_reg, swap_reg, markWord::biased_lock_mask_in_place);
+  cmp(tmp_reg, (u1)markWord::biased_lock_pattern);
   br(Assembler::NE, cas_label);
   // The bias pattern is present in the object's header. Need to check
   // whether the bias owner and the epoch are both still current.
   load_prototype_header(tmp_reg, obj_reg);
   orr(tmp_reg, tmp_reg, rthread);
   eor(tmp_reg, swap_reg, tmp_reg);
-  andr(tmp_reg, tmp_reg, ~((int) markOopDesc::age_mask_in_place));
+  andr(tmp_reg, tmp_reg, ~((int) markWord::age_mask_in_place));
   if (counters != NULL) {
     Label around;
     cbnz(tmp_reg, around);
@@ -520,7 +520,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg,
   // If the low three bits in the xor result aren't clear, that means
   // the prototype header is no longer biased and we have to revoke
   // the bias on this object.
-  andr(rscratch1, tmp_reg, markOopDesc::biased_lock_mask_in_place);
+  andr(rscratch1, tmp_reg, markWord::biased_lock_mask_in_place);
   cbnz(rscratch1, try_revoke_bias);
 
   // Biasing is still enabled for this data type. See whether the
@@ -532,7 +532,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg,
   // that the current epoch is invalid in order to do this because
   // otherwise the manipulations it performs on the mark word are
   // illegal.
-  andr(rscratch1, tmp_reg, markOopDesc::epoch_mask_in_place);
+  andr(rscratch1, tmp_reg, markWord::epoch_mask_in_place);
   cbnz(rscratch1, try_rebias);
 
   // The epoch of the current bias is still valid but we know nothing
@@ -543,7 +543,7 @@ int MacroAssembler::biased_locking_enter(Register lock_reg,
   // don't accidentally blow away another thread's valid bias.
   {
     Label here;
-    mov(rscratch1, markOopDesc::biased_lock_mask_in_place | markOopDesc::age_mask_in_place | markOopDesc::epoch_mask_in_place);
+    mov(rscratch1, markWord::biased_lock_mask_in_place | markWord::age_mask_in_place | markWord::epoch_mask_in_place);
     andr(swap_reg, swap_reg, rscratch1);
     orr(tmp_reg, swap_reg, rthread);
     cmpxchg_obj_header(swap_reg, tmp_reg, obj_reg, rscratch1, here, slow_case);
@@ -628,8 +628,8 @@ void MacroAssembler::biased_locking_exit(Register obj_reg, Register temp_reg, La
   // lock, the object could not be rebiased toward another thread, so
   // the bias bit would be clear.
   ldr(temp_reg, Address(obj_reg, oopDesc::mark_offset_in_bytes()));
-  andr(temp_reg, temp_reg, markOopDesc::biased_lock_mask_in_place);
-  cmp(temp_reg, (u1)markOopDesc::biased_lock_pattern);
+  andr(temp_reg, temp_reg, markWord::biased_lock_mask_in_place);
+  cmp(temp_reg, (u1)markWord::biased_lock_pattern);
   br(Assembler::EQ, done);
 }
 
@@ -3953,7 +3953,7 @@ void  MacroAssembler::set_narrow_oop(Register dst, jobject obj) {
     assert (UseCompressedOops, "should only be used for compressed oops");
     assert (Universe::heap() != NULL, "java heap should be initialized");
     assert (oop_recorder() != NULL, "this assembler needs an OopRecorder");
-    assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(obj)), "should be real oop");
+    assert(Universe::heap()->is_in(JNIHandles::resolve(obj)), "should be real oop");
   }
 #endif
   int oop_index = oop_recorder()->find_index(obj);
@@ -3968,7 +3968,7 @@ void  MacroAssembler::set_narrow_klass(Register dst, Klass* k) {
   assert (UseCompressedClassPointers, "should only be used for compressed headers");
   assert (oop_recorder() != NULL, "this assembler needs an OopRecorder");
   int index = oop_recorder()->find_index(k);
-  assert(! Universe::heap()->is_in_reserved(k), "should not be an oop");
+  assert(! Universe::heap()->is_in(k), "should not be an oop");
 
   InstructionMark im(this);
   RelocationHolder rspec = metadata_Relocation::spec(index);
@@ -4052,7 +4052,7 @@ void MacroAssembler::movoop(Register dst, jobject obj, bool immediate) {
 #ifdef ASSERT
     {
       ThreadInVMfromUnknown tiv;
-      assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(obj)), "should be real oop");
+      assert(Universe::heap()->is_in(JNIHandles::resolve(obj)), "should be real oop");
     }
 #endif
     oop_index = oop_recorder()->find_index(obj);
@@ -4082,7 +4082,7 @@ Address MacroAssembler::constant_oop_address(jobject obj) {
   {
     ThreadInVMfromUnknown tiv;
     assert(oop_recorder() != NULL, "this assembler needs an OopRecorder");
-    assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(obj)), "not an oop");
+    assert(Universe::heap()->is_in(JNIHandles::resolve(obj)), "not an oop");
   }
 #endif
   int oop_index = oop_recorder()->find_index(obj);
@@ -5832,4 +5832,26 @@ void MacroAssembler::get_thread(Register dst) {
   }
 
   pop(saved_regs, sp);
+}
+
+void MacroAssembler::cache_wb(Address line) {
+  assert(line.getMode() == Address::base_plus_offset, "mode should be base_plus_offset");
+  assert(line.index() == noreg, "index should be noreg");
+  assert(line.offset() == 0, "offset should be 0");
+  // would like to assert this
+  // assert(line._ext.shift == 0, "shift should be zero");
+  if (VM_Version::supports_dcpop()) {
+    // writeback using clear virtual address to point of persistence
+    dc(Assembler::CVAP, line.base());
+  } else {
+    // no need to generate anything as Unsafe.writebackMemory should
+    // never invoke this stub
+  }
+}
+
+void MacroAssembler::cache_wbsync(bool is_pre) {
+  // we only need a barrier post sync
+  if (!is_pre) {
+    membar(Assembler::AnyAny);
+  }
 }
