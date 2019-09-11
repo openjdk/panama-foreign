@@ -342,7 +342,7 @@ Node *MemNode::Ideal_common(PhaseGVN *phase, bool can_reshape) {
       }
     }
     Node* frame = igvn->transform(new ParmNode(phase->C->start(), TypeFunc::FramePtr));
-    Node* halt = igvn->transform(new HaltNode(ctl, frame));
+    Node* halt = igvn->transform(new HaltNode(ctl, frame, "unsafe off-heap access with zero address"));
     phase->C->root()->add_req(halt);
     return this;
   }
@@ -1434,8 +1434,6 @@ Node *LoadNode::split_through_phi(PhaseGVN *phase) {
       }
     }
   }
-
-  bool load_boxed_phi = load_boxed_values && base_is_phi && (base->in(0) == mem->in(0));
 
   // Split through Phi (see original code in loopopts.cpp).
   assert(C->have_alias_type(t_oop), "instance should have alias type");

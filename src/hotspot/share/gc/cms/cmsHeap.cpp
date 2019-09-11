@@ -62,7 +62,7 @@ public:
   }
 
   size_t used_in_bytes() {
-    return _space->used();
+    return _space->used_stable();
   }
 };
 
@@ -240,13 +240,11 @@ void CMSHeap::cms_process_roots(StrongRootsScope* scope,
 }
 
 void CMSHeap::gc_prologue(bool full) {
-  always_do_update_barrier = false;
   GenCollectedHeap::gc_prologue(full);
 };
 
 void CMSHeap::gc_epilogue(bool full) {
   GenCollectedHeap::gc_epilogue(full);
-  always_do_update_barrier = true;
 };
 
 GrowableArray<GCMemoryManager*> CMSHeap::memory_managers() {
