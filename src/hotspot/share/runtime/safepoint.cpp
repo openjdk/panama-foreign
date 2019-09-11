@@ -939,7 +939,7 @@ void SafepointSynchronize::print_safepoint_timeout() {
           break; // Could not send signal. Report fatal error.
         }
         // Give cur_thread a chance to report the error and terminate the VM.
-        os::sleep(Thread::current(), 3000, false);
+        os::naked_sleep(3000);
       }
     }
     fatal("Safepoint sync time longer than " INTX_FORMAT "ms detected when executing %s.",
@@ -952,8 +952,7 @@ void SafepointSynchronize::print_safepoint_timeout() {
 
 ThreadSafepointState::ThreadSafepointState(JavaThread *thread)
   : _at_poll_safepoint(false), _thread(thread), _safepoint_safe(false),
-    _safepoint_id(SafepointSynchronize::InactiveSafepointCounter),
-    _orig_thread_state(_thread_uninitialized), _next(NULL) {
+    _safepoint_id(SafepointSynchronize::InactiveSafepointCounter), _next(NULL) {
 }
 
 void ThreadSafepointState::create(JavaThread *thread) {
@@ -989,9 +988,6 @@ void ThreadSafepointState::examine_state_of_thread(uint64_t safepoint_count) {
     // Consider it running and just return.
     return;
   }
-
-  // Save the state at the start of safepoint processing.
-  _orig_thread_state = stable_state;
 
   // Check for a thread that is suspended. Note that thread resume tries
   // to grab the Threads_lock which we own here, so a thread cannot be
@@ -1059,8 +1055,6 @@ void ThreadSafepointState::print_on(outputStream *st) const {
 
   _thread->print_thread_state_on(st);
 }
-
-void ThreadSafepointState::print() const { print_on(tty); }
 
 // ---------------------------------------------------------------------------------------------------------------------
 

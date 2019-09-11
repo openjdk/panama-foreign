@@ -29,9 +29,7 @@
  * @requires vm.cds
  * @requires vm.cds.custom.loaders
  * @library /test/lib /test/hotspot/jtreg/runtime/cds/appcds
- * @modules java.base/jdk.internal.misc
- *          java.management
- *          jdk.jartool/sun.tools.jar
+ * @modules jdk.jartool/sun.tools.jar
  * @compile test-classes/LoaderSegregation.java
  *          test-classes/CustomLoadee.java test-classes/CustomLoadee2.java
  *          test-classes/CustomInterface2_ia.java test-classes/CustomInterface2_ib.java
@@ -65,7 +63,7 @@ public class LoaderSegregationTest {
         String wbJar = JarBuilder.build(true, "WhiteBox", "sun/hotspot/WhiteBox");
         String use_whitebox_jar = "-Xbootclasspath/a:" + wbJar;
 
-        String appJar = JarBuilder.build("LoaderSegregation_app", "LoaderSegregation",
+        String appJar = JarBuilder.build("LoaderSegregation_app", "LoaderSegregation", "LoaderSegregation$1",
                                          "CustomLoadee", "CustomLoadee2", "CustomLoadee3Child", "CustomInterface2_ia",
                                          "OnlyBuiltin", "Util");
 
@@ -112,8 +110,6 @@ public class LoaderSegregationTest {
 
         output = TestCommon.exec(TestCommon.concatPaths(appJar, app2Jar),
                                  // command-line arguments ...
-                                 "--add-opens=java.base/java.lang=ALL-UNNAMED",
-                                 "--add-opens=java.base/java.security=ALL-UNNAMED",
                                  use_whitebox_jar,
                                  "-XX:+UnlockDiagnosticVMOptions",
                                  "-XX:+WhiteBoxAPI",
