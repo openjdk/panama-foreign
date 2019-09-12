@@ -972,6 +972,9 @@ private:
   void aesenc(XMMRegister dst, XMMRegister src);
   void aesenclast(XMMRegister dst, Address src);
   void aesenclast(XMMRegister dst, XMMRegister src);
+  // Vector AES instructions
+  void vaesenc(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+  void vaesenclast(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vaesdec(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vaesdeclast(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
@@ -1029,6 +1032,8 @@ private:
   void cld();
 
   void clflush(Address adr);
+  void clflushopt(Address adr);
+  void clwb(Address adr);
 
   void cmovl(Condition cc, Register dst, Register src);
   void cmovl(Condition cc, Register dst, Address src);
@@ -1405,6 +1410,7 @@ private:
   }
 
   void mfence();
+  void sfence();
 
   // Moves
 
