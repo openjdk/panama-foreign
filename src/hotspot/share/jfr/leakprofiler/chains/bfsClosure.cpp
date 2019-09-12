@@ -22,7 +22,7 @@
  *
  */
 #include "precompiled.hpp"
-#include "jfr/leakprofiler/chains/bitset.hpp"
+#include "jfr/leakprofiler/chains/bitset.inline.hpp"
 #include "jfr/leakprofiler/chains/bfsClosure.hpp"
 #include "jfr/leakprofiler/chains/dfsClosure.hpp"
 #include "jfr/leakprofiler/chains/edge.hpp"
@@ -131,7 +131,7 @@ void BFSClosure::closure_impl(const oop* reference, const oop pointee) {
   if (!_mark_bits->is_marked(pointee)) {
     _mark_bits->mark_obj(pointee);
     // is the pointee a sample object?
-    if (NULL == pointee->mark()) {
+    if (NULL == pointee->mark().to_pointer()) {
       add_chain(reference, pointee);
     }
 
@@ -148,7 +148,7 @@ void BFSClosure::closure_impl(const oop* reference, const oop pointee) {
 
 void BFSClosure::add_chain(const oop* reference, const oop pointee) {
   assert(pointee != NULL, "invariant");
-  assert(NULL == pointee->mark(), "invariant");
+  assert(NULL == pointee->mark().to_pointer(), "invariant");
   Edge leak_edge(_current_parent, reference);
   _edge_store->put_chain(&leak_edge, _current_parent == NULL ? 1 : _current_frontier_level + 2);
 }
@@ -230,8 +230,6 @@ void BFSClosure::do_oop(narrowOop* ref) {
 
 void BFSClosure::do_root(const oop* ref) {
   assert(ref != NULL, "invariant");
-  assert(is_aligned(ref, HeapWordSize), "invariant");
-  assert(*ref != NULL, "invariant");
   if (!_edge_queue->is_full()) {
     _edge_queue->add(NULL, ref);
   }

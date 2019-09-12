@@ -59,7 +59,7 @@ public class MappedMemoryScope extends MemorySegmentImpl.Scope {
     public static MemorySegmentImpl of(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
         if (bytesSize <= 0) throw new IllegalArgumentException("Requested bytes size must be > 0.");
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
-            UnmapperProxy unmapperProxy = channelImpl.mapInternal(channelImpl.imode(mapMode), 0L, bytesSize);
+            UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
             return new MemorySegmentImpl(unmapperProxy.address(), bytesSize, 0, new MappedMemoryScope(unmapperProxy));
         }
     }
