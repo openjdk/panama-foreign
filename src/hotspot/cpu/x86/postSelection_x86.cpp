@@ -22,6 +22,7 @@
 //
 //
 
+#include "precompiled.hpp"
 #include "adfiles/ad_x86.hpp"
 #include "oops/compressedOops.hpp"
 #include "opto/addnode.hpp"
@@ -31,7 +32,6 @@
 #include "opto/matcher.hpp"
 #include "opto/narrowptrnode.hpp"
 #include "opto/opcodes.hpp"
-#include "precompiled.hpp"
 #include "utilities/pair.hpp"
 
 //----------------------------------------------------------------------
@@ -480,8 +480,24 @@ static void RemoveLegacyOperandRCCNodes(Compile *c, Node *root) {
 }
 
 void Matcher::do_post_selection_processing(Compile *c, Node *root) {
-  if (root) {
-    _vec_nodes += RemoveGenericOperands(c, root);
+  if (root && require_postselect_cleanup()) {
+    Compile::_vec_nodes += RemoveGenericOperands(c, root);
     RemoveLegacyOperandRCCNodes(c, root);
   }
+  if (Matcher::vector_size_supported(T_BYTE,4)) {
+    idealreg2regmask[Op_VecS] = &VECTORS_REG_mask();
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,2)) {
+    idealreg2regmask[Op_VecD] = &VECTORD_REG_mask();
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,4)) {
+    idealreg2regmask[Op_VecX] = &VECTORX_REG_mask(); 
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,8)) {
+    idealreg2regmask[Op_VecY] = &VECTORY_REG_mask();
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,16)) {
+    idealreg2regmask[Op_VecZ] = &VECTORZ_REG_mask();
+  }
+  Fixup_Save_On_Entry();
 }
