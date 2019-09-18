@@ -78,6 +78,15 @@ public:
     }
   };
 
+#ifdef X86
+  // Enables post selection phase for machine graph cleanup.
+  // Currently this is needed only for X86 target to remove
+  // generic vector operands.
+  void enable_postselect_cleanup(const Node * n);
+  void reset_postselect_cleanup() { _require_postselect_cleanup = 0;}
+  bool require_postselect_cleanup() { return _require_postselect_cleanup & (1 << 0x2);}
+  void do_post_selection_processing(Compile*, Node *);
+#endif
 private:
   // Private arena of State objects
   ResourceArea _states_arena;
@@ -216,9 +225,8 @@ public:
   // Always Save   = 'A' (same as SOE + SOC)
   const char *_register_save_policy;
   const char *_c_reg_save_policy;
-  char _require_postselect_cleanup;
-  int  _vec_nodes;
 
+  char _require_postselect_cleanup;
 
   // Convert a machine register to a machine register type, so-as to
   // properly match spill code.
@@ -563,20 +571,6 @@ public:
   Node* find_old_node(Node* new_node) {
     return _new2old_map[new_node->_idx];
   }
-#endif
-
-#ifdef X86
-  // Enables post selection phase for machine graph cleanup.
-  // Currently this is needed only for X86 target to remove
-  // generic vector operands.
-
-  void enable_postselect_cleanup(const Node * n);
-
-  void reset_postselect_cleanup() { _require_postselect_cleanup = 0;}
-
-  bool require_postselect_cleanup() { return _require_postselect_cleanup & (1 << 0x2);}
-
-  void do_post_selection_processing(Compile*, Node *);
 #endif
 };
 

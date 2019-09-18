@@ -76,7 +76,6 @@ Matcher::Matcher()
   _register_save_policy(register_save_policy),
   _c_reg_save_policy(c_reg_save_policy),
   _require_postselect_cleanup(1),
-  _vec_nodes(0),
   _register_save_type(register_save_type) {
   C->set_matcher(this);
 
@@ -398,8 +397,14 @@ void Matcher::match( ) {
   NOT_DEBUG( old->destruct_contents() );
 
   // ------------------------
-  // Set up save-on-entry registers
-  Fixup_Save_On_Entry( );
+  // Set up save-on-entry registers.
+  // For X86 this will be called at the end of 
+  // post selection stage once generic operands
+  // are resolved. 
+#ifndef X86
+    Fixup_Save_On_Entry( );
+#endif
+
 }
 
 
