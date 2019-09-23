@@ -20171,259 +20171,116 @@ instruct vptest8ieq(rRegI dst, legVecY src1, legVecY src2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct loadmask8b(vecD dst, vecD src) %{
-  predicate(UseSSE >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct loadmaskb(vecG dst, vecG src) %{
+  predicate(((UseSSE >= 2 && (n->as_Vector()->length() == 8 || n->as_Vector()->length() == 16)) ||
+             (UseAVX && n->as_Vector()->length() == 32) ||
+             (UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 64)) &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst);
-  format %{ "pxor  $dst,$dst\n\t"
-           "psubb $dst,$src\t! load mask (8B to 8B)" %}
+  format %{ "vector_loadmask_byte $dst,$src\n\t" %}
   ins_encode %{
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ psubb($dst$$XMMRegister, $src$$XMMRegister);
+    const TypeVect * vt = this->bottom_type()->is_vect();
+    switch (vt->length()) {
+      case 8:
+      case 16: {
+         __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
+         __ psubb($dst$$XMMRegister, $src$$XMMRegister);
+      } break;
+      case 32:
+      case 64: {
+        int vector_len = GetVectorLengthEnc(this);
+        __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+        __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, vector_len);
+      } break;
+    }
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct loadmask16b(vecX dst, vecX src) %{
-  predicate(UseSSE >= 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct loadmasks(vecG dst, vecG src) %{
+  predicate(((UseSSE >= 4 && (n->as_Vector()->length() == 4 || n->as_Vector()->length() == 8)) ||
+             (UseAVX && n->as_Vector()->length() == 16) ||
+             (UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 32)) &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst);
-  format %{ "vpxor  $dst,$dst\n\t"
-           "vpsubb $dst,$src\t! load mask (16B to 16B)" %}
+  format %{ "vector_loadmask_short $dst,$src\n\t" %}
   ins_encode %{
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ psubb($dst$$XMMRegister, $src$$XMMRegister);
+    const TypeVect * vt = this->bottom_type()->is_vect();
+    switch (vt->length()) {
+      case 4:
+      case 8: {
+         __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
+         __ psubb($dst$$XMMRegister, $src$$XMMRegister);
+         __ pmovsxbw($dst$$XMMRegister, $dst$$XMMRegister);
+      } break;
+      case 16:
+      case 32: {
+        int vector_len = GetVectorLengthEnc(this);
+        __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+        __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, vector_len);
+        __ vpmovsxbw($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+      } break;
+    }
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct loadmask32b(vecY dst, vecY src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct loadmaski(vecG dst, vecG src) %{
+  predicate(((UseSSE >= 4 && (n->as_Vector()->length() == 2 || n->as_Vector()->length() == 4)) ||
+             (UseAVX && n->as_Vector()->length() == 8) ||
+             (UseAVX > 2 && n->as_Vector()->length() == 16)) &&
+             (n->bottom_type()->is_vect()->element_basic_type() == T_INT || n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst);
-  format %{ "vpxor  $dst,$dst\n\t"
-           "vpsubb $dst,$src\t! load mask (32B to 32B)" %}
+  format %{ "vector_loadmask_int $dst,$src\n\t" %}
   ins_encode %{
-    int vector_len = 1;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    const TypeVect * vt = this->bottom_type()->is_vect();
+    switch (vt->length()) {
+      case 2:
+      case 4: {
+         __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
+         __ psubb($dst$$XMMRegister, $src$$XMMRegister);
+         __ pmovsxbd($dst$$XMMRegister, $dst$$XMMRegister);
+      } break;
+      case 8:
+      case 16: {
+        int vector_len = GetVectorLengthEnc(this);
+        __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+        __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, vector_len);
+        __ vpmovsxbd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+      } break;
+    }
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct loadmask64b(vecZ dst, vecZ src) %{
-  predicate(UseAVX > 0 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct loadmaskl(vecG dst, vecG src) %{
+  predicate(((UseSSE >= 4 && (n->as_Vector()->length() == 1 || n->as_Vector()->length() == 2)) ||
+             (UseAVX && n->as_Vector()->length() == 4) ||
+             (UseAVX > 2 && n->as_Vector()->length() == 8)) &&
+             (n->bottom_type()->is_vect()->element_basic_type() == T_LONG || n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst);
-  format %{ "vpxor  $dst,$dst\n\t"
-           "vpsubb $dst,$src\t! load mask (64B to 64B)" %}
+  format %{ "vector_loadmask_long $dst,$src\n\t" %}
   ins_encode %{
-    int vector_len = 2;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask4s(vecD dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst);
-  format %{ "pxor  $dst,$dst\n\t"
-           "psubb $dst,$src\n\t"
-           "pmovsxbw $dst\t! load mask (4B to 4S)" %}
-  ins_encode %{
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ psubb($dst$$XMMRegister, $src$$XMMRegister);
-    __ pmovsxbw($dst$$XMMRegister, $dst$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask8s(vecX dst, vecD src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst);
-  format %{ "pxor  $dst,$dst\n\t"
-           "psubb $dst,$src\n\t"
-           "pmovsxbw $dst\t! load mask (8B to 8S)" %}
-  ins_encode %{
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ psubb($dst$$XMMRegister, $src$$XMMRegister);
-    __ pmovsxbw($dst$$XMMRegister, $dst$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask16s(vecY dst, vecX src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst);
-  format %{ "vpxor  $dst,$dst\n\t"
-           "vpsubb $dst,$src\n\t"
-           "vpmovsxbw $dst\t! load mask (16B to 16S)" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, 0);
-    __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, 0);
-    __ vpmovsxbw($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask32s(vecZ dst, vecY src) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst);
-  format %{ "vpxor  $dst,$dst\n\t"
-           "vpsubb $dst,$src\n\t"
-           "vpmovsxbw $dst\t! load mask (32B to 32S)" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, 1);
-    __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, 1);
-    __ vpmovsxbw($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask2i(vecD dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst);
-  format %{ "pxor  $dst,$dst\n\t"
-           "psubb $dst,$src\n\t"
-           "pmovsxbd $dst\t! load mask (2B to 2I)" %}
-  ins_encode %{
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ psubb($dst$$XMMRegister, $src$$XMMRegister);
-    __ pmovsxbd($dst$$XMMRegister, $dst$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask4i(vecX dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 4 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst);
-  format %{ "pxor  $dst,$dst\n\t"
-           "psubb $dst,$src\n\t"
-           "pmovsxbd $dst\t! load mask (4B to 4I)" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ psubb($dst$$XMMRegister, $src$$XMMRegister);
-    __ pmovsxbd($dst$$XMMRegister, $dst$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask8i(vecY dst, vecD src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst);
-  format %{ "vpxor  $dst,$dst\n\t"
-           "vpsubb $dst,$src\n\t"
-           "vpmovsxbd $dst\t! load mask (8B to 8I)" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, 0);
-    __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, 0);
-    __ vpmovsxbd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask16i(vecZ dst, vecX src, vecZ tmp) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst, TEMP tmp);
-  format %{ "vpxor  $dst,$dst\n\t"
-           "vpmovzxbd $tmp,$src\n\t"
-           "vpsubd $dst,$tmp\t! load mask (16B to 16I)" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vpmovzxbd($tmp$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vpsubd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask1l(vecD dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 1 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst);
-  format %{ "pxor  $dst,$dst\n\t"
-           "psubb $dst,$src\n\t"
-           "pmovsxbq $dst\t! load mask (1B to 1L)" %}
-  ins_encode %{
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ psubb($dst$$XMMRegister, $src$$XMMRegister);
-    __ pmovsxbq($dst$$XMMRegister, $dst$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask2l(vecX dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst);
-  format %{ "pxor  $dst,$dst\n\t"
-           "psubb $dst,$src\n\t"
-           "pmovsxbq $dst\t! load mask (2B to 2L)" %}
-  ins_encode %{
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ psubb($dst$$XMMRegister, $src$$XMMRegister);
-    __ pmovsxbq($dst$$XMMRegister, $dst$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask4l(vecY dst, vecS src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst);
-  format %{ "vpxor  $dst,$dst\n\t"
-           "vpsubb $dst,$src\n\t"
-           "vpmovsxbq $dst\t! load mask (4B to 4L)" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, 0);
-    __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, 0);
-    __ vpmovsxbq($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadmask8l(vecZ dst, vecD src, vecZ tmp) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
-  match(Set dst (VectorLoadMask src));
-  effect(TEMP dst, TEMP tmp);
-  format %{ "vpxor  $dst,$dst\n\t"
-           "vpmovzxbq $tmp,$src\n\t"
-           "vpsubq $dst,$tmp\t! load mask (8B to 8L)" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vpmovzxbq($tmp$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    const TypeVect * vt = this->bottom_type()->is_vect();
+    switch (vt->length()) {
+      case 1:
+      case 2: {
+         __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
+         __ psubb($dst$$XMMRegister, $src$$XMMRegister);
+         __ pmovsxbq($dst$$XMMRegister, $dst$$XMMRegister);
+      } break;
+      case 4:
+      case 8: {
+        int vector_len = GetVectorLengthEnc(this);
+        __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+        __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, vector_len);
+        __ vpmovsxbq($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+      } break;
+    }
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20667,8 +20524,8 @@ instruct storemask8l(vecD dst, vecZ src, rRegL scratch) %{
 
 //-------------------------------- LOAD_IOTA_INDICES----------------------------------
 
-instruct loadcon4b(vecS dst, immI0 src, rRegI scratch) %{
-  predicate(UseSSE > 1  && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct loadconb(vecG dst, immI0 src, rRegI scratch) %{
+  predicate(UseSSE > 1  && (n->as_Vector()->length() == 4 || n->as_Vector()->length() == 8) && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadConst src));
   effect(TEMP scratch);
   format %{ "movdqu $dst, CONSTANT_MEMORY\t! load iota indices" %}
@@ -20678,19 +20535,8 @@ instruct loadcon4b(vecS dst, immI0 src, rRegI scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct loadcon8b(vecD dst, immI0 src, rRegI scratch) %{
-  predicate(UseSSE > 1  && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorLoadConst src));
-  effect(TEMP scratch);
-  format %{ "movdqu $dst, CONSTANT_MEMORY\t! load iota indices" %}
-  ins_encode %{
-      __ movdqu($dst$$XMMRegister, ExternalAddress(vector_iota_indices()), $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadcon16b(vecX dst, immI0 src, rRegI scratch) %{
-  predicate(UseAVX > 0  && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct loadconvb(vecG dst, immI0 src, rRegI scratch) %{
+  predicate(UseAVX > 0  && (n->as_Vector()->length() == 16 || n->as_Vector()->length() == 32) && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadConst src));
   effect(TEMP scratch);
   format %{ "vpmovdqu $dst, CONSTANT_MEMORY\t! load iota indices"  %}
@@ -20700,18 +20546,7 @@ instruct loadcon16b(vecX dst, immI0 src, rRegI scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct loadcon32b(vecY dst, immI0 src, rRegI scratch) %{
-  predicate(UseAVX > 0  && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorLoadConst src));
-  effect(TEMP scratch);
-  format %{ "vmovdqu $dst, CONSTANT_MEMORY\t! load iota indices" %}
-  ins_encode %{
-     __ vmovdqu($dst$$XMMRegister, ExternalAddress(vector_iota_indices()), $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadcon64b(vecZ dst, immI0 src, rRegL scratch) %{
+instruct loadcon64b(vecG dst, immI0 src, rRegL scratch) %{
   predicate(UseAVX > 2  && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadConst src));
   effect(TEMP scratch);
@@ -20725,37 +20560,27 @@ instruct loadcon64b(vecZ dst, immI0 src, rRegL scratch) %{
 
 //-------------------------------- LOAD_SHUFFLE ----------------------------------
 
-instruct loadshuffle8b(vecD dst, vecD src) %{
-  predicate(UseSSE > 1  && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct loadshuffleb(vecG dst, vecG src) %{
+  predicate(UseSSE > 1  && (n->as_Vector()->length() == 8 || n->as_Vector()->length() == 16) && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadShuffle src));
-  format %{ "movdqu $dst, $src\t! load shuffle (load 8B for 8BRearrange)" %}
+  format %{ "movdqu $dst, $src\t! load shuffle (load B for BRearrange)" %}
   ins_encode %{
      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct loadshuffle16b(vecX dst, vecX src) %{
-  predicate(UseSSE > 1 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorLoadShuffle src));
-  format %{ "movdqu $dst, $src\t! load shuffle (load 16B for 16BRearrange)" %}
-  ins_encode %{
-    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadshuffle32b(vecY dst, vecY src) %{
+instruct loadshufflevb(vecG dst, vecG src) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadShuffle src));
-  format %{ "vmovdqu $dst, $src\t! load shuffle (load 32B for 32BRearrange)" %}
+  format %{ "vmovdqu $dst, $src\t! load shuffle (load B for BRearrange)" %}
   ins_encode %{
     __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct loadshuffle64b(vecZ dst, vecZ src) %{
+instruct loadshuffle64b(vecG dst, vecG src) %{
   predicate(UseAVX > 2  && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadShuffle src));
   format %{ "vmovdqu $dst, $src\t! load shuffle (load 64B for 64BRearrange)" %}
@@ -20765,19 +20590,11 @@ instruct loadshuffle64b(vecZ dst, vecZ src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct loadshuffle4s(vecD dst, vecS src, vecD tmp, vecD tmp2, rRegI scratch) %{
-  predicate(UseSSE > 3 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct loadshuffles(vecG dst, vecG src, vecX tmp, vecX tmp2, rRegI scratch) %{
+  predicate(UseSSE > 3 && (n->as_Vector()->length() == 4 || n->as_Vector()->length() == 8) && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorLoadShuffle src));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
-   format %{ "pmovsxbw    $tmp, $src \n\t"
-             "movdqu      $tmp2,0x0002000200020002\n\t"
-             "pmullw      $tmp,$tmp2\n\t"
-             "movdqu      $tmp2,$tmp\n\t"
-             "psllw       $tmp2,0x8\n\t"
-             "paddb       $tmp2,$tmp\n\t"
-             "movdqu      $tmp, 0x0100010001000100 \n\t"
-             "paddb       $tmp2,$tmp\n\t"
-             "movdqu      $dst, $tmp2\t! load shuffle (load 4B for 4SRearrange)" %}
+  format %{ "load shuffle (load 4B for 4SRearrange) $dst, $src\t!" %}
   ins_encode %{
     __ pmovsxbw($tmp$$XMMRegister, $src$$XMMRegister);
     __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_short_sizemask()), $scratch$$Register);
@@ -20792,50 +20609,12 @@ instruct loadshuffle4s(vecD dst, vecS src, vecD tmp, vecD tmp2, rRegI scratch) %
   ins_pipe( pipe_slow );
 %}
 
-instruct loadshuffle8s(vecX dst, vecD src, vecX tmp, vecX tmp2, rRegI scratch) %{
-  predicate(UseSSE > 3 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct loadshufflevs(vecG dst, vecG src) %{
+  predicate(UseAVX >= 2 && (n->as_Vector()->length() == 16 || n->as_Vector()->length() == 32) && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorLoadShuffle src));
-  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
-  format %{  "pmovsxbw    $tmp, $src \n\t"
-             "movdqu      $tmp2,0x0002000200020002\n\t"
-             "pmullw      $tmp,$tmp2\n\t"
-             "movdqu      $tmp2,$tmp\n\t"
-             "psllw       $tmp2,0x8\n\t"
-             "paddb       $tmp2,$tmp\n\t"
-             "movdqu      $tmp, 0x0100010001000100 \n\t"
-             "paddb       $tmp2,$tmp\n\t"
-             "movdqu      $dst, $tmp2\t! load shuffle (load 8B for 8SRearrange)" %}
+  format %{ "vpmovsxbw   $dst,$src\t! load shuffle (load B for SRearrange)" %}
   ins_encode %{
-    __ pmovsxbw($tmp$$XMMRegister, $src$$XMMRegister);
-    __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_short_sizemask()), $scratch$$Register);
-    __ pmullw($tmp$$XMMRegister, $tmp2$$XMMRegister);
-    __ movdqu($tmp2$$XMMRegister, $tmp$$XMMRegister);
-    __ psllw($tmp2$$XMMRegister, 0x8);
-    __ paddb($tmp2$$XMMRegister, $tmp$$XMMRegister);
-    __ movdqu($tmp$$XMMRegister, ExternalAddress(vector_short_shufflemask()), $scratch$$Register);
-    __ paddb($tmp2$$XMMRegister, $tmp$$XMMRegister);
-    __ movdqu($dst$$XMMRegister, $tmp2$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadshuffle16s(vecY dst, vecX src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorLoadShuffle src));
-  format %{ "vpmovsxbw   $dst,$src\t! load shuffle (load 16B for 16SRearrange)" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadshuffle32s(vecZ dst, vecY src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorLoadShuffle src));
-  format %{ "vpmovsxbw   $dst,$src\t! load shuffle (load 32B for 32SRearrange)" %}
-  ins_encode %{
-    int vector_len = 2;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
@@ -20847,19 +20626,7 @@ instruct loadshuffle4i(vecX dst, vecS src, vecX tmp, vecX tmp2, rRegI scratch) %
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadShuffle src));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
-  format %{ "pmovsxbd   $tmp, $src \n\t"
-            "movdqu      $tmp2, 0x0000000400000004 \n\t"
-            "pmulld      $tmp2, $tmp \n\t"
-            "movdqu      $tmp,$tmp2\n\t"
-            "pslld       $tmp2,0x8\n\t"
-            "paddb       $tmp2,$tmp\n\t"
-            "pslld       $tmp2,0x8\n\t"
-            "paddb       $tmp2,$tmp\n\t"
-            "pslld       $tmp2,0x8\n\t"
-            "paddb       $tmp2,$tmp\n\t"
-            "movdqu      $tmp, 0x0302010003020100 \n\t"
-            "paddb       $tmp2,$tmp\n\t"
-            "movdqu      $dst, $tmp2\t! load shuffle (load 4B for 4IRearrange)" %}
+  format %{ "load shuffle (load 4B for 4IRearrange) $dst, $src\t!" %}
   ins_encode %{
     __ pmovsxbd($tmp$$XMMRegister, $src$$XMMRegister);
     __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_int_sizemask()), $scratch$$Register);
@@ -20878,27 +20645,14 @@ instruct loadshuffle4i(vecX dst, vecS src, vecX tmp, vecX tmp2, rRegI scratch) %
   ins_pipe( pipe_slow );
 %}
 
-instruct loadshuffle8i(vecY dst, vecD src) %{
-  predicate(UseAVX >= 1 && n->as_Vector()->length() == 8 &&
+instruct loadshufflevi(vecG dst, vecG src) %{
+  predicate(UseAVX >= 1 && (n->as_Vector()->length() == 8 || n->as_Vector()->length() == 16) &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadShuffle src));
-  format %{ "vpmovsxbd $dst, $src\t! load shuffle (load 8B for 8IRearrange)" %}
+  format %{ "vpmovsxbd $dst, $src\t! load shuffle (load B for IRearrange)" %}
   ins_encode %{
-  int vector_len = 1;
-    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct loadshuffle16i(vecZ dst, vecX src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
-  match(Set dst (VectorLoadShuffle src));
-  format %{ "vpmovsxbd $dst, $src\t! load shuffle (load 16B for 16IRearrange)" %}
-  ins_encode %{
-  int vector_len = 2;
+  int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
@@ -20910,15 +20664,7 @@ instruct loadshuffle4l(vecY dst, vecS src, vecY tmp, vecY tmp2, rRegI scratch) %
              n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadShuffle src));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
-   format %{ "vpmovsxbd   $tmp2, $src \n\t"
-             "movdqu     $tmp, 0x0000000200000002 \n\t"
-             "pmulld     $tmp, $tmp2 \n\t"
-             "vpmovsxdq  $tmp2,$tmp\n\t"
-             "vpsllq     $tmp2,0x20\n\t"
-             "vpaddd     $tmp2,$tmp\n\t"
-             "vmovdqu    $tmp, 0x0000000100000000 \n\t"
-             "vpaddd     $tmp2,$tmp\n\t"
-             "vmovdqu    $dst, $tmp2\t! load shuffle (load 4L for 4LRearrange)" %}
+  format %{ "load shuffle (load 4L for 4LRearrange) $dst, $src\t!" %}
   ins_encode %{
     int vector_len = 1;
     __ vpmovsxbd($tmp2$$XMMRegister, $src$$XMMRegister, 0);
@@ -20940,15 +20686,7 @@ instruct loadshuffle8l(vecZ dst, vecD src, vecZ tmp, vecZ tmp2, rRegI scratch) %
              n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadShuffle src));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
-  format %{ "vpmovsxbd  $tmp2, $src \n\t"
-            "movdqu     $tmp, 0x0000000200000002 \n\t"
-            "pmulld     $tmp, $tmp2\n\t"
-            "vpmovsxdq  $tmp2,$tmp\n\t"
-            "vpsllq     $tmp2,0x20\n\t"
-            "vpaddd     $tmp2,$tmp\n\t"
-            "vmovdqu    $tmp, 0x0000000100000000 \n\t"
-            "vpaddd     $tmp2,$tmp\n\t"
-            "vmovdqu    $dst, $tmp2\t! load shuffle (load 8L for 8LRearrange)" %}
+  format %{ "load shuffle (load 8L for 8LRearrange) $dst, $src\t!" %}
   ins_encode %{
   int vector_len = 2;
     __ vpmovsxbd($tmp2$$XMMRegister, $src$$XMMRegister, 1);
