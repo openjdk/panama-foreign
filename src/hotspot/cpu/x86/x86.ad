@@ -1664,22 +1664,28 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           break;
         case Op_VectorCastB2X:
           if (UseAVX <= 0) { ret_value = false; }
-          else if (size_in_bits >= 256 && UseAVX < 2) { ret_value = false; }
+          else if (size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+          else if (size_in_bits > 256  && UseAVX < 3) { ret_value = false; }
           break;
         case Op_VectorCastS2X:
           if (UseAVX <= 0) { ret_value = false; }
           else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+          else if (is_integral_type(bt) && size_in_bits > 256 && UseAVX < 3) { ret_value = false; }
           else if (is_integral_type(bt) && vlen * type2aelembytes(T_SHORT) * BitsPerByte == 256 && UseAVX < 2) { ret_value = false; }
+          else if (is_integral_type(bt) && vlen * type2aelembytes(T_SHORT) * BitsPerByte > 256 && UseAVX < 3) { ret_value = false; }
           break;
         case Op_VectorCastI2X:
           if (UseAVX <= 0) { ret_value = false; }
-          else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+          else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2 && bt != T_DOUBLE && bt != T_FLOAT) { ret_value = false; }
+          else if (is_integral_type(bt) && size_in_bits > 256 && UseAVX < 3) { ret_value = false; }
           else if (is_integral_type(bt) && vlen * type2aelembytes(T_INT) * BitsPerByte == 256 && UseAVX < 2) { ret_value = false; }
+          else if (is_integral_type(bt) && vlen * type2aelembytes(T_INT) * BitsPerByte > 256 && UseAVX < 3) { ret_value = false; }
           break;
         case Op_VectorCastL2X:
           if (UseAVX <= 0) { ret_value = false; }
           else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
           else if (is_integral_type(bt) && vlen * type2aelembytes(T_LONG) * BitsPerByte == 256 && UseAVX < 2) { ret_value = false; }
+          else if (is_integral_type(bt) && vlen * type2aelembytes(T_LONG) * BitsPerByte > 256 && UseAVX < 3) { ret_value = false; }
           else if (!is_integral_type(bt) && !VM_Version::supports_avx512dq()) { ret_value = false; }
           break;
         case Op_VectorCastF2X:
@@ -1687,12 +1693,14 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           // implementable with vectors.
           if (UseAVX <= 0) { ret_value = false; }
           else if (bt != T_DOUBLE) { ret_value = false; } // Implementation limitation
+          else if (size_in_bits > 256  && UseAVX < 3) { ret_value = false; }
           break;
         case Op_VectorCastD2X:
           // Casts from FP to integral types require special fixup logic not easily
           // implementable with vectors.
           if (UseAVX <= 0) { ret_value = false; }
           else if (bt != T_FLOAT) { ret_value = false; } // Implementation limitation
+          else if (vlen * type2aelembytes(T_DOUBLE) * BitsPerByte > 256 && UseAVX < 3) { ret_value = false; }
           break;
         case Op_VectorReinterpret:
           if (size_in_bits >= 256 && UseAVX < 2) { ret_value = false; }
@@ -17839,197 +17847,87 @@ instruct vxor64B_mem(vecZ dst, vecZ src, memory mem) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt4Bto4S_reg(vecD dst, vecS src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+
+instruct vcvtBtoS_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 4 && n->as_Vector()->length() <= 32 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbw   $dst,$src\t! convert 4B to 4S vector" %}
+  format %{ "vpmovsxbw   $dst,$src\t! convert B to S vector" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt8Bto8S_reg(vecX dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct vcvtBtoI_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 4 && n->as_Vector()->length() <= 16 && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbw   $dst,$src\t! convert 8B to 8S vector" %}
+  format %{ "vpmovsxbd   $dst,$src\t! convert B to I vector" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt16Bto16S_reg(vecY dst, vecX src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbw   $dst,$src\t! convert 16B to 16S vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt32Bto32S_reg(vecZ dst, vecY src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbw   $dst,$src\t! convert 32B to 32S vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Bto4I_reg(vecX dst, vecS src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbd   $dst,$src\t! convert 4B to 4I vector" %}
-  ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt8Bto8I_reg(vecY dst, vecD src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+instruct vcvtBtoL_reg(vecG dst, vecG src) %{
+  predicate((n->as_Vector()->length() == 4 || n->as_Vector()->length() == 8) && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbd   $dst,$src\t! convert 8B to 8I vector" %}
+  format %{ "vpmovsxbq   $dst,$src\t! convert B to L vector" %}
   ins_encode %{
-    int vector_len = 1;
-    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt16Bto16I_reg(vecZ dst, vecX src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbd   $dst,$src\t! convert 16B to 16I vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Bto4L_reg(vecY dst, vecS src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbq   $dst,$src\t! convert 4B to 4L vector" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxbq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt8Bto8L_reg(vecZ dst, vecD src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbq   $dst,$src\t! convert 8B to 8L vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpmovsxbq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Bto4F_reg(vecX dst, vecS src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+instruct vcvtBtoF_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 4 && n->as_Vector()->length() <= 16 && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorCastB2X src));
   format %{ "vpmovsxbd   $dst,$src\n\t"
-            "vcvtdq2ps   $dst,$dst\t! convert 4B to 4F vector" %}
+            "vcvtdq2ps   $dst,$dst\t! convert B to F vector" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
     __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt8Bto8F_reg(vecY dst, vecD src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+instruct vcvtBtoD_reg(vecG dst, vecG src) %{
+  predicate((n->as_Vector()->length() == 4 || n->as_Vector()->length() == 8) && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorCastB2X src));
   format %{ "vpmovsxbd   $dst,$src\n\t"
-            "vcvtdq2ps   $dst,$dst\t! convert 8B to 8F vector" %}
+            "vcvtdq2pd   $dst,$dst\t! convert B to D vector" %}
   ins_encode %{
-    int vector_len = 1;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt16Bto16F_reg(vecZ dst, vecX src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbd   $dst,$src\n\t"
-            "vcvtdq2ps   $dst,$dst\t! convert 16B to 16F vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Bto4D_reg(vecY dst, vecS src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbd   $dst,$src\n\t"
-            "vcvtdq2pd   $dst,$dst\t! convert 4B to 4D vector" %}
-  ins_encode %{
-    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, 0);
-    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, 1);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Bto8D_reg(vecZ dst, vecD src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbd   $dst,$src\n\t"
-            "vcvtdq2pd   $dst,$dst\t! convert 8B to 8D vector" %}
-  ins_encode %{
-    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, 1);
-    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, 2);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Sto4B_reg(vecS dst, vecD src, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct vcvtStoB_reg(vecG dst, vecG src, rRegL scratch) %{
+  predicate((n->as_Vector()->length() == 4 || n->as_Vector()->length() == 8) && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   effect(TEMP scratch);
   match(Set dst (VectorCastS2X src));
   format %{ "vpand      $dst,$src,[0x00FF00FF00FF00FF]\n\t"
-            "vpackuswb  $dst,$dst\t! convert 4S to 4B vector" %}
+            "vpackuswb  $dst,$dst\t! convert S to B vector" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()), vector_len, $scratch$$Register);
     __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt8Sto8B_reg(vecD dst, vecX src, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  effect(TEMP scratch);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpand      $dst,$src,[0x00FF00FF00FF00FF]\n\t"
-            "vpackuswb  $dst,$dst\t! convert 8S to 8B vector" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()), vector_len, $scratch$$Register);
-    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt16Sto16B_reg(vecX dst, vecY src, vecY tmp, rRegL scratch) %{
+instruct vcvt16Sto16B_reg(vecG dst, vecG src, vecY tmp, rRegL scratch) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   effect(TEMP scratch, TEMP tmp);
   match(Set dst (VectorCastS2X src));
@@ -18045,8 +17943,8 @@ instruct vcvt16Sto16B_reg(vecX dst, vecY src, vecY tmp, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt32Sto32B_reg(vecY dst, vecZ src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct vcvt32Sto32B_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorCastS2X src));
     format %{ "evpmovwb   $dst,$src\t! convert 32S to 32B vector" %}
   ins_encode %{
@@ -18056,176 +17954,61 @@ instruct vcvt32Sto32B_reg(vecY dst, vecZ src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt2Sto2I_reg(vecD dst, vecS src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwd   $dst,$src\t! convert 2S to 2I vector" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
 
-instruct vcvt4Sto4I_reg(vecX dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwd   $dst,$src\t! convert 4S to 4I vector" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Sto8I_reg(vecY dst, vecX src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwd   $dst,$src\t! convert 8S to 8I vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt16Sto16I_reg(vecZ dst, vecY src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+instruct vcvtStoI_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 16 && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorCastS2X src));
   format %{ "vpmovsxwd   $dst,$src\t! convert 16S to 16I vector" %}
   ins_encode %{
-    int vector_len = 2;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt2Sto2L_reg(vecX dst, vecS src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+instruct vcvtStoL_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwq   $dst,$src\t! convert 2S to 2L vector" %}
+  format %{ "vpmovsxwq   $dst,$src\t! convert S to L vector" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxwq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt4Sto4L_reg(vecY dst, vecD src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwq   $dst,$src\t! convert 4S to 4L vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpmovsxwq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Sto8L_reg(vecZ dst, vecX src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwq   $dst,$src\t! convert 8S to 8L vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpmovsxwq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt2Sto2F_reg(vecD dst, vecS src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+instruct vcvtStoF_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 16 && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorCastS2X src));
   format %{ "vpmovsxwd   $dst,$src\n\t"
-            "vcvtdq2ps   $dst,$dst\t! convert 2S to 2F vector" %}
+            "vcvtdq2ps   $dst,$dst\t! convert S to F vector" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
     __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt4Sto4F_reg(vecX dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+instruct vcvtStoD_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorCastS2X src));
   format %{ "vpmovsxwd   $dst,$src\n\t"
-            "vcvtdq2ps   $dst,$dst\t! convert 4S to 4F vector" %}
+            "vcvtdq2pd   $dst,$dst\t! convert S to D vector" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Sto8F_reg(vecY dst, vecX src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwd   $dst,$src\n\t"
-            "vcvtdq2ps   $dst,$dst\t! convert 8S to 8F vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt16Sto16F_reg(vecZ dst, vecY src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwd   $dst,$src\n\t"
-            "vcvtdq2ps   $dst,$dst\t! convert 16S to 16F vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt2Sto2D_reg(vecX dst, vecS src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwd   $dst,$src\n\t"
-            "vcvtdq2pd   $dst,$dst\t! convert 2S to 2D vector" %}
-  ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
     __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt4Sto4D_reg(vecY dst, vecD src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwd   $dst,$src\n\t"
-            "vcvtdq2pd   $dst,$dst\t! convert 4S to 4D vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Sto8D_reg(vecZ dst, vecX src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastS2X src));
-  format %{ "vpmovsxwd   $dst,$src\n\t"
-            "vcvtdq2pd   $dst,$dst\t! convert 8S to 8D vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Ito4B_reg(vecS dst, vecX src, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct vcvt4Ito4B_reg(vecG dst, vecG src, rRegL scratch) %{
+  predicate(n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   effect(TEMP scratch);
   match(Set dst (VectorCastI2X src));
   format %{ "vpand      $dst,$src,[0x000000FF000000FF]\n\t"
@@ -18240,8 +18023,8 @@ instruct vcvt4Ito4B_reg(vecS dst, vecX src, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt8Ito8B_reg(vecD dst, vecY src, vecY tmp, rRegL scratch) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct vcvt8Ito8B_reg(vecG dst, vecG src, vecY tmp, rRegL scratch) %{
+  predicate(n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   effect(TEMP scratch, TEMP tmp);
   match(Set dst (VectorCastI2X src));
   format %{ "vpand      $dst,$src,[0x000000FF000000FF]\n\t"
@@ -18258,8 +18041,8 @@ instruct vcvt8Ito8B_reg(vecD dst, vecY src, vecY tmp, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt16Ito16B_reg(vecX dst, vecZ src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct vcvt16Ito16B_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorCastI2X src));
     format %{ "evpmovdb   $dst,$src\t! convert 16I to 16B vector" %}
   ins_encode %{
@@ -18269,36 +18052,23 @@ instruct vcvt16Ito16B_reg(vecX dst, vecZ src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt2Ito2S_reg(vecS dst, vecD src, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct vcvtItoS_reg(vecG dst, vecG src, rRegL scratch) %{
+  predicate((n->as_Vector()->length() == 2 || n->as_Vector()->length() == 4) &&
+             n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   effect(TEMP scratch);
   match(Set dst (VectorCastI2X src));
   format %{ "vpand      $dst,$src,[0x0000FFFF0000FFFF]\n\t"
-            "vpackusdw  $dst,$dst\t! convert 2I to 2S vector" %}
+            "vpackusdw  $dst,$dst\t! convert I to S vector" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_int_to_short_mask()), vector_len, $scratch$$Register);
     __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt4Ito4S_reg(vecD dst, vecX src, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  effect(TEMP scratch);
-  match(Set dst (VectorCastI2X src));
-  format %{ "vpand      $dst,$src,[0x0000FFFF0000FFFF]\n\t"
-            "vpackusdw  $dst,$dst\t! convert 4I to 4S vector" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_int_to_short_mask()), vector_len, $scratch$$Register);
-    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Ito8S_reg(vecX dst, vecY src, vecY tmp, rRegL scratch) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct vcvt8Ito8S_reg(vecG dst, vecG src, vecY tmp, rRegL scratch) %{
+  predicate(n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   effect(TEMP scratch, TEMP tmp);
   match(Set dst (VectorCastI2X src));
   format %{ "vpand      $dst,$src,[0x0000FFFF0000FFFF]\n\t"
@@ -18313,8 +18083,8 @@ instruct vcvt8Ito8S_reg(vecX dst, vecY src, vecY tmp, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt16Ito16S_reg(vecY dst, vecZ src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct vcvt16Ito16S_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorCastI2X src));
     format %{ "evpmovdw   $dst,$src\t! convert 16I to 16S vector" %}
   ins_encode %{
@@ -18324,118 +18094,44 @@ instruct vcvt16Ito16S_reg(vecY dst, vecZ src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt2Ito2L_reg(vecX dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+instruct vcvtItoL_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorCastI2X src));
-  format %{ "vpmovsxdq   $dst,$src\t! convert 2I to 2L vector" %}
+  format %{ "vpmovsxdq   $dst,$src\t! convert I to L vector" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmovsxdq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt4Ito4L_reg(vecY dst, vecX src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+instruct vcvtItoF_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 16 && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorCastI2X src));
-  format %{ "vpmovsxdq   $dst,$src\t! convert 4I to 4L vector" %}
+  format %{ "vcvtdq2ps   $dst,$src\t! convert I to F vector" %}
   ins_encode %{
-    int vector_len = 1;
-    __ vpmovsxdq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Ito8L_reg(vecZ dst, vecY src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorCastI2X src));
-  format %{ "vpmovsxdq   $dst,$src\t! convert 8I to 8L vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpmovsxdq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt2Ito2F_reg(vecD dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorCastI2X src));
-  format %{ "vcvtdq2ps   $dst,$src\t! convert 2I to 2F vector" %}
-  ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vcvtdq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt4Ito4F_reg(vecX dst, vecX src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+instruct vcvtItoD_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorCastI2X src));
-  format %{ "vcvtdq2ps   $dst,$src\t! convert 4I to 4F vector" %}
+  format %{ "vcvtdq2pd   $dst,$src\t! convert I to D vector" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vcvtdq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Ito8F_reg(vecY dst, vecY src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorCastI2X src));
-  format %{ "vcvtdq2ps   $dst,$src\t! convert 8I to 8F vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vcvtdq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt16Ito16F_reg(vecZ dst, vecZ src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorCastI2X src));
-  format %{ "vcvtdq2ps   $dst,$src\t! convert 16I to 16F vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vcvtdq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt2Ito2D_reg(vecX dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastI2X src));
-  format %{ "vcvtdq2pd   $dst,$src\t! convert 2I to 2D vector" %}
-  ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vcvtdq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt4Ito4D_reg(vecY dst, vecX src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastI2X src));
-  format %{ "vcvtdq2pd   $dst,$src\t! convert 4I to 4D vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vcvtdq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Ito8D_reg(vecZ dst, vecY src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastI2X src));
-  format %{ "vcvtdq2pd   $dst,$src\t! convert 8I to 8D vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vcvtdq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Lto4B_reg(vecS dst, vecY src, rRegL scratch) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct vcvt4Lto4B_reg(vecG dst, vecG src, rRegL scratch) %{
+  predicate(n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorCastL2X src));
   effect(TEMP scratch);
   format %{ "vpermilps  $dst,$src,8\n\t"
@@ -18456,8 +18152,8 @@ instruct vcvt4Lto4B_reg(vecS dst, vecY src, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt8Lto8B_reg(vecD dst, vecZ src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct vcvt8Lto8B_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorCastL2X src));
     format %{ "evpmovqb   $dst,$src\t! convert 8L to 8B vector" %}
   ins_encode %{
@@ -18467,8 +18163,8 @@ instruct vcvt8Lto8B_reg(vecD dst, vecZ src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt2Lto2S_reg(vecS dst, vecX src, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct vcvt2Lto2S_reg(vecG dst, vecG src, rRegL scratch) %{
+  predicate(n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorCastL2X src));
   effect(TEMP scratch);
   format %{ "vpshufd    $dst,$src,8\n\t"
@@ -18483,8 +18179,8 @@ instruct vcvt2Lto2S_reg(vecS dst, vecX src, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt4Lto4S_reg(vecD dst, vecY src, rRegL scratch) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct vcvt4Lto4S_reg(vecG dst, vecG src, rRegL scratch) %{
+  predicate(n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorCastL2X src));
   effect(TEMP scratch);
   format %{ "vpermilps  $dst,$src,8\n\t"
@@ -18503,8 +18199,8 @@ instruct vcvt4Lto4S_reg(vecD dst, vecY src, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt8Lto8S_reg(vecX dst, vecZ src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct vcvt8Lto8S_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorCastL2X src));
     format %{ "evpmovqw   $dst,$src\t! convert 8L to 8S vector" %}
   ins_encode %{
@@ -18514,7 +18210,7 @@ instruct vcvt8Lto8S_reg(vecX dst, vecZ src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt1Lto1I_reg(vecS dst, vecD src) %{
+instruct vcvt1Lto1I_reg(vecG dst, vecG src) %{
   predicate(n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorCastL2X src));
   format %{ "movdqu   $dst,$src\t! convert 1L to 1I vector" %}
@@ -18527,7 +18223,7 @@ instruct vcvt1Lto1I_reg(vecS dst, vecD src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt2Lto2I_reg(vecD dst, vecX src) %{
+instruct vcvt2Lto2I_reg(vecG dst, vecG src) %{
   predicate(UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorCastL2X src));
   format %{ "pshufd   $dst,$src,8\t! convert 2L to 2I vector" %}
@@ -18537,175 +18233,73 @@ instruct vcvt2Lto2I_reg(vecD dst, vecX src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt2Lto2I_reg_avx(vecD dst, vecX src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+instruct vcvtLtoI_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8  &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorCastL2X src));
-  format %{ "vpshufd   $dst,$src,8\t! convert 2L to 2I vector" %}
+  format %{ "vector_cvtLtoI_reg $dst,$src\t! convert L to I vector" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpshufd($dst$$XMMRegister, $src$$XMMRegister, 8, vector_len);
+   int vector_len = GetVectorLengthEnc(this);
+   const TypeVect * vt = this->bottom_type()->is_vect();
+   switch(vt->length()) {
+     default:
+       assert(0, "Incorrect vector length");
+     case 2:
+       __ vpshufd($dst$$XMMRegister, $src$$XMMRegister, 8, vector_len);
+       break;
+     case 4: {
+       __ vpermilps($dst$$XMMRegister, $src$$XMMRegister, 8, vector_len);
+       __ vpermpd($dst$$XMMRegister, $dst$$XMMRegister, 8, vector_len);
+     } break;
+     case 8:
+       __ evpmovqd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+       break;
+    }
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt4Lto4I_reg(vecX dst, vecY src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorCastL2X src));
-  format %{ "vpermilps  $dst,$src,8\n\t"
-          "vpermpd  $dst,$dst,8\t! convert 4L to 4I vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpermilps($dst$$XMMRegister, $src$$XMMRegister, 8, vector_len);
-    __ vpermpd($dst$$XMMRegister, $dst$$XMMRegister, 8, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Lto8I_reg(vecY dst, vecZ src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorCastL2X src));
-    format %{ "evpmovqd   $dst,$src\t! convert 8L to 8I vector" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ evpmovqd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt2Lto2F_reg(vecD dst, vecX src) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorCastL2X src));
-  format %{ "vcvtqq2ps   $dst,$src\t! convert 2L to 2F vector" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ evcvtqq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Lto4F_reg(vecX dst, vecY src) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorCastL2X src));
-  format %{ "vcvtqq2ps   $dst,$src\t! convert 4L to 4F vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ evcvtqq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Lto8F_reg(vecY dst, vecZ src) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+instruct vcvtLtoF_reg(vecG dst, vecG src) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() &&
+            n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorCastL2X src));
   format %{ "vcvtqq2ps   $dst,$src\t! convert 8L to 8F vector" %}
   ins_encode %{
-    int vector_len = 2;
+    int vector_len = GetVectorLengthEnc(this);
     __ evcvtqq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt1Lto1D_reg(vecD dst, vecD src) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastL2X src));
-  format %{ "vcvtqq2pd   $dst,$src\t! convert 1L to 1D vector" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ evcvtqq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt2Lto2D_reg(vecX dst, vecX src) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastL2X src));
-  format %{ "vcvtqq2pd   $dst,$src\t! convert 2L to 2D vector" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ evcvtqq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Lto4D_reg(vecY dst, vecY src) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastL2X src));
-  format %{ "vcvtqq2pd   $dst,$src\t! convert 4L to 4D vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ evcvtqq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Lto8D_reg(vecZ dst, vecZ src) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+instruct vcvtLtoD_reg(vecG dst, vecG src) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && 
+            n->as_Vector()->length() >= 1 && n->as_Vector()->length() <= 8 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorCastL2X src));
   format %{ "vcvtqq2pd   $dst,$src\t! convert 8L to 8D vector" %}
   ins_encode %{
-    int vector_len = 2;
+    int vector_len = GetVectorLengthEnc(this);
     __ evcvtqq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt2Fto2D_reg(vecX dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastF2X src));
-  format %{ "vcvtps2pd   $dst,$src\t! convert 2F to 2D vector" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vcvtps2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Fto4D_reg(vecY dst, vecX src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorCastF2X src));
-  format %{ "vcvtps2pd   $dst,$src\t! convert 4F to 4D vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vcvtps2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Fto8D_reg(vecZ dst, vecY src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+instruct vcvtFtoD_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorCastF2X src));
   format %{ "vcvtps2pd   $dst,$src\t! convert 8F to 8D vector" %}
   ins_encode %{
-    int vector_len = 2;
+    int vector_len = GetVectorLengthEnc(this);
     __ vcvtps2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt2Dto2F_reg(vecD dst, vecX src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorCastD2X src));
-  format %{ "vcvtpd2ps   $dst,$src\t! convert 2D to 2F vector" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vcvtpd2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt4Dto4F_reg(vecX dst, vecY src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorCastD2X src));
-  format %{ "vcvtpd2ps   $dst,$src\t! convert 4D to 4F vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vcvtpd2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcvt8Dto8F_reg(vecY dst, vecZ src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+instruct vcvtDtoF_reg(vecG dst, vecG src) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8  && 
+            n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorCastD2X src));
   format %{ "vcvtpd2ps   $dst,$src\t! convert 8D to 8F vector" %}
   ins_encode %{
@@ -18715,46 +18309,20 @@ instruct vcvt8Dto8F_reg(vecY dst, vecZ src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC2F(legVecD dst, legVecD src1, legVecD src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 &&
+instruct vcmpCCF(legVecG dst, legVecG src1, legVecG src2, immI8 cond) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCps  $dst,$src1,$src2\t! cmpCC packed2F" %}
+  format %{ "vcmpCCps  $dst,$src1,$src2\t! cmpCC packedF" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
     __ vcmpps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC4F(legVecX dst, legVecX src1, legVecX src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCps  $dst,$src1,$src2\t! cmpCC packed4F" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
-    __ vcmpps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC8F(legVecY dst, legVecY src1, legVecY src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCps  $dst,$src1,$src2\t! cmpCC packed8F" %}
-  ins_encode %{
-    int vector_len = 1;
-    Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
-    __ vcmpps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC16F(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
+instruct vcmpCC16F(vecG dst, vecG src1, vecG src2, immI8 cond, rRegL scratch) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
@@ -18772,46 +18340,20 @@ instruct vcmpCC16F(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC1D(legVecD dst, legVecD src1, legVecD src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 &&
+instruct vcmpCCD(legVecG dst, legVecG src1, legVecG src2, immI8 cond) %{
+  predicate(n->as_Vector()->length() >= 1 && n->as_Vector()->length() <= 4 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCpd  $dst,$src1,$src2\t! cmpCC packed1D" %}
+  format %{ "vcmpCCpd  $dst,$src1,$src2\t! cmpCC packedD" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
     __ vcmppd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC2D(legVecX dst, legVecX src1, legVecX src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCpd  $dst,$src1,$src2\t! cmpCC packed2D" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
-    __ vcmppd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC4D(legVecY dst, legVecY src1, legVecY src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCpd  $dst,$src1,$src2\t! cmpCC packed4D" %}
-  ins_encode %{
-    int vector_len = 1;
-    Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
-    __ vcmppd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC8D(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
+instruct vcmpCC8D(vecG dst, vecG src1, vecG src2, immI8 cond, rRegL scratch) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 8 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
@@ -18829,49 +18371,21 @@ instruct vcmpCC8D(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC2I(legVecD dst, legVecD src1, legVecD src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 &&
+instruct vcmpCCI(legVecG dst, legVecG src1, legVecG src2, immI8 cond, rRegL scratch) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
   effect(TEMP scratch);
-  format %{ "vpcmpCCd  $dst,$src1,$src2\n\t! cmpCC packed2I" %}
+  format %{ "vpcmpCCd  $dst,$src1,$src2\n\t! cmpCC packedI" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
     __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::D, vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC4I(legVecX dst, legVecX src1, legVecX src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCd  $dst,$src1,$src2\n\t! cmpCC packed4I" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::D, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC8I(legVecY dst, legVecY src1, legVecY src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCd  $dst,$src1,$src2\n\t! cmpCC packed8I" %}
-  ins_encode %{
-    int vector_len = 1;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::D, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC16I(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
+instruct vcmpCC16I(vecG dst, vecG src1, vecG src2, immI8 cond, rRegL scratch) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
@@ -18889,49 +18403,22 @@ instruct vcmpCC16I(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC8B(legVecD dst, legVecD src1, legVecD src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 &&
+
+instruct vcmpCCB(legVecG dst, legVecG src1, legVecG src2, immI8 cond, rRegL scratch) %{
+  predicate(n->as_Vector()->length() >= 8 && n->as_Vector()->length() <= 32 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
   effect(TEMP scratch);
-  format %{ "vpcmpCCb  $dst,$src1,$src2\n\t! cmpCC packed8B" %}
+  format %{ "vpcmpCCb  $dst,$src1,$src2\n\t! cmpCC packedB" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
     __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::B, vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC16B(legVecX dst, legVecX src1, legVecX src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 16 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCb  $dst,$src1,$src2\n\t! cmpCC packed16B" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::B, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC32B(legVecY dst, legVecY src1, legVecY src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 32 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCb  $dst,$src1,$src2\n\t! cmpCC packed32B" %}
-  ins_encode %{
-    int vector_len = 1;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::B, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC64B(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
+instruct vcmpCC64B(vecG dst, vecG src1, vecG src2, immI8 cond, rRegL scratch) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 64 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
@@ -18949,49 +18436,21 @@ instruct vcmpCC64B(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC4S(legVecD dst, legVecD src1, legVecD src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
+instruct vcmpCCS(legVecG dst, legVecG src1, legVecG src2, immI8 cond, rRegL scratch) %{
+  predicate(n->as_Vector()->length() >= 4 && n->as_Vector()->length() <= 16 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
   effect(TEMP scratch);
-  format %{ "vpcmpCCw  $dst,$src1,$src2\n\t! cmpCC packed4S" %}
+  format %{ "vpcmpCCw  $dst,$src1,$src2\n\t! cmpCC packedS" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
     __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::W, vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC8S(legVecX dst, legVecX src1, legVecX src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCw  $dst,$src1,$src2\n\t! cmpCC packed8S" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::W, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC16S(legVecY dst, legVecY src1, legVecY src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 16 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCw  $dst,$src1,$src2\n\t! cmpCC packed16S" %}
-  ins_encode %{
-    int vector_len = 1;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::W, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC32S(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
+instruct vcmpCC32S(vecG dst, vecG src1, vecG src2, immI8 cond, rRegL scratch) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 32 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
@@ -19009,49 +18468,21 @@ instruct vcmpCC32S(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC1L(legVecD dst, legVecD src1, legVecD src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 &&
+instruct vcmpCCL(legVecG dst, legVecG src1, legVecG src2, immI8 cond, rRegL scratch) %{
+  predicate(n->as_Vector()->length() >= 1 && n->as_Vector()->length() <= 4 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
   effect(TEMP scratch);
-  format %{ "vpcmpCCq  $dst,$src1,$src2\n\t! cmpCC packed1L" %}
+  format %{ "vpcmpCCq  $dst,$src1,$src2\n\t! cmpCC packedL" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
     __ vpcmpCCq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC2L(vecX dst, vecX src1, vecX src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCq  $dst,$src1,$src2\n\t! cmpCC packed2L" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC4L(legVecY dst, legVecY src1, legVecY src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCq  $dst,$src1,$src2\n\t! cmpCC packed4L" %}
-  ins_encode %{
-    int vector_len = 1;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC8L(vecZ dst, vecZ src1, vecZ src2, immI8 cond, rRegL scratch) %{
+instruct vcmpCC8L(vecG dst, vecG src1, vecG src2, immI8 cond, rRegL scratch) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 8 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
