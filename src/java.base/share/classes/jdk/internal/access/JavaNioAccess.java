@@ -55,4 +55,8 @@ public interface JavaNioAccess {
      * {@code bb} is direct.
      */
     ByteBuffer newScopedByteBuffer(MemorySegmentProxy bufferScope, ByteBuffer bb);
+
+    Object getBufferBase(ByteBuffer bb);
+
+    long getBufferAddress(ByteBuffer bb);
 }

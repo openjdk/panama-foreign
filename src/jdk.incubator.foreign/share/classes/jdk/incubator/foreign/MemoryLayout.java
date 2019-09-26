@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Stream;
 
 /**
  * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
@@ -344,7 +345,7 @@ E * (S + I * F)
      */
     static MemoryLayout ofPaddingBits(long size) {
         AbstractLayout.checkSize(size);
-        return new PaddingLayout(size, OptionalLong.empty(), Optional.empty());
+        return new PaddingLayout(size);
     }
 
     /**
@@ -356,7 +357,7 @@ E * (S + I * F)
      */
     static ValueLayout ofValueBits(long size, ByteOrder order) throws IllegalArgumentException {
         AbstractLayout.checkSize(size);
-        return new ValueLayout(order, size, OptionalLong.empty(), Optional.empty());
+        return new ValueLayout(order, size);
     }
 
     /**
@@ -368,7 +369,8 @@ E * (S + I * F)
      */
     static SequenceLayout ofSequence(long elementCount, MemoryLayout elementLayout) throws IllegalArgumentException {
         AbstractLayout.checkSize(elementCount, true);
-        return new SequenceLayout(OptionalLong.of(elementCount), elementLayout, OptionalLong.empty(), Optional.empty());
+        OptionalLong size = OptionalLong.of(elementCount);
+        return new SequenceLayout(size, elementLayout);
     }
 
     /**
@@ -377,7 +379,7 @@ E * (S + I * F)
      * @return the new sequence layout with given element layout.
      */
     static SequenceLayout ofSequence(MemoryLayout elementLayout) {
-        return new SequenceLayout(OptionalLong.empty(), elementLayout, OptionalLong.empty(), Optional.empty());
+        return new SequenceLayout(OptionalLong.empty(), elementLayout);
     }
 
     /**
@@ -386,7 +388,7 @@ E * (S + I * F)
      * @return a new <em>struct</em> group layout with given member layouts.
      */
     static GroupLayout ofStruct(MemoryLayout... elements) {
-        return new GroupLayout(GroupLayout.Kind.STRUCT, List.of(elements), OptionalLong.empty(), Optional.empty());
+        return new GroupLayout(GroupLayout.Kind.STRUCT, List.of(elements));
     }
 
     /**
@@ -395,6 +397,6 @@ E * (S + I * F)
      * @return a new <em>union</em> group layout with given member layouts.
      */
     static GroupLayout ofUnion(MemoryLayout... elements) {
-        return new GroupLayout(GroupLayout.Kind.UNION, List.of(elements), OptionalLong.empty(), Optional.empty());
+        return new GroupLayout(GroupLayout.Kind.UNION, List.of(elements));
     }
 }

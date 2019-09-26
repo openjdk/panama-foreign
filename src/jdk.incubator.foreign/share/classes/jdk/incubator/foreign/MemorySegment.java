@@ -55,7 +55,7 @@ import java.io.IOException;
  * in this way are called <em>native memory segments</em>.
  * <p>
  * It is also possible to obtain a memory segment backed by an existing heap-allocated Java array,
- * using the corresponding factory method {@link MemorySegment#ofArray(Object)}. Memory segments obtained
+ * using one of the provided factory methods (e.g. {@link MemorySegment#ofArray(int[])}). Memory segments obtained
  * in this way are called <em>array memory segments</em>.
  * <p>
  * It is possible to obtain a memory segment backed by an existing Java byte buffer (see {@link ByteBuffer}),
@@ -217,29 +217,97 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new buffer memory segment.
      */
     static MemorySegment ofByteBuffer(ByteBuffer bb) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkPermission(new RuntimePermission("java.foreign.Pointer.fromByteBuffer"));
-        }
         return BufferScope.of(bb);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated primitive array.
+     * Creates a new array memory segment that models the memory associated with a given heap-allocated byte array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
      * for the life-time of the segment.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
-     * @throws IllegalArgumentException if the backing array is not a primitive type array, or if the number of dimension in
-     * the array is greater than 1.
      */
-    static MemorySegment ofArray(Object arr) throws IllegalArgumentException {
-        if (!arr.getClass().isArray() ||
-                !arr.getClass().componentType().isPrimitive()) {
-            throw new IllegalArgumentException("Not a primitive array");
-        }
+    static MemorySegment ofArray(byte[] arr) throws IllegalArgumentException {
+        return HeapScope.ofArray(arr);
+    }
+
+    /**
+     * Creates a new array memory segment that models the memory associated with a given heap-allocated char array.
+     * <p>
+     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
+     * for the life-time of the segment.
+     *
+     * @param arr the primitive array backing the array memory segment.
+     * @return a new array memory segment.
+     */
+    static MemorySegment ofArray(char[] arr) throws IllegalArgumentException {
+        return HeapScope.ofArray(arr);
+    }
+
+    /**
+     * Creates a new array memory segment that models the memory associated with a given heap-allocated short array.
+     * <p>
+     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
+     * for the life-time of the segment.
+     *
+     * @param arr the primitive array backing the array memory segment.
+     * @return a new array memory segment.
+     */
+    static MemorySegment ofArray(short[] arr) throws IllegalArgumentException {
+        return HeapScope.ofArray(arr);
+    }
+
+    /**
+     * Creates a new array memory segment that models the memory associated with a given heap-allocated int array.
+     * <p>
+     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
+     * for the life-time of the segment.
+     *
+     * @param arr the primitive array backing the array memory segment.
+     * @return a new array memory segment.
+     */
+    static MemorySegment ofArray(int[] arr) throws IllegalArgumentException {
+        return HeapScope.ofArray(arr);
+    }
+
+    /**
+     * Creates a new array memory segment that models the memory associated with a given heap-allocated float array.
+     * <p>
+     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
+     * for the life-time of the segment.
+     *
+     * @param arr the primitive array backing the array memory segment.
+     * @return a new array memory segment.
+     */
+    static MemorySegment ofArray(float[] arr) throws IllegalArgumentException {
+        return HeapScope.ofArray(arr);
+    }
+    
+    /**
+     * Creates a new array memory segment that models the memory associated with a given heap-allocated long array.
+     * <p>
+     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
+     * for the life-time of the segment.
+     *
+     * @param arr the primitive array backing the array memory segment.
+     * @return a new array memory segment.
+     */
+    static MemorySegment ofArray(long[] arr) throws IllegalArgumentException {
+        return HeapScope.ofArray(arr);
+    }
+    
+    /**
+     * Creates a new array memory segment that models the memory associated with a given heap-allocated double array.
+     * <p>
+     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
+     * for the life-time of the segment.
+     *
+     * @param arr the primitive array backing the array memory segment.
+     * @return a new array memory segment.
+     */
+    static MemorySegment ofArray(double[] arr) throws IllegalArgumentException {
         return HeapScope.ofArray(arr);
     }
 

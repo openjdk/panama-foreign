@@ -63,7 +63,8 @@ public class NativeScope extends MemorySegmentImpl.Scope {
 
         long buf = unsafe.allocateMemory(alignedSize);
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemorySegment segment = new MemorySegmentImpl(buf, alignedSize, 0, new NativeScope(buf));
+        NativeScope scope = new NativeScope(buf);
+        MemorySegment segment = new MemorySegmentImpl(buf, alignedSize, 0, scope);
         if (alignedBuf != buf) {
             long delta = alignedBuf - buf;
             segment = segment.slice(delta, bytesSize);
