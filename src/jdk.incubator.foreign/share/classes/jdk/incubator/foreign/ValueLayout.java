@@ -52,12 +52,14 @@ import java.util.OptionalLong;
 public class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     private final ByteOrder order;
-    private final long size;
 
-    ValueLayout(ByteOrder order, long size, OptionalLong alignment, Map<String, Constable> annotations) {
-        super(alignment, annotations);
+    ValueLayout(ByteOrder order, long size) {
+        this(order, size, size, Map.of());
+    }
+
+    ValueLayout(ByteOrder order, long size, long alignment, Map<String, Constable> annotations) {
+        super(size, alignment, annotations);
         this.order = order;
-        this.size = size;
     }
 
     /**
@@ -74,16 +76,11 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @return a new value layout with given byte order.
      */
     public ValueLayout withOrder(ByteOrder order) {
-        return new ValueLayout(order, size, optAlignment(), annotations());
+        return new ValueLayout(order, size, alignment, annotations);
     }
 
     @Override
     public long bitSize() {
-        return size;
-    }
-
-    @Override
-    long naturalAlignmentBits() {
         return size;
     }
 
@@ -108,17 +105,17 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
         ValueLayout v = (ValueLayout)other;
         return order.equals(v.order) &&
             size == v.size &&
-            bitAlignment() == v.bitAlignment();
+            alignment == v.alignment;
     }
 
     @Override
     public int hashCode() {
         return super.hashCode()^ order.hashCode() ^
-            Long.hashCode(size) ^ Long.hashCode(bitAlignment());
+            Long.hashCode(size) ^ Long.hashCode(alignment);
     }
 
     @Override
-    ValueLayout dup(OptionalLong alignment, Map<String, Constable> annotations) {
+    ValueLayout dup(long alignment, Map<String, Constable> annotations) {
         return new ValueLayout(order, size, alignment, annotations);
     }
 

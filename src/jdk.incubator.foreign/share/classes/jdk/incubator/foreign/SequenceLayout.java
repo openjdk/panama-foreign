@@ -62,12 +62,16 @@ MemoryLayout.ofStruct(
  */
 public class SequenceLayout extends AbstractLayout {
 
-    private final OptionalLong size;
+    private final OptionalLong elemCount;
     private final MemoryLayout elementLayout;
 
-    SequenceLayout(OptionalLong size, MemoryLayout elementLayout, OptionalLong alignment, Map<String, Constable> annotations) {
-        super(alignment, annotations);
-        this.size = size;
+    SequenceLayout(OptionalLong elemCount, MemoryLayout elementLayout) {
+        this(elemCount, elementLayout, elementLayout.bitAlignment(), Map.of());
+    }
+
+    SequenceLayout(OptionalLong elemCount, MemoryLayout elementLayout, long alignment, Map<String, Constable> annotations) {
+        super(elemCount.isPresent() ? elemCount.getAsLong() * elementLayout.bitSize() : -1, alignment, annotations);
+        this.elemCount = elemCount;
         this.elementLayout = elementLayout;
     }
 
@@ -78,16 +82,11 @@ public class SequenceLayout extends AbstractLayout {
      */
     @Override
     public long bitSize() throws UnsupportedOperationException {
-        if (size.isPresent()) {
-            return elementLayout.bitSize() * size.getAsLong();
+        if (elemCount.isPresent()) {
+            return super.bitSize();
         } else {
             throw new UnsupportedOperationException("Cannot compute size of unbounded sequence");
         }
-    }
-
-    @Override
-    long naturalAlignmentBits() {
-        return elementLayout().bitAlignment();
     }
 
     /**
@@ -103,13 +102,13 @@ public class SequenceLayout extends AbstractLayout {
      * @return the element count of this sequence layout (if any).
      */
     public OptionalLong elementsCount() {
-        return size;
+        return elemCount;
     }
 
     @Override
     public String toString() {
         return decorateLayoutString(String.format("[%s:%s]",
-                size.isPresent() ? size.getAsLong() : "", elementLayout));
+                elemCount.isPresent() ? elemCount.getAsLong() : "", elementLayout));
     }
 
     @Override
@@ -124,24 +123,24 @@ public class SequenceLayout extends AbstractLayout {
             return false;
         }
         SequenceLayout s = (SequenceLayout)other;
-        return size.equals(s.size) && elementLayout.equals(s.elementLayout);
+        return elemCount.equals(s.elemCount) && elementLayout.equals(s.elementLayout);
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ size.hashCode() ^ elementLayout.hashCode();
+        return super.hashCode() ^ elemCount.hashCode() ^ elementLayout.hashCode();
     }
 
     @Override
-    SequenceLayout dup(OptionalLong alignment, Map<String, Constable> annotations) {
+    SequenceLayout dup(long alignment, Map<String, Constable> annotations) {
         return new SequenceLayout(elementsCount(), elementLayout, alignment, annotations);
     }
 
     @Override
     public Optional<DynamicConstantDesc<SequenceLayout>> describeConstable() {
-        return size.isPresent() ?
+        return elemCount.isPresent() ?
                 Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
-                        CD_SEQUENCE_LAYOUT, MH_SIZED_SEQUENCE, size.getAsLong(), elementLayout.describeConstable().get())) :
+                        CD_SEQUENCE_LAYOUT, MH_SIZED_SEQUENCE, elemCount.getAsLong(), elementLayout.describeConstable().get())) :
                 Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
                         CD_SEQUENCE_LAYOUT, MH_UNSIZED_SEQUENCE, elementLayout.describeConstable().get()));
     }

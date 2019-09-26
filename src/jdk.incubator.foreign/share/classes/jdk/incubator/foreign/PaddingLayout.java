@@ -46,20 +46,17 @@ import java.util.OptionalLong;
  * This class is immutable and thread-safe.
  */
 /* package-private */ class PaddingLayout extends AbstractLayout implements MemoryLayout {
-    private final long size;
 
-    PaddingLayout(long size, OptionalLong alignment, Map<String, Constable> annotations) {
-        super(alignment, annotations);
-        this.size = size;
+    PaddingLayout(long size) {
+        this(size, size, Map.of());
+    }
+
+    PaddingLayout(long size, long alignment, Map<String, Constable> annotations) {
+        super(size, alignment, annotations);
     }
 
     @Override
     public long bitSize() {
-        return size;
-    }
-
-    @Override
-    long naturalAlignmentBits() {
         return size;
     }
 
@@ -89,7 +86,7 @@ import java.util.OptionalLong;
     }
 
     @Override
-    PaddingLayout dup(OptionalLong alignment, Map<String, Constable> annotations) {
+    PaddingLayout dup(long alignment, Map<String, Constable> annotations) {
         return new PaddingLayout(size, alignment, annotations);
     }
 

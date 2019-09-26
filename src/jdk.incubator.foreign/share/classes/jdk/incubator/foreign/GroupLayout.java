@@ -63,30 +63,47 @@ public class GroupLayout extends AbstractLayout {
         /**
          * A 'struct' kind.
          */
-        STRUCT(LongStream::sum, "", MH_STRUCT),
+        STRUCT(LongStream::sum, Kind::max, "", MH_STRUCT),
         /**
          * A 'union' kind.
          */
-        UNION(ls -> ls.max().getAsLong(), "|", MH_UNION);
+        UNION(Kind::max, Kind::max, "|", MH_UNION);
 
         final ToLongFunction<LongStream> sizeFunc;
+        final ToLongFunction<LongStream> alignFunc;
         final String delimTag;
         final MethodHandleDesc mhDesc;
 
-        Kind(ToLongFunction<LongStream> sizeFunc, String delimTag, MethodHandleDesc mhDesc) {
+        Kind(ToLongFunction<LongStream> sizeFunc, ToLongFunction<LongStream> alignFunc,
+             String delimTag, MethodHandleDesc mhDesc) {
             this.sizeFunc = sizeFunc;
+            this.alignFunc = alignFunc;
             this.delimTag = delimTag;
             this.mhDesc = mhDesc;
+        }
+
+        static long max(LongStream ls) {
+            return ls.max().getAsLong();
+        }
+
+        long sizeof(List<MemoryLayout> elems) {
+            return sizeFunc.applyAsLong(elems.stream().mapToLong(MemoryLayout::bitSize));
+        }
+
+        long alignof(List<MemoryLayout> elems) {
+            return alignFunc.applyAsLong(elems.stream().mapToLong(MemoryLayout::bitAlignment));
         }
     }
 
     private final Kind kind;
     private final List<MemoryLayout> elements;
-    private long size = -1L;
-    private long alignment = -1L;
 
-    GroupLayout(Kind kind, List<MemoryLayout> elements, OptionalLong alignment, Map<String, Constable> annotations) {
-        super(alignment, annotations);
+    GroupLayout(Kind kind, List<MemoryLayout> elements) {
+        this(kind, elements, kind.alignof(elements), Map.of());
+    }
+
+    GroupLayout(Kind kind, List<MemoryLayout> elements, long alignment, Map<String, Constable> annotations) {
+        super(kind.sizeof(elements), alignment, annotations);
         this.kind = kind;
         this.elements = elements;
     }
@@ -147,23 +164,7 @@ public class GroupLayout extends AbstractLayout {
     }
 
     @Override
-    public long bitSize() {
-        if (size == -1L) {
-            size = kind.sizeFunc.applyAsLong(elements.stream().mapToLong(MemoryLayout::bitSize));
-        }
-        return size;
-    }
-
-    @Override
-    long naturalAlignmentBits() {
-        if (alignment == -1L) {
-            alignment = Kind.UNION.sizeFunc.applyAsLong(elements.stream().mapToLong(MemoryLayout::bitAlignment));
-        }
-        return alignment;
-    }
-
-    @Override
-    GroupLayout dup(OptionalLong alignment, Map<String, Constable> annotations) {
+    GroupLayout dup(long alignment, Map<String, Constable> annotations) {
         return new GroupLayout(kind, elements, alignment, annotations);
     }
 

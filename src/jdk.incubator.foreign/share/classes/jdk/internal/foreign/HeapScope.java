@@ -49,52 +49,36 @@ public class HeapScope extends MemorySegmentImpl.Scope {
         base = null;
     }
 
-    public static MemorySegment ofArray(Object array) {
-        int size = java.lang.reflect.Array.getLength(array);
-        long base = baseOffset(array.getClass());
-        long scale = indexScale(array.getClass());
-        return new MemorySegmentImpl(base, size * scale, 0, new HeapScope(array));
+    public static MemorySegment ofArray(byte[] arr) {
+        return ofArray(arr, arr.length, Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
-    
-    static long baseOffset(Class<?> cl) {
-        cl = cl.componentType();
-        if (cl == byte.class) {
-            return Unsafe.ARRAY_BYTE_BASE_OFFSET;
-        } else if (cl == char.class) {
-            return Unsafe.ARRAY_CHAR_BASE_OFFSET;
-        } else if (cl == short.class) {
-            return Unsafe.ARRAY_SHORT_BASE_OFFSET;
-        } else if (cl == int.class) {
-            return Unsafe.ARRAY_INT_BASE_OFFSET;
-        } else if (cl == float.class) {
-            return Unsafe.ARRAY_FLOAT_BASE_OFFSET;
-        } else if (cl == long.class) {
-            return Unsafe.ARRAY_LONG_BASE_OFFSET;
-        } else if (cl == double.class) {
-            return Unsafe.ARRAY_DOUBLE_BASE_OFFSET;
-        } else {
-            throw new IllegalStateException("bad type" + cl);
-        }
+
+    public static MemorySegment ofArray(char[] arr) {
+        return ofArray(arr, arr.length, Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE);
     }
-    
-    static long indexScale(Class<?> cl) {
-        cl = cl.componentType();
-        if (cl == byte.class) {
-            return Unsafe.ARRAY_BYTE_INDEX_SCALE;
-        } else if (cl == char.class) {
-            return Unsafe.ARRAY_CHAR_INDEX_SCALE;
-        } else if (cl == short.class) {
-            return Unsafe.ARRAY_SHORT_INDEX_SCALE;
-        } else if (cl == int.class) {
-            return Unsafe.ARRAY_INT_INDEX_SCALE;
-        } else if (cl == float.class) {
-            return Unsafe.ARRAY_FLOAT_INDEX_SCALE;
-        } else if (cl == long.class) {
-            return Unsafe.ARRAY_LONG_INDEX_SCALE;
-        } else if (cl == double.class) {
-            return Unsafe.ARRAY_DOUBLE_INDEX_SCALE;
-        } else {
-            throw new IllegalStateException("bad type" + cl);
-        }
+
+    public static MemorySegment ofArray(short[] arr) {
+        return ofArray(arr, arr.length, Unsafe.ARRAY_SHORT_BASE_OFFSET, Unsafe.ARRAY_SHORT_INDEX_SCALE);
+    }
+
+    public static MemorySegment ofArray(int[] arr) {
+        return ofArray(arr, arr.length, Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
+    }
+
+    public static MemorySegment ofArray(float[] arr) {
+        return ofArray(arr, arr.length, Unsafe.ARRAY_FLOAT_BASE_OFFSET, Unsafe.ARRAY_FLOAT_INDEX_SCALE);
+    }
+
+    public static MemorySegment ofArray(long[] arr) {
+        return ofArray(arr, arr.length, Unsafe.ARRAY_LONG_BASE_OFFSET, Unsafe.ARRAY_LONG_INDEX_SCALE);
+    }
+
+    public static MemorySegment ofArray(double[] arr) {
+        return ofArray(arr, arr.length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+    }
+
+    private static MemorySegment ofArray(Object arr, int size, int base, int scale) {
+        HeapScope scope = new HeapScope(arr);
+        return new MemorySegmentImpl(base, size * scale, 0, scope);
     }
 }

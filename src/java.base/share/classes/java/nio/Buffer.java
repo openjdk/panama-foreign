@@ -757,6 +757,16 @@ public abstract class Buffer {
                 public ByteBuffer newScopedByteBuffer(MemorySegmentProxy segment, ByteBuffer bb) {
                     return ScopedByteBuffer.of(segment, bb);
                 }
+
+                @Override
+                public Object getBufferBase(ByteBuffer bb) {
+                    return bb.base();
+                }
+
+                @Override
+                public long getBufferAddress(ByteBuffer bb) {
+                    return bb.address;
+                }
             });
     }
 

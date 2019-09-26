@@ -39,23 +39,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 abstract class AbstractLayout implements MemoryLayout {
-    private final OptionalLong alignment;
-    private final Map<String, Constable> annotations;
+    protected final long size;
+    protected final long alignment;
+    protected final Map<String, Constable> annotations;
 
-    public AbstractLayout(OptionalLong alignment, Map<String, Constable> annotations) {
+    public AbstractLayout(long size, long alignment, Map<String, Constable> annotations) {
+        this.size = size;
         this.alignment = alignment;
         this.annotations = Collections.unmodifiableMap(annotations);
-    }
-
-    Map<String, Constable> annotations() {
-        return annotations;
-    }
-
-    OptionalLong optAlignment() {
-        return alignment;
     }
 
     Optional<String> optName() {
@@ -79,14 +72,12 @@ abstract class AbstractLayout implements MemoryLayout {
         return optName();
     }
 
-    abstract AbstractLayout dup(OptionalLong alignment, Map<String, Constable> name);
-
-    abstract long naturalAlignmentBits();
+    abstract AbstractLayout dup(long alignment, Map<String, Constable> annos);
 
     @Override
     public AbstractLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
         checkAlignment(alignmentBits);
-        return dup(OptionalLong.of(alignmentBits), annotations);
+        return dup(alignmentBits, annotations);
     }
 
     void checkAlignment(long alignmentBitCount) {
@@ -109,22 +100,25 @@ abstract class AbstractLayout implements MemoryLayout {
 
     @Override
     public final long bitAlignment() {
-        return alignment.orElse(naturalAlignmentBits());
+        return alignment;
+    }
+
+    @Override
+    public long bitSize() {
+        return size;
     }
 
     String decorateLayoutString(String s) {
         if (optName().isPresent()) {
             s = String.format("%s(%s)", s, optName().get());
         }
-        if (alignment.isPresent()) {
-            s = alignment.getAsLong() + "%" + s;
-        }
+        s = alignment + "%" + s;
         return s;
     }
 
     @Override
     public int hashCode() {
-        return optName().hashCode() << alignment.orElse(0L);
+        return annotations.hashCode() << Long.hashCode(alignment);
     }
 
     @Override
@@ -137,8 +131,8 @@ abstract class AbstractLayout implements MemoryLayout {
             return false;
         }
 
-        return Objects.equals(alignment, ((AbstractLayout)other).alignment) &&
-                Objects.equals(annotations, ((AbstractLayout)other).annotations);
+        return Objects.equals(annotations, ((AbstractLayout)other).annotations) &&
+                Objects.equals(alignment, ((AbstractLayout)other).alignment);
     }
 
     static final String NAME = "name";
