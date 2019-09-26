@@ -26,28 +26,16 @@
 
 package jdk.internal.foreign;
 
-import jdk.internal.misc.Unsafe;
+import jdk.internal.access.JavaNioAccess;
+import jdk.internal.access.SharedSecrets;
 
 import jdk.incubator.foreign.MemorySegment;
-import java.nio.Buffer;
+
 import java.nio.ByteBuffer;
 
 public class BufferScope extends MemorySegmentImpl.Scope {
 
-    private static Unsafe unsafe = Unsafe.getUnsafe();
-
-    private static final long BYTE_BUFFER_BASE;
-    private static final long BUFFER_ADDRESS;
-
-    static {
-        try {
-            BYTE_BUFFER_BASE = unsafe.objectFieldOffset(ByteBuffer.class.getDeclaredField("hb"));
-            BUFFER_ADDRESS = unsafe.objectFieldOffset(Buffer.class.getDeclaredField("address"));
-        }
-        catch (Exception e) {
-            throw new InternalError(e);
-        }
-    }
+    private static final JavaNioAccess javaNioAccess = SharedSecrets.getJavaNioAccess();
 
     // Keep a reference to the buffer so it is kept alive while the segment is alive
     private ByteBuffer bb;
@@ -58,7 +46,7 @@ public class BufferScope extends MemorySegmentImpl.Scope {
 
     @Override
     public Object base() {
-        return getBufferBase(bb);
+        return javaNioAccess.getBufferBase(bb);
     }
 
     @Override
@@ -67,20 +55,13 @@ public class BufferScope extends MemorySegmentImpl.Scope {
         bb = null;
     }
 
-    static Object getBufferBase(ByteBuffer bb) {
-        return unsafe.getReference(bb, BYTE_BUFFER_BASE);
-    }
-
-    static long getBufferAddress(ByteBuffer bb) {
-        return unsafe.getLong(bb, BUFFER_ADDRESS);
-    }
-
     public static MemorySegment of(ByteBuffer bb) {
-        long bbAddress = getBufferAddress(bb);
+        long bbAddress = javaNioAccess.getBufferAddress(bb);
 
         int pos = bb.position();
         int limit = bb.limit();
 
-        return new MemorySegmentImpl(bbAddress + pos, limit - pos, 0, new BufferScope(bb));
+        BufferScope bufferScope = new BufferScope(bb);
+        return new MemorySegmentImpl(bbAddress + pos, limit - pos, 0, bufferScope);
     }
 }

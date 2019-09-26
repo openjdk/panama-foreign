@@ -38,16 +38,14 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 abstract class AbstractLayout implements MemoryLayout {
-    private final OptionalLong alignment;
+    protected final long size;
+    protected final long alignment;
     private final Optional<String> name;
 
-    public AbstractLayout(OptionalLong alignment, Optional<String> name) {
+    public AbstractLayout(long size, long alignment, Optional<String> name) {
+        this.size = size;
         this.alignment = alignment;
         this.name = name;
-    }
-
-    OptionalLong optAlignment() {
-        return alignment;
     }
 
     Optional<String> optName() {
@@ -64,14 +62,12 @@ abstract class AbstractLayout implements MemoryLayout {
         return name;
     }
 
-    abstract AbstractLayout dup(OptionalLong alignment, Optional<String> name);
-
-    abstract long naturalAlignmentBits();
+    abstract AbstractLayout dup(long alignment, Optional<String> name);
 
     @Override
     public AbstractLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
         checkAlignment(alignmentBits);
-        return dup(OptionalLong.of(alignmentBits), name);
+        return dup(alignmentBits, name);
     }
 
     void checkAlignment(long alignmentBitCount) {
@@ -94,22 +90,25 @@ abstract class AbstractLayout implements MemoryLayout {
 
     @Override
     public final long bitAlignment() {
-        return alignment.orElse(naturalAlignmentBits());
+        return alignment;
+    }
+
+    @Override
+    public long bitSize() {
+        return size;
     }
 
     String decorateLayoutString(String s) {
         if (name.isPresent()) {
             s = String.format("%s(%s)", s, name.get());
         }
-        if (alignment.isPresent()) {
-            s = alignment.getAsLong() + "%" + s;
-        }
+        s = alignment + "%" + s;
         return s;
     }
 
     @Override
     public int hashCode() {
-        return name.hashCode() << alignment.orElse(0L);
+        return name.hashCode() << Long.hashCode(alignment);
     }
 
     @Override

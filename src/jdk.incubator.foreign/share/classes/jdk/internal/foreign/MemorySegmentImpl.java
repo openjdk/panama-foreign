@@ -122,7 +122,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     @Override
     public final void close() throws UnsupportedOperationException {
         checkValidState();
-        if (isPinned()) {
+        if (isSet(PINNED)) {
             throw new UnsupportedOperationException("Cannot close a pinned segment");
         } else {
             scope.close();
