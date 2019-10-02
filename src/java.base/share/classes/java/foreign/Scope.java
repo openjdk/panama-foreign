@@ -22,9 +22,6 @@
  */
 package java.foreign;
 
-import jdk.internal.foreign.ScopeImpl;
-import jdk.internal.foreign.memory.BoundedArray;
-
 import java.foreign.annotations.NativeCallback;
 import java.foreign.layout.Layout;
 import java.foreign.memory.Array;
@@ -32,6 +29,8 @@ import java.foreign.memory.Callback;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
+import jdk.internal.foreign.ScopeImpl;
+import jdk.internal.foreign.memory.BoundedArray;
 
 /**
  * A scope models a unit of resource lifecycle management. It provides primitives for memory allocation, as well
@@ -172,6 +171,9 @@ public interface Scope extends AutoCloseable {
      * @return a pointer to the newly allocated memory region.
      */
     default Pointer<Byte> allocateCString(String str) {
+        if (str == null) {
+            return Pointer.ofNull();
+        }
         return allocateArray(NativeTypes.UINT8, str.concat("\0").getBytes()).elementPointer();
     }
 
@@ -200,6 +202,20 @@ public interface Scope extends AutoCloseable {
      * @return the new scope.
      */
     Scope fork();
+
+    /**
+     * Return if this scope is parent of the specified scope.
+     * @param s1
+     * @return
+     */
+    default boolean isAncestor(Scope s1) {
+        for (Scope s = s1.parent(); s != null; s = s.parent()) {
+            if (s == this) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Retrieves the global scope associated with this VM.

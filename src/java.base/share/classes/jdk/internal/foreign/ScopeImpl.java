@@ -41,7 +41,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
 import jdk.internal.foreign.CallbackImplGenerator.SyntheticCallback;
 import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.memory.BoundedArray;
@@ -60,7 +59,53 @@ public final class ScopeImpl implements Scope {
     private final static long UNIT_SIZE = 64 * 1024;
 
     public static ScopeImpl GLOBAL = new ScopeImpl(null, false);
-    public static ScopeImpl UNCHECKED = new ScopeImpl(null, false);
+    public static final Scope UNCHECKED = new Scope() {
+
+        @Override
+        public <X> Pointer<X> allocate(LayoutType<X> type) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <X> Array<X> allocateArray(LayoutType<X> elementType, long size) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <T extends Struct<T>> T allocateStruct(Class<T> carrier) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <T> Callback<T> allocateCallback(Class<T> funcIntfClass, T funcIntfInstance) throws IllegalArgumentException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <T> Callback<T> allocateCallback(T funcIntfInstance) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Scope parent() {
+            return null;
+        }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void merge() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Scope fork() {
+            throw new UnsupportedOperationException();
+        }
+    };
 
     public static Scope makeLibraryScope() {
         return new ScopeImpl(GLOBAL, false);
@@ -126,6 +171,10 @@ public final class ScopeImpl implements Scope {
     }
 
     private <T> BoundedPointer<T> allocateInternal(LayoutType<T> type, long count, int align) {
+        if (count == 0) {
+            return BoundedPointer.ofNull();
+        }
+
         // FIXME: when allocating structs align size up to 8 bytes to allow for raw reads/writes?
         long size = Util.alignUp(type.bytesSize(), align);
         if (size < 0) {
@@ -310,23 +359,5 @@ public final class ScopeImpl implements Scope {
         }
         //remove from parent
         parent.descendants.remove(this);
-    }
-
-    public static void checkAncestor(Pointer<?> p1, Pointer<?> p2) {
-        if (!isAncestor(p1.scope(), p2.scope())) {
-            throw new RuntimeException("Access denied");
-        }
-    }
-
-    private static boolean isAncestor(Scope s1, Scope s2) {
-        if (s1 == ScopeImpl.UNCHECKED ||
-                s2 == ScopeImpl.UNCHECKED ||
-                s1 == s2) {
-            return true;
-        } else if (s2 == null) {
-            return false;
-        } else {
-            return isAncestor(s1, s2.parent());
-        }
     }
 }

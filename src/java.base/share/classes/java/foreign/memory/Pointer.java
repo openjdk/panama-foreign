@@ -24,7 +24,7 @@ package java.foreign.memory;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
+import jdk.internal.foreign.ScopeImpl;
 import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 
@@ -193,6 +193,10 @@ public interface Pointer<X> {
      */
     Scope scope();
 
+    default boolean isManaged() {
+        return (scope() != null && scope() != ScopeImpl.UNCHECKED);
+    }
+
     /**
      * Returns a pointer to the memory region covered by the given byte
      * buffer. The region starts relative to the buffer's position (inclusive)
@@ -242,10 +246,18 @@ public interface Pointer<X> {
      * @param dst the destination pointer.
      */
     static void copy(Pointer<?> src, Pointer<?> dst) {
+        long srcSize = src.type().bytesSize();
+        long dstSize = dst.type().bytesSize();
+
+        // Relax type check for NULL pointer
+        if (srcSize == 0 && dstSize == 0) {
+            return;
+        }
+
         if (!src.type().equals(dst.type())) {
             throw new IllegalArgumentException("Incompatible types: " + src.type() + ", and: " + dst.type());
         }
-        assert src.type().bytesSize() == dst.type().bytesSize() : "byteSize should be equal after type check";
+        assert srcSize == dstSize : "byteSize should be equal after type check";
 
         copy(src, dst, dst.type().bytesSize());
     }

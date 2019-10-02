@@ -41,3 +41,5 @@ struct FPPtrFieldStruct {
 };
 
 EXPORT int map_sum2(int arr[], int len, struct FPPtrFieldStruct s);
+
+EXPORT int sum_ptr(int *ar, int len);

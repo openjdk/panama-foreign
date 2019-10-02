@@ -25,11 +25,6 @@
 
 package jdk.internal.foreign.memory;
 
-import jdk.internal.foreign.LibrariesHelper;
-import jdk.internal.foreign.ScopeImpl;
-import jdk.internal.foreign.Util;
-import jdk.internal.vm.annotation.Stable;
-
 import java.foreign.layout.Sequence;
 import java.foreign.memory.Array;
 import java.foreign.memory.Callback;
@@ -41,6 +36,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.util.function.Supplier;
+import jdk.internal.foreign.LibrariesHelper;
+import jdk.internal.foreign.ScopeImpl;
+import jdk.internal.foreign.Util;
+import jdk.internal.vm.annotation.Stable;
 
 /**
  * Helper class for references. Defines several reference subclasses, specialized in well-known Java carrier
@@ -441,13 +440,13 @@ public final class References {
             LayoutType<?> pointeeType = ((LayoutTypeImpl<?>)pointer.type()).pointeeType();
             Pointer<?> rp = addr == 0 ?
                     Pointer.ofNull() :
-                    new BoundedPointer<>(pointeeType, pointer.scope(), Pointer.AccessMode.READ_WRITE,
+                    new BoundedPointer<>(pointeeType, ScopeImpl.UNCHECKED, Pointer.AccessMode.READ_WRITE,
                             MemoryBoundInfo.EVERYTHING, addr);
             return rp;
         }
 
         static void set(Pointer<?> pointer, Pointer<?> pointerValue) {
-            ScopeImpl.checkAncestor(pointerValue, pointer);
+            checkAncestor(pointerValue, pointer);
             ((BoundedPointer<?>)pointer).putBits(pointerValue.addr());
         }
     }
@@ -558,6 +557,14 @@ public final class References {
         }
     }
 
+    private static void checkAncestor(Pointer<?> src, Pointer<?> target) {
+        if (target.isManaged() && src.isManaged()) {
+            if (target.scope().isAncestor(src.scope())) {
+                throw new RuntimeException("Access denied");
+            }
+        }
+    }
+
     /**
      * Reference for function pointers.
      */
@@ -591,13 +598,13 @@ public final class References {
                 return Callback.ofNull();
             } else {
                 Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).getFuncIntf();
-                Pointer<?> rp = BoundedPointer.createNativeVoidPointer(pointer.scope(), addr);
+                Pointer<?> rp = BoundedPointer.createNativeVoidPointer(ScopeImpl.UNCHECKED, addr);
                 return new CallbackImpl<>(rp, carrier);
             }
         }
 
         static void set(Pointer<?> pointer, Callback<?> func) {
-            ScopeImpl.checkAncestor(func.entryPoint(), pointer);
+            checkAncestor(func.entryPoint(), pointer);
             ((BoundedPointer<?>)pointer).putBits(func.entryPoint().addr());
         }
     }
