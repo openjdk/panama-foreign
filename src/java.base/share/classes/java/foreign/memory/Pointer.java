@@ -242,10 +242,18 @@ public interface Pointer<X> {
      * @param dst the destination pointer.
      */
     static void copy(Pointer<?> src, Pointer<?> dst) {
+        long srcSize = src.type().bytesSize();
+        long dstSize = dst.type().bytesSize();
+
+        // Relax type check for NULL pointer
+        if (srcSize == 0 && dstSize == 0) {
+            return;
+        }
+
         if (!src.type().equals(dst.type())) {
             throw new IllegalArgumentException("Incompatible types: " + src.type() + ", and: " + dst.type());
         }
-        assert src.type().bytesSize() == dst.type().bytesSize() : "byteSize should be equal after type check";
+        assert srcSize == dstSize : "byteSize should be equal after type check";
 
         copy(src, dst, dst.type().bytesSize());
     }

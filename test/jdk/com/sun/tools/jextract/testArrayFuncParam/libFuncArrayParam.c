@@ -50,3 +50,11 @@ EXPORT int map_sum(int arr[], int len, int (*map)(int arr[], int idx, int val)) 
 EXPORT int map_sum2(int arr[], int len, struct FPPtrFieldStruct s) {
     return map_sum(arr, len, s.map);
 }
+
+EXPORT int sum_ptr(int *ar, int len) {
+    int i = 0, res = 0;
+    for (i = 0; i < len; i++) {
+        res += ar[i];
+    }
+    return res;
+}

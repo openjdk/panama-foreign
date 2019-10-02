@@ -57,7 +57,7 @@ public class FuncArrayParamTest {
     @Test
     public void testFuncArrayParam() {
         try (Scope scope = Scope.globalScope().fork()) {
-            Array<Integer> carr = scope.allocateArray(NativeTypes.INT32, jarr.length);
+            Array<Integer> carr = scope.allocateArray(NativeTypes.INT, jarr.length);
             for (int i = 0; i < jarr.length; i++) {
                 carr.set(i, jarr[i]);
             }
@@ -65,12 +65,23 @@ public class FuncArrayParamTest {
             assertEquals(fap.f(carr.elementPointer(), jarr.length), sum);
             assertEquals(fap.g(carr.elementPointer(), jarr.length), sum);
             assertEquals(fap.k(carr.elementPointer(), jarr.length), sum);
+            assertEquals(fap.sum_ptr(carr.elementPointer(), jarr.length), sum);
 
             assertEquals(fap.map_sum(carr.elementPointer(), jarr.length, scope.allocateCallback((arr, idx, val)->2*val)), 2*sum);
 
             FPPtrFieldStruct s = scope.allocateStruct(FPPtrFieldStruct.class);
             s.map$set(scope.allocateCallback((arr, idx, val) -> -val));
             assertEquals(fap.map_sum2(carr.elementPointer(), jarr.length, s), -sum);
+        }
+    }
+
+    @Test
+    public void testSumPtr() {
+        try (Scope scope = Scope.globalScope().fork()) {
+            assertEquals(fap.sum_ptr(Pointer.ofNull(), 0), 0);
+
+            Array<Integer> ar = scope.allocateArray(NativeTypes.INT, 0);
+            assertEquals(fap.sum_ptr(ar.elementPointer(), 0), 0);
         }
     }
 }

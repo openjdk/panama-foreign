@@ -41,7 +41,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
 import jdk.internal.foreign.CallbackImplGenerator.SyntheticCallback;
 import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.memory.BoundedArray;
@@ -126,6 +125,10 @@ public final class ScopeImpl implements Scope {
     }
 
     private <T> BoundedPointer<T> allocateInternal(LayoutType<T> type, long count, int align) {
+        if (count == 0) {
+            return BoundedPointer.ofNull();
+        }
+
         // FIXME: when allocating structs align size up to 8 bytes to allow for raw reads/writes?
         long size = Util.alignUp(type.bytesSize(), align);
         if (size < 0) {
