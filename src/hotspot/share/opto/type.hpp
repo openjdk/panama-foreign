@@ -1793,6 +1793,7 @@ inline bool Type::is_ptr_to_boxing_obj() const {
 #define Op_SubX      Op_SubL
 #define Op_XorX      Op_XorL
 #define Op_URShiftX  Op_URShiftL
+#define Op_LoadX     Op_LoadL
 // conversions
 #define ConvI2X(x)   ConvI2L(x)
 #define ConvL2X(x)   (x)
@@ -1840,6 +1841,7 @@ inline bool Type::is_ptr_to_boxing_obj() const {
 #define Op_SubX      Op_SubI
 #define Op_XorX      Op_XorI
 #define Op_URShiftX  Op_URShiftI
+#define Op_LoadX     Op_LoadI
 // conversions
 #define ConvI2X(x)   (x)
 #define ConvL2X(x)   ConvL2I(x)
