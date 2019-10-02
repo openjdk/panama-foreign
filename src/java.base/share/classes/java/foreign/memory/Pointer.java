@@ -24,7 +24,7 @@ package java.foreign.memory;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
+import jdk.internal.foreign.ScopeImpl;
 import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 
@@ -192,6 +192,10 @@ public interface Pointer<X> {
      * @return the owning scope.
      */
     Scope scope();
+
+    default boolean isManaged() {
+        return (scope() != null && scope() != ScopeImpl.UNCHECKED);
+    }
 
     /**
      * Returns a pointer to the memory region covered by the given byte

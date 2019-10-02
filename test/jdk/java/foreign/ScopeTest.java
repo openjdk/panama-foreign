@@ -39,7 +39,8 @@ import static org.testng.Assert.fail;
 
 /*
  * @test
- * @run testng ScopeTest
+ * @build TestHelper
+ * @run testng/othervm ScopeTest
  */
 public class ScopeTest {
     private <X> void assertEmptyArray(Array<X> ar, X value) {
@@ -187,5 +188,32 @@ public class ScopeTest {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testMergeGlobal() {
         Scope.globalScope().merge();
+    }
+
+    @Test
+    public void checkNativeAllocationScope() {
+        TestHelper lib = TestHelper.lib;
+        Pointer<TestHelper.OpaquePoint> dot = lib.allocateDot();
+        assertFalse(dot.isManaged());
+        lib.freeDot(dot);
+
+        Array<TestHelper.Point> ar = lib.allocateDotArray(3).withSize(3);
+        assertFalse(ar.elementPointer().isManaged());
+        assertFalse(ar.ptr().isManaged());
+
+        TestHelper.Point pt = ar.get(0);
+        assertFalse(pt.ptr().isManaged());
+        try (Scope scope = Scope.globalScope().fork()) {
+            pt.data$set(scope.allocateCString("test"));
+        }
+        lib.freeDotArray(ar.elementPointer());
+
+        try (Scope scope = Scope.globalScope().fork()) {
+            pt = lib.getDot(10, 20, scope.allocateCString("init ok"));
+            // Native struct returned by value has its own Scope
+            assertTrue(pt.ptr().isManaged());
+            pt.data$set(scope.allocateCString("would fail with scope violation if only ancestor is allowed"));
+            pt.data$set(pt.ptr().scope().allocateCString("has to use this form if only ancestor is allowed"));
+        }
     }
 }

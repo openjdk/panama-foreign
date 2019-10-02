@@ -203,7 +203,7 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     private void checkAlive() throws IllegalStateException {
-        if (scope != null) {
+        if (isManaged()) {
             ((ScopeImpl)scope).checkAlive();
         }
     }

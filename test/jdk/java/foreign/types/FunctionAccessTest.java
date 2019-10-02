@@ -49,31 +49,46 @@ public class FunctionAccessTest {
     @Test
     public void testFunctionField() {
         Callback<NativeToIntFunction> funcOutsideScope = null;
+        Callback<NativeToIntFunction> funcViaStruct = null;
+        MyStruct m = null;
         try (Scope s = Scope.globalScope().fork()) {
-            MyStruct m = s.allocateStruct(MyStruct.class);
+            m = s.allocateStruct(MyStruct.class);
             NativeToIntFunction f = () -> 42;
-            m.setFunction(s.allocateCallback(f));
-            Callback<NativeToIntFunction> func = m.getFunction();
-            //do a roundtrip
-            m.setFunction(func);
+            Callback<NativeToIntFunction> func = s.allocateCallback(f);
+            f = null;
             System.gc();
-            func = m.getFunction();
+
+            funcOutsideScope = func;
+            m.setFunction(func);
+            funcViaStruct = m.getFunction();
 
             //check resource is still there
             assertEquals(func.asFunction().get(), 42);
-            funcOutsideScope = func;
-            //check that calling get twice yields same object we started with
-            m.setFunction(func);
-            assertEquals(func.asFunction().get(), 42);
+            assertEquals(funcOutsideScope.asFunction().get(), 42);
+            assertEquals(funcViaStruct.asFunction().get(), 42);
         } catch (Throwable e) {
             throw new AssertionError(e);
+        }
+
+        System.gc();
+        try {
+            m.getFunction(); // should throw!
+            fail("exception not thrown!");
+        } catch (IllegalStateException ex) {
+            assertTrue(ex.getMessage().contains("Scope is not alive"));
         }
         try {
              funcOutsideScope.asFunction(); // should throw!
              fail("exception not thrown!");
-         } catch (IllegalStateException ex) {
+        } catch (IllegalStateException ex) {
              assertTrue(ex.getMessage().contains("Scope is not alive"));
-         }
+        }
+        try {
+            assertEquals(funcViaStruct.asFunction().get(), 42);
+            // In case GC has not kicked in, the call may work
+        } catch (NullPointerException npe) {
+            // If stub is GCed, we got an NPE
+        }
     }
 
     @NativeStruct("[" +

@@ -21,6 +21,9 @@
  * questions.
  */
 
+import java.foreign.Libraries;
+import java.foreign.memory.LayoutType;
+import java.lang.invoke.MethodHandles;
 import org.testng.annotations.Test;
 
 import java.foreign.NativeTypes;
@@ -39,7 +42,8 @@ import static org.testng.Assert.*;
 
 /*
  * @test
- * @run testng ResourceStructTest
+ * @build TestHelper
+ * @run testng/othervm ResourceStructTest
  */
 
 public class ResourceStructTest {
@@ -111,9 +115,45 @@ public class ResourceStructTest {
     public void testPointerInferScope() {
         try(Scope scope = Scope.globalScope().fork()) {
             resources recs = scope.allocateStruct(resources.class);
-            recs.xp$set(scope.allocate(NativeTypes.INT32));
+            Pointer<Integer> ptr = scope.allocate(NativeTypes.INT32);
+            assertEquals(ptr.scope(), scope);
+            recs.xp$set(ptr);
             Pointer<Integer> p = recs.xp$get();
-            assertEquals(p.scope(), scope);
+            // Unchecked for now until we actually implement some inference
+            assertFalse(p.isManaged());
+        }
+    }
+
+    @Test
+    public void test8229857() {
+        TestHelper lib = TestHelper.lib;
+        Pointer<TestHelper.OpaquePoint>[] dots = new Pointer[3];
+        try (Scope scope = Scope.globalScope().fork()) {
+            Array<Pointer<TestHelper.OpaquePoint>> ar = scope.allocateArray(
+                    LayoutType.ofStruct(TestHelper.OpaquePoint.class).pointer(), dots.length);
+            lib.allocateDots(dots.length, ar.elementPointer());
+            for (int i = 0; i < dots.length; i++) {
+                dots[i] = ar.get(i);
+                int x = lib.getDotX(dots[i]);
+                assertEquals(x, i);
+                lib.setCoordination(dots[i], x * 2, lib.getDotY(dots[i]));
+            }
+        }
+
+        // The Pointers should still be valid even though scope is closed
+        for (int i = 0; i < dots.length; i++) {
+            assertEquals(lib.getDotX(dots[i]), 2 * i);
+            assertEquals(lib.getDotY(dots[i]), i);
+        }
+
+        // Free native allocated memory
+        try (Scope scope = Scope.globalScope().fork()) {
+            Array<Pointer<TestHelper.OpaquePoint>> ar = scope.allocateArray(
+                    LayoutType.ofStruct(TestHelper.OpaquePoint.class).pointer(), dots.length);
+            for (int i = 0; i < dots.length; i++) {
+                ar.set(i, dots[i]);
+            }
+            lib.freeDots(dots.length, ar.elementPointer());
         }
     }
 
@@ -123,7 +163,7 @@ public class ResourceStructTest {
             resources recs = scope.allocateStruct(resources.class);
             recs.cb$set(scope.allocateCallback(() -> {}));
             Callback<FI1> cb = recs.cb$get();
-            assertEquals(cb.entryPoint().scope(), scope);
+            assertFalse(cb.entryPoint().isManaged());
         }
     }
 
