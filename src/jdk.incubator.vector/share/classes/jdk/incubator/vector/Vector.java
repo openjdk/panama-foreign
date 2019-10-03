@@ -1635,15 +1635,14 @@ public abstract class Vector<E> {
      *    DIV}{@code , v)}.
      *
      * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
-     *
-     * <p>
      * As a full-service named operation, this method
      * comes in masked and unmasked overloadings, and
      * (in subclasses) also comes in scalar-broadcast
      * overloadings (both masked and unmasked).
+     *
+     * @apiNote If the underlying scalar operator does not support
+     * division by zero, but is presented with a zero divisor,
+     * an {@code ArithmeticException} will be thrown.
      *
      * @param v a second input vector
      * @return the result of dividing this vector by the second input vector
@@ -1676,15 +1675,14 @@ public abstract class Vector<E> {
      *    DIV}{@code , v, m)}.
      *
      * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
-     *
-     * <p>
      * As a full-service named operation, this method
      * comes in masked and unmasked overloadings, and
      * (in subclasses) also comes in scalar-broadcast
      * overloadings (both masked and unmasked).
+     *
+     * @apiNote If the underlying scalar operator does not support
+     * division by zero, but is presented with a zero divisor,
+     * an {@code ArithmeticException} will be thrown.
      *
      * @param v a second input vector
      * @param m the mask controlling lane selection

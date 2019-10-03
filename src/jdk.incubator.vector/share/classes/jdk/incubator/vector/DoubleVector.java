@@ -552,7 +552,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * Returns a vector where the first lane element is set to the primtive
      * value {@code e}, all other lane elements are set to the default
-     * value.
+     * value(positive zero).
+     ).
      *
      * @param species species of the desired vector
      * @param e the value
@@ -1308,8 +1309,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /**
      * {@inheritDoc} <!--workaround-->
-     * @see #div(double)
-     * <p> Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
@@ -1331,14 +1331,12 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *    lanewise}{@code (}{@link VectorOperators#DIV
      *    DIV}{@code , e)}.
      *
-     * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
-     * Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
+     * @see #div(double)
+
      *
      * @param e the input scalar
      * @return the result of dividing each lane of this vector by the scalar
@@ -1357,7 +1355,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @see #div(double,VectorMask)
-     * <p> Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
@@ -1381,11 +1379,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *    lanewise}{@code (}{@link VectorOperators#DIV
      *    DIV}{@code , s, m)}.
      *
-     * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
-     * Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
@@ -1417,7 +1411,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @apiNote
      * For this method, floating point negative
      * zero {@code -0.0} is treated as a value distinct from, and less
-     * than, the default zero value.
+     * than the default value(positive zero).
      */
     @Override
     @ForceInline
@@ -1429,8 +1423,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * Computes the smaller of this vector and the broadcast of an input scalar.
      *
-     * This is a lane-wise binary operation which appliesthe
-     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * This is a lane-wise binary operation which applies the
+     * operation {@code Math.min()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -1447,7 +1441,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @apiNote
      * For this method, floating point negative
      * zero {@code -0.0} is treated as a value distinct from, and less
-     * than, the default zero value.
+     * than the default value(positive zero).
      */
     @ForceInline
     public final DoubleVector min(double e) {
@@ -1469,8 +1463,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * Computes the larger of this vector and the broadcast of an input scalar.
      *
-     * This is a lane-wise binary operation which appliesthe
-     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * This is a lane-wise binary operation which applies the
+     * operation {@code Math.max()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -2256,7 +2250,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *
      * (As with {@code MAX} and {@code MIN}, floating point negative
      * zero {@code -0.0} is treated as a value distinct from
-     * the default zero value, so a first-nonzero lane reduction
+     * the default value, positive zero. So a first-nonzero lane reduction
      * might return {@code -0.0} even in the presence of non-zero
      * lane values.)
      *
@@ -2318,7 +2312,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * If the operation is
      *  {@code ADD}
      * or {@code FIRST_NONZERO},
-     * then the identity value is zero, the default {@code double} value.
+     * then the identity value is positive zero, the default {@code double} value.
      * <li>
      * If the operation is {@code MUL},
      * then the identity value is one.
@@ -2606,7 +2600,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of {@code double} (zero).
+     * value of {@code double} (positive zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -2644,7 +2638,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of {@code double} (zero).
+     * value of {@code double} (positive zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -2721,7 +2715,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Loads a vector from an array of type {@code double[]}
      * starting at an offset and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of {@code double} (zero).
+     * value of {@code double} (positive zero).
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then the array element at
      * index {@code offset + N} is placed into the resulting vector at lane index

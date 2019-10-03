@@ -74,6 +74,19 @@ import jdk.internal.vm.annotation.Stable;
  * conversion, with the indicated type
  * </ul>
  *
+ * <h2>Operations on floating point vectors</h2>
+ * <ul>
+ * <li> Binary vector operators, which apply to floating point vectors,
+ * follow the accuracy and monotonicity specifications of the equivalent
+ * Java operation or method mentioned in its documentation.
+ * <li> Some operators, although defined as associative operators (example, {@link #ADD}),
+ * are not truly associative on floating point numbers. The result of an expression
+ * is a function both of the input values as well as the order of operations.
+ * When such operators are used for operations such as
+ * {@link FloatVector#reduceLanes(Associative)}, the order
+ * is intentionally not defined. This allows the implementation the flexibility
+ * to implement the operation using fast machine instructions.
+ *
  * <p> Note that a particular operator token may apply to several
  * different lane types.  Thus, these tokens behave like overloaded
  * operators or methods, not like type-specific method handles or
@@ -462,39 +475,39 @@ public abstract class VectorOperators {
     /** Produce {@code -a}. */
     public static final Unary NEG = unary("NEG", "-a", VectorIntrinsics.VECTOR_OP_NEG, VO_ALL|VO_SPECIAL);
 
-    /** Produce {@code sin(a)}.  Floating only. */
+    /** Produce {@code sin(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary SIN = unary("SIN", "sin", VectorIntrinsics.VECTOR_OP_SIN, VO_ONLYFP);
-    /** Produce {@code cos(a)}.  Floating only. */
+    /** Produce {@code cos(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary COS = unary("COS", "cos", VectorIntrinsics.VECTOR_OP_COS, VO_ONLYFP);
-    /** Produce {@code tan(a)}.  Floating only. */
+    /** Produce {@code tan(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary TAN = unary("TAN", "tan", VectorIntrinsics.VECTOR_OP_TAN, VO_ONLYFP);
-    /** Produce {@code asin(a)}.  Floating only. */
+    /** Produce {@code asin(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary ASIN = unary("ASIN", "asin", VectorIntrinsics.VECTOR_OP_ASIN, VO_ONLYFP);
-    /** Produce {@code acos(a)}.  Floating only. */
+    /** Produce {@code acos(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary ACOS = unary("ACOS", "acos", VectorIntrinsics.VECTOR_OP_ACOS, VO_ONLYFP);
-    /** Produce {@code atan(a)}.  Floating only. */
+    /** Produce {@code atan(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary ATAN = unary("ATAN", "atan", VectorIntrinsics.VECTOR_OP_ATAN, VO_ONLYFP);
 
-    /** Produce {@code exp(a)}.  Floating only. */
+    /** Produce {@code exp(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary EXP = unary("EXP", "exp", VectorIntrinsics.VECTOR_OP_EXP, VO_ONLYFP);
-    /** Produce {@code log(a)}.  Floating only. */
+    /** Produce {@code log(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary LOG = unary("LOG", "log", VectorIntrinsics.VECTOR_OP_LOG, VO_ONLYFP);
-    /** Produce {@code log10(a)}.  Floating only. */
+    /** Produce {@code log10(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary LOG10 = unary("LOG10", "log10", VectorIntrinsics.VECTOR_OP_LOG10, VO_ONLYFP);
-    /** Produce {@code sqrt(a)}.  Floating only. */
+    /** Produce {@code sqrt(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary SQRT = unary("SQRT", "sqrt", VectorIntrinsics.VECTOR_OP_SQRT, VO_ONLYFP);
-    /** Produce {@code cbrt(a)}.  Floating only. */
+    /** Produce {@code cbrt(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary CBRT = unary("CBRT", "cbrt", VectorIntrinsics.VECTOR_OP_CBRT, VO_ONLYFP);
 
-    /** Produce {@code sinh(a)}.  Floating only. */
+    /** Produce {@code sinh(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary SINH = unary("SINH", "sinh", VectorIntrinsics.VECTOR_OP_SINH, VO_ONLYFP);
-    /** Produce {@code cosh(a)}.  Floating only. */
+    /** Produce {@code cosh(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary COSH = unary("COSH", "cosh", VectorIntrinsics.VECTOR_OP_COSH, VO_ONLYFP);
-    /** Produce {@code tanh(a)}.  Floating only. */
+    /** Produce {@code tanh(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary TANH = unary("TANH", "tanh", VectorIntrinsics.VECTOR_OP_TANH, VO_ONLYFP);
-    /** Produce {@code expm1(a)}.  Floating only. */
+    /** Produce {@code expm1(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary EXPM1 = unary("EXPM1", "expm1", VectorIntrinsics.VECTOR_OP_EXPM1, VO_ONLYFP);
-    /** Produce {@code log1p(a)}.  Floating only. */
+    /** Produce {@code log1p(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary LOG1P = unary("LOG1P", "log1p", VectorIntrinsics.VECTOR_OP_LOG1P, VO_ONLYFP);
 
     // Binary operators
@@ -536,11 +549,11 @@ public abstract class VectorOperators {
     /** Produce {@code rotateRight(a,n)}.  Integral only. */
     public static final /*bitwise*/ Binary ROR = binary("ROR", "rotateRight", VectorIntrinsics.VECTOR_OP_RROTATE, VO_SHIFT);
 
-    /** Produce {@code atan2(a,b)}.  Floating only. */
+    /** Produce {@code atan2(a,b)}. See  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Binary ATAN2 = binary("ATAN2", "atan2", VectorIntrinsics.VECTOR_OP_ATAN2, VO_ONLYFP);
-    /** Produce {@code pow(a,b)}.  Floating only. */
+    /** Produce {@code pow(a,b)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Binary POW = binary("POW", "pow", VectorIntrinsics.VECTOR_OP_POW, VO_ONLYFP);
-    /** Produce {@code hypot(a,b)}.  Floating only. */
+    /** Produce {@code hypot(a,b)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Binary HYPOT = binary("HYPOT", "hypot", VectorIntrinsics.VECTOR_OP_HYPOT, VO_ONLYFP);
 
     // Ternary operators
@@ -692,13 +705,13 @@ public abstract class VectorOperators {
     public static final Conversion<Integer,Integer> INPLACE_S2I = convert("INPLACE_S2I", 'W', int.class, int.class, VO_KIND_INPLACE + 0x9a, VO_ALL);
     /** In-place widen {@code shortVal} inside long to {@code (long)shortVal}. */
     public static final Conversion<Long,Long> INPLACE_S2L = convert("INPLACE_S2L", 'W', long.class, long.class, VO_KIND_INPLACE + 0x9b, VO_ALL);
-    /** Reinterpret bits of {@code doubleVal} as {@code long}. */
+    /** Reinterpret bits of {@code doubleVal} as {@code long}. As if by {@link Double#doubleToLongBits(double)} */
     public static final Conversion<Double,Long> REINTERPRET_D2L = convert("REINTERPRET_D2L", 'R', double.class, long.class, VO_KIND_BITWISE, VO_ALL);
-    /** Reinterpret bits of {@code floatVal} as {@code int}. */
+    /** Reinterpret bits of {@code floatVal} as {@code int}. As if by {@link Float#floatToRawIntBits(float)} */
     public static final Conversion<Float,Integer> REINTERPRET_F2I = convert("REINTERPRET_F2I", 'R', float.class, int.class, VO_KIND_BITWISE, VO_ALL);
-    /** Reinterpret bits of {@code intVal} as {@code float}. */
+    /** Reinterpret bits of {@code intVal} as {@code float}. As if by {@link Float#intBitsToFloat(int)} */
     public static final Conversion<Integer,Float> REINTERPRET_I2F = convert("REINTERPRET_I2F", 'R', int.class, float.class, VO_KIND_BITWISE, VO_ALL);
-    /** Reinterpret bits of {@code longVal} as {@code double}. */
+    /** Reinterpret bits of {@code longVal} as {@code double}. As if by {@link Double#longBitsToDouble(long)} */
     public static final Conversion<Long,Double> REINTERPRET_L2D = convert("REINTERPRET_L2D", 'R', long.class, double.class, VO_KIND_BITWISE, VO_ALL);
     /** Zero-extend {@code byteVal} to {@code int}. */
     public static final Conversion<Byte,Integer> ZERO_EXTEND_B2I = convert("ZERO_EXTEND_B2I", 'Z', byte.class, int.class, VO_KIND_BITWISE, VO_ALL);

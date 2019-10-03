@@ -566,7 +566,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * Returns a vector where the first lane element is set to the primtive
      * value {@code e}, all other lane elements are set to the default
-     * value.
+     * value({#if[FP]?positive }zero).
+     ).
      *
      * @param species species of the desired vector
      * @param e the value
@@ -1479,12 +1480,15 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 
     /**
      * {@inheritDoc} <!--workaround-->
-     * @see #div($type$)
 #if[FP]
-     * <p> Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
+#else[FP]
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
+     * @see #div($type$)
 #end[FP]
      */
     @Override
@@ -1504,16 +1508,17 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *    lanewise}{@code (}{@link VectorOperators#DIV
      *    DIV}{@code , e)}.
      *
-     * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
 #if[FP]
-     * Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
+#else[FP]
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
 #end[FP]
+     * @see #div($type$)
+
      *
      * @param e the input scalar
      * @return the result of dividing each lane of this vector by the scalar
@@ -1533,10 +1538,13 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
      * @see #div($type$,VectorMask)
 #if[FP]
-     * <p> Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
+#else[FP]
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
 #end[FP]
      */
     @Override
@@ -1558,15 +1566,14 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *    lanewise}{@code (}{@link VectorOperators#DIV
      *    DIV}{@code , s, m)}.
      *
-     * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
 #if[FP]
-     * Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
+#else[FP]
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
 #end[FP]
      *
      * @param e the input scalar
@@ -1597,7 +1604,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @apiNote
      * For this method, floating point negative
      * zero {@code -0.0} is treated as a value distinct from, and less
-     * than, the default zero value.
+     * than the default value(positive zero).
 #end[FP]
      */
     @Override
@@ -1610,8 +1617,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * Computes the smaller of this vector and the broadcast of an input scalar.
      *
-     * This is a lane-wise binary operation which appliesthe
-     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * This is a lane-wise binary operation which applies the
+     * operation {@code Math.min()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -1629,7 +1636,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @apiNote
      * For this method, floating point negative
      * zero {@code -0.0} is treated as a value distinct from, and less
-     * than, the default zero value.
+     * than the default value(positive zero).
 #end[FP]
      */
     @ForceInline
@@ -1654,8 +1661,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     /**
      * Computes the larger of this vector and the broadcast of an input scalar.
      *
-     * This is a lane-wise binary operation which appliesthe
-     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * This is a lane-wise binary operation which applies the
+     * operation {@code Math.max()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -2720,7 +2727,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
 #if[FP]
      * (As with {@code MAX} and {@code MIN}, floating point negative
      * zero {@code -0.0} is treated as a value distinct from
-     * the default zero value, so a first-nonzero lane reduction
+     * the default value, positive zero. So a first-nonzero lane reduction
      * might return {@code -0.0} even in the presence of non-zero
      * lane values.)
 #end[FP]
@@ -2794,7 +2801,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *  {@code ADD}
 #end[BITWISE]
      * or {@code FIRST_NONZERO},
-     * then the identity value is zero, the default {@code $type$} value.
+     * then the identity value is {#if[FP]?positive }zero, the default {@code $type$} value.
      * <li>
      * If the operation is {@code MUL},
      * then the identity value is one.
@@ -3187,7 +3194,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of {@code $type$} (zero).
+     * value of {@code $type$} ({#if[FP]?positive }zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -3225,7 +3232,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of {@code $type$} (zero).
+     * value of {@code $type$} ({#if[FP]?positive }zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -3302,7 +3309,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * Loads a vector from an array of type {@code $type$[]}
      * starting at an offset and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of {@code $type$} (zero).
+     * value of {@code $type$} ({#if[FP]?positive }zero).
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then the array element at
      * index {@code offset + N} is placed into the resulting vector at lane index

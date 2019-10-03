@@ -552,7 +552,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
     /**
      * Returns a vector where the first lane element is set to the primtive
      * value {@code e}, all other lane elements are set to the default
-     * value.
+     * value(zero).
+     ).
      *
      * @param species species of the desired vector
      * @param e the value
@@ -1375,6 +1376,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
     /**
      * {@inheritDoc} <!--workaround-->
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
      * @see #div(short)
      */
     @Override
@@ -1394,10 +1397,10 @@ public abstract class ShortVector extends AbstractVector<Short> {
      *    lanewise}{@code (}{@link VectorOperators#DIV
      *    DIV}{@code , e)}.
      *
-     * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
+     * @see #div(short)
+
      *
      * @param e the input scalar
      * @return the result of dividing each lane of this vector by the scalar
@@ -1416,6 +1419,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @see #div(short,VectorMask)
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
      */
     @Override
     @ForceInline
@@ -1436,10 +1441,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
      *    lanewise}{@code (}{@link VectorOperators#DIV
      *    DIV}{@code , s, m)}.
      *
-     * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
      *
      * @param e the input scalar
      * @param m the mask controlling lane selection
@@ -1476,8 +1479,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
     /**
      * Computes the smaller of this vector and the broadcast of an input scalar.
      *
-     * This is a lane-wise binary operation which appliesthe
-     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * This is a lane-wise binary operation which applies the
+     * operation {@code Math.min()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -1509,8 +1512,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
     /**
      * Computes the larger of this vector and the broadcast of an input scalar.
      *
-     * This is a lane-wise binary operation which appliesthe
-     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * This is a lane-wise binary operation which applies the
+     * operation {@code Math.max()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
