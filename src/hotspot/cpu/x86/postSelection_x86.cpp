@@ -232,6 +232,61 @@ static MachOper *GetMachOperand(bool isLegacy, const TypeVect *vt) {
   return NULL;
 }
 
+static const  RegMask * GetRegMaskForType(bool isLegacy, const TypeVect *vt) {
+  if (isLegacy) {
+    switch (vt->length_in_bytes()) {
+    case 4: {
+      legVecSOper obj;
+      return static_cast<MachOper*>(&obj)->in_RegMask(0);
+     }
+    case 8: {
+      legVecDOper obj;
+      return static_cast<MachOper*>(&obj)->in_RegMask(0);
+     }
+    case 16: {
+      legVecXOper obj;
+      return static_cast<MachOper*>(&obj)->in_RegMask(0);
+     }
+    case 32: {
+      legVecYOper obj;
+      return static_cast<MachOper*>(&obj)->in_RegMask(0);
+     }
+    case 64: {
+      legVecZOper obj;
+      return static_cast<MachOper*>(&obj)->in_RegMask(0);
+     }
+    default:
+      assert(0, "Cannot find register mask for this vector length");
+    }
+  } else {
+    switch (vt->length_in_bytes()) {
+    case 4: {
+      vecSOper obj;
+      return static_cast<MachOper*>(&obj)->in_RegMask(0);
+     }
+    case 8: {
+      vecDOper obj;
+      return static_cast<MachOper*>(&obj)->in_RegMask(0);
+     }
+    case 16: {
+      vecXOper obj;
+      return static_cast<MachOper*>(&obj)->in_RegMask(0);
+     }
+    case 32: {
+      vecYOper obj;
+      return static_cast<MachOper*>(&obj)->in_RegMask(0);
+     }
+    case 64: {
+      vecZOper obj;
+      return static_cast<MachOper*>(&obj)->in_RegMask(0);
+     }
+    default:
+      assert(0, "Cannot find register mask for this vector length");
+    }
+  }
+  return NULL;
+}
+
 static MachOper *
 GetSpecificOperandFromDef(MachNode *node, MachOper *oper,
                           GrowableArray<Node *> *lazyresolution) {
@@ -320,12 +375,13 @@ static int RemoveGenericOperands(Compile *c, Node *root) {
       // 1) Convert generic def operand into specific one using the type of
       // machine node.
       if (!GenRCCNode) {
-        if (mnode->_opnds[0]->opcode() == VECG)
+        if (mnode->_opnds[0]->opcode() == VECG) {
           mnode->_opnds[0] =
               GetMachOperand(false, mnode->bottom_type()->is_vect());
-        else if (mnode->_opnds[0]->opcode() == LEGVECG)
+        } else if (mnode->_opnds[0]->opcode() == LEGVECG) {
           mnode->_opnds[0] =
               GetMachOperand(true, mnode->bottom_type()->is_vect());
+        }
       }
 
       // 2) For generic use operands pull specific register class operands from
@@ -337,9 +393,9 @@ static int RemoveGenericOperands(Compile *c, Node *root) {
                                                        &lazyresolution);
           if (inoper == NULL)
             GenTempOpndsCounter++;
-          else if (inoper != mnode->_opnds[j])
+          else if (inoper != mnode->_opnds[j]) {
             mnode->_opnds[j] = inoper->clone();
-          else
+          } else
             GenOpndsCounter++;
         }
       }
@@ -479,25 +535,19 @@ static void RemoveLegacyOperandRCCNodes(Compile *c, Node *root) {
   }
 }
 
+const RegMask * Matcher::get_concrete_reg_mask(MachNode * node) {
+   MachOper * def = node->_opnds[0];
+   if (def->opcode() == VECG)
+     return GetRegMaskForType(0, node->bottom_type()->is_vect());
+   else if (def->opcode() == LEGVECG)
+     return GetRegMaskForType(1, node->bottom_type()->is_vect());
+   else 
+     return &node->out_RegMask(); 
+}
+
 void Matcher::do_post_selection_processing(Compile *c, Node *root) {
   if (root && require_postselect_cleanup()) {
     Compile::_vec_nodes += RemoveGenericOperands(c, root);
     RemoveLegacyOperandRCCNodes(c, root);
   }
-  if (Matcher::vector_size_supported(T_BYTE,4)) {
-    idealreg2regmask[Op_VecS] = &VECTORS_REG_mask();
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,2)) {
-    idealreg2regmask[Op_VecD] = &VECTORD_REG_mask();
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,4)) {
-    idealreg2regmask[Op_VecX] = &VECTORX_REG_mask(); 
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,8)) {
-    idealreg2regmask[Op_VecY] = &VECTORY_REG_mask();
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,16)) {
-    idealreg2regmask[Op_VecZ] = &VECTORZ_REG_mask();
-  }
-  Fixup_Save_On_Entry();
 }

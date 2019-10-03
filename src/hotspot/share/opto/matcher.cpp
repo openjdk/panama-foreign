@@ -398,13 +398,7 @@ void Matcher::match( ) {
 
   // ------------------------
   // Set up save-on-entry registers.
-  // For X86 this will be called at the end of 
-  // post selection stage once generic operands
-  // are resolved. 
-#ifndef X86
-    Fixup_Save_On_Entry( );
-#endif
-
+  Fixup_Save_On_Entry( );
 }
 
 
@@ -887,6 +881,13 @@ void Matcher::Fixup_Save_On_Entry( ) {
   } // End of for all machine registers
 }
 
+const RegMask * Matcher::getRegMaskForNode(MachNode * node) {
+#ifdef X86
+  return Matcher::get_concrete_reg_mask(node);
+#else
+  return &node->out_RegMask();
+#endif
+}
 //------------------------------init_spill_mask--------------------------------
 void Matcher::init_spill_mask( Node *ret ) {
   if( idealreg2regmask[Op_RegI] ) return; // One time only init
@@ -922,6 +923,29 @@ void Matcher::init_spill_mask( Node *ret ) {
   // Share frame pointer while making spill ops
   set_shared(fp);
 
+  // Vector regmasks.
+  if (Matcher::vector_size_supported(T_BYTE,4)) {
+    TypeVect::VECTS = TypeVect::make(T_BYTE, 4);
+    MachNode *spillVectS = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTS));
+    idealreg2regmask[Op_VecS] = getRegMaskForNode(spillVectS);
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,2)) {
+    MachNode *spillVectD = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTD));
+    idealreg2regmask[Op_VecD] = getRegMaskForNode(spillVectD);
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,4)) {
+    MachNode *spillVectX = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTX));
+    idealreg2regmask[Op_VecX] = getRegMaskForNode(spillVectX);
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,8)) {
+    MachNode *spillVectY = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTY));
+    idealreg2regmask[Op_VecY] = getRegMaskForNode(spillVectY);
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,16)) {
+    MachNode *spillVectZ = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTZ));
+    idealreg2regmask[Op_VecZ] = getRegMaskForNode(spillVectZ);
+  }
+
   // Compute generic short-offset Loads
 #ifdef _LP64
   MachNode *spillCP = match_tree(new LoadNNode(NULL,mem,fp,atp,TypeInstPtr::BOTTOM,MemNode::unordered));
@@ -942,29 +966,6 @@ void Matcher::init_spill_mask( Node *ret ) {
   idealreg2regmask[Op_RegF] = &spillF->out_RegMask();
   idealreg2regmask[Op_RegD] = &spillD->out_RegMask();
   idealreg2regmask[Op_RegP] = &spillP->out_RegMask();
-
-  // Vector regmasks.
-  if (Matcher::vector_size_supported(T_BYTE,4)) {
-    TypeVect::VECTS = TypeVect::make(T_BYTE, 4);
-    MachNode *spillVectS = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTS));
-    idealreg2regmask[Op_VecS] = &spillVectS->out_RegMask();
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,2)) {
-    MachNode *spillVectD = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTD));
-    idealreg2regmask[Op_VecD] = &spillVectD->out_RegMask();
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,4)) {
-    MachNode *spillVectX = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTX));
-    idealreg2regmask[Op_VecX] = &spillVectX->out_RegMask();
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,8)) {
-    MachNode *spillVectY = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTY));
-    idealreg2regmask[Op_VecY] = &spillVectY->out_RegMask();
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,16)) {
-    MachNode *spillVectZ = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTZ));
-    idealreg2regmask[Op_VecZ] = &spillVectZ->out_RegMask();
-  }
 }
 
 #ifdef ASSERT
