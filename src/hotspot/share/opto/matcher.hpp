@@ -86,6 +86,7 @@ public:
   void reset_postselect_cleanup() { _require_postselect_cleanup = 0;}
   bool require_postselect_cleanup() { return _require_postselect_cleanup & (1 << 0x2);}
   void do_post_selection_processing(Compile*, Node *);
+  const static RegMask * get_concrete_reg_mask(MachNode * node);
 #endif
 private:
   // Private arena of State objects
@@ -287,6 +288,7 @@ public:
   // If we should save-on-entry this register
   bool is_save_on_entry( int reg );
 
+  const RegMask * getRegMaskForNode(MachNode *);
   // Fixup the save-on-entry registers
   void Fixup_Save_On_Entry( );
 

@@ -4211,7 +4211,7 @@ bool MatchRule::is_vector() const {
     "VLShiftV","VRShiftV","VURShiftV",
     "ReplicateB","ReplicateS","ReplicateI","ReplicateL","ReplicateF","ReplicateD",
     "LoadVector","StoreVector","LoadVectorGather", "StoreVectorScatter",
-    "VectorLoadMask", "VectorStoreMask", "VectorBlend", "VectorInsert",
+    "VectorTest", "VectorLoadMask", "VectorStoreMask", "VectorBlend", "VectorInsert",
     "VectorRearrange","VectorLoadShuffle",
     "VectorCastB2X", "VectorCastS2X", "VectorCastI2X",
     "VectorCastL2X", "VectorCastF2X", "VectorCastD2X",
