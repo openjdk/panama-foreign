@@ -1703,7 +1703,9 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           else if (vlen * type2aelembytes(T_DOUBLE) * BitsPerByte > 256 && UseAVX < 3) { ret_value = false; }
           break;
         case Op_VectorReinterpret:
-          if (size_in_bits >= 256 && UseAVX < 2) { ret_value = false; }
+          if (UseAVX < 0) { ret_value = false; }
+          if (size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+          if (size_in_bits > 256 && UseAVX < 3) { ret_value = false; }
           break;
         case Op_MulReductionVI:
           if (bt ==T_BYTE && size_in_bits == 512 && !VM_Version::supports_avx512bw()) { ret_value = false; }
@@ -3172,8 +3174,12 @@ instruct MoveVecG2LegVecG(legVecG dst, vecG src) %{
 %}
 
 
-instruct reinterpretS(vecS dst) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+instruct reinterpretG(vecG dst) %{
+  predicate((n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4) || 
+            (n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8) ||
+            (n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16) ||
+            (n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32) ||
+            (n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64));
   match(Set dst (VectorReinterpret dst));
   ins_cost(125);
   format %{ " # reinterpret $dst" %}
@@ -3183,8 +3189,9 @@ instruct reinterpretS(vecS dst) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretS2D(vecD dst, vecS src, rRegL scratch) %{
-  predicate(UseAVX == 0 && n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+instruct reinterpretG2G(vecG dst, vecG src, rRegL scratch) %{
+  predicate(UseAVX == 0 && (((n->bottom_type()->is_vect()->length_in_bytes() == 8 || n->bottom_type()->is_vect()->length_in_bytes() == 16) && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4) ||
+             (n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8)));
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
   effect(TEMP dst, TEMP scratch);
@@ -3196,73 +3203,26 @@ instruct reinterpretS2D(vecD dst, vecS src, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretS2D_avx(vecD dst, vecS src, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+instruct reinterpretS2G_avx(vecG dst, vecG src, rRegL scratch) %{
+  predicate(UseAVX > 0 && 
+             ((n->bottom_type()->is_vect()->length_in_bytes() >= 8 && n->bottom_type()->is_vect()->length_in_bytes() <= 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4) ||
+             ((n->bottom_type()->is_vect()->length_in_bytes() >= 16 && n->bottom_type()->is_vect()->length_in_bytes() <= 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8))));
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
   effect(TEMP dst, TEMP scratch);
   format %{ " # reinterpret $dst,$src" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_32_bit_mask()), vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretS2X(vecX dst, vecS src, rRegL scratch) %{
-  predicate(UseAVX == 0 && n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  effect(TEMP dst, TEMP scratch);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    __ movdqu($dst$$XMMRegister, ExternalAddress(vector_32_bit_mask()), $scratch$$Register);
-    __ pand($dst$$XMMRegister, $src$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretS2X_avx(vecX dst, vecS src, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  effect(TEMP scratch);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_32_bit_mask()), vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretS2Y(vecY dst, vecS src, rRegL scratch) %{
-  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  effect(TEMP scratch);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_32_bit_mask()), vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretS2Z(vecZ dst, vecS src, rRegL scratch) %{
-  predicate(UseAVX > 2 && n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  effect(TEMP scratch);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_32_bit_mask()), vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretD2S(vecS dst, vecD src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+instruct reinterpretG2G_avx(vecG dst, vecG src) %{
+  predicate((n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8) || 
+            (n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16) ||
+            (n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16) ||
+            (n->bottom_type()->is_vect()->length_in_bytes() >= 4 && n->bottom_type()->is_vect()->length_in_bytes() <= 16 && (n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32 || n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64)));
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
   format %{ " # reinterpret $dst,$src" %}
@@ -3275,190 +3235,21 @@ instruct reinterpretD2S(vecS dst, vecD src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretD(vecD dst) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
-  match(Set dst (VectorReinterpret dst));
-  ins_cost(125);
-  format %{ " # reinterpret $dst" %}
-  ins_encode %{
-    // empty
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretD2X(vecX dst, vecD src, rRegL scratch) %{
-  predicate(UseAVX == 0 && n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  effect(TEMP dst, TEMP scratch);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    __ movdqu($dst$$XMMRegister, ExternalAddress(vector_64_bit_mask()), $scratch$$Register);
-    __ pand($dst$$XMMRegister, $src$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretD2X_avx(vecX dst, vecD src, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  effect(TEMP dst, TEMP scratch);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_64_bit_mask()), vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretD2Y(vecY dst, vecD src, rRegL scratch) %{
-  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  effect(TEMP scratch);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_64_bit_mask()), vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretD2Z(vecZ dst, vecD src, rRegL scratch) %{
-  predicate(UseAVX > 2 && n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  effect(TEMP scratch);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_64_bit_mask()), vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretX2S(vecS dst, vecX src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    // If register is the same, then move is not needed.
-    if ($dst$$XMMRegister != $src$$XMMRegister) {
-      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    }
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretX2D(vecD dst, vecX src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    // If register is the same, then move is not needed.
-    if ($dst$$XMMRegister != $src$$XMMRegister) {
-      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    }
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretX(vecX dst) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
-  match(Set dst (VectorReinterpret dst));
-  ins_cost(125);
-  format %{ " # reinterpret $dst" %}
-  ins_encode %{
-    // empty
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretX2Y(vecY dst, vecX src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
+instruct reinterpretX2Y(vecG dst, vecG src) %{
+  predicate((n->bottom_type()->is_vect()->length_in_bytes() == 32 || n->bottom_type()->is_vect()->length_in_bytes() == 64) && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
   effect(TEMP dst);
   format %{ " # reinterpret $dst,$src" %}
   ins_encode %{
-    int vector_len = 1;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
     __ movdqu($dst$$XMMRegister, $src$$XMMRegister);  // just 128-bits need moved
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretX2Z(vecZ dst, vecX src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  effect(TEMP dst);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);  // just 128-bits need moved
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretY2S(vecS dst, vecY src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    // If register is the same, then move is not needed.
-    if ($dst$$XMMRegister != $src$$XMMRegister) {
-      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    }
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretY2D(vecD dst, vecY src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    // If register is the same, then move is not needed.
-    if ($dst$$XMMRegister != $src$$XMMRegister) {
-      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    }
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretY2X(vecX dst, vecY src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    // If register is the same, then move is not needed.
-    if ($dst$$XMMRegister != $src$$XMMRegister) {
-      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    }
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretY(vecY dst) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32);
-  match(Set dst (VectorReinterpret dst));
-  ins_cost(125);
-  format %{ " # reinterpret $dst" %}
-  ins_encode %{
-    // empty
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretY2Z(vecZ dst, vecY src) %{
+instruct reinterpretY2Z(vecG dst, vecG src) %{
   predicate(n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32);
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
@@ -3472,49 +3263,7 @@ instruct reinterpretY2Z(vecZ dst, vecY src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretZ2S(vecS dst, vecZ src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    // If register is the same, then move is not needed.
-    if ($dst$$XMMRegister != $src$$XMMRegister) {
-      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    }
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretZ2D(vecD dst, vecZ src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    // If register is the same, then move is not needed.
-    if ($dst$$XMMRegister != $src$$XMMRegister) {
-      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    }
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretZ2X(vecX dst, vecZ src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64);
-  match(Set dst (VectorReinterpret src));
-  ins_cost(125);
-  format %{ " # reinterpret $dst,$src" %}
-  ins_encode %{
-    // If register is the same, then move is not needed.
-    if ($dst$$XMMRegister != $src$$XMMRegister) {
-      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    }
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretZ2Y(vecY dst, vecZ src) %{
+instruct reinterpretZ2Y(vecG dst, vecG src) %{
   predicate(n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64);
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
@@ -3524,17 +3273,6 @@ instruct reinterpretZ2Y(vecY dst, vecZ src) %{
     if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct reinterpretZ(vecZ dst) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64);
-  match(Set dst (VectorReinterpret dst));
-  ins_cost(125);
-  format %{ " # reinterpret $dst" %}
-  ins_encode %{
-    // empty
   %}
   ins_pipe( pipe_slow );
 %}
@@ -6267,23 +6005,11 @@ instruct rvinsert8D(vecZ dst, vecZ src, vecZ tmp, vecY tmp2, regD val, rRegL tmp
 
 // ====================REDUCTION ARITHMETIC=======================================
 
-instruct rsadd8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2) %{
+instruct rsadd8B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, rRegI tmp2) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{
-            "pshufd  $tmp,$src2,0x1\n\t"
-            "paddb   $tmp,$src2\n\t"
-            "movzbl  $dst,$src1\n\t"
-            "pextrb  $tmp2,$tmp, 0x0\n\t"
-            "addl    $dst,$tmp2\n\t"
-            "pextrb  $tmp2,$tmp, 0x1\n\t"
-            "addl    $dst,$tmp2\n\t"
-            "pextrb  $tmp2,$tmp, 0x2\n\t"
-            "addl    $dst,$tmp2\n\t"
-            "pextrb  $tmp2,$tmp, 0x3\n\t"
-            "addl    $dst,$tmp2\n\t"
-            "movsbl  $dst,$dst\t! add reduction8B" %}
+  format %{ "vector_addB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
     __ paddb($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -6301,24 +6027,11 @@ instruct rsadd8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   ins_pipe( pipe_slow );
 %}
 
-instruct rsadd16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2, rRegI tmp3) %{
+instruct rsadd16B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2, rRegI tmp3) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP dst);
-  format %{ "pshufd  $tmp,$src2,0xE\n\t"
-            "paddb   $tmp,$src2\n\t"
-            "pshufd  $tmp2,$tmp,0x1\n\t"
-            "paddb   $tmp,$tmp,$tmp2\n\t"
-            "movzbl  $dst,$src1\n\t"
-            "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "pextrb  $tmp3,$tmp, 0x1\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "pextrb  $tmp3,$tmp, 0x2\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "pextrb  $tmp3,$tmp, 0x3\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "movsbl  $dst,$dst\t! add reduction16B" %}
+  format %{ "vector_addB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
     __ paddb($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -6338,26 +6051,11 @@ instruct rsadd16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rvadd32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2, rRegI tmp3) %{
+instruct rvadd32B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2, rRegI tmp3) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP dst);
-  format %{ "vextracti128_high  $tmp,$src2\n\t"
-            "vpaddb  $tmp,$tmp,$src2\n\t"
-            "pshufd  $tmp2,$tmp,0xE\n\t"
-            "vpaddb  $tmp,$tmp,$tmp2\n\t"
-            "pshufd  $tmp2,$tmp,0x1\n\t"
-            "vpaddb  $tmp,$tmp,$tmp2\n\t"
-            "movzbl  $dst,$src1\n\t"
-            "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "pextrb  $tmp3,$tmp, 0x1\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "pextrb  $tmp3,$tmp, 0x2\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "pextrb  $tmp3,$tmp, 0x3\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "movsbl  $dst,$dst\t! add reduction32B" %}
+  format %{ "vector_addB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -6380,28 +6078,11 @@ instruct rvadd32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rvadd64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp2, rRegI tmp3) %{
+instruct rvadd64B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2, rRegI tmp3) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP dst);
-  format %{ "vextracti64x4_high  $tmp2,$src2\n\t"
-            "vpaddb  $tmp2,$tmp2,$src2\n\t"
-            "vextracti128_high  $tmp,$tmp2\n\t"
-            "vpaddb  $tmp,$tmp,$tmp2\n\t"
-            "pshufd  $tmp2,$tmp,0xE\n\t"
-            "vpaddb  $tmp,$tmp,$tmp2\n\t"
-            "pshufd  $tmp2,$tmp,0x1\n\t"
-            "vpaddb  $tmp,$tmp,$tmp2\n\t"
-            "movzbl  $dst,$src1\n\t"
-            "movdl   $tmp3,$tmp\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "shrl    $tmp3,0x8\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "shrl    $tmp3,0x8\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "shrl    $tmp3,0x8\n\t"
-            "addl    $dst,$tmp3\n\t"
-            "movsbl  $dst,$dst\t! add reduction64B" %}
+  format %{ "vector_addB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vextracti64x4_high($tmp2$$XMMRegister, $src2$$XMMRegister);
@@ -6426,18 +6107,11 @@ instruct rvadd64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rsadd4S_reduction_reg(rRegI dst, rRegI src1, legVecD src2, legRegF tmp, rRegI tmp2) %{
+instruct rsadd4S_reduction_reg(rRegI dst, rRegI src1, legVecG src2, legRegF tmp, rRegI tmp2) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{
-            "movdqu   $tmp,$src2\n\t"
-            "phaddw   $tmp,$tmp\n\t"
-            "phaddw   $tmp,$tmp\n\t"
-            "movzwl   $dst,$src1\n\t"
-            "pextrw   $tmp2,$tmp, 0x0\n\t"
-            "addw     $dst,$tmp2\n\t"
-            "movswl  $dst,$dst\t! add reduction4S" %}
+  format %{ "vector_addS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ movdqu($tmp$$XMMRegister, $src2$$XMMRegister);
     __ phaddw($tmp$$XMMRegister, $tmp$$XMMRegister);
@@ -6450,16 +6124,11 @@ instruct rsadd4S_reduction_reg(rRegI dst, rRegI src1, legVecD src2, legRegF tmp,
   ins_pipe( pipe_slow );
 %}
 
-instruct rvadd4S_reduction_reg(rRegI dst, rRegI src1, legVecD src2, legRegF tmp, rRegI tmp2) %{
+instruct rvaddS_reduction_reg(rRegI dst, rRegI src1, legVecG src2, legRegF tmp, rRegI tmp2) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ "vphaddw  $tmp,$src2,$src2\n\t"
-            "vphaddw  $tmp,$tmp,$tmp\n\t"
-            "movzwl   $dst,$src1\n\t"
-            "pextrw   $tmp2,$tmp, 0x0\n\t"
-            "addw     $dst,$tmp2\n\t"
-            "movswl  $dst,$dst\t! add reduction4S" %}
+  format %{ "vector_addS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vphaddw($tmp$$XMMRegister, $src2$$XMMRegister, $src2$$XMMRegister, vector_len);
@@ -6472,19 +6141,11 @@ instruct rvadd4S_reduction_reg(rRegI dst, rRegI src1, legVecD src2, legRegF tmp,
   ins_pipe( pipe_slow );
 %}
 
-instruct rsadd8S_reduction_reg(rRegI dst, rRegI src1, legVecX src2, legRegF tmp, rRegI tmp2) %{
+instruct rsadd8S_reduction_reg(rRegI dst, rRegI src1, legVecG src2, legRegF tmp, rRegI tmp2) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{
-            "movdqu   $tmp,$src2\n\t"
-            "phaddw  $tmp,$tmp\n\t"
-            "phaddw  $tmp,$tmp\n\t"
-            "phaddw  $tmp,$tmp\n\t"
-            "movzwl   $dst,$src1\n\t"
-            "pextrw   $tmp2,$tmp, 0x0\n\t"
-            "addw     $dst,$tmp2\n\t"
-            "movswl  $dst,$dst\t! add reduction8S" %}
+  format %{ "vector_addS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ movdqu($tmp$$XMMRegister, $src2$$XMMRegister);
     __ phaddw($tmp$$XMMRegister, $tmp$$XMMRegister);
@@ -6498,42 +6159,11 @@ instruct rsadd8S_reduction_reg(rRegI dst, rRegI src1, legVecX src2, legRegF tmp,
   ins_pipe( pipe_slow );
 %}
 
-instruct rvadd8S_reduction_reg(rRegI dst, rRegI src1, legVecX src2, legRegF tmp, rRegI tmp2) %{
-  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (AddReductionVI src1 src2));
-  effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ "vphaddw  $tmp,$src2,$src2\n\t"
-            "vphaddw  $tmp,$tmp,$tmp\n\t"
-            "vphaddw  $tmp,$tmp,$tmp\n\t"
-            "movzwl   $dst,$src1\n\t"
-            "pextrw   $tmp2,$tmp, 0x0\n\t"
-            "addw     $dst,$tmp2\n\t"
-            "movswl  $dst,$dst\t! add reduction8S" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vphaddw($tmp$$XMMRegister, $src2$$XMMRegister, $src2$$XMMRegister, vector_len);
-    __ vphaddw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, vector_len);
-    __ vphaddw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, vector_len);
-    __ movzwl($dst$$Register, $src1$$Register);
-    __ pextrw($tmp2$$Register, $tmp$$XMMRegister, 0x0);
-    __ addw($dst$$Register, $tmp2$$Register);
-    __ movswl($dst$$Register, $dst$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rvadd16S_reduction_reg(rRegI dst, rRegI src1, legVecY src2, legRegF tmp, rRegI tmp2) %{
+instruct rvadd16S_reduction_reg(rRegI dst, rRegI src1, legVecG src2, legRegF tmp, rRegI tmp2) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ "vphaddw  $tmp,$src2,$src2\n\t"
-            "vphaddw  $tmp,$tmp,$tmp\n\t"
-            "vphaddw  $tmp,$tmp,$tmp\n\t"
-            "vphaddw  $tmp,$tmp,$tmp\n\t"
-            "movzwl   $dst,$src1\n\t"
-            "pextrw   $tmp2,$tmp, 0x0\n\t"
-            "addw     $dst,$tmp2\n\t"
-            "movswl  $dst,$dst\t! add reduction16S" %}
+  format %{ "vector_addS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vphaddw($tmp$$XMMRegister, $src2$$XMMRegister, $src2$$XMMRegister, vector_len);
@@ -6549,23 +6179,11 @@ instruct rvadd16S_reduction_reg(rRegI dst, rRegI src1, legVecY src2, legRegF tmp
   ins_pipe( pipe_slow );
 %}
 
-instruct rvadd32S_reduction_reg_evex(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp2, rRegI tmp3) %{
+instruct rvadd32S_reduction_reg_evex(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2, rRegI tmp3) %{
   predicate(UseAVX > 2  && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP dst);
-  format %{ "vextracti64x4_high  $tmp2,$src2\n\t"
-            "vpaddw  $tmp2,$tmp2,$src2\n\t"
-            "vextracti128_high  $tmp,$tmp2\n\t"
-            "vpaddw  $tmp,$tmp,$tmp2\n\t"
-            "pshufd  $tmp2,$tmp,0xE\n\t"
-            "vpaddw  $tmp,$tmp,$tmp2\n\t"
-            "pshufd  $tmp2,$tmp,0x1\n\t"
-            "vpaddw  $tmp,$tmp,$tmp2\n\t"
-            "movdl   $tmp3,$tmp\n\t"
-            "addw    $dst,$tmp3\n\t"
-            "shrl    $tmp3,0x16\n\t"
-            "addw     $dst,$tmp3\n\t"
-            "movswl  $dst,$dst\t! add reduction32S" %}
+  format %{ "vector_addS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ vextracti64x4_high($tmp2$$XMMRegister, $src2$$XMMRegister);
     __ vpaddw($tmp2$$XMMRegister, $tmp2$$XMMRegister, $src2$$XMMRegister, 1);
@@ -7416,21 +7034,11 @@ instruct rvsub8D_reduction_reg(regD dst, vecZ src2, regD tmp, regD tmp2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmul8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
+instruct rsmul8B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MulReductionVI src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp1, TEMP tmp2, TEMP tmp3);
-  format %{ "pmovsxbw $tmp,$src2\n\t"
-            "pshufd   $tmp1,$tmp,0xE\n\t"
-            "pmullw   $tmp,$tmp1\n\t"
-            "pshufd   $tmp1,$tmp,0x1\n\t"
-            "pmullw   $tmp,$tmp1\n\t"
-            "pextrw   $tmp2,$tmp, 0x1\n\t"
-            "pextrw   $tmp3,$tmp, 0x0\n\t"
-            "imul     $tmp2,$tmp3 \n\t"
-            "movsbl   $dst,$src1\n\t"
-            "imull    $dst,$tmp2\n\t"
-            "movsbl   $dst,$dst\t! mul reduction8B" %}
+  format %{ "vector_mulB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pmovsxbw($tmp$$XMMRegister, $src2$$XMMRegister);
     __ pshufd($tmp1$$XMMRegister, $tmp$$XMMRegister, 0xE);
@@ -7447,24 +7055,11 @@ instruct rsmul8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmul16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
+instruct rsmul16B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MulReductionVI src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp1, TEMP tmp2, TEMP tmp3);
-  format %{ "pmovsxbw $tmp,$src2\n\t"
-            "pshufd   $tmp1,$src2,0xEE\n\t"
-            "pmovsxbw $tmp1,$tmp1\n\t"
-            "pmullw   $tmp,$tmp1\n\t"
-            "pshufd   $tmp1,$tmp,0xE\n\t"
-            "pmullw   $tmp,$tmp1\n\t"
-            "pshufd   $tmp1,$tmp,0x1\n\t"
-            "pmullw   $tmp,$tmp1\n\t"
-            "pextrw   $tmp2,$tmp, 0x1\n\t"
-            "pextrw   $tmp3,$tmp, 0x0\n\t"
-            "imull    $tmp2,$tmp3 \n\t"
-            "movsbl   $dst,$src1\n\t"
-            "imull    $dst,$tmp2\n\t"
-            "movsbl   $dst,$dst\t! mul reduction16B" %}
+  format %{ "vector_mulB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ pmovsxbw($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -7485,26 +7080,11 @@ instruct rsmul16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmul32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
+instruct rvmul32B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MulReductionVI src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp1, TEMP tmp2, TEMP tmp3);
-  format %{ "vextracti128_high  $tmp,$src2\n\t"
-            "pmovsxbw $tmp,$tmp\n\t"
-            "pmovsxbw $tmp1,$src2\n\t"
-            "vpmullw  $tmp,$tmp,$tmp1\n\t"
-            "vextracti128_high  $tmp1,$tmp\n\t"
-            "vpmullw  $tmp,$tmp,$tmp1\n\t"
-            "pshufd   $tmp1,$tmp,0xE\n\t"
-            "vpmullw  $tmp,$tmp,$tmp1\n\t"
-            "pshufd   $tmp1,$tmp,0x1\n\t"
-            "vpmullw  $tmp,$tmp,$tmp1\n\t"
-            "pextrw   $tmp2,$tmp, 0x1\n\t"
-            "pextrw   $tmp3,$tmp, 0x0\n\t"
-            "imull    $tmp2,$tmp3 \n\t"
-            "movsbl   $dst,$src1\n\t"
-            "imull    $dst,$tmp2\n\t"
-            "movsbl   $dst,$dst\t! mul reduction32B" %}
+  format %{ "vector_mulB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -7527,28 +7107,11 @@ instruct rvmul32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmul64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
+instruct rvmul64B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
   predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MulReductionVI src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp1, TEMP tmp2, TEMP tmp3);
-  format %{ "vextracti64x4_high  $tmp,$src2\n\t"
-            "vpmovsxbw $tmp,$tmp\n\t"
-            "vpmovsxbw $tmp1,$src2\n\t"
-            "vpmullw  $tmp,$tmp,$tmp1\n\t"
-            "vextracti64x4_high  $tmp1,$tmp\n\t"
-            "vpmullw  $tmp,$tmp,$tmp1\n\t"
-            "vextracti128_high  $tmp1,$tmp\n\t"
-            "vpmullw  $tmp,$tmp,$tmp1\n\t"
-            "pshufd   $tmp1,$tmp,0xE\n\t"
-            "vpmullw  $tmp,$tmp,$tmp1\n\t"
-            "pshufd   $tmp1,$tmp,0x1\n\t"
-            "vpmullw  $tmp,$tmp,$tmp1\n\t"
-            "pextrw   $tmp2,$tmp, 0x1\n\t"
-            "pextrw   $tmp3,$tmp, 0x0\n\t"
-            "imull    $tmp2,$tmp3 \n\t"
-            "movsbl   $dst,$src1\n\t"
-            "imull    $dst,$tmp2\n\t"
-            "movsbl   $dst,$dst\t! mul reduction64B" %}
+  format %{ "vector_mulB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 2;
     __ vextracti64x4_high($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -7573,18 +7136,11 @@ instruct rvmul64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmul4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2, rRegI tmp3) %{
+instruct rsmul4S_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, rRegI tmp2, rRegI tmp3) %{
   predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MulReductionVI src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3);
-  format %{ "pshufd  $tmp,$src2,0x1\n\t"
-            "pmullw  $tmp,$src2\n\t"
-            "pextrw  $tmp2,$tmp, 0x1\n\t"
-            "pextrw  $tmp3,$tmp, 0x0\n\t"
-            "imull    $tmp2,$tmp3 \n\t"
-            "movswl   $dst,$src1\n\t"
-            "imull    $dst,$tmp2\n\t"
-            "movswl   $dst,$dst\t! mul reduction4S" %}
+  format %{ "vector_mulS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
     __ pmullw($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -7598,20 +7154,11 @@ instruct rsmul4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmul8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
+instruct rsmul8S_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
   predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MulReductionVI src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp1, TEMP tmp2, TEMP tmp3);
-  format %{ "pshufd  $tmp,$src2,0xE\n\t"
-            "pmullw  $tmp,$src2\n\t"
-            "pshufd  $tmp1,$tmp,0x1\n\t"
-            "pmullw  $tmp,$tmp1\n\t"
-            "pextrw  $tmp2,$tmp, 0x1\n\t"
-            "pextrw  $tmp3,$tmp, 0x0\n\t"
-            "imul    $tmp2,$tmp3 \n\t"
-            "movswl   $dst,$src1\n\t"
-            "imull    $dst,$tmp2\n\t"
-            "movswl   $dst,$dst\t! mul reduction8S" %}
+  format %{ "vector_mulS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
     __ pmullw($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -7627,22 +7174,11 @@ instruct rsmul8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmul16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
+instruct rvmul16S_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MulReductionVI src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp1, TEMP tmp2, TEMP tmp3);
-  format %{ "vextracti128_high  $tmp,$src2\n\t"
-            "vpmullw  $tmp,$tmp,$src2\n\t"
-            "pshufd  $tmp1,$tmp,0xE\n\t"
-            "pmullw  $tmp,$tmp1\n\t"
-            "pshufd  $tmp1,$tmp,0x1\n\t"
-            "pmullw  $tmp,$tmp1\n\t"
-            "pextrw  $tmp2,$tmp, 0x1\n\t"
-            "pextrw  $tmp3,$tmp, 0x0\n\t"
-            "imul    $tmp2,$tmp3 \n\t"
-            "movswl   $dst,$src1\n\t"
-            "imull    $dst,$tmp2\n\t"
-            "movswl   $dst,$dst\t! mul reduction16S" %}
+  format %{ "vector_mulS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
     __ vpmullw($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, 1);
@@ -7660,24 +7196,11 @@ instruct rvmul16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmul32S_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
+instruct rvmul32S_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp1, rRegI tmp2, rRegI tmp3) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MulReductionVI src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp1, TEMP tmp2, TEMP tmp3);
-  format %{ "vextracti64x4_high  $tmp1,$src2\n\t"
-            "vpmullw  $tmp1,$tmp1,$src2\n\t"
-            "vextracti128_high  $tmp,$tmp1\n\t"
-            "vpmullw  $tmp,$tmp,$tmp1\n\t"
-            "pshufd  $tmp1,$tmp,0xE\n\t"
-            "pmullw  $tmp,$tmp1\n\t"
-            "pshufd  $tmp1,$tmp,0x1\n\t"
-            "pmullw  $tmp,$tmp1\n\t"
-            "pextrw  $tmp2,$tmp, 0x1\n\t"
-            "pextrw  $tmp3,$tmp, 0x0\n\t"
-            "imul    $tmp2,$tmp3 \n\t"
-            "movswl   $dst,$src1\n\t"
-            "imull    $dst,$tmp2\n\t"
-            "movswl   $dst,$dst\t! mul reduction32S" %}
+  format %{ "vector_mulS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vextracti64x4_high($tmp1$$XMMRegister, $src2$$XMMRegister);
@@ -8194,29 +7717,11 @@ instruct rvmul8D_reduction_reg(regD dst, legVecZ src2, legVecZ tmp, legVecZ tmp2
 %}
 
 //--------------------Min Reduction --------------------
-instruct rsmin8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+instruct rsmin8B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
-  format %{ "pshufd  $tmp,$src2,0x1\n\t"
-            "pminsb  $tmp,$src2\n\t"
-            "pextrb  $tmp2,$tmp, 0x1\n\t"
-            "movsbl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp,0x0\n\t"
-            "movsbl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $src1,$tmp3\n\t"
-            "cmovl  $tmp3,$src1, 0x0\n\t"
-            "movl  $dst,$tmp2\n\t"
-            "pextrb  $tmp2,$tmp\n\t"
-            "movsbl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp\n\t"
-            "movsbl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $tmp3,$dst\n\t"
-            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  format %{ "vector_minB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister,0x1);
     __ pminsb($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -8242,31 +7747,11 @@ instruct rsmin8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmin16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+instruct rsmin16B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
-  format %{ "pshufd  $tmp4,$src2,0xE\n\t"
-            "pminsb  $tmp4,$src2\n\t"
-            "pshufd  $tmp,$tmp4,0x1\n\t"
-            "pminsb  $tmp,$tmp4\n\t"
-            "pextrb  $tmp2,$tmp, 0x1\n\t"
-            "movsbl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp,0x0\n\t"
-            "movsbl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $src1,$tmp3\n\t"
-            "cmovl  $tmp3,$src1, 0x0\n\t"
-            "movl  $dst,$tmp2\n\t"
-            "pextrb  $tmp2,$tmp\n\t"
-            "movsbl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp\n\t"
-            "movsbl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $tmp3,$dst\n\t"
-            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  format %{ "vector_minB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp4$$XMMRegister, $src2$$XMMRegister, 0xE);
     __ pminsb($tmp4$$XMMRegister, $src2$$XMMRegister);
@@ -8294,31 +7779,11 @@ instruct rsmin16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rReg
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+instruct rvmin16B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
-  format %{ "pshufd  $tmp4,$src2,0xE\n\t"
-            "vpminsb  $tmp,$tmp4,$src2\n\t"
-            "pshufd  $tmp,$tmp4,0x1\n\t"
-            "vpminsb  $tmp,$tmp,$tmp4\n\t"
-            "pextrb  $tmp2,$tmp, 0x1\n\t"
-            "movsbl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp,0x0\n\t"
-            "movsbl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $src1,$tmp3\n\t"
-            "cmovl  $tmp3,$src1, 0x0\n\t"
-            "movl  $dst,$tmp2\n\t"
-            "pextrb  $tmp2,$tmp\n\t"
-            "movsbl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp\n\t"
-            "movsbl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $tmp3,$dst\n\t"
-            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  format %{ "vector_minB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ pshufd($tmp4$$XMMRegister, $src2$$XMMRegister, 0xE);
@@ -8347,33 +7812,11 @@ instruct rvmin16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rReg
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+instruct rvmin32B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
-  format %{ "vextracti128_high  $tmp,$src2\n\t"
-            "vpminsb  $tmp,$tmp,$src2\n\t"
-            "pshufd  $tmp4,$tmp,0xE\n\t"
-            "vpminsb  $tmp4,$tmp4,$tmp\n\t"
-            "pshufd  $tmp,$tmp4,0x1\n\t"
-            "vpminsb  $tmp,$tmp,$tmp4\n\t"
-            "pextrb  $tmp2,$tmp, 0x1\n\t"
-            "movsbl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp,0x0\n\t"
-            "movsbl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $src1,$tmp3\n\t"
-            "cmovl  $tmp3,$src1, 0x0\n\t"
-            "movl  $dst,$tmp2\n\t"
-            "pextrb  $tmp2,$tmp\n\t"
-            "movsbl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp\n\t"
-            "movsbl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $tmp3,$dst\n\t"
-            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  format %{ "vector_minB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -8404,35 +7847,11 @@ instruct rvmin32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, rReg
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+instruct rvmin64B_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
-  format %{ "vextracti64x4_high  $tmp4,$src2\n\t"
-            "vpminsb  $tmp4,$tmp4,$src2\n\t"
-            "vextracti128_high  $tmp,$tmp4\n\t"
-            "vpminsb  $tmp,$tmp,$tmp4\n\t"
-            "pshufd  $tmp4,$tmp,0xE\n\t"
-            "vpminsb  $tmp4,$tmp4,$tmp\n\t"
-            "pshufd  $tmp,$tmp4,0x1\n\t"
-            "vpminsb  $tmp,$tmp,$tmp4\n\t"
-            "pextrb  $tmp2,$tmp, 0x1\n\t"
-            "movsbl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp,0x0\n\t"
-            "movsbl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $src1,$tmp3\n\t"
-            "cmovl  $tmp3,$src1, 0x0\n\t"
-            "movl  $dst,$tmp2\n\t"
-            "pextrb  $tmp2,$tmp\n\t"
-            "movsbl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp\n\t"
-            "movsbl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $tmp3,$dst\n\t"
-            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  format %{ "vector_minB_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ vextracti64x4_high($tmp4$$XMMRegister, $src2$$XMMRegister);
     __ vpminsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, 2);
@@ -8464,21 +7883,11 @@ instruct rvmin64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, rReg
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmin4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2, rRegI tmp3) %{
+instruct rsmin4S_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, rRegI tmp2, rRegI tmp3) %{
   predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
-  format %{ "pshufd  $tmp,$src2,0x1\n\t"
-            "pminsw  $tmp,$src2\n\t"
-            "pextrw  $tmp2,$tmp, 0x1\n\t"
-            "movswl  $tmp2,$tmp2\n\t"
-            "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "movswl  $tmp3,$tmp3,0x1\n\t"
-            "cmpl  $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,tmp2\n\t"
-            "cmpl  $src1,$tmp3\n\t"
-            "cmovl  $tmp3,$src1\n\t"
-            "movswl  $dst,$tmp3\t! min reduction4S" %}
+  format %{ "vector_minS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister,0x1);
     __ pminsw($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -8495,23 +7904,11 @@ instruct rsmin4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmin8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+instruct rsmin8S_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
   predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
-  format %{ "pshufd  $tmp2,$src2,0xE\n\t"
-            "pminsw  $tmp2,$src2\n\t"
-            "pshufd  $tmp,$tmp2,0x1\n\t"
-            "pminsw  $tmp,$tmp2\n\t"
-            "pextrw  $tmp2,$tmp\n\t"
-            "movswl  $tmp2,$tmp2\n\t"
-            "pextrw  $tmp3,$tmp, 0x0\n\t"
-            "movswl  $tmp3,$tmp3\n\t"
-            "cmpl    $tmp2,$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $src1,$tmp3\n\t"
-            "cmovl  $tmp3,$src1\n\t"
-            "movl  $dst,$tmp3\t! min reduction8S" %}
+  format %{ "vector_minS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister,0xE);
     __ pminsw($tmp2$$XMMRegister, $src2$$XMMRegister);
@@ -8530,20 +7927,11 @@ instruct rsmin8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+instruct rvmin8S_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
-  format %{ "pshufd   $tmp,$src2,0xE\n\t"
-            "vpminsw  $tmp,$tmp,$src2\n\t"
-            "pshufd   $tmp2,$tmp,0x1\n\t"
-            "vpminsw  $tmp,$tmp,$tmp2\n\t"
-            "movzwl   $dst,$src1\n\t"
-            "pextrw   $tmp3,$tmp, 0x0\n\t"
-            "vpminsw  $dst,$dst,$tmp3\n\t"
-            "pextrw   $tmp3,$tmp, 0x1\n\t"
-            "vpminsw  $dst,$dst,$tmp3\n\t"
-            "movswl   $dst,$dst\t! min reduction8S" %}
+  format %{ "vector_minS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
@@ -8563,25 +7951,11 @@ instruct rvmin8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+instruct rvmin16S_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
-  format %{ "vextracti128_high  $tmp,$src2\n\t"
-            "vpminsw  $tmp,$tmp,$src2\n\t"
-            "pshufd  $tmp2,$tmp,0xE\n\t"
-            "vpminsw  $tmp,$tmp,$tmp2\n\t"
-            "pshufd  $tmp2,$tmp,0x1\n\t"
-            "vpminsw  $tmp,$tmp,$tmp2\n\t"
-            "pextrw  $tmp2,$tmp, 0x1\n\t"
-            "movswl  $tmp2,$tmp2\n\t"
-            "pextrw  $tmp3,$tmp, 0x0\n\t"
-            "movswl  $tmp3,$tmp3\n\t"
-            "cmpl  $tmp2$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $src1,$tmp3\n\t"
-            "cmovl  $tmp3,$src1\n\t"
-            "movl  $dst,$tmp3\t! min reduction16S" %}
+  format %{ "vector_minS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -8603,27 +7977,11 @@ instruct rvmin16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin32S_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+instruct rvmin32S_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
-  format %{ "vextracti64x4_high  $tmp2,$src2\n\t"
-            "vpminsw  $tmp2,$tmp2,$src2\n\t"
-            "vextracti128_high  $tmp,$tmp2\n\t"
-            "vpminsw  $tmp,$tmp,$tmp2\n\t"
-            "pshufd  $tmp2,$tmp,0xE\n\t"
-            "vpminsw  $tmp,$tmp,$tmp2\n\t"
-            "pshufd  $tmp2,$tmp,0x1\n\t"
-            "vpminsw  $tmp,$tmp,$tmp2\n\t"
-            "pextrw  $tmp3,$tmp, 0x0\n\t"
-            "movswl  $dst,$src1\n\t"
-            "pextrw  $tmp3,$tmp, 0x0\n\t"
-            "movswl  $dst,$src1\n\t"
-            "cmpl  $tmp2$tmp3\n\t"
-            "cmovl  $tmp3,$tmp2\n\t"
-            "cmpl  $src1,$tmp3\n\t"
-            "cmovl  $tmp3,$src1\n\t"
-            "movl  $dst,$dst\t! min reduction32S" %}
+  format %{ "vector_minS_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 2;
     __ vextracti64x4_high($tmp2$$XMMRegister, $src2$$XMMRegister);
@@ -8647,15 +8005,11 @@ instruct rvmin32S_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmin2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF tmp2) %{
+instruct rsmin2I_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
-  format %{ "pshufd  $tmp,$src2,0x1\n\t"
-            "pminsd  $tmp,$src2\n\t"
-            "movd    $tmp2,$src1\n\t"
-            "pminsd  $tmp2,$tmp\n\t"
-            "movd    $dst,$tmp2\t! min reduction2I" %}
+  format %{ "vector_minI_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
     __ pminsd($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -8666,15 +8020,11 @@ instruct rsmin2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF tmp2) %{
+instruct rvmin2I_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
-  format %{ "pshufd   $tmp,$src2,0x1\n\t"
-            "vpminsd  $tmp2,$tmp,$src2\n\t"
-            "movd     $tmp,$src1\n\t"
-            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
-            "movd     $dst,$tmp2\t! min reduction2I" %}
+  format %{ "vector_minI_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
@@ -8686,17 +8036,11 @@ instruct rvmin2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmin4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
+instruct rsmin4I_reduction_reg(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
-  format %{ "pshufd  $tmp,$src2,0xE\n\t"
-            "pminsd  $tmp,$src2\n\t"
-            "pshufd  $tmp2,$tmp,0x1\n\t"
-            "pminsd  $tmp2,$tmp\n\t"
-            "movd    $tmp,$src1\n\t"
-            "pminsd  $tmp2,$tmp\n\t"
-            "movd    $dst,$tmp2\t! min reduction4I" %}
+  format %{ "vector_minI_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
     __ pminsd($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -8709,17 +8053,11 @@ instruct rsmin4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
+instruct rvmin4I_reduction(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
-  format %{ "pshufd   $tmp,$src2,0xE\n\t"
-            "vpminsd  $tmp2,$tmp,$src2\n\t"
-            "pshufd   $tmp,$tmp2,0x1\n\t"
-            "vpminsd  $tmp2,$tmp2,$tmp\n\t"
-            "movd     $tmp,$src1\n\t"
-            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
-            "movd     $dst,$tmp2\t! min reduction4I" %}
+  format %{ "vector_minI_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
@@ -8733,43 +8071,11 @@ instruct rvmin4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin4I_reduction_evex(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
-  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (MinReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2);
-  format %{ "pshufd   $tmp,$src2,0xE\n\t"
-            "vpminsd  $tmp2,$tmp,$src2\n\t"
-            "pshufd   $tmp,$tmp2,0x1\n\t"
-            "vpminsd  $tmp2,$tmp2,$tmp\n\t"
-            "movd     $tmp,$src1\n\t"
-            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
-            "movd     $dst,$tmp2\t! min reduction4I" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
-    __ vpminsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
-    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
-    __ vpminsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
-    __ movdl($tmp$$XMMRegister, $src1$$Register);
-    __ vpminsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ movdl($dst$$Register, $tmp2$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rvmin8I_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2) %{
+instruct rvmin8I_reduction(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
-  format %{ "vextracti128_high   $tmp,$src2\n\t"
-            "vpminsd  $tmp,$tmp,$src2\n\t"
-            "pshufd   $tmp2,$tmp,0xE\n\t"
-            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
-            "pshufd   $tmp,$tmp2,0x1\n\t"
-            "vpminsd  $tmp2,$tmp2,$tmp\n\t"
-            "movd     $tmp,$src1\n\t"
-            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
-            "movd     $dst,$tmp2\t! min reduction8I" %}
+  format %{ "vector_minI_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
@@ -8785,49 +8091,11 @@ instruct rvmin8I_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin8I_reduction_evex(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2) %{
-  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (MinReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2);
-  format %{ "vextracti128_high   $tmp,$src2\n\t"
-            "vpminsd  $tmp,$tmp,$src2\n\t"
-            "pshufd   $tmp2,$tmp,0xE\n\t"
-            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
-            "pshufd   $tmp,$tmp2,0x1\n\t"
-            "vpminsd  $tmp2,$tmp2,$tmp\n\t"
-            "movd     $tmp,$src1\n\t"
-            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
-            "movd     $dst,$tmp2\t! min reduction8I" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
-    __ vpminsd($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
-    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
-    __ vpminsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
-    __ vpminsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
-    __ movdl($tmp$$XMMRegister, $src1$$Register);
-    __ vpminsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ movdl($dst$$Register, $tmp2$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rvmin16I_reduction_evex(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp2, regF tmp3) %{
+instruct rvmin16I_reduction_evex(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2, regF tmp3) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
-  format %{ "vextracti64x4_high  $tmp3,$src2\n\t"
-            "vpminsd  $tmp3,$tmp3,$src2\n\t"
-            "vextracti128_high   $tmp,$tmp3\n\t"
-            "vpminsd  $tmp,$tmp,$tmp3\n\t"
-            "pshufd   $tmp2,$tmp,0xE\n\t"
-            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
-            "pshufd   $tmp,$tmp2,0x1\n\t"
-            "vpminsd  $tmp2,$tmp2,$tmp\n\t"
-            "movd     $tmp,$src1\n\t"
-            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
-            "movd     $dst,$tmp2\t! min reduction16I" %}
+  format %{ "vector_minI_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 2;
     __ vextracti64x4_high($tmp3$$XMMRegister, $src2$$XMMRegister);
@@ -8846,15 +8114,11 @@ instruct rvmin16I_reduction_evex(rRegI dst, rRegI src1, vecZ src2, regF tmp, reg
 %}
 
 // Long Min Reduction
-instruct rsmin1L_reduction_reg(rRegL dst, rRegL src1, legVecD src2, rxmm0 tmp, legVecD tmp2) %{
+instruct rsmin1L_reduction_reg(rRegL dst, rRegL src1, legVecG src2, rxmm0 tmp, legVecD tmp2) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
-  format %{ "movdq      $tmp,$src1\n\t"
-            "movdq      $tmp2,$src1\n\t"
-            "pcmpgtq   $tmp,$src2\n\t"
-            "blendvpd  $tmp2,$src2\n\t"
-            "movdq      $dst,$tmp2\t! min reduction1L" %}
+  format %{ "vector_minL_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ movdq($tmp$$XMMRegister,$src1$$Register);
     __ movdq($tmp2$$XMMRegister,$src1$$Register);
@@ -8865,20 +8129,11 @@ instruct rsmin1L_reduction_reg(rRegL dst, rRegL src1, legVecD src2, rxmm0 tmp, l
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 xmm_0, vecX tmp2, vecX tmp3) %{
+instruct rsmin2L_reduction_reg(rRegL dst, rRegL src1, vecG src2, rxmm0 xmm_0, vecX tmp2, vecX tmp3) %{
   predicate(UseSSE > 3 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP xmm_0, TEMP tmp2, TEMP tmp3);
-  format %{ "pshufd  $tmp3,$src2,0xE\n\t"
-            "movdqu  $xmm_0,$src2\n\t"
-            "movdqu  $tmp2,$src2\n\t"
-            "pcmpgtq  $xmm_0,$tmp3\n\t"
-            "blendvpd  $tmp2,$tmp3\n\t"
-            "movdqu  $xmm_0,$tmp2\n\t"
-            "movdq  $tmp3,$src1\n\t"
-            "pcmpgtq  $xmm_0,$tmp3\n\t"
-            "blendvpd  $tmp2,$tmp3\n\t"
-            "movq  $dst,$tmp2\t! min reduction2L" %}
+  format %{ "vector_minL_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ pshufd($tmp3$$XMMRegister, $src2$$XMMRegister, 0xE);
     __ movdqu($xmm_0$$XMMRegister, $src2$$XMMRegister);
@@ -8894,17 +8149,11 @@ instruct rsmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 xmm_0, ve
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin2L_reduction_reg(rRegL dst, rRegL src1, legVecX src2, legVecX tmp, legVecX tmp2, legVecX tmp3) %{
+instruct rvmin2L_reduction_reg(rRegL dst, rRegL src1, legVecG src2, legVecX tmp, legVecX tmp2, legVecX tmp3) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
-  format %{ "pshufd   $tmp2,$src2,0xE\n\t"
-            "vpcmpgtq  $tmp,$tmp2,$src2\n\t"
-            "vblendvpd   $tmp2,$tmp2,$src2,$tmp\n\t"
-            "movq     $tmp,$src1\n\t"
-            "vpcmpgtq  $tmp3,$tmp2,$tmp\n\t"
-            "blendvpd   $tmp2,$tmp2,$src1,$tmp3\n\t"
-            "movq     $dst,$tmp2\t! min reduction2L" %}
+  format %{ "vector_minL_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister, 0xE);
@@ -8918,20 +8167,11 @@ instruct rvmin2L_reduction_reg(rRegL dst, rRegL src1, legVecX src2, legVecX tmp,
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin4L_reduction_reg(rRegL dst, rRegL src1, legVecY src2, legVecY tmp, legVecY tmp2, legVecY tmp3) %{
+instruct rvmin4L_reduction_reg(rRegL dst, rRegL src1, legVecG src2, legVecY tmp, legVecY tmp2, legVecY tmp3) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
-  format %{ "vextracti128_high   $tmp2,$src2\n\t"
-            "vpcmpgtq  $tmp,$tmp2,$src2\n\t"
-            "vblendvpd   $tmp2,$tmp2,$src2,$tmp\n\t"
-            "vpshufd   $tmp3, $tmp2,0x1\n\t"
-            "vpcmpgtq  $tmp, $tmp3,$tmp\n\t2"
-            "vblendvpd $tmp3,$tmp3,$tmp2,$tmp\n\t"
-            "movq     $tmp2,$src1\n\t"
-            "vpcmpgtq  $tmp,$tmp2,$tmp3\n\t"
-            "blendvpd   $tmp2,$tmp2,$tmp3,$tmp\n\t"
-            "movq     $dst,$tmp2\t! min reduction2L" %}
+  format %{ "vector_minL_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vextracti128_high($tmp2$$XMMRegister, $src2$$XMMRegister);
@@ -8948,23 +8188,11 @@ instruct rvmin4L_reduction_reg(rRegL dst, rRegL src1, legVecY src2, legVecY tmp,
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin8L_reduction_reg(rRegL dst, rRegL src1, legVecZ src2, legVecZ tmp, legVecZ tmp2, legVecZ tmp3) %{
+instruct rvmin8L_reduction_reg(rRegL dst, rRegL src1, legVecG src2, legVecZ tmp, legVecZ tmp2, legVecZ tmp3) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
-  format %{ "vextracti64x4_high  $tmp3,$src2\n\t"
-            "vpcmpgtq  $tmp,$tmp3,$src2\n\t"
-            "vblendvpd   $tmp3,$tmp3,$src2,$tmp\n\t"
-            "vextracti128_high   $tmp2,$tmp3\n\t"
-            "vpcmpgtq  $tmp,$tmp2,$tmp3\n\t"
-            "vblendvpd   $tmp2,$tmp2,$tmp3,$tmp\n\t"
-            "vpshufd  $tmp3,$tmp2,0x1\n\t"
-            "vpcmpgtq   $tmp,$tmp3,$tmp2\n\t"
-            "vblendvpd  $tmp3,$tmp3,$tmp2,$tmp\n\t"
-            "movq     $tmp2,$src1\n\t"
-            "vpcmpgtq  $tmp,$tmp2,$tmp3\n\t"
-            "vblendvpd  $tmp2,$tmp2,$tmp3,$tmp\n\t"
-            "movq     $dst,$tmp2\t! min reduction4I" %}
+  format %{ "vector_minL_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     __ vextracti64x4_high($tmp3$$XMMRegister, $src2$$XMMRegister);
     __ vpcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister, $src2$$XMMRegister, 1);
@@ -8984,14 +8212,12 @@ instruct rvmin8L_reduction_reg(rRegL dst, rRegL src1, legVecZ src2, legVecZ tmp,
 %}
 
 // Float Min Reduction
-instruct rvmin2F_reduction_reg_av(legRegF dst, legVecD src, legVecD tmp, legVecD dtmp,
+instruct rvmin2F_reduction_reg_av(legRegF dst, legVecG src, legVecD tmp, legVecD dtmp,
                                   legVecD atmp, legVecD btmp, legVecX xmm_1) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinReductionV dst src));
   effect(TEMP dst, TEMP tmp, TEMP dtmp, TEMP atmp, TEMP btmp, TEMP xmm_1);
-  format %{ "vpermilps    $xmm_1,$src,1\n\t"
-            "vminps_macro $dtmp,$xmm_1,$src\t! minps\n\t"
-            "vminps_macro $dst,$dtmp,$dst\t! minps" %}
+  format %{ "vector_minF_reduction $dst,$src\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vpermilps($xmm_1$$XMMRegister, $src$$XMMRegister, 1, vector_len);
@@ -9003,14 +8229,13 @@ instruct rvmin2F_reduction_reg_av(legRegF dst, legVecD src, legVecD tmp, legVecD
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin2F_reduction_reg(legRegF dst, immF src1, legVecD src2, legVecD tmp,
+instruct rvmin2F_reduction_reg(legRegF dst, immF src1, legVecG src2, legVecD tmp,
                                legVecD atmp, legVecD btmp, legVecX xmm_1) %{
   predicate(UseAVX > 0 && n->in(1)->as_Type()->type() == (Type*)TypeF::POS_INF && 
             n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP atmp, TEMP btmp, TEMP xmm_1);
-  format %{ "vpermilps    $xmm_1,$src2,1\n\t"
-            "vminps_macro $dst,$xmm_1,$src2\t! minps" %}
+  format %{ "vector_minF_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vpermilps($xmm_1$$XMMRegister, $src2$$XMMRegister, 1, vector_len);
@@ -9020,16 +8245,12 @@ instruct rvmin2F_reduction_reg(legRegF dst, immF src1, legVecD src2, legVecD tmp
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin4F_reduction_reg_av(legRegF dst, legVecX src, legVecX tmp, legVecX dtmp, 
+instruct rvmin4F_reduction_reg_av(legRegF dst, legVecG src, legVecX tmp, legVecX dtmp, 
                                   legVecX atmp, legVecX btmp, legVecX xmm_0, legVecX xmm_1) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinReductionV dst src));
   effect(TEMP dst, TEMP tmp, TEMP dtmp, TEMP atmp, TEMP btmp, TEMP xmm_0, TEMP xmm_1);
-  format %{ "vpermilps    $xmm_1,$src,14\n\t"
-            "vminps_macro $xmm_0,$xmm_1,$src\t! minps\n\t"
-            "vpermilps    $xmm_1,$xmm_0,1\n\t"
-            "vminps_macro $dtmp,$xmm_1,$xmm_0\t! minps\n\t"
-            "vminps_macro $dst,$dtmp,$dst\t! minps" %}
+  format %{ "vector_minF_reduction $dst,$src\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vpermilps($xmm_1$$XMMRegister, $src$$XMMRegister, 14, vector_len);
@@ -9044,16 +8265,13 @@ instruct rvmin4F_reduction_reg_av(legRegF dst, legVecX src, legVecX tmp, legVecX
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin4F_reduction_reg(legRegF dst, immF src1, legVecX src2, legVecX tmp, legVecX atmp,
+instruct rvmin4F_reduction_reg(legRegF dst, immF src1, legVecG src2, legVecX tmp, legVecX atmp,
                                legVecX btmp, legVecX xmm_0, legVecX xmm_1) %{
   predicate(UseAVX > 0 && n->in(1)->as_Type()->type() == (Type*)TypeF::POS_INF && 
             n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP atmp, TEMP btmp, TEMP xmm_0, TEMP xmm_1);
-  format %{ "vpermilps    $xmm_1,$src2,14\n\t"
-            "vminps_macro $xmm_0,$xmm_1,$src2\t! minps\n\t"
-            "vpermilps    $xmm_1,$xmm_0,1\n\t"
-            "vminps_macro $dst,$xmm_1,$xmm_0\t! minps" %}
+  format %{ "vector_minF_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vpermilps($xmm_1$$XMMRegister, $src2$$XMMRegister, 14, vector_len);
@@ -9066,18 +8284,12 @@ instruct rvmin4F_reduction_reg(legRegF dst, immF src1, legVecX src2, legVecX tmp
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin8F_reduction_reg_av(legRegF dst, legVecY src, legVecY tmp, legVecY dtmp, legVecY atmp,
+instruct rvmin8F_reduction_reg_av(legRegF dst, legVecG src, legVecY tmp, legVecY dtmp, legVecY atmp,
                                   legVecY btmp, legVecY ymm_0, legVecY ymm_1) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinReductionV dst src));
   effect(TEMP dst, TEMP tmp, TEMP dtmp, TEMP atmp, TEMP btmp, TEMP ymm_0, TEMP ymm_1);
-  format %{ "vperm2f128   $ymm_1,$src,$src,1\n\t"
-            "vminps_macro $ymm_0,$ymm_1,$src\t! minps\n\t"
-            "vpermilps    $ymm_1,$ymm_0,14\n\t"
-            "vminps_macro $ymm_0,$ymm_1,$ymm_0\n\t! mips\n\t"
-            "vpermilps    $ymm_1,$ymm_0,1\n\t"
-            "vminps_macro $dtmp,$ymm_1,$ymm_0\t! minps\n\t" 
-            "vminps_macro $dst,$dtmp,$dst\t! minps" %}
+  format %{ "vector_minF_reduction $dst,$src\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vperm2f128($ymm_1$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, 1);
@@ -9095,18 +8307,13 @@ instruct rvmin8F_reduction_reg_av(legRegF dst, legVecY src, legVecY tmp, legVecY
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin8F_reduction_reg(legRegF dst, immF src1, legVecY src2, legVecY tmp,
+instruct rvmin8F_reduction_reg(legRegF dst, immF src1, legVecG src2, legVecY tmp,
                                legVecY atmp, legVecY btmp, legVecY ymm_0, legVecY ymm_1) %{
   predicate(UseAVX > 0 && n->in(1)->as_Type()->type() == (Type*)TypeF::POS_INF && 
             n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP atmp, TEMP btmp, TEMP ymm_0, TEMP ymm_1);
-  format %{ "vperm2f128   $ymm_1,$src2,$src2, 1\n\t"
-            "vminps_macro $ymm_0,$ymm_1,$src2\t! minps\n\t"
-            "vpermilps    $ymm_1,$ymm_0,14\n\t"
-            "vminps_macro $ymm_0,$ymm_1,$ymm_0\t! mips\n\t"
-            "vpermilps    $ymm_1,$ymm_0,1\n\t"
-            "vminps_macro $dst,$ymm_1,$ymm_0\t! minps" %}
+  format %{ "vector_minF_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vperm2f128($ymm_1$$XMMRegister, $src2$$XMMRegister, $src2$$XMMRegister, 1);
@@ -9122,22 +8329,12 @@ instruct rvmin8F_reduction_reg(legRegF dst, immF src1, legVecY src2, legVecY tmp
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin16F_reduction_reg_av(regF dst, vecZ src, vecZ tmp, vecZ dtmp,
+instruct rvmin16F_reduction_reg_av(regF dst, vecG src, vecZ tmp, vecZ dtmp,
                                    vecZ atmp, vecZ btmp, vecY ymm_0, vecY ymm_1) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinReductionV dst src));
   effect(TEMP dst, TEMP tmp, TEMP dtmp, TEMP atmp, TEMP btmp, TEMP ymm_0, TEMP ymm_1);
-  format %{
-       "vextractf64x4 $ymm_0, $src, 0\n\t"
-       "vextractf64x4 $ymm_1, $src, 1\n\t"
-       "vminps_macro $ymm_0,$ymm_1,$ymm_0\t! minps\n\t"
-       "vpermpd      $ymm_1,$ymm_0,78\n\t"
-       "vminps_macro $ymm_0,$ymm_1,$ymm_0\n\t! minps\n\t"
-       "vpermilps    $ymm_1,$ymm_0,14\n\t"
-       "vminps_macro $ymm_0,$ymm_1,$ymm_0\n\t! minps\n\t"
-       "vpermilps    $ymm_1,$ymm_0,1\n\t"
-       "vminps_macro $dtmp,$ymm_1,$ymm_0\t! minps\n\t"
-       "vminps_macro $dst,$dtmp,$dst\t! minps" %}
+  format %{ "vector_minF_reduction $dst,$src\n\t" %}
   ins_encode %{
     int vector_len = 1;
     KRegister ktmp = k1;
@@ -9160,22 +8357,13 @@ instruct rvmin16F_reduction_reg_av(regF dst, vecZ src, vecZ tmp, vecZ dtmp,
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin16F_reduction_reg(regF dst, immF src1, vecZ src2, vecZ tmp,
+instruct rvmin16F_reduction_reg(regF dst, immF src1, vecG src2, vecZ tmp,
                                 vecZ atmp, vecZ btmp, vecY ymm_0, vecY ymm_1) %{
   predicate(UseAVX > 2 && n->in(1)->as_Type()->type() == (Type*)TypeF::POS_INF && 
             n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP atmp, TEMP btmp, TEMP ymm_0, TEMP ymm_1);
-  format %{
-       "vextractf64x4 $ymm_0, $src2, 0\n\t"
-       "vextractf64x4 $ymm_1, $src2, 1\n\t"
-       "vminps_macro $ymm_0,$ymm_1,$ymm_0\t! minps\n\t"
-       "vpermpd      $ymm_1,$ymm_0, 78\n\t"
-       "vminps_macro $ymm_0,$ymm_1,$ymm_0\t! minps\n\t"
-       "vpermilps    $ymm_1,$ymm_0,14\n\t"
-       "vminps_macro $ymm_0,$ymm_1,$ymm_0\t! mips\n\t"
-       "vpermilps    $ymm_1,$ymm_0,1\n\t"
-       "vminps_macro $dst,$ymm_1,$ymm_0\t! minps" %}
+  format %{ "vector_minF_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     KRegister ktmp = k1;
@@ -9196,14 +8384,12 @@ instruct rvmin16F_reduction_reg(regF dst, immF src1, vecZ src2, vecZ tmp,
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin2D_reduction_reg_av(legRegD dst, legVecX src, legVecX tmp, legVecX dtmp,
+instruct rvmin2D_reduction_reg_av(legRegD dst, legVecG src, legVecX tmp, legVecX dtmp,
                                   legVecX atmp, legVecX btmp, legVecX xmm_1) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinReductionV dst src));
   effect(TEMP dst, TEMP tmp, TEMP dtmp, TEMP atmp, TEMP btmp, TEMP xmm_1);
-  format %{ "vpermilpd    $xmm_1,$src,1\n\t"
-            "vminps_macro $dtmp,$xmm_1,$src\t! minps\n\t"
-            "vminps_macro $dst,$dtmp,$dst\t! minps" %}
+  format %{ "vector_minD_reduction $dst,$src\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vpermilpd($xmm_1$$XMMRegister, $src$$XMMRegister, 1, vector_len);
@@ -9215,14 +8401,13 @@ instruct rvmin2D_reduction_reg_av(legRegD dst, legVecX src, legVecX tmp, legVecX
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin2D_reduction_reg(legRegD dst, immD src1, legVecX src2, legVecX tmp,
+instruct rvmin2D_reduction_reg(legRegD dst, immD src1, legVecG src2, legVecX tmp,
                                legVecX atmp, legVecX btmp, legVecX xmm_1) %{
   predicate(UseAVX > 0 && n->in(1)->as_Type()->type() == (Type*)TypeD::POS_INF && 
             n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP atmp, TEMP btmp, TEMP xmm_1);
-  format %{ "vpermilpd    $xmm_1,$src2,1\n\t"
-            "vminps_macro $dst,$xmm_1,$src2\t! minps" %}
+  format %{ "vector_minD_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vpermilpd($xmm_1$$XMMRegister, $src2$$XMMRegister, 1, vector_len);
@@ -9232,16 +8417,12 @@ instruct rvmin2D_reduction_reg(legRegD dst, immD src1, legVecX src2, legVecX tmp
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin4D_reduction_reg_av(legRegD dst, legVecY src, legVecY tmp, legVecY dtmp,
+instruct rvmin4D_reduction_reg_av(legRegD dst, legVecG src, legVecY tmp, legVecY dtmp,
                                   legVecY atmp, legVecY btmp, legVecY ymm_0, legVecY ymm_1) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinReductionV dst src));
   effect(TEMP dst, TEMP tmp, TEMP dtmp, TEMP atmp, TEMP btmp, TEMP ymm_0, TEMP ymm_1);
-  format %{ "vperm2f128   $ymm_1,$src,$src,1\n\t"
-            "vminpd_macro $ymm_0,$ymm_1,$src\t! minps\n\t"
-            "vpermilpd    $ymm_1,$ymm_0,1\n\t"
-            "vminpd_macro $dtmp,$ymm_1,$ymm_0\t! minps\n\t"
-            "vminpd_macro $dst,$dtmp,$dst\t! minps" %}
+  format %{ "vector_minD_reduction $dst,$src\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vperm2f128($ymm_1$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, 1);
@@ -9256,16 +8437,13 @@ instruct rvmin4D_reduction_reg_av(legRegD dst, legVecY src, legVecY tmp, legVecY
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin4D_reduction_reg(legRegD dst, immD src1, legVecY src2, legVecY tmp,
+instruct rvmin4D_reduction_reg(legRegD dst, immD src1, legVecG src2, legVecY tmp,
                                legVecY atmp, legVecY btmp, legVecY ymm_0, legVecY ymm_1) %{
   predicate(UseAVX > 0  && n->in(1)->as_Type()->type() == (Type*)TypeD::POS_INF && 
             n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP atmp, TEMP btmp, TEMP ymm_0, TEMP ymm_1);
-  format %{ "vperm2f128   $ymm_1,$src2,$src2,1\n\t"
-            "vminpd_macro $ymm_0,$ymm_1,$src2\t! minps\n\t"
-            "vpermilpd    $ymm_1,$ymm_0,1\n\t"
-            "vminpd_macro $dst,$ymm_1,$ymm_0\t! minps" %}
+  format %{ "vector_minD_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vperm2f128($ymm_1$$XMMRegister, $src2$$XMMRegister, $src2$$XMMRegister, 1);
@@ -9278,20 +8456,12 @@ instruct rvmin4D_reduction_reg(legRegD dst, immD src1, legVecY src2, legVecY tmp
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin8D_reduction_reg_av(regD dst, vecZ src, vecZ tmp, vecZ dtmp, vecZ atmp,
+instruct rvmin8D_reduction_reg_av(regD dst, vecG src, vecZ tmp, vecZ dtmp, vecZ atmp,
                                   vecZ btmp, vecY ymm_0, vecY ymm_1) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinReductionV dst src));
   effect(TEMP dst, TEMP tmp, TEMP dtmp, TEMP atmp, TEMP btmp, TEMP ymm_0, TEMP ymm_1);
-  format %{
-       "vextractf64x4 $ymm_0, $src, 0\n\t"
-       "vextractf64x4 $ymm_1, $src, 1\n\t"
-       "vminpd_macro $ymm_0,$ymm_1,$ymm_0\t! minpd\n\t"
-       "vpermpd      $ymm_1,$ymm_0,14\n\t"
-       "vminpd_macro $ymm_0,$ymm_1,$src\t! minpd\n\t"
-       "vpermilpd    $ymm_1,$ymm_0,1\n\t"
-       "vminpd_macro $dtmp,$ymm_1,$ymm_0\t! minpd\n\t" 
-       "vminpd_macro $dst,$dtmp,$dst\t! minpd\t" %}
+  format %{ "vector_minD_reduction $dst,$src\n\t" %}
   ins_encode %{
     int vector_len = 1;
     KRegister ktmp = k1;
@@ -9311,20 +8481,13 @@ instruct rvmin8D_reduction_reg_av(regD dst, vecZ src, vecZ tmp, vecZ dtmp, vecZ 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmin8D_reduction_reg(regD dst, immD src1, vecZ src2, vecZ tmp, 
+instruct rvmin8D_reduction_reg(regD dst, immD src1, vecG src2, vecZ tmp, 
                                vecZ atmp, vecZ btmp, vecY ymm_0, vecY ymm_1) %{
   predicate(UseAVX > 2 && n->in(1)->as_Type()->type() == (Type*)TypeD::POS_INF && 
             n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP atmp, TEMP btmp, TEMP ymm_0, TEMP ymm_1);
-  format %{
-       "vextractf64x4 $ymm_0, $src2, 0\n\t"
-       "vextractf64x4 $ymm_1, $src2, 1\n\t"
-       "vminpd_macro $ymm_0,$ymm_1,$ymm_0\t! minpd\n\t"
-       "vpermpd      $ymm_1,$ymm_0,14\n\t"
-       "vminpd_macro $ymm_0,$ymm_1,$ymm_0\t! minpd\n\t"
-       "vpermilpd    $ymm_1,$ymm_0,1\n\t"
-       "vminpd_macro $dst,$ymm_1,$ymm_0\t! minpd\n\t" %}
+  format %{ "vector_minD_reduction $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     KRegister ktmp = k1;
@@ -9883,7 +9046,7 @@ instruct rsmax4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmax4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
+instruct rvmax4I_reduction(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MaxReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
@@ -9907,60 +9070,8 @@ instruct rvmax4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvmax4I_reduction_evex(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
-  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (MaxReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2);
-  format %{ "pshufd   $tmp,$src2,0xE\n\t"
-            "vpmaxsd  $tmp2,$tmp,$src2\n\t"
-            "pshufd   $tmp,$tmp2,0x1\n\t"
-            "vpmaxsd  $tmp2,$tmp2,$tmp\n\t"
-            "movd     $tmp,$src1\n\t"
-            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
-            "movd     $dst,$tmp2\t! max reduction4I" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
-    __ vpmaxsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
-    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
-    __ vpmaxsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
-    __ movdl($tmp$$XMMRegister, $src1$$Register);
-    __ vpmaxsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ movdl($dst$$Register, $tmp2$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rvmax8I_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2) %{
+instruct rvmax8I_reduction(rRegI dst, rRegI src1, vecG src2, regF tmp, regF tmp2) %{
   predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (MaxReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2);
-  format %{ "vextracti128_high   $tmp,$src2\n\t"
-            "vpmaxsd  $tmp,$tmp,$src2\n\t"
-            "pshufd   $tmp2,$tmp,0xE\n\t"
-            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
-            "pshufd   $tmp,$tmp2,0x1\n\t"
-            "vpmaxsd  $tmp2,$tmp2,$tmp\n\t"
-            "movd     $tmp,$src1\n\t"
-            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
-            "movd     $dst,$tmp2\t! max reduction8I" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
-    __ vpmaxsd($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
-    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
-    __ vpmaxsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
-    __ vpmaxsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
-    __ movdl($tmp$$XMMRegister, $src1$$Register);
-    __ vpmaxsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ movdl($dst$$Register, $tmp2$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rvmax8I_reduction_evex(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2) %{
-  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MaxReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
   format %{ "vextracti128_high   $tmp,$src2\n\t"
@@ -13599,18 +12710,11 @@ instruct vmul4I_mem(vecX dst, vecX src, memory mem) %{
 
 // Long vector mul
 
-instruct mul2L_reg(vecX dst, vecX src2, vecX tmp) %{
+instruct mul2L_reg(vecG dst, vecG src2, vecX tmp) %{
   predicate(UseSSE > 3 && n->as_Vector()->length() == 2 && VM_Version::supports_sse4_1());
   match(Set dst (MulVL dst src2));
   effect(TEMP dst, TEMP tmp);
-  format %{ "pshufd $tmp,$src2, 177\n\t"
-            "pmulld $tmp,$dst\n\t"
-            "phaddd $tmp,$tmp\n\t"
-            "pmovzxdq $tmp,$tmp\n\t"
-            "psllq $tmp, 32\n\t"
-            "pmuludq $dst,$src2\n\t"
-            "paddq $dst,$tmp\n\t! mul packed2L" %}
-
+  format %{ "vector_mulL $dst,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 177);
@@ -13624,17 +12728,11 @@ instruct mul2L_reg(vecX dst, vecX src2, vecX tmp) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vmul2L_reg_avx(vecX dst, vecX src1, vecX src2, vecX tmp1, vecX tmp) %{
+instruct vmul2L_reg_avx(vecG dst, vecG src1, vecG src2, vecX tmp1, vecX tmp) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && VM_Version::supports_avx());
   match(Set dst (MulVL src1 src2));
   effect(TEMP tmp1, TEMP tmp);
-  format %{ "vpshufd $tmp,$src2\n\t"
-            "vpmulld $tmp,$src1,$tmp\n\t"
-            "vphaddd $tmp,$tmp,$tmp\n\t"
-            "vpmovzxdq $tmp,$tmp\n\t"
-            "vpsllq $tmp,$tmp\n\t"
-            "vpmuludq $tmp1,$src1,$src2\n\t"
-            "vpaddq $dst,$tmp,$tmp1\t! mul packed2L" %}
+  format %{ "vector_mulL $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 0;
     __ vpshufd($tmp$$XMMRegister, $src2$$XMMRegister, 177, vector_len);
@@ -13648,39 +12746,33 @@ instruct vmul2L_reg_avx(vecX dst, vecX src1, vecX src2, vecX tmp1, vecX tmp) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vmul2L_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 2 && VM_Version::supports_avx512dq());
+instruct vmulL_reg(vecG dst, vecG src1, vecG src2) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 && VM_Version::supports_avx512dq());
   match(Set dst (MulVL src1 src2));
   format %{ "vpmullq $dst,$src1,$src2\t! mul packed2L" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmullq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vmul2L_mem(vecX dst, vecX src, memory mem) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 2 && VM_Version::supports_avx512dq());
+instruct vmulL_mem(vecG dst, vecG src, memory mem) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 && VM_Version::supports_avx512dq());
   match(Set dst (MulVL src (LoadVector mem)));
   format %{ "vpmullq $dst,$src,$mem\t! mul packed2L" %}
   ins_encode %{
-    int vector_len = 0;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpmullq($dst$$XMMRegister, $src$$XMMRegister, $mem$$Address, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vmul4L_reg_avx(vecY dst, vecY src1, vecY src2, vecY tmp, vecY tmp1,) %{
+instruct vmul4L_reg_avx(vecG dst, vecG src1, vecG src2, vecY tmp, vecY tmp1,) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && VM_Version::supports_avx2());
   match(Set dst (MulVL src1 src2));
   effect(TEMP tmp1, TEMP tmp);
-  format %{ "vpshufd $tmp,$src2\n\t"
-            "vpmulld $tmp,$src1,$tmp\n\t"
-            "vphaddd $tmp,$tmp,$tmp\n\t"
-            "vpmovzxdq $tmp,$tmp\n\t"
-            "vpsllq $tmp,$tmp\n\t"
-            "vpmuludq $tmp1,$src1,$src2\n\t"
-            "vpaddq $dst,$tmp,$tmp1\t! mul packed4L" %}
+  format %{ "vector_mulL $dst,$src1,$src2\n\t" %}
   ins_encode %{
     int vector_len = 1;
     __ vpshufd($tmp$$XMMRegister, $src2$$XMMRegister, 177, vector_len);
@@ -13691,50 +12783,6 @@ instruct vmul4L_reg_avx(vecY dst, vecY src1, vecY src2, vecY tmp, vecY tmp1,) %{
     __ vpsllq($tmp$$XMMRegister, $tmp$$XMMRegister, 32, vector_len);
     __ vpmuludq($tmp1$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
     __ vpaddq($dst$$XMMRegister, $tmp$$XMMRegister, $tmp1$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vmul4L_reg(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && VM_Version::supports_avx512dq());
-  match(Set dst (MulVL src1 src2));
-  format %{ "vpmullq $dst,$src1,$src2\t! mul packed4L" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpmullq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vmul4L_mem(vecY dst, vecY src, memory mem) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && VM_Version::supports_avx512dq());
-  match(Set dst (MulVL src (LoadVector mem)));
-  format %{ "vpmullq $dst,$src,$mem\t! mul packed4L" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpmullq($dst$$XMMRegister, $src$$XMMRegister, $mem$$Address, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vmul8L_reg(vecZ dst, vecZ src1, vecZ src2) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && VM_Version::supports_avx512dq());
-  match(Set dst (MulVL src1 src2));
-  format %{ "vpmullq $dst,$src1,$src2\t! mul packed8L" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpmullq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vmul8L_mem(vecZ dst, vecZ src, memory mem) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && VM_Version::supports_avx512dq());
-  match(Set dst (MulVL src (LoadVector mem)));
-  format %{ "vpmullq $dst,$src,$mem\t! mul packed8L" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpmullq($dst$$XMMRegister, $src$$XMMRegister, $mem$$Address, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20134,107 +19182,57 @@ instruct loadshuffle8l(vecZ dst, vecD src, vecZ tmp, vecZ tmp2, rRegI scratch) %
 %}
 //-------------------------------- Rearrange -------------------------------------
 
-instruct rearrange8b(vecD dst, vecD shuffle) %{
-  predicate(UseSSE > 2 && n->as_Vector()->length() == 8 &&
+instruct rearrangeb(vecG dst, vecG shuffle) %{
+  predicate(UseSSE > 2 && (n->as_Vector()->length() == 8 || n->as_Vector()->length() == 16) &&
             n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorRearrange dst shuffle));
   effect(TEMP dst);
-  format %{ "pshufb $dst, $shuffle\t! rerrrange (8BRearrange)" %}
+  format %{ "pshufb $dst, $shuffle\t! rerrrange (BRearrange)" %}
   ins_encode %{
     __ pshufb($dst$$XMMRegister, $shuffle$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rearrange16b(vecX dst, vecX shuffle) %{
-  predicate(UseSSE > 2 && n->as_Vector()->length() == 16 &&
-            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorRearrange dst shuffle));
-  effect(TEMP dst);
-  format %{ "pshufb $dst, $shuffle\t! rearrange (16BRearrange)" %}
-  ins_encode %{
-    __ pshufb($dst$$XMMRegister, $shuffle$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rearrange32b(vecY dst, vecY src, vecY shuffle) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vbmi() && n->as_Vector()->length() == 32 &&
+instruct rearrangevb(vecG dst, vecG src, vecG shuffle) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vbmi() && (n->as_Vector()->length() == 32 || n->as_Vector()->length() == 64)&&
             n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorRearrange src shuffle));
   effect(TEMP dst);
-  format %{ "vpermb $dst, $shuffle\t! rearrange (32BRearrange)" %}
+  format %{ "vpermb $dst, $shuffle\t! rearrange (BRearrange)" %}
   ins_encode %{
-    int vector_len = 1;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpermb($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rearrange64b(vecZ dst, vecZ src, vecZ shuffle) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vbmi() && n->as_Vector()->length() == 64 &&
-            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorRearrange src shuffle));
-  effect(TEMP dst);
-  format %{ "vpermb $dst, $shuffle\t! rearrange (64BRearrange)" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpermb($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rearrange4s(vecD dst, vecD shuffle) %{
-  predicate(UseSSE > 2 && n->as_Vector()->length() == 4 &&
+instruct rearranges(vecD dst, vecD shuffle) %{
+  predicate(UseSSE > 2 && (n->as_Vector()->length() == 4 || n->as_Vector()->length() == 8) &&
             n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorRearrange dst shuffle));
   effect(TEMP dst);
-  format %{ "pshufb $dst, $shuffle\t! rerrrange (4SRearrange)" %}
+  format %{ "pshufb $dst, $shuffle\t! rerrrange (SRearrange)" %}
   ins_encode %{
     __ pshufb($dst$$XMMRegister, $shuffle$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rearrange8s(vecX dst, vecX shuffle) %{
-  predicate(UseSSE > 2 && n->as_Vector()->length() == 8 &&
-            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorRearrange dst shuffle));
-  effect(TEMP dst);
-  format %{ "pshufb $dst, $shuffle\t! rearrange (8SRearrange)" %}
-  ins_encode %{
-    __ pshufb($dst$$XMMRegister, $shuffle$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rearrange16s(vecY dst, vecY src, vecY shuffle) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vlbw() && n->as_Vector()->length() == 16 &&
+instruct rearrangevs(vecG dst, vecG src, vecG shuffle) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vlbw() && (n->as_Vector()->length() == 16 || n->as_Vector()->length() == 32) &&
             n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorRearrange src shuffle));
   effect(TEMP dst);
   format %{ "vpermw $dst, $shuffle\t! rearrange (16SRearrange)" %}
   ins_encode %{
-    int vector_len = 1;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpermw($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rearrange32s(vecZ dst, vecZ src, vecZ shuffle) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vlbw() && n->as_Vector()->length() == 32 &&
-            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorRearrange src shuffle));
-  effect(TEMP dst);
-  format %{ "vpermw $dst, $shuffle\t! rearrange (32SRearrange)" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpermw($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rearrange4i(vecX dst, vecX shuffle) %{
+instruct rearrangei(vecG dst, vecG shuffle) %{
  predicate(UseSSE > 2 && n->as_Vector()->length() == 4 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
@@ -20247,61 +19245,34 @@ instruct rearrange4i(vecX dst, vecX shuffle) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct rearrange8i(vecY dst, vecY src, vecY shuffle) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 &&
+instruct rearrangevi(vecG dst, vecG src, vecG shuffle) %{
+  predicate(UseAVX > 1 && (n->as_Vector()->length() == 8 || n->as_Vector()->length() == 16) &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorRearrange src shuffle));
   effect(TEMP dst);
   format %{ "vpermd $dst, $src, $shuffle\t! rearrange (8IRearrange)" %}
   ins_encode %{
-    int vector_len = 1;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rearrange16i(vecZ dst, vecZ src, vecZ shuffle) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
-  match(Set dst (VectorRearrange src shuffle));
-  effect(TEMP dst);
-  format %{ "vpermd $dst, $src, $shuffle\t! rearrange (16IRearrange)" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rearrange4l(vecY dst, vecY src, vecY shuffle) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 &&
+instruct rearrangevl(vecG dst, vecG src, vecG shuffle) %{
+  predicate(UseAVX > 1 && (n->as_Vector()->length() == 4 || n->as_Vector()->length() == 8)&&
             (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
              n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorRearrange src shuffle));
   effect(TEMP dst);
   format %{ "vpermd $dst, $src, $shuffle\t! rearrange (4LRearrange)" %}
   ins_encode %{
-    int vector_len = 1;
+    int vector_len = GetVectorLengthEnc(this);
     __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rearrange8l(vecZ dst, vecZ src, vecZ shuffle) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 &&
-            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
-             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
-  match(Set dst (VectorRearrange src shuffle));
-  effect(TEMP dst);
-  format %{ "vpermd $dst, $src, $shuffle\t! rearrange (8LRearrange)" %}
-  ins_encode %{
-    int vector_len = 2;
-    __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
 // --------------------------------- FMA --------------------------------------
 
 // a * b + c
