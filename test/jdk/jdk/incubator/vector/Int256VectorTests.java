@@ -701,7 +701,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a + b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void ADDInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -721,7 +721,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a + b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void addInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -738,7 +738,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, Int256VectorTests::add);
     }
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void ADDInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -758,7 +758,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, mask, Int256VectorTests::ADD);
     }
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void addInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -781,7 +781,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a - b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void SUBInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -801,7 +801,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a - b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void subInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -818,7 +818,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, Int256VectorTests::sub);
     }
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void SUBInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -838,7 +838,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, mask, Int256VectorTests::SUB);
     }
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void subInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -861,7 +861,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a * b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void MULInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -881,7 +881,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a * b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void mulInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -898,7 +898,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, Int256VectorTests::mul);
     }
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void MULInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -918,7 +918,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, mask, Int256VectorTests::MUL);
     }
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void mulInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -943,7 +943,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)((a)!=0?a:b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void FIRST_NONZEROInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -960,7 +960,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, Int256VectorTests::FIRST_NONZERO);
     }
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void FIRST_NONZEROInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -984,7 +984,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a & b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void ANDInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1004,7 +1004,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a & b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void andInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1023,7 +1023,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void ANDInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -1048,7 +1048,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a & ~b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void AND_NOTInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1067,7 +1067,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void AND_NOTInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -1092,7 +1092,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a | b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void ORInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1111,7 +1111,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void ORInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -1136,7 +1136,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a ^ b);
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void XORInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1155,7 +1155,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void XORInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -1180,7 +1180,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)((a << b));
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void LSHLInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1199,7 +1199,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void LSHLInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -1228,7 +1228,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)((a >> b));
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void ASHRInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1247,7 +1247,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void ASHRInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -1276,7 +1276,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)((a >>> b));
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void LSHRInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1295,7 +1295,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void LSHRInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -1324,7 +1324,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)((a << b));
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void LSHLInt256VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1342,7 +1342,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void LSHLInt256VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -1370,7 +1370,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)((a >>> b));
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void LSHRInt256VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1388,7 +1388,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void LSHRInt256VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -1416,7 +1416,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)((a >> b));
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void ASHRInt256VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1434,7 +1434,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void ASHRInt256VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -1461,7 +1461,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(Math.min(a, b));
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void MINInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1481,7 +1481,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(Math.min(a, b));
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void minInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1501,7 +1501,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(Math.max(a, b));
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void MAXInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1521,7 +1521,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(Math.max(a, b));
     }
 
-    //@Test(dataProvider = "intBinaryOpProvider")
+    @Test(dataProvider = "intBinaryOpProvider")
     static void maxInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -1561,7 +1561,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void ANDInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -1611,7 +1611,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void ANDInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -1661,7 +1661,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void ORInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -1711,7 +1711,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void ORInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -1761,7 +1761,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void XORInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -1811,7 +1811,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void XORInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -1858,7 +1858,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         return res;
     }
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void ADDInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -1904,7 +1904,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         return res;
     }
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void ADDInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -1950,7 +1950,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         return res;
     }
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void MULInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -1996,7 +1996,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         return res;
     }
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void MULInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2038,7 +2038,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         return res;
     }
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void MINInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2080,7 +2080,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         return res;
     }
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void MINInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2122,7 +2122,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         return res;
     }
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void MAXInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2164,7 +2164,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         return res;
     }
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void MAXInt256VectorTestsMasked(IntFunction<int[]> fa, IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2200,7 +2200,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "boolUnaryOpProvider")
+    @Test(dataProvider = "boolUnaryOpProvider")
     static void anyTrueInt256VectorTests(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
         boolean[] r = fmr.apply(SPECIES.length());
@@ -2226,7 +2226,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "boolUnaryOpProvider")
+    @Test(dataProvider = "boolUnaryOpProvider")
     static void allTrueInt256VectorTests(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
         boolean[] r = fmr.apply(SPECIES.length());
@@ -2242,7 +2242,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void withInt256VectorTests(IntFunction<int []> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2260,7 +2260,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return bits(a)==0;
     }
 
-    //@Test(dataProvider = "intTestOpProvider")
+    @Test(dataProvider = "intTestOpProvider")
     static void IS_DEFAULTInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
 
@@ -2282,7 +2282,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return bits(a)<0;
     }
 
-    //@Test(dataProvider = "intTestOpProvider")
+    @Test(dataProvider = "intTestOpProvider")
     static void IS_NEGATIVEInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
 
@@ -2364,7 +2364,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "intCompareOpProvider")
+    @Test(dataProvider = "intCompareOpProvider")
     static void EQInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -2468,7 +2468,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return mask ? b : a;
     }
 
-    //@Test(dataProvider = "intBinaryOpMaskProvider")
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void blendInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -2488,7 +2488,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, mask, Int256VectorTests::blend);
     }
 
-    //@Test(dataProvider = "intUnaryOpShuffleProvider")
+    @Test(dataProvider = "intUnaryOpShuffleProvider")
     static void RearrangeInt256VectorTests(IntFunction<int[]> fa,
                                            BiFunction<Integer,Integer,int[]> fs) {
         int[] a = fa.apply(SPECIES.length());
@@ -2508,7 +2508,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void getInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2664,7 +2664,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, Int256VectorTests::get);
     }
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void BroadcastInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
@@ -2682,7 +2682,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void ZeroInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
@@ -2706,7 +2706,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void singleInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
@@ -2747,7 +2747,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "intTernaryOpProvider")
+    @Test(dataProvider = "intTernaryOpProvider")
     static void BITWISE_BLENDInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb, IntFunction<int[]> fc) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
@@ -2767,7 +2767,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-    //@Test(dataProvider = "intTernaryOpMaskProvider")
+    @Test(dataProvider = "intTernaryOpMaskProvider")
     static void BITWISE_BLENDInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<int[]> fc, IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -2794,7 +2794,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(-((int)a));
     }
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void NEGInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2809,7 +2809,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, Int256VectorTests::NEG);
     }
 
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void NEGMaskedInt256VectorTests(IntFunction<int[]> fa,
                                                 IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -2835,7 +2835,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(Math.abs((int)a));
     }
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void ABSInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2850,7 +2850,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, Int256VectorTests::ABS);
     }
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void absInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2865,7 +2865,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, Int256VectorTests::abs);
     }
 
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void ABSMaskedInt256VectorTests(IntFunction<int[]> fa,
                                                 IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -2890,7 +2890,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void NOTInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2907,7 +2907,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void NOTMaskedInt256VectorTests(IntFunction<int[]> fa,
                                                 IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -2933,7 +2933,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intUnaryOpProvider")
+    @Test(dataProvider = "intUnaryOpProvider")
     static void ZOMOInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
@@ -2950,7 +2950,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    //@Test(dataProvider = "intUnaryOpMaskProvider")
+    @Test(dataProvider = "intUnaryOpMaskProvider")
     static void ZOMOMaskedInt256VectorTests(IntFunction<int[]> fa,
                                                 IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -2980,7 +2980,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return res;
     }
 
-    //@Test(dataProvider = "intUnaryOpIndexProvider")
+    @Test(dataProvider = "intUnaryOpIndexProvider")
     static void gatherInt256VectorTests(IntFunction<int[]> fa, BiFunction<Integer,Integer,int[]> fs) {
         int[] a = fa.apply(SPECIES.length());
         int[] b    = fs.apply(a.length, SPECIES.length());
@@ -3004,7 +3004,7 @@ public class Int256VectorTests extends AbstractVectorTest {
       return res;
     }
 
-    //@Test(dataProvider = "intUnaryOpIndexProvider")
+    @Test(dataProvider = "intUnaryOpIndexProvider")
     static void scatterInt256VectorTests(IntFunction<int[]> fa, BiFunction<Integer,Integer,int[]> fs) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fs.apply(a.length, SPECIES.length());
