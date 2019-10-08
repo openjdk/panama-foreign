@@ -1327,6 +1327,21 @@ public:
 
 #undef INSN
 
+#define INSN(NAME, size, opc)                                           \
+  void NAME(FloatRegister Rt, Register Rn) {                            \
+    starti;                                                             \
+    f(size, 31, 30), f(0b111100, 29, 24), f(opc, 23, 22), f(0, 21);     \
+    f(0, 20, 12), f(0b01, 11, 10);                                      \
+    rf(Rn, 5), rf((Register)Rt, 0);                                     \
+  }
+
+  INSN(ldrs, 0b10, 0b01);
+  INSN(ldrd, 0b11, 0b01);
+  INSN(ldrq, 0b00, 0b11);
+
+#undef INSN
+
+
 #define INSN(NAME, opc, V)                                              \
   void NAME(address dest, prfop op = PLDL1KEEP) {                       \
     long offset = (dest - pc()) >> 2;                                   \
