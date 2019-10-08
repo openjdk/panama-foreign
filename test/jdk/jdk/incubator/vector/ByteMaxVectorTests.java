@@ -672,7 +672,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         a.intoArray(r, 0);
         b.intoArray(r, a.length());
         return r;
-    }   
+    }
 
     @Test
     static void smokeTest2() {
@@ -702,6 +702,22 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte[] abValues1 = bothToArray(uab0, uab1);
         Assert.assertEquals(Arrays.toString(abValues), Arrays.toString(abValues1));
     }
+
+    static void iotaShuffle() {
+        ByteVector io = (ByteVector) SPECIES.broadcast(0).addIndex(1);
+        ByteVector io2 = (ByteVector) VectorShuffle.iota(SPECIES, 0 , 1, false).toVector();
+        Assert.assertEquals(io, io2);
+    }
+
+    @Test
+    // Test all shuffle related operations.
+    static void shuffleTest() {
+        // To test backend instructions, make sure that C2 is used.
+        for (int loop = 0; loop < INVOC_COUNT * INVOC_COUNT; loop++) {
+            iotaShuffle();
+        }
+    }
+
     static byte ADD(byte a, byte b) {
         return (byte)(a + b);
     }
