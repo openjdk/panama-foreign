@@ -56,31 +56,57 @@ try (MemorySegment segment = MemorySegment.ofNative(10 * 4)) {
  * layout, obtain its alignment requirements, and so on. Memory layouts also provide an alternate, more abstract way, to produce
  * memory access var handles, e.g. using <a href="Layout.html#layout-paths"><em>layout paths</em></a>.
  *
- * <h2><a id="deallocation"></a>Deterministic deallocation</h2>
+ * <h2><a id = "concurrency">Concurrent access</a></h2>
+ *
+ * In their default configuration, memory segments support strong thread-confinement guarantees. Upon creation,
+ * a memory segment is assigned an <em>owner thread</em>, typically the thread which initiated the creation operation.
+ * A segment in this configuration is said to be a <em>confined</em> segment. Confined segments can be operated upon
+ * only by their owner threads; that is, any operation, such as accessing the memory associated with a confined segment,
+ * in a thread other than the owner thread will result in a runtime failure. As such, clients of confined segments
+ * do not have to worry about other threads concurrently attempting to access and/or release the resources associated
+ * with a memory segment they have created.
+ *
+ * Optionally, a client that owns a confined segment might transfer the segment ownership onto a different owner thread
+ * (see {@link jdk.incubator.foreign.MemorySegment#asConfined(java.lang.Thread)}). This operation can be useful when two
+ * (or more) threads might want to cooperate to achieve a certain task; this pattern of access is also known as
+ * <em>serial thread confinement</em>.
+ *
+ * There are cases, however, where confinement rules might be too strict, and where multiple threads might require concurrent
+ * access on the same memory segment. For this purpose, a confined segment can be turned into a <em>shared segment</em>
+ * (see {@link jdk.incubator.foreign.MemorySegment#asShared()}}.
+ * Since a shared segment has no thread owner, multiple threads can access the <em>same</em> shared segment concurrently; it is therefore
+ * the responsibility of the clients to ensure that concurrent access is correct, by using some form of synchronization.
+ *
+ * <h2><a id="deallocation"></a>Deallocation</h2>
  * When writing code that manipulates memory segments, especially if backed by memory which resides outside the Java heap, it is
- * crucial that the client releases the resources associated with a memory segment, by calling the {@link jdk.incubator.foreign.MemorySegment#close()}
+ * crucial that the resources associated with a memory segment are released when the segments are no longer in use. Confined segments support a so called <em>deterministic</em>
+ * deallocation model, where clients have to explicitly free resources associated with a segment by calling the {@link jdk.incubator.foreign.MemorySegment#close()}
  * method either explicitly, or implicitly, by relying on try-with-resources construct (as demonstrated in the example above).
  * Closing a given memory segment is an <em>atomic</em> operation which can either succeed - and result in the underlying
  * memory associated with the segment to be released, or <em>fail</em> with an exception.
  * <p>
- * The deterministic deallocation model differs significantly from the implicit strategies adopted within other APIs, most
- * notably the {@link java.nio.ByteBuffer} API: in that case, when a native byte buffer is created (see {@link java.nio.ByteBuffer#allocateDirect(int)}),
- * the underlying memory is not released until the byte buffer reference becomes <em>unreachable</em>. While implicit deallocation
- * models such as this can be handy - clients do not have to remember to <em>close</em> a direct buffer - such models can also make it
- * hard for clients to ensure that the memory associated with a direct buffer has indeed been released.
+ * Conversely, shared memory segments adopt a so called <em>implicit deallocation model</em> where the underlying memory is not released until
+ * the shared segment becomes <em>unreachable</em> (this model is similar to the one provided by the {@link java.nio.ByteBuffer} API,
+ * see {@link java.nio.ByteBuffer#allocateDirect(int)}). While implicit deallocation can be handy - clients do not have to remember
+ * to <em>close</em> a shared segment - such models can also make it harder for clients to ensure that the memory associated
+ * with a native segment has indeed been released.
+ *
  * <h2><a id="safety"></a>Safety</h2>
  * This API provides strong safety guarantees when it comes to memory access. First, when dereferencing a memory segment using
  * a memory address, such an address is validated (upon access), to make sure that it does not point to a memory location
  * which resides <em>outside</em> the boundaries of the memory segment it refers to. We call this guarantee <em>spatial safety</em>.
  * <p>
- * Since memory segments can be closed (see above), a memory address is also validated (upon access) to make sure that
- * the segment it belongs to has not been closed prematurely. We call this guarantee <em>temporal safety</em>. Note that,
- * in the general case, guaranteeing temporal safety can be hard, as multiple threads could attempt to access and/or close
- * the same memory segment concurrently. The memory access API addresses this problem by imposing strong
- * <a href="MemorySegment.html#thread-confinement"><em>thread-confinement</em></a> guarantees on memory segments: each memory segment is associated with an owner thread, which is the only thread that
- * can either access or close the segment. Concurrent accesses to the segment from threads other than the owner thread will fail.
+ * Moreover, since the resources associated with a given segment can be released, either explicitly or implicitly (see above),
+ * a memory address is also validated (upon access) to make sure that the segment it points to is still valid.
+ * We call this guarantee <em>temporal safety</em>. Temporal safety in confined segments is made possible by the fact that
+ * these segments are serially thread-confined, that is, only one thread at a time can gain access to a given confined segment;
+ * this rules out race conditions where a thread tries to access a segment while another is trying to close it.
+ *
+ * In the case of shared segments, temporal safety is guaranteed by the fact that the implicit deallocation model will
+ * not free any resource associated with a segment while the segment is still <em>reachable</em> by some thread. This means
+ * that it is not possible, by design, to access a shared memory segment <em>after</em> its resources have been released.
  * <p>
  * Together, spatial and temporal safety ensure that each memory access operation either succeeds - and accesses a valid
- * memory location - or fails.
+ * memory location - or fails gracefully (e.g. with a runtime failure as opposed to a JVM crash).
  */
 package jdk.incubator.foreign;
