@@ -45,27 +45,22 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final long length;
     final int mask;
     final long min;
-    final Thread thread;
-    final Scope scope;
+    final Object base;
+    final MemoryScope scope;
 
     final static int READ_ONLY = 1;
     final static int PINNED = READ_ONLY << 1;
+    final static int SHARED = PINNED << 1;
     final static long NONCE = new Random().nextLong();
 
-    public static MemorySegmentImpl everything() {
-        return new MemorySegmentImpl(0, Long.MAX_VALUE, 0, new MemorySegmentImpl.Scope() {
-            @Override
-            public Object base() {
-                return null;
-            }
-        });
-    }
+    public static MemorySegmentImpl EVERYTHING =
+            new MemorySegmentImpl(0, null, Long.MAX_VALUE, PINNED | SHARED, MemoryScope.GLOBAL);
 
-    public MemorySegmentImpl(long min, long length, int mask, Scope scope) {
+    public MemorySegmentImpl(long min, Object base, long length, int mask, MemoryScope scope) {
         this.length = length;
         this.mask = mask;
         this.min = min;
-        this.thread = Thread.currentThread();
+        this.base = base;
         this.scope = scope;
     }
 
@@ -79,48 +74,83 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         if (outOfBounds(offset, newSize)) {
             throw new IllegalArgumentException();
         }
-        return new MemorySegmentImpl(min + offset, newSize, mask, scope);
+        return new MemorySegmentImpl(min + offset, base, newSize, mask, scope);
+    }
+
+    @Override
+    public MemorySegment asShared() {
+        checkValidState();
+        if (scope.isShared()) {
+            throw new IllegalStateException("Segment is already shared");
+        } else {
+            MemoryScope.ConfinedScope confinedScope = (MemoryScope.ConfinedScope)scope;
+            //flush read/writes to memory before returning the new segment
+            UNSAFE.fullFence();
+            return new MemorySegmentImpl(min, base, length, mask | SHARED | PINNED, confinedScope.toShared(this));
+        }
+    }
+
+    @Override
+    public MemorySegment asConfined(Thread newOwner) {
+        checkValidState();
+        if (scope.isShared()) {
+            throw new IllegalStateException("Cannot confine shared segment");
+        } else {
+            MemoryScope.ConfinedScope confinedScope = (MemoryScope.ConfinedScope)scope;
+            if (confinedScope.thread != newOwner) {
+                //flush read/writes to memory before returning the new segment
+                UNSAFE.fullFence();
+                return new MemorySegmentImpl(min, base, length, mask, confinedScope.transfer(newOwner));
+            } else {
+                throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
+            }
+        }
     }
 
     @Override
     public final MemoryAddress baseAddress() {
-        checkValidState();
         return new MemoryAddressImpl(this, 0);
     }
 
     @Override
     public final long byteSize() {
-        checkValidState();
         return length;
     }
 
     @Override
     public final MemorySegment asReadOnly() {
         checkValidState();
-        return new MemorySegmentImpl(min, length, mask | READ_ONLY, scope);
+        return new MemorySegmentImpl(min, base, length, mask | READ_ONLY, scope);
     }
 
     @Override
     public final MemorySegment asPinned() {
         checkValidState();
-        return new MemorySegmentImpl(min, length, mask | PINNED, scope);
+        return new MemorySegmentImpl(min, base, length, mask | PINNED, scope);
     }
 
     @Override
     public final boolean isAlive() {
-        checkValidState();
         return scope.isAlive();
     }
 
     @Override
     public final boolean isPinned() {
-        checkValidState();
         return isSet(PINNED);
     }
 
     @Override
+    public boolean isShared() {
+        return isSet(SHARED);
+    }
+
+    @Override
+    public boolean isConfined(Thread thread) {
+        return !isShared() && ((MemoryScope.ConfinedScope)scope).thread == thread;
+    }
+
+    @Override
     public final boolean isReadOnly() {
-        checkValidState();
         return isSet(READ_ONLY);
     }
 
@@ -131,7 +161,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     @Override
     public final void close() throws UnsupportedOperationException {
         checkValidState();
-        if (isSet(PINNED)) {
+        if (isPinned()) {
             throw new UnsupportedOperationException("Cannot close a pinned segment");
         } else {
             scope.close();
@@ -166,11 +196,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     public final void checkValidState() {
-        if (thread != Thread.currentThread()) {
-            throw new IllegalStateException("Attempt to access segment outside owning thread");
-        } else if (!scope.isAlive()) {
-            throw new IllegalStateException("Segment is not alive");
-        }
+        scope.checkValidState();
     }
 
     private String outOfBoundsMsg(long offset, long length) {
@@ -180,7 +206,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
-        if (isSet(READ_ONLY) && writeAccess) {
+        if (isReadOnly() && writeAccess) {
             throw new UnsupportedOperationException("Cannot write to read-only memory segment");
         } else if (outOfBounds(offset, length)) {
             throw new IllegalStateException(outOfBoundsMsg(offset, length));
@@ -194,7 +220,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     public Object base() {
-        return scope.base();
+        return base;
     }
 
     @Override
@@ -204,17 +230,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     private int id() {
         //compute a stable and random id for this memory segment
-        return Math.abs(Objects.hash(scope.base(), min, NONCE));
+        return Math.abs(Objects.hash(base, min, NONCE));
     }
 
-    public static abstract class Scope {
-        boolean isAlive = true;
-        final boolean isAlive() {
-            return isAlive;
-        }
-        public void close() {
-            isAlive = false;
-        }
-        public abstract Object base();
-    }
 }

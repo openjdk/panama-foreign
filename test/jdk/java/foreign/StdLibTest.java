@@ -105,21 +105,20 @@ public class StdLibTest extends NativeTestHelper {
 
     @Test(dataProvider = "instants")
     void test_time(Instant instant) throws Throwable {
-        try (StdLibHelper.Tm tm = stdLibHelper.gmtime(instant.getEpochSecond())) {
-            LocalDateTime localTime = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
-            assertEquals(tm.sec(), localTime.getSecond());
-            assertEquals(tm.min(), localTime.getMinute());
-            assertEquals(tm.hour(), localTime.getHour());
-            //day pf year in Java has 1-offset
-            assertEquals(tm.yday(), localTime.getDayOfYear() - 1);
-            assertEquals(tm.mday(), localTime.getDayOfMonth());
-            //days of week starts from Sunday in C, but on Monday in Java, also account for 1-offset
-            assertEquals((tm.wday() + 6) % 7, localTime.getDayOfWeek().getValue() - 1);
-            //month in Java has 1-offset
-            assertEquals(tm.mon(), localTime.getMonth().getValue() - 1);
-            assertEquals(tm.isdst(), ZoneOffset.UTC.getRules()
-                    .isDaylightSavings(Instant.ofEpochMilli(instant.getEpochSecond() * 1000)));
-        }
+        StdLibHelper.Tm tm = stdLibHelper.gmtime(instant.getEpochSecond());
+        LocalDateTime localTime = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+        assertEquals(tm.sec(), localTime.getSecond());
+        assertEquals(tm.min(), localTime.getMinute());
+        assertEquals(tm.hour(), localTime.getHour());
+        //day pf year in Java has 1-offset
+        assertEquals(tm.yday(), localTime.getDayOfYear() - 1);
+        assertEquals(tm.mday(), localTime.getDayOfMonth());
+        //days of week starts from Sunday in C, but on Monday in Java, also account for 1-offset
+        assertEquals((tm.wday() + 6) % 7, localTime.getDayOfWeek().getValue() - 1);
+        //month in Java has 1-offset
+        assertEquals(tm.mon(), localTime.getMonth().getValue() - 1);
+        assertEquals(tm.isdst(), ZoneOffset.UTC.getRules()
+                .isDaylightSavings(Instant.ofEpochMilli(instant.getEpochSecond() * 1000)));
     }
 
     @Test(dataProvider = "ints")
@@ -256,8 +255,9 @@ public class StdLibTest extends NativeTestHelper {
             }
         }
 
-        static class Tm implements AutoCloseable {
+        static class Tm {
 
+            //Tm pointer should never be freed, as it points to shared memory
             private MemoryAddress base;
 
             Tm(MemoryAddress base) {
@@ -291,11 +291,6 @@ public class StdLibTest extends NativeTestHelper {
             boolean isdst() {
                 byte b = (byte)byteHandle.get(base.offset(32));
                 return b == 0 ? false : true;
-            }
-
-            @Override
-            public void close() {
-                base.segment().close();
             }
         }
 

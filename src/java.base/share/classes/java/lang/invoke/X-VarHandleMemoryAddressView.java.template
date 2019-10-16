@@ -24,6 +24,8 @@
  */
 package java.lang.invoke;
 
+import java.lang.ref.Reference;
+
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.vm.annotation.ForceInline;
 
@@ -82,103 +84,135 @@ final class VarHandleMemoryAddressAs$Type$s {
     @ForceInline
     static $type$ get0(VarHandleMemoryAddressBase handle, Object obb, long base) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, true);
+        try {
 #if[floatingPoint]
-        $rawType$ rawValue = UNSAFE.get$RawType$Unaligned(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                handle.be);
-        return $Type$.$rawType$BitsTo$Type$(rawValue);
+            $rawType$ rawValue = UNSAFE.get$RawType$Unaligned(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    handle.be);
+            return $Type$.$rawType$BitsTo$Type$(rawValue);
 #else[floatingPoint]
 #if[byte]
-        return UNSAFE.get$Type$(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment));
+            return UNSAFE.get$Type$(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment));
 #else[byte]
-        return UNSAFE.get$Type$Unaligned(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                handle.be);
+            return UNSAFE.get$Type$Unaligned(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    handle.be);
 #end[byte]
 #end[floatingPoint]
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static void set0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
+        try {
 #if[floatingPoint]
-        UNSAFE.put$RawType$Unaligned(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                $Type$.$type$ToRaw$RawType$Bits(value),
-                handle.be);
+            UNSAFE.put$RawType$Unaligned(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    $Type$.$type$ToRaw$RawType$Bits(value),
+                    handle.be);
 #else[floatingPoint]
 #if[byte]
-        UNSAFE.put$Type$(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                value);
+            UNSAFE.put$Type$(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    value);
 #else[byte]
-        UNSAFE.put$Type$Unaligned(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                value,
-                handle.be);
+            UNSAFE.put$Type$Unaligned(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    value,
+                    handle.be);
 #end[byte]
 #end[floatingPoint]
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static $type$ getVolatile0(VarHandleMemoryAddressBase handle, Object obb, long base) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, true);
-        return convEndian(handle.be,
+        try {
+            return convEndian(handle.be,
                           UNSAFE.get$RawType$Volatile(
                                   bb.unsafeGetBase(),
                                   offset(bb, base, handle.alignment)));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static void setVolatile0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        UNSAFE.put$RawType$Volatile(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                convEndian(handle.be, value));
+        try {
+            UNSAFE.put$RawType$Volatile(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    convEndian(handle.be, value));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static $type$ getAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, true);
-        return convEndian(handle.be,
-                          UNSAFE.get$RawType$Acquire(
-                                  bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment)));
+        try {
+            return convEndian(handle.be,
+                              UNSAFE.get$RawType$Acquire(
+                                      bb.unsafeGetBase(),
+                                      offset(bb, base, handle.alignment)));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static void setRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        UNSAFE.put$RawType$Release(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                convEndian(handle.be, value));
+        try {
+            UNSAFE.put$RawType$Release(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    convEndian(handle.be, value));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static $type$ getOpaque0(VarHandleMemoryAddressBase handle, Object obb, long base) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, true);
-        return convEndian(handle.be,
-                          UNSAFE.get$RawType$Opaque(
-                                  bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment)));
+        try {
+            return convEndian(handle.be,
+                              UNSAFE.get$RawType$Opaque(
+                                      bb.unsafeGetBase(),
+                                      offset(bb, base, handle.alignment)));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static void setOpaque0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        UNSAFE.put$RawType$Opaque(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                convEndian(handle.be, value));
+        try {
+            UNSAFE.put$RawType$Opaque(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    convEndian(handle.be, value));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 #if[CAS]
 
@@ -194,97 +228,137 @@ final class VarHandleMemoryAddressAs$Type$s {
     @ForceInline
     static $type$ compareAndExchange0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        return convEndian(handle.be,
-                          UNSAFE.compareAndExchange$RawType$(
-                                  bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
-                                  convEndian(handle.be, expected), convEndian(handle.be, value)));
+        try {
+            return convEndian(handle.be,
+                              UNSAFE.compareAndExchange$RawType$(
+                                      bb.unsafeGetBase(),
+                                      offset(bb, base, handle.alignment),
+                                      convEndian(handle.be, expected), convEndian(handle.be, value)));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static $type$ compareAndExchangeAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        return convEndian(handle.be,
-                          UNSAFE.compareAndExchange$RawType$Acquire(
-                                  bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
-                                  convEndian(handle.be, expected), convEndian(handle.be, value)));
+        try {
+            return convEndian(handle.be,
+                              UNSAFE.compareAndExchange$RawType$Acquire(
+                                      bb.unsafeGetBase(),
+                                      offset(bb, base, handle.alignment),
+                                      convEndian(handle.be, expected), convEndian(handle.be, value)));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static $type$ compareAndExchangeRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        return convEndian(handle.be,
-                          UNSAFE.compareAndExchange$RawType$Release(
-                                  bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
-                                  convEndian(handle.be, expected), convEndian(handle.be, value)));
+        try {
+            return convEndian(handle.be,
+                              UNSAFE.compareAndExchange$RawType$Release(
+                                      bb.unsafeGetBase(),
+                                      offset(bb, base, handle.alignment),
+                                      convEndian(handle.be, expected), convEndian(handle.be, value)));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static boolean weakCompareAndSetPlain0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        return UNSAFE.weakCompareAndSet$RawType$Plain(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                convEndian(handle.be, expected), convEndian(handle.be, value));
+        try {
+            return UNSAFE.weakCompareAndSet$RawType$Plain(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    convEndian(handle.be, expected), convEndian(handle.be, value));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static boolean weakCompareAndSet0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        return UNSAFE.weakCompareAndSet$RawType$(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                convEndian(handle.be, expected), convEndian(handle.be, value));
+        try {
+            return UNSAFE.weakCompareAndSet$RawType$(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    convEndian(handle.be, expected), convEndian(handle.be, value));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static boolean weakCompareAndSetAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        return UNSAFE.weakCompareAndSet$RawType$Acquire(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                convEndian(handle.be, expected), convEndian(handle.be, value));
+        try {
+            return UNSAFE.weakCompareAndSet$RawType$Acquire(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    convEndian(handle.be, expected), convEndian(handle.be, value));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static boolean weakCompareAndSetRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        return UNSAFE.weakCompareAndSet$RawType$Release(
-                bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
-                convEndian(handle.be, expected), convEndian(handle.be, value));
+        try {
+            return UNSAFE.weakCompareAndSet$RawType$Release(
+                    bb.unsafeGetBase(),
+                    offset(bb, base, handle.alignment),
+                    convEndian(handle.be, expected), convEndian(handle.be, value));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static $type$ getAndSet0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        return convEndian(handle.be,
-                          UNSAFE.getAndSet$RawType$(
-                                  bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
-                                  convEndian(handle.be, value)));
+        try {
+            return convEndian(handle.be,
+                              UNSAFE.getAndSet$RawType$(
+                                      bb.unsafeGetBase(),
+                                      offset(bb, base, handle.alignment),
+                                      convEndian(handle.be, value)));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static $type$ getAndSetAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        return convEndian(handle.be,
-                          UNSAFE.getAndSet$RawType$Acquire(
-                                  bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
-                                  convEndian(handle.be, value)));
+        try {
+            return convEndian(handle.be,
+                              UNSAFE.getAndSet$RawType$Acquire(
+                                      bb.unsafeGetBase(),
+                                      offset(bb, base, handle.alignment),
+                                      convEndian(handle.be, value)));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 
     @ForceInline
     static $type$ getAndSetRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        return convEndian(handle.be,
-                          UNSAFE.getAndSet$RawType$Release(
-                                  bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
-                                  convEndian(handle.be, value)));
+        try {
+            return convEndian(handle.be,
+                              UNSAFE.getAndSet$RawType$Release(
+                                      bb.unsafeGetBase(),
+                                      offset(bb, base, handle.alignment),
+                                      convEndian(handle.be, value)));
+        } finally {
+            Reference.reachabilityFence(bb);
+        }
     }
 #end[CAS]
 #if[AtomicAdd]
@@ -292,39 +366,51 @@ final class VarHandleMemoryAddressAs$Type$s {
     @ForceInline
     static $type$ getAndAdd0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ delta) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndAdd$RawType$(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    delta);
-        } else {
-            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignment), delta);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndAdd$RawType$(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        delta);
+            } else {
+                return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignment), delta);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
     @ForceInline
     static $type$ getAndAddAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ delta) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndAdd$RawType$Acquire(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    delta);
-        } else {
-            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignment), delta);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndAdd$RawType$Acquire(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        delta);
+            } else {
+                return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignment), delta);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
     @ForceInline
     static $type$ getAndAddRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ delta) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndAdd$RawType$Release(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    delta);
-        } else {
-            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignment), delta);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndAdd$RawType$Release(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        delta);
+            } else {
+                return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignment), delta);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
@@ -345,39 +431,51 @@ final class VarHandleMemoryAddressAs$Type$s {
     @ForceInline
     static $type$ getAndBitwiseOr0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndBitwiseOr$RawType$(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    value);
-        } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndBitwiseOr$RawType$(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        value);
+            } else {
+                return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
     @ForceInline
     static $type$ getAndBitwiseOrRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndBitwiseOr$RawType$Release(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    value);
-        } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndBitwiseOr$RawType$Release(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        value);
+            } else {
+                return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
     @ForceInline
     static $type$ getAndBitwiseOrAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndBitwiseOr$RawType$Acquire(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    value);
-        } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndBitwiseOr$RawType$Acquire(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        value);
+            } else {
+                return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
@@ -396,39 +494,51 @@ final class VarHandleMemoryAddressAs$Type$s {
     @ForceInline
     static $type$ getAndBitwiseAnd0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndBitwiseAnd$RawType$(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    value);
-        } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndBitwiseAnd$RawType$(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        value);
+            } else {
+                return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
     @ForceInline
     static $type$ getAndBitwiseAndRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndBitwiseAnd$RawType$Release(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    value);
-        } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndBitwiseAnd$RawType$Release(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        value);
+            } else {
+                return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
     @ForceInline
     static $type$ getAndBitwiseAndAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndBitwiseAnd$RawType$Acquire(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    value);
-        } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndBitwiseAnd$RawType$Acquire(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        value);
+            } else {
+                return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
@@ -448,39 +558,51 @@ final class VarHandleMemoryAddressAs$Type$s {
     @ForceInline
     static $type$ getAndBitwiseXor0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndBitwiseXor$RawType$(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    value);
-        } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndBitwiseXor$RawType$(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        value);
+            } else {
+                return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
     @ForceInline
     static $type$ getAndBitwiseXorRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndBitwiseXor$RawType$Release(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    value);
-        } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndBitwiseXor$RawType$Release(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        value);
+            } else {
+                return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 
     @ForceInline
     static $type$ getAndBitwiseXorAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
-        if (handle.be == BE) {
-            return UNSAFE.getAndBitwiseXor$RawType$Acquire(
-                    bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
-                    value);
-        } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+        try {
+            if (handle.be == BE) {
+                return UNSAFE.getAndBitwiseXor$RawType$Acquire(
+                        bb.unsafeGetBase(),
+                        offset(bb, base, handle.alignment),
+                        value);
+            } else {
+                return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            }
+        } finally {
+            Reference.reachabilityFence(bb);
         }
     }
 

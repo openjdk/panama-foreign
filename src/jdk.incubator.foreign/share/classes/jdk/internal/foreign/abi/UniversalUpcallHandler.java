@@ -130,7 +130,7 @@ public class UniversalUpcallHandler implements UpcallHandler {
             MemoryAddress res = getPtr(callingSequence.returnInMemoryBinding());
             long addr = (long)PTR_HANDLE.get(res);
             long size = Utils.alignUp(function.returnLayout().get().byteSize(), 8);
-            return MemorySegmentImpl.everything().slice(addr, size).baseAddress();
+            return MemorySegmentImpl.EVERYTHING.slice(addr, size).baseAddress();
         }
 
         void setReturnPtr(long ptr) {

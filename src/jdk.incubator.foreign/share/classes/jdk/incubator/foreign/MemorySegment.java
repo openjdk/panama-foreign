@@ -26,10 +26,7 @@
 
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.BufferScope;
-import jdk.internal.foreign.HeapScope;
-import jdk.internal.foreign.NativeScope;
-import jdk.internal.foreign.MappedMemoryScope;
+import jdk.internal.foreign.Utils;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -69,24 +66,26 @@ import java.io.IOException;
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
  * {@link MemorySegment#ofPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>.
  * <p>
- * Typically, when a memory segment is closed (see {@link MemorySegment#close()}, all resources associated with it
- * are released; this has different meanings depending on the kind of memory segment being considered:
+ *
+ * <h2>Closing a memory segment</h2>
+ *
+ * <a href="./package-summary.html#concurrency">Confined memory segments</a> can be closed explicitly (see {@link MemorySegment#close()}).
+ * When a confined segment is closed, all off-heap resources associated with it are released; this has different meanings depending on the kind of
+ * memory segment being considered:
  * <ul>
  *     <li>closing a native memory segment results in <em>freeing</em> the native memory associated with it</li>
- *     <li>closing an array memory segment can result in the backing Java array to be garbage collected</li>
- *     <li>closing an buffer memory segment can result in the backing byte buffer to be garbage collected (which,
- *     depending on the byte buffer kind, might trigger further cleanup actions)</li>
  *     <li>closing a mapped memory segment results in the backing memory-mapped file to be unmapped</li>
  * </ul>
  *
- * <h2><a id = "thread-confinement">Thread confinement</a></h2>
+ * Closing a buffer, or a heap segment does not have any side-effect, other than making the marking the segment as
+ * <em>not alive</em> (see {@link MemorySegment#isAlive()}). Also, since the buffer and heap segments might keep strong
+ * references to the original buffer or array instance, it is the responsibility of clients to ensure that these
+ * segments are discarded in a timely manner, so as not to prevent garbage collection to reclaim the underlying
+ * objects.
  *
- * Memory segments support strong thread-confinement guarantees. Upon creation, they are assigned an <em>owner thread</em>,
- * typically the thread which initiated the creation operation. After creation, only the owner thread will be allowed
- * to directly manipulate the memory segment (e.g. close the segment) or access the underlying memory associated with
- * the segment using a memory access var handle. Any attempt to perform such operations from a thread other than the
- * owner thread will result in a runtime failure. As such, a client does not have to worry about other threads
- * concurrently attempting to release the memory resources associated with a memory segment it has created.
+ * Conversely, <a href="./package-summary.html#concurrency">shared memory segments</a> cannot be closed explicitly;
+ * resources associated with a given shared segment will be released when such a segment is deemed <em>unreacheable</em>
+ * by the garbage collector.
  *
  * <h2>Memory segment views</h2>
  *
@@ -134,6 +133,54 @@ public interface MemorySegment extends AutoCloseable {
     MemorySegment slice(long offset, long newSize) throws IllegalArgumentException;
 
     /**
+     * Obtains a <a href="./package-summary.html#concurrency">confined memory segment</a> which can be used to access memory
+     * associated to this segment from a given thread. As a side-effect, this segment will be marked as <em>not alive</em>,
+     * and subsequent operations on this segment will result in runtime errors.
+     * @param newOwner the new owner thread.
+     * @return a confined copy of this segment with given owner thread.
+     * @throws IllegalStateException if the segment is a shared segment (see {@link MemorySegment#isShared()}).
+     * @throws IllegalArgumentException if the segment is already a confined segment owner by {@code newOnwer}.
+     */
+    MemorySegment asConfined(Thread newOwner) throws IllegalStateException;
+
+    /**
+     * Obtains a <a href="./package-summary.html#concurrency">shared memory segment</a> which can be used to access memory
+     * associated with this segment across multiple threads. As a side-effect, this segment will be marked as <em>not alive</em>,
+     * and subsequent operations on this segment will result in runtime errors. The shared copy will also be marked as
+     * <em>pinned</em> (see {@link MemorySegment#isPinned()}); as such, any attempt to close the returned segment will
+     * result in a runtime error.
+     * @return a shared copy of this segment.
+     * @throws IllegalStateException if the segment is a already a shared segment (see {@link MemorySegment#isShared()}).
+     */
+    MemorySegment asShared();
+
+    /**
+     * Is this segment a shared segment?
+     * @return true, if this segment is a shared segment.
+     */
+    boolean isShared();
+
+    /**
+     * Is this segment a confined segment owned by the given thread?
+     * @param thread the owner of the confined segment.
+     * @return true, if this segment is a confined segment owned by given thread.
+     */
+    boolean isConfined(Thread thread);
+
+    /**
+     * Is this segment accessible from the current thread? This could be the case if the segment is a confined
+     * segment owned by the current thread, or if the segment is a shared segment. In other words, this method
+     * is equivalent to the following code:
+     * <blockquote><pre>{@code
+return isShared() || isConfined(Thread.currentThread());
+     * }</pre></blockquote>
+     * @return true, if this segment is accessible from the current thread.
+     */
+    default boolean isAccessible() {
+        return isShared() || isConfined(Thread.currentThread());
+    }
+
+    /**
      * The size (in bytes) of this memory segment.
      * @return The size (in bytes) of this memory segment.
      */
@@ -175,7 +222,7 @@ public interface MemorySegment extends AutoCloseable {
     boolean isReadOnly();
 
     /**
-     * Closes this memory segment, and releases any resources allocated with it. Once a memory segment has been closed,
+     * Closes this memory segment, and releases off-heap resources allocated with it. Once a memory segment has been closed,
      * any attempt to use the memory segment, or to access the memory associated with the segment will fail with
      * {@link IllegalStateException}.
      * @throws UnsupportedOperationException if the segment cannot be closed (e.g. because the segment is pinned)
@@ -217,7 +264,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new buffer memory segment.
      */
     static MemorySegment ofByteBuffer(ByteBuffer bb) {
-        return BufferScope.of(bb);
+        return Utils.makeBufferSegment(bb);
     }
 
     /**
@@ -230,7 +277,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(byte[] arr) throws IllegalArgumentException {
-        return HeapScope.ofArray(arr);
+        return Utils.makeArraySegment(arr);
     }
 
     /**
@@ -243,7 +290,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(char[] arr) throws IllegalArgumentException {
-        return HeapScope.ofArray(arr);
+        return Utils.makeArraySegment(arr);
     }
 
     /**
@@ -256,7 +303,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(short[] arr) throws IllegalArgumentException {
-        return HeapScope.ofArray(arr);
+        return Utils.makeArraySegment(arr);
     }
 
     /**
@@ -269,7 +316,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(int[] arr) throws IllegalArgumentException {
-        return HeapScope.ofArray(arr);
+        return Utils.makeArraySegment(arr);
     }
 
     /**
@@ -282,7 +329,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(float[] arr) throws IllegalArgumentException {
-        return HeapScope.ofArray(arr);
+        return Utils.makeArraySegment(arr);
     }
     
     /**
@@ -295,7 +342,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(long[] arr) throws IllegalArgumentException {
-        return HeapScope.ofArray(arr);
+        return Utils.makeArraySegment(arr);
     }
     
     /**
@@ -308,7 +355,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(double[] arr) throws IllegalArgumentException {
-        return HeapScope.ofArray(arr);
+        return Utils.makeArraySegment(arr);
     }
 
     /**
@@ -372,7 +419,7 @@ ofNative(bitsSize, 1);
      * of mapped memory associated with the returned mapped memory segment is unspecified and should not be relied upon.
      */
     static MemorySegment ofPath(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IllegalArgumentException, IOException {
-        return MappedMemoryScope.of(path, bytesSize, mapMode);
+        return Utils.makeMappedSegment(path, bytesSize, mapMode);
     }
 
     /**
@@ -400,6 +447,6 @@ ofNative(bitsSize, 1);
             throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
         }
 
-        return NativeScope.of(bytesSize, alignmentBytes);
+        return Utils.makeNativeSegment(bytesSize, alignmentBytes);
     }
 }

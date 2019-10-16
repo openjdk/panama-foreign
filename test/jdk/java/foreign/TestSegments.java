@@ -32,7 +32,9 @@ import jdk.incubator.foreign.MemorySegment;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongFunction;
@@ -60,22 +62,20 @@ public class TestSegments {
     }
 
     @Test(dataProvider = "segmentOperations")
-    public void testOpOutsideConfinement(Map<Method, Object[]> members) throws Throwable {
+    public void testOpOutsideConfinement(SegmentMember member) throws Throwable {
         try (MemorySegment segment = MemorySegment.ofNative(4)) {
-            for (var entries : members.entrySet()) {
-                AtomicBoolean failed = new AtomicBoolean(false);
-                Thread t = new Thread(() -> {
-                    try {
-                        entries.getKey().invoke(segment, entries.getValue());
-                    } catch (ReflectiveOperationException ex) {
-                        throw new IllegalStateException(ex);
-                    }
-                });
-                t.setUncaughtExceptionHandler((thread, ex) -> failed.set(true));
-                t.start();
-                t.join();
-                assertTrue(failed.get());
-            }
+            AtomicBoolean failed = new AtomicBoolean(false);
+            Thread t = new Thread(() -> {
+                try {
+                    member.method.invoke(segment, member.params);
+                } catch (ReflectiveOperationException ex) {
+                    throw new IllegalStateException(ex);
+                }
+            });
+            t.setUncaughtExceptionHandler((thread, ex) -> failed.set(true));
+            t.start();
+            t.join();
+            assertEquals(failed.get(), member.isConfined());
         }
     }
 
@@ -117,7 +117,7 @@ public class TestSegments {
 
     @DataProvider(name = "segmentOperations")
     static Object[][] segmentMembers() {
-        Map<Method, Object[]> members = new HashMap<>();
+        List<SegmentMember> members = new ArrayList<>();
         for (Method m : MemorySegment.class.getDeclaredMethods()) {
             //skip statics and method declared in j.l.Object
             if (m.getDeclaringClass().equals(Object.class) ||
@@ -125,9 +125,30 @@ public class TestSegments {
             Object[] args = Stream.of(m.getParameterTypes())
                     .map(TestSegments::defaultValue)
                     .toArray();
-            members.put(m, args);
+            members.add(new SegmentMember(m, args));
         }
-        return new Object[][] { { members } };
+        return members.stream().map(ms -> new Object[] { ms }).toArray(Object[][]::new);
+    }
+
+    static class SegmentMember {
+        final Method method;
+        final Object[] params;
+
+        public SegmentMember(Method method, Object[] params) {
+            this.method = method;
+            this.params = params;
+        }
+
+        boolean isConfined() {
+            return method.getName().startsWith("as") ||
+                    method.getName().equals("close") ||
+                    method.getName().equals("slice");
+        }
+
+        @Override
+        public String toString() {
+            return method.getName();
+        }
     }
 
     static Object defaultValue(Class<?> c) {

@@ -30,6 +30,8 @@ import jdk.internal.misc.Unsafe;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+
+import java.lang.ref.Reference;
 import java.util.Objects;
 
 public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
@@ -40,11 +42,11 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
     private final long offset;
 
     public static MemoryAddress ofNull() {
-        return MemorySegmentImpl.everything().baseAddress();
+        return MemorySegmentImpl.EVERYTHING.baseAddress();
     }
 
     public static MemoryAddress ofNative(long addr) {
-        return MemorySegmentImpl.everything().baseAddress().offset(addr);
+        return Utils.makeNativeSegment(addr).baseAddress();
     }
 
     public MemoryAddressImpl(MemorySegmentImpl segment) {
@@ -59,10 +61,15 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
     public static void copy(MemoryAddressImpl src, MemoryAddressImpl dst, long size) {
         src.checkAccess(0, size, true);
         dst.checkAccess(0, size, false);
-        UNSAFE.copyMemory(
-                src.unsafeGetBase(), src.unsafeGetOffset(),
-                dst.unsafeGetBase(), dst.unsafeGetOffset(),
-                size);
+        try {
+            UNSAFE.copyMemory(
+                    src.unsafeGetBase(), src.unsafeGetOffset(),
+                    dst.unsafeGetBase(), dst.unsafeGetOffset(),
+                    size);
+        } finally {
+            Reference.reachabilityFence(src);
+            Reference.reachabilityFence(dst);
+        }
     }
 
     public long size() {

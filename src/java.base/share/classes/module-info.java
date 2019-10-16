@@ -212,7 +212,8 @@ module java.base {
         jdk.management.agent,
         jdk.internal.jvmstat;
     exports jdk.internal.ref to
-        java.desktop;
+        java.desktop,
+        jdk.incubator.foreign;
     exports jdk.internal.reflect to
         java.logging,
         java.sql,
