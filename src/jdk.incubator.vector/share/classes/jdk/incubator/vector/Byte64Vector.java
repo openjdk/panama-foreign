@@ -148,7 +148,7 @@ final class Byte64Vector extends ByteVector {
 
     @ForceInline
     Byte64Shuffle iotaShuffle(int start) { 
-        return (Byte64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Byte64Shuffle(i -> (Byte64Shuffle.partiallyWrapIndex(i + val, l))));
+        return (Byte64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Byte64Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -388,9 +388,9 @@ final class Byte64Vector extends ByteVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Byte64Shuffle Iota = iotaShuffle(origin);
-         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(origin))));
-         Iota = (Byte64Shuffle)iotaShuffle(origin).wrapIndexes();
+         Byte64Shuffle Iota = (Byte64Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast((byte)(VLENGTH-origin))));
+         Iota = (Byte64Shuffle)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -416,9 +416,9 @@ final class Byte64Vector extends ByteVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Byte64Shuffle Iota = iotaShuffle(-origin);
-         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(0))));
-         Iota = (Byte64Shuffle)iotaShuffle(-origin).wrapIndexes();
+         Byte64Shuffle Iota = (Byte64Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(origin))));
+         Iota = (Byte64Shuffle)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }

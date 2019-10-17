@@ -153,7 +153,7 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @ForceInline
     $shuffletype$ iotaShuffle(int start) { 
-        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, (val, l) -> new $shuffletype$(i -> ($shuffletype$.partiallyWrapIndex(i + val, l))));
+        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, (val, l) -> new $shuffletype$(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -397,9 +397,9 @@ final class $vectortype$ extends $abstractvectortype$ {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         $shuffletype$ Iota = iotaShuffle(origin);
-         VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast(($type$)(origin))));
-         Iota = ($shuffletype$)iotaShuffle(origin).wrapIndexes();
+         $shuffletype$ Iota = ($shuffletype$)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast(($type$)(VLENGTH-origin))));
+         Iota = ($shuffletype$)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -425,9 +425,9 @@ final class $vectortype$ extends $abstractvectortype$ {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         $shuffletype$ Iota = iotaShuffle(-origin);
-         VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast(($type$)(0))));
-         Iota = ($shuffletype$)iotaShuffle(-origin).wrapIndexes();
+         $shuffletype$ Iota = ($shuffletype$)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast(($type$)(origin))));
+         Iota = ($shuffletype$)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }

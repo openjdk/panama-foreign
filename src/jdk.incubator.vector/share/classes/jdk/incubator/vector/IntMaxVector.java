@@ -149,7 +149,7 @@ final class IntMaxVector extends IntVector {
 
     @ForceInline
     IntMaxShuffle iotaShuffle(int start) { 
-        return (IntMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, IntMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new IntMaxShuffle(i -> (IntMaxShuffle.partiallyWrapIndex(i + val, l))));
+        return (IntMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, IntMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new IntMaxShuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -389,9 +389,9 @@ final class IntMaxVector extends IntVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         IntMaxShuffle Iota = iotaShuffle(origin);
-         VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((int)(origin))));
-         Iota = (IntMaxShuffle)iotaShuffle(origin).wrapIndexes();
+         IntMaxShuffle Iota = (IntMaxShuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast((int)(VLENGTH-origin))));
+         Iota = (IntMaxShuffle)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -417,9 +417,9 @@ final class IntMaxVector extends IntVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         IntMaxShuffle Iota = iotaShuffle(-origin);
-         VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((int)(0))));
-         Iota = (IntMaxShuffle)iotaShuffle(-origin).wrapIndexes();
+         IntMaxShuffle Iota = (IntMaxShuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((int)(origin))));
+         Iota = (IntMaxShuffle)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }

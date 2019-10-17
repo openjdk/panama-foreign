@@ -144,7 +144,7 @@ final class Long64Vector extends LongVector {
 
     @ForceInline
     Long64Shuffle iotaShuffle(int start) { 
-        return (Long64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long64Shuffle(i -> (Long64Shuffle.partiallyWrapIndex(i + val, l))));
+        return (Long64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long64Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -379,9 +379,9 @@ final class Long64Vector extends LongVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Long64Shuffle Iota = iotaShuffle(origin);
-         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(origin))));
-         Iota = (Long64Shuffle)iotaShuffle(origin).wrapIndexes();
+         Long64Shuffle Iota = (Long64Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast((long)(VLENGTH-origin))));
+         Iota = (Long64Shuffle)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -407,9 +407,9 @@ final class Long64Vector extends LongVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Long64Shuffle Iota = iotaShuffle(-origin);
-         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(0))));
-         Iota = (Long64Shuffle)iotaShuffle(-origin).wrapIndexes();
+         Long64Shuffle Iota = (Long64Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(origin))));
+         Iota = (Long64Shuffle)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }

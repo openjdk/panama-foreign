@@ -149,7 +149,7 @@ final class Short128Vector extends ShortVector {
 
     @ForceInline
     Short128Shuffle iotaShuffle(int start) { 
-        return (Short128Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Short128Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Short128Shuffle(i -> (Short128Shuffle.partiallyWrapIndex(i + val, l))));
+        return (Short128Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Short128Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Short128Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -389,9 +389,9 @@ final class Short128Vector extends ShortVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Short128Shuffle Iota = iotaShuffle(origin);
-         VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((short)(origin))));
-         Iota = (Short128Shuffle)iotaShuffle(origin).wrapIndexes();
+         Short128Shuffle Iota = (Short128Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast((short)(VLENGTH-origin))));
+         Iota = (Short128Shuffle)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -417,9 +417,9 @@ final class Short128Vector extends ShortVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Short128Shuffle Iota = iotaShuffle(-origin);
-         VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((short)(0))));
-         Iota = (Short128Shuffle)iotaShuffle(-origin).wrapIndexes();
+         Short128Shuffle Iota = (Short128Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((short)(origin))));
+         Iota = (Short128Shuffle)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
