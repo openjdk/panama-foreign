@@ -147,7 +147,7 @@ final class Byte256Vector extends ByteVector {
     Byte256Shuffle iotaShuffle() { return Byte256Shuffle.IOTA; }
 
     @ForceInline
-    Byte256Shuffle iotaShuffle(int start) { 
+    Byte256Shuffle iotaShuffle(int start) {
         return (Byte256Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte256Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Byte256Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 

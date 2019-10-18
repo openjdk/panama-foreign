@@ -143,7 +143,7 @@ final class Long512Vector extends LongVector {
     Long512Shuffle iotaShuffle() { return Long512Shuffle.IOTA; }
 
     @ForceInline
-    Long512Shuffle iotaShuffle(int start) { 
+    Long512Shuffle iotaShuffle(int start) {
         return (Long512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long512Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long512Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 

@@ -143,7 +143,7 @@ final class LongMaxVector extends LongVector {
     LongMaxShuffle iotaShuffle() { return LongMaxShuffle.IOTA; }
 
     @ForceInline
-    LongMaxShuffle iotaShuffle(int start) { 
+    LongMaxShuffle iotaShuffle(int start) {
         return (LongMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, LongMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new LongMaxShuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 

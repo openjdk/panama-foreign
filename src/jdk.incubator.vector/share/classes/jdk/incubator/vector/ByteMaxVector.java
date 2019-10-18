@@ -147,7 +147,7 @@ final class ByteMaxVector extends ByteVector {
     ByteMaxShuffle iotaShuffle() { return ByteMaxShuffle.IOTA; }
 
     @ForceInline
-    ByteMaxShuffle iotaShuffle(int start) { 
+    ByteMaxShuffle iotaShuffle(int start) {
         return (ByteMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ByteMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ByteMaxShuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 

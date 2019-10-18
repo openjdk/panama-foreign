@@ -148,7 +148,7 @@ final class ShortMaxVector extends ShortVector {
     ShortMaxShuffle iotaShuffle() { return ShortMaxShuffle.IOTA; }
 
     @ForceInline
-    ShortMaxShuffle iotaShuffle(int start) { 
+    ShortMaxShuffle iotaShuffle(int start) {
         return (ShortMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ShortMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ShortMaxShuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 

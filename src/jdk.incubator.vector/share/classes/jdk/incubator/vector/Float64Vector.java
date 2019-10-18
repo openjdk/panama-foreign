@@ -148,7 +148,7 @@ final class Float64Vector extends FloatVector {
     Float64Shuffle iotaShuffle() { return Float64Shuffle.IOTA; }
 
     @ForceInline
-    Float64Shuffle iotaShuffle(int start) { 
+    Float64Shuffle iotaShuffle(int start) {
         return (Float64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Float64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Float64Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 

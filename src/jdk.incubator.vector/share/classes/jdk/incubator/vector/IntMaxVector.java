@@ -148,7 +148,7 @@ final class IntMaxVector extends IntVector {
     IntMaxShuffle iotaShuffle() { return IntMaxShuffle.IOTA; }
 
     @ForceInline
-    IntMaxShuffle iotaShuffle(int start) { 
+    IntMaxShuffle iotaShuffle(int start) {
         return (IntMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, IntMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new IntMaxShuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 

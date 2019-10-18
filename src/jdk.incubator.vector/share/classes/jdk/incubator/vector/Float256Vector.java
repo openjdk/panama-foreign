@@ -148,7 +148,7 @@ final class Float256Vector extends FloatVector {
     Float256Shuffle iotaShuffle() { return Float256Shuffle.IOTA; }
 
     @ForceInline
-    Float256Shuffle iotaShuffle(int start) { 
+    Float256Shuffle iotaShuffle(int start) {
         return (Float256Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Float256Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Float256Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 

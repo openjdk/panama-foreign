@@ -553,7 +553,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * Returns a vector where the first lane element is set to the primtive
      * value {@code e}, all other lane elements are set to the default
      * value(zero).
-     ).
      *
      * @param species species of the desired vector
      * @param e the value

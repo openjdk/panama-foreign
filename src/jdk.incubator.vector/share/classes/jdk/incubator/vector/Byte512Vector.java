@@ -147,7 +147,7 @@ final class Byte512Vector extends ByteVector {
     Byte512Shuffle iotaShuffle() { return Byte512Shuffle.IOTA; }
 
     @ForceInline
-    Byte512Shuffle iotaShuffle(int start) { 
+    Byte512Shuffle iotaShuffle(int start) {
         return (Byte512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte512Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Byte512Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 

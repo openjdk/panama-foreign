@@ -148,7 +148,7 @@ final class Double512Vector extends DoubleVector {
     Double512Shuffle iotaShuffle() { return Double512Shuffle.IOTA; }
 
     @ForceInline
-    Double512Shuffle iotaShuffle(int start) { 
+    Double512Shuffle iotaShuffle(int start) {
         return (Double512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Double512Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Double512Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 

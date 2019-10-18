@@ -567,7 +567,6 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * Returns a vector where the first lane element is set to the primtive
      * value {@code e}, all other lane elements are set to the default
      * value({#if[FP]?positive }zero).
-     ).
      *
      * @param species species of the desired vector
      * @param e the value

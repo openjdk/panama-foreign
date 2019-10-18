@@ -148,7 +148,7 @@ final class DoubleMaxVector extends DoubleVector {
     DoubleMaxShuffle iotaShuffle() { return DoubleMaxShuffle.IOTA; }
 
     @ForceInline
-    DoubleMaxShuffle iotaShuffle(int start) { 
+    DoubleMaxShuffle iotaShuffle(int start) {
         return (DoubleMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, DoubleMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new DoubleMaxShuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
