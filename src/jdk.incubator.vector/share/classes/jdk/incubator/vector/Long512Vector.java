@@ -53,7 +53,7 @@ final class Long512Vector extends LongVector {
     static final Class<Long> ETYPE = long.class;
 
     // The JVM expects to find the state here.
-    private final long[] vec; // Don't access directly, use getElements() instead.
+    private final long[] vec; // Don't access directly, use vec() instead.
 
     Long512Vector(long[] v) {
         vec = v;
@@ -114,7 +114,7 @@ final class Long512Vector extends LongVector {
     /*package-private*/
     @ForceInline
     final @Override
-    long[] getElements() {
+    long[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -463,7 +463,7 @@ final class Long512Vector extends LongVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    long[] vecarr = vec.getElements();
+                                    long[] vecarr = vec.vec();
                                     return (long)vecarr[ix];
                                 });
     }
@@ -477,7 +477,7 @@ final class Long512Vector extends LongVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
-                                    long[] res = v.getElements().clone();
+                                    long[] res = v.vec().clone();
                                     res[ix] = (long)bits;
                                     return v.vectorFactory(res);
                                 });

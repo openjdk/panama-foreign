@@ -53,7 +53,7 @@ final class Short512Vector extends ShortVector {
     static final Class<Short> ETYPE = short.class;
 
     // The JVM expects to find the state here.
-    private final short[] vec; // Don't access directly, use getElements() instead.
+    private final short[] vec; // Don't access directly, use vec() instead.
 
     Short512Vector(short[] v) {
         vec = v;
@@ -114,7 +114,7 @@ final class Short512Vector extends ShortVector {
     /*package-private*/
     @ForceInline
     final @Override
-    short[] getElements() {
+    short[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -473,7 +473,7 @@ final class Short512Vector extends ShortVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    short[] vecarr = vec.getElements();
+                                    short[] vecarr = vec.vec();
                                     return (long)vecarr[ix];
                                 });
     }
@@ -487,7 +487,7 @@ final class Short512Vector extends ShortVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
-                                    short[] res = v.getElements().clone();
+                                    short[] res = v.vec().clone();
                                     res[ix] = (short)bits;
                                     return v.vectorFactory(res);
                                 });

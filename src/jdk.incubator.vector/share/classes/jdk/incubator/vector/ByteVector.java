@@ -87,7 +87,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     // Virtualized getter
 
     /*package-private*/
-    abstract byte[] getElements();
+    abstract byte[] vec();
 
     // Virtualized constructors
 
@@ -151,7 +151,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     @ForceInline
     final
     ByteVector uOpTemplate(FUnOp f) {
-        byte[] vec = getElements();
+        byte[] vec = vec();
         byte[] res = new byte[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec[i]);
@@ -167,7 +167,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     final
     ByteVector uOpTemplate(VectorMask<Byte> m,
                                      FUnOp f) {
-        byte[] vec = getElements();
+        byte[] vec = vec();
         byte[] res = new byte[length()];
         boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -192,8 +192,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     ByteVector bOpTemplate(Vector<Byte> o,
                                      FBinOp f) {
         byte[] res = new byte[length()];
-        byte[] vec1 = this.getElements();
-        byte[] vec2 = ((ByteVector)o).getElements();
+        byte[] vec1 = this.vec();
+        byte[] vec2 = ((ByteVector)o).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i]);
         }
@@ -211,8 +211,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
                                      VectorMask<Byte> m,
                                      FBinOp f) {
         byte[] res = new byte[length()];
-        byte[] vec1 = this.getElements();
-        byte[] vec2 = ((ByteVector)o).getElements();
+        byte[] vec1 = this.vec();
+        byte[] vec2 = ((ByteVector)o).vec();
         boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
@@ -238,9 +238,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
                                      Vector<Byte> o2,
                                      FTriOp f) {
         byte[] res = new byte[length()];
-        byte[] vec1 = this.getElements();
-        byte[] vec2 = ((ByteVector)o1).getElements();
-        byte[] vec3 = ((ByteVector)o2).getElements();
+        byte[] vec1 = this.vec();
+        byte[] vec2 = ((ByteVector)o1).vec();
+        byte[] vec3 = ((ByteVector)o2).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
@@ -260,9 +260,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
                                      VectorMask<Byte> m,
                                      FTriOp f) {
         byte[] res = new byte[length()];
-        byte[] vec1 = this.getElements();
-        byte[] vec2 = ((ByteVector)o1).getElements();
-        byte[] vec3 = ((ByteVector)o2).getElements();
+        byte[] vec1 = this.vec();
+        byte[] vec2 = ((ByteVector)o1).vec();
+        byte[] vec3 = ((ByteVector)o2).vec();
         boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
@@ -278,7 +278,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     @ForceInline
     final
     byte rOpTemplate(byte v, FBinOp f) {
-        byte[] vec = getElements();
+        byte[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -297,7 +297,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     final
     <M> ByteVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
-        //dummy; no vec = getElements();
+        //dummy; no vec = vec();
         byte[] res = new byte[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(memory, offset, i);
@@ -311,7 +311,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     <M> ByteVector ldOp(M memory, int offset,
                                   VectorMask<Byte> m,
                                   FLdOp<M> f) {
-        //byte[] vec = getElements();
+        //byte[] vec = vec();
         byte[] res = new byte[length()];
         boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -331,7 +331,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
-        byte[] vec = getElements();
+        byte[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             f.apply(memory, offset, i, vec[i]);
         }
@@ -343,7 +343,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     <M> void stOp(M memory, int offset,
                   VectorMask<Byte> m,
                   FStOp<M> f) {
-        byte[] vec = getElements();
+        byte[] vec = vec();
         boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
         for (int i = 0; i < vec.length; i++) {
             if (mbits[i]) {
@@ -365,8 +365,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     AbstractMask<Byte> bTest(int cond,
                                   Vector<Byte> o,
                                   FBinTest f) {
-        byte[] vec1 = getElements();
-        byte[] vec2 = ((ByteVector)o).getElements();
+        byte[] vec1 = vec();
+        byte[] vec2 = ((ByteVector)o).vec();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(cond, i, vec1[i], vec2[i]);
@@ -2041,8 +2041,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     ByteVector sliceTemplate(int origin, Vector<Byte> v1) {
         ByteVector that = (ByteVector) v1;
         that.check(this);
-        byte[] a0 = this.getElements();
-        byte[] a1 = that.getElements();
+        byte[] a0 = this.vec();
+        byte[] a1 = that.vec();
         byte[] res = new byte[a0.length];
         int vlen = res.length;
         int firstPart = vlen - origin;
@@ -2084,8 +2084,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     unsliceTemplate(int origin, Vector<Byte> w, int part) {
         ByteVector that = (ByteVector) w;
         that.check(this);
-        byte[] slice = this.getElements();
-        byte[] res = that.getElements();
+        byte[] slice = this.vec();
+        byte[] res = that.vec().clone();
         int vlen = res.length;
         int firstPart = vlen - origin;
         switch (part) {

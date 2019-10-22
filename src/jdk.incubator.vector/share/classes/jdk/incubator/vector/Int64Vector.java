@@ -53,7 +53,7 @@ final class Int64Vector extends IntVector {
     static final Class<Integer> ETYPE = int.class;
 
     // The JVM expects to find the state here.
-    private final int[] vec; // Don't access directly, use getElements() instead.
+    private final int[] vec; // Don't access directly, use vec() instead.
 
     Int64Vector(int[] v) {
         vec = v;
@@ -114,7 +114,7 @@ final class Int64Vector extends IntVector {
     /*package-private*/
     @ForceInline
     final @Override
-    int[] getElements() {
+    int[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -473,7 +473,7 @@ final class Int64Vector extends IntVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    int[] vecarr = vec.getElements();
+                                    int[] vecarr = vec.vec();
                                     return (long)vecarr[ix];
                                 });
     }
@@ -487,7 +487,7 @@ final class Int64Vector extends IntVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
-                                    int[] res = v.getElements().clone();
+                                    int[] res = v.vec().clone();
                                     res[ix] = (int)bits;
                                     return v.vectorFactory(res);
                                 });

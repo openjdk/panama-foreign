@@ -94,7 +94,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     // Virtualized getter
 
     /*package-private*/
-    abstract $type$[] getElements();
+    abstract $type$[] vec();
 
     // Virtualized constructors
 
@@ -158,7 +158,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     @ForceInline
     final
     $abstractvectortype$ uOpTemplate(FUnOp f) {
-        $type$[] vec = getElements();
+        $type$[] vec = vec();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec[i]);
@@ -174,7 +174,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     final
     $abstractvectortype$ uOpTemplate(VectorMask<$Boxtype$> m,
                                      FUnOp f) {
-        $type$[] vec = getElements();
+        $type$[] vec = vec();
         $type$[] res = new $type$[length()];
         boolean[] mbits = ((AbstractMask<$Boxtype$>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -199,8 +199,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     $abstractvectortype$ bOpTemplate(Vector<$Boxtype$> o,
                                      FBinOp f) {
         $type$[] res = new $type$[length()];
-        $type$[] vec1 = this.getElements();
-        $type$[] vec2 = (($abstractvectortype$)o).getElements();
+        $type$[] vec1 = this.vec();
+        $type$[] vec2 = (($abstractvectortype$)o).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i]);
         }
@@ -218,8 +218,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
                                      VectorMask<$Boxtype$> m,
                                      FBinOp f) {
         $type$[] res = new $type$[length()];
-        $type$[] vec1 = this.getElements();
-        $type$[] vec2 = (($abstractvectortype$)o).getElements();
+        $type$[] vec1 = this.vec();
+        $type$[] vec2 = (($abstractvectortype$)o).vec();
         boolean[] mbits = ((AbstractMask<$Boxtype$>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
@@ -245,9 +245,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
                                      Vector<$Boxtype$> o2,
                                      FTriOp f) {
         $type$[] res = new $type$[length()];
-        $type$[] vec1 = this.getElements();
-        $type$[] vec2 = (($abstractvectortype$)o1).getElements();
-        $type$[] vec3 = (($abstractvectortype$)o2).getElements();
+        $type$[] vec1 = this.vec();
+        $type$[] vec2 = (($abstractvectortype$)o1).vec();
+        $type$[] vec3 = (($abstractvectortype$)o2).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
@@ -267,9 +267,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
                                      VectorMask<$Boxtype$> m,
                                      FTriOp f) {
         $type$[] res = new $type$[length()];
-        $type$[] vec1 = this.getElements();
-        $type$[] vec2 = (($abstractvectortype$)o1).getElements();
-        $type$[] vec3 = (($abstractvectortype$)o2).getElements();
+        $type$[] vec1 = this.vec();
+        $type$[] vec2 = (($abstractvectortype$)o1).vec();
+        $type$[] vec3 = (($abstractvectortype$)o2).vec();
         boolean[] mbits = ((AbstractMask<$Boxtype$>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
@@ -285,7 +285,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     @ForceInline
     final
     $type$ rOpTemplate($type$ v, FBinOp f) {
-        $type$[] vec = getElements();
+        $type$[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -304,7 +304,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     final
     <M> $abstractvectortype$ ldOp(M memory, int offset,
                                   FLdOp<M> f) {
-        //dummy; no vec = getElements();
+        //dummy; no vec = vec();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(memory, offset, i);
@@ -318,7 +318,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     <M> $abstractvectortype$ ldOp(M memory, int offset,
                                   VectorMask<$Boxtype$> m,
                                   FLdOp<M> f) {
-        //$type$[] vec = getElements();
+        //$type$[] vec = vec();
         $type$[] res = new $type$[length()];
         boolean[] mbits = ((AbstractMask<$Boxtype$>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -338,7 +338,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
-        $type$[] vec = getElements();
+        $type$[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             f.apply(memory, offset, i, vec[i]);
         }
@@ -350,7 +350,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     <M> void stOp(M memory, int offset,
                   VectorMask<$Boxtype$> m,
                   FStOp<M> f) {
-        $type$[] vec = getElements();
+        $type$[] vec = vec();
         boolean[] mbits = ((AbstractMask<$Boxtype$>)m).getBits();
         for (int i = 0; i < vec.length; i++) {
             if (mbits[i]) {
@@ -372,8 +372,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     AbstractMask<$Boxtype$> bTest(int cond,
                                   Vector<$Boxtype$> o,
                                   FBinTest f) {
-        $type$[] vec1 = getElements();
-        $type$[] vec2 = (($abstractvectortype$)o).getElements();
+        $type$[] vec1 = vec();
+        $type$[] vec2 = (($abstractvectortype$)o).vec();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(cond, i, vec1[i], vec2[i]);
@@ -2300,8 +2300,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     $abstractvectortype$ sliceTemplate(int origin, Vector<$Boxtype$> v1) {
         $abstractvectortype$ that = ($abstractvectortype$) v1;
         that.check(this);
-        $type$[] a0 = this.getElements();
-        $type$[] a1 = that.getElements();
+        $type$[] a0 = this.vec();
+        $type$[] a1 = that.vec();
         $type$[] res = new $type$[a0.length];
         int vlen = res.length;
         int firstPart = vlen - origin;
@@ -2343,8 +2343,8 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     unsliceTemplate(int origin, Vector<$Boxtype$> w, int part) {
         $abstractvectortype$ that = ($abstractvectortype$) w;
         that.check(this);
-        $type$[] slice = this.getElements();
-        $type$[] res = that.getElements();
+        $type$[] slice = this.vec();
+        $type$[] res = that.vec().clone();
         int vlen = res.length;
         int firstPart = vlen - origin;
         switch (part) {

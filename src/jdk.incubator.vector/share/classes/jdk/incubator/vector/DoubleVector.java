@@ -88,7 +88,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     // Virtualized getter
 
     /*package-private*/
-    abstract double[] getElements();
+    abstract double[] vec();
 
     // Virtualized constructors
 
@@ -152,7 +152,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     @ForceInline
     final
     DoubleVector uOpTemplate(FUnOp f) {
-        double[] vec = getElements();
+        double[] vec = vec();
         double[] res = new double[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec[i]);
@@ -168,7 +168,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     final
     DoubleVector uOpTemplate(VectorMask<Double> m,
                                      FUnOp f) {
-        double[] vec = getElements();
+        double[] vec = vec();
         double[] res = new double[length()];
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -193,8 +193,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     DoubleVector bOpTemplate(Vector<Double> o,
                                      FBinOp f) {
         double[] res = new double[length()];
-        double[] vec1 = this.getElements();
-        double[] vec2 = ((DoubleVector)o).getElements();
+        double[] vec1 = this.vec();
+        double[] vec2 = ((DoubleVector)o).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i]);
         }
@@ -212,8 +212,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                                      VectorMask<Double> m,
                                      FBinOp f) {
         double[] res = new double[length()];
-        double[] vec1 = this.getElements();
-        double[] vec2 = ((DoubleVector)o).getElements();
+        double[] vec1 = this.vec();
+        double[] vec2 = ((DoubleVector)o).vec();
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
@@ -239,9 +239,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                                      Vector<Double> o2,
                                      FTriOp f) {
         double[] res = new double[length()];
-        double[] vec1 = this.getElements();
-        double[] vec2 = ((DoubleVector)o1).getElements();
-        double[] vec3 = ((DoubleVector)o2).getElements();
+        double[] vec1 = this.vec();
+        double[] vec2 = ((DoubleVector)o1).vec();
+        double[] vec3 = ((DoubleVector)o2).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
@@ -261,9 +261,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                                      VectorMask<Double> m,
                                      FTriOp f) {
         double[] res = new double[length()];
-        double[] vec1 = this.getElements();
-        double[] vec2 = ((DoubleVector)o1).getElements();
-        double[] vec3 = ((DoubleVector)o2).getElements();
+        double[] vec1 = this.vec();
+        double[] vec2 = ((DoubleVector)o1).vec();
+        double[] vec3 = ((DoubleVector)o2).vec();
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
@@ -279,7 +279,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     @ForceInline
     final
     double rOpTemplate(double v, FBinOp f) {
-        double[] vec = getElements();
+        double[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -298,7 +298,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     final
     <M> DoubleVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
-        //dummy; no vec = getElements();
+        //dummy; no vec = vec();
         double[] res = new double[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(memory, offset, i);
@@ -312,7 +312,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     <M> DoubleVector ldOp(M memory, int offset,
                                   VectorMask<Double> m,
                                   FLdOp<M> f) {
-        //double[] vec = getElements();
+        //double[] vec = vec();
         double[] res = new double[length()];
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -332,7 +332,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
-        double[] vec = getElements();
+        double[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             f.apply(memory, offset, i, vec[i]);
         }
@@ -344,7 +344,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     <M> void stOp(M memory, int offset,
                   VectorMask<Double> m,
                   FStOp<M> f) {
-        double[] vec = getElements();
+        double[] vec = vec();
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
         for (int i = 0; i < vec.length; i++) {
             if (mbits[i]) {
@@ -366,8 +366,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     AbstractMask<Double> bTest(int cond,
                                   Vector<Double> o,
                                   FBinTest f) {
-        double[] vec1 = getElements();
-        double[] vec2 = ((DoubleVector)o).getElements();
+        double[] vec1 = vec();
+        double[] vec2 = ((DoubleVector)o).vec();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(cond, i, vec1[i], vec2[i]);
@@ -1942,8 +1942,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     DoubleVector sliceTemplate(int origin, Vector<Double> v1) {
         DoubleVector that = (DoubleVector) v1;
         that.check(this);
-        double[] a0 = this.getElements();
-        double[] a1 = that.getElements();
+        double[] a0 = this.vec();
+        double[] a1 = that.vec();
         double[] res = new double[a0.length];
         int vlen = res.length;
         int firstPart = vlen - origin;
@@ -1985,8 +1985,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     unsliceTemplate(int origin, Vector<Double> w, int part) {
         DoubleVector that = (DoubleVector) w;
         that.check(this);
-        double[] slice = this.getElements();
-        double[] res = that.getElements();
+        double[] slice = this.vec();
+        double[] res = that.vec().clone();
         int vlen = res.length;
         int firstPart = vlen - origin;
         switch (part) {

@@ -53,7 +53,7 @@ final class Double512Vector extends DoubleVector {
     static final Class<Double> ETYPE = double.class;
 
     // The JVM expects to find the state here.
-    private final double[] vec; // Don't access directly, use getElements() instead.
+    private final double[] vec; // Don't access directly, use vec() instead.
 
     Double512Vector(double[] v) {
         vec = v;
@@ -114,7 +114,7 @@ final class Double512Vector extends DoubleVector {
     /*package-private*/
     @ForceInline
     final @Override
-    double[] getElements() {
+    double[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -467,7 +467,7 @@ final class Double512Vector extends DoubleVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    double[] vecarr = vec.getElements();
+                                    double[] vecarr = vec.vec();
                                     return (long)Double.doubleToLongBits(vecarr[ix]);
                                 });
         return Double.longBitsToDouble(bits);
@@ -482,7 +482,7 @@ final class Double512Vector extends DoubleVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)Double.doubleToLongBits(e),
                                 (v, ix, bits) -> {
-                                    double[] res = v.getElements().clone();
+                                    double[] res = v.vec().clone();
                                     res[ix] = Double.longBitsToDouble((long)bits);
                                     return v.vectorFactory(res);
                                 });

@@ -53,7 +53,7 @@ final class Byte128Vector extends ByteVector {
     static final Class<Byte> ETYPE = byte.class;
 
     // The JVM expects to find the state here.
-    private final byte[] vec; // Don't access directly, use getElements() instead.
+    private final byte[] vec; // Don't access directly, use vec() instead.
 
     Byte128Vector(byte[] v) {
         vec = v;
@@ -114,7 +114,7 @@ final class Byte128Vector extends ByteVector {
     /*package-private*/
     @ForceInline
     final @Override
-    byte[] getElements() {
+    byte[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -473,7 +473,7 @@ final class Byte128Vector extends ByteVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    byte[] vecarr = vec.getElements();
+                                    byte[] vecarr = vec.vec();
                                     return (long)vecarr[ix];
                                 });
     }
@@ -487,7 +487,7 @@ final class Byte128Vector extends ByteVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
-                                    byte[] res = v.getElements().clone();
+                                    byte[] res = v.vec().clone();
                                     res[ix] = (byte)bits;
                                     return v.vectorFactory(res);
                                 });

@@ -88,7 +88,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     // Virtualized getter
 
     /*package-private*/
-    abstract float[] getElements();
+    abstract float[] vec();
 
     // Virtualized constructors
 
@@ -152,7 +152,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     @ForceInline
     final
     FloatVector uOpTemplate(FUnOp f) {
-        float[] vec = getElements();
+        float[] vec = vec();
         float[] res = new float[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec[i]);
@@ -168,7 +168,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     final
     FloatVector uOpTemplate(VectorMask<Float> m,
                                      FUnOp f) {
-        float[] vec = getElements();
+        float[] vec = vec();
         float[] res = new float[length()];
         boolean[] mbits = ((AbstractMask<Float>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -193,8 +193,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
     FloatVector bOpTemplate(Vector<Float> o,
                                      FBinOp f) {
         float[] res = new float[length()];
-        float[] vec1 = this.getElements();
-        float[] vec2 = ((FloatVector)o).getElements();
+        float[] vec1 = this.vec();
+        float[] vec2 = ((FloatVector)o).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i]);
         }
@@ -212,8 +212,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
                                      VectorMask<Float> m,
                                      FBinOp f) {
         float[] res = new float[length()];
-        float[] vec1 = this.getElements();
-        float[] vec2 = ((FloatVector)o).getElements();
+        float[] vec1 = this.vec();
+        float[] vec2 = ((FloatVector)o).vec();
         boolean[] mbits = ((AbstractMask<Float>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
@@ -239,9 +239,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
                                      Vector<Float> o2,
                                      FTriOp f) {
         float[] res = new float[length()];
-        float[] vec1 = this.getElements();
-        float[] vec2 = ((FloatVector)o1).getElements();
-        float[] vec3 = ((FloatVector)o2).getElements();
+        float[] vec1 = this.vec();
+        float[] vec2 = ((FloatVector)o1).vec();
+        float[] vec3 = ((FloatVector)o2).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
@@ -261,9 +261,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
                                      VectorMask<Float> m,
                                      FTriOp f) {
         float[] res = new float[length()];
-        float[] vec1 = this.getElements();
-        float[] vec2 = ((FloatVector)o1).getElements();
-        float[] vec3 = ((FloatVector)o2).getElements();
+        float[] vec1 = this.vec();
+        float[] vec2 = ((FloatVector)o1).vec();
+        float[] vec3 = ((FloatVector)o2).vec();
         boolean[] mbits = ((AbstractMask<Float>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
@@ -279,7 +279,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     @ForceInline
     final
     float rOpTemplate(float v, FBinOp f) {
-        float[] vec = getElements();
+        float[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -298,7 +298,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     final
     <M> FloatVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
-        //dummy; no vec = getElements();
+        //dummy; no vec = vec();
         float[] res = new float[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(memory, offset, i);
@@ -312,7 +312,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     <M> FloatVector ldOp(M memory, int offset,
                                   VectorMask<Float> m,
                                   FLdOp<M> f) {
-        //float[] vec = getElements();
+        //float[] vec = vec();
         float[] res = new float[length()];
         boolean[] mbits = ((AbstractMask<Float>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -332,7 +332,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
-        float[] vec = getElements();
+        float[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             f.apply(memory, offset, i, vec[i]);
         }
@@ -344,7 +344,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     <M> void stOp(M memory, int offset,
                   VectorMask<Float> m,
                   FStOp<M> f) {
-        float[] vec = getElements();
+        float[] vec = vec();
         boolean[] mbits = ((AbstractMask<Float>)m).getBits();
         for (int i = 0; i < vec.length; i++) {
             if (mbits[i]) {
@@ -366,8 +366,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
     AbstractMask<Float> bTest(int cond,
                                   Vector<Float> o,
                                   FBinTest f) {
-        float[] vec1 = getElements();
-        float[] vec2 = ((FloatVector)o).getElements();
+        float[] vec1 = vec();
+        float[] vec2 = ((FloatVector)o).vec();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(cond, i, vec1[i], vec2[i]);
@@ -1942,8 +1942,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
     FloatVector sliceTemplate(int origin, Vector<Float> v1) {
         FloatVector that = (FloatVector) v1;
         that.check(this);
-        float[] a0 = this.getElements();
-        float[] a1 = that.getElements();
+        float[] a0 = this.vec();
+        float[] a1 = that.vec();
         float[] res = new float[a0.length];
         int vlen = res.length;
         int firstPart = vlen - origin;
@@ -1985,8 +1985,8 @@ public abstract class FloatVector extends AbstractVector<Float> {
     unsliceTemplate(int origin, Vector<Float> w, int part) {
         FloatVector that = (FloatVector) w;
         that.check(this);
-        float[] slice = this.getElements();
-        float[] res = that.getElements();
+        float[] slice = this.vec();
+        float[] res = that.vec().clone();
         int vlen = res.length;
         int firstPart = vlen - origin;
         switch (part) {

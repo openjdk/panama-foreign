@@ -88,7 +88,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     // Virtualized getter
 
     /*package-private*/
-    abstract short[] getElements();
+    abstract short[] vec();
 
     // Virtualized constructors
 
@@ -152,7 +152,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     @ForceInline
     final
     ShortVector uOpTemplate(FUnOp f) {
-        short[] vec = getElements();
+        short[] vec = vec();
         short[] res = new short[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec[i]);
@@ -168,7 +168,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     final
     ShortVector uOpTemplate(VectorMask<Short> m,
                                      FUnOp f) {
-        short[] vec = getElements();
+        short[] vec = vec();
         short[] res = new short[length()];
         boolean[] mbits = ((AbstractMask<Short>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -193,8 +193,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
     ShortVector bOpTemplate(Vector<Short> o,
                                      FBinOp f) {
         short[] res = new short[length()];
-        short[] vec1 = this.getElements();
-        short[] vec2 = ((ShortVector)o).getElements();
+        short[] vec1 = this.vec();
+        short[] vec2 = ((ShortVector)o).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i]);
         }
@@ -212,8 +212,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
                                      VectorMask<Short> m,
                                      FBinOp f) {
         short[] res = new short[length()];
-        short[] vec1 = this.getElements();
-        short[] vec2 = ((ShortVector)o).getElements();
+        short[] vec1 = this.vec();
+        short[] vec2 = ((ShortVector)o).vec();
         boolean[] mbits = ((AbstractMask<Short>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
@@ -239,9 +239,9 @@ public abstract class ShortVector extends AbstractVector<Short> {
                                      Vector<Short> o2,
                                      FTriOp f) {
         short[] res = new short[length()];
-        short[] vec1 = this.getElements();
-        short[] vec2 = ((ShortVector)o1).getElements();
-        short[] vec3 = ((ShortVector)o2).getElements();
+        short[] vec1 = this.vec();
+        short[] vec2 = ((ShortVector)o1).vec();
+        short[] vec3 = ((ShortVector)o2).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
@@ -261,9 +261,9 @@ public abstract class ShortVector extends AbstractVector<Short> {
                                      VectorMask<Short> m,
                                      FTriOp f) {
         short[] res = new short[length()];
-        short[] vec1 = this.getElements();
-        short[] vec2 = ((ShortVector)o1).getElements();
-        short[] vec3 = ((ShortVector)o2).getElements();
+        short[] vec1 = this.vec();
+        short[] vec2 = ((ShortVector)o1).vec();
+        short[] vec3 = ((ShortVector)o2).vec();
         boolean[] mbits = ((AbstractMask<Short>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
@@ -279,7 +279,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     @ForceInline
     final
     short rOpTemplate(short v, FBinOp f) {
-        short[] vec = getElements();
+        short[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -298,7 +298,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     final
     <M> ShortVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
-        //dummy; no vec = getElements();
+        //dummy; no vec = vec();
         short[] res = new short[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(memory, offset, i);
@@ -312,7 +312,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     <M> ShortVector ldOp(M memory, int offset,
                                   VectorMask<Short> m,
                                   FLdOp<M> f) {
-        //short[] vec = getElements();
+        //short[] vec = vec();
         short[] res = new short[length()];
         boolean[] mbits = ((AbstractMask<Short>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -332,7 +332,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
-        short[] vec = getElements();
+        short[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             f.apply(memory, offset, i, vec[i]);
         }
@@ -344,7 +344,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
     <M> void stOp(M memory, int offset,
                   VectorMask<Short> m,
                   FStOp<M> f) {
-        short[] vec = getElements();
+        short[] vec = vec();
         boolean[] mbits = ((AbstractMask<Short>)m).getBits();
         for (int i = 0; i < vec.length; i++) {
             if (mbits[i]) {
@@ -366,8 +366,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
     AbstractMask<Short> bTest(int cond,
                                   Vector<Short> o,
                                   FBinTest f) {
-        short[] vec1 = getElements();
-        short[] vec2 = ((ShortVector)o).getElements();
+        short[] vec1 = vec();
+        short[] vec2 = ((ShortVector)o).vec();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(cond, i, vec1[i], vec2[i]);
@@ -2042,8 +2042,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
     ShortVector sliceTemplate(int origin, Vector<Short> v1) {
         ShortVector that = (ShortVector) v1;
         that.check(this);
-        short[] a0 = this.getElements();
-        short[] a1 = that.getElements();
+        short[] a0 = this.vec();
+        short[] a1 = that.vec();
         short[] res = new short[a0.length];
         int vlen = res.length;
         int firstPart = vlen - origin;
@@ -2085,8 +2085,8 @@ public abstract class ShortVector extends AbstractVector<Short> {
     unsliceTemplate(int origin, Vector<Short> w, int part) {
         ShortVector that = (ShortVector) w;
         that.check(this);
-        short[] slice = this.getElements();
-        short[] res = that.getElements();
+        short[] slice = this.vec();
+        short[] res = that.vec().clone();
         int vlen = res.length;
         int firstPart = vlen - origin;
         switch (part) {

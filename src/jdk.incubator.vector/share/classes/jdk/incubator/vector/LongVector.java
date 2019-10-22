@@ -88,7 +88,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     // Virtualized getter
 
     /*package-private*/
-    abstract long[] getElements();
+    abstract long[] vec();
 
     // Virtualized constructors
 
@@ -152,7 +152,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     @ForceInline
     final
     LongVector uOpTemplate(FUnOp f) {
-        long[] vec = getElements();
+        long[] vec = vec();
         long[] res = new long[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec[i]);
@@ -168,7 +168,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     final
     LongVector uOpTemplate(VectorMask<Long> m,
                                      FUnOp f) {
-        long[] vec = getElements();
+        long[] vec = vec();
         long[] res = new long[length()];
         boolean[] mbits = ((AbstractMask<Long>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -193,8 +193,8 @@ public abstract class LongVector extends AbstractVector<Long> {
     LongVector bOpTemplate(Vector<Long> o,
                                      FBinOp f) {
         long[] res = new long[length()];
-        long[] vec1 = this.getElements();
-        long[] vec2 = ((LongVector)o).getElements();
+        long[] vec1 = this.vec();
+        long[] vec2 = ((LongVector)o).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i]);
         }
@@ -212,8 +212,8 @@ public abstract class LongVector extends AbstractVector<Long> {
                                      VectorMask<Long> m,
                                      FBinOp f) {
         long[] res = new long[length()];
-        long[] vec1 = this.getElements();
-        long[] vec2 = ((LongVector)o).getElements();
+        long[] vec1 = this.vec();
+        long[] vec2 = ((LongVector)o).vec();
         boolean[] mbits = ((AbstractMask<Long>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
@@ -239,9 +239,9 @@ public abstract class LongVector extends AbstractVector<Long> {
                                      Vector<Long> o2,
                                      FTriOp f) {
         long[] res = new long[length()];
-        long[] vec1 = this.getElements();
-        long[] vec2 = ((LongVector)o1).getElements();
-        long[] vec3 = ((LongVector)o2).getElements();
+        long[] vec1 = this.vec();
+        long[] vec2 = ((LongVector)o1).vec();
+        long[] vec3 = ((LongVector)o2).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
@@ -261,9 +261,9 @@ public abstract class LongVector extends AbstractVector<Long> {
                                      VectorMask<Long> m,
                                      FTriOp f) {
         long[] res = new long[length()];
-        long[] vec1 = this.getElements();
-        long[] vec2 = ((LongVector)o1).getElements();
-        long[] vec3 = ((LongVector)o2).getElements();
+        long[] vec1 = this.vec();
+        long[] vec2 = ((LongVector)o1).vec();
+        long[] vec3 = ((LongVector)o2).vec();
         boolean[] mbits = ((AbstractMask<Long>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
@@ -279,7 +279,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     @ForceInline
     final
     long rOpTemplate(long v, FBinOp f) {
-        long[] vec = getElements();
+        long[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -298,7 +298,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     final
     <M> LongVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
-        //dummy; no vec = getElements();
+        //dummy; no vec = vec();
         long[] res = new long[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(memory, offset, i);
@@ -312,7 +312,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     <M> LongVector ldOp(M memory, int offset,
                                   VectorMask<Long> m,
                                   FLdOp<M> f) {
-        //long[] vec = getElements();
+        //long[] vec = vec();
         long[] res = new long[length()];
         boolean[] mbits = ((AbstractMask<Long>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -332,7 +332,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
-        long[] vec = getElements();
+        long[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             f.apply(memory, offset, i, vec[i]);
         }
@@ -344,7 +344,7 @@ public abstract class LongVector extends AbstractVector<Long> {
     <M> void stOp(M memory, int offset,
                   VectorMask<Long> m,
                   FStOp<M> f) {
-        long[] vec = getElements();
+        long[] vec = vec();
         boolean[] mbits = ((AbstractMask<Long>)m).getBits();
         for (int i = 0; i < vec.length; i++) {
             if (mbits[i]) {
@@ -366,8 +366,8 @@ public abstract class LongVector extends AbstractVector<Long> {
     AbstractMask<Long> bTest(int cond,
                                   Vector<Long> o,
                                   FBinTest f) {
-        long[] vec1 = getElements();
-        long[] vec2 = ((LongVector)o).getElements();
+        long[] vec1 = vec();
+        long[] vec2 = ((LongVector)o).vec();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(cond, i, vec1[i], vec2[i]);
@@ -1913,8 +1913,8 @@ public abstract class LongVector extends AbstractVector<Long> {
     LongVector sliceTemplate(int origin, Vector<Long> v1) {
         LongVector that = (LongVector) v1;
         that.check(this);
-        long[] a0 = this.getElements();
-        long[] a1 = that.getElements();
+        long[] a0 = this.vec();
+        long[] a1 = that.vec();
         long[] res = new long[a0.length];
         int vlen = res.length;
         int firstPart = vlen - origin;
@@ -1956,8 +1956,8 @@ public abstract class LongVector extends AbstractVector<Long> {
     unsliceTemplate(int origin, Vector<Long> w, int part) {
         LongVector that = (LongVector) w;
         that.check(this);
-        long[] slice = this.getElements();
-        long[] res = that.getElements();
+        long[] slice = this.vec();
+        long[] res = that.vec().clone();
         int vlen = res.length;
         int firstPart = vlen - origin;
         switch (part) {

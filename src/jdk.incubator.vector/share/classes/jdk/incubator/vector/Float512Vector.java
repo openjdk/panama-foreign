@@ -53,7 +53,7 @@ final class Float512Vector extends FloatVector {
     static final Class<Float> ETYPE = float.class;
 
     // The JVM expects to find the state here.
-    private final float[] vec; // Don't access directly, use getElements() instead.
+    private final float[] vec; // Don't access directly, use vec() instead.
 
     Float512Vector(float[] v) {
         vec = v;
@@ -114,7 +114,7 @@ final class Float512Vector extends FloatVector {
     /*package-private*/
     @ForceInline
     final @Override
-    float[] getElements() {
+    float[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -467,7 +467,7 @@ final class Float512Vector extends FloatVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    float[] vecarr = vec.getElements();
+                                    float[] vecarr = vec.vec();
                                     return (long)Float.floatToIntBits(vecarr[ix]);
                                 });
         return Float.intBitsToFloat(bits);
@@ -482,7 +482,7 @@ final class Float512Vector extends FloatVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)Float.floatToIntBits(e),
                                 (v, ix, bits) -> {
-                                    float[] res = v.getElements().clone();
+                                    float[] res = v.vec().clone();
                                     res[ix] = Float.intBitsToFloat((int)bits);
                                     return v.vectorFactory(res);
                                 });

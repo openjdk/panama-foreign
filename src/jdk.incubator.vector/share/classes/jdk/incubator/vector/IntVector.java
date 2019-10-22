@@ -88,7 +88,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     // Virtualized getter
 
     /*package-private*/
-    abstract int[] getElements();
+    abstract int[] vec();
 
     // Virtualized constructors
 
@@ -152,7 +152,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     @ForceInline
     final
     IntVector uOpTemplate(FUnOp f) {
-        int[] vec = getElements();
+        int[] vec = vec();
         int[] res = new int[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec[i]);
@@ -168,7 +168,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     final
     IntVector uOpTemplate(VectorMask<Integer> m,
                                      FUnOp f) {
-        int[] vec = getElements();
+        int[] vec = vec();
         int[] res = new int[length()];
         boolean[] mbits = ((AbstractMask<Integer>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -193,8 +193,8 @@ public abstract class IntVector extends AbstractVector<Integer> {
     IntVector bOpTemplate(Vector<Integer> o,
                                      FBinOp f) {
         int[] res = new int[length()];
-        int[] vec1 = this.getElements();
-        int[] vec2 = ((IntVector)o).getElements();
+        int[] vec1 = this.vec();
+        int[] vec2 = ((IntVector)o).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i]);
         }
@@ -212,8 +212,8 @@ public abstract class IntVector extends AbstractVector<Integer> {
                                      VectorMask<Integer> m,
                                      FBinOp f) {
         int[] res = new int[length()];
-        int[] vec1 = this.getElements();
-        int[] vec2 = ((IntVector)o).getElements();
+        int[] vec1 = this.vec();
+        int[] vec2 = ((IntVector)o).vec();
         boolean[] mbits = ((AbstractMask<Integer>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
@@ -239,9 +239,9 @@ public abstract class IntVector extends AbstractVector<Integer> {
                                      Vector<Integer> o2,
                                      FTriOp f) {
         int[] res = new int[length()];
-        int[] vec1 = this.getElements();
-        int[] vec2 = ((IntVector)o1).getElements();
-        int[] vec3 = ((IntVector)o2).getElements();
+        int[] vec1 = this.vec();
+        int[] vec2 = ((IntVector)o1).vec();
+        int[] vec3 = ((IntVector)o2).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
@@ -261,9 +261,9 @@ public abstract class IntVector extends AbstractVector<Integer> {
                                      VectorMask<Integer> m,
                                      FTriOp f) {
         int[] res = new int[length()];
-        int[] vec1 = this.getElements();
-        int[] vec2 = ((IntVector)o1).getElements();
-        int[] vec3 = ((IntVector)o2).getElements();
+        int[] vec1 = this.vec();
+        int[] vec2 = ((IntVector)o1).vec();
+        int[] vec3 = ((IntVector)o2).vec();
         boolean[] mbits = ((AbstractMask<Integer>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
@@ -279,7 +279,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     @ForceInline
     final
     int rOpTemplate(int v, FBinOp f) {
-        int[] vec = getElements();
+        int[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -298,7 +298,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     final
     <M> IntVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
-        //dummy; no vec = getElements();
+        //dummy; no vec = vec();
         int[] res = new int[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(memory, offset, i);
@@ -312,7 +312,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     <M> IntVector ldOp(M memory, int offset,
                                   VectorMask<Integer> m,
                                   FLdOp<M> f) {
-        //int[] vec = getElements();
+        //int[] vec = vec();
         int[] res = new int[length()];
         boolean[] mbits = ((AbstractMask<Integer>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -332,7 +332,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
-        int[] vec = getElements();
+        int[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             f.apply(memory, offset, i, vec[i]);
         }
@@ -344,7 +344,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
     <M> void stOp(M memory, int offset,
                   VectorMask<Integer> m,
                   FStOp<M> f) {
-        int[] vec = getElements();
+        int[] vec = vec();
         boolean[] mbits = ((AbstractMask<Integer>)m).getBits();
         for (int i = 0; i < vec.length; i++) {
             if (mbits[i]) {
@@ -366,8 +366,8 @@ public abstract class IntVector extends AbstractVector<Integer> {
     AbstractMask<Integer> bTest(int cond,
                                   Vector<Integer> o,
                                   FBinTest f) {
-        int[] vec1 = getElements();
-        int[] vec2 = ((IntVector)o).getElements();
+        int[] vec1 = vec();
+        int[] vec2 = ((IntVector)o).vec();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(cond, i, vec1[i], vec2[i]);
@@ -2041,8 +2041,8 @@ public abstract class IntVector extends AbstractVector<Integer> {
     IntVector sliceTemplate(int origin, Vector<Integer> v1) {
         IntVector that = (IntVector) v1;
         that.check(this);
-        int[] a0 = this.getElements();
-        int[] a1 = that.getElements();
+        int[] a0 = this.vec();
+        int[] a1 = that.vec();
         int[] res = new int[a0.length];
         int vlen = res.length;
         int firstPart = vlen - origin;
@@ -2084,8 +2084,8 @@ public abstract class IntVector extends AbstractVector<Integer> {
     unsliceTemplate(int origin, Vector<Integer> w, int part) {
         IntVector that = (IntVector) w;
         that.check(this);
-        int[] slice = this.getElements();
-        int[] res = that.getElements();
+        int[] slice = this.vec();
+        int[] res = that.vec().clone();
         int vlen = res.length;
         int firstPart = vlen - origin;
         switch (part) {
