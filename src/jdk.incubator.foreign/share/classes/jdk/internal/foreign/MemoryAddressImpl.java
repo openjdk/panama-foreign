@@ -41,9 +41,7 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
     private final MemorySegmentImpl segment;
     private final long offset;
 
-    public static MemoryAddress ofNull() {
-        return MemorySegmentImpl.EVERYTHING.baseAddress();
-    }
+    public static final MemoryAddress NULL = MemorySegmentImpl.EVERYTHING.baseAddress();
 
     public static MemoryAddress ofNative(long addr) {
         return Utils.makeNativeSegment(addr).baseAddress();

@@ -89,7 +89,7 @@ public class UniversalNativeInvoker {
         long[] values = new long[nValues];
         MemoryAddress argsPtr = nValues > 0 ?
                 MemorySegment.ofArray(values).baseAddress() :
-                MemoryAddressImpl.ofNull();
+                MemoryAddressImpl.NULL;
 
         for (int i = 0; i < args.length; i++) {
             Object arg = args[i];
@@ -109,7 +109,7 @@ public class UniversalNativeInvoker {
         } else if (!isVoid && returnValues.length != 0) {
             retPtr = MemorySegment.ofArray(returnValues).baseAddress();
         } else {
-            retPtr = MemoryAddressImpl.ofNull();
+            retPtr = MemoryAddressImpl.NULL;
         }
 
         if (DEBUG) {

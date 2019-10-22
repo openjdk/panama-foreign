@@ -74,4 +74,12 @@ public final class ForeignUnsafe {
     public static MemoryAddress ofLong(long addr) {
         return MemoryAddressImpl.ofNative(addr);
     }
+
+    /**
+     * Obtain a new memory address instance modelling the NULL pointer.
+     * @return the NULL memory address.
+     */
+    public static MemoryAddress ofNull() {
+        return MemoryAddressImpl.NULL;
+    }
 }

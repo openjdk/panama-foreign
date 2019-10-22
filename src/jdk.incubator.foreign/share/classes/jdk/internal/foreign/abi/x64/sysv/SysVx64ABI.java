@@ -147,7 +147,7 @@ public class SysVx64ABI implements SystemABI {
                  */
                 if (layout.bitSize() == 0) {
                     //empty struct!
-                    return MemoryAddressImpl.ofNull();
+                    return MemoryAddressImpl.NULL;
                 }
 
                 MemoryAddress rtmp = MemorySegment.ofNative(layout).baseAddress();

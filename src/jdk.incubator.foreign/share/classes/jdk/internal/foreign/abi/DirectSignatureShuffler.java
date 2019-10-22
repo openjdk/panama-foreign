@@ -340,7 +340,7 @@ public class DirectSignatureShuffler {
 
     private static MemoryAddress longToPointer(long addr) {
         return addr == 0L ?
-                MemoryAddressImpl.ofNull() :
+                MemoryAddressImpl.NULL :
                 MemoryAddressImpl.ofNative(addr);
     }
 
@@ -402,12 +402,15 @@ public class DirectSignatureShuffler {
             }
         }
 
+        if (callingSequence.returnsInMemory()) {
+            return false;
+        }
+
         List<ArgumentBinding> returnBindings = callingSequence.returnBindings();
         if (returnBindings.isEmpty()) {
             return true;
         } else {
-            return !callingSequence.returnsInMemory() &&
-                    returnBindings.size() == 1 && isDirectBinding(returnBindings.get(0));
+            return returnBindings.size() == 1 && isDirectBinding(returnBindings.get(0));
         }
     }
 
