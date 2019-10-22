@@ -67,6 +67,12 @@ get_template="Get-op"
 rearrange_template="Rearrange"
 broadcast_template="Broadcast"
 zero_template="Zero"
+slice_template="Slice-op"
+slice1_template="Slice-bop"
+slice1_masked_template="Slice-Masked-bop"
+unslice_template="Unslice-op"
+unslice1_template="Unslice-bop"
+unslice1_masked_template="Unslice-Masked-bop"
 
 function replace_variables {
   local filename=$1
@@ -389,6 +395,18 @@ gen_op_tmpl $zero_template "zero" "" $unit_output $perf_output $perf_scalar_outp
 
 # Single
 gen_op_tmpl $single_template "single" "" $unit_output $perf_output $perf_scalar_output
+
+# Slice
+# Please remove "BITWISE" once the intrinsic failure for the float slice/ unslice is fixed
+gen_op_tmpl $slice_template "slice" "" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_op_tmpl $slice1_template "slice" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $slice1_masked_template "slice" "" $unit_output $perf_output $perf_scalar_output
+
+# Unslice
+# Please remove "BITWISE" once the intrinsic failure for the float slice/ unslice is fixed
+gen_op_tmpl $unslice_template "unslice" "" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_op_tmpl $unslice1_template "unslice" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $unslice1_masked_template "unslice" "" $unit_output $perf_output $perf_scalar_output
 
 # Math
 gen_op_tmpl $unary_math_template "SIN" "Math.sin((double)a)" $unit_output $perf_output $perf_scalar_output "FP"

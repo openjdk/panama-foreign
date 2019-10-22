@@ -7125,13 +7125,11 @@ bool LibraryCallKit::inline_vector_shuffle_iota() {
 
   Node* bcast_step = _gvn.transform(VectorNode::scalar2vector(step, num_elem, Type::get_const_basic_type(elem_bt)));
 
-  // TBD: Need to correct to match the new partiallyWrapIndex
-//  Node* bcast_mod  = _gvn.transform(VectorNode::scalar2vector(gvn().makecon(TypeInt::make(num_elem-1)),
-//                                             num_elem, Type::get_const_basic_type(elem_bt)));
-//  Node* add = _gvn.transform(VectorNode::make(Op_AddI, iota, bcast_step, num_elem, elem_bt));
-//  Node* res = _gvn.transform(VectorNode::make(Op_AndI, add,  bcast_mod, num_elem, elem_bt));
+  Node* bcast_mod  = _gvn.transform(VectorNode::scalar2vector(gvn().makecon(TypeInt::make(num_elem-1)),
+                                               num_elem, Type::get_const_basic_type(elem_bt)));
+  Node* add = _gvn.transform(VectorNode::make(Op_AddI, iota, bcast_step, num_elem, elem_bt));
+  Node* res = _gvn.transform(VectorNode::make(Op_AndI, add,  bcast_mod, num_elem, elem_bt));
 
-  Node* res = _gvn.transform(VectorNode::make(Op_AddI, iota, bcast_step, num_elem, elem_bt));
   ciKlass* sbox_klass = shuffle_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* shuffle_box_type = TypeInstPtr::make_exact(TypePtr::NotNull, sbox_klass);
 

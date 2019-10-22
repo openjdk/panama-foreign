@@ -497,6 +497,112 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 
+    interface FLaneOp {
+        $type$[] apply($type$[] a, int origin, int idx);
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] r, int origin, FLaneOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, origin, i));
+            }
+        } catch (AssertionError e) {
+            $type$[] ref = f.apply(a, origin, i);
+            $type$[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i);
+        }
+    }
+
+    interface FLaneBop {
+        $type$[] apply($type$[] a, $type$[] b, int origin, int idx);
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] b, $type$[] r, int origin, FLaneBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, i));
+            }
+        } catch (AssertionError e) {
+            $type$[] ref = f.apply(a, b, origin, i);
+            $type$[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin);
+        }
+    }
+
+    interface FLaneMaskedBop {
+        $type$[] apply($type$[] a, $type$[] b, int origin, boolean[] mask, int idx);
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] b, $type$[] r, int origin, boolean[] mask, FLaneMaskedBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, mask, i));
+            }
+        } catch (AssertionError e) {
+            $type$[] ref = f.apply(a, b, origin, mask, i);
+            $type$[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin);
+        }
+    }
+
+    interface FLanePartBop {
+        $type$[] apply($type$[] a, $type$[] b, int origin, int part, int idx);
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] b, $type$[] r, int origin, int part, FLanePartBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, part, i));
+            }
+        } catch (AssertionError e) {
+            $type$[] ref = f.apply(a, b, origin, part, i);
+            $type$[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin
+              + ", with part #" + part);
+        }
+    }
+
+    interface FLanePartMaskedBop {
+        $type$[] apply($type$[] a, $type$[] b, int origin, int part, boolean[] mask, int idx);
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] b, $type$[] r, int origin, int part, boolean[] mask, FLanePartMaskedBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, part, mask, i));
+            }
+        } catch (AssertionError e) {
+            $type$[] ref = f.apply(a, b, origin, part, mask, i);
+            $type$[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin
+              + ", with part #" + part);
+        }
+    }
+
     static $bitstype$ bits($type$ e) {
         return {#if[FP]? $Type$.$type$To$Bitstype$Bits(e): e};
     }

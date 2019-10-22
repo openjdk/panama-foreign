@@ -354,18 +354,18 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
     @ForceInline
     AbstractShuffle<E> iotaShuffle(int start, int step, boolean wrap) {
         AbstractShuffle<E> res;
-        if (step == 1) {
+        if (step == 1 && wrap) {
             if (start == 0)
                 return dummyVector().iotaShuffle();
             else
-                res = dummyVector().iotaShuffle(start);
+                return dummyVector().iotaShuffle(start);
         } else {
             // FIXME: Vectorize this.
             res = shuffleFromOp(i -> start + i * step);
+            if (!wrap)  return res;
+            // FIXME: Vectorize this.
+            return res.wrapIndexes();
         }
-        if (!wrap)  return res;
-        // FIXME: Vectorize this.
-        return res.wrapIndexes();
     }
 
     // Define fromArray when we know the ETYPE.

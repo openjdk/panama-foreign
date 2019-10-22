@@ -466,6 +466,112 @@ public class Float64VectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FLaneOp {
+        float[] apply(float[] a, int origin, int idx);
+    }
+
+    static void assertArraysEquals(float[] a, float[] r, int origin, FLaneOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, origin, i));
+            }
+        } catch (AssertionError e) {
+            float[] ref = f.apply(a, origin, i);
+            float[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i);
+        }
+    }
+
+    interface FLaneBop {
+        float[] apply(float[] a, float[] b, int origin, int idx);
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, int origin, FLaneBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, i));
+            }
+        } catch (AssertionError e) {
+            float[] ref = f.apply(a, b, origin, i);
+            float[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin);
+        }
+    }
+
+    interface FLaneMaskedBop {
+        float[] apply(float[] a, float[] b, int origin, boolean[] mask, int idx);
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, int origin, boolean[] mask, FLaneMaskedBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, mask, i));
+            }
+        } catch (AssertionError e) {
+            float[] ref = f.apply(a, b, origin, mask, i);
+            float[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin);
+        }
+    }
+
+    interface FLanePartBop {
+        float[] apply(float[] a, float[] b, int origin, int part, int idx);
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, int origin, int part, FLanePartBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, part, i));
+            }
+        } catch (AssertionError e) {
+            float[] ref = f.apply(a, b, origin, part, i);
+            float[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin
+              + ", with part #" + part);
+        }
+    }
+
+    interface FLanePartMaskedBop {
+        float[] apply(float[] a, float[] b, int origin, int part, boolean[] mask, int idx);
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, int origin, int part, boolean[] mask, FLanePartMaskedBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, part, mask, i));
+            }
+        } catch (AssertionError e) {
+            float[] ref = f.apply(a, b, origin, part, mask, i);
+            float[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin
+              + ", with part #" + part);
+        }
+    }
+
     static int bits(float e) {
         return  Float.floatToIntBits(e);
     }
@@ -2170,6 +2276,165 @@ public class Float64VectorTests extends AbstractVectorTest {
         }
 
         assertArraysEquals(a, r, Float64VectorTests::single);
+    }
+
+    static float[] slice(float[] a, float[] b, int origin, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = a[idx+i+origin];
+            else {
+                res[i] = b[idx+j];
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void sliceFloat64VectorTestsBinary(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.slice(origin, bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, Float64VectorTests::slice);
+    }
+    static float[] slice(float[] a, float[] b, int origin, boolean[] mask, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = mask[i] ? a[idx+i+origin] : (float)0;
+            else {
+                res[i] = mask[i] ? b[idx+j] : (float)0;
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void sliceFloat64VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromArray(SPECIES, mask, 0);
+
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.slice(origin, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, mask, Float64VectorTests::slice);
+    }
+
+    static float[] unslice(float[] a, float[] b, int origin, int part, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if (part == 0) {
+                if (i < origin)
+                    res[i] = b[idx+i];
+                else {
+                    res[i] = a[idx+j];
+                    j++;
+                }
+            } else if (part == 1) {
+                if (i < origin)
+                    res[i] = a[idx+SPECIES.length()-origin+i];
+                else {
+                    res[i] = b[idx+origin+j];
+                    j++;
+                }
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void unsliceFloat64VectorTestsBinary(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        int part = (new java.util.Random()).nextInt(2);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.unslice(origin, bv, part).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, part, Float64VectorTests::unslice);
+    }
+    static float[] unslice(float[] a, float[] b, int origin, int part, boolean[] mask, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = b[idx+i+origin];
+            else {
+                res[i] = b[idx+j];
+                j++;
+            }
+        }
+        for (int i = 0; i < SPECIES.length(); i++){
+            res[i] = mask[i] ? a[idx+i] : res[i];
+        }
+        float[] res1 = new float[SPECIES.length()];
+        if (part == 0) {
+            for (int i = 0, j = 0; i < SPECIES.length(); i++){
+                if (i < origin)
+                    res1[i] = b[idx+i];
+                else {
+                   res1[i] = res[j];
+                   j++;
+                }
+            }
+        } else if (part == 1) {
+            for (int i = 0, j = 0; i < SPECIES.length(); i++){
+                if (i < origin)
+                    res1[i] = res[SPECIES.length()-origin+i];
+                else {
+                    res1[i] = b[idx+origin+j];
+                    j++;
+                }
+            }
+        }
+        return res1;
+    }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void unsliceFloat64VectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromArray(SPECIES, mask, 0);
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        int part = (new java.util.Random()).nextInt(2);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.unslice(origin, bv, part, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, part, mask, Float64VectorTests::unslice);
     }
 
     static float SIN(float a) {
