@@ -6900,7 +6900,7 @@ instruct scatter16I(memory mem, vecZ src, vecZ idx, rRegP tmp, rRegI tmp2) %{
 
 //Scatter Float
 instruct scatter4F(memory mem, vecX src, vecX idx, rRegP tmp, rRegI tmp2) %{
-  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set mem (StoreVectorScatter mem (Binary src idx)));
   effect(TEMP tmp, TEMP tmp2);
   format %{ "movl   $tmp,0xFFFF\n\t"

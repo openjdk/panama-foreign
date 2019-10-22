@@ -1456,6 +1456,7 @@ const bool Matcher::match_rule_supported(int opcode) {
     case Op_AbsVI:
        if (UseSSE < 3) // requires at least SSE3
          ret_value = false;
+       break;
     case Op_MulReductionVI:
       if (UseSSE < 4) // requires at least SSE4
         ret_value = false;
@@ -1573,6 +1574,8 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_VURShiftV:
           if (UseAVX < 2)
             ret_value = false;
+          if ((size_in_bits < 512) && (VM_Version::supports_avx512vl() == false))
+            ret_value = false;
           break;
         case Op_AbsVS:
         case Op_MulVS:
@@ -1582,6 +1585,10 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_RShiftVS:
         case Op_URShiftVS:
           if ((vlen == 32) && (VM_Version::supports_avx512bw() == false))
+            ret_value = false;
+          break;
+        case Op_AbsVL:
+          if ((size_in_bits < 512) && (VM_Version::supports_avx512vl() == false))
             ret_value = false;
           break;
         case Op_MulVB:
@@ -1711,6 +1718,7 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           if (UseAVX < 3) { ret_value = false; }
           else if(bt == T_BYTE || bt == T_SHORT) { ret_value = false; }
           else if (size_in_bits == 64 ) { ret_value = false; }
+          else if (size_in_bits < 512 && !VM_Version::supports_avx512vl()) { ret_value = false; }
           break;
         default:
           break;
@@ -15923,7 +15931,7 @@ instruct vsllv16B_avx(vecX dst, vecX src, vecX shift, vecY tmp, vecY tmp2, vecY 
 %}
 
 instruct vsllv16B_evex(vecX dst, vecX src, vecX shift, vecY tmp, vecY tmp2, rRegI scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VLShiftV src shift));
   effect(TEMP dst, TEMP tmp2, TEMP tmp, TEMP scratch);
   format %{ "vpmovzxbw  $tmp,$src\n\t"
@@ -16019,7 +16027,7 @@ instruct vsllv32B_avx(vecY dst, vecY src, vecY shift, vecY tmp, vecY tmp2, vecY 
 %}
 
 instruct vsllv32B_evex(vecY dst, vecY src, vecY shift, vecZ tmp, vecZ tmp2, rRegI scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw()  && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VLShiftV src shift));
   effect(TEMP dst, TEMP tmp2, TEMP tmp, TEMP scratch);
   format %{ "vpmovzxbw  $tmp,$src\n\t"
@@ -16108,7 +16116,7 @@ instruct vsllv4S_avx(vecD dst, vecD src, vecD shift, vecX tmp, vecX tmp2, rRegI 
 %}
 
 instruct vsllv4S_evex(vecD dst, vecD src, vecD shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VLShiftV src shift));
   format %{ "evpsllvw  $dst,$src,$shift\t! variable bit shift left shift packed4S" %}
   ins_encode %{
@@ -16141,7 +16149,7 @@ instruct vsllv8S_avx(vecX dst, vecX src, vecX shift, vecY tmp, vecY tmp2, rRegI 
 %}
 
 instruct vsllv8S_evex(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VLShiftV src shift));
   format %{ "evpsllvw  $dst,$src,$shift\t! variable bit shift left shift packed8S" %}
   ins_encode %{
@@ -16186,7 +16194,7 @@ instruct vsllv16S_avx(vecY dst, vecY src, vecY shift, vecY tmp, vecY tmp2, rRegL
 %}
 
 instruct vsllv16S_evex(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VLShiftV src shift));
   format %{ "evpsllvw  $dst,$src,$shift\t! variable bit shift left shift packed16S" %}
   ins_encode %{
@@ -16197,7 +16205,7 @@ instruct vsllv16S_evex(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsllv32S_evex(vecZ dst, vecZ src, vecZ shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VLShiftV src shift));
   format %{ "evpsllvw  $dst,$src,$shift\t! variable bit shift left shift packed32S" %}
   ins_encode %{
@@ -16408,7 +16416,7 @@ instruct vsrlv16B_avx(vecX dst, vecX src, vecX shift, vecY tmp, vecY tmp2, vecY 
 %}
 
 instruct vsrlv16B_evex(vecX dst, vecX src, vecX shift, vecY tmp, vecY tmp2, rRegI scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VURShiftV src shift));
   effect(TEMP dst, TEMP tmp2, TEMP tmp, TEMP scratch);
   format %{ "vpmovzxbw  $tmp,$src\n\t"
@@ -16504,7 +16512,7 @@ instruct vsrlv32B_avx(vecY dst, vecY src, vecY shift, vecY tmp, vecY tmp2, vecY 
 %}
 
 instruct vsrlv32B_evex(vecY dst, vecY src, vecY shift, vecZ tmp, vecZ tmp2, rRegI scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VURShiftV src shift));
   effect(TEMP dst, TEMP tmp2, TEMP tmp, TEMP scratch);
   format %{ "vpmovzxbw  $tmp,$src\n\t"
@@ -16528,7 +16536,7 @@ instruct vsrlv32B_evex(vecY dst, vecY src, vecY shift, vecZ tmp, vecZ tmp2, rReg
 %}
 
 instruct vsrlv64B_evex(vecZ dst, vecZ src, vecZ shift, vecZ tmp, vecZ tmp2, vecZ tmp3, vecZ shift1, rRegI scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 64 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 64 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VURShiftV src shift));
   effect(TEMP dst, TEMP tmp3, TEMP tmp2, TEMP tmp, TEMP shift1, TEMP scratch);
   format %{ "vextracti64x4_high  $tmp,$src\n\t"
@@ -16593,7 +16601,7 @@ instruct vsrlv4S_avx(vecD dst, vecD src, vecD shift, vecX tmp, vecX tmp2, rRegI 
 %}
 
 instruct vsrlv4S_evex(vecD dst, vecD src, vecD shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VURShiftV src shift));
   format %{ "evpsrlvw  $dst,$src,$shift\t! variable bit shift logical right shift packed4S" %}
   ins_encode %{
@@ -16626,7 +16634,7 @@ instruct vsrlv8S_avx(vecX dst, vecX src, vecX shift, vecY tmp, vecY tmp2, rRegI 
 %}
 
 instruct vsrlv8S_evex(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VURShiftV src shift));
   format %{ "evpsllvw  $dst,$src,$shift\t! variable bit shift logical right shift packed8S" %}
   ins_encode %{
@@ -16671,7 +16679,7 @@ instruct vsrlv16S_avx(vecY dst, vecY src, vecY shift, vecY tmp, vecY tmp2, rRegI
 %}
 
 instruct vsrlv16S_evex(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VURShiftV src shift));
   format %{ "evpsrlvw  $dst,$src,$shift\t! variable bit shift logical right shift packed16S" %}
   ins_encode %{
@@ -16682,7 +16690,7 @@ instruct vsrlv16S_evex(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsrlv32S_evex(vecZ dst, vecZ src, vecZ shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VURShiftV src shift));
   format %{ "evpsrlvw  $dst,$src,$shift\t! variable bit shift logical right shift packed32S" %}
   ins_encode %{
@@ -16893,7 +16901,7 @@ instruct vsrav16B_avx(vecX dst, vecX src, vecX shift, vecY tmp, vecY tmp2, vecY 
 %}
 
 instruct vsrav16B_evex(vecX dst, vecX src, vecX shift, vecY tmp, vecY tmp2, rRegI scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VRShiftV src shift));
   effect(TEMP dst, TEMP tmp2, TEMP tmp, TEMP scratch);
   format %{ "vpmovsxbw  $tmp,$src\n\t"
@@ -16989,7 +16997,7 @@ instruct vsrav32B_avx(vecY dst, vecY src, vecY shift, vecY tmp, vecY tmp2, vecY 
 %}
 
 instruct vsrav32B_evex(vecY dst, vecY src, vecY shift, vecZ tmp, vecZ tmp2, rRegI scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VRShiftV src shift));
   effect(TEMP dst, TEMP tmp2, TEMP tmp, TEMP scratch);
   format %{ "vpmovsxbw  $tmp,$src\n\t"
@@ -17078,7 +17086,7 @@ instruct vsrav4S_avx(vecD dst, vecD src, vecD shift, vecX tmp, vecX tmp2, rRegI 
 %}
 
 instruct vsrav4S_evex(vecD dst, vecD src, vecD shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 4 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VRShiftV src shift));
   format %{ "evpsravw  $dst,$src,$shift\t! variable bit shift arithmetic right shift packed4S" %}
   ins_encode %{
@@ -17111,7 +17119,7 @@ instruct vsrav8S_avx(vecX dst, vecX src, vecX shift, vecY tmp, vecY tmp2, rRegI 
 %}
 
 instruct vsrav8S_evex(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 8 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VRShiftV src shift));
   format %{ "evpsllvw  $dst,$src,$shift\t! variable bit shift arithmetic right shift packed8S" %}
   ins_encode %{
@@ -17156,7 +17164,7 @@ instruct vsrav16S_avx(vecY dst, vecY src, vecY shift, vecY tmp, vecY tmp2, rRegI
 %}
 
 instruct vsrav16S_evex(vecY dst, vecY src, vecY shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 16 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VRShiftV src shift));
   format %{ "evpsravw  $dst,$src,$shift\t! variable bit shift arithmetic right shift packed16S" %}
   ins_encode %{
@@ -17167,7 +17175,7 @@ instruct vsrav16S_evex(vecY dst, vecY src, vecY shift) %{
 %}
 
 instruct vsrav32S_evex(vecZ dst, vecZ src, vecZ shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VRShiftV src shift));
   format %{ "evpsravw  $dst,$src,$shift\t! variable bit shift arithmetic right shift packed32S" %}
   ins_encode %{
