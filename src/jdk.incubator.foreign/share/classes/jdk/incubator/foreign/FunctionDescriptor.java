@@ -135,7 +135,8 @@ public final class FunctionDescriptor implements Constable {
      */
     @Override
     public int hashCode() {
-        return resLayout.hashCode() ^ Arrays.hashCode(argLayouts) ^ Boolean.hashCode(variadic);
+        int hashCode = Arrays.hashCode(argLayouts) ^ Boolean.hashCode(variadic);
+        return resLayout == null ? hashCode : resLayout.hashCode() ^ hashCode;
     }
 
     @Override
