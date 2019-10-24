@@ -2533,7 +2533,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * var bb = ByteBuffer.wrap(a);
      * var bo = ByteOrder.LITTLE_ENDIAN;
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2565,7 +2565,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2635,7 +2635,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Lanes where the mask is unset are filled with the default
      * value of {@code double} (positive zero).
      * Bytes are composed into primitive lane elements according
-     * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
+     * to the specified byte order.
      * The vector is arranged into lanes according to
      * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
@@ -2644,7 +2644,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * fromByteBuffer()} as follows:
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2860,21 +2860,17 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * Loads a vector from a {@linkplain ByteBuffer byte buffer}
      * starting at an offset into the byte buffer.
-     * <p>
-     * Bytes are composed into primitive lane elements according to
-     * {@link ByteOrder#LITTLE_ENDIAN little endian} byte order.
-     * To avoid errors, the
-     * {@linkplain ByteBuffer#order() intrinsic byte order}
-     * of the buffer must be little-endian.
+     * Bytes are composed into primitive lane elements according
+     * to the specified byte order.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
      * This method behaves as if it returns the result of calling
      * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
      * fromByteBuffer()} as follows:
      * <pre>{@code
-     * var bb = ByteBuffer.wrap(a);
-     * var bo = ByteOrder.LITTLE_ENDIAN;
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2882,8 +2878,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @param offset the offset into the byte buffer
      * @param bo the intended byte order
      * @return a vector loaded from a byte buffer
-     * @throws IllegalArgumentException if byte order of bb
-     *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*8 < 0}
      *         or {@code offset+N*8 >= bb.limit()}
@@ -2906,22 +2900,33 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Loads a vector from a {@linkplain ByteBuffer byte buffer}
      * starting at an offset into the byte buffer
      * and using a mask.
+     * Lanes where the mask is unset are filled with the default
+     * value of {@code double} (positive zero).
+     * Bytes are composed into primitive lane elements according
+     * to the specified byte order.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
-     * Bytes are composed into primitive lane elements according to
-     * {@link ByteOrder#LITTLE_ENDIAN little endian} byte order.
-     * To avoid errors, the
-     * {@linkplain ByteBuffer#order() intrinsic byte order}
-     * of the buffer must be little-endian.
-     * <p>
-     * This method behaves as if it returns the result of calling
-     * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
-     * fromByteBuffer()} as follows:
+     * The following pseudocode illustrates the behavior:
      * <pre>{@code
-     * var bb = ByteBuffer.wrap(a);
-     * var bo = ByteOrder.LITTLE_ENDIAN;
-     * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * DoubleBuffer eb = bb.duplicate()
+     *     .position(offset)
+     *     .order(bo).asDoubleBuffer();
+     * double[] ar = new double[species.length()];
+     * for (int n = 0; n < ar.length; n++) {
+     *     if (m.laneIsSet(n)) {
+     *         ar[n] = eb.get(n);
+     *     }
+     * }
+     * DoubleVector r = DoubleVector.fromArray(species, ar, 0);
      * }</pre>
+     * @implNote
+     * This operation is likely to be more efficient if
+     * the specified byte order is the same as
+     * {@linkplain ByteOrder#nativeOrder()
+     * the platform native order},
+     * since this method will not need to reorder
+     * the bytes of lane values.
      *
      * @param species species of desired vector
      * @param bb the byte buffer
@@ -2929,8 +2934,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @param bo the intended byte order
      * @param m the mask controlling lane selection
      * @return a vector loaded from a byte buffer
-     * @throws IllegalArgumentException if byte order of bb
-     *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*8 < 0}
      *         or {@code offset+N*8 >= bb.limit()}

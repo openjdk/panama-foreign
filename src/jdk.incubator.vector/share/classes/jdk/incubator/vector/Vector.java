@@ -3280,7 +3280,7 @@ public abstract class Vector<E> {
      * var bb = ByteBuffer.wrap(a);
      * var bo = ByteOrder.LITTLE_ENDIAN;
      * var m = maskAll(true);
-     * intoByteBuffer(bb, offset, m, bo);
+     * intoByteBuffer(bb, offset, bo, m);
      * }</pre>
      *
      * @param a the byte array
@@ -3307,7 +3307,7 @@ public abstract class Vector<E> {
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
      * var bo = ByteOrder.LITTLE_ENDIAN;
-     * intoByteBuffer(bb, offset, m, bo);
+     * intoByteBuffer(bb, offset, bo, m);
      * }</pre>
      *
      * @param a the byte array
@@ -3336,7 +3336,7 @@ public abstract class Vector<E> {
      * intoByteBuffer()} as follows:
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
-     * intoByteBuffer(bb, offset, m, bo);
+     * intoByteBuffer(bb, offset, bo, m);
      * }</pre>
      *
      * @param a the byte array
@@ -3367,7 +3367,7 @@ public abstract class Vector<E> {
      * intoByteBuffer()} as follows:
      * <pre>{@code
      * var m = maskAll(true);
-     * intoByteBuffer(bb, offset, m, bo);
+     * intoByteBuffer(bb, offset, bo, m);
      * }</pre>
      *
      * @param bb the byte buffer
@@ -3390,6 +3390,7 @@ public abstract class Vector<E> {
      * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
      * The following pseudocode illustrates the behavior, where
+     * the primitive element type is not of {@code byte},
      * {@code EBuffer} is the primitive buffer type, {@code ETYPE} is the
      * primitive element type, and {@code EVector} is the primitive
      * vector type for this vector:
@@ -3400,10 +3401,18 @@ public abstract class Vector<E> {
      * ETYPE[] a = this.toArray();
      * for (int n = 0; n < a.length; n++) {
      *     if (m.laneIsSet(n)) {
-     *         eb.put(n, es[n]);
+     *         eb.put(n, a[n]);
      *     }
      * }
      * }</pre>
+     * When the primitive element type is of {@code byte} the primitive
+     * byte buffer is obtained as follows, where operation on the buffer
+     * remains the same as in the prior pseudocode:
+     * <pre>{@code
+     * ByteBuffer eb = bb.duplicate()
+     *     .position(offset);
+     * }</pre>
+     *
      * @implNote
      * This operation is likely to be more efficient if
      * the specified byte order is the same as

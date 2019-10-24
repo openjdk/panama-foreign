@@ -2664,7 +2664,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * var bb = ByteBuffer.wrap(a);
      * var bo = ByteOrder.LITTLE_ENDIAN;
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2696,7 +2696,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2766,7 +2766,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * Lanes where the mask is unset are filled with the default
      * value of {@code byte} (zero).
      * Bytes are composed into primitive lane elements according
-     * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
+     * to the specified byte order.
      * The vector is arranged into lanes according to
      * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
@@ -2775,7 +2775,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * fromByteBuffer()} as follows:
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2966,15 +2966,17 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * Loads a vector from a {@linkplain ByteBuffer byte buffer}
      * starting at an offset into the byte buffer.
+     * Bytes are composed into primitive lane elements according
+     * to the specified byte order.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
      * This method behaves as if it returns the result of calling
      * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
      * fromByteBuffer()} as follows:
      * <pre>{@code
-     * var bb = ByteBuffer.wrap(a);
-     * var bo = ByteOrder.LITTLE_ENDIAN;
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -3004,16 +3006,27 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * Loads a vector from a {@linkplain ByteBuffer byte buffer}
      * starting at an offset into the byte buffer
      * and using a mask.
+     * Lanes where the mask is unset are filled with the default
+     * value of {@code byte} (zero).
+     * Bytes are composed into primitive lane elements according
+     * to the specified byte order.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
-     * This method behaves as if it returns the result of calling
-     * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
-     * fromByteBuffer()} as follows:
+     * The following pseudocode illustrates the behavior:
      * <pre>{@code
-     * var bb = ByteBuffer.wrap(a);
-     * var bo = ByteOrder.LITTLE_ENDIAN;
-     * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * ByteBuffer eb = bb.duplicate()
+     *     .position(offset);
+     * byte[] ar = new byte[species.length()];
+     * for (int n = 0; n < ar.length; n++) {
+     *     if (m.laneIsSet(n)) {
+     *         ar[n] = eb.get(n);
+     *     }
+     * }
+     * ByteVector r = ByteVector.fromArray(species, ar, 0);
      * }</pre>
+     * @implNote
+     * The byte order argument is ignored.
      *
      * @param species species of desired vector
      * @param bb the byte buffer
