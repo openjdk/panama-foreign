@@ -30,7 +30,6 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.BinaryOperator;
-import java.util.function.IntUnaryOperator;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.concurrent.ThreadLocalRandom;
@@ -540,7 +539,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
      *         if {@code es.length != species.length()}
      */
     @ForceInline
-    @SuppressWarnings("unchecked")
     public static ShortVector fromValues(VectorSpecies<Short> species, short... es) {
         ShortSpecies vsp = (ShortSpecies) species;
         int vlength = vsp.laneCount();
@@ -1377,7 +1375,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
      * {@inheritDoc} <!--workaround-->
      * @apiNote If there is a zero divisor, {@code
      * ArithmeticException} will be thrown.
-     * @see #div(short)
      */
     @Override
     @ForceInline
@@ -1398,8 +1395,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
      *
      * @apiNote If there is a zero divisor, {@code
      * ArithmeticException} will be thrown.
-     * @see #div(short)
-
      *
      * @param e the input scalar
      * @return the result of dividing each lane of this vector by the scalar
@@ -2132,7 +2127,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
      */
     @Override
     public abstract
-    ShortVector unslice(int origin); 
+    ShortVector unslice(int origin);
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {
@@ -2263,7 +2258,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
      * Blends together the bits of two vectors under
      * the control of a third, which supplies mask bits.
      *
-     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2293,7 +2287,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
      * Blends together the bits of a vector and a scalar under
      * the control of another scalar, which supplies mask bits.
      *
-     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2321,7 +2314,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
      * Blends together the bits of a vector and a scalar under
      * the control of another vector, which supplies mask bits.
      *
-     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2348,7 +2340,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
     /**
      * Blends together the bits of two vectors under
      * the control of a scalar, which supplies mask bits.
-     *
      *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
@@ -3158,8 +3149,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
      * @param offset an offset to combine with the index map offsets
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
-     * @returns a vector of the values {@code a[f(N)]}, where
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3229,8 +3218,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
      * @param m the mask
-     * @returns a vector of the values {@code m ? a[f(N)] : 0},
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3685,7 +3672,6 @@ public abstract class ShortVector extends AbstractVector<Short> {
 
         /*package-private*/
         @ForceInline
-        
         final ShortVector broadcast(short e) {
             return broadcastBits(toBits(e));
         }
@@ -3853,7 +3839,7 @@ public abstract class ShortVector extends AbstractVector<Short> {
                 case 512: return Short512Vector.ZERO;
             }
             throw new AssertionError();
-        }        
+        }
 
         @Override
         @ForceInline

@@ -30,7 +30,6 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.BinaryOperator;
-import java.util.function.IntUnaryOperator;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.concurrent.ThreadLocalRandom;
@@ -540,7 +539,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         if {@code es.length != species.length()}
      */
     @ForceInline
-    @SuppressWarnings("unchecked")
     public static DoubleVector fromValues(VectorSpecies<Double> species, double... es) {
         DoubleSpecies vsp = (DoubleSpecies) species;
         int vlength = vsp.laneCount();
@@ -1334,8 +1332,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
-     * @see #div(double)
-
      *
      * @param e the input scalar
      * @return the result of dividing each lane of this vector by the scalar
@@ -2031,7 +2027,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     @Override
     public abstract
-    DoubleVector unslice(int origin); 
+    DoubleVector unslice(int origin);
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {
@@ -3046,8 +3042,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @param offset an offset to combine with the index map offsets
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
-     * @returns a vector of the values {@code a[f(N)]}, where
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3117,8 +3111,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
      * @param m the mask
-     * @returns a vector of the values {@code m ? a[f(N)] : 0},
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3566,7 +3558,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
         /*package-private*/
         @ForceInline
-        
         final DoubleVector broadcast(double e) {
             return broadcastBits(toBits(e));
         }
@@ -3734,7 +3725,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                 case 512: return Double512Vector.ZERO;
             }
             throw new AssertionError();
-        }        
+        }
 
         @Override
         @ForceInline

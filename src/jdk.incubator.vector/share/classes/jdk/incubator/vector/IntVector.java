@@ -30,7 +30,6 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.BinaryOperator;
-import java.util.function.IntUnaryOperator;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.concurrent.ThreadLocalRandom;
@@ -540,7 +539,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
      *         if {@code es.length != species.length()}
      */
     @ForceInline
-    @SuppressWarnings("unchecked")
     public static IntVector fromValues(VectorSpecies<Integer> species, int... es) {
         IntSpecies vsp = (IntSpecies) species;
         int vlength = vsp.laneCount();
@@ -1376,7 +1374,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * {@inheritDoc} <!--workaround-->
      * @apiNote If there is a zero divisor, {@code
      * ArithmeticException} will be thrown.
-     * @see #div(int)
      */
     @Override
     @ForceInline
@@ -1397,8 +1394,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
      *
      * @apiNote If there is a zero divisor, {@code
      * ArithmeticException} will be thrown.
-     * @see #div(int)
-
      *
      * @param e the input scalar
      * @return the result of dividing each lane of this vector by the scalar
@@ -2131,7 +2126,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
      */
     @Override
     public abstract
-    IntVector unslice(int origin); 
+    IntVector unslice(int origin);
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {
@@ -2262,7 +2257,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * Blends together the bits of two vectors under
      * the control of a third, which supplies mask bits.
      *
-     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2292,7 +2286,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * Blends together the bits of a vector and a scalar under
      * the control of another scalar, which supplies mask bits.
      *
-     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2320,7 +2313,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * Blends together the bits of a vector and a scalar under
      * the control of another vector, which supplies mask bits.
      *
-     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2347,7 +2339,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
     /**
      * Blends together the bits of two vectors under
      * the control of a scalar, which supplies mask bits.
-     *
      *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
@@ -3172,8 +3163,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * @param offset an offset to combine with the index map offsets
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
-     * @returns a vector of the values {@code a[f(N)]}, where
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3243,8 +3232,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
      * @param m the mask
-     * @returns a vector of the values {@code m ? a[f(N)] : 0},
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3692,7 +3679,6 @@ public abstract class IntVector extends AbstractVector<Integer> {
 
         /*package-private*/
         @ForceInline
-        
         final IntVector broadcast(int e) {
             return broadcastBits(toBits(e));
         }
@@ -3860,7 +3846,7 @@ public abstract class IntVector extends AbstractVector<Integer> {
                 case 512: return Int512Vector.ZERO;
             }
             throw new AssertionError();
-        }        
+        }
 
         @Override
         @ForceInline

@@ -25,10 +25,6 @@
 package jdk.incubator.vector;
 
 import java.util.function.IntFunction;
-import java.util.function.BinaryOperator;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.HashMap;
 import java.util.ArrayList;
 
@@ -50,7 +46,7 @@ import jdk.internal.vm.annotation.Stable;
  *
  * The documentation for each individual operator token is very brief,
  * giving a symbolic Java expression for the operation that the token
- * requests.  Those symbolic expression use the following conventional
+ * requests.  Those symbolic expressions use the following conventional
  * elements:
  * <ul>
  * <li>{@code a}, {@code b}, {@code c} &mdash; names of lane values
@@ -82,6 +78,7 @@ import jdk.internal.vm.annotation.Stable;
  * <li> Some operators, although defined as associative operators (example, {@link #ADD}),
  * are not truly associative on floating point numbers. The result of an expression
  * is a function both of the input values as well as the order of operations.
+ * </ul>
  * When such operators are used for operations such as
  * {@link FloatVector#reduceLanes(Associative)}, the order
  * is intentionally not defined. This allows the implementation the flexibility
@@ -127,11 +124,11 @@ public abstract class VectorOperators {
          * or example expression,
          * such as {@code "+"}, {@code "max"} or {@code "-a"},
          * is also available as {@link #operatorName()}.
-         * 
+         *
          * @return the symbolic name of this operator,
          *         such as {@code "ADD"}
          */
-        public abstract String name();
+        String name();
 
         /**
          * Returns the Java operator symbol or method
@@ -141,7 +138,7 @@ public abstract class VectorOperators {
          * for the operator, using operand names
          * {@code a}, {@code b} (for non-unary operators),
          * and {@code c} (for ternary operators).
-         * 
+         *
          * The symbolic name of the constant,
          * such as {@code "ADD"},
          * is also available as {@link #name()}.
@@ -150,13 +147,13 @@ public abstract class VectorOperators {
          *         or a method name, such as {@code "max"},
          *         or a representative expression, such as {@code "-a"}
          */
-        public abstract String operatorName();
+        String operatorName();
 
         /**
          * Returns the arity of this operator (1, 2, or 3).
          * @return the arity of this operator (1, 2, or 3)
          */
-        public abstract int arity();
+        int arity();
 
         /**
          * Reports whether this operator returns a boolean (a mask).
@@ -164,32 +161,32 @@ public abstract class VectorOperators {
          * {@code rangeType}.
          * @return whether this operator returns a boolean
          */
-        public abstract boolean isBoolean();
+        boolean isBoolean();
 
         /**
          * Reports the special return type of this operator.
          * If this operator is a boolean, returns {@code boolean.class}.
          * If this operator is a {@code Conversion},
          * returns its {@linkplain Conversion#rangeType range type}.
-         * 
+         *
          * Otherwise, the operator's return value always has
          * whatever type was given as an input, and this method
          * returns {@code Object.class} to denote that fact.
          * @return the special return type, or {@code Object.class} if none
          */
-        public abstract Class<?> rangeType();
+        Class<?> rangeType();
 
         /**
          * Returns the associativity of this operator.
          * Only binary operators can be associative.
          * @return the associativity of this operator
          */
-        public abstract boolean isAssociative();
+        boolean isAssociative();
 
         /**
          * Reports whether this operator is compatible with
          * the proposed element type.
-         * 
+         *
          * First, unrestricted operators are compatible with all element
          * types.
          *
@@ -205,7 +202,7 @@ public abstract class VectorOperators {
          * @param elementType the proposed operand type for the operator
          * @return whether the proposed type is compatible with this operator
          */
-        public abstract boolean compatibleWith(Class<?> elementType);
+        boolean compatibleWith(Class<?> elementType);
 
         // FIXME: Maybe add a query about architectural support.
     }
@@ -329,14 +326,14 @@ public abstract class VectorOperators {
          * The domain of this conversion, a primitive type.
          * @return the domain of this conversion
          */
-        public abstract Class<E> domainType();
+        Class<E> domainType();
 
         /**
          * The range of this conversion, a primitive type.
          * @return the range of this conversion
          */
         @Override
-        public abstract Class<F> rangeType();
+        Class<F> rangeType();
 
         /**
          * Ensures that this conversion has the
@@ -347,7 +344,6 @@ public abstract class VectorOperators {
          * @param <F> the desired range type
          * @return this conversion object, with validated domain and range
          */
-        public abstract
         <E,F> Conversion<E,F> check(Class<E> from, Class<F> to);
 
         /// Factories.
@@ -361,7 +357,7 @@ public abstract class VectorOperators {
          * @return a Java assignment or casting conversion
          */
         @ForceInline
-        public static <E,F> Conversion<E,F> ofCast(Class<E> from, Class<F> to) {
+        static <E,F> Conversion<E,F> ofCast(Class<E> from, Class<F> to) {
             LaneType dom = LaneType.of(from);
             LaneType ran = LaneType.of(to);
             return ConversionImpl.ofCast(dom, ran).check(from, to);
@@ -376,7 +372,7 @@ public abstract class VectorOperators {
          * @return a bitwise reinterpretation conversion
          */
         @ForceInline
-        public static <E,F> Conversion<E,F> ofReinterpret(Class<E> from, Class<F> to) {
+        static <E,F> Conversion<E,F> ofReinterpret(Class<E> from, Class<F> to) {
             LaneType dom = LaneType.of(from);
             LaneType ran = LaneType.of(to);
             return ConversionImpl.ofReinterpret(dom, ran).check(from, to);
@@ -1098,7 +1094,7 @@ public abstract class VectorOperators {
             conv.check(domType, ranType);
             synchronized (ConversionImpl.class) {
                 if (cache[ranKey] == null) {
-                    cache[ranKey] = conv; 
+                    cache[ranKey] = conv;
                 } else {
                     conv = cache[ranKey];
                     conv.check(domType, ranType);

@@ -192,7 +192,6 @@ public abstract class VectorMask<E> {
      * @see #fromValues(VectorSpecies, boolean...)
      */
     @ForceInline
-    @SuppressWarnings("unchecked")
     public static <E> VectorMask<E> fromArray(VectorSpecies<E> species, boolean[] bits, int offset) {
         AbstractSpecies<E> vsp = (AbstractSpecies<E>) species;
         int laneCount = vsp.laneCount();
@@ -433,7 +432,7 @@ public abstract class VectorMask<E> {
      * Removes lanes numbered {@code N} from this mask where the
      * adjusted index {@code N+offset}, is not in the range
      * {@code [0..limit-1]}.
-     * 
+     *
      * <p> In all cases the series of set and unset lanes is assigned
      * as if by using infinite precision or {@code VLENGTH-}saturating
      * additions or subtractions, without overflow or wrap-around.
@@ -479,7 +478,7 @@ public abstract class VectorMask<E> {
      * of the vector lane is set if and only if the mask lane is set.
      * In addition, for integral types, <em>all</em> lane bits are set
      * in lanes where the mask is set.
-     * 
+     *
      * <p> The vector returned is the same as would be computed by
      * {@code ZERO.blend(MINUS_ONE, this)}, where {@code ZERO} and
      * {@code MINUS_ONE} are vectors which replicate the default

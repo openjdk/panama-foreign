@@ -25,17 +25,13 @@
 package jdk.incubator.vector;
 
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
 
-import static jdk.incubator.vector.VectorIntrinsics.*;
 import static jdk.incubator.vector.VectorOperators.*;
 
 @SuppressWarnings("cast")

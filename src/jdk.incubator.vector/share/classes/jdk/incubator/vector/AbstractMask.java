@@ -24,9 +24,7 @@
  */
 package jdk.incubator.vector;
 
-import java.util.Arrays;
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
 
 import static jdk.incubator.vector.VectorOperators.*;
 

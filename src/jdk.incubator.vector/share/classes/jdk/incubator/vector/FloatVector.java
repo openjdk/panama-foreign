@@ -30,7 +30,6 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.BinaryOperator;
-import java.util.function.IntUnaryOperator;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.concurrent.ThreadLocalRandom;
@@ -540,7 +539,6 @@ public abstract class FloatVector extends AbstractVector<Float> {
      *         if {@code es.length != species.length()}
      */
     @ForceInline
-    @SuppressWarnings("unchecked")
     public static FloatVector fromValues(VectorSpecies<Float> species, float... es) {
         FloatSpecies vsp = (FloatSpecies) species;
         int vlength = vsp.laneCount();
@@ -1334,8 +1332,6 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
-     * @see #div(float)
-
      *
      * @param e the input scalar
      * @return the result of dividing each lane of this vector by the scalar
@@ -2031,7 +2027,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      */
     @Override
     public abstract
-    FloatVector unslice(int origin); 
+    FloatVector unslice(int origin);
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {
@@ -3047,8 +3043,6 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @param offset an offset to combine with the index map offsets
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
-     * @returns a vector of the values {@code a[f(N)]}, where
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3118,8 +3112,6 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
      * @param m the mask
-     * @returns a vector of the values {@code m ? a[f(N)] : 0},
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3567,7 +3559,6 @@ public abstract class FloatVector extends AbstractVector<Float> {
 
         /*package-private*/
         @ForceInline
-        
         final FloatVector broadcast(float e) {
             return broadcastBits(toBits(e));
         }
@@ -3735,7 +3726,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
                 case 512: return Float512Vector.ZERO;
             }
             throw new AssertionError();
-        }        
+        }
 
         @Override
         @ForceInline
