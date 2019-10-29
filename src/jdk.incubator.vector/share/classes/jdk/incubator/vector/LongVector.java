@@ -523,16 +523,21 @@ public abstract class LongVector extends AbstractVector<Long> {
     }
 
     /**
-     * Returns a vector where each lane element is set to a randomly
-     * generated primitive value.
+     * Returns a vector where each lane element is set to a generated pseudorandom
+     * primitive value
+     * between {@code Long.MIN_VALUE} (inclusive) and
+     * {@code Long.MAX_VALUE} (inclusive).
+     * <p>
+     * The algorithm that generates pseudorandom values is not guaranteed to
+     * be cryptographically secure.
      *
-     * The semantics are equivalent to calling
-     * {@link ThreadLocalRandom#nextLong()}
-     * for each lane, from first to last.
+     * @implNote
+     * This implementation generates psuedorandom values using
+     * {@link ThreadLocalRandom} for each lane, from first to last.
      *
      * @param species species of the desired vector
-     * @return a vector where each lane elements is set to a randomly
-     * generated primitive value
+     * @return a vector where each lane element is set to a generated pseudorandom
+     * primitive value
      */
     public static LongVector random(VectorSpecies<Long> species) {
         LongSpecies vsp = (LongSpecies) species;

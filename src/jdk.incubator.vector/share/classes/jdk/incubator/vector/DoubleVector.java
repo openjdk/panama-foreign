@@ -564,16 +564,20 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     /**
-     * Returns a vector where each lane element is set to a randomly
-     * generated primitive value.
+     * Returns a vector where each lane element is set to a generated pseudorandom
+     * primitive value
+     * between zero (inclusive) and one (exclusive).
+     * <p>
+     * The algorithm that generates pseudorandom values is not guaranteed to
+     * be cryptographically secure.
      *
-     * The semantics are equivalent to calling
-     * {@link ThreadLocalRandom#nextDouble()}
-     * for each lane, from first to last.
+     * @implNote
+     * This implementation generates psuedorandom values using
+     * {@link ThreadLocalRandom} for each lane, from first to last.
      *
      * @param species species of the desired vector
-     * @return a vector where each lane elements is set to a randomly
-     * generated primitive value
+     * @return a vector where each lane element is set to a generated pseudorandom
+     * primitive value
      */
     public static DoubleVector random(VectorSpecies<Double> species) {
         DoubleSpecies vsp = (DoubleSpecies) species;
