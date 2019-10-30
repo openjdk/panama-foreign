@@ -1285,7 +1285,7 @@ class VectorBoxAllocateNode : public CallStaticJavaNode {
 
 class VectorUnboxNode : public VectorNode {
 private:
-  bool _shuffle_to_vector = false;
+  bool _shuffle_to_vector;
 protected:
   uint size_of() const { return sizeof(*this); }
  public:
