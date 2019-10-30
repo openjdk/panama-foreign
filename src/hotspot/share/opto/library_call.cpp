@@ -349,7 +349,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_vector_extract();
   bool inline_vector_insert();
   Node* box_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
-  Node* unbox_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
+  Node* unbox_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem, bool shuffle_to_vector = false);
   Node* shift_count(Node* cnt, int shift_op, BasicType bt, int num_elem);
   Node* gen_call_to_svml(int vector_api_op_id, BasicType bt, int num_elem, Node* opd1, Node* opd2);
   void set_vector_result(Node* result, bool set_res = true);
@@ -6946,7 +6946,7 @@ Node* LibraryCallKit::box_vector(Node* vector, const TypeInstPtr* vbox_type,
   return _gvn.transform(vbox);
 }
 
-Node* LibraryCallKit::unbox_vector(Node* v, const TypeInstPtr* vbox_type, BasicType elem_bt, int num_elem) {
+Node* LibraryCallKit::unbox_vector(Node* v, const TypeInstPtr* vbox_type, BasicType elem_bt, int num_elem, bool shuffle_to_vector) {
   const TypeInstPtr* vbox_type_v = gvn().type(v)->is_instptr();
   if (vbox_type->klass() != vbox_type_v->klass()) {
     return NULL; // arguments don't agree on vector shapes
@@ -6955,7 +6955,7 @@ Node* LibraryCallKit::unbox_vector(Node* v, const TypeInstPtr* vbox_type, BasicT
     return NULL; // no nulls are allowed
   }
   const TypeVect* vec_type = TypeVect::make(elem_bt, num_elem);
-  Node* unbox = gvn().transform(new VectorUnboxNode(C, vec_type, v, merged_memory()));
+  Node* unbox = gvn().transform(new VectorUnboxNode(C, vec_type, v, merged_memory(), shuffle_to_vector));
   return unbox;
 }
 
@@ -7163,15 +7163,21 @@ bool LibraryCallKit::inline_vector_shuffle_to_vector() {
     return false;
   }
 
-  if (!arch_supports_vector(Op_VectorLoadShuffle, num_elem, elem_bt, VecMaskNotUsed)) {
-    return false; // not supported
+  int cast_vopc = VectorCastNode::opcode(T_BYTE); // from shuffle of type T_BYTE
+  // Make sure that cast is implemented to particular type/size combination.
+  if (!arch_supports_vector(cast_vopc, num_elem, elem_bt, VecMaskNotUsed)) {
+    if (C->print_intrinsics()) {
+      tty->print_cr("  ** not supported: arity=1 op=cast#%d/3 vlen2=%d etype2=%s",
+        cast_vopc, num_elem, type2name(elem_bt));
+    }
+    return false;
   }
 
   ciKlass* sbox_klass = shuffle_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* shuffle_box_type = TypeInstPtr::make_exact(TypePtr::NotNull, sbox_klass);
 
-  // Unbox shuffle
-  Node* shuffle_vec = unbox_vector(shuffle, shuffle_box_type, elem_bt, num_elem);
+  // Unbox shuffle with true flag to indicate its load shuffle to vector
+  Node* shuffle_vec = unbox_vector(shuffle, shuffle_box_type, elem_bt, num_elem, true);
 
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vec_box_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);

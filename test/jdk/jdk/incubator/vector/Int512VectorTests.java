@@ -2842,7 +2842,6 @@ public class Int512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, Int512VectorTests::single);
     }
-
     static int[] slice(int[] a, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
@@ -2868,7 +2867,6 @@ public class Int512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, Int512VectorTests::slice);
     }
-
     static int[] slice(int[] a, int[] b, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2931,7 +2929,6 @@ public class Int512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Int512VectorTests::slice);
     }
-
     static int[] unslice(int[] a, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2959,7 +2956,6 @@ public class Int512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, Int512VectorTests::unslice);
     }
-
     static int[] unslice(int[] a, int[] b, int origin, int part, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){

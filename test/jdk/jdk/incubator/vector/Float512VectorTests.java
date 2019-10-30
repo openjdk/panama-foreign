@@ -2277,7 +2277,31 @@ public class Float512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, Float512VectorTests::single);
     }
+    static float[] slice(float[] a, int origin, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = a[idx+i+origin];
+            else
+                res[i] = (float)0;
+        }
+        return res;
+    }
 
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void sliceFloat512VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                av.slice(origin).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, origin, Float512VectorTests::slice);
+    }
     static float[] slice(float[] a, float[] b, int origin, int idx) {
         float[] res = new float[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2340,7 +2364,33 @@ public class Float512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Float512VectorTests::slice);
     }
+    static float[] unslice(float[] a, int origin, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i < origin)
+                res[i] = (float)0;
+            else {
+                res[i] = a[idx+j];
+                j++;
+            }
+        }
+        return res;
+    }
 
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void unsliceFloat512VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                av.unslice(origin).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, origin, Float512VectorTests::unslice);
+    }
     static float[] unslice(float[] a, float[] b, int origin, int part, int idx) {
         float[] res = new float[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){

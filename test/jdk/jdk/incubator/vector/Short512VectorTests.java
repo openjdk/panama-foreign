@@ -2842,7 +2842,6 @@ public class Short512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, Short512VectorTests::single);
     }
-
     static short[] slice(short[] a, int origin, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
@@ -2868,7 +2867,6 @@ public class Short512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, Short512VectorTests::slice);
     }
-
     static short[] slice(short[] a, short[] b, int origin, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2931,7 +2929,6 @@ public class Short512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Short512VectorTests::slice);
     }
-
     static short[] unslice(short[] a, int origin, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2959,7 +2956,6 @@ public class Short512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, Short512VectorTests::unslice);
     }
-
     static short[] unslice(short[] a, short[] b, int origin, int part, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){

@@ -1366,7 +1366,6 @@ public class LongMaxVector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
-
     @Benchmark
     public void slice(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
@@ -1381,7 +1380,6 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
         bh.consume(r);
     }
-
 
     @Benchmark
     public void slice(Blackhole bh) {
@@ -1420,7 +1418,6 @@ public class LongMaxVector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
-
     @Benchmark
     public void unslice(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
@@ -1435,7 +1432,6 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
         bh.consume(r);
     }
-
 
     @Benchmark
     public void unslice(Blackhole bh) {

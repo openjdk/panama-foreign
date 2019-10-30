@@ -953,6 +953,20 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
+    @Benchmark
+    public void slice(Blackhole bh) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                av.slice(origin).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
 
     @Benchmark
     public void slice(Blackhole bh) {
@@ -991,6 +1005,20 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
+    @Benchmark
+    public void unslice(Blackhole bh) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                av.unslice(origin).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
 
     @Benchmark
     public void unslice(Blackhole bh) {

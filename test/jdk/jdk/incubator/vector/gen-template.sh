@@ -397,14 +397,12 @@ gen_op_tmpl $zero_template "zero" "" $unit_output $perf_output $perf_scalar_outp
 gen_op_tmpl $single_template "single" "" $unit_output $perf_output $perf_scalar_output
 
 # Slice
-# Please remove "BITWISE" once the intrinsic failure for the float slice/ unslice is fixed
-gen_op_tmpl $slice_template "slice" "" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_op_tmpl $slice_template "slice" "" $unit_output $perf_output $perf_scalar_output
 gen_op_tmpl $slice1_template "slice" "" $unit_output $perf_output $perf_scalar_output
 gen_op_tmpl $slice1_masked_template "slice" "" $unit_output $perf_output $perf_scalar_output
 
 # Unslice
-# Please remove "BITWISE" once the intrinsic failure for the float slice/ unslice is fixed
-gen_op_tmpl $unslice_template "unslice" "" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_op_tmpl $unslice_template "unslice" "" $unit_output $perf_output $perf_scalar_output
 gen_op_tmpl $unslice1_template "unslice" "" $unit_output $perf_output $perf_scalar_output
 gen_op_tmpl $unslice1_masked_template "unslice" "" $unit_output $perf_output $perf_scalar_output
 

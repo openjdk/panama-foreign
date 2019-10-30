@@ -2855,6 +2855,7 @@ void Compile::expand_vunbox_node(VectorUnboxNode* vec_unbox) {
     ciInstanceKlass* from_kls = tinst->klass()->as_instance_klass();
     BasicType bt = vec_unbox->vect_type()->element_basic_type();
     BasicType masktype = bt;
+    BasicType elem_bt;
 
     const char* field_name = "vec";
     if (from_kls->is_vectormask()) {
@@ -2862,6 +2863,9 @@ void Compile::expand_vunbox_node(VectorUnboxNode* vec_unbox) {
       bt = T_BOOLEAN;
     } else if (from_kls->is_vectorshuffle()) {
       field_name = "reorder";
+      if (vec_unbox->is_shuffle_to_vector() == true) {
+        elem_bt = bt;
+      }
       bt = T_BYTE;
     }
 
@@ -2899,8 +2903,12 @@ void Compile::expand_vunbox_node(VectorUnboxNode* vec_unbox) {
       assert(vec_unbox->bottom_type()->is_vect()->element_basic_type() == masktype, "expect mask type consistency");
       vec_val_load = gvn.transform(new VectorLoadMaskNode(vec_val_load, TypeVect::make(masktype, num_elem)));
     } else if (from_kls->is_vectorshuffle()) {
-      assert(vec_unbox->bottom_type()->is_vect()->element_basic_type() == masktype, "expect shuffle type consistency");
-      vec_val_load = gvn.transform(new VectorLoadShuffleNode(vec_val_load, TypeVect::make(masktype, num_elem)));
+      if (vec_unbox->is_shuffle_to_vector() == false) {
+        assert(vec_unbox->bottom_type()->is_vect()->element_basic_type() == masktype, "expect shuffle type consistency");
+        vec_val_load = gvn.transform(new VectorLoadShuffleNode(vec_val_load, TypeVect::make(masktype, num_elem)));
+      } else if (elem_bt != T_BYTE) {
+        vec_val_load = gvn.transform(VectorCastNode::make(Op_VectorCastB2X, vec_val_load, elem_bt, num_elem));
+      }
     }
 
     gvn.hash_delete(vec_unbox);

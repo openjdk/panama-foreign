@@ -2842,7 +2842,6 @@ public class Long128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, Long128VectorTests::single);
     }
-
     static long[] slice(long[] a, int origin, int idx) {
         long[] res = new long[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
@@ -2868,7 +2867,6 @@ public class Long128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, Long128VectorTests::slice);
     }
-
     static long[] slice(long[] a, long[] b, int origin, int idx) {
         long[] res = new long[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2931,7 +2929,6 @@ public class Long128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Long128VectorTests::slice);
     }
-
     static long[] unslice(long[] a, int origin, int idx) {
         long[] res = new long[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2959,7 +2956,6 @@ public class Long128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, Long128VectorTests::unslice);
     }
-
     static long[] unslice(long[] a, long[] b, int origin, int part, int idx) {
         long[] res = new long[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){

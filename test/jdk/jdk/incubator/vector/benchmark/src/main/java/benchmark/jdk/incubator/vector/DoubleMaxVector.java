@@ -953,6 +953,20 @@ public class DoubleMaxVector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
+    @Benchmark
+    public void slice(Blackhole bh) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                av.slice(origin).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
 
     @Benchmark
     public void slice(Blackhole bh) {
@@ -991,6 +1005,20 @@ public class DoubleMaxVector extends AbstractVectorBenchmark {
         bh.consume(r);
     }
 
+    @Benchmark
+    public void unslice(Blackhole bh) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                av.unslice(origin).intoArray(r, i);
+            }
+        }
+
+        bh.consume(r);
+    }
 
     @Benchmark
     public void unslice(Blackhole bh) {

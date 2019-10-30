@@ -2847,7 +2847,6 @@ public class IntMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, IntMaxVectorTests::single);
     }
-
     static int[] slice(int[] a, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
@@ -2873,7 +2872,6 @@ public class IntMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, IntMaxVectorTests::slice);
     }
-
     static int[] slice(int[] a, int[] b, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2936,7 +2934,6 @@ public class IntMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, IntMaxVectorTests::slice);
     }
-
     static int[] unslice(int[] a, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2964,7 +2961,6 @@ public class IntMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, IntMaxVectorTests::unslice);
     }
-
     static int[] unslice(int[] a, int[] b, int origin, int part, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){

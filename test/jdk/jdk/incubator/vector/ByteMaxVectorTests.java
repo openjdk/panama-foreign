@@ -2847,7 +2847,6 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, ByteMaxVectorTests::single);
     }
-
     static byte[] slice(byte[] a, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
@@ -2873,7 +2872,6 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, ByteMaxVectorTests::slice);
     }
-
     static byte[] slice(byte[] a, byte[] b, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2936,7 +2934,6 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, ByteMaxVectorTests::slice);
     }
-
     static byte[] unslice(byte[] a, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2964,7 +2961,6 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, ByteMaxVectorTests::unslice);
     }
-
     static byte[] unslice(byte[] a, byte[] b, int origin, int part, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){

@@ -2847,7 +2847,6 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, ShortMaxVectorTests::single);
     }
-
     static short[] slice(short[] a, int origin, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
@@ -2873,7 +2872,6 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, ShortMaxVectorTests::slice);
     }
-
     static short[] slice(short[] a, short[] b, int origin, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2936,7 +2934,6 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, ShortMaxVectorTests::slice);
     }
-
     static short[] unslice(short[] a, int origin, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2964,7 +2961,6 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, origin, ShortMaxVectorTests::unslice);
     }
-
     static short[] unslice(short[] a, short[] b, int origin, int part, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){

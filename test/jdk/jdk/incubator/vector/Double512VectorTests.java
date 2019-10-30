@@ -2277,7 +2277,31 @@ public class Double512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, Double512VectorTests::single);
     }
+    static double[] slice(double[] a, int origin, int idx) {
+        double[] res = new double[SPECIES.length()];
+        for (int i = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = a[idx+i+origin];
+            else
+                res[i] = (double)0;
+        }
+        return res;
+    }
 
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void sliceDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                av.slice(origin).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, origin, Double512VectorTests::slice);
+    }
     static double[] slice(double[] a, double[] b, int origin, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
@@ -2340,7 +2364,33 @@ public class Double512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Double512VectorTests::slice);
     }
+    static double[] unslice(double[] a, int origin, int idx) {
+        double[] res = new double[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i < origin)
+                res[i] = (double)0;
+            else {
+                res[i] = a[idx+j];
+                j++;
+            }
+        }
+        return res;
+    }
 
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void unsliceDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
+                av.unslice(origin).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, origin, Double512VectorTests::unslice);
+    }
     static double[] unslice(double[] a, double[] b, int origin, int part, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
