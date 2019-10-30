@@ -454,7 +454,7 @@ public abstract class VectorMask<E> {
      * {@code allTrue.indexInRange(-N1, N2)}.
      *
      * @param offset the starting index
-     * @param limit the upper-bound (exlusive) of index range
+     * @param limit the upper-bound (exclusive) of index range
      * @return the original mask, with out-of-range lanes unset
      * @see VectorSpecies#indexInRange(int, int)
      */

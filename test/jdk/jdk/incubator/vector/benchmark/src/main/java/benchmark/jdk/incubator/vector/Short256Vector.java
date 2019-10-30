@@ -1352,21 +1352,6 @@ public class Short256Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void single(Blackhole bh) {
-        short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = ShortVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-    @Benchmark
     public void slice(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];

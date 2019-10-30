@@ -2256,27 +2256,6 @@ public class Float128VectorTests extends AbstractVectorTest {
 
 
 
-    static float[] single(float val) {
-        float[] res = new float[SPECIES.length()];
-        res[0] = val;
-
-        return res;
-    }
-
-    @Test(dataProvider = "floatUnaryOpProvider")
-    static void singleFloat128VectorTests(IntFunction<float[]> fa) {
-        float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
-            }
-        }
-
-        assertArraysEquals(a, r, Float128VectorTests::single);
-    }
     static float[] slice(float[] a, int origin, int idx) {
         float[] res = new float[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){

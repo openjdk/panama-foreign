@@ -2256,27 +2256,6 @@ public class Double256VectorTests extends AbstractVectorTest {
 
 
 
-    static double[] single(double val) {
-        double[] res = new double[SPECIES.length()];
-        res[0] = val;
-
-        return res;
-    }
-
-    @Test(dataProvider = "doubleUnaryOpProvider")
-    static void singleDouble256VectorTests(IntFunction<double[]> fa) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector av = DoubleVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
-            }
-        }
-
-        assertArraysEquals(a, r, Double256VectorTests::single);
-    }
     static double[] slice(double[] a, int origin, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){

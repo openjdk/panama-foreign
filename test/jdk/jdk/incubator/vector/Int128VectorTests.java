@@ -2821,27 +2821,6 @@ public class Int128VectorTests extends AbstractVectorTest {
 
 
 
-    static int[] single(int val) {
-        int[] res = new int[SPECIES.length()];
-        res[0] = val;
-
-        return res;
-    }
-
-    @Test(dataProvider = "intUnaryOpProvider")
-    static void singleInt128VectorTests(IntFunction<int[]> fa) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector av = IntVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
-            }
-        }
-
-        assertArraysEquals(a, r, Int128VectorTests::single);
-    }
     static int[] slice(int[] a, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){

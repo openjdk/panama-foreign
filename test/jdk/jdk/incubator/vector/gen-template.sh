@@ -62,7 +62,6 @@ gather_template="Gather-op"
 gather_masked_template="Gather-Masked-op"
 scatter_template="Scatter-op"
 scatter_masked_template="Scatter-Masked-op"
-single_template="Single-op"
 get_template="Get-op"
 rearrange_template="Rearrange"
 broadcast_template="Broadcast"
@@ -392,9 +391,6 @@ gen_op_tmpl $broadcast_template "broadcast" "" $unit_output $perf_output $perf_s
 
 # Zero
 gen_op_tmpl $zero_template "zero" "" $unit_output $perf_output $perf_scalar_output
-
-# Single
-gen_op_tmpl $single_template "single" "" $unit_output $perf_output $perf_scalar_output
 
 # Slice
 gen_op_tmpl $slice_template "slice" "" $unit_output $perf_output $perf_scalar_output

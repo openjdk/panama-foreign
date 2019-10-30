@@ -34,7 +34,6 @@ import java.util.Objects;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -559,56 +558,6 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
         VectorIntrinsics.requireLength(es.length, vlength);
         // Get an unaliased copy and use it directly:
         return vsp.vectorFactory(Arrays.copyOf(es, vlength));
-    }
-
-    /**
-     * Returns a vector where the first lane element is set to the primtive
-     * value {@code e}, all other lane elements are set to the default
-     * value({#if[FP]?positive }zero).
-     *
-     * @param species species of the desired vector
-     * @param e the value
-     * @return a vector where the first lane element is set to the primitive
-     * value {@code e}
-     */
-    // FIXME: Does this carry its weight?
-    @ForceInline
-    public static $abstractvectortype$ single(VectorSpecies<$Boxtype$> species, $type$ e) {
-        return zero(species).withLane(0, e);
-    }
-
-    /**
-     * Returns a vector where each lane element is set to a generated pseudorandom
-     * primitive value
-#if[FP]
-     * between zero (inclusive) and one (exclusive).
-#else[FP]
-     * between {@code $Boxtype$.MIN_VALUE} (inclusive) and
-     * {@code $Boxtype$.MAX_VALUE} (inclusive).
-#end[FP]
-     * <p>
-     * The algorithm that generates pseudorandom values is not guaranteed to
-     * be cryptographically secure.
-     *
-     * @implNote
-     * This implementation generates psuedorandom values using
-     * {@link ThreadLocalRandom} for each lane, from first to last.
-     *
-     * @param species species of the desired vector
-     * @return a vector where each lane element is set to a generated pseudorandom
-     * primitive value
-     */
-    public static $abstractvectortype$ random(VectorSpecies<$Boxtype$> species) {
-        $Type$Species vsp = ($Type$Species) species;
-        ThreadLocalRandom r = ThreadLocalRandom.current();
-        return vsp.vOp(i -> nextRandom(r));
-    }
-    private static $type$ nextRandom(ThreadLocalRandom r) {
-#if[byteOrShort]
-        return ($type$) r.nextInt();
-#else[byteOrShort]
-        return r.next$Type$();
-#end[byteOrShort]
     }
 
     // Unary lanewise support
@@ -3853,7 +3802,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     // typed vector or constant species instance.
 
     // Unchecked loading operations in native byte order.
-    // Caller is reponsible for applying index checks, masking, and
+    // Caller is responsible for applying index checks, masking, and
     // byte swapping.
 
     /*package-private*/
@@ -3905,7 +3854,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
     }
 
     // Unchecked storing operations in native byte order.
-    // Caller is reponsible for applying index checks, masking, and
+    // Caller is responsible for applying index checks, masking, and
     // byte swapping.
 
     abstract

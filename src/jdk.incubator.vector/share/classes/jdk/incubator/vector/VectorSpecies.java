@@ -179,7 +179,7 @@ public interface VectorSpecies<E> {
      * {@code maskAll(true).indexInRange(offset, limit)}
      *
      * @param offset the starting index
-     * @param limit the upper-bound (exlusive) of index range
+     * @param limit the upper-bound (exclusive) of index range
      * @return a mask with out-of-range lanes unset
      * @see VectorMask#indexInRange(int, int)
      */

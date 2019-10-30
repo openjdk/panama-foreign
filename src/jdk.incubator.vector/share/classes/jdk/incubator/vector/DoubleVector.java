@@ -32,7 +32,6 @@ import java.util.Objects;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -545,47 +544,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
         VectorIntrinsics.requireLength(es.length, vlength);
         // Get an unaliased copy and use it directly:
         return vsp.vectorFactory(Arrays.copyOf(es, vlength));
-    }
-
-    /**
-     * Returns a vector where the first lane element is set to the primtive
-     * value {@code e}, all other lane elements are set to the default
-     * value(positive zero).
-     *
-     * @param species species of the desired vector
-     * @param e the value
-     * @return a vector where the first lane element is set to the primitive
-     * value {@code e}
-     */
-    // FIXME: Does this carry its weight?
-    @ForceInline
-    public static DoubleVector single(VectorSpecies<Double> species, double e) {
-        return zero(species).withLane(0, e);
-    }
-
-    /**
-     * Returns a vector where each lane element is set to a generated pseudorandom
-     * primitive value
-     * between zero (inclusive) and one (exclusive).
-     * <p>
-     * The algorithm that generates pseudorandom values is not guaranteed to
-     * be cryptographically secure.
-     *
-     * @implNote
-     * This implementation generates psuedorandom values using
-     * {@link ThreadLocalRandom} for each lane, from first to last.
-     *
-     * @param species species of the desired vector
-     * @return a vector where each lane element is set to a generated pseudorandom
-     * primitive value
-     */
-    public static DoubleVector random(VectorSpecies<Double> species) {
-        DoubleSpecies vsp = (DoubleSpecies) species;
-        ThreadLocalRandom r = ThreadLocalRandom.current();
-        return vsp.vOp(i -> nextRandom(r));
-    }
-    private static double nextRandom(ThreadLocalRandom r) {
-        return r.nextDouble();
     }
 
     // Unary lanewise support
@@ -3238,7 +3196,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     // typed vector or constant species instance.
 
     // Unchecked loading operations in native byte order.
-    // Caller is reponsible for applying index checks, masking, and
+    // Caller is responsible for applying index checks, masking, and
     // byte swapping.
 
     /*package-private*/
@@ -3290,7 +3248,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     // Unchecked storing operations in native byte order.
-    // Caller is reponsible for applying index checks, masking, and
+    // Caller is responsible for applying index checks, masking, and
     // byte swapping.
 
     abstract

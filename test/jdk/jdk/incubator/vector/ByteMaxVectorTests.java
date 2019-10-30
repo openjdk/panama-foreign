@@ -2826,27 +2826,6 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
 
 
-    static byte[] single(byte val) {
-        byte[] res = new byte[SPECIES.length()];
-        res[0] = val;
-
-        return res;
-    }
-
-    @Test(dataProvider = "byteUnaryOpProvider")
-    static void singleByteMaxVectorTests(IntFunction<byte[]> fa) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = ByteVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
-            }
-        }
-
-        assertArraysEquals(a, r, ByteMaxVectorTests::single);
-    }
     static byte[] slice(byte[] a, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){

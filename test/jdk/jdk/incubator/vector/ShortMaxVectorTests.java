@@ -2826,27 +2826,6 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
 
 
 
-    static short[] single(short val) {
-        short[] res = new short[SPECIES.length()];
-        res[0] = val;
-
-        return res;
-    }
-
-    @Test(dataProvider = "shortUnaryOpProvider")
-    static void singleShortMaxVectorTests(IntFunction<short[]> fa) {
-        short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = ShortVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
-            }
-        }
-
-        assertArraysEquals(a, r, ShortMaxVectorTests::single);
-    }
     static short[] slice(short[] a, int origin, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){

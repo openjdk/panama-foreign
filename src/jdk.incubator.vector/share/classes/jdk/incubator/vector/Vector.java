@@ -544,7 +544,7 @@ import java.util.List;
  *
  * <li>If the masked operation is a unary, binary, or n-ary arithmetic or
  * logical operation, suppressed lanes are filled from the first
- * vector operand (i.e., the vector recieving the method call), as if
+ * vector operand (i.e., the vector receiving the method call), as if
  * by a {@linkplain #blend(Vector,VectorMask) blend}.</li>
  *
  * <li>If the masked operation is a memory load or a {@code slice()} from
@@ -1418,7 +1418,7 @@ public abstract class Vector<E> {
 
     // Full-service functions support all four variations
     // of vector vs. broadcast scalar, and mask vs. not.
-    // The lanewise generic operator is (by this defintion)
+    // The lanewise generic operator is (by this definition)
     // also a full-service function.
 
     // Other named functions handle just the one named
@@ -3583,25 +3583,6 @@ public abstract class Vector<E> {
     @Override
     public abstract int hashCode();
 
-    /**
-     * Returns all the lane values of this vector, boxed in a list.
-     * The list elements are boxed and presented in lane order.
-     * The list is immutable, as if returned from
-     * {@link List#of(Object[]) List.&lt;E&gt;of}.
-     *
-     * @apiNote
-     * Because this operation jumps out of the domain of vectors into
-     * the domain of Java collections, it is likely to have large
-     * overheads, as compared with other vector operations.
-     * Often {@link #toArray Vector.toArray} is preferable,
-     * since it produces a packed array of unboxed lane values.
-     *
-     * @return a list containing the lane values of this vector
-     */
-    // Does this pull its weight?  Perhaps not.
-    // It might be OK to rely on the {@code toArray()} methods.
-    public abstract List<E> toList();
-
     // ==== JROSE NAME CHANGES ====
 
     // RAISED FROM SUBCLASSES (with generalized type)
@@ -3610,7 +3591,6 @@ public abstract class Vector<E> {
     // ADDED
     // * compare(OP,v) to replace most of the comparison methods
     // * maskAll(boolean) to replace maskAllTrue/False
-    // * toList() -> List<E> (interop with collections)
     // * toLongArray(), toDoubleArray() (generic unboxed access)
     // * check(Class), check(VectorSpecies) (static type-safety checks)
     // * enum Comparison (enum of EQ, NE, GT, LT, GE, LE)

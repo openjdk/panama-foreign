@@ -1352,21 +1352,6 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void single(Blackhole bh) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = ByteVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-    @Benchmark
     public void slice(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];

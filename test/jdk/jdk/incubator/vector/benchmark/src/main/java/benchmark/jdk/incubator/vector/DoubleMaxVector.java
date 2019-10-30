@@ -939,21 +939,6 @@ public class DoubleMaxVector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void single(Blackhole bh) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector av = DoubleVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-    @Benchmark
     public void slice(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];

@@ -1352,21 +1352,6 @@ public class Long512Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void single(Blackhole bh) {
-        long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector av = LongVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
-            }
-        }
-
-        bh.consume(r);
-    }
-
-    @Benchmark
     public void slice(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = new long[a.length];

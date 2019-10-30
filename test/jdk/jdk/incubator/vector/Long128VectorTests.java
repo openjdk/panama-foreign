@@ -2821,27 +2821,6 @@ public class Long128VectorTests extends AbstractVectorTest {
 
 
 
-    static long[] single(long val) {
-        long[] res = new long[SPECIES.length()];
-        res[0] = val;
-
-        return res;
-    }
-
-    @Test(dataProvider = "longUnaryOpProvider")
-    static void singleLong128VectorTests(IntFunction<long[]> fa) {
-        long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector av = LongVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
-            }
-        }
-
-        assertArraysEquals(a, r, Long128VectorTests::single);
-    }
     static long[] slice(long[] a, int origin, int idx) {
         long[] res = new long[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){

@@ -99,7 +99,7 @@ import java.util.function.IntUnaryOperator;
  * second source vector.
  *
  * <li> When a shuffle is cast from another shuffle species with a
- * smaller {@code VLENGTH}, all indexes are re-validated aginst the
+ * smaller {@code VLENGTH}, all indexes are re-validated against the
  * new {@code VLENGTH}, and some may be converted to exceptional
  * indexes.  In any case, shuffle casting never converts exceptional
  * indexes to normal ones.
