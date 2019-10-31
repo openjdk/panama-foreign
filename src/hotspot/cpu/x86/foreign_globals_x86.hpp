@@ -22,36 +22,12 @@
  */
 
 #include "asm/macroAssembler.hpp"
+#include "utilities/growableArray.hpp"
 
 #ifndef CPU_X86_VM_FOREIGN_GLOBALS_X86_HPP
 #define CPU_X86_VM_FOREIGN_GLOBALS_X86_HPP
 
 #define __ _masm->
-
-#ifdef _LP64
-
-#define INTEGER_ARGUMENT_REGISTERS_NOOF (const size_t)Argument::n_int_register_parameters_c
-#define VECTOR_ARGUMENT_REGISTERS_NOOF (const size_t)Argument::n_float_register_parameters_c
-#define INTEGER_RETURN_REGISTERS_NOOF (const size_t)Argument::n_int_register_returns_c
-#define VECTOR_RETURN_REGISTERS_NOOF (const size_t)Argument::n_float_register_returns_c
-#define X87_RETURN_REGISTERS_NOOF 2
-
-extern Register integer_return_registers[];
-extern Register integer_argument_registers[];
-extern XMMRegister vector_return_registers[];
-extern XMMRegister vector_argument_registers[];
-
-#else // _LP64
-
-#define INTEGER_ARGUMENT_REGISTERS_NOOF 0
-#define VECTOR_ARGUMENT_REGISTERS_NOOF 0
-#define INTEGER_RETURN_REGISTERS_NOOF 1
-#define VECTOR_RETURN_REGISTERS_NOOF 1
-
-extern Register integer_return_registers[];
-extern XMMRegister vector_return_registers[];
-
-#endif // _LP64
 
 struct VectorRegister {
   static const size_t VECTOR_MAX_WIDTH_BITS = 512; // AVX-512 (64-byte) vector types
@@ -67,5 +43,37 @@ struct VectorRegister {
     double d[VECTOR_MAX_WIDTH_DOUBLES];
   };
 };
+
+struct ABIDescriptor {
+    GrowableArray<Register> _integer_argument_registers;
+    GrowableArray<Register> _integer_return_registers;
+    GrowableArray<XMMRegister> _vector_argument_registers;
+    GrowableArray<XMMRegister> _vector_return_registers;
+    size_t _X87_return_registers_noof;
+
+    GrowableArray<Register> _integer_additional_volatile_registers;
+    GrowableArray<XMMRegister> _vector_additional_volatile_registers;
+
+    int32_t _stack_alignment_bytes;
+    int32_t _shadow_space_bytes;
+
+    bool is_volatile_reg(Register reg) const;
+    bool is_volatile_reg(XMMRegister reg) const;
+};
+
+struct BufferLayout {
+  size_t stack_args_bytes;
+  size_t stack_args;
+  size_t arguments_vector;
+  size_t arguments_integer;
+  size_t arguments_next_pc;
+  size_t returns_vector;
+  size_t returns_integer;
+  size_t returns_x87;
+  size_t buffer_size;
+};
+
+const ABIDescriptor parseABIDescriptor(JNIEnv* env, jobject jabi);
+const BufferLayout parseBufferLayout(JNIEnv* env, jobject jlayout);
 
 #endif // CPU_X86_VM_FOREIGN_GLOBALS_X86_HPP

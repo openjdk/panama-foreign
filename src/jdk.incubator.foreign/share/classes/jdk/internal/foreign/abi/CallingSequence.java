@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,77 +22,65 @@
  */
 package jdk.internal.foreign.abi;
 
-import java.util.EnumMap;
+import jdk.incubator.foreign.FunctionDescriptor;
+
+import java.lang.invoke.MethodType;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CallingSequence {
-    private final EnumMap<StorageClass, List<ArgumentBinding>> bindings;
-    private final boolean returnsInMemory;
-    private final Map<Integer, List<ArgumentBinding>> bindingsByIndex;
+    private final MethodType mt;
+    private final FunctionDescriptor desc;
 
-    public CallingSequence(boolean returnsInMemory, EnumMap<StorageClass, List<ArgumentBinding>> bindings) {
-        this.bindings = new EnumMap<>(bindings);
-        this.returnsInMemory = returnsInMemory;
-        this.bindingsByIndex = Stream.of(StorageClass.values())
-                .flatMap(sc -> bindings(sc).stream())
-                .collect(Collectors.groupingBy(b -> b.argument().argumentIndex()));
+    private final List<Binding> returnBindings;
+    private final List<List<Binding>> argumentBindings;
+
+    public CallingSequence(MethodType mt, FunctionDescriptor desc,
+                           List<List<Binding>> argumentBindings, List<Binding> returnBindings) {
+        this.mt = mt;
+        this.desc = desc;
+        this.returnBindings = returnBindings;
+        this.argumentBindings = argumentBindings;
     }
 
-    public List<ArgumentBinding> bindings(StorageClass storageClass) {
-        return bindings.getOrDefault(storageClass, List.of());
+    public Stream<Binding.MoveBinding> moveBindings() {
+        return argumentBindings.stream()
+                .flatMap(List::stream)
+                .filter(Binding.MoveBinding.class::isInstance)
+                .map(Binding.MoveBinding.class::cast);
     }
 
-    public boolean returnsInMemory() {
-        return returnsInMemory;
+    public List<Binding> argumentBindings(int i) {
+        return argumentBindings.get(i);
     }
 
-    public List<ArgumentBinding> argumentBindings(int i) {
-        return bindingsByIndex.getOrDefault(i, List.of());
-    }
-
-    public List<ArgumentBinding> returnBindings() {
-        if (returnsInMemory) {
-            throw new IllegalStateException("Attempting to obtain return bindings for in-memory return!");
-        }
-        return bindingsByIndex.getOrDefault(-1, List.of());
-    }
-
-    private static boolean isReturnInMemoryStorageClass(StorageClass storageClass) {
-        return storageClass == StorageClass.INTEGER_ARGUMENT_REGISTER
-            || storageClass == StorageClass.INDIRECT_RESULT_REGISTER;
-    }
-
-    public ArgumentBinding returnInMemoryBinding() {
-        if (!returnsInMemory) {
-            throw new IllegalStateException("Attempting to obtain in-memory binding for regular return");
-        }
-        //if returns in memory, we have two bindings with position -1, the argument and the return.
-        //The code below filters out the return binding.
-        return bindingsByIndex.getOrDefault(-1, List.of()).stream()
-                .filter(b -> isReturnInMemoryStorageClass(b.storage().getStorageClass()))
-                .findFirst()
-                .orElseThrow(IllegalStateException::new);
+    public List<Binding> returnBindings() {
+        return returnBindings;
     }
 
     public String asString() {
         StringBuilder sb = new StringBuilder();
 
         sb.append("CallingSequence: {\n");
-        sb.append("  returnsInMemory: " + returnsInMemory + "\n");
-        sb.append("  Classes:\n");
-        for (StorageClass c : StorageClass.values()) {
-            sb.append("    ").append(c).append("\n");
-            for (ArgumentBinding binding : bindings(c)) {
-                if (binding != null) {
-                    sb.append("      ").append(binding.toString()).append("\n");
-                }
-            }
+        sb.append("  MethodType: " + mt);
+        sb.append("  FunctionDescriptor: " + desc);
+        sb.append("  Argument Bindings:\n");
+        for (int i = 0; i < mt.parameterCount(); i++) {
+            sb.append("    ").append(i).append(": ").append(argumentBindings.get(i)).append("\n");
+        }
+        if (mt.returnType() != void.class) {
+            sb.append("    ").append("Return: ").append(returnBindings).append("\n");
         }
         sb.append("}\n");
 
         return sb.toString();
+    }
+
+    public MethodType methodType() {
+        return mt;
+    }
+
+    public FunctionDescriptor functionDesc() {
+        return desc;
     }
 }

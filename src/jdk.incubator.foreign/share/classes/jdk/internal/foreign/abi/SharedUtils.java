@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2019, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,10 +22,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi.aarch64;
+package jdk.internal.foreign.abi;
 
 import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.Storage;
 
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
@@ -34,11 +32,6 @@ import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 
 public class SharedUtils {
-    public static final int INTEGER_REGISTER_SIZE = 8;
-    public static final int VECTOR_REGISTER_SIZE = 16;
-
-    public static final int STACK_SLOT_SIZE = 8;
-
     /**
      * Align the specified type from a given address
      * @return The address the data should be at based on alignment requirement
@@ -95,64 +88,5 @@ public class SharedUtils {
     private static long alignmentOfContainer(GroupLayout ct) {
         // Most strict member
         return ct.memberLayouts().stream().mapToLong(t -> alignment(t, false)).max().orElse(1);
-    }
-
-    public static class StorageDebugHelper {
-
-        private final int maxIntegerArgRegisters;
-        private final int maxIntegerReturnRegisters;
-        private final int maxVectorArgRegisters;
-        private final int maxVectorReturnRegisters;
-
-        public StorageDebugHelper(int maxIntegerArgRegisters,
-                                  int maxIntegerReturnRegisters,
-                                  int maxVectorArgRegisters,
-                                  int maxVectorReturnRegisters) {
-            this.maxIntegerArgRegisters = maxIntegerArgRegisters;
-            this.maxIntegerReturnRegisters = maxIntegerReturnRegisters;
-            this.maxVectorArgRegisters = maxVectorArgRegisters;
-            this.maxVectorReturnRegisters = maxVectorReturnRegisters;
-        }
-
-        private static String getVectorRegisterName(long index, long size) {
-            return "v" + index;
-        }
-
-        private static String getIntegerRegisterName(long index) {
-            return "r" + index;
-        }
-
-        public String getStorageName(Storage storage) {
-            switch (storage.getStorageClass()) {
-                case INTEGER_ARGUMENT_REGISTER:
-                    if (storage.getStorageIndex() > maxIntegerArgRegisters) {
-                        throw new IllegalArgumentException("Illegal storage: " + storage);
-                    }
-                    return getIntegerRegisterName(storage.getStorageIndex());
-
-                case VECTOR_ARGUMENT_REGISTER:
-                    if (storage.getStorageIndex() > maxVectorArgRegisters) {
-                        throw new IllegalArgumentException("Illegal storage: " + storage);
-                    }
-                    return getVectorRegisterName(storage.getStorageIndex(), storage.getSize());
-
-                case INTEGER_RETURN_REGISTER:
-                    if (storage.getStorageIndex() > maxIntegerReturnRegisters) {
-                        throw new IllegalArgumentException("Illegal storage: " + storage);
-                    }
-                    return getIntegerRegisterName(storage.getStorageIndex());
-
-                case VECTOR_RETURN_REGISTER:
-                    if (storage.getStorageIndex() > maxVectorReturnRegisters) {
-                        throw new IllegalArgumentException("Illegal storage: " + storage);
-                    }
-                    return getVectorRegisterName(storage.getStorageIndex(), storage.getSize());
-
-                case STACK_ARGUMENT_SLOT:
-                    return "[sp + " + Long.toHexString(8 * storage.getStorageIndex()) + "]";
-            }
-
-            throw new IllegalArgumentException("Unhandled storage type: " + storage.getStorageClass());
-        }
     }
 }

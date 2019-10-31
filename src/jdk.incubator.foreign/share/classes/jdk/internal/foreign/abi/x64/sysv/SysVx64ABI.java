@@ -69,17 +69,7 @@ public class SysVx64ABI implements SystemABI {
             throw new IllegalArgumentException("Variadic function: " + function);
         }
 
-        CallingSequence callingSequence = arrangeCall(function);
-        if (fastPath == null || !fastPath.equals("none")) {
-            if (DirectSignatureShuffler.acceptDowncall(type, callingSequence)) {
-                return DirectNativeInvoker.make(symbol, callingSequence, type);
-            } else if (fastPath != null && fastPath.equals("direct")) {
-                throw new IllegalStateException(
-                        String.format("No fast path for: %s", type.descriptorString()));
-            }
-        }
-        return new UniversalNativeInvoker(MemoryAddressImpl.addressof(symbol), callingSequence, type, function, adapter)
-                .getBoundMethodHandle();
+        return CallArranger.arrangeDowncall(MemoryAddressImpl.addressof(symbol), type, function);
     }
 
     @Override
@@ -88,96 +78,6 @@ public class SysVx64ABI implements SystemABI {
             throw new IllegalArgumentException("Variadic function: " + function);
         }
 
-        MethodType type = target.type();
-        CallingSequence callingSequence = arrangeCall(function);
-        if (fastPath == null || !fastPath.equals("none")) {
-            if (DirectSignatureShuffler.acceptUpcall(type, callingSequence)) {
-                return UpcallStubs.upcallAddress(new DirectUpcallHandler(target, callingSequence, type));
-            } else if (fastPath != null && fastPath.equals("direct")) {
-                throw new IllegalStateException(
-                        String.format("No fast path for function type %s", function));
-            }
-        }
-        return UpcallStubs.upcallAddress(new UniversalUpcallHandler(target, callingSequence, type, function,
-                adapter));
-    }
-
-    CallingSequence arrangeCall(FunctionDescriptor function) {
-        CallingSequenceBuilder stdc = new CallingSequenceBuilderImpl(function.returnLayout().orElse(null));
-        function.argumentLayouts().forEach(stdc::addArgument);
-        return stdc.build();
-    }
-
-    UniversalAdapter adapter = new UniversalAdapter() {
-        @Override
-        public void unboxValue(Object o, Class<?> carrier, MemoryLayout layout, java.util.function.Function<ArgumentBinding, MemoryAddress> dstPtrFunc,
-                               List<ArgumentBinding> bindings) {
-            if (layout instanceof GroupLayout) {
-                MemoryAddress src = ((MemorySegment)o).baseAddress();
-                if (layout.bitSize() != 0) {
-                    for (ArgumentBinding binding : bindings) {
-                        MemoryAddress dst = dstPtrFunc.apply(binding);
-                        MemoryAddressImpl srcPtr = (MemoryAddressImpl)src.offset(binding.offset());
-                        MemoryAddress.copy(srcPtr, dst,
-                                Math.min(binding.storage().getSize(), srcPtr.size() - srcPtr.offset()));
-                    }
-                }
-            } else if (carrier == MemoryAddress.class) {
-                assert bindings.size() <= 2;
-                VarHandle vh = MemoryHandles.varHandle(long.class);
-                MemoryAddress dst = dstPtrFunc.apply(bindings.get(0));
-                vh.set(dst, MemoryAddressImpl.addressof((MemoryAddress)o));
-            } else if (isX87(layout)) {
-                //for now, we have to use an indirection (when we have value types we can fix this)
-                assert bindings.size() <= 2;
-                MemoryAddress.copy((MemoryAddress)o, dstPtrFunc.apply(bindings.get(0)), layout.byteSize());
-            } else {
-                assert bindings.size() == 1;
-                VarHandle vh = MemoryHandles.varHandle(carrier);
-                MemoryAddress dst = dstPtrFunc.apply(bindings.get(0));
-                vh.set(dst, o);
-            }
-        }
-
-        public Object boxValue(Class<?> carrier, MemoryLayout layout, java.util.function.Function<ArgumentBinding, MemoryAddress> srcPtrFunc,
-                               List<ArgumentBinding> bindings) {
-            if (layout instanceof GroupLayout) {
-                /*
-                 * Leak memory for now
-                 */
-                if (layout.bitSize() == 0) {
-                    //empty struct!
-                    return MemoryAddressImpl.NULL;
-                }
-
-                MemoryAddress rtmp = MemorySegment.ofNative(layout).baseAddress();
-
-                for (ArgumentBinding binding : bindings) {
-                    MemoryAddressImpl dst = (MemoryAddressImpl)rtmp.offset(binding.offset());
-                    MemoryAddress.copy(srcPtrFunc.apply(binding), dst,
-                            Math.min(binding.storage().getSize(), dst.size() - dst.offset()));
-                }
-
-                return rtmp.segment();
-            } else if (carrier == MemoryAddress.class) {
-                assert bindings.size() <= 2;
-                VarHandle vh = MemoryHandles.varHandle(long.class);
-                return MemoryAddressImpl.ofNative((long)vh.get(srcPtrFunc.apply(bindings.get(0))));
-            } else if (isX87(layout)) {
-                //for now, we have to use an indirection (when we have value types we can fix this)
-                assert bindings.size() <= 2;
-                MemoryAddress dest = MemorySegment.ofNative(layout).baseAddress();
-                MemoryAddress.copy(srcPtrFunc.apply(bindings.get(0)), dest, layout.byteSize());
-                return dest;
-            } else {
-                assert bindings.size() == 1;
-                VarHandle vh = MemoryHandles.varHandle(carrier);
-                return vh.get(srcPtrFunc.apply(bindings.get(0)));
-            }
-        }
-    };
-
-    private boolean isX87(MemoryLayout layout) {
-        return Utils.getAnnotation(layout, ArgumentClassImpl.ABI_CLASS) == ArgumentClassImpl.X87;
+        return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
     }
 }

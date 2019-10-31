@@ -20,71 +20,55 @@
  *  or visit www.oracle.com if you need additional information or have any
  *  questions.
  */
-
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
 
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.function.BiConsumer;
 
-public abstract class CallingSequenceBuilder {
+public class CallingSequenceBuilder {
+    private final List<List<Binding>> inputBindings = new ArrayList<>();
+    private List<Binding> ouputBindings = List.of();
 
-    private final EnumMap<StorageClass, List<ArgumentBinding>> bindings = new EnumMap<>(StorageClass.class);
-    private final boolean returnsInMemory;
+    private MethodType mt = MethodType.methodType(void.class);
+    private FunctionDescriptor desc = FunctionDescriptor.ofVoid(false);
 
-    private int argIndex = 0;
-
-    private final BindingsComputer returnBindgingsComputer;
-    private final BindingsComputer argumentBindgingsComputer;
-
-    protected CallingSequenceBuilder(MemoryLayout ptrLayout,
-                                     MemoryLayout ret,
-                                     BindingsComputer returnBindgingsComputer,
-                                     BindingsComputer argumentBindgingsComputer) {
-        this.returnBindgingsComputer = returnBindgingsComputer;
-        this.argumentBindgingsComputer = argumentBindgingsComputer;
-        if (ret != null) {
-            Argument retInfo = makeArgument(ret, -1, "__retval");
-            this.returnsInMemory = retInfo.inMemory();
-            if (returnsInMemory) {
-                retInfo = makeArgument(ptrLayout, -1, "__retval");
-                addArgumentBindings(retInfo);
-            }
-            addReturnBindings(retInfo);
-        } else {
-            this.returnsInMemory = false;
-        }
-    }
-
-    public final CallingSequenceBuilder addArgument(MemoryLayout l) {
-        addArgumentBindings(makeArgument(l, argIndex, "arg" + argIndex));
-        argIndex++;
+    public final CallingSequenceBuilder addArgument(Class<?> carrier, MemoryLayout layout,
+                                                    List<Binding> bindings) {
+        inputBindings.add(bindings);
+        mt = mt.appendParameterTypes(carrier);
+        descAddArgument(layout);
         return this;
     }
 
-    public final CallingSequence build() {
-        return new CallingSequence(returnsInMemory, bindings);
+    private void descAddArgument(MemoryLayout layout) {
+        boolean isVoid = desc.returnLayout().isEmpty();
+        var args = new ArrayList<>(desc.argumentLayouts());
+        args.add(layout);
+        var argsArray = args.toArray(MemoryLayout[]::new);
+        if (isVoid) {
+            desc = FunctionDescriptor.ofVoid(false, argsArray);
+        } else {
+            desc = FunctionDescriptor.of(desc.returnLayout().get(), false, argsArray);
+        }
     }
 
-    protected abstract Argument makeArgument(MemoryLayout layout, int pos, String name);
-
-    private void addReturnBindings(Argument a) {
-        returnBindgingsComputer.computeBindings(a, this::addBinding);
+    public CallingSequenceBuilder setReturnBindings(Class<?> carrier, MemoryLayout layout,
+                                                    List<Binding> bindings) {
+        this.ouputBindings = bindings;
+        mt = mt.changeReturnType(carrier);
+        desc = FunctionDescriptor.of(layout, false, desc.argumentLayouts().toArray(MemoryLayout[]::new));
+        return this;
     }
 
-    private void addArgumentBindings(Argument a) {
-        argumentBindgingsComputer.computeBindings(a, this::addBinding);
+    public CallingSequence build() {
+        return new CallingSequence(mt, desc, inputBindings, ouputBindings);
     }
 
-    private void addBinding(StorageClass storageClass, ArgumentBinding binding) {
-        bindings.computeIfAbsent(storageClass, _unused -> new ArrayList<>()).add(binding);
-    }
-
-    public interface BindingsComputer {
-        void computeBindings(Argument argument, BiConsumer<StorageClass, ArgumentBinding> bindingConsumer);
+    public int currentIndex() {
+        return mt.parameterCount();
     }
 }

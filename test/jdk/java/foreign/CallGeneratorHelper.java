@@ -314,7 +314,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
         String sig = paramDecls.isEmpty() ?
                 "" :
                 paramDecls.stream().collect(Collectors.joining(", ")) + ", ";
-        String body = ret == Ret.VOID ? "{ }" : String.format("{ return cb(%s); }", paramNames);
+        String body = String.format(ret == Ret.VOID ? "{ cb(%s); }" : "{ return cb(%s); }", paramNames);
         List<String> paramTypes = params.stream().map(p -> p.type(fields)).collect(Collectors.toList());
         String cbSig = paramTypes.isEmpty() ?
                 "void" :
@@ -392,11 +392,12 @@ public class CallGeneratorHelper extends NativeTestHelper {
             if (check) {
                 assertTrue(fieldsCheck.size() == 1);
                 checks.add(o -> {
+                    MemorySegment actual = (MemorySegment)o;
                     try {
                         if (isPointer(l)) {
-                            fieldsCheck.get(0).accept(ForeignUnsafe.ofLong((long)accessor.get(str.baseAddress())));
+                            fieldsCheck.get(0).accept(ForeignUnsafe.ofLong((long)accessor.get(actual.baseAddress())));
                         } else {
-                            fieldsCheck.get(0).accept(accessor.get(str.baseAddress()));
+                            fieldsCheck.get(0).accept(accessor.get(actual.baseAddress()));
                         }
                     } catch (Throwable ex) {
                         throw new IllegalStateException(ex);

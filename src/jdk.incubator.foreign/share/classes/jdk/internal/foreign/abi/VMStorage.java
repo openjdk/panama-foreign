@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,41 +22,52 @@
  */
 package jdk.internal.foreign.abi;
 
-public class ArgumentBinding {
-    private final Storage storage;
-    private final Argument argument;
-    private final long offset;
+import java.util.Objects;
 
-    public ArgumentBinding(Storage storage, Argument argument, long offset) {
-        this.storage = storage;
-        this.argument = argument;
-        this.offset = offset;
+public class VMStorage {
+    private final int type;
+    private final int index;
+
+    private final String debugName;
+
+    public VMStorage(int type, int index, String debugName) {
+        this.type = type;
+        this.index = index;
+        this.debugName = debugName;
     }
 
-    public ArgumentBinding(Storage storage, Argument argument) {
-        this(storage, argument, 0);
+    public int type() {
+        return type;
     }
 
-    public Storage storage() {
-        return storage;
+    public int index() {
+        return index;
     }
 
-    public Argument argument() {
-        return argument;
+    public String name() {
+        return debugName;
     }
 
-    public long offset() {
-        return offset;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VMStorage vmStorage = (VMStorage) o;
+        return type == vmStorage.type &&
+                index == vmStorage.index;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, index);
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(storage)
-                .append(" : ")
-                .append(argument.name())
-                .append(" @ 0x")
-                .append(Long.toHexString(offset));
-        return sb.toString();
+        return "VMStorage{" +
+                "type=" + type +
+                ", index=" + index +
+                ", debugName='" + debugName + '\'' +
+                '}';
     }
 }

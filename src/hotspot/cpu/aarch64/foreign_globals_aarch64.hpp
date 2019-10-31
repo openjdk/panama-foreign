@@ -23,21 +23,12 @@
  */
 
 #include "asm/macroAssembler.hpp"
+#include "utilities/growableArray.hpp"
 
 #ifndef CPU_AARCH64_VM_FOREIGN_GLOBALS_AARCH64_HPP
 #define CPU_AARCH64_VM_FOREIGN_GLOBALS_AARCH64_HPP
 
 #define __ _masm->
-
-#define INTEGER_ARGUMENT_REGISTERS_NOOF (const size_t)Argument::n_int_register_parameters_c
-#define VECTOR_ARGUMENT_REGISTERS_NOOF (const size_t)Argument::n_float_register_parameters_c
-#define INTEGER_RETURN_REGISTERS_NOOF 8
-#define VECTOR_RETURN_REGISTERS_NOOF 8
-
-extern Register integer_return_registers[];
-extern Register integer_argument_registers[];
-extern FloatRegister vector_return_registers[];
-extern FloatRegister vector_argument_registers[];
 
 struct VectorRegister {
   static const size_t VECTOR_MAX_WIDTH_BITS = 128;
@@ -53,5 +44,35 @@ struct VectorRegister {
     double d[VECTOR_MAX_WIDTH_DOUBLES];
   };
 };
+
+struct ABIDescriptor {
+  GrowableArray<Register> _integer_argument_registers;
+  GrowableArray<Register> _integer_return_registers;
+  GrowableArray<FloatRegister> _vector_argument_registers;
+  GrowableArray<FloatRegister> _vector_return_registers;
+
+  GrowableArray<Register> _integer_additional_volatile_registers;
+  GrowableArray<FloatRegister> _vector_additional_volatile_registers;
+
+  int32_t _stack_alignment_bytes;
+  int32_t _shadow_space_bytes;
+
+  bool is_volatile_reg(Register reg) const;
+  bool is_volatile_reg(FloatRegister reg) const;
+};
+
+struct BufferLayout {
+  size_t stack_args_bytes;
+  size_t stack_args;
+  size_t arguments_vector;
+  size_t arguments_integer;
+  size_t arguments_next_pc;
+  size_t returns_vector;
+  size_t returns_integer;
+  size_t buffer_size;
+};
+
+const ABIDescriptor parseABIDescriptor(JNIEnv* env, jobject jabi);
+const BufferLayout parseBufferLayout(JNIEnv* env, jobject jlayout);
 
 #endif // CPU_AARCH64_VM_FOREIGN_GLOBALS_AARCH64_HPP

@@ -26,7 +26,7 @@ package jdk.internal.foreign.abi.aarch64;
 import jdk.internal.foreign.abi.ArgumentClass;
 
 public enum ArgumentClassImpl implements ArgumentClass {
-    POINTER, INTEGER, VECTOR, MEMORY, HFA;
+    POINTER, INTEGER, VECTOR, MEMORY;
 
     public boolean isIntegral() {
         return this == INTEGER || this == POINTER;

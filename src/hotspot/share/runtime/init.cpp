@@ -156,7 +156,6 @@ jint init_globals() {
   }
   stubRoutines_init2(); // note: StubRoutines need 2-phase init
   MethodHandles::generate_adapters();
-  UniversalNativeInvoker::generate_adapter();
 
 #if INCLUDE_NMT
   // Solaris stack is walkable only after stubRoutines are set up.

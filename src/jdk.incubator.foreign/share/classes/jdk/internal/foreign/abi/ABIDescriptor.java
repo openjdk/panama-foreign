@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,37 +22,24 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.MemoryLayout;
+public class ABIDescriptor {
+    final Architecture arch;
 
-import java.util.List;
+    public final VMStorage[][] inputStorage;
+    public final VMStorage[][] outputStorage;
 
-public abstract class Argument {
-    private final int argumentIndex; // index of argument (in argument list)
-    private final MemoryLayout layout;
-    private final String debugName; //optional debug name
+    final VMStorage[][] volatileStorage;
 
-    protected Argument(MemoryLayout layout, int argumentIndex, String debugName) {
-        this.argumentIndex = argumentIndex;
-        this.layout = layout;
-        this.debugName = debugName;
-    }
+    final int stackAlignment;
+    final int shadowSpace;
 
-    public int argumentIndex() {
-        return argumentIndex;
-    }
-
-    public MemoryLayout layout() {
-        return layout;
-    }
-
-    public String name() {
-        return debugName != null ? debugName : "<anonymous>";
-    }
-
-    public abstract boolean inMemory();
-
-    @Override
-    public String toString() {
-        return "[" + layout.toString() + " " + name() + "]";
+    public ABIDescriptor(Architecture arch, jdk.internal.foreign.abi.VMStorage[][] inputStorage, jdk.internal.foreign.abi.VMStorage[][] outputStorage,
+                         VMStorage[][] volatileStorage, int stackAlignment, int shadowSpace) {
+        this.arch = arch;
+        this.inputStorage = inputStorage;
+        this.outputStorage = outputStorage;
+        this.volatileStorage = volatileStorage;
+        this.stackAlignment = stackAlignment;
+        this.shadowSpace = shadowSpace;
     }
 }

@@ -32,10 +32,9 @@
 #include "utilities/macros.hpp"
 #include CPU_HEADER(foreign_globals)
 
-class UniversalUpcallHandler: AllStatic {
-
+class ProgrammableUpcallHandler : AllStatic {
 public:
-  static address generate_upcall_stub(Handle& rec);
+  static jlong generate_upcall_stub(JNIEnv *env, jobject rec, jobject abi, jobject buffer_layout);
 };
 
 #endif // SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP

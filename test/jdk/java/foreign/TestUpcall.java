@@ -41,6 +41,8 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.ValueLayout;
+import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -51,9 +53,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import jdk.incubator.foreign.ValueLayout;
-import org.testng.annotations.*;
 
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static org.testng.Assert.assertEquals;
@@ -70,7 +69,7 @@ public class TestUpcall extends CallGeneratorHelper {
     static {
         try {
             DUMMY = MethodHandles.lookup().findStatic(TestUpcall.class, "dummy", MethodType.methodType(void.class));
-            PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcall.class, "passAndSave", MethodType.methodType(Object.class, Object.class, AtomicReference.class));
+            PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcall.class, "passAndSave", MethodType.methodType(Object.class, Object[].class, AtomicReference.class));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -79,14 +78,16 @@ public class TestUpcall extends CallGeneratorHelper {
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcalls(String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
-        List<Consumer<Object>> checks = new ArrayList<>();
+        List<Consumer<Object>> returnChecks = new ArrayList<>();
+        List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = lib.lookup(fName);
         MethodHandle mh = abi.downcallHandle(addr, methodType(ret, paramTypes, fields), function(ret, paramTypes, fields));
-        Object[] args = makeArgs(paramTypes, fields, checks);
+        Object[] args = makeArgs(ret, paramTypes, fields, returnChecks, argChecks);
         mh = mh.asSpreader(Object[].class, paramTypes.size() + 1);
         Object res = mh.invoke(args);
+        argChecks.forEach(c -> c.accept(args));
         if (ret == Ret.NON_VOID) {
-            checks.forEach(c -> c.accept(res));
+            returnChecks.forEach(c -> c.accept(res));
         }
         for (Object arg : args) {
             cleanup(arg);
@@ -112,38 +113,55 @@ public class TestUpcall extends CallGeneratorHelper {
                 FunctionDescriptor.of(layouts[0], false, layouts);
     }
 
-    static Object[] makeArgs(List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks) throws ReflectiveOperationException {
+    static Object[] makeArgs(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
         Object[] args = new Object[params.size() + 1];
         for (int i = 0 ; i < params.size() ; i++) {
             args[i] = makeArg(params.get(i).layout(fields), checks, i == 0);
         }
-        args[params.size()] = makeCallback(params.size() > 0 ? params.get(0) : null, fields, checks);
+        args[params.size()] = makeCallback(ret, params, fields, checks, argChecks);
         return args;
     }
 
     @SuppressWarnings("unchecked")
-    static MemoryAddress makeCallback(ParamType param, List<StructFieldType> fields, List<Consumer<Object>> checks) {
-        MemoryLayout layout = null;
-        if (param != null) {
-            layout = param.layout(fields);
+    static MemoryAddress makeCallback(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
+        if (params.isEmpty()) {
+            return abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(false));
         }
 
-        MethodHandle mh = DUMMY;
-        MemoryLayout finalLayout = layout;
-        if (layout != null) {
-            AtomicReference<Object> box = new AtomicReference<>();
-            mh = insertArguments(PASS_AND_SAVE, 1, box);
-            Class<?> paramType = paramCarrier(layout);
-            mh = mh.asType(MethodType.methodType(paramType, paramType));
-            if (paramType == MemorySegment.class) {
-                checks.add(o -> assertStructEquals((MemorySegment) o, (MemorySegment) box.get(), finalLayout));
+        AtomicReference<Object[]> box = new AtomicReference<>();
+        MethodHandle mh = insertArguments(PASS_AND_SAVE, 1, box);
+        mh = mh.asCollector(Object[].class, params.size());
+
+        for (int i = 0; i < params.size(); i++) {
+            ParamType pt = params.get(i);
+            MemoryLayout layout = pt.layout(fields);
+            Class<?> carrier = paramCarrier(layout);
+            mh = mh.asType(mh.type().changeParameterType(i, carrier));
+
+            final int finalI = i;
+            if (carrier == MemorySegment.class) {
+                argChecks.add(o -> assertStructEquals((MemorySegment) o[finalI], (MemorySegment) box.get()[finalI], layout));
             } else {
-                checks.add(o -> assertEquals(o, box.get()));
+                argChecks.add(o -> assertEquals(o[finalI], box.get()[finalI]));
             }
         }
-        FunctionDescriptor func = layout != null ?
-                FunctionDescriptor.of(layout, false, layout) :
-                FunctionDescriptor.ofVoid(false);
+
+        ParamType firstParam = params.get(0);
+        MemoryLayout firstlayout = firstParam.layout(fields);
+        Class<?> firstCarrier = paramCarrier(firstlayout);
+
+        if (firstCarrier == MemorySegment.class) {
+            checks.add(o -> assertStructEquals((MemorySegment) o, (MemorySegment) box.get()[0], firstlayout));
+        } else {
+            checks.add(o -> assertEquals(o, box.get()[0]));
+        }
+
+        mh = mh.asType(mh.type().changeReturnType(ret == Ret.VOID ? void.class : firstCarrier));
+
+        MemoryLayout[] paramLayouts = params.stream().map(p -> p.layout(fields)).toArray(MemoryLayout[]::new);
+        FunctionDescriptor func = ret != Ret.VOID
+                ? FunctionDescriptor.of(firstlayout, false, paramLayouts)
+                : FunctionDescriptor.ofVoid(false, paramLayouts);
         return abi.upcallStub(mh, func);
     }
 
@@ -174,9 +192,9 @@ public class TestUpcall extends CallGeneratorHelper {
         }
     }
 
-    static Object passAndSave(Object o, AtomicReference<Object> ref) {
+    static Object passAndSave(Object[] o, AtomicReference<Object[]> ref) {
         ref.set(o);
-        return o;
+        return o[0];
     }
 
     static void dummy() {

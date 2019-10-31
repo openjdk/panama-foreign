@@ -26,30 +26,34 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 
-JVM_ENTRY(jlong, UUH_AllocateUpcallStub(JNIEnv *env, jobject rec))
+JVM_ENTRY(jlong, PUH_AllocateUpcallStub(JNIEnv *env, jobject rec, jobject abi, jobject buffer_layout))
   Handle receiver(THREAD, JNIHandles::resolve(rec));
-  return (jlong)UniversalUpcallHandler::generate_upcall_stub(receiver);
+  jobject global_rec = JNIHandles::make_global(receiver);
+  ThreadToNativeFromVM ttnfvm(thread);
+
+  return ProgrammableUpcallHandler::generate_upcall_stub(env, global_rec, abi, buffer_layout);
 JVM_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 #define LANG "Ljava/lang/"
 
-// These are the native methods on jdk.internal.foreign.abi.UniversalUpcallHandler.
-static JNINativeMethod UUH_methods[] = {
-  {CC "allocateUpcallStub", CC "()J",                 FN_PTR(UUH_AllocateUpcallStub)},
+#define FOREIGN_ABI "Ljdk/internal/foreign/abi"
+
+static JNINativeMethod PUH_methods[] = {
+  {CC "allocateUpcallStub", CC "(" FOREIGN_ABI "/ABIDescriptor;" FOREIGN_ABI "/BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
 };
 
 /**
  * This one function is exported, used by NativeLookup.
  */
-JVM_ENTRY(void, JVM_RegisterUniversalUpcallHandlerMethods(JNIEnv *env, jclass UUH_class)) {
+JVM_ENTRY(void, JVM_RegisterProgrammableUpcallHandlerMethods(JNIEnv *env, jclass PUH_class)) {
   {
     ThreadToNativeFromVM ttnfv(thread);
 
-    int status = env->RegisterNatives(UUH_class, UUH_methods, sizeof(UUH_methods)/sizeof(JNINativeMethod));
+    int status = env->RegisterNatives(PUH_class, PUH_methods, sizeof(PUH_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.abi.UniversalUpcallHandler natives");
+              "register jdk.internal.foreign.abi.ProgrammableUpcallHandler natives");
   }
 }
 JVM_END

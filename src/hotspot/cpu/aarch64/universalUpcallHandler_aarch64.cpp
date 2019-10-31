@@ -50,7 +50,7 @@ static struct {
 } upcall_info;
 
 // FIXME: This should be initialized explicitly instead of lazily/racily
-static void upcall_init(void) {
+static void upcall_init() {
 #if 0
   fprintf(stderr, "upcall_init()\n");
 #endif
@@ -58,9 +58,9 @@ static void upcall_init(void) {
   TRAPS = Thread::current();
   ResourceMark rm;
 
-  const char* cname = "jdk/internal/foreign/abi/UniversalUpcallHandler";
+  const char* cname = "jdk/internal/foreign/abi/ProgrammableUpcallHandler";
   const char* mname = "invoke";
-  const char* mdesc = "(Ljdk/internal/foreign/abi/UniversalUpcallHandler;JJJJJJJ)V";
+  const char* mdesc = "(Ljdk/internal/foreign/abi/ProgrammableUpcallHandler;J)V";
   Symbol* cname_sym = SymbolTable::new_symbol(cname, (int)strlen(cname));
   Symbol* mname_sym = SymbolTable::new_symbol(mname, (int)strlen(mname));
   Symbol* mdesc_sym = SymbolTable::new_symbol(mdesc, (int)strlen(mdesc));
@@ -88,31 +88,8 @@ static void upcall_init(void) {
   upcall_info.inited = true;
 }
 
-struct upcall_context {
-  struct {
-    uintptr_t integer[10];  // r19-r28
-    double    vector[8];    // v8-v15 (lower 64 bits)
-  } preserved;
-
-  struct {
-    uintptr_t integer[INTEGER_ARGUMENT_REGISTERS_NOOF];
-    VectorRegister vector[VECTOR_ARGUMENT_REGISTERS_NOOF];
-    uintptr_t sp;
-    uintptr_t indirect;
-  } args;
-
-  struct {
-    uintptr_t integer[INTEGER_RETURN_REGISTERS_NOOF];
-    VectorRegister vector[VECTOR_RETURN_REGISTERS_NOOF];
-  } returns;
-};
-
-static void upcall_helper(jobject rec, struct upcall_context* context) {
-#if 0
-  ::fprintf(stderr, "upcall_helper(%p, %p)\n", rec, context);
-#endif
-
-   void *p_env = NULL;
+static void upcall_helper(jobject rec, address buff) {
+  void *p_env = NULL;
 
   Thread* thread = Thread::current_or_null();
   if (thread == NULL) {
@@ -123,72 +100,30 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
 
   assert(thread->is_Java_thread(), "really?");
 
-#if 0
-  fprintf(stderr, "args.integer: %p\n", context->args.integer);
-  for (size_t i = 0; i < INTEGER_ARGUMENT_REGISTERS_NOOF; i++) {
-    fprintf(stderr, "args.integer[%zd]: 0x%lx\n", i, context->args.integer[i]);
-  }
-
-  fprintf(stderr, "args.vector: %p\n", context->args.vector);
-  for (size_t i = 0; i < VECTOR_ARGUMENT_REGISTERS_NOOF; i++) {
-    fprintf(stderr, "args.vector[%zd]:\n", i);
-
-    fprintf(stderr, "\traw: | ");
-    for (size_t j = 0; j < VectorRegister::VECTOR_MAX_WIDTH_U64S; j++) {
-      fprintf(stderr, "\t0x%016lx |", context->args.vector[i].u64[j]);
-    }
-    fprintf(stderr, "\n");
-
-    fprintf(stderr, "\tfloat: |");
-    for (size_t j = 0; j < VectorRegister::VECTOR_MAX_WIDTH_FLOATS; j++) {
-      fprintf(stderr, "%f |", context->args.vector[i].f[j]);
-    }
-    fprintf(stderr, "\n");
-
-    fprintf(stderr, "\tdouble: |");
-    for (size_t j = 0; j < VectorRegister::VECTOR_MAX_WIDTH_DOUBLES; j++) {
-      fprintf(stderr, "%f |", context->args.vector[i].d[j]);
-    }
-    fprintf(stderr, "\n");
-  }
-
-  fprintf(stderr, "args.sp: 0x%lx\n", context->args.sp);
-  for (int i = 0; i < 64; i += 8) {
-    fprintf(stderr, "args.stack+%d: 0x%lx\n", i, *(uintptr_t*)(context->args.sp+i));
-  }
-#endif
+  ThreadInVMfromNative __tiv((JavaThread *)thread);
 
   if (!upcall_info.inited) {
     upcall_init();
   }
 
-  ThreadInVMfromNative __tiv((JavaThread *)thread);
-
   ResourceMark rm;
   JavaValue result(T_VOID);
-  JavaCallArguments args(7 * 2);
+  JavaCallArguments args(2); // long = 2 slots
 
   args.push_jobject(rec);
-  args.push_long((jlong)&context->args.integer);
-  args.push_long((jlong)&context->args.vector);
-  args.push_long((jlong)context->args.sp);
-  args.push_long((jlong)&context->returns.integer);
-  args.push_long((jlong)&context->returns.vector);
-  args.push_long(0L /* X87 regs on x86 */);
-  args.push_long((jlong)&context->args.indirect);
+  args.push_long((jlong) buff);
 
   JavaCalls::call_static(&result, upcall_info.upcall_method.klass,
                          upcall_info.upcall_method.name, upcall_info.upcall_method.sig,
                          &args, thread);
 }
 
-address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
+static address generate_upcall_stub(jobject rec, const ABIDescriptor& abi,
+                                    const BufferLayout& layout) {
   ResourceMark rm;
   CodeBuffer buffer("upcall_stub", 1024, 1024);
 
   MacroAssembler* _masm = new MacroAssembler(&buffer);
-
-  jobject rec = JNIHandles::make_global(rec_handle);
 
   // stub code
   __ enter();
@@ -196,42 +131,29 @@ address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
   // save pointer to JNI receiver handle into constant segment
   Address rec_adr = InternalAddress(__ address_constant((address)rec));
 
-  __ sub(sp, sp, align_up(sizeof(struct upcall_context), 16));
+  assert(abi._stack_alignment_bytes % 16 == 0, "stack must be 16 byte aligned");
 
-  // Save preserved registers according to calling convention
-  __ stp(r19, r20, Address(sp, offsetof(struct upcall_context, preserved.integer[0])));
-  __ stp(r21, r22, Address(sp, offsetof(struct upcall_context, preserved.integer[2])));
-  __ stp(r23, r24, Address(sp, offsetof(struct upcall_context, preserved.integer[4])));
-  __ stp(r25, r26, Address(sp, offsetof(struct upcall_context, preserved.integer[6])));
-  __ stp(r27, r28, Address(sp, offsetof(struct upcall_context, preserved.integer[8])));
+  __ sub(sp, sp, (int) align_up(layout.buffer_size, abi._stack_alignment_bytes));
 
-  __ stpd(v8, v9, Address(sp, offsetof(struct upcall_context, preserved.vector[0])));
-  __ stpd(v10, v11, Address(sp, offsetof(struct upcall_context, preserved.vector[2])));
-  __ stpd(v12, v13, Address(sp, offsetof(struct upcall_context, preserved.vector[4])));
-  __ stpd(v14, v15, Address(sp, offsetof(struct upcall_context, preserved.vector[6])));
+  // TODO: This stub only uses registers which are caller-save in the
+  //       standard C ABI. If this is called from a different ABI then
+  //       we need to save registers here according to abi.is_volatile_reg.
 
-  // Capture argument registers
-
-  const size_t integer_arg_base = offsetof(struct upcall_context, args.integer);
-  for (size_t i = 0; i < INTEGER_ARGUMENT_REGISTERS_NOOF; i++) {
-    Register reg = integer_argument_registers[i];
-    size_t offset = integer_arg_base + i * sizeof(uintptr_t);
-    __ str(reg, Address(sp, (int)offset));
+  for (int i = 0; i < abi._integer_argument_registers.length(); i++) {
+    Register reg = abi._integer_argument_registers.at(i);
+    ssize_t offset = layout.arguments_integer + i * sizeof(uintptr_t);
+    __ str(reg, Address(sp, offset));
   }
 
-  const size_t vector_arg_base = offsetof(struct upcall_context, args.vector);
-  for (size_t i = 0; i < VECTOR_ARGUMENT_REGISTERS_NOOF; i++) {
-    FloatRegister reg = vector_argument_registers[i];
-    size_t offset = vector_arg_base + i * sizeof(VectorRegister);
-    __ strq(reg, Address(sp, (int)offset));
+  for (int i = 0; i < abi._vector_argument_registers.length(); i++) {
+    FloatRegister reg = abi._vector_argument_registers.at(i);
+    ssize_t offset = layout.arguments_vector + i * sizeof(VectorRegister);
+    __ strq(reg, Address(sp, offset));
   }
-
-  // Final integer argument is indirect result register
-  __ str(r8, Address(sp, offsetof(struct upcall_context, args.indirect)));
 
   // Capture prev stack pointer (stack arguments base)
-  __ mov(rscratch1, sp);
-  __ str(rscratch1, Address(sp, offsetof(struct upcall_context, args.sp)));
+  __ add(rscratch1, rfp, 16);   // Skip saved FP and LR
+  __ str(rscratch1, Address(sp, layout.stack_args));
 
   // Call upcall helper
   __ ldr(c_rarg0, rec_adr);
@@ -239,34 +161,16 @@ address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
   __ movptr(rscratch1, CAST_FROM_FN_PTR(uint64_t, upcall_helper));
   __ blr(rscratch1);
 
-  // Handle return values
-  const size_t integer_return_base = offsetof(struct upcall_context, returns.integer);
-  for (size_t i = 0; i < INTEGER_RETURN_REGISTERS_NOOF; i++) {
-    Register reg = integer_return_registers[i];
-    ssize_t offs = integer_return_base + i * sizeof(uintptr_t);
-    __ lea(rscratch1, Address(sp, offs));
-    __ ldr(reg, rscratch1);
+  for (int i = 0; i < abi._integer_return_registers.length(); i++) {
+    ssize_t offs = layout.returns_integer + i * sizeof(uintptr_t);
+    __ ldr(abi._integer_return_registers.at(i), Address(sp, offs));
   }
 
-  const size_t vector_return_base = offsetof(struct upcall_context, returns.vector);
-  for (size_t i = 0; i < VECTOR_ARGUMENT_REGISTERS_NOOF; i++) {
-    FloatRegister reg = vector_return_registers[i];
-    ssize_t offs = vector_return_base + i * sizeof(VectorRegister);
-    __ lea(rscratch1, Address(sp, offs));
-    __ ldrq(reg, rscratch1);
+  for (int i = 0; i < abi._vector_return_registers.length(); i++) {
+    FloatRegister reg = abi._vector_return_registers.at(i);
+    ssize_t offs = layout.returns_vector + i * sizeof(VectorRegister);
+    __ ldrq(reg, Address(sp, offs));
   }
-
-  // Restore preserved registers
-  __ ldp(r19, r20, Address(sp, offsetof(struct upcall_context, preserved.integer[0])));
-  __ ldp(r21, r22, Address(sp, offsetof(struct upcall_context, preserved.integer[2])));
-  __ ldp(r23, r24, Address(sp, offsetof(struct upcall_context, preserved.integer[4])));
-  __ ldp(r25, r26, Address(sp, offsetof(struct upcall_context, preserved.integer[6])));
-  __ ldp(r27, r28, Address(sp, offsetof(struct upcall_context, preserved.integer[8])));
-
-  __ ldpd(v8, v9, Address(sp, offsetof(struct upcall_context, preserved.vector[0])));
-  __ ldpd(v10, v11, Address(sp, offsetof(struct upcall_context, preserved.vector[2])));
-  __ ldpd(v12, v13, Address(sp, offsetof(struct upcall_context, preserved.vector[4])));
-  __ ldpd(v14, v15, Address(sp, offsetof(struct upcall_context, preserved.vector[6])));
 
   __ leave();
   __ ret(lr);
@@ -276,4 +180,11 @@ address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
   BufferBlob* blob = BufferBlob::create("upcall_stub", &buffer);
 
   return blob->code_begin();
+}
+
+jlong ProgrammableUpcallHandler::generate_upcall_stub(JNIEnv *env, jobject rec, jobject jabi, jobject jlayout) {
+  const ABIDescriptor abi = parseABIDescriptor(env, jabi);
+  const BufferLayout layout = parseBufferLayout(env, jlayout);
+
+  return (jlong) ::generate_upcall_stub(rec, abi, layout);
 }
