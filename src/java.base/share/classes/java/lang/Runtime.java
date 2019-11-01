@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Azul Systems, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -738,7 +739,7 @@ public class Runtime {
         load0(Reflection.getCallerClass(), filename);
     }
 
-    synchronized NativeLibrary load0(Class<?> fromClass, String filename) {
+    NativeLibrary load0(Class<?> fromClass, String filename) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(filename);
@@ -816,14 +817,14 @@ public class Runtime {
         return NativeLibrary.defaultLibrary;
     }
 
-    synchronized NativeLibrary loadLibrary0(Class<?> fromClass, String libname) {
+     NativeLibrary loadLibrary0(Class<?> fromClass, String libname) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(libname);
         }
         if (libname.indexOf((int)File.separatorChar) != -1) {
             throw new UnsatisfiedLinkError(
-    "Directory separator should not appear in library name: " + libname);
+                "Directory separator should not appear in library name: " + libname);
         }
         return ClassLoader.loadLibrary(fromClass, libname, false);
     }
