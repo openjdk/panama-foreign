@@ -90,6 +90,13 @@
         BASIC_JAVA_CLASSES_DO_PART1(f) \
         BASIC_JAVA_CLASSES_DO_PART2(f)
 
+// Interface to java.lang.Object objects
+
+class java_lang_Object : AllStatic {
+ public:
+  static void register_natives(TRAPS);
+};
+
 // Interface to java.lang.String objects
 
 class java_lang_String : AllStatic {
@@ -368,6 +375,7 @@ class java_lang_Thread : AllStatic {
   static int _inheritedAccessControlContext_offset;
   static int _priority_offset;
   static int _eetop_offset;
+  static int _interrupted_offset;
   static int _daemon_offset;
   static int _stillborn_offset;
   static int _stackSize_offset;
@@ -386,6 +394,9 @@ class java_lang_Thread : AllStatic {
   static JavaThread* thread(oop java_thread);
   // Set JavaThread for instance
   static void set_thread(oop java_thread, JavaThread* thread);
+  // Interrupted status
+  static bool interrupted(oop java_thread);
+  static void set_interrupted(oop java_thread, bool val);
   // Name
   static oop name(oop java_thread);
   static void set_name(oop java_thread, oop name);
