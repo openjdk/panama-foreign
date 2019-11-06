@@ -72,17 +72,27 @@ import jdk.internal.vm.annotation.Stable;
  *
  * <h2>Operations on floating point vectors</h2>
  * <ul>
- * <li> Binary vector operators, which apply to floating point vectors,
+ * <li>Lane-wise vector operations that apply to floating point vectors
  * follow the accuracy and monotonicity specifications of the equivalent
  * Java operation or method mentioned in its documentation.
- * <li> Some operators, although defined as associative operators (example, {@link #ADD}),
- * are not truly associative on floating point numbers. The result of an expression
- * is a function both of the input values as well as the order of operations.
+ *
+ * <li id="fp_assoc">Certain associative operations that apply to floating point
+ * vectors are not truly associative on the floating point lane values.
+ * Specifically, {@link #ADD} and {@link #MUL} used with cross-lane reduction
+ * operations, such as {@link FloatVector#reduceLanes(Associative)}.
+ * The result of such an operation is a function both of the input
+ * values (vector and mask) as well as the order of the scalar operations
+ * applied to combine lane values.
+ * In such cases the order is intentionally not defined.
+ * This allows the JVM to generate optimal machine code for the underlying
+ * platform at runtime.  If the platform supports a vector instruction
+ * to add or multiply all values in the vector, or if there is some
+ * other efficient machine code sequence, then the JVM has the option of
+ * generating this machine code. Otherwise, the default
+ * implementation is applied, which adds vector elements
+ * sequentially from beginning to end.  For this reason, the
+ * result of such an operation may vary for the same input values.
  * </ul>
- * When such operators are used for operations such as
- * {@link FloatVector#reduceLanes(Associative)}, the order
- * is intentionally not defined. This allows the implementation the flexibility
- * to implement the operation using fast machine instructions.
  *
  * <p> Note that a particular operator token may apply to several
  * different lane types.  Thus, these tokens behave like overloaded

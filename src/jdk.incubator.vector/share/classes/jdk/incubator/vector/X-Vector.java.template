@@ -2657,57 +2657,32 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to all the lane elements.
-     *
      * <p>
      * A few reduction operations do not support arbitrary reordering
      * of their operands, yet are included here because of their
      * usefulness.
-     *
      * <ul>
      * <li>
      * In the case of {@code FIRST_NONZERO}, the reduction returns
      * the value from the lowest-numbered non-zero lane.
-     *
 #if[FP]
      * (As with {@code MAX} and {@code MIN}, floating point negative
      * zero {@code -0.0} is treated as a value distinct from
      * the default value, positive zero. So a first-nonzero lane reduction
      * might return {@code -0.0} even in the presence of non-zero
      * lane values.)
-#end[FP]
-     *
      * <li>
-     * In the case of floating point addition and multiplication, the
+     * In the case of {@code ADD} and {@code MUL}, the
      * precise result will reflect the choice of an arbitrary order
      * of operations, which may even vary over time.
-     *
+     * For further details see the section
+     * <a href="VectorOperators.html#fp_assoc">Operations on floating point vectors</a>.
+#end[FP]
      * <li>
      * All other reduction operations are fully commutative and
      * associative.  The implementation can choose any order of
      * processing, yet it will always produce the same result.
-     *
      * </ul>
-     *
-#if[FP]
-     * @implNote
-     * The value of a floating-point reduction may be a function
-     * both of the input values as well as the order of scalar
-     * operations which combine those values, specifically in the
-     * case of {@code ADD} and {@code MUL} operations, where
-     * details of rounding depend on operand order.
-     * In those cases, the order of operations of this method is
-     * intentionally not defined.  This allows the JVM to generate
-     * optimal machine code for the underlying platform at runtime. If
-     * the platform supports a vector instruction to add or multiply
-     * all values in the vector, or if there is some other efficient
-     * machine code sequence, then the JVM has the option of
-     * generating this machine code. Otherwise, the default
-     * implementation is applied, which adds vector elements
-     * sequentially from beginning to end.  For this reason, the
-     * output of this method may vary for the same input values,
-     * if the selected operator is {@code ADD} or {@code MUL}.
-     *
-#end[FP]
      *
      * @param op the operation used to combine lane values
      * @return the accumulated result
@@ -2769,19 +2744,32 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * then the identity value is {@code $Boxtype$.POSITIVE_INFINITY}.
 #end[FP]
      * </ul>
+     * <p>
+     * A few reduction operations do not support arbitrary reordering
+     * of their operands, yet are included here because of their
+     * usefulness.
+     * <ul>
+     * <li>
+     * In the case of {@code FIRST_NONZERO}, the reduction returns
+     * the value from the lowest-numbered non-zero lane.
 #if[FP]
-     *
-     * @implNote
-     * The value of a floating-point reduction may be a function
-     * both of the input values as well as the order of scalar
-     * operations which combine those values, specifically in the
-     * case of {@code ADD} and {@code MUL} operations, where
-     * details of rounding depend on operand order.
-     * See {@linkplain #reduceLanes(VectorOperators.Associative)
-     * the unmasked version of this method}
-     * for a discussion.
-     *
+     * (As with {@code MAX} and {@code MIN}, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from
+     * the default value, positive zero. So a first-nonzero lane reduction
+     * might return {@code -0.0} even in the presence of non-zero
+     * lane values.)
+     * <li>
+     * In the case of {@code ADD} and {@code MUL}, the
+     * precise result will reflect the choice of an arbitrary order
+     * of operations, which may even vary over time.
+     * For further details see the section
+     * <a href="VectorOperators.html#fp_assoc">Operations on floating point vectors</a>.
 #end[FP]
+     * <li>
+     * All other reduction operations are fully commutative and
+     * associative.  The implementation can choose any order of
+     * processing, yet it will always produce the same result.
+     * </ul>
      *
      * @param op the operation used to combine lane values
      * @param m the mask controlling lane selection

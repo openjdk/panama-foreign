@@ -2334,30 +2334,19 @@ public abstract class ShortVector extends AbstractVector<Short> {
      *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to all the lane elements.
-     *
      * <p>
      * A few reduction operations do not support arbitrary reordering
      * of their operands, yet are included here because of their
      * usefulness.
-     *
      * <ul>
      * <li>
      * In the case of {@code FIRST_NONZERO}, the reduction returns
      * the value from the lowest-numbered non-zero lane.
-     *
-     *
-     * <li>
-     * In the case of floating point addition and multiplication, the
-     * precise result will reflect the choice of an arbitrary order
-     * of operations, which may even vary over time.
-     *
      * <li>
      * All other reduction operations are fully commutative and
      * associative.  The implementation can choose any order of
      * processing, yet it will always produce the same result.
-     *
      * </ul>
-     *
      *
      * @param op the operation used to combine lane values
      * @return the accumulated result
@@ -2402,6 +2391,19 @@ public abstract class ShortVector extends AbstractVector<Short> {
      * <li>
      * If the operation is {@code MIN},
      * then the identity value is {@code Short.MAX_VALUE}.
+     * </ul>
+     * <p>
+     * A few reduction operations do not support arbitrary reordering
+     * of their operands, yet are included here because of their
+     * usefulness.
+     * <ul>
+     * <li>
+     * In the case of {@code FIRST_NONZERO}, the reduction returns
+     * the value from the lowest-numbered non-zero lane.
+     * <li>
+     * All other reduction operations are fully commutative and
+     * associative.  The implementation can choose any order of
+     * processing, yet it will always produce the same result.
      * </ul>
      *
      * @param op the operation used to combine lane values

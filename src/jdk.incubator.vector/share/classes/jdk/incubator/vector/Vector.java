@@ -1076,9 +1076,7 @@ import java.util.List;
  * work with boxed {@code Integer} values, the overheads associated
  * with boxing are avoided by having each vector subtype work
  * internally on lane values of the actual {@code ETYPE}, such as
- * {@code int}.  A few {@linkplain Vector#toList() interoperability
- * methods}, are specified to work on boxed values.  These are
- * documented as <em>not</em> for use in inner loops.
+ * {@code int}.
  *
  * <h2>Value-based classes and identity operations</h2>
  *
@@ -1810,6 +1808,13 @@ public abstract class Vector<E> {
      * applies the specified operation to all the lane elements.
      * The result is delivered as a {@code long} value, rather
      * than the vector's native {@code ETYPE}.
+     * <p>
+     * In the case of operations {@code ADD} and {@code MUL},
+     * when {@code ETYPE} is {@code float} or {@code double},
+     * the precise result, before casting, will reflect the choice
+     * of an arbitrary order of operations, which may even vary over time.
+     * For further details see the section
+     * <a href="VectorOperators.html#fp_assoc">Operations on floating point vectors</a>.
      *
      * @apiNote
      * If the {@code ETYPE} is {@code float} or {@code double},
@@ -1821,15 +1826,6 @@ public abstract class Vector<E> {
      * strongly typed access}
      * is preferable, if you are working with a vector
      * subtype that has a known element type.
-     *
-     * @implNote
-     * The value of a floating-point reduction may be a function
-     * both of the input values as well as the order of scalar
-     * operations which combine those values, specifically in the
-     * case of {@code ADD} and {@code MUL} operations, where
-     * details of rounding depend on operand order.
-     * See {@link FloatVector#reduceLanes(VectorOperators.Associative)
-     * FloatVector.reduceLanes()} for a discussion.
      *
      * @param op the operation used to combine lane values
      * @return the accumulated result, cast to {@code long}
@@ -1877,6 +1873,13 @@ public abstract class Vector<E> {
      * {@code POSITIVE_INFINITY} is used, and will appear
      * after casting as {@code Long.MAX_VALUE}.
      * </ul>
+     * <p>
+     * In the case of operations {@code ADD} and {@code MUL},
+     * when {@code ETYPE} is {@code float} or {@code double},
+     * the precise result, before casting, will reflect the choice
+     * of an arbitrary order of operations, which may even vary over time.
+     * For further details see the section
+     * <a href="VectorOperators.html#fp_assoc">Operations on floating point vectors</a>.
      *
      * @apiNote
      * If the {@code ETYPE} is {@code float} or {@code double},
@@ -1888,15 +1891,6 @@ public abstract class Vector<E> {
      * strongly typed access}
      * is preferable, if you are working with a vector
      * subtype that has a known element type.
-     *
-     * @implNote
-     * The value of a floating-point reduction may be a function
-     * both of the input values as well as the order of scalar
-     * operations which combine those values, specifically in the
-     * case of {@code ADD} and {@code MUL} operations, where
-     * details of rounding depend on operand order.
-     * See {@link FloatVector#reduceLanes(VectorOperators.Associative)
-     * FloatVector.reduceLanes()} for a discussion.
      *
      * @param op the operation used to combine lane values
      * @param m the mask controlling lane selection
