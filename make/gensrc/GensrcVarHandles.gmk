@@ -280,4 +280,3 @@ GENSRC_JAVA_BASE += $(GENSRC_VARHANDLES)
 
 # Include custom extension post hook
 $(eval $(call IncludeCustomExtension, gensrc/GensrcVarHandles-post.gmk))
-
