@@ -711,7 +711,7 @@ public abstract class VectorOperators {
     public static final Conversion<Integer,Integer> INPLACE_S2I = convert("INPLACE_S2I", 'W', int.class, int.class, VO_KIND_INPLACE + 0x9a, VO_ALL);
     /** In-place widen {@code shortVal} inside long to {@code (long)shortVal}. */
     public static final Conversion<Long,Long> INPLACE_S2L = convert("INPLACE_S2L", 'W', long.class, long.class, VO_KIND_INPLACE + 0x9b, VO_ALL);
-    /** Reinterpret bits of {@code doubleVal} as {@code long}. As if by {@link Double#doubleToLongBits(double)} */
+    /** Reinterpret bits of {@code doubleVal} as {@code long}. As if by {@link Double#doubleToRawLongBits(double)} */
     public static final Conversion<Double,Long> REINTERPRET_D2L = convert("REINTERPRET_D2L", 'R', double.class, long.class, VO_KIND_BITWISE, VO_ALL);
     /** Reinterpret bits of {@code floatVal} as {@code int}. As if by {@link Float#floatToRawIntBits(float)} */
     public static final Conversion<Float,Integer> REINTERPRET_F2I = convert("REINTERPRET_F2I", 'R', float.class, int.class, VO_KIND_BITWISE, VO_ALL);
