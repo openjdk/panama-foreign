@@ -1368,7 +1368,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @apiNote
      * For this method, floating point negative
      * zero {@code -0.0} is treated as a value distinct from, and less
-     * than the default value(positive zero).
+     * than the default value (positive zero).
      */
     @Override
     @ForceInline
@@ -1398,7 +1398,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @apiNote
      * For this method, floating point negative
      * zero {@code -0.0} is treated as a value distinct from, and less
-     * than the default value(positive zero).
+     * than the default value (positive zero).
      */
     @ForceInline
     public final FloatVector min(float e) {
@@ -1408,8 +1408,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @apiNote
-     * For this method, negative floating-point zero compares
-     * less than the default value, positive zero.
+     * For this method, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than the default value (positive zero).
      */
     @Override
     @ForceInline
@@ -1436,8 +1437,9 @@ public abstract class FloatVector extends AbstractVector<Float> {
      * @see VectorOperators#MAX
      * @see #lanewise(VectorOperators.Binary,float,VectorMask)
      * @apiNote
-     * For this method, negative floating-point zero compares
-     * less than the default value, positive zero.
+     * For this method, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than the default value (positive zero).
      */
     @ForceInline
     public final FloatVector max(float e) {

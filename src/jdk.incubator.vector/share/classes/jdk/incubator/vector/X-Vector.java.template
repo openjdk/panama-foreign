@@ -1552,7 +1552,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @apiNote
      * For this method, floating point negative
      * zero {@code -0.0} is treated as a value distinct from, and less
-     * than the default value(positive zero).
+     * than the default value (positive zero).
 #end[FP]
      */
     @Override
@@ -1584,7 +1584,7 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @apiNote
      * For this method, floating point negative
      * zero {@code -0.0} is treated as a value distinct from, and less
-     * than the default value(positive zero).
+     * than the default value (positive zero).
 #end[FP]
      */
     @ForceInline
@@ -1596,8 +1596,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * {@inheritDoc} <!--workaround-->
 #if[FP]
      * @apiNote
-     * For this method, negative floating-point zero compares
-     * less than the default value, positive zero.
+     * For this method, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than the default value (positive zero).
 #end[FP]
      */
     @Override
@@ -1626,8 +1627,9 @@ public abstract class $abstractvectortype$ extends AbstractVector<$Boxtype$> {
      * @see #lanewise(VectorOperators.Binary,$type$,VectorMask)
 #if[FP]
      * @apiNote
-     * For this method, negative floating-point zero compares
-     * less than the default value, positive zero.
+     * For this method, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than the default value (positive zero).
 #end[FP]
      */
     @ForceInline

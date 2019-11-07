@@ -1745,7 +1745,7 @@ public abstract class Vector<E> {
      * Computes the smaller of this vector and a second input vector.
      *
      * This is a lane-wise binary operation which applies the
-     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * operation {@code Math.min()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -1774,7 +1774,7 @@ public abstract class Vector<E> {
      * Computes the larger of this vector and a second input vector.
      *
      * This is a lane-wise binary operation which applies the
-     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * operation {@code Math.max()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
