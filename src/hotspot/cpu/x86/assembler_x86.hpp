@@ -1596,6 +1596,9 @@ private:
 
 #ifdef _LP64
   void notq(Register dst);
+
+  void btsq(Address dst, int imm8);
+  void btrq(Address dst, int imm8);
 #endif
 
   void orl(Address dst, int32_t imm32);
