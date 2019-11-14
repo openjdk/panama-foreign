@@ -14537,7 +14537,7 @@ instruct min8F_reg_avx(legVecY dst, legVecY a, legVecY b, legVecY tmp, legVecY a
 instruct min16F_reg_evex(vecZ dst, vecZ a, vecZ b, vecZ atmp, vecZ btmp) %{
   predicate(UseAVX > 2 && VM_Version::supports_avx512dq() &&  n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinV a b));
-  effect(USE a, USE b, TEMP atmp, TEMP btmp);
+  effect(USE a, USE b, TEMP dst, TEMP atmp, TEMP btmp);
   format %{ 
      "vpmovd2m         k1,$a                    \n\t"
      "vblendmps        $atmp,k1,$a,$b           \n\t"
@@ -14630,7 +14630,7 @@ instruct min4D_reg_avx(legVecY dst, legVecY a, legVecY b, legVecY tmp, legVecY a
 instruct min8D_reg_evex(vecZ dst, vecZ a, vecZ b, vecZ atmp, vecZ btmp) %{
   predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinV a b));
-  effect(USE a, USE b, TEMP atmp, TEMP btmp);
+  effect(USE a, USE b, TEMP dst, TEMP atmp, TEMP btmp);
   format %{ 
      "vpmovq2m         k1,$a                    \n\t"
      "vblendmpd        $atmp,k1,$a,$b           \n\t"
@@ -20850,12 +20850,12 @@ instruct loadcon8b(vecD dst, immI0 src, rRegI scratch) %{
 %}
 
 instruct loadcon16b(vecX dst, immI0 src, rRegI scratch) %{
-  predicate(UseAVX > 0  && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseSSE > 1  && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadConst src));
   effect(TEMP scratch);
-  format %{ "vpmovdqu $dst, CONSTANT_MEMORY\t! load iota indices"  %}
+  format %{ "movdqu $dst, CONSTANT_MEMORY\t! load iota indices"  %}
   ins_encode %{
-     __ vmovdqu($dst$$XMMRegister, ExternalAddress(vector_iota_indices()), $scratch$$Register);
+     __ movdqu($dst$$XMMRegister, ExternalAddress(vector_iota_indices()), $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
