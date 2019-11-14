@@ -2826,7 +2826,7 @@ public class IntMaxVectorTests extends AbstractVectorTest {
 
 
 
-    static int[] slice(int[] a, int origin, int idx) {
+    static int[] sliceUnary(int[] a, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2838,7 +2838,7 @@ public class IntMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "intUnaryOpProvider")
-    static void sliceIntMaxVectorTests(IntFunction<int[]> fa) {
+    static void sliceUnaryIntMaxVectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2849,9 +2849,9 @@ public class IntMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, IntMaxVectorTests::slice);
+        assertArraysEquals(a, r, origin, IntMaxVectorTests::sliceUnary);
     }
-    static int[] slice(int[] a, int[] b, int origin, int idx) {
+    static int[] sliceBinary(int[] a, int[] b, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2865,7 +2865,7 @@ public class IntMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "intBinaryOpProvider")
-    static void sliceIntMaxVectorTestsBinary(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+    static void sliceBinaryIntMaxVectorTestsBinary(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
@@ -2878,7 +2878,7 @@ public class IntMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, IntMaxVectorTests::slice);
+        assertArraysEquals(a, b, r, origin, IntMaxVectorTests::sliceBinary);
     }
     static int[] slice(int[] a, int[] b, int origin, boolean[] mask, int idx) {
         int[] res = new int[SPECIES.length()];
@@ -2913,7 +2913,7 @@ public class IntMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, IntMaxVectorTests::slice);
     }
-    static int[] unslice(int[] a, int origin, int idx) {
+    static int[] unsliceUnary(int[] a, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i < origin)
@@ -2927,7 +2927,7 @@ public class IntMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "intUnaryOpProvider")
-    static void unsliceIntMaxVectorTests(IntFunction<int[]> fa) {
+    static void unsliceUnaryIntMaxVectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2938,9 +2938,9 @@ public class IntMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, IntMaxVectorTests::unslice);
+        assertArraysEquals(a, r, origin, IntMaxVectorTests::unsliceUnary);
     }
-    static int[] unslice(int[] a, int[] b, int origin, int part, int idx) {
+    static int[] unsliceBinary(int[] a, int[] b, int origin, int part, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if (part == 0) {
@@ -2963,7 +2963,7 @@ public class IntMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "intBinaryOpProvider")
-    static void unsliceIntMaxVectorTestsBinary(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+    static void unsliceBinaryIntMaxVectorTestsBinary(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
@@ -2977,7 +2977,7 @@ public class IntMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, part, IntMaxVectorTests::unslice);
+        assertArraysEquals(a, b, r, origin, part, IntMaxVectorTests::unsliceBinary);
     }
     static int[] unslice(int[] a, int[] b, int origin, int part, boolean[] mask, int idx) {
         int[] res = new int[SPECIES.length()];

@@ -2821,7 +2821,7 @@ public class Int128VectorTests extends AbstractVectorTest {
 
 
 
-    static int[] slice(int[] a, int origin, int idx) {
+    static int[] sliceUnary(int[] a, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2833,7 +2833,7 @@ public class Int128VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "intUnaryOpProvider")
-    static void sliceInt128VectorTests(IntFunction<int[]> fa) {
+    static void sliceUnaryInt128VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2844,9 +2844,9 @@ public class Int128VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Int128VectorTests::slice);
+        assertArraysEquals(a, r, origin, Int128VectorTests::sliceUnary);
     }
-    static int[] slice(int[] a, int[] b, int origin, int idx) {
+    static int[] sliceBinary(int[] a, int[] b, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2860,7 +2860,7 @@ public class Int128VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "intBinaryOpProvider")
-    static void sliceInt128VectorTestsBinary(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+    static void sliceBinaryInt128VectorTestsBinary(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
@@ -2873,7 +2873,7 @@ public class Int128VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, Int128VectorTests::slice);
+        assertArraysEquals(a, b, r, origin, Int128VectorTests::sliceBinary);
     }
     static int[] slice(int[] a, int[] b, int origin, boolean[] mask, int idx) {
         int[] res = new int[SPECIES.length()];
@@ -2908,7 +2908,7 @@ public class Int128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Int128VectorTests::slice);
     }
-    static int[] unslice(int[] a, int origin, int idx) {
+    static int[] unsliceUnary(int[] a, int origin, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i < origin)
@@ -2922,7 +2922,7 @@ public class Int128VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "intUnaryOpProvider")
-    static void unsliceInt128VectorTests(IntFunction<int[]> fa) {
+    static void unsliceUnaryInt128VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2933,9 +2933,9 @@ public class Int128VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Int128VectorTests::unslice);
+        assertArraysEquals(a, r, origin, Int128VectorTests::unsliceUnary);
     }
-    static int[] unslice(int[] a, int[] b, int origin, int part, int idx) {
+    static int[] unsliceBinary(int[] a, int[] b, int origin, int part, int idx) {
         int[] res = new int[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if (part == 0) {
@@ -2958,7 +2958,7 @@ public class Int128VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "intBinaryOpProvider")
-    static void unsliceInt128VectorTestsBinary(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+    static void unsliceBinaryInt128VectorTestsBinary(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
@@ -2972,7 +2972,7 @@ public class Int128VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, part, Int128VectorTests::unslice);
+        assertArraysEquals(a, b, r, origin, part, Int128VectorTests::unsliceBinary);
     }
     static int[] unslice(int[] a, int[] b, int origin, int part, boolean[] mask, int idx) {
         int[] res = new int[SPECIES.length()];

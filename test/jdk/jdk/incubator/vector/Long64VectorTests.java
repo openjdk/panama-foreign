@@ -2821,7 +2821,7 @@ public class Long64VectorTests extends AbstractVectorTest {
 
 
 
-    static long[] slice(long[] a, int origin, int idx) {
+    static long[] sliceUnary(long[] a, int origin, int idx) {
         long[] res = new long[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2833,7 +2833,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "longUnaryOpProvider")
-    static void sliceLong64VectorTests(IntFunction<long[]> fa) {
+    static void sliceUnaryLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = new long[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2844,9 +2844,9 @@ public class Long64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Long64VectorTests::slice);
+        assertArraysEquals(a, r, origin, Long64VectorTests::sliceUnary);
     }
-    static long[] slice(long[] a, long[] b, int origin, int idx) {
+    static long[] sliceBinary(long[] a, long[] b, int origin, int idx) {
         long[] res = new long[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2860,7 +2860,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "longBinaryOpProvider")
-    static void sliceLong64VectorTestsBinary(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+    static void sliceBinaryLong64VectorTestsBinary(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = new long[a.length];
@@ -2873,7 +2873,7 @@ public class Long64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, Long64VectorTests::slice);
+        assertArraysEquals(a, b, r, origin, Long64VectorTests::sliceBinary);
     }
     static long[] slice(long[] a, long[] b, int origin, boolean[] mask, int idx) {
         long[] res = new long[SPECIES.length()];
@@ -2908,7 +2908,7 @@ public class Long64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Long64VectorTests::slice);
     }
-    static long[] unslice(long[] a, int origin, int idx) {
+    static long[] unsliceUnary(long[] a, int origin, int idx) {
         long[] res = new long[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i < origin)
@@ -2922,7 +2922,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "longUnaryOpProvider")
-    static void unsliceLong64VectorTests(IntFunction<long[]> fa) {
+    static void unsliceUnaryLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = new long[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2933,9 +2933,9 @@ public class Long64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Long64VectorTests::unslice);
+        assertArraysEquals(a, r, origin, Long64VectorTests::unsliceUnary);
     }
-    static long[] unslice(long[] a, long[] b, int origin, int part, int idx) {
+    static long[] unsliceBinary(long[] a, long[] b, int origin, int part, int idx) {
         long[] res = new long[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if (part == 0) {
@@ -2958,7 +2958,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "longBinaryOpProvider")
-    static void unsliceLong64VectorTestsBinary(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+    static void unsliceBinaryLong64VectorTestsBinary(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = new long[a.length];
@@ -2972,7 +2972,7 @@ public class Long64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, part, Long64VectorTests::unslice);
+        assertArraysEquals(a, b, r, origin, part, Long64VectorTests::unsliceBinary);
     }
     static long[] unslice(long[] a, long[] b, int origin, int part, boolean[] mask, int idx) {
         long[] res = new long[SPECIES.length()];

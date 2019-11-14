@@ -1352,7 +1352,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void slice(Blackhole bh) {
+    public void sliceUnary(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -1367,7 +1367,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void slice(Blackhole bh) {
+    public void sliceBinary(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
@@ -1404,7 +1404,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void unslice(Blackhole bh) {
+    public void unsliceUnary(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -1419,7 +1419,7 @@ public class Short256Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void unslice(Blackhole bh) {
+    public void unsliceBinary(Blackhole bh) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];

@@ -393,13 +393,13 @@ gen_op_tmpl $broadcast_template "broadcast" "" $unit_output $perf_output $perf_s
 gen_op_tmpl $zero_template "zero" "" $unit_output $perf_output $perf_scalar_output
 
 # Slice
-gen_op_tmpl $slice_template "slice" "" $unit_output $perf_output $perf_scalar_output
-gen_op_tmpl $slice1_template "slice" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $slice_template "sliceUnary" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $slice1_template "sliceBinary" "" $unit_output $perf_output $perf_scalar_output
 gen_op_tmpl $slice1_masked_template "slice" "" $unit_output $perf_output $perf_scalar_output
 
 # Unslice
-gen_op_tmpl $unslice_template "unslice" "" $unit_output $perf_output $perf_scalar_output
-gen_op_tmpl $unslice1_template "unslice" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $unslice_template "unsliceUnary" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $unslice1_template "unsliceBinary" "" $unit_output $perf_output $perf_scalar_output
 gen_op_tmpl $unslice1_masked_template "unslice" "" $unit_output $perf_output $perf_scalar_output
 
 # Math

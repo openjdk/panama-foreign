@@ -2826,7 +2826,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
 
 
-    static byte[] slice(byte[] a, int origin, int idx) {
+    static byte[] sliceUnary(byte[] a, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2838,7 +2838,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void sliceByteMaxVectorTests(IntFunction<byte[]> fa) {
+    static void sliceUnaryByteMaxVectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2849,9 +2849,9 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, ByteMaxVectorTests::slice);
+        assertArraysEquals(a, r, origin, ByteMaxVectorTests::sliceUnary);
     }
-    static byte[] slice(byte[] a, byte[] b, int origin, int idx) {
+    static byte[] sliceBinary(byte[] a, byte[] b, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2865,7 +2865,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")
-    static void sliceByteMaxVectorTestsBinary(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
+    static void sliceBinaryByteMaxVectorTestsBinary(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
@@ -2878,7 +2878,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, ByteMaxVectorTests::slice);
+        assertArraysEquals(a, b, r, origin, ByteMaxVectorTests::sliceBinary);
     }
     static byte[] slice(byte[] a, byte[] b, int origin, boolean[] mask, int idx) {
         byte[] res = new byte[SPECIES.length()];
@@ -2913,7 +2913,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, ByteMaxVectorTests::slice);
     }
-    static byte[] unslice(byte[] a, int origin, int idx) {
+    static byte[] unsliceUnary(byte[] a, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i < origin)
@@ -2927,7 +2927,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void unsliceByteMaxVectorTests(IntFunction<byte[]> fa) {
+    static void unsliceUnaryByteMaxVectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2938,9 +2938,9 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, ByteMaxVectorTests::unslice);
+        assertArraysEquals(a, r, origin, ByteMaxVectorTests::unsliceUnary);
     }
-    static byte[] unslice(byte[] a, byte[] b, int origin, int part, int idx) {
+    static byte[] unsliceBinary(byte[] a, byte[] b, int origin, int part, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if (part == 0) {
@@ -2963,7 +2963,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")
-    static void unsliceByteMaxVectorTestsBinary(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
+    static void unsliceBinaryByteMaxVectorTestsBinary(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
@@ -2977,7 +2977,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, part, ByteMaxVectorTests::unslice);
+        assertArraysEquals(a, b, r, origin, part, ByteMaxVectorTests::unsliceBinary);
     }
     static byte[] unslice(byte[] a, byte[] b, int origin, int part, boolean[] mask, int idx) {
         byte[] res = new byte[SPECIES.length()];

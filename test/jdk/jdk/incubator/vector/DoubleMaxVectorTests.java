@@ -2261,7 +2261,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
 
 
-    static double[] slice(double[] a, int origin, int idx) {
+    static double[] sliceUnary(double[] a, int origin, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2273,7 +2273,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleUnaryOpProvider")
-    static void sliceDoubleMaxVectorTests(IntFunction<double[]> fa) {
+    static void sliceUnaryDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2284,9 +2284,9 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, DoubleMaxVectorTests::slice);
+        assertArraysEquals(a, r, origin, DoubleMaxVectorTests::sliceUnary);
     }
-    static double[] slice(double[] a, double[] b, int origin, int idx) {
+    static double[] sliceBinary(double[] a, double[] b, int origin, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2300,7 +2300,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleBinaryOpProvider")
-    static void sliceDoubleMaxVectorTestsBinary(IntFunction<double[]> fa, IntFunction<double[]> fb) {
+    static void sliceBinaryDoubleMaxVectorTestsBinary(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
@@ -2313,7 +2313,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, DoubleMaxVectorTests::slice);
+        assertArraysEquals(a, b, r, origin, DoubleMaxVectorTests::sliceBinary);
     }
     static double[] slice(double[] a, double[] b, int origin, boolean[] mask, int idx) {
         double[] res = new double[SPECIES.length()];
@@ -2348,7 +2348,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, DoubleMaxVectorTests::slice);
     }
-    static double[] unslice(double[] a, int origin, int idx) {
+    static double[] unsliceUnary(double[] a, int origin, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i < origin)
@@ -2362,7 +2362,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleUnaryOpProvider")
-    static void unsliceDoubleMaxVectorTests(IntFunction<double[]> fa) {
+    static void unsliceUnaryDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2373,9 +2373,9 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, DoubleMaxVectorTests::unslice);
+        assertArraysEquals(a, r, origin, DoubleMaxVectorTests::unsliceUnary);
     }
-    static double[] unslice(double[] a, double[] b, int origin, int part, int idx) {
+    static double[] unsliceBinary(double[] a, double[] b, int origin, int part, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if (part == 0) {
@@ -2398,7 +2398,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleBinaryOpProvider")
-    static void unsliceDoubleMaxVectorTestsBinary(IntFunction<double[]> fa, IntFunction<double[]> fb) {
+    static void unsliceBinaryDoubleMaxVectorTestsBinary(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
@@ -2412,7 +2412,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, part, DoubleMaxVectorTests::unslice);
+        assertArraysEquals(a, b, r, origin, part, DoubleMaxVectorTests::unsliceBinary);
     }
     static double[] unslice(double[] a, double[] b, int origin, int part, boolean[] mask, int idx) {
         double[] res = new double[SPECIES.length()];

@@ -1352,7 +1352,7 @@ public class Long64Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void slice(Blackhole bh) {
+    public void sliceUnary(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = new long[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -1367,7 +1367,7 @@ public class Long64Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void slice(Blackhole bh) {
+    public void sliceBinary(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = new long[a.length];
@@ -1404,7 +1404,7 @@ public class Long64Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void unslice(Blackhole bh) {
+    public void unsliceUnary(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = new long[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -1419,7 +1419,7 @@ public class Long64Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void unslice(Blackhole bh) {
+    public void unsliceBinary(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = new long[a.length];

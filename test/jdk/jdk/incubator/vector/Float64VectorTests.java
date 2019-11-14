@@ -2256,7 +2256,7 @@ public class Float64VectorTests extends AbstractVectorTest {
 
 
 
-    static float[] slice(float[] a, int origin, int idx) {
+    static float[] sliceUnary(float[] a, int origin, int idx) {
         float[] res = new float[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2268,7 +2268,7 @@ public class Float64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void sliceFloat64VectorTests(IntFunction<float[]> fa) {
+    static void sliceUnaryFloat64VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = new float[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2279,9 +2279,9 @@ public class Float64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Float64VectorTests::slice);
+        assertArraysEquals(a, r, origin, Float64VectorTests::sliceUnary);
     }
-    static float[] slice(float[] a, float[] b, int origin, int idx) {
+    static float[] sliceBinary(float[] a, float[] b, int origin, int idx) {
         float[] res = new float[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2295,7 +2295,7 @@ public class Float64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")
-    static void sliceFloat64VectorTestsBinary(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void sliceBinaryFloat64VectorTestsBinary(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] r = new float[a.length];
@@ -2308,7 +2308,7 @@ public class Float64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, Float64VectorTests::slice);
+        assertArraysEquals(a, b, r, origin, Float64VectorTests::sliceBinary);
     }
     static float[] slice(float[] a, float[] b, int origin, boolean[] mask, int idx) {
         float[] res = new float[SPECIES.length()];
@@ -2343,7 +2343,7 @@ public class Float64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Float64VectorTests::slice);
     }
-    static float[] unslice(float[] a, int origin, int idx) {
+    static float[] unsliceUnary(float[] a, int origin, int idx) {
         float[] res = new float[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i < origin)
@@ -2357,7 +2357,7 @@ public class Float64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void unsliceFloat64VectorTests(IntFunction<float[]> fa) {
+    static void unsliceUnaryFloat64VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = new float[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2368,9 +2368,9 @@ public class Float64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Float64VectorTests::unslice);
+        assertArraysEquals(a, r, origin, Float64VectorTests::unsliceUnary);
     }
-    static float[] unslice(float[] a, float[] b, int origin, int part, int idx) {
+    static float[] unsliceBinary(float[] a, float[] b, int origin, int part, int idx) {
         float[] res = new float[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if (part == 0) {
@@ -2393,7 +2393,7 @@ public class Float64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")
-    static void unsliceFloat64VectorTestsBinary(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+    static void unsliceBinaryFloat64VectorTestsBinary(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] r = new float[a.length];
@@ -2407,7 +2407,7 @@ public class Float64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, part, Float64VectorTests::unslice);
+        assertArraysEquals(a, b, r, origin, part, Float64VectorTests::unsliceBinary);
     }
     static float[] unslice(float[] a, float[] b, int origin, int part, boolean[] mask, int idx) {
         float[] res = new float[SPECIES.length()];

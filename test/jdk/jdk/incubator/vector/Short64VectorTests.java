@@ -2821,7 +2821,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
 
 
-    static short[] slice(short[] a, int origin, int idx) {
+    static short[] sliceUnary(short[] a, int origin, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2833,7 +2833,7 @@ public class Short64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "shortUnaryOpProvider")
-    static void sliceShort64VectorTests(IntFunction<short[]> fa) {
+    static void sliceUnaryShort64VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2844,9 +2844,9 @@ public class Short64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Short64VectorTests::slice);
+        assertArraysEquals(a, r, origin, Short64VectorTests::sliceUnary);
     }
-    static short[] slice(short[] a, short[] b, int origin, int idx) {
+    static short[] sliceBinary(short[] a, short[] b, int origin, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2860,7 +2860,7 @@ public class Short64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")
-    static void sliceShort64VectorTestsBinary(IntFunction<short[]> fa, IntFunction<short[]> fb) {
+    static void sliceBinaryShort64VectorTestsBinary(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
@@ -2873,7 +2873,7 @@ public class Short64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, Short64VectorTests::slice);
+        assertArraysEquals(a, b, r, origin, Short64VectorTests::sliceBinary);
     }
     static short[] slice(short[] a, short[] b, int origin, boolean[] mask, int idx) {
         short[] res = new short[SPECIES.length()];
@@ -2908,7 +2908,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Short64VectorTests::slice);
     }
-    static short[] unslice(short[] a, int origin, int idx) {
+    static short[] unsliceUnary(short[] a, int origin, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i < origin)
@@ -2922,7 +2922,7 @@ public class Short64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "shortUnaryOpProvider")
-    static void unsliceShort64VectorTests(IntFunction<short[]> fa) {
+    static void unsliceUnaryShort64VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2933,9 +2933,9 @@ public class Short64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Short64VectorTests::unslice);
+        assertArraysEquals(a, r, origin, Short64VectorTests::unsliceUnary);
     }
-    static short[] unslice(short[] a, short[] b, int origin, int part, int idx) {
+    static short[] unsliceBinary(short[] a, short[] b, int origin, int part, int idx) {
         short[] res = new short[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if (part == 0) {
@@ -2958,7 +2958,7 @@ public class Short64VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")
-    static void unsliceShort64VectorTestsBinary(IntFunction<short[]> fa, IntFunction<short[]> fb) {
+    static void unsliceBinaryShort64VectorTestsBinary(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
@@ -2972,7 +2972,7 @@ public class Short64VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, part, Short64VectorTests::unslice);
+        assertArraysEquals(a, b, r, origin, part, Short64VectorTests::unsliceBinary);
     }
     static short[] unslice(short[] a, short[] b, int origin, int part, boolean[] mask, int idx) {
         short[] res = new short[SPECIES.length()];

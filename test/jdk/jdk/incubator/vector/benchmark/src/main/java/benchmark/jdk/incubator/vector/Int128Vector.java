@@ -1352,7 +1352,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void slice(Blackhole bh) {
+    public void sliceUnary(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -1367,7 +1367,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void slice(Blackhole bh) {
+    public void sliceBinary(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
@@ -1404,7 +1404,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void unslice(Blackhole bh) {
+    public void unsliceUnary(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -1419,7 +1419,7 @@ public class Int128Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void unslice(Blackhole bh) {
+    public void unsliceBinary(Blackhole bh) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];

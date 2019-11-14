@@ -2256,7 +2256,7 @@ public class Double128VectorTests extends AbstractVectorTest {
 
 
 
-    static double[] slice(double[] a, int origin, int idx) {
+    static double[] sliceUnary(double[] a, int origin, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2268,7 +2268,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleUnaryOpProvider")
-    static void sliceDouble128VectorTests(IntFunction<double[]> fa) {
+    static void sliceUnaryDouble128VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2279,9 +2279,9 @@ public class Double128VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Double128VectorTests::slice);
+        assertArraysEquals(a, r, origin, Double128VectorTests::sliceUnary);
     }
-    static double[] slice(double[] a, double[] b, int origin, int idx) {
+    static double[] sliceBinary(double[] a, double[] b, int origin, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2295,7 +2295,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleBinaryOpProvider")
-    static void sliceDouble128VectorTestsBinary(IntFunction<double[]> fa, IntFunction<double[]> fb) {
+    static void sliceBinaryDouble128VectorTestsBinary(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
@@ -2308,7 +2308,7 @@ public class Double128VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, Double128VectorTests::slice);
+        assertArraysEquals(a, b, r, origin, Double128VectorTests::sliceBinary);
     }
     static double[] slice(double[] a, double[] b, int origin, boolean[] mask, int idx) {
         double[] res = new double[SPECIES.length()];
@@ -2343,7 +2343,7 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Double128VectorTests::slice);
     }
-    static double[] unslice(double[] a, int origin, int idx) {
+    static double[] unsliceUnary(double[] a, int origin, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i < origin)
@@ -2357,7 +2357,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleUnaryOpProvider")
-    static void unsliceDouble128VectorTests(IntFunction<double[]> fa) {
+    static void unsliceUnaryDouble128VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2368,9 +2368,9 @@ public class Double128VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Double128VectorTests::unslice);
+        assertArraysEquals(a, r, origin, Double128VectorTests::unsliceUnary);
     }
-    static double[] unslice(double[] a, double[] b, int origin, int part, int idx) {
+    static double[] unsliceBinary(double[] a, double[] b, int origin, int part, int idx) {
         double[] res = new double[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if (part == 0) {
@@ -2393,7 +2393,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "doubleBinaryOpProvider")
-    static void unsliceDouble128VectorTestsBinary(IntFunction<double[]> fa, IntFunction<double[]> fb) {
+    static void unsliceBinaryDouble128VectorTestsBinary(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
@@ -2407,7 +2407,7 @@ public class Double128VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, part, Double128VectorTests::unslice);
+        assertArraysEquals(a, b, r, origin, part, Double128VectorTests::unsliceBinary);
     }
     static double[] unslice(double[] a, double[] b, int origin, int part, boolean[] mask, int idx) {
         double[] res = new double[SPECIES.length()];

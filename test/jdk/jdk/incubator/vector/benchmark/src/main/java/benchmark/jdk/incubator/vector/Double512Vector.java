@@ -939,7 +939,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void slice(Blackhole bh) {
+    public void sliceUnary(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -954,7 +954,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void slice(Blackhole bh) {
+    public void sliceBinary(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
@@ -991,7 +991,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void unslice(Blackhole bh) {
+    public void unsliceUnary(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -1006,7 +1006,7 @@ public class Double512Vector extends AbstractVectorBenchmark {
     }
 
     @Benchmark
-    public void unslice(Blackhole bh) {
+    public void unsliceBinary(Blackhole bh) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];

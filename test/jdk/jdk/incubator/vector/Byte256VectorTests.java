@@ -2821,7 +2821,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
 
 
 
-    static byte[] slice(byte[] a, int origin, int idx) {
+    static byte[] sliceUnary(byte[] a, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2833,7 +2833,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void sliceByte256VectorTests(IntFunction<byte[]> fa) {
+    static void sliceUnaryByte256VectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2844,9 +2844,9 @@ public class Byte256VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Byte256VectorTests::slice);
+        assertArraysEquals(a, r, origin, Byte256VectorTests::sliceUnary);
     }
-    static byte[] slice(byte[] a, byte[] b, int origin, int idx) {
+    static byte[] sliceBinary(byte[] a, byte[] b, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i+origin < SPECIES.length())
@@ -2860,7 +2860,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")
-    static void sliceByte256VectorTestsBinary(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
+    static void sliceBinaryByte256VectorTestsBinary(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
@@ -2873,7 +2873,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, Byte256VectorTests::slice);
+        assertArraysEquals(a, b, r, origin, Byte256VectorTests::sliceBinary);
     }
     static byte[] slice(byte[] a, byte[] b, int origin, boolean[] mask, int idx) {
         byte[] res = new byte[SPECIES.length()];
@@ -2908,7 +2908,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, origin, mask, Byte256VectorTests::slice);
     }
-    static byte[] unslice(byte[] a, int origin, int idx) {
+    static byte[] unsliceUnary(byte[] a, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if(i < origin)
@@ -2922,7 +2922,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void unsliceByte256VectorTests(IntFunction<byte[]> fa) {
+    static void unsliceUnaryByte256VectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         int origin = (new java.util.Random()).nextInt(SPECIES.length());
@@ -2933,9 +2933,9 @@ public class Byte256VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, r, origin, Byte256VectorTests::unslice);
+        assertArraysEquals(a, r, origin, Byte256VectorTests::unsliceUnary);
     }
-    static byte[] unslice(byte[] a, byte[] b, int origin, int part, int idx) {
+    static byte[] unsliceBinary(byte[] a, byte[] b, int origin, int part, int idx) {
         byte[] res = new byte[SPECIES.length()];
         for (int i = 0, j = 0; i < SPECIES.length(); i++){
             if (part == 0) {
@@ -2958,7 +2958,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")
-    static void unsliceByte256VectorTestsBinary(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
+    static void unsliceBinaryByte256VectorTestsBinary(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
@@ -2972,7 +2972,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertArraysEquals(a, b, r, origin, part, Byte256VectorTests::unslice);
+        assertArraysEquals(a, b, r, origin, part, Byte256VectorTests::unsliceBinary);
     }
     static byte[] unslice(byte[] a, byte[] b, int origin, int part, boolean[] mask, int idx) {
         byte[] res = new byte[SPECIES.length()];
