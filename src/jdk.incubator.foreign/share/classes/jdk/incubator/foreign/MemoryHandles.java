@@ -54,9 +54,9 @@ SequenceLayout seq = MemoryLayout.ofSequence(5,
  * }</pre></blockquote>
  * To access the member layout named {@code value}, we can construct a memory access var handle as follows:
  * <blockquote><pre>{@code
-VarHandle handle = MemoryAccessVarHandles.dereferenceVarHandle(int.class); //(MemoryAddress) -> int
-handle = MemoryAccessVarHandles.offsetAddress(handle, 4); //(MemoryAddress) -> int
-handle = MemoryAccessVarHandles.scaleAddress(handle, 8); //(MemoryAddress, long) -> int
+VarHandle handle = MemoryHandles.varHandle(int.class); //(MemoryAddress) -> int
+handle = MemoryHandles.withOffset(handle, 4); //(MemoryAddress) -> int
+handle = MemoryHandles.withStride(handle, 8); //(MemoryAddress, long) -> int
  * }</pre></blockquote>
  *
  * <h2>Addressing mode</h2>
