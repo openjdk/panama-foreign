@@ -346,14 +346,19 @@ public abstract class VectorShuffle<E> {
      * Creates a shuffle using source indexes set to sequential
      * values starting from {@code start} and stepping
      * by the given {@code step}.
-     * If {@code wrap} is true, also reduce each index (as if
-     * by {@link VectorShuffle#wrapIndex(int) wrapIndex})
-     * to the valid range {@code [0..VLENGTH-1]}.
      * <p>
      * This method returns the value of the expression
      * {@code VectorShuffle.fromOp(species, i -> R(start + i * step))},
-     * where {@code R} is {@code wrapIndex} if {@code wrap} is true,
-     * and is the identity function otherwise.
+     * where {@code R} is {@link VectorShuffle#wrapIndex(int) wrapIndex}
+     * if {@code wrap} is true, and is the identity function otherwise.
+     * <p>
+     * If {@code wrap} is false each index is validated
+     * against the species {@code VLENGTH}, and (if invalid)
+     * is partially wrapped to an exceptional index in the
+     * range {@code [-VLENGTH..-1]}.
+     * Otherwise, if {@code wrap} is true, also reduce each index, as if
+     * by {@link VectorShuffle#wrapIndex(int) wrapIndex},
+     * to the valid range {@code [0..VLENGTH-1]}.
      *
      * @apiNote The {@code wrap} parameter should be set to {@code
      * true} if invalid source indexes should be wrapped.  Otherwise,
