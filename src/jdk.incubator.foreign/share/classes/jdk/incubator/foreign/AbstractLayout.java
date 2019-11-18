@@ -38,8 +38,8 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 abstract class AbstractLayout implements MemoryLayout {
-    protected final long size;
-    protected final long alignment;
+    final long size;
+    final long alignment;
     private final Optional<String> name;
 
     public AbstractLayout(long size, long alignment, Optional<String> name) {

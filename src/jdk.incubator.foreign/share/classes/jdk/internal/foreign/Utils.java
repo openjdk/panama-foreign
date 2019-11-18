@@ -30,7 +30,6 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
-import jdk.internal.foreign.MemoryScope.ConfinedScope;
 import jdk.internal.misc.Unsafe;
 import sun.nio.ch.FileChannelImpl;
 
@@ -74,8 +73,8 @@ public final class Utils {
 
         long buf = unsafe.allocateMemory(alignedSize);
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemoryScope scope = new ConfinedScope(null, Thread.currentThread(), () -> unsafe.freeMemory(buf));
-        MemorySegment segment = new MemorySegmentImpl(buf, null, alignedSize, 0, scope);
+        MemoryScope scope = new MemoryScope(null, () -> unsafe.freeMemory(buf));
+        MemorySegment segment = new MemorySegmentImpl(buf, null, alignedSize, 0, Thread.currentThread(), scope);
         if (alignedBuf != buf) {
             long delta = alignedBuf - buf;
             segment = segment.slice(delta, bytesSize);
@@ -112,8 +111,8 @@ public final class Utils {
     }
 
     private static MemorySegment makeArraySegment(Object arr, int size, int base, int scale) {
-        MemoryScope scope = new ConfinedScope(null, Thread.currentThread(), null);
-        return new MemorySegmentImpl(base, arr, size * scale, 0, scope);
+        MemoryScope scope = new MemoryScope(null, null);
+        return new MemorySegmentImpl(base, arr, size * scale, 0, Thread.currentThread(), scope);
     }
 
     public static MemorySegment makeBufferSegment(ByteBuffer bb) {
@@ -123,17 +122,17 @@ public final class Utils {
         int pos = bb.position();
         int limit = bb.limit();
 
-        MemoryScope bufferScope = new ConfinedScope(bb, Thread.currentThread(), null);
-        return new MemorySegmentImpl(bbAddress + pos, base, limit - pos, 0, bufferScope);
+        MemoryScope bufferScope = new MemoryScope(bb, null);
+        return new MemorySegmentImpl(bbAddress + pos, base, limit - pos, 0, Thread.currentThread(), bufferScope);
     }
 
     // create and map a file into a fresh segment
-    public static MemorySegmentImpl makeMappedSegment(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
+    public static MemorySegment makeMappedSegment(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
         if (bytesSize <= 0) throw new IllegalArgumentException("Requested bytes size must be > 0.");
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
-            MemoryScope scope = new ConfinedScope(null, Thread.currentThread(), () -> unmapperProxy.unmap());
-            return new MemorySegmentImpl(unmapperProxy.address(), null, bytesSize, 0, scope);
+            MemoryScope scope = new MemoryScope(null, () -> unmapperProxy.unmap());
+            return new MemorySegmentImpl(unmapperProxy.address(), null, bytesSize, 0, Thread.currentThread(), scope);
         }
     }
 

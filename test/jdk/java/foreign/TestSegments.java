@@ -33,9 +33,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
@@ -67,7 +65,10 @@ public class TestSegments {
             AtomicBoolean failed = new AtomicBoolean(false);
             Thread t = new Thread(() -> {
                 try {
-                    member.method.invoke(segment, member.params);
+                    Object o = member.method.invoke(segment, member.params);
+                    if (member.method.getName().equals("acquire")) {
+                        ((MemorySegment)o).close();
+                    }
                 } catch (ReflectiveOperationException ex) {
                     throw new IllegalStateException(ex);
                 }

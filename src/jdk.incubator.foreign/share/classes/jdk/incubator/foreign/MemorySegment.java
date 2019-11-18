@@ -26,12 +26,14 @@
 
 package jdk.incubator.foreign;
 
+import java.nio.ByteBuffer;
+
 import jdk.internal.foreign.Utils;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
-import java.io.IOException;
+
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
  * and temporal bounds. Spatial bounds make sure that memory access operatons on a memory segment cannot affect a memory location
@@ -65,7 +67,6 @@ import java.io.IOException;
  * <p>
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
  * {@link MemorySegment#ofPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>.
- * <p>
  *
  * <h2>Closing a memory segment</h2>
  *
@@ -86,6 +87,22 @@ import java.io.IOException;
  * Conversely, <a href="./package-summary.html#concurrency">shared memory segments</a> cannot be closed explicitly;
  * resources associated with a given shared segment will be released when such a segment is deemed <em>unreacheable</em>
  * by the garbage collector.
+ *
+ * <h2><a id = "thread-confinement">Thread confinement</a></h2>
+ *
+ * Memory segments support strong thread-confinement guarantees. Upon creation, they are assigned an <em>owner thread</em>,
+ * typically the thread which initiated the creation operation. After creation, only the owner thread will be allowed
+ * to directly manipulate the memory segment (e.g. close the memory segment) or access the underlying memory associated with
+ * the segment using a memory access var handle. Any attempt to perform such operations from a thread other than the
+ * owner thread will result in a runtime failure.
+ *
+ * If a memory segment S owned by thread A needs to be used by thread B, B needs to explicitly <em>acquire</em> S,
+ * which will create a so called <em>acquired</em> memory segment owned by B (see {@link #acquire()}) backed by the same resources
+ * as S. A memory segment can be acquired multiple times by one or more threads; in that case, a memory segment S cannot
+ * be closed until all the acquired memory segments derived from S have been closed. Furthermore, closing an acquired
+ * memory segment does <em>not</em> trigger any deallocation action. It is therefore important that clients remember to
+ * explicitly close the original segment from which the acquired memory segments have been obtained in order to truly
+ * ensure that off-heap resources associated with the memory segment are released.
  *
  * <h2>Memory segment views</h2>
  *
@@ -118,6 +135,15 @@ public interface MemorySegment extends AutoCloseable {
     MemoryAddress baseAddress();
 
     /**
+     * Obtains an <a href="#thread-confinement">acquired</a> memory segment which can be used to access memory associated
+     * to this segment from the current thread. As a side-effect, the current segment cannot be closed until the acquired
+     * view has been closed too (see {@link #close()}).
+     * @return an <a href="#thread-confinement">acquired</a> memory segment which can be used to access memory associated
+     * to this segment from the current thread.
+     */
+    MemorySegment acquire();
+
+    /**
      * Creates a new memory address whose base address is the same as this address plus a given offset,
      * and whose new size is specified by the given argument.
      * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
@@ -133,52 +159,10 @@ public interface MemorySegment extends AutoCloseable {
     MemorySegment slice(long offset, long newSize) throws IllegalArgumentException;
 
     /**
-     * Obtains a <a href="./package-summary.html#concurrency">confined memory segment</a> which can be used to access memory
-     * associated to this segment from a given thread. As a side-effect, this segment will be marked as <em>not alive</em>,
-     * and subsequent operations on this segment will result in runtime errors.
-     * @param newOwner the new owner thread.
-     * @return a confined copy of this segment with given owner thread.
-     * @throws IllegalStateException if the segment is a shared segment (see {@link MemorySegment#isShared()}).
-     * @throws IllegalArgumentException if the segment is already a confined segment owner by {@code newOnwer}.
-     */
-    MemorySegment asConfined(Thread newOwner) throws IllegalStateException;
-
-    /**
-     * Obtains a <a href="./package-summary.html#concurrency">shared memory segment</a> which can be used to access memory
-     * associated with this segment across multiple threads. As a side-effect, this segment will be marked as <em>not alive</em>,
-     * and subsequent operations on this segment will result in runtime errors. The shared copy will also be marked as
-     * <em>pinned</em> (see {@link MemorySegment#isPinned()}); as such, any attempt to close the returned segment will
-     * result in a runtime error.
-     * @return a shared copy of this segment.
-     * @throws IllegalStateException if the segment is a already a shared segment (see {@link MemorySegment#isShared()}).
-     */
-    MemorySegment asShared();
-
-    /**
-     * Is this segment a shared segment?
-     * @return true, if this segment is a shared segment.
-     */
-    boolean isShared();
-
-    /**
-     * Is this segment a confined segment owned by the given thread?
-     * @param thread the owner of the confined segment.
-     * @return true, if this segment is a confined segment owned by given thread.
-     */
-    boolean isConfined(Thread thread);
-
-    /**
-     * Is this segment accessible from the current thread? This could be the case if the segment is a confined
-     * segment owned by the current thread, or if the segment is a shared segment. In other words, this method
-     * is equivalent to the following code:
-     * <blockquote><pre>{@code
-return isShared() || isConfined(Thread.currentThread());
-     * }</pre></blockquote>
+     * Is this segment accessible from the current thread?
      * @return true, if this segment is accessible from the current thread.
      */
-    default boolean isAccessible() {
-        return isShared() || isConfined(Thread.currentThread());
-    }
+    boolean isAccessible();
 
     /**
      * The size (in bytes) of this memory segment.
@@ -222,11 +206,13 @@ return isShared() || isConfined(Thread.currentThread());
     boolean isReadOnly();
 
     /**
-     * Closes this memory segment, and releases off-heap resources allocated with it. Once a memory segment has been closed,
-     * any attempt to use the memory segment, or to access the memory associated with the segment will fail with
-     * {@link IllegalStateException}.
-     * @throws UnsupportedOperationException if the segment cannot be closed (e.g. because the segment is pinned)
-     * @see MemorySegment#isPinned()
+     * Closes this memory segment. Once a memory segment has been closed, any attempt to use the memory segment,
+     * or to access the memory associated with the segment will fail with {@link IllegalStateException}. Depending on
+     * the memory segment being closed, calling this method further trigger deallocation of all the resources associated
+     * with the memory segment.
+     * @throws UnsupportedOperationException if the segment cannot be closed e.g. because the segment is pinned (see
+     * {@link MemorySegment#isPinned()}) or because existing acquired views of this segments are still in use (see
+     * {@link MemorySegment#acquire()}).
      */
     void close() throws UnsupportedOperationException;
 
@@ -331,7 +317,7 @@ return isShared() || isConfined(Thread.currentThread());
     static MemorySegment ofArray(float[] arr) throws IllegalArgumentException {
         return Utils.makeArraySegment(arr);
     }
-    
+
     /**
      * Creates a new array memory segment that models the memory associated with a given heap-allocated long array.
      * <p>
@@ -344,7 +330,7 @@ return isShared() || isConfined(Thread.currentThread());
     static MemorySegment ofArray(long[] arr) throws IllegalArgumentException {
         return Utils.makeArraySegment(arr);
     }
-    
+
     /**
      * Creates a new array memory segment that models the memory associated with a given heap-allocated double array.
      * <p>
@@ -363,7 +349,7 @@ return isShared() || isConfined(Thread.currentThread());
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-ofNative(layout.bytesSize(), layout.bytesAlignment());
+    ofNative(layout.bytesSize(), layout.bytesAlignment());
      * }</pre></blockquote>
      *
      * @implNote The initialization state of the contents of the block of off-heap memory associated with the returned native memory
@@ -386,7 +372,7 @@ ofNative(layout.bytesSize(), layout.bytesAlignment());
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-ofNative(bitsSize, 1);
+    ofNative(bitsSize, 1);
      * }</pre></blockquote>
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
@@ -443,7 +429,7 @@ ofNative(bitsSize, 1);
         }
 
         if (alignmentBytes < 0 ||
-            ((alignmentBytes & (alignmentBytes - 1)) != 0L)) {
+                ((alignmentBytes & (alignmentBytes - 1)) != 0L)) {
             throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
         }
 

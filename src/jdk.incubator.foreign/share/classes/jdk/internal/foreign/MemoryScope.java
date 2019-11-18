@@ -26,100 +26,58 @@
 
 package jdk.internal.foreign;
 
+import java.util.concurrent.atomic.AtomicInteger;
 
-import jdk.internal.ref.CleanerFactory;
-
-import java.lang.ref.Cleaner;
-
-public abstract class MemoryScope {
+public class MemoryScope {
 
     //reference to keep hold onto
     final Object ref;
+    private boolean isAlive = true;
 
-    public MemoryScope(Object ref) {
+    final AtomicInteger activeCount = new AtomicInteger();
+
+    final static int UNACQUIRED = 0;
+    final static int CLOSED = -1;
+
+    final Runnable cleanupAction;
+
+    public MemoryScope(Object ref, Runnable cleanupAction) {
         this.ref = ref;
+        this.cleanupAction = cleanupAction;
     }
 
-    abstract void checkValidState();
-    abstract void close();
-    abstract boolean isShared();
-    abstract boolean isAlive();
+    final boolean isAlive() {
+        return isAlive;
+    }
 
-    static final class ConfinedScope extends MemoryScope {
-        final Thread thread;
-        final Runnable cleanupAction;
-        boolean isAlive = true;
-
-        ConfinedScope(Object ref, Thread thread, Runnable cleanupAction) {
-            super(ref);
-            this.thread = thread;
-            this.cleanupAction = cleanupAction;
-        }
-
-        final void checkValidState() {
-            if (Thread.currentThread() != thread) {
-                throw new IllegalStateException("Attempt to access segment outside owning thread");
-            } else if (!isAlive) {
-                throw new IllegalStateException("Segment is not alive");
-            }
-        }
-
-        @Override
-        public boolean isAlive() {
-            return isAlive;
-        }
-
-        @Override
-        boolean isShared() {
-            return false;
-        }
-
-        void close() {
-            if (cleanupAction != null) {
-                cleanupAction.run();
-            }
-            isAlive = false;
-        }
-
-        MemoryScope toShared(MemorySegmentImpl memorySegment) {
-            isAlive = false;
-            return new SharedScope(ref, cleanupAction);
-        }
-
-        MemoryScope transfer(Thread newOwner) {
-            isAlive = false;
-            return new ConfinedScope(ref, newOwner, cleanupAction);
+    final void checkAlive() {
+        if (!isAlive) {
+            throw new IllegalStateException("Segment is not alive");
         }
     }
 
-    static final class SharedScope extends MemoryScope {
-
-        Cleaner cleaner = CleanerFactory.cleaner();
-
-        public SharedScope(Object ref, Runnable cleanup) {
-            super(ref);
-            if (cleanup != null) {
-                cleaner.register(this, cleanup);
-            }
+    MemoryScope acquire() {
+        if (activeCount.updateAndGet(i -> i == CLOSED ? CLOSED : ++i) == CLOSED) {
+            //cannot get here - segment is not alive!
+            throw new IllegalStateException();
         }
+        return new MemoryScope(ref, this::release);
+    }
 
-        void checkValidState() {
-            //do nothing
+    void release() {
+        if (activeCount.getAndUpdate(i -> i <= UNACQUIRED ? i : --i) <= UNACQUIRED) {
+            //cannot get here - we can't close segment twice
+            throw new IllegalStateException();
         }
+    }
 
-        @Override
-        boolean isAlive() {
-            return true;
+    void close() {
+        if (!activeCount.compareAndSet(UNACQUIRED, CLOSED)) {
+            throw new UnsupportedOperationException("Cannot close a segment that has active acquired views");
         }
-
-        @Override
-        boolean isShared() {
-            return true;
-        }
-
-        @Override
-        void close() {
-            throw new IllegalStateException("Cannot get here: shared scope should belong to pinned segment");
+        isAlive = false;
+        if (cleanupAction != null) {
+            cleanupAction.run();
         }
     }
 }
