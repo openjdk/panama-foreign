@@ -50,7 +50,6 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final MemoryScope scope;
 
     final static int READ_ONLY = 1;
-    final static int PINNED = READ_ONLY << 1;
     final static long NONCE = new Random().nextLong();
 
     public MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
@@ -67,7 +66,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public final MemorySegmentImpl slice(long offset, long newSize) throws IllegalArgumentException {
+    public final MemorySegmentImpl asSlice(long offset, long newSize) throws IllegalArgumentException {
         checkValidState();
         if (outOfBounds(offset, newSize)) {
             throw new IllegalArgumentException();
@@ -77,6 +76,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public MemorySegment acquire() {
+        scope.checkAlive();
         return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
     }
 
@@ -96,19 +96,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public final MemorySegmentImpl asPinned() {
-        checkValidState();
-        return new MemorySegmentImpl(min, base, length, mask | PINNED, owner, scope);
-    }
-
-    @Override
     public final boolean isAlive() {
         return scope.isAlive();
-    }
-
-    @Override
-    public final boolean isPinned() {
-        return isSet(PINNED);
     }
 
     @Override
@@ -128,19 +117,13 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     @Override
     public final void close() throws UnsupportedOperationException {
         checkValidState();
-        if (isPinned()) {
-            throw new UnsupportedOperationException("Cannot close a pinned segment");
-        } else {
-            scope.close();
-        }
+        scope.close();
     }
 
     @Override
     public ByteBuffer asByteBuffer() throws UnsupportedOperationException, IllegalStateException {
         checkValidState();
-        if (length > Integer.MAX_VALUE) {
-            throw new UnsupportedOperationException("Segment is too large to wrap as ByteBuffer. Size: " + length);
-        }
+        checkIntSize("ByteBuffer");
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
         ByteBuffer _bb;
         if (base() != null) {
@@ -155,11 +138,24 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
             //scope is IMMUTABLE - obtain a RO byte buffer
             _bb = _bb.asReadOnlyBuffer();
         }
-        if (!isPinned()) {
-            //scope is not PINNED - need to wrap the buffer so that appropriate scope checks take place
-            _bb = nioAccess.newScopedByteBuffer(this, _bb);
+        // need to wrap the buffer so that appropriate scope checks take place
+        return nioAccess.newScopedByteBuffer(this, _bb);
+    }
+
+    @Override
+    public byte[] toByteArray() throws UnsupportedOperationException, IllegalStateException {
+        checkValidState();
+        checkIntSize("byte[]");
+        byte[] arr = new byte[(int)length];
+        MemorySegment arrSegment = MemorySegment.ofArray(arr);
+        MemoryAddress.copy(this.baseAddress(), arrSegment.baseAddress(), length);
+        return arr;
+    }
+
+    private void checkIntSize(String typeName) {
+        if (length > Integer.MAX_VALUE) {
+            throw new UnsupportedOperationException(String.format("Segment is too large to wrap as %s. Size: %d", typeName, length));
         }
-        return _bb;
     }
 
     public final void checkValidState() {

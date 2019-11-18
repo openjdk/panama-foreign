@@ -40,17 +40,18 @@ import java.nio.file.Path;
  * which falls <em>outside</em> the boundaries of the memory segment being accessed. Temporal checks make sure that memory access
  * operations on a segment cannot occur after a memory segment has already been closed (see {@link MemorySegment#close()}).
  * <p>
- * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
- * class; use of identity-sensitive operations (including reference equality
- * ({@code ==}), identity hash code, or synchronization) on instances of
- * {@code MemorySegment} may have unpredictable results and should be avoided.
- * The {@code equals} method should be used for comparisons.
+ * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
+ * use of identity-sensitive operations (including reference equality ({@code ==}), identity hash code, or synchronization) on
+ * instances of {@code MemorySegment} may have unpredictable results and should be avoided. The {@code equals} method should
+ * be used for comparisons.
+ * <p>
+ * Non-platform classes should not implement {@linkplain MemorySegment} directly.
  *
  * <h2>Constructing memory segments from different sources</h2>
  *
  * There are multiple ways to obtain a memory segment. First, memory segments backed by off-heap memory can
- * be allocated using one of the many factory methods provided (see {@link MemorySegment#ofNative(MemoryLayout)},
- * {@link MemorySegment#ofNative(long)} and {@link MemorySegment#ofNative(long, long)}). Memory segments obtained
+ * be allocated using one of the many factory methods provided (see {@link MemorySegment#allocateNative(MemoryLayout)},
+ * {@link MemorySegment#allocateNative(long)} and {@link MemorySegment#allocateNative(long, long)}). Memory segments obtained
  * in this way are called <em>native memory segments</em>.
  * <p>
  * It is also possible to obtain a memory segment backed by an existing heap-allocated Java array,
@@ -66,7 +67,7 @@ import java.nio.file.Path;
  * by native memory.
  * <p>
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
- * {@link MemorySegment#ofPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>.
+ * {@link MemorySegment#mapFromPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>.
  *
  * <h2>Closing a memory segment</h2>
  *
@@ -107,24 +108,26 @@ import java.nio.file.Path;
  * <h2>Memory segment views</h2>
  *
  * Memory segments support <em>views</em>. It is possible to create an <em>immutable</em> view of a memory segment
- * (see {@link MemorySegment#asReadOnly()}) which does not support write operations. It is also possible
- * to create a <em>pinned</em> view of a memory segment (see {@link MemorySegment#asPinned()}), which cannot be
- * closed (see {@link MemorySegment#close()}). Finally, it is possible to create views whose spatial bounds
- * are stricter than the ones of the original segment (see {@link MemorySegment#slice(long, long)}).
+ * (see {@link MemorySegment#asReadOnly()}) which does not support write operations. It is also possible to create views
+ * whose spatial bounds are stricter than the ones of the original segment (see {@link MemorySegment#asSlice(long, long)}).
  * <p>
  * Temporal bounds of the original segment are inherited by the view; that is, closing a resized segment view
  * will cause the whole segment to be closed; as such special care must be taken when sharing views
  * between multiple clients. If a client want to protect itself against early closure of a segment by
  * another actor, it is the responsibility of that client to take protective measures, such as calling
- * {@link MemorySegment#asPinned()} before sharing the view with another client.
+ * {@link MemorySegment#acquire()} before sharing the view with another client.
  * <p>
  * To allow for interoperability with existing code, a byte buffer view can be obtained from a memory segment
  * (see {@link #asByteBuffer()}). This can be useful, for instance, for those clients that want to keep using the
  * {@link ByteBuffer} API, but need to operate on large memory segments. Byte buffers obtained in such a way support
  * the same spatial and temporal access restrictions associated to the memory address from which they originated.
  *
+ * @apiNote In the future, if the Java language permits, {@link MemorySegment}
+ * may become a {@code sealed} interface, which would prohibit subclassing except by
+ * explicitly permitted types.
+ *
  * @implSpec
- * This class is immutable and thread-safe.
+ * Implementations of this interface are immutable and thread-safe.
  */
 public interface MemorySegment extends AutoCloseable {
 
@@ -140,23 +143,9 @@ public interface MemorySegment extends AutoCloseable {
      * view has been closed too (see {@link #close()}).
      * @return an <a href="#thread-confinement">acquired</a> memory segment which can be used to access memory associated
      * to this segment from the current thread.
+     * @throws IllegalStateException if this segment has been closed.
      */
-    MemorySegment acquire();
-
-    /**
-     * Creates a new memory address whose base address is the same as this address plus a given offset,
-     * and whose new size is specified by the given argument.
-     * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
-     * @param newSize The new segment size, specified in bytes.
-     * @return a new address with updated base/limit addresses.
-     * @throws IllegalArgumentException if the new segment bounds are illegal; this can happen because:
-     * <ul>
-     * <li>either {@code offset} or {@code newSize} are &lt; 0</li>
-     * <li>{@code offset} is bigger than the current segment size (see {@link #byteSize()}
-     * <li>{@code newSize} is bigger than the current segment size (see {@link #byteSize()}
-     * </ul>
-     */
-    MemorySegment slice(long offset, long newSize) throws IllegalArgumentException;
+    MemorySegment acquire() throws IllegalStateException;
 
     /**
      * Is this segment accessible from the current thread?
@@ -174,15 +163,27 @@ public interface MemorySegment extends AutoCloseable {
      * Obtains a read-only view of this segment. An attempt to write memory associated with a read-only memory segment
      * will fail with {@link UnsupportedOperationException}.
      * @return a read-only view of this segment.
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
      */
-    MemorySegment asReadOnly();
+    MemorySegment asReadOnly() throws IllegalStateException;
 
     /**
-     * Obtains a pinned view of this segment. An attempt to close a pinned memory segment will fail with
-     * with {@link UnsupportedOperationException}.
-     * @return a pinned view of this segment.
+     * Obtains a new memory segment view whose base address is the same as the base address in this segment plus a given offset,
+     * and whose new size is specified by the given argument.
+     * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
+     * @param newSize The new segment size, specified in bytes.
+     * @return a new address with updated base/limit addresses.
+     * @throws IllegalArgumentException if the new segment bounds are illegal; this can happen because:
+     * <ul>
+     * <li>either {@code offset} or {@code newSize} are &lt; 0</li>
+     * <li>{@code offset} is bigger than the current segment size (see {@link #byteSize()}
+     * <li>{@code newSize} is bigger than the current segment size (see {@link #byteSize()}
+     * </ul>
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
      */
-    MemorySegment asPinned();
+    MemorySegment asSlice(long offset, long newSize) throws IllegalArgumentException, IllegalStateException;
 
     /**
      * Is this segment alive?
@@ -190,13 +191,6 @@ public interface MemorySegment extends AutoCloseable {
      * @see MemorySegment#close()
      */
     boolean isAlive();
-
-    /**
-     * Is this segment pinned?
-     * @return true, if the segment is pinned.
-     * @see MemorySegment#asPinned()
-     */
-    boolean isPinned();
 
     /**
      * Is this segment read-only?
@@ -210,11 +204,12 @@ public interface MemorySegment extends AutoCloseable {
      * or to access the memory associated with the segment will fail with {@link IllegalStateException}. Depending on
      * the memory segment being closed, calling this method further trigger deallocation of all the resources associated
      * with the memory segment.
-     * @throws UnsupportedOperationException if the segment cannot be closed e.g. because the segment is pinned (see
-     * {@link MemorySegment#isPinned()}) or because existing acquired views of this segments are still in use (see
-     * {@link MemorySegment#acquire()}).
+     * @throws UnsupportedOperationException if the segment cannot be closed e.g. because existing acquired views of this
+     * segment are still in use (see {@link MemorySegment#acquire()}).
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
      */
-    void close() throws UnsupportedOperationException;
+    void close() throws UnsupportedOperationException, IllegalStateException;
 
     /**
      * Wraps this segment in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
@@ -230,13 +225,24 @@ public interface MemorySegment extends AutoCloseable {
      * The resulting buffer's byte order is {@link java.nio.ByteOrder#BIG_ENDIAN}; this can be changed using
      * {@link ByteBuffer#order(java.nio.ByteOrder)}.
      *
-     * @return the created {@link ByteBuffer}.
+     * @return a {@link ByteBuffer} view of this memory segment.
      * @throws UnsupportedOperationException if this segment cannot be mapped onto a {@link ByteBuffer} instance,
      * e.g. because it models an heap-based segment that is not based on a {@code byte[]}), or if its size is greater
      * than {@link Integer#MAX_VALUE}.
-     * @throws IllegalStateException if the scope associated with this segment has been closed.
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
      */
     ByteBuffer asByteBuffer() throws UnsupportedOperationException, IllegalStateException;
+
+    /**
+     * Copy the contents of this memory segment into a fresh byte array.
+     * @return a fresh byte array copy of this memory segment.
+     * @throws UnsupportedOperationException if this segment cannot be mapped onto a {@link byte[]} instance,
+     * e.g. its size is greater than {@link Integer#MAX_VALUE}.
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
+     */
+    byte[] toByteArray() throws UnsupportedOperationException, IllegalStateException;
 
     /**
      * Creates a new buffer memory segment that models the memory associated with the given byte
@@ -349,7 +355,7 @@ public interface MemorySegment extends AutoCloseable {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    ofNative(layout.bytesSize(), layout.bytesAlignment());
+    allocateNative(layout.bytesSize(), layout.bytesAlignment());
      * }</pre></blockquote>
      *
      * @implNote The initialization state of the contents of the block of off-heap memory associated with the returned native memory
@@ -363,8 +369,8 @@ public interface MemorySegment extends AutoCloseable {
      * @throws RuntimeException if the specified size is too large for the system runtime.
      * @throws OutOfMemoryError if the allocation of the off-heap memory block is refused by the system runtime.
      */
-    static MemorySegment ofNative(MemoryLayout layout) throws IllegalArgumentException {
-        return ofNative(layout.byteSize(), layout.byteAlignment());
+    static MemorySegment allocateNative(MemoryLayout layout) throws IllegalArgumentException {
+        return allocateNative(layout.byteSize(), layout.byteAlignment());
     }
 
     /**
@@ -372,7 +378,7 @@ public interface MemorySegment extends AutoCloseable {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    ofNative(bitsSize, 1);
+    allocateNative(bitsSize, 1);
      * }</pre></blockquote>
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
@@ -386,8 +392,8 @@ public interface MemorySegment extends AutoCloseable {
      * on a native memory segment, to make sure the backing off-heap memory block is deallocated accordingly. Failure to do so
      * will result in off-heap memory leaks.
      */
-    static MemorySegment ofNative(long bytesSize) throws IllegalArgumentException {
-        return ofNative(bytesSize, 1);
+    static MemorySegment allocateNative(long bytesSize) throws IllegalArgumentException {
+        return allocateNative(bytesSize, 1);
     }
 
     /**
@@ -404,7 +410,7 @@ public interface MemorySegment extends AutoCloseable {
      * @implNote When obtaining a mapped segment from a newly created file, the initialization state of the contents of the block
      * of mapped memory associated with the returned mapped memory segment is unspecified and should not be relied upon.
      */
-    static MemorySegment ofPath(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IllegalArgumentException, IOException {
+    static MemorySegment mapFromPath(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IllegalArgumentException, IOException {
         return Utils.makeMappedSegment(path, bytesSize, mapMode);
     }
 
@@ -423,7 +429,7 @@ public interface MemorySegment extends AutoCloseable {
      * on a native memory segment, to make sure the backing off-heap memory block is deallocated accordingly. Failure to do so
      * will result in off-heap memory leaks.
      */
-    static MemorySegment ofNative(long bytesSize, long alignmentBytes) throws IllegalArgumentException {
+    static MemorySegment allocateNative(long bytesSize, long alignmentBytes) throws IllegalArgumentException {
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
         }

@@ -80,7 +80,7 @@ public class TestMemoryAccess {
 
     private void testAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, MemoryLayout layout, VarHandle handle, Checker checker) {
         MemoryAddress outer_address;
-        try (MemorySegment segment = viewFactory.apply(MemorySegment.ofNative(layout))) {
+        try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(layout))) {
             MemoryAddress addr = segment.baseAddress();
             try {
                 checker.check(handle, addr);
@@ -111,10 +111,10 @@ public class TestMemoryAccess {
 
     private void testArrayAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, SequenceLayout seq, VarHandle handle, ArrayChecker checker) {
         MemoryAddress outer_address;
-        try (MemorySegment segment = viewFactory.apply(MemorySegment.ofNative(seq))) {
+        try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq))) {
             MemoryAddress addr = segment.baseAddress();
             try {
-                for (int i = 0; i < seq.elementsCount().getAsLong(); i++) {
+                for (int i = 0; i < seq.elementCount().getAsLong(); i++) {
                     checker.check(handle, addr, i);
                 }
                 if (segment.isReadOnly()) {
@@ -127,7 +127,7 @@ public class TestMemoryAccess {
                 return;
             }
             try {
-                checker.check(handle, addr, seq.elementsCount().getAsLong());
+                checker.check(handle, addr, seq.elementCount().getAsLong());
                 throw new AssertionError(); //not ok, out of bounds
             } catch (IllegalStateException ex) {
                 //ok, should fail (out of bounds)
@@ -179,11 +179,11 @@ public class TestMemoryAccess {
 
     private void testMatrixAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, SequenceLayout seq, VarHandle handle, MatrixChecker checker) {
         MemoryAddress outer_address;
-        try (MemorySegment segment = viewFactory.apply(MemorySegment.ofNative(seq))) {
+        try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq))) {
             MemoryAddress addr = segment.baseAddress();
             try {
-                for (int i = 0; i < seq.elementsCount().getAsLong(); i++) {
-                    for (int j = 0; j < ((SequenceLayout) seq.elementLayout()).elementsCount().getAsLong(); j++) {
+                for (int i = 0; i < seq.elementCount().getAsLong(); i++) {
+                    for (int j = 0; j < ((SequenceLayout) seq.elementLayout()).elementCount().getAsLong(); j++) {
                         checker.check(handle, addr, i, j);
                     }
                 }
@@ -197,8 +197,8 @@ public class TestMemoryAccess {
                 return;
             } 
             try {
-                checker.check(handle, addr, seq.elementsCount().getAsLong(),
-                        ((SequenceLayout)seq.elementLayout()).elementsCount().getAsLong());
+                checker.check(handle, addr, seq.elementCount().getAsLong(),
+                        ((SequenceLayout)seq.elementLayout()).elementCount().getAsLong());
                 throw new AssertionError(); //not ok, out of bounds
             } catch (IllegalStateException ex) {
                 //ok, should fail (out of bounds)

@@ -37,14 +37,19 @@ import jdk.internal.foreign.MemoryAddressImpl;
  * on the underlying memory backing a given memory segment. Since a memory address is always associated with a memory segment,
  * such access operations are always subject to spatial and temporal checks as enforced by the address' owning memory region.
  * <p>
- * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
- * class; use of identity-sensitive operations (including reference equality
- * ({@code ==}), identity hash code, or synchronization) on instances of
- * {@code MemoryAddress} may have unpredictable results and should be avoided.
- * The {@code equals} method should be used for comparisons.
+ * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
+ * use of identity-sensitive operations (including reference equality ({@code ==}), identity hash code, or synchronization) on
+ * instances of {@code MemoryAddress} may have unpredictable results and should be avoided. The {@code equals} method should
+ * be used for comparisons.
+ * <p>
+ * Non-platform classes should not implement {@linkplain MemoryAddress} directly.
+ *
+ * @apiNote In the future, if the Java language permits, {@link MemoryAddress}
+ * may become a {@code sealed} interface, which would prohibit subclassing except by
+ * explicitly permitted types.
  *
  * @implSpec
- * This class is immutable and thread-safe.
+ * Implementations of this interface are immutable and thread-safe.
  */
 public interface MemoryAddress {
     /**

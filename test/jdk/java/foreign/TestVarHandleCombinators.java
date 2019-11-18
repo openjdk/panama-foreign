@@ -43,7 +43,7 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testElementAccess() {
-        VarHandle vh = MemoryHandles.varHandle(byte.class);
+        VarHandle vh = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
         vh = MemoryHandles.withStride(vh, 1);
 
         byte[] arr = { 0, 0, -1, 0 };
@@ -61,7 +61,7 @@ public class TestVarHandleCombinators {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadStrideElement() {
-        VarHandle vh = MemoryHandles.varHandle(int.class);
+        VarHandle vh = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
         MemoryHandles.withStride(vh, 0); //scale factor cant be zero
     }
 
@@ -79,7 +79,7 @@ public class TestVarHandleCombinators {
     public void testAlign() {
         VarHandle vh = MemoryHandles.varHandle(byte.class, 2, ByteOrder.nativeOrder());
 
-        MemorySegment segment = MemorySegment.ofNative(1, 2);
+        MemorySegment segment = MemorySegment.allocateNative(1, 2);
         MemoryAddress address = segment.baseAddress();
 
         vh.set(address, (byte) 10); // fine, memory region is aligned
@@ -91,7 +91,7 @@ public class TestVarHandleCombinators {
         VarHandle vh = MemoryHandles.varHandle(byte.class, 2, ByteOrder.nativeOrder());
         vh = MemoryHandles.withOffset(vh, 1); // offset by 1 byte
 
-        MemorySegment segment = MemorySegment.ofNative(2, 2);
+        MemorySegment segment = MemorySegment.allocateNative(2, 2);
         MemoryAddress address = segment.baseAddress();
 
         vh.set(address, (byte) 10); // should be bad align
@@ -99,7 +99,7 @@ public class TestVarHandleCombinators {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testOffsetNegative() {
-        VarHandle vh = MemoryHandles.varHandle(byte.class);
+        VarHandle vh = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
         MemoryHandles.withOffset(vh, -1);
     }
 
@@ -111,7 +111,7 @@ public class TestVarHandleCombinators {
 
     @Test
     public void testOffset() {
-        VarHandle vh = MemoryHandles.varHandle(byte.class);
+        VarHandle vh = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
         vh = MemoryHandles.withOffset(vh, 1);
 
         MemorySegment segment = MemorySegment.ofArray(new byte[2]);
@@ -152,12 +152,12 @@ public class TestVarHandleCombinators {
 
         //[10 : [5 : [x32 i32]]]
 
-        VarHandle vh = MemoryHandles.varHandle(int.class);
+        VarHandle vh = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
         vh = MemoryHandles.withOffset(vh, 4);
         VarHandle inner_vh = MemoryHandles.withStride(vh, 8);
         VarHandle outer_vh = MemoryHandles.withStride(inner_vh, 5 * 8);
         int count = 0;
-        try (MemorySegment segment = MemorySegment.ofNative(inner_size * outer_size * 8)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(inner_size * outer_size * 8)) {
             for (long i = 0; i < outer_size; i++) {
                 for (long j = 0; j < inner_size; j++) {
                     outer_vh.set(segment.baseAddress(), i, j, count);
@@ -172,7 +172,7 @@ public class TestVarHandleCombinators {
 
     @Test(dataProvider = "badCarriers", expectedExceptions = IllegalArgumentException.class)
     public void testBadCarrier(Class<?> carrier) {
-        MemoryHandles.varHandle(carrier);
+        MemoryHandles.varHandle(carrier, ByteOrder.nativeOrder());
     }
 
     @DataProvider(name = "badCarriers")

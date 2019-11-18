@@ -102,7 +102,7 @@ public class TestNative {
     static VarHandle doubleHandle = longs.varHandle(double.class, PathElement.sequenceElement());
 
     static void initBytes(MemoryAddress base, SequenceLayout seq, BiConsumer<MemoryAddress, Long> handleSetter) {
-        for (long i = 0; i < seq.elementsCount().getAsLong() ; i++) {
+        for (long i = 0; i < seq.elementCount().getAsLong() ; i++) {
             handleSetter.accept(base, i);
         }
     }
@@ -112,8 +112,8 @@ public class TestNative {
                                               Function<ByteBuffer, Z> bufferFactory,
                                               BiFunction<Z, Integer, Object> nativeBufferExtractor,
                                               BiFunction<Long, Integer, Object> nativeRawExtractor) {
-        long nelems = layout.elementsCount().getAsLong();
-        ByteBuffer bb = base.segment().slice(base.offset(), (int)layout.byteSize()).asByteBuffer();
+        long nelems = layout.elementCount().getAsLong();
+        ByteBuffer bb = base.segment().asSlice(base.offset(), (int)layout.byteSize()).asByteBuffer();
         Z z = bufferFactory.apply(bb);
         for (long i = 0 ; i < nelems ; i++) {
             Object handleValue = handleExtractor.apply(base, i);
@@ -151,7 +151,7 @@ public class TestNative {
 
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        try (MemorySegment segment = MemorySegment.ofNative(seq)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
             MemoryAddress address = segment.baseAddress();
             initializer.accept(address);
             checker.accept(address);
@@ -161,7 +161,7 @@ public class TestNative {
     @Test(dataProvider="buffers")
     public void testNativeCapacity(Function<ByteBuffer, Buffer> bufferFunction, int elemSize) {
         int capacity = (int)doubles.byteSize();
-        try (MemorySegment segment = MemorySegment.ofNative(doubles)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(doubles)) {
             ByteBuffer bb = segment.asByteBuffer();
             Buffer buf = bufferFunction.apply(bb);
             int expected = capacity / elemSize;

@@ -47,7 +47,7 @@ import java.util.OptionalLong;
  * @implSpec
  * This class is immutable and thread-safe.
  */
-public class ValueLayout extends AbstractLayout implements MemoryLayout {
+public final class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     private final ByteOrder order;
 

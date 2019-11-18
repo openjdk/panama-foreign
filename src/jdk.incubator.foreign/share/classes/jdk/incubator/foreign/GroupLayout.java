@@ -52,7 +52,7 @@ import java.util.stream.LongStream;
  * @implSpec
  * This class is immutable and thread-safe.
  */
-public class GroupLayout extends AbstractLayout {
+public final class GroupLayout extends AbstractLayout {
 
     /**
      * The group kind.

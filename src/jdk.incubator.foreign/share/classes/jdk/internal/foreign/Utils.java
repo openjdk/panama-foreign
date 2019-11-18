@@ -77,7 +77,7 @@ public final class Utils {
         MemorySegment segment = new MemorySegmentImpl(buf, null, alignedSize, 0, Thread.currentThread(), scope);
         if (alignedBuf != buf) {
             long delta = alignedBuf - buf;
-            segment = segment.slice(delta, bytesSize);
+            segment = segment.asSlice(delta, bytesSize);
         }
         return segment;
     }

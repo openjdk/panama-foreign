@@ -43,7 +43,7 @@ public class TestSharedAccess {
 
     @Test
     public void testShared() throws Throwable {
-        try (MemorySegment s = MemorySegment.ofNative(4)) {
+        try (MemorySegment s = MemorySegment.allocateNative(4)) {
             setInt(s, 42);
             assertEquals(getInt(s), 42);
             List<Thread> threads = new ArrayList<>();
@@ -67,7 +67,7 @@ public class TestSharedAccess {
 
     @Test(expectedExceptions=UnsupportedOperationException.class)
     public void testBadCloseWithPendingAcquire() {
-        try (MemorySegment segment = MemorySegment.ofNative(8)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(8)) {
             segment.acquire();
         } //should fail here!
     }

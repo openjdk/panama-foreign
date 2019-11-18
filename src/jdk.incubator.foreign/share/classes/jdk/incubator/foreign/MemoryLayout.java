@@ -48,6 +48,13 @@ import java.util.stream.Stream;
  * More complex layouts can be derived from simpler ones: a <em>sequence layout</em> denotes a repetition of one or more
  * element layout (see {@link SequenceLayout}); a <em>group layout</em> denotes an aggregation of (typically) heterogeneous
  * member layouts (see {@link GroupLayout}).
+ * <p>
+ * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
+ * use of identity-sensitive operations (including reference equality ({@code ==}), identity hash code, or synchronization) on
+ * instances of {@code MemoryLayout} may have unpredictable results and should be avoided. The {@code equals} method should
+ * be used for comparisons.
+ * <p>
+ * Non-platform classes should not implement {@linkplain MemoryLayout} directly.
  *
  * <h2>Size, alignment and byte order</h2>
  *
@@ -109,6 +116,9 @@ long valueOffset = seq.offset(PathElement.sequenceElement(), PathElement.groupEl
  * @apiNote In the future, if the Java language permits, {@link MemoryLayout}
  * may become a {@code sealed} interface, which would prohibit subclassing except by
  * explicitly permitted types.
+ *
+ * @implSpec
+ * Implementations of this class are immutable and thread-safe.
  */
 public interface MemoryLayout extends Constable {
 
@@ -242,6 +252,15 @@ public interface MemoryLayout extends Constable {
      * of sequence element layout can be <em>explicit</em> (see {@link PathElement#sequenceElement(long)}) or
      * <em>implicit</em> (see {@link PathElement#sequenceElement()}). When a path uses one or more implicit
      * sequence path elements, it acquires additional <em>free dimensions</em>.
+     * <p>
+     * Non-platform classes should not implement {@linkplain PathElement} directly.
+     *
+     * @apiNote In the future, if the Java language permits, {@link PathElement}
+     * may become a {@code sealed} interface, which would prohibit subclassing except by
+     * explicitly permitted types.
+     *
+     * @implSpec
+     * Implementations of this interface are immutable and thread-safe.
      */
     interface PathElement {
 

@@ -36,7 +36,7 @@ import java.nio.ByteOrder;
 /**
  * This class defines several factory methods for constructing and combining memory access var handles.
  * To obtain a memory access var handle, clients must start from one of the <em>leaves</em> methods
- * (see {@link MemoryHandles#varHandle(Class)},
+ * (see {@link MemoryHandles#varHandle(Class, ByteOrder)},
  * {@link MemoryHandles#varHandle(Class, long, ByteOrder)}). This determines the variable type
  * (all primitive types but {@code void} and {@code boolean} are supported), as well as the alignment constraints and the
  * byte order associated to a memory access var handle.The resulting memory access var handle can then be combined in various ways
@@ -88,23 +88,24 @@ public final class MemoryHandles {
     }
 
     /**
-     * Creates a memory access var handle with the given carrier type.
+     * Creates a memory access var handle with the given carrier type and byte order.
      *
      * The resulting memory access var handle features a single {@link MemoryAddress} access coordinate,
      * and its variable type is set by the given carrier type.
      *
      * The alignment constraint for the resulting memory access var handle is the same as the in memory size of the
-     * carrier type, and the accessed offset is set at zero. The used byte order is the machine native byte order.
+     * carrier type, and the accessed offset is set at zero.
      *
      * @param carrier the carrier type. Valid carriers are {@code byte}, {@code short}, {@code char}, {@code int},
      * {@code float}, {@code long}, and {@code double}.
+     * @param byteOrder the required byte order.
      * @return the new memory access var handle.
      * @throws IllegalArgumentException when an illegal carrier type is used
      */
-    public static VarHandle varHandle(Class<?> carrier) throws IllegalArgumentException {
+    public static VarHandle varHandle(Class<?> carrier, ByteOrder byteOrder) throws IllegalArgumentException {
         return varHandle(carrier,
                 carrierSize(carrier),
-                ByteOrder.nativeOrder());
+                byteOrder);
     }
 
     /**

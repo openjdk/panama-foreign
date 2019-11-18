@@ -46,22 +46,22 @@ public class TestSegments {
 
     @Test(dataProvider = "badSizeAndAlignments", expectedExceptions = IllegalArgumentException.class)
     public void testBadAllocateAlign(long size, long align) {
-        MemorySegment.ofNative(size, align);
+        MemorySegment.allocateNative(size, align);
     }
 
     @Test(dataProvider = "badLayouts", expectedExceptions = UnsupportedOperationException.class)
     public void testBadAllocateLayout(MemoryLayout layout) {
-        MemorySegment.ofNative(layout);
+        MemorySegment.allocateNative(layout);
     }
 
     @Test(expectedExceptions = OutOfMemoryError.class)
     public void testAllocateTooBig() {
-        MemorySegment.ofNative(Long.MAX_VALUE);
+        MemorySegment.allocateNative(Long.MAX_VALUE);
     }
 
     @Test(dataProvider = "segmentOperations")
     public void testOpOutsideConfinement(SegmentMember member) throws Throwable {
-        try (MemorySegment segment = MemorySegment.ofNative(4)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(4)) {
             AtomicBoolean failed = new AtomicBoolean(false);
             Thread t = new Thread(() -> {
                 try {
@@ -142,6 +142,7 @@ public class TestSegments {
 
         boolean isConfined() {
             return method.getName().startsWith("as") ||
+                    method.getName().startsWith("to") ||
                     method.getName().equals("close") ||
                     method.getName().equals("slice");
         }

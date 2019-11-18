@@ -43,7 +43,7 @@ import java.util.OptionalLong;
  * @implSpec
  * This class is immutable and thread-safe.
  */
-/* package-private */ class PaddingLayout extends AbstractLayout implements MemoryLayout {
+/* package-private */ final class PaddingLayout extends AbstractLayout implements MemoryLayout {
 
     PaddingLayout(long size) {
         this(size, size, Optional.empty());

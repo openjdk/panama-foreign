@@ -30,7 +30,7 @@
  * <pre>{@code
 static final VarHandle intHandle = MemoryAccessVarHandles.dereferenceVarHandle(int.class);
 
-try (MemorySegment segment = MemorySegment.ofNative(10 * 4)) {
+try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
    MemoryAddress base = segment.baseAddress();
    for (long i = 0 ; i < 10 ; i++) {
      intHandle.set(base.offset(i * 4), (int)i);

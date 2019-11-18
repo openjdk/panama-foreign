@@ -58,7 +58,7 @@ MemoryLayout.ofStruct(
  * @implSpec
  * This class is immutable and thread-safe.
  */
-public class SequenceLayout extends AbstractLayout {
+public final class SequenceLayout extends AbstractLayout {
 
     private final OptionalLong elemCount;
     private final MemoryLayout elementLayout;
@@ -76,7 +76,7 @@ public class SequenceLayout extends AbstractLayout {
     /**
      * Computes the layout size, in bits. Since not all sequences have a finite size, this method can throw an exception.
      * @return the layout size (where defined).
-     * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementsCount()}).
+     * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementCount()}).
      */
     @Override
     public long bitSize() throws UnsupportedOperationException {
@@ -99,7 +99,7 @@ public class SequenceLayout extends AbstractLayout {
      * Returns the element count of this sequence layout (if any).
      * @return the element count of this sequence layout (if any).
      */
-    public OptionalLong elementsCount() {
+    public OptionalLong elementCount() {
         return elemCount;
     }
 
@@ -131,7 +131,7 @@ public class SequenceLayout extends AbstractLayout {
 
     @Override
     SequenceLayout dup(long alignment, Optional<String> name) {
-        return new SequenceLayout(elementsCount(), elementLayout, alignment, name);
+        return new SequenceLayout(elementCount(), elementLayout, alignment, name);
     }
 
     @Override

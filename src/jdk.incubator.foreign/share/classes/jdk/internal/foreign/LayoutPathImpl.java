@@ -86,8 +86,8 @@ public class LayoutPathImpl {
     }
 
     private void checkSequenceBounds(SequenceLayout seq, long index) {
-        if (seq.elementsCount().isPresent() && index >= seq.elementsCount().getAsLong()) {
-            throw new IllegalArgumentException(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementsCount().getAsLong()));
+        if (seq.elementCount().isPresent() && index >= seq.elementCount().getAsLong()) {
+            throw new IllegalArgumentException(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementCount().getAsLong()));
         }
     }
 
