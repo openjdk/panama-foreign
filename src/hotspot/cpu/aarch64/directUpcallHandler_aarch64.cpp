@@ -145,7 +145,8 @@ struct upcall_context {
                                                                         \
   ThreadInVMfromNative __tiv((JavaThread *)thread);                     \
   JavaValue result(RES_T);                                              \
-  JavaCalls::call(&result, meth, &args, thread);
+  methodHandle mhandle(thread, meth);                                   \
+  JavaCalls::call(&result, mhandle, &args, thread);
 
 
 static long specialized_upcall_helper_J(long l0, long l1, long l2, long l3,
