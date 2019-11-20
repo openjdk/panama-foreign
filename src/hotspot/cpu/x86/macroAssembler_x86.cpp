@@ -4298,10 +4298,20 @@ void MacroAssembler::vabsnegd(int opcode, XMMRegister dst, Register scr) {
 
 void MacroAssembler::vabsnegd(int opcode, XMMRegister dst, XMMRegister src, int vector_len, Register scr) {
   if (opcode == Op_AbsVD) {
-    vandpd(dst, src, ExternalAddress(StubRoutines::x86::vector_double_sign_mask()), vector_len, scr);
+    if (vector_len == Assembler::AVX_512bit && !VM_Version::supports_avx512dq()) {
+      // If avx512dq extension is not supported, vandpd instruction cannot be generated for 512-bit.
+      vpand(dst, src, ExternalAddress(StubRoutines::x86::vector_double_sign_mask()), vector_len, scr);
+    } else {
+      vandpd(dst, src, ExternalAddress(StubRoutines::x86::vector_double_sign_mask()), vector_len, scr);
+    }
   } else {
     assert((opcode == Op_NegVD),"opcode should be Op_NegD");
-    vxorpd(dst, src, ExternalAddress(StubRoutines::x86::vector_double_sign_flip()), vector_len, scr);
+    if (vector_len == Assembler::AVX_512bit && !VM_Version::supports_avx512dq()) {
+      // If avx512dq extension is not supported, vxorpd instruction cannot be generated for 512-bit.
+      vpxor(dst, src, ExternalAddress(StubRoutines::x86::vector_double_sign_flip()), vector_len, scr);
+    } else {
+      vxorpd(dst, src, ExternalAddress(StubRoutines::x86::vector_double_sign_flip()), vector_len, scr);
+    }
   }
 }
 
@@ -4316,10 +4326,20 @@ void MacroAssembler::vabsnegf(int opcode, XMMRegister dst, Register scr) {
 
 void MacroAssembler::vabsnegf(int opcode, XMMRegister dst, XMMRegister src, int vector_len, Register scr) {
   if (opcode == Op_AbsVF) {
-    vandps(dst, src, ExternalAddress(StubRoutines::x86::vector_float_sign_mask()), vector_len, scr);
+    if (vector_len == Assembler::AVX_512bit && !VM_Version::supports_avx512dq()) {
+      // If avx512dq extension is not supported, vandps instruction cannot be generated for 512-bit.
+      vpand(dst, src, ExternalAddress(StubRoutines::x86::vector_float_sign_mask()), vector_len, scr);
+    } else {
+      vandps(dst, src, ExternalAddress(StubRoutines::x86::vector_float_sign_mask()), vector_len, scr);
+    }
   } else {
     assert((opcode == Op_NegVF),"opcode should be Op_NegF");
-    vxorps(dst, src, ExternalAddress(StubRoutines::x86::vector_float_sign_flip()), vector_len, scr);
+    if (vector_len == Assembler::AVX_512bit && !VM_Version::supports_avx512dq()) {
+      // If avx512dq extension is not supported, vxorps instruction cannot be generated for 512-bit.
+      vpxor(dst, src, ExternalAddress(StubRoutines::x86::vector_float_sign_flip()), vector_len, scr);
+    } else {
+      vxorps(dst, src, ExternalAddress(StubRoutines::x86::vector_float_sign_flip()), vector_len, scr);
+    }
   }
 }
 
