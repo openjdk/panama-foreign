@@ -97,7 +97,7 @@ public interface MemoryAddress {
      * @throws IllegalArgumentException if {@code bytes} is &lt; 0, or if it is greater than the size of the segments
      * associated with either {@code src} or {@code dst}.
      * @throws IllegalStateException if either the source address or the target address belong to memory segments
-     * which have been already closed.
+     * which have been already closed, or if access occurs from a thread other than the thread owning either segment.
      */
     static void copy(MemoryAddress src, MemoryAddress dst, long bytes) throws IllegalStateException, IllegalArgumentException {
         MemoryAddressImpl.copy((MemoryAddressImpl)src, (MemoryAddressImpl)dst, bytes);

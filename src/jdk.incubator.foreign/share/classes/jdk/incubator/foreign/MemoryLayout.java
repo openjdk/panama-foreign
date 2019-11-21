@@ -59,7 +59,7 @@ import java.util.stream.Stream;
  * <h2>Size, alignment and byte order</h2>
  *
  * All layouts have a size; layout size for value and padding layouts is always explicitly denoted; this means that a layout description
- * has always the same size in bits, regardless of the platform in which it is used. For derived layouts, the size is computed
+ * always has the same size in bits, regardless of the platform in which it is used. For derived layouts, the size is computed
  * as follows:
  * <ul>
  *     <li>for a <em>finite</em> sequence layout <em>S</em> whose element layout is <em>E</em> and size is L,
@@ -92,7 +92,7 @@ import java.util.stream.Stream;
  * (see {@link MemoryLayout#offset(PathElement...)}), or to quickly obtain a memory access handle corresponding to the selected
  * layout (see {@link MemoryLayout#varHandle(Class, PathElement...)}).
  * <p>
- * Such <em>layout paths</em> can be constructed programmatically using the instance methods in this class.
+ * Such <em>layout paths</em> can be constructed programmatically using the methods in this class.
  * For instance, given a layout constructed as follows:
  * <blockquote><pre>{@code
 SequenceLayout seq = MemoryLayout.ofSequence(5,
@@ -127,6 +127,7 @@ public interface MemoryLayout extends Constable {
 
     /**
      * Computes the layout size, in bits.
+     *
      * @return the layout size, in bits.
      * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}).
      */
@@ -134,6 +135,7 @@ public interface MemoryLayout extends Constable {
 
     /**
      * Computes the layout size, in bytes.
+     *
      * @return the layout size, in bytes.
      * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}),
      * or if the bits size (see {@link MemoryLayout#bitSize()} is not a multiple of 8.
@@ -145,6 +147,7 @@ public interface MemoryLayout extends Constable {
 
     /**
      * Return the <em>name</em> (if any) associated with this layout.
+     *
      * @return the layout <em>name</em> (if any).
      * @see MemoryLayout#withName(String)
      */
@@ -152,6 +155,7 @@ public interface MemoryLayout extends Constable {
 
     /**
      * Attach a <em>name</em> to this layout.
+     *
      * @param name the layout name.
      * @return a new layout which is the same as this layout, except for the <em>name</em> associated to it.
      * @see MemoryLayout#name()
@@ -159,7 +163,7 @@ public interface MemoryLayout extends Constable {
     MemoryLayout withName(String name);
 
     /**
-     * Returns the alignment constraints associated with this layout, expressed in bits. Layout alignment defines a power
+     * Returns the alignment constraint associated with this layout, expressed in bits. Layout alignment defines a power
      * of two A which is the bitwise alignment of the layout. If A&gt;=8 then A/8 is the number of bytes that must be aligned
      * for any pointer that correctly points to this layout. Thus:
      *
@@ -174,7 +178,7 @@ public interface MemoryLayout extends Constable {
     long bitAlignment();
 
     /**
-     * Returns the alignment constraints associated with this layout, expressed in bytes. Layout alignment defines a power
+     * Returns the alignment constraint associated with this layout, expressed in bytes. Layout alignment defines a power
      * of two A which is the bytewise alignment of the layout, where A is the number of bytes that must be aligned
      * for any pointer that correctly points to this layout. Thus:
      *
@@ -192,22 +196,23 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * Creates a new layout which features the desired alignment.
+     * Creates a new layout which features the desired alignment constraint.
      *
-     * @param bitAlignment the layout alignment, expressed in bits.
-     * @return a new layout which is the same as this layout, except for the alignment associated to it.
-     * @throws IllegalArgumentException if the supplied alignment is not a power of two, or if it's lower than 8.
+     * @param bitAlignment the layout alignment constraint, expressed in bits.
+     * @return a new layout which is the same as this layout, except for the alignment constraint associated to it.
+     * @throws IllegalArgumentException if the supplied alignment is not a power of two, or if it's less than than 8.
      */
     MemoryLayout withBitAlignment(long bitAlignment) throws IllegalArgumentException;
 
     /**
-     * The offset of the layout selected by a given layout path, where the path is considered rooted in this
+     * Computes the offset of the layout selected by a given layout path, where the path is considered rooted in this
      * layout.
-     * @param elements an operator that can be used to generate the desired layout path.
-     * @return The offset of layout selected by a the layout path obtained by concatenating the path elements in {@code elements}.
      *
      * @apiNote if the layout path has one (or more) free dimensions,
      * the offset is computed as if all the indices corresponding to such dimensions were set to {@code 0}.
+     *
+     * @param elements the layout path elements.
+     * @return The offset of layout selected by a the layout path obtained by concatenating the path elements in {@code elements}.
      */
     default long offset(PathElement... elements) throws UnsupportedOperationException {
         LayoutPathImpl path = LayoutPathImpl.rootPath(this);
@@ -218,10 +223,14 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * A var handle that can be used to dereference memory at the layout selected by a given layout path,
+     * Creates a memory access var handle that can be used to dereference memory at the layout selected by a given layout path,
      * where the path is considered rooted in this layout.
+     *
+     * @apiNote the resulting var handle will feature an additional {@code long} access coordinate for every
+     * unspecified sequence access component contained in this layout path.
+     *
      * @param carrier the var handle carrier type.
-     * @param elements an operator that can be used to generate the desired layout path.
+     * @param elements the layout path elements.
      * @return a var handle which can be used to dereference memory at the layout denoted by given layout path.
      * @throws UnsupportedOperationException if the layout targeted by this path is not a {@link ValueLayout} layout.
      * @throws IllegalArgumentException if the carrier does not represent a primitive type, if the carrier is {@code void},
@@ -232,9 +241,6 @@ public interface MemoryLayout extends Constable {
      * <li>the size of the value layout selected by the path does not match that of the specified carrier type</li>
      * <li>the layout path has one or more path elements with incompatible alignment constraints</li>
      * </ul>
-     *
-     * @apiNote the result var handle will feature an additional {@code long} access coordinate for every
-     * unspecified sequence access component contained in this layout path.
      */
     default VarHandle varHandle(Class<?> carrier, PathElement... elements) throws UnsupportedOperationException, IllegalArgumentException {
         LayoutPathImpl path = LayoutPathImpl.rootPath(this);
@@ -245,7 +251,7 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * Instances of this class are used to form <a href="Layout.html#layout-paths"><em>layout paths</em></a>. There
+     * Instances of this class are used to form <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>. There
      * are two kinds of path elements: <em>group path elements</em> and <em>sequence path elements</em>. Group
      * path elements are used to select a given named member layout within a {@link GroupLayout}. Sequence
      * path elements are used to select a sequence element layout within a {@link SequenceLayout}; selection
@@ -268,12 +274,13 @@ public interface MemoryLayout extends Constable {
          * Returns a path element which selects a member layout with given name from a given group layout.
          * The path element returned by this method does not alter the number of free dimensions of any path
          * that is combined with such element.
+         *
+         * @implSpec in case multiple group elements with a matching name exist, the path element returned by this
+         * method will select the first one; that is, the group element with lowest offset from current path is selected.
+         *
          * @param name the name of the group element to be selected.
          * @return a path element which selects the group element with given name.
          * @throws NullPointerException if the specified group element name is {@code null}.
-         *
-         * @implSpec in case multiple group elements with matching name exist, the path element returned by this
-         * method will select the first one; that is, the group element with lowest offset from current path is selected.
          */
         static PathElement groupElement(String name) {
             Objects.requireNonNull(name);
@@ -284,6 +291,7 @@ public interface MemoryLayout extends Constable {
          * Returns a path element which selects the element layout at the specified position in a given the sequence layout.
          * The path element returned by this method does not alter the number of free dimensions of any path
          * that is combined with such element.
+         *
          * @param index the index of the sequence element to be selected.
          * @return a path element which selects the sequence element layout with given index.
          * @throws IllegalArgumentException if the index is &lt; 0.
@@ -307,6 +315,7 @@ public interface MemoryLayout extends Constable {
 E * (S + I * F)
          * }</pre></blockquote>
          * where {@code E} is the size (in bytes) of the sequence element layout.
+         *
          * @param start the index of the first sequence element to be selected.
          * @param step the step factor at which subsequence sequence elements are to be selected.
          * @return a path element which selects the sequence element layout with given index.
@@ -327,6 +336,7 @@ E * (S + I * F)
          * Returns a path element which selects an unspecified element layout from a given sequence layout.
          * If a path with free dimensions {@code n} is combined with the path element returned by this method,
          * the number of free dimensions of the resulting path will be {@code 1 + n}.
+         *
          * @return a path element which selects an unspecified sequence element layout.
          */
         static PathElement sequenceElement() {
@@ -345,12 +355,14 @@ E * (S + I * F)
 
     /**
      * Returns the hash code value for this layout.
+     *
      * @return the hash code value for this layout.
      */
     int hashCode();
 
     /**
      * Returns a string representation of this layout.
+     *
      * @return a string representation of this layout.
      */
     @Override
@@ -358,6 +370,7 @@ E * (S + I * F)
 
     /**
      * Create a new padding layout with given size.
+     *
      * @param size the padding size in bits.
      * @return the new selector layout.
      * @throws IllegalArgumentException if size is &le; 0.
@@ -369,6 +382,7 @@ E * (S + I * F)
 
     /**
      * Create a value layout of given byte order and size.
+     *
      * @param size the value layout size.
      * @param order the value layout's byte order.
      * @return a new value layout.
@@ -381,8 +395,9 @@ E * (S + I * F)
 
     /**
      * Create a new sequence layout with given element layout and element count.
-     * @param elementLayout the sequence element layout.
+     *
      * @param elementCount the sequence element count.
+     * @param elementLayout the sequence element layout.
      * @return the new sequence layout with given element layout and size.
      * @throws IllegalArgumentException if size &lt; 0.
      */
@@ -394,6 +409,7 @@ E * (S + I * F)
 
     /**
      * Create a new sequence layout, with unbounded element count and given element layout.
+     *
      * @param elementLayout the element layout of the sequence layout.
      * @return the new sequence layout with given element layout.
      */
@@ -403,6 +419,7 @@ E * (S + I * F)
 
     /**
      * Create a new <em>struct</em> group layout with given member layouts.
+     *
      * @param elements The member layouts of the <em>struct</em> group layout.
      * @return a new <em>struct</em> group layout with given member layouts.
      */
@@ -412,6 +429,7 @@ E * (S + I * F)
 
     /**
      * Create a new <em>union</em> group layout with given member layouts.
+     *
      * @param elements The member layouts of the <em>union</em> layout.
      * @return a new <em>union</em> group layout with given member layouts.
      */

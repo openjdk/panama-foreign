@@ -48,6 +48,7 @@ MemoryLayout.ofStruct(
     MemoryLayout.ofValueBits(32),
     MemoryLayout.ofValueBits(32));
  * }</pre>
+ *
  * <p>
  * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
  * class; use of identity-sensitive operations (including reference equality
@@ -75,6 +76,7 @@ public final class SequenceLayout extends AbstractLayout {
 
     /**
      * Computes the layout size, in bits. Since not all sequences have a finite size, this method can throw an exception.
+     *
      * @return the layout size (where defined).
      * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementCount()}).
      */
@@ -88,7 +90,8 @@ public final class SequenceLayout extends AbstractLayout {
     }
 
     /**
-     * The element layout associated with this sequence layout.
+     * Returns the element layout associated with this sequence layout.
+     *
      * @return The element layout associated with this sequence layout.
      */
     public MemoryLayout elementLayout() {
@@ -97,6 +100,7 @@ public final class SequenceLayout extends AbstractLayout {
 
     /**
      * Returns the element count of this sequence layout (if any).
+     *
      * @return the element count of this sequence layout (if any).
      */
     public OptionalLong elementCount() {

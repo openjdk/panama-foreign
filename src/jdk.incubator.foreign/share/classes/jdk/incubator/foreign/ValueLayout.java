@@ -36,7 +36,7 @@ import java.util.OptionalLong;
 /**
  * A value layout. A value layout is used to model the memory layout associated with values of basic data types, such as <em>integral</em> types
  * (either signed or unsigned) and <em>floating-point</em> types. Each value layout has a size and a byte order (see {@link ByteOrder}).
- * Where it's not explicitly provided, a value layout's byte order is assumed to be compatible with the platform byte order (see {@link ByteOrder#nativeOrder()}).
+ *
  * <p>
  * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
  * class; use of identity-sensitive operations (including reference equality
@@ -62,6 +62,7 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * Returns the value's byte order.
+     *
      * @return the value's  byte order.
      */
     public ByteOrder order() {
@@ -70,6 +71,7 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     /**
      * Returns a new value layout with given byte order.
+     *
      * @param order the desired byte order.
      * @return a new value layout with given byte order.
      */

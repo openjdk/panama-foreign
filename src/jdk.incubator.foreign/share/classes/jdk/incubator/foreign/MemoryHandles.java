@@ -35,11 +35,11 @@ import java.nio.ByteOrder;
 
 /**
  * This class defines several factory methods for constructing and combining memory access var handles.
- * To obtain a memory access var handle, clients must start from one of the <em>leaves</em> methods
+ * To obtain a memory access var handle, clients must start from one of the <em>leaf</em> methods
  * (see {@link MemoryHandles#varHandle(Class, ByteOrder)},
  * {@link MemoryHandles#varHandle(Class, long, ByteOrder)}). This determines the variable type
- * (all primitive types but {@code void} and {@code boolean} are supported), as well as the alignment constraints and the
- * byte order associated to a memory access var handle.The resulting memory access var handle can then be combined in various ways
+ * (all primitive types but {@code void} and {@code boolean} are supported), as well as the alignment constraint and the
+ * byte order associated to a memory access var handle. The resulting memory access var handle can then be combined in various ways
  * to emulate different addressing modes. The var handles created by this class feature a <em>mandatory</em> coordinate type
  * (of type {@link MemoryAddress}), and zero or more {@code long} coordinate types, which can be used to emulate
  * multi-dimensional array indexing.
@@ -74,7 +74,7 @@ address = base + offset
 offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
  * }</pre></blockquote>
  *
- * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided optional {@code long}
+ * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as optional {@code long}
  * access coordinates, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
  * <em>static</em> constants which are can be acquired through the {@link MemoryHandles#withOffset(VarHandle, long)}
  * and the {@link MemoryHandles#withStride(VarHandle, long)} combinators, respectively.
@@ -109,7 +109,7 @@ public final class MemoryHandles {
     }
 
     /**
-     * Creates a memory access var handle with the given carrier type, alignment constraints and byte order.
+     * Creates a memory access var handle with the given carrier type, alignment constraint, and byte order.
      *
      * The resulting memory access var handle features a single {@link MemoryAddress} access coordinate,
      * and its variable type is set by the given carrier type.
@@ -118,10 +118,11 @@ public final class MemoryHandles {
      *
      * @param carrier the carrier type. Valid carriers are {@code byte}, {@code short}, {@code char}, {@code int},
      * {@code float}, {@code long}, and {@code double}.
-     * @param align the alignment constraints (in bytes). Must be a power of two.
+     * @param align the alignment constraint (in bytes). Must be a power of two.
      * @param byteOrder the required byte order.
      * @return the new memory access var handle.
-     * @throws IllegalArgumentException when an illegal carrier type is used
+     * @throws IllegalArgumentException when an illegal carrier type is used, or when the alignment constraint
+     * is not a power of two.
      */
     public static VarHandle varHandle(Class<?> carrier, long align, ByteOrder byteOrder) throws IllegalArgumentException {
         if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
@@ -147,7 +148,7 @@ public final class MemoryHandles {
      * @param offset the offset, in bytes. Must be positive or zero.
      * @return the new memory access var handle.
      * @throws IllegalArgumentException when a memory access var handle is passed that is not a memory access var handle,
-     * if the offset is negative, or incompatible with the alignment constraints.
+     * if the offset is negative, or incompatible with the alignment constraint.
      * or when a negative offset is passed.
      */
     public static VarHandle withOffset(VarHandle target, long offset) throws IllegalArgumentException {
@@ -181,7 +182,7 @@ public final class MemoryHandles {
      * @param stride the stride by which to multiply the coordinate value. Must be greater than zero.
      * @return the new memory access var handle.
      * @throws IllegalArgumentException when a memory access var handle is passed that is not a memory access var handle,
-     * if the stride is zero, or otherwise incompatible with the alignment constraints.
+     * if the stride is less than or equal to zero, or otherwise incompatible with the alignment constraint.
      */
     public static VarHandle withStride(VarHandle target, long stride) throws IllegalArgumentException {
         if (stride == 0) {
