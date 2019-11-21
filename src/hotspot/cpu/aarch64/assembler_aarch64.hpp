@@ -2440,10 +2440,20 @@ public:
     rf(Vn, 5), rf(Vd, 0);
   }
 
-  // (double) {a, b} -> (a + b)
-  void faddpd(FloatRegister Vd, FloatRegister Vn) {
+  // (long) {a, b} -> (a + b)
+  void addpd(FloatRegister Vd, FloatRegister Vn) {
     starti;
-    f(0b0111111001110000110110, 31, 10);
+    f(0b0101111011110001101110, 31, 10);
+    rf(Vn, 5), rf(Vd, 0);
+  }
+
+  // (Floating-point) {a, b} -> (a + b)
+  void faddp(FloatRegister Vd, FloatRegister Vn, SIMD_RegVariant type) {
+    assert(type == D || type == S, "Wrong type for faddp");
+    starti;
+    f(0b011111100, 31, 23);
+    f(type == D ? 1 : 0, 22);
+    f(0b110000110110, 21, 10);
     rf(Vn, 5), rf(Vd, 0);
   }
 
