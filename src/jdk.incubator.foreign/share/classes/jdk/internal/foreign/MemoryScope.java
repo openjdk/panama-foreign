@@ -73,7 +73,7 @@ public class MemoryScope {
 
     void close() {
         if (!activeCount.compareAndSet(UNACQUIRED, CLOSED)) {
-            throw new UnsupportedOperationException("Cannot close a segment that has active acquired views");
+            throw new IllegalStateException("Cannot close a segment that has active acquired views");
         }
         isAlive = false;
         if (cleanupAction != null) {

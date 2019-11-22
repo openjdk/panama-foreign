@@ -65,7 +65,7 @@ abstract class AbstractLayout implements MemoryLayout {
     abstract AbstractLayout dup(long alignment, Optional<String> name);
 
     @Override
-    public AbstractLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+    public AbstractLayout withBitAlignment(long alignmentBits) {
         checkAlignment(alignmentBits);
         return dup(alignmentBits, name);
     }

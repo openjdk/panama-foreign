@@ -140,7 +140,7 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
      * {@inheritDoc}
      */
     @Override
-    public ValueLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+    public ValueLayout withBitAlignment(long alignmentBits) {
         return (ValueLayout)super.withBitAlignment(alignmentBits);
     }
 }

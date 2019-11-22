@@ -58,8 +58,8 @@ public class LayoutPathImpl {
         return offset;
     }
 
-    public LayoutPathImpl sequenceElement() throws UnsupportedOperationException {
-        check(SequenceLayout.class);
+    public LayoutPathImpl sequenceElement() throws IllegalArgumentException {
+        check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
         MemoryLayout elem = seq.elementLayout();
         List<Long> newScales = new ArrayList<>(scales);
@@ -67,8 +67,8 @@ public class LayoutPathImpl {
         return LayoutPathImpl.nestedPath(elem, offset, newScales, this);
     }
 
-    public LayoutPathImpl sequenceElement(long start, long step) throws IllegalArgumentException, UnsupportedOperationException {
-        check(SequenceLayout.class);
+    public LayoutPathImpl sequenceElement(long start, long step) throws IllegalArgumentException {
+        check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
         checkSequenceBounds(seq, start);
         MemoryLayout elem = seq.elementLayout();
@@ -78,21 +78,21 @@ public class LayoutPathImpl {
         return LayoutPathImpl.nestedPath(elem, offset + (start * elemSize), newScales, this);
     }
 
-    public LayoutPathImpl sequenceElement(long index) throws IllegalArgumentException, UnsupportedOperationException {
-        check(SequenceLayout.class);
+    public LayoutPathImpl sequenceElement(long index) throws IllegalArgumentException {
+        check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
         checkSequenceBounds(seq, index);
         return LayoutPathImpl.nestedPath(seq.elementLayout(), offset, scales, this);
     }
 
-    private void checkSequenceBounds(SequenceLayout seq, long index) {
+    private void checkSequenceBounds(SequenceLayout seq, long index) throws IllegalArgumentException {
         if (seq.elementCount().isPresent() && index >= seq.elementCount().getAsLong()) {
-            throw new IllegalArgumentException(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementCount().getAsLong()));
+            throw badLayoutPath(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementCount().getAsLong()));
         }
     }
 
-    public LayoutPathImpl groupElement(String name) throws IllegalArgumentException, UnsupportedOperationException {
-        check(GroupLayout.class);
+    public LayoutPathImpl groupElement(String name) throws IllegalArgumentException {
+        check(GroupLayout.class, "attempting to select a group element from a non-group layout");
         GroupLayout g = (GroupLayout)layout;
         long offset = 0;
         MemoryLayout elem = null;
@@ -107,20 +107,20 @@ public class LayoutPathImpl {
             }
         }
         if (elem == null) {
-            throw new IllegalArgumentException("Cannot resolve '" + name + "' in layout " + layout);
+            throw badLayoutPath("cannot resolve '" + name + "' in layout " + layout);
         }
         return LayoutPathImpl.nestedPath(elem, this.offset + offset, scales, this);
     }
 
-    void check(Class<?> layoutClass) {
+    void check(Class<?> layoutClass, String msg) throws IllegalArgumentException {
         if (!layoutClass.isAssignableFrom(layout.getClass())) {
-            throw new IllegalStateException("Expected layout of type: " + layoutClass.getName());
+            throw badLayoutPath(msg);
         }
     }
 
-    public VarHandle dereferenceHandle(Class<?> carrier) {
+    public VarHandle dereferenceHandle(Class<?> carrier) throws IllegalArgumentException, UnsupportedOperationException {
         if (!(layout instanceof ValueLayout)) {
-            throw new IllegalArgumentException("Not a value layout: " + layout);
+            throw badLayoutPath("layout path does not select a value layout");
         }
 
         if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class // illegal carrier?
@@ -138,6 +138,10 @@ public class LayoutPathImpl {
                 scales.stream().mapToLong(s -> Utils.bitsToBytesOrThrow(s, IllegalStateException::new)).toArray());
     }
 
+    static IllegalArgumentException badLayoutPath(String cause) throws IllegalArgumentException {
+        return new IllegalArgumentException("Bad layout path: " + cause);
+    }
+
     public static LayoutPathImpl rootPath(MemoryLayout layout) {
         return new LayoutPathImpl(layout, 0L, List.of(), null);
     }
@@ -146,7 +150,7 @@ public class LayoutPathImpl {
         return new LayoutPathImpl(layout, offset, scales, encl);
     }
 
-    static void checkAlignment(LayoutPathImpl path) {
+    static void checkAlignment(LayoutPathImpl path) throws UnsupportedOperationException {
         MemoryLayout layout = path.layout;
         long alignment = layout.bitAlignment();
         if (path.offset % alignment != 0) {

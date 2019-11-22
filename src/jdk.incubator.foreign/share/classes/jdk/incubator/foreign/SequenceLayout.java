@@ -81,7 +81,7 @@ public final class SequenceLayout extends AbstractLayout {
      * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementCount()}).
      */
     @Override
-    public long bitSize() throws UnsupportedOperationException {
+    public long bitSize() {
         if (elemCount.isPresent()) {
             return super.bitSize();
         } else {
@@ -162,7 +162,7 @@ public final class SequenceLayout extends AbstractLayout {
      * {@inheritDoc}
      */
     @Override
-    public SequenceLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+    public SequenceLayout withBitAlignment(long alignmentBits) {
         return (SequenceLayout)super.withBitAlignment(alignmentBits);
     }
 }

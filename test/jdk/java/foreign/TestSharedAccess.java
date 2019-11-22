@@ -65,7 +65,7 @@ public class TestSharedAccess {
         }
     }
 
-    @Test(expectedExceptions=UnsupportedOperationException.class)
+    @Test(expectedExceptions=IllegalStateException.class)
     public void testBadCloseWithPendingAcquire() {
         try (MemorySegment segment = MemorySegment.allocateNative(8)) {
             segment.acquire();

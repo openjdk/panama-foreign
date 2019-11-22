@@ -50,7 +50,7 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
         this.offset = offset;
     }
 
-    public static void copy(MemoryAddressImpl src, MemoryAddressImpl dst, long size) {
+    public static void copy(MemoryAddressImpl src, MemoryAddressImpl dst, long size) throws IndexOutOfBoundsException {
         src.checkAccess(0, size, true);
         dst.checkAccess(0, size, false);
         try {

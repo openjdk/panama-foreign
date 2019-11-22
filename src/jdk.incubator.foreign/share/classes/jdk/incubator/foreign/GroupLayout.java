@@ -197,7 +197,7 @@ public final class GroupLayout extends AbstractLayout {
      * {@inheritDoc}
      */
     @Override
-    public GroupLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+    public GroupLayout withBitAlignment(long alignmentBits) {
         return (GroupLayout)super.withBitAlignment(alignmentBits);
     }
 }

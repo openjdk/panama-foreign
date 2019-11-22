@@ -96,7 +96,7 @@ public class TestMemoryAccess {
             try {
                 checker.check(handle, addr.offset(layout.byteSize()));
                 throw new AssertionError(); //not ok, out of bounds
-            } catch (IllegalStateException ex) {
+            } catch (IndexOutOfBoundsException ex) {
                 //ok, should fail (out of bounds)
             }
             outer_address = addr; //leak!
@@ -129,7 +129,7 @@ public class TestMemoryAccess {
             try {
                 checker.check(handle, addr, seq.elementCount().getAsLong());
                 throw new AssertionError(); //not ok, out of bounds
-            } catch (IllegalStateException ex) {
+            } catch (IndexOutOfBoundsException ex) {
                 //ok, should fail (out of bounds)
             }
             outer_address = addr; //leak!
@@ -200,7 +200,7 @@ public class TestMemoryAccess {
                 checker.check(handle, addr, seq.elementCount().getAsLong(),
                         ((SequenceLayout)seq.elementLayout()).elementCount().getAsLong());
                 throw new AssertionError(); //not ok, out of bounds
-            } catch (IllegalStateException ex) {
+            } catch (IndexOutOfBoundsException ex) {
                 //ok, should fail (out of bounds)
             }
             outer_address = addr; //leak!

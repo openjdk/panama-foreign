@@ -32,6 +32,7 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
 import sun.nio.ch.FileChannelImpl;
+import sun.security.action.GetBooleanAction;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -49,6 +50,8 @@ public final class Utils {
     private final static long MAX_ALIGN = 16;
 
     private static final JavaNioAccess javaNioAccess = SharedSecrets.getJavaNioAccess();
+
+    private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
     public static long alignUp(long n, long alignment) {
         return (n + alignment - 1) & -alignment;
@@ -72,6 +75,9 @@ public final class Utils {
         }
 
         long buf = unsafe.allocateMemory(alignedSize);
+        if (!skipZeroMemory) {
+            unsafe.setMemory(buf, alignedSize, (byte)0);
+        }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         MemoryScope scope = new MemoryScope(null, () -> unsafe.freeMemory(buf));
         MemorySegment segment = new MemorySegmentImpl(buf, null, alignedSize, 0, Thread.currentThread(), scope);

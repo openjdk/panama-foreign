@@ -142,7 +142,7 @@ public interface MemorySegment extends AutoCloseable {
      * with this segment from the current thread.
      * @throws IllegalStateException if this segment has been closed.
      */
-    MemorySegment acquire() throws IllegalStateException;
+    MemorySegment acquire();
 
     /**
      * Is this segment accessible from the current thread?
@@ -163,7 +163,7 @@ public interface MemorySegment extends AutoCloseable {
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
-    MemorySegment asReadOnly() throws IllegalStateException;
+    MemorySegment asReadOnly();
 
     /**
      * Obtains a new memory segment view whose base address is the same as the base address of this segment plus a given offset,
@@ -171,15 +171,11 @@ public interface MemorySegment extends AutoCloseable {
      * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
      * @param newSize The new segment size, specified in bytes.
      * @return a new memory segment view with updated base/limit addresses.
-     * @throws IllegalArgumentException if the new segment bounds are illegal; this can happen because:
-     * <ul>
-     * <li>{@code offset} is negative or greater than {@code byteSize()}</li>
-     * <li>{@code newSize} is negative or {@code newSize > byteSize() - offset}</li>
-     * </ul>
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > byteSize()}, {@code newSize < 0}, or {@code newSize > byteSize() - offset}
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
-    MemorySegment asSlice(long offset, long newSize) throws IllegalArgumentException, IllegalStateException;
+    MemorySegment asSlice(long offset, long newSize);
 
     /**
      * Is this segment alive?
@@ -200,12 +196,10 @@ public interface MemorySegment extends AutoCloseable {
      * or to access the memory associated with the segment will fail with {@link IllegalStateException}. Depending on
      * the kind of memory segment being closed, calling this method further trigger deallocation of all the resources
      * associated with the memory segment.
-     * @throws UnsupportedOperationException if the segment cannot be closed e.g. because existing acquired views of this
-     * segment are still in use (see {@link MemorySegment#acquire()}).
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment.
+     * thread owning this segment, or if existing acquired views of this segment are still in use (see {@link MemorySegment#acquire()}).
      */
-    void close() throws UnsupportedOperationException, IllegalStateException;
+    void close();
 
     /**
      * Wraps this segment in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
@@ -228,7 +222,7 @@ public interface MemorySegment extends AutoCloseable {
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
-    ByteBuffer asByteBuffer() throws UnsupportedOperationException, IllegalStateException;
+    ByteBuffer asByteBuffer();
 
     /**
      * Copy the contents of this memory segment into a fresh byte array.
@@ -238,7 +232,7 @@ public interface MemorySegment extends AutoCloseable {
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
-    byte[] toByteArray() throws UnsupportedOperationException, IllegalStateException;
+    byte[] toByteArray();
 
     /**
      * Creates a new buffer memory segment that models the memory associated with the given byte
@@ -264,7 +258,7 @@ public interface MemorySegment extends AutoCloseable {
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
      */
-    static MemorySegment ofArray(byte[] arr) throws IllegalArgumentException {
+    static MemorySegment ofArray(byte[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
@@ -277,7 +271,7 @@ public interface MemorySegment extends AutoCloseable {
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
      */
-    static MemorySegment ofArray(char[] arr) throws IllegalArgumentException {
+    static MemorySegment ofArray(char[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
@@ -290,7 +284,7 @@ public interface MemorySegment extends AutoCloseable {
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
      */
-    static MemorySegment ofArray(short[] arr) throws IllegalArgumentException {
+    static MemorySegment ofArray(short[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
@@ -303,7 +297,7 @@ public interface MemorySegment extends AutoCloseable {
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
      */
-    static MemorySegment ofArray(int[] arr) throws IllegalArgumentException {
+    static MemorySegment ofArray(int[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
@@ -316,7 +310,7 @@ public interface MemorySegment extends AutoCloseable {
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
      */
-    static MemorySegment ofArray(float[] arr) throws IllegalArgumentException {
+    static MemorySegment ofArray(float[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
@@ -329,7 +323,7 @@ public interface MemorySegment extends AutoCloseable {
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
      */
-    static MemorySegment ofArray(long[] arr) throws IllegalArgumentException {
+    static MemorySegment ofArray(long[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
@@ -342,7 +336,7 @@ public interface MemorySegment extends AutoCloseable {
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
      */
-    static MemorySegment ofArray(double[] arr) throws IllegalArgumentException {
+    static MemorySegment ofArray(double[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
@@ -361,11 +355,9 @@ public interface MemorySegment extends AutoCloseable {
      *
      * @param layout the layout of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
-     * @throws UnsupportedOperationException if the specified layout has illegal size or alignment constraint.
-     * @throws RuntimeException if the specified size is too large for the system runtime.
-     * @throws OutOfMemoryError if the allocation of the off-heap memory block is refused by the system runtime.
+     * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraint.
      */
-    static MemorySegment allocateNative(MemoryLayout layout) throws IllegalArgumentException {
+    static MemorySegment allocateNative(MemoryLayout layout) {
         return allocateNative(layout.byteSize(), layout.byteAlignment());
     }
 
@@ -374,7 +366,7 @@ public interface MemorySegment extends AutoCloseable {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    allocateNative(bitsSize, 1);
+    allocateNative(bytesSize, 1);
      * }</pre></blockquote>
      *
      * @implNote The initialization state of the contents of the block of off-heap memory associated with the returned native memory
@@ -384,11 +376,9 @@ public interface MemorySegment extends AutoCloseable {
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if specified size is &lt; 0.
-     * @throws RuntimeException if the specified size is too large for the system runtime.
-     * @throws OutOfMemoryError if the allocation of the off-heap memory block is refused by the system runtime.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}.
      */
-    static MemorySegment allocateNative(long bytesSize) throws IllegalArgumentException {
+    static MemorySegment allocateNative(long bytesSize) {
         return allocateNative(bytesSize, 1);
     }
 
@@ -402,11 +392,11 @@ public interface MemorySegment extends AutoCloseable {
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
      * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}.
      * @return a new mapped memory segment.
-     * @throws IllegalArgumentException if specified size is &lt; 0.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws UnsupportedOperationException if an unsupported map mode is specified.
      * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
      */
-    static MemorySegment mapFromPath(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IllegalArgumentException, IOException {
+    static MemorySegment mapFromPath(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
         return Utils.makeMappedSegment(path, bytesSize, mapMode);
     }
 
@@ -422,12 +412,10 @@ public interface MemorySegment extends AutoCloseable {
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if either specified size or alignment are &lt; 0, or if the alignment constraint
+     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes < 0}, or if {@code alignmentBytes}
      * is not a power of 2.
-     * @throws RuntimeException if the specified size is too large for the system runtime.
-     * @throws OutOfMemoryError if the allocation of the off-heap memory block is refused by the system runtime.
      */
-    static MemorySegment allocateNative(long bytesSize, long alignmentBytes) throws IllegalArgumentException {
+    static MemorySegment allocateNative(long bytesSize, long alignmentBytes) {
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
         }

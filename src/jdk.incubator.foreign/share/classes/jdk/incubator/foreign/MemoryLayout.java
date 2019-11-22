@@ -122,6 +122,14 @@ long valueOffset = seq.offset(PathElement.sequenceElement(), PathElement.groupEl
  */
 public interface MemoryLayout extends Constable {
 
+    /**
+     * Returns an {@link Optional} containing the nominal descriptor for this
+     * layout, if one can be constructed, or an empty {@link Optional}
+     * if one cannot be constructed.
+     *
+     * @return An {@link Optional} containing the resulting nominal descriptor,
+     * or an empty {@link Optional} if one cannot be constructed.
+     */
     @Override
     Optional<? extends DynamicConstantDesc<? extends MemoryLayout>> describeConstable();
 
@@ -131,16 +139,16 @@ public interface MemoryLayout extends Constable {
      * @return the layout size, in bits.
      * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}).
      */
-    long bitSize() throws UnsupportedOperationException;
+    long bitSize();
 
     /**
      * Computes the layout size, in bytes.
      *
      * @return the layout size, in bytes.
      * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}),
-     * or if the bits size (see {@link MemoryLayout#bitSize()} is not a multiple of 8.
+     * or if {@code bitSize()} is not a multiple of 8.
      */
-    default long byteSize() throws UnsupportedOperationException {
+    default long byteSize() {
         return Utils.bitsToBytesOrThrow(bitSize(),
                 () -> new UnsupportedOperationException("Cannot compute byte size; bit size is not a multiple of 8"));
     }
@@ -189,6 +197,7 @@ public interface MemoryLayout extends Constable {
      * </ul>
      *
      * @return the layout alignment constraint, in bytes.
+     * @throws UnsupportedOperationException if {@code bitAlignment()} is not a multiple of 8.
      */
     default long byteAlignment() {
         return Utils.bitsToBytesOrThrow(bitAlignment(),
@@ -200,9 +209,9 @@ public interface MemoryLayout extends Constable {
      *
      * @param bitAlignment the layout alignment constraint, expressed in bits.
      * @return a new layout which is the same as this layout, except for the alignment constraint associated to it.
-     * @throws IllegalArgumentException if the supplied alignment is not a power of two, or if it's less than than 8.
+     * @throws IllegalArgumentException if {@code bitAlignment} is not a power of two, or if it's less than than 8.
      */
-    MemoryLayout withBitAlignment(long bitAlignment) throws IllegalArgumentException;
+    MemoryLayout withBitAlignment(long bitAlignment);
 
     /**
      * Computes the offset of the layout selected by a given layout path, where the path is considered rooted in this
@@ -213,8 +222,10 @@ public interface MemoryLayout extends Constable {
      *
      * @param elements the layout path elements.
      * @return The offset of layout selected by a the layout path obtained by concatenating the path elements in {@code elements}.
+     * @throws IllegalArgumentException if the layout path obtained by concatenating the path elements in {@code elements}
+     * does not select a valid layout element.
      */
-    default long offset(PathElement... elements) throws UnsupportedOperationException {
+    default long offset(PathElement... elements) {
         LayoutPathImpl path = LayoutPathImpl.rootPath(this);
         for (PathElement e : elements) {
             path = ((LayoutPathImpl.PathElementImpl)e).apply(path);
@@ -232,17 +243,13 @@ public interface MemoryLayout extends Constable {
      * @param carrier the var handle carrier type.
      * @param elements the layout path elements.
      * @return a var handle which can be used to dereference memory at the layout denoted by given layout path.
-     * @throws UnsupportedOperationException if the layout targeted by this path is not a {@link ValueLayout} layout.
+     * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints.
      * @throws IllegalArgumentException if the carrier does not represent a primitive type, if the carrier is {@code void},
      * {@code boolean}, or if the layout path obtained by concatenating the path elements in {@code elements}
-     * cannot be dereferenced; this can occur for the following reasons:
-     * <ul>
-     * <li>the layout path does not select a value layout (see {@link ValueLayout})</li>
-     * <li>the size of the value layout selected by the path does not match that of the specified carrier type</li>
-     * <li>the layout path has one or more path elements with incompatible alignment constraints</li>
-     * </ul>
+     * does not select a value layout (see {@link ValueLayout}), or if the selected value layout has a size that
+     * that does not match that of the specified carrier type.
      */
-    default VarHandle varHandle(Class<?> carrier, PathElement... elements) throws UnsupportedOperationException, IllegalArgumentException {
+    default VarHandle varHandle(Class<?> carrier, PathElement... elements) {
         LayoutPathImpl path = LayoutPathImpl.rootPath(this);
         for (PathElement e : elements) {
             path = ((LayoutPathImpl.PathElementImpl)e).apply(path);
@@ -294,9 +301,9 @@ public interface MemoryLayout extends Constable {
          *
          * @param index the index of the sequence element to be selected.
          * @return a path element which selects the sequence element layout with given index.
-         * @throws IllegalArgumentException if the index is &lt; 0.
+         * @throws IllegalArgumentException if {@code index < 0}.
          */
-        static PathElement sequenceElement(long index) throws IllegalArgumentException {
+        static PathElement sequenceElement(long index) {
             if (index < 0) {
                 throw new IllegalArgumentException("Index must be positive: " + index);
             }
@@ -319,10 +326,9 @@ E * (S + I * F)
          * @param start the index of the first sequence element to be selected.
          * @param step the step factor at which subsequence sequence elements are to be selected.
          * @return a path element which selects the sequence element layout with given index.
-         * @throws IllegalArgumentException if the start index is out of the bounds of the selected sequence layout,
-         * or if the step factor is 0, or otherwise incompatible with the selected sequence layout size.
+         * @throws IllegalArgumentException if {@code start < 0}, or {@code step == 0}.
          */
-        static PathElement sequenceElement(long start, long step) throws IllegalArgumentException {
+        static PathElement sequenceElement(long start, long step) {
             if (start < 0) {
                 throw new IllegalArgumentException("Start index must be positive: " + start);
             }
@@ -373,7 +379,7 @@ E * (S + I * F)
      *
      * @param size the padding size in bits.
      * @return the new selector layout.
-     * @throws IllegalArgumentException if size is &le; 0.
+     * @throws IllegalArgumentException if {@code size <= 0}.
      */
     static MemoryLayout ofPaddingBits(long size) {
         AbstractLayout.checkSize(size);
@@ -386,9 +392,9 @@ E * (S + I * F)
      * @param size the value layout size.
      * @param order the value layout's byte order.
      * @return a new value layout.
-     * @throws IllegalArgumentException if size is &le; 0.
+     * @throws IllegalArgumentException if {@code size <= 0}.
      */
-    static ValueLayout ofValueBits(long size, ByteOrder order) throws IllegalArgumentException {
+    static ValueLayout ofValueBits(long size, ByteOrder order) {
         AbstractLayout.checkSize(size);
         return new ValueLayout(order, size);
     }
@@ -399,9 +405,9 @@ E * (S + I * F)
      * @param elementCount the sequence element count.
      * @param elementLayout the sequence element layout.
      * @return the new sequence layout with given element layout and size.
-     * @throws IllegalArgumentException if size &lt; 0.
+     * @throws IllegalArgumentException if {@code elementCount < 0}.
      */
-    static SequenceLayout ofSequence(long elementCount, MemoryLayout elementLayout) throws IllegalArgumentException {
+    static SequenceLayout ofSequence(long elementCount, MemoryLayout elementLayout) {
         AbstractLayout.checkSize(elementCount, true);
         OptionalLong size = OptionalLong.of(elementCount);
         return new SequenceLayout(size, elementLayout);

@@ -44,8 +44,8 @@ try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
  * The segment is created inside a <em>try-with-resources</em> construct: this idiom ensures that all the memory resources
  * associated with the segment will be released at the end of the block. Inside the try-with-resources block, we initialize
  * the contents of the memory segment; more specifically, if we view the memory segment as a set of 10 adjacent slots,
- * <em>s[i]</em>, where 0 &le; <em>i</em> &lt; 10, where the size of each slot is exactly 4 bytes, the initialization logic above will set each slot
- * so that <em>s[i] = i</em>, again where 0 &le; <em>i</em> &lt; 10.
+ * {@code s[i]}, where {@code 0 <= i < 10}, where the size of each slot is exactly 4 bytes, the initialization logic above will set each slot
+ * so that {@code s[i] = i}, again where {@code 0 <= i < 10}.
  *
  * <p>
  * The key abstractions introduced by this package are {@link jdk.incubator.foreign.MemorySegment} and {@link jdk.incubator.foreign.MemoryAddress}.

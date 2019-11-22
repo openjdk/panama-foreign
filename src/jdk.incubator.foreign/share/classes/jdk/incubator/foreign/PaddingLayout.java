@@ -109,7 +109,7 @@ import java.util.OptionalLong;
      * {@inheritDoc}
      */
     @Override
-    public PaddingLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+    public PaddingLayout withBitAlignment(long alignmentBits) {
         return (PaddingLayout)super.withBitAlignment(alignmentBits);
     }
 }

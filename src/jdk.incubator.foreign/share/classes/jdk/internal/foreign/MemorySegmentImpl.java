@@ -68,9 +68,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     @Override
     public final MemorySegmentImpl asSlice(long offset, long newSize) throws IllegalArgumentException {
         checkValidState();
-        if (outOfBounds(offset, newSize)) {
-            throw new IllegalArgumentException();
-        }
+        checkBounds(offset, newSize);
         return new MemorySegmentImpl(min + offset, base, newSize, mask, owner, scope);
     }
 
@@ -165,24 +163,21 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         scope.checkAlive();
     }
 
-    private String outOfBoundsMsg(long offset, long length) {
-        return String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
-                this, offset, length);
-    }
-
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
         if (isReadOnly() && writeAccess) {
             throw new UnsupportedOperationException("Cannot write to read-only memory segment");
-        } else if (outOfBounds(offset, length)) {
-            throw new IllegalStateException(outOfBoundsMsg(offset, length));
         }
+        checkBounds(offset, length);
     }
 
-    boolean outOfBounds(long offset, long length) {
-        return (length < 0 ||
+    void checkBounds(long offset, long length) {
+        if (length < 0 ||
                 offset < 0 ||
-                offset > this.length - length); // careful of overflow
+                offset > this.length - length) { // careful of overflow
+            throw new IndexOutOfBoundsException(String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
+                this, offset, length));
+        }
     }
 
     public Object base() {

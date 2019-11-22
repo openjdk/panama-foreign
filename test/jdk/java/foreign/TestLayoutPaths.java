@@ -38,19 +38,19 @@ import static org.testng.Assert.*;
 
 public class TestLayoutPaths {
 
-    @Test(expectedExceptions = IllegalStateException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadSelectFromSeq() {
         SequenceLayout seq = MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT);
         seq.offset(PathElement.groupElement("foo"));
     }
 
-    @Test(expectedExceptions = IllegalStateException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadSelectFromStruct() {
         GroupLayout g = MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT);
         g.offset(PathElement.sequenceElement());
     }
 
-    @Test(expectedExceptions = IllegalStateException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadSelectFromValue() {
         SequenceLayout seq = MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT);
         seq.offset(PathElement.sequenceElement(), PathElement.sequenceElement());

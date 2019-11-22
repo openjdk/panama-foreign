@@ -27,8 +27,11 @@
  */
 
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 
+import java.awt.font.LayoutPath;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteOrder;
@@ -38,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
+import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
@@ -77,6 +81,17 @@ public class TestSegments {
             t.start();
             t.join();
             assertEquals(failed.get(), member.isConfined());
+        }
+    }
+
+    @Test
+    public void testNativeSegmentIsZeroed() {
+        VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+                .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
+        try (MemorySegment segment = MemorySegment.allocateNative(1000)) {
+            for (long i = 0 ; i < segment.byteSize() ; i++) {
+                assertEquals(0, (byte)byteHandle.get(segment.baseAddress(), i));
+            }
         }
     }
 
