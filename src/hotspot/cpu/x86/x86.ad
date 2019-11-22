@@ -1097,13 +1097,6 @@ reg_class vectorz_reg_legacy(XMM0,  XMM0b,  XMM0c,  XMM0d,  XMM0e,  XMM0f,  XMM0
 reg_class_dynamic vectorz_reg(vectorz_reg_evex, vectorz_reg_legacy, %{ VM_Version::supports_evex() %} );
 reg_class_dynamic vectorz_reg_vl(vectorz_reg_evex, vectorz_reg_legacy, %{ VM_Version::supports_evex() && VM_Version::supports_avx512vl() %} );
 
-// Dummy register class
-reg_class_dynamic vector_reg(vectory_reg, vectorx_reg, %{ VM_Version::supports_avxonly() %} );
-reg_class_dynamic vectorg_reg(vectorz_reg_evex, vector_reg, %{ VM_Version::supports_evex() %} );
-
-
-
-
 reg_class xmm0_reg(XMM0, XMM0b, XMM0c, XMM0d);
 reg_class ymm0_reg(XMM0, XMM0b, XMM0c, XMM0d, XMM0e, XMM0f, XMM0g, XMM0h);
 reg_class zmm0_reg(XMM0, XMM0b, XMM0c, XMM0d, XMM0e, XMM0f, XMM0g, XMM0h, XMM0i, XMM0j, XMM0k, XMM0l, XMM0m, XMM0n, XMM0o, XMM0p);
@@ -1309,8 +1302,6 @@ class HandlerImpl {
 source %{
 
 #include "opto/addnode.hpp"
-#include "utilities/pair.hpp"
-
 
 // Emit exception handler code.
 // Stuff framesize into a register and call a VM stub routine.
@@ -1401,25 +1392,6 @@ int HandlerImpl::emit_deopt_handler(CodeBuffer& cbuf) {
   static address vector_short_to_byte_mask() { return StubRoutines::x86::vector_short_to_byte_mask(); }
 
 //=============================================================================
-
-static inline int GetVectorLengthEnc(const Node *n ) {
-  const TypeVect * vt = n->bottom_type()->is_vect();
-  switch(vt->length_in_bytes()) {
-    default:
-      assert(0 , "Incorrect vector type");
-    case 4:
-    case 8:
-    case 16:
-      return 0;
-    case 32:
-     return 1;
-    case 64:
-      return 2;
-  }
-  return -1;
-}
-
-
 const bool Matcher::match_rule_supported(int opcode) {
   if (!has_match_rule(opcode))
     return false;
@@ -2189,12 +2161,6 @@ static inline jlong replicate8_imm(int con, int width) {
   return val;
 }
 
-static inline jlong replicate_imm(int con, int width, int vl) {
-   if (vl == 4)
-      return (jlong)replicate4_imm(con, width);
-   else
-      return (jlong)replicate8_imm(con, width);
-}
 
 #ifndef PRODUCT
   void MachNopNode::format(PhaseRegAlloc*, outputStream* st) const {
@@ -3159,22 +3125,6 @@ instruct fmaF_reg(regF a, regF b, regF c) %{
 %}
 
 // ====================VECTOR INSTRUCTIONS=====================================
-instruct MoveLegVecG2VecG(vecG dst, legVecG src) %{
-  match(Set dst src);
-  format %{ "Dummy moves" %}
-  ins_encode %{
-  %}
-  ins_pipe( fpu_reg_reg );
-%}
-
-instruct MoveVecG2LegVecG(legVecG dst, vecG src) %{
-  match(Set dst src);
-  format %{ "Dummy moves" %}
-  ins_encode %{
-  %}
-  ins_pipe( fpu_reg_reg );
-%}
-
 
 instruct reinterpretS(vecS dst) %{
   predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
@@ -21696,7 +21646,6 @@ instruct vpopcount2I(vecD dst, vecD src) %{
   %}
   ins_pipe( pipe_slow );
 %}
-
 instruct vpopcount4I(vecX dst, vecX src) %{
   predicate(VM_Version::supports_vpopcntdq() && UsePopCountInstruction && n->as_Vector()->length() == 4);
   match(Set dst (PopCountVI src));

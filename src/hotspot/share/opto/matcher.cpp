@@ -75,7 +75,6 @@ Matcher::Matcher()
   _ruleName(ruleName),
   _register_save_policy(register_save_policy),
   _c_reg_save_policy(c_reg_save_policy),
-  _require_postselect_cleanup(1),
   _register_save_type(register_save_type) {
   C->set_matcher(this);
 
@@ -186,10 +185,6 @@ void Matcher::match( ) {
 #ifdef _LP64
   // Pointers take 2 slots in 64-bit land
   _return_addr_mask.Insert(OptoReg::add(return_addr(),1));
-#endif
-
-#ifdef X86
-  reset_postselect_cleanup();
 #endif
 
   // Map a Java-signature return type into return register-value
@@ -400,7 +395,6 @@ void Matcher::match( ) {
   // Set up save-on-entry registers.
   Fixup_Save_On_Entry( );
 }
-
 
 
 //------------------------------Fixup_Save_On_Entry----------------------------
@@ -881,13 +875,6 @@ void Matcher::Fixup_Save_On_Entry( ) {
   } // End of for all machine registers
 }
 
-const RegMask * Matcher::getRegMaskForNode(MachNode * node) {
-#ifdef X86
-  return Matcher::get_concrete_reg_mask(node);
-#else
-  return &node->out_RegMask();
-#endif
-}
 //------------------------------init_spill_mask--------------------------------
 void Matcher::init_spill_mask( Node *ret ) {
   if( idealreg2regmask[Op_RegI] ) return; // One time only init
@@ -923,29 +910,6 @@ void Matcher::init_spill_mask( Node *ret ) {
   // Share frame pointer while making spill ops
   set_shared(fp);
 
-  // Vector regmasks.
-  if (Matcher::vector_size_supported(T_BYTE,4)) {
-    TypeVect::VECTS = TypeVect::make(T_BYTE, 4);
-    MachNode *spillVectS = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTS));
-    idealreg2regmask[Op_VecS] = getRegMaskForNode(spillVectS);
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,2)) {
-    MachNode *spillVectD = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTD));
-    idealreg2regmask[Op_VecD] = getRegMaskForNode(spillVectD);
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,4)) {
-    MachNode *spillVectX = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTX));
-    idealreg2regmask[Op_VecX] = getRegMaskForNode(spillVectX);
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,8)) {
-    MachNode *spillVectY = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTY));
-    idealreg2regmask[Op_VecY] = getRegMaskForNode(spillVectY);
-  }
-  if (Matcher::vector_size_supported(T_FLOAT,16)) {
-    MachNode *spillVectZ = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTZ));
-    idealreg2regmask[Op_VecZ] = getRegMaskForNode(spillVectZ);
-  }
-
   // Compute generic short-offset Loads
 #ifdef _LP64
   MachNode *spillCP = match_tree(new LoadNNode(NULL,mem,fp,atp,TypeInstPtr::BOTTOM,MemNode::unordered));
@@ -966,6 +930,29 @@ void Matcher::init_spill_mask( Node *ret ) {
   idealreg2regmask[Op_RegF] = &spillF->out_RegMask();
   idealreg2regmask[Op_RegD] = &spillD->out_RegMask();
   idealreg2regmask[Op_RegP] = &spillP->out_RegMask();
+
+  // Vector regmasks.
+  if (Matcher::vector_size_supported(T_BYTE,4)) {
+    TypeVect::VECTS = TypeVect::make(T_BYTE, 4);
+    MachNode *spillVectS = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTS));
+    idealreg2regmask[Op_VecS] = &spillVectS->out_RegMask();
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,2)) {
+    MachNode *spillVectD = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTD));
+    idealreg2regmask[Op_VecD] = &spillVectD->out_RegMask();
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,4)) {
+    MachNode *spillVectX = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTX));
+    idealreg2regmask[Op_VecX] = &spillVectX->out_RegMask();
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,8)) {
+    MachNode *spillVectY = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTY));
+    idealreg2regmask[Op_VecY] = &spillVectY->out_RegMask();
+  }
+  if (Matcher::vector_size_supported(T_FLOAT,16)) {
+    MachNode *spillVectZ = match_tree(new LoadVectorNode(NULL,mem,fp,atp,TypeVect::VECTZ));
+    idealreg2regmask[Op_VecZ] = &spillVectZ->out_RegMask();
+  }
 }
 
 #ifdef ASSERT
@@ -1740,10 +1727,6 @@ MachNode *Matcher::ReduceInst( State *s, int rule, Node *&mem ) {
   mach->_opnds[0] = s->MachOperGenerator(_reduceOp[rule]);
   assert( mach->_opnds[0] != NULL, "Missing result operand" );
   Node *leaf = s->_leaf;
-#ifdef X86
-  enable_postselect_cleanup(leaf);
-#endif
-
   // Check for instruction or instruction chain rule
   if( rule >= _END_INST_CHAIN_RULE || rule < _BEGIN_INST_CHAIN_RULE ) {
     assert(C->node_arena()->contains(s->_leaf) || !has_new_node(s->_leaf),
@@ -2108,21 +2091,6 @@ bool Matcher::is_bmi_pattern(Node *n, Node *m) {
   }
   return false;
 }
-
-void Matcher::enable_postselect_cleanup(const Node * n) {
-  // 0th bit is set till we begin matching over ideal graph. 
-  // Before starting matching, 0th bit is reset by calling  
-  // reset_postselect_cleanup().
-  if (_require_postselect_cleanup & 0x1)
-    return;
-
-  // Return if already found a vector node during matching.
-  if (_require_postselect_cleanup & (0x1 << 2))
-    return;
-
-  _require_postselect_cleanup |= 1 << (n->bottom_type()->isa_vect() != NULL ? 2 : 1);
-}
-
 #endif // X86
 
 bool Matcher::is_vshift_con(Node *n, Node *m) {

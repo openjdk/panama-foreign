@@ -273,23 +273,8 @@ void ArchDesc::inspectOperands() {
     const char *result      = op->reduce_result();
     bool        has_root    = false;
 
-    // Currently operand clause having multiple match rules only
-    // accept one primary operand(e.g. VecX/VecY/VecG/RegI etc.)
-    // and other matches are against operand clauses.
-    // Extending multi-match scenarios in operand clause to accommodate
-    // multiple primary operands. 
-    if (strcmp(rootOp,"vecG")==0 || strcmp(rootOp,"legVecG")==0) {
-      MatchRule * rule = &mrule;
-      while(rule) {
-        rule->_machType  = rootOp;
-        buildMatchList(rule, result, rootOp, pred, cost);
-        rule = rule->_next;
-      }
-    } else {
-      // Construct a MatchList for this entry
-      buildMatchList(op->_matrule, result, rootOp, pred, cost);
-    }
-
+    // Construct a MatchList for this entry
+    buildMatchList(op->_matrule, result, rootOp, pred, cost);
   }
 }
 
@@ -881,12 +866,6 @@ const char *ArchDesc::reg_mask(InstructForm &inForm) {
     abort();
   }
 
-  // For generic registers operands, pull the register mask
-  // of its dst operands
-  if (strcmp(result, "vecG")==0 || strcmp(result, "legVecG")==0  ) {
-    return "*(this->_opnds[0]->in_RegMask(0))";
-  }
-
   // Instructions producing 'Universe' use RegMask::Empty
   if( strcmp(result,"Universe")==0 ) {
     return "RegMask::Empty";
@@ -955,7 +934,6 @@ const char *ArchDesc::getIdealType(const char *idealOp) {
     case 'X':  return "TypeVect::VECTX";
     case 'Y':  return "TypeVect::VECTY";
     case 'Z':  return "TypeVect::VECTZ";
-    case 'G':  return "TypeVect::VECTG";
     default:
       internal_err("Vector type %s with unrecognized type\n",idealOp);
     }

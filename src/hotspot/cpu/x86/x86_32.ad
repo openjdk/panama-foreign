@@ -3353,31 +3353,6 @@ ins_attrib ins_alignment(1);    // Required alignment attribute (must be a power
 // instruction definitions.
 
 //----------Simple Operands----------------------------------------------------
-// Generic vector operands.
-operand vecG() %{
-  constraint(ALLOC_IN_RC(vectorg_reg));
-  match(VecX);
-  match(VecY);
-  match(VecZ);
-  match(VecS);
-  match(VecD);
-
-  format %{ %}
-  interface(REG_INTER);
-%}
-
-operand legVecG() %{
-  constraint(ALLOC_IN_RC(vectorg_reg));
-  match(VecX);
-  match(VecY);
-  match(VecZ);
-  match(VecS);
-  match(VecD);
-
-  format %{ %}
-  interface(REG_INTER);
-%}
-
 // Immediate Operands
 // Integer Immediate
 operand immI() %{

@@ -160,9 +160,6 @@ void C2Compiler::compile_method(ciEnv* env, ciMethod* target, int entry_bci, Dir
 
 void C2Compiler::print_timers() {
   Compile::print_timers();
-#ifdef X86 
-  tty->print_cr("   Vector Node Count:           %d",    Compile::_vec_nodes);
-#endif
 }
 
 bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virtual) {
