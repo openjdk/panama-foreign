@@ -42,6 +42,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.function.Supplier;
 
+/**
+ * This class contains misc helper functions to support creation of memory segments.
+ */
 public final class Utils {
 
     private static Unsafe unsafe = Unsafe.getUnsafe();

@@ -276,7 +276,7 @@ public class TestByteBuffer {
             Buffer bb = bufferFactory.apply(segment.asByteBuffer());
             assertTrue(bb.isDirect());
             DirectBuffer directBuffer = ((DirectBuffer)bb);
-            assertEquals(directBuffer.address(), MemoryAddressImpl.addressof(base));
+            assertEquals(directBuffer.address(), ((MemoryAddressImpl)base).unsafeGetOffset());
             assertTrue((directBuffer.attachment() == null) == (bb instanceof ByteBuffer));
             assertTrue(directBuffer.cleaner() == null);
         }

@@ -34,7 +34,11 @@ import jdk.incubator.foreign.MemorySegment;
 import java.lang.ref.Reference;
 import java.util.Objects;
 
-public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
+/**
+ * This class provides an immutable implementation for the {@code MemoryAddress} interface. This class contains information
+ * about the segment this address is associated with, as well as an offset into such segment.
+ */
+public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
@@ -50,23 +54,16 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
         this.offset = offset;
     }
 
-    public static void copy(MemoryAddressImpl src, MemoryAddressImpl dst, long size) throws IndexOutOfBoundsException {
+    public static void copy(MemoryAddressImpl src, MemoryAddressImpl dst, long size) {
         src.checkAccess(0, size, true);
         dst.checkAccess(0, size, false);
-        try {
-            UNSAFE.copyMemory(
-                    src.unsafeGetBase(), src.unsafeGetOffset(),
-                    dst.unsafeGetBase(), dst.unsafeGetOffset(),
-                    size);
-        } finally {
-            Reference.reachabilityFence(src);
-            Reference.reachabilityFence(dst);
-        }
+        UNSAFE.copyMemory(
+                src.unsafeGetBase(), src.unsafeGetOffset(),
+                dst.unsafeGetBase(), dst.unsafeGetOffset(),
+                size);
     }
 
-    public long size() {
-        return segment.length;
-    }
+    // MemoryAddress methods
 
     @Override
     public long offset() {
@@ -83,6 +80,8 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
         return new MemoryAddressImpl(segment, offset + bytes);
     }
 
+    // MemoryAddressProxy methods
+
     public void checkAccess(long offset, long length, boolean readOnly) {
         segment.checkRange(this.offset + offset, length, !readOnly);
     }
@@ -95,14 +94,7 @@ public class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
         return segment.base();
     }
 
-    public static long addressof(MemoryAddress address) {
-        MemoryAddressImpl addressImpl = (MemoryAddressImpl)address;
-        addressImpl.checkAccess(0L, 1, false);
-        if (addressImpl.unsafeGetBase() != null) {
-            throw new IllegalStateException("Heap address!");
-        }
-        return addressImpl.unsafeGetOffset();
-    }
+    // Object methods
 
     @Override
     public int hashCode() {

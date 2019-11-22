@@ -81,7 +81,7 @@ offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
  */
 public final class MemoryHandles {
 
-    private static JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
+    private final static JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
 
     private MemoryHandles() {
         //sorry, just the one!

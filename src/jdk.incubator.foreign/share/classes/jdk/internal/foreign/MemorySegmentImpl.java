@@ -37,6 +37,14 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Random;
 
+/**
+ * This class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
+ * about the segment's spatial and temporal bounds, as well as the addressing coordinates (base + offset) which allows
+ * unsafe access; each memory segment implementation is associated with an owner thread which is set at creation time.
+ * Access to certain sensitive operations on the memory segment will fail with {@code IllegalStateException} if the
+ * segment is either in an invalid state (e.g. it has already been closed) or if access occurs from a thread other
+ * than the owner thread. See {@link MemoryScope} for more details on management of temporal bounds.
+ */
 public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
@@ -61,12 +69,10 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         this.scope = scope;
     }
 
-    public MemorySegmentImpl root() {
-        return this;
-    }
+    // MemorySegment methods
 
     @Override
-    public final MemorySegmentImpl asSlice(long offset, long newSize) throws IllegalArgumentException {
+    public final MemorySegmentImpl asSlice(long offset, long newSize) {
         checkValidState();
         checkBounds(offset, newSize);
         return new MemorySegmentImpl(min + offset, base, newSize, mask, owner, scope);
@@ -78,6 +84,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
     }
 
+    @Override
     public final MemoryAddress baseAddress() {
         return new MemoryAddressImpl(this, 0);
     }
@@ -103,23 +110,19 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return isSet(READ_ONLY);
     }
 
-    public final boolean isSet(int mask) {
-        return (this.mask & mask) != 0;
-    }
-
     @Override
     public boolean isAccessible() {
         return owner == Thread.currentThread();
     }
 
     @Override
-    public final void close() throws UnsupportedOperationException {
+    public final void close() {
         checkValidState();
         scope.close();
     }
 
     @Override
-    public ByteBuffer asByteBuffer() throws UnsupportedOperationException, IllegalStateException {
+    public ByteBuffer asByteBuffer() {
         checkValidState();
         checkIntSize("ByteBuffer");
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
@@ -141,7 +144,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public byte[] toByteArray() throws UnsupportedOperationException, IllegalStateException {
+    public byte[] toByteArray() {
         checkValidState();
         checkIntSize("byte[]");
         byte[] arr = new byte[(int)length];
@@ -150,18 +153,24 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return arr;
     }
 
-    private void checkIntSize(String typeName) {
-        if (length > Integer.MAX_VALUE) {
-            throw new UnsupportedOperationException(String.format("Segment is too large to wrap as %s. Size: %d", typeName, length));
-        }
-    }
+    // MemorySegmentProxy methods
 
+    @Override
     public final void checkValidState() {
         if (owner != Thread.currentThread()) {
             throw new IllegalStateException("Attempt to access segment outside owning thread");
         }
         scope.checkAlive();
     }
+
+    // Object methods
+
+    @Override
+    public String toString() {
+        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + byteSize() + " }";
+    }
+
+    // Helper methods
 
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
@@ -171,22 +180,27 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         checkBounds(offset, length);
     }
 
-    void checkBounds(long offset, long length) {
+    Object base() {
+        return base;
+    }
+
+    private final boolean isSet(int mask) {
+        return (this.mask & mask) != 0;
+    }
+
+    private void checkIntSize(String typeName) {
+        if (length > (Integer.MAX_VALUE - 8)) { //conservative check
+            throw new UnsupportedOperationException(String.format("Segment is too large to wrap as %s. Size: %d", typeName, length));
+        }
+    }
+
+    private void checkBounds(long offset, long length) {
         if (length < 0 ||
                 offset < 0 ||
                 offset > this.length - length) { // careful of overflow
             throw new IndexOutOfBoundsException(String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
                 this, offset, length));
         }
-    }
-
-    public Object base() {
-        return base;
-    }
-
-    @Override
-    public String toString() {
-        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + byteSize() + " }";
     }
 
     private int id() {

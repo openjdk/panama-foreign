@@ -28,7 +28,13 @@ package jdk.internal.foreign;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MemoryScope {
+/**
+ * This class manages the temporal bounds associated with a memory segment. A scope has a liveness bit, which is updated
+ * when the scope is closed (this operation is triggered by {@link MemorySegmentImpl#close()}). Furthermore, a scope is
+ * associated with an <em>atomic</em> counter which can be incremented (upon calling the {@link #acquire()} method),
+ * and is decremented (when a previously acquired segment is later closed).
+ */
+public final class MemoryScope {
 
     //reference to keep hold onto
     final Object ref;
@@ -57,6 +63,7 @@ public class MemoryScope {
     }
 
     MemoryScope acquire() {
+        // fixme: what about overflow?
         if (activeCount.updateAndGet(i -> i == CLOSED ? CLOSED : ++i) == CLOSED) {
             //cannot get here - segment is not alive!
             throw new IllegalStateException();

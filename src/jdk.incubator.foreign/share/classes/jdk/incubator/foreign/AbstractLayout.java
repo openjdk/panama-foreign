@@ -71,8 +71,7 @@ abstract class AbstractLayout implements MemoryLayout {
     }
 
     void checkAlignment(long alignmentBitCount) {
-        if (alignmentBitCount <= 0 || //alignment must be positive
-                ((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
+        if (((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
                 (alignmentBitCount < 8)) { //alignment must be greater than 8
             throw new IllegalArgumentException("Invalid alignment: " + alignmentBitCount);
         }

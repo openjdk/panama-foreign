@@ -37,61 +37,59 @@ import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.UnaryOperator;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
-public class LayoutPathImpl {
+/**
+ * This class provide support for constructing layout paths; that is, starting from a root path (see {@link #rootPath(MemoryLayout)},
+ * a path can be constructed by selecting layout elements using the selector methods provided by this class
+ * (see {@link #sequenceElement()}, {@link #sequenceElement(long)}, {@link #sequenceElement(long, long)}, {@link #groupElement(String)}).
+ * Once a path has been fully constructed, clients can ask for the offset associated with the layout element selected
+ * by the path (see {@link #offset}), or obtain a memory access var handle to access the selected layout element
+ * given an address pointing to a segment associated with the root layout (see {@link #dereferenceHandle(Class)}).
+ */
+public class LayoutPath {
 
     private static JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
 
     private final MemoryLayout layout;
     private final long offset;
-    private final LayoutPathImpl enclosing;
-    private final List<Long> scales;
+    private final LayoutPath enclosing;
+    private final long[] scales;
 
-    private LayoutPathImpl(MemoryLayout layout, long offset, List<Long> scales, LayoutPathImpl enclosing) {
+    private LayoutPath(MemoryLayout layout, long offset, long[] scales, LayoutPath enclosing) {
         this.layout = layout;
         this.offset = offset;
         this.scales = scales;
         this.enclosing = enclosing;
     }
 
-    public long offset() {
-        return offset;
-    }
+    // Layout path selector methods
 
-    public LayoutPathImpl sequenceElement() throws IllegalArgumentException {
+    public LayoutPath sequenceElement() {
         check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
         MemoryLayout elem = seq.elementLayout();
-        List<Long> newScales = new ArrayList<>(scales);
-        newScales.add(elem.bitSize());
-        return LayoutPathImpl.nestedPath(elem, offset, newScales, this);
+        return LayoutPath.nestedPath(elem, offset, addScale(elem.bitSize()), this);
     }
 
-    public LayoutPathImpl sequenceElement(long start, long step) throws IllegalArgumentException {
+    public LayoutPath sequenceElement(long start, long step) {
         check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
         checkSequenceBounds(seq, start);
         MemoryLayout elem = seq.elementLayout();
-        List<Long> newScales = new ArrayList<>(scales);
         long elemSize = elem.bitSize();
-        newScales.add(elemSize * step);
-        return LayoutPathImpl.nestedPath(elem, offset + (start * elemSize), newScales, this);
+        return LayoutPath.nestedPath(elem, offset + (start * elemSize), addScale(elemSize * step), this);
     }
 
-    public LayoutPathImpl sequenceElement(long index) throws IllegalArgumentException {
+    public LayoutPath sequenceElement(long index) {
         check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
         checkSequenceBounds(seq, index);
-        return LayoutPathImpl.nestedPath(seq.elementLayout(), offset, scales, this);
+        return LayoutPath.nestedPath(seq.elementLayout(), offset, scales, this);
     }
 
-    private void checkSequenceBounds(SequenceLayout seq, long index) throws IllegalArgumentException {
-        if (seq.elementCount().isPresent() && index >= seq.elementCount().getAsLong()) {
-            throw badLayoutPath(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementCount().getAsLong()));
-        }
-    }
-
-    public LayoutPathImpl groupElement(String name) throws IllegalArgumentException {
+    public LayoutPath groupElement(String name) {
         check(GroupLayout.class, "attempting to select a group element from a non-group layout");
         GroupLayout g = (GroupLayout)layout;
         long offset = 0;
@@ -109,16 +107,16 @@ public class LayoutPathImpl {
         if (elem == null) {
             throw badLayoutPath("cannot resolve '" + name + "' in layout " + layout);
         }
-        return LayoutPathImpl.nestedPath(elem, this.offset + offset, scales, this);
+        return LayoutPath.nestedPath(elem, this.offset + offset, scales, this);
     }
 
-    void check(Class<?> layoutClass, String msg) throws IllegalArgumentException {
-        if (!layoutClass.isAssignableFrom(layout.getClass())) {
-            throw badLayoutPath(msg);
-        }
+    // Layout path projections
+
+    public long offset() {
+        return offset;
     }
 
-    public VarHandle dereferenceHandle(Class<?> carrier) throws IllegalArgumentException, UnsupportedOperationException {
+    public VarHandle dereferenceHandle(Class<?> carrier) {
         if (!(layout instanceof ValueLayout)) {
             throw badLayoutPath("layout path does not select a value layout");
         }
@@ -135,28 +133,44 @@ public class LayoutPathImpl {
                 layout.byteAlignment(),
                 ((ValueLayout) layout).order(),
                 Utils.bitsToBytesOrThrow(offset, IllegalStateException::new),
-                scales.stream().mapToLong(s -> Utils.bitsToBytesOrThrow(s, IllegalStateException::new)).toArray());
+                LongStream.of(scales).map(s -> Utils.bitsToBytesOrThrow(s, IllegalStateException::new)).toArray());
     }
 
-    static IllegalArgumentException badLayoutPath(String cause) throws IllegalArgumentException {
+    // Layout path construction
+
+    public static LayoutPath rootPath(MemoryLayout layout) {
+        return new LayoutPath(layout, 0L, EMPTY_SCALES, null);
+    }
+
+    private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] scales, LayoutPath encl) {
+        return new LayoutPath(layout, offset, scales, encl);
+    }
+
+    // Helper methods
+
+    private void check(Class<?> layoutClass, String msg) {
+        if (!layoutClass.isAssignableFrom(layout.getClass())) {
+            throw badLayoutPath(msg);
+        }
+    }
+
+    private void checkSequenceBounds(SequenceLayout seq, long index) {
+        if (seq.elementCount().isPresent() && index >= seq.elementCount().getAsLong()) {
+            throw badLayoutPath(String.format("Sequence index out of bound; found: %d, size: %d", index, seq.elementCount().getAsLong()));
+        }
+    }
+
+    private static IllegalArgumentException badLayoutPath(String cause) {
         return new IllegalArgumentException("Bad layout path: " + cause);
     }
 
-    public static LayoutPathImpl rootPath(MemoryLayout layout) {
-        return new LayoutPathImpl(layout, 0L, List.of(), null);
-    }
-
-    public static LayoutPathImpl nestedPath(MemoryLayout layout, long offset, List<Long> scales, LayoutPathImpl encl) {
-        return new LayoutPathImpl(layout, offset, scales, encl);
-    }
-
-    static void checkAlignment(LayoutPathImpl path) throws UnsupportedOperationException {
+    private static void checkAlignment(LayoutPath path) {
         MemoryLayout layout = path.layout;
         long alignment = layout.bitAlignment();
         if (path.offset % alignment != 0) {
             throw new UnsupportedOperationException("Invalid alignment requirements for layout " + layout);
         }
-        LayoutPathImpl encl = path.enclosing;
+        LayoutPath encl = path.enclosing;
         if (encl != null) {
             if (encl.layout.bitAlignment() < alignment) {
                 throw new UnsupportedOperationException("Alignment requirements for layout " + layout + " do not match those for enclosing layout " + encl.layout);
@@ -165,16 +179,29 @@ public class LayoutPathImpl {
         }
     }
 
-    public static class PathElementImpl implements MemoryLayout.PathElement, UnaryOperator<LayoutPathImpl> {
+    private long[] addScale(long scale) {
+        long[] newScales = new long[scales.length + 1];
+        System.arraycopy(scales, 0, newScales, 0, scales.length);
+        newScales[scales.length] = scale;
+        return newScales;
+    }
 
-        final UnaryOperator<LayoutPathImpl> pathOp;
+    private static long[] EMPTY_SCALES = new long[0];
 
-        public PathElementImpl(UnaryOperator<LayoutPathImpl> pathOp) {
+    /**
+     * This class provides an immutable implementation for the {@code PathElement} interface. A path element implementation
+     * is simply a pointer to one of the selector methods provided by the {@code LayoutPath} class.
+     */
+    public static class PathElementImpl implements MemoryLayout.PathElement, UnaryOperator<LayoutPath> {
+
+        final UnaryOperator<LayoutPath> pathOp;
+
+        public PathElementImpl(UnaryOperator<LayoutPath> pathOp) {
             this.pathOp = pathOp;
         }
 
         @Override
-        public LayoutPathImpl apply(LayoutPathImpl layoutPath) {
+        public LayoutPath apply(LayoutPath layoutPath) {
             return pathOp.apply(layoutPath);
         }
     }

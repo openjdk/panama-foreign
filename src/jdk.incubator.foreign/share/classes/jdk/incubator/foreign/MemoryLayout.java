@@ -25,7 +25,7 @@
  */
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.LayoutPathImpl;
+import jdk.internal.foreign.LayoutPath;
 import jdk.internal.foreign.Utils;
 
 import java.lang.constant.Constable;
@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.stream.Stream;
 
 /**
  * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
@@ -226,9 +225,9 @@ public interface MemoryLayout extends Constable {
      * does not select a valid layout element.
      */
     default long offset(PathElement... elements) {
-        LayoutPathImpl path = LayoutPathImpl.rootPath(this);
+        LayoutPath path = LayoutPath.rootPath(this);
         for (PathElement e : elements) {
-            path = ((LayoutPathImpl.PathElementImpl)e).apply(path);
+            path = ((LayoutPath.PathElementImpl)e).apply(path);
         }
         return path.offset();
     }
@@ -250,9 +249,9 @@ public interface MemoryLayout extends Constable {
      * that does not match that of the specified carrier type.
      */
     default VarHandle varHandle(Class<?> carrier, PathElement... elements) {
-        LayoutPathImpl path = LayoutPathImpl.rootPath(this);
+        LayoutPath path = LayoutPath.rootPath(this);
         for (PathElement e : elements) {
-            path = ((LayoutPathImpl.PathElementImpl)e).apply(path);
+            path = ((LayoutPath.PathElementImpl)e).apply(path);
         }
         return path.dereferenceHandle(carrier);
     }
@@ -291,7 +290,7 @@ public interface MemoryLayout extends Constable {
          */
         static PathElement groupElement(String name) {
             Objects.requireNonNull(name);
-            return new LayoutPathImpl.PathElementImpl(path -> path.groupElement(name));
+            return new LayoutPath.PathElementImpl(path -> path.groupElement(name));
         }
 
         /**
@@ -307,7 +306,7 @@ public interface MemoryLayout extends Constable {
             if (index < 0) {
                 throw new IllegalArgumentException("Index must be positive: " + index);
             }
-            return new LayoutPathImpl.PathElementImpl(path -> path.sequenceElement(index));
+            return new LayoutPath.PathElementImpl(path -> path.sequenceElement(index));
         }
 
         /**
@@ -335,7 +334,7 @@ E * (S + I * F)
             if (step == 0) {
                 throw new IllegalArgumentException("Step must be != 0: " + step);
             }
-            return new LayoutPathImpl.PathElementImpl(path -> path.sequenceElement(start, step));
+            return new LayoutPath.PathElementImpl(path -> path.sequenceElement(start, step));
         }
 
         /**
@@ -346,7 +345,7 @@ E * (S + I * F)
          * @return a path element which selects an unspecified sequence element layout.
          */
         static PathElement sequenceElement() {
-            return new LayoutPathImpl.PathElementImpl(LayoutPathImpl::sequenceElement);
+            return new LayoutPath.PathElementImpl(LayoutPath::sequenceElement);
         }
     }
 

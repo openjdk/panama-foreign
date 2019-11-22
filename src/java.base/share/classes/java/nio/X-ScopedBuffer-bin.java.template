@@ -57,7 +57,7 @@ class XXX {
 
     public $Type$Buffer as$Type$Buffer() {
         checkAlive();
-        return Scoped$Type$Buffer.of(scope, _buffer.as$Type$Buffer());
+        return Scoped$Type$Buffer.of(segment, _buffer.as$Type$Buffer());
     }
 
 #end

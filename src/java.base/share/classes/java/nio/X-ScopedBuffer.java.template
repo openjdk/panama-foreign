@@ -33,37 +33,41 @@ import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.ref.Cleaner;
 import sun.nio.ch.DirectBuffer;
 
+/**
+ * This class decorates the ByteBuffer class, by adding checks for the validity of the temporal bounds associated
+ * with the underlying memory segment.
+ */
 class Scoped$Type$Buffer extends $Type$Buffer {
 
-    final MemorySegmentProxy scope;
+    final MemorySegmentProxy segment;
     final $Type$Buffer _buffer;
 
-    Scoped$Type$Buffer(MemorySegmentProxy scope, $Type$Buffer _buffer) {
+    Scoped$Type$Buffer(MemorySegmentProxy segment, $Type$Buffer _buffer) {
         super(_buffer.hb, _buffer.address, _buffer.capacity());
-        this.scope = scope;
+        this.segment = segment;
         this._buffer = _buffer;
     }
     
     void checkAlive() {
-        scope.checkValidState();
+        segment.checkValidState();
     }
 
     @Override
     public $Type$Buffer slice() {
         checkAlive();
-        return of(scope, _buffer.slice());
+        return of(segment, _buffer.slice());
     }
 
     @Override
     public $Type$Buffer slice(int index, int length) {
         checkAlive();
-        return of(scope, _buffer.slice(index, length));
+        return of(segment, _buffer.slice(index, length));
     }
 
     @Override
     public $Type$Buffer duplicate() {
         checkAlive();
-        return of(scope, _buffer.duplicate());
+        return of(segment, _buffer.duplicate());
     }
 
     @Override
@@ -73,7 +77,7 @@ class Scoped$Type$Buffer extends $Type$Buffer {
         if (ro == _buffer) {
             return this;
         }
-        return of(scope, _buffer.asReadOnlyBuffer());
+        return of(segment, _buffer.asReadOnlyBuffer());
     }
 
     @Override
@@ -323,7 +327,7 @@ class Scoped$Type$Buffer extends $Type$Buffer {
     @Override
     public $Type$Buffer order(ByteOrder bo) {
         checkAlive();
-        return of(scope, _buffer.order(bo));
+        return of(segment, _buffer.order(bo));
     }
 
     @Override
@@ -335,7 +339,7 @@ class Scoped$Type$Buffer extends $Type$Buffer {
     @Override
     public $Type$Buffer alignedSlice(int unitSize) {
         checkAlive();
-        return of(scope, _buffer.alignedSlice(unitSize));
+        return of(segment, _buffer.alignedSlice(unitSize));
     }
 
 #end[byte]
@@ -356,13 +360,13 @@ class Scoped$Type$Buffer extends $Type$Buffer {
     @Override
     public $Type$Buffer put(String src, int start, int end) {
         checkAlive();
-        return of(scope, _buffer.put(src, start, end));
+        return of(segment, _buffer.put(src, start, end));
     }
 
     @Override
     public $Type$Buffer put(String src) {
         checkAlive();
-        return of(scope, _buffer.put(src));
+        return of(segment, _buffer.put(src));
     }
 
     @Override
@@ -386,25 +390,25 @@ class Scoped$Type$Buffer extends $Type$Buffer {
     @Override
     public CharBuffer subSequence(int start, int end) {
         checkAlive();
-        return of(scope, _buffer.subSequence(start, end));
+        return of(segment, _buffer.subSequence(start, end));
     }
 
     @Override
     public $Type$Buffer append(CharSequence csq) {
         checkAlive();
-        return of(scope, _buffer.append(csq));
+        return of(segment, _buffer.append(csq));
     }
 
     @Override
     public $Type$Buffer append(CharSequence csq, int start, int end) {
         checkAlive();
-        return of(scope, _buffer.append(csq, start, end));
+        return of(segment, _buffer.append(csq, start, end));
     }
 
     @Override
     public $Type$Buffer append($type$ $x$) {
         checkAlive();
-        return of(scope, _buffer.append($x$));
+        return of(segment, _buffer.append($x$));
     }
 
     @Override
@@ -427,8 +431,8 @@ class Scoped$Type$Buffer extends $Type$Buffer {
 #end[char]
 
     static class ScopedDirect$Type$Buffer extends Scoped$Type$Buffer implements DirectBuffer {
-        ScopedDirect$Type$Buffer(MemorySegmentProxy scope, $Type$Buffer _buffer) {
-            super(scope, _buffer);
+        ScopedDirect$Type$Buffer(MemorySegmentProxy segment, $Type$Buffer _buffer) {
+            super(segment, _buffer);
         }
 
         @Override
@@ -447,11 +451,11 @@ class Scoped$Type$Buffer extends $Type$Buffer {
         }
     }
     
-    public static Scoped$Type$Buffer of(MemorySegmentProxy scope, $Type$Buffer bb) {
+    public static Scoped$Type$Buffer of(MemorySegmentProxy segment, $Type$Buffer bb) {
         if (bb.isDirect()) {
-            return new ScopedDirect$Type$Buffer(scope, bb);
+            return new ScopedDirect$Type$Buffer(segment, bb);
         } else {
-            return new Scoped$Type$Buffer(scope, bb);
+            return new Scoped$Type$Buffer(segment, bb);
         }
     }
 
