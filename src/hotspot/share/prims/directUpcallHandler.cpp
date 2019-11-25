@@ -23,7 +23,7 @@
 
 #include "precompiled.hpp"
 #include "prims/directUpcallHandler.hpp"
-#include "runtime/compilationPolicy.hpp"
+#include "compiler/compilationPolicy.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 
@@ -41,7 +41,8 @@ JVM_ENTRY(jlong, AllocateUpcallStub_LinkToNative(JNIEnv *env, jobject _unused, j
   Method* entry = java_lang_invoke_MemberName::vmtarget(vmentry);
 
   assert(entry->method_holder()->is_initialized(), "no clinit barrier");
-  CompilationPolicy::compile_if_required(entry, CHECK_0);
+  methodHandle _resolved_method = methodHandle(THREAD, entry);
+  CompilationPolicy::compile_if_required(_resolved_method, CHECK_0);
 
   return (jlong)DirectUpcallHandler::generate_linkToNative_upcall_stub(mh_j, entry, CHECK_0);
  JVM_END
