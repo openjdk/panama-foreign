@@ -169,12 +169,15 @@ HeapRegion* G1CollectedHeap::new_heap_region(uint hrs_index,
 
 // Private methods.
 
-HeapRegion* G1CollectedHeap::new_region(size_t word_size, HeapRegionType type, bool do_expand) {
+HeapRegion* G1CollectedHeap::new_region(size_t word_size,
+                                        HeapRegionType type,
+                                        bool do_expand,
+                                        uint node_index) {
   assert(!is_humongous(word_size) || word_size <= HeapRegion::GrainWords,
          "the only time we use this to allocate a humongous region is "
          "when we are allocating a single humongous region");
 
-  HeapRegion* res = _hrm->allocate_free_region(type);
+  HeapRegion* res = _hrm->allocate_free_region(type, node_index);
 
   if (res == NULL && do_expand && _expand_heap_after_alloc_failure) {
     // Currently, only attempts to allocate GC alloc regions set
@@ -186,12 +189,15 @@ HeapRegion* G1CollectedHeap::new_region(size_t word_size, HeapRegionType type, b
     log_debug(gc, ergo, heap)("Attempt heap expansion (region allocation request failed). Allocation request: " SIZE_FORMAT "B",
                               word_size * HeapWordSize);
 
-    if (expand(word_size * HeapWordSize)) {
-      // Given that expand() succeeded in expanding the heap, and we
+    assert(word_size * HeapWordSize < HeapRegion::GrainBytes,
+           "This kind of expansion should never be more than one region. Size: " SIZE_FORMAT,
+           word_size * HeapWordSize);
+    if (expand_single_region(node_index)) {
+      // Given that expand_single_region() succeeded in expanding the heap, and we
       // always expand the heap by an amount aligned to the heap
       // region size, the free list should in theory not be empty.
       // In either case allocate_free_region() will check for NULL.
-      res = _hrm->allocate_free_region(type);
+      res = _hrm->allocate_free_region(type, node_index);
     } else {
       _expand_heap_after_alloc_failure = false;
     }
@@ -664,8 +670,6 @@ bool G1CollectedHeap::alloc_archive_regions(MemRegion* ranges,
         next_region = NULL;
       }
       curr_region->set_top(top);
-      curr_region->set_first_dead(top);
-      curr_region->set_end_of_live(top);
       curr_region = next_region;
     }
 
@@ -1022,7 +1026,7 @@ void G1CollectedHeap::abort_concurrent_cycle() {
 
 void G1CollectedHeap::prepare_heap_for_full_collection() {
   // Make sure we'll choose a new allocation region afterwards.
-  _allocator->release_mutator_alloc_region();
+  _allocator->release_mutator_alloc_regions();
   _allocator->abandon_gc_alloc_regions();
 
   // We may have added regions to the current incremental collection
@@ -1066,7 +1070,7 @@ void G1CollectedHeap::prepare_heap_for_mutators() {
   // Start a new incremental collection set for the next pause
   start_new_collection_set();
 
-  _allocator->init_mutator_alloc_region();
+  _allocator->init_mutator_alloc_regions();
 
   // Post collection state updates.
   MetaspaceGC::compute_new_size();
@@ -1383,6 +1387,19 @@ bool G1CollectedHeap::expand(size_t expand_bytes, WorkGang* pretouch_workers, do
   return regions_to_expand > 0;
 }
 
+bool G1CollectedHeap::expand_single_region(uint node_index) {
+  uint expanded_by = _hrm->expand_on_preferred_node(node_index);
+
+  if (expanded_by == 0) {
+    assert(is_maximal_no_gc(), "Should be no regions left, available: %u", _hrm->available());
+    log_debug(gc, ergo, heap)("Did not expand the heap (heap already fully expanded)");
+    return false;
+  }
+
+  policy()->record_new_heap_size(num_regions());
+  return true;
+}
+
 void G1CollectedHeap::shrink_helper(size_t shrink_bytes) {
   size_t aligned_shrink_bytes =
     ReservedSpace::page_align_size_down(shrink_bytes);
@@ -1392,7 +1409,6 @@ void G1CollectedHeap::shrink_helper(size_t shrink_bytes) {
 
   uint num_regions_removed = _hrm->shrink_by(num_regions_to_remove);
   size_t shrunk_bytes = num_regions_removed * HeapRegion::GrainBytes;
-
 
   log_debug(gc, ergo, heap)("Shrink the heap. requested shrinking amount: " SIZE_FORMAT "B aligned shrinking amount: " SIZE_FORMAT "B attempted shrinking amount: " SIZE_FORMAT "B",
                             shrink_bytes, aligned_shrink_bytes, shrunk_bytes);
@@ -1495,6 +1511,7 @@ G1CollectedHeap::G1CollectedHeap() :
   _humongous_set("Humongous Region Set", new HumongousRegionSetChecker()),
   _bot(NULL),
   _listener(),
+  _numa(G1NUMA::create()),
   _hrm(NULL),
   _allocator(NULL),
   _verifier(NULL),
@@ -1777,6 +1794,8 @@ jint G1CollectedHeap::initialize() {
   }
   _workers->initialize_workers();
 
+  _numa->set_region_info(HeapRegion::GrainBytes, page_size);
+
   // Create the G1ConcurrentMark data structure and thread.
   // (Must do this late, so that "max_regions" is defined.)
   _cm = new G1ConcurrentMark(this, prev_bitmap_storage, next_bitmap_storage);
@@ -1824,7 +1843,7 @@ jint G1CollectedHeap::initialize() {
   dummy_region->set_top(dummy_region->end());
   G1AllocRegion::setup(this, dummy_region);
 
-  _allocator->init_mutator_alloc_region();
+  _allocator->init_mutator_alloc_regions();
 
   // Do create of the monitoring and management support so that
   // values in the heap have been properly initialized.
@@ -2370,6 +2389,15 @@ void G1CollectedHeap::print_on(outputStream* st) const {
   st->print("%u survivors (" SIZE_FORMAT "K)", survivor_regions,
             (size_t) survivor_regions * HeapRegion::GrainBytes / K);
   st->cr();
+  if (_numa->is_enabled()) {
+    uint num_nodes = _numa->num_active_nodes();
+    st->print("  remaining free region(s) on each NUMA node: ");
+    const int* node_ids = _numa->node_ids();
+    for (uint node_index = 0; node_index < num_nodes; node_index++) {
+      st->print("%d=%u ", node_ids[node_index], _hrm->num_free_regions(node_index));
+    }
+    st->cr();
+  }
   MetaspaceUtils::print_on(st);
 }
 
@@ -2559,6 +2587,20 @@ void G1CollectedHeap::gc_epilogue(bool full) {
   // We have just completed a GC. Update the soft reference
   // policy with the new heap occupancy
   Universe::update_heap_info_at_gc();
+
+  // Print NUMA statistics.
+  _numa->print_statistics();
+}
+
+void G1CollectedHeap::verify_numa_regions(const char* desc) {
+  LogTarget(Trace, gc, heap, verify) lt;
+
+  if (lt.is_enabled()) {
+    LogStream ls(lt);
+    // Iterate all heap regions to print matching between preferred numa id and actual numa id.
+    G1NodeIndexCheckClosure cl(desc, _numa, &ls);
+    heap_region_iterate(&cl);
+  }
 }
 
 HeapWord* G1CollectedHeap::do_collection_pause(size_t word_size,
@@ -2868,6 +2910,7 @@ void G1CollectedHeap::verify_before_young_collection(G1HeapVerifier::G1VerifyTyp
   }
   _verifier->verify_before_gc(type);
   _verifier->check_bitmaps("GC Start");
+  verify_numa_regions("GC Start");
 }
 
 void G1CollectedHeap::verify_after_young_collection(G1HeapVerifier::G1VerifyType type) {
@@ -2878,6 +2921,7 @@ void G1CollectedHeap::verify_after_young_collection(G1HeapVerifier::G1VerifyType
   }
   _verifier->verify_after_gc(type);
   _verifier->check_bitmaps("GC End");
+  verify_numa_regions("GC End");
 }
 
 void G1CollectedHeap::expand_heap_after_young_collection(){
@@ -3007,7 +3051,7 @@ bool G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_
 
         // Forget the current allocation region (we might even choose it to be part
         // of the collection set!).
-        _allocator->release_mutator_alloc_region();
+        _allocator->release_mutator_alloc_regions();
 
         calculate_collection_set(evacuation_info, target_pause_time_ms);
 
@@ -3044,7 +3088,7 @@ bool G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_
 
         allocate_dummy_regions();
 
-        _allocator->init_mutator_alloc_region();
+        _allocator->init_mutator_alloc_regions();
 
         expand_heap_after_young_collection();
 
@@ -3978,7 +4022,7 @@ private:
       }
 
       if (!r->evacuation_failed()) {
-        assert(r->not_empty(), "Region %u is an empty region in the collection set.", r->hrm_index());
+        assert(!r->is_empty(), "Region %u is an empty region in the collection set.", r->hrm_index());
         _before_used_bytes += r->used();
         g1h->free_region(r,
                          &_local_free_list,
@@ -4540,13 +4584,15 @@ void G1CollectedHeap::rebuild_region_sets(bool free_list_only) {
 // Methods for the mutator alloc region
 
 HeapRegion* G1CollectedHeap::new_mutator_alloc_region(size_t word_size,
-                                                      bool force) {
+                                                      bool force,
+                                                      uint node_index) {
   assert_heap_locked_or_at_safepoint(true /* should_be_vm_thread */);
   bool should_allocate = policy()->should_allocate_mutator_region();
   if (force || should_allocate) {
     HeapRegion* new_alloc_region = new_region(word_size,
                                               HeapRegionType::Eden,
-                                              false /* do_expand */);
+                                              false /* do_expand */,
+                                              node_index);
     if (new_alloc_region != NULL) {
       set_region_short_lived_locked(new_alloc_region);
       _hr_printer.alloc(new_alloc_region, !should_allocate);
@@ -4584,7 +4630,7 @@ bool G1CollectedHeap::has_more_regions(G1HeapRegionAttr dest) {
   }
 }
 
-HeapRegion* G1CollectedHeap::new_gc_alloc_region(size_t word_size, G1HeapRegionAttr dest) {
+HeapRegion* G1CollectedHeap::new_gc_alloc_region(size_t word_size, G1HeapRegionAttr dest, uint node_index) {
   assert(FreeList_lock->owned_by_self(), "pre-condition");
 
   if (!has_more_regions(dest)) {
@@ -4600,7 +4646,8 @@ HeapRegion* G1CollectedHeap::new_gc_alloc_region(size_t word_size, G1HeapRegionA
 
   HeapRegion* new_alloc_region = new_region(word_size,
                                             type,
-                                            true /* do_expand */);
+                                            true /* do_expand */,
+                                            node_index);
 
   if (new_alloc_region != NULL) {
     if (type.is_survivor()) {
