@@ -73,7 +73,7 @@ public class SharedUtils {
     }
 
     private static long alignmentOfArray(SequenceLayout ar, boolean isVar) {
-        if (ar.elementsCount().getAsLong() == 0) {
+        if (ar.elementCount().getAsLong() == 0) {
             // VLA or incomplete
             return 16;
         } else if ((ar.byteSize()) >= 16 && isVar) {

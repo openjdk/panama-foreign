@@ -25,10 +25,8 @@
 
 package java.lang.invoke;
 
-import static java.lang.invoke.MethodHandleStatics.UNSAFE;
-
 /**
- * Base class for memory address var handle implementations.
+ * Base class for memory access var handle implementations.
  */
 abstract class VarHandleMemoryAddressBase extends VarHandle {
     final boolean be;

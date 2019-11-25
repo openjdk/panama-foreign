@@ -118,21 +118,21 @@ public class TestByteBuffer {
 
 
     static void initTuples(MemoryAddress base) {
-        for (long i = 0; i < tuples.elementsCount().getAsLong() ; i++) {
+        for (long i = 0; i < tuples.elementCount().getAsLong() ; i++) {
             indexHandle.set(base, i, (int)i);
             valueHandle.set(base, i, (float)(i / 500f));
         }
     }
 
     static void checkTuples(MemoryAddress base, ByteBuffer bb) {
-        for (long i = 0; i < tuples.elementsCount().getAsLong() ; i++) {
+        for (long i = 0; i < tuples.elementCount().getAsLong() ; i++) {
             assertEquals(bb.getInt(), (int)indexHandle.get(base, i));
             assertEquals(bb.getFloat(), (float)valueHandle.get(base, i));
         }
     }
 
     static void initBytes(MemoryAddress base, SequenceLayout seq, BiConsumer<MemoryAddress, Long> handleSetter) {
-        for (long i = 0; i < seq.elementsCount().getAsLong() ; i++) {
+        for (long i = 0; i < seq.elementCount().getAsLong() ; i++) {
             handleSetter.accept(base, i);
         }
     }
@@ -141,11 +141,11 @@ public class TestByteBuffer {
                                               Function<ByteBuffer, Z> bufFactory,
                                               BiFunction<MemoryAddress, Long, Object> handleExtractor,
                                               Function<Z, Object> bufferExtractor) {
-        long nelems = layout.elementsCount().getAsLong();
+        long nelems = layout.elementCount().getAsLong();
         long elemSize = layout.elementLayout().byteSize();
         for (long i = 0 ; i < nelems ; i++) {
             long limit = nelems - i;
-            MemorySegment resizedSegment = base.segment().slice(i * elemSize, limit * elemSize);
+            MemorySegment resizedSegment = base.segment().asSlice(i * elemSize, limit * elemSize);
             ByteBuffer bb = resizedSegment.asByteBuffer();
             Z z = bufFactory.apply(bb);
             for (long j = i ; j < limit ; j++) {
@@ -164,7 +164,7 @@ public class TestByteBuffer {
 
     @Test
     public void testOffheap() {
-        try (MemorySegment segment = MemorySegment.ofNative(tuples)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(tuples)) {
             MemoryAddress base = segment.baseAddress();
             initTuples(base);
 
@@ -217,13 +217,13 @@ public class TestByteBuffer {
         f.deleteOnExit();
 
         //write to channel
-        try (MemorySegment segment = MemorySegment.ofPath(f.toPath(), tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
+        try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
             MemoryAddress base = segment.baseAddress();
             initTuples(base);
         }
 
         //read from channel
-        try (MemorySegment segment = MemorySegment.ofPath(f.toPath(), tuples.byteSize(), FileChannel.MapMode.READ_ONLY)) {
+        try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), tuples.byteSize(), FileChannel.MapMode.READ_ONLY)) {
             MemoryAddress base = segment.baseAddress();
             checkTuples(base, segment.asByteBuffer());
         }
@@ -244,7 +244,7 @@ public class TestByteBuffer {
     @Test(dataProvider = "bufferOps")
     public void testScopedBuffer(Function<ByteBuffer, Buffer> bufferFactory, Map<Method, Object[]> members) {
         Buffer bb;
-        try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
             MemoryAddress base = segment.baseAddress();
             bb = bufferFactory.apply(segment.asByteBuffer());
         }
@@ -271,12 +271,12 @@ public class TestByteBuffer {
 
     @Test(dataProvider = "bufferOps")
     public void testDirectBuffer(Function<ByteBuffer, Buffer> bufferFactory, Map<Method, Object[]> members) {
-        try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
             MemoryAddress base = segment.baseAddress();
             Buffer bb = bufferFactory.apply(segment.asByteBuffer());
             assertTrue(bb.isDirect());
             DirectBuffer directBuffer = ((DirectBuffer)bb);
-            assertEquals(directBuffer.address(), MemoryAddressImpl.addressof(base));
+            assertEquals(directBuffer.address(), ((MemoryAddressImpl)base).unsafeGetOffset());
             assertTrue((directBuffer.attachment() == null) == (bb instanceof ByteBuffer));
             assertTrue(directBuffer.cleaner() == null);
         }
@@ -284,7 +284,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeOffheap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        try (MemorySegment segment = MemorySegment.ofNative(seq)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
             MemoryAddress base = segment.baseAddress();
             initializer.accept(base);
             checker.accept(base);
@@ -320,7 +320,7 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeRoundtripNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        try (MemorySegment segment = MemorySegment.ofNative(seq)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
             MemoryAddress first = segment.baseAddress();
             initializer.accept(first);
             MemoryAddress second = MemorySegment.ofByteBuffer(segment.asByteBuffer()).baseAddress();
@@ -331,7 +331,7 @@ public class TestByteBuffer {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testBufferOnClosedScope() {
         MemorySegment leaked;
-        try (MemorySegment segment = MemorySegment.ofNative(bytes)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
             leaked = segment;
         }
         leaked.asByteBuffer();
@@ -339,13 +339,13 @@ public class TestByteBuffer {
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testTooBigForByteBuffer() {
-        MemorySegment.ofNative((long) Integer.MAX_VALUE * 2).asByteBuffer();
+        MemorySegment.allocateNative((long) Integer.MAX_VALUE * 2).asByteBuffer();
     }
 
     @Test(dataProvider="resizeOps")
     public void testCopyHeapToNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         int bytes = (int)seq.byteSize();
-        try (MemorySegment nativeArray = MemorySegment.ofNative(bytes) ;
+        try (MemorySegment nativeArray = MemorySegment.allocateNative(bytes);
              MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
             initializer.accept(heapArray.baseAddress());
             MemoryAddress.copy(heapArray.baseAddress(), nativeArray.baseAddress(), bytes);
@@ -356,7 +356,7 @@ public class TestByteBuffer {
     @Test(dataProvider="resizeOps")
     public void testCopyNativeToHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         int bytes = (int)seq.byteSize();
-        try (MemorySegment nativeArray = MemorySegment.ofNative(seq) ;
+        try (MemorySegment nativeArray = MemorySegment.allocateNative(seq);
              MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
             initializer.accept(nativeArray.baseAddress());
             MemoryAddress.copy(nativeArray.baseAddress(), heapArray.baseAddress(), bytes);

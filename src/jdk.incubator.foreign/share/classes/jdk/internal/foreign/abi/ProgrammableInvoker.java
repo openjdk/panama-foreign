@@ -32,6 +32,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class ProgrammableInvoker {
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.DEBUG");
 
-    private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class);
+    private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
 
     // Unbound MH for the invoke() method
     private static final MethodHandle INVOKE_MH;
@@ -97,11 +98,11 @@ public class ProgrammableInvoker {
 
     Object invoke(Object[] args) {
         List<MemorySegment> tempBuffers = new ArrayList<>();
-        try (MemorySegment argBuffer = MemorySegment.ofNative(layout.size, 64)) {
+        try (MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64)) {
             MemoryAddress argsPtr = argBuffer.baseAddress();
             MemoryAddress stackArgs;
             if (stackArgsBytes > 0) {
-                MemorySegment stackArgsSeg = MemorySegment.ofNative(stackArgsBytes, 8);
+                MemorySegment stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8);
                 tempBuffers.add(stackArgsSeg);
                 stackArgs = stackArgsSeg.baseAddress();
             } else {

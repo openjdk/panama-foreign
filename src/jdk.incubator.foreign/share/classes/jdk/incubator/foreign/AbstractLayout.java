@@ -39,10 +39,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 abstract class AbstractLayout implements MemoryLayout {
-    protected final long size;
-    protected final long alignment;
+    final long size;
+    final long alignment;
     protected final Map<String, Constable> annotations;
 
     public AbstractLayout(long size, long alignment, Map<String, Constable> annotations) {
@@ -75,14 +76,13 @@ abstract class AbstractLayout implements MemoryLayout {
     abstract AbstractLayout dup(long alignment, Map<String, Constable> annos);
 
     @Override
-    public AbstractLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+    public AbstractLayout withBitAlignment(long alignmentBits) {
         checkAlignment(alignmentBits);
         return dup(alignmentBits, annotations);
     }
 
     void checkAlignment(long alignmentBitCount) {
-        if (alignmentBitCount <= 0 || //alignment must be positive
-                ((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
+        if (((alignmentBitCount & (alignmentBitCount - 1)) != 0L) || //alignment must be a power of two
                 (alignmentBitCount < 8)) { //alignment must be greater than 8
             throw new IllegalArgumentException("Invalid alignment: " + alignmentBitCount);
         }

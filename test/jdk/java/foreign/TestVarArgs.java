@@ -79,9 +79,9 @@ public class TestVarArgs extends NativeTestHelper {
 
     @Test(dataProvider = "args")
     public void testVarArgs(List<VarArg> args) throws Throwable {
-        try (MemorySegment writeBack = MemorySegment.ofNative(args.size() * WRITEBACK_BYTES_PER_ARG);
-            MemorySegment callInfo = MemorySegment.ofNative(ML_CallInfo);
-            MemorySegment argIDs = MemorySegment.ofNative(MemoryLayout.ofSequence(args.size(), C_INT))) {
+        try (MemorySegment writeBack = MemorySegment.allocateNative(args.size() * WRITEBACK_BYTES_PER_ARG);
+            MemorySegment callInfo = MemorySegment.allocateNative(ML_CallInfo);
+            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.ofSequence(args.size(), C_INT))) {
 
             MemoryAddress callInfoPtr = callInfo.baseAddress();
 

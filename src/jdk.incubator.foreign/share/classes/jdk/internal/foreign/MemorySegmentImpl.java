@@ -37,6 +37,14 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Random;
 
+/**
+ * This class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
+ * about the segment's spatial and temporal bounds, as well as the addressing coordinates (base + offset) which allows
+ * unsafe access; each memory segment implementation is associated with an owner thread which is set at creation time.
+ * Access to certain sensitive operations on the memory segment will fail with {@code IllegalStateException} if the
+ * segment is either in an invalid state (e.g. it has already been closed) or if access occurs from a thread other
+ * than the owner thread. See {@link MemoryScope} for more details on management of temporal bounds.
+ */
 public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
@@ -46,65 +54,37 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final int mask;
     final long min;
     final Object base;
+    final Thread owner;
     final MemoryScope scope;
 
     final static int READ_ONLY = 1;
-    final static int PINNED = READ_ONLY << 1;
-    final static int SHARED = PINNED << 1;
     final static long NONCE = new Random().nextLong();
 
     public static MemorySegmentImpl EVERYTHING =
-            new MemorySegmentImpl(0, null, Long.MAX_VALUE, PINNED | SHARED, MemoryScope.GLOBAL);
+            new MemorySegmentImpl(0, null, Long.MAX_VALUE, 0, null, MemoryScope.GLOBAL);
 
-    public MemorySegmentImpl(long min, Object base, long length, int mask, MemoryScope scope) {
+    public MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
         this.mask = mask;
         this.min = min;
         this.base = base;
+        this.owner = owner;
         this.scope = scope;
     }
 
-    public MemorySegmentImpl root() {
-        return this;
+    // MemorySegment methods
+
+    @Override
+    public final MemorySegmentImpl asSlice(long offset, long newSize) {
+        checkValidState();
+        checkBounds(offset, newSize);
+        return new MemorySegmentImpl(min + offset, base, newSize, mask, owner, scope);
     }
 
     @Override
-    public final MemorySegment slice(long offset, long newSize) throws IllegalArgumentException {
-        checkValidState();
-        if (outOfBounds(offset, newSize)) {
-            throw new IllegalArgumentException();
-        }
-        return new MemorySegmentImpl(min + offset, base, newSize, mask, scope);
-    }
-
-    @Override
-    public MemorySegment asShared() {
-        checkValidState();
-        if (scope.isShared()) {
-            throw new IllegalStateException("Segment is already shared");
-        } else {
-            MemoryScope.ConfinedScope confinedScope = (MemoryScope.ConfinedScope)scope;
-            //flush read/writes to memory before returning the new segment
-            UNSAFE.fullFence();
-            return new MemorySegmentImpl(min, base, length, mask | SHARED | PINNED, confinedScope.toShared(this));
-        }
-    }
-
-    @Override
-    public MemorySegment asConfined(Thread newOwner) {
-        checkValidState();
-        if (scope.isShared()) {
-            throw new IllegalStateException("Cannot confine shared segment");
-        } else {
-            MemoryScope.ConfinedScope confinedScope = (MemoryScope.ConfinedScope)scope;
-            if (confinedScope.thread != newOwner) {
-                //flush read/writes to memory before returning the new segment
-                UNSAFE.fullFence();
-                return new MemorySegmentImpl(min, base, length, mask, confinedScope.transfer(newOwner));
-            } else {
-                throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
-            }
-        }
+    public MemorySegment acquire() {
+        scope.checkAlive();
+        return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
     }
 
     @Override
@@ -118,15 +98,9 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public final MemorySegment asReadOnly() {
+    public final MemorySegmentImpl asReadOnly() {
         checkValidState();
-        return new MemorySegmentImpl(min, base, length, mask | READ_ONLY, scope);
-    }
-
-    @Override
-    public final MemorySegment asPinned() {
-        checkValidState();
-        return new MemorySegmentImpl(min, base, length, mask | PINNED, scope);
+        return new MemorySegmentImpl(min, base, length, mask | READ_ONLY, owner, scope);
     }
 
     @Override
@@ -135,45 +109,28 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public final boolean isPinned() {
-        return isSet(PINNED);
-    }
-
-    @Override
-    public boolean isShared() {
-        return isSet(SHARED);
-    }
-
-    @Override
-    public boolean isConfined(Thread thread) {
-        return !isShared() && ((MemoryScope.ConfinedScope)scope).thread == thread;
-    }
-
-    @Override
     public final boolean isReadOnly() {
         return isSet(READ_ONLY);
     }
 
-    public final boolean isSet(int mask) {
-        return (this.mask & mask) != 0;
+    @Override
+    public boolean isAccessible() {
+        return owner == Thread.currentThread();
     }
 
     @Override
-    public final void close() throws UnsupportedOperationException {
+    public final void close() {
         checkValidState();
-        if (isPinned()) {
-            throw new UnsupportedOperationException("Cannot close a pinned segment");
-        } else {
-            scope.close();
+        if (owner == null) {
+            throw new IllegalStateException("Cannot close unchecked segment");
         }
+        scope.close();
     }
 
     @Override
-    public ByteBuffer asByteBuffer() throws UnsupportedOperationException, IllegalStateException {
+    public ByteBuffer asByteBuffer() {
         checkValidState();
-        if (length > Integer.MAX_VALUE) {
-            throw new UnsupportedOperationException("Segment is too large to wrap as ByteBuffer. Size: " + length);
-        }
+        checkIntSize("ByteBuffer");
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
         ByteBuffer _bb;
         if (base() != null) {
@@ -188,44 +145,68 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
             //scope is IMMUTABLE - obtain a RO byte buffer
             _bb = _bb.asReadOnlyBuffer();
         }
-        if (!isPinned()) {
-            //scope is not PINNED - need to wrap the buffer so that appropriate scope checks take place
-            _bb = nioAccess.newScopedByteBuffer(this, _bb);
-        }
-        return _bb;
+        // need to wrap the buffer so that appropriate scope checks take place
+        return nioAccess.newScopedByteBuffer(this, _bb);
     }
 
+    @Override
+    public byte[] toByteArray() {
+        checkValidState();
+        checkIntSize("byte[]");
+        byte[] arr = new byte[(int)length];
+        MemorySegment arrSegment = MemorySegment.ofArray(arr);
+        MemoryAddress.copy(this.baseAddress(), arrSegment.baseAddress(), length);
+        return arr;
+    }
+
+    // MemorySegmentProxy methods
+
+    @Override
     public final void checkValidState() {
-        scope.checkValidState();
+        if (owner != null && owner != Thread.currentThread()) {
+            throw new IllegalStateException("Attempt to access segment outside owning thread");
+        }
+        scope.checkAlive();
     }
 
-    private String outOfBoundsMsg(long offset, long length) {
-        return String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
-                this, offset, length);
+    // Object methods
+
+    @Override
+    public String toString() {
+        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + byteSize() + " }";
     }
+
+    // Helper methods
 
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
         if (isReadOnly() && writeAccess) {
             throw new UnsupportedOperationException("Cannot write to read-only memory segment");
-        } else if (outOfBounds(offset, length)) {
-            throw new IllegalStateException(outOfBoundsMsg(offset, length));
         }
+        checkBounds(offset, length);
     }
 
-    boolean outOfBounds(long offset, long length) {
-        return (length < 0 ||
-                offset < 0 ||
-                offset > this.length - length); // careful of overflow
-    }
-
-    public Object base() {
+    Object base() {
         return base;
     }
 
-    @Override
-    public String toString() {
-        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + byteSize() + " }";
+    private final boolean isSet(int mask) {
+        return (this.mask & mask) != 0;
+    }
+
+    private void checkIntSize(String typeName) {
+        if (length > (Integer.MAX_VALUE - 8)) { //conservative check
+            throw new UnsupportedOperationException(String.format("Segment is too large to wrap as %s. Size: %d", typeName, length));
+        }
+    }
+
+    private void checkBounds(long offset, long length) {
+        if (length < 0 ||
+                offset < 0 ||
+                offset > this.length - length) { // careful of overflow
+            throw new IndexOutOfBoundsException(String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
+                this, offset, length));
+        }
     }
 
     private int id() {

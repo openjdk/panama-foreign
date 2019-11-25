@@ -25,7 +25,7 @@
  */
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.LayoutPathImpl;
+import jdk.internal.foreign.LayoutPath;
 import jdk.internal.foreign.Utils;
 
 import java.lang.constant.Constable;
@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.stream.Stream;
 
 /**
  * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
@@ -48,11 +47,18 @@ import java.util.stream.Stream;
  * More complex layouts can be derived from simpler ones: a <em>sequence layout</em> denotes a repetition of one or more
  * element layout (see {@link SequenceLayout}); a <em>group layout</em> denotes an aggregation of (typically) heterogeneous
  * member layouts (see {@link GroupLayout}).
+ * <p>
+ * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
+ * use of identity-sensitive operations (including reference equality ({@code ==}), identity hash code, or synchronization) on
+ * instances of {@code MemoryLayout} may have unpredictable results and should be avoided. The {@code equals} method should
+ * be used for comparisons.
+ * <p>
+ * Non-platform classes should not implement {@linkplain MemoryLayout} directly.
  *
  * <h2>Size, alignment and byte order</h2>
  *
  * All layouts have a size; layout size for value and padding layouts is always explicitly denoted; this means that a layout description
- * has always the same size in bits, regardless of the platform in which it is used. For derived layouts, the size is computed
+ * always has the same size in bits, regardless of the platform in which it is used. For derived layouts, the size is computed
  * as follows:
  * <ul>
  *     <li>for a <em>finite</em> sequence layout <em>S</em> whose element layout is <em>E</em> and size is L,
@@ -85,7 +91,7 @@ import java.util.stream.Stream;
  * (see {@link MemoryLayout#offset(PathElement...)}), or to quickly obtain a memory access handle corresponding to the selected
  * layout (see {@link MemoryLayout#varHandle(Class, PathElement...)}).
  * <p>
- * Such <em>layout paths</em> can be constructed programmatically using the instance methods in this class.
+ * Such <em>layout paths</em> can be constructed programmatically using the methods in this class.
  * For instance, given a layout constructed as follows:
  * <blockquote><pre>{@code
 SequenceLayout seq = MemoryLayout.ofSequence(5,
@@ -109,32 +115,46 @@ long valueOffset = seq.offset(PathElement.sequenceElement(), PathElement.groupEl
  * @apiNote In the future, if the Java language permits, {@link MemoryLayout}
  * may become a {@code sealed} interface, which would prohibit subclassing except by
  * explicitly permitted types.
+ *
+ * @implSpec
+ * Implementations of this class are immutable and thread-safe.
  */
 public interface MemoryLayout extends Constable {
 
+    /**
+     * Returns an {@link Optional} containing the nominal descriptor for this
+     * layout, if one can be constructed, or an empty {@link Optional}
+     * if one cannot be constructed.
+     *
+     * @return An {@link Optional} containing the resulting nominal descriptor,
+     * or an empty {@link Optional} if one cannot be constructed.
+     */
     @Override
     Optional<? extends DynamicConstantDesc<? extends MemoryLayout>> describeConstable();
 
     /**
      * Computes the layout size, in bits.
+     *
      * @return the layout size, in bits.
      * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}).
      */
-    long bitSize() throws UnsupportedOperationException;
+    long bitSize();
 
     /**
      * Computes the layout size, in bytes.
+     *
      * @return the layout size, in bytes.
      * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}),
-     * or if the bits size (see {@link MemoryLayout#bitSize()} is not a multiple of 8.
+     * or if {@code bitSize()} is not a multiple of 8.
      */
-    default long byteSize() throws UnsupportedOperationException {
+    default long byteSize() {
         return Utils.bitsToBytesOrThrow(bitSize(),
                 () -> new UnsupportedOperationException("Cannot compute byte size; bit size is not a multiple of 8"));
     }
 
     /**
      * Return the <em>name</em> (if any) associated with this layout.
+     *
      * @return the layout <em>name</em> (if any).
      * @see MemoryLayout#withName(String)
      */
@@ -142,6 +162,7 @@ public interface MemoryLayout extends Constable {
 
     /**
      * Attach a <em>name</em> to this layout.
+     *
      * @param name the layout name.
      * @return a new layout which is the same as this layout, except for the <em>name</em> associated to it.
      * @see MemoryLayout#name()
@@ -149,7 +170,7 @@ public interface MemoryLayout extends Constable {
     MemoryLayout withName(String name);
 
     /**
-     * Returns the alignment constraints associated with this layout, expressed in bits. Layout alignment defines a power
+     * Returns the alignment constraint associated with this layout, expressed in bits. Layout alignment defines a power
      * of two A which is the bitwise alignment of the layout. If A&gt;=8 then A/8 is the number of bytes that must be aligned
      * for any pointer that correctly points to this layout. Thus:
      *
@@ -164,7 +185,7 @@ public interface MemoryLayout extends Constable {
     long bitAlignment();
 
     /**
-     * Returns the alignment constraints associated with this layout, expressed in bytes. Layout alignment defines a power
+     * Returns the alignment constraint associated with this layout, expressed in bytes. Layout alignment defines a power
      * of two A which is the bytewise alignment of the layout, where A is the number of bytes that must be aligned
      * for any pointer that correctly points to this layout. Thus:
      *
@@ -175,6 +196,7 @@ public interface MemoryLayout extends Constable {
      * </ul>
      *
      * @return the layout alignment constraint, in bytes.
+     * @throws UnsupportedOperationException if {@code bitAlignment()} is not a multiple of 8.
      */
     default long byteAlignment() {
         return Utils.bitsToBytesOrThrow(bitAlignment(),
@@ -182,66 +204,75 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * Creates a new layout which features the desired alignment.
+     * Creates a new layout which features the desired alignment constraint.
      *
-     * @param bitAlignment the layout alignment, expressed in bits.
-     * @return a new layout which is the same as this layout, except for the alignment associated to it.
-     * @throws IllegalArgumentException if the supplied alignment is not a power of two, or if it's lower than 8.
+     * @param bitAlignment the layout alignment constraint, expressed in bits.
+     * @return a new layout which is the same as this layout, except for the alignment constraint associated to it.
+     * @throws IllegalArgumentException if {@code bitAlignment} is not a power of two, or if it's less than than 8.
      */
-    MemoryLayout withBitAlignment(long bitAlignment) throws IllegalArgumentException;
+    MemoryLayout withBitAlignment(long bitAlignment);
 
     /**
-     * The offset of the layout selected by a given layout path, where the path is considered rooted in this
+     * Computes the offset of the layout selected by a given layout path, where the path is considered rooted in this
      * layout.
-     * @param elements an operator that can be used to generate the desired layout path.
-     * @return The offset of layout selected by a the layout path obtained by concatenating the path elements in {@code elements}.
      *
      * @apiNote if the layout path has one (or more) free dimensions,
      * the offset is computed as if all the indices corresponding to such dimensions were set to {@code 0}.
+     *
+     * @param elements the layout path elements.
+     * @return The offset of layout selected by a the layout path obtained by concatenating the path elements in {@code elements}.
+     * @throws IllegalArgumentException if the layout path obtained by concatenating the path elements in {@code elements}
+     * does not select a valid layout element.
      */
-    default long offset(PathElement... elements) throws UnsupportedOperationException {
-        LayoutPathImpl path = LayoutPathImpl.rootPath(this);
+    default long offset(PathElement... elements) {
+        LayoutPath path = LayoutPath.rootPath(this);
         for (PathElement e : elements) {
-            path = ((LayoutPathImpl.PathElementImpl)e).apply(path);
+            path = ((LayoutPath.PathElementImpl)e).apply(path);
         }
         return path.offset();
     }
 
     /**
-     * A var handle that can be used to dereference memory at the layout selected by a given layout path,
+     * Creates a memory access var handle that can be used to dereference memory at the layout selected by a given layout path,
      * where the path is considered rooted in this layout.
+     *
+     * @apiNote the resulting var handle will feature an additional {@code long} access coordinate for every
+     * unspecified sequence access component contained in this layout path.
+     *
      * @param carrier the var handle carrier type.
-     * @param elements an operator that can be used to generate the desired layout path.
+     * @param elements the layout path elements.
      * @return a var handle which can be used to dereference memory at the layout denoted by given layout path.
-     * @throws UnsupportedOperationException if the layout targeted by this path is not a {@link ValueLayout} layout.
+     * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints.
      * @throws IllegalArgumentException if the carrier does not represent a primitive type, if the carrier is {@code void},
      * {@code boolean}, or if the layout path obtained by concatenating the path elements in {@code elements}
-     * cannot be dereferenced; this can occur for the following reasons:
-     * <ul>
-     * <li>the layout path does not select a value layout (see {@link ValueLayout})</li>
-     * <li>the size of the value layout selected by the path does not match that of the specified carrier type</li>
-     * <li>the layout path has one or more path elements with incompatible alignment constraints</li>
-     * </ul>
-     *
-     * @apiNote the result var handle will feature an additional {@code long} access coordinate for every
-     * unspecified sequence access component contained in this layout path.
+     * does not select a value layout (see {@link ValueLayout}), or if the selected value layout has a size that
+     * that does not match that of the specified carrier type.
      */
-    default VarHandle varHandle(Class<?> carrier, PathElement... elements) throws UnsupportedOperationException, IllegalArgumentException {
-        LayoutPathImpl path = LayoutPathImpl.rootPath(this);
+    default VarHandle varHandle(Class<?> carrier, PathElement... elements) {
+        LayoutPath path = LayoutPath.rootPath(this);
         for (PathElement e : elements) {
-            path = ((LayoutPathImpl.PathElementImpl)e).apply(path);
+            path = ((LayoutPath.PathElementImpl)e).apply(path);
         }
         return path.dereferenceHandle(carrier);
     }
 
     /**
-     * Instances of this class are used to form <a href="Layout.html#layout-paths"><em>layout paths</em></a>. There
+     * Instances of this class are used to form <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>. There
      * are two kinds of path elements: <em>group path elements</em> and <em>sequence path elements</em>. Group
      * path elements are used to select a given named member layout within a {@link GroupLayout}. Sequence
      * path elements are used to select a sequence element layout within a {@link SequenceLayout}; selection
      * of sequence element layout can be <em>explicit</em> (see {@link PathElement#sequenceElement(long)}) or
      * <em>implicit</em> (see {@link PathElement#sequenceElement()}). When a path uses one or more implicit
      * sequence path elements, it acquires additional <em>free dimensions</em>.
+     * <p>
+     * Non-platform classes should not implement {@linkplain PathElement} directly.
+     *
+     * @apiNote In the future, if the Java language permits, {@link PathElement}
+     * may become a {@code sealed} interface, which would prohibit subclassing except by
+     * explicitly permitted types.
+     *
+     * @implSpec
+     * Implementations of this interface are immutable and thread-safe.
      */
     interface PathElement {
 
@@ -249,31 +280,33 @@ public interface MemoryLayout extends Constable {
          * Returns a path element which selects a member layout with given name from a given group layout.
          * The path element returned by this method does not alter the number of free dimensions of any path
          * that is combined with such element.
+         *
+         * @implSpec in case multiple group elements with a matching name exist, the path element returned by this
+         * method will select the first one; that is, the group element with lowest offset from current path is selected.
+         *
          * @param name the name of the group element to be selected.
          * @return a path element which selects the group element with given name.
          * @throws NullPointerException if the specified group element name is {@code null}.
-         *
-         * @implSpec in case multiple group elements with matching name exist, the path element returned by this
-         * method will select the first one; that is, the group element with lowest offset from current path is selected.
          */
         static PathElement groupElement(String name) {
             Objects.requireNonNull(name);
-            return new LayoutPathImpl.PathElementImpl(path -> path.groupElement(name));
+            return new LayoutPath.PathElementImpl(path -> path.groupElement(name));
         }
 
         /**
          * Returns a path element which selects the element layout at the specified position in a given the sequence layout.
          * The path element returned by this method does not alter the number of free dimensions of any path
          * that is combined with such element.
+         *
          * @param index the index of the sequence element to be selected.
          * @return a path element which selects the sequence element layout with given index.
-         * @throws IllegalArgumentException if the index is &lt; 0.
+         * @throws IllegalArgumentException if {@code index < 0}.
          */
-        static PathElement sequenceElement(long index) throws IllegalArgumentException {
+        static PathElement sequenceElement(long index) {
             if (index < 0) {
                 throw new IllegalArgumentException("Index must be positive: " + index);
             }
-            return new LayoutPathImpl.PathElementImpl(path -> path.sequenceElement(index));
+            return new LayoutPath.PathElementImpl(path -> path.sequenceElement(index));
         }
 
         /**
@@ -288,30 +321,31 @@ public interface MemoryLayout extends Constable {
 E * (S + I * F)
          * }</pre></blockquote>
          * where {@code E} is the size (in bytes) of the sequence element layout.
+         *
          * @param start the index of the first sequence element to be selected.
          * @param step the step factor at which subsequence sequence elements are to be selected.
          * @return a path element which selects the sequence element layout with given index.
-         * @throws IllegalArgumentException if the start index is out of the bounds of the selected sequence layout,
-         * or if the step factor is 0, or otherwise incompatible with the selected sequence layout size.
+         * @throws IllegalArgumentException if {@code start < 0}, or {@code step == 0}.
          */
-        static PathElement sequenceElement(long start, long step) throws IllegalArgumentException {
+        static PathElement sequenceElement(long start, long step) {
             if (start < 0) {
                 throw new IllegalArgumentException("Start index must be positive: " + start);
             }
             if (step == 0) {
                 throw new IllegalArgumentException("Step must be != 0: " + step);
             }
-            return new LayoutPathImpl.PathElementImpl(path -> path.sequenceElement(start, step));
+            return new LayoutPath.PathElementImpl(path -> path.sequenceElement(start, step));
         }
 
         /**
          * Returns a path element which selects an unspecified element layout from a given sequence layout.
          * If a path with free dimensions {@code n} is combined with the path element returned by this method,
          * the number of free dimensions of the resulting path will be {@code 1 + n}.
+         *
          * @return a path element which selects an unspecified sequence element layout.
          */
         static PathElement sequenceElement() {
-            return new LayoutPathImpl.PathElementImpl(LayoutPathImpl::sequenceElement);
+            return new LayoutPath.PathElementImpl(LayoutPath::sequenceElement);
         }
     }
 
@@ -326,12 +360,14 @@ E * (S + I * F)
 
     /**
      * Returns the hash code value for this layout.
+     *
      * @return the hash code value for this layout.
      */
     int hashCode();
 
     /**
      * Returns a string representation of this layout.
+     *
      * @return a string representation of this layout.
      */
     @Override
@@ -339,9 +375,10 @@ E * (S + I * F)
 
     /**
      * Create a new padding layout with given size.
+     *
      * @param size the padding size in bits.
      * @return the new selector layout.
-     * @throws IllegalArgumentException if size is &le; 0.
+     * @throws IllegalArgumentException if {@code size <= 0}.
      */
     static MemoryLayout ofPaddingBits(long size) {
         AbstractLayout.checkSize(size);
@@ -350,24 +387,26 @@ E * (S + I * F)
 
     /**
      * Create a value layout of given byte order and size.
+     *
      * @param size the value layout size.
      * @param order the value layout's byte order.
      * @return a new value layout.
-     * @throws IllegalArgumentException if size is &le; 0.
+     * @throws IllegalArgumentException if {@code size <= 0}.
      */
-    static ValueLayout ofValueBits(long size, ByteOrder order) throws IllegalArgumentException {
+    static ValueLayout ofValueBits(long size, ByteOrder order) {
         AbstractLayout.checkSize(size);
         return new ValueLayout(order, size);
     }
 
     /**
      * Create a new sequence layout with given element layout and element count.
-     * @param elementLayout the sequence element layout.
+     *
      * @param elementCount the sequence element count.
+     * @param elementLayout the sequence element layout.
      * @return the new sequence layout with given element layout and size.
-     * @throws IllegalArgumentException if size &lt; 0.
+     * @throws IllegalArgumentException if {@code elementCount < 0}.
      */
-    static SequenceLayout ofSequence(long elementCount, MemoryLayout elementLayout) throws IllegalArgumentException {
+    static SequenceLayout ofSequence(long elementCount, MemoryLayout elementLayout) {
         AbstractLayout.checkSize(elementCount, true);
         OptionalLong size = OptionalLong.of(elementCount);
         return new SequenceLayout(size, elementLayout);
@@ -375,6 +414,7 @@ E * (S + I * F)
 
     /**
      * Create a new sequence layout, with unbounded element count and given element layout.
+     *
      * @param elementLayout the element layout of the sequence layout.
      * @return the new sequence layout with given element layout.
      */
@@ -384,6 +424,7 @@ E * (S + I * F)
 
     /**
      * Create a new <em>struct</em> group layout with given member layouts.
+     *
      * @param elements The member layouts of the <em>struct</em> group layout.
      * @return a new <em>struct</em> group layout with given member layouts.
      */
@@ -393,6 +434,7 @@ E * (S + I * F)
 
     /**
      * Create a new <em>union</em> group layout with given member layouts.
+     *
      * @param elements The member layouts of the <em>union</em> layout.
      * @return a new <em>union</em> group layout with given member layouts.
      */

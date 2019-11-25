@@ -32,6 +32,7 @@ import jdk.internal.vm.annotation.Stable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
@@ -48,7 +49,7 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.DEBUG");
 
-    private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class);
+    private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
 
     @Stable
     private final MethodHandle mh;

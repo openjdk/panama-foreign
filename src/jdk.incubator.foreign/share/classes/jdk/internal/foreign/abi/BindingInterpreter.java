@@ -28,13 +28,14 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.MemoryAddressImpl;
 
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.List;
 import java.util.function.Function;
 
 class BindingInterpreter {
-    private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class);
-    private static final VarHandle VH_FLOAT = MemoryHandles.varHandle(float.class);
-    private static final VarHandle VH_DOUBLE = MemoryHandles.varHandle(double.class);
+    private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
+    private static final VarHandle VH_FLOAT = MemoryHandles.varHandle(float.class, ByteOrder.nativeOrder());
+    private static final VarHandle VH_DOUBLE = MemoryHandles.varHandle(double.class, ByteOrder.nativeOrder());
 
     static void unbox(Object arg, List<Binding> bindings, Function<VMStorage,
             MemoryAddress> ptrFunction, List<? super MemorySegment> buffers) {
@@ -80,7 +81,7 @@ class BindingInterpreter {
                     Binding.Copy binding = (Binding.Copy) b;
                     MemorySegment operand = (MemorySegment) currentValue;
                     assert operand.byteSize() == binding.size() : "operand size mismatch";
-                    MemorySegment copy = MemorySegment.ofNative(binding.size(), binding.alignment());
+                    MemorySegment copy = MemorySegment.allocateNative(binding.size(), binding.alignment());
                     MemoryAddress.copy(operand.baseAddress(), copy.baseAddress(), binding.size());
                     buffers.add(copy);
                     currentValue = copy;
@@ -125,13 +126,13 @@ class BindingInterpreter {
                 case Binding.COPY_BUFFER_TAG: {
                     Binding.Copy binding = (Binding.Copy) b;
                     MemoryAddress operand = (MemoryAddress) currentValue;
-                    MemorySegment copy = MemorySegment.ofNative(binding.size(), binding.alignment());
+                    MemorySegment copy = MemorySegment.allocateNative(binding.size(), binding.alignment());
                     MemoryAddress.copy(operand, copy.baseAddress(), binding.size());
                     currentValue = copy; // leaked
                 } break;
                 case Binding.ALLOC_BUFFER_TAG: {
                     Binding.AllocateBuffer binding = (Binding.AllocateBuffer) b;
-                    currentValue = MemorySegment.ofNative(binding.size(), binding.alignment());
+                    currentValue = MemorySegment.allocateNative(binding.size(), binding.alignment());
                 } break;
                 case Binding.BOX_ADDRESS_TAG: {
                     currentValue = MemoryAddressImpl.ofNative((long) currentValue);

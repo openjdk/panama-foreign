@@ -53,7 +53,7 @@ public final class ForeignUnsafe {
     }
 
     /**
-     * Obtain the offset associated with this address. If {@link #getUnsafeBase(MemoryAddress)} returns {@null} on the passed
+     * Obtain the offset associated with this address. If {@link #getUnsafeBase(MemoryAddress)} returns {@code null} on the passed
      * address, then the offset is to be interpreted as the (absolute) numerical value associated said address.
      * Alternatively, the offset represents the displacement of a field or an array element within the containing
      * base object. This can be used in conjunction with {@link #getUnsafeBase(MemoryAddress)} in order to obtain a base/offset

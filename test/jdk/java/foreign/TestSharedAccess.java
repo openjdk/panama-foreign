@@ -27,15 +27,13 @@
  * @run testng TestSharedAccess
  */
 
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemoryLayouts;
 import org.testng.annotations.*;
 
 import java.lang.invoke.VarHandle;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.testng.Assert.*;
 
@@ -44,46 +42,18 @@ public class TestSharedAccess {
     static final VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
 
     @Test
-    public void testConfined() throws Throwable {
-        Thread owner = Thread.currentThread();
-        MemorySegment s = MemorySegment.ofNative(4);
-        AtomicReference<MemorySegment> confined = new AtomicReference<>(s);
-        setInt(s, 42);
-        assertEquals(getInt(s), 42);
-        List<Thread> threads = new ArrayList<>();
-        for (int i = 0 ; i < 100000 ; i++) {
-            threads.add(new Thread(() -> {
-                assertEquals(getInt(confined.get()), 42);
-                confined.set(confined.get().asConfined(owner));
-            }));
-        }
-        threads.forEach(t -> {
-            confined.set(confined.get().asConfined(t));
-            t.start();
-            try {
-                t.join();
-            } catch (Throwable e) {
-                throw new IllegalStateException(e);
-            }
-        });
-        confined.get().close();
-    }
-
-    @Test
     public void testShared() throws Throwable {
-        MemorySegment seg = MemorySegment.ofNative(4);
-        WeakReference<MemorySegment> wr = null;
-        {
-            MemorySegment s = seg.asShared();
-            wr = new WeakReference<>(s);
+        try (MemorySegment s = MemorySegment.allocateNative(4)) {
             setInt(s, 42);
             assertEquals(getInt(s), 42);
             List<Thread> threads = new ArrayList<>();
-                for (int i = 0 ; i < 100000 ; i++) {
-                    threads.add(new Thread(() -> {
-                        assertEquals(getInt(s), 42);
-                    }));
-                }
+            for (int i = 0 ; i < 1000 ; i++) {
+                threads.add(new Thread(() -> {
+                    try (MemorySegment local = s.acquire()) {
+                        assertEquals(getInt(local), 42);
+                    }
+                }));
+            }
             threads.forEach(Thread::start);
             threads.forEach(t -> {
                 try {
@@ -93,67 +63,13 @@ public class TestSharedAccess {
                 }
             });
         }
-        seg = null;
-        while (wr.get() != null) {
-            System.gc();
-            Thread.sleep(100);
-        }
-        // make sure we terminate :-)
     }
 
-    @Test
-    public void testBadSharedToConfined() throws Throwable {
-        MemorySegment segment = MemorySegment.ofNative(4);
-        assertTrue(segment.isAccessible());
-        assertTrue(segment.isConfined(Thread.currentThread()));
-        assertFalse(segment.isShared());
-        MemorySegment shared = segment.asShared();
-        assertTrue(shared.isAccessible());
-        assertTrue(shared.isShared());
-        try {
-            shared.asConfined(Thread.currentThread());
-            assertTrue(false); //should not get here
-        } catch (IllegalStateException ise) {
-            assertTrue(true);
-        } catch (Throwable t) {
-            assertTrue(false); //should not get here
-        }
-    }
-
-    @Test
-    public void testBadSharedToShared() throws Throwable {
-        MemorySegment segment = MemorySegment.ofNative(4);
-        assertTrue(segment.isAccessible());
-        assertTrue(segment.isConfined(Thread.currentThread()));
-        assertFalse(segment.isShared());
-        MemorySegment shared = segment.asShared();
-        assertTrue(shared.isAccessible());
-        assertTrue(shared.isShared());
-        try {
-            shared.asShared();
-            assertTrue(false); //should not get here
-        } catch (IllegalStateException ise) {
-            assertTrue(true);
-        } catch (Throwable t) {
-            assertTrue(false); //should not get here
-        }
-    }
-
-    @Test
-    public void testBadConfinedToConfined() throws Throwable {
-        try (MemorySegment segment = MemorySegment.ofNative(4)) {
-            assertTrue(segment.isAccessible());
-            assertTrue(segment.isConfined(Thread.currentThread()));
-            assertFalse(segment.isShared());
-            try {
-                segment.asConfined(Thread.currentThread());
-                assertTrue(false); //should not get here
-            } catch (IllegalArgumentException ise) {
-                assertTrue(true);
-            } catch (Throwable t) {
-                assertTrue(false); //should not get here
-            }
-        }
+    @Test(expectedExceptions=IllegalStateException.class)
+    public void testBadCloseWithPendingAcquire() {
+        try (MemorySegment segment = MemorySegment.allocateNative(8)) {
+            segment.acquire();
+        } //should fail here!
     }
 
     static int getInt(MemorySegment handle) {

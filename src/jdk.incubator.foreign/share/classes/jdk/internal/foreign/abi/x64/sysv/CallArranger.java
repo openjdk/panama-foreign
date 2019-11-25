@@ -92,7 +92,7 @@ public class CallArranger {
     static {
         try {
             var lookup = MethodHandles.lookup();
-            MH_ALLOC_BUFFER = lookup.findStatic(MemorySegment.class, "ofNative",
+            MH_ALLOC_BUFFER = lookup.findStatic(MemorySegment.class, "allocateNative",
                     methodType(MemorySegment.class, MemoryLayout.class));
             MH_BASEADDRESS = lookup.findVirtual(MemorySegment.class, "baseAddress",
                     methodType(MemoryAddress.class));
@@ -498,7 +498,7 @@ public class CallArranger {
         }
 
         long offset = 0;
-        final long count = type.elementsCount().getAsLong();
+        final long count = type.elementCount().getAsLong();
         for (long idx = 0; idx < count; idx++) {
             MemoryLayout t = type.elementLayout();
             offset = SharedUtils.align(t, false, offset);
@@ -578,7 +578,7 @@ public class CallArranger {
             // ignore zero-length array for now
             // TODO: handle zero length arrays here
             if (t instanceof SequenceLayout) {
-                if (((SequenceLayout) t).elementsCount().getAsLong() == 0) {
+                if (((SequenceLayout) t).elementCount().getAsLong() == 0) {
                     continue;
                 }
             }

@@ -87,7 +87,7 @@ public class CallArranger {
     static {
         try {
             var lookup = MethodHandles.lookup();
-            MH_ALLOC_BUFFER = lookup.findStatic(MemorySegment.class, "ofNative",
+            MH_ALLOC_BUFFER = lookup.findStatic(MemorySegment.class, "allocateNative",
                     methodType(MemorySegment.class, MemoryLayout.class));
             MH_BASEADDRESS = lookup.findVirtual(MemorySegment.class, "baseAddress",
                     methodType(MemoryAddress.class));

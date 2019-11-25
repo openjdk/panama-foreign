@@ -27,19 +27,21 @@
  */
 
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 
+import java.awt.font.LayoutPath;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
+import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
@@ -48,26 +50,29 @@ public class TestSegments {
 
     @Test(dataProvider = "badSizeAndAlignments", expectedExceptions = IllegalArgumentException.class)
     public void testBadAllocateAlign(long size, long align) {
-        MemorySegment.ofNative(size, align);
+        MemorySegment.allocateNative(size, align);
     }
 
     @Test(dataProvider = "badLayouts", expectedExceptions = UnsupportedOperationException.class)
     public void testBadAllocateLayout(MemoryLayout layout) {
-        MemorySegment.ofNative(layout);
+        MemorySegment.allocateNative(layout);
     }
 
     @Test(expectedExceptions = OutOfMemoryError.class)
     public void testAllocateTooBig() {
-        MemorySegment.ofNative(Long.MAX_VALUE);
+        MemorySegment.allocateNative(Long.MAX_VALUE);
     }
 
     @Test(dataProvider = "segmentOperations")
     public void testOpOutsideConfinement(SegmentMember member) throws Throwable {
-        try (MemorySegment segment = MemorySegment.ofNative(4)) {
+        try (MemorySegment segment = MemorySegment.allocateNative(4)) {
             AtomicBoolean failed = new AtomicBoolean(false);
             Thread t = new Thread(() -> {
                 try {
-                    member.method.invoke(segment, member.params);
+                    Object o = member.method.invoke(segment, member.params);
+                    if (member.method.getName().equals("acquire")) {
+                        ((MemorySegment)o).close();
+                    }
                 } catch (ReflectiveOperationException ex) {
                     throw new IllegalStateException(ex);
                 }
@@ -76,6 +81,17 @@ public class TestSegments {
             t.start();
             t.join();
             assertEquals(failed.get(), member.isConfined());
+        }
+    }
+
+    @Test
+    public void testNativeSegmentIsZeroed() {
+        VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+                .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
+        try (MemorySegment segment = MemorySegment.allocateNative(1000)) {
+            for (long i = 0 ; i < segment.byteSize() ; i++) {
+                assertEquals(0, (byte)byteHandle.get(segment.baseAddress(), i));
+            }
         }
     }
 
@@ -141,6 +157,7 @@ public class TestSegments {
 
         boolean isConfined() {
             return method.getName().startsWith("as") ||
+                    method.getName().startsWith("to") ||
                     method.getName().equals("close") ||
                     method.getName().equals("slice");
         }

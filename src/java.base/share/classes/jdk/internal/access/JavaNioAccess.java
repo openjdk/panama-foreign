@@ -51,10 +51,10 @@ public interface JavaNioAccess {
 
 /**
      * Constructs a ByteBuffer which delegates all operations to {@code bb} and whose life-cycle is bounded
-     * by the given scope in {@code scope}. The created buffer could be direct or not, based on whether
+     * by the temporal bounds associated with {@code segment}. The created buffer could be direct or not, based on whether
      * {@code bb} is direct.
      */
-    ByteBuffer newScopedByteBuffer(MemorySegmentProxy bufferScope, ByteBuffer bb);
+    ByteBuffer newScopedByteBuffer(MemorySegmentProxy segment, ByteBuffer bb);
 
     Object getBufferBase(ByteBuffer bb);
 

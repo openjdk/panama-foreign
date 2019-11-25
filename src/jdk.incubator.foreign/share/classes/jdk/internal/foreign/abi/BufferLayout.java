@@ -27,11 +27,12 @@ import jdk.incubator.foreign.MemoryHandles;
 
 import java.io.PrintStream;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
 class BufferLayout {
-    static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class);
+    static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
 
     final long size;
     final long arguments_next_pc;

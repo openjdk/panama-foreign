@@ -37,14 +37,19 @@ import jdk.internal.foreign.MemoryAddressImpl;
  * on the underlying memory backing a given memory segment. Since a memory address is always associated with a memory segment,
  * such access operations are always subject to spatial and temporal checks as enforced by the address' owning memory region.
  * <p>
- * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
- * class; use of identity-sensitive operations (including reference equality
- * ({@code ==}), identity hash code, or synchronization) on instances of
- * {@code MemoryAddress} may have unpredictable results and should be avoided.
- * The {@code equals} method should be used for comparisons.
+ * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
+ * use of identity-sensitive operations (including reference equality ({@code ==}), identity hash code, or synchronization) on
+ * instances of {@code MemoryAddress} may have unpredictable results and should be avoided. The {@code equals} method should
+ * be used for comparisons.
+ * <p>
+ * Non-platform classes should not implement {@linkplain MemoryAddress} directly.
+ *
+ * @apiNote In the future, if the Java language permits, {@link MemoryAddress}
+ * may become a {@code sealed} interface, which would prohibit subclassing except by
+ * explicitly permitted types.
  *
  * @implSpec
- * This class is immutable and thread-safe.
+ * Implementations of this interface are immutable and thread-safe.
  */
 public interface MemoryAddress {
     /**
@@ -89,12 +94,13 @@ public interface MemoryAddress {
      * @param src the source address.
      * @param dst the target address.
      * @param bytes the number of bytes to be copied.
-     * @throws IllegalArgumentException if {@code bytes} is &lt; 0, or if it is greater than the size of the segments
+     * @throws IndexOutOfBoundsException if {@code bytes < 0}, or if it is greater than the size of the segments
      * associated with either {@code src} or {@code dst}.
      * @throws IllegalStateException if either the source address or the target address belong to memory segments
-     * which have been already closed.
+     * which have been already closed, or if access occurs from a thread other than the thread owning either segment.
+     * @throws UnsupportedOperationException if {@code dst} is associated with a read-only segment (see {@link MemorySegment#isReadOnly()}).
      */
-    static void copy(MemoryAddress src, MemoryAddress dst, long bytes) throws IllegalStateException, IllegalArgumentException {
+    static void copy(MemoryAddress src, MemoryAddress dst, long bytes) {
         MemoryAddressImpl.copy((MemoryAddressImpl)src, (MemoryAddressImpl)dst, bytes);
     }
 

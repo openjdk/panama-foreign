@@ -50,6 +50,7 @@ MemoryLayout.ofStruct(
     MemoryLayout.ofValueBits(32),
     MemoryLayout.ofValueBits(32));
  * }</pre>
+ *
  * <p>
  * This is a <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>
  * class; use of identity-sensitive operations (including reference equality
@@ -60,7 +61,7 @@ MemoryLayout.ofStruct(
  * @implSpec
  * This class is immutable and thread-safe.
  */
-public class SequenceLayout extends AbstractLayout {
+public final class SequenceLayout extends AbstractLayout {
 
     private final OptionalLong elemCount;
     private final MemoryLayout elementLayout;
@@ -77,11 +78,12 @@ public class SequenceLayout extends AbstractLayout {
 
     /**
      * Computes the layout size, in bits. Since not all sequences have a finite size, this method can throw an exception.
+     *
      * @return the layout size (where defined).
-     * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementsCount()}).
+     * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementCount()}).
      */
     @Override
-    public long bitSize() throws UnsupportedOperationException {
+    public long bitSize() {
         if (elemCount.isPresent()) {
             return super.bitSize();
         } else {
@@ -90,7 +92,8 @@ public class SequenceLayout extends AbstractLayout {
     }
 
     /**
-     * The element layout associated with this sequence layout.
+     * Returns the element layout associated with this sequence layout.
+     *
      * @return The element layout associated with this sequence layout.
      */
     public MemoryLayout elementLayout() {
@@ -99,9 +102,10 @@ public class SequenceLayout extends AbstractLayout {
 
     /**
      * Returns the element count of this sequence layout (if any).
+     *
      * @return the element count of this sequence layout (if any).
      */
-    public OptionalLong elementsCount() {
+    public OptionalLong elementCount() {
         return elemCount;
     }
 
@@ -133,7 +137,7 @@ public class SequenceLayout extends AbstractLayout {
 
     @Override
     SequenceLayout dup(long alignment, Map<String, Constable> annotations) {
-        return new SequenceLayout(elementsCount(), elementLayout, alignment, annotations);
+        return new SequenceLayout(elementCount(), elementLayout, alignment, annotations);
     }
 
     @Override
@@ -160,7 +164,7 @@ public class SequenceLayout extends AbstractLayout {
      * {@inheritDoc}
      */
     @Override
-    public SequenceLayout withBitAlignment(long alignmentBits) throws IllegalArgumentException {
+    public SequenceLayout withBitAlignment(long alignmentBits) {
         return (SequenceLayout)super.withBitAlignment(alignmentBits);
     }
 }

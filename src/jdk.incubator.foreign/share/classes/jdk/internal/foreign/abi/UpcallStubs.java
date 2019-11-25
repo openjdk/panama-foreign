@@ -32,9 +32,8 @@ public class UpcallStubs {
 
     public static MemoryAddress upcallAddress(UpcallHandler handler) {
         long addr = handler.entryPoint();
-        return new MemorySegmentImpl(addr, null,8, 0,
-                new MemoryScope.ConfinedScope(null, Thread.currentThread(),
-                        () -> UpcallStubs.freeUpcallStub(addr))).baseAddress();
+        return new MemorySegmentImpl(addr, null, 8, 0, Thread.currentThread(),
+                new MemoryScope(null, () -> UpcallStubs.freeUpcallStub(addr))).baseAddress();
     }
 
     // natives

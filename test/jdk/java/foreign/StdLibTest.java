@@ -38,6 +38,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -70,9 +71,9 @@ public class StdLibTest extends NativeTestHelper {
 
     final static SystemABI abi = SystemABI.getInstance();
 
-    final static VarHandle byteHandle = MemoryHandles.varHandle(byte.class);
-    final static VarHandle intHandle = MemoryHandles.varHandle(int.class);
-    final static VarHandle longHandle = MemoryHandles.varHandle(long.class);
+    final static VarHandle byteHandle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
+    final static VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
+    final static VarHandle longHandle = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
     final static VarHandle byteArrHandle = arrayHandle(C_CHAR, byte.class);
     final static VarHandle intArrHandle = arrayHandle(C_INT, int.class);
 
@@ -218,7 +219,7 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         String strcat(String s1, String s2) throws Throwable {
-            try (MemorySegment buf = MemorySegment.ofNative(s1.length() + s2.length() + 1) ;
+            try (MemorySegment buf = MemorySegment.allocateNative(s1.length() + s2.length() + 1) ;
                  MemorySegment other = makeNativeString(s2)) {
                 char[] chars = s1.toCharArray();
                 for (long i = 0 ; i < chars.length ; i++) {
@@ -249,7 +250,7 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         Tm gmtime(long arg) throws Throwable {
-            try (MemorySegment time = MemorySegment.ofNative(8)) {
+            try (MemorySegment time = MemorySegment.allocateNative(8)) {
                 longHandle.set(time.baseAddress(), arg);
                 return new Tm((MemoryAddress)gmtime.invokeExact(time.baseAddress()));
             }
@@ -298,13 +299,13 @@ public class StdLibTest extends NativeTestHelper {
             //init native array
             SequenceLayout seq = MemoryLayout.ofSequence(arr.length, C_INT);
 
-            try (MemorySegment nativeArr = MemorySegment.ofNative(seq)) {
+            try (MemorySegment nativeArr = MemorySegment.allocateNative(seq)) {
 
                 IntStream.range(0, arr.length)
                         .forEach(i -> intArrHandle.set(nativeArr.baseAddress(), i, arr[i]));
 
                 //call qsort
-                qsort.invokeExact(nativeArr.baseAddress(), seq.elementsCount().getAsLong(), C_INT.byteSize(), qsortUpcallAddr);
+                qsort.invokeExact(nativeArr.baseAddress(), seq.elementCount().getAsLong(), C_INT.byteSize(), qsortUpcallAddr);
 
                 //convert back to Java array
                 return LongStream.range(0, arr.length)
@@ -451,7 +452,7 @@ public class StdLibTest extends NativeTestHelper {
 
     static MemorySegment makeNativeString(String value, int length) {
         MemoryLayout strLayout = MemoryLayout.ofSequence(length, C_CHAR);
-        MemorySegment segment = MemorySegment.ofNative(strLayout);
+        MemorySegment segment = MemorySegment.allocateNative(strLayout);
         MemoryAddress addr = segment.baseAddress();
         for (int i = 0 ; i < value.length() ; i++) {
             byteArrHandle.set(addr, i, (byte)value.charAt(i));

@@ -340,11 +340,11 @@ public class CallGeneratorHelper extends NativeTestHelper {
     @SuppressWarnings("unchecked")
     static Object makeArg(MemoryLayout layout, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         if (layout instanceof GroupLayout) {
-            MemorySegment segment = MemorySegment.ofNative(layout);
+            MemorySegment segment = MemorySegment.allocateNative(layout);
             initStruct(segment, (GroupLayout)layout, checks, check);
             return segment;
         } else if (isPointer(layout)) {
-            MemorySegment segment = MemorySegment.ofNative(1);
+            MemorySegment segment = MemorySegment.allocateNative(1);
             if (check) {
                 checks.add(o -> {
                     try {
