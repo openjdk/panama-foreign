@@ -58,7 +58,7 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     ValueLayout(ByteOrder order, long size, long alignment, Map<String, Constable> annotations) {
-        super(size, alignment, annotations);
+        super(OptionalLong.of(size), alignment, annotations);
         this.order = order;
     }
 
@@ -78,19 +78,14 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @return a new value layout with given byte order.
      */
     public ValueLayout withOrder(ByteOrder order) {
-        return new ValueLayout(order, size, alignment, annotations);
-    }
-
-    @Override
-    public long bitSize() {
-        return size;
+        return new ValueLayout(order, bitSize(), alignment, annotations);
     }
 
     @Override
     public String toString() {
         return decorateLayoutString(String.format("%s%d",
                 order == ByteOrder.BIG_ENDIAN ? "B" : "b",
-                size));
+                bitSize()));
     }
 
     @Override
@@ -106,25 +101,25 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
         }
         ValueLayout v = (ValueLayout)other;
         return order.equals(v.order) &&
-            size == v.size &&
+            bitSize() == v.bitSize() &&
             alignment == v.alignment;
     }
 
     @Override
     public int hashCode() {
         return super.hashCode()^ order.hashCode() ^
-            Long.hashCode(size) ^ Long.hashCode(alignment);
+            Long.hashCode(bitSize()) ^ Long.hashCode(alignment);
     }
 
     @Override
     ValueLayout dup(long alignment, Map<String, Constable> annotations) {
-        return new ValueLayout(order, size, alignment, annotations);
+        return new ValueLayout(order, bitSize(), alignment, annotations);
     }
 
     @Override
     public Optional<DynamicConstantDesc<ValueLayout>> describeConstable() {
         return Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
-                CD_VALUE_LAYOUT, MH_VALUE, size, order == ByteOrder.BIG_ENDIAN ? BIG_ENDIAN : LITTLE_ENDIAN));
+                CD_VALUE_LAYOUT, MH_VALUE, bitSize(), order == ByteOrder.BIG_ENDIAN ? BIG_ENDIAN : LITTLE_ENDIAN));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout

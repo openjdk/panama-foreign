@@ -52,17 +52,12 @@ import java.util.OptionalLong;
     }
 
     PaddingLayout(long size, long alignment, Map<String, Constable> annotations) {
-        super(size, alignment, annotations);
-    }
-
-    @Override
-    public long bitSize() {
-        return size;
+        super(OptionalLong.of(size), alignment, annotations);
     }
 
     @Override
     public String toString() {
-        return decorateLayoutString("x" + size);
+        return decorateLayoutString("x" + bitSize());
     }
 
     @Override
@@ -77,23 +72,23 @@ import java.util.OptionalLong;
             return false;
         }
         PaddingLayout p = (PaddingLayout)other;
-        return size == p.size;
+        return bitSize() == p.bitSize();
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ Long.hashCode(size);
+        return super.hashCode() ^ Long.hashCode(bitSize());
     }
 
     @Override
     PaddingLayout dup(long alignment, Map<String, Constable> annotations) {
-        return new PaddingLayout(size, alignment, annotations);
+        return new PaddingLayout(bitSize(), alignment, annotations);
     }
 
     @Override
     public Optional<DynamicConstantDesc<MemoryLayout>> describeConstable() {
         return Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "padding",
-                CD_LAYOUT, MH_PADDING, size));
+                CD_LAYOUT, MH_PADDING, bitSize()));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout

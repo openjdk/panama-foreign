@@ -29,9 +29,11 @@
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 
+import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.function.LongFunction;
 
+import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
@@ -47,6 +49,118 @@ public class TestLayouts {
         layout.withBitAlignment(alignment);
     }
 
+    @Test
+    public void testVLAInStruct() {
+        MemoryLayout layout = MemoryLayout.ofStruct(
+                MemoryLayouts.JAVA_INT.withName("size"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(MemoryLayouts.JAVA_DOUBLE).withName("arr"));
+        VarHandle size_handle = layout.varHandle(int.class, MemoryLayout.PathElement.groupElement("size"));
+        VarHandle array_elem_handle = layout.varHandle(double.class,
+                MemoryLayout.PathElement.groupElement("arr"),
+                MemoryLayout.PathElement.sequenceElement());
+        try (MemorySegment segment = MemorySegment.allocateNative(8 + 8 * 4)) {
+            size_handle.set(segment.baseAddress(), 4);
+            for (int i = 0 ; i < 4 ; i++) {
+                array_elem_handle.set(segment.baseAddress(), i, (double)i);
+            }
+            //check
+            assertEquals(4, (int)size_handle.get(segment.baseAddress()));
+            for (int i = 0 ; i < 4 ; i++) {
+                assertEquals((double)i, (double)array_elem_handle.get(segment.baseAddress(), i));
+            }
+        }
+    }
+
+    @Test
+    public void testVLAInSequence() {
+        MemoryLayout layout = MemoryLayout.ofStruct(
+                MemoryLayouts.JAVA_INT.withName("size"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(1, MemoryLayout.ofSequence(MemoryLayouts.JAVA_DOUBLE)).withName("arr"));
+        VarHandle size_handle = layout.varHandle(int.class, MemoryLayout.PathElement.groupElement("size"));
+        VarHandle array_elem_handle = layout.varHandle(double.class,
+                MemoryLayout.PathElement.groupElement("arr"),
+                MemoryLayout.PathElement.sequenceElement(0),
+                MemoryLayout.PathElement.sequenceElement());
+        try (MemorySegment segment = MemorySegment.allocateNative(8 + 8 * 4)) {
+            size_handle.set(segment.baseAddress(), 4);
+            for (int i = 0 ; i < 4 ; i++) {
+                array_elem_handle.set(segment.baseAddress(), i, (double)i);
+            }
+            //check
+            assertEquals(4, (int)size_handle.get(segment.baseAddress()));
+            for (int i = 0 ; i < 4 ; i++) {
+                assertEquals((double)i, (double)array_elem_handle.get(segment.baseAddress(), i));
+            }
+        }
+    }
+
+    @Test(dataProvider = "unboundLayouts", expectedExceptions = UnsupportedOperationException.class)
+    public void testUnboundSize(MemoryLayout layout, long align) {
+        layout.bitSize();
+    }
+
+    @Test(dataProvider = "unboundLayouts")
+    public void testUnboundAlignment(MemoryLayout layout, long align) {
+        assertEquals(align, layout.bitAlignment());
+    }
+
+    @Test(dataProvider = "unboundLayouts")
+    public void testUnboundEquals(MemoryLayout layout, long align) {
+        assertTrue(layout.equals(layout));
+    }
+
+    @Test(dataProvider = "unboundLayouts")
+    public void testUnboundHash(MemoryLayout layout, long align) {
+        layout.hashCode();
+    }
+
+    @Test
+    public void testEmptyGroup() {
+        MemoryLayout struct = MemoryLayout.ofStruct();
+        assertEquals(struct.bitSize(), 0);
+        assertEquals(struct.bitAlignment(), 1);
+
+        MemoryLayout union = MemoryLayout.ofUnion();
+        assertEquals(union.bitSize(), 0);
+        assertEquals(union.bitAlignment(), 1);
+    }
+
+    @Test
+    public void testStructSizeAndAlign() {
+        MemoryLayout struct = MemoryLayout.ofStruct(
+                MemoryLayout.ofPaddingBits(8),
+                MemoryLayouts.JAVA_BYTE,
+                MemoryLayouts.JAVA_CHAR,
+                MemoryLayouts.JAVA_INT,
+                MemoryLayouts.JAVA_LONG
+        );
+        assertEquals(struct.byteSize(), 1 + 1 + 2 + 4 + 8);
+        assertEquals(struct.byteAlignment(), 8);
+    }
+
+    @Test
+    public void testUnionSizeAndAlign() {
+        MemoryLayout struct = MemoryLayout.ofUnion(
+                MemoryLayouts.JAVA_BYTE,
+                MemoryLayouts.JAVA_CHAR,
+                MemoryLayouts.JAVA_INT,
+                MemoryLayouts.JAVA_LONG
+        );
+        assertEquals(struct.byteSize(), 8);
+        assertEquals(struct.byteAlignment(), 8);
+    }
+
+    @Test(dataProvider="layoutsAndAlignments")
+    public void testAlignmentString(MemoryLayout layout, long bitAlign) {
+        long[] alignments = { 8, 16, 32, 64, 128 };
+        for (long a : alignments) {
+            assertFalse(layout.toString().contains("%"));
+            assertEquals(layout.withBitAlignment(a).toString().contains("%"), a != bitAlign);
+        }
+    }
+
     @DataProvider(name = "badLayoutSizes")
     public Object[][] factoriesAndSizes() {
         return new Object[][] {
@@ -60,8 +174,23 @@ public class TestLayouts {
         };
     }
 
+    @DataProvider(name = "unboundLayouts")
+    public Object[][] unboundLayouts() {
+        return new Object[][] {
+                { MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT), 32 },
+                { MemoryLayout.ofSequence(MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT)), 32 },
+                { MemoryLayout.ofSequence(4, MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT)), 32 },
+                { MemoryLayout.ofStruct(MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT)), 32 },
+                { MemoryLayout.ofStruct(MemoryLayout.ofSequence(MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT))), 32 },
+                { MemoryLayout.ofStruct(MemoryLayout.ofSequence(4, MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT))), 32 },
+                { MemoryLayout.ofUnion(MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT)), 32 },
+                { MemoryLayout.ofUnion(MemoryLayout.ofSequence(MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT))), 32 },
+                { MemoryLayout.ofUnion(MemoryLayout.ofSequence(4, MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT))), 32 },
+        };
+    }
+
     @DataProvider(name = "badAlignments")
-    public Object[][] layoutsAndAlignments() {
+    public Object[][] layoutsAndBadAlignments() {
         LayoutKind[] layoutKinds = LayoutKind.values();
         Object[][] values = new Object[layoutKinds.length * 2][2];
         for (int i = 0; i < layoutKinds.length ; i++) {
@@ -101,5 +230,41 @@ public class TestLayouts {
         LayoutKind(MemoryLayout layout) {
             this.layout = layout;
         }
+    }
+
+    @DataProvider(name = "layoutsAndAlignments")
+    public Object[][] layoutsAndAlignments() {
+        MemoryLayout[] basicLayouts = {
+                MemoryLayouts.JAVA_BYTE,
+                MemoryLayouts.JAVA_CHAR,
+                MemoryLayouts.JAVA_SHORT,
+                MemoryLayouts.JAVA_INT,
+                MemoryLayouts.JAVA_FLOAT,
+                MemoryLayouts.JAVA_LONG,
+                MemoryLayouts.JAVA_DOUBLE,
+        };
+        Object[][] layoutsAndAlignments = new Object[basicLayouts.length * 5][];
+        int i = 0;
+        //add basic layouts
+        for (MemoryLayout l : basicLayouts) {
+            layoutsAndAlignments[i++] = new Object[] { l, l.bitAlignment() };
+        }
+        //add basic layouts wrapped in a sequence with unspecified size
+        for (MemoryLayout l : basicLayouts) {
+            layoutsAndAlignments[i++] = new Object[] { MemoryLayout.ofSequence(l), l.bitAlignment() };
+        }
+        //add basic layouts wrapped in a sequence with given size
+        for (MemoryLayout l : basicLayouts) {
+            layoutsAndAlignments[i++] = new Object[] { MemoryLayout.ofSequence(4, l), l.bitAlignment() };
+        }
+        //add basic layouts wrapped in a struct
+        for (MemoryLayout l : basicLayouts) {
+            layoutsAndAlignments[i++] = new Object[] { MemoryLayout.ofStruct(l), l.bitAlignment() };
+        }
+        //add basic layouts wrapped in a union
+        for (MemoryLayout l : basicLayouts) {
+            layoutsAndAlignments[i++] = new Object[] { MemoryLayout.ofUnion(l), l.bitAlignment() };
+        }
+        return layoutsAndAlignments;
     }
 }
