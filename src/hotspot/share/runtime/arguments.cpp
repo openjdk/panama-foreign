@@ -85,6 +85,7 @@ bool   Arguments::_BackgroundCompilation        = BackgroundCompilation;
 bool   Arguments::_ClipInlining                 = ClipInlining;
 intx   Arguments::_Tier3InvokeNotifyFreqLog     = Tier3InvokeNotifyFreqLog;
 intx   Arguments::_Tier4InvocationThreshold     = Tier4InvocationThreshold;
+size_t Arguments::_SharedBaseAddress            = SharedBaseAddress;
 
 bool   Arguments::_enable_preview               = false;
 
@@ -527,6 +528,7 @@ static SpecialFlag const special_jvm_flags[] = {
   { "CompactFields",                JDK_Version::jdk(14), JDK_Version::jdk(15), JDK_Version::jdk(16) },
   { "MonitorBound",                 JDK_Version::jdk(14), JDK_Version::jdk(15), JDK_Version::jdk(16) },
   { "G1RSetScanBlockSize",          JDK_Version::jdk(14), JDK_Version::jdk(15), JDK_Version::jdk(16) },
+  { "UseParallelOldGC",             JDK_Version::jdk(14), JDK_Version::jdk(15), JDK_Version::jdk(16) },
 
   // --- Deprecated alias flags (see also aliased_jvm_flags) - sorted by obsolete_in then expired_in:
   { "DefaultMaxRAMFraction",        JDK_Version::jdk(8),  JDK_Version::undefined(), JDK_Version::undefined() },
@@ -618,8 +620,10 @@ static SpecialFlag const special_jvm_flags[] = {
   { "ResizeOldPLAB",                           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
   { "UseCMSBestFit",                           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
   { "UseCMSInitiatingOccupancyOnly",           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
+  { "GCLockerInvokesConcurrent",     JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
   { "BindGCTaskThreadsToCPUs",       JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(16) },
   { "UseGCTaskAffinity",             JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(16) },
+  { "GCTaskTimeStampEntries",        JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(16) },
 
 #ifdef TEST_VERIFY_SPECIAL_JVM_FLAGS
   // These entries will generate build errors.  Their purpose is to test the macros.
@@ -2273,6 +2277,9 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs *vm_options_args,
     Arguments::_Tier3InvokeNotifyFreqLog = Tier3InvokeNotifyFreqLog;
     Arguments::_Tier4InvocationThreshold = Tier4InvocationThreshold;
   }
+
+  // CDS dumping always write the archive to the default value of SharedBaseAddress.
+  Arguments::_SharedBaseAddress = SharedBaseAddress;
 
   // Setup flags for mixed which is the default
   set_mode_flags(_mixed);

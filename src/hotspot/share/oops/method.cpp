@@ -58,6 +58,7 @@
 #include "prims/methodHandles.hpp"
 #include "prims/nativeLookup.hpp"
 #include "runtime/arguments.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/init.hpp"
@@ -332,11 +333,9 @@ int Method::size(bool is_native) {
   return align_metadata_size(header_size() + extra_words);
 }
 
-
 Symbol* Method::klass_name() const {
   return method_holder()->name();
 }
-
 
 void Method::metaspace_pointers_do(MetaspaceClosure* it) {
   log_trace(cds)("Iter(Method): %p", this);
@@ -344,6 +343,11 @@ void Method::metaspace_pointers_do(MetaspaceClosure* it) {
   it->push(&_constMethod);
   it->push(&_method_data);
   it->push(&_method_counters);
+
+  Method* this_ptr = this;
+  it->push_method_entry(&this_ptr, (intptr_t*)&_i2i_entry);
+  it->push_method_entry(&this_ptr, (intptr_t*)&_from_compiled_entry);
+  it->push_method_entry(&this_ptr, (intptr_t*)&_from_interpreted_entry);
 }
 
 // Attempt to return method oop to original state.  Clear any pointers
@@ -566,7 +570,7 @@ MethodCounters* Method::build_method_counters(Method* m, TRAPS) {
 
 bool Method::init_method_counters(MethodCounters* counters) {
   // Try to install a pointer to MethodCounters, return true on success.
-  return Atomic::replace_if_null(counters, &_method_counters);
+  return Atomic::replace_if_null(&_method_counters, counters);
 }
 
 int Method::extra_stack_words() {
@@ -1244,7 +1248,7 @@ void Method::restore_unshareable_info(TRAPS) {
 }
 
 address Method::from_compiled_entry_no_trampoline() const {
-  CompiledMethod *code = OrderAccess::load_acquire(&_code);
+  CompiledMethod *code = Atomic::load_acquire(&_code);
   if (code) {
     return code->verified_entry_point();
   } else {
@@ -1270,7 +1274,7 @@ address Method::verified_code_entry() {
 // Not inline to avoid circular ref.
 bool Method::check_code() const {
   // cached in a register or local.  There's a race on the value of the field.
-  CompiledMethod *code = OrderAccess::load_acquire(&_code);
+  CompiledMethod *code = Atomic::load_acquire(&_code);
   return code == NULL || (code->method() == NULL) || (code->method() == (Method*)this && !code->is_osr_method());
 }
 
@@ -1741,12 +1745,15 @@ static int method_comparator(Method* a, Method* b) {
 
 // This is only done during class loading, so it is OK to assume method_idnum matches the methods() array
 // default_methods also uses this without the ordering for fast find_method
-void Method::sort_methods(Array<Method*>* methods, bool set_idnums) {
+void Method::sort_methods(Array<Method*>* methods, bool set_idnums, method_comparator_func func) {
   int length = methods->length();
   if (length > 1) {
+    if (func == NULL) {
+      func = method_comparator;
+    }
     {
       NoSafepointVerifier nsv;
-      QuickSort::sort(methods->data(), length, method_comparator, /*idempotent=*/false);
+      QuickSort::sort(methods->data(), length, func, /*idempotent=*/false);
     }
     // Reset method ordering
     if (set_idnums) {
