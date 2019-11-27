@@ -136,7 +136,7 @@ public interface MemoryLayout extends Constable {
      * Computes the layout size, in bits.
      *
      * @return the layout size, in bits.
-     * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}).
+     * @throws UnsupportedOperationException if the layout is, or contains, a sequence layout with unspecified size (see {@link SequenceLayout}).
      */
     long bitSize();
 
@@ -144,7 +144,7 @@ public interface MemoryLayout extends Constable {
      * Computes the layout size, in bytes.
      *
      * @return the layout size, in bytes.
-     * @throws UnsupportedOperationException if the layout has unbounded size (see {@link SequenceLayout}),
+     * @throws UnsupportedOperationException if the layout is, or contains, a sequence layout with unspecified size (see {@link SequenceLayout}),
      * or if {@code bitSize()} is not a multiple of 8.
      */
     default long byteSize() {

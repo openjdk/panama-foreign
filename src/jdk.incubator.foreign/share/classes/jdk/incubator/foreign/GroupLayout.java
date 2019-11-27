@@ -33,9 +33,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.function.ToLongFunction;
+import java.util.function.LongBinaryOperator;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 
 /**
  * A group layout is used to combine together multiple <em>member layouts</em>. There are two ways in which member layouts
@@ -62,35 +61,37 @@ public final class GroupLayout extends AbstractLayout {
         /**
          * A 'struct' kind.
          */
-        STRUCT(LongStream::sum, Kind::max, "", MH_STRUCT),
+        STRUCT("", MH_STRUCT, Long::sum),
         /**
          * A 'union' kind.
          */
-        UNION(Kind::max, Kind::max, "|", MH_UNION);
+        UNION("|", MH_UNION, Math::max);
 
-        final ToLongFunction<LongStream> sizeFunc;
-        final ToLongFunction<LongStream> alignFunc;
         final String delimTag;
         final MethodHandleDesc mhDesc;
+        final LongBinaryOperator sizeOp;
 
-        Kind(ToLongFunction<LongStream> sizeFunc, ToLongFunction<LongStream> alignFunc,
-             String delimTag, MethodHandleDesc mhDesc) {
-            this.sizeFunc = sizeFunc;
-            this.alignFunc = alignFunc;
+        Kind(String delimTag, MethodHandleDesc mhDesc, LongBinaryOperator sizeOp) {
             this.delimTag = delimTag;
             this.mhDesc = mhDesc;
+            this.sizeOp = sizeOp;
         }
 
-        static long max(LongStream ls) {
-            return ls.max().getAsLong();
-        }
-
-        long sizeof(List<MemoryLayout> elems) {
-            return sizeFunc.applyAsLong(elems.stream().mapToLong(MemoryLayout::bitSize));
+        OptionalLong sizeof(List<MemoryLayout> elems) {
+            long size = 0;
+            for (MemoryLayout elem : elems) {
+                if (AbstractLayout.optSize(elem).isPresent()) {
+                    size = sizeOp.applyAsLong(size, elem.bitSize());
+                } else {
+                    return OptionalLong.empty();
+                }
+            }
+            return OptionalLong.of(size);
         }
 
         long alignof(List<MemoryLayout> elems) {
-            return alignFunc.applyAsLong(elems.stream().mapToLong(MemoryLayout::bitAlignment));
+            return elems.stream().mapToLong(MemoryLayout::bitAlignment).max() // max alignment in case we have member layouts
+                    .orElse(1); // or minimal alignment if no member layout is given
         }
     }
 
@@ -168,6 +169,11 @@ public final class GroupLayout extends AbstractLayout {
     @Override
     GroupLayout dup(long alignment, Optional<String> name) {
         return new GroupLayout(kind, elements, alignment, name);
+    }
+
+    @Override
+    protected boolean hasNaturalAlignment() {
+        return alignment == kind.alignof(elements);
     }
 
     @Override

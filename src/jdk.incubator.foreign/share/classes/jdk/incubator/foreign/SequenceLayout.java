@@ -69,24 +69,11 @@ public final class SequenceLayout extends AbstractLayout {
     }
 
     SequenceLayout(OptionalLong elemCount, MemoryLayout elementLayout, long alignment, Optional<String> name) {
-        super(elemCount.isPresent() ? elemCount.getAsLong() * elementLayout.bitSize() : -1, alignment, name);
+        super(elemCount.isPresent() && AbstractLayout.optSize(elementLayout).isPresent() ?
+                OptionalLong.of(elemCount.getAsLong() * elementLayout.bitSize()) :
+                OptionalLong.empty(), alignment, name);
         this.elemCount = elemCount;
         this.elementLayout = elementLayout;
-    }
-
-    /**
-     * Computes the layout size, in bits. Since not all sequences have a finite size, this method can throw an exception.
-     *
-     * @return the layout size (where defined).
-     * @throws UnsupportedOperationException if the sequence is unbounded in size (see {@link SequenceLayout#elementCount()}).
-     */
-    @Override
-    public long bitSize() {
-        if (elemCount.isPresent()) {
-            return super.bitSize();
-        } else {
-            throw new UnsupportedOperationException("Cannot compute size of unbounded sequence");
-        }
     }
 
     /**
@@ -136,6 +123,11 @@ public final class SequenceLayout extends AbstractLayout {
     @Override
     SequenceLayout dup(long alignment, Optional<String> name) {
         return new SequenceLayout(elementCount(), elementLayout, alignment, name);
+    }
+
+    @Override
+    protected boolean hasNaturalAlignment() {
+        return alignment == elementLayout.bitAlignment();
     }
 
     @Override

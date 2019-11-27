@@ -38,11 +38,11 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 abstract class AbstractLayout implements MemoryLayout {
-    final long size;
+    private final OptionalLong size;
     final long alignment;
     private final Optional<String> name;
 
-    public AbstractLayout(long size, long alignment, Optional<String> name) {
+    public AbstractLayout(OptionalLong size, long alignment, Optional<String> name) {
         this.size = size;
         this.alignment = alignment;
         this.name = name;
@@ -94,15 +94,29 @@ abstract class AbstractLayout implements MemoryLayout {
 
     @Override
     public long bitSize() {
-        return size;
+        return size.orElseThrow(this::badSizeException);
+    }
+
+    public static OptionalLong optSize(MemoryLayout layout) {
+        return ((AbstractLayout)layout).size;
+    }
+
+    private UnsupportedOperationException badSizeException() {
+        return new UnsupportedOperationException("Cannot compute size of a layout which is, or depends on a sequence layout with unspecified size");
     }
 
     String decorateLayoutString(String s) {
         if (name.isPresent()) {
             s = String.format("%s(%s)", s, name.get());
         }
-        s = alignment + "%" + s;
+        if (!hasNaturalAlignment()) {
+            s = alignment + "%" + s;
+        }
         return s;
+    }
+
+    protected boolean hasNaturalAlignment() {
+        return size.isPresent() && size.getAsLong() == alignment;
     }
 
     @Override
