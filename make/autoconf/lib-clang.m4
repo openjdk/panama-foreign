@@ -61,7 +61,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
       LIBCLANG_VERSION="$with_libclang_version"
       AC_MSG_RESULT([$LIBCLANG_VERSION (manually specified)])
     else
-      LIBCLANG_VERSION="7"
+      LIBCLANG_VERSION="9"
       AC_MSG_RESULT([$LIBCLANG_VERSION (default)])
     fi
 

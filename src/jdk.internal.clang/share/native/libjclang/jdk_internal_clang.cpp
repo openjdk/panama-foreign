@@ -407,7 +407,7 @@ JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Cursor_isMacroFunctionLike
 JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Cursor_isAnonymousStruct
   (JNIEnv *env, jobject cursor) {
     CXCursor *ptr = (CXCursor*) J2P(env, cursor);
-    return clang_Cursor_isAnonymous(*ptr);
+    return clang_Cursor_isAnonymousRecordDecl(*ptr);
 }
 
 JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Cursor_spelling
