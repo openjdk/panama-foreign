@@ -40,7 +40,7 @@
 # not already done. To redo a step, manually delete the target files from that
 # step.
 
-LLVM_VERSION=7.0.0
+LLVM_VERSION=9.0.0
 
 BUNDLE_NAME=libclang-$LLVM_VERSION.tar.gz
 
@@ -121,7 +121,7 @@ case $OS_NAME in
     # Download binaries
     mkdir -p $DOWNLOAD_DIR
     cd $DOWNLOAD_DIR
-    LLVM_FILE=clang+llvm-$LLVM_VERSION-x86_64-apple-darwin.tar.xz
+    LLVM_FILE=clang+llvm-$LLVM_VERSION-x86_64-darwin-apple.tar.xz
     if [ ! -f $LLVM_FILE ]; then
       echo http://releases.llvm.org/$LLVM_VERSION/$LLVM_FILE
       curl -O http://releases.llvm.org/$LLVM_VERSION/$LLVM_FILE
@@ -129,7 +129,7 @@ case $OS_NAME in
 
     # Extract binaries
     cd $OUTPUT_DIR
-    LLVM_DIRNAME=clang+llvm-$LLVM_VERSION-x86_64-apple-darwin
+    LLVM_DIRNAME=clang+llvm-$LLVM_VERSION-x86_64-darwin-apple
     LLVM_DIR=$OUTPUT_DIR/$LLVM_DIRNAME
     INSTALL_DIR=$LLVM_DIR
     if [ ! -d $LLVM_DIRNAME ]; then
@@ -162,7 +162,7 @@ esac
 mkdir -p $IMAGE_DIR
 # Extract what we need into an image
 if [ ! -e $IMAGE_DIR/lib/libclang$LIB_SUFFIX ]; then
-  echo "Copying libclang.so to image"
+  echo "Copying libclang$LIB_SUFFIX to image"
   mkdir -p $IMAGE_DIR/lib
   cp -a $INSTALL_DIR/lib/libclang.* $IMAGE_DIR/lib/
 fi
