@@ -73,36 +73,36 @@ public class TestByteBuffer {
 
     static SequenceLayout tuples = MemoryLayout.ofSequence(500,
             MemoryLayout.ofStruct(
-                    MemoryLayouts.JAVA_INT.withName("index"),
-                    MemoryLayouts.JAVA_FLOAT.withName("value")
+                    MemoryLayouts.BITS_32_BE.withName("index"),
+                    MemoryLayouts.BITS_32_BE.withName("value")
             ));
 
     static SequenceLayout bytes = MemoryLayout.ofSequence(100,
-            MemoryLayouts.JAVA_BYTE
+            MemoryLayouts.BITS_8_BE
     );
 
     static SequenceLayout chars = MemoryLayout.ofSequence(100,
-            MemoryLayouts.JAVA_CHAR
+            MemoryLayouts.BITS_16_BE
     );
 
     static SequenceLayout shorts = MemoryLayout.ofSequence(100,
-            MemoryLayouts.JAVA_SHORT
+            MemoryLayouts.BITS_16_BE
     );
 
     static SequenceLayout ints = MemoryLayout.ofSequence(100,
-            MemoryLayouts.JAVA_INT
+            MemoryLayouts.BITS_32_BE
     );
 
     static SequenceLayout floats = MemoryLayout.ofSequence(100,
-            MemoryLayouts.JAVA_FLOAT
+            MemoryLayouts.BITS_32_BE
     );
 
     static SequenceLayout longs = MemoryLayout.ofSequence(100,
-            MemoryLayouts.JAVA_LONG
+            MemoryLayouts.BITS_64_BE
     );
 
     static SequenceLayout doubles = MemoryLayout.ofSequence(100,
-            MemoryLayouts.JAVA_DOUBLE
+            MemoryLayouts.BITS_64_BE
     );
 
     static VarHandle indexHandle = tuples.varHandle(int.class, PathElement.sequenceElement(), PathElement.groupElement("index"));

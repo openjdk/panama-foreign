@@ -102,37 +102,37 @@ public final class MemoryLayouts {
     public static final MemoryLayout PAD_64 = MemoryLayout.ofPaddingBits(64);
 
     /**
-     * A value layout constant whose size is the same as that of a Java {@code byte}, and byte order set to {@link ByteOrder#BIG_ENDIAN}.
+     * A value layout constant whose size is the same as that of a Java {@code byte}, and byte order set to {@link ByteOrder#nativeOrder()}.
      */
-    public static final ValueLayout JAVA_BYTE = BITS_8_BE;
+    public static final ValueLayout JAVA_BYTE = MemoryLayout.ofValueBits(8, ByteOrder.nativeOrder());
 
     /**
-     * A value layout constant whose size is the same as that of a Java {@code char}, and byte order set to {@link ByteOrder#BIG_ENDIAN}.
+     * A value layout constant whose size is the same as that of a Java {@code char}, and byte order set to {@link ByteOrder#nativeOrder()}.
      */
-    public static final ValueLayout JAVA_CHAR = BITS_16_BE;
+    public static final ValueLayout JAVA_CHAR = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder());
 
     /**
-     * A value layout constant whose size is the same as that of a Java {@code short}, and byte order set to {@link ByteOrder#BIG_ENDIAN}.
+     * A value layout constant whose size is the same as that of a Java {@code short}, and byte order set to {@link ByteOrder#nativeOrder()}.
      */
-    public static final ValueLayout JAVA_SHORT = BITS_16_BE;
+    public static final ValueLayout JAVA_SHORT = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder());
 
     /**
-     * A value layout constant whose size is the same as that of a Java {@code int}, and byte order set to {@link ByteOrder#BIG_ENDIAN}.
+     * A value layout constant whose size is the same as that of a Java {@code int}, and byte order set to {@link ByteOrder#nativeOrder()}.
      */
-    public static final ValueLayout JAVA_INT = BITS_32_BE;
+    public static final ValueLayout JAVA_INT = MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder());
 
     /**
-     * A value layout constant whose size is the same as that of a Java {@code long}, and byte order set to {@link ByteOrder#BIG_ENDIAN}.
+     * A value layout constant whose size is the same as that of a Java {@code long}, and byte order set to {@link ByteOrder#nativeOrder()}.
      */
-    public static final ValueLayout JAVA_LONG = BITS_64_BE;
+    public static final ValueLayout JAVA_LONG = MemoryLayout.ofValueBits(64, ByteOrder.nativeOrder());
 
     /**
-     * A value layout constant whose size is the same as that of a Java {@code float}, and byte order set to {@link ByteOrder#BIG_ENDIAN}.
+     * A value layout constant whose size is the same as that of a Java {@code float}, and byte order set to {@link ByteOrder#nativeOrder()}.
      */
-    public static final ValueLayout JAVA_FLOAT = BITS_32_BE;
+    public static final ValueLayout JAVA_FLOAT = MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder());
 
     /**
-     * A value layout constant whose size is the same as that of a Java {@code double}, and byte order set to {@link ByteOrder#BIG_ENDIAN}.
+     * A value layout constant whose size is the same as that of a Java {@code double}, and byte order set to {@link ByteOrder#nativeOrder()}.
      */
-    public static final ValueLayout JAVA_DOUBLE = BITS_64_BE;
+    public static final ValueLayout JAVA_DOUBLE = MemoryLayout.ofValueBits(64, ByteOrder.nativeOrder());
 }
