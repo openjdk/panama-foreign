@@ -27,7 +27,10 @@
 package jdk.incubator.foreign.unsafe;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.MemorySegmentImpl;
+import jdk.internal.foreign.Utils;
 
 /**
  * Unsafe methods to allow interop between sun.misc.unsafe and memory access API.
@@ -67,19 +70,15 @@ public final class ForeignUnsafe {
     }
 
     /**
-     * Obtain a new memory address instance from given long address.
-     * @param addr the long address.
-     * @return the new memory address instance.
+     * Returns a new native memory segment with given base address and size. The returned segment has its own temporal
+     * bounds, and can therefore be closed; closing such a segment does <em>not</em> result in any resource being
+     * deallocated.
+     * @param base the desired base address
+     * @param byteSize the desired size.
+     * @return a new native memory segment with given base address and size.
+     * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address.
      */
-    public static MemoryAddress ofLong(long addr) {
-        return MemoryAddressImpl.ofNative(addr);
-    }
-
-    /**
-     * Obtain a new memory address instance modelling the NULL pointer.
-     * @return the NULL memory address.
-     */
-    public static MemoryAddress ofNull() {
-        return MemoryAddressImpl.NULL;
+    public static MemorySegment ofNativeUnchecked(MemoryAddress base, long byteSize) {
+        return Utils.makeNativeSegmentUnchecked(base, byteSize);
     }
 }

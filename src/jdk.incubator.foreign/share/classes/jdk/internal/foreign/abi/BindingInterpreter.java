@@ -26,6 +26,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.Utils;
 
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
@@ -126,6 +127,7 @@ class BindingInterpreter {
                 case Binding.COPY_BUFFER_TAG: {
                     Binding.Copy binding = (Binding.Copy) b;
                     MemoryAddress operand = (MemoryAddress) currentValue;
+                    operand = Utils.resizeNativeAddress(operand, binding.size());
                     MemorySegment copy = MemorySegment.allocateNative(binding.size(), binding.alignment());
                     MemoryAddress.copy(operand, copy.baseAddress(), binding.size());
                     currentValue = copy; // leaked
@@ -135,7 +137,7 @@ class BindingInterpreter {
                     currentValue = MemorySegment.allocateNative(binding.size(), binding.alignment());
                 } break;
                 case Binding.BOX_ADDRESS_TAG: {
-                    currentValue = MemoryAddressImpl.ofNative((long) currentValue);
+                    currentValue = MemoryAddress.ofLong((long) currentValue);
                 } break;
                 case Binding.BASE_ADDRESS_TAG: {
                     currentValue = ((MemorySegment) currentValue).baseAddress();

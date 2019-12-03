@@ -60,8 +60,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final static int READ_ONLY = 1;
     final static long NONCE = new Random().nextLong();
 
-    public static MemorySegmentImpl EVERYTHING =
-            new MemorySegmentImpl(0, null, Long.MAX_VALUE, 0, null, MemoryScope.GLOBAL);
+    public static MemorySegmentImpl NOTHING =
+            new MemorySegmentImpl(0, null, 0, 0, null, MemoryScope.GLOBAL);
 
     public MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
@@ -121,8 +121,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     @Override
     public final void close() {
         checkValidState();
-        if (owner == null) {
-            throw new IllegalStateException("Cannot close unchecked segment");
+        if (scope == MemoryScope.GLOBAL) {
+            throw new IllegalStateException("Cannot close a root segment");
         }
         scope.close();
     }

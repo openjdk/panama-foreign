@@ -62,6 +62,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
@@ -106,20 +107,21 @@ public class StdLibTest extends NativeTestHelper {
 
     @Test(dataProvider = "instants")
     void test_time(Instant instant) throws Throwable {
-        StdLibHelper.Tm tm = stdLibHelper.gmtime(instant.getEpochSecond());
-        LocalDateTime localTime = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
-        assertEquals(tm.sec(), localTime.getSecond());
-        assertEquals(tm.min(), localTime.getMinute());
-        assertEquals(tm.hour(), localTime.getHour());
-        //day pf year in Java has 1-offset
-        assertEquals(tm.yday(), localTime.getDayOfYear() - 1);
-        assertEquals(tm.mday(), localTime.getDayOfMonth());
-        //days of week starts from Sunday in C, but on Monday in Java, also account for 1-offset
-        assertEquals((tm.wday() + 6) % 7, localTime.getDayOfWeek().getValue() - 1);
-        //month in Java has 1-offset
-        assertEquals(tm.mon(), localTime.getMonth().getValue() - 1);
-        assertEquals(tm.isdst(), ZoneOffset.UTC.getRules()
-                .isDaylightSavings(Instant.ofEpochMilli(instant.getEpochSecond() * 1000)));
+        try (StdLibHelper.Tm tm = stdLibHelper.gmtime(instant.getEpochSecond())) {
+            LocalDateTime localTime = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+            assertEquals(tm.sec(), localTime.getSecond());
+            assertEquals(tm.min(), localTime.getMinute());
+            assertEquals(tm.hour(), localTime.getHour());
+            //day pf year in Java has 1-offset
+            assertEquals(tm.yday(), localTime.getDayOfYear() - 1);
+            assertEquals(tm.mday(), localTime.getDayOfMonth());
+            //days of week starts from Sunday in C, but on Monday in Java, also account for 1-offset
+            assertEquals((tm.wday() + 6) % 7, localTime.getDayOfWeek().getValue() - 1);
+            //month in Java has 1-offset
+            assertEquals(tm.mon(), localTime.getMonth().getValue() - 1);
+            assertEquals(tm.isdst(), ZoneOffset.UTC.getRules()
+                    .isDaylightSavings(Instant.ofEpochMilli(instant.getEpochSecond() * 1000)));
+        }
     }
 
     @Test(dataProvider = "ints")
@@ -168,7 +170,8 @@ public class StdLibTest extends NativeTestHelper {
         final static MethodHandle strlen;
         final static MethodHandle gmtime;
         final static MethodHandle qsort;
-        final static MemoryAddress qsortUpcallAddr;
+        final static MethodHandle qsortCompar;
+        final static FunctionDescriptor qsortComparFunction;
         final static MethodHandle rand;
         final static MemoryAddress printfAddr;
 
@@ -196,7 +199,7 @@ public class StdLibTest extends NativeTestHelper {
                         MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
                         FunctionDescriptor.of(C_POINTER, false, C_POINTER));
 
-                FunctionDescriptor qsortFunction = FunctionDescriptor.of(C_INT, false,
+                qsortComparFunction = FunctionDescriptor.of(C_INT, false,
                         C_POINTER, C_POINTER);
 
                 qsort = abi.downcallHandle(lookup.lookup("qsort"),
@@ -204,9 +207,8 @@ public class StdLibTest extends NativeTestHelper {
                         FunctionDescriptor.ofVoid(false, C_POINTER, C_ULONG, C_ULONG, C_POINTER));
 
                 //qsort upcall handle
-                MethodHandle compar = MethodHandles.lookup().findStatic(StdLibTest.class, "qsortCompare",
-                        MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class));
-                qsortUpcallAddr = abi.upcallStub(compar, qsortFunction);
+                qsortCompar = MethodHandles.lookup().findStatic(StdLibTest.StdLibHelper.class, "qsortCompare",
+                        MethodType.methodType(int.class, MemorySegment.class, MemoryAddress.class, MemoryAddress.class));
 
                 rand = abi.downcallHandle(lookup.lookup("rand"),
                         MethodType.methodType(int.class),
@@ -226,7 +228,7 @@ public class StdLibTest extends NativeTestHelper {
                     byteArrHandle.set(buf.baseAddress(), i, (byte)chars[(int)i]);
                 }
                 byteArrHandle.set(buf.baseAddress(), (long)chars.length, (byte)'\0');
-                return toJavaString((MemoryAddress)strcat.invokeExact(buf.baseAddress(), other.baseAddress()));
+                return toJavaString(((MemoryAddress)strcat.invokeExact(buf.baseAddress(), other.baseAddress())).rebase(buf));
             }
         }
 
@@ -256,13 +258,15 @@ public class StdLibTest extends NativeTestHelper {
             }
         }
 
-        static class Tm {
+        static class Tm implements AutoCloseable {
 
-            //Tm pointer should never be freed, as it points to shared memory
+            //Tm pointer should never be freed directly, as it points to shared memory
             private MemoryAddress base;
 
+            static final long SIZE = 56;
+
             Tm(MemoryAddress base) {
-                this.base = base;
+                this.base = base.rebase(ForeignUnsafe.ofNativeUnchecked(base, SIZE));
             }
 
             int sec() {
@@ -293,6 +297,11 @@ public class StdLibTest extends NativeTestHelper {
                 byte b = (byte)byteHandle.get(base.offset(32));
                 return b == 0 ? false : true;
             }
+
+            @Override
+            public void close() throws Exception {
+                base.segment().close();
+            }
         }
 
         int[] qsort(int[] arr) throws Throwable {
@@ -305,6 +314,7 @@ public class StdLibTest extends NativeTestHelper {
                         .forEach(i -> intArrHandle.set(nativeArr.baseAddress(), i, arr[i]));
 
                 //call qsort
+                MemoryAddress qsortUpcallAddr = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction);
                 qsort.invokeExact(nativeArr.baseAddress(), seq.elementCount().getAsLong(), C_INT.byteSize(), qsortUpcallAddr);
 
                 //convert back to Java array
@@ -314,8 +324,8 @@ public class StdLibTest extends NativeTestHelper {
             }
         }
 
-        static int qsortCompare(MemoryAddress addr1, MemoryAddress addr2) {
-            return (int)intHandle.get(addr1) - (int)intHandle.get(addr2);
+        static int qsortCompare(MemorySegment base, MemoryAddress addr1, MemoryAddress addr2) {
+            return (int)intHandle.get(addr1.rebase(base)) - (int)intHandle.get(addr2.rebase(base));
         }
 
         int rand() throws Throwable {
@@ -440,10 +450,6 @@ public class StdLibTest extends NativeTestHelper {
                                 perms.stream());
                     }).collect(Collectors.toCollection(LinkedHashSet::new));
         }
-    }
-
-    static int qsortCompare(MemoryAddress addr1, MemoryAddress addr2) {
-        return (int)intHandle.get(addr1) - (int)intHandle.get(addr2);
     }
 
     static MemorySegment makeNativeString(String value) {

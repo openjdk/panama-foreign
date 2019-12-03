@@ -27,6 +27,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.Utils;
 import jdk.internal.vm.annotation.Stable;
 
 import java.lang.invoke.MethodHandle;
@@ -77,7 +78,7 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
     }
 
     public static void invoke(ProgrammableUpcallHandler handler, long address) {
-        handler.invoke(MemoryAddressImpl.ofNative(address));
+        handler.invoke(MemoryAddress.ofLong(address));
     }
 
     private void invoke(MemoryAddress buffer) {
@@ -87,13 +88,14 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
                 layout.dump(abi.arch, buffer, System.err);
             }
 
-            MemoryAddress stackArgsBase = MemoryAddressImpl.ofNative((long) VH_LONG.get(buffer.offset(layout.stack_args)));
+            MemoryAddress bufferBase = Utils.resizeNativeAddress(buffer, layout.size);
+            MemoryAddress stackArgsBase = MemoryAddressImpl.ofLongUnchecked((long)VH_LONG.get(buffer.rebase(bufferBase.segment()).offset(layout.stack_args)));
             Object[] args = new Object[type.parameterCount()];
             for (int i = 0 ; i < type.parameterCount() ; i++) {
                 args[i] = jdk.internal.foreign.abi.BindingInterpreter.box(callingSequence.argumentBindings(i),
                         s -> abi.arch.isStackType(s.type())
                             ? stackArgsBase.offset(s.index() * abi.arch.typeSize(abi.arch.stackType()))
-                            : buffer.offset(layout.argOffset(s)));
+                            : bufferBase.offset(layout.argOffset(s)));
             }
 
             if (DEBUG) {
@@ -110,7 +112,7 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
 
             if (mh.type().returnType() != void.class) {
                 jdk.internal.foreign.abi.BindingInterpreter.unbox(o,
-                        callingSequence.returnBindings(), s -> buffer.offset(layout.retOffset(s)), new ArrayList<>());
+                        callingSequence.returnBindings(), s -> bufferBase.offset(layout.retOffset(s)), new ArrayList<>());
             }
 
             if (DEBUG) {

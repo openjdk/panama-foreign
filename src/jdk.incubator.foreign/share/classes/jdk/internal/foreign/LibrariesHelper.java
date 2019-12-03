@@ -86,7 +86,7 @@ public final class LibrariesHelper {
         @Override
         public MemoryAddress lookup(String name) throws NoSuchMethodException {
             long addr = proxy.lookup(name);
-            return MemoryAddressImpl.ofNative(addr);
+            return MemoryAddress.ofLong(addr);
         }
     }
 }

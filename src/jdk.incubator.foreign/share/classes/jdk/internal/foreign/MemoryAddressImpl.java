@@ -45,12 +45,6 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     private final MemorySegmentImpl segment;
     private final long offset;
 
-    public static final MemoryAddress NULL = MemorySegmentImpl.EVERYTHING.baseAddress();
-
-    public static MemoryAddress ofNative(long addr) {
-        return Utils.makeNativeSegment(addr).baseAddress();
-    }
-
     public MemoryAddressImpl(MemorySegmentImpl segment) {
         this(segment, 0);
     }
@@ -84,6 +78,16 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     @Override
     public MemoryAddress offset(long bytes) {
         return new MemoryAddressImpl(segment, offset + bytes);
+    }
+
+    @Override
+    public MemoryAddress rebase(MemorySegment segment) {
+        MemorySegmentImpl segmentImpl = (MemorySegmentImpl)segment;
+        if (segmentImpl.base != this.segment.base) {
+            throw new IllegalArgumentException("Invalid rebase target: " + segment);
+        }
+        return new MemoryAddressImpl((MemorySegmentImpl)segment,
+                unsafeGetOffset() - ((MemoryAddressImpl)segment.baseAddress()).unsafeGetOffset());
     }
 
     // MemoryAddressProxy methods
@@ -127,10 +131,17 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     public static long addressof(MemoryAddress address) {
         MemoryAddressImpl addressImpl = (MemoryAddressImpl)address;
-        addressImpl.checkAccess(0L, 1, false);
         if (addressImpl.unsafeGetBase() != null) {
             throw new IllegalStateException("Heap address!");
         }
         return addressImpl.unsafeGetOffset();
+    }
+
+    public static MemoryAddress ofLongUnchecked(long value) {
+        return ofLongUnchecked(value, Long.MAX_VALUE);
+    }
+
+    public static MemoryAddress ofLongUnchecked(long value, long byteSize) {
+        return new MemoryAddressImpl((MemorySegmentImpl)Utils.makeNativeSegmentUnchecked(value, byteSize), 0);
     }
 }

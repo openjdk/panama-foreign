@@ -26,6 +26,7 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ValueLayout;
@@ -102,6 +103,10 @@ public final class Utils {
         return getAnnotations(layout).get(name);
     }
 
+    public static MemoryAddress resizeNativeAddress(MemoryAddress base, long byteSize) {
+        return new MemoryAddressImpl((MemorySegmentImpl)Utils.makeNativeSegmentUnchecked(base, byteSize), 0);
+    }
+
     // segment factories
 
     public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes) {
@@ -125,11 +130,16 @@ public final class Utils {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegment(long addr) {
-        MemoryScope scope = new MemoryScope(null, () -> unsafe.freeMemory(addr));
-        long size = MemorySegmentImpl.EVERYTHING.length - addr;
-        MemorySegment segment = new MemorySegmentImpl(addr, null, size, 0, Thread.currentThread(), scope);
-        return segment;
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress base, long bytesSize) {
+        if (((MemorySegmentImpl)base.segment()).base != null) {
+            throw new IllegalArgumentException("Not a native address: " + base);
+        }
+        return makeNativeSegmentUnchecked(((MemoryAddressImpl)base).unsafeGetOffset(), bytesSize);
+    }
+
+    public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize) {
+        MemoryScope scope = new MemoryScope(null, null);
+        return new MemorySegmentImpl(min, null, bytesSize, 0, Thread.currentThread(), scope);
     }
 
     public static MemorySegment makeArraySegment(byte[] arr) {

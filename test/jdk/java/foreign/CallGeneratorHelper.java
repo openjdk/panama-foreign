@@ -395,7 +395,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
                     MemorySegment actual = (MemorySegment)o;
                     try {
                         if (isPointer(l)) {
-                            fieldsCheck.get(0).accept(ForeignUnsafe.ofLong((long)accessor.get(actual.baseAddress())));
+                            fieldsCheck.get(0).accept(MemoryAddress.ofLong((long)accessor.get(actual.baseAddress())));
                         } else {
                             fieldsCheck.get(0).accept(accessor.get(actual.baseAddress()));
                         }

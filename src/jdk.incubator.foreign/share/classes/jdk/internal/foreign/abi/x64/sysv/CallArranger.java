@@ -189,7 +189,7 @@ public class CallArranger {
     }
 
     private static void bufferCopy(MemoryAddress dest, MemorySegment buffer) {
-        MemoryAddress.copy(buffer.baseAddress(), dest, buffer.byteSize());
+        MemoryAddress.copy(buffer.baseAddress(), Utils.resizeNativeAddress(dest, buffer.byteSize()), buffer.byteSize());
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
