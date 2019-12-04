@@ -1411,11 +1411,11 @@ const bool Matcher::match_rule_supported(int opcode) {
         ret_value = false;
       break;
     case Op_MulVI:
-      if ((UseSSE < 4) && (UseAVX < 1))
+      if (UseSSE < 4 && UseAVX < 1)
         ret_value = false;
       break;
     case Op_MulVL:
-      if ((UseSSE < 4) && (UseAVX < 1) || (UseAVX > 2 && VM_Version::supports_avx512dq() == false)) // only with SSE4_1 or AVX
+      if ((UseSSE < 4 && UseAVX < 1) || (UseAVX > 2 && VM_Version::supports_avx512dq() == false)) // only with SSE4_1 or AVX
         ret_value = false;
       break;
     case Op_MulReductionVL:
@@ -11874,7 +11874,7 @@ instruct vadd16B(vecX dst, vecX src) %{
 %}
 
 instruct vadd16B_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 0  && n->as_Vector()->length() == 16);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 16);
   match(Set dst (AddVB src1 src2));
   format %{ "vpaddb  $dst,$src1,$src2\t! add packed16B" %}
   ins_encode %{
@@ -11951,7 +11951,7 @@ instruct vadd2S(vecS dst, vecS src) %{
 %}
 
 instruct vadd2S_reg(vecS dst, vecS src1, vecS src2) %{
-  predicate(UseAVX > 0  && n->as_Vector()->length() == 2);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
   match(Set dst (AddVS src1 src2));
   format %{ "vpaddw  $dst,$src1,$src2\t! add packed2S" %}
   ins_encode %{
@@ -15990,7 +15990,7 @@ instruct vsllv32B_avx(vecY dst, vecY src, vecY shift, vecY tmp, vecY tmp2, vecY 
 %}
 
 instruct vsllv32B_evex(vecY dst, vecY src, vecY shift, vecZ tmp, vecZ tmp2, rRegI scratch) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512bw()  && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 32 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VLShiftV src shift));
   effect(TEMP dst, TEMP tmp2, TEMP tmp, TEMP scratch);
   format %{ "vpmovzxbw  $tmp,$src\n\t"
@@ -20660,7 +20660,7 @@ instruct storemask4s(vecS dst, vecD src) %{
 %}
 
 instruct storemask8s(vecD dst, vecX src) %{
-  predicate(UseSSE >=3  && n->as_Vector()->length() == 8 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 2);
+  predicate(UseSSE >=3 && n->as_Vector()->length() == 8 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 2);
   match(Set dst (VectorStoreMask src));
   format %{ "pabsw $dst,$src\n\t"
             "packuswb $dst,$dst\t! store mask (8S to 8B)" %}
@@ -20849,7 +20849,7 @@ instruct storemask8l_evex(vecD dst, vecZ src, rRegL scratch, vecZ tmp) %{
 %}
 
 instruct storemask8l(vecD dst, vecZ src, rRegL scratch) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() & n->as_Vector()->length() == 8 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 8);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 8 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 8);
   match(Set dst (VectorStoreMask src));
   effect(TEMP scratch);
   format %{ "vpcmpeqq k2,$src,0xFFFFFFFF\n\t"
@@ -20868,7 +20868,7 @@ instruct storemask8l(vecD dst, vecZ src, rRegL scratch) %{
 //-------------------------------- LOAD_IOTA_INDICES----------------------------------
 
 instruct loadcon4b(vecS dst, immI0 src, rRegI scratch) %{
-  predicate(UseSSE > 1  && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseSSE > 1 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadConst src));
   effect(TEMP scratch);
   format %{ "movdqu $dst, CONSTANT_MEMORY\t! load iota indices" %}
@@ -20879,7 +20879,7 @@ instruct loadcon4b(vecS dst, immI0 src, rRegI scratch) %{
 %}
 
 instruct loadcon8b(vecD dst, immI0 src, rRegI scratch) %{
-  predicate(UseSSE > 1  && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseSSE > 1 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadConst src));
   effect(TEMP scratch);
   format %{ "movdqu $dst, CONSTANT_MEMORY\t! load iota indices" %}
@@ -20890,7 +20890,7 @@ instruct loadcon8b(vecD dst, immI0 src, rRegI scratch) %{
 %}
 
 instruct loadcon16b(vecX dst, immI0 src, rRegI scratch) %{
-  predicate(UseSSE > 1  && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseSSE > 1 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadConst src));
   effect(TEMP scratch);
   format %{ "movdqu $dst, CONSTANT_MEMORY\t! load iota indices"  %}
@@ -20901,7 +20901,7 @@ instruct loadcon16b(vecX dst, immI0 src, rRegI scratch) %{
 %}
 
 instruct loadcon32b(vecY dst, immI0 src, rRegI scratch) %{
-  predicate(UseAVX > 0  && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadConst src));
   effect(TEMP scratch);
   format %{ "vmovdqu $dst, CONSTANT_MEMORY\t! load iota indices" %}
@@ -20912,7 +20912,7 @@ instruct loadcon32b(vecY dst, immI0 src, rRegI scratch) %{
 %}
 
 instruct loadcon64b(vecZ dst, immI0 src, rRegL scratch) %{
-  predicate(UseAVX > 2  && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadConst src));
   effect(TEMP scratch);
   format %{ "vmovdqub $dst,k0, CONSTANT_MEMORY\t! load iota indices" %}
@@ -20926,7 +20926,7 @@ instruct loadcon64b(vecZ dst, immI0 src, rRegL scratch) %{
 //-------------------------------- LOAD_SHUFFLE ----------------------------------
 
 instruct loadshuffle8b(vecD dst, vecD src) %{
-  predicate(UseSSE > 1  && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseSSE > 1 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadShuffle src));
   format %{ "movdqu $dst, $src\t! load shuffle (load 8B for 8BRearrange)" %}
   ins_encode %{
@@ -20956,7 +20956,7 @@ instruct loadshuffle32b(vecY dst, vecY src) %{
 %}
 
 instruct loadshuffle64b(vecZ dst, vecZ src) %{
-  predicate(UseAVX > 2  && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorLoadShuffle src));
   format %{ "vmovdqu $dst, $src\t! load shuffle (load 64B for 64BRearrange)" %}
   ins_encode %{
