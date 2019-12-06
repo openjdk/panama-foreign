@@ -8354,7 +8354,7 @@ instruct rvmin64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, vecY tmp, rReg
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmin4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, vecD tmp, vecS tmp2, rRegI tmp3) %{
+instruct rsmin4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, vecD tmp, rRegI tmp2, rRegI tmp3) %{
   predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
