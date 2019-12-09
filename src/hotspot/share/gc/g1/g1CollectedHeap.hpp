@@ -133,6 +133,7 @@ class G1CollectedHeap : public CollectedHeap {
   friend class VM_CollectForMetadataAllocation;
   friend class VM_G1CollectForAllocation;
   friend class VM_G1CollectFull;
+  friend class VM_G1TryInitiateConcMark;
   friend class VMStructs;
   friend class MutatorAllocRegion;
   friend class G1FullCollector;
@@ -213,6 +214,10 @@ private:
 
   void set_used(size_t bytes);
 
+  // Number of bytes used in all regions during GC. Typically changed when
+  // retiring a GC alloc region.
+  size_t _bytes_used_during_gc;
+
   // Class that handles archive allocation ranges.
   G1ArchiveAllocator* _archive_allocator;
 
@@ -259,15 +264,20 @@ private:
 
   G1HRPrinter _hr_printer;
 
-  // It decides whether an explicit GC should start a concurrent cycle
-  // instead of doing a STW GC. Currently, a concurrent cycle is
-  // explicitly started if:
-  // (a) cause == _gc_locker and +GCLockerInvokesConcurrent, or
-  // (b) cause == _g1_humongous_allocation
-  // (c) cause == _java_lang_system_gc and +ExplicitGCInvokesConcurrent.
-  // (d) cause == _dcmd_gc_run and +ExplicitGCInvokesConcurrent.
-  // (e) cause == _wb_conc_mark
+  // Return true if an explicit GC should start a concurrent cycle instead
+  // of doing a STW full GC. A concurrent cycle should be started if:
+  // (a) cause == _g1_humongous_allocation,
+  // (b) cause == _java_lang_system_gc and +ExplicitGCInvokesConcurrent,
+  // (c) cause == _dcmd_gc_run and +ExplicitGCInvokesConcurrent,
+  // (d) cause == _wb_conc_mark,
+  // (e) cause == _g1_periodic_collection and +G1PeriodicGCInvokesConcurrent.
   bool should_do_concurrent_full_gc(GCCause::Cause cause);
+
+  // Attempt to start a concurrent cycle with the indicated cause.
+  // precondition: should_do_concurrent_full_gc(cause)
+  bool try_collect_concurrently(GCCause::Cause cause,
+                                uint gc_counter,
+                                uint old_marking_started_before);
 
   // Return true if should upgrade to full gc after an incremental one.
   bool should_upgrade_to_full_gc(GCCause::Cause cause);
@@ -583,6 +593,7 @@ public:
   // These are only valid for starts_humongous regions.
   inline void set_humongous_reclaim_candidate(uint region, bool value);
   inline bool is_humongous_reclaim_candidate(uint region);
+  inline void set_has_humongous_reclaim_candidate(bool value);
 
   // Remove from the reclaim candidate set.  Also remove from the
   // collection set so that later encounters avoid the slow path.
@@ -590,8 +601,7 @@ public:
 
   // Register the given region to be part of the collection set.
   inline void register_humongous_region_with_region_attr(uint index);
-  // Update region attributes table with information about all regions.
-  void register_regions_with_region_attr();
+
   // We register a region with the fast "in collection set" test. We
   // simply set to true the array slot corresponding to this region.
   void register_young_region_with_region_attr(HeapRegion* r) {
@@ -630,7 +640,7 @@ public:
   // Full GC). If concurrent is true, the caller is the outer caller
   // in this nesting (i.e., the concurrent cycle). Further nesting is
   // not currently supported. The end of this call also notifies
-  // the FullGCCount_lock in case a Java thread is waiting for a full
+  // the G1OldGCCount_lock in case a Java thread is waiting for a full
   // GC to happen (e.g., it called System.gc() with
   // +ExplicitGCInvokesConcurrent).
   void increment_old_marking_cycles_completed(bool concurrent);
@@ -1088,10 +1098,9 @@ public:
   // "CollectedHeap" supports.
   virtual void collect(GCCause::Cause cause);
 
-  // Perform a collection of the heap with the given cause; if the VM operation
-  // fails to execute for any reason, retry only if retry_on_gc_failure is set.
+  // Perform a collection of the heap with the given cause.
   // Returns whether this collection actually executed.
-  bool try_collect(GCCause::Cause cause, bool retry_on_gc_failure);
+  bool try_collect(GCCause::Cause cause);
 
   // True iff an evacuation has failed in the most-recent collection.
   bool evacuation_failed() { return _evacuation_failed; }
@@ -1160,10 +1169,6 @@ public:
 
   // Iterate over all objects, calling "cl.do_object" on each.
   virtual void object_iterate(ObjectClosure* cl);
-
-  virtual void safe_object_iterate(ObjectClosure* cl) {
-    object_iterate(cl);
-  }
 
   // Iterate over heap regions, in address order, terminating the
   // iteration early if the "do_heap_region" method returns "true".
