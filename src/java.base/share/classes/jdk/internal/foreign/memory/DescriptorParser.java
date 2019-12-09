@@ -352,7 +352,7 @@ public class DescriptorParser {
                     if (buf.length() == 0) {
                         throw scanner.error("Invalid numeric start in ident");
                     }
-                    buf.append(scanner.lastNumber());
+                    buf.append(scanner.lastString());
                     break;
                 case END:
                     throw scanner.error("Expected " + expected);
