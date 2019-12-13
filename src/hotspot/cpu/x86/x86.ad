@@ -6026,7 +6026,7 @@ instruct rvinsert8F(vecY dst, vecY src, vecY tmp, regF val, immU3 idx) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert16F(vecZ dst, vecZ src, vecZ tmp, vecX tmp1, regF val, immU4 idx) %{
+instruct rvinsert16F(vecZ dst, vecZ src, vecX tmp, vecX tmp1, regF val, immU4 idx) %{
   predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst, TEMP tmp, TEMP tmp1);
@@ -6126,7 +6126,7 @@ instruct rvinsert4D(vecY dst, vecY src, vecY tmp, regD val, rRegL tmp1, immU2 id
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert8D(vecZ dst, vecZ src, vecZ tmp, vecY tmp2, regD val, rRegL tmp1, immU3 idx) %{
+instruct rvinsert8D(vecZ dst, vecZ src, legVecZ tmp, vecY tmp2, regD val, rRegL tmp1, immU3 idx) %{
   predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst, TEMP tmp, TEMP tmp1, TEMP tmp2);
@@ -10767,7 +10767,7 @@ instruct rvand8I_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvand16I_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp2, regF tmp3) %{
+instruct rvand16I_reduction_reg(rRegI dst, rRegI src1, legVecZ src2, vecX tmp, vecX tmp2, vecY tmp3) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (AndReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
@@ -10841,7 +10841,7 @@ instruct rvand4L_reduction_reg_avx(rRegL dst, rRegL src1, vecY src2, regF tmp, r
   ins_pipe( pipe_slow );
 %}
 
-instruct rvand8L_reduction_reg(rRegL dst, rRegL src1, vecZ src2, regF tmp, regF tmp2) %{
+instruct rvand8L_reduction_reg(rRegL dst, rRegL src1, legVecZ src2, vecX tmp, vecY tmp2) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (AndReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
@@ -11226,7 +11226,7 @@ instruct rvor8I_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF t
   ins_pipe( pipe_slow );
 %}
 
-instruct rvor16I_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp2, regF tmp3) %{
+instruct rvor16I_reduction_reg(rRegI dst, rRegI src1, legVecZ src2, vecX tmp, vecX tmp2, vecY tmp3) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (OrReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
@@ -11302,7 +11302,7 @@ instruct rvor4L_reduction_reg_avx(rRegL dst, rRegL src1, vecY src2, regF tmp, re
 %}
 
 #ifdef _LP64
-instruct rvor8L_reduction_reg(rRegL dst, rRegL src1, vecZ src2, regF tmp, regF tmp2) %{
+instruct rvor8L_reduction_reg(rRegL dst, rRegL src1, legVecZ src2, vecX tmp, vecY tmp2) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (OrReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
@@ -11545,7 +11545,7 @@ instruct rsxor8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvxor16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2, rRegI tmp3) %{
+instruct rvxor16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, vecY tmp, vecD tmp2, rRegI tmp3) %{
   predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (XorReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP dst);
@@ -11687,7 +11687,7 @@ instruct rvxor8I_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvxor16I_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp2, regF tmp3) %{
+instruct rvxor16I_reduction_reg(rRegI dst, rRegI src1, legVecZ src2, vecX tmp, vecD tmp2, vecY tmp3) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (XorReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
@@ -11763,7 +11763,7 @@ instruct rvxor4L_reduction_reg_avx(rRegL dst, rRegL src1, vecY src2, regF tmp, r
 %}
 
 #ifdef _LP64
-instruct rvxor8L_reduction_reg(rRegL dst, rRegL src1, vecZ src2, regF tmp, regF tmp2) %{
+instruct rvxor8L_reduction_reg(rRegL dst, rRegL src1, legVecZ src2, vecX tmp, vecY tmp2) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (XorReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
@@ -17896,7 +17896,7 @@ instruct vcvt4Bto4D_reg(vecY dst, vecS src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt8Bto8D_reg(vecZ dst, vecD src) %{
+instruct vcvt8Bto8D_reg(legVecZ dst, vecD src) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorCastB2X src));
   format %{ "vpmovsxbd   $dst,$src\n\t"
@@ -19225,7 +19225,7 @@ instruct extract8i(rRegI dst, vecY src, vecX tmp, immI idx) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct extract16i(rRegI dst, vecZ src, vecX tmp, immI idx) %{
+instruct extract16i(rRegI dst, legVecZ src, vecX tmp, immI idx) %{
   predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 16);
   match(Set dst (ExtractI src idx));
   effect(TEMP tmp);
@@ -21134,7 +21134,7 @@ instruct loadshuffle4l(vecY dst, vecS src, vecY tmp, vecY tmp2, rRegI scratch) %
   ins_pipe( pipe_slow );
 %}
 
-instruct loadshuffle8l(vecZ dst, vecD src, vecZ tmp, vecZ tmp2, rRegI scratch) %{
+instruct loadshuffle8l(vecZ dst, vecD src, vecX tmp, vecX tmp2, rRegI scratch) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 8 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
              n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
