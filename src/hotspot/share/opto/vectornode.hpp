@@ -1284,9 +1284,14 @@ class VectorBoxAllocateNode : public CallStaticJavaNode {
 };
 
 class VectorUnboxNode : public VectorNode {
+private:
+  bool _shuffle_to_vector;
+protected:
+  uint size_of() const { return sizeof(*this); }
  public:
-  VectorUnboxNode(Compile* C, const TypeVect* vec_type, Node* obj, Node* mem)
+  VectorUnboxNode(Compile* C, const TypeVect* vec_type, Node* obj, Node* mem, bool shuffle_to_vector)
     : VectorNode(mem, obj, vec_type) {
+    _shuffle_to_vector = shuffle_to_vector;
     init_flags(Flag_is_macro);
     C->add_macro_node(this);
   }
@@ -1295,6 +1300,7 @@ class VectorUnboxNode : public VectorNode {
   Node* obj() const { return in(2); }
   Node* mem() const { return in(1); }
   virtual Node *Identity(PhaseGVN *phase);
+  bool is_shuffle_to_vector() { return _shuffle_to_vector; }
 };
 
 class VectorMaskCmpNode : public VectorNode {

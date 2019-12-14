@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
- * @run testng/othervm -ea -esa FloatMaxVectorTests
+ * @run testng/othervm -ea -esa -Xbatch FloatMaxVectorTests
  */
 
 // -- This file was mechanically generated: Do not edit! -- //
@@ -471,6 +471,112 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FLaneOp {
+        float[] apply(float[] a, int origin, int idx);
+    }
+
+    static void assertArraysEquals(float[] a, float[] r, int origin, FLaneOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, origin, i));
+            }
+        } catch (AssertionError e) {
+            float[] ref = f.apply(a, origin, i);
+            float[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i);
+        }
+    }
+
+    interface FLaneBop {
+        float[] apply(float[] a, float[] b, int origin, int idx);
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, int origin, FLaneBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, i));
+            }
+        } catch (AssertionError e) {
+            float[] ref = f.apply(a, b, origin, i);
+            float[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin);
+        }
+    }
+
+    interface FLaneMaskedBop {
+        float[] apply(float[] a, float[] b, int origin, boolean[] mask, int idx);
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, int origin, boolean[] mask, FLaneMaskedBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, mask, i));
+            }
+        } catch (AssertionError e) {
+            float[] ref = f.apply(a, b, origin, mask, i);
+            float[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin);
+        }
+    }
+
+    interface FLanePartBop {
+        float[] apply(float[] a, float[] b, int origin, int part, int idx);
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, int origin, int part, FLanePartBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, part, i));
+            }
+        } catch (AssertionError e) {
+            float[] ref = f.apply(a, b, origin, part, i);
+            float[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin
+              + ", with part #" + part);
+        }
+    }
+
+    interface FLanePartMaskedBop {
+        float[] apply(float[] a, float[] b, int origin, int part, boolean[] mask, int idx);
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, int origin, int part, boolean[] mask, FLanePartMaskedBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, part, mask, i));
+            }
+        } catch (AssertionError e) {
+            float[] ref = f.apply(a, b, origin, part, mask, i);
+            float[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin
+              + ", with part #" + part);
+        }
+    }
+
     static int bits(float e) {
         return  Float.floatToIntBits(e);
     }
@@ -726,7 +832,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         a.intoArray(r, 0);
         b.intoArray(r, a.length());
         return r;
-    }   
+    }
 
     @Test
     static void smokeTest2() {
@@ -756,6 +862,22 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] abValues1 = bothToArray(uab0, uab1);
         Assert.assertEquals(Arrays.toString(abValues), Arrays.toString(abValues1));
     }
+
+    static void iotaShuffle() {
+        FloatVector io = (FloatVector) SPECIES.broadcast(0).addIndex(1);
+        FloatVector io2 = (FloatVector) VectorShuffle.iota(SPECIES, 0 , 1, false).toVector();
+        Assert.assertEquals(io, io2);
+    }
+
+    @Test
+    // Test all shuffle related operations.
+    static void shuffleTest() {
+        // To test backend instructions, make sure that C2 is used.
+        for (int loop = 0; loop < INVOC_COUNT * INVOC_COUNT; loop++) {
+            iotaShuffle();
+        }
+    }
+
     static float ADD(float a, float b) {
         return (float)(a + b);
     }
@@ -2139,26 +2261,214 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
 
 
-    static float[] single(float val) {
+    static float[] sliceUnary(float[] a, int origin, int idx) {
         float[] res = new float[SPECIES.length()];
-        res[0] = val;
-
+        for (int i = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = a[idx+i+origin];
+            else
+                res[i] = (float)0;
+        }
         return res;
     }
 
     @Test(dataProvider = "floatUnaryOpProvider")
-    static void singleFloatMaxVectorTests(IntFunction<float[]> fa) {
+    static void sliceUnaryFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = new float[a.length];
-
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector av = FloatVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                av.slice(origin).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, r, FloatMaxVectorTests::single);
+        assertArraysEquals(a, r, origin, FloatMaxVectorTests::sliceUnary);
+    }
+    static float[] sliceBinary(float[] a, float[] b, int origin, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = a[idx+i+origin];
+            else {
+                res[i] = b[idx+j];
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void sliceBinaryFloatMaxVectorTestsBinary(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.slice(origin, bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, FloatMaxVectorTests::sliceBinary);
+    }
+    static float[] slice(float[] a, float[] b, int origin, boolean[] mask, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = mask[i] ? a[idx+i+origin] : (float)0;
+            else {
+                res[i] = mask[i] ? b[idx+j] : (float)0;
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void sliceFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromArray(SPECIES, mask, 0);
+
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.slice(origin, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, mask, FloatMaxVectorTests::slice);
+    }
+    static float[] unsliceUnary(float[] a, int origin, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i < origin)
+                res[i] = (float)0;
+            else {
+                res[i] = a[idx+j];
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void unsliceUnaryFloatMaxVectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                av.unslice(origin).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, origin, FloatMaxVectorTests::unsliceUnary);
+    }
+    static float[] unsliceBinary(float[] a, float[] b, int origin, int part, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if (part == 0) {
+                if (i < origin)
+                    res[i] = b[idx+i];
+                else {
+                    res[i] = a[idx+j];
+                    j++;
+                }
+            } else if (part == 1) {
+                if (i < origin)
+                    res[i] = a[idx+SPECIES.length()-origin+i];
+                else {
+                    res[i] = b[idx+origin+j];
+                    j++;
+                }
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void unsliceBinaryFloatMaxVectorTestsBinary(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        int part = (new java.util.Random()).nextInt(2);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.unslice(origin, bv, part).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, part, FloatMaxVectorTests::unsliceBinary);
+    }
+    static float[] unslice(float[] a, float[] b, int origin, int part, boolean[] mask, int idx) {
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = b[idx+i+origin];
+            else {
+                res[i] = b[idx+j];
+                j++;
+            }
+        }
+        for (int i = 0; i < SPECIES.length(); i++){
+            res[i] = mask[i] ? a[idx+i] : res[i];
+        }
+        float[] res1 = new float[SPECIES.length()];
+        if (part == 0) {
+            for (int i = 0, j = 0; i < SPECIES.length(); i++){
+                if (i < origin)
+                    res1[i] = b[idx+i];
+                else {
+                   res1[i] = res[j];
+                   j++;
+                }
+            }
+        } else if (part == 1) {
+            for (int i = 0, j = 0; i < SPECIES.length(); i++){
+                if (i < origin)
+                    res1[i] = res[SPECIES.length()-origin+i];
+                else {
+                    res1[i] = b[idx+origin+j];
+                    j++;
+                }
+            }
+        }
+        return res1;
+    }
+
+    @Test(dataProvider = "floatBinaryOpMaskProvider")
+    static void unsliceFloatMaxVectorTestsMasked(IntFunction<float[]> fa, IntFunction<float[]> fb,
+    IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Float> vmask = VectorMask.fromArray(SPECIES, mask, 0);
+        float[] r = new float[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        int part = (new java.util.Random()).nextInt(2);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = FloatVector.fromArray(SPECIES, a, i);
+                FloatVector bv = FloatVector.fromArray(SPECIES, b, i);
+                av.unslice(origin, bv, part, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, part, mask, FloatMaxVectorTests::unslice);
     }
 
     static float SIN(float a) {

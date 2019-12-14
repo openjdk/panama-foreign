@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
- * @run testng/othervm -ea -esa Long128VectorTests
+ * @run testng/othervm -ea -esa -Xbatch Long128VectorTests
  */
 
 // -- This file was mechanically generated: Do not edit! -- //
@@ -418,6 +418,112 @@ public class Long128VectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FLaneOp {
+        long[] apply(long[] a, int origin, int idx);
+    }
+
+    static void assertArraysEquals(long[] a, long[] r, int origin, FLaneOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, origin, i));
+            }
+        } catch (AssertionError e) {
+            long[] ref = f.apply(a, origin, i);
+            long[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i);
+        }
+    }
+
+    interface FLaneBop {
+        long[] apply(long[] a, long[] b, int origin, int idx);
+    }
+
+    static void assertArraysEquals(long[] a, long[] b, long[] r, int origin, FLaneBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, i));
+            }
+        } catch (AssertionError e) {
+            long[] ref = f.apply(a, b, origin, i);
+            long[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin);
+        }
+    }
+
+    interface FLaneMaskedBop {
+        long[] apply(long[] a, long[] b, int origin, boolean[] mask, int idx);
+    }
+
+    static void assertArraysEquals(long[] a, long[] b, long[] r, int origin, boolean[] mask, FLaneMaskedBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, mask, i));
+            }
+        } catch (AssertionError e) {
+            long[] ref = f.apply(a, b, origin, mask, i);
+            long[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin);
+        }
+    }
+
+    interface FLanePartBop {
+        long[] apply(long[] a, long[] b, int origin, int part, int idx);
+    }
+
+    static void assertArraysEquals(long[] a, long[] b, long[] r, int origin, int part, FLanePartBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, part, i));
+            }
+        } catch (AssertionError e) {
+            long[] ref = f.apply(a, b, origin, part, i);
+            long[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin
+              + ", with part #" + part);
+        }
+    }
+
+    interface FLanePartMaskedBop {
+        long[] apply(long[] a, long[] b, int origin, int part, boolean[] mask, int idx);
+    }
+
+    static void assertArraysEquals(long[] a, long[] b, long[] r, int origin, int part, boolean[] mask, FLanePartMaskedBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, part, mask, i));
+            }
+        } catch (AssertionError e) {
+            long[] ref = f.apply(a, b, origin, part, mask, i);
+            long[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin
+              + ", with part #" + part);
+        }
+    }
+
     static long bits(long e) {
         return  e;
     }
@@ -667,7 +773,7 @@ public class Long128VectorTests extends AbstractVectorTest {
         a.intoArray(r, 0);
         b.intoArray(r, a.length());
         return r;
-    }   
+    }
 
     @Test
     static void smokeTest2() {
@@ -697,6 +803,22 @@ public class Long128VectorTests extends AbstractVectorTest {
         long[] abValues1 = bothToArray(uab0, uab1);
         Assert.assertEquals(Arrays.toString(abValues), Arrays.toString(abValues1));
     }
+
+    static void iotaShuffle() {
+        LongVector io = (LongVector) SPECIES.broadcast(0).addIndex(1);
+        LongVector io2 = (LongVector) VectorShuffle.iota(SPECIES, 0 , 1, false).toVector();
+        Assert.assertEquals(io, io2);
+    }
+
+    @Test
+    // Test all shuffle related operations.
+    static void shuffleTest() {
+        // To test backend instructions, make sure that C2 is used.
+        for (int loop = 0; loop < INVOC_COUNT * INVOC_COUNT; loop++) {
+            iotaShuffle();
+        }
+    }
+
     static long ADD(long a, long b) {
         return (long)(a + b);
     }
@@ -2699,26 +2821,214 @@ public class Long128VectorTests extends AbstractVectorTest {
 
 
 
-    static long[] single(long val) {
+    static long[] sliceUnary(long[] a, int origin, int idx) {
         long[] res = new long[SPECIES.length()];
-        res[0] = val;
-
+        for (int i = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = a[idx+i+origin];
+            else
+                res[i] = (long)0;
+        }
         return res;
     }
 
     @Test(dataProvider = "longUnaryOpProvider")
-    static void singleLong128VectorTests(IntFunction<long[]> fa) {
+    static void sliceUnaryLong128VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = new long[a.length];
-
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector av = LongVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                av.slice(origin).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, r, Long128VectorTests::single);
+        assertArraysEquals(a, r, origin, Long128VectorTests::sliceUnary);
+    }
+    static long[] sliceBinary(long[] a, long[] b, int origin, int idx) {
+        long[] res = new long[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = a[idx+i+origin];
+            else {
+                res[i] = b[idx+j];
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "longBinaryOpProvider")
+    static void sliceBinaryLong128VectorTestsBinary(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] b = fb.apply(SPECIES.length());
+        long[] r = new long[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                LongVector bv = LongVector.fromArray(SPECIES, b, i);
+                av.slice(origin, bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, Long128VectorTests::sliceBinary);
+    }
+    static long[] slice(long[] a, long[] b, int origin, boolean[] mask, int idx) {
+        long[] res = new long[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = mask[i] ? a[idx+i+origin] : (long)0;
+            else {
+                res[i] = mask[i] ? b[idx+j] : (long)0;
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "longBinaryOpMaskProvider")
+    static void sliceLong128VectorTestsMasked(IntFunction<long[]> fa, IntFunction<long[]> fb,
+    IntFunction<boolean[]> fm) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] b = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Long> vmask = VectorMask.fromArray(SPECIES, mask, 0);
+
+        long[] r = new long[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                LongVector bv = LongVector.fromArray(SPECIES, b, i);
+                av.slice(origin, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, mask, Long128VectorTests::slice);
+    }
+    static long[] unsliceUnary(long[] a, int origin, int idx) {
+        long[] res = new long[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i < origin)
+                res[i] = (long)0;
+            else {
+                res[i] = a[idx+j];
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "longUnaryOpProvider")
+    static void unsliceUnaryLong128VectorTests(IntFunction<long[]> fa) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                av.unslice(origin).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, origin, Long128VectorTests::unsliceUnary);
+    }
+    static long[] unsliceBinary(long[] a, long[] b, int origin, int part, int idx) {
+        long[] res = new long[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if (part == 0) {
+                if (i < origin)
+                    res[i] = b[idx+i];
+                else {
+                    res[i] = a[idx+j];
+                    j++;
+                }
+            } else if (part == 1) {
+                if (i < origin)
+                    res[i] = a[idx+SPECIES.length()-origin+i];
+                else {
+                    res[i] = b[idx+origin+j];
+                    j++;
+                }
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "longBinaryOpProvider")
+    static void unsliceBinaryLong128VectorTestsBinary(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] b = fb.apply(SPECIES.length());
+        long[] r = new long[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        int part = (new java.util.Random()).nextInt(2);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                LongVector bv = LongVector.fromArray(SPECIES, b, i);
+                av.unslice(origin, bv, part).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, part, Long128VectorTests::unsliceBinary);
+    }
+    static long[] unslice(long[] a, long[] b, int origin, int part, boolean[] mask, int idx) {
+        long[] res = new long[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = b[idx+i+origin];
+            else {
+                res[i] = b[idx+j];
+                j++;
+            }
+        }
+        for (int i = 0; i < SPECIES.length(); i++){
+            res[i] = mask[i] ? a[idx+i] : res[i];
+        }
+        long[] res1 = new long[SPECIES.length()];
+        if (part == 0) {
+            for (int i = 0, j = 0; i < SPECIES.length(); i++){
+                if (i < origin)
+                    res1[i] = b[idx+i];
+                else {
+                   res1[i] = res[j];
+                   j++;
+                }
+            }
+        } else if (part == 1) {
+            for (int i = 0, j = 0; i < SPECIES.length(); i++){
+                if (i < origin)
+                    res1[i] = res[SPECIES.length()-origin+i];
+                else {
+                    res1[i] = b[idx+origin+j];
+                    j++;
+                }
+            }
+        }
+        return res1;
+    }
+
+    @Test(dataProvider = "longBinaryOpMaskProvider")
+    static void unsliceLong128VectorTestsMasked(IntFunction<long[]> fa, IntFunction<long[]> fb,
+    IntFunction<boolean[]> fm) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] b = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Long> vmask = VectorMask.fromArray(SPECIES, mask, 0);
+        long[] r = new long[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        int part = (new java.util.Random()).nextInt(2);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = LongVector.fromArray(SPECIES, a, i);
+                LongVector bv = LongVector.fromArray(SPECIES, b, i);
+                av.unslice(origin, bv, part, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, part, mask, Long128VectorTests::unslice);
     }
 
 

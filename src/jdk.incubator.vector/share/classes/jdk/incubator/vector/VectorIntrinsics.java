@@ -9,8 +9,6 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.*;
 
-import jdk.incubator.vector.Vector;
-
 /*non-public*/ class VectorIntrinsics {
     static final Unsafe U = Unsafe.getUnsafe();
 
@@ -144,9 +142,9 @@ import jdk.incubator.vector.Vector;
        VM apply(Sh s);
     }
 
-    @HotSpotIntrinsicCandidate 
-    static 
-    <VM ,Sh extends VectorShuffle<E>, E> 
+    @HotSpotIntrinsicCandidate
+    static
+    <VM ,Sh extends VectorShuffle<E>, E>
     VM shuffleToVector(Class<?> VM, Class<?>E , Class<?> ShuffleClass, Sh s, int length,
                        ShuffleToVectorOperation<VM,Sh,E> defaultImpl) {
       assert isNonCapturingLambda(defaultImpl) : defaultImpl;

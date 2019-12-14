@@ -24,8 +24,6 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.vm.annotation.ForceInline;
-import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
 
 /**
@@ -60,7 +58,7 @@ public interface VectorSpecies<E> {
      *
      * @return the primitive element type ({@code ETYPE})
      */
-    public abstract Class<E> elementType();
+    Class<E> elementType();
 
     /**
      * Returns the generic parameter type {@code E} corresponding
@@ -68,7 +66,7 @@ public interface VectorSpecies<E> {
      *
      * @return the parameter type {@code E}
      */
-    public abstract Class<E> genericElementType();
+    Class<E> genericElementType();
 
     /**
      * Returns the primitive array type {@code ETYPE[]},
@@ -77,7 +75,7 @@ public interface VectorSpecies<E> {
      *
      * @return the primitive array type {@code ETYPE[]}
      */
-    public abstract Class<?> arrayType();
+    Class<?> arrayType();
 
     /**
      * Returns the vector type of this species.
@@ -86,14 +84,14 @@ public interface VectorSpecies<E> {
      *
      * @return the vector type of this species
      */
-    abstract Class<? extends Vector<E>> vectorType();
+    Class<? extends Vector<E>> vectorType();
 
     /**
      * Returns the vector mask type for this species.
      *
      * @return the mask type
      */
-    abstract Class<? extends VectorMask<E>> maskType();
+    Class<? extends VectorMask<E>> maskType();
 
     /**
      * Returns the lane size, in bits, of vectors of this
@@ -101,7 +99,7 @@ public interface VectorSpecies<E> {
      *
      * @return the element size, in bits
      */
-    public abstract int elementSize();
+    int elementSize();
 
     /**
      * Returns the shape of vectors produced by this
@@ -109,41 +107,41 @@ public interface VectorSpecies<E> {
      *
      * @return the shape of any vectors of this species
      */
-    public abstract VectorShape vectorShape();
+    VectorShape vectorShape();
 
     /**
      * Returns the number of lanes in a vector of this species.
      *
-     * @apiNote: This is also the number of lanes in a mask or
+     * @apiNote This is also the number of lanes in a mask or
      * shuffle associated with a vector of this species.
      *
      * @return the number of vector lanes
      */
-    public abstract int length();
+    int length();
 
     /**
      * Returns the total vector size, in bits, of any vector
      * of this species.
      * This is the same value as {@code this.vectorShape().vectorBitSize()}.
      *
-     * @apiNote: This size may be distinct from the size in bits
+     * @apiNote This size may be distinct from the size in bits
      * of a mask or shuffle of this species.
      *
      * @return the total vector size, in bits
      */
-    public abstract int vectorBitSize();
+    int vectorBitSize();
 
     /**
      * Returns the total vector size, in bytes, of any vector
      * of this species.
      * This is the same value as {@code this.vectorShape().vectorBitSize() / Byte.SIZE}.
      *
-     * @apiNote: This size may be distinct from the size in bits
+     * @apiNote This size may be distinct from the size in bits
      * of a mask or shuffle of this species.
      *
      * @return the total vector size, in bytes
      */
-    public abstract int vectorByteSize();
+    int vectorByteSize();
 
     /**
      * Loop control function which returns the largest multiple of
@@ -168,7 +166,7 @@ public interface VectorSpecies<E> {
                negative and the result would overflow to a positive value
      * @see Math#floorMod(int, int)
      */
-    public abstract int loopBound(int length);
+    int loopBound(int length);
 
     /**
      * Returns a mask of this species where only
@@ -181,11 +179,11 @@ public interface VectorSpecies<E> {
      * {@code maskAll(true).indexInRange(offset, limit)}
      *
      * @param offset the starting index
-     * @param limit the upper-bound (exlusive) of index range
+     * @param limit the upper-bound (exclusive) of index range
      * @return a mask with out-of-range lanes unset
      * @see VectorMask#indexInRange(int, int)
      */
-    public abstract VectorMask<E> indexInRange(int offset, int limit);
+    VectorMask<E> indexInRange(int offset, int limit);
 
     /**
      * Checks that this species has the given element type,
@@ -202,7 +200,7 @@ public interface VectorSpecies<E> {
      * @see Vector#check(Class)
      * @see Vector#check(VectorSpecies)
      */
-    public abstract <F> VectorSpecies<F> check(Class<F> elementType);
+    <F> VectorSpecies<F> check(Class<F> elementType);
 
     /**
      * Given this species and a second one, reports the net
@@ -224,7 +222,7 @@ public interface VectorSpecies<E> {
      * If {@code lanewise} is false, this size that of the input
      * {@code VSHAPE}.  If {@code lanewise} is true, the logical
      * result size is the product of the input {@code VLENGTH}
-     * times the size of the <em>output</em> {@size ETYPE}.
+     * times the size of the <em>output</em> {@code ETYPE}.
      *
      * <li> Next, the logical result size is compared against
      * the size of the proposed output shape, to see how it
@@ -243,7 +241,7 @@ public interface VectorSpecies<E> {
      * a upper exclusive limit on the {@code part} parameter to a
      * method that would transform the input species to the output
      * species.
-     * 
+     *
      * <li> If the logical result would drop into the output shape
      * with room to spare, the return value is a negative number whose
      * absolute value the ratio (greater than one) between the output
@@ -253,9 +251,9 @@ public interface VectorSpecies<E> {
      * vector.  It is also the <em>part limit</em>, an exclusive lower
      * limit on the {@code part} parameter to a method that would
      * transform the input species to the output species.
-     * 
+     *
      * </ul>
-     * 
+     *
      * @param outputSpecies the proposed output species
      * @param lanewise whether to take lane sizes into account
      * @return an indication of the size change, as a signed ratio or zero
@@ -263,7 +261,7 @@ public interface VectorSpecies<E> {
      * @see Vector#reinterpretShape(VectorSpecies,int)
      * @see Vector#convertShape(VectorOperators.Conversion,VectorSpecies,int)
      */
-    public abstract int partLimit(VectorSpecies<?> outputSpecies, boolean lanewise);
+    int partLimit(VectorSpecies<?> outputSpecies, boolean lanewise);
 
     // Factories
 
@@ -282,7 +280,7 @@ public interface VectorSpecies<E> {
      * @see #withShape(VectorShape)
      * @see VectorSpecies#of(Class, VectorShape)
      */
-    public abstract <F> VectorSpecies<F> withLanes(Class<F> newType);
+    <F> VectorSpecies<F> withLanes(Class<F> newType);
 
     /**
      * Finds a species with the given shape and the same
@@ -297,7 +295,7 @@ public interface VectorSpecies<E> {
      * @see #withLanes(Class)
      * @see VectorSpecies#of(Class, VectorShape)
      */
-    public abstract VectorSpecies<E> withShape(VectorShape newShape);
+    VectorSpecies<E> withShape(VectorShape newShape);
 
     /**
      * Finds a species for an element type and shape.
@@ -312,7 +310,7 @@ public interface VectorSpecies<E> {
      * @see #withLanes(Class)
      * @see #withShape(VectorShape)
      */
-    public static <E> VectorSpecies<E> of(Class<E> elementType, VectorShape shape) {
+    static <E> VectorSpecies<E> of(Class<E> elementType, VectorShape shape) {
         LaneType laneType = LaneType.of(elementType);
         return AbstractSpecies.findSpecies(elementType, laneType, shape);
     }
@@ -337,7 +335,7 @@ public interface VectorSpecies<E> {
      *         or if the given type is not a valid {@code ETYPE}
      * @see VectorSpecies#ofPreferred(Class)
      */
-    public static <E> VectorSpecies<E> ofLargestShape(Class<E> etype) {
+    static <E> VectorSpecies<E> ofLargestShape(Class<E> etype) {
         return VectorSpecies.of(etype, VectorShape.largestShapeFor(etype));
     }
 
@@ -402,7 +400,7 @@ public interface VectorSpecies<E> {
      *         if the given {@code elementType} argument is not
      *         a valid vector {@code ETYPE}
      */
-    public static int elementSize(Class<?> elementType) {
+    static int elementSize(Class<?> elementType) {
         return LaneType.of(elementType).elementSize;
     }
 
@@ -422,7 +420,7 @@ public interface VectorSpecies<E> {
      * @see IntVector#zero(VectorSpecies)
      * @see FloatVector#zero(VectorSpecies)
      */
-    public abstract Vector<E> zero();
+    Vector<E> zero();
 
     /**
      * Returns a vector of this species
@@ -435,7 +433,7 @@ public interface VectorSpecies<E> {
      * or an equivalent {@code fromArray} method,
      * on the vector type corresponding to
      * this species.
-     * 
+     *
      * @param a an array of the {@code ETYPE} for this species
      * @param offset the index of the first lane value to load
      * @return a vector of the given species filled from the array
@@ -445,7 +443,7 @@ public interface VectorSpecies<E> {
      * @see IntVector#fromArray(VectorSpecies,int[],int)
      * @see FloatVector#fromArray(VectorSpecies,float[],int)
      */
-    public abstract Vector<E> fromArray(Object a, int offset);
+    Vector<E> fromArray(Object a, int offset);
     // Defined when ETYPE is known.
 
     /**
@@ -462,7 +460,7 @@ public interface VectorSpecies<E> {
      * this species, after the values are copied
      * (without loss of value or precision) to
      * an appropriately typed array.
-     * 
+     *
      * @param values an array of values to load into the vector
      * @return a vector of the given species filled from the array
      * @throws IllegalArgumentException
@@ -473,7 +471,7 @@ public interface VectorSpecies<E> {
      * @see FloatVector#fromArray(VectorSpecies,float[],int)
      * @see #checkValue(long)
      */
-    public abstract Vector<E> fromValues(long... values);
+    Vector<E> fromValues(long... values);
 
     /**
      * Returns a vector of this species
@@ -485,7 +483,7 @@ public interface VectorSpecies<E> {
      * or an equivalent {@code fromByteArray} method,
      * on the vector type corresponding to
      * this species.
-     * 
+     *
      * @param a a byte array
      * @param offset the index of the first byte to load
      * @return a vector of the given species filled from the byte array
@@ -496,7 +494,7 @@ public interface VectorSpecies<E> {
      * @see IntVector#fromByteArray(VectorSpecies,byte[],int)
      * @see FloatVector#fromByteArray(VectorSpecies,byte[],int)
      */
-    public abstract Vector<E> fromByteArray(byte[] a, int offset);
+    Vector<E> fromByteArray(byte[] a, int offset);
 
     /**
      * Returns a mask of this species
@@ -505,7 +503,7 @@ public interface VectorSpecies<E> {
      *
      * Equivalent to
      * {@code VectorMask.fromArray(this,a,offset)}.
-     * 
+     *
      * @param bits the {@code boolean} array
      * @param offset the offset into the array
      * @return the mask loaded from the {@code boolean} array
@@ -514,7 +512,7 @@ public interface VectorSpecies<E> {
      *         for any lane {@code N} in the vector mask
      * @see VectorMask#fromArray(VectorSpecies,boolean[],int)
      */
-    public abstract VectorMask<E> loadMask(boolean[] bits, int offset);
+    VectorMask<E> loadMask(boolean[] bits, int offset);
 
     /**
      * Returns a mask of this species,
@@ -526,7 +524,7 @@ public interface VectorSpecies<E> {
      *         the given bit
      * @see Vector#maskAll(boolean)
      */
-    public abstract VectorMask<E> maskAll(boolean bit);
+    VectorMask<E> maskAll(boolean bit);
 
     /**
      * Returns a vector of the given species
@@ -549,7 +547,7 @@ public interface VectorSpecies<E> {
      * @see Vector#broadcast(long)
      * @see #checkValue(long)
      */
-    public abstract Vector<E> broadcast(long e);
+    Vector<E> broadcast(long e);
 
     /**
      * Checks that this species can represent the given element value,
@@ -571,7 +569,7 @@ public interface VectorSpecies<E> {
      *         be represented by the vector species {@code ETYPE}
      * @see #broadcast(long)
      */
-    public abstract long checkValue(long e);
+    long checkValue(long e);
 
     /**
      * Creates a shuffle for this species from
@@ -589,7 +587,7 @@ public interface VectorSpecies<E> {
      * @throws IndexOutOfBoundsException if {@code sourceIndexes.length != VLENGTH}
      * @see VectorShuffle#fromValues(VectorSpecies,int...)
      */
-    public abstract VectorShuffle<E> shuffleFromValues(int... sourceIndexes);
+    VectorShuffle<E> shuffleFromValues(int... sourceIndexes);
 
     /**
      * Creates a shuffle for this species from
@@ -609,7 +607,7 @@ public interface VectorSpecies<E> {
      *         {@code offset > sourceIndexes.length - VLENGTH}
      * @see VectorShuffle#fromArray(VectorSpecies,int[],int)
      */
-    public abstract VectorShuffle<E> shuffleFromArray(int[] sourceIndexes, int offset);
+    VectorShuffle<E> shuffleFromArray(int[] sourceIndexes, int offset);
 
     /**
      * Creates a shuffle for this species from
@@ -641,20 +639,25 @@ public interface VectorSpecies<E> {
      * @return a shuffle of mapped indexes
      * @see VectorShuffle#fromOp(VectorSpecies,IntUnaryOperator)
      */
-    public abstract VectorShuffle<E> shuffleFromOp(IntUnaryOperator fn);
+    VectorShuffle<E> shuffleFromOp(IntUnaryOperator fn);
 
     /**
      * Creates a shuffle using source indexes set to sequential
      * values starting from {@code start} and stepping
      * by the given {@code step}.
-     * If {@code wrap} is true, also reduce each index, as if
-     * by {@link VectorShuffle#wrapIndex(int) wrapIndex},
-     * to the valid range {@code [0..VLENGTH-1]}.
      * <p>
      * This method returns the value of the expression
-     * {@code shuffleFromOp(i -> R(start + i * step))},
-     * where {@code R} is {@code wrapIndex} if {@code wrap} is true,
-     * and is the identity function otherwise.
+     * {@code VectorSpecies.shuffleFromOp(i -> R(start + i * step))},
+     * where {@code R} is {@link VectorShuffle#wrapIndex(int) wrapIndex}
+     * if {@code wrap} is true, and is the identity function otherwise.
+     * <p>
+     * If {@code wrap} is false each index is validated
+     * against the species {@code VLENGTH}, and (if invalid)
+     * is partially wrapped to an exceptional index in the
+     * range {@code [-VLENGTH..-1]}.
+     * Otherwise, if {@code wrap} is true, also reduce each index, as if
+     * by {@link VectorShuffle#wrapIndex(int) wrapIndex},
+     * to the valid range {@code [0..VLENGTH-1]}.
      *
      * @apiNote The {@code wrap} parameter should be set to {@code
      * true} if invalid source indexes should be wrapped.  Otherwise,
@@ -668,7 +671,7 @@ public interface VectorSpecies<E> {
      * @return a shuffle of sequential lane indexes
      * @see VectorShuffle#iota(VectorSpecies,int,int,boolean)
      */
-    public abstract VectorShuffle<E> iotaShuffle(int start, int step, boolean wrap);
+    VectorShuffle<E> iotaShuffle(int start, int step, boolean wrap);
 
     /**
      * Returns a string of the form "Species[ETYPE, VLENGTH, SHAPE]",
@@ -681,7 +684,7 @@ public interface VectorSpecies<E> {
      * @return a string of the form "Species[ETYPE, VLENGTH, SHAPE]"
      */
     @Override
-    public abstract String toString();
+    String toString();
 
     /**
      * Indicates whether this species is identical to some other object.
@@ -691,7 +694,7 @@ public interface VectorSpecies<E> {
      * @return whether this species is identical to some other object
      */
     @Override
-    public abstract boolean equals(Object obj);
+    boolean equals(Object obj);
 
     /**
      * Returns a hash code value for the species,
@@ -700,7 +703,7 @@ public interface VectorSpecies<E> {
      * @return  a hash code value for this species
      */
     @Override
-    public abstract int hashCode();
+    int hashCode();
 
     // ==== JROSE NAME CHANGES ====
 

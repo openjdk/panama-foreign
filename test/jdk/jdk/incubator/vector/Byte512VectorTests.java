@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
- * @run testng/othervm -ea -esa Byte512VectorTests
+ * @run testng/othervm -ea -esa -Xbatch Byte512VectorTests
  */
 
 // -- This file was mechanically generated: Do not edit! -- //
@@ -418,6 +418,112 @@ public class Byte512VectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FLaneOp {
+        byte[] apply(byte[] a, int origin, int idx);
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] r, int origin, FLaneOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, origin, i));
+            }
+        } catch (AssertionError e) {
+            byte[] ref = f.apply(a, origin, i);
+            byte[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i);
+        }
+    }
+
+    interface FLaneBop {
+        byte[] apply(byte[] a, byte[] b, int origin, int idx);
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] b, byte[] r, int origin, FLaneBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, i));
+            }
+        } catch (AssertionError e) {
+            byte[] ref = f.apply(a, b, origin, i);
+            byte[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin);
+        }
+    }
+
+    interface FLaneMaskedBop {
+        byte[] apply(byte[] a, byte[] b, int origin, boolean[] mask, int idx);
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] b, byte[] r, int origin, boolean[] mask, FLaneMaskedBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, mask, i));
+            }
+        } catch (AssertionError e) {
+            byte[] ref = f.apply(a, b, origin, mask, i);
+            byte[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin);
+        }
+    }
+
+    interface FLanePartBop {
+        byte[] apply(byte[] a, byte[] b, int origin, int part, int idx);
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] b, byte[] r, int origin, int part, FLanePartBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, part, i));
+            }
+        } catch (AssertionError e) {
+            byte[] ref = f.apply(a, b, origin, part, i);
+            byte[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin
+              + ", with part #" + part);
+        }
+    }
+
+    interface FLanePartMaskedBop {
+        byte[] apply(byte[] a, byte[] b, int origin, int part, boolean[] mask, int idx);
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] b, byte[] r, int origin, int part, boolean[] mask, FLanePartMaskedBop f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, b, origin, part, mask, i));
+            }
+        } catch (AssertionError e) {
+            byte[] ref = f.apply(a, b, origin, part, mask, i);
+            byte[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res, "(ref: " + Arrays.toString(ref)
+              + ", res: " + Arrays.toString(res)
+              + "), at index #" + i
+              + ", at origin #" + origin
+              + ", with part #" + part);
+        }
+    }
+
     static byte bits(byte e) {
         return  e;
     }
@@ -667,7 +773,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         a.intoArray(r, 0);
         b.intoArray(r, a.length());
         return r;
-    }   
+    }
 
     @Test
     static void smokeTest2() {
@@ -697,6 +803,22 @@ public class Byte512VectorTests extends AbstractVectorTest {
         byte[] abValues1 = bothToArray(uab0, uab1);
         Assert.assertEquals(Arrays.toString(abValues), Arrays.toString(abValues1));
     }
+
+    static void iotaShuffle() {
+        ByteVector io = (ByteVector) SPECIES.broadcast(0).addIndex(1);
+        ByteVector io2 = (ByteVector) VectorShuffle.iota(SPECIES, 0 , 1, false).toVector();
+        Assert.assertEquals(io, io2);
+    }
+
+    @Test
+    // Test all shuffle related operations.
+    static void shuffleTest() {
+        // To test backend instructions, make sure that C2 is used.
+        for (int loop = 0; loop < INVOC_COUNT * INVOC_COUNT; loop++) {
+            iotaShuffle();
+        }
+    }
+
     static byte ADD(byte a, byte b) {
         return (byte)(a + b);
     }
@@ -2699,26 +2821,214 @@ public class Byte512VectorTests extends AbstractVectorTest {
 
 
 
-    static byte[] single(byte val) {
+    static byte[] sliceUnary(byte[] a, int origin, int idx) {
         byte[] res = new byte[SPECIES.length()];
-        res[0] = val;
-
+        for (int i = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = a[idx+i+origin];
+            else
+                res[i] = (byte)0;
+        }
         return res;
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void singleByte512VectorTests(IntFunction<byte[]> fa) {
+    static void sliceUnaryByte512VectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
-
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = ByteVector.single(SPECIES, a[i]);
-                av.intoArray(r, i);
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                av.slice(origin).intoArray(r, i);
             }
         }
 
-        assertArraysEquals(a, r, Byte512VectorTests::single);
+        assertArraysEquals(a, r, origin, Byte512VectorTests::sliceUnary);
+    }
+    static byte[] sliceBinary(byte[] a, byte[] b, int origin, int idx) {
+        byte[] res = new byte[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = a[idx+i+origin];
+            else {
+                res[i] = b[idx+j];
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "byteBinaryOpProvider")
+    static void sliceBinaryByte512VectorTestsBinary(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] b = fb.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
+                av.slice(origin, bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, Byte512VectorTests::sliceBinary);
+    }
+    static byte[] slice(byte[] a, byte[] b, int origin, boolean[] mask, int idx) {
+        byte[] res = new byte[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = mask[i] ? a[idx+i+origin] : (byte)0;
+            else {
+                res[i] = mask[i] ? b[idx+j] : (byte)0;
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
+    static void sliceByte512VectorTestsMasked(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
+    IntFunction<boolean[]> fm) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] b = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Byte> vmask = VectorMask.fromArray(SPECIES, mask, 0);
+
+        byte[] r = new byte[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
+                av.slice(origin, bv, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, mask, Byte512VectorTests::slice);
+    }
+    static byte[] unsliceUnary(byte[] a, int origin, int idx) {
+        byte[] res = new byte[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i < origin)
+                res[i] = (byte)0;
+            else {
+                res[i] = a[idx+j];
+                j++;
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "byteUnaryOpProvider")
+    static void unsliceUnaryByte512VectorTests(IntFunction<byte[]> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                av.unslice(origin).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, origin, Byte512VectorTests::unsliceUnary);
+    }
+    static byte[] unsliceBinary(byte[] a, byte[] b, int origin, int part, int idx) {
+        byte[] res = new byte[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if (part == 0) {
+                if (i < origin)
+                    res[i] = b[idx+i];
+                else {
+                    res[i] = a[idx+j];
+                    j++;
+                }
+            } else if (part == 1) {
+                if (i < origin)
+                    res[i] = a[idx+SPECIES.length()-origin+i];
+                else {
+                    res[i] = b[idx+origin+j];
+                    j++;
+                }
+            }
+        }
+        return res;
+    }
+
+    @Test(dataProvider = "byteBinaryOpProvider")
+    static void unsliceBinaryByte512VectorTestsBinary(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] b = fb.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        int part = (new java.util.Random()).nextInt(2);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
+                av.unslice(origin, bv, part).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, part, Byte512VectorTests::unsliceBinary);
+    }
+    static byte[] unslice(byte[] a, byte[] b, int origin, int part, boolean[] mask, int idx) {
+        byte[] res = new byte[SPECIES.length()];
+        for (int i = 0, j = 0; i < SPECIES.length(); i++){
+            if(i+origin < SPECIES.length())
+                res[i] = b[idx+i+origin];
+            else {
+                res[i] = b[idx+j];
+                j++;
+            }
+        }
+        for (int i = 0; i < SPECIES.length(); i++){
+            res[i] = mask[i] ? a[idx+i] : res[i];
+        }
+        byte[] res1 = new byte[SPECIES.length()];
+        if (part == 0) {
+            for (int i = 0, j = 0; i < SPECIES.length(); i++){
+                if (i < origin)
+                    res1[i] = b[idx+i];
+                else {
+                   res1[i] = res[j];
+                   j++;
+                }
+            }
+        } else if (part == 1) {
+            for (int i = 0, j = 0; i < SPECIES.length(); i++){
+                if (i < origin)
+                    res1[i] = res[SPECIES.length()-origin+i];
+                else {
+                    res1[i] = b[idx+origin+j];
+                    j++;
+                }
+            }
+        }
+        return res1;
+    }
+
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
+    static void unsliceByte512VectorTestsMasked(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
+    IntFunction<boolean[]> fm) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] b = fb.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        VectorMask<Byte> vmask = VectorMask.fromArray(SPECIES, mask, 0);
+        byte[] r = new byte[a.length];
+        int origin = (new java.util.Random()).nextInt(SPECIES.length());
+        int part = (new java.util.Random()).nextInt(2);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = ByteVector.fromArray(SPECIES, a, i);
+                ByteVector bv = ByteVector.fromArray(SPECIES, b, i);
+                av.unslice(origin, bv, part, vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, origin, part, mask, Byte512VectorTests::unslice);
     }
 
 

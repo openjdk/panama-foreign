@@ -25,17 +25,11 @@
 package jdk.incubator.vector;
 
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
 
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
 
-import static jdk.incubator.vector.VectorIntrinsics.*;
 import static jdk.incubator.vector.VectorOperators.*;
 
 @SuppressWarnings("cast")
@@ -239,23 +233,6 @@ abstract class AbstractVector<E> extends Vector<E> {
     @ForceInline
     public DoubleVector reinterpretAsDoubles() {
         return (DoubleVector) asVectorRaw(LaneType.DOUBLE);
-    }
-
-    /**
-     * {@inheritDoc} <!--workaround-->
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public final List<E> toList() {
-        int limit = length();
-        Object packedLaneVals = this.toArray();
-        LaneType laneType = ((AbstractSpecies<E>) species()).laneType;
-        Class<E> genType = (Class<E>) laneType.genericElementType;
-        E[] boxedLaneVals = (E[]) Array.newInstance(genType, limit);
-        for (int i = 0; i < limit; i++) {
-            boxedLaneVals[i] = (E) Array.get(packedLaneVals, i);
-        }
-        return List.of(boxedLaneVals);
     }
 
     /**

@@ -25,15 +25,11 @@
 package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
 
 import static jdk.incubator.vector.VectorIntrinsics.*;
 import static jdk.incubator.vector.VectorOperators.*;
@@ -57,7 +53,7 @@ final class ByteMaxVector extends ByteVector {
     static final Class<Byte> ETYPE = byte.class;
 
     // The JVM expects to find the state here.
-    private final byte[] vec; // Don't access directly, use getElements() instead.
+    private final byte[] vec; // Don't access directly, use vec() instead.
 
     ByteMaxVector(byte[] v) {
         vec = v;
@@ -118,7 +114,7 @@ final class ByteMaxVector extends ByteVector {
     /*package-private*/
     @ForceInline
     final @Override
-    byte[] getElements() {
+    byte[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -147,8 +143,8 @@ final class ByteMaxVector extends ByteVector {
     ByteMaxShuffle iotaShuffle() { return ByteMaxShuffle.IOTA; }
 
     @ForceInline
-    ByteMaxShuffle iotaShuffle(int start) { 
-        return (ByteMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ByteMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ByteMaxShuffle(i -> (ByteMaxShuffle.partiallyWrapIndex(i + val, l))));
+    ByteMaxShuffle iotaShuffle(int start) {
+        return (ByteMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ByteMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ByteMaxShuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -388,9 +384,9 @@ final class ByteMaxVector extends ByteVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         ByteMaxShuffle Iota = iotaShuffle(origin);
-         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(origin))));
-         Iota = (ByteMaxShuffle)iotaShuffle(origin).wrapIndexes();
+         ByteMaxShuffle Iota = (ByteMaxShuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast((byte)(VLENGTH-origin))));
+         Iota = (ByteMaxShuffle)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -416,9 +412,9 @@ final class ByteMaxVector extends ByteVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         ByteMaxShuffle Iota = iotaShuffle(-origin);
-         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(0))));
-         Iota = (ByteMaxShuffle)iotaShuffle(-origin).wrapIndexes();
+         ByteMaxShuffle Iota = (ByteMaxShuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Byte> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((byte)(origin))));
+         Iota = (ByteMaxShuffle)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -477,7 +473,7 @@ final class ByteMaxVector extends ByteVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    byte[] vecarr = vec.getElements();
+                                    byte[] vecarr = vec.vec();
                                     return (long)vecarr[ix];
                                 });
     }
@@ -491,7 +487,7 @@ final class ByteMaxVector extends ByteVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
-                                    byte[] res = v.getElements().clone();
+                                    byte[] res = v.vec().clone();
                                     res[ix] = (byte)bits;
                                     return v.vectorFactory(res);
                                 });

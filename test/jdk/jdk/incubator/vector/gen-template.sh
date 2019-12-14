@@ -62,11 +62,16 @@ gather_template="Gather-op"
 gather_masked_template="Gather-Masked-op"
 scatter_template="Scatter-op"
 scatter_masked_template="Scatter-Masked-op"
-single_template="Single-op"
 get_template="Get-op"
 rearrange_template="Rearrange"
 broadcast_template="Broadcast"
 zero_template="Zero"
+slice_template="Slice-op"
+slice1_template="Slice-bop"
+slice1_masked_template="Slice-Masked-bop"
+unslice_template="Unslice-op"
+unslice1_template="Unslice-bop"
+unslice1_masked_template="Unslice-Masked-bop"
 
 function replace_variables {
   local filename=$1
@@ -387,8 +392,15 @@ gen_op_tmpl $broadcast_template "broadcast" "" $unit_output $perf_output $perf_s
 # Zero
 gen_op_tmpl $zero_template "zero" "" $unit_output $perf_output $perf_scalar_output
 
-# Single
-gen_op_tmpl $single_template "single" "" $unit_output $perf_output $perf_scalar_output
+# Slice
+gen_op_tmpl $slice_template "sliceUnary" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $slice1_template "sliceBinary" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $slice1_masked_template "slice" "" $unit_output $perf_output $perf_scalar_output
+
+# Unslice
+gen_op_tmpl $unslice_template "unsliceUnary" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $unslice1_template "unsliceBinary" "" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $unslice1_masked_template "unslice" "" $unit_output $perf_output $perf_scalar_output
 
 # Math
 gen_op_tmpl $unary_math_template "SIN" "Math.sin((double)a)" $unit_output $perf_output $perf_scalar_output "FP"

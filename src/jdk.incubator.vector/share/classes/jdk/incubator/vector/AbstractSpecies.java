@@ -26,7 +26,6 @@ package jdk.incubator.vector;
 
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -354,18 +353,18 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
     @ForceInline
     AbstractShuffle<E> iotaShuffle(int start, int step, boolean wrap) {
         AbstractShuffle<E> res;
-        if (step == 1) {
+        if (step == 1 && wrap) {
             if (start == 0)
                 return dummyVector().iotaShuffle();
             else
-                res = dummyVector().iotaShuffle(start);
+                return dummyVector().iotaShuffle(start);
         } else {
             // FIXME: Vectorize this.
             res = shuffleFromOp(i -> start + i * step);
+            if (!wrap)  return res;
+            // FIXME: Vectorize this.
+            return res.wrapIndexes();
         }
-        if (!wrap)  return res;
-        // FIXME: Vectorize this.
-        return res.wrapIndexes();
     }
 
     // Define fromArray when we know the ETYPE.
@@ -418,7 +417,7 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
                                                 boolean isInt,
                                                 long cv) {
         String msg = String.format("Array creation failed: "+
-                                   "lane value %s cannot be represented in %s %s"+
+                                   "lane value %s cannot be represented in %s"+
                                    "; result of cast is %s",
                                    iv,
                                    (isInt ? "int" : "long"),
@@ -451,7 +450,7 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
     void checkScale(int scale) {
         if (scale > 0) {
             if (scale <= maxScale)  return;
-        } else if (scale <= 0) {
+        } else { // scale <= 0
             if (scale >= minScale)  return;
         }
         throw checkScaleFailed(scale);
@@ -495,7 +494,6 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
     }
 
     @ForceInline
-    @SuppressWarnings("unchecked")
     /*package-private*/
     AbstractSpecies<E> check(LaneType laneType) {
         if (laneType != this.laneType) {
@@ -610,13 +608,13 @@ abstract class AbstractSpecies<E> implements VectorSpecies<E> {
         // arguments to this method.  If the cache
         // is full when the JIT runs, the cache item becomes
         // a compile-time constant.  And then all the @Stable
-        // fields of the AbstractSpecies are also constants. 
+        // fields of the AbstractSpecies are also constants.
         AbstractSpecies<?> s = CACHES[laneType.switchKey][shape.switchKey];
         if (s != null)  return s;
         return computeSpecies(laneType, shape);
     }
 
-    private static <E>
+    private static
     AbstractSpecies<?> computeSpecies(LaneType laneType,
                                       VectorShape shape) {
         AbstractSpecies<?> s = null;

@@ -25,18 +25,11 @@
 package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-#if[!byte]
-import java.nio.$Type$Buffer;
-#end[!byte]
-import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
 
 import static jdk.incubator.vector.VectorIntrinsics.*;
 import static jdk.incubator.vector.VectorOperators.*;
@@ -60,7 +53,7 @@ final class $vectortype$ extends $abstractvectortype$ {
     static final Class<$Boxtype$> ETYPE = $type$.class;
 
     // The JVM expects to find the state here.
-    private final $type$[] vec; // Don't access directly, use getElements() instead.
+    private final $type$[] vec; // Don't access directly, use vec() instead.
 
     $vectortype$($type$[] v) {
         vec = v;
@@ -121,7 +114,7 @@ final class $vectortype$ extends $abstractvectortype$ {
     /*package-private*/
     @ForceInline
     final @Override
-    $type$[] getElements() {
+    $type$[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -152,8 +145,8 @@ final class $vectortype$ extends $abstractvectortype$ {
     $shuffletype$ iotaShuffle() { return $shuffletype$.IOTA; }
 
     @ForceInline
-    $shuffletype$ iotaShuffle(int start) { 
-        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, (val, l) -> new $shuffletype$(i -> ($shuffletype$.partiallyWrapIndex(i + val, l))));
+    $shuffletype$ iotaShuffle(int start) {
+        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, (val, l) -> new $shuffletype$(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -397,9 +390,9 @@ final class $vectortype$ extends $abstractvectortype$ {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         $shuffletype$ Iota = iotaShuffle(origin);
-         VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast(($type$)(origin))));
-         Iota = ($shuffletype$)iotaShuffle(origin).wrapIndexes();
+         $shuffletype$ Iota = ($shuffletype$)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast(($type$)(VLENGTH-origin))));
+         Iota = ($shuffletype$)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -425,9 +418,9 @@ final class $vectortype$ extends $abstractvectortype$ {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         $shuffletype$ Iota = iotaShuffle(-origin);
-         VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast(($type$)(0))));
-         Iota = ($shuffletype$)iotaShuffle(-origin).wrapIndexes();
+         $shuffletype$ Iota = ($shuffletype$)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<$Boxtype$> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast(($type$)(origin))));
+         Iota = ($shuffletype$)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -487,7 +480,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    $type$[] vecarr = vec.getElements();
+                                    $type$[] vecarr = vec.vec();
                                     return (long)$Type$.$type$To$Bitstype$Bits(vecarr[ix]);
                                 });
         return $Type$.$bitstype$BitsTo$Fptype$(bits);
@@ -502,7 +495,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)$Type$.$type$To$Bitstype$Bits(e),
                                 (v, ix, bits) -> {
-                                    $type$[] res = v.getElements().clone();
+                                    $type$[] res = v.vec().clone();
                                     res[ix] = $Type$.$bitstype$BitsTo$Type$(($bitstype$)bits);
                                     return v.vectorFactory(res);
                                 });
@@ -517,7 +510,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    $type$[] vecarr = vec.getElements();
+                                    $type$[] vecarr = vec.vec();
                                     return (long)vecarr[ix];
                                 });
     }
@@ -531,7 +524,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
-                                    $type$[] res = v.getElements().clone();
+                                    $type$[] res = v.vec().clone();
                                     res[ix] = ($type$)bits;
                                     return v.vectorFactory(res);
                                 });

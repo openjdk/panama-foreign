@@ -24,7 +24,6 @@
  */
 package jdk.incubator.vector;
 
-import java.util.Arrays;
 import java.util.function.IntUnaryOperator;
 import jdk.internal.vm.annotation.ForceInline;
 
@@ -110,7 +109,6 @@ abstract class AbstractShuffle<E> extends VectorShuffle<E> {
     @ForceInline
     public final AbstractShuffle<E> checkIndexes() {
         // FIXME: vectorize this
-        int length = reorder.length;
         for (int index : reorder) {
             if (index < 0) {
                 throw checkIndexFailed(index, length());

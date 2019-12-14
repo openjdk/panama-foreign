@@ -4849,8 +4849,7 @@ void Assembler::evshufi64x2(XMMRegister dst, XMMRegister nds, XMMRegister src, i
 void Assembler::pshufpd(XMMRegister dst, XMMRegister src, int imm8) {
   assert(isByte(imm8), "invalid value");
   NOT_LP64(assert(VM_Version::supports_sse2(), ""));
-  int vector_len = VM_Version::supports_avx512novl() ? AVX_512bit : AVX_128bit;
-  InstructionAttr attributes(vector_len, /* rex_w */ false, /* legacy_mode */ false, /* no_mask_reg */ true, /* uses_vl */ true);
+  InstructionAttr attributes(AVX_128bit, /* rex_w */ false, /* legacy_mode */ false, /* no_mask_reg */ true, /* uses_vl */ true);
   int encode = simd_prefix_and_encode(dst, dst, src, VEX_SIMD_66, VEX_OPCODE_0F, &attributes);
   emit_int8((unsigned char)0xC6);
   emit_int8((unsigned char)(0xC0 | encode));
@@ -4869,8 +4868,7 @@ void Assembler::vpshufpd(XMMRegister dst, XMMRegister nds, XMMRegister src, int 
 void Assembler::pshufps(XMMRegister dst, XMMRegister src, int imm8) {
   assert(isByte(imm8), "invalid value");
   NOT_LP64(assert(VM_Version::supports_sse2(), ""));
-  int vector_len = VM_Version::supports_avx512novl() ? AVX_512bit : AVX_128bit;
-  InstructionAttr attributes(vector_len, /* rex_w */ false, /* legacy_mode */ false, /* no_mask_reg */ true, /* uses_vl */ true);
+  InstructionAttr attributes(AVX_128bit, /* rex_w */ false, /* legacy_mode */ false, /* no_mask_reg */ true, /* uses_vl */ true);
   int encode = simd_prefix_and_encode(dst, dst, src, VEX_SIMD_NONE, VEX_OPCODE_0F, &attributes);
   emit_int8((unsigned char)0xC6);
   emit_int8((unsigned char)(0xC0 | encode));

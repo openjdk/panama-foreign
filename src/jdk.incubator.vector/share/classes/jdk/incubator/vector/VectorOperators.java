@@ -25,10 +25,6 @@
 package jdk.incubator.vector;
 
 import java.util.function.IntFunction;
-import java.util.function.BinaryOperator;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.HashMap;
 import java.util.ArrayList;
 
@@ -50,7 +46,7 @@ import jdk.internal.vm.annotation.Stable;
  *
  * The documentation for each individual operator token is very brief,
  * giving a symbolic Java expression for the operation that the token
- * requests.  Those symbolic expression use the following conventional
+ * requests.  Those symbolic expressions use the following conventional
  * elements:
  * <ul>
  * <li>{@code a}, {@code b}, {@code c} &mdash; names of lane values
@@ -72,6 +68,30 @@ import jdk.internal.vm.annotation.Stable;
  *
  * <li>{@code intVal}, {@code byteVal}, etc. &mdash; the operand of a
  * conversion, with the indicated type
+ * </ul>
+ *
+ * <h2>Operations on floating point vectors</h2>
+ * <ul>
+ * <li>Lane-wise vector operations that apply to floating point vectors
+ * follow the accuracy and monotonicity specifications of the equivalent
+ * Java operation or method mentioned in its documentation.
+ *
+ * <li id="fp_assoc">Certain associative operations that apply to floating point
+ * vectors are not truly associative on the floating point lane values.
+ * Specifically, {@link #ADD} and {@link #MUL} used with cross-lane reduction
+ * operations, such as {@link FloatVector#reduceLanes(Associative)}.
+ * The result of such an operation is a function both of the input
+ * values (vector and mask) as well as the order of the scalar operations
+ * applied to combine lane values.
+ * In such cases the order is intentionally not defined.
+ * This allows the JVM to generate optimal machine code for the underlying
+ * platform at runtime.  If the platform supports a vector instruction
+ * to add or multiply all values in the vector, or if there is some
+ * other efficient machine code sequence, then the JVM has the option of
+ * generating this machine code. Otherwise, the default
+ * implementation is applied, which adds vector elements
+ * sequentially from beginning to end.  For this reason, the
+ * result of such an operation may vary for the same input values.
  * </ul>
  *
  * <p> Note that a particular operator token may apply to several
@@ -114,11 +134,11 @@ public abstract class VectorOperators {
          * or example expression,
          * such as {@code "+"}, {@code "max"} or {@code "-a"},
          * is also available as {@link #operatorName()}.
-         * 
+         *
          * @return the symbolic name of this operator,
          *         such as {@code "ADD"}
          */
-        public abstract String name();
+        String name();
 
         /**
          * Returns the Java operator symbol or method
@@ -128,7 +148,7 @@ public abstract class VectorOperators {
          * for the operator, using operand names
          * {@code a}, {@code b} (for non-unary operators),
          * and {@code c} (for ternary operators).
-         * 
+         *
          * The symbolic name of the constant,
          * such as {@code "ADD"},
          * is also available as {@link #name()}.
@@ -137,13 +157,13 @@ public abstract class VectorOperators {
          *         or a method name, such as {@code "max"},
          *         or a representative expression, such as {@code "-a"}
          */
-        public abstract String operatorName();
+        String operatorName();
 
         /**
          * Returns the arity of this operator (1, 2, or 3).
          * @return the arity of this operator (1, 2, or 3)
          */
-        public abstract int arity();
+        int arity();
 
         /**
          * Reports whether this operator returns a boolean (a mask).
@@ -151,32 +171,32 @@ public abstract class VectorOperators {
          * {@code rangeType}.
          * @return whether this operator returns a boolean
          */
-        public abstract boolean isBoolean();
+        boolean isBoolean();
 
         /**
          * Reports the special return type of this operator.
          * If this operator is a boolean, returns {@code boolean.class}.
          * If this operator is a {@code Conversion},
          * returns its {@linkplain Conversion#rangeType range type}.
-         * 
+         *
          * Otherwise, the operator's return value always has
          * whatever type was given as an input, and this method
          * returns {@code Object.class} to denote that fact.
          * @return the special return type, or {@code Object.class} if none
          */
-        public abstract Class<?> rangeType();
+        Class<?> rangeType();
 
         /**
          * Returns the associativity of this operator.
          * Only binary operators can be associative.
          * @return the associativity of this operator
          */
-        public abstract boolean isAssociative();
+        boolean isAssociative();
 
         /**
          * Reports whether this operator is compatible with
          * the proposed element type.
-         * 
+         *
          * First, unrestricted operators are compatible with all element
          * types.
          *
@@ -192,7 +212,7 @@ public abstract class VectorOperators {
          * @param elementType the proposed operand type for the operator
          * @return whether the proposed type is compatible with this operator
          */
-        public abstract boolean compatibleWith(Class<?> elementType);
+        boolean compatibleWith(Class<?> elementType);
 
         // FIXME: Maybe add a query about architectural support.
     }
@@ -316,14 +336,14 @@ public abstract class VectorOperators {
          * The domain of this conversion, a primitive type.
          * @return the domain of this conversion
          */
-        public abstract Class<E> domainType();
+        Class<E> domainType();
 
         /**
          * The range of this conversion, a primitive type.
          * @return the range of this conversion
          */
         @Override
-        public abstract Class<F> rangeType();
+        Class<F> rangeType();
 
         /**
          * Ensures that this conversion has the
@@ -334,7 +354,6 @@ public abstract class VectorOperators {
          * @param <F> the desired range type
          * @return this conversion object, with validated domain and range
          */
-        public abstract
         <E,F> Conversion<E,F> check(Class<E> from, Class<F> to);
 
         /// Factories.
@@ -348,7 +367,7 @@ public abstract class VectorOperators {
          * @return a Java assignment or casting conversion
          */
         @ForceInline
-        public static <E,F> Conversion<E,F> ofCast(Class<E> from, Class<F> to) {
+        static <E,F> Conversion<E,F> ofCast(Class<E> from, Class<F> to) {
             LaneType dom = LaneType.of(from);
             LaneType ran = LaneType.of(to);
             return ConversionImpl.ofCast(dom, ran).check(from, to);
@@ -363,7 +382,7 @@ public abstract class VectorOperators {
          * @return a bitwise reinterpretation conversion
          */
         @ForceInline
-        public static <E,F> Conversion<E,F> ofReinterpret(Class<E> from, Class<F> to) {
+        static <E,F> Conversion<E,F> ofReinterpret(Class<E> from, Class<F> to) {
             LaneType dom = LaneType.of(from);
             LaneType ran = LaneType.of(to);
             return ConversionImpl.ofReinterpret(dom, ran).check(from, to);
@@ -462,39 +481,39 @@ public abstract class VectorOperators {
     /** Produce {@code -a}. */
     public static final Unary NEG = unary("NEG", "-a", VectorIntrinsics.VECTOR_OP_NEG, VO_ALL|VO_SPECIAL);
 
-    /** Produce {@code sin(a)}.  Floating only. */
+    /** Produce {@code sin(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary SIN = unary("SIN", "sin", VectorIntrinsics.VECTOR_OP_SIN, VO_ONLYFP);
-    /** Produce {@code cos(a)}.  Floating only. */
+    /** Produce {@code cos(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary COS = unary("COS", "cos", VectorIntrinsics.VECTOR_OP_COS, VO_ONLYFP);
-    /** Produce {@code tan(a)}.  Floating only. */
+    /** Produce {@code tan(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary TAN = unary("TAN", "tan", VectorIntrinsics.VECTOR_OP_TAN, VO_ONLYFP);
-    /** Produce {@code asin(a)}.  Floating only. */
+    /** Produce {@code asin(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary ASIN = unary("ASIN", "asin", VectorIntrinsics.VECTOR_OP_ASIN, VO_ONLYFP);
-    /** Produce {@code acos(a)}.  Floating only. */
+    /** Produce {@code acos(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary ACOS = unary("ACOS", "acos", VectorIntrinsics.VECTOR_OP_ACOS, VO_ONLYFP);
-    /** Produce {@code atan(a)}.  Floating only. */
+    /** Produce {@code atan(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary ATAN = unary("ATAN", "atan", VectorIntrinsics.VECTOR_OP_ATAN, VO_ONLYFP);
 
-    /** Produce {@code exp(a)}.  Floating only. */
+    /** Produce {@code exp(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary EXP = unary("EXP", "exp", VectorIntrinsics.VECTOR_OP_EXP, VO_ONLYFP);
-    /** Produce {@code log(a)}.  Floating only. */
+    /** Produce {@code log(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary LOG = unary("LOG", "log", VectorIntrinsics.VECTOR_OP_LOG, VO_ONLYFP);
-    /** Produce {@code log10(a)}.  Floating only. */
+    /** Produce {@code log10(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary LOG10 = unary("LOG10", "log10", VectorIntrinsics.VECTOR_OP_LOG10, VO_ONLYFP);
-    /** Produce {@code sqrt(a)}.  Floating only. */
+    /** Produce {@code sqrt(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary SQRT = unary("SQRT", "sqrt", VectorIntrinsics.VECTOR_OP_SQRT, VO_ONLYFP);
-    /** Produce {@code cbrt(a)}.  Floating only. */
+    /** Produce {@code cbrt(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary CBRT = unary("CBRT", "cbrt", VectorIntrinsics.VECTOR_OP_CBRT, VO_ONLYFP);
 
-    /** Produce {@code sinh(a)}.  Floating only. */
+    /** Produce {@code sinh(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary SINH = unary("SINH", "sinh", VectorIntrinsics.VECTOR_OP_SINH, VO_ONLYFP);
-    /** Produce {@code cosh(a)}.  Floating only. */
+    /** Produce {@code cosh(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary COSH = unary("COSH", "cosh", VectorIntrinsics.VECTOR_OP_COSH, VO_ONLYFP);
-    /** Produce {@code tanh(a)}.  Floating only. */
+    /** Produce {@code tanh(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary TANH = unary("TANH", "tanh", VectorIntrinsics.VECTOR_OP_TANH, VO_ONLYFP);
-    /** Produce {@code expm1(a)}.  Floating only. */
+    /** Produce {@code expm1(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary EXPM1 = unary("EXPM1", "expm1", VectorIntrinsics.VECTOR_OP_EXPM1, VO_ONLYFP);
-    /** Produce {@code log1p(a)}.  Floating only. */
+    /** Produce {@code log1p(a)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Unary LOG1P = unary("LOG1P", "log1p", VectorIntrinsics.VECTOR_OP_LOG1P, VO_ONLYFP);
 
     // Binary operators
@@ -536,11 +555,11 @@ public abstract class VectorOperators {
     /** Produce {@code rotateRight(a,n)}.  Integral only. */
     public static final /*bitwise*/ Binary ROR = binary("ROR", "rotateRight", VectorIntrinsics.VECTOR_OP_RROTATE, VO_SHIFT);
 
-    /** Produce {@code atan2(a,b)}.  Floating only. */
+    /** Produce {@code atan2(a,b)}. See  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Binary ATAN2 = binary("ATAN2", "atan2", VectorIntrinsics.VECTOR_OP_ATAN2, VO_ONLYFP);
-    /** Produce {@code pow(a,b)}.  Floating only. */
+    /** Produce {@code pow(a,b)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Binary POW = binary("POW", "pow", VectorIntrinsics.VECTOR_OP_POW, VO_ONLYFP);
-    /** Produce {@code hypot(a,b)}.  Floating only. */
+    /** Produce {@code hypot(a,b)}.  Floating only.  See section "Operations on floating point vectors" above */
     public static final /*float*/ Binary HYPOT = binary("HYPOT", "hypot", VectorIntrinsics.VECTOR_OP_HYPOT, VO_ONLYFP);
 
     // Ternary operators
@@ -692,13 +711,13 @@ public abstract class VectorOperators {
     public static final Conversion<Integer,Integer> INPLACE_S2I = convert("INPLACE_S2I", 'W', int.class, int.class, VO_KIND_INPLACE + 0x9a, VO_ALL);
     /** In-place widen {@code shortVal} inside long to {@code (long)shortVal}. */
     public static final Conversion<Long,Long> INPLACE_S2L = convert("INPLACE_S2L", 'W', long.class, long.class, VO_KIND_INPLACE + 0x9b, VO_ALL);
-    /** Reinterpret bits of {@code doubleVal} as {@code long}. */
+    /** Reinterpret bits of {@code doubleVal} as {@code long}. As if by {@link Double#doubleToRawLongBits(double)} */
     public static final Conversion<Double,Long> REINTERPRET_D2L = convert("REINTERPRET_D2L", 'R', double.class, long.class, VO_KIND_BITWISE, VO_ALL);
-    /** Reinterpret bits of {@code floatVal} as {@code int}. */
+    /** Reinterpret bits of {@code floatVal} as {@code int}. As if by {@link Float#floatToRawIntBits(float)} */
     public static final Conversion<Float,Integer> REINTERPRET_F2I = convert("REINTERPRET_F2I", 'R', float.class, int.class, VO_KIND_BITWISE, VO_ALL);
-    /** Reinterpret bits of {@code intVal} as {@code float}. */
+    /** Reinterpret bits of {@code intVal} as {@code float}. As if by {@link Float#intBitsToFloat(int)} */
     public static final Conversion<Integer,Float> REINTERPRET_I2F = convert("REINTERPRET_I2F", 'R', int.class, float.class, VO_KIND_BITWISE, VO_ALL);
-    /** Reinterpret bits of {@code longVal} as {@code double}. */
+    /** Reinterpret bits of {@code longVal} as {@code double}. As if by {@link Double#longBitsToDouble(long)} */
     public static final Conversion<Long,Double> REINTERPRET_L2D = convert("REINTERPRET_L2D", 'R', long.class, double.class, VO_KIND_BITWISE, VO_ALL);
     /** Zero-extend {@code byteVal} to {@code int}. */
     public static final Conversion<Byte,Integer> ZERO_EXTEND_B2I = convert("ZERO_EXTEND_B2I", 'Z', byte.class, int.class, VO_KIND_BITWISE, VO_ALL);
@@ -1085,7 +1104,7 @@ public abstract class VectorOperators {
             conv.check(domType, ranType);
             synchronized (ConversionImpl.class) {
                 if (cache[ranKey] == null) {
-                    cache[ranKey] = conv; 
+                    cache[ranKey] = conv;
                 } else {
                     conv = cache[ranKey];
                     conv.check(domType, ranType);

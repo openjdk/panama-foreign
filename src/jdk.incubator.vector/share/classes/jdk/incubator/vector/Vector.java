@@ -24,21 +24,10 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.misc.Unsafe;
-import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
-
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.IntUnaryOperator;
-import java.util.function.UnaryOperator;
-
-import jdk.incubator.vector.*;
 
 /**
  * A
@@ -256,7 +245,7 @@ import jdk.incubator.vector.*;
  * A <em>lane-wise unary</em> operation, such as
  * {@code w = v0.}{@link Vector#neg() neg}{@code ()},
  * takes one input vector,
- * distributing a unary scalar operator across the lanes, 
+ * distributing a unary scalar operator across the lanes,
  * and produces a result vector of the same type and shape.
  *
  * For each lane of the input vector {@code a},
@@ -280,9 +269,9 @@ import jdk.incubator.vector.*;
  * A <em>lane-wise binary</em> operation, such as
  * {@code w = v0.}{@link Vector#add(Vector) add}{@code (v1)},
  * takes two input vectors,
- * distributing a binary scalar operator across the lanes, 
+ * distributing a binary scalar operator across the lanes,
  * and produces a result vector of the same type and shape.
- * 
+ *
  * For each lane of the two input vectors {@code a} and {@code b},
  * the underlying scalar operator is applied to the lane values.
  * The result is placed into the vector result in the same lane.
@@ -467,7 +456,7 @@ import jdk.incubator.vector.*;
  * A <em>lane-wise binary test</em> operation, such as
  * {@code m = v0.}{@link Vector#lt(Vector) lt}{@code (v1)},
  * takes two input vectors,
- * distributing a binary scalar comparison across the lanes, 
+ * distributing a binary scalar comparison across the lanes,
  * and produces, not a vector of booleans, but rather a
  * {@linkplain VectorMask vector mask}.
  *
@@ -525,7 +514,7 @@ import jdk.incubator.vector.*;
  * each scalar value is first transformed to a vector of the same
  * species as the first vector input, using the appropriate
  * {@code broadcast} operation.
- * 
+ *
  * <h2><a id="masking"></a>Masked operations</h2>
  *
  * <p> Many vector operations accept an optional
@@ -555,16 +544,16 @@ import jdk.incubator.vector.*;
  *
  * <li>If the masked operation is a unary, binary, or n-ary arithmetic or
  * logical operation, suppressed lanes are filled from the first
- * vector operand (i.e., the vector recieving the method call), as if
+ * vector operand (i.e., the vector receiving the method call), as if
  * by a {@linkplain #blend(Vector,VectorMask) blend}.</li>
- * 
+ *
  * <li>If the masked operation is a memory load or a {@code slice()} from
  * another vector, suppressed lanes are not loaded, and are filled
  * with the default value for the {@code ETYPE}, which in every case
  * consists of all zero bits.  An unset lane can never cause an
  * exception, even if the hypothetical corresponding memory location
  * does not exist (because it is out of an array's index range).</li>
- * 
+ *
  * <li>If the operation is a cross-lane operation with an operand
  * which supplies lane indexes (of type {@code VectorShuffle} or
  * {@code Vector}, suppressed lanes are not computed, and are filled
@@ -777,7 +766,7 @@ import jdk.incubator.vector.*;
  * lanes) can then be stored back into the original array elements
  * using the statement
  * {@link FloatVector#intoArray(float[],int,VectorMask) fv.intoArray(fa,i,mnz)}.
- * 
+ *
  * <h2><a id="expansion"></a>Expansions, contractions, and partial results</h2>
  *
  * Since vectors are fixed in size, occasions often arise where the
@@ -910,7 +899,7 @@ import jdk.incubator.vector.*;
  * are filled with zero, or as specified by the method.
  *
  * <p> Specifically, the data is steered into the lanes numbered in the
- * range {@code [R..R+L-1}, where {@code L} is the {@code VLENGTH} of
+ * range {@code [R..R+L-1]}, where {@code L} is the {@code VLENGTH} of
  * the logical result vector, and the origin of the block, {@code R},
  * is again a multiple of {@code L} selected by the part number,
  * specifically {@code |part|*L}.
@@ -1002,7 +991,7 @@ import jdk.incubator.vector.*;
  * {@code partLimit()} value {@code M} is the exclusive upper limit
  * for part numbers, while for contractions the {@code partLimit()}
  * value {@code -M} is the exclusive <em>lower</em> limit.
- * 
+ *
  * <h2><a id="cross-lane"></a>Moving data across lane boundaries</h2>
  * The cross-lane methods which do not redraw lanes or change species
  * are more regularly structured and easier to reason about.
@@ -1012,7 +1001,7 @@ import jdk.incubator.vector.*;
  * <li>The {@link #slice(int,Vector) slice()} family of methods,
  * which extract contiguous slice of {@code VLENGTH} fields from
  * a given origin point within a concatenated pair of vectors.
- * 
+ *
  * <li>The {@link #unslice(int,Vector,int) unslice()} family of
  * methods, which insert a contiguous slice of {@code VLENGTH} fields
  * into a concatenated pair of vectors at a given origin point.
@@ -1026,7 +1015,7 @@ import jdk.incubator.vector.*;
  * can encode a mathematical permutation as well as many other
  * patterns of data movement.
  *
- * </ul> 
+ * </ul>
  * <p> Some vector operations are not lane-wise, but rather move data
  * across lane boundaries.  Such operations are typically rare in SIMD
  * code, though they are sometimes necessary for specific algorithms
@@ -1069,7 +1058,7 @@ import jdk.incubator.vector.*;
  * @implNote
  *
  * <h2>Hardware platform dependencies</h2>
- * 
+ *
  * The Vector API is to accelerate computations in style of Single
  * Instruction Multiple Data (SIMD), using available hardware
  * resources such as vector hardware registers and vector hardware
@@ -1087,9 +1076,7 @@ import jdk.incubator.vector.*;
  * work with boxed {@code Integer} values, the overheads associated
  * with boxing are avoided by having each vector subtype work
  * internally on lane values of the actual {@code ETYPE}, such as
- * {@code int}.  A few {@linkplain Vector#toList() interoperability
- * methods}, are specified to work on boxed values.  These are
- * documented as <em>not</em> for use in inner loops.
+ * {@code int}.
  *
  * <h2>Value-based classes and identity operations</h2>
  *
@@ -1124,7 +1111,7 @@ import jdk.incubator.vector.*;
  *   -- between Vector.java and package-info.java -->
  *
  * @param <E> the generic (boxed) version of the vector {@code ETYPE}
- * 
+ *
  */
 public abstract class Vector<E> {
 
@@ -1429,7 +1416,7 @@ public abstract class Vector<E> {
 
     // Full-service functions support all four variations
     // of vector vs. broadcast scalar, and mask vs. not.
-    // The lanewise generic operator is (by this defintion)
+    // The lanewise generic operator is (by this definition)
     // also a full-service function.
 
     // Other named functions handle just the one named
@@ -1480,7 +1467,7 @@ public abstract class Vector<E> {
      * {@link #lanewise(VectorOperators.Binary,Vector,VectorMask)
      *    lanewise}{@code (}{@link VectorOperators#ADD
      *    ADD}{@code , v, m)}.
-     * 
+     *
      * <p>
      * As a full-service named operation, this method
      * comes in masked and unmasked overloadings, and
@@ -1542,7 +1529,7 @@ public abstract class Vector<E> {
      * {@link #lanewise(VectorOperators.Binary,Vector,VectorMask)
      *    lanewise}{@code (}{@link VectorOperators#SUB
      *    SUB}{@code , v, m)}.
-     * 
+     *
      * <p>
      * As a full-service named operation, this method
      * comes in masked and unmasked overloadings, and
@@ -1604,7 +1591,7 @@ public abstract class Vector<E> {
      * {@link #lanewise(VectorOperators.Binary,Vector,VectorMask)
      *    lanewise}{@code (}{@link VectorOperators#MUL
      *    MUL}{@code , v, m)}.
-     * 
+     *
      * <p>
      * As a full-service named operation, this method
      * comes in masked and unmasked overloadings, and
@@ -1635,15 +1622,14 @@ public abstract class Vector<E> {
      *    DIV}{@code , v)}.
      *
      * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
-     *
-     * <p>
      * As a full-service named operation, this method
      * comes in masked and unmasked overloadings, and
      * (in subclasses) also comes in scalar-broadcast
      * overloadings (both masked and unmasked).
+     *
+     * @apiNote If the underlying scalar operator does not support
+     * division by zero, but is presented with a zero divisor,
+     * an {@code ArithmeticException} will be thrown.
      *
      * @param v a second input vector
      * @return the result of dividing this vector by the second input vector
@@ -1676,15 +1662,14 @@ public abstract class Vector<E> {
      *    DIV}{@code , v, m)}.
      *
      * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
-     *
-     * <p>
      * As a full-service named operation, this method
      * comes in masked and unmasked overloadings, and
      * (in subclasses) also comes in scalar-broadcast
      * overloadings (both masked and unmasked).
+     *
+     * @apiNote If the underlying scalar operator does not support
+     * division by zero, but is presented with a zero divisor,
+     * an {@code ArithmeticException} will be thrown.
      *
      * @param v a second input vector
      * @param m the mask controlling lane selection
@@ -1714,7 +1699,7 @@ public abstract class Vector<E> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Unary)
      *    lanewise}{@code (}{@link VectorOperators#NEG
-     *    NEG}{@code)}.
+     *    NEG}{@code )}.
      *
      * @apiNote
      * This method has no masked variant, but the corresponding
@@ -1739,7 +1724,7 @@ public abstract class Vector<E> {
      * This method is also equivalent to the expression
      * {@link #lanewise(VectorOperators.Unary)
      *    lanewise}{@code (}{@link VectorOperators#ABS
-     *    ABS}{@code)}.
+     *    ABS}{@code )}.
      *
      * @apiNote
      * This method has no masked variant, but the corresponding
@@ -1760,7 +1745,7 @@ public abstract class Vector<E> {
      * Computes the smaller of this vector and a second input vector.
      *
      * This is a lane-wise binary operation which applies the
-     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * operation {@code Math.min()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -1789,7 +1774,7 @@ public abstract class Vector<E> {
      * Computes the larger of this vector and a second input vector.
      *
      * This is a lane-wise binary operation which applies the
-     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * operation {@code Math.max()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -1823,6 +1808,13 @@ public abstract class Vector<E> {
      * applies the specified operation to all the lane elements.
      * The result is delivered as a {@code long} value, rather
      * than the vector's native {@code ETYPE}.
+     * <p>
+     * In the case of operations {@code ADD} and {@code MUL},
+     * when {@code ETYPE} is {@code float} or {@code double},
+     * the precise result, before casting, will reflect the choice
+     * of an arbitrary order of operations, which may even vary over time.
+     * For further details see the section
+     * <a href="VectorOperators.html#fp_assoc">Operations on floating point vectors</a>.
      *
      * @apiNote
      * If the {@code ETYPE} is {@code float} or {@code double},
@@ -1834,15 +1826,6 @@ public abstract class Vector<E> {
      * strongly typed access}
      * is preferable, if you are working with a vector
      * subtype that has a known element type.
-     *
-     * @implNote
-     * The value of a floating-point reduction may be a function
-     * both of the input values as well as the order of scalar
-     * operations which combine those values, specifically in the
-     * case of {@code ADD} and {@code MUL} operations, where
-     * details of rounding depend on operand order.
-     * See {@link FloatVector#reduceLanes(VectorOperators.Associative)
-     * FloatVector.reduceLanes()} for a discussion.
      *
      * @param op the operation used to combine lane values
      * @return the accumulated result, cast to {@code long}
@@ -1890,6 +1873,13 @@ public abstract class Vector<E> {
      * {@code POSITIVE_INFINITY} is used, and will appear
      * after casting as {@code Long.MAX_VALUE}.
      * </ul>
+     * <p>
+     * In the case of operations {@code ADD} and {@code MUL},
+     * when {@code ETYPE} is {@code float} or {@code double},
+     * the precise result, before casting, will reflect the choice
+     * of an arbitrary order of operations, which may even vary over time.
+     * For further details see the section
+     * <a href="VectorOperators.html#fp_assoc">Operations on floating point vectors</a>.
      *
      * @apiNote
      * If the {@code ETYPE} is {@code float} or {@code double},
@@ -1901,15 +1891,6 @@ public abstract class Vector<E> {
      * strongly typed access}
      * is preferable, if you are working with a vector
      * subtype that has a known element type.
-     *
-     * @implNote
-     * The value of a floating-point reduction may be a function
-     * both of the input values as well as the order of scalar
-     * operations which combine those values, specifically in the
-     * case of {@code ADD} and {@code MUL} operations, where
-     * details of rounding depend on operand order.
-     * See {@link FloatVector#reduceLanes(VectorOperators.Associative)
-     * FloatVector.reduceLanes()} for a discussion.
      *
      * @param op the operation used to combine lane values
      * @param m the mask controlling lane selection
@@ -2406,7 +2387,7 @@ public abstract class Vector<E> {
      * the current vector as a slice within another "background" input
      * vector, which is regarded as one or the other input to a
      * hypothetical subsequent {@code slice()} operation.
-     * 
+     *
      * <p> This is a cross-lane operation that permutes the lane
      * elements of the current vector toward the back and inserts them
      * into a logical pair of background vectors.  Only one of the
@@ -2476,7 +2457,7 @@ public abstract class Vector<E> {
      * elements of the current vector forward and inserts its lanes
      * (when selected by the mask) into a logical pair of background
      * vectors.  As with the
-     * {@code #unslice(int,Vector,int) unmasked version} of this method,
+     * {@linkplain #unslice(int,Vector,int) unmasked version} of this method,
      * only one of the pair will be returned, as selected by the
      * {@code part} number.
      *
@@ -2553,7 +2534,7 @@ public abstract class Vector<E> {
      *
      * This is a cross-lane operation that rearranges the lane
      * elements of this vector.
-     * 
+     *
      * For each lane {@code N} of the shuffle, and for each lane
      * source index {@code I=s.laneSource(N)} in the shuffle,
      * the output lane {@code N} obtains the value from
@@ -2575,7 +2556,7 @@ public abstract class Vector<E> {
      *
      * This is a cross-lane operation that rearranges the lane
      * elements of this vector.
-     * 
+     *
      * For each lane {@code N} of the shuffle, and for each lane
      * source index {@code I=s.laneSource(N)} in the shuffle,
      * the output lane {@code N} obtains the value from
@@ -2651,7 +2632,7 @@ public abstract class Vector<E> {
      * value {@code I=this.lane(N)} in this vector,
      * the output lane {@code N} obtains the value from
      * the argument vector at lane {@code I}.
-     * 
+     *
      * In this way, the result contains only values stored in the
      * argument vector {@code v}, but presented in an order which
      * depends on the index values in {@code this}.
@@ -2661,8 +2642,8 @@ public abstract class Vector<E> {
      *
      * @param v the vector supplying the result values
      * @return the rearrangement of the lane elements of {@code v}
-     * @throw IndexOutOfBoundsException if any invalid
-     *        source indexes are found in {@code this}
+     * @throws IndexOutOfBoundsException if any invalid
+     *         source indexes are found in {@code this}
      * @see #rearrange(VectorShuffle)
      */
     public abstract Vector<E> selectFrom(Vector<E> v);
@@ -2688,9 +2669,9 @@ public abstract class Vector<E> {
      * @param v the vector supplying the result values
      * @param m the mask controlling selection from {@code v}
      * @return the rearrangement of the lane elements of {@code v}
-     * @throw IndexOutOfBoundsException if any invalid
-     *        source indexes are found in {@code this},
-     *        in a lane which is set in the mask
+     * @throws IndexOutOfBoundsException if any invalid
+     *         source indexes are found in {@code this},
+     *         in a lane which is set in the mask
      * @see #selectFrom(Vector)
      * @see #rearrange(VectorShuffle,VectorMask)
      */
@@ -3119,7 +3100,7 @@ public abstract class Vector<E> {
      * {@code this.convertShape(conv, rsp, this.broadcast(part))},
      * where the output species is
      * {@code rsp=this.species().withLanes(FTYPE.class)}.
-     * 
+     *
      * @param conv the desired scalar conversion to apply lane-wise
      * @param part the <a href="Vector.html#expansion">part number</a>
      *        of the result, or zero if neither expanding nor contracting
@@ -3150,7 +3131,7 @@ public abstract class Vector<E> {
      * This is a lane-wise operation which copies {@code ETYPE} values
      * from the input vector to corresponding {@code FTYPE} values in
      * the result.
-     * 
+     *
      * <p> If the old and new species have the same shape, the behavior
      * is exactly the same as the simpler, shape-invariant method
      * {@link #convert(VectorOperators.Conversion,int) convert()}.
@@ -3293,7 +3274,7 @@ public abstract class Vector<E> {
      * var bb = ByteBuffer.wrap(a);
      * var bo = ByteOrder.LITTLE_ENDIAN;
      * var m = maskAll(true);
-     * intoByteBuffer(bb, offset, m, bo);
+     * intoByteBuffer(bb, offset, bo, m);
      * }</pre>
      *
      * @param a the byte array
@@ -3320,7 +3301,7 @@ public abstract class Vector<E> {
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
      * var bo = ByteOrder.LITTLE_ENDIAN;
-     * intoByteBuffer(bb, offset, m, bo);
+     * intoByteBuffer(bb, offset, bo, m);
      * }</pre>
      *
      * @param a the byte array
@@ -3349,7 +3330,7 @@ public abstract class Vector<E> {
      * intoByteBuffer()} as follows:
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
-     * intoByteBuffer(bb, offset, m, bo);
+     * intoByteBuffer(bb, offset, bo, m);
      * }</pre>
      *
      * @param a the byte array
@@ -3380,7 +3361,7 @@ public abstract class Vector<E> {
      * intoByteBuffer()} as follows:
      * <pre>{@code
      * var m = maskAll(true);
-     * intoByteBuffer(bb, offset, m, bo);
+     * intoByteBuffer(bb, offset, bo, m);
      * }</pre>
      *
      * @param bb the byte buffer
@@ -3403,6 +3384,7 @@ public abstract class Vector<E> {
      * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
      * The following pseudocode illustrates the behavior, where
+     * the primitive element type is not of {@code byte},
      * {@code EBuffer} is the primitive buffer type, {@code ETYPE} is the
      * primitive element type, and {@code EVector} is the primitive
      * vector type for this vector:
@@ -3413,10 +3395,18 @@ public abstract class Vector<E> {
      * ETYPE[] a = this.toArray();
      * for (int n = 0; n < a.length; n++) {
      *     if (m.laneIsSet(n)) {
-     *         eb.put(n, es[n]);
+     *         eb.put(n, a[n]);
      *     }
      * }
      * }</pre>
+     * When the primitive element type is of {@code byte} the primitive
+     * byte buffer is obtained as follows, where operation on the buffer
+     * remains the same as in the prior pseudocode:
+     * <pre>{@code
+     * ByteBuffer eb = bb.duplicate()
+     *     .position(offset);
+     * }</pre>
+     *
      * @implNote
      * This operation is likely to be more efficient if
      * the specified byte order is the same as
@@ -3587,25 +3577,6 @@ public abstract class Vector<E> {
     @Override
     public abstract int hashCode();
 
-    /**
-     * Returns all the lane values of this vector, boxed in a list.
-     * The list elements are boxed and presented in lane order.
-     * The list is immutable, as if returned from
-     * {@link List#of(Object[]) List.&lt;E&gt;of}.
-     *
-     * @apiNote
-     * Because this operation jumps out of the domain of vectors into
-     * the domain of Java collections, it is likely to have large
-     * overheads, as compared with other vector operations.
-     * Often {@link #toArray Vector.toArray} is preferable,
-     * since it produces a packed array of unboxed lane values.
-     *
-     * @return a list containing the lane values of this vector
-     */
-    // Does this pull its weight?  Perhaps not.
-    // It might be OK to rely on the {@code toArray()} methods.
-    public abstract List<E> toList();
-
     // ==== JROSE NAME CHANGES ====
 
     // RAISED FROM SUBCLASSES (with generalized type)
@@ -3614,7 +3585,6 @@ public abstract class Vector<E> {
     // ADDED
     // * compare(OP,v) to replace most of the comparison methods
     // * maskAll(boolean) to replace maskAllTrue/False
-    // * toList() -> List<E> (interop with collections)
     // * toLongArray(), toDoubleArray() (generic unboxed access)
     // * check(Class), check(VectorSpecies) (static type-safety checks)
     // * enum Comparison (enum of EQ, NE, GT, LT, GE, LE)

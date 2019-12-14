@@ -29,10 +29,8 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.BinaryOperator;
-import java.util.function.IntUnaryOperator;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -88,7 +86,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     // Virtualized getter
 
     /*package-private*/
-    abstract byte[] getElements();
+    abstract byte[] vec();
 
     // Virtualized constructors
 
@@ -152,7 +150,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     @ForceInline
     final
     ByteVector uOpTemplate(FUnOp f) {
-        byte[] vec = getElements();
+        byte[] vec = vec();
         byte[] res = new byte[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec[i]);
@@ -168,7 +166,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     final
     ByteVector uOpTemplate(VectorMask<Byte> m,
                                      FUnOp f) {
-        byte[] vec = getElements();
+        byte[] vec = vec();
         byte[] res = new byte[length()];
         boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -193,8 +191,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     ByteVector bOpTemplate(Vector<Byte> o,
                                      FBinOp f) {
         byte[] res = new byte[length()];
-        byte[] vec1 = this.getElements();
-        byte[] vec2 = ((ByteVector)o).getElements();
+        byte[] vec1 = this.vec();
+        byte[] vec2 = ((ByteVector)o).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i]);
         }
@@ -212,8 +210,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
                                      VectorMask<Byte> m,
                                      FBinOp f) {
         byte[] res = new byte[length()];
-        byte[] vec1 = this.getElements();
-        byte[] vec2 = ((ByteVector)o).getElements();
+        byte[] vec1 = this.vec();
+        byte[] vec2 = ((ByteVector)o).vec();
         boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
@@ -239,9 +237,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
                                      Vector<Byte> o2,
                                      FTriOp f) {
         byte[] res = new byte[length()];
-        byte[] vec1 = this.getElements();
-        byte[] vec2 = ((ByteVector)o1).getElements();
-        byte[] vec3 = ((ByteVector)o2).getElements();
+        byte[] vec1 = this.vec();
+        byte[] vec2 = ((ByteVector)o1).vec();
+        byte[] vec3 = ((ByteVector)o2).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
@@ -261,9 +259,9 @@ public abstract class ByteVector extends AbstractVector<Byte> {
                                      VectorMask<Byte> m,
                                      FTriOp f) {
         byte[] res = new byte[length()];
-        byte[] vec1 = this.getElements();
-        byte[] vec2 = ((ByteVector)o1).getElements();
-        byte[] vec3 = ((ByteVector)o2).getElements();
+        byte[] vec1 = this.vec();
+        byte[] vec2 = ((ByteVector)o1).vec();
+        byte[] vec3 = ((ByteVector)o2).vec();
         boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
@@ -279,7 +277,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     @ForceInline
     final
     byte rOpTemplate(byte v, FBinOp f) {
-        byte[] vec = getElements();
+        byte[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -298,7 +296,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     final
     <M> ByteVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
-        //dummy; no vec = getElements();
+        //dummy; no vec = vec();
         byte[] res = new byte[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(memory, offset, i);
@@ -312,7 +310,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     <M> ByteVector ldOp(M memory, int offset,
                                   VectorMask<Byte> m,
                                   FLdOp<M> f) {
-        //byte[] vec = getElements();
+        //byte[] vec = vec();
         byte[] res = new byte[length()];
         boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -332,7 +330,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
-        byte[] vec = getElements();
+        byte[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             f.apply(memory, offset, i, vec[i]);
         }
@@ -344,7 +342,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     <M> void stOp(M memory, int offset,
                   VectorMask<Byte> m,
                   FStOp<M> f) {
-        byte[] vec = getElements();
+        byte[] vec = vec();
         boolean[] mbits = ((AbstractMask<Byte>)m).getBits();
         for (int i = 0; i < vec.length; i++) {
             if (mbits[i]) {
@@ -366,8 +364,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     AbstractMask<Byte> bTest(int cond,
                                   Vector<Byte> o,
                                   FBinTest f) {
-        byte[] vec1 = getElements();
-        byte[] vec2 = ((ByteVector)o).getElements();
+        byte[] vec1 = vec();
+        byte[] vec2 = ((ByteVector)o).vec();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(cond, i, vec1[i], vec2[i]);
@@ -539,50 +537,12 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *         if {@code es.length != species.length()}
      */
     @ForceInline
-    @SuppressWarnings("unchecked")
     public static ByteVector fromValues(VectorSpecies<Byte> species, byte... es) {
         ByteSpecies vsp = (ByteSpecies) species;
         int vlength = vsp.laneCount();
         VectorIntrinsics.requireLength(es.length, vlength);
         // Get an unaliased copy and use it directly:
         return vsp.vectorFactory(Arrays.copyOf(es, vlength));
-    }
-
-    /**
-     * Returns a vector where the first lane element is set to the primtive
-     * value {@code e}, all other lane elements are set to the default
-     * value.
-     *
-     * @param species species of the desired vector
-     * @param e the value
-     * @return a vector where the first lane element is set to the primitive
-     * value {@code e}
-     */
-    // FIXME: Does this carry its weight?
-    @ForceInline
-    public static ByteVector single(VectorSpecies<Byte> species, byte e) {
-        return zero(species).withLane(0, e);
-    }
-
-    /**
-     * Returns a vector where each lane element is set to a randomly
-     * generated primitive value.
-     *
-     * The semantics are equivalent to calling
-     * {@code (byte)}{@link ThreadLocalRandom#nextInt()}
-     * for each lane, from first to last.
-     *
-     * @param species species of the desired vector
-     * @return a vector where each lane elements is set to a randomly
-     * generated primitive value
-     */
-    public static ByteVector random(VectorSpecies<Byte> species) {
-        ByteSpecies vsp = (ByteSpecies) species;
-        ThreadLocalRandom r = ThreadLocalRandom.current();
-        return vsp.vOp(i -> nextRandom(r));
-    }
-    private static byte nextRandom(ThreadLocalRandom r) {
-        return (byte) r.nextInt();
     }
 
     // Unary lanewise support
@@ -1374,7 +1334,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
 
     /**
      * {@inheritDoc} <!--workaround-->
-     * @see #div(byte)
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
      */
     @Override
     @ForceInline
@@ -1393,10 +1354,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *    lanewise}{@code (}{@link VectorOperators#DIV
      *    DIV}{@code , e)}.
      *
-     * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
      *
      * @param e the input scalar
      * @return the result of dividing each lane of this vector by the scalar
@@ -1415,6 +1374,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @see #div(byte,VectorMask)
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
      */
     @Override
     @ForceInline
@@ -1435,10 +1396,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *    lanewise}{@code (}{@link VectorOperators#DIV
      *    DIV}{@code , s, m)}.
      *
-     * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
+     * @apiNote If there is a zero divisor, {@code
+     * ArithmeticException} will be thrown.
      *
      * @param e the input scalar
      * @param m the mask controlling lane selection
@@ -1475,8 +1434,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * Computes the smaller of this vector and the broadcast of an input scalar.
      *
-     * This is a lane-wise binary operation which appliesthe
-     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * This is a lane-wise binary operation which applies the
+     * operation {@code Math.min()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -1508,8 +1467,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * Computes the larger of this vector and the broadcast of an input scalar.
      *
-     * This is a lane-wise binary operation which appliesthe
-     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * This is a lane-wise binary operation which applies the
+     * operation {@code Math.max()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -2044,8 +2003,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     ByteVector sliceTemplate(int origin, Vector<Byte> v1) {
         ByteVector that = (ByteVector) v1;
         that.check(this);
-        byte[] a0 = this.getElements();
-        byte[] a1 = that.getElements();
+        byte[] a0 = this.vec();
+        byte[] a1 = that.vec();
         byte[] res = new byte[a0.length];
         int vlen = res.length;
         int firstPart = vlen - origin;
@@ -2087,8 +2046,8 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     unsliceTemplate(int origin, Vector<Byte> w, int part) {
         ByteVector that = (ByteVector) w;
         that.check(this);
-        byte[] slice = this.getElements();
-        byte[] res = that.getElements();
+        byte[] slice = this.vec();
+        byte[] res = that.vec().clone();
         int vlen = res.length;
         int firstPart = vlen - origin;
         switch (part) {
@@ -2129,7 +2088,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      */
     @Override
     public abstract
-    ByteVector unslice(int origin); 
+    ByteVector unslice(int origin);
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {
@@ -2260,7 +2219,6 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * Blends together the bits of two vectors under
      * the control of a third, which supplies mask bits.
      *
-     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2290,7 +2248,6 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * Blends together the bits of a vector and a scalar under
      * the control of another scalar, which supplies mask bits.
      *
-     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2318,7 +2275,6 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * Blends together the bits of a vector and a scalar under
      * the control of another vector, which supplies mask bits.
      *
-     *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
      * to each lane.
@@ -2345,7 +2301,6 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * Blends together the bits of two vectors under
      * the control of a scalar, which supplies mask bits.
-     *
      *
      * This is a lane-wise ternary operation which performs
      * a bitwise blending operation {@code (a&~c)|(b&c)}
@@ -2378,30 +2333,19 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to all the lane elements.
-     *
      * <p>
      * A few reduction operations do not support arbitrary reordering
      * of their operands, yet are included here because of their
      * usefulness.
-     *
      * <ul>
      * <li>
      * In the case of {@code FIRST_NONZERO}, the reduction returns
      * the value from the lowest-numbered non-zero lane.
-     *
-     *
-     * <li>
-     * In the case of floating point addition and multiplication, the
-     * precise result will reflect the choice of an arbitrary order
-     * of operations, which may even vary over time.
-     *
      * <li>
      * All other reduction operations are fully commutative and
      * associative.  The implementation can choose any order of
      * processing, yet it will always produce the same result.
-     *
      * </ul>
-     *
      *
      * @param op the operation used to combine lane values
      * @return the accumulated result
@@ -2446,6 +2390,19 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * <li>
      * If the operation is {@code MIN},
      * then the identity value is {@code Byte.MAX_VALUE}.
+     * </ul>
+     * <p>
+     * A few reduction operations do not support arbitrary reordering
+     * of their operands, yet are included here because of their
+     * usefulness.
+     * <ul>
+     * <li>
+     * In the case of {@code FIRST_NONZERO}, the reduction returns
+     * the value from the lowest-numbered non-zero lane.
+     * <li>
+     * All other reduction operations are fully commutative and
+     * associative.  The implementation can choose any order of
+     * processing, yet it will always produce the same result.
      * </ul>
      *
      * @param op the operation used to combine lane values
@@ -2671,7 +2628,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * var bb = ByteBuffer.wrap(a);
      * var bo = ByteOrder.LITTLE_ENDIAN;
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2703,7 +2660,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2773,7 +2730,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * Lanes where the mask is unset are filled with the default
      * value of {@code byte} (zero).
      * Bytes are composed into primitive lane elements according
-     * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
+     * to the specified byte order.
      * The vector is arranged into lanes according to
      * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
@@ -2782,7 +2739,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * fromByteBuffer()} as follows:
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2973,15 +2930,17 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     /**
      * Loads a vector from a {@linkplain ByteBuffer byte buffer}
      * starting at an offset into the byte buffer.
+     * Bytes are composed into primitive lane elements according
+     * to the specified byte order.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
      * This method behaves as if it returns the result of calling
      * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
      * fromByteBuffer()} as follows:
      * <pre>{@code
-     * var bb = ByteBuffer.wrap(a);
-     * var bo = ByteOrder.LITTLE_ENDIAN;
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -3011,16 +2970,27 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * Loads a vector from a {@linkplain ByteBuffer byte buffer}
      * starting at an offset into the byte buffer
      * and using a mask.
+     * Lanes where the mask is unset are filled with the default
+     * value of {@code byte} (zero).
+     * Bytes are composed into primitive lane elements according
+     * to the specified byte order.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
-     * This method behaves as if it returns the result of calling
-     * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
-     * fromByteBuffer()} as follows:
+     * The following pseudocode illustrates the behavior:
      * <pre>{@code
-     * var bb = ByteBuffer.wrap(a);
-     * var bo = ByteOrder.LITTLE_ENDIAN;
-     * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * ByteBuffer eb = bb.duplicate()
+     *     .position(offset);
+     * byte[] ar = new byte[species.length()];
+     * for (int n = 0; n < ar.length; n++) {
+     *     if (m.laneIsSet(n)) {
+     *         ar[n] = eb.get(n);
+     *     }
+     * }
+     * ByteVector r = ByteVector.fromArray(species, ar, 0);
      * }</pre>
+     * @implNote
+     * The byte order argument is ignored.
      *
      * @param species species of desired vector
      * @param bb the byte buffer
@@ -3139,8 +3109,6 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @param offset an offset to combine with the index map offsets
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
-     * @returns a vector of the values {@code a[f(N)]}, where
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3210,8 +3178,6 @@ public abstract class ByteVector extends AbstractVector<Byte> {
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
      * @param m the mask
-     * @returns a vector of the values {@code m ? a[f(N)] : 0},
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3332,7 +3298,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     // typed vector or constant species instance.
 
     // Unchecked loading operations in native byte order.
-    // Caller is reponsible for applying index checks, masking, and
+    // Caller is responsible for applying index checks, masking, and
     // byte swapping.
 
     /*package-private*/
@@ -3384,7 +3350,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
     }
 
     // Unchecked storing operations in native byte order.
-    // Caller is reponsible for applying index checks, masking, and
+    // Caller is responsible for applying index checks, masking, and
     // byte swapping.
 
     abstract
@@ -3658,7 +3624,6 @@ public abstract class ByteVector extends AbstractVector<Byte> {
 
         /*package-private*/
         @ForceInline
-        
         final ByteVector broadcast(byte e) {
             return broadcastBits(toBits(e));
         }
@@ -3826,7 +3791,7 @@ public abstract class ByteVector extends AbstractVector<Byte> {
                 case 512: return Byte512Vector.ZERO;
             }
             throw new AssertionError();
-        }        
+        }
 
         @Override
         @ForceInline

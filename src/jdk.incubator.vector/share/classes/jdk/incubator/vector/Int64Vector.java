@@ -25,16 +25,11 @@
 package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
-import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
 
 import static jdk.incubator.vector.VectorIntrinsics.*;
 import static jdk.incubator.vector.VectorOperators.*;
@@ -58,7 +53,7 @@ final class Int64Vector extends IntVector {
     static final Class<Integer> ETYPE = int.class;
 
     // The JVM expects to find the state here.
-    private final int[] vec; // Don't access directly, use getElements() instead.
+    private final int[] vec; // Don't access directly, use vec() instead.
 
     Int64Vector(int[] v) {
         vec = v;
@@ -119,7 +114,7 @@ final class Int64Vector extends IntVector {
     /*package-private*/
     @ForceInline
     final @Override
-    int[] getElements() {
+    int[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -148,8 +143,8 @@ final class Int64Vector extends IntVector {
     Int64Shuffle iotaShuffle() { return Int64Shuffle.IOTA; }
 
     @ForceInline
-    Int64Shuffle iotaShuffle(int start) { 
-        return (Int64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Int64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Int64Shuffle(i -> (Int64Shuffle.partiallyWrapIndex(i + val, l))));
+    Int64Shuffle iotaShuffle(int start) {
+        return (Int64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Int64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Int64Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -389,9 +384,9 @@ final class Int64Vector extends IntVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Int64Shuffle Iota = iotaShuffle(origin);
-         VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((int)(origin))));
-         Iota = (Int64Shuffle)iotaShuffle(origin).wrapIndexes();
+         Int64Shuffle Iota = (Int64Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast((int)(VLENGTH-origin))));
+         Iota = (Int64Shuffle)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -417,9 +412,9 @@ final class Int64Vector extends IntVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Int64Shuffle Iota = iotaShuffle(-origin);
-         VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((int)(0))));
-         Iota = (Int64Shuffle)iotaShuffle(-origin).wrapIndexes();
+         Int64Shuffle Iota = (Int64Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Integer> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((int)(origin))));
+         Iota = (Int64Shuffle)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -478,7 +473,7 @@ final class Int64Vector extends IntVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    int[] vecarr = vec.getElements();
+                                    int[] vecarr = vec.vec();
                                     return (long)vecarr[ix];
                                 });
     }
@@ -492,7 +487,7 @@ final class Int64Vector extends IntVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
-                                    int[] res = v.getElements().clone();
+                                    int[] res = v.vec().clone();
                                     res[ix] = (int)bits;
                                     return v.vectorFactory(res);
                                 });

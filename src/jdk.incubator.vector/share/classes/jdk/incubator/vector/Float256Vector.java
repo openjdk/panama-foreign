@@ -25,16 +25,11 @@
 package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
 
 import static jdk.incubator.vector.VectorIntrinsics.*;
 import static jdk.incubator.vector.VectorOperators.*;
@@ -58,7 +53,7 @@ final class Float256Vector extends FloatVector {
     static final Class<Float> ETYPE = float.class;
 
     // The JVM expects to find the state here.
-    private final float[] vec; // Don't access directly, use getElements() instead.
+    private final float[] vec; // Don't access directly, use vec() instead.
 
     Float256Vector(float[] v) {
         vec = v;
@@ -119,7 +114,7 @@ final class Float256Vector extends FloatVector {
     /*package-private*/
     @ForceInline
     final @Override
-    float[] getElements() {
+    float[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -148,8 +143,8 @@ final class Float256Vector extends FloatVector {
     Float256Shuffle iotaShuffle() { return Float256Shuffle.IOTA; }
 
     @ForceInline
-    Float256Shuffle iotaShuffle(int start) { 
-        return (Float256Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Float256Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Float256Shuffle(i -> (Float256Shuffle.partiallyWrapIndex(i + val, l))));
+    Float256Shuffle iotaShuffle(int start) {
+        return (Float256Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Float256Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Float256Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -383,9 +378,9 @@ final class Float256Vector extends FloatVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Float256Shuffle Iota = iotaShuffle(origin);
-         VectorMask<Float> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((float)(origin))));
-         Iota = (Float256Shuffle)iotaShuffle(origin).wrapIndexes();
+         Float256Shuffle Iota = (Float256Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Float> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast((float)(VLENGTH-origin))));
+         Iota = (Float256Shuffle)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -411,9 +406,9 @@ final class Float256Vector extends FloatVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Float256Shuffle Iota = iotaShuffle(-origin);
-         VectorMask<Float> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((float)(0))));
-         Iota = (Float256Shuffle)iotaShuffle(-origin).wrapIndexes();
+         Float256Shuffle Iota = (Float256Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Float> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((float)(origin))));
+         Iota = (Float256Shuffle)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -472,7 +467,7 @@ final class Float256Vector extends FloatVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    float[] vecarr = vec.getElements();
+                                    float[] vecarr = vec.vec();
                                     return (long)Float.floatToIntBits(vecarr[ix]);
                                 });
         return Float.intBitsToFloat(bits);
@@ -487,7 +482,7 @@ final class Float256Vector extends FloatVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)Float.floatToIntBits(e),
                                 (v, ix, bits) -> {
-                                    float[] res = v.getElements().clone();
+                                    float[] res = v.vec().clone();
                                     res[ix] = Float.intBitsToFloat((int)bits);
                                     return v.vectorFactory(res);
                                 });

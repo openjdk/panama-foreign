@@ -25,16 +25,11 @@
 package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.ShortBuffer;
-import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
 
 import static jdk.incubator.vector.VectorIntrinsics.*;
 import static jdk.incubator.vector.VectorOperators.*;
@@ -58,7 +53,7 @@ final class ShortMaxVector extends ShortVector {
     static final Class<Short> ETYPE = short.class;
 
     // The JVM expects to find the state here.
-    private final short[] vec; // Don't access directly, use getElements() instead.
+    private final short[] vec; // Don't access directly, use vec() instead.
 
     ShortMaxVector(short[] v) {
         vec = v;
@@ -119,7 +114,7 @@ final class ShortMaxVector extends ShortVector {
     /*package-private*/
     @ForceInline
     final @Override
-    short[] getElements() {
+    short[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -148,8 +143,8 @@ final class ShortMaxVector extends ShortVector {
     ShortMaxShuffle iotaShuffle() { return ShortMaxShuffle.IOTA; }
 
     @ForceInline
-    ShortMaxShuffle iotaShuffle(int start) { 
-        return (ShortMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ShortMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ShortMaxShuffle(i -> (ShortMaxShuffle.partiallyWrapIndex(i + val, l))));
+    ShortMaxShuffle iotaShuffle(int start) {
+        return (ShortMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ShortMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ShortMaxShuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -389,9 +384,9 @@ final class ShortMaxVector extends ShortVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         ShortMaxShuffle Iota = iotaShuffle(origin);
-         VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((short)(origin))));
-         Iota = (ShortMaxShuffle)iotaShuffle(origin).wrapIndexes();
+         ShortMaxShuffle Iota = (ShortMaxShuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast((short)(VLENGTH-origin))));
+         Iota = (ShortMaxShuffle)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -417,9 +412,9 @@ final class ShortMaxVector extends ShortVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         ShortMaxShuffle Iota = iotaShuffle(-origin);
-         VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((short)(0))));
-         Iota = (ShortMaxShuffle)iotaShuffle(-origin).wrapIndexes();
+         ShortMaxShuffle Iota = (ShortMaxShuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Short> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((short)(origin))));
+         Iota = (ShortMaxShuffle)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -478,7 +473,7 @@ final class ShortMaxVector extends ShortVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    short[] vecarr = vec.getElements();
+                                    short[] vecarr = vec.vec();
                                     return (long)vecarr[ix];
                                 });
     }
@@ -492,7 +487,7 @@ final class ShortMaxVector extends ShortVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
-                                    short[] res = v.getElements().clone();
+                                    short[] res = v.vec().clone();
                                     res[ix] = (short)bits;
                                     return v.vectorFactory(res);
                                 });

@@ -16701,13 +16701,13 @@ instruct reduce_add8B(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecD tmp)
   ins_cost(INSN_COST);
   effect(TEMP_DEF dst, TEMP tmp);
   format %{ "addv  $tmp, T8B, $src2\n\t"
-            "umov  $dst, $tmp, B, 0\n\t"
+            "smov  $dst, $tmp, B, 0\n\t"
             "addw  $dst, $dst, $src1\n\t"
             "sxtb  $dst, $dst\t add reduction8B"
   %}
   ins_encode %{
     __ addv(as_FloatRegister($tmp$$reg), __ T8B, as_FloatRegister($src2$$reg));
-    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ B, 0);
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ B, 0);
     __ addw($dst$$Register, $dst$$Register, $src1$$Register);
     __ sxtb($dst$$Register, $dst$$Register);
   %}
@@ -16721,13 +16721,13 @@ instruct reduce_add16B(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp)
   ins_cost(INSN_COST);
   effect(TEMP_DEF dst, TEMP tmp);
   format %{ "addv  $tmp, T16B, $src2\n\t"
-            "umov  $dst, $tmp, B, 0\n\t"
+            "smov  $dst, $tmp, B, 0\n\t"
             "addw  $dst, $dst, $src1\n\t"
             "sxtb  $dst, $dst\t add reduction16B"
   %}
   ins_encode %{
     __ addv(as_FloatRegister($tmp$$reg), __ T16B, as_FloatRegister($src2$$reg));
-    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ B, 0);
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ B, 0);
     __ addw($dst$$Register, $dst$$Register, $src1$$Register);
     __ sxtb($dst$$Register, $dst$$Register);
   %}
@@ -16741,13 +16741,13 @@ instruct reduce_add4S(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecD tmp)
   ins_cost(INSN_COST);
   effect(TEMP_DEF dst, TEMP tmp);
   format %{ "addv  $tmp, T4H, $src2\n\t"
-            "umov  $dst, $tmp, H, 0\n\t"
+            "smov  $dst, $tmp, H, 0\n\t"
             "addw  $dst, $dst, $src1\n\t"
             "sxth  $dst, $dst\t add reduction4S"
   %}
   ins_encode %{
     __ addv(as_FloatRegister($tmp$$reg), __ T4H, as_FloatRegister($src2$$reg));
-    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ H, 0);
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ H, 0);
     __ addw($dst$$Register, $dst$$Register, $src1$$Register);
     __ sxth($dst$$Register, $dst$$Register);
   %}
@@ -16761,13 +16761,13 @@ instruct reduce_add8S(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp)
   ins_cost(INSN_COST);
   effect(TEMP_DEF dst, TEMP tmp);
   format %{ "addv  $tmp, T8H, $src2\n\t"
-            "umov  $dst, $tmp, H, 0\n\t"
+            "smov  $dst, $tmp, H, 0\n\t"
             "addw  $dst, $dst, $src1\n\t"
             "sxth  $dst, $dst\t add reduction8S"
   %}
   ins_encode %{
     __ addv(as_FloatRegister($tmp$$reg), __ T8H, as_FloatRegister($src2$$reg));
-    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ H, 0);
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ H, 0);
     __ addw($dst$$Register, $dst$$Register, $src1$$Register);
     __ sxth($dst$$Register, $dst$$Register);
   %}
@@ -17003,22 +17003,18 @@ instruct reduce_mul4I(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp, iRegI
   ins_pipe(pipe_class_default);
 %}
 
-instruct reduce_add2F(vRegF dst, vRegF src1, vecD src2, vecD tmp)
+instruct reduce_add2F(vRegF dst, vRegF src1, vecD src2, vRegF tmp)
 %{
   match(Set dst (AddReductionVF src1 src2));
   ins_cost(INSN_COST);
-  effect(TEMP tmp, TEMP dst);
-  format %{ "fadds $dst, $src1, $src2\n\t"
-            "ins   $tmp, S, $src2, 0, 1\n\t"
-            "fadds $dst, $dst, $tmp\t add reduction2F"
+  effect(TEMP tmp);
+  format %{ "faddp $tmp, $src2, S\n\t"
+            "fadds $dst, $src1, $tmp\t add reduction2F"
   %}
   ins_encode %{
+    __ faddp(as_FloatRegister($tmp$$reg), as_FloatRegister($src2$$reg), __ S);
     __ fadds(as_FloatRegister($dst$$reg),
-             as_FloatRegister($src1$$reg), as_FloatRegister($src2$$reg));
-    __ ins(as_FloatRegister($tmp$$reg), __ S,
-           as_FloatRegister($src2$$reg), 0, 1);
-    __ fadds(as_FloatRegister($dst$$reg),
-             as_FloatRegister($dst$$reg), as_FloatRegister($tmp$$reg));
+             as_FloatRegister($src1$$reg), as_FloatRegister($tmp$$reg));
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -17107,21 +17103,19 @@ instruct reduce_mul4F(vRegF dst, vRegF src1, vecX src2, vecX tmp)
   ins_pipe(pipe_class_default);
 %}
 
-instruct reduce_add2L(iRegLNoSp dst, iRegL src1, vecX src2, iRegLNoSp tmp)
+instruct reduce_add2L(iRegLNoSp dst, iRegL src1, vecX src2, vecX tmp)
 %{
   match(Set dst (AddReductionVL src1 src2));
   ins_cost(INSN_COST);
   effect(TEMP_DEF dst, TEMP tmp);
-  format %{ "umov  $tmp, $src2, D, 0\n\t"
-            "add   $dst, $src1, $tmp\n\t"
-            "umov  $tmp, $src2, D, 1\n\t"
-            "add   $dst, $dst, $tmp\t add reduction2L"
+  format %{ "addpd $tmp, $src2\n\t"
+            "umov  $dst, $tmp, D, 0\n\t"
+            "add   $dst, $src1, $dst\t add reduction2L"
   %}
   ins_encode %{
-    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
-    __ add($dst$$Register, $src1$$Register, $tmp$$Register);
-    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 1);
-    __ add($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ addpd(as_FloatRegister($tmp$$reg), as_FloatRegister($src2$$reg));
+    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ D, 0);
+    __ add($dst$$Register, $src1$$Register, $dst$$Register);
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -17145,22 +17139,18 @@ instruct reduce_mul2L(iRegLNoSp dst, iRegL src1, vecX src2, iRegLNoSp tmp)
   ins_pipe(pipe_class_default);
 %}
 
-instruct reduce_add2D(vRegD dst, vRegD src1, vecX src2, vecX tmp)
+instruct reduce_add2D(vRegD dst, vRegD src1, vecX src2, vRegD tmp)
 %{
   match(Set dst (AddReductionVD src1 src2));
   ins_cost(INSN_COST);
-  effect(TEMP tmp, TEMP dst);
-  format %{ "faddd $dst, $src1, $src2\n\t"
-            "ins   $tmp, D, $src2, 0, 1\n\t"
-            "faddd $dst, $dst, $tmp\t add reduction2D"
+  effect(TEMP tmp);
+  format %{ "faddp $tmp, $src2, D\n\t"
+            "faddd $dst, $src1, $tmp\t add reduction2D"
   %}
   ins_encode %{
+    __ faddp(as_FloatRegister($tmp$$reg), as_FloatRegister($src2$$reg), __ D);
     __ faddd(as_FloatRegister($dst$$reg),
-             as_FloatRegister($src1$$reg), as_FloatRegister($src2$$reg));
-    __ ins(as_FloatRegister($tmp$$reg), __ D,
-           as_FloatRegister($src2$$reg), 0, 1);
-    __ faddd(as_FloatRegister($dst$$reg),
-             as_FloatRegister($dst$$reg), as_FloatRegister($tmp$$reg));
+             as_FloatRegister($src1$$reg), as_FloatRegister($tmp$$reg));
   %}
   ins_pipe(pipe_class_default);
 %}
@@ -20002,6 +19992,297 @@ instruct storemask2L(vecD dst, vecX src) %{
     __ negr(as_FloatRegister($dst$$reg), __ T8B, as_FloatRegister($dst$$reg));
   %}
   ins_pipe(vdop128);
+%}
+
+//-------------------------------- LOAD_IOTA_INDICES----------------------------------
+
+instruct loadcon8B(vecD dst, immI0 src) %{
+  predicate((n->as_Vector()->length() == 2 || n->as_Vector()->length() == 4 ||
+             n->as_Vector()->length() == 8) &&
+             n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadConst src));
+  ins_cost(INSN_COST);
+  format %{ "ldr $dst,CONSTANT_MEMORY\t# load iota indices" %}
+  ins_encode %{
+    __ lea(rscratch1, ExternalAddress(StubRoutines::aarch64::vector_iota_indices()));
+    __ ldrd(as_FloatRegister($dst$$reg), rscratch1);
+  %}
+  ins_pipe(pipe_class_memory);
+%}
+
+instruct loadcon16B(vecX dst, immI0 src) %{
+  predicate(n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadConst src));
+  ins_cost(INSN_COST);
+  format %{ "ldr $dst,CONSTANT_MEMORY\t# load iota indices" %}
+  ins_encode %{
+    __ lea(rscratch1, ExternalAddress(StubRoutines::aarch64::vector_iota_indices()));
+    __ ldrq(as_FloatRegister($dst$$reg), rscratch1);
+  %}
+  ins_pipe(pipe_class_memory);
+%}
+
+//-------------------------------- LOAD_SHUFFLE ----------------------------------
+
+instruct loadshuffle8B(vecD dst, vecD src) %{
+  predicate(n->as_Vector()->length() == 8 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadShuffle src));
+  ins_cost(INSN_COST);
+  format %{ "mov  $dst, $src\t# get 8B shuffle" %}
+  ins_encode %{
+    __ orr(as_FloatRegister($dst$$reg), __ T8B,
+           as_FloatRegister($src$$reg), as_FloatRegister($src$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct loadshuffle16B(vecX dst, vecX src) %{
+  predicate(n->as_Vector()->length() == 16 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadShuffle src));
+  ins_cost(INSN_COST);
+  format %{ "mov  $dst, $src\t# get 16B shuffle" %}
+  ins_encode %{
+    __ orr(as_FloatRegister($dst$$reg), __ T16B,
+           as_FloatRegister($src$$reg), as_FloatRegister($src$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct loadshuffle4S(vecD dst, vecD src) %{
+  predicate(n->as_Vector()->length() == 4 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorLoadShuffle src));
+  ins_cost(INSN_COST);
+  format %{ "uxtl  $dst, $src\n\t# 4B to 4H" %}
+  ins_encode %{
+    __ uxtl(as_FloatRegister($dst$$reg), __ T8H, as_FloatRegister($src$$reg), __ T8B);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct loadshuffle8S(vecX dst, vecD src) %{
+  predicate(n->as_Vector()->length() == 8 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorLoadShuffle src));
+  ins_cost(INSN_COST);
+  format %{ "uxtl  $dst, $src\n\t# 8B to 8H" %}
+  ins_encode %{
+    __ uxtl(as_FloatRegister($dst$$reg), __ T8H, as_FloatRegister($src$$reg), __ T8B);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct loadshuffle2I(vecD dst, vecD src) %{
+  predicate(n->as_Vector()->length() == 2 &&
+           (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+            n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
+  match(Set dst (VectorLoadShuffle src));
+  ins_cost(INSN_COST);
+  format %{ "uxtl  $dst, $src\t# 2B to 2H \n\t"
+            "uxtl  $dst, $dst\t# 2H to 2S" %}
+  ins_encode %{
+    __ uxtl(as_FloatRegister($dst$$reg), __ T8H, as_FloatRegister($src$$reg), __ T8B);
+    __ uxtl(as_FloatRegister($dst$$reg), __ T4S, as_FloatRegister($dst$$reg), __ T4H);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct loadshuffle4I(vecX dst, vecD src) %{
+  predicate(n->as_Vector()->length() == 4 &&
+           (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+            n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
+  match(Set dst (VectorLoadShuffle src));
+  ins_cost(INSN_COST);
+  format %{ "uxtl  $dst, $src\t# 4B to 4H \n\t"
+            "uxtl  $dst, $dst\t# 4H to 4S" %}
+  ins_encode %{
+    __ uxtl(as_FloatRegister($dst$$reg), __ T8H, as_FloatRegister($src$$reg), __ T8B);
+    __ uxtl(as_FloatRegister($dst$$reg), __ T4S, as_FloatRegister($dst$$reg), __ T4H);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct loadshuffle2L(vecX dst, vecD src) %{
+  predicate(n->as_Vector()->length() == 2 &&
+           (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
+            n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
+  match(Set dst (VectorLoadShuffle src));
+  ins_cost(INSN_COST);
+  format %{ "uxtl  $dst, $src\t# 2B to 2H \n\t"
+            "uxtl  $dst, $dst\t# 2H to 2S \n\t"
+            "uxtl  $dst, $dst\t# 2S to 4D" %}
+  ins_encode %{
+    __ uxtl(as_FloatRegister($dst$$reg), __ T8H, as_FloatRegister($src$$reg), __ T8B);
+    __ uxtl(as_FloatRegister($dst$$reg), __ T4S, as_FloatRegister($dst$$reg), __ T4H);
+    __ uxtl(as_FloatRegister($dst$$reg), __ T2D, as_FloatRegister($dst$$reg), __ T2S);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+//-------------------------------- Rearrange -------------------------------------
+// Here is an example that rearranges a NEON vector with 4 ints:
+// Rearrange V1 int[a0, a1, a2, a3] to V2 int[a2, a3, a0, a1]
+//   1. Get the indices of V1 and store them as Vi byte[0, 1, 2, 3].
+//   2. Convert Vi byte[0, 1, 2, 3] to the indices of V2 and also store them as Vi byte[2, 3, 0, 1].
+//   3. Unsigned extend Long Vi from byte[2, 3, 0, 1] to int[2, 3, 0, 1].
+//   4. Multiply Vi int[2, 3, 0, 1] with constant int[0x04040404, 0x04040404, 0x04040404, 0x04040404]
+//      and get tbl base Vm int[0x08080808, 0x0c0c0c0c, 0x00000000, 0x04040404].
+//   5. Add Vm with constant int[0x03020100, 0x03020100, 0x03020100, 0x03020100]
+//      and get tbl index Vm int[0x0b0a0908, 0x0f0e0d0c, 0x03020100, 0x07060504]
+//   6. Use Vm as index register, and use V1 as table register.
+//      Then get V2 as the result by tbl NEON instructions.
+// Notes:
+//   Step 1 matches VectorLoadConst.
+//   Step 3 matches VectorLoadShuffle.
+//   Step 4, 5, 6 match VectorRearrange.
+//   For VectorRearrange short/int, the reason why such complex calculation is
+//   required is because NEON tbl supports bytes table only, so for short/int, we
+//   need to lookup 2/4 bytes as a group. For VectorRearrange long, we use bsl
+//   to implement rearrange.
+
+instruct rearrange8B(vecD dst, vecD src, vecD shuffle) %{
+  predicate(n->as_Vector()->length() == 8 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorRearrange src shuffle));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst);
+  format %{ "tbl $dst, {$dst}, $shuffle\t# rearrange 8B" %}
+  ins_encode %{
+    __ tbl(as_FloatRegister($dst$$reg), __ T8B,
+           as_FloatRegister($src$$reg), 1, as_FloatRegister($shuffle$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct rearrange16B(vecX dst, vecX src, vecX shuffle) %{
+  predicate(n->as_Vector()->length() == 16 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorRearrange src shuffle));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst);
+  format %{ "tbl $dst, {$dst}, $shuffle\t# rearrange 16B" %}
+  ins_encode %{
+    __ tbl(as_FloatRegister($dst$$reg), __ T16B,
+           as_FloatRegister($src$$reg), 1, as_FloatRegister($shuffle$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct rearrange4S(vecD dst, vecD src, vecD shuffle, vecD vtmp0, vecD vtmp1) %{
+  predicate(n->as_Vector()->length() == 4 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorRearrange src shuffle));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP vtmp0, TEMP vtmp1);
+  format %{ "mov   $vtmp0, CONSTANT\t# constant 0x0202020202020202 \n\t"
+            "mov   $vtmp1, CONSTANT\t# constant 0x0100010001000100 \n\t"
+            "mulv  $dst, T4H, $shuffle, $vtmp0\n\t"
+            "addv  $dst, T8B, $dst, $vtmp1\n\t"
+            "tbl   $dst, {$src}, $dst\t# rearrange 4S" %}
+  ins_encode %{
+    __ mov(as_FloatRegister($vtmp0$$reg), __ T8B, 0x02);
+    __ mov(as_FloatRegister($vtmp1$$reg), __ T4H, 0x0100);
+    __ mulv(as_FloatRegister($dst$$reg), __ T4H,
+            as_FloatRegister($shuffle$$reg), as_FloatRegister($vtmp0$$reg));
+    __ addv(as_FloatRegister($dst$$reg), __ T8B,
+            as_FloatRegister($dst$$reg), as_FloatRegister($vtmp1$$reg));
+    __ tbl(as_FloatRegister($dst$$reg), __ T8B,
+           as_FloatRegister($src$$reg), 1, as_FloatRegister($dst$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct rearrange8S(vecX dst, vecX src, vecX shuffle, vecX vtmp0, vecX vtmp1) %{
+  predicate(n->as_Vector()->length() == 8 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorRearrange src shuffle));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP vtmp0, TEMP vtmp1);
+  format %{ "mov   $vtmp0, CONSTANT\t# constant 0x0202020202020202 \n\t"
+            "mov   $vtmp1, CONSTANT\t# constant 0x0100010001000100 \n\t"
+            "mulv  $dst, T8H, $shuffle, $vtmp0\n\t"
+            "addv  $dst, T16B, $dst, $vtmp1\n\t"
+            "tbl   $dst, {$src}, $dst\t# rearrange 8S" %}
+  ins_encode %{
+    __ mov(as_FloatRegister($vtmp0$$reg), __ T16B, 0x02);
+    __ mov(as_FloatRegister($vtmp1$$reg), __ T8H, 0x0100);
+    __ mulv(as_FloatRegister($dst$$reg), __ T8H,
+            as_FloatRegister($shuffle$$reg), as_FloatRegister($vtmp0$$reg));
+    __ addv(as_FloatRegister($dst$$reg), __ T16B,
+            as_FloatRegister($dst$$reg), as_FloatRegister($vtmp1$$reg));
+    __ tbl(as_FloatRegister($dst$$reg), __ T16B,
+           as_FloatRegister($src$$reg), 1, as_FloatRegister($dst$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct rearrange2I(vecD dst, vecD src, vecD shuffle, vecD vtmp0, vecD vtmp1) %{
+  predicate(n->as_Vector()->length() == 2 &&
+           (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+            n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
+  match(Set dst (VectorRearrange src shuffle));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP vtmp0, TEMP vtmp1);
+  format %{ "negr $dst, $shuffle\n\t"
+            "dup  $vtmp0, T2S, $src, 0\n\t"
+            "dup  $vtmp1, T2S, $src, 1\n\t"
+            "bsl  $dst, $vtmp1, $vtmp0\t# rearrange 2L" %}
+  ins_encode %{
+    __ negr(as_FloatRegister($dst$$reg), __ T2S, as_FloatRegister($shuffle$$reg));
+    __ dup(as_FloatRegister($vtmp0$$reg), __ T2S, as_FloatRegister($src$$reg), 0);
+    __ dup(as_FloatRegister($vtmp1$$reg), __ T2S, as_FloatRegister($src$$reg), 1);
+    __ bsl(as_FloatRegister($dst$$reg), __ T8B,
+           as_FloatRegister($vtmp1$$reg), as_FloatRegister($vtmp0$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct rearrange4I(vecX dst, vecX src, vecX shuffle, vecX vtmp0, vecX vtmp1) %{
+  predicate(n->as_Vector()->length() == 4 &&
+           (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+            n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
+  match(Set dst (VectorRearrange src shuffle));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP vtmp0, TEMP vtmp1);
+  format %{ "mov   $vtmp0, CONSTANT\t# constant 0x0404040404040404 \n\t"
+            "mov   $vtmp1, CONSTANT\t# constant 0x0302010003020100 \n\t"
+            "mulv  $dst, T8H, $shuffle, $vtmp0\n\t"
+            "addv  $dst, T16B, $dst, $vtmp1\n\t"
+            "tbl   $dst, {$src}, $dst\t# rearrange 4I" %}
+  ins_encode %{
+    __ mov(as_FloatRegister($vtmp0$$reg), __ T16B, 0x04);
+    __ mov(as_FloatRegister($vtmp1$$reg), __ T4S, 0x03020100);
+    __ mulv(as_FloatRegister($dst$$reg), __ T4S,
+            as_FloatRegister($shuffle$$reg), as_FloatRegister($vtmp0$$reg));
+    __ addv(as_FloatRegister($dst$$reg), __ T16B,
+            as_FloatRegister($dst$$reg), as_FloatRegister($vtmp1$$reg));
+    __ tbl(as_FloatRegister($dst$$reg), __ T16B,
+           as_FloatRegister($src$$reg), 1, as_FloatRegister($dst$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct rearrange2L(vecX dst, vecX src, vecX shuffle, vecX vtmp0, vecX vtmp1) %{
+  predicate(n->as_Vector()->length() == 2 &&
+           (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
+            n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
+  match(Set dst (VectorRearrange src shuffle));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP vtmp0, TEMP vtmp1);
+  format %{ "negr $dst, $shuffle\n\t"
+            "dup  $vtmp0, T2D, $src, 0\n\t"
+            "dup  $vtmp1, T2D, $src, 1\n\t"
+            "bsl  $dst, $vtmp1, $vtmp0\t# rearrange 2L" %}
+  ins_encode %{
+    __ negr(as_FloatRegister($dst$$reg), __ T2D, as_FloatRegister($shuffle$$reg));
+    __ dup(as_FloatRegister($vtmp0$$reg), __ T2D, as_FloatRegister($src$$reg), 0);
+    __ dup(as_FloatRegister($vtmp1$$reg), __ T2D, as_FloatRegister($src$$reg), 1);
+    __ bsl(as_FloatRegister($dst$$reg), __ T16B,
+           as_FloatRegister($vtmp1$$reg), as_FloatRegister($vtmp0$$reg));
+  %}
+  ins_pipe(pipe_class_default);
 %}
 
 instruct anytrue_in_mask8B(iRegINoSp dst, vecD src1, vecD src2, vecD tmp, rFlagsReg cr) %{

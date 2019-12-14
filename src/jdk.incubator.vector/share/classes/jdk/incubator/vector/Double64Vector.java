@@ -25,16 +25,11 @@
 package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.DoubleBuffer;
-import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
 
 import static jdk.incubator.vector.VectorIntrinsics.*;
 import static jdk.incubator.vector.VectorOperators.*;
@@ -58,7 +53,7 @@ final class Double64Vector extends DoubleVector {
     static final Class<Double> ETYPE = double.class;
 
     // The JVM expects to find the state here.
-    private final double[] vec; // Don't access directly, use getElements() instead.
+    private final double[] vec; // Don't access directly, use vec() instead.
 
     Double64Vector(double[] v) {
         vec = v;
@@ -119,7 +114,7 @@ final class Double64Vector extends DoubleVector {
     /*package-private*/
     @ForceInline
     final @Override
-    double[] getElements() {
+    double[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -148,8 +143,8 @@ final class Double64Vector extends DoubleVector {
     Double64Shuffle iotaShuffle() { return Double64Shuffle.IOTA; }
 
     @ForceInline
-    Double64Shuffle iotaShuffle(int start) { 
-        return (Double64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Double64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Double64Shuffle(i -> (Double64Shuffle.partiallyWrapIndex(i + val, l))));
+    Double64Shuffle iotaShuffle(int start) {
+        return (Double64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Double64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Double64Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -383,9 +378,9 @@ final class Double64Vector extends DoubleVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Double64Shuffle Iota = iotaShuffle(origin);
-         VectorMask<Double> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((double)(origin))));
-         Iota = (Double64Shuffle)iotaShuffle(origin).wrapIndexes();
+         Double64Shuffle Iota = (Double64Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Double> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast((double)(VLENGTH-origin))));
+         Iota = (Double64Shuffle)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -411,9 +406,9 @@ final class Double64Vector extends DoubleVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Double64Shuffle Iota = iotaShuffle(-origin);
-         VectorMask<Double> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((double)(0))));
-         Iota = (Double64Shuffle)iotaShuffle(-origin).wrapIndexes();
+         Double64Shuffle Iota = (Double64Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Double> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((double)(origin))));
+         Iota = (Double64Shuffle)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -472,7 +467,7 @@ final class Double64Vector extends DoubleVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    double[] vecarr = vec.getElements();
+                                    double[] vecarr = vec.vec();
                                     return (long)Double.doubleToLongBits(vecarr[ix]);
                                 });
         return Double.longBitsToDouble(bits);
@@ -487,7 +482,7 @@ final class Double64Vector extends DoubleVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)Double.doubleToLongBits(e),
                                 (v, ix, bits) -> {
-                                    double[] res = v.getElements().clone();
+                                    double[] res = v.vec().clone();
                                     res[ix] = Double.longBitsToDouble((long)bits);
                                     return v.vectorFactory(res);
                                 });

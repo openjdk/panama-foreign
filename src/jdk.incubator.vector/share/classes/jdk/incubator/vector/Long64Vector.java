@@ -25,16 +25,11 @@
 package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.LongBuffer;
-import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.vm.annotation.Stable;
 
 import static jdk.incubator.vector.VectorIntrinsics.*;
 import static jdk.incubator.vector.VectorOperators.*;
@@ -58,7 +53,7 @@ final class Long64Vector extends LongVector {
     static final Class<Long> ETYPE = long.class;
 
     // The JVM expects to find the state here.
-    private final long[] vec; // Don't access directly, use getElements() instead.
+    private final long[] vec; // Don't access directly, use vec() instead.
 
     Long64Vector(long[] v) {
         vec = v;
@@ -119,7 +114,7 @@ final class Long64Vector extends LongVector {
     /*package-private*/
     @ForceInline
     final @Override
-    long[] getElements() {
+    long[] vec() {
         return VectorIntrinsics.maybeRebox(this).vec;
     }
 
@@ -143,8 +138,8 @@ final class Long64Vector extends LongVector {
     Long64Shuffle iotaShuffle() { return Long64Shuffle.IOTA; }
 
     @ForceInline
-    Long64Shuffle iotaShuffle(int start) { 
-        return (Long64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long64Shuffle(i -> (Long64Shuffle.partiallyWrapIndex(i + val, l))));
+    Long64Shuffle iotaShuffle(int start) {
+        return (Long64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long64Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
     }
 
     @Override
@@ -379,9 +374,9 @@ final class Long64Vector extends LongVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Long64Shuffle Iota = iotaShuffle(origin);
-         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(origin))));
-         Iota = (Long64Shuffle)iotaShuffle(origin).wrapIndexes();
+         Long64Shuffle Iota = (Long64Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.LT, (broadcast((long)(VLENGTH-origin))));
+         Iota = (Long64Shuffle)VectorShuffle.iota(VSPECIES, origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -407,9 +402,9 @@ final class Long64Vector extends LongVector {
        if ((origin < 0) || (origin >= VLENGTH)) {
          throw new ArrayIndexOutOfBoundsException("Index " + origin + " out of bounds for vector length " + VLENGTH);
        } else {
-         Long64Shuffle Iota = iotaShuffle(-origin);
-         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(0))));
-         Iota = (Long64Shuffle)iotaShuffle(-origin).wrapIndexes();
+         Long64Shuffle Iota = (Long64Shuffle)VectorShuffle.iota(VSPECIES, 0, 1, true);
+         VectorMask<Long> BlendMask = Iota.toVector().compare(VectorOperators.GE, (broadcast((long)(origin))));
+         Iota = (Long64Shuffle)VectorShuffle.iota(VSPECIES, -origin, 1, true);
          return ZERO.blend(this.rearrange(Iota), BlendMask);
        }
     }
@@ -468,7 +463,7 @@ final class Long64Vector extends LongVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i,
                                 (vec, ix) -> {
-                                    long[] vecarr = vec.getElements();
+                                    long[] vecarr = vec.vec();
                                     return (long)vecarr[ix];
                                 });
     }
@@ -482,7 +477,7 @@ final class Long64Vector extends LongVector {
                                 VCLASS, ETYPE, VLENGTH,
                                 this, i, (long)e,
                                 (v, ix, bits) -> {
-                                    long[] res = v.getElements().clone();
+                                    long[] res = v.vec().clone();
                                     res[ix] = (long)bits;
                                     return v.vectorFactory(res);
                                 });

@@ -30,10 +30,8 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.BinaryOperator;
-import java.util.function.IntUnaryOperator;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import java.util.concurrent.ThreadLocalRandom;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -89,7 +87,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     // Virtualized getter
 
     /*package-private*/
-    abstract double[] getElements();
+    abstract double[] vec();
 
     // Virtualized constructors
 
@@ -153,7 +151,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     @ForceInline
     final
     DoubleVector uOpTemplate(FUnOp f) {
-        double[] vec = getElements();
+        double[] vec = vec();
         double[] res = new double[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec[i]);
@@ -169,7 +167,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     final
     DoubleVector uOpTemplate(VectorMask<Double> m,
                                      FUnOp f) {
-        double[] vec = getElements();
+        double[] vec = vec();
         double[] res = new double[length()];
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -194,8 +192,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     DoubleVector bOpTemplate(Vector<Double> o,
                                      FBinOp f) {
         double[] res = new double[length()];
-        double[] vec1 = this.getElements();
-        double[] vec2 = ((DoubleVector)o).getElements();
+        double[] vec1 = this.vec();
+        double[] vec2 = ((DoubleVector)o).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i]);
         }
@@ -213,8 +211,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                                      VectorMask<Double> m,
                                      FBinOp f) {
         double[] res = new double[length()];
-        double[] vec1 = this.getElements();
-        double[] vec2 = ((DoubleVector)o).getElements();
+        double[] vec1 = this.vec();
+        double[] vec2 = ((DoubleVector)o).vec();
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
@@ -240,9 +238,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                                      Vector<Double> o2,
                                      FTriOp f) {
         double[] res = new double[length()];
-        double[] vec1 = this.getElements();
-        double[] vec2 = ((DoubleVector)o1).getElements();
-        double[] vec3 = ((DoubleVector)o2).getElements();
+        double[] vec1 = this.vec();
+        double[] vec2 = ((DoubleVector)o1).vec();
+        double[] vec3 = ((DoubleVector)o2).vec();
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
@@ -262,9 +260,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                                      VectorMask<Double> m,
                                      FTriOp f) {
         double[] res = new double[length()];
-        double[] vec1 = this.getElements();
-        double[] vec2 = ((DoubleVector)o1).getElements();
-        double[] vec3 = ((DoubleVector)o2).getElements();
+        double[] vec1 = this.vec();
+        double[] vec2 = ((DoubleVector)o1).vec();
+        double[] vec3 = ((DoubleVector)o2).vec();
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
         for (int i = 0; i < res.length; i++) {
             res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
@@ -280,7 +278,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     @ForceInline
     final
     double rOpTemplate(double v, FBinOp f) {
-        double[] vec = getElements();
+        double[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -299,7 +297,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     final
     <M> DoubleVector ldOp(M memory, int offset,
                                   FLdOp<M> f) {
-        //dummy; no vec = getElements();
+        //dummy; no vec = vec();
         double[] res = new double[length()];
         for (int i = 0; i < res.length; i++) {
             res[i] = f.apply(memory, offset, i);
@@ -313,7 +311,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     <M> DoubleVector ldOp(M memory, int offset,
                                   VectorMask<Double> m,
                                   FLdOp<M> f) {
-        //double[] vec = getElements();
+        //double[] vec = vec();
         double[] res = new double[length()];
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
         for (int i = 0; i < res.length; i++) {
@@ -333,7 +331,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     final
     <M> void stOp(M memory, int offset,
                   FStOp<M> f) {
-        double[] vec = getElements();
+        double[] vec = vec();
         for (int i = 0; i < vec.length; i++) {
             f.apply(memory, offset, i, vec[i]);
         }
@@ -345,7 +343,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     <M> void stOp(M memory, int offset,
                   VectorMask<Double> m,
                   FStOp<M> f) {
-        double[] vec = getElements();
+        double[] vec = vec();
         boolean[] mbits = ((AbstractMask<Double>)m).getBits();
         for (int i = 0; i < vec.length; i++) {
             if (mbits[i]) {
@@ -367,8 +365,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     AbstractMask<Double> bTest(int cond,
                                   Vector<Double> o,
                                   FBinTest f) {
-        double[] vec1 = getElements();
-        double[] vec2 = ((DoubleVector)o).getElements();
+        double[] vec1 = vec();
+        double[] vec2 = ((DoubleVector)o).vec();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(cond, i, vec1[i], vec2[i]);
@@ -540,50 +538,12 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *         if {@code es.length != species.length()}
      */
     @ForceInline
-    @SuppressWarnings("unchecked")
     public static DoubleVector fromValues(VectorSpecies<Double> species, double... es) {
         DoubleSpecies vsp = (DoubleSpecies) species;
         int vlength = vsp.laneCount();
         VectorIntrinsics.requireLength(es.length, vlength);
         // Get an unaliased copy and use it directly:
         return vsp.vectorFactory(Arrays.copyOf(es, vlength));
-    }
-
-    /**
-     * Returns a vector where the first lane element is set to the primtive
-     * value {@code e}, all other lane elements are set to the default
-     * value.
-     *
-     * @param species species of the desired vector
-     * @param e the value
-     * @return a vector where the first lane element is set to the primitive
-     * value {@code e}
-     */
-    // FIXME: Does this carry its weight?
-    @ForceInline
-    public static DoubleVector single(VectorSpecies<Double> species, double e) {
-        return zero(species).withLane(0, e);
-    }
-
-    /**
-     * Returns a vector where each lane element is set to a randomly
-     * generated primitive value.
-     *
-     * The semantics are equivalent to calling
-     * {@link ThreadLocalRandom#nextDouble()}
-     * for each lane, from first to last.
-     *
-     * @param species species of the desired vector
-     * @return a vector where each lane elements is set to a randomly
-     * generated primitive value
-     */
-    public static DoubleVector random(VectorSpecies<Double> species) {
-        DoubleSpecies vsp = (DoubleSpecies) species;
-        ThreadLocalRandom r = ThreadLocalRandom.current();
-        return vsp.vOp(i -> nextRandom(r));
-    }
-    private static double nextRandom(ThreadLocalRandom r) {
-        return r.nextDouble();
     }
 
     // Unary lanewise support
@@ -1308,8 +1268,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
     /**
      * {@inheritDoc} <!--workaround-->
-     * @see #div(double)
-     * <p> Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
@@ -1331,11 +1290,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *    lanewise}{@code (}{@link VectorOperators#DIV
      *    DIV}{@code , e)}.
      *
-     * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
-     * Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
@@ -1357,7 +1312,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @see #div(double,VectorMask)
-     * <p> Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
@@ -1381,11 +1336,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *    lanewise}{@code (}{@link VectorOperators#DIV
      *    DIV}{@code , s, m)}.
      *
-     * <p>
-     * If the underlying scalar operator does not support
-     * division by zero, but is presented with a zero divisor,
-     * an {@code ArithmeticException} will be thrown.
-     * Because the underlying scalar operator is an IEEE
+     * @apiNote Because the underlying scalar operator is an IEEE
      * floating point number, division by zero in fact will
      * not throw an exception, but will yield a signed
      * infinity or NaN.
@@ -1417,7 +1368,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @apiNote
      * For this method, floating point negative
      * zero {@code -0.0} is treated as a value distinct from, and less
-     * than, the default zero value.
+     * than the default value (positive zero).
      */
     @Override
     @ForceInline
@@ -1429,8 +1380,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * Computes the smaller of this vector and the broadcast of an input scalar.
      *
-     * This is a lane-wise binary operation which appliesthe
-     * operation {@code (a, b) -> a < b ? a : b} to each pair of
+     * This is a lane-wise binary operation which applies the
+     * operation {@code Math.min()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -1447,7 +1398,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @apiNote
      * For this method, floating point negative
      * zero {@code -0.0} is treated as a value distinct from, and less
-     * than, the default zero value.
+     * than the default value (positive zero).
      */
     @ForceInline
     public final DoubleVector min(double e) {
@@ -1457,8 +1408,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * {@inheritDoc} <!--workaround-->
      * @apiNote
-     * For this method, negative floating-point zero compares
-     * less than the default value, positive zero.
+     * For this method, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than the default value (positive zero).
      */
     @Override
     @ForceInline
@@ -1469,8 +1421,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * Computes the larger of this vector and the broadcast of an input scalar.
      *
-     * This is a lane-wise binary operation which appliesthe
-     * operation {@code (a, b) -> a > b ? a : b} to each pair of
+     * This is a lane-wise binary operation which applies the
+     * operation {@code Math.max()} to each pair of
      * corresponding lane values.
      *
      * This method is also equivalent to the expression
@@ -1485,8 +1437,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @see VectorOperators#MAX
      * @see #lanewise(VectorOperators.Binary,double,VectorMask)
      * @apiNote
-     * For this method, negative floating-point zero compares
-     * less than the default value, positive zero.
+     * For this method, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from, and less
+     * than the default value (positive zero).
      */
     @ForceInline
     public final DoubleVector max(double e) {
@@ -1953,8 +1906,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     DoubleVector sliceTemplate(int origin, Vector<Double> v1) {
         DoubleVector that = (DoubleVector) v1;
         that.check(this);
-        double[] a0 = this.getElements();
-        double[] a1 = that.getElements();
+        double[] a0 = this.vec();
+        double[] a1 = that.vec();
         double[] res = new double[a0.length];
         int vlen = res.length;
         int firstPart = vlen - origin;
@@ -1996,8 +1949,8 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     unsliceTemplate(int origin, Vector<Double> w, int part) {
         DoubleVector that = (DoubleVector) w;
         that.check(this);
-        double[] slice = this.getElements();
-        double[] res = that.getElements();
+        double[] slice = this.vec();
+        double[] res = that.vec().clone();
         int vlen = res.length;
         int firstPart = vlen - origin;
         switch (part) {
@@ -2038,7 +1991,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      */
     @Override
     public abstract
-    DoubleVector unslice(int origin); 
+    DoubleVector unslice(int origin);
 
     private ArrayIndexOutOfBoundsException
     wrongPartForSlice(int part) {
@@ -2243,53 +2196,30 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      *
      * This is an associative cross-lane reduction operation which
      * applies the specified operation to all the lane elements.
-     *
      * <p>
      * A few reduction operations do not support arbitrary reordering
      * of their operands, yet are included here because of their
      * usefulness.
-     *
      * <ul>
      * <li>
      * In the case of {@code FIRST_NONZERO}, the reduction returns
      * the value from the lowest-numbered non-zero lane.
-     *
      * (As with {@code MAX} and {@code MIN}, floating point negative
      * zero {@code -0.0} is treated as a value distinct from
-     * the default zero value, so a first-nonzero lane reduction
+     * the default value, positive zero. So a first-nonzero lane reduction
      * might return {@code -0.0} even in the presence of non-zero
      * lane values.)
-     *
      * <li>
-     * In the case of floating point addition and multiplication, the
+     * In the case of {@code ADD} and {@code MUL}, the
      * precise result will reflect the choice of an arbitrary order
      * of operations, which may even vary over time.
-     *
+     * For further details see the section
+     * <a href="VectorOperators.html#fp_assoc">Operations on floating point vectors</a>.
      * <li>
      * All other reduction operations are fully commutative and
      * associative.  The implementation can choose any order of
      * processing, yet it will always produce the same result.
-     *
      * </ul>
-     *
-     * @implNote
-     * The value of a floating-point reduction may be a function
-     * both of the input values as well as the order of scalar
-     * operations which combine those values, specifically in the
-     * case of {@code ADD} and {@code MUL} operations, where
-     * details of rounding depend on operand order.
-     * In those cases, the order of operations of this method is
-     * intentionally not defined.  This allows the JVM to generate
-     * optimal machine code for the underlying platform at runtime. If
-     * the platform supports a vector instruction to add or multiply
-     * all values in the vector, or if there is some other efficient
-     * machine code sequence, then the JVM has the option of
-     * generating this machine code. Otherwise, the default
-     * implementation is applied, which adds vector elements
-     * sequentially from beginning to end.  For this reason, the
-     * output of this method may vary for the same input values,
-     * if the selected operator is {@code ADD} or {@code MUL}.
-     *
      *
      * @param op the operation used to combine lane values
      * @return the accumulated result
@@ -2318,7 +2248,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * If the operation is
      *  {@code ADD}
      * or {@code FIRST_NONZERO},
-     * then the identity value is zero, the default {@code double} value.
+     * then the identity value is positive zero, the default {@code double} value.
      * <li>
      * If the operation is {@code MUL},
      * then the identity value is one.
@@ -2329,17 +2259,30 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * If the operation is {@code MIN},
      * then the identity value is {@code Double.POSITIVE_INFINITY}.
      * </ul>
-     *
-     * @implNote
-     * The value of a floating-point reduction may be a function
-     * both of the input values as well as the order of scalar
-     * operations which combine those values, specifically in the
-     * case of {@code ADD} and {@code MUL} operations, where
-     * details of rounding depend on operand order.
-     * See {@linkplain #reduceLanes(VectorOperators.Associative)
-     * the unmasked version of this method}
-     * for a discussion.
-     *
+     * <p>
+     * A few reduction operations do not support arbitrary reordering
+     * of their operands, yet are included here because of their
+     * usefulness.
+     * <ul>
+     * <li>
+     * In the case of {@code FIRST_NONZERO}, the reduction returns
+     * the value from the lowest-numbered non-zero lane.
+     * (As with {@code MAX} and {@code MIN}, floating point negative
+     * zero {@code -0.0} is treated as a value distinct from
+     * the default value, positive zero. So a first-nonzero lane reduction
+     * might return {@code -0.0} even in the presence of non-zero
+     * lane values.)
+     * <li>
+     * In the case of {@code ADD} and {@code MUL}, the
+     * precise result will reflect the choice of an arbitrary order
+     * of operations, which may even vary over time.
+     * For further details see the section
+     * <a href="VectorOperators.html#fp_assoc">Operations on floating point vectors</a>.
+     * <li>
+     * All other reduction operations are fully commutative and
+     * associative.  The implementation can choose any order of
+     * processing, yet it will always produce the same result.
+     * </ul>
      *
      * @param op the operation used to combine lane values
      * @param m the mask controlling lane selection
@@ -2544,7 +2487,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * var bb = ByteBuffer.wrap(a);
      * var bo = ByteOrder.LITTLE_ENDIAN;
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2576,7 +2519,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2606,7 +2549,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of {@code double} (zero).
+     * value of {@code double} (positive zero).
      * Bytes are composed into primitive lane elements according
      * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
      * The vector is arranged into lanes according to
@@ -2644,9 +2587,9 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Loads a vector from a byte array starting at an offset
      * and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of {@code double} (zero).
+     * value of {@code double} (positive zero).
      * Bytes are composed into primitive lane elements according
-     * to {@linkplain ByteOrder#LITTLE_ENDIAN little endian} ordering.
+     * to the specified byte order.
      * The vector is arranged into lanes according to
      * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
@@ -2655,7 +2598,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * fromByteBuffer()} as follows:
      * <pre>{@code
      * var bb = ByteBuffer.wrap(a);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2721,7 +2664,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Loads a vector from an array of type {@code double[]}
      * starting at an offset and using a mask.
      * Lanes where the mask is unset are filled with the default
-     * value of {@code double} (zero).
+     * value of {@code double} (positive zero).
      * For each vector lane, where {@code N} is the vector lane index,
      * if the mask lane at index {@code N} is set then the array element at
      * index {@code offset + N} is placed into the resulting vector at lane index
@@ -2871,21 +2814,17 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     /**
      * Loads a vector from a {@linkplain ByteBuffer byte buffer}
      * starting at an offset into the byte buffer.
-     * <p>
-     * Bytes are composed into primitive lane elements according to
-     * {@link ByteOrder#LITTLE_ENDIAN little endian} byte order.
-     * To avoid errors, the
-     * {@linkplain ByteBuffer#order() intrinsic byte order}
-     * of the buffer must be little-endian.
+     * Bytes are composed into primitive lane elements according
+     * to the specified byte order.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
      * This method behaves as if it returns the result of calling
      * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
      * fromByteBuffer()} as follows:
      * <pre>{@code
-     * var bb = ByteBuffer.wrap(a);
-     * var bo = ByteOrder.LITTLE_ENDIAN;
      * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * return fromByteBuffer(species, bb, offset, bo, m);
      * }</pre>
      *
      * @param species species of desired vector
@@ -2893,8 +2832,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @param offset the offset into the byte buffer
      * @param bo the intended byte order
      * @return a vector loaded from a byte buffer
-     * @throws IllegalArgumentException if byte order of bb
-     *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*8 < 0}
      *         or {@code offset+N*8 >= bb.limit()}
@@ -2917,22 +2854,33 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * Loads a vector from a {@linkplain ByteBuffer byte buffer}
      * starting at an offset into the byte buffer
      * and using a mask.
+     * Lanes where the mask is unset are filled with the default
+     * value of {@code double} (positive zero).
+     * Bytes are composed into primitive lane elements according
+     * to the specified byte order.
+     * The vector is arranged into lanes according to
+     * <a href="Vector.html#lane-order">memory ordering</a>.
      * <p>
-     * Bytes are composed into primitive lane elements according to
-     * {@link ByteOrder#LITTLE_ENDIAN little endian} byte order.
-     * To avoid errors, the
-     * {@linkplain ByteBuffer#order() intrinsic byte order}
-     * of the buffer must be little-endian.
-     * <p>
-     * This method behaves as if it returns the result of calling
-     * {@link #fromByteBuffer(VectorSpecies,ByteBuffer,int,ByteOrder,VectorMask)
-     * fromByteBuffer()} as follows:
+     * The following pseudocode illustrates the behavior:
      * <pre>{@code
-     * var bb = ByteBuffer.wrap(a);
-     * var bo = ByteOrder.LITTLE_ENDIAN;
-     * var m = species.maskAll(true);
-     * return fromByteBuffer(species, bb, offset, m, bo);
+     * DoubleBuffer eb = bb.duplicate()
+     *     .position(offset)
+     *     .order(bo).asDoubleBuffer();
+     * double[] ar = new double[species.length()];
+     * for (int n = 0; n < ar.length; n++) {
+     *     if (m.laneIsSet(n)) {
+     *         ar[n] = eb.get(n);
+     *     }
+     * }
+     * DoubleVector r = DoubleVector.fromArray(species, ar, 0);
      * }</pre>
+     * @implNote
+     * This operation is likely to be more efficient if
+     * the specified byte order is the same as
+     * {@linkplain ByteOrder#nativeOrder()
+     * the platform native order},
+     * since this method will not need to reorder
+     * the bytes of lane values.
      *
      * @param species species of desired vector
      * @param bb the byte buffer
@@ -2940,8 +2888,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @param bo the intended byte order
      * @param m the mask controlling lane selection
      * @return a vector loaded from a byte buffer
-     * @throws IllegalArgumentException if byte order of bb
-     *         is not {@link ByteOrder#LITTLE_ENDIAN}
      * @throws IndexOutOfBoundsException
      *         if {@code offset+N*8 < 0}
      *         or {@code offset+N*8 >= bb.limit()}
@@ -3053,8 +2999,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @param offset an offset to combine with the index map offsets
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
-     * @returns a vector of the values {@code a[f(N)]}, where
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3124,8 +3068,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
      * @param indexMap the index map
      * @param mapOffset the offset into the index map
      * @param m the mask
-     * @returns a vector of the values {@code m ? a[f(N)] : 0},
-     *          {@code f(N) = offset + indexMap[mapOffset + N]]}.
      * @throws IndexOutOfBoundsException
      *         if {@code mapOffset+N < 0}
      *         or if {@code mapOffset+N >= indexMap.length},
@@ -3246,7 +3188,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     // typed vector or constant species instance.
 
     // Unchecked loading operations in native byte order.
-    // Caller is reponsible for applying index checks, masking, and
+    // Caller is responsible for applying index checks, masking, and
     // byte swapping.
 
     /*package-private*/
@@ -3298,7 +3240,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
     }
 
     // Unchecked storing operations in native byte order.
-    // Caller is reponsible for applying index checks, masking, and
+    // Caller is responsible for applying index checks, masking, and
     // byte swapping.
 
     abstract
@@ -3573,7 +3515,6 @@ public abstract class DoubleVector extends AbstractVector<Double> {
 
         /*package-private*/
         @ForceInline
-        
         final DoubleVector broadcast(double e) {
             return broadcastBits(toBits(e));
         }
@@ -3741,7 +3682,7 @@ public abstract class DoubleVector extends AbstractVector<Double> {
                 case 512: return Double512Vector.ZERO;
             }
             throw new AssertionError();
-        }        
+        }
 
         @Override
         @ForceInline
