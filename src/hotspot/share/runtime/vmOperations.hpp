@@ -49,7 +49,6 @@
   template(ClearICs)                              \
   template(ForceSafepoint)                        \
   template(ForceAsyncSafepoint)                   \
-  template(Deoptimize)                            \
   template(DeoptimizeFrame)                       \
   template(DeoptimizeAll)                         \
   template(ZombieAll)                             \
@@ -64,11 +63,10 @@
   template(GenCollectForAllocation)               \
   template(ParallelGCFailedAllocation)            \
   template(ParallelGCSystemGC)                    \
-  template(CMS_Initial_Mark)                      \
-  template(CMS_Final_Remark)                      \
   template(G1CollectForAllocation)                \
   template(G1CollectFull)                         \
   template(G1Concurrent)                          \
+  template(G1TryInitiateConcMark)                 \
   template(ZMarkStart)                            \
   template(ZMarkEnd)                              \
   template(ZRelocateStart)                        \
@@ -146,7 +144,6 @@ class VM_Operation: public CHeapObj<mtInternal> {
 
  private:
   Thread*         _calling_thread;
-  ThreadPriority  _priority;
   long            _timestamp;
   VM_Operation*   _next;
   VM_Operation*   _prev;
@@ -160,8 +157,7 @@ class VM_Operation: public CHeapObj<mtInternal> {
 
   // VM operation support (used by VM thread)
   Thread* calling_thread() const                 { return _calling_thread; }
-  ThreadPriority priority()                      { return _priority; }
-  void set_calling_thread(Thread* thread, ThreadPriority priority);
+  void set_calling_thread(Thread* thread);
 
   long timestamp() const              { return _timestamp; }
   void set_timestamp(long timestamp)  { _timestamp = timestamp; }
@@ -318,14 +314,6 @@ class VM_GTestExecuteAtSafepoint: public VM_Operation {
 
  protected:
   VM_GTestExecuteAtSafepoint() {}
-};
-
-class VM_Deoptimize: public VM_Operation {
- public:
-  VM_Deoptimize() {}
-  VMOp_Type type() const                        { return VMOp_Deoptimize; }
-  void doit();
-  bool allow_nested_vm_operations() const        { return true; }
 };
 
 class VM_MarkActiveNMethods: public VM_Operation {

@@ -28,6 +28,7 @@
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
+#include "compiler/compilationPolicy.hpp"
 #include "compiler/compileBroker.hpp"
 #include "compiler/disassembler.hpp"
 #include "gc/shared/barrierSetNMethod.hpp"
@@ -52,7 +53,6 @@
 #include "prims/nativeLookup.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/biasedLocking.hpp"
-#include "runtime/compilationPolicy.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/frame.inline.hpp"
@@ -206,7 +206,7 @@ JRT_ENTRY(void, InterpreterRuntime::resolve_ldc(JavaThread* thread, Bytecodes::C
     if (rindex >= 0) {
       oop coop = m->constants()->resolved_references()->obj_at(rindex);
       oop roop = (result == NULL ? Universe::the_null_sentinel() : result);
-      assert(oopDesc::equals(roop, coop), "expected result for assembly code");
+      assert(roop == coop, "expected result for assembly code");
     }
   }
 #endif
@@ -356,7 +356,7 @@ void InterpreterRuntime::note_trap(JavaThread* thread, int reason, TRAPS) {
 #ifdef CC_INTERP
 // As legacy note_trap, but we have more arguments.
 JRT_ENTRY(void, InterpreterRuntime::note_trap(JavaThread* thread, int reason, Method *method, int trap_bci))
-  methodHandle trap_method(method);
+  methodHandle trap_method(thread, method);
   note_trap_inner(thread, reason, trap_method, trap_bci, THREAD);
 JRT_END
 
@@ -769,15 +769,10 @@ JRT_ENTRY_NO_ASYNC(void, InterpreterRuntime::monitorenter(JavaThread* thread, Ba
     Atomic::inc(BiasedLocking::slow_path_entry_count_addr());
   }
   Handle h_obj(thread, elem->obj());
-  assert(Universe::heap()->is_in_reserved_or_null(h_obj()),
+  assert(Universe::heap()->is_in_or_null(h_obj()),
          "must be NULL or an object");
-  if (UseBiasedLocking) {
-    // Retry fast entry if bias is revoked to avoid unnecessary inflation
-    ObjectSynchronizer::fast_enter(h_obj, elem->lock(), true, CHECK);
-  } else {
-    ObjectSynchronizer::slow_enter(h_obj, elem->lock(), CHECK);
-  }
-  assert(Universe::heap()->is_in_reserved_or_null(elem->obj()),
+  ObjectSynchronizer::enter(h_obj, elem->lock(), CHECK);
+  assert(Universe::heap()->is_in_or_null(elem->obj()),
          "must be NULL or an object");
 #ifdef ASSERT
   thread->last_frame().interpreter_frame_verify_monitor(elem);
@@ -791,12 +786,12 @@ JRT_ENTRY_NO_ASYNC(void, InterpreterRuntime::monitorexit(JavaThread* thread, Bas
   thread->last_frame().interpreter_frame_verify_monitor(elem);
 #endif
   Handle h_obj(thread, elem->obj());
-  assert(Universe::heap()->is_in_reserved_or_null(h_obj()),
+  assert(Universe::heap()->is_in_or_null(h_obj()),
          "must be NULL or an object");
   if (elem == NULL || h_obj()->is_unlocked()) {
     THROW(vmSymbols::java_lang_IllegalMonitorStateException());
   }
-  ObjectSynchronizer::slow_exit(h_obj(), elem->lock(), thread);
+  ObjectSynchronizer::exit(h_obj(), elem->lock(), thread);
   // Free entry. This must be done here, since a pending exception might be installed on
   // exit. If it is not cleared, the exception handling code will try to unlock the monitor again.
   elem->set_obj(NULL);
@@ -858,10 +853,10 @@ void InterpreterRuntime::resolve_invoke(JavaThread* thread, Bytecodes::Code byte
     Symbol* signature = call.signature();
     receiver = Handle(thread, last_frame.callee_receiver(signature));
 
-    assert(Universe::heap()->is_in_reserved_or_null(receiver()),
+    assert(Universe::heap()->is_in_or_null(receiver()),
            "sanity check");
     assert(receiver.is_null() ||
-           !Universe::heap()->is_in_reserved(receiver->klass()),
+           !Universe::heap()->is_in(receiver->klass()),
            "sanity check");
   }
 
@@ -902,7 +897,7 @@ void InterpreterRuntime::resolve_invoke(JavaThread* thread, Bytecodes::Code byte
       // (see also CallInfo::set_interface for details)
       assert(info.call_kind() == CallInfo::vtable_call ||
              info.call_kind() == CallInfo::direct_call, "");
-      methodHandle rm = info.resolved_method();
+      Method* rm = info.resolved_method();
       assert(rm->is_final() || info.has_vtable_index(),
              "should have been set already");
     } else if (!info.resolved_method()->has_itable_index()) {
@@ -926,25 +921,26 @@ void InterpreterRuntime::resolve_invoke(JavaThread* thread, Bytecodes::Code byte
   // methods must be checked for every call.
   InstanceKlass* sender = pool->pool_holder();
   sender = sender->is_unsafe_anonymous() ? sender->unsafe_anonymous_host() : sender;
+  methodHandle resolved_method(THREAD, info.resolved_method());
 
   switch (info.call_kind()) {
   case CallInfo::direct_call:
     cp_cache_entry->set_direct_call(
       bytecode,
-      info.resolved_method(),
+      resolved_method,
       sender->is_interface());
     break;
   case CallInfo::vtable_call:
     cp_cache_entry->set_vtable_call(
       bytecode,
-      info.resolved_method(),
+      resolved_method,
       info.vtable_index());
     break;
   case CallInfo::itable_call:
     cp_cache_entry->set_itable_call(
       bytecode,
       info.resolved_klass(),
-      info.resolved_method(),
+      resolved_method,
       info.itable_index());
     break;
   default:  ShouldNotReachHere();
@@ -1254,15 +1250,15 @@ JRT_ENTRY(void, InterpreterRuntime::post_field_modification(JavaThread *thread,
   char sig_type = '\0';
 
   switch(cp_entry->flag_state()) {
-    case btos: sig_type = 'B'; break;
-    case ztos: sig_type = 'Z'; break;
-    case ctos: sig_type = 'C'; break;
-    case stos: sig_type = 'S'; break;
-    case itos: sig_type = 'I'; break;
-    case ftos: sig_type = 'F'; break;
-    case atos: sig_type = 'L'; break;
-    case ltos: sig_type = 'J'; break;
-    case dtos: sig_type = 'D'; break;
+    case btos: sig_type = JVM_SIGNATURE_BYTE;    break;
+    case ztos: sig_type = JVM_SIGNATURE_BOOLEAN; break;
+    case ctos: sig_type = JVM_SIGNATURE_CHAR;    break;
+    case stos: sig_type = JVM_SIGNATURE_SHORT;   break;
+    case itos: sig_type = JVM_SIGNATURE_INT;     break;
+    case ftos: sig_type = JVM_SIGNATURE_FLOAT;   break;
+    case atos: sig_type = JVM_SIGNATURE_CLASS;   break;
+    case ltos: sig_type = JVM_SIGNATURE_LONG;    break;
+    case dtos: sig_type = JVM_SIGNATURE_DOUBLE;  break;
     default:  ShouldNotReachHere(); return;
   }
   bool is_static = (obj == NULL);
@@ -1440,7 +1436,7 @@ void SignatureHandlerLibrary::add(const methodHandle& method) {
         method->set_signature_handler(_handlers->at(handler_index));
       }
     } else {
-      CHECK_UNHANDLED_OOPS_ONLY(Thread::current()->clear_unhandled_oops());
+      DEBUG_ONLY(Thread::current()->check_possible_safepoint());
       // use generic signature handler
       method->set_signature_handler(Interpreter::slow_signature_handler());
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,10 +27,13 @@ package jdk.jfr.internal.dcmd;
 
 
 
+import jdk.jfr.FlightRecorder;
 import jdk.jfr.internal.LogLevel;
 import jdk.jfr.internal.LogTag;
 import jdk.jfr.internal.Logger;
 import jdk.jfr.internal.Options;
+import jdk.jfr.internal.PlatformRecorder;
+import jdk.jfr.internal.PrivateAccess;
 import jdk.jfr.internal.Repository;
 import jdk.jfr.internal.SecuritySupport.SafePath;
 
@@ -87,7 +90,11 @@ final class DCmdConfigure extends AbstractDCmd {
         if (repositoryPath != null) {
             try {
                 SafePath s = new SafePath(repositoryPath);
-                Repository.getRepository().setBasePath(s);
+                if (FlightRecorder.isInitialized()) {
+                    PrivateAccess.getInstance().getPlatformRecorder().migrate(s);
+                } else {
+                    Repository.getRepository().setBasePath(s);
+                }
                 Logger.log(LogTag.JFR, LogLevel.INFO, "Base repository path set to " + repositoryPath);
             } catch (Exception e) {
                 throw new DCmdException("Could not use " + repositoryPath + " as repository. " + e.getMessage(), e);

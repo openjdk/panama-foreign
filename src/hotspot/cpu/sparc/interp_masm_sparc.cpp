@@ -29,7 +29,7 @@
 #include "interpreter/interpreterRuntime.hpp"
 #include "logging/log.hpp"
 #include "oops/arrayOop.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "oops/methodData.hpp"
 #include "oops/method.hpp"
 #include "oops/methodCounters.hpp"
@@ -91,7 +91,6 @@ void InterpreterMacroAssembler::dispatch_prolog(TosState state, int bcp_incr) {
 // dispatch.
 void InterpreterMacroAssembler::dispatch_epilog(TosState state, int bcp_incr) {
   assert_not_delayed();
-  verify_FPU(1, state);
   interp_verify_oop(Otos_i, state, __FILE__, __LINE__);
   jmp( IdispatchAddress, 0 );
   if (bcp_incr != 0)  delayed()->inc(Lbcp, bcp_incr);
@@ -264,7 +263,6 @@ void InterpreterMacroAssembler::dispatch_only(TosState state) {
 // dispatch value in Lbyte_code and increment Lbcp
 
 void InterpreterMacroAssembler::dispatch_Lbyte_code(TosState state, address* table, int bcp_incr, bool verify, bool generate_poll) {
-  verify_FPU(1, state);
   // %%%%% maybe implement +VerifyActivationFrameSize here
   //verify_thread(); //too slow; we will just verify on method entry & exit
   if (verify) interp_verify_oop(Otos_i, state, __FILE__, __LINE__);
@@ -1200,7 +1198,7 @@ void InterpreterMacroAssembler::lock_object(Register lock_reg, Register Object) 
 
     assert_different_registers(lock_reg, obj_reg, mark_reg, temp_reg);
 
-    // load markOop from object into mark_reg
+    // load markWord from object into mark_reg
     ld_ptr(mark_addr, mark_reg);
 
     if (UseBiasedLocking) {
@@ -1211,11 +1209,11 @@ void InterpreterMacroAssembler::lock_object(Register lock_reg, Register Object) 
     // we need a temporary register here as we do not want to clobber lock_reg
     // (cas clobbers the destination register)
     mov(lock_reg, temp_reg);
-    // set mark reg to be (markOop of object | UNLOCK_VALUE)
-    or3(mark_reg, markOopDesc::unlocked_value, mark_reg);
+    // set mark reg to be (markWord of object | UNLOCK_VALUE)
+    or3(mark_reg, markWord::unlocked_value, mark_reg);
     // initialize the box  (Must happen before we update the object mark!)
     st_ptr(mark_reg, lock_addr, BasicLock::displaced_header_offset_in_bytes());
-    // compare and exchange object_addr, markOop | 1, stack address of basicLock
+    // compare and exchange object_addr, markWord | 1, stack address of basicLock
     assert(mark_addr.disp() == 0, "cas must take a zero displacement");
     cas_ptr(mark_addr.base(), mark_reg, temp_reg);
 
@@ -1224,7 +1222,7 @@ void InterpreterMacroAssembler::lock_object(Register lock_reg, Register Object) 
 
     // We did not see an unlocked object so try the fast recursive case
 
-    // Check if owner is self by comparing the value in the markOop of object
+    // Check if owner is self by comparing the value in the markWord of object
     // with the stack pointer
     sub(temp_reg, SP, temp_reg);
     sub(temp_reg, STACK_BIAS, temp_reg);
@@ -1234,7 +1232,7 @@ void InterpreterMacroAssembler::lock_object(Register lock_reg, Register Object) 
     // (a) %sp -vs- markword proximity check, and,
     // (b) verify mark word LSBs == 0 (Stack-locked).
     //
-    // FFFFF003/FFFFFFFFFFFF003 is (markOopDesc::lock_mask_in_place | -os::vm_page_size())
+    // FFFFF003/FFFFFFFFFFFF003 is (markWord::lock_mask_in_place | -os::vm_page_size())
     // Note that the page size used for %sp proximity testing is arbitrary and is
     // unrelated to the actual MMU page size.  We use a 'logical' page size of
     // 4096 bytes.   F..FFF003 is designed to fit conveniently in the SIMM13 immediate
@@ -2542,11 +2540,6 @@ void InterpreterMacroAssembler::verify_oop_or_return_address(Register reg, Regis
   bind(test);
   verify_oop(reg);
   bind(skip);
-}
-
-
-void InterpreterMacroAssembler::verify_FPU(int stack_depth, TosState state) {
-  if (state == ftos || state == dtos) MacroAssembler::verify_FPU(stack_depth);
 }
 
 

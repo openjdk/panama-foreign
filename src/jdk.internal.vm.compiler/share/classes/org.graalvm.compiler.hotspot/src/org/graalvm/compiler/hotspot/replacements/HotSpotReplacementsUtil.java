@@ -51,6 +51,7 @@ import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.extended.ForeignCallNode;
 import org.graalvm.compiler.nodes.extended.LoadHubNode;
+import org.graalvm.compiler.nodes.extended.LoadHubOrNullNode;
 import org.graalvm.compiler.nodes.extended.RawLoadNode;
 import org.graalvm.compiler.nodes.extended.StoreHubNode;
 import org.graalvm.compiler.nodes.graphbuilderconf.IntrinsicContext;
@@ -307,11 +308,13 @@ public class HotSpotReplacementsUtil {
 
     @Fold
     public static int osThreadOffset(@InjectedParameter GraalHotSpotVMConfig config) {
+        assert config.osThreadOffset != Integer.MAX_VALUE;
         return config.osThreadOffset;
     }
 
     @Fold
     public static int osThreadInterruptedOffset(@InjectedParameter GraalHotSpotVMConfig config) {
+        assert config.osThreadInterruptedOffset != Integer.MAX_VALUE;
         return config.osThreadInterruptedOffset;
     }
 
@@ -777,16 +780,33 @@ public class HotSpotReplacementsUtil {
     @NodeIntrinsic(value = LoadHubNode.class)
     public static native KlassPointer loadHubIntrinsic(Object object);
 
-    public static final LocationIdentity CLASS_STATE_LOCATION = NamedLocationIdentity.mutable("ClassState");
+    @NodeIntrinsic(value = LoadHubOrNullNode.class)
+    public static native KlassPointer loadHubOrNullIntrinsic(Object object);
+
+    static final LocationIdentity CLASS_INIT_STATE_LOCATION = NamedLocationIdentity.mutable("ClassInitState");
+
+    static final LocationIdentity CLASS_INIT_THREAD_LOCATION = NamedLocationIdentity.mutable("ClassInitThread");
 
     @Fold
-    public static int instanceKlassInitStateOffset(@InjectedParameter GraalHotSpotVMConfig config) {
+    static int instanceKlassInitStateOffset(@InjectedParameter GraalHotSpotVMConfig config) {
         return config.instanceKlassInitStateOffset;
+    }
+
+    @Fold
+    static int instanceKlassInitThreadOffset(@InjectedParameter GraalHotSpotVMConfig config) {
+        assert config.instanceKlassInitThreadOffset != -1;
+        return config.instanceKlassInitThreadOffset;
     }
 
     @Fold
     public static int instanceKlassStateFullyInitialized(@InjectedParameter GraalHotSpotVMConfig config) {
         return config.instanceKlassStateFullyInitialized;
+    }
+
+    @Fold
+    public static int instanceKlassStateBeingInitialized(@InjectedParameter GraalHotSpotVMConfig config) {
+        assert config.instanceKlassStateBeingInitialized != -1;
+        return config.instanceKlassStateBeingInitialized;
     }
 
     /**
@@ -795,11 +815,15 @@ public class HotSpotReplacementsUtil {
      * @return true is the InstanceKlass represented by hub is fully initialized
      */
     public static boolean isInstanceKlassFullyInitialized(KlassPointer hub) {
-        return readInstanceKlassState(hub) == instanceKlassStateFullyInitialized(INJECTED_VMCONFIG);
+        return readInstanceKlassInitState(hub) == instanceKlassStateFullyInitialized(INJECTED_VMCONFIG);
     }
 
-    private static byte readInstanceKlassState(KlassPointer hub) {
-        return hub.readByte(instanceKlassInitStateOffset(INJECTED_VMCONFIG), CLASS_STATE_LOCATION);
+    static byte readInstanceKlassInitState(KlassPointer hub) {
+        return hub.readByte(instanceKlassInitStateOffset(INJECTED_VMCONFIG), CLASS_INIT_STATE_LOCATION);
+    }
+
+    static Word readInstanceKlassInitThread(KlassPointer hub) {
+        return hub.readWord(instanceKlassInitThreadOffset(INJECTED_VMCONFIG), CLASS_INIT_THREAD_LOCATION);
     }
 
     public static final LocationIdentity KLASS_MODIFIER_FLAGS_LOCATION = NamedLocationIdentity.immutable("Klass::_modifier_flags");

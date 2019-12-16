@@ -265,8 +265,6 @@ void os::Solaris::try_enable_extended_io() {
   }
 }
 
-static int _processors_online = 0;
-
 jint os::Solaris::_os_thread_limit = 0;
 volatile jint os::Solaris::_os_thread_count = 0;
 
@@ -291,7 +289,6 @@ static volatile hrtime_t max_hrtime = 0;
 
 void os::Solaris::initialize_system_info() {
   set_processor_count(sysconf(_SC_NPROCESSORS_CONF));
-  _processors_online = sysconf(_SC_NPROCESSORS_ONLN);
   _physical_memory = (julong)sysconf(_SC_PHYS_PAGES) *
                                      (julong)sysconf(_SC_PAGESIZE);
 }
@@ -320,144 +317,11 @@ int os::active_processor_count() {
     // Query the number of cpus available to us.
     if (pset_info(pset, NULL, &pset_cpus, NULL) == 0) {
       assert(pset_cpus > 0 && pset_cpus <= online_cpus, "sanity check");
-      _processors_online = pset_cpus;
       return pset_cpus;
     }
   }
   // Otherwise return number of online cpus
   return online_cpus;
-}
-
-static bool find_processors_in_pset(psetid_t        pset,
-                                    processorid_t** id_array,
-                                    uint_t*         id_length) {
-  bool result = false;
-  // Find the number of processors in the processor set.
-  if (pset_info(pset, NULL, id_length, NULL) == 0) {
-    // Make up an array to hold their ids.
-    *id_array = NEW_C_HEAP_ARRAY(processorid_t, *id_length, mtInternal);
-    // Fill in the array with their processor ids.
-    if (pset_info(pset, NULL, id_length, *id_array) == 0) {
-      result = true;
-    }
-  }
-  return result;
-}
-
-// Callers of find_processors_online() must tolerate imprecise results --
-// the system configuration can change asynchronously because of DR
-// or explicit psradm operations.
-//
-// We also need to take care that the loop (below) terminates as the
-// number of processors online can change between the _SC_NPROCESSORS_ONLN
-// request and the loop that builds the list of processor ids.   Unfortunately
-// there's no reliable way to determine the maximum valid processor id,
-// so we use a manifest constant, MAX_PROCESSOR_ID, instead.  See p_online
-// man pages, which claim the processor id set is "sparse, but
-// not too sparse".  MAX_PROCESSOR_ID is used to ensure that we eventually
-// exit the loop.
-//
-// In the future we'll be able to use sysconf(_SC_CPUID_MAX), but that's
-// not available on S8.0.
-
-static bool find_processors_online(processorid_t** id_array,
-                                   uint*           id_length) {
-  const processorid_t MAX_PROCESSOR_ID = 100000;
-  // Find the number of processors online.
-  *id_length = sysconf(_SC_NPROCESSORS_ONLN);
-  // Make up an array to hold their ids.
-  *id_array = NEW_C_HEAP_ARRAY(processorid_t, *id_length, mtInternal);
-  // Processors need not be numbered consecutively.
-  long found = 0;
-  processorid_t next = 0;
-  while (found < *id_length && next < MAX_PROCESSOR_ID) {
-    processor_info_t info;
-    if (processor_info(next, &info) == 0) {
-      // NB, PI_NOINTR processors are effectively online ...
-      if (info.pi_state == P_ONLINE || info.pi_state == P_NOINTR) {
-        (*id_array)[found] = next;
-        found += 1;
-      }
-    }
-    next += 1;
-  }
-  if (found < *id_length) {
-    // The loop above didn't identify the expected number of processors.
-    // We could always retry the operation, calling sysconf(_SC_NPROCESSORS_ONLN)
-    // and re-running the loop, above, but there's no guarantee of progress
-    // if the system configuration is in flux.  Instead, we just return what
-    // we've got.  Note that in the worst case find_processors_online() could
-    // return an empty set.  (As a fall-back in the case of the empty set we
-    // could just return the ID of the current processor).
-    *id_length = found;
-  }
-
-  return true;
-}
-
-static bool assign_distribution(processorid_t* id_array,
-                                uint           id_length,
-                                uint*          distribution,
-                                uint           distribution_length) {
-  // We assume we can assign processorid_t's to uint's.
-  assert(sizeof(processorid_t) == sizeof(uint),
-         "can't convert processorid_t to uint");
-  // Quick check to see if we won't succeed.
-  if (id_length < distribution_length) {
-    return false;
-  }
-  // Assign processor ids to the distribution.
-  // Try to shuffle processors to distribute work across boards,
-  // assuming 4 processors per board.
-  const uint processors_per_board = ProcessDistributionStride;
-  // Find the maximum processor id.
-  processorid_t max_id = 0;
-  for (uint m = 0; m < id_length; m += 1) {
-    max_id = MAX2(max_id, id_array[m]);
-  }
-  // The next id, to limit loops.
-  const processorid_t limit_id = max_id + 1;
-  // Make up markers for available processors.
-  bool* available_id = NEW_C_HEAP_ARRAY(bool, limit_id, mtInternal);
-  for (uint c = 0; c < limit_id; c += 1) {
-    available_id[c] = false;
-  }
-  for (uint a = 0; a < id_length; a += 1) {
-    available_id[id_array[a]] = true;
-  }
-  // Step by "boards", then by "slot", copying to "assigned".
-  // NEEDS_CLEANUP: The assignment of processors should be stateful,
-  //                remembering which processors have been assigned by
-  //                previous calls, etc., so as to distribute several
-  //                independent calls of this method.  What we'd like is
-  //                It would be nice to have an API that let us ask
-  //                how many processes are bound to a processor,
-  //                but we don't have that, either.
-  //                In the short term, "board" is static so that
-  //                subsequent distributions don't all start at board 0.
-  static uint board = 0;
-  uint assigned = 0;
-  // Until we've found enough processors ....
-  while (assigned < distribution_length) {
-    // ... find the next available processor in the board.
-    for (uint slot = 0; slot < processors_per_board; slot += 1) {
-      uint try_id = board * processors_per_board + slot;
-      if ((try_id < limit_id) && (available_id[try_id] == true)) {
-        distribution[assigned] = try_id;
-        available_id[try_id] = false;
-        assigned += 1;
-        break;
-      }
-    }
-    board += 1;
-    if (board * processors_per_board + 0 >= limit_id) {
-      board = 0;
-    }
-  }
-  if (available_id != NULL) {
-    FREE_C_HEAP_ARRAY(bool, available_id);
-  }
-  return true;
 }
 
 void os::set_native_thread_name(const char *name) {
@@ -470,33 +334,6 @@ void os::set_native_thread_name(const char *name) {
     buf[sizeof(buf) - 1] = '\0';
     Solaris::_pthread_setname_np(pthread_self(), buf);
   }
-}
-
-bool os::distribute_processes(uint length, uint* distribution) {
-  bool result = false;
-  // Find the processor id's of all the available CPUs.
-  processorid_t* id_array  = NULL;
-  uint           id_length = 0;
-  // There are some races between querying information and using it,
-  // since processor sets can change dynamically.
-  psetid_t pset = PS_NONE;
-  // Are we running in a processor set?
-  if ((pset_bind(PS_QUERY, P_PID, P_MYID, &pset) == 0) && pset != PS_NONE) {
-    result = find_processors_in_pset(pset, &id_array, &id_length);
-  } else {
-    result = find_processors_online(&id_array, &id_length);
-  }
-  if (result == true) {
-    if (id_length >= length) {
-      result = assign_distribution(id_array, id_length, distribution, length);
-    } else {
-      result = false;
-    }
-  }
-  if (id_array != NULL) {
-    FREE_C_HEAP_ARRAY(processorid_t, id_array);
-  }
-  return result;
 }
 
 bool os::bind_to_processor(uint processor_id) {
@@ -562,7 +399,7 @@ void os::init_system_properties_values() {
     MAX3((size_t)MAXPATHLEN,  // For dll_dir & friends.
          sizeof(SYS_EXT_DIR) + sizeof("/lib/"), // invariant ld_library_path
          (size_t)MAXPATHLEN + sizeof(EXTENSIONS_DIR) + sizeof(SYS_EXT_DIR) + sizeof(EXTENSIONS_DIR)); // extensions dir
-  char *buf = (char *)NEW_C_HEAP_ARRAY(char, bufsize, mtInternal);
+  char *buf = NEW_C_HEAP_ARRAY(char, bufsize, mtInternal);
 
   // sysclasspath, java_home, dll_dir
   {
@@ -648,7 +485,7 @@ void os::init_system_properties_values() {
     // through the dlinfo() call, so only add additional space for the path
     // components explicitly added here.
     size_t library_path_size = info->dls_size + strlen(common_path);
-    library_path = (char *)NEW_C_HEAP_ARRAY(char, library_path_size, mtInternal);
+    library_path = NEW_C_HEAP_ARRAY(char, library_path_size, mtInternal);
     library_path[0] = '\0';
 
     // Construct the desired Java library path from the linker's library
@@ -1187,7 +1024,7 @@ inline hrtime_t getTimeNanos() {
   if (now <= prev) {
     return prev;   // same or retrograde time;
   }
-  const hrtime_t obsv = Atomic::cmpxchg(now, &max_hrtime, prev);
+  const hrtime_t obsv = Atomic::cmpxchg(&max_hrtime, prev, now);
   assert(obsv >= prev, "invariant");   // Monotonicity
   // If the CAS succeeded then we're done and return "now".
   // If the CAS failed and the observed value "obsv" is >= now then
@@ -1241,8 +1078,6 @@ bool os::getTimesSecs(double* process_real_time,
 }
 
 bool os::supports_vtime() { return true; }
-bool os::enable_vtime() { return false; }
-bool os::vtime_enabled() { return false; }
 
 double os::elapsedVTime() {
   return (double)gethrvtime() / (double)hrtime_hz;
@@ -1596,6 +1431,10 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
     unsigned char endianess;    // MSB or LSB
     char*         name;         // String representation
   } arch_t;
+
+#ifndef EM_AARCH64
+  #define EM_AARCH64    183               /* ARM AARCH64 */
+#endif
 
   static const arch_t arch_array[]={
     {EM_386,         EM_386,     ELFCLASS32, ELFDATA2LSB, (char*)"IA 32"},
@@ -2145,7 +1984,7 @@ static int check_pending_signals() {
   while (true) {
     for (int i = 0; i < Sigexit + 1; i++) {
       jint n = pending_signals[i];
-      if (n > 0 && n == Atomic::cmpxchg(n - 1, &pending_signals[i], n)) {
+      if (n > 0 && n == Atomic::cmpxchg(&pending_signals[i], n, n - 1)) {
         return i;
       }
     }
@@ -2233,7 +2072,7 @@ int os::Solaris::commit_memory_impl(char* addr, size_t bytes, bool exec) {
   char *res = Solaris::mmap_chunk(addr, size, MAP_PRIVATE|MAP_FIXED, prot);
   if (res != NULL) {
     if (UseNUMAInterleaving) {
-      numa_make_global(addr, bytes);
+        numa_make_global(addr, bytes);
     }
     return 0;
   }
@@ -2426,6 +2265,10 @@ int os::numa_get_group_id() {
     return 0;
   }
   return ids[os::random() % r];
+}
+
+int os::numa_get_group_id_for_address(const void* address) {
+  return 0;
 }
 
 // Request information about the page.
@@ -3845,15 +3688,11 @@ void os::Solaris::install_signal_handlers() {
   // Log that signal checking is off only if -verbose:jni is specified.
   if (CheckJNICalls) {
     if (libjsig_is_loaded) {
-      if (PrintJNIResolving) {
-        tty->print_cr("Info: libjsig is activated, all active signal checking is disabled");
-      }
+      log_debug(jni, resolve)("Info: libjsig is activated, all active signal checking is disabled");
       check_signals = false;
     }
     if (AllowUserSignalHandlers) {
-      if (PrintJNIResolving) {
-        tty->print_cr("Info: AllowUserSignalHandlers is activated, all active signal checking is disabled");
-      }
+      log_debug(jni, resolve)("Info: AllowUserSignalHandlers is activated, all active signal checking is disabled");
       check_signals = false;
     }
   }
@@ -4428,7 +4267,7 @@ bool os::pd_unmap_memory(char* addr, size_t bytes) {
 void os::pause() {
   char filename[MAX_PATH];
   if (PauseAtStartupFile && PauseAtStartupFile[0]) {
-    jio_snprintf(filename, MAX_PATH, PauseAtStartupFile);
+    jio_snprintf(filename, MAX_PATH, "%s", PauseAtStartupFile);
   } else {
     jio_snprintf(filename, MAX_PATH, "./vm.paused.%d", current_process_id());
   }
@@ -4871,7 +4710,7 @@ void os::PlatformEvent::park() {           // AKA: down()
   int v;
   for (;;) {
     v = _Event;
-    if (Atomic::cmpxchg(v-1, &_Event, v) == v) break;
+    if (Atomic::cmpxchg(&_Event, v, v-1) == v) break;
   }
   guarantee(v >= 0, "invariant");
   if (v == 0) {
@@ -4909,7 +4748,7 @@ int os::PlatformEvent::park(jlong millis) {
   int v;
   for (;;) {
     v = _Event;
-    if (Atomic::cmpxchg(v-1, &_Event, v) == v) break;
+    if (Atomic::cmpxchg(&_Event, v, v-1) == v) break;
   }
   guarantee(v >= 0, "invariant");
   if (v != 0) return OS_OK;
@@ -4958,7 +4797,7 @@ void os::PlatformEvent::unpark() {
   // from the first park() call after an unpark() call which will help
   // shake out uses of park() and unpark() without condition variables.
 
-  if (Atomic::xchg(1, &_Event) >= 0) return;
+  if (Atomic::xchg(&_Event, 1) >= 0) return;
 
   // If the thread associated with the event was parked, wake it.
   // Wait for the thread assoc with the PlatformEvent to vacate.
@@ -5057,13 +4896,13 @@ void Parker::park(bool isAbsolute, jlong time) {
   // Return immediately if a permit is available.
   // We depend on Atomic::xchg() having full barrier semantics
   // since we are doing a lock-free update to _counter.
-  if (Atomic::xchg(0, &_counter) > 0) return;
+  if (Atomic::xchg(&_counter, 0) > 0) return;
 
   // Optional fast-exit: Check interrupt before trying to wait
   Thread* thread = Thread::current();
   assert(thread->is_Java_thread(), "Must be JavaThread");
   JavaThread *jt = (JavaThread *)thread;
-  if (Thread::is_interrupted(thread, false)) {
+  if (jt->is_interrupted(false)) {
     return;
   }
 
@@ -5086,10 +4925,12 @@ void Parker::park(bool isAbsolute, jlong time) {
   // the ThreadBlockInVM() CTOR and DTOR may grab Threads_lock.
   ThreadBlockInVM tbivm(jt);
 
+  // Can't access interrupt state now that we are _thread_blocked. If we've
+  // been interrupted since we checked above then _counter will be > 0.
+
   // Don't wait if cannot get lock since interference arises from
-  // unblocking.  Also. check interrupt before trying wait
-  if (Thread::is_interrupted(thread, false) ||
-      os::Solaris::mutex_trylock(_mutex) != 0) {
+  // unblocking.
+  if (os::Solaris::mutex_trylock(_mutex) != 0) {
     return;
   }
 
@@ -5149,36 +4990,42 @@ void Parker::unpark() {
   }
 }
 
-// Platform Monitor implementation
+// Platform Mutex/Monitor implementations
+
+os::PlatformMutex::PlatformMutex() {
+  int status = os::Solaris::mutex_init(&_mutex);
+  assert_status(status == 0, status, "mutex_init");
+}
+
+os::PlatformMutex::~PlatformMutex() {
+  int status = os::Solaris::mutex_destroy(&_mutex);
+  assert_status(status == 0, status, "mutex_destroy");
+}
+
+void os::PlatformMutex::lock() {
+  int status = os::Solaris::mutex_lock(&_mutex);
+  assert_status(status == 0, status, "mutex_lock");
+}
+
+void os::PlatformMutex::unlock() {
+  int status = os::Solaris::mutex_unlock(&_mutex);
+  assert_status(status == 0, status, "mutex_unlock");
+}
+
+bool os::PlatformMutex::try_lock() {
+  int status = os::Solaris::mutex_trylock(&_mutex);
+  assert_status(status == 0 || status == EBUSY, status, "mutex_trylock");
+  return status == 0;
+}
 
 os::PlatformMonitor::PlatformMonitor() {
   int status = os::Solaris::cond_init(&_cond);
   assert_status(status == 0, status, "cond_init");
-  status = os::Solaris::mutex_init(&_mutex);
-  assert_status(status == 0, status, "mutex_init");
 }
 
 os::PlatformMonitor::~PlatformMonitor() {
   int status = os::Solaris::cond_destroy(&_cond);
   assert_status(status == 0, status, "cond_destroy");
-  status = os::Solaris::mutex_destroy(&_mutex);
-  assert_status(status == 0, status, "mutex_destroy");
-}
-
-void os::PlatformMonitor::lock() {
-  int status = os::Solaris::mutex_lock(&_mutex);
-  assert_status(status == 0, status, "mutex_lock");
-}
-
-void os::PlatformMonitor::unlock() {
-  int status = os::Solaris::mutex_unlock(&_mutex);
-  assert_status(status == 0, status, "mutex_unlock");
-}
-
-bool os::PlatformMonitor::try_lock() {
-  int status = os::Solaris::mutex_trylock(&_mutex);
-  assert_status(status == 0 || status == EBUSY, status, "mutex_trylock");
-  return status == 0;
 }
 
 // Must already be locked
@@ -5372,6 +5219,10 @@ int os::get_core_path(char* buffer, size_t bufferSize) {
                                               p, current_process_id());
 
   return strlen(buffer);
+}
+
+bool os::supports_map_sync() {
+  return false;
 }
 
 #ifndef PRODUCT

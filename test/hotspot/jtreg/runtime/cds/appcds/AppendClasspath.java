@@ -27,9 +27,7 @@
  * @summary At run time, it is OK to append new elements to the classpath that was used at dump time.
  * @requires vm.cds
  * @library /test/lib
- * @modules java.base/jdk.internal.misc
- *          java.management
- *          jdk.jartool/sun.tools.jar
+ * @modules jdk.jartool/sun.tools.jar
  * @compile test-classes/Hello.java
  * @compile test-classes/HelloMore.java
  * @run driver AppendClasspath
@@ -97,19 +95,5 @@ public class AppendClasspath {
         "-cp", appJar2 + File.pathSeparator + appJar,
         "HelloMore")
         .assertAbnormalExit(errorMessage1, errorMessage2);
-
-    // FAIL: 4) non-existing jar during dump time but jar exists during runtime
-    TestCommon.testDump(classPath, TestCommon.list("Hello"));
-
-    Files.copy(Paths.get(classDir, "hello.jar"),
-        Paths.get(classDir, newFile),
-        StandardCopyOption.REPLACE_EXISTING);
-
-    TestCommon.run(
-        "-cp", classPath,
-        "-Xlog:class+path=trace",
-        "Hello")
-        .assertAbnormalExit(errorMessage1, errorMessage2);
-
     }
 }

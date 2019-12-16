@@ -463,6 +463,8 @@ int vmIntrinsics::predicates_needed(vmIntrinsics::ID id) {
   switch (id) {
   case vmIntrinsics::_cipherBlockChaining_encryptAESCrypt:
   case vmIntrinsics::_cipherBlockChaining_decryptAESCrypt:
+  case vmIntrinsics::_electronicCodeBook_encryptAESCrypt:
+  case vmIntrinsics::_electronicCodeBook_decryptAESCrypt:
   case vmIntrinsics::_counterMode_AESCrypt:
     return 1;
   case vmIntrinsics::_digestBase_implCompressMB:
@@ -566,13 +568,15 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
     if (!InlineClassNatives) return true;
     break;
   case vmIntrinsics::_currentThread:
-  case vmIntrinsics::_isInterrupted:
     if (!InlineThreadNatives) return true;
     break;
   case vmIntrinsics::_floatToRawIntBits:
   case vmIntrinsics::_intBitsToFloat:
   case vmIntrinsics::_doubleToRawLongBits:
   case vmIntrinsics::_longBitsToDouble:
+  case vmIntrinsics::_ceil:
+  case vmIntrinsics::_floor:
+  case vmIntrinsics::_rint:
   case vmIntrinsics::_dabs:
   case vmIntrinsics::_fabs:
   case vmIntrinsics::_iabs:
@@ -736,6 +740,10 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_cipherBlockChaining_decryptAESCrypt:
     if (!UseAESIntrinsics) return true;
     break;
+  case vmIntrinsics::_electronicCodeBook_encryptAESCrypt:
+  case vmIntrinsics::_electronicCodeBook_decryptAESCrypt:
+    if (!UseAESIntrinsics) return true;
+    break;
   case vmIntrinsics::_counterMode_AESCrypt:
     if (!UseAESCTRIntrinsics) return true;
     break;
@@ -778,9 +786,6 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
 #endif // COMPILER1
 #ifdef COMPILER2
   case vmIntrinsics::_clone:
-#if INCLUDE_ZGC
-    if (UseZGC) return true;
-#endif
   case vmIntrinsics::_copyOf:
   case vmIntrinsics::_copyOfRange:
     // These intrinsics use both the objectcopy and the arraycopy
@@ -961,7 +966,7 @@ const char* vmIntrinsics::short_name_as_C_string(vmIntrinsics::ID id, char* buf,
   case F_RNY:fname = "native synchronized "; break;
   default:   break;
   }
-  const char* kptr = strrchr(kname, '/');
+  const char* kptr = strrchr(kname, JVM_SIGNATURE_SLASH);
   if (kptr != NULL)  kname = kptr + 1;
   int len = jio_snprintf(buf, buflen, "%s: %s%s.%s%s",
                          str, fname, kname, mname, sname);
@@ -1064,19 +1069,18 @@ void vmIntrinsics::verify_method(ID actual_id, Method* m) {
 
   const char* declared_name = name_at(declared_id);
   const char* actual_name   = name_at(actual_id);
-  methodHandle mh = m;
   m = NULL;
   ttyLocker ttyl;
   if (xtty != NULL) {
     xtty->begin_elem("intrinsic_misdeclared actual='%s' declared='%s'",
                      actual_name, declared_name);
-    xtty->method(mh);
+    xtty->method(m);
     xtty->end_elem("%s", "");
   }
   if (PrintMiscellaneous && (WizardMode || Verbose)) {
     tty->print_cr("*** misidentified method; %s(%d) should be %s(%d):",
                   declared_name, declared_id, actual_name, actual_id);
-    mh()->print_short_name(tty);
+    m->print_short_name(tty);
     tty->cr();
   }
 }

@@ -196,8 +196,6 @@ void GenArguments::initialize_heap_flags_and_sizes() {
     }
   }
 
-  always_do_update_barrier = UseConcMarkSweepGC;
-
   DEBUG_ONLY(assert_flags();)
 }
 
@@ -231,7 +229,7 @@ void GenArguments::initialize_size_info() {
     // yield a size that is too small) and bound it by MaxNewSize above.
     // Ergonomics plays here by previously calculating the desired
     // NewSize and MaxNewSize.
-    max_young_size = MIN2(MAX2(max_young_size, NewSize), MaxNewSize);
+    max_young_size = clamp(max_young_size, NewSize, MaxNewSize);
   }
 
   // Given the maximum young size, determine the initial and
@@ -262,7 +260,7 @@ void GenArguments::initialize_size_info() {
       // NewSize as the floor, because if NewRatio is overly large, the resulting
       // size can be too small.
       initial_young_size =
-        MIN2(max_young_size, MAX2(scale_by_NewRatio_aligned(InitialHeapSize, GenAlignment), NewSize));
+        clamp(scale_by_NewRatio_aligned(InitialHeapSize, GenAlignment), NewSize, max_young_size);
     }
   }
 
@@ -287,7 +285,7 @@ void GenArguments::initialize_size_info() {
     // the minimum, maximum and initial sizes consistent
     // with the young sizes and the overall heap sizes.
     MinOldSize = GenAlignment;
-    initial_old_size = MIN2(MaxOldSize, MAX2(InitialHeapSize - initial_young_size, MinOldSize));
+    initial_old_size = clamp(InitialHeapSize - initial_young_size, MinOldSize, MaxOldSize);
     // MaxOldSize has already been made consistent above.
   } else {
     // OldSize has been explicitly set on the command line. Use it

@@ -47,6 +47,13 @@ import static java.util.Objects.requireNonNull;
  * found in section 8.9 of
  * <cite>The Java&trade; Language Specification</cite>.
  *
+ * Enumeration types are all serializable and receive special handling
+ * by the serialization mechanism. The serialized representation used
+ * for enum constants cannot be customized. Declarations of methods
+ * and fields that would otherwise interact with serialization are
+ * ignored, including {@code serialVersionUID}; see the <cite>Java
+ * Object Serialization Specification</cite> for details.
+ *
  * <p> Note that when using an enumeration type as the type of a set
  * or as the type of the keys in a map, specialized and efficient
  * {@linkplain java.util.EnumSet set} and {@linkplain
@@ -275,11 +282,13 @@ public abstract class Enum<E extends Enum<E>>
     /**
      * prevent default deserialization
      */
+    @java.io.Serial
     private void readObject(ObjectInputStream in) throws IOException,
         ClassNotFoundException {
         throw new InvalidObjectException("can't deserialize enum");
     }
 
+    @java.io.Serial
     private void readObjectNoData() throws ObjectStreamException {
         throw new InvalidObjectException("can't deserialize enum");
     }

@@ -33,7 +33,6 @@
 #include "oops/method.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/vm_version.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/thread.inline.hpp"
@@ -45,9 +44,9 @@ static traceid atomic_inc(traceid volatile* const dest) {
   traceid compare_value;
   traceid exchange_value;
   do {
-    compare_value = OrderAccess::load_acquire(dest);
+    compare_value = *dest;
     exchange_value = compare_value + 1;
-  } while (Atomic::cmpxchg(exchange_value, dest, compare_value) != compare_value);
+  } while (Atomic::cmpxchg(dest, compare_value, exchange_value) != compare_value);
   return exchange_value;
 }
 
@@ -159,7 +158,7 @@ void JfrTraceId::remove(const Klass* k) {
   // This mechanism will retain the event specific flags
   // in the archive, allowing for event flag restoration
   // when renewing the traceid on klass revival.
-  k->set_trace_id(EVENT_FLAGS_MASK(k));
+  k->set_trace_id(EVENT_KLASS_MASK(k));
 }
 
 // used by CDS / APPCDS as part of "restore_unshareable_info"
@@ -181,12 +180,12 @@ traceid JfrTraceId::get(jclass jc) {
   return get(java_lang_Class::as_Klass(my_oop));
 }
 
-traceid JfrTraceId::use(jclass jc, bool leakp /* false */) {
+traceid JfrTraceId::use(jclass jc) {
   assert(jc != NULL, "invariant");
   assert(((JavaThread*)Thread::current())->thread_state() == _thread_in_vm, "invariant");
   const oop my_oop = JNIHandles::resolve(jc);
   assert(my_oop != NULL, "invariant");
-  return use(java_lang_Class::as_Klass(my_oop), leakp);
+  return use(java_lang_Class::as_Klass(my_oop));
 }
 
 bool JfrTraceId::in_visible_set(const jclass jc) {

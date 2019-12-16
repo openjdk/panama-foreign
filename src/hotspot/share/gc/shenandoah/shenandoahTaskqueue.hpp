@@ -26,6 +26,7 @@
 #include "gc/shared/owstTaskTerminator.hpp"
 #include "gc/shared/taskqueue.hpp"
 #include "memory/allocation.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/mutex.hpp"
 #include "runtime/thread.hpp"
 
@@ -141,11 +142,11 @@ public:
 
 public:
   ObjArrayChunkedTask(oop o = NULL) {
-    assert(oopDesc::equals_raw(decode_oop(encode_oop(o)), o), "oop can be encoded: " PTR_FORMAT, p2i(o));
+    assert(decode_oop(encode_oop(o)) ==  o, "oop can be encoded: " PTR_FORMAT, p2i(o));
     _obj = encode_oop(o);
   }
   ObjArrayChunkedTask(oop o, int chunk, int pow) {
-    assert(oopDesc::equals_raw(decode_oop(encode_oop(o)), o), "oop can be encoded: " PTR_FORMAT, p2i(o));
+    assert(decode_oop(encode_oop(o)) == o, "oop can be encoded: " PTR_FORMAT, p2i(o));
     assert(decode_chunk(encode_chunk(chunk)) == chunk, "chunk can be encoded: %d", chunk);
     assert(decode_pow(encode_pow(pow)) == pow, "pow can be encoded: %d", pow);
     _obj = encode_oop(o) | encode_chunk(chunk) | encode_pow(pow);
@@ -304,7 +305,7 @@ T* ParallelClaimableQueueSet<T, F>::claim_next() {
     return NULL;
   }
 
-  jint index = Atomic::add(1, &_claimed_index);
+  jint index = Atomic::add(&_claimed_index, 1);
 
   if (index <= size) {
     return GenericTaskQueueSet<T, F>::queue((uint)index - 1);

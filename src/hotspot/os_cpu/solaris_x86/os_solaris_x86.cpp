@@ -38,7 +38,6 @@
 #include "prims/jniFastGetField.hpp"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
@@ -541,7 +540,7 @@ JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid,
         if (cb != NULL) {
           CompiledMethod* nm = cb->as_compiled_method_or_null();
           bool is_unsafe_arraycopy = thread->doing_unsafe_access() && UnsafeCopyMemory::contains_pc(pc);
-          if ((nm != NULL && nm->has_unsafe_access()) || is_unsafe_arraycopy)) {
+          if ((nm != NULL && nm->has_unsafe_access()) || is_unsafe_arraycopy) {
             address next_pc = Assembler::locate_next_instruction(pc);
             if (is_unsafe_arraycopy) {
               next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);

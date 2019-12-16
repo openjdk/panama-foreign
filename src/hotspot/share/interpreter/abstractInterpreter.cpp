@@ -208,7 +208,7 @@ AbstractInterpreter::MethodKind AbstractInterpreter::method_kind(const methodHan
 
 address AbstractInterpreter::get_trampoline_code_buffer(AbstractInterpreter::MethodKind kind) {
   const size_t trampoline_size = SharedRuntime::trampoline_size();
-  address addr = MetaspaceShared::cds_i2i_entry_code_buffers((size_t)(AbstractInterpreter::number_of_method_entries) * trampoline_size);
+  address addr = MetaspaceShared::i2i_entry_code_buffers((size_t)(AbstractInterpreter::number_of_method_entries) * trampoline_size);
   addr += (size_t)(kind) * trampoline_size;
 
   return addr;
@@ -222,6 +222,7 @@ void AbstractInterpreter::update_cds_entry_table(AbstractInterpreter::MethodKind
     CodeBuffer buffer(trampoline, (int)(SharedRuntime::trampoline_size()));
     MacroAssembler _masm(&buffer);
     SharedRuntime::generate_trampoline(&_masm, _entry_table[kind]);
+    _masm.flush();
 
     if (PrintInterpreter) {
       Disassembler::decode(buffer.insts_begin(), buffer.insts_end());
@@ -267,7 +268,8 @@ bool AbstractInterpreter::is_not_reached(const methodHandle& method, int bci) {
         }
         assert(!invoke_bc.has_index_u4(code), "sanity");
         int method_index = invoke_bc.get_index_u2_cpcache(code);
-        Method* resolved_method = ConstantPool::method_at_if_loaded(cpool, method_index);
+        constantPoolHandle cp(Thread::current(), cpool);
+        Method* resolved_method = ConstantPool::method_at_if_loaded(cp, method_index);
         return (resolved_method == NULL);
       }
       default: ShouldNotReachHere();

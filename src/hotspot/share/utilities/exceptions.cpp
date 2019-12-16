@@ -229,7 +229,7 @@ void Exceptions::throw_stack_overflow_exception(Thread* THREAD, const char* file
     exception = Handle(THREAD, e);  // fill_in_stack trace does gc
     assert(k->is_initialized(), "need to increase java_thread_min_stack_allowed calculation");
     if (StackTraceInThrowable) {
-      java_lang_Throwable::fill_in_stack_trace(exception, method());
+      java_lang_Throwable::fill_in_stack_trace(exception, method);
     }
     // Increment counter for hs_err file reporting
     Atomic::inc(&Exceptions::_stack_overflow_errors);
@@ -435,9 +435,9 @@ volatile int Exceptions::_out_of_memory_error_metaspace_errors = 0;
 volatile int Exceptions::_out_of_memory_error_class_metaspace_errors = 0;
 
 void Exceptions::count_out_of_memory_exceptions(Handle exception) {
-  if (oopDesc::equals(exception(), Universe::out_of_memory_error_metaspace())) {
+  if (exception() == Universe::out_of_memory_error_metaspace()) {
      Atomic::inc(&_out_of_memory_error_metaspace_errors);
-  } else if (oopDesc::equals(exception(), Universe::out_of_memory_error_class_metaspace())) {
+  } else if (exception() == Universe::out_of_memory_error_class_metaspace()) {
      Atomic::inc(&_out_of_memory_error_class_metaspace_errors);
   } else {
      // everything else reported as java heap OOM

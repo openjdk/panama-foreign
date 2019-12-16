@@ -79,8 +79,8 @@ class Handle {
   oop     operator () () const                   { return obj(); }
   oop     operator -> () const                   { return non_null_obj(); }
 
-  bool operator == (oop o) const                 { return oopDesc::equals(obj(), o); }
-  bool operator == (const Handle& h) const       { return oopDesc::equals(obj(), h.obj()); }
+  bool operator == (oop o) const                 { return obj() == o; }
+  bool operator == (const Handle& h) const       { return obj() == h.obj(); }
 
   // Null checks
   bool    is_null() const                        { return _handle == NULL; }
@@ -143,7 +143,6 @@ DEF_HANDLE(typeArray        , is_typeArray_noinline        )
    public:                                       \
     /* Constructors */                           \
     name##Handle () : _value(NULL), _thread(NULL) {}   \
-    name##Handle (type* obj);                    \
     name##Handle (Thread* thread, type* obj);    \
                                                  \
     name##Handle (const name##Handle &h);        \

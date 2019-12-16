@@ -30,7 +30,7 @@
 #include "gc/parallel/psYoungGen.hpp"
 #include "gc/shared/gcUtil.hpp"
 #include "gc/shared/genArguments.hpp"
-#include "gc/shared/spaceDecorator.hpp"
+#include "gc/shared/spaceDecorator.inline.hpp"
 #include "logging/log.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/java.hpp"
@@ -300,8 +300,7 @@ bool PSYoungGen::resize_generation(size_t eden_size, size_t survivor_size) {
   // Adjust new generation size
   const size_t eden_plus_survivors =
           align_up(eden_size + 2 * survivor_size, alignment);
-  size_t desired_size = MAX2(MIN2(eden_plus_survivors, max_size()),
-                             min_gen_size());
+  size_t desired_size = clamp(eden_plus_survivors, min_gen_size(), max_size());
   assert(desired_size <= max_size(), "just checking");
 
   if (desired_size > orig_size) {
@@ -749,7 +748,7 @@ void PSYoungGen::adjust_pointers() {
 void PSYoungGen::compact() {
   eden_mark_sweep()->compact(ZapUnusedHeapArea);
   from_mark_sweep()->compact(ZapUnusedHeapArea);
-  // Mark sweep stores preserved markOops in to space, don't disturb!
+  // Mark sweep stores preserved markWords in to space, don't disturb!
   to_mark_sweep()->compact(false);
 }
 

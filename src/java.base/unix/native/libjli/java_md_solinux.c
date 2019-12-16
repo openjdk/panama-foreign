@@ -188,6 +188,7 @@ ContainsLibJVM(const char *env) {
     char serverPattern[] = "lib/server";
     char *envpath;
     char *path;
+    char* save_ptr = NULL;
     jboolean clientPatternFound;
     jboolean serverPatternFound;
 
@@ -207,7 +208,7 @@ ContainsLibJVM(const char *env) {
      * we have a suspicious path component, check if it contains a libjvm.so
      */
     envpath = JLI_StringDup(env);
-    for (path = JLI_StrTok(envpath, ":"); path != NULL; path = JLI_StrTok(NULL, ":")) {
+    for (path = strtok_r(envpath, ":", &save_ptr); path != NULL; path = strtok_r(NULL, ":", &save_ptr)) {
         if (clientPatternFound && JLI_StrStr(path, clientPattern) != NULL) {
             if (JvmExists(path)) {
                 JLI_MemFree(envpath);
@@ -789,16 +790,6 @@ CallJavaMainInNewThread(jlong stack_size, void* args) {
 
 /* Coarse estimation of number of digits assuming the worst case is a 64-bit pid. */
 #define MAX_PID_STR_SZ   20
-
-void SetJavaLauncherPlatformProps() {
-   /* Linux only */
-#ifdef __linux__
-    const char *substr = "-Dsun.java.launcher.pid=";
-    char *pid_prop_str = (char *)JLI_MemAlloc(JLI_StrLen(substr) + MAX_PID_STR_SZ + 1);
-    sprintf(pid_prop_str, "%s%d", substr, getpid());
-    AddOption(pid_prop_str, NULL);
-#endif /* __linux__ */
-}
 
 int
 JVMInit(InvocationFunctions* ifn, jlong threadStackSize,

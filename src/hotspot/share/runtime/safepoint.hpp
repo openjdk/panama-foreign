@@ -75,7 +75,6 @@ class SafepointSynchronize : AllStatic {
     SAFEPOINT_CLEANUP_COMPILATION_POLICY,
     SAFEPOINT_CLEANUP_SYMBOL_TABLE_REHASH,
     SAFEPOINT_CLEANUP_STRING_TABLE_REHASH,
-    SAFEPOINT_CLEANUP_CLD_PURGE,
     SAFEPOINT_CLEANUP_SYSTEM_DICTIONARY_RESIZE,
     SAFEPOINT_CLEANUP_REQUEST_OOPSTORAGE_CLEANUP,
     // Leave this one last.
@@ -111,14 +110,6 @@ class SafepointSynchronize : AllStatic {
   static WaitBarrier* _wait_barrier;
   static long         _end_of_last_safepoint;     // Time of last safepoint in milliseconds
   static julong       _coalesced_vmop_count;     // coalesced vmop count
-
-  // Statistics
-  static void begin_statistics(int nof_threads, int nof_running);
-  static void update_statistics_on_spin_end();
-  static void update_statistics_on_sync_end(jlong end_time);
-  static void update_statistics_on_cleanup_end(jlong end_time);
-  static void end_statistics(jlong end_time);
-  static void print_statistics();
 
   // For debug long safepoint
   static void print_safepoint_timeout();
@@ -215,7 +206,6 @@ class ThreadSafepointState: public CHeapObj<mtThread> {
   JavaThread*                     _thread;
   bool                            _safepoint_safe;
   volatile uint64_t               _safepoint_id;
-  JavaThreadState                 _orig_thread_state;
 
   ThreadSafepointState*           _next;
 
@@ -241,8 +231,6 @@ class ThreadSafepointState: public CHeapObj<mtThread> {
   void     reset_safepoint_id();
   void     set_safepoint_id(uint64_t sid);
 
-  JavaThreadState orig_thread_state() const { return _orig_thread_state; }
-
   // Support for safepoint timeout (debugging)
   bool is_at_poll_safepoint()           { return _at_poll_safepoint; }
   void set_at_poll_safepoint(bool val)  { _at_poll_safepoint = val; }
@@ -251,7 +239,6 @@ class ThreadSafepointState: public CHeapObj<mtThread> {
 
   // debugging
   void print_on(outputStream* st) const;
-  void print() const;
 
   // Initialize
   static void create(JavaThread *thread);

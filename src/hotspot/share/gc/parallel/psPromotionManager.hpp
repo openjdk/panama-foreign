@@ -51,7 +51,10 @@ class ParCompactionManager;
 
 class PSPromotionManager {
   friend class PSScavenge;
+  friend class ScavengeRootsTask;
   friend class PSRefProcTaskExecutor;
+  friend class PSRefProcTask;
+
  private:
   static PaddedEnd<PSPromotionManager>* _manager_array;
   static OopStarTaskQueueSet*           _stack_array_depth;
@@ -99,8 +102,7 @@ class PSPromotionManager {
   // partially-scanned arrays (in the latter case, we push an oop to
   // the from-space image of the array and the length on the
   // from-space image indicates how many entries on the array we still
-  // need to scan; this is basically how ParNew does partial array
-  // scanning too). To be able to distinguish between reference
+  // need to scan. To be able to distinguish between reference
   // locations and partially-scanned array oops we simply mask the
   // latter oops with 0x01. The next three methods do the masking,
   // unmasking, and checking whether the oop is masked or not. Notice
@@ -175,7 +177,7 @@ class PSPromotionManager {
 
   // Promotion methods
   template<bool promote_immediately> oop copy_to_survivor_space(oop o);
-  oop oop_promotion_failed(oop obj, markOop obj_mark);
+  oop oop_promotion_failed(oop obj, markWord obj_mark);
 
   void reset();
   void register_preserved_marks(PreservedMarks* preserved_marks);

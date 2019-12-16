@@ -60,19 +60,18 @@ void ShenandoahArguments::initialize() {
   }
 
   // Enable NUMA by default. While Shenandoah is not NUMA-aware, enabling NUMA makes
-  // storage allocation code NUMA-aware, and NUMA interleaving makes the storage
-  // allocated in consistent manner (interleaving) to minimize run-to-run variance.
+  // storage allocation code NUMA-aware.
   if (FLAG_IS_DEFAULT(UseNUMA)) {
     FLAG_SET_DEFAULT(UseNUMA, true);
-    FLAG_SET_DEFAULT(UseNUMAInterleaving, true);
   }
 
   // Set up default number of concurrent threads. We want to have cycles complete fast
   // enough, but we also do not want to steal too much CPU from the concurrently running
   // application. Using 1/4 of available threads for concurrent GC seems a good
   // compromise here.
-  if (FLAG_IS_DEFAULT(ConcGCThreads)) {
-    FLAG_SET_DEFAULT(ConcGCThreads, MAX2(1, os::processor_count() / 4));
+  bool ergo_conc = FLAG_IS_DEFAULT(ConcGCThreads);
+  if (ergo_conc) {
+    FLAG_SET_DEFAULT(ConcGCThreads, MAX2(1, os::initial_active_processor_count() / 4));
   }
 
   if (ConcGCThreads == 0) {
@@ -84,17 +83,30 @@ void ShenandoahArguments::initialize() {
   // that will overwhelm the OS scheduler. Using 1/2 of available threads seems to be a fair
   // compromise here. Due to implementation constraints, it should not be lower than
   // the number of concurrent threads.
-  if (FLAG_IS_DEFAULT(ParallelGCThreads)) {
-    FLAG_SET_DEFAULT(ParallelGCThreads, MAX2(1, os::processor_count() / 2));
+  bool ergo_parallel = FLAG_IS_DEFAULT(ParallelGCThreads);
+  if (ergo_parallel) {
+    FLAG_SET_DEFAULT(ParallelGCThreads, MAX2(1, os::initial_active_processor_count() / 2));
   }
 
   if (ParallelGCThreads == 0) {
     vm_exit_during_initialization("Shenandoah expects ParallelGCThreads > 0, check -XX:ParallelGCThreads=#");
   }
 
+  // Make sure ergonomic decisions do not break the thread count invariants.
+  // This may happen when user overrides one of the flags, but not the other.
+  // When that happens, we want to adjust the setting that was set ergonomically.
   if (ParallelGCThreads < ConcGCThreads) {
-    warning("Shenandoah expects ConcGCThreads <= ParallelGCThreads, adjusting ParallelGCThreads automatically");
-    FLAG_SET_DEFAULT(ParallelGCThreads, ConcGCThreads);
+    if (ergo_conc && !ergo_parallel) {
+      FLAG_SET_DEFAULT(ConcGCThreads, ParallelGCThreads);
+    } else if (!ergo_conc && ergo_parallel) {
+      FLAG_SET_DEFAULT(ParallelGCThreads, ConcGCThreads);
+    } else if (ergo_conc && ergo_parallel) {
+      // Should not happen, check the ergonomic computation above. Fail with relevant error.
+      vm_exit_during_initialization("Shenandoah thread count ergonomic error");
+    } else {
+      // User settings error, report and ask user to rectify.
+      vm_exit_during_initialization("Shenandoah expects ConcGCThreads <= ParallelGCThreads, check -XX:ParallelGCThreads, -XX:ConcGCThreads");
+    }
   }
 
   if (FLAG_IS_DEFAULT(ParallelRefProcEnabled)) {
@@ -159,11 +171,7 @@ void ShenandoahArguments::initialize() {
   }
 
   // If class unloading is disabled, no unloading for concurrent cycles as well.
-  // If class unloading is enabled, users should opt-in for unloading during
-  // concurrent cycles.
-  if (!ClassUnloading || !FLAG_IS_CMDLINE(ClassUnloadingWithConcurrentMark)) {
-    log_info(gc)("Consider -XX:+ClassUnloadingWithConcurrentMark if large pause times "
-                 "are observed on class-unloading sensitive workloads");
+  if (!ClassUnloading) {
     FLAG_SET_DEFAULT(ClassUnloadingWithConcurrentMark, false);
   }
 

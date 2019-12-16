@@ -32,9 +32,10 @@
 #include "runtime/java.hpp"
 #include "runtime/os.hpp"
 #include "runtime/stubCodeGenerator.hpp"
+#include "runtime/vm_version.hpp"
 #include "utilities/virtualizationSupport.hpp"
-#include "vm_version_x86.hpp"
 
+#include OS_HEADER_INLINE(os)
 
 int VM_Version::_cpu;
 int VM_Version::_model;
@@ -366,22 +367,29 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     //
     intx saved_useavx = UseAVX;
     intx saved_usesse = UseSSE;
-    // check _cpuid_info.sef_cpuid7_ebx.bits.avx512f
-    __ lea(rsi, Address(rbp, in_bytes(VM_Version::sef_cpuid7_offset())));
-    __ movl(rax, 0x10000);
-    __ andl(rax, Address(rsi, 4)); // xcr0 bits sse | ymm
-    __ cmpl(rax, 0x10000);
-    __ jccb(Assembler::notEqual, legacy_setup); // jump if EVEX is not supported
-    // check _cpuid_info.xem_xcr0_eax.bits.opmask
-    // check _cpuid_info.xem_xcr0_eax.bits.zmm512
-    // check _cpuid_info.xem_xcr0_eax.bits.zmm32
-    __ movl(rax, 0xE0);
-    __ andl(rax, Address(rbp, in_bytes(VM_Version::xem_xcr0_offset()))); // xcr0 bits sse | ymm
-    __ cmpl(rax, 0xE0);
-    __ jccb(Assembler::notEqual, legacy_setup); // jump if EVEX is not supported
 
     // If UseAVX is unitialized or is set by the user to include EVEX
     if (use_evex) {
+      // check _cpuid_info.sef_cpuid7_ebx.bits.avx512f
+      __ lea(rsi, Address(rbp, in_bytes(VM_Version::sef_cpuid7_offset())));
+      __ movl(rax, 0x10000);
+      __ andl(rax, Address(rsi, 4)); // xcr0 bits sse | ymm
+      __ cmpl(rax, 0x10000);
+      __ jccb(Assembler::notEqual, legacy_setup); // jump if EVEX is not supported
+      // check _cpuid_info.xem_xcr0_eax.bits.opmask
+      // check _cpuid_info.xem_xcr0_eax.bits.zmm512
+      // check _cpuid_info.xem_xcr0_eax.bits.zmm32
+      __ movl(rax, 0xE0);
+      __ andl(rax, Address(rbp, in_bytes(VM_Version::xem_xcr0_offset()))); // xcr0 bits sse | ymm
+      __ cmpl(rax, 0xE0);
+      __ jccb(Assembler::notEqual, legacy_setup); // jump if EVEX is not supported
+
+      if (FLAG_IS_DEFAULT(UseAVX)) {
+        __ lea(rsi, Address(rbp, in_bytes(VM_Version::std_cpuid1_offset())));
+        __ movl(rax, Address(rsi, 0));
+        __ cmpl(rax, 0x50654);              // If it is Skylake
+        __ jcc(Assembler::equal, legacy_setup);
+      }
       // EVEX setup: run in lowest evex mode
       VM_Version::set_evex_cpuFeatures(); // Enable temporary to pass asserts
       UseAVX = 3;
@@ -450,22 +458,28 @@ class VM_Version_StubGenerator: public StubCodeGenerator {
     VM_Version::set_cpuinfo_cont_addr(__ pc());
     // Returns here after signal. Save xmm0 to check it later.
 
-    // check _cpuid_info.sef_cpuid7_ebx.bits.avx512f
-    __ lea(rsi, Address(rbp, in_bytes(VM_Version::sef_cpuid7_offset())));
-    __ movl(rax, 0x10000);
-    __ andl(rax, Address(rsi, 4));
-    __ cmpl(rax, 0x10000);
-    __ jcc(Assembler::notEqual, legacy_save_restore);
-    // check _cpuid_info.xem_xcr0_eax.bits.opmask
-    // check _cpuid_info.xem_xcr0_eax.bits.zmm512
-    // check _cpuid_info.xem_xcr0_eax.bits.zmm32
-    __ movl(rax, 0xE0);
-    __ andl(rax, Address(rbp, in_bytes(VM_Version::xem_xcr0_offset()))); // xcr0 bits sse | ymm
-    __ cmpl(rax, 0xE0);
-    __ jcc(Assembler::notEqual, legacy_save_restore);
-
     // If UseAVX is unitialized or is set by the user to include EVEX
     if (use_evex) {
+      // check _cpuid_info.sef_cpuid7_ebx.bits.avx512f
+      __ lea(rsi, Address(rbp, in_bytes(VM_Version::sef_cpuid7_offset())));
+      __ movl(rax, 0x10000);
+      __ andl(rax, Address(rsi, 4));
+      __ cmpl(rax, 0x10000);
+      __ jcc(Assembler::notEqual, legacy_save_restore);
+      // check _cpuid_info.xem_xcr0_eax.bits.opmask
+      // check _cpuid_info.xem_xcr0_eax.bits.zmm512
+      // check _cpuid_info.xem_xcr0_eax.bits.zmm32
+      __ movl(rax, 0xE0);
+      __ andl(rax, Address(rbp, in_bytes(VM_Version::xem_xcr0_offset()))); // xcr0 bits sse | ymm
+      __ cmpl(rax, 0xE0);
+      __ jcc(Assembler::notEqual, legacy_save_restore);
+
+      if (FLAG_IS_DEFAULT(UseAVX)) {
+        __ lea(rsi, Address(rbp, in_bytes(VM_Version::std_cpuid1_offset())));
+        __ movl(rax, Address(rsi, 0));
+        __ cmpl(rax, 0x50654);              // If it is Skylake
+        __ jcc(Assembler::equal, legacy_save_restore);
+      }
       // EVEX check: run in lowest evex mode
       VM_Version::set_evex_cpuFeatures(); // Enable temporary to pass asserts
       UseAVX = 3;
@@ -608,6 +622,16 @@ void VM_Version::get_processor_features() {
   guarantee(_cpuid_info.std_cpuid1_ebx.bits.clflush_size == 8, "such clflush size is not supported");
 #endif
 
+#ifdef _LP64
+  // assigning this field effectively enables Unsafe.writebackMemory()
+  // by initing UnsafeConstant.DATA_CACHE_LINE_FLUSH_SIZE to non-zero
+  // that is only implemented on x86_64 and only if the OS plays ball
+  if (os::supports_map_sync()) {
+    // publish data cache line flush size to generic field, otherwise
+    // let if default to zero thereby disabling writeback
+    _data_cache_line_flush_size = _cpuid_info.std_cpuid1_ebx.bits.clflush_size * 8;
+  }
+#endif
   // If the OS doesn't support SSE, we can't use this feature even if the HW does
   if (!os::supports_sse())
     _features &= ~(CPU_SSE|CPU_SSE2|CPU_SSE3|CPU_SSSE3|CPU_SSE4A|CPU_SSE4_1|CPU_SSE4_2);
@@ -649,6 +673,9 @@ void VM_Version::get_processor_features() {
   }
   if (FLAG_IS_DEFAULT(UseAVX)) {
     FLAG_SET_DEFAULT(UseAVX, use_avx_limit);
+    if (is_intel_family_core() && _model == CPU_MODEL_SKYLAKE && _stepping < 5) {
+      FLAG_SET_DEFAULT(UseAVX, 2);  //Set UseAVX=2 for Skylake
+    }
   } else if (UseAVX > use_avx_limit) {
     warning("UseAVX=%d is not supported on this CPU, setting it to UseAVX=%d", (int) UseAVX, use_avx_limit);
     FLAG_SET_DEFAULT(UseAVX, use_avx_limit);
@@ -1048,6 +1075,13 @@ void VM_Version::get_processor_features() {
     }
   }
 #endif // COMPILER2 && ASSERT
+
+  if (!FLAG_IS_DEFAULT(AVX3Threshold)) {
+    if (!is_power_of_2(AVX3Threshold)) {
+      warning("AVX3Threshold must be a power of 2");
+      FLAG_SET_DEFAULT(AVX3Threshold, 4096);
+    }
+  }
 
 #ifdef _LP64
   if (FLAG_IS_DEFAULT(UseMultiplyToLenIntrinsic)) {

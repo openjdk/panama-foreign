@@ -103,10 +103,7 @@ public:
   virtual void do_full_collection(bool clear_all_soft_refs);
 
   // Heap walking support
-  virtual void safe_object_iterate(ObjectClosure* cl);
-  virtual void object_iterate(ObjectClosure* cl) {
-    safe_object_iterate(cl);
-  }
+  virtual void object_iterate(ObjectClosure* cl);
 
   // Object pinning support: every object is implicitly pinned
   virtual bool supports_object_pinning() const           { return true; }
@@ -114,8 +111,8 @@ public:
   virtual void unpin_object(JavaThread* thread, oop obj) { }
 
   // No support for block parsing.
-  virtual HeapWord* block_start(const void* addr) const { return NULL;  }
-  virtual bool block_is_obj(const HeapWord* addr) const { return false; }
+  HeapWord* block_start(const void* addr) const { return NULL;  }
+  bool block_is_obj(const HeapWord* addr) const { return false; }
 
   // No GC threads
   virtual void print_gc_threads_on(outputStream* st) const {}
@@ -136,8 +133,12 @@ public:
     return os::elapsed_counter() / NANOSECS_PER_MILLISEC;
   }
 
+  MemRegion reserved_region() const { return _reserved; }
+  bool is_in_reserved(const void* addr) const { return _reserved.contains(addr); }
+
   virtual void print_on(outputStream* st) const;
   virtual void print_tracing_info() const;
+  virtual bool print_location(outputStream* st, void* addr) const;
 
 private:
   void print_heap_info(size_t used) const;

@@ -22,40 +22,54 @@
  */
 
 /* @test
- * @bug 8181493
+ * @bug 8181493 8231174
  * @summary Verify that nanosecond precision is maintained for file timestamps
- * @requires (os.family == "linux") | (os.family == "mac") | (os.family == "solaris")
+ * @requires (os.family == "linux") | (os.family == "mac") | (os.family == "solaris") | (os.family == "windows")
+ * @modules java.base/sun.nio.fs:+open
  */
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.FileStore;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileTime;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class SetTimesNanos {
-    public static void main(String[] args) throws IOException,
-        InterruptedException {
+    private static final boolean IS_WINDOWS =
+        System.getProperty("os.name").startsWith("Windows");
+
+    public static void main(String[] args) throws Exception {
+        if (!IS_WINDOWS) {
+            // Check whether futimens() system call is supported
+            Class unixNativeDispatcherClass =
+                Class.forName("sun.nio.fs.UnixNativeDispatcher");
+            Method futimensSupported =
+                unixNativeDispatcherClass.getDeclaredMethod("futimensSupported");
+            futimensSupported.setAccessible(true);
+            if (!(boolean)futimensSupported.invoke(null)) {
+                System.err.println("futimens() not supported; skipping test");
+                return;
+            }
+        }
 
         Path dirPath = Path.of("test");
         Path dir = Files.createDirectory(dirPath);
         FileStore store = Files.getFileStore(dir);
-        System.out.format("FileStore: %s on %s (%s)%n", dir, store.name(),
-            store.type());
-        if (System.getProperty("os.name").toLowerCase().startsWith("mac") &&
-            store.type().equalsIgnoreCase("hfs")) {
-            System.err.println
-                ("HFS on macOS does not have nsec timestamps: skipping test");
+        System.out.format("FileStore: \"%s\" on %s (%s)%n",
+            dir, store.name(), store.type());
+
+        Set<String> testedTypes = IS_WINDOWS ?
+            Set.of("NTFS") : Set.of("apfs", "ext4", "xfs", "zfs");
+        if (!testedTypes.contains(store.type())) {
+            System.err.format("%s not in %s; skipping test", store.type(), testedTypes);
             return;
         }
+
         testNanos(dir);
 
         Path file = Files.createFile(dir.resolve("test.dat"));
@@ -70,6 +84,11 @@ public class SetTimesNanos {
         BasicFileAttributeView view =
             Files.getFileAttributeView(path, BasicFileAttributeView.class);
         view.setTimes(pathTime, pathTime, null);
+
+        // Windows file time resolution is 100ns so truncate
+        if (IS_WINDOWS) {
+            timeNanos = 100L*(timeNanos/100L);
+        }
 
         // Read attributes
         BasicFileAttributes attrs =

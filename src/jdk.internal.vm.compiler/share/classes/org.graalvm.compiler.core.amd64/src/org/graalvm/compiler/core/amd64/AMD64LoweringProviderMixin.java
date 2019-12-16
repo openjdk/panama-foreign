@@ -35,7 +35,7 @@ public interface AMD64LoweringProviderMixin extends LoweringProvider {
     }
 
     @Override
-    default boolean supportBulkZeroing() {
+    default boolean supportsBulkZeroing() {
         return true;
     }
 }

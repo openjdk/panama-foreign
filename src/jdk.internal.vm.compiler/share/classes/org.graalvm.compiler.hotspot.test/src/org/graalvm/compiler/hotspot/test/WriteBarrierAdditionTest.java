@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,25 +28,22 @@ import static org.graalvm.compiler.hotspot.replacements.HotSpotReplacementsUtil.
 
 import java.lang.ref.WeakReference;
 
-import org.graalvm.compiler.api.replacements.Fold;
+import org.graalvm.compiler.api.test.Graal;
 import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.hotspot.GraalHotSpotVMConfig;
-import org.graalvm.compiler.hotspot.GraalHotSpotVMConfigBase;
+import org.graalvm.compiler.hotspot.HotSpotBackend;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
 import org.graalvm.compiler.nodes.gc.G1PostWriteBarrier;
 import org.graalvm.compiler.nodes.gc.G1PreWriteBarrier;
 import org.graalvm.compiler.nodes.gc.G1ReferentFieldReadBarrier;
 import org.graalvm.compiler.nodes.gc.SerialWriteBarrier;
-import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins;
-import org.graalvm.compiler.nodes.graphbuilderconf.NodeIntrinsicPluginFactory;
 import org.graalvm.compiler.nodes.memory.HeapAccess.BarrierType;
 import org.graalvm.compiler.nodes.memory.ReadNode;
 import org.graalvm.compiler.nodes.memory.WriteNode;
 import org.graalvm.compiler.nodes.memory.address.OffsetAddressNode;
 import org.graalvm.compiler.nodes.spi.LoweringTool;
 import org.graalvm.compiler.phases.OptimisticOptimizations;
-import org.graalvm.compiler.phases.common.CanonicalizerPhase;
 import org.graalvm.compiler.phases.common.GuardLoweringPhase;
 import org.graalvm.compiler.phases.common.LoweringPhase;
 import org.graalvm.compiler.phases.common.WriteBarrierAdditionPhase;
@@ -54,7 +51,7 @@ import org.graalvm.compiler.phases.common.inlining.InliningPhase;
 import org.graalvm.compiler.phases.common.inlining.policy.InlineEverythingPolicy;
 import org.graalvm.compiler.phases.tiers.HighTierContext;
 import org.graalvm.compiler.phases.tiers.MidTierContext;
-import org.graalvm.compiler.replacements.NodeIntrinsificationProvider;
+import org.graalvm.compiler.runtime.RuntimeProvider;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -161,29 +158,18 @@ public class WriteBarrierAdditionTest extends HotSpotGraalCompilerTest {
     static Container con = new Container();
 
     /**
-     * Expected 4 barriers for the Serial GC and 9 for G1 (1 ref + 4 pre + 4 post). In this test, we
-     * load the correct offset of the WeakReference object so naturally we assert the presence of
-     * the pre barrier.
+     * Expected 0 barrier for the Serial GC and 1 for G1. In this test, we load the correct offset
+     * of the WeakReference object so naturally we assert the presence of the pre barrier.
      */
     @Test
     public void test5() throws Exception {
         testHelper("test5Snippet", config.useG1GC ? 1 : 0);
     }
 
-    @Override
-    protected void registerInvocationPlugins(InvocationPlugins invocationPlugins) {
-        NodeIntrinsicPluginFactory.InjectionProvider injection = new NodeIntrinsificationProvider(getMetaAccess(), getSnippetReflection(), getProviders().getForeignCalls(), null);
-        new PluginFactory_WriteBarrierAdditionTest().registerPlugins(invocationPlugins, injection);
-        super.registerInvocationPlugins(invocationPlugins);
-    }
+    private static final boolean useCompressedOops = ((HotSpotBackend) Graal.getRequiredCapability(RuntimeProvider.class).getHostBackend()).getRuntime().getVMConfig().useCompressedOops;
 
-    @Fold
-    public static boolean useCompressedOops(@Fold.InjectedParameter GraalHotSpotVMConfig config) {
-        return config.useCompressedOops;
-    }
-
-    public static Object test5Snippet() throws Exception {
-        return UNSAFE.getObject(wr, useCompressedOops(GraalHotSpotVMConfigBase.INJECTED_VMCONFIG) ? 12L : 16L);
+    public Object test5Snippet() {
+        return UNSAFE.getObject(wr, useCompressedOops ? 12L : 16L);
     }
 
     /**
@@ -276,11 +262,11 @@ public class WriteBarrierAdditionTest extends HotSpotGraalCompilerTest {
             StructuredGraph graph = parseEager(snippet, AllowAssumptions.NO, debug);
             HighTierContext highContext = getDefaultHighTierContext();
             MidTierContext midContext = new MidTierContext(getProviders(), getTargetProvider(), OptimisticOptimizations.ALL, graph.getProfilingInfo());
-            new InliningPhase(new InlineEverythingPolicy(), new CanonicalizerPhase()).apply(graph, highContext);
-            new CanonicalizerPhase().apply(graph, highContext);
-            new LoweringPhase(new CanonicalizerPhase(), LoweringTool.StandardLoweringStage.HIGH_TIER).apply(graph, highContext);
+            new InliningPhase(new InlineEverythingPolicy(), createCanonicalizerPhase()).apply(graph, highContext);
+            this.createCanonicalizerPhase().apply(graph, highContext);
+            new LoweringPhase(this.createCanonicalizerPhase(), LoweringTool.StandardLoweringStage.HIGH_TIER).apply(graph, highContext);
             new GuardLoweringPhase().apply(graph, midContext);
-            new LoweringPhase(new CanonicalizerPhase(), LoweringTool.StandardLoweringStage.MID_TIER).apply(graph, midContext);
+            new LoweringPhase(this.createCanonicalizerPhase(), LoweringTool.StandardLoweringStage.MID_TIER).apply(graph, midContext);
             new WriteBarrierAdditionPhase().apply(graph, midContext);
             debug.dump(DebugContext.BASIC_LEVEL, graph, "After Write Barrier Addition");
 

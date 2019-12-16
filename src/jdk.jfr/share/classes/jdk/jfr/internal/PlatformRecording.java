@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,6 +84,8 @@ public final class PlatformRecording implements AutoCloseable {
     private TimerTask startTask;
     private AccessControlContext noDestinationDumpOnExitAccessControlContext;
     private boolean shuoldWriteActiveRecordingEvent = true;
+    private Duration flushInterval = Duration.ofSeconds(1);
+    private long finalStartChunkNanos = Long.MIN_VALUE;
 
     PlatformRecording(PlatformRecorder recorder, long id) {
         // Typically the access control context is taken
@@ -98,9 +100,10 @@ public final class PlatformRecording implements AutoCloseable {
         this.name = String.valueOf(id);
     }
 
-    public void start() {
+    public long start() {
         RecordingState oldState;
         RecordingState newState;
+        long startNanos = -1;
         synchronized (recorder) {
             oldState = getState();
             if (!Utils.isBefore(state, RecordingState.RUNNING)) {
@@ -111,7 +114,7 @@ public final class PlatformRecording implements AutoCloseable {
                 startTask = null;
                 startTime = null;
             }
-            recorder.start(this);
+            startNanos = recorder.start(this);
             Logger.log(LogTag.JFR, LogLevel.INFO, () -> {
                 // Only print non-default values so it easy to see
                 // which options were added
@@ -143,6 +146,8 @@ public final class PlatformRecording implements AutoCloseable {
             newState = getState();
         }
         notifyIfStateChanged(oldState, newState);
+
+        return startNanos;
     }
 
     public boolean stop(String reason) {
@@ -366,10 +371,16 @@ public final class PlatformRecording implements AutoCloseable {
 
     public void setDestination(WriteableUserPath userSuppliedPath) throws IOException {
         synchronized (recorder) {
+            checkSetDestination(userSuppliedPath);
+            this.destination = userSuppliedPath;
+        }
+    }
+
+    public void checkSetDestination(WriteableUserPath userSuppliedPath) throws IOException {
+        synchronized (recorder) {
             if (Utils.isState(getState(), RecordingState.STOPPED, RecordingState.CLOSED)) {
                 throw new IllegalStateException("Destination can't be set on a recording that has been stopped/closed");
             }
-            this.destination = userSuppliedPath;
         }
     }
 
@@ -474,7 +485,10 @@ public final class PlatformRecording implements AutoCloseable {
         }
         for (FlightRecorderListener cl : PlatformRecorder.getListeners()) {
             try {
-                cl.recordingStateChanged(getRecording());
+                // Skip internal recordings
+                if (recording != null) {
+                    cl.recordingStateChanged(recording);
+                }
             } catch (RuntimeException re) {
                 Logger.log(JFR, WARN, "Error notifying recorder listener:" + re.getMessage());
             }
@@ -773,5 +787,37 @@ public final class PlatformRecording implements AutoCloseable {
 
     public SafePath getDumpOnExitDirectory()  {
         return this.dumpOnExitDirectory;
+    }
+
+    public void setFlushInterval(Duration interval) {
+        synchronized (recorder) {
+            if (getState() == RecordingState.CLOSED) {
+                throw new IllegalStateException("Can't set stream interval when recording is closed");
+            }
+            this.flushInterval = interval;
+        }
+    }
+
+    public Duration getFlushInterval() {
+        synchronized (recorder) {
+            return flushInterval;
+        }
+    }
+
+    public long getStreamIntervalMillis() {
+        synchronized (recorder) {
+            if (flushInterval != null) {
+                return flushInterval.toMillis();
+            }
+            return Long.MAX_VALUE;
+        }
+    }
+
+    public long getFinalChunkStartNanos() {
+        return finalStartChunkNanos;
+    }
+
+    public void setFinalStartnanos(long chunkStartNanos) {
+       this.finalStartChunkNanos = chunkStartNanos;
     }
 }

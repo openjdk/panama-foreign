@@ -201,8 +201,8 @@ const char* Symbol::as_klass_external_name() const {
   int   length = (int)strlen(str);
   // Turn all '/'s into '.'s (also for array klasses)
   for (int index = 0; index < length; index++) {
-    if (str[index] == '/') {
-      str[index] = '.';
+    if (str[index] == JVM_SIGNATURE_SLASH) {
+      str[index] = JVM_SIGNATURE_DOT;
     }
   }
   return str;
@@ -210,8 +210,8 @@ const char* Symbol::as_klass_external_name() const {
 
 static void print_class(outputStream *os, char *class_str, int len) {
   for (int i = 0; i < len; ++i) {
-    if (class_str[i] == '/') {
-      os->put('.');
+    if (class_str[i] == JVM_SIGNATURE_SLASH) {
+      os->put(JVM_SIGNATURE_DOT);
     } else {
       os->put(class_str[i]);
     }
@@ -221,9 +221,9 @@ static void print_class(outputStream *os, char *class_str, int len) {
 static void print_array(outputStream *os, char *array_str, int len) {
   int dimensions = 0;
   for (int i = 0; i < len; ++i) {
-    if (array_str[i] == '[') {
+    if (array_str[i] == JVM_SIGNATURE_ARRAY) {
       dimensions++;
-    } else if (array_str[i] == 'L') {
+    } else if (array_str[i] == JVM_SIGNATURE_CLASS) {
       // Expected format: L<type name>;. Skip 'L' and ';' delimiting the type name.
       print_class(os, array_str+i+1, len-i-2);
       break;
@@ -281,7 +281,7 @@ bool Symbol::try_increment_refcount() {
     } else if (refc == 0) {
       return false; // dead, can't revive.
     } else {
-      found = Atomic::cmpxchg(old_value + 1, &_length_and_refcount, old_value);
+      found = Atomic::cmpxchg(&_length_and_refcount, old_value, old_value + 1);
       if (found == old_value) {
         return true; // successfully updated.
       }
@@ -324,7 +324,7 @@ void Symbol::decrement_refcount() {
 #endif
       return;
     } else {
-      found = Atomic::cmpxchg(old_value - 1, &_length_and_refcount, old_value);
+      found = Atomic::cmpxchg(&_length_and_refcount, old_value, old_value - 1);
       if (found == old_value) {
         return;  // successfully updated.
       }
@@ -348,7 +348,7 @@ void Symbol::make_permanent() {
       return;
     } else {
       int len = extract_length(old_value);
-      found = Atomic::cmpxchg(pack_length_and_refcount(len, PERM_REFCOUNT), &_length_and_refcount, old_value);
+      found = Atomic::cmpxchg(&_length_and_refcount, old_value, pack_length_and_refcount(len, PERM_REFCOUNT));
       if (found == old_value) {
         return;  // successfully updated.
       }
@@ -394,7 +394,7 @@ bool Symbol::is_valid(Symbol* s) {
   if (!os::is_readable_range(s, s + 1)) return false;
 
   // Symbols are not allocated in Java heap.
-  if (Universe::heap()->is_in_reserved(s)) return false;
+  if (Universe::heap()->is_in(s)) return false;
 
   int len = s->utf8_length();
   if (len < 0) return false;

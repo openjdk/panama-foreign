@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8144355 8144062 8176709 8194070 8193802
+ * @bug 8144355 8144062 8176709 8194070 8193802 8231093
  * @summary Test aliasing additions to ZipFileSystem for multi-release jar files
  * @library /lib/testlibrary/java/util/jar
  * @modules jdk.compiler
@@ -40,6 +40,7 @@ import java.lang.invoke.MethodType;
 import java.lang.Runtime.Version;
 import java.net.URI;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,6 +50,8 @@ import org.testng.annotations.*;
 
 public class MultiReleaseJarTest {
     final private int MAJOR_VERSION = Runtime.version().feature();
+    private static final String PROPERTY_RELEASE_VERSION = "releaseVersion";
+    private static final String PROPERTY_MULTI_RELEASE = "multi-release";
 
     final private String userdir = System.getProperty("user.dir",".");
     final private CreateMultiReleaseTestJars creator =  new CreateMultiReleaseTestJars();
@@ -87,43 +90,56 @@ public class MultiReleaseJarTest {
     @DataProvider(name="strings")
     public Object[][] createStrings() {
         return new Object[][]{
-                {"runtime", MAJOR_VERSION},
-                {"-20", 8},
-                {"0", 8},
-                {"8", 8},
-                {"9", 9},
-                {Integer.toString(MAJOR_VERSION), MAJOR_VERSION},
-                {Integer.toString(MAJOR_VERSION+1), MAJOR_VERSION},
-                {"50", MAJOR_VERSION}
+                {"runtime", MAJOR_VERSION, "8"},
+                {null, 8, Integer.toString(MAJOR_VERSION)},
+                {"8", 8, "9"},
+                {"9", 9, null},
+                {Integer.toString(MAJOR_VERSION), MAJOR_VERSION, "8"},
+                {Integer.toString(MAJOR_VERSION+1), MAJOR_VERSION, "8"},
+                {"50", MAJOR_VERSION, "9"}
         };
     }
 
     @DataProvider(name="integers")
     public Object[][] createIntegers() {
         return new Object[][] {
-                {Integer.valueOf(-5), 8},
-                {Integer.valueOf(0), 8},
-                {Integer.valueOf(8), 8},
-                {Integer.valueOf(9), 9},
-                {Integer.valueOf(MAJOR_VERSION), MAJOR_VERSION},
-                {Integer.valueOf(MAJOR_VERSION + 1), MAJOR_VERSION},
-                {Integer.valueOf(100), MAJOR_VERSION}
+                {null, 8, Integer.valueOf(9)},
+                {Integer.valueOf(8), 8, Integer.valueOf(9)},
+                {Integer.valueOf(9), 9, Integer.valueOf(MAJOR_VERSION)},
+                {Integer.valueOf(MAJOR_VERSION), MAJOR_VERSION, Integer.valueOf(8)},
+                {Integer.valueOf(MAJOR_VERSION + 1), MAJOR_VERSION, null},
+                {Integer.valueOf(100), MAJOR_VERSION, Integer.valueOf(8)}
         };
     }
 
     @DataProvider(name="versions")
     public Object[][] createVersions() {
         return new Object[][] {
-                {Version.parse("8"),    8},
-                {Version.parse("9"),    9},
-                {Version.parse(Integer.toString(MAJOR_VERSION)),  MAJOR_VERSION},
-                {Version.parse(Integer.toString(MAJOR_VERSION) + 1),  MAJOR_VERSION},
-                {Version.parse("100"), MAJOR_VERSION}
+                {null, 8, Version.parse("14")},
+                {Version.parse("8"), 8, Version.parse("7")},
+                {Version.parse("9"), 9, null},
+                {Version.parse(Integer.toString(MAJOR_VERSION)), MAJOR_VERSION, Version.parse("8")},
+                {Version.parse(Integer.toString(MAJOR_VERSION) + 1), MAJOR_VERSION, Version.parse("9")},
+                {Version.parse("100"), MAJOR_VERSION, Version.parse("14")}
         };
     }
 
-    // Not the best test but all I can do since ZipFileSystem and JarFileSystem
-    // are not public, so I can't use (fs instanceof ...)
+    @DataProvider(name="invalidVersions")
+    public Object[][] invalidVersions() {
+        return new Object[][] {
+                {Map.of(PROPERTY_RELEASE_VERSION, "")},
+                {Map.of(PROPERTY_RELEASE_VERSION, "invalid")},
+                {Map.of(PROPERTY_RELEASE_VERSION, "0")},
+                {Map.of(PROPERTY_RELEASE_VERSION, "-1")},
+                {Map.of(PROPERTY_RELEASE_VERSION, "11.0.1")},
+                {Map.of(PROPERTY_RELEASE_VERSION, new ArrayList<Long>())},
+                {Map.of(PROPERTY_RELEASE_VERSION, Integer.valueOf(0))},
+                {Map.of(PROPERTY_RELEASE_VERSION, Integer.valueOf(-1))}
+        };
+    }
+
+    // Not the best test but all I can do since ZipFileSystem
+    // is not public, so I can't use (fs instanceof ...)
     @Test
     public void testNewFileSystem() throws Exception {
         Map<String,String> env = new HashMap<>();
@@ -131,7 +147,7 @@ public class MultiReleaseJarTest {
         try (FileSystem fs = FileSystems.newFileSystem(mruri, env)) {
             Assert.assertTrue(readAndCompare(fs, 8));
         }
-        env.put("multi-release", "runtime");
+        env.put(PROPERTY_RELEASE_VERSION, "runtime");
         // a configuration and jar file is multi-release
         try (FileSystem fs = FileSystems.newFileSystem(mruri, env)) {
             Assert.assertTrue(readAndCompare(fs, MAJOR_VERSION));
@@ -149,29 +165,76 @@ public class MultiReleaseJarTest {
     }
 
     @Test(dataProvider="strings")
-    public void testStrings(String value, int expected) throws Throwable {
-        stringEnv.put("multi-release", value);
+    public void testStrings(String value, int expected, String ignorable) throws Throwable {
+        stringEnv.clear();
+        stringEnv.put(PROPERTY_RELEASE_VERSION, value);
+        // we check, that values for "multi-release" are ignored
+        stringEnv.put(PROPERTY_MULTI_RELEASE, ignorable);
         runTest(stringEnv, expected);
     }
 
     @Test(dataProvider="integers")
-    public void testIntegers(Integer value, int expected) throws Throwable {
-        integerEnv.put("multi-release", value);
+    public void testIntegers(Integer value, int expected, Integer ignorable) throws Throwable {
+        integerEnv.clear();
+        integerEnv.put(PROPERTY_RELEASE_VERSION, value);
+        // we check, that values for "multi-release" are ignored
+        integerEnv.put(PROPERTY_MULTI_RELEASE, value);
         runTest(integerEnv, expected);
     }
 
     @Test(dataProvider="versions")
-    public void testVersions(Version value, int expected) throws Throwable {
-        versionEnv.put("multi-release", value);
+    public void testVersions(Version value, int expected, Version ignorable) throws Throwable {
+        versionEnv.clear();
+        versionEnv.put(PROPERTY_RELEASE_VERSION, value);
+        // we check, that values for "multi-release" are ignored
+        versionEnv.put(PROPERTY_MULTI_RELEASE, ignorable);
         runTest(versionEnv, expected);
     }
 
     @Test
     public void testShortJar() throws Throwable {
-        integerEnv.put("multi-release", Integer.valueOf(MAJOR_VERSION));
+        integerEnv.clear();
+        integerEnv.put(PROPERTY_RELEASE_VERSION, Integer.valueOf(MAJOR_VERSION));
         runTest(smruri, integerEnv, MAJOR_VERSION);
-        integerEnv.put("multi-release", Integer.valueOf(9));
+        integerEnv.put(PROPERTY_RELEASE_VERSION, Integer.valueOf(9));
         runTest(smruri, integerEnv, 8);
+    }
+
+    /**
+     * Validate that an invalid value for the "releaseVersion" property throws
+     * an {@code IllegalArgumentException}
+     * @param env Zip FS map
+     * @throws Throwable  Exception thrown for anything other than the expected
+     * IllegalArgumentException
+     */
+    @Test(dataProvider="invalidVersions")
+    public void testInvalidVersions(Map<String,?> env) throws Throwable {
+        Assert.assertThrows(IllegalArgumentException.class, () ->
+                FileSystems.newFileSystem(Path.of(userdir,
+                        "multi-release.jar"), env));
+    }
+
+    // The following tests are for backwards compatibility to validate that
+    // the original property still works
+    @Test(dataProvider="strings")
+    public void testMRStrings(String value, int expected, String ignorable) throws Throwable {
+        stringEnv.clear();
+        stringEnv.put(PROPERTY_MULTI_RELEASE, value);
+        runTest(stringEnv, expected);
+    }
+
+    @Test(dataProvider="integers")
+    public void testMRIntegers(Integer value, int expected, Integer ignorable) throws Throwable {
+        integerEnv.clear();
+        integerEnv.put(PROPERTY_MULTI_RELEASE, value);
+        runTest(integerEnv, expected);
+    }
+
+    @Test(dataProvider="versions")
+    public void testMRVersions(Version value, int expected, Version ignorable) throws Throwable {
+        versionEnv.clear();
+        versionEnv.put(PROPERTY_MULTI_RELEASE, value);
+        runTest(versionEnv, expected);
     }
 
     private void runTest(Map<String,?> env, int expected) throws Throwable {
@@ -213,7 +276,7 @@ public class MultiReleaseJarTest {
         JarBuilder jb = new JarBuilder(jfname);
         jb.addAttribute("Multi-Release", "true");
         jb.build();
-        Map<String,String> env = Map.of("multi-release", "runtime");
+        Map<String,String> env = Map.of(PROPERTY_RELEASE_VERSION, "runtime");
         try (FileSystem fs = FileSystems.newFileSystem(uri, env)) {
             Assert.assertTrue(true);
         }
@@ -228,7 +291,7 @@ public class MultiReleaseJarTest {
         creator.buildCustomMultiReleaseJar(fileName, value, Map.of(),
                 /*addEntries*/true);
 
-        Map<String,String> env = Map.of("multi-release", "runtime");
+        Map<String,String> env = Map.of(PROPERTY_RELEASE_VERSION, "runtime");
         Path filePath = Paths.get(userdir, fileName);
         String ssp = filePath.toUri().toString();
         URI customJar = new URI("jar", ssp , null);

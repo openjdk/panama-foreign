@@ -1192,9 +1192,6 @@ class HandlerImpl {
   // predicate controlling translation of CompareAndSwapX
   bool needs_acquiring_load_exclusive(const Node *load);
 
-  // predicate controlling translation of StoreCM
-  bool unnecessary_storestore(const Node *storecm);
-
   // predicate controlling addressing modes
   bool size_fits_all_mem_uses(AddPNode* addp, int shift);
 %}
@@ -1583,29 +1580,6 @@ bool needs_acquiring_load_exclusive(const Node *n)
   return true;
 }
 
-// predicate controlling translation of StoreCM
-//
-// returns true if a StoreStore must precede the card write otherwise
-// false
-
-bool unnecessary_storestore(const Node *storecm)
-{
-  assert(storecm->Opcode()  == Op_StoreCM, "expecting a StoreCM");
-
-  // we need to generate a dmb ishst between an object put and the
-  // associated card mark when we are using CMS without conditional
-  // card marking
-
-  if (UseConcMarkSweepGC && !UseCondCardMark) {
-    return false;
-  }
-
-  // a storestore is unnecesary in all other cases
-
-  return true;
-}
-
-
 #define __ _masm.
 
 // advance declarations for helper functions to convert register
@@ -1771,7 +1745,7 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
     __ far_jump(RuntimeAddress(SharedRuntime::get_handle_wrong_method_stub()));
     __ bind(L_skip_barrier);
   }
-  
+
   int bangsize = C->bang_size_in_bytes();
   if (C->need_stack_bang(bangsize) && UseStackBanging)
     __ generate_stack_overflow_check(bangsize);
@@ -2185,17 +2159,21 @@ int HandlerImpl::emit_deopt_handler(CodeBuffer& cbuf)
 //=============================================================================
 
 const bool Matcher::match_rule_supported(int opcode) {
-
-  switch (opcode) {
-  default:
-    break;
-  }
-
-  if (!has_match_rule(opcode)) {
+  if (!has_match_rule(opcode))
     return false;
+
+  bool ret_value = true;
+  switch (opcode) {
+    case Op_CacheWB:
+    case Op_CacheWBPreSync:
+    case Op_CacheWBPostSync:
+      if (!VM_Version::supports_data_cache_line_flush()) {
+        ret_value = false;
+      }
+      break;
   }
 
-  return true;  // Per default match rules are supported.
+  return ret_value; // Per default match rules are supported.
 }
 
 const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType bt, int op_arity) {
@@ -2530,17 +2508,8 @@ void Compile::reshape_address(AddPNode* addp) {
     __ INSN(REG, as_Register(BASE));                                    \
   }
 
-typedef void (MacroAssembler::* mem_insn)(Register Rt, const Address &adr);
-typedef void (MacroAssembler::* mem_float_insn)(FloatRegister Rt, const Address &adr);
-typedef void (MacroAssembler::* mem_vector_insn)(FloatRegister Rt,
-                                  MacroAssembler::SIMD_RegVariant T, const Address &adr);
 
-  // Used for all non-volatile memory accesses.  The use of
-  // $mem->opcode() to discover whether this pattern uses sign-extended
-  // offsets is something of a kludge.
-  static void loadStore(MacroAssembler masm, mem_insn insn,
-                         Register reg, int opcode,
-                         Register base, int index, int size, int disp)
+static Address mem2address(int opcode, Register base, int index, int size, int disp)
   {
     Address::extend scale;
 
@@ -2559,16 +2528,34 @@ typedef void (MacroAssembler::* mem_vector_insn)(FloatRegister Rt,
     }
 
     if (index == -1) {
-      (masm.*insn)(reg, Address(base, disp));
+      return Address(base, disp);
     } else {
       assert(disp == 0, "unsupported address mode: disp = %d", disp);
-      (masm.*insn)(reg, Address(base, as_Register(index), scale));
+      return Address(base, as_Register(index), scale);
     }
   }
 
+
+typedef void (MacroAssembler::* mem_insn)(Register Rt, const Address &adr);
+typedef void (MacroAssembler::* mem_insn2)(Register Rt, Register adr);
+typedef void (MacroAssembler::* mem_float_insn)(FloatRegister Rt, const Address &adr);
+typedef void (MacroAssembler::* mem_vector_insn)(FloatRegister Rt,
+                                  MacroAssembler::SIMD_RegVariant T, const Address &adr);
+
+  // Used for all non-volatile memory accesses.  The use of
+  // $mem->opcode() to discover whether this pattern uses sign-extended
+  // offsets is something of a kludge.
+  static void loadStore(MacroAssembler masm, mem_insn insn,
+                        Register reg, int opcode,
+                        Register base, int index, int size, int disp)
+  {
+    Address addr = mem2address(opcode, base, index, size, disp);
+    (masm.*insn)(reg, addr);
+  }
+
   static void loadStore(MacroAssembler masm, mem_float_insn insn,
-                         FloatRegister reg, int opcode,
-                         Register base, int index, int size, int disp)
+                        FloatRegister reg, int opcode,
+                        Register base, int index, int size, int disp)
   {
     Address::extend scale;
 
@@ -2590,8 +2577,8 @@ typedef void (MacroAssembler::* mem_vector_insn)(FloatRegister Rt,
   }
 
   static void loadStore(MacroAssembler masm, mem_vector_insn insn,
-                         FloatRegister reg, MacroAssembler::SIMD_RegVariant T,
-                         int opcode, Register base, int index, int size, int disp)
+                        FloatRegister reg, MacroAssembler::SIMD_RegVariant T,
+                        int opcode, Register base, int index, int size, int disp)
   {
     if (index == -1) {
       (masm.*insn)(reg, T, Address(base, disp));
@@ -3541,7 +3528,7 @@ encode %{
 
     assert_different_registers(oop, box, tmp, disp_hdr);
 
-    // Load markOop from object into displaced_header.
+    // Load markWord from object into displaced_header.
     __ ldr(disp_hdr, Address(oop, oopDesc::mark_offset_in_bytes()));
 
     if (UseBiasedLocking && !UseOptoBiasInlining) {
@@ -3549,17 +3536,17 @@ encode %{
     }
 
     // Check for existing monitor
-    __ tbnz(disp_hdr, exact_log2(markOopDesc::monitor_value), object_has_monitor);
+    __ tbnz(disp_hdr, exact_log2(markWord::monitor_value), object_has_monitor);
 
-    // Set tmp to be (markOop of object | UNLOCK_VALUE).
-    __ orr(tmp, disp_hdr, markOopDesc::unlocked_value);
+    // Set tmp to be (markWord of object | UNLOCK_VALUE).
+    __ orr(tmp, disp_hdr, markWord::unlocked_value);
 
     // Initialize the box. (Must happen before we update the object mark!)
     __ str(tmp, Address(box, BasicLock::displaced_header_offset_in_bytes()));
 
-    // Compare object markOop with an unlocked value (tmp) and if
-    // equal exchange the stack address of our box with object markOop.
-    // On failure disp_hdr contains the possibly locked markOop.
+    // Compare object markWord with an unlocked value (tmp) and if
+    // equal exchange the stack address of our box with object markWord.
+    // On failure disp_hdr contains the possibly locked markWord.
     __ cmpxchg(oop, tmp, box, Assembler::xword, /*acquire*/ true,
                /*release*/ true, /*weak*/ false, disp_hdr);
     __ br(Assembler::EQ, cont);
@@ -3573,10 +3560,10 @@ encode %{
     // We did not see an unlocked object so try the fast recursive case.
 
     // Check if the owner is self by comparing the value in the
-    // markOop of object (disp_hdr) with the stack pointer.
+    // markWord of object (disp_hdr) with the stack pointer.
     __ mov(rscratch1, sp);
     __ sub(disp_hdr, disp_hdr, rscratch1);
-    __ mov(tmp, (address) (~(os::vm_page_size()-1) | (uintptr_t)markOopDesc::lock_mask_in_place));
+    __ mov(tmp, (address) (~(os::vm_page_size()-1) | markWord::lock_mask_in_place));
     // If condition is true we are cont and hence we can store 0 as the
     // displaced header in the box, which indicates that it is a recursive lock.
     __ ands(tmp/*==0?*/, disp_hdr, tmp);   // Sets flags for result
@@ -3591,15 +3578,15 @@ encode %{
     // otherwise m->owner may contain a thread or a stack address.
     //
     // Try to CAS m->owner from NULL to current thread.
-    __ add(tmp, disp_hdr, (ObjectMonitor::owner_offset_in_bytes()-markOopDesc::monitor_value));
+    __ add(tmp, disp_hdr, (ObjectMonitor::owner_offset_in_bytes()-markWord::monitor_value));
     __ cmpxchg(tmp, zr, rthread, Assembler::xword, /*acquire*/ true,
                /*release*/ true, /*weak*/ false, noreg); // Sets flags for result
 
     // Store a non-null value into the box to avoid looking like a re-entrant
     // lock. The fast-path monitor unlock code checks for
-    // markOopDesc::monitor_value so use markOopDesc::unused_mark which has the
-    // relevant bit set, and also matches ObjectSynchronizer::slow_enter.
-    __ mov(tmp, (address)markOopDesc::unused_mark());
+    // markWord::monitor_value so use markWord::unused_mark which has the
+    // relevant bit set, and also matches ObjectSynchronizer::enter.
+    __ mov(tmp, (address)markWord::unused_mark().value());
     __ str(tmp, Address(box, BasicLock::displaced_header_offset_in_bytes()));
 
     __ bind(cont);
@@ -3631,10 +3618,10 @@ encode %{
 
     // Handle existing monitor.
     __ ldr(tmp, Address(oop, oopDesc::mark_offset_in_bytes()));
-    __ tbnz(disp_hdr, exact_log2(markOopDesc::monitor_value), object_has_monitor);
+    __ tbnz(disp_hdr, exact_log2(markWord::monitor_value), object_has_monitor);
 
     // Check if it is still a light weight lock, this is is true if we
-    // see the stack address of the basicLock in the markOop of the
+    // see the stack address of the basicLock in the markWord of the
     // object.
 
     __ cmpxchg(oop, box, disp_hdr, Assembler::xword, /*acquire*/ false,
@@ -3645,7 +3632,8 @@ encode %{
 
     // Handle existing monitor.
     __ bind(object_has_monitor);
-    __ add(tmp, tmp, -markOopDesc::monitor_value); // monitor
+    STATIC_ASSERT(markWord::monitor_value <= INT_MAX);
+    __ add(tmp, tmp, -(int)markWord::monitor_value); // monitor
     __ ldr(rscratch1, Address(tmp, ObjectMonitor::owner_offset_in_bytes()));
     __ ldr(disp_hdr, Address(tmp, ObjectMonitor::recursions_offset_in_bytes()));
     __ eor(rscratch1, rscratch1, rthread); // Will be 0 if we are the owner.
@@ -3819,7 +3807,7 @@ frame %{
     static const int hi[Op_RegL + 1] = { // enum name
       0,                                 // Op_Node
       0,                                 // Op_Set
-      OptoReg::Bad,                       // Op_RegN
+      OptoReg::Bad,                      // Op_RegN
       OptoReg::Bad,                      // Op_RegI
       R0_H_num,                          // Op_RegP
       OptoReg::Bad,                      // Op_RegF
@@ -6951,7 +6939,7 @@ instruct loadRange(iRegINoSp dst, memory mem)
 instruct loadP(iRegPNoSp dst, memory mem)
 %{
   match(Set dst (LoadP mem));
-  predicate(!needs_acquiring_load(n));
+  predicate(!needs_acquiring_load(n) && (n->as_Load()->barrier_data() == 0));
 
   ins_cost(4 * INSN_COST);
   format %{ "ldr  $dst, $mem\t# ptr" %}
@@ -7239,7 +7227,6 @@ instruct loadConD(vRegD dst, immD con) %{
 instruct storeimmCM0(immI0 zero, memory mem)
 %{
   match(Set mem (StoreCM mem zero));
-  predicate(unnecessary_storestore(n));
 
   ins_cost(INSN_COST);
   format %{ "storestore (elided)\n\t"
@@ -7644,6 +7631,7 @@ instruct loadL_volatile(iRegLNoSp dst, /* sync_memory*/indirect mem)
 instruct loadP_volatile(iRegPNoSp dst, /* sync_memory*/indirect mem)
 %{
   match(Set dst (LoadP mem));
+  predicate(n->as_Load()->barrier_data() == 0);
 
   ins_cost(VOLATILE_REF_COST);
   format %{ "ldar  $dst, $mem\t# ptr" %}
@@ -7801,6 +7789,47 @@ instruct storeD_volatile(vRegD src, /* sync_memory*/indirect mem)
 %}
 
 //  ---------------- end of volatile loads and stores ----------------
+
+instruct cacheWB(indirect addr)
+%{
+  predicate(VM_Version::supports_data_cache_line_flush());
+  match(CacheWB addr);
+
+  ins_cost(100);
+  format %{"cache wb $addr" %}
+  ins_encode %{
+    assert($addr->index_position() < 0, "should be");
+    assert($addr$$disp == 0, "should be");
+    __ cache_wb(Address($addr$$base$$Register, 0));
+  %}
+  ins_pipe(pipe_slow); // XXX
+%}
+
+instruct cacheWBPreSync()
+%{
+  predicate(VM_Version::supports_data_cache_line_flush());
+  match(CacheWBPreSync);
+
+  ins_cost(100);
+  format %{"cache wb presync" %}
+  ins_encode %{
+    __ cache_wbsync(true);
+  %}
+  ins_pipe(pipe_slow); // XXX
+%}
+
+instruct cacheWBPostSync()
+%{
+  predicate(VM_Version::supports_data_cache_line_flush());
+  match(CacheWBPostSync);
+
+  ins_cost(100);
+  format %{"cache wb postsync" %}
+  ins_encode %{
+    __ cache_wbsync(false);
+  %}
+  ins_pipe(pipe_slow); // XXX
+%}
 
 // ============================================================================
 // BSWAP Instructions
@@ -8341,6 +8370,17 @@ instruct castII(iRegI dst)
   ins_pipe(pipe_class_empty);
 %}
 
+instruct castLL(iRegL dst)
+%{
+  match(Set dst (CastLL dst));
+
+  size(0);
+  format %{ "# castLL of $dst" %}
+  ins_encode(/* empty encoding */);
+  ins_cost(0);
+  ins_pipe(pipe_class_empty);
+%}
+
 // ============================================================================
 // Atomic operation instructions
 //
@@ -8528,6 +8568,7 @@ instruct compareAndSwapL(iRegINoSp res, indirect mem, iRegLNoSp oldval, iRegLNoS
 instruct compareAndSwapP(iRegINoSp res, indirect mem, iRegP oldval, iRegP newval, rFlagsReg cr) %{
 
   match(Set res (CompareAndSwapP mem (Binary oldval newval)));
+  predicate(n->as_LoadStore()->barrier_data() == 0);
   ins_cost(2 * VOLATILE_REF_COST);
 
   effect(KILL cr);
@@ -8641,7 +8682,7 @@ instruct compareAndSwapLAcq(iRegINoSp res, indirect mem, iRegLNoSp oldval, iRegL
 
 instruct compareAndSwapPAcq(iRegINoSp res, indirect mem, iRegP oldval, iRegP newval, rFlagsReg cr) %{
 
-  predicate(needs_acquiring_load_exclusive(n));
+  predicate(needs_acquiring_load_exclusive(n) && (n->as_LoadStore()->barrier_data() == 0));
   match(Set res (CompareAndSwapP mem (Binary oldval newval)));
   ins_cost(VOLATILE_REF_COST);
 
@@ -8772,6 +8813,7 @@ instruct compareAndExchangeN(iRegNNoSp res, indirect mem, iRegN oldval, iRegN ne
 %}
 
 instruct compareAndExchangeP(iRegPNoSp res, indirect mem, iRegP oldval, iRegP newval, rFlagsReg cr) %{
+  predicate(n->as_LoadStore()->barrier_data() == 0);
   match(Set res (CompareAndExchangeP mem (Binary oldval newval)));
   ins_cost(2 * VOLATILE_REF_COST);
   effect(TEMP_DEF res, KILL cr);
@@ -8871,7 +8913,7 @@ instruct compareAndExchangeNAcq(iRegNNoSp res, indirect mem, iRegN oldval, iRegN
 %}
 
 instruct compareAndExchangePAcq(iRegPNoSp res, indirect mem, iRegP oldval, iRegP newval, rFlagsReg cr) %{
-  predicate(needs_acquiring_load_exclusive(n));
+  predicate(needs_acquiring_load_exclusive(n) && (n->as_LoadStore()->barrier_data() == 0));
   match(Set res (CompareAndExchangeP mem (Binary oldval newval)));
   ins_cost(VOLATILE_REF_COST);
   effect(TEMP_DEF res, KILL cr);
@@ -8972,6 +9014,7 @@ instruct weakCompareAndSwapN(iRegINoSp res, indirect mem, iRegN oldval, iRegN ne
 %}
 
 instruct weakCompareAndSwapP(iRegINoSp res, indirect mem, iRegP oldval, iRegP newval, rFlagsReg cr) %{
+  predicate(n->as_LoadStore()->barrier_data() == 0);
   match(Set res (WeakCompareAndSwapP mem (Binary oldval newval)));
   ins_cost(2 * VOLATILE_REF_COST);
   effect(KILL cr);
@@ -9079,8 +9122,8 @@ instruct weakCompareAndSwapNAcq(iRegINoSp res, indirect mem, iRegN oldval, iRegN
 %}
 
 instruct weakCompareAndSwapPAcq(iRegINoSp res, indirect mem, iRegP oldval, iRegP newval, rFlagsReg cr) %{
-  predicate(needs_acquiring_load_exclusive(n));
   match(Set res (WeakCompareAndSwapP mem (Binary oldval newval)));
+  predicate(needs_acquiring_load_exclusive(n) && (n->as_LoadStore()->barrier_data() == 0));
   ins_cost(VOLATILE_REF_COST);
   effect(KILL cr);
   format %{
@@ -9130,6 +9173,7 @@ instruct get_and_setN(indirect mem, iRegN newv, iRegINoSp prev) %{
 %}
 
 instruct get_and_setP(indirect mem, iRegP newv, iRegPNoSp prev) %{
+  predicate(n->as_LoadStore()->barrier_data() == 0);
   match(Set prev (GetAndSetP mem newv));
   ins_cost(2 * VOLATILE_REF_COST);
   format %{ "atomic_xchg  $prev, $newv, [$mem]" %}
@@ -9173,7 +9217,7 @@ instruct get_and_setNAcq(indirect mem, iRegN newv, iRegINoSp prev) %{
 %}
 
 instruct get_and_setPAcq(indirect mem, iRegP newv, iRegPNoSp prev) %{
-  predicate(needs_acquiring_load_exclusive(n));
+  predicate(needs_acquiring_load_exclusive(n) && (n->as_LoadStore()->barrier_data() == 0));
   match(Set prev (GetAndSetP mem newv));
   ins_cost(VOLATILE_REF_COST);
   format %{ "atomic_xchg_acq  $prev, $newv, [$mem]" %}
@@ -10373,6 +10417,56 @@ instruct mnegL(iRegLNoSp dst, iRegL src1, iRegL src2, immL0 zero) %{
   %}
 
   ins_pipe(lmac_reg_reg);
+%}
+
+// Combine Integer Signed Multiply & Add/Sub/Neg Long
+
+instruct smaddL(iRegLNoSp dst, iRegIorL2I src1, iRegIorL2I src2, iRegLNoSp src3) %{
+  match(Set dst (AddL src3 (MulL (ConvI2L src1) (ConvI2L src2))));
+
+  ins_cost(INSN_COST * 3);
+  format %{ "smaddl  $dst, $src1, $src2, $src3" %}
+
+  ins_encode %{
+    __ smaddl(as_Register($dst$$reg),
+              as_Register($src1$$reg),
+              as_Register($src2$$reg),
+              as_Register($src3$$reg));
+  %}
+
+  ins_pipe(imac_reg_reg);
+%}
+
+instruct smsubL(iRegLNoSp dst, iRegIorL2I src1, iRegIorL2I src2, iRegLNoSp src3) %{
+  match(Set dst (SubL src3 (MulL (ConvI2L src1) (ConvI2L src2))));
+
+  ins_cost(INSN_COST * 3);
+  format %{ "smsubl  $dst, $src1, $src2, $src3" %}
+
+  ins_encode %{
+    __ smsubl(as_Register($dst$$reg),
+              as_Register($src1$$reg),
+              as_Register($src2$$reg),
+              as_Register($src3$$reg));
+  %}
+
+  ins_pipe(imac_reg_reg);
+%}
+
+instruct smnegL(iRegLNoSp dst, iRegIorL2I src1, iRegIorL2I src2, immL0 zero) %{
+  match(Set dst (MulL (SubL zero (ConvI2L src1)) (ConvI2L src2)));
+  match(Set dst (MulL (ConvI2L src1) (SubL zero (ConvI2L src2))));
+
+  ins_cost(INSN_COST * 3);
+  format %{ "smnegl  $dst, $src1, $src2" %}
+
+  ins_encode %{
+    __ smnegl(as_Register($dst$$reg),
+              as_Register($src1$$reg),
+              as_Register($src2$$reg));
+  %}
+
+  ins_pipe(imac_reg_reg);
 %}
 
 // Integer Divide

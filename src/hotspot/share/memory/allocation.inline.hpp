@@ -26,6 +26,7 @@
 #define SHARE_MEMORY_ALLOCATION_INLINE_HPP
 
 #include "runtime/atomic.hpp"
+#include "runtime/globals.hpp"
 #include "runtime/os.hpp"
 #include "services/memTracker.hpp"
 #include "utilities/align.hpp"
@@ -40,7 +41,7 @@ inline void inc_stat_counter(volatile julong* dest, julong add_value) {
   *dest += add_value;
 #else
   julong value = Atomic::load(dest);
-  Atomic::store(value + add_value, dest);
+  Atomic::store(dest, value + add_value);
 #endif
 }
 #endif

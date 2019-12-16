@@ -2781,6 +2781,8 @@ static void defineIn_RegMask(FILE *fp, FormDict &globals, OperandForm &oper) {
       // Return the sole RegMask.
       if (strcmp(first_reg_class, "stack_slots") == 0) {
         fprintf(fp,"  return &(Compile::current()->FIRST_STACK_mask());\n");
+      } else if (strcmp(first_reg_class, "dynamic") == 0) {
+        fprintf(fp,"  return &RegMask::Empty;\n");
       } else {
         const char* first_reg_class_to_upper = toUpper(first_reg_class);
         fprintf(fp,"  return &%s_mask();\n", first_reg_class_to_upper);
@@ -3936,6 +3938,9 @@ void ArchDesc::buildMachNode(FILE *fp_cpp, InstructForm *inst, const char *inden
   if( inst->is_ideal_if() ) {
     fprintf(fp_cpp, "%s node->_prob = _leaf->as_If()->_prob;\n", indent);
     fprintf(fp_cpp, "%s node->_fcnt = _leaf->as_If()->_fcnt;\n", indent);
+  }
+  if (inst->is_ideal_halt()) {
+    fprintf(fp_cpp, "%s node->_halt_reason = _leaf->as_Halt()->_halt_reason;\n", indent);
   }
   if (inst->is_ideal_jump()) {
     fprintf(fp_cpp, "%s node->_probs = _leaf->as_Jump()->_probs;\n", indent);

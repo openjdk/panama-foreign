@@ -26,10 +26,12 @@
 #include "gc/epsilon/epsilonMemoryPool.hpp"
 #include "gc/epsilon/epsilonThreadLocalData.hpp"
 #include "gc/shared/gcArguments.hpp"
+#include "gc/shared/locationPrinter.inline.hpp"
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/globals.hpp"
 
 jint EpsilonHeap::initialize() {
@@ -38,13 +40,13 @@ jint EpsilonHeap::initialize() {
   size_t max_byte_size  = align_up(MaxHeapSize, align);
 
   // Initialize backing storage
-  ReservedSpace heap_rs = Universe::reserve_heap(max_byte_size, align);
+  ReservedHeapSpace heap_rs = Universe::reserve_heap(max_byte_size, align);
   _virtual_space.initialize(heap_rs, init_byte_size);
 
   MemRegion committed_region((HeapWord*)_virtual_space.low(),          (HeapWord*)_virtual_space.high());
   MemRegion  reserved_region((HeapWord*)_virtual_space.low_boundary(), (HeapWord*)_virtual_space.high_boundary());
 
-  initialize_reserved_region(reserved_region.start(), reserved_region.end());
+  initialize_reserved_region(heap_rs);
 
   _space = new ContiguousSpace();
   _space->initialize(committed_region, /* clear_space = */ true, /* mangle_space = */ true);
@@ -109,8 +111,8 @@ GrowableArray<MemoryPool*> EpsilonHeap::memory_pools() {
 
 size_t EpsilonHeap::unsafe_max_tlab_alloc(Thread* thr) const {
   // Return max allocatable TLAB size, and let allocation path figure out
-  // the actual TLAB allocation size.
-  return _max_tlab_size;
+  // the actual allocation size. Note: result should be in bytes.
+  return _max_tlab_size * HeapWordSize;
 }
 
 EpsilonHeap* EpsilonHeap::heap() {
@@ -155,7 +157,7 @@ HeapWord* EpsilonHeap::allocate_work(size_t size) {
   // Allocation successful, update counters
   {
     size_t last = _last_counter_update;
-    if ((used - last >= _step_counter_update) && Atomic::cmpxchg(used, &_last_counter_update, last) == last) {
+    if ((used - last >= _step_counter_update) && Atomic::cmpxchg(&_last_counter_update, last, used) == last) {
       _monitoring_support->update_counters();
     }
   }
@@ -163,7 +165,7 @@ HeapWord* EpsilonHeap::allocate_work(size_t size) {
   // ...and print the occupancy line, if needed
   {
     size_t last = _last_heap_print;
-    if ((used - last >= _step_heap_print) && Atomic::cmpxchg(used, &_last_heap_print, last) == last) {
+    if ((used - last >= _step_heap_print) && Atomic::cmpxchg(&_last_heap_print, last, used) == last) {
       print_heap_info(used);
       print_metaspace_info();
     }
@@ -211,7 +213,7 @@ HeapWord* EpsilonHeap::allocate_new_tlab(size_t min_size,
   }
 
   // Always honor boundaries
-  size = MAX2(min_size, MIN2(_max_tlab_size, size));
+  size = clamp(size, min_size, _max_tlab_size);
 
   // Always honor alignment
   size = align_up(size, MinObjAlignment);
@@ -289,8 +291,8 @@ void EpsilonHeap::do_full_collection(bool clear_all_soft_refs) {
   collect(gc_cause());
 }
 
-void EpsilonHeap::safe_object_iterate(ObjectClosure *cl) {
-  _space->safe_object_iterate(cl);
+void EpsilonHeap::object_iterate(ObjectClosure *cl) {
+  _space->object_iterate(cl);
 }
 
 void EpsilonHeap::print_on(outputStream *st) const {
@@ -303,6 +305,10 @@ void EpsilonHeap::print_on(outputStream *st) const {
   _space->print_on(st);
 
   MetaspaceUtils::print_on(st);
+}
+
+bool EpsilonHeap::print_location(outputStream* st, void* addr) const {
+  return BlockLocationPrinter<EpsilonHeap>::print_location(st, addr);
 }
 
 void EpsilonHeap::print_tracing_info() const {

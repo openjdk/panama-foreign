@@ -41,9 +41,6 @@
 #include "opto/rootnode.hpp"
 #include "opto/subnode.hpp"
 #include "utilities/macros.hpp"
-#if INCLUDE_ZGC
-#include "gc/z/c2/zBarrierSetC2.hpp"
-#endif
 
 //=============================================================================
 //------------------------------split_thru_phi---------------------------------
@@ -324,7 +321,7 @@ Node *PhaseIdealLoop::has_local_phi_input( Node *n ) {
       }
       return NULL;
     }
-    assert(m->is_Phi() || is_dominator(get_ctrl(m), n_ctrl), "m has strange control");
+    assert(n->is_Phi() || m->is_Phi() || is_dominator(get_ctrl(m), n_ctrl), "m has strange control");
   }
 
   return n_ctrl;
@@ -653,7 +650,10 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
     }
   }//for
   Node* bol = iff->in(1);
-  assert(bol->Opcode() == Op_Bool, "");
+  if (bol->Opcode() == Op_Opaque4) {
+    return NULL; // Ignore loop predicate checks (the Opaque4 ensures they will go away)
+  }
+  assert(bol->Opcode() == Op_Bool, "Unexpected node");
   int cmp_op = bol->in(1)->Opcode();
   // It is expensive to generate flags from a float compare.
   // Avoid duplicated float compare.
@@ -1072,26 +1072,21 @@ static bool merge_point_safe(Node* region) {
   // uses.
   // A better fix for this problem can be found in the BugTraq entry, but
   // expediency for Mantis demands this hack.
-  // 6855164: If the merge point has a FastLockNode with a PhiNode input, we stop
-  // split_if_with_blocks from splitting a block because we could not move around
-  // the FastLockNode.
+#ifdef _LP64
   for (DUIterator_Fast imax, i = region->fast_outs(imax); i < imax; i++) {
     Node* n = region->fast_out(i);
     if (n->is_Phi()) {
       for (DUIterator_Fast jmax, j = n->fast_outs(jmax); j < jmax; j++) {
         Node* m = n->fast_out(j);
-        if (m->is_FastLock())
-          return false;
-#ifdef _LP64
         if (m->Opcode() == Op_ConvI2L)
           return false;
         if (m->is_CastII() && m->isa_CastII()->has_range_check()) {
           return false;
         }
-#endif
       }
     }
   }
+#endif
   return true;
 }
 
@@ -1189,6 +1184,22 @@ bool PhaseIdealLoop::can_split_if(Node* n_ctrl) {
   }
 
   return true;
+}
+
+// Detect if the node is the inner strip-mined loop
+// Return: NULL if it's not the case, or the exit of outer strip-mined loop
+static Node* is_inner_of_stripmined_loop(const Node* out) {
+  Node* out_le = NULL;
+
+  if (out->is_CountedLoopEnd()) {
+      const CountedLoopNode* loop = out->as_CountedLoopEnd()->loopnode();
+
+      if (loop != NULL && loop->is_strip_mined()) {
+        out_le = loop->in(LoopNode::EntryControl)->as_OuterStripMinedLoop()->outer_loop_exit();
+      }
+  }
+
+  return out_le;
 }
 
 //------------------------------split_if_with_blocks_post----------------------
@@ -1324,6 +1335,15 @@ void PhaseIdealLoop::split_if_with_blocks_post(Node *n) {
       Node *dom = idom(prevdom);
       while (dom != cutoff) {
         if (dom->req() > 1 && dom->in(1) == bol && prevdom->in(0) == dom) {
+          // It's invalid to move control dependent data nodes in the inner
+          // strip-mined loop, because:
+          //  1) break validation of LoopNode::verify_strip_mined()
+          //  2) move code with side-effect in strip-mined loop
+          // Move to the exit of outer strip-mined loop in that case.
+          Node* out_le = is_inner_of_stripmined_loop(dom);
+          if (out_le != NULL) {
+            prevdom = out_le;
+          }
           // Replace the dominated test with an obvious true or false.
           // Place it on the IGVN worklist for later cleanup.
           C->set_major_progress();
@@ -1418,6 +1438,20 @@ void PhaseIdealLoop::split_if_with_blocks_post(Node *n) {
               // Such nodes should only have ProjNodes as outs, e.g. IfNode
               // should only have IfTrueNode and IfFalseNode (4985384).
               x_ctrl = find_non_split_ctrl(x_ctrl);
+
+              IdealLoopTree* x_loop = get_loop(x_ctrl);
+              Node* x_head = x_loop->_head;
+              if (x_head->is_Loop() && (x_head->is_OuterStripMinedLoop() || x_head->as_Loop()->is_strip_mined()) && is_dominator(n_ctrl, x_head)) {
+                // Anti dependence analysis is sometimes too
+                // conservative: a store in the outer strip mined loop
+                // can prevent a load from floating out of the outer
+                // strip mined loop but the load may not be referenced
+                // from the safepoint: loop strip mining verification
+                // code reports a problem in that case. Make sure the
+                // load is not moved in the outer strip mined loop in
+                // that case.
+                x_ctrl = x_head->as_Loop()->skip_strip_mined()->in(LoopNode::EntryControl);
+              }
               assert(dom_depth(n_ctrl) <= dom_depth(x_ctrl), "n is later than its clone");
 
               x->set_req(0, x_ctrl);
@@ -1693,7 +1727,7 @@ void PhaseIdealLoop::clone_loop_handle_data_uses(Node* old, Node_List &old_new,
 #ifdef ASSERT
     if (loop->_head->as_Loop()->is_strip_mined() && outer_loop->is_member(use_loop) && !loop->is_member(use_loop) && old_new[use->_idx] == NULL) {
       Node* sfpt = loop->_head->as_CountedLoop()->outer_safepoint();
-      assert(mode == ControlAroundStripMined && use == sfpt, "missed a node");
+      assert(mode == ControlAroundStripMined && (use == sfpt || !use->is_reachable_from_root()), "missed a node");
     }
 #endif
     if (!loop->is_member(use_loop) && !outer_loop->is_member(use_loop) && (!old->is_CFG() || !use->is_CFG())) {
@@ -2692,7 +2726,7 @@ void PhaseIdealLoop::clone_for_special_use_inside_loop( IdealLoopTree *loop, Nod
     _igvn.register_new_node_with_optimizer(n_clone);
     set_ctrl(n_clone, get_ctrl(n));
     sink_list.push(n_clone);
-    not_peel <<= n_clone->_idx;  // add n_clone to not_peel set.
+    not_peel.set(n_clone->_idx);
 #ifndef PRODUCT
     if (TracePartialPeeling) {
       tty->print_cr("special not_peeled cloning old: %d new: %d", n->_idx, n_clone->_idx);
@@ -3125,7 +3159,8 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
   Node_List worklist(area);
   Node_List sink_list(area);
 
-  if (!may_require_nodes(loop->est_loop_clone_sz(2))) {
+  uint estimate = loop->est_loop_clone_sz(1);
+  if (exceeding_node_budget(estimate)) {
     return false;
   }
 
@@ -3150,8 +3185,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
 
   // Set of non-cfg nodes to peel are those that are control
   // dependent on the cfg nodes.
-  uint i;
-  for(i = 0; i < loop->_body.size(); i++ ) {
+  for (uint i = 0; i < loop->_body.size(); i++) {
     Node *n = loop->_body.at(i);
     Node *n_c = has_ctrl(n) ? get_ctrl(n) : n;
     if (peel.test(n_c->_idx)) {
@@ -3166,7 +3200,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
 
   // Get a post order schedule of nodes in the peel region
   // Result in right-most operand.
-  scheduled_nodelist(loop, peel, peel_list );
+  scheduled_nodelist(loop, peel, peel_list);
 
   assert(is_valid_loop_partition(loop, peel, peel_list, not_peel), "bad partition");
 
@@ -3186,28 +3220,24 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
   // Evacuate nodes in peel region into the not_peeled region if possible
   uint new_phi_cnt = 0;
   uint cloned_for_outside_use = 0;
-  for (i = 0; i < peel_list.size();) {
+  for (uint i = 0; i < peel_list.size();) {
     Node* n = peel_list.at(i);
 #ifndef PRODUCT
   if (TracePartialPeeling) n->dump();
 #endif
     bool incr = true;
-    if ( !n->is_CFG() ) {
-
-      if ( has_use_in_set(n, not_peel) ) {
-
+    if (!n->is_CFG()) {
+      if (has_use_in_set(n, not_peel)) {
         // If not used internal to the peeled region,
         // move "n" from peeled to not_peeled region.
-
-        if ( !has_use_internal_to_set(n, peel, loop) ) {
-
+        if (!has_use_internal_to_set(n, peel, loop)) {
           // if not pinned and not a load (which maybe anti-dependent on a store)
           // and not a CMove (Matcher expects only bool->cmove).
           if (n->in(0) == NULL && !n->is_Load() && !n->is_CMove()) {
-            cloned_for_outside_use += clone_for_use_outside_loop( loop, n, worklist );
+            cloned_for_outside_use += clone_for_use_outside_loop(loop, n, worklist);
             sink_list.push(n);
-            peel     >>= n->_idx; // delete n from peel set.
-            not_peel <<= n->_idx; // add n to not_peel set.
+            peel.remove(n->_idx);
+            not_peel.set(n->_idx);
             peel_list.remove(i);
             incr = false;
 #ifndef PRODUCT
@@ -3220,7 +3250,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
         } else {
           // Otherwise check for special def-use cases that span
           // the peel/not_peel boundary such as bool->if
-          clone_for_special_use_inside_loop( loop, n, not_peel, sink_list, worklist );
+          clone_for_special_use_inside_loop(loop, n, not_peel, sink_list, worklist);
           new_phi_cnt++;
         }
       }
@@ -3228,7 +3258,11 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
     if (incr) i++;
   }
 
-  if (new_phi_cnt > old_phi_cnt + PartialPeelNewPhiDelta) {
+  estimate += cloned_for_outside_use + new_phi_cnt;
+  bool exceed_node_budget = !may_require_nodes(estimate);
+  bool exceed_phi_limit = new_phi_cnt > old_phi_cnt + PartialPeelNewPhiDelta;
+
+  if (exceed_node_budget || exceed_phi_limit) {
 #ifndef PRODUCT
     if (TracePartialPeeling) {
       tty->print_cr("\nToo many new phis: %d  old %d new cmpi: %c",
@@ -3276,7 +3310,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
 
   const uint clone_exit_idx = 1;
   const uint orig_exit_idx  = 2;
-  assert(is_valid_clone_loop_form( loop, peel_list, orig_exit_idx, clone_exit_idx ), "bad clone loop");
+  assert(is_valid_clone_loop_form(loop, peel_list, orig_exit_idx, clone_exit_idx), "bad clone loop");
 
   Node* head_clone             = old_new[head->_idx];
   LoopNode* new_head_clone     = old_new[new_head->_idx]->as_Loop();
@@ -3284,7 +3318,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
 
   // Add phi if "def" node is in peel set and "use" is not
 
-  for(i = 0; i < peel_list.size(); i++ ) {
+  for (uint i = 0; i < peel_list.size(); i++) {
     Node *def  = peel_list.at(i);
     if (!def->is_CFG()) {
       for (DUIterator_Fast jmax, j = def->fast_outs(jmax); j < jmax; j++) {
@@ -3340,7 +3374,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
   //          cloned-not_peeled  in(0)    in(0)
   //          orig-peeled
 
-  for(i = 0; i < loop->_body.size(); i++ ) {
+  for (uint i = 0; i < loop->_body.size(); i++) {
     Node *n = loop->_body.at(i);
     if (!n->is_CFG()           && n->in(0) != NULL        &&
         not_peel.test(n->_idx) && peel.test(n->in(0)->_idx)) {

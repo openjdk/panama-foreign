@@ -105,7 +105,7 @@ class JvmtiTagHashmapEntry : public CHeapObj<mtInternal> {
   }
 
   inline bool equals(oop object) {
-    return oopDesc::equals(object, object_peek());
+    return object == object_peek();
   }
 
   inline JvmtiTagHashmapEntry* next() const        { return _next; }
@@ -520,7 +520,7 @@ JvmtiTagMap* JvmtiTagMap::tag_map_for(JvmtiEnv* env) {
       tag_map = new JvmtiTagMap(env);
     }
   } else {
-    CHECK_UNHANDLED_OOPS_ONLY(Thread::current()->clear_unhandled_oops());
+    DEBUG_ONLY(Thread::current()->check_possible_safepoint());
   }
   return tag_map;
 }
@@ -1032,7 +1032,7 @@ static inline bool is_filtered_by_klass_filter(oop obj, Klass* klass_filter) {
 
 // helper function to tell if a field is a primitive field or not
 static inline bool is_primitive_field_type(char type) {
-  return (type != 'L' && type != '[');
+  return (type != JVM_SIGNATURE_CLASS && type != JVM_SIGNATURE_ARRAY);
 }
 
 // helper function to copy the value from location addr to jvalue.
@@ -1271,9 +1271,6 @@ class VM_HeapIterateOperation: public VM_Operation {
     }
 
     // do the iteration
-    // If this operation encounters a bad object when using CMS,
-    // consider using safe_object_iterate() which avoids perm gen
-    // objects that may contain bad references.
     Universe::heap()->object_iterate(_blk);
   }
 
@@ -1545,7 +1542,7 @@ class TagObjectCollector : public JvmtiTagHashmapEntryClosure {
         // SATB marking similar to other j.l.ref.Reference referents. This is
         // achieved by using a phantom load in the object() accessor.
         oop o = entry->object();
-        assert(o != NULL && Universe::heap()->is_in_reserved(o), "sanity check");
+        assert(o != NULL && Universe::heap()->is_in(o), "sanity check");
         jobject ref = JNIHandles::make_local(JavaThread::current(), o);
         _object_results->append(ref);
         _tag_results->append((uint64_t)entry->tag());
@@ -1628,8 +1625,8 @@ class RestoreMarksClosure : public ObjectClosure {
  public:
   void do_object(oop o) {
     if (o != NULL) {
-      markOop mark = o->mark();
-      if (mark->is_marked()) {
+      markWord mark = o->mark();
+      if (mark.is_marked()) {
         o->init_mark();
       }
     }
@@ -1641,7 +1638,7 @@ class ObjectMarker : AllStatic {
  private:
   // saved headers
   static GrowableArray<oop>* _saved_oop_stack;
-  static GrowableArray<markOop>* _saved_mark_stack;
+  static GrowableArray<markWord>* _saved_mark_stack;
   static bool _needs_reset;                  // do we need to reset mark bits?
 
  public:
@@ -1656,7 +1653,7 @@ class ObjectMarker : AllStatic {
 };
 
 GrowableArray<oop>* ObjectMarker::_saved_oop_stack = NULL;
-GrowableArray<markOop>* ObjectMarker::_saved_mark_stack = NULL;
+GrowableArray<markWord>* ObjectMarker::_saved_mark_stack = NULL;
 bool ObjectMarker::_needs_reset = true;  // need to reset mark bits by default
 
 // initialize ObjectMarker - prepares for object marking
@@ -1667,7 +1664,7 @@ void ObjectMarker::init() {
   Universe::heap()->ensure_parsability(false);  // no need to retire TLABs
 
   // create stacks for interesting headers
-  _saved_mark_stack = new (ResourceObj::C_HEAP, mtInternal) GrowableArray<markOop>(4000, true);
+  _saved_mark_stack = new (ResourceObj::C_HEAP, mtInternal) GrowableArray<markWord>(4000, true);
   _saved_oop_stack = new (ResourceObj::C_HEAP, mtInternal) GrowableArray<oop>(4000, true);
 
   if (UseBiasedLocking) {
@@ -1691,7 +1688,7 @@ void ObjectMarker::done() {
   // now restore the interesting headers
   for (int i = 0; i < _saved_oop_stack->length(); i++) {
     oop o = _saved_oop_stack->at(i);
-    markOop mark = _saved_mark_stack->at(i);
+    markWord mark = _saved_mark_stack->at(i);
     o->set_mark(mark);
   }
 
@@ -1707,23 +1704,23 @@ void ObjectMarker::done() {
 // mark an object
 inline void ObjectMarker::mark(oop o) {
   assert(Universe::heap()->is_in(o), "sanity check");
-  assert(!o->mark()->is_marked(), "should only mark an object once");
+  assert(!o->mark().is_marked(), "should only mark an object once");
 
   // object's mark word
-  markOop mark = o->mark();
+  markWord mark = o->mark();
 
-  if (mark->must_be_preserved(o)) {
+  if (o->mark_must_be_preserved(mark)) {
     _saved_mark_stack->push(mark);
     _saved_oop_stack->push(o);
   }
 
   // mark the object
-  o->set_mark(markOopDesc::prototype()->set_marked());
+  o->set_mark(markWord::prototype().set_marked());
 }
 
 // return true if object is marked
 inline bool ObjectMarker::visited(oop o) {
-  return o->mark()->is_marked();
+  return o->mark().is_marked();
 }
 
 // Stack allocated class to help ensure that ObjectMarker is used
@@ -2572,7 +2569,7 @@ class SimpleRootsClosure : public OopClosure {
       return;
     }
 
-    assert(Universe::heap()->is_in_reserved(o), "should be impossible");
+    assert(Universe::heap()->is_in(o), "should be impossible");
 
     jvmtiHeapReferenceKind kind = root_kind();
     if (kind == JVMTI_HEAP_REFERENCE_SYSTEM_CLASS) {
@@ -2964,7 +2961,7 @@ inline bool VM_HeapWalkOperation::iterate_over_object(oop o) {
       oop fld_o = o->obj_field(field->field_offset());
       // ignore any objects that aren't visible to profiler
       if (fld_o != NULL) {
-        assert(Universe::heap()->is_in_reserved(fld_o), "unsafe code should not "
+        assert(Universe::heap()->is_in(fld_o), "unsafe code should not "
                "have references to Klass* anymore");
         int slot = field->field_index();
         if (!CallbackInvoker::report_field_reference(o, fld_o, slot)) {

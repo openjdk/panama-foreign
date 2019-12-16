@@ -25,6 +25,7 @@ package jdk.test.lib;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -197,8 +198,7 @@ public final class Utils {
      * @return A copy of given opts with all GC options removed.
      */
     private static final Pattern useGcPattern = Pattern.compile(
-            "(?:\\-XX\\:[\\+\\-]Use.+GC)"
-            + "|(?:\\-Xconcgc)");
+            "(?:\\-XX\\:[\\+\\-]Use.+GC)");
     public static List<String> removeGcOpts(List<String> opts) {
         List<String> optsWithoutGC = new ArrayList<String>();
         for (String opt : opts) {
@@ -749,13 +749,14 @@ public final class Utils {
     // until the method main() is found; the class containing that method is the
     // main test class and will be returned as the name of the test.
     // Special handling is used for testng tests.
+    @SuppressWarnings("unchecked")
     public static String getTestName() {
         String result = null;
         // If we are using testng, then we should be able to load the "Test" annotation.
-        Class testClassAnnotation;
+        Class<? extends Annotation> testClassAnnotation;
 
         try {
-            testClassAnnotation = Class.forName("org.testng.annotations.Test");
+            testClassAnnotation = (Class<? extends Annotation>)Class.forName("org.testng.annotations.Test");
         } catch (ClassNotFoundException e) {
             testClassAnnotation = null;
         }
@@ -776,7 +777,7 @@ public final class Utils {
             // annotation. If present, then use the name of this class.
             if (testClassAnnotation != null) {
                 try {
-                    Class c = Class.forName(className);
+                    Class<?> c = Class.forName(className);
                     if (c.isAnnotationPresent(testClassAnnotation)) {
                         result = className;
                         break;

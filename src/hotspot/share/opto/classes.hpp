@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,9 @@ macro(ReverseBytesL)
 macro(ReverseBytesUS)
 macro(ReverseBytesS)
 macro(CProj)
+macro(CacheWB)
+macro(CacheWBPreSync)
+macro(CacheWBPostSync)
 macro(CallDynamicJava)
 macro(CallJava)
 macro(CallLeaf)
@@ -59,6 +62,7 @@ macro(CallLeafVector)
 macro(CallRuntime)
 macro(CallStaticJava)
 macro(CastII)
+macro(CastLL)
 macro(CastX2P)
 macro(CastP2X)
 macro(CastPP)
@@ -190,17 +194,6 @@ macro(LoadP)
 macro(LoadN)
 macro(LoadRange)
 macro(LoadS)
-#if INCLUDE_ZGC
-#define zgcmacro(x) macro(x)
-#else
-#define zgcmacro(x) optionalmacro(x)
-#endif
-zgcmacro(LoadBarrier)
-zgcmacro(LoadBarrierSlowReg)
-zgcmacro(ZCompareAndSwapP)
-zgcmacro(ZWeakCompareAndSwapP)
-zgcmacro(ZCompareAndExchangeP)
-zgcmacro(ZGetAndSetP)
 macro(Lock)
 macro(Loop)
 macro(LoopLimit)
@@ -276,6 +269,8 @@ macro(Rethrow)
 macro(Return)
 macro(Root)
 macro(RoundDouble)
+macro(RoundDoubleMode)
+macro(RoundDoubleModeV)
 macro(RoundFloat)
 macro(SafePoint)
 macro(SafePointScalarObject)

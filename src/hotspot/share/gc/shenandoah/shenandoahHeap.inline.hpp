@@ -49,7 +49,7 @@
 
 
 inline ShenandoahHeapRegion* ShenandoahRegionIterator::next() {
-  size_t new_index = Atomic::add((size_t) 1, &_index);
+  size_t new_index = Atomic::add(&_index, (size_t) 1);
   // get_region() provides the bounds-check and returns NULL on OOB.
   return _heap->get_region(new_index - 1);
 }
@@ -113,11 +113,11 @@ inline oop ShenandoahHeap::evac_update_with_forwarded(T* p) {
     oop heap_oop = CompressedOops::decode_not_null(o);
     if (in_collection_set(heap_oop)) {
       oop forwarded_oop = ShenandoahBarrierSet::resolve_forwarded_not_null(heap_oop);
-      if (oopDesc::equals_raw(forwarded_oop, heap_oop)) {
+      if (forwarded_oop == heap_oop) {
         forwarded_oop = evacuate_object(heap_oop, Thread::current());
       }
       oop prev = cas_oop(forwarded_oop, p, heap_oop);
-      if (oopDesc::equals_raw(prev, heap_oop)) {
+      if (prev == heap_oop) {
         return forwarded_oop;
       } else {
         return NULL;
@@ -130,13 +130,21 @@ inline oop ShenandoahHeap::evac_update_with_forwarded(T* p) {
 }
 
 inline oop ShenandoahHeap::cas_oop(oop n, oop* addr, oop c) {
-  return (oop) Atomic::cmpxchg(n, addr, c);
+  assert(is_aligned(addr, HeapWordSize), "Address should be aligned: " PTR_FORMAT, p2i(addr));
+  return (oop) Atomic::cmpxchg(addr, c, n);
+}
+
+inline oop ShenandoahHeap::cas_oop(oop n, narrowOop* addr, narrowOop c) {
+  assert(is_aligned(addr, sizeof(narrowOop)), "Address should be aligned: " PTR_FORMAT, p2i(addr));
+  narrowOop val = CompressedOops::encode(n);
+  return CompressedOops::decode((narrowOop) Atomic::cmpxchg(addr, c, val));
 }
 
 inline oop ShenandoahHeap::cas_oop(oop n, narrowOop* addr, oop c) {
+  assert(is_aligned(addr, sizeof(narrowOop)), "Address should be aligned: " PTR_FORMAT, p2i(addr));
   narrowOop cmp = CompressedOops::encode(c);
   narrowOop val = CompressedOops::encode(n);
-  return CompressedOops::decode((narrowOop) Atomic::cmpxchg(val, addr, cmp));
+  return CompressedOops::decode((narrowOop) Atomic::cmpxchg(addr, cmp, val));
 }
 
 template <class T>
@@ -146,7 +154,7 @@ inline oop ShenandoahHeap::maybe_update_with_forwarded_not_null(T* p, oop heap_o
 
   if (in_collection_set(heap_oop)) {
     oop forwarded_oop = ShenandoahBarrierSet::resolve_forwarded_not_null(heap_oop);
-    if (oopDesc::equals_raw(forwarded_oop, heap_oop)) {
+    if (forwarded_oop == heap_oop) {
       // E.g. during evacuation.
       return forwarded_oop;
     }
@@ -159,7 +167,7 @@ inline oop ShenandoahHeap::maybe_update_with_forwarded_not_null(T* p, oop heap_o
     // reference be updated later.
     oop witness = cas_oop(forwarded_oop, p, heap_oop);
 
-    if (!oopDesc::equals_raw(witness, heap_oop)) {
+    if (witness != heap_oop) {
       // CAS failed, someone had beat us to it. Normally, we would return the failure witness,
       // because that would be the proper write of to-space object, enforced by strong barriers.
       // However, there is a corner case with arraycopy. It can happen that a Java thread
@@ -279,7 +287,7 @@ inline oop ShenandoahHeap::evacuate_object(oop p, Thread* thread) {
   // Try to install the new forwarding pointer.
   oop copy_val = oop(copy);
   oop result = ShenandoahForwarding::try_update_forwardee(p, copy_val);
-  if (oopDesc::equals_raw(result, copy_val)) {
+  if (result == copy_val) {
     // Successfully evacuated. Our copy is now the public one!
     shenandoah_assert_correct(NULL, copy_val);
     return copy_val;
@@ -362,6 +370,14 @@ inline bool ShenandoahHeap::is_full_gc_move_in_progress() const {
 
 inline bool ShenandoahHeap::is_update_refs_in_progress() const {
   return _gc_state.is_set(UPDATEREFS);
+}
+
+inline bool ShenandoahHeap::is_stw_gc_in_progress() const {
+  return is_full_gc_in_progress() || is_degenerated_gc_in_progress();
+}
+
+inline bool ShenandoahHeap::is_concurrent_root_in_progress() const {
+  return _concurrent_root_in_progress.is_set();
 }
 
 template<class T>

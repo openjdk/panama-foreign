@@ -26,7 +26,6 @@
 #include "logging/logConfiguration.hpp"
 #include "logging/logDecorations.hpp"
 #include "runtime/atomic.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/os.inline.hpp"
 #include "runtime/thread.inline.hpp"
 #include "services/management.hpp"
@@ -44,12 +43,12 @@ void LogDecorations::initialize(jlong vm_start_time) {
 }
 
 const char* LogDecorations::host_name() {
-  const char* host_name = OrderAccess::load_acquire(&_host_name);
+  const char* host_name = Atomic::load_acquire(&_host_name);
   if (host_name == NULL) {
     char buffer[1024];
     if (os::get_host_name(buffer, sizeof(buffer))) {
       host_name = os::strdup_check_oom(buffer);
-      const char* old_value = Atomic::cmpxchg(host_name, &_host_name, (const char*)NULL);
+      const char* old_value = Atomic::cmpxchg(&_host_name, (const char*)NULL, host_name);
       if (old_value != NULL) {
         os::free((void *) host_name);
         host_name = old_value;
@@ -65,6 +64,8 @@ void LogDecorations::create_decorations(const LogDecorators &decorators) {
   if (decorators.is_decorator(LogDecorators::full_name##_decorator)) { \
     _decoration_offset[LogDecorators::full_name##_decorator] = position; \
     position = create_##full_name##_decoration(position) + 1; \
+  } else { \
+    _decoration_offset[LogDecorators::full_name##_decorator] = NULL; \
   }
   DECORATOR_LIST
 #undef DECORATOR
@@ -145,4 +146,3 @@ char* LogDecorations::create_hostname_decoration(char* pos) {
   int written = jio_snprintf(pos, DecorationsBufferSize - (pos - _decorations_buffer), "%s", host_name());
   ASSERT_AND_RETURN(written, pos)
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -459,6 +459,11 @@ abstract class ClassSpecializer<T,K,S extends ClassSpecializer<T,K,S>.SpeciesDat
      */
     public class Factory {
         /**
+         * Constructs a factory.
+         */
+        Factory() {}
+
+        /**
          * Get a concrete subclass of the top class for a given combination of bound types.
          *
          * @param speciesData the species requiring the class, not yet linked
@@ -539,31 +544,33 @@ abstract class ClassSpecializer<T,K,S extends ClassSpecializer<T,K,S>.SpeciesDat
          * has a shape like the following:
          *
          * <pre>
-         * class TopClass { ... private static
-         * final class Species_LLI extends TopClass {
-         *     final Object argL0;
-         *     final Object argL1;
-         *     final int argI2;
-         *     private Species_LLI(CT ctarg, ..., Object argL0, Object argL1, int argI2) {
-         *         super(ctarg, ...);
-         *         this.argL0 = argL0;
-         *         this.argL1 = argL1;
-         *         this.argI2 = argI2;
-         *     }
-         *     final SpeciesData speciesData() { return BMH_SPECIES; }
-         *     &#64;Stable static SpeciesData BMH_SPECIES; // injected afterwards
-         *     static TopClass make(CT ctarg, ..., Object argL0, Object argL1, int argI2) {
-         *         return new Species_LLI(ctarg, ..., argL0, argL1, argI2);
-         *     }
-         *     final TopClass copyWith(CT ctarg, ...) {
-         *         return new Species_LLI(ctarg, ..., argL0, argL1, argI2);
-         *     }
-         *     // two transforms, for the sake of illustration:
-         *     final TopClass copyWithExtendL(CT ctarg, ..., Object narg) {
-         *         return BMH_SPECIES.transform(L_TYPE).invokeBasic(ctarg, ..., argL0, argL1, argI2, narg);
-         *     }
-         *     final TopClass copyWithExtendI(CT ctarg, ..., int narg) {
-         *         return BMH_SPECIES.transform(I_TYPE).invokeBasic(ctarg, ..., argL0, argL1, argI2, narg);
+         * class TopClass {
+         *     ...
+         *     private static final class Species_LLI extends TopClass {
+         *         final Object argL0;
+         *         final Object argL1;
+         *         final int argI2;
+         *         private Species_LLI(CT ctarg, ..., Object argL0, Object argL1, int argI2) {
+         *             super(ctarg, ...);
+         *             this.argL0 = argL0;
+         *             this.argL1 = argL1;
+         *             this.argI2 = argI2;
+         *         }
+         *         final SpeciesData speciesData() { return BMH_SPECIES; }
+         *         &#64;Stable static SpeciesData BMH_SPECIES; // injected afterwards
+         *         static TopClass make(CT ctarg, ..., Object argL0, Object argL1, int argI2) {
+         *             return new Species_LLI(ctarg, ..., argL0, argL1, argI2);
+         *         }
+         *         final TopClass copyWith(CT ctarg, ...) {
+         *             return new Species_LLI(ctarg, ..., argL0, argL1, argI2);
+         *         }
+         *         // two transforms, for the sake of illustration:
+         *         final TopClass copyWithExtendL(CT ctarg, ..., Object narg) {
+         *             return BMH_SPECIES.transform(L_TYPE).invokeBasic(ctarg, ..., argL0, argL1, argI2, narg);
+         *         }
+         *         final TopClass copyWithExtendI(CT ctarg, ..., int narg) {
+         *             return BMH_SPECIES.transform(I_TYPE).invokeBasic(ctarg, ..., argL0, argL1, argI2, narg);
+         *         }
          *     }
          * }
          * </pre>
@@ -619,7 +626,8 @@ abstract class ClassSpecializer<T,K,S extends ClassSpecializer<T,K,S>.SpeciesDat
         }
         private static final int ACC_PPP = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED;
 
-        /*non-public*/ byte[] generateConcreteSpeciesCodeFile(String className0, ClassSpecializer<T,K,S>.SpeciesData speciesData) {
+        /*non-public*/
+        byte[] generateConcreteSpeciesCodeFile(String className0, ClassSpecializer<T,K,S>.SpeciesData speciesData) {
             final String className = classBCName(className0);
             final String superClassName = classBCName(speciesData.deriveSuperClass());
 

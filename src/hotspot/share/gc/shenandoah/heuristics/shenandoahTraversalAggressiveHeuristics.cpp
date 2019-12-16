@@ -53,7 +53,7 @@ ShenandoahTraversalAggressiveHeuristics::ShenandoahTraversalAggressiveHeuristics
 }
 
 bool ShenandoahTraversalAggressiveHeuristics::is_experimental() {
-  return true;
+  return false;
 }
 
 bool ShenandoahTraversalAggressiveHeuristics::is_diagnostic() {
@@ -74,6 +74,9 @@ void ShenandoahTraversalAggressiveHeuristics::choose_collection_set(ShenandoahCo
 
   RegionData *data = get_region_data_cache(heap->num_regions());
   size_t cnt = 0;
+
+  // About to choose the collection set, make sure we have pinned regions in correct state
+  heap->assert_pinned_region_status();
 
   // Step 0. Prepare all regions
   for (size_t i = 0; i < heap->num_regions(); i++) {

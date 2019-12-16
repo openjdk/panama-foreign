@@ -52,7 +52,6 @@ import java.util.zip.ZipException;
  * @author Xueming Shen, Rajendra Gutupalli, Jaya Hangal
  */
 public class ZipFileSystemProvider extends FileSystemProvider {
-
     private final Map<Path, ZipFileSystem> filesystems = new HashMap<>();
 
     public ZipFileSystemProvider() {}
@@ -104,20 +103,7 @@ public class ZipFileSystemProvider extends FileSystemProvider {
                 if (filesystems.containsKey(realPath))
                     throw new FileSystemAlreadyExistsException();
             }
-            ZipFileSystem zipfs;
-            try {
-                if (env.containsKey("multi-release")) {
-                    zipfs = new JarFileSystem(this, path, env);
-                } else {
-                    zipfs = new ZipFileSystem(this, path, env);
-                }
-            } catch (ZipException ze) {
-                String pname = path.toString();
-                if (pname.endsWith(".zip") || pname.endsWith(".jar"))
-                    throw ze;
-                // assume NOT a zip/jar file
-                throw new UnsupportedOperationException();
-            }
+            ZipFileSystem zipfs = getZipFileSystem(path, env);
             if (realPath == null) {  // newly created
                 realPath = path.toRealPath();
             }
@@ -131,14 +117,12 @@ public class ZipFileSystemProvider extends FileSystemProvider {
         throws IOException
     {
         ensureFile(path);
+        return getZipFileSystem(path, env);
+    }
+
+    private ZipFileSystem getZipFileSystem(Path path, Map<String, ?> env) throws IOException {
         try {
-            ZipFileSystem zipfs;
-            if (env.containsKey("multi-release")) {
-                zipfs = new JarFileSystem(this, path, env);
-            } else {
-                zipfs = new ZipFileSystem(this, path, env);
-            }
-            return zipfs;
+            return new ZipFileSystem(this, path, env);
         } catch (ZipException ze) {
             String pname = path.toString();
             if (pname.endsWith(".zip") || pname.endsWith(".jar"))

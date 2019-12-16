@@ -136,6 +136,7 @@ module java.base {
         java.security.sasl;
     exports jdk.internal to // for @HotSpotIntrinsicCandidate
             jdk.jfr,
+            jdk.compiler,
             jdk.incubator.vector;
     exports jdk.internal.access to
         java.desktop,
@@ -194,6 +195,7 @@ module java.base {
         jdk.incubator.vector,
         jdk.jfr,
         jdk.jshell,
+        jdk.nio.mapmode,
         jdk.scripting.nashorn,
         jdk.scripting.nashorn.shell,
         jdk.unsupported,
@@ -241,8 +243,9 @@ module java.base {
         jdk.naming.dns;
     exports sun.net.util to
         java.desktop,
+        java.net.http,
         jdk.jconsole,
-        java.net.http;
+        jdk.sctp;
     exports sun.net.www to
         java.net.http,
         jdk.jartool;

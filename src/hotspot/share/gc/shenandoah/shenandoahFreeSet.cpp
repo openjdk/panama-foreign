@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2016, 2019, Red Hat, Inc. All rights reserved.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -29,6 +29,7 @@
 #include "gc/shenandoah/shenandoahMarkingContext.inline.hpp"
 #include "gc/shenandoah/shenandoahTraversalGC.hpp"
 #include "logging/logStream.hpp"
+#include "runtime/orderAccess.hpp"
 
 ShenandoahFreeSet::ShenandoahFreeSet(ShenandoahHeap* heap, size_t max_regions) :
   _heap(heap),
@@ -147,6 +148,11 @@ HeapWord* ShenandoahFreeSet::allocate_single(ShenandoahAllocRequest& req, bool& 
 
 HeapWord* ShenandoahFreeSet::try_allocate_in(ShenandoahHeapRegion* r, ShenandoahAllocRequest& req, bool& in_new_region) {
   assert (!has_no_alloc_capacity(r), "Performance: should avoid full regions on this path: " SIZE_FORMAT, r->region_number());
+
+  if (_heap->is_concurrent_root_in_progress() &&
+      r->is_trash()) {
+    return NULL;
+  }
 
   try_recycle_trashed(r);
 
@@ -491,8 +497,12 @@ void ShenandoahFreeSet::log_status() {
       size_t max_humongous = max_contig * ShenandoahHeapRegion::region_size_bytes();
       size_t free = capacity() - used();
 
-      ls.print("Free: " SIZE_FORMAT "M (" SIZE_FORMAT " regions), Max regular: " SIZE_FORMAT "K, Max humongous: " SIZE_FORMAT "K, ",
-               total_free / M, mutator_count(), max / K, max_humongous / K);
+      ls.print("Free: " SIZE_FORMAT "%s (" SIZE_FORMAT " regions), Max regular: " SIZE_FORMAT "%s, Max humongous: " SIZE_FORMAT "%s, ",
+               byte_size_in_proper_unit(total_free),    proper_unit_for_byte_size(total_free),
+               mutator_count(),
+               byte_size_in_proper_unit(max),           proper_unit_for_byte_size(max),
+               byte_size_in_proper_unit(max_humongous), proper_unit_for_byte_size(max_humongous)
+      );
 
       size_t frag_ext;
       if (free > 0) {
@@ -525,8 +535,10 @@ void ShenandoahFreeSet::log_status() {
         }
       }
 
-      ls.print_cr("Evacuation Reserve: " SIZE_FORMAT "M (" SIZE_FORMAT " regions), Max regular: " SIZE_FORMAT "K",
-                  total_free / M, collector_count(), max / K);
+      ls.print_cr("Evacuation Reserve: " SIZE_FORMAT "%s (" SIZE_FORMAT " regions), Max regular: " SIZE_FORMAT "%s",
+                  byte_size_in_proper_unit(total_free), proper_unit_for_byte_size(total_free),
+                  collector_count(),
+                  byte_size_in_proper_unit(max),        proper_unit_for_byte_size(max));
     }
   }
 }

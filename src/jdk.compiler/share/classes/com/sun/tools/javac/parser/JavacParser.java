@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.sun.source.tree.CaseTree.CaseKind;
+import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
 import com.sun.source.tree.ModuleTree.ModuleKind;
 
@@ -893,6 +893,7 @@ public class JavacParser implements Parser {
 
     /*  Expression2Rest = {infixop Expression3}
      *                  | Expression3 instanceof Type
+     *                  | Expression3 instanceof Pattern
      *  infixop         = "||"
      *                  | "&&"
      *                  | "|"
@@ -915,13 +916,24 @@ public class JavacParser implements Parser {
         Token topOp = Tokens.DUMMY;
         while (prec(token.kind) >= minprec) {
             opStack[top] = topOp;
-            top++;
-            topOp = token;
-            nextToken();
-            odStack[top] = (topOp.kind == INSTANCEOF) ? parseType() : term3();
+
+            if (token.kind == INSTANCEOF) {
+                int pos = token.pos;
+                nextToken();
+                JCTree pattern = parseType();
+                if (token.kind == IDENTIFIER) {
+                    checkSourceLevel(token.pos, Feature.PATTERN_MATCHING_IN_INSTANCEOF);
+                    pattern = toP(F.at(token.pos).BindingPattern(ident(), pattern));
+                }
+                odStack[top] = F.at(pos).TypeTest(odStack[top], pattern);
+            } else {
+                topOp = token;
+                nextToken();
+                top++;
+                odStack[top] = term3();
+            }
             while (top > 0 && prec(topOp.kind) >= prec(token.kind)) {
-                odStack[top-1] = makeOp(topOp.pos, topOp.kind, odStack[top-1],
-                                        odStack[top]);
+                odStack[top - 1] = F.at(topOp.pos).Binary(optag(topOp.kind), odStack[top - 1], odStack[top]);
                 top--;
                 topOp = opStack[top];
             }
@@ -938,19 +950,6 @@ public class JavacParser implements Parser {
         return t;
     }
     //where
-        /** Construct a binary or type test node.
-         */
-        private JCExpression makeOp(int pos,
-                                    TokenKind topOp,
-                                    JCExpression od1,
-                                    JCExpression od2)
-        {
-            if (topOp == INSTANCEOF) {
-                return F.at(pos).TypeTest(od1, od2);
-            } else {
-                return F.at(pos).Binary(optag(topOp), od1, od2);
-            }
-        }
         /** If tree is a concatenation of string literals, replace it
          *  by a single literal representing the concatenated string.
          */
@@ -1432,8 +1431,7 @@ public class JavacParser implements Parser {
         }
         List<JCStatement> stats = null;
         JCTree body = null;
-        @SuppressWarnings("removal")
-        CaseKind kind;
+        CaseTree.CaseKind kind;
         switch (token.kind) {
             case ARROW:
                 checkSourceLevel(Feature.SWITCH_RULE);
@@ -2897,8 +2895,7 @@ public class JavacParser implements Parser {
                 nextToken();
                 checkSourceLevel(Feature.SWITCH_MULTIPLE_CASE_LABELS);
             };
-            @SuppressWarnings("removal")
-            CaseKind caseKind;
+            CaseTree.CaseKind caseKind;
             JCTree body = null;
             if (token.kind == ARROW) {
                 checkSourceLevel(Feature.SWITCH_RULE);
@@ -2922,8 +2919,7 @@ public class JavacParser implements Parser {
         }
         case DEFAULT: {
             nextToken();
-            @SuppressWarnings("removal")
-            CaseKind caseKind;
+            CaseTree.CaseKind caseKind;
             JCTree body = null;
             if (token.kind == ARROW) {
                 checkSourceLevel(Feature.SWITCH_RULE);
@@ -3300,7 +3296,7 @@ public class JavacParser implements Parser {
             if (allowYieldStatement) {
                 return true;
             } else if (shouldWarn) {
-                log.warning(pos, Warnings.RestrictedTypeNotAllowedPreview(name, Source.JDK13));
+                log.warning(pos, Warnings.RestrictedTypeNotAllowed(name, Source.JDK14));
             }
         }
         return false;
@@ -3756,23 +3752,59 @@ public class JavacParser implements Parser {
     List<JCTree> enumBody(Name enumName) {
         accept(LBRACE);
         ListBuffer<JCTree> defs = new ListBuffer<>();
+        boolean wasSemi = false;
+        boolean hasStructuralErrors = false;
+        boolean wasError = false;
         if (token.kind == COMMA) {
             nextToken();
-        } else if (token.kind != RBRACE && token.kind != SEMI) {
-            defs.append(enumeratorDeclaration(enumName));
-            while (token.kind == COMMA) {
+            if (token.kind == SEMI) {
+                wasSemi = true;
                 nextToken();
-                if (token.kind == RBRACE || token.kind == SEMI) break;
-                defs.append(enumeratorDeclaration(enumName));
-            }
-            if (token.kind != SEMI && token.kind != RBRACE) {
-                defs.append(syntaxError(token.pos, Errors.Expected3(COMMA, RBRACE, SEMI)));
-                nextToken();
+            } else if (token.kind != RBRACE) {
+                reportSyntaxError(S.prevToken().endPos,
+                                  Errors.Expected2(RBRACE, SEMI));
+                wasError = true;
             }
         }
-        if (token.kind == SEMI) {
-            nextToken();
-            while (token.kind != RBRACE && token.kind != EOF) {
+        while (token.kind != RBRACE && token.kind != EOF) {
+            if (token.kind == SEMI) {
+                accept(SEMI);
+                wasSemi = true;
+                if (token.kind == RBRACE || token.kind == EOF) break;
+            }
+            EnumeratorEstimate memberType = estimateEnumeratorOrMember(enumName);
+            if (memberType == EnumeratorEstimate.UNKNOWN) {
+                memberType = wasSemi ? EnumeratorEstimate.MEMBER
+                                     : EnumeratorEstimate.ENUMERATOR;
+            }
+            if (memberType == EnumeratorEstimate.ENUMERATOR) {
+                wasError = false;
+                if (wasSemi && !hasStructuralErrors) {
+                    reportSyntaxError(token.pos, Errors.EnumConstantNotExpected);
+                    hasStructuralErrors = true;
+                }
+                defs.append(enumeratorDeclaration(enumName));
+                if (token.pos <= endPosTable.errorEndPos) {
+                    // error recovery
+                   skip(false, true, true, false);
+                } else {
+                    if (token.kind != RBRACE && token.kind != SEMI && token.kind != EOF) {
+                        if (token.kind == COMMA) {
+                            nextToken();
+                        } else {
+                            setErrorEndPos(token.pos);
+                            reportSyntaxError(S.prevToken().endPos,
+                                              Errors.Expected3(COMMA, RBRACE, SEMI));
+                            wasError = true;
+                        }
+                    }
+                }
+            } else {
+                if (!wasSemi && !hasStructuralErrors && !wasError) {
+                    reportSyntaxError(token.pos, Errors.EnumConstantExpected);
+                    hasStructuralErrors = true;
+                }
+                wasError = false;
                 defs.appendList(classOrInterfaceBodyDeclaration(enumName,
                                                                 false));
                 if (token.pos <= endPosTable.errorEndPos) {
@@ -3783,6 +3815,28 @@ public class JavacParser implements Parser {
         }
         accept(RBRACE);
         return defs.toList();
+    }
+
+    private EnumeratorEstimate estimateEnumeratorOrMember(Name enumName) {
+        if (token.kind == TokenKind.IDENTIFIER && token.name() != enumName) {
+            Token next = S.token(1);
+            switch (next.kind) {
+                case LPAREN: case LBRACE: case COMMA: case SEMI:
+                    return EnumeratorEstimate.ENUMERATOR;
+            }
+        }
+        switch (token.kind) {
+            case IDENTIFIER: case MONKEYS_AT: case LT:
+                return EnumeratorEstimate.UNKNOWN;
+            default:
+                return EnumeratorEstimate.MEMBER;
+        }
+    }
+
+    private enum EnumeratorEstimate {
+        ENUMERATOR,
+        MEMBER,
+        UNKNOWN;
     }
 
     /** EnumeratorDeclaration = AnnotationsOpt [TypeArguments] IDENTIFIER [ Arguments ] [ "{" ClassBody "}" ]

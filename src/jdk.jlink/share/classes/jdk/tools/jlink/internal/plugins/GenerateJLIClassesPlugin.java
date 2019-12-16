@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.JavaLangInvokeAccess;
@@ -75,13 +74,13 @@ public final class GenerateJLIClassesPlugin implements Plugin {
     private static final JavaLangInvokeAccess JLIA
             = SharedSecrets.getJavaLangInvokeAccess();
 
-    Set<String> speciesTypes = Set.of();
+    private final TreeSet<String> speciesTypes = new TreeSet<>();
 
-    Set<String> invokerTypes = Set.of();
+    private final TreeSet<String> invokerTypes = new TreeSet<>();
 
-    Set<String> callSiteTypes = Set.of();
+    private final TreeSet<String> callSiteTypes = new TreeSet<>();
 
-    Map<String, Set<String>> dmhMethods = Map.of();
+    private final Map<String, Set<String>> dmhMethods = new TreeMap<>();
 
     String mainArgument;
 
@@ -148,7 +147,7 @@ public final class GenerateJLIClassesPlugin implements Plugin {
     private static Map<String, Set<String>> defaultDMHMethods() {
         return Map.of(
             DMH_INVOKE_INTERFACE, Set.of("LL_L", "L3_I", "L3_V"),
-            DMH_INVOKE_VIRTUAL, Set.of("L_L", "LL_L", "LLI_I", "L3_V"),
+            DMH_INVOKE_VIRTUAL, Set.of("LL_L", "LLI_I", "L3_V"),
             DMH_INVOKE_SPECIAL, Set.of("LL_I", "LL_L", "LLF_L", "LLD_L",
                 "L3_I", "L3_L", "L4_L", "L5_L", "L6_L", "L7_L", "L8_L",
                 "LLI_I", "LLI_L", "LLIL_I", "LLIL_L", "LLII_I", "LLII_L",
@@ -166,15 +165,18 @@ public final class GenerateJLIClassesPlugin implements Plugin {
         );
     }
 
+    private static int DMH_INVOKE_VIRTUAL_TYPE = 0;
+    private static int DMH_INVOKE_INTERFACE_TYPE = 4;
+
     // Map from DirectMethodHandle method type to internal ID, matching values
     // of the corresponding constants in java.lang.invoke.MethodTypeForm
     private static final Map<String, Integer> DMH_METHOD_TYPE_MAP =
             Map.of(
-                DMH_INVOKE_VIRTUAL,     0,
+                DMH_INVOKE_VIRTUAL,     DMH_INVOKE_VIRTUAL_TYPE,
                 DMH_INVOKE_STATIC,      1,
                 DMH_INVOKE_SPECIAL,     2,
                 DMH_NEW_INVOKE_SPECIAL, 3,
-                DMH_INVOKE_INTERFACE,   4,
+                DMH_INVOKE_INTERFACE,   DMH_INVOKE_INTERFACE_TYPE,
                 DMH_INVOKE_STATIC_INIT, 5,
                 DMH_INVOKE_SPECIAL_IFC, 20
             );
@@ -184,21 +186,31 @@ public final class GenerateJLIClassesPlugin implements Plugin {
         mainArgument = config.get(NAME);
     }
 
+    private void addSpeciesType(String type) {
+        speciesTypes.add(expandSignature(type));
+    }
+
+    private void addInvokerType(String methodType) {
+        validateMethodType(methodType);
+        invokerTypes.add(methodType);
+    }
+
+    private void addCallSiteType(String csType) {
+        validateMethodType(csType);
+        callSiteTypes.add(csType);
+    }
+
     public void initialize(ResourcePool in) {
         // Start with the default configuration
-        speciesTypes = defaultSpecies().stream()
-                .map(type -> expandSignature(type))
-                .collect(Collectors.toSet());
+        defaultSpecies().stream().forEach(this::addSpeciesType);
 
-        invokerTypes = defaultInvokers();
-        validateMethodTypes(invokerTypes);
+        defaultInvokers().stream().forEach(this::validateMethodType);
 
-        callSiteTypes = defaultCallSiteTypes();
+        defaultCallSiteTypes().stream().forEach(this::addCallSiteType);
 
-        dmhMethods = defaultDMHMethods();
-        for (Set<String> dmhMethodTypes : dmhMethods.values()) {
-            validateMethodTypes(dmhMethodTypes);
-        }
+        defaultDMHMethods().entrySet().stream().forEach(e -> {
+            e.getValue().stream().forEach(type -> addDMHMethodType(e.getKey(), type));
+        });
 
         // Extend the default configuration with the contents in the supplied
         // input file - if none was supplied we look for the default file
@@ -222,18 +234,6 @@ public final class GenerateJLIClassesPlugin implements Plugin {
     }
 
     private void readTraceConfig(Stream<String> lines) {
-        // Use TreeSet/TreeMap to keep things sorted in a deterministic
-        // order to avoid scrambling the layout on small changes and to
-        // ease finding methods in the generated code
-        speciesTypes = new TreeSet<>(speciesTypes);
-        invokerTypes = new TreeSet<>(invokerTypes);
-        callSiteTypes = new TreeSet<>(callSiteTypes);
-
-        TreeMap<String, Set<String>> newDMHMethods = new TreeMap<>();
-        for (Map.Entry<String, Set<String>> entry : dmhMethods.entrySet()) {
-            newDMHMethods.put(entry.getKey(), new TreeSet<>(entry.getValue()));
-        }
-        dmhMethods = newDMHMethods;
         lines.map(line -> line.split(" "))
              .forEach(parts -> {
                 switch (parts[0]) {
@@ -242,19 +242,18 @@ public final class GenerateJLIClassesPlugin implements Plugin {
                         if (parts.length == 3 && parts[1].startsWith("java.lang.invoke.BoundMethodHandle$Species_")) {
                             String species = parts[1].substring("java.lang.invoke.BoundMethodHandle$Species_".length());
                             if (!"L".equals(species)) {
-                                speciesTypes.add(expandSignature(species));
+                                addSpeciesType(species);
                             }
                         }
                         break;
                     case "[LF_RESOLVE]":
                         String methodType = parts[3];
-                        validateMethodType(methodType);
                         if (parts[1].equals(INVOKERS_HOLDER_NAME)) {
                             if ("linkToTargetMethod".equals(parts[2]) ||
                                     "linkToCallSite".equals(parts[2])) {
-                                callSiteTypes.add(methodType);
+                                addCallSiteType(methodType);
                             } else {
-                                invokerTypes.add(methodType);
+                                addInvokerType(methodType);
                             }
                         } else if (parts[1].contains("DirectMethodHandle")) {
                             String dmh = parts[2];
@@ -285,12 +284,6 @@ public final class GenerateJLIClassesPlugin implements Plugin {
             return Files.lines(file.toPath());
         } catch (IOException io) {
             throw new PluginException("Couldn't read file");
-        }
-    }
-
-    private void validateMethodTypes(Set<String> dmhMethodTypes) {
-        for (String type : dmhMethodTypes) {
-            validateMethodType(type);
         }
     }
 
@@ -337,9 +330,10 @@ public final class GenerateJLIClassesPlugin implements Plugin {
         generateHolderClasses(out);
 
         // Let it go
-        speciesTypes = null;
-        invokerTypes = null;
-        dmhMethods = null;
+        speciesTypes.clear();
+        invokerTypes.clear();
+        callSiteTypes.clear();
+        dmhMethods.clear();
 
         return out.build();
     }
@@ -380,10 +374,23 @@ public final class GenerateJLIClassesPlugin implements Plugin {
                 if (mt.parameterCount() < 1 ||
                     mt.parameterType(0) != Object.class) {
                     throw new PluginException(
-                            "DMH type parameter must start with L");
+                            "DMH type parameter must start with L: " + dmhType + " " + type);
                 }
+
+                // Adapt the method type of the LF to retrieve
                 directMethodTypes[index] = mt.dropParameterTypes(0, 1);
+
+                // invokeVirtual and invokeInterface must have a leading Object
+                // parameter, i.e., the receiver
                 dmhTypes[index] = DMH_METHOD_TYPE_MAP.get(dmhType);
+                if (dmhTypes[index] == DMH_INVOKE_INTERFACE_TYPE ||
+                    dmhTypes[index] == DMH_INVOKE_VIRTUAL_TYPE) {
+                    if (mt.parameterCount() < 2 ||
+                        mt.parameterType(1) != Object.class) {
+                        throw new PluginException(
+                                "DMH type parameter must start with LL: " + dmhType + " " + type);
+                    }
+                }
                 index++;
             }
         }

@@ -33,6 +33,7 @@
 #include "gc/z/zRootsIterator.hpp"
 #include "gc/z/zStat.hpp"
 #include "gc/z/zTask.hpp"
+#include "gc/z/zThread.inline.hpp"
 #include "gc/z/zThreadLocalAllocBuffer.hpp"
 #include "gc/z/zWorkers.hpp"
 #include "logging/log.hpp"
@@ -47,6 +48,9 @@ public:
   virtual void do_thread(Thread* thread) {
     // Update thread local address bad mask
     ZThreadLocalData::set_address_bad_mask(thread, ZAddressBadMask);
+
+    // Relocate invisible root
+    ZThreadLocalData::do_invisible_root(thread, ZBarrier::relocate_barrier_on_root_oop_field);
 
     // Remap TLAB
     ZThreadLocalAllocBuffer::remap(thread);
@@ -69,12 +73,12 @@ private:
 public:
   ZRelocateRootsTask() :
       ZTask("ZRelocateRootsTask"),
-      _roots() {}
+      _roots(true /* visit_jvmti_weak_export */) {}
 
   virtual void work() {
     // During relocation we need to visit the JVMTI
     // export weak roots to rehash the JVMTI tag map
-    _roots.oops_do(&_cl, true /* visit_jvmti_weak_export */);
+    _roots.oops_do(&_cl);
   }
 };
 
@@ -123,7 +127,7 @@ uintptr_t ZRelocate::relocate_object_inner(ZForwarding* forwarding, uintptr_t fr
   // Relocation contention
   ZStatInc(ZCounterRelocationContention);
   log_trace(gc)("Relocation contention, thread: " PTR_FORMAT " (%s), forwarding: " PTR_FORMAT
-                ", entry: " UINT32_FORMAT ", oop: " PTR_FORMAT ", size: " SIZE_FORMAT,
+                ", entry: " SIZE_FORMAT ", oop: " PTR_FORMAT ", size: " SIZE_FORMAT,
                 ZThread::id(), ZThread::name(), p2i(forwarding), cursor, from_good, size);
 
   // Try undo allocation

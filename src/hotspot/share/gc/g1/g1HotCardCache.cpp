@@ -68,7 +68,7 @@ CardTable::CardValue* G1HotCardCache::insert(CardValue* card_ptr) {
     return card_ptr;
   }
   // Otherwise, the card is hot.
-  size_t index = Atomic::add(1u, &_hot_cache_idx) - 1;
+  size_t index = Atomic::add(&_hot_cache_idx, 1u) - 1;
   size_t masked_index = index & (_hot_cache_size - 1);
   CardValue* current_ptr = _hot_cache[masked_index];
 
@@ -78,29 +78,28 @@ CardTable::CardValue* G1HotCardCache::insert(CardValue* card_ptr) {
   // card_ptr in favor of the other option, which would be starting over. This
   // should be OK since card_ptr will likely be the older card already when/if
   // this ever happens.
-  CardValue* previous_ptr = Atomic::cmpxchg(card_ptr,
-                                            &_hot_cache[masked_index],
-                                            current_ptr);
+  CardValue* previous_ptr = Atomic::cmpxchg(&_hot_cache[masked_index],
+                                            current_ptr,
+                                            card_ptr);
   return (previous_ptr == current_ptr) ? previous_ptr : card_ptr;
 }
 
-void G1HotCardCache::drain(G1CardTableEntryClosure* cl, uint worker_i) {
+void G1HotCardCache::drain(G1CardTableEntryClosure* cl, uint worker_id) {
   assert(default_use_cache(), "Drain only necessary if we use the hot card cache.");
 
   assert(_hot_cache != NULL, "Logic");
   assert(!use_cache(), "cache should be disabled");
 
   while (_hot_cache_par_claimed_idx < _hot_cache_size) {
-    size_t end_idx = Atomic::add(_hot_cache_par_chunk_size,
-                                 &_hot_cache_par_claimed_idx);
+    size_t end_idx = Atomic::add(&_hot_cache_par_claimed_idx,
+                                 _hot_cache_par_chunk_size);
     size_t start_idx = end_idx - _hot_cache_par_chunk_size;
     // The current worker has successfully claimed the chunk [start_idx..end_idx)
     end_idx = MIN2(end_idx, _hot_cache_size);
     for (size_t i = start_idx; i < end_idx; i++) {
       CardValue* card_ptr = _hot_cache[i];
       if (card_ptr != NULL) {
-        bool result = cl->do_card_ptr(card_ptr, worker_i);
-        assert(result, "Closure should always return true");
+        cl->do_card_ptr(card_ptr, worker_id);
       } else {
         break;
       }

@@ -33,7 +33,6 @@
 #include "runtime/handles.inline.hpp"
 #include "runtime/init.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/os.inline.hpp"
 #include "runtime/thread.inline.hpp"
 #include "runtime/safepointVerifiers.hpp"
@@ -55,12 +54,6 @@ VMEntryWrapper::~VMEntryWrapper() {
   if (WalkStackALot) {
     InterfaceSupport::walk_stack();
   }
-#ifdef COMPILER2
-  // This option is not used by Compiler 1
-  if (StressDerivedPointers) {
-    InterfaceSupport::stress_derived_pointers();
-  }
-#endif
   if (DeoptimizeALot || DeoptimizeRandom) {
     InterfaceSupport::deoptimizeAll();
   }
@@ -93,8 +86,8 @@ RuntimeHistogramElement::RuntimeHistogramElement(const char* elementName) {
   _name = elementName;
   uintx count = 0;
 
-  while (Atomic::cmpxchg(1, &RuntimeHistogram_lock, 0) != 0) {
-    while (OrderAccess::load_acquire(&RuntimeHistogram_lock) != 0) {
+  while (Atomic::cmpxchg(&RuntimeHistogram_lock, 0, 1) != 0) {
+    while (Atomic::load_acquire(&RuntimeHistogram_lock) != 0) {
       count +=1;
       if ( (WarnOnStalledSpinLock > 0)
         && (count % WarnOnStalledSpinLock == 0)) {
@@ -231,31 +224,6 @@ void InterfaceSupport::deoptimizeAll() {
     }
   }
   deoptimizeAllCounter++;
-}
-
-
-void InterfaceSupport::stress_derived_pointers() {
-#ifdef COMPILER2
-  JavaThread *thread = JavaThread::current();
-  if (!is_init_completed()) return;
-  ResourceMark rm(thread);
-  bool found = false;
-  for (StackFrameStream sfs(thread); !sfs.is_done() && !found; sfs.next()) {
-    CodeBlob* cb = sfs.current()->cb();
-    if (cb != NULL && cb->oop_maps() ) {
-      // Find oopmap for current method
-      const ImmutableOopMap* map = cb->oop_map_for_return_address(sfs.current()->pc());
-      assert(map != NULL, "no oopmap found for pc");
-      found = map->has_derived_pointer();
-    }
-  }
-  if (found) {
-    // $$$ Not sure what to do here.
-    /*
-    Scavenge::invoke(0);
-    */
-  }
-#endif
 }
 
 

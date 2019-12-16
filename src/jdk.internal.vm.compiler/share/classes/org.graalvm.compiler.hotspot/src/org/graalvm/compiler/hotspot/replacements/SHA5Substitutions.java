@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,6 @@ import org.graalvm.compiler.nodes.PiNode;
 import org.graalvm.compiler.nodes.extended.RawLoadNode;
 import org.graalvm.compiler.nodes.graphbuilderconf.IntrinsicContext;
 import org.graalvm.compiler.replacements.ReplacementsUtil;
-import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
 import org.graalvm.compiler.word.Word;
 import jdk.internal.vm.compiler.word.LocationIdentity;
 import jdk.internal.vm.compiler.word.WordFactory;
@@ -46,8 +45,6 @@ import jdk.vm.ci.meta.JavaKind;
 
 @ClassSubstitution(className = "sun.security.provider.SHA5", optional = true)
 public class SHA5Substitutions {
-
-    public static final String implCompressName = JavaVersionUtil.JAVA_SPEC <= 8 ? "implCompress" : "implCompress0";
 
     @MethodSubstitution(isStatic = false)
     static void implCompress0(Object receiver, byte[] buf, int ofs) {

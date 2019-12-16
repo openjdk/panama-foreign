@@ -30,7 +30,6 @@
 #include "runtime/atomic.hpp"
 #include "runtime/mutex.hpp"
 #include "runtime/mutexLocker.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/thread.inline.hpp"
 #include "utilities/globalCounter.inline.hpp"
 
@@ -40,7 +39,7 @@ PtrQueue::PtrQueue(PtrQueueSet* qset, bool active) :
   _qset(qset),
   _active(active),
   _index(0),
-  _capacity_in_bytes(0),
+  _capacity_in_bytes(index_to_byte_index(qset->buffer_size())),
   _buf(NULL)
 {}
 
@@ -80,13 +79,6 @@ void PtrQueue::handle_zero_index() {
   if (_buf != NULL) {
     handle_completed_buffer();
   } else {
-    // Bootstrapping kludge; lazily initialize capacity.  The initial
-    // thread's queues are constructed before the second phase of the
-    // two-phase initialization of the associated qsets.  As a result,
-    // we can't initialize _capacity_in_bytes in the queue constructor.
-    if (_capacity_in_bytes == 0) {
-      _capacity_in_bytes = index_to_byte_index(qset()->buffer_size());
-    }
     allocate_buffer();
   }
 }
@@ -157,7 +149,7 @@ BufferNode* BufferNode::Allocator::allocate() {
     // Decrement count after getting buffer from free list.  This, along
     // with incrementing count before adding to free list, ensures count
     // never underflows.
-    size_t count = Atomic::sub(1u, &_free_count);
+    size_t count = Atomic::sub(&_free_count, 1u);
     assert((count + 1) != 0, "_free_count underflow");
   }
   return node;
@@ -189,7 +181,7 @@ void BufferNode::Allocator::release(BufferNode* node) {
   const size_t trigger_transfer = 10;
 
   // Add to pending list. Update count first so no underflow in transfer.
-  size_t pending_count = Atomic::add(1u, &_pending_count);
+  size_t pending_count = Atomic::add(&_pending_count, 1u);
   _pending_list.push(*node);
   if (pending_count > trigger_transfer) {
     try_transfer_pending();
@@ -204,7 +196,7 @@ void BufferNode::Allocator::release(BufferNode* node) {
 bool BufferNode::Allocator::try_transfer_pending() {
   // Attempt to claim the lock.
   if (Atomic::load(&_transfer_lock) || // Skip CAS if likely to fail.
-      Atomic::cmpxchg(true, &_transfer_lock, false)) {
+      Atomic::cmpxchg(&_transfer_lock, false, true)) {
     return false;
   }
   // Have the lock; perform the transfer.
@@ -219,19 +211,19 @@ bool BufferNode::Allocator::try_transfer_pending() {
       last = next;
       ++count;
     }
-    Atomic::sub(count, &_pending_count);
+    Atomic::sub(&_pending_count, count);
 
     // Wait for any in-progress pops, to avoid ABA for them.
     GlobalCounter::write_synchronize();
 
     // Add synchronized nodes to _free_list.
     // Update count first so no underflow in allocate().
-    Atomic::add(count, &_free_count);
+    Atomic::add(&_free_count, count);
     _free_list.prepend(*first, *last);
     log_trace(gc, ptrqueue, freelist)
              ("Transferred %s pending to free: " SIZE_FORMAT, name(), count);
   }
-  OrderAccess::release_store(&_transfer_lock, false);
+  Atomic::release_store(&_transfer_lock, false);
   return true;
 }
 
@@ -243,24 +235,19 @@ size_t BufferNode::Allocator::reduce_free_list(size_t remove_goal) {
     if (node == NULL) break;
     BufferNode::deallocate(node);
   }
-  size_t new_count = Atomic::sub(removed, &_free_count);
+  size_t new_count = Atomic::sub(&_free_count, removed);
   log_debug(gc, ptrqueue, freelist)
            ("Reduced %s free list by " SIZE_FORMAT " to " SIZE_FORMAT,
             name(), removed, new_count);
   return removed;
 }
 
-PtrQueueSet::PtrQueueSet() :
-  _allocator(NULL),
+PtrQueueSet::PtrQueueSet(BufferNode::Allocator* allocator) :
+  _allocator(allocator),
   _all_active(false)
 {}
 
 PtrQueueSet::~PtrQueueSet() {}
-
-void PtrQueueSet::initialize(BufferNode::Allocator* allocator) {
-  assert(allocator != NULL, "Init order issue?");
-  _allocator = allocator;
-}
 
 void** PtrQueueSet::allocate_buffer() {
   BufferNode* node = _allocator->allocate();
@@ -270,4 +257,3 @@ void** PtrQueueSet::allocate_buffer() {
 void PtrQueueSet::deallocate_buffer(BufferNode* node) {
   _allocator->release(node);
 }
-

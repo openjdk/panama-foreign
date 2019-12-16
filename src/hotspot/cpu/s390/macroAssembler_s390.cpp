@@ -37,9 +37,11 @@
 #include "oops/accessDecorators.hpp"
 #include "oops/compressedOops.inline.hpp"
 #include "oops/klass.inline.hpp"
+#ifdef COMPILER2
 #include "opto/compile.hpp"
 #include "opto/intrinsicnode.hpp"
 #include "opto/matcher.hpp"
+#endif
 #include "prims/methodHandles.hpp"
 #include "registerSaver_s390.hpp"
 #include "runtime/biasedLocking.hpp"
@@ -2925,7 +2927,7 @@ unsigned int MacroAssembler::call_ic_miss_handler(Label& ICM, int trapMarker, in
 }
 
 void MacroAssembler::nmethod_UEP(Label& ic_miss) {
-  Register ic_reg       = as_Register(Matcher::inline_cache_reg_encode());
+  Register ic_reg       = Z_inline_cache;
   int      klass_offset = oopDesc::klass_offset_in_bytes();
   if (!ImplicitNullChecks || MacroAssembler::needs_explicit_null_check(klass_offset)) {
     if (VM_Version::has_CompareBranch()) {
@@ -3198,15 +3200,15 @@ void MacroAssembler::biased_locking_enter(Register  obj_reg,
   // whether the epoch is still valid.
   // Note that the runtime guarantees sufficient alignment of JavaThread
   // pointers to allow age to be placed into low bits.
-  assert(markOopDesc::age_shift == markOopDesc::lock_bits + markOopDesc::biased_lock_bits,
+  assert(markWord::age_shift == markWord::lock_bits + markWord::biased_lock_bits,
          "biased locking makes assumptions about bit layout");
   z_lr(temp_reg, mark_reg);
-  z_nilf(temp_reg, markOopDesc::biased_lock_mask_in_place);
-  z_chi(temp_reg, markOopDesc::biased_lock_pattern);
+  z_nilf(temp_reg, markWord::biased_lock_mask_in_place);
+  z_chi(temp_reg, markWord::biased_lock_pattern);
   z_brne(cas_label);  // Try cas if object is not biased, i.e. cannot be biased locked.
 
   load_prototype_header(temp_reg, obj_reg);
-  load_const_optimized(temp2_reg, ~((int) markOopDesc::age_mask_in_place));
+  load_const_optimized(temp2_reg, ~((int) markWord::age_mask_in_place));
 
   z_ogr(temp_reg, Z_thread);
   z_xgr(temp_reg, mark_reg);
@@ -3232,7 +3234,7 @@ void MacroAssembler::biased_locking_enter(Register  obj_reg,
   // If the low three bits in the xor result aren't clear, that means
   // the prototype header is no longer biased and we have to revoke
   // the bias on this object.
-  z_tmll(temp_reg, markOopDesc::biased_lock_mask_in_place);
+  z_tmll(temp_reg, markWord::biased_lock_mask_in_place);
   z_brnaz(try_revoke_bias);
 
   // Biasing is still enabled for this data type. See whether the
@@ -3244,7 +3246,7 @@ void MacroAssembler::biased_locking_enter(Register  obj_reg,
   // that the current epoch is invalid in order to do this because
   // otherwise the manipulations it performs on the mark word are
   // illegal.
-  z_tmll(temp_reg, markOopDesc::epoch_mask_in_place);
+  z_tmll(temp_reg, markWord::epoch_mask_in_place);
   z_brnaz(try_rebias);
 
   //----------------------------------------------------------------------------
@@ -3254,8 +3256,8 @@ void MacroAssembler::biased_locking_enter(Register  obj_reg,
   // fails we will go in to the runtime to revoke the object's bias.
   // Note that we first construct the presumed unbiased header so we
   // don't accidentally blow away another thread's valid bias.
-  z_nilf(mark_reg, markOopDesc::biased_lock_mask_in_place | markOopDesc::age_mask_in_place |
-         markOopDesc::epoch_mask_in_place);
+  z_nilf(mark_reg, markWord::biased_lock_mask_in_place | markWord::age_mask_in_place |
+         markWord::epoch_mask_in_place);
   z_lgr(temp_reg, Z_thread);
   z_llgfr(mark_reg, mark_reg);
   z_ogr(temp_reg, mark_reg);
@@ -3287,7 +3289,7 @@ void MacroAssembler::biased_locking_enter(Register  obj_reg,
   // bias in the current epoch. In other words, we allow transfer of
   // the bias from one thread to another directly in this situation.
 
-  z_nilf(mark_reg, markOopDesc::biased_lock_mask_in_place | markOopDesc::age_mask_in_place | markOopDesc::epoch_mask_in_place);
+  z_nilf(mark_reg, markWord::biased_lock_mask_in_place | markWord::age_mask_in_place | markWord::epoch_mask_in_place);
   load_prototype_header(temp_reg, obj_reg);
   z_llgfr(mark_reg, mark_reg);
 
@@ -3348,9 +3350,9 @@ void MacroAssembler::biased_locking_exit(Register mark_addr, Register temp_reg, 
   BLOCK_COMMENT("biased_locking_exit {");
 
   z_lg(temp_reg, 0, mark_addr);
-  z_nilf(temp_reg, markOopDesc::biased_lock_mask_in_place);
+  z_nilf(temp_reg, markWord::biased_lock_mask_in_place);
 
-  z_chi(temp_reg, markOopDesc::biased_lock_pattern);
+  z_chi(temp_reg, markWord::biased_lock_pattern);
   z_bre(done);
   BLOCK_COMMENT("} biased_locking_exit");
 }
@@ -3363,7 +3365,7 @@ void MacroAssembler::compiler_fast_lock_object(Register oop, Register box, Regis
 
   BLOCK_COMMENT("compiler_fast_lock_object {");
 
-  // Load markOop from oop into mark.
+  // Load markWord from oop into mark.
   z_lg(displacedHeader, 0, oop);
 
   if (try_bias) {
@@ -3372,13 +3374,13 @@ void MacroAssembler::compiler_fast_lock_object(Register oop, Register box, Regis
 
   // Handle existing monitor.
   // The object has an existing monitor iff (mark & monitor_value) != 0.
-  guarantee(Immediate::is_uimm16(markOopDesc::monitor_value), "must be half-word");
+  guarantee(Immediate::is_uimm16(markWord::monitor_value), "must be half-word");
   z_lr(temp, displacedHeader);
-  z_nill(temp, markOopDesc::monitor_value);
+  z_nill(temp, markWord::monitor_value);
   z_brne(object_has_monitor);
 
-  // Set mark to markOop | markOopDesc::unlocked_value.
-  z_oill(displacedHeader, markOopDesc::unlocked_value);
+  // Set mark to markWord | markWord::unlocked_value.
+  z_oill(displacedHeader, markWord::unlocked_value);
 
   // Load Compare Value application register.
 
@@ -3386,7 +3388,7 @@ void MacroAssembler::compiler_fast_lock_object(Register oop, Register box, Regis
   z_stg(displacedHeader, BasicLock::displaced_header_offset_in_bytes(), box);
 
   // Memory Fence (in cmpxchgd)
-  // Compare object markOop with mark and if equal exchange scratch1 with object markOop.
+  // Compare object markWord with mark and if equal exchange scratch1 with object markWord.
 
   // If the compare-and-swap succeeded, then we found an unlocked object and we
   // have now locked it.
@@ -3397,7 +3399,7 @@ void MacroAssembler::compiler_fast_lock_object(Register oop, Register box, Regis
   // We did not see an unlocked object so try the fast recursive case.
 
   z_sgr(currentHeader, Z_SP);
-  load_const_optimized(temp, (~(os::vm_page_size()-1) | markOopDesc::lock_mask_in_place));
+  load_const_optimized(temp, (~(os::vm_page_size()-1) | markWord::lock_mask_in_place));
 
   z_ngr(currentHeader, temp);
   //   z_brne(done);
@@ -3407,7 +3409,7 @@ void MacroAssembler::compiler_fast_lock_object(Register oop, Register box, Regis
   z_bru(done);
 
   Register zero = temp;
-  Register monitor_tagged = displacedHeader; // Tagged with markOopDesc::monitor_value.
+  Register monitor_tagged = displacedHeader; // Tagged with markWord::monitor_value.
   bind(object_has_monitor);
   // The object's monitor m is unlocked iff m->owner == NULL,
   // otherwise m->owner may contain a thread or a stack address.
@@ -3456,12 +3458,12 @@ void MacroAssembler::compiler_fast_unlock_object(Register oop, Register box, Reg
   // Handle existing monitor.
   // The object has an existing monitor iff (mark & monitor_value) != 0.
   z_lg(currentHeader, oopDesc::mark_offset_in_bytes(), oop);
-  guarantee(Immediate::is_uimm16(markOopDesc::monitor_value), "must be half-word");
-  z_nill(currentHeader, markOopDesc::monitor_value);
+  guarantee(Immediate::is_uimm16(markWord::monitor_value), "must be half-word");
+  z_nill(currentHeader, markWord::monitor_value);
   z_brne(object_has_monitor);
 
   // Check if it is still a light weight lock, this is true if we see
-  // the stack address of the basicLock in the markOop of the object
+  // the stack address of the basicLock in the markWord of the object
   // copy box to currentHeader such that csg does not kill it.
   z_lgr(currentHeader, box);
   z_csg(currentHeader, displacedHeader, 0, oop);
@@ -4590,6 +4592,7 @@ unsigned int MacroAssembler::CopyRawMemory_AlignedDisjoint(Register src_reg, Reg
   return block_end - block_start;
 }
 
+#ifdef COMPILER2
 //------------------------------------------------------
 //   Special String Intrinsics. Implementation
 //------------------------------------------------------
@@ -5837,7 +5840,7 @@ unsigned int MacroAssembler::string_indexof_char(Register result, Register hayst
 
   return offset() - block_start;
 }
-
+#endif
 
 //-------------------------------------------------
 //   Constants (scalar and oop) in constant pool
@@ -6148,96 +6151,6 @@ void MacroAssembler::translate_tt(Register r1, Register r2, uint m3) {
   bind(retry);
   Assembler::z_trtt(r1, r2, m3);
   Assembler::z_brc(Assembler::bcondOverflow /* CC==3 (iterate) */, retry);
-}
-
-
-void MacroAssembler::generate_type_profiling(const Register Rdata,
-                                             const Register Rreceiver_klass,
-                                             const Register Rwanted_receiver_klass,
-                                             const Register Rmatching_row,
-                                             bool is_virtual_call) {
-  const int row_size = in_bytes(ReceiverTypeData::receiver_offset(1)) -
-                       in_bytes(ReceiverTypeData::receiver_offset(0));
-  const int num_rows = ReceiverTypeData::row_limit();
-  NearLabel found_free_row;
-  NearLabel do_increment;
-  NearLabel found_no_slot;
-
-  BLOCK_COMMENT("type profiling {");
-
-  // search for:
-  //    a) The type given in Rwanted_receiver_klass.
-  //    b) The *first* empty row.
-
-  // First search for a) only, just running over b) with no regard.
-  // This is possible because
-  //    wanted_receiver_class == receiver_class  &&  wanted_receiver_class == 0
-  // is never true (receiver_class can't be zero).
-  for (int row_num = 0; row_num < num_rows; row_num++) {
-    // Row_offset should be a well-behaved positive number. The generated code relies
-    // on that wrt constant code size. Add2reg can handle all row_offset values, but
-    // will have to vary generated code size.
-    int row_offset = in_bytes(ReceiverTypeData::receiver_offset(row_num));
-    assert(Displacement::is_shortDisp(row_offset), "Limitation of generated code");
-
-    // Is Rwanted_receiver_klass in this row?
-    if (VM_Version::has_CompareBranch()) {
-      z_lg(Rwanted_receiver_klass, row_offset, Z_R0, Rdata);
-      // Rmatching_row = Rdata + row_offset;
-      add2reg(Rmatching_row, row_offset, Rdata);
-      // if (*row_recv == (intptr_t) receiver_klass) goto fill_existing_slot;
-      compare64_and_branch(Rwanted_receiver_klass, Rreceiver_klass, Assembler::bcondEqual, do_increment);
-    } else {
-      add2reg(Rmatching_row, row_offset, Rdata);
-      z_cg(Rreceiver_klass, row_offset, Z_R0, Rdata);
-      z_bre(do_increment);
-    }
-  }
-
-  // Now that we did not find a match, let's search for b).
-
-  // We could save the first calculation of Rmatching_row if we woud search for a) in reverse order.
-  // We would then end up here with Rmatching_row containing the value for row_num == 0.
-  // We would not see much benefit, if any at all, because the CPU can schedule
-  // two instructions together with a branch anyway.
-  for (int row_num = 0; row_num < num_rows; row_num++) {
-    int row_offset = in_bytes(ReceiverTypeData::receiver_offset(row_num));
-
-    // Has this row a zero receiver_klass, i.e. is it empty?
-    if (VM_Version::has_CompareBranch()) {
-      z_lg(Rwanted_receiver_klass, row_offset, Z_R0, Rdata);
-      // Rmatching_row = Rdata + row_offset
-      add2reg(Rmatching_row, row_offset, Rdata);
-      // if (*row_recv == (intptr_t) 0) goto found_free_row
-      compare64_and_branch(Rwanted_receiver_klass, (intptr_t)0, Assembler::bcondEqual, found_free_row);
-    } else {
-      add2reg(Rmatching_row, row_offset, Rdata);
-      load_and_test_long(Rwanted_receiver_klass, Address(Rdata, row_offset));
-      z_bre(found_free_row);  // zero -> Found a free row.
-    }
-  }
-
-  // No match, no empty row found.
-  // Increment total counter to indicate polymorphic case.
-  if (is_virtual_call) {
-    add2mem_64(Address(Rdata, CounterData::count_offset()), 1, Rmatching_row);
-  }
-  z_bru(found_no_slot);
-
-  // Here we found an empty row, but we have not found Rwanted_receiver_klass.
-  // Rmatching_row holds the address to the first empty row.
-  bind(found_free_row);
-  // Store receiver_klass into empty slot.
-  z_stg(Rreceiver_klass, 0, Z_R0, Rmatching_row);
-
-  // Increment the counter of Rmatching_row.
-  bind(do_increment);
-  ByteSize counter_offset = ReceiverTypeData::receiver_count_offset(0) - ReceiverTypeData::receiver_offset(0);
-  add2mem_64(Address(Rmatching_row, counter_offset), 1, Rdata);
-
-  bind(found_no_slot);
-
-  BLOCK_COMMENT("} type profiling");
 }
 
 //---------------------------------------

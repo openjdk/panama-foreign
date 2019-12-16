@@ -25,10 +25,9 @@ import jdk.jfr.Description;
 import jdk.jfr.Label;
 
 
-// This class generates simple event in a loop
-// for a specified time.
-// Pass the time in seconds as a parameter.
+// This class generates simple event in a loop for a specified time.
 public class EventGeneratorLoop {
+    public static final String MAIN_METHOD_STARTED = "MAIN_METHOD_STARTED";
 
     @Label("SimpleEvent")
     @Description("Simple custom event")
@@ -40,12 +39,13 @@ public class EventGeneratorLoop {
         int count;
     }
 
-
     public static void main(String[] args) throws Exception {
         if ((args.length < 1) || (args[0] == null)) {
             throw new IllegalArgumentException("Expecting one argument: time to run (seconds)");
         }
         int howLong = Integer.parseInt(args[0]);
+
+        System.out.println(MAIN_METHOD_STARTED + ", argument is " + howLong);
 
         for (int i=0; i < howLong; i++) {
             SimpleEvent ev = new SimpleEvent();
@@ -56,5 +56,8 @@ public class EventGeneratorLoop {
             try { Thread.sleep(1000); } catch (InterruptedException e) {}
             System.out.print(".");
         }
+
+        System.out.println("EventGeneratorLoop is coming to an end");
     }
+
 }

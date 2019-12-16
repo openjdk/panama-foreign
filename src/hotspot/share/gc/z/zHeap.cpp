@@ -22,35 +22,27 @@
  */
 
 #include "precompiled.hpp"
-#include "gc/shared/gcArguments.hpp"
-#include "gc/shared/oopStorage.hpp"
-#include "gc/z/zAddress.hpp"
+#include "gc/shared/locationPrinter.hpp"
+#include "gc/z/zAddress.inline.hpp"
 #include "gc/z/zGlobals.hpp"
 #include "gc/z/zHeap.inline.hpp"
 #include "gc/z/zHeapIterator.hpp"
-#include "gc/z/zList.inline.hpp"
-#include "gc/z/zLock.inline.hpp"
 #include "gc/z/zMark.inline.hpp"
-#include "gc/z/zOopClosures.inline.hpp"
 #include "gc/z/zPage.inline.hpp"
 #include "gc/z/zPageTable.inline.hpp"
 #include "gc/z/zRelocationSet.inline.hpp"
+#include "gc/z/zRelocationSetSelector.hpp"
 #include "gc/z/zResurrection.hpp"
-#include "gc/z/zRootsIterator.hpp"
 #include "gc/z/zStat.hpp"
-#include "gc/z/zTask.hpp"
-#include "gc/z/zThread.hpp"
-#include "gc/z/zTracer.inline.hpp"
+#include "gc/z/zThread.inline.hpp"
 #include "gc/z/zVerify.hpp"
-#include "gc/z/zVirtualMemory.inline.hpp"
 #include "gc/z/zWorkers.inline.hpp"
 #include "logging/log.hpp"
+#include "memory/iterator.hpp"
 #include "memory/resourceArea.hpp"
-#include "oops/oop.inline.hpp"
-#include "runtime/arguments.hpp"
+#include "runtime/handshake.hpp"
 #include "runtime/safepoint.hpp"
 #include "runtime/thread.hpp"
-#include "utilities/align.hpp"
 #include "utilities/debug.hpp"
 
 static const ZStatSampler ZSamplerHeapUsedBeforeMark("Memory", "Heap Used Before Mark", ZStatUnitBytes);
@@ -64,7 +56,7 @@ ZHeap* ZHeap::_heap = NULL;
 
 ZHeap::ZHeap() :
     _workers(),
-    _object_allocator(_workers.nworkers()),
+    _object_allocator(),
     _page_allocator(heap_min_size(), heap_initial_size(), heap_max_size(), heap_max_reserve_size()),
     _page_table(),
     _forwarding_table(),
@@ -179,7 +171,7 @@ size_t ZHeap::unsafe_max_tlab_alloc() const {
 
 bool ZHeap::is_in(uintptr_t addr) const {
   // An address is considered to be "in the heap" if it points into
-  // the allocated part of a pages, regardless of which heap view is
+  // the allocated part of a page, regardless of which heap view is
   // used. Note that an address with the finalizable metadata bit set
   // is not pointing into a heap view, and therefore not considered
   // to be "in the heap".
@@ -192,16 +184,6 @@ bool ZHeap::is_in(uintptr_t addr) const {
   }
 
   return false;
-}
-
-uintptr_t ZHeap::block_start(uintptr_t addr) const {
-  const ZPage* const page = _page_table.get(addr);
-  return page->block_start(addr);
-}
-
-bool ZHeap::block_is_obj(uintptr_t addr) const {
-  const ZPage* const page = _page_table.get(addr);
-  return page->block_is_obj(addr);
 }
 
 uint ZHeap::nconcurrent_worker_threads() const {
@@ -263,34 +245,14 @@ uint64_t ZHeap::uncommit(uint64_t delay) {
   return _page_allocator.uncommit(delay);
 }
 
-void ZHeap::before_flip() {
-  if (ZVerifyViews) {
-    // Unmap all pages
-    _page_allocator.debug_unmap_all_pages();
-  }
-}
-
-void ZHeap::after_flip() {
-  if (ZVerifyViews) {
-    // Map all pages
-    ZPageTableIterator iter(&_page_table);
-    for (ZPage* page; iter.next(&page);) {
-      _page_allocator.debug_map_page(page);
-    }
-    _page_allocator.debug_map_cached_pages();
-  }
-}
-
 void ZHeap::flip_to_marked() {
-  before_flip();
+  ZVerifyViewsFlip flip(&_page_allocator);
   ZAddress::flip_to_marked();
-  after_flip();
 }
 
 void ZHeap::flip_to_remapped() {
-  before_flip();
+  ZVerifyViewsFlip flip(&_page_allocator);
   ZAddress::flip_to_remapped();
-  after_flip();
 }
 
 void ZHeap::mark_start() {
@@ -354,7 +316,7 @@ bool ZHeap::mark_end() {
   // Process weak roots
   _weak_roots_processor.process_weak_roots();
 
-  // Prepare to unload unused classes and code
+  // Prepare to unload stale metadata and nmethods
   _unload.prepare();
 
   return true;
@@ -364,6 +326,11 @@ void ZHeap::set_soft_reference_policy(bool clear) {
   _reference_processor.set_soft_reference_policy(clear);
 }
 
+class ZRendezvousClosure : public ThreadClosure {
+public:
+  virtual void do_thread(Thread* thread) {}
+};
+
 void ZHeap::process_non_strong_references() {
   // Process Soft/Weak/Final/PhantomReferences
   _reference_processor.process_references();
@@ -371,11 +338,25 @@ void ZHeap::process_non_strong_references() {
   // Process concurrent weak roots
   _weak_roots_processor.process_concurrent_weak_roots();
 
-  // Unload unused classes and code
-  _unload.unload();
+  // Unlink stale metadata and nmethods
+  _unload.unlink();
+
+  // Perform a handshake. This is needed 1) to make sure that stale
+  // metadata and nmethods are no longer observable. And 2), to
+  // prevent the race where a mutator first loads an oop, which is
+  // logically null but not yet cleared. Then this oop gets cleared
+  // by the reference processor and resurrection is unblocked. At
+  // this point the mutator could see the unblocked state and pass
+  // this invalid oop through the normal barrier path, which would
+  // incorrectly try to mark the oop.
+  ZRendezvousClosure cl;
+  Handshake::execute(&cl);
 
   // Unblock resurrection of weak/phantom references
   ZResurrection::unblock();
+
+  // Purge stale metadata and nmethods that were unlinked
+  _unload.purge();
 
   // Enqueue Soft/Weak/Final/PhantomReferences. Note that this
   // must be done after unblocking resurrection. Otherwise the
@@ -444,7 +425,7 @@ void ZHeap::reset_relocation_set() {
 void ZHeap::relocate_start() {
   assert(SafepointSynchronize::is_at_safepoint(), "Should be at safepoint");
 
-  // Finish unloading of classes and code
+  // Finish unloading stale metadata and nmethods
   _unload.finish();
 
   // Flip address view
@@ -477,6 +458,14 @@ void ZHeap::object_iterate(ObjectClosure* cl, bool visit_weaks) {
 
   ZHeapIterator iter;
   iter.objects_do(cl, visit_weaks);
+}
+
+void ZHeap::pages_do(ZPageClosure* cl) {
+  ZPageTableIterator iter(&_page_table);
+  for (ZPage* page; iter.next(&page);) {
+    cl->do_page(page);
+  }
+  _page_allocator.pages_do(cl);
 }
 
 void ZHeap::serviceability_initialize() {
@@ -520,6 +509,16 @@ void ZHeap::print_extended_on(outputStream* st) const {
   _page_allocator.enable_deferred_delete();
 
   st->cr();
+}
+
+bool ZHeap::print_location(outputStream* st, uintptr_t addr) const {
+  if (LocationPrinter::is_valid_obj((void*)addr)) {
+    st->print(PTR_FORMAT " is a %s oop: ", addr, ZAddress::is_good(addr) ? "good" : "bad");
+    ZOop::from_address(addr)->print_on(st);
+    return true;
+  }
+
+  return false;
 }
 
 void ZHeap::verify() {

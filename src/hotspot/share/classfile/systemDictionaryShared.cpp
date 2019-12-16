@@ -38,6 +38,7 @@
 #include "classfile/vmSymbols.hpp"
 #include "logging/log.hpp"
 #include "memory/allocation.hpp"
+#include "memory/archiveUtils.hpp"
 #include "memory/filemap.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceClosure.hpp"
@@ -294,6 +295,7 @@ public:
     if (DynamicDumpSharedSpaces) {
       _klass = DynamicArchive::original_to_target(info._klass);
     }
+    ArchivePtrMarker::mark_pointer(&_klass);
   }
 
   bool matches(int clsfile_size, int clsfile_crc32) const {
@@ -337,6 +339,8 @@ public:
     } else {
       *info_pointer_addr(klass) = record;
     }
+
+    ArchivePtrMarker::mark_pointer(info_pointer_addr(klass));
   }
 
   // Used by RunTimeSharedDictionary to implement OffsetCompactHashtable::EQUALS
@@ -657,7 +661,6 @@ bool SystemDictionaryShared::is_sharing_possible(ClassLoaderData* loader_data) {
 bool SystemDictionaryShared::is_shared_class_visible_for_classloader(
                                                      InstanceKlass* ik,
                                                      Handle class_loader,
-                                                     const char* pkg_string,
                                                      Symbol* pkg_name,
                                                      PackageEntry* pkg_entry,
                                                      ModuleEntry* mod_entry,
@@ -684,7 +687,7 @@ bool SystemDictionaryShared::is_shared_class_visible_for_classloader(
     }
   } else if (SystemDictionary::is_system_class_loader(class_loader())) {
     assert(ent != NULL, "shared class for system loader should have valid SharedClassPathEntry");
-    if (pkg_string == NULL) {
+    if (pkg_name == NULL) {
       // The archived class is in the unnamed package. Currently, the boot image
       // does not contain any class in the unnamed package.
       assert(!ent->is_modules_image(), "Class in the unnamed package must be from the classpath");
@@ -744,11 +747,11 @@ bool SystemDictionaryShared::is_shared_class_visible_for_classloader(
 }
 
 bool SystemDictionaryShared::has_platform_or_app_classes() {
-  if (FileMapInfo::current_info()->header()->has_platform_or_app_classes()) {
+  if (FileMapInfo::current_info()->has_platform_or_app_classes()) {
     return true;
   }
   if (DynamicArchive::is_mapped() &&
-      FileMapInfo::dynamic_info()->header()->has_platform_or_app_classes()) {
+      FileMapInfo::dynamic_info()->has_platform_or_app_classes()) {
     return true;
   }
   return false;
@@ -906,14 +909,9 @@ InstanceKlass* SystemDictionaryShared::lookup_from_stream(Symbol* class_name,
     return NULL;
   }
 
-  const RunTimeSharedClassInfo* record = find_record(&_unregistered_dictionary, class_name);
+  const RunTimeSharedClassInfo* record = find_record(&_unregistered_dictionary, &_dynamic_unregistered_dictionary, class_name);
   if (record == NULL) {
-    if (DynamicArchive::is_mapped()) {
-      record = find_record(&_dynamic_unregistered_dictionary, class_name);
-    }
-    if (record == NULL) {
-      return NULL;
-    }
+    return NULL;
   }
 
   int clsfile_size  = cfs->length();
@@ -1029,7 +1027,7 @@ DumpTimeSharedClassInfo* SystemDictionaryShared::find_or_allocate_info_for(Insta
 }
 
 void SystemDictionaryShared::set_shared_class_misc_info(InstanceKlass* k, ClassFileStream* cfs) {
-  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "only when dumping");
+  Arguments::assert_is_dumping_archive();
   assert(!is_builtin(k), "must be unregistered class");
   DumpTimeSharedClassInfo* info = find_or_allocate_info_for(k);
   info->_clsfile_size  = cfs->length();
@@ -1059,10 +1057,8 @@ void SystemDictionaryShared::remove_dumptime_info(InstanceKlass* k) {
     FREE_C_HEAP_ARRAY(DTConstraint, p->_verifier_constraints);
     p->_verifier_constraints = NULL;
   }
-  if (p->_verifier_constraint_flags != NULL) {
-    FREE_C_HEAP_ARRAY(char, p->_verifier_constraint_flags);
-    p->_verifier_constraint_flags = NULL;
-  }
+  FREE_C_HEAP_ARRAY(char, p->_verifier_constraint_flags);
+  p->_verifier_constraint_flags = NULL;
   _dumptime_table->remove(k);
 }
 
@@ -1187,7 +1183,7 @@ void SystemDictionaryShared::check_excluded_classes() {
 
 bool SystemDictionaryShared::is_excluded_class(InstanceKlass* k) {
   assert(_no_class_loading_should_happen, "sanity");
-  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "only when dumping");
+  Arguments::assert_is_dumping_archive();
   return find_or_allocate_info_for(k)->is_excluded();
 }
 
@@ -1211,7 +1207,7 @@ void SystemDictionaryShared::dumptime_classes_do(class MetaspaceClosure* it) {
 
 bool SystemDictionaryShared::add_verification_constraint(InstanceKlass* k, Symbol* name,
          Symbol* from_name, bool from_field_is_protected, bool from_is_array, bool from_is_object) {
-  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "called at dump time only");
+  Arguments::assert_is_dumping_archive();
   DumpTimeSharedClassInfo* info = find_or_allocate_info_for(k);
   info->add_verification_constraint(k, name, from_name, from_field_is_protected,
                                     from_is_array, from_is_object);
@@ -1362,7 +1358,7 @@ public:
       if (DynamicDumpSharedSpaces) {
         name = DynamicArchive::original_to_target(name);
       }
-      hash = primitive_hash<Symbol*>(name);
+      hash = SystemDictionaryShared::hash_for_shared_dictionary(name);
       u4 delta;
       if (DynamicDumpSharedSpaces) {
         delta = MetaspaceShared::object_delta_u4(DynamicArchive::buffer_to_target(record));
@@ -1415,29 +1411,34 @@ void SystemDictionaryShared::serialize_dictionary_headers(SerializeClosure* soc,
 }
 
 const RunTimeSharedClassInfo*
-SystemDictionaryShared::find_record(RunTimeSharedDictionary* dict, Symbol* name) {
-  if (UseSharedSpaces) {
-    unsigned int hash = primitive_hash<Symbol*>(name);
-    return dict->lookup(name, hash, 0);
-  } else {
+SystemDictionaryShared::find_record(RunTimeSharedDictionary* static_dict, RunTimeSharedDictionary* dynamic_dict, Symbol* name) {
+  if (!UseSharedSpaces || !name->is_shared()) {
+    // The names of all shared classes must also be a shared Symbol.
     return NULL;
   }
+
+  unsigned int hash = SystemDictionaryShared::hash_for_shared_dictionary(name);
+  const RunTimeSharedClassInfo* record = NULL;
+  if (!MetaspaceShared::is_shared_dynamic(name)) {
+    // The names of all shared classes in the static dict must also be in the
+    // static archive
+    record = static_dict->lookup(name, hash, 0);
+  }
+
+  if (record == NULL && DynamicArchive::is_mapped()) {
+    record = dynamic_dict->lookup(name, hash, 0);
+  }
+
+  return record;
 }
 
 InstanceKlass* SystemDictionaryShared::find_builtin_class(Symbol* name) {
-  const RunTimeSharedClassInfo* record = find_record(&_builtin_dictionary, name);
-  if (record) {
+  const RunTimeSharedClassInfo* record = find_record(&_builtin_dictionary, &_dynamic_builtin_dictionary, name);
+  if (record != NULL) {
     return record->_klass;
+  } else {
+    return NULL;
   }
-
-  if (DynamicArchive::is_mapped()) {
-    record = find_record(&_dynamic_builtin_dictionary, name);
-    if (record) {
-      return record->_klass;
-    }
-  }
-
-  return NULL;
 }
 
 void SystemDictionaryShared::update_shared_entry(InstanceKlass* k, int id) {

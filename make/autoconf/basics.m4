@@ -205,6 +205,34 @@ AC_DEFUN([BASIC_PREPEND_TO_PATH],
   fi
 ])
 
+################################################################################
+# This will make a path absolute. Assumes it's already a unix path. Also
+# resolves ~ to homedir.
+AC_DEFUN([BASIC_ABSOLUTE_PATH],
+[
+  if test "x[$]$1" != x; then
+    new_path="[$]$1"
+
+    # Use eval to expand a potential ~. This technique does not work if there
+    # are spaces in the path (which is valid at this point on Windows), so only
+    # try to apply it if there is an actual ~ first in the path.
+    if [ [[ "$new_path" = "~"* ]] ]; then
+      eval new_path="$new_path"
+      if test ! -f "$new_path" && test ! -d "$new_path"; then
+        AC_MSG_ERROR([The new_path of $1, which resolves as "$new_path", is not found.])
+      fi
+    fi
+
+    if test -d "$new_path"; then
+      $1="`cd "$new_path"; $THEPWDCMD -L`"
+    else
+      dir="`$DIRNAME "$new_path"`"
+      base="`$BASENAME "$new_path"`"
+      $1="`cd "$dir"; $THEPWDCMD -L`/$base"
+    fi
+  fi
+])
+
 ###############################################################################
 # This will make sure the given variable points to a full and proper
 # path. This means:
@@ -217,7 +245,6 @@ AC_DEFUN([BASIC_PREPEND_TO_PATH],
 AC_DEFUN([BASIC_FIXUP_PATH],
 [
   # Only process if variable expands to non-empty
-
   if test "x[$]$1" != x; then
     if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
       BASIC_FIXUP_PATH_CYGWIN($1)
@@ -234,19 +261,8 @@ AC_DEFUN([BASIC_FIXUP_PATH],
         AC_MSG_ERROR([Spaces are not allowed in this path.])
       fi
 
-      # Use eval to expand a potential ~
-      eval path="$path"
-      if test ! -f "$path" && test ! -d "$path"; then
-        AC_MSG_ERROR([The path of $1, which resolves as "$path", is not found.])
-      fi
-
-      if test -d "$path"; then
-        $1="`cd "$path"; $THEPWDCMD -L`"
-      else
-        dir="`$DIRNAME "$path"`"
-        base="`$BASENAME "$path"`"
-        $1="`cd "$dir"; $THEPWDCMD -L`/$base"
-      fi
+      BASIC_ABSOLUTE_PATH(path)
+      $1="$path"
     fi
   fi
 ])
@@ -411,7 +427,7 @@ AC_DEFUN_ONCE([BASIC_INIT],
   # Save the path variable before it gets changed
   ORIGINAL_PATH="$PATH"
   AC_SUBST(ORIGINAL_PATH)
-  DATE_WHEN_CONFIGURED=`LANG=C date`
+  DATE_WHEN_CONFIGURED=`date`
   AC_SUBST(DATE_WHEN_CONFIGURED)
   AC_MSG_NOTICE([Configuration created at $DATE_WHEN_CONFIGURED.])
 ])
@@ -473,31 +489,43 @@ AC_DEFUN([BASIC_SETUP_TOOL],
       # for unknown variables in the end.
       CONFIGURE_OVERRIDDEN_VARIABLES="$try_remove_var"
 
+      tool_override=[$]$1
+      AC_MSG_NOTICE([User supplied override $1="$tool_override"])
+
       # Check if we try to supply an empty value
-      if test "x[$]$1" = x; then
-        AC_MSG_NOTICE([Setting user supplied tool $1= (no value)])
+      if test "x$tool_override" = x; then
         AC_MSG_CHECKING([for $1])
         AC_MSG_RESULT([disabled])
       else
+        # Split up override in command part and argument part
+        tool_and_args=($tool_override)
+        [ tool_command=${tool_and_args[0]} ]
+        [ unset 'tool_and_args[0]' ]
+        [ tool_args=${tool_and_args[@]} ]
+
         # Check if the provided tool contains a complete path.
-        tool_specified="[$]$1"
-        tool_basename="${tool_specified##*/}"
-        if test "x$tool_basename" = "x$tool_specified"; then
+        tool_basename="${tool_command##*/}"
+        if test "x$tool_basename" = "x$tool_command"; then
           # A command without a complete path is provided, search $PATH.
-          AC_MSG_NOTICE([Will search for user supplied tool $1=$tool_basename])
+          AC_MSG_NOTICE([Will search for user supplied tool "$tool_basename"])
           AC_PATH_PROG($1, $tool_basename)
           if test "x[$]$1" = x; then
-            AC_MSG_ERROR([User supplied tool $tool_basename could not be found])
+            AC_MSG_ERROR([User supplied tool $1="$tool_basename" could not be found])
           fi
         else
           # Otherwise we believe it is a complete path. Use it as it is.
-          AC_MSG_NOTICE([Will use user supplied tool $1=$tool_specified])
-          AC_MSG_CHECKING([for $1])
-          if test ! -x "$tool_specified"; then
+          AC_MSG_NOTICE([Will use user supplied tool "$tool_command"])
+          AC_MSG_CHECKING([for $tool_command])
+          if test ! -x "$tool_command"; then
             AC_MSG_RESULT([not found])
-            AC_MSG_ERROR([User supplied tool $1=$tool_specified does not exist or is not executable])
+            AC_MSG_ERROR([User supplied tool $1="$tool_command" does not exist or is not executable])
           fi
-          AC_MSG_RESULT([$tool_specified])
+           $1="$tool_command"
+          AC_MSG_RESULT([found])
+        fi
+        if test "x$tool_args" != x; then
+          # If we got arguments, re-append them to the command after the fixup.
+          $1="[$]$1 $tool_args"
         fi
       fi
     fi
@@ -542,6 +570,26 @@ AC_DEFUN([BASIC_REQUIRE_PROGS],
 AC_DEFUN([BASIC_REQUIRE_SPECIAL],
 [
   BASIC_SETUP_TOOL($1, [$2])
+  BASIC_CHECK_NONEMPTY($1)
+])
+
+###############################################################################
+# Like BASIC_REQUIRE_PROGS but also allows for bash built-ins
+# $1: variable to set
+# $2: executable name (or list of names) to look for
+# $3: [path]
+AC_DEFUN([BASIC_REQUIRE_BUILTIN_PROGS],
+[
+  BASIC_SETUP_TOOL($1, [AC_PATH_PROGS($1, $2, , $3)])
+  if test "x[$]$1" = x; then
+    AC_MSG_NOTICE([Required tool $2 not found in PATH, checking built-in])
+    if help $2 > /dev/null 2>&1; then
+      AC_MSG_NOTICE([Found $2 as shell built-in. Using it])
+      $1="$2"
+    else
+      AC_MSG_ERROR([Required tool $2 also not found as built-in.])
+    fi
+  fi
   BASIC_CHECK_NONEMPTY($1)
 ])
 
@@ -1134,6 +1182,8 @@ AC_DEFUN([BASIC_CHECK_TAR],
     TAR_TYPE="bsd"
   elif test "x$OPENJDK_BUILD_OS" = "xsolaris"; then
     TAR_TYPE="solaris"
+  elif test "x$OPENJDK_BUILD_OS" = "xaix"; then
+    TAR_TYPE="aix"
   fi
   AC_MSG_CHECKING([what type of tar was found])
   AC_MSG_RESULT([$TAR_TYPE])
@@ -1147,6 +1197,11 @@ AC_DEFUN([BASIC_CHECK_TAR],
       # When using gnu tar for Solaris targets, need to use compatibility mode
       TAR_CREATE_EXTRA_PARAM="--format=ustar"
     fi
+  elif test "x$TAR_TYPE" = "aix"; then
+    # -L InputList of aix tar: name of file listing the files and directories
+    # that need to be   archived or extracted
+    TAR_INCLUDE_PARAM="L"
+    TAR_SUPPORTS_TRANSFORM="false"
   else
     TAR_INCLUDE_PARAM="I"
     TAR_SUPPORTS_TRANSFORM="false"
@@ -1248,6 +1303,9 @@ AC_DEFUN_ONCE([BASIC_SETUP_COMPLEX_TOOLS],
     BASIC_REQUIRE_PROGS(SETFILE, SetFile)
   elif test "x$OPENJDK_TARGET_OS" = "xsolaris"; then
     BASIC_REQUIRE_PROGS(ELFEDIT, elfedit)
+  fi
+  if ! test "x$OPENJDK_TARGET_OS" = "xwindows"; then
+    BASIC_REQUIRE_BUILTIN_PROGS(ULIMIT, ulimit)
   fi
 ])
 

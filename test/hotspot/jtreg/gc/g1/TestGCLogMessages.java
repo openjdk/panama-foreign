@@ -35,12 +35,14 @@ package gc.g1;
  *          java.management
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- * @run main gc.g1.TestGCLogMessages
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
+ *                   gc.g1.TestGCLogMessages
  */
 
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
-import jdk.test.lib.Platform;
+import sun.hotspot.code.Compiler;
 
 public class TestGCLogMessages {
 
@@ -85,7 +87,7 @@ public class TestGCLogMessages {
         }
 
         public boolean isAvailable() {
-            return Platform.isGraal() || Platform.isServer();
+            return Compiler.isC2Enabled() || Compiler.isGraalEnabled();
         }
     }
 
@@ -105,7 +107,6 @@ public class TestGCLogMessages {
         new LogMessageWithLevel("Merged Coarse", Level.DEBUG),
         new LogMessageWithLevel("Hot Card Cache", Level.DEBUG),
         new LogMessageWithLevel("Log Buffers", Level.DEBUG),
-        new LogMessageWithLevel("Processed Buffers", Level.DEBUG),
         new LogMessageWithLevel("Dirty Cards", Level.DEBUG),
         new LogMessageWithLevel("Skipped Cards", Level.DEBUG),
         // Scan Heap Roots
@@ -117,6 +118,7 @@ public class TestGCLogMessages {
         new LogMessageWithLevel("Code Root Scan", Level.DEBUG),
         // Object Copy
         new LogMessageWithLevel("Object Copy", Level.DEBUG),
+        new LogMessageWithLevel("Copied Bytes", Level.DEBUG),
         new LogMessageWithLevel("LAB Waste", Level.DEBUG),
         new LogMessageWithLevel("LAB Undo Waste", Level.DEBUG),
         // Ext Root Scan
@@ -129,8 +131,6 @@ public class TestGCLogMessages {
         new LogMessageWithLevel("CLDG Roots", Level.TRACE),
         new LogMessageWithLevel("JVMTI Roots", Level.TRACE),
         new LogMessageWithLevel("CM RefProcessor Roots", Level.TRACE),
-        new LogMessageWithLevel("Wait For Strong CLD", Level.TRACE),
-        new LogMessageWithLevel("Weak CLD Roots", Level.TRACE),
         // Redirty Cards
         new LogMessageWithLevel("Redirty Cards", Level.DEBUG),
         new LogMessageWithLevel("Parallel Redirty", Level.TRACE),
@@ -159,9 +159,10 @@ public class TestGCLogMessages {
         new LogMessageWithLevel("Reference Processing", Level.DEBUG),
         // VM internal reference processing
         new LogMessageWithLevel("Weak Processing", Level.DEBUG),
-        new LogMessageWithLevel("JNI weak processing", Level.DEBUG),
-        new LogMessageWithLevel("StringTable weak processing", Level.DEBUG),
-        new LogMessageWithLevel("VM weak processing", Level.DEBUG),
+        new LogMessageWithLevel("JNI weak", Level.DEBUG),
+        new LogMessageWithLevel("StringTable weak", Level.DEBUG),
+        new LogMessageWithLevel("ResolvedMethodTable weak", Level.DEBUG),
+        new LogMessageWithLevel("VM weak", Level.DEBUG),
 
         new LogMessageWithLevelC2OrJVMCIOnly("DerivedPointerTable Update", Level.DEBUG),
         new LogMessageWithLevel("Start New Collection Set", Level.DEBUG),

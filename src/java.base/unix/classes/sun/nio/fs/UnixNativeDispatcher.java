@@ -33,7 +33,7 @@ class UnixNativeDispatcher {
     protected UnixNativeDispatcher() { }
 
     // returns a NativeBuffer containing the given path
-    private static NativeBuffer copyToNativeBuffer(UnixPath path) {
+    static NativeBuffer copyToNativeBuffer(UnixPath path) {
         byte[] cstr = path.getByteArrayForSysCalls();
         int size = cstr.length + 1;
         NativeBuffer buffer = NativeBuffers.getNativeBufferFromCache(size);
@@ -117,6 +117,16 @@ class UnixNativeDispatcher {
      * fclose(FILE* stream)
      */
     static native void fclose(long stream) throws UnixException;
+
+    /**
+     * void rewind(FILE* stream);
+     */
+    static native void rewind(long stream) throws UnixException;
+
+    /**
+     * ssize_t getline(char **lineptr, size_t *n, FILE *stream);
+     */
+    static native int getlinelen(long stream) throws UnixException;
 
     /**
      * link(const char* existing, const char* new)

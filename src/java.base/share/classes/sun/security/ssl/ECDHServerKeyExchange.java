@@ -38,6 +38,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.text.MessageFormat;
 import java.util.Locale;
+import java.util.Map;
 import sun.security.ssl.SSLHandshake.HandshakeMessage;
 import sun.security.ssl.SupportedGroupsExtension.SupportedGroups;
 import sun.security.ssl.X509Authentication.X509Credentials;
@@ -110,13 +111,18 @@ final class ECDHServerKeyExchange {
 
             // Find the NamedGroup used for the ephemeral keys.
             namedGroup = namedGroupPossession.getNamedGroup();
-            publicPoint = namedGroup.encodePossessionPublicKey(
-                    namedGroupPossession);
-
-            if ((namedGroup == null) || (namedGroup.oid == null) ) {
+            if ((namedGroup == null) || (!namedGroup.isAvailable)) {
                 // unlikely
                 throw shc.conContext.fatal(Alert.ILLEGAL_PARAMETER,
-                    "Missing Named Group");
+                    "Missing or improper named group: " + namedGroup);
+            }
+
+            publicPoint = namedGroup.encodePossessionPublicKey(
+                    namedGroupPossession);
+            if (publicPoint == null) {
+                // unlikely
+                throw shc.conContext.fatal(Alert.ILLEGAL_PARAMETER,
+                    "Missing public point for named group: " + namedGroup);
             }
 
             if (x509Possession == null) {
@@ -129,26 +135,22 @@ final class ECDHServerKeyExchange {
                         shc.negotiatedProtocol.useTLS12PlusSpec();
                 Signature signer = null;
                 if (useExplicitSigAlgorithm) {
-                    signatureScheme = SignatureScheme.getPreferableAlgorithm(
-                            shc.peerRequestedSignatureSchemes,
-                            x509Possession,
-                            shc.negotiatedProtocol);
-                    if (signatureScheme == null) {
+                    Map.Entry<SignatureScheme, Signature> schemeAndSigner =
+                            SignatureScheme.getSignerOfPreferableAlgorithm(
+                                shc.algorithmConstraints,
+                                shc.peerRequestedSignatureSchemes,
+                                x509Possession,
+                                shc.negotiatedProtocol);
+                    if (schemeAndSigner == null) {
                         // Unlikely, the credentials generator should have
                         // selected the preferable signature algorithm properly.
                         throw shc.conContext.fatal(Alert.INTERNAL_ERROR,
-                                "No preferred signature algorithm for " +
+                                "No supported signature algorithm for " +
                                 x509Possession.popPrivateKey.getAlgorithm() +
                                 "  key");
-                    }
-                    try {
-                        signer = signatureScheme.getSignature(
-                                x509Possession.popPrivateKey);
-                    } catch (NoSuchAlgorithmException | InvalidKeyException |
-                            InvalidAlgorithmParameterException nsae) {
-                        throw shc.conContext.fatal(Alert.INTERNAL_ERROR,
-                            "Unsupported signature algorithm: " +
-                            signatureScheme.name, nsae);
+                    } else {
+                        signatureScheme = schemeAndSigner.getKey();
+                        signer = schemeAndSigner.getValue();
                     }
                 } else {
                     signatureScheme = null;
@@ -269,7 +271,7 @@ final class ECDHServerKeyExchange {
             Signature signer;
             if (useExplicitSigAlgorithm) {
                 try {
-                    signer = signatureScheme.getSignature(
+                    signer = signatureScheme.getVerifier(
                             x509Credentials.popPublicKey);
                 } catch (NoSuchAlgorithmException | InvalidKeyException |
                         InvalidAlgorithmParameterException nsae) {

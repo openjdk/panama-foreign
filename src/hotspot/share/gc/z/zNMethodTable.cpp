@@ -42,8 +42,6 @@
 #include "memory/allocation.hpp"
 #include "memory/iterator.hpp"
 #include "memory/resourceArea.hpp"
-#include "runtime/atomic.hpp"
-#include "runtime/orderAccess.hpp"
 #include "utilities/debug.hpp"
 
 ZNMethodTableEntry* ZNMethodTable::_table = NULL;
@@ -51,7 +49,7 @@ size_t ZNMethodTable::_size = 0;
 size_t ZNMethodTable::_nregistered = 0;
 size_t ZNMethodTable::_nunregistered = 0;
 ZNMethodTableIteration ZNMethodTable::_iteration;
-ZSafeDelete<ZNMethodTableEntry[]> ZNMethodTable::_safe_delete;
+ZSafeDeleteNoLock<ZNMethodTableEntry[]> ZNMethodTable::_safe_delete;
 
 size_t ZNMethodTable::first_index(const nmethod* nm, size_t size) {
   assert(is_power_of_2(size), "Invalid size");
