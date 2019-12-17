@@ -118,7 +118,6 @@
   LOG_TAG(oopstorage) \
   LOG_TAG(os) \
   LOG_TAG(pagesize) \
-  LOG_TAG(panama) \
   LOG_TAG(patch) \
   LOG_TAG(path) \
   LOG_TAG(perf) \
@@ -138,6 +137,7 @@
   LOG_TAG(parser) \
   LOG_TAG(ptrqueue) \
   LOG_TAG(purge) \
+  LOG_TAG(record) \
   LOG_TAG(resolve) \
   LOG_TAG(safepoint) \
   LOG_TAG(sampling) \

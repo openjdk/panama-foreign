@@ -30,6 +30,7 @@
 #include "gc/shenandoah/shenandoahNMethod.hpp"
 #include "memory/allocation.hpp"
 #include "memory/iterator.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 class ShenandoahHeap;
 class ShenandoahHeapRegion;
@@ -53,10 +54,8 @@ private:
   ShenandoahParallelCodeHeapIterator* _iters;
   int                       _length;
 
-private:
-  // Noncopyable.
-  ShenandoahParallelCodeCacheIterator(const ShenandoahParallelCodeCacheIterator& o);
-  ShenandoahParallelCodeCacheIterator& operator=(const ShenandoahParallelCodeCacheIterator& o);
+  NONCOPYABLE(ShenandoahParallelCodeCacheIterator);
+
 public:
   ShenandoahParallelCodeCacheIterator(const GrowableArray<CodeHeap*>* heaps);
   ~ShenandoahParallelCodeCacheIterator();
@@ -110,7 +109,7 @@ public:
   // Concurrent nmethod unloading support
   static void unlink(WorkGang* workers, bool unloading_occurred);
   static void purge(WorkGang* workers);
-  static void prepare_concurrent_unloading();
+  static void arm_nmethods();
   static int  disarmed_value()         { return _disarmed_value; }
   static int* disarmed_value_address() { return &_disarmed_value; }
 

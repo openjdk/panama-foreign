@@ -29,6 +29,7 @@ import java.lang.constant.Constable;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -39,16 +40,16 @@ import java.util.OptionalLong;
  * that is equal to the sequence layout's element count. In other words this layout:
  *
  * <pre>{@code
-MemoryLayout.ofSequence(3, MemoryLayout.ofValueBits(32));
+MemoryLayout.ofSequence(3, MemoryLayout.ofValueBits(32, ByteOrder.BIG_ENDIAN));
  * }</pre>
  *
  * is equivalent to the following layout:
  *
  * <pre>{@code
 MemoryLayout.ofStruct(
-    MemoryLayout.ofValueBits(32),
-    MemoryLayout.ofValueBits(32),
-    MemoryLayout.ofValueBits(32));
+    MemoryLayout.ofValueBits(32, ByteOrder.BIG_ENDIAN),
+    MemoryLayout.ofValueBits(32, ByteOrder.BIG_ENDIAN),
+    MemoryLayout.ofValueBits(32, ByteOrder.BIG_ENDIAN));
  * }</pre>
  *
  * <p>
@@ -119,7 +120,7 @@ public final class SequenceLayout extends AbstractLayout {
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ elemCount.hashCode() ^ elementLayout.hashCode();
+        return Objects.hash(super.hashCode(), elemCount, elementLayout);
     }
 
     @Override
@@ -128,7 +129,7 @@ public final class SequenceLayout extends AbstractLayout {
     }
 
     @Override
-    protected boolean hasNaturalAlignment() {
+    boolean hasNaturalAlignment() {
         return alignment == elementLayout.bitAlignment();
     }
 

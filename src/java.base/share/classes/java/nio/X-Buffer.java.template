@@ -37,6 +37,7 @@ import java.util.stream.$Streamtype$Stream;
 #end[streamableType]
 
 import java.util.Objects;
+import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.util.ArraysSupport;
 
 /**
@@ -279,23 +280,23 @@ public abstract class $Type$Buffer
     // backing array, and array offset
     //
     $Type$Buffer(int mark, int pos, int lim, int cap,   // package-private
-                 $type$[] hb, int offset)
+                 $type$[] hb, int offset, MemorySegmentProxy segment)
     {
-        super(mark, pos, lim, cap);
+        super(mark, pos, lim, cap, segment);
         this.hb = hb;
         this.offset = offset;
     }
 
     // Creates a new buffer with the given mark, position, limit, and capacity
     //
-    $Type$Buffer(int mark, int pos, int lim, int cap) { // package-private
-        this(mark, pos, lim, cap, null, 0);
+    $Type$Buffer(int mark, int pos, int lim, int cap, MemorySegmentProxy segment) { // package-private
+        this(mark, pos, lim, cap, null, 0, segment);
     }
 
     // Creates a new buffer with given base, address and capacity
     //
-    $Type$Buffer($type$[] hb, long addr, int cap) { // package-private
-        super(addr, cap);
+    $Type$Buffer($type$[] hb, long addr, int cap, MemorySegmentProxy segment) { // package-private
+        super(addr, cap, segment);
         this.hb = hb;
         this.offset = 0;
     }
@@ -356,7 +357,7 @@ public abstract class $Type$Buffer
     public static $Type$Buffer allocate(int capacity) {
         if (capacity < 0)
             throw createCapacityException(capacity);
-        return new Heap$Type$Buffer(capacity, capacity);
+        return new Heap$Type$Buffer(capacity, capacity, null);
     }
 
     /**
@@ -401,7 +402,7 @@ public abstract class $Type$Buffer
                                     int offset, int length)
     {
         try {
-            return new Heap$Type$Buffer(array, offset, length);
+            return new Heap$Type$Buffer(array, offset, length, null);
         } catch (IllegalArgumentException x) {
             throw new IndexOutOfBoundsException();
         }
@@ -1035,7 +1036,7 @@ public abstract class $Type$Buffer
      * @throws  ReadOnlyBufferException
      *          If this buffer is read-only
      */
-    public $Type$Buffer put($type$[] src) {
+    public final $Type$Buffer put($type$[] src) {
         return put(src, 0, src.length);
     }
 
@@ -1215,7 +1216,7 @@ public abstract class $Type$Buffer
      * @throws  ReadOnlyBufferException
      *          If this buffer is read-only
      */
-    public $Type$Buffer put(String src) {
+    public final $Type$Buffer put(String src) {
         return put(src, 0, src.length());
     }
 
@@ -1235,7 +1236,7 @@ public abstract class $Type$Buffer
      * @return  {@code true} if, and only if, this buffer
      *          is backed by an array and is not read-only
      */
-    public boolean hasArray() {
+    public final boolean hasArray() {
         return (hb != null) && !isReadOnly;
     }
 
@@ -1258,7 +1259,7 @@ public abstract class $Type$Buffer
      * @throws  UnsupportedOperationException
      *          If this buffer is not backed by an accessible array
      */
-    public $type$[] array() {
+    public final $type$[] array() {
         if (hb == null)
             throw new UnsupportedOperationException();
         if (isReadOnly)
@@ -1286,7 +1287,7 @@ public abstract class $Type$Buffer
      * @throws  UnsupportedOperationException
      *          If this buffer is not backed by an accessible array
      */
-    public int arrayOffset() {
+    public final int arrayOffset() {
         if (hb == null)
             throw new UnsupportedOperationException();
         if (isReadOnly)
@@ -1301,6 +1302,9 @@ public abstract class $Type$Buffer
      */
     @Override
     public
+#if[!byte]
+    final
+#end[!byte]
     $Type$Buffer position(int newPosition) {
         super.position(newPosition);
         return this;
@@ -1311,6 +1315,9 @@ public abstract class $Type$Buffer
      */
     @Override
     public
+#if[!byte]
+    final
+#end[!byte]
     $Type$Buffer limit(int newLimit) {
         super.limit(newLimit);
         return this;
@@ -1321,6 +1328,9 @@ public abstract class $Type$Buffer
      */
     @Override
     public 
+#if[!byte]
+    final
+#end[!byte]
     $Type$Buffer mark() {
         super.mark();
         return this;
@@ -1331,6 +1341,9 @@ public abstract class $Type$Buffer
      */
     @Override
     public 
+#if[!byte]
+    final
+#end[!byte]
     $Type$Buffer reset() {
         super.reset();
         return this;
@@ -1341,6 +1354,9 @@ public abstract class $Type$Buffer
      */
     @Override
     public 
+#if[!byte]
+    final
+#end[!byte]
     $Type$Buffer clear() {
         super.clear();
         return this;
@@ -1351,6 +1367,9 @@ public abstract class $Type$Buffer
      */
     @Override
     public 
+#if[!byte]
+    final
+#end[!byte]
     $Type$Buffer flip() {
         super.flip();
         return this;
@@ -1361,6 +1380,9 @@ public abstract class $Type$Buffer
      */
     @Override
     public 
+#if[!byte]
+    final
+#end[!byte]
     $Type$Buffer rewind() {
         super.rewind();
         return this;
@@ -1619,7 +1641,7 @@ public abstract class $Type$Buffer
      *
      * @return  The length of this character buffer
      */
-    public int length() {
+    public final int length() {
         return remaining();
     }
 
@@ -1637,7 +1659,7 @@ public abstract class $Type$Buffer
      * @throws  IndexOutOfBoundsException
      *          If the preconditions on {@code index} do not hold
      */
-    public char charAt(int index) {
+    public final char charAt(int index) {
         return get(position() + checkIndex(index, 1));
     }
 
@@ -1824,7 +1846,7 @@ public abstract class $Type$Buffer
      *
      * @return  This buffer's byte order
      */
-    public ByteOrder order() {
+    public final ByteOrder order() {
         return bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
     }
 
@@ -1838,7 +1860,7 @@ public abstract class $Type$Buffer
      *
      * @return  This buffer
      */
-    public $Type$Buffer order(ByteOrder bo) {
+    public final $Type$Buffer order(ByteOrder bo) {
         bigEndian = (bo == ByteOrder.BIG_ENDIAN);
         nativeByteOrder =
             (bigEndian == (ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN));
@@ -1888,7 +1910,7 @@ public abstract class $Type$Buffer
      * @see #alignedSlice(int)
      * @since 9
      */
-    public int alignmentOffset(int index, int unitSize) {
+    public final int alignmentOffset(int index, int unitSize) {
         if (index < 0)
             throw new IllegalArgumentException("Index less than zero: " + index);
         if (unitSize < 1 || (unitSize & (unitSize - 1)) != 0)
@@ -1958,7 +1980,7 @@ public abstract class $Type$Buffer
      * @see #slice()
      * @since 9
      */
-    public ByteBuffer alignedSlice(int unitSize) {
+    public final ByteBuffer alignedSlice(int unitSize) {
         int pos = position();
         int lim = limit();
 

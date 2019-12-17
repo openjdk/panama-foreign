@@ -27,6 +27,7 @@ package jdk.internal.access;
 
 import jdk.internal.access.foreign.MemorySegmentProxy;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 public interface JavaNioAccess {
@@ -46,17 +47,28 @@ public interface JavaNioAccess {
      * at the given memory address and extending {@code cap} bytes.
      * The {@code ob} parameter is an arbitrary object that is attached
      * to the resulting buffer.
+     * Used by {@code jdk.internal.foreignMemorySegmentImpl}.
      */
-    ByteBuffer newDirectByteBuffer(long addr, int cap, Object ob);
+    ByteBuffer newDirectByteBuffer(long addr, int cap, Object obj, MemorySegmentProxy segment);
 
-/**
-     * Constructs a ByteBuffer which delegates all operations to {@code bb} and whose life-cycle is bounded
-     * by the temporal bounds associated with {@code segment}. The created buffer could be direct or not, based on whether
-     * {@code bb} is direct.
+    /**
+     * Constructs an heap ByteBuffer with given backing array, offset, capacity and segment.
+     * Used by {@code jdk.internal.foreignMemorySegmentImpl}.
      */
-    ByteBuffer newScopedByteBuffer(MemorySegmentProxy segment, ByteBuffer bb);
+    ByteBuffer newHeapByteBuffer(byte[] hb, int offset, int capacity, MemorySegmentProxy segment);
 
+    /**
+     * Used by {@code jdk.internal.foreign.Utils}.
+     */
     Object getBufferBase(ByteBuffer bb);
 
+    /**
+     * Used by {@code jdk.internal.foreign.Utils}.
+     */
     long getBufferAddress(ByteBuffer bb);
+
+    /**
+     * Used by byte buffer var handle views.
+     */
+    void checkSegment(Buffer buffer);
 }

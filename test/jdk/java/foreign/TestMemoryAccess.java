@@ -195,7 +195,7 @@ public class TestMemoryAccess {
                     throw new AssertionError(); //we should not have failed!
                 }
                 return;
-            } 
+            }
             try {
                 checker.check(handle, addr, seq.elementCount().getAsLong(),
                         ((SequenceLayout)seq.elementLayout()).elementCount().getAsLong());
@@ -212,12 +212,12 @@ public class TestMemoryAccess {
             //ok, should fail (scope is closed)
         }
     }
-    
+
     static Function<MemorySegment, MemorySegment> ID = Function.identity();
     static Function<MemorySegment, MemorySegment> IMMUTABLE = MemorySegment::asReadOnly;
 
     @DataProvider(name = "elements")
-    public Object[][] createData() {                
+    public Object[][] createData() {
         return new Object[][] {
                 //BE, RW
                 { ID, MemoryLayouts.BITS_8_BE, byte.class, Checker.BYTE },

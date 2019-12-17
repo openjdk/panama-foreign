@@ -39,6 +39,8 @@ import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SequenceLayout;
 
 import java.io.File;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
@@ -46,10 +48,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.InvalidMarkException;
 import java.nio.LongBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
@@ -57,10 +61,12 @@ import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import jdk.internal.foreign.MemoryAddressImpl;
@@ -250,13 +256,18 @@ public class TestByteBuffer {
         }
         //outside of scope!!
         for (Map.Entry<Method, Object[]> e : members.entrySet()) {
+            if (!e.getKey().getName().contains("get") &&
+                            !e.getKey().getName().contains("put")) {
+                //skip
+                return;
+            }
             try {
                 e.getKey().invoke(bb, e.getValue());
                 assertTrue(false);
             } catch (InvocationTargetException ex) {
                 Throwable cause = ex.getCause();
                 if (cause instanceof IllegalStateException) {
-                    //all other buffer operation should fail because of the scope check
+                    //all get/set buffer operation should fail because of the scope check
                     assertTrue(ex.getCause().getMessage().contains("not alive"));
                 } else {
                     //all other exceptions were unexpected - fail
@@ -265,6 +276,40 @@ public class TestByteBuffer {
             } catch (Throwable ex) {
                 //unexpected exception - fail
                 assertTrue(false);
+            }
+        }
+    }
+
+    @Test(dataProvider = "bufferHandleOps")
+    public void testScopedBufferAndVarHandle(VarHandle bufferHandle) {
+        ByteBuffer bb;
+        try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
+            bb = segment.asByteBuffer();
+            for (Map.Entry<MethodHandle, Object[]> e : varHandleMembers(bb, bufferHandle).entrySet()) {
+                MethodHandle handle = e.getKey().bindTo(bufferHandle)
+                        .asSpreader(Object[].class, e.getValue().length);
+                try {
+                    handle.invoke(e.getValue());
+                } catch (UnsupportedOperationException ex) {
+                    //skip
+                } catch (Throwable ex) {
+                    //should not fail - segment is alive!
+                    fail();
+                }
+            }
+        }
+        for (Map.Entry<MethodHandle, Object[]> e : varHandleMembers(bb, bufferHandle).entrySet()) {
+            try {
+                MethodHandle handle = e.getKey().bindTo(bufferHandle)
+                        .asSpreader(Object[].class, e.getValue().length);
+                handle.invoke(e.getValue());
+                fail();
+            } catch (IllegalStateException ex) {
+                assertTrue(ex.getMessage().contains("not alive"));
+            } catch (UnsupportedOperationException ex) {
+                //skip
+            } catch (Throwable ex) {
+                fail();
             }
         }
     }
@@ -391,6 +436,34 @@ public class TestByteBuffer {
         return members;
     }
 
+    @DataProvider(name = "bufferHandleOps")
+    public static Object[][] bufferHandleOps() throws Throwable {
+        return new Object[][]{
+                { MethodHandles.byteBufferViewVarHandle(char[].class, ByteOrder.nativeOrder()) },
+                { MethodHandles.byteBufferViewVarHandle(short[].class, ByteOrder.nativeOrder()) },
+                { MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.nativeOrder()) },
+                { MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.nativeOrder()) },
+                { MethodHandles.byteBufferViewVarHandle(float[].class, ByteOrder.nativeOrder()) },
+                { MethodHandles.byteBufferViewVarHandle(double[].class, ByteOrder.nativeOrder()) }
+        };
+    }
+
+    static Map<MethodHandle, Object[]> varHandleMembers(ByteBuffer bb, VarHandle handle) {
+        Map<MethodHandle, Object[]> members = new HashMap<>();
+        for (VarHandle.AccessMode mode : VarHandle.AccessMode.values()) {
+            Class<?>[] params = handle.accessModeType(mode).parameterArray();
+            Object[] args = Stream.concat(Stream.of(bb), Stream.of(params).skip(1)
+                    .map(TestByteBuffer::defaultValue))
+                    .toArray();
+            try {
+                members.put(MethodHandles.varHandleInvoker(mode, handle.accessModeType(mode)), args);
+            } catch (Throwable ex) {
+                throw new AssertionError(ex);
+            }
+        }
+        return members;
+    }
+
     @DataProvider(name = "resizeOps")
     public Object[][] resizeOps() {
         Consumer<MemoryAddress> byteInitializer =
@@ -452,6 +525,26 @@ public class TestByteBuffer {
                 return 0f;
             } else if (c == double.class) {
                 return 0d;
+            } else {
+                throw new IllegalStateException();
+            }
+        } else if (c.isArray()) {
+            if (c == char[].class) {
+                return new char[1];
+            } else if (c == boolean[].class) {
+                return new boolean[1];
+            } else if (c == byte[].class) {
+                return new byte[1];
+            } else if (c == short[].class) {
+                return new short[1];
+            } else if (c == int[].class) {
+                return new int[1];
+            } else if (c == long[].class) {
+                return new long[1];
+            } else if (c == float[].class) {
+                return new float[1];
+            } else if (c == double[].class) {
+                return new double[1];
             } else {
                 throw new IllegalStateException();
             }

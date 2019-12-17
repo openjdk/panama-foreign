@@ -84,22 +84,22 @@ public final class MemoryLayouts {
      * A value layout constant with size of eight bytes, and byte order set to {@link ByteOrder#BIG_ENDIAN}.
      */
     public static final ValueLayout BITS_64_BE = MemoryLayout.ofValueBits(64, ByteOrder.BIG_ENDIAN);
-    
+
     /**
      * A padding layout constant with size of one byte.
      */
     public static final MemoryLayout PAD_8 = MemoryLayout.ofPaddingBits(8);
-    
+
     /**
      * A padding layout constant with size of two bytes.
      */
     public static final MemoryLayout PAD_16 = MemoryLayout.ofPaddingBits(16);
-    
+
     /**
      * A padding layout constant with size of four bytes.
      */
     public static final MemoryLayout PAD_32 = MemoryLayout.ofPaddingBits(32);
-    
+
     /**
      * A padding layout constant with size of eight bytes.
      */

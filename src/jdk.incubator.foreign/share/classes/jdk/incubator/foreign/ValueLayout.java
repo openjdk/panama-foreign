@@ -107,8 +107,7 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     @Override
     public int hashCode() {
-        return super.hashCode()^ order.hashCode() ^
-            Long.hashCode(bitSize()) ^ Long.hashCode(alignment);
+        return Objects.hash(super.hashCode(), order, bitSize(), alignment);
     }
 
     @Override

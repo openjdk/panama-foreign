@@ -37,6 +37,8 @@ final class VarHandleMemoryAddressAs$Type$s {
 
     static final boolean BE = UNSAFE.isBigEndian();
 
+    static final int VM_ALIGN = $BoxType$.BYTES - 1;
+
 #if[floatingPoint]
     @ForceInline
     static $rawType$ convEndian(boolean big, $type$ v) {
@@ -71,9 +73,20 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
     
     @ForceInline
-    static long offset(MemoryAddressProxy bb, long offset, long alignment) {
-        long address = bb.unsafeGetOffset() + offset;
-        if ((address & alignment) != 0) {
+    static long offset(MemoryAddressProxy bb, long offset, long alignmentMask) {
+        long address = offsetNoVMAlignCheck(bb, offset, alignmentMask);
+        if ((address & VM_ALIGN) != 0) {
+            throw VarHandleMemoryAddressBase.newIllegalStateExceptionForMisalignedAccess(address);
+        }
+        return address;
+    }
+
+    @ForceInline
+    static long offsetNoVMAlignCheck(MemoryAddressProxy bb, long offset, long alignmentMask) {
+        long base = bb.unsafeGetOffset();
+        long address = base + offset;
+        //note: the offset portion has already been aligned-checked, by construction
+        if ((base & alignmentMask) != 0) {
             throw VarHandleMemoryAddressBase.newIllegalStateExceptionForMisalignedAccess(address);
         }
         return address;
@@ -85,18 +98,18 @@ final class VarHandleMemoryAddressAs$Type$s {
 #if[floatingPoint]
         $rawType$ rawValue = UNSAFE.get$RawType$Unaligned(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 handle.be);
         return $Type$.$rawType$BitsTo$Type$(rawValue);
 #else[floatingPoint]
 #if[byte]
         return UNSAFE.get$Type$(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment));
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask));
 #else[byte]
         return UNSAFE.get$Type$Unaligned(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 handle.be);
 #end[byte]
 #end[floatingPoint]
@@ -108,19 +121,19 @@ final class VarHandleMemoryAddressAs$Type$s {
 #if[floatingPoint]
         UNSAFE.put$RawType$Unaligned(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 $Type$.$type$ToRaw$RawType$Bits(value),
                 handle.be);
 #else[floatingPoint]
 #if[byte]
         UNSAFE.put$Type$(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 value);
 #else[byte]
         UNSAFE.put$Type$Unaligned(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 value,
                 handle.be);
 #end[byte]
@@ -133,7 +146,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         return convEndian(handle.be,
                           UNSAFE.get$RawType$Volatile(
                                   bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment)));
+                                  offset(bb, base, handle.alignmentMask)));
     }
 
     @ForceInline
@@ -141,7 +154,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         UNSAFE.put$RawType$Volatile(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, value));
     }
 
@@ -151,7 +164,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         return convEndian(handle.be,
                           UNSAFE.get$RawType$Acquire(
                                   bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment)));
+                                  offset(bb, base, handle.alignmentMask)));
     }
 
     @ForceInline
@@ -159,7 +172,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         UNSAFE.put$RawType$Release(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, value));
     }
 
@@ -169,7 +182,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         return convEndian(handle.be,
                           UNSAFE.get$RawType$Opaque(
                                   bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment)));
+                                  offset(bb, base, handle.alignmentMask)));
     }
 
     @ForceInline
@@ -177,7 +190,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         UNSAFE.put$RawType$Opaque(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, value));
     }
 #if[CAS]
@@ -187,7 +200,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.compareAndSet$RawType$(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -197,7 +210,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         return convEndian(handle.be,
                           UNSAFE.compareAndExchange$RawType$(
                                   bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
@@ -207,7 +220,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         return convEndian(handle.be,
                           UNSAFE.compareAndExchange$RawType$Acquire(
                                   bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
@@ -217,7 +230,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         return convEndian(handle.be,
                           UNSAFE.compareAndExchange$RawType$Release(
                                   bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
@@ -226,7 +239,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$Plain(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -235,7 +248,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -244,7 +257,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$Acquire(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -253,7 +266,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$Release(
                 bb.unsafeGetBase(),
-                offset(bb, base, handle.alignment),
+                offset(bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -263,7 +276,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         return convEndian(handle.be,
                           UNSAFE.getAndSet$RawType$(
                                   bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, value)));
     }
 
@@ -273,7 +286,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         return convEndian(handle.be,
                           UNSAFE.getAndSet$RawType$Acquire(
                                   bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, value)));
     }
 
@@ -283,7 +296,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         return convEndian(handle.be,
                           UNSAFE.getAndSet$RawType$Release(
                                   bb.unsafeGetBase(),
-                                  offset(bb, base, handle.alignment),
+                                  offset(bb, base, handle.alignmentMask),
                                   convEndian(handle.be, value)));
     }
 #end[CAS]
@@ -295,10 +308,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndAdd$RawType$(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     delta);
         } else {
-            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignment), delta);
+            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), delta);
         }
     }
 
@@ -308,10 +321,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndAdd$RawType$Acquire(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     delta);
         } else {
-            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignment), delta);
+            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), delta);
         }
     }
 
@@ -321,10 +334,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndAdd$RawType$Release(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     delta);
         } else {
-            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignment), delta);
+            return getAndAddConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), delta);
         }
     }
 
@@ -348,10 +361,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseOr$RawType$(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -361,10 +374,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseOr$RawType$Release(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -374,10 +387,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseOr$RawType$Acquire(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            return getAndBitwiseOrConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -399,10 +412,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseAnd$RawType$(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -412,10 +425,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseAnd$RawType$Release(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -425,10 +438,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseAnd$RawType$Acquire(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            return getAndBitwiseAndConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -451,10 +464,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseXor$RawType$(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -464,10 +477,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseXor$RawType$Release(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -477,10 +490,10 @@ final class VarHandleMemoryAddressAs$Type$s {
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseXor$RawType$Acquire(
                     bb.unsafeGetBase(),
-                    offset(bb, base, handle.alignment),
+                    offset(bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignment), value);
+            return getAndBitwiseXorConvEndianWithCAS(bb, offset(bb, base, handle.alignmentMask), value);
         }
     }
 

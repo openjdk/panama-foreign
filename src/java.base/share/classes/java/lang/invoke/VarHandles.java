@@ -32,14 +32,15 @@ import java.lang.reflect.Modifier;
 import java.nio.ByteOrder;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static java.lang.invoke.MethodHandleStatics.UNSAFE;
 
 final class VarHandles {
 
-    static ClassValue<Map<Integer, MethodHandle>> addressFactories = new ClassValue<Map<Integer, MethodHandle>>() {
+    static ClassValue<ConcurrentMap<Integer, MethodHandle>> ADDRESS_FACTORIES = new ClassValue<>() {
         @Override
-        protected Map<Integer, MethodHandle> computeValue(Class<?> type) {
+        protected ConcurrentMap<Integer, MethodHandle> computeValue(Class<?> type) {
             return new ConcurrentHashMap<>();
         }
     };
@@ -302,13 +303,13 @@ final class VarHandles {
      * to a single fixed offset to compute an effective offset from the given MemoryAddress for the access.
      *
      * @param carrier the Java carrier type.
-     * @param alignment alignment requirement to be checked upon access. In bytes. Must be a power of 2.
+     * @param alignmentMask alignment requirement to be checked upon access. In bytes. Expressed as a mask.
      * @param byteOrder the byte order.
      * @param offset a constant offset for the access.
      * @param strides the scale factors with which to multiply given access coordinates.
      * @return the created VarHandle.
      */
-    static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, long alignment,
+    static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, long alignmentMask,
                                                  ByteOrder byteOrder, long offset, long[] strides) {
         if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
             throw new IllegalArgumentException("Invalid carrier: " + carrier.getName());
@@ -316,13 +317,13 @@ final class VarHandles {
         long size = Wrapper.forPrimitiveType(carrier).bitWidth() / 8;
         boolean be = byteOrder == ByteOrder.BIG_ENDIAN;
 
-        Map<Integer, MethodHandle> carrierFactory = addressFactories.get(carrier);
+        Map<Integer, MethodHandle> carrierFactory = ADDRESS_FACTORIES.get(carrier);
         MethodHandle fac = carrierFactory.computeIfAbsent(strides.length,
                 dims -> new AddressVarHandleGenerator(carrier, dims)
                             .generateHandleFactory());
 
         try {
-            return (VarHandle)fac.invoke(be, size, offset, alignment - 1, strides);
+            return (VarHandle)fac.invoke(be, size, offset, alignmentMask, strides);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }

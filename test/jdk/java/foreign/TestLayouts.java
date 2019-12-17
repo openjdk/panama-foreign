@@ -96,6 +96,25 @@ public class TestLayouts {
         }
     }
 
+    @Test
+    public void testIndexedSequencePath() {
+        MemoryLayout seq = MemoryLayout.ofSequence(10, MemoryLayouts.JAVA_INT);
+        try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
+            VarHandle indexHandle = seq.varHandle(int.class, MemoryLayout.PathElement.sequenceElement());
+            // init segment
+            for (int i = 0 ; i < 10 ; i++) {
+                indexHandle.set(segment.baseAddress(), (long)i, i);
+            }
+            //check statically indexed handles
+            for (int i = 0 ; i < 10 ; i++) {
+                VarHandle preindexHandle = seq.varHandle(int.class, MemoryLayout.PathElement.sequenceElement(i));
+                int expected = (int)indexHandle.get(segment.baseAddress(), (long)i);
+                int found = (int)preindexHandle.get(segment.baseAddress());
+                assertEquals(expected, found);
+            }
+        }
+    }
+
     @Test(dataProvider = "unboundLayouts", expectedExceptions = UnsupportedOperationException.class)
     public void testUnboundSize(MemoryLayout layout, long align) {
         layout.bitSize();

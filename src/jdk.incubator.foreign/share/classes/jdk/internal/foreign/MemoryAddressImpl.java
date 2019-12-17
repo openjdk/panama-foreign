@@ -57,10 +57,12 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     public static void copy(MemoryAddressImpl src, MemoryAddressImpl dst, long size) {
         src.checkAccess(0, size, true);
         dst.checkAccess(0, size, false);
-        UNSAFE.copyMemory(
-                src.unsafeGetBase(), src.unsafeGetOffset(),
-                dst.unsafeGetBase(), dst.unsafeGetOffset(),
-                size);
+        //check disjoint
+        long offsetSrc = src.unsafeGetOffset();
+        long offsetDst = dst.unsafeGetOffset();
+        Object baseSrc = src.unsafeGetBase();
+        Object baseDst = dst.unsafeGetBase();
+        UNSAFE.copyMemory(baseSrc, offsetSrc, baseDst, offsetDst, size);
     }
 
     // MemoryAddress methods

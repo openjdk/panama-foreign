@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 
 import com.sun.source.doctree.DocTree;
+import jdk.javadoc.doclet.Taglet.Location;
 import jdk.javadoc.internal.doclets.toolkit.BaseConfiguration;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.Messages;
@@ -49,8 +50,6 @@ import static com.sun.source.doctree.DocTree.Kind.INHERIT_DOC;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
  */
 
 public class InheritDocTaglet extends BaseTaglet {
@@ -59,7 +58,7 @@ public class InheritDocTaglet extends BaseTaglet {
      * Construct a new InheritDocTaglet.
      */
     public InheritDocTaglet () {
-        super(INHERIT_DOC.tagName, true, EnumSet.of(Site.TYPE, Site.METHOD));
+        super(INHERIT_DOC.tagName, true, EnumSet.of(Location.TYPE, Location.METHOD));
     }
 
     /**

@@ -108,7 +108,7 @@ abstract class AbstractLayout implements MemoryLayout {
         return size.orElseThrow(this::badSizeException);
     }
 
-    public static OptionalLong optSize(MemoryLayout layout) {
+    static OptionalLong optSize(MemoryLayout layout) {
         return ((AbstractLayout)layout).size;
     }
 
@@ -126,7 +126,7 @@ abstract class AbstractLayout implements MemoryLayout {
         return s;
     }
 
-    protected boolean hasNaturalAlignment() {
+    boolean hasNaturalAlignment() {
         return size.isPresent() && size.getAsLong() == alignment;
     }
 
@@ -153,6 +153,10 @@ abstract class AbstractLayout implements MemoryLayout {
 
     /*** Helper constants for implementing Layout::describeConstable ***/
 
+    public static final DirectMethodHandleDesc BSM_GET_STATIC_FINAL
+            = ConstantDescs.ofConstantBootstrap(ConstantDescs.CD_ConstantBootstraps, "getStaticFinal",
+            ConstantDescs.CD_Object, ConstantDescs.CD_Class);
+
     static final ClassDesc CD_LAYOUT = MemoryLayout.class.describeConstable().get();
 
     static final ClassDesc CD_VALUE_LAYOUT = ValueLayout.class.describeConstable().get();
@@ -165,13 +169,13 @@ abstract class AbstractLayout implements MemoryLayout {
 
     static final ClassDesc CD_FUNCTION_DESC = FunctionDescriptor.class.describeConstable().get();
 
-    static final ConstantDesc BIG_ENDIAN = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "BIG_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
+    static final ConstantDesc BIG_ENDIAN = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "BIG_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
 
-    static final ConstantDesc LITTLE_ENDIAN = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "LITTLE_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
+    static final ConstantDesc LITTLE_ENDIAN = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "LITTLE_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
 
-    static final ConstantDesc TRUE = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "TRUE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
+    static final ConstantDesc TRUE = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "TRUE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
 
-    static final ConstantDesc FALSE = DynamicConstantDesc.ofNamed(ConstantDescs.BSM_GET_STATIC_FINAL, "FALSE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
+    static final ConstantDesc FALSE = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "FALSE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
 
     static final MethodHandleDesc MH_PADDING = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_LAYOUT, "ofPaddingBits",
                 MethodTypeDesc.of(CD_LAYOUT, ConstantDescs.CD_long));
