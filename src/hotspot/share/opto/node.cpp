@@ -546,9 +546,6 @@ Node *Node::clone() const {
   if (n->is_SafePoint()) {
     n->as_SafePoint()->clone_replaced_nodes();
   }
-  if (n->is_Load()) {
-    n->as_Load()->copy_barrier_info(this);
-  }
   return n;                     // Return the clone
 }
 
@@ -704,8 +701,25 @@ bool Node::is_dead() const {
   dump();
   return true;
 }
-#endif
 
+bool Node::is_reachable_from_root() const {
+  ResourceMark rm;
+  Unique_Node_List wq;
+  wq.push((Node*)this);
+  RootNode* root = Compile::current()->root();
+  for (uint i = 0; i < wq.size(); i++) {
+    Node* m = wq.at(i);
+    if (m == root) {
+      return true;
+    }
+    for (DUIterator_Fast jmax, j = m->fast_outs(jmax); j < jmax; j++) {
+      Node* u = m->fast_out(j);
+      wq.push(u);
+    }
+  }
+  return false;
+}
+#endif
 
 //------------------------------is_unreachable---------------------------------
 bool Node::is_unreachable(PhaseIterGVN &igvn) const {
@@ -1228,12 +1242,10 @@ bool Node::dominates(Node* sub, Node_List &nlist) {
     if (sub == up && sub->is_Loop()) {
       // Take loop entry path on the way up to 'dom'.
       up = sub->in(1); // in(LoopNode::EntryControl);
-    } else if (sub == up && sub->is_Region() && sub->req() != 3) {
-      // Always take in(1) path on the way up to 'dom' for clone regions
-      // (with only one input) or regions which merge > 2 paths
-      // (usually used to merge fast/slow paths).
+    } else if (sub == up && sub->is_Region() && sub->req() == 2) {
+      // Take in(1) path on the way up to 'dom' for regions with only one input
       up = sub->in(1);
-    } else if (sub == up && sub->is_Region()) {
+    } else if (sub == up && sub->is_Region() && sub->req() == 3) {
       // Try both paths for Regions with 2 input paths (it may be a loop head).
       // It could give conservative 'false' answer without information
       // which region's input is the entry path.
@@ -1456,10 +1468,6 @@ bool Node::rematerialize() const {
 // Nodes which use memory without consuming it, hence need antidependences.
 bool Node::needs_anti_dependence_check() const {
   if (req() < 2 || (_flags & Flag_needs_anti_dependence_check) == 0) {
-    return false;
-  }
-  BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
-  if (!bs->needs_anti_dependence_check(this)) {
     return false;
   }
   return in(1)->bottom_type()->has_memory();
@@ -2391,14 +2399,15 @@ void Node_List::dump_simple() const {
 
 //=============================================================================
 //------------------------------remove-----------------------------------------
-void Unique_Node_List::remove( Node *n ) {
-  if( _in_worklist[n->_idx] ) {
-    for( uint i = 0; i < size(); i++ )
-      if( _nodes[i] == n ) {
-        map(i,Node_List::pop());
-        _in_worklist >>= n->_idx;
+void Unique_Node_List::remove(Node* n) {
+  if (_in_worklist.test(n->_idx)) {
+    for (uint i = 0; i < size(); i++) {
+      if (_nodes[i] == n) {
+        map(i, Node_List::pop());
+        _in_worklist.remove(n->_idx);
         return;
       }
+    }
     ShouldNotReachHere();
   }
 }
@@ -2407,11 +2416,11 @@ void Unique_Node_List::remove( Node *n ) {
 // Remove useless nodes from worklist
 void Unique_Node_List::remove_useless_nodes(VectorSet &useful) {
 
-  for( uint i = 0; i < size(); ++i ) {
+  for (uint i = 0; i < size(); ++i) {
     Node *n = at(i);
     assert( n != NULL, "Did not expect null entries in worklist");
-    if( ! useful.test(n->_idx) ) {
-      _in_worklist >>= n->_idx;
+    if (!useful.test(n->_idx)) {
+      _in_worklist.remove(n->_idx);
       map(i,Node_List::pop());
       // Node *replacement = Node_List::pop();
       // if( i != size() ) { // Check if removing last entry

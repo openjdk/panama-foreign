@@ -28,11 +28,7 @@
  * @library /test/lib /test/hotspot/jtreg/runtime/cds/appcds /test/hotspot/jtreg/runtime/cds/appcds/test-classes
  * @requires vm.cds.archived.java.heap
  * @requires vm.flavor != "minimal"
- * @modules java.base/jdk.internal.misc
- *          jdk.jartool/sun.tools.jar
- *          java.management
- * @build HumongousDuringDumpTransformer Hello
- * @run main/othervm/timeout=240 HumongousDuringDump
+ * @run driver/timeout=240 HumongousDuringDump
  */
 
 import jdk.test.lib.cds.CDSOptions;
@@ -41,10 +37,10 @@ import jdk.test.lib.process.ProcessTools;
 
 public class HumongousDuringDump {
     public static String appClasses[] = {
-        "Hello",
+        Hello.class.getName(),
     };
     public static String agentClasses[] = {
-        "HumongousDuringDumpTransformer",
+        HumongousDuringDumpTransformer.class.getName(),
     };
 
     public static void main(String[] args) throws Throwable {
@@ -63,7 +59,7 @@ public class HumongousDuringDump {
         String extraOption = "-XX:+AllowArchivingWithJavaAgent";
 
         OutputAnalyzer out =
-          TestCommon.testDump(appJar, TestCommon.list("Hello"),
+          TestCommon.testDump(appJar, TestCommon.list(Hello.class.getName()),
                               "-XX:+UnlockDiagnosticVMOptions", extraOption,
                               "-Xlog:gc+region+cds",
                               "-Xlog:gc+region=trace",
@@ -82,7 +78,7 @@ public class HumongousDuringDump {
                 "-XX:+PrintSharedSpaces",
                 "-XX:+UnlockDiagnosticVMOptions", extraOption,
                 gcLog,
-                "Hello")
+                Hello.class.getName())
               .assertNormalExit();
     }
 }

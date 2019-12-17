@@ -27,9 +27,6 @@
  * @summary Compare archived system modules with non-archived.
  * @requires vm.cds.archived.java.heap
  * @library /test/jdk/lib/testlibrary /test/lib /test/hotspot/jtreg/runtime/cds/appcds
- * @modules java.base/jdk.internal.misc
- *          java.management
- *          jdk.jartool/sun.tools.jar
  * @compile PrintSystemModulesApp.java
  * @run driver ClassFileInstaller -jar app.jar PrintSystemModulesApp
  * @run driver ArchivedModuleCompareTest
@@ -52,12 +49,12 @@ public class ArchivedModuleCompareTest {
 
         output = TestCommon.execOff("-cp", appJar, "PrintSystemModulesApp");
         output.shouldHaveExitValue(0);
-        String bootModules1 = output.getStdout();
+        String bootModules1 = TestCommon.filterOutLogs(output.getStdout());
 
         output = TestCommon.exec(appJar, "PrintSystemModulesApp");
         TestCommon.checkExec(output);
         if (output.getStderr().contains("sharing")) {
-            String bootModules2 = output.getStdout();
+            String bootModules2 = TestCommon.filterOutLogs(output.getStdout());
             TestCommon.checkOutputStrings(bootModules1, bootModules2, ", ");
         }
 
@@ -69,14 +66,14 @@ public class ArchivedModuleCompareTest {
                                     "--show-module-resolution",
                                     "-version");
         output.shouldHaveExitValue(0);
-        String moduleResolutionOut1 = output.getStdout();
+        String moduleResolutionOut1 = TestCommon.filterOutLogs(output.getStdout());
 
         output = TestCommon.exec(appJar,
                                  "--show-module-resolution",
                                  "-version");
         TestCommon.checkExec(output);
         if (output.getStderr().contains("sharing")) {
-            String moduleResolutionOut2 = output.getStdout();
+            String moduleResolutionOut2 = TestCommon.filterOutLogs(output.getStdout());
             TestCommon.checkOutputStrings(
                 moduleResolutionOut1, moduleResolutionOut2, "\n");
         }

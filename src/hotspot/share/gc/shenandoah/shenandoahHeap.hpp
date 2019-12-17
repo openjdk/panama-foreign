@@ -32,6 +32,7 @@
 #include "gc/shenandoah/shenandoahLock.hpp"
 #include "gc/shenandoah/shenandoahEvacOOMHandler.hpp"
 #include "gc/shenandoah/shenandoahSharedVariables.hpp"
+#include "gc/shenandoah/shenandoahUnload.hpp"
 #include "services/memoryManager.hpp"
 
 class ConcurrentGCTimer;
@@ -43,6 +44,7 @@ class ShenandoahGCSession;
 class ShenandoahGCStateResetter;
 class ShenandoahHeuristics;
 class ShenandoahMarkingContext;
+class ShenandoahMarkCompact;
 class ShenandoahMode;
 class ShenandoahPhaseTimings;
 class ShenandoahHeap;
@@ -214,6 +216,9 @@ private:
   ShenandoahRegionIterator _update_refs_iterator;
 
 public:
+
+  inline HeapWord* base() const { return _heap_region.start(); }
+
   inline size_t num_regions() const { return _num_regions; }
   inline bool is_heap_region_special() { return _heap_region_special; }
 
@@ -267,6 +272,7 @@ private:
   ShenandoahSharedFlag   _full_gc_in_progress;
   ShenandoahSharedFlag   _full_gc_move_in_progress;
   ShenandoahSharedFlag   _progress_last_gc;
+  ShenandoahSharedFlag   _concurrent_root_in_progress;
 
   void set_gc_state_all_threads(char state);
   void set_gc_state_mask(uint mask, bool value);
@@ -283,6 +289,7 @@ public:
   void set_full_gc_move_in_progress(bool in_progress);
   void set_concurrent_traversal_in_progress(bool in_progress);
   void set_has_forwarded_objects(bool cond);
+  void set_concurrent_root_in_progress(bool cond);
 
   inline bool is_stable() const;
   inline bool is_idle() const;
@@ -295,6 +302,8 @@ public:
   inline bool is_concurrent_traversal_in_progress() const;
   inline bool has_forwarded_objects() const;
   inline bool is_gc_in_progress_mask(uint mask) const;
+  inline bool is_stw_gc_in_progress() const;
+  inline bool is_concurrent_root_in_progress() const;
 
 // ---------- GC cancellation and degeneration machinery
 //
@@ -507,6 +516,7 @@ public:
 //
 private:
   ShenandoahSharedFlag _unload_classes;
+  ShenandoahUnload     _unloader;
 
 public:
   void set_unload_classes(bool uc);
@@ -519,6 +529,12 @@ private:
   void stw_unload_classes(bool full_gc);
   void stw_process_weak_roots(bool full_gc);
 
+  // Prepare concurrent root processing
+  void prepare_concurrent_roots();
+  // Prepare and finish concurrent unloading
+  void prepare_concurrent_unloading();
+  void finish_concurrent_unloading();
+
 // ---------- Generic interface hooks
 // Minor things that super-interface expects us to implement to play nice with
 // the rest of runtime. Some of the things here are not required to be implemented,
@@ -530,16 +546,19 @@ public:
 
   bool is_in(const void* p) const;
 
+  MemRegion reserved_region() const { return _reserved; }
+  bool is_in_reserved(const void* addr) const { return _reserved.contains(addr); }
+
   void collect(GCCause::Cause cause);
   void do_full_collection(bool clear_all_soft_refs);
 
   // Used for parsing heap during error printing
   HeapWord* block_start(const void* addr) const;
   bool block_is_obj(const HeapWord* addr) const;
+  bool print_location(outputStream* st, void* addr) const;
 
   // Used for native heap walkers: heap dumpers, mostly
   void object_iterate(ObjectClosure* cl);
-  void safe_object_iterate(ObjectClosure* cl);
 
   // Used by RMI
   jlong millis_since_last_gc();
@@ -555,7 +574,7 @@ public:
 public:
   void register_nmethod(nmethod* nm);
   void unregister_nmethod(nmethod* nm);
-  void flush_nmethod(nmethod* nm) {}
+  void flush_nmethod(nmethod* nm);
   void verify_nmethod(nmethod* nm) {}
 
 // ---------- Pinning hooks
@@ -566,6 +585,9 @@ public:
 
   oop pin_object(JavaThread* thread, oop obj);
   void unpin_object(JavaThread* thread, oop obj);
+
+  void sync_pinned_region_status();
+  void assert_pinned_region_status() NOT_DEBUG_RETURN;
 
 // ---------- Allocation support
 //
@@ -700,12 +722,11 @@ public:
 
   static inline oop cas_oop(oop n, narrowOop* addr, oop c);
   static inline oop cas_oop(oop n, oop* addr, oop c);
+  static inline oop cas_oop(oop n, narrowOop* addr, narrowOop c);
 
   void trash_humongous_region_at(ShenandoahHeapRegion *r);
 
   void deduplicate_string(oop str);
-
-  void stop_concurrent_marking();
 
 private:
   void trash_cset_regions();

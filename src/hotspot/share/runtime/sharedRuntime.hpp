@@ -351,7 +351,7 @@ class SharedRuntime: AllStatic {
                                         Bytecodes::Code& bc,
                                         CallInfo& callinfo, TRAPS);
 
-  static methodHandle extract_attached_method(vframeStream& vfst);
+  static Method* extract_attached_method(vframeStream& vfst);
 
   static address clean_virtual_call_entry();
   static address clean_opt_virtual_call_entry();
@@ -489,7 +489,8 @@ class SharedRuntime: AllStatic {
                                           int compile_id,
                                           BasicType* sig_bt,
                                           VMRegPair* regs,
-                                          BasicType ret_type);
+                                          BasicType ret_type,
+                                          address critical_entry);
 
   // Block before entering a JNI critical method
   static void block_for_jni_critical(JavaThread* thread);

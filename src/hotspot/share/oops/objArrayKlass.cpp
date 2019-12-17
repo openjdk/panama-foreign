@@ -106,14 +106,14 @@ Klass* ObjArrayKlass::allocate_objArray_klass(ClassLoaderData* loader_data,
     int len = element_klass->name()->utf8_length();
     char *new_str = NEW_RESOURCE_ARRAY(char, len + 4);
     int idx = 0;
-    new_str[idx++] = '[';
+    new_str[idx++] = JVM_SIGNATURE_ARRAY;
     if (element_klass->is_instance_klass()) { // it could be an array or simple type
-      new_str[idx++] = 'L';
+      new_str[idx++] = JVM_SIGNATURE_CLASS;
     }
     memcpy(&new_str[idx], name_str, len * sizeof(char));
     idx += len;
     if (element_klass->is_instance_klass()) {
-      new_str[idx++] = ';';
+      new_str[idx++] = JVM_SIGNATURE_ENDCLASS;
     }
     new_str[idx++] = '\0';
     name = SymbolTable::new_permanent_symbol(new_str);
@@ -212,7 +212,7 @@ oop ObjArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
 // Either oop or narrowOop depending on UseCompressedOops.
 void ObjArrayKlass::do_copy(arrayOop s, size_t src_offset,
                             arrayOop d, size_t dst_offset, int length, TRAPS) {
-  if (oopDesc::equals(s, d)) {
+  if (s == d) {
     // since source and destination are equal we do not need conversion checks.
     assert(length > 0, "sanity check");
     ArrayAccess<>::oop_arraycopy(s, src_offset, d, dst_offset, length);
@@ -328,7 +328,7 @@ Klass* ObjArrayKlass::array_klass_impl(bool or_null, int n, TRAPS) {
 
   // lock-free read needs acquire semantics
   if (higher_dimension_acquire() == NULL) {
-    if (or_null)  return NULL;
+    if (or_null) return NULL;
 
     ResourceMark rm;
     JavaThread *jt = (JavaThread *)THREAD;
@@ -349,14 +349,13 @@ Klass* ObjArrayKlass::array_klass_impl(bool or_null, int n, TRAPS) {
         assert(ak->is_objArray_klass(), "incorrect initialization of ObjArrayKlass");
       }
     }
-  } else {
-    CHECK_UNHANDLED_OOPS_ONLY(Thread::current()->clear_unhandled_oops());
   }
 
   ObjArrayKlass *ak = ObjArrayKlass::cast(higher_dimension());
   if (or_null) {
     return ak->array_klass_or_null(n);
   }
+  THREAD->check_possible_safepoint();
   return ak->array_klass(n, THREAD);
 }
 

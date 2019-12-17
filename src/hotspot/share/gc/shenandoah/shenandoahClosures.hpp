@@ -27,6 +27,7 @@
 
 class ShenandoahHeap;
 class ShenandoahMarkingContext;
+class ShenandoahHeapRegionSet;
 class Thread;
 
 class ShenandoahForwardedIsAliveClosure: public BoolObjectClosure {
@@ -65,6 +66,20 @@ private:
   inline void do_oop_work(T* p);
 };
 
+class ShenandoahTraversalUpdateRefsClosure: public OopClosure {
+private:
+  ShenandoahHeap* const           _heap;
+  ShenandoahHeapRegionSet* const  _traversal_set;
+
+public:
+  inline ShenandoahTraversalUpdateRefsClosure();
+  inline void do_oop(oop* p);
+  inline void do_oop(narrowOop* p);
+private:
+  template <class T>
+  inline void do_oop_work(T* p);
+};
+
 class ShenandoahEvacuateUpdateRootsClosure: public BasicOopIterateClosure {
 private:
   ShenandoahHeap* _heap;
@@ -87,6 +102,15 @@ public:
   inline ShenandoahEvacUpdateOopStorageRootsClosure();
   inline void do_oop(oop* p);
   inline void do_oop(narrowOop* p);
+};
+
+class ShenandoahCodeBlobAndDisarmClosure: public CodeBlobToOopClosure {
+private:
+  BarrierSetNMethod* const _bs;
+
+public:
+  inline ShenandoahCodeBlobAndDisarmClosure(OopClosure* cl);
+  inline void do_code_blob(CodeBlob* cb);
 };
 
 #ifdef ASSERT

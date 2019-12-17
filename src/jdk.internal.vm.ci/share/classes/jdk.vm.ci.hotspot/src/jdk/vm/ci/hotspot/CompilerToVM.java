@@ -56,7 +56,7 @@ final class CompilerToVM {
     private static native void registerNatives();
 
     /**
-     * These values mirror the equivalent values from {@link Unsafe} but are approriate for the JVM
+     * These values mirror the equivalent values from {@code Unsafe} but are appropriate for the JVM
      * being compiled against.
      */
     // Checkstyle: stop
@@ -372,9 +372,8 @@ final class CompilerToVM {
      * @return the outcome of the installation which will be one of
      *         {@link HotSpotVMConfig#codeInstallResultOk},
      *         {@link HotSpotVMConfig#codeInstallResultCacheFull},
-     *         {@link HotSpotVMConfig#codeInstallResultCodeTooLarge},
-     *         {@link HotSpotVMConfig#codeInstallResultDependenciesFailed} or
-     *         {@link HotSpotVMConfig#codeInstallResultDependenciesInvalid}.
+     *         {@link HotSpotVMConfig#codeInstallResultCodeTooLarge} or
+     *         {@link HotSpotVMConfig#codeInstallResultDependenciesFailed}.
      * @throws JVMCIError if there is something wrong with the compiled code or the associated
      *             metadata.
      */
@@ -390,9 +389,8 @@ final class CompilerToVM {
      * @return the outcome of the installation which will be one of
      *         {@link HotSpotVMConfig#codeInstallResultOk},
      *         {@link HotSpotVMConfig#codeInstallResultCacheFull},
-     *         {@link HotSpotVMConfig#codeInstallResultCodeTooLarge},
-     *         {@link HotSpotVMConfig#codeInstallResultDependenciesFailed} or
-     *         {@link HotSpotVMConfig#codeInstallResultDependenciesInvalid}.
+     *         {@link HotSpotVMConfig#codeInstallResultCodeTooLarge} or
+     *         {@link HotSpotVMConfig#codeInstallResultDependenciesFailed}.
      * @throws JVMCIError if there is something wrong with the compiled code or the metadata
      */
     native int getMetadata(TargetDescription target, HotSpotCompiledCode compiledCode, HotSpotMetaData metaData);
@@ -516,10 +514,10 @@ final class CompilerToVM {
 
     /**
      * Reads an object pointer within a VM data structure. That is, any {@link VMField} whose
-     * {@link VMField#type type} is {@code "oop"} (e.g.,
-     * {@code Klass::_java_mirror}, {@code JavaThread::_threadObj}).
+     * {@link VMField#type type} is {@code "oop"} (e.g., {@code Klass::_java_mirror},
+     * {@code JavaThread::_threadObj}).
      *
-     * Note that {@link Unsafe#getObject(Object, long)} cannot be used for this since it does a
+     * Note that {@code Unsafe.getObject(Object, long)} cannot be used for this since it does a
      * {@code narrowOop} read if the VM is using compressed oops whereas oops within VM data
      * structures are (currently) always uncompressed.
      *
@@ -559,10 +557,10 @@ final class CompilerToVM {
     native int getCountersSize();
 
     /**
-     * Attempt to change the size of the counters allocated for JVMCI. This requires a safepoint to
+     * Change the size of the counters allocated for JVMCI. This requires a safepoint to
      * safely reallocate the storage but it's advisable to increase the size in reasonable chunks.
      */
-    native boolean setCountersSize(int newSize);
+    native void setCountersSize(int newSize);
 
     /**
      * Determines if {@code metaspaceMethodData} is mature.
@@ -967,6 +965,11 @@ final class CompilerToVM {
      * @see HotSpotJVMCIRuntime#isCurrentThreadAttached()
      */
     native boolean isCurrentThreadAttached();
+
+    /**
+     * @see HotSpotJVMCIRuntime#getCurrentJavaThread()
+     */
+    native long getCurrentJavaThread();
 
     /**
      * @see HotSpotJVMCIRuntime#attachCurrentThread

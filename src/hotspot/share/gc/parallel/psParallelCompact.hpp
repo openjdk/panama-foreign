@@ -32,6 +32,8 @@
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/collectorCounters.hpp"
 #include "oops/oop.hpp"
+#include "runtime/atomic.hpp"
+#include "runtime/orderAccess.hpp"
 
 class ParallelScavengeHeap;
 class PSAdaptiveSizePolicy;
@@ -40,8 +42,7 @@ class PSOldGen;
 class ParCompactionManager;
 class ParallelTaskTerminator;
 class PSParallelCompact;
-class GCTaskManager;
-class GCTaskQueue;
+class PreGCValues;
 class MoveAndUpdateClosure;
 class RefProcTaskExecutor;
 class ParallelOldTracer;
@@ -537,7 +538,7 @@ inline void ParallelCompactData::RegionData::decrement_destination_count()
 {
   assert(_dc_and_los < dc_claimed, "already claimed");
   assert(_dc_and_los >= dc_one, "count would go negative");
-  Atomic::add(dc_mask, &_dc_and_los);
+  Atomic::add(&_dc_and_los, dc_mask);
 }
 
 inline HeapWord* ParallelCompactData::RegionData::data_location() const
@@ -577,7 +578,7 @@ inline bool ParallelCompactData::RegionData::claim_unsafe()
 inline void ParallelCompactData::RegionData::add_live_obj(size_t words)
 {
   assert(words <= (size_t)los_mask - live_obj_size(), "overflow");
-  Atomic::add(static_cast<region_sz_t>(words), &_dc_and_los);
+  Atomic::add(&_dc_and_los, static_cast<region_sz_t>(words));
 }
 
 inline void ParallelCompactData::RegionData::set_highest_ref(HeapWord* addr)
@@ -585,7 +586,7 @@ inline void ParallelCompactData::RegionData::set_highest_ref(HeapWord* addr)
 #ifdef ASSERT
   HeapWord* tmp = _highest_ref;
   while (addr > tmp) {
-    tmp = Atomic::cmpxchg(addr, &_highest_ref, tmp);
+    tmp = Atomic::cmpxchg(&_highest_ref, tmp, addr);
   }
 #endif  // #ifdef ASSERT
 }
@@ -593,7 +594,7 @@ inline void ParallelCompactData::RegionData::set_highest_ref(HeapWord* addr)
 inline bool ParallelCompactData::RegionData::claim()
 {
   const region_sz_t los = static_cast<region_sz_t>(live_obj_size());
-  const region_sz_t old = Atomic::cmpxchg(dc_claimed | los, &_dc_and_los, los);
+  const region_sz_t old = Atomic::cmpxchg(&_dc_and_los, los, dc_claimed | los);
   return old == los;
 }
 
@@ -913,6 +914,8 @@ inline void ParMarkBitMapClosure::decrement_words_remaining(size_t words) {
 // region that can be put on the ready list.  The regions are atomically added
 // and removed from the ready list.
 
+class TaskQueue;
+
 class PSParallelCompact : AllStatic {
  public:
   // Convenient access to type names.
@@ -924,6 +927,24 @@ class PSParallelCompact : AllStatic {
     old_space_id, eden_space_id,
     from_space_id, to_space_id, last_space_id
   } SpaceId;
+
+  struct UpdateDensePrefixTask : public CHeapObj<mtGC> {
+    SpaceId _space_id;
+    size_t _region_index_start;
+    size_t _region_index_end;
+
+    UpdateDensePrefixTask() :
+        _space_id(SpaceId(0)),
+        _region_index_start(0),
+        _region_index_end(0) {}
+
+    UpdateDensePrefixTask(SpaceId space_id,
+                          size_t region_index_start,
+                          size_t region_index_end) :
+        _space_id(space_id),
+        _region_index_start(region_index_start),
+        _region_index_end(region_index_end) {}
+  };
 
  public:
   // Inline closure decls
@@ -1050,18 +1071,11 @@ class PSParallelCompact : AllStatic {
   static void compact();
 
   // Add available regions to the stack and draining tasks to the task queue.
-  static void prepare_region_draining_tasks(GCTaskQueue* q,
-                                            uint parallel_gc_threads);
+  static void prepare_region_draining_tasks(uint parallel_gc_threads);
 
   // Add dense prefix update tasks to the task queue.
-  static void enqueue_dense_prefix_tasks(GCTaskQueue* q,
+  static void enqueue_dense_prefix_tasks(TaskQueue& task_queue,
                                          uint parallel_gc_threads);
-
-  // Add region stealing tasks to the task queue.
-  static void enqueue_region_stealing_tasks(
-                                       GCTaskQueue* q,
-                                       ParallelTaskTerminator* terminator_ptr,
-                                       uint parallel_gc_threads);
 
   // If objects are left in eden after a collection, try to move the boundary
   // and absorb them into the old gen.  Returns true if eden was emptied.
@@ -1101,9 +1115,6 @@ class PSParallelCompact : AllStatic {
   static unsigned int total_invocations() { return _total_invocations; }
   static CollectorCounters* counters()    { return _counters; }
 
-  // Used to add tasks
-  static GCTaskManager* const gc_task_manager();
-
   // Marking support
   static inline bool mark_obj(oop obj);
   static inline bool is_marked(oop obj);
@@ -1120,9 +1131,6 @@ class PSParallelCompact : AllStatic {
   static inline HeapWord*         new_top(SpaceId space_id);
   static inline HeapWord*         dense_prefix(SpaceId space_id);
   static inline ObjectStartArray* start_array(SpaceId space_id);
-
-  // Move and update the live objects in the specified space.
-  static void move_and_update(ParCompactionManager* cm, SpaceId space_id);
 
   // Process the end of the given region range in the dense prefix.
   // This includes saving any object not updated.

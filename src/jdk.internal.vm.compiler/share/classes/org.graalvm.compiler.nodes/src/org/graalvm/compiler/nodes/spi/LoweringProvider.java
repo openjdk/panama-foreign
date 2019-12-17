@@ -53,7 +53,7 @@ public interface LoweringProvider {
     Integer smallestCompareWidth();
 
     /**
-     * Indicates whether the target platform supports bulk zeroing instruction.
+     * Indicates whether this target platform supports bulk zeroing of arbitrary size.
      */
-    boolean supportBulkZeroing();
+    boolean supportsBulkZeroing();
 }

@@ -218,7 +218,7 @@ public class TestCommon extends CDSTestUtils {
                 if (!mainModuleSpecified && !patchModuleSpecified) {
                     // If you have an empty classpath, you cannot specify a classlist!
                     if (opts.classList != null && opts.classList.length > 0) {
-                        throw new RuntimeException("test.dynamic.dump not supported empty classpath with non-empty classlist");
+                        throw new RuntimeException("test.dynamic.dump is not supported with an empty classpath while the classlist is not empty");
                     }
                     cmd.add("-version");
                 }
@@ -242,7 +242,12 @@ public class TestCommon extends CDSTestUtils {
         if (opts.appJarDir != null) {
             pb.directory(new File(opts.appJarDir));
         }
-        return executeAndLog(pb, "dump");
+
+        OutputAnalyzer output = executeAndLog(pb, "dump");
+        if (DYNAMIC_DUMP && isUnableToMap(output)) {
+            throw new SkippedException(UnableToMapMsg);
+        }
+        return output;
     }
 
     // This allows you to run the AppCDS tests with JFR enabled at runtime (though not at
@@ -338,6 +343,7 @@ public class TestCommon extends CDSTestUtils {
             newFile.renameTo(oldFile);
             System.out.println("firstJar = " + firstJar + " Modified");
         } else {
+            zipFile.close();
             System.out.println("firstJar = " + firstJar);
         }
     }
@@ -462,9 +468,6 @@ public class TestCommon extends CDSTestUtils {
                                           String... suffix) throws Exception {
         OutputAnalyzer output = dump(appJar, classList, suffix);
         if (DYNAMIC_DUMP) {
-            if (isUnableToMap(output)) {
-                throw new SkippedException(UnableToMapMsg);
-            }
             output.shouldContain("Written dynamic archive");
         } else {
             output.shouldContain("Loading classes to share");
@@ -477,9 +480,6 @@ public class TestCommon extends CDSTestUtils {
                                           String... suffix) throws Exception {
         OutputAnalyzer output = dump(appJarDir, appJar, classList, suffix);
         if (DYNAMIC_DUMP) {
-            if (isUnableToMap(output)) {
-                throw new SkippedException(UnableToMapMsg);
-            }
             output.shouldContain("Written dynamic archive");
         } else {
             output.shouldContain("Loading classes to share");
@@ -612,7 +612,7 @@ public class TestCommon extends CDSTestUtils {
 
     static Pattern pattern;
 
-    static void findAllClasses(ArrayList<String> list) throws Throwable {
+    static void findAllClasses(ArrayList<String> list) throws Exception {
         // Find all the classes in the jrt file system
         pattern = Pattern.compile("/modules/[a-z.]*[a-z]+/([^-]*)[.]class");
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
@@ -620,7 +620,7 @@ public class TestCommon extends CDSTestUtils {
         findAllClassesAtPath(base, list);
     }
 
-    private static void findAllClassesAtPath(Path p, ArrayList<String> list) throws Throwable {
+    private static void findAllClassesAtPath(Path p, ArrayList<String> list) throws Exception {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
             for (Path entry: stream) {
                 Matcher matcher = pattern.matcher(entry.toString());
@@ -630,7 +630,7 @@ public class TestCommon extends CDSTestUtils {
                 }
                 try {
                     findAllClassesAtPath(entry, list);
-                } catch (Throwable t) {}
+                } catch (Exception ex) {}
             }
         }
     }
@@ -661,5 +661,25 @@ public class TestCommon extends CDSTestUtils {
              Files.createSymbolicLink(linkedJar.toPath(), origJar.toPath());
          }
          return linkedJar;
+    }
+
+    // Remove all UL log messages from a JVM's STDOUT (such as those printed by -Xlog:cds)
+    static Pattern logPattern = Pattern.compile("^\\[[0-9. ]*s\\].*");
+    public static String filterOutLogs(String stdout) {
+        StringBuilder sb = new StringBuilder();
+        String prefix = "";
+        for (String line : stdout.split("\n")) {
+            if (logPattern.matcher(line).matches()) {
+                continue;
+            }
+            sb.append(prefix);
+            sb.append(line);
+            prefix = "\n";
+        }
+        if (stdout.endsWith("\n")) {
+            // String.split("A\n") returns {"A"}, not {"A", ""}.
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 }

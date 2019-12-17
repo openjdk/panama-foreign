@@ -63,6 +63,7 @@ import sun.security.util.*;
 public class AlgorithmId implements Serializable, DerEncoder {
 
     /** use serialVersionUID from JDK 1.1. for interoperability */
+    @java.io.Serial
     private static final long serialVersionUID = 7205873507486557157L;
 
     /**
@@ -71,6 +72,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
     private ObjectIdentifier algid;
 
     // The (parsed) parameters
+    @SuppressWarnings("serial") // Not statically typed as Serializable
     private AlgorithmParameters algParams;
     private boolean constructedFromDer = true;
 
@@ -79,6 +81,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
      * DER-encoded form; subclasses can be made to automaticaly parse
      * them so there is fast access to these parameters.
      */
+    @SuppressWarnings("serial") // Not statically typed as Serializable
     protected DerValue          params;
 
 
@@ -274,8 +277,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
      * with the same parameters.
      */
     public boolean equals(AlgorithmId other) {
-        boolean paramsEqual =
-          (params == null ? other.params == null : params.equals(other.params));
+        boolean paramsEqual = Objects.equals(other.params, params);
         return (algid.equals((Object)other.algid) && paramsEqual);
     }
 

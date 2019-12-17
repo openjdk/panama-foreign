@@ -96,11 +96,15 @@ class G1Policy: public CHeapObj<mtGC> {
 
   uint _free_regions_at_end_of_collection;
 
-  size_t _max_rs_length;
+  size_t _rs_length;
 
   size_t _rs_length_prediction;
 
-  size_t _pending_cards;
+  size_t _pending_cards_at_gc_start;
+  size_t _pending_cards_at_prev_gc_end;
+  size_t _total_mutator_refined_cards;
+  size_t _total_concurrent_refined_cards;
+  Tickspan _total_concurrent_refinement_time;
 
   // The amount of allocated bytes in old gen during the last mutator and the following
   // young GC phase.
@@ -112,7 +116,7 @@ class G1Policy: public CHeapObj<mtGC> {
     return collector_state()->in_young_only_phase() && !collector_state()->mark_or_rebuild_in_progress();
   }
 
-  double log_buffer_processing_time() const;
+  double logged_cards_processing_time() const;
 public:
   const G1Predictions& predictor() const { return _predictor; }
   const G1Analytics* analytics()   const { return const_cast<const G1Analytics*>(_analytics); }
@@ -132,8 +136,8 @@ public:
     hr->install_surv_rate_group(_survivor_surv_rate_group);
   }
 
-  void record_max_rs_length(size_t rs_length) {
-    _max_rs_length = rs_length;
+  void record_rs_length(size_t rs_length) {
+    _rs_length = rs_length;
   }
 
   double predict_base_elapsed_time_ms(size_t pending_cards) const;
@@ -179,9 +183,6 @@ private:
   double constant_other_time_ms(double pause_time_ms) const;
 
   G1CollectionSetChooser* cset_chooser() const;
-
-  // The number of bytes copied during the GC.
-  size_t _bytes_copied_during_gc;
 
   // Stash a pointer to the g1 heap.
   G1CollectedHeap* _g1h;
@@ -244,7 +245,7 @@ private:
                         uint base_free_regions, double target_pause_time_ms) const;
 
 public:
-  size_t pending_cards() const { return _pending_cards; }
+  size_t pending_cards_at_gc_start() const { return _pending_cards_at_gc_start; }
 
   // Calculate the minimum number of old regions we'll add to the CSet
   // during a mixed GC.
@@ -283,6 +284,9 @@ private:
   void record_pause(PauseKind kind, double start, double end);
   // Indicate that we aborted marking before doing any mixed GCs.
   void abort_time_to_mixed_tracking();
+
+  void record_concurrent_refinement_data(bool is_full_collection);
+
 public:
 
   G1Policy(STWGCTimer* gc_timer);
@@ -313,7 +317,7 @@ public:
 
   // Record the start and end of an evacuation pause.
   void record_collection_pause_start(double start_time_sec);
-  virtual void record_collection_pause_end(double pause_time_ms, size_t heap_used_bytes_before_gc);
+  virtual void record_collection_pause_end(double pause_time_ms);
 
   // Record the start and end of a full collection.
   void record_full_collection_start();
@@ -331,17 +335,6 @@ public:
   void record_concurrent_mark_cleanup_end();
 
   void print_phases();
-
-  // Record how much space we copied during a GC. This is typically
-  // called when a GC alloc region is being retired.
-  void record_bytes_copied_during_gc(size_t bytes) {
-    _bytes_copied_during_gc += bytes;
-  }
-
-  // The amount of space we copied during a GC.
-  size_t bytes_copied_during_gc() const {
-    return _bytes_copied_during_gc;
-  }
 
   bool next_gc_should_be_mixed(const char* true_action_str,
                                const char* false_action_str) const;

@@ -47,7 +47,6 @@
 #include "oops/oopHandle.inline.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/handles.inline.hpp"
-#include "runtime/orderAccess.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/stack.inline.hpp"
 
@@ -55,10 +54,6 @@ void Klass::set_java_mirror(Handle m) {
   assert(!m.is_null(), "New mirror should never be null.");
   assert(_java_mirror.resolve() == NULL, "should only be used to initialize mirror");
   _java_mirror = class_loader_data()->add_handle(m);
-}
-
-oop Klass::java_mirror() const {
-  return _java_mirror.resolve();
 }
 
 oop Klass::java_mirror_no_keepalive() const {
@@ -195,7 +190,7 @@ void* Klass::operator new(size_t size, ClassLoaderData* loader_data, size_t word
 // should be NULL before setting it.
 Klass::Klass(KlassID id) : _id(id),
                            _java_mirror(NULL),
-                           _prototype_header(markOopDesc::prototype()),
+                           _prototype_header(markWord::prototype()),
                            _shared_class_path_index(-1) {
   CDS_ONLY(_shared_class_flags = 0;)
   CDS_JAVA_HEAP_ONLY(_archived_mirror = 0;)
@@ -366,7 +361,7 @@ InstanceKlass* Klass::superklass() const {
 Klass* Klass::subklass(bool log) const {
   // Need load_acquire on the _subklass, because it races with inserts that
   // publishes freshly initialized data.
-  for (Klass* chain = OrderAccess::load_acquire(&_subklass);
+  for (Klass* chain = Atomic::load_acquire(&_subklass);
        chain != NULL;
        // Do not need load_acquire on _next_sibling, because inserts never
        // create _next_sibling edges to dead data.
@@ -406,7 +401,7 @@ Klass* Klass::next_sibling(bool log) const {
 
 void Klass::set_subklass(Klass* s) {
   assert(s != this, "sanity check");
-  OrderAccess::release_store(&_subklass, s);
+  Atomic::release_store(&_subklass, s);
 }
 
 void Klass::set_next_sibling(Klass* s) {
@@ -414,7 +409,7 @@ void Klass::set_next_sibling(Klass* s) {
   // Does not need release semantics. If used by cleanup, it will link to
   // already safely published data, and if used by inserts, will be published
   // safely using cmpxchg.
-  Atomic::store(s, &_next_sibling);
+  Atomic::store(&_next_sibling, s);
 }
 
 void Klass::append_to_sibling_list() {
@@ -431,7 +426,7 @@ void Klass::append_to_sibling_list() {
   super->clean_subklass();
 
   for (;;) {
-    Klass* prev_first_subklass = OrderAccess::load_acquire(&_super->_subklass);
+    Klass* prev_first_subklass = Atomic::load_acquire(&_super->_subklass);
     if (prev_first_subklass != NULL) {
       // set our sibling to be the superklass' previous first subklass
       assert(prev_first_subklass->is_loader_alive(), "May not attach not alive klasses");
@@ -440,7 +435,7 @@ void Klass::append_to_sibling_list() {
     // Note that the prev_first_subklass is always alive, meaning no sibling_next links
     // are ever created to not alive klasses. This is an important invariant of the lock-free
     // cleaning protocol, that allows us to safely unlink dead klasses from the sibling list.
-    if (Atomic::cmpxchg(this, &super->_subklass, prev_first_subklass) == prev_first_subklass) {
+    if (Atomic::cmpxchg(&super->_subklass, prev_first_subklass, this) == prev_first_subklass) {
       return;
     }
   }
@@ -450,12 +445,12 @@ void Klass::append_to_sibling_list() {
 void Klass::clean_subklass() {
   for (;;) {
     // Need load_acquire, due to contending with concurrent inserts
-    Klass* subklass = OrderAccess::load_acquire(&_subklass);
+    Klass* subklass = Atomic::load_acquire(&_subklass);
     if (subklass == NULL || subklass->is_loader_alive()) {
       return;
     }
     // Try to fix _subklass until it points at something not dead.
-    Atomic::cmpxchg(subklass->next_sibling(), &_subklass, subklass);
+    Atomic::cmpxchg(&_subklass, subklass, subklass->next_sibling());
   }
 }
 
@@ -525,7 +520,7 @@ void Klass::metaspace_pointers_do(MetaspaceClosure* it) {
 }
 
 void Klass::remove_unshareable_info() {
-  assert (DumpSharedSpaces || DynamicDumpSharedSpaces,
+  assert (Arguments::is_dumping_archive(),
           "only called during CDS dump time");
   JFR_ONLY(REMOVE_ID(this);)
   if (log_is_enabled(Trace, cds, unshareable)) {
@@ -543,7 +538,7 @@ void Klass::remove_unshareable_info() {
 }
 
 void Klass::remove_java_mirror() {
-  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "only called during CDS dump time");
+  Arguments::assert_is_dumping_archive();
   if (log_is_enabled(Trace, cds, unshareable)) {
     ResourceMark rm;
     log_trace(cds, unshareable)("remove java_mirror: %s", external_name());
@@ -675,8 +670,6 @@ void Klass::check_array_allocation_length(int length, int max_length, TRAPS) {
   }
 }
 
-oop Klass::class_loader() const { return class_loader_data()->class_loader(); }
-
 // In product mode, this function doesn't have virtual function calls so
 // there might be some performance advantage to handling InstanceKlass here.
 const char* Klass::external_name() const {
@@ -716,7 +709,7 @@ jint Klass::compute_modifier_flags(TRAPS) const {
 }
 
 int Klass::atomic_incr_biased_lock_revocation_count() {
-  return (int) Atomic::add(1, &_biased_lock_revocation_count);
+  return (int) Atomic::add(&_biased_lock_revocation_count, 1);
 }
 
 // Unless overridden, jvmti_class_status has no flags set.
@@ -744,9 +737,9 @@ void Klass::oop_print_on(oop obj, outputStream* st) {
 
   if (WizardMode) {
      // print header
-     obj->mark()->print_on(st);
+     obj->mark().print_on(st);
      st->cr();
-     st->print(BULLET"prototype_header: " INTPTR_FORMAT, p2i(_prototype_header));
+     st->print(BULLET"prototype_header: " INTPTR_FORMAT, _prototype_header.value());
      st->cr();
   }
 
@@ -820,14 +813,6 @@ bool Klass::is_valid(Klass* k) {
   return ClassLoaderDataGraph::is_valid(k->class_loader_data());
 }
 
-klassVtable Klass::vtable() const {
-  return klassVtable(const_cast<Klass*>(this), start_of_vtable(), vtable_length() / vtableEntry::size());
-}
-
-vtableEntry* Klass::start_of_vtable() const {
-  return (vtableEntry*) ((address)this + in_bytes(vtable_start_offset()));
-}
-
 Method* Klass::method_at_vtable(int index)  {
 #ifndef PRODUCT
   assert(index >= 0, "valid vtable index");
@@ -838,9 +823,6 @@ Method* Klass::method_at_vtable(int index)  {
   return start_of_vtable()[index].method();
 }
 
-ByteSize Klass::vtable_start_offset() {
-  return in_ByteSize(InstanceKlass::header_size() * wordSize);
-}
 
 #ifndef PRODUCT
 

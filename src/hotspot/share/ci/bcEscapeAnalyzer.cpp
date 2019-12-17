@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -151,7 +151,7 @@ bool BCEscapeAnalyzer::returns_all(ArgumentMap vars) {
 void BCEscapeAnalyzer::clear_bits(ArgumentMap vars, VectorSet &bm) {
   for (int i = 0; i < _arg_size; i++) {
     if (vars.contains(i)) {
-      bm >>= i;
+      bm.remove(i);
     }
   }
 }
@@ -859,7 +859,7 @@ void BCEscapeAnalyzer::iterate_one_block(ciBlock *blk, StateInfo &state, Growabl
           if (s.cur_bc() != Bytecodes::_getstatic) {
             set_method_escape(state.apop());
           }
-          if (field_type == T_OBJECT || field_type == T_ARRAY) {
+          if (is_reference_type(field_type)) {
             state.apush(unknown_obj);
           } else if (type2size[field_type] == 1) {
             state.spush();
@@ -873,7 +873,7 @@ void BCEscapeAnalyzer::iterate_one_block(ciBlock *blk, StateInfo &state, Growabl
         { bool will_link;
           ciField* field = s.get_field(will_link);
           BasicType field_type = field->type()->basic_type();
-          if (field_type == T_OBJECT || field_type == T_ARRAY) {
+          if (is_reference_type(field_type)) {
             set_global_escape(state.apop());
           } else if (type2size[field_type] == 1) {
             state.spop();
@@ -1280,9 +1280,9 @@ void BCEscapeAnalyzer::clear_escape_info() {
     set_modified(var, OFFSET_ANY, 4);
     set_global_escape(var);
   }
-  _arg_local.Clear();
-  _arg_stack.Clear();
-  _arg_returned.Clear();
+  _arg_local.clear();
+  _arg_stack.clear();
+  _arg_returned.clear();
   _return_local = false;
   _return_allocated = false;
   _allocated_escapes = true;
@@ -1334,7 +1334,7 @@ void BCEscapeAnalyzer::compute_escape_info() {
 
   // Do not scan method if it has no object parameters and
   // does not returns an object (_return_allocated is set in initialize()).
-  if (_arg_local.Size() == 0 && !_return_allocated) {
+  if (_arg_local.is_empty() && !_return_allocated) {
     // Clear all info since method's bytecode was not analysed and
     // set pessimistic escape information.
     clear_escape_info();
@@ -1457,10 +1457,10 @@ BCEscapeAnalyzer::BCEscapeAnalyzer(ciMethod* method, BCEscapeAnalyzer* parent)
     , _parent(parent)
     , _level(parent == NULL ? 0 : parent->level() + 1) {
   if (!_conservative) {
-    _arg_local.Clear();
-    _arg_stack.Clear();
-    _arg_returned.Clear();
-    _dirty.Clear();
+    _arg_local.clear();
+    _arg_stack.clear();
+    _arg_returned.clear();
+    _dirty.clear();
     Arena* arena = CURRENT_ENV->arena();
     _arg_modified = (uint *) arena->Amalloc(_arg_size * sizeof(uint));
     Copy::zero_to_bytes(_arg_modified, _arg_size * sizeof(uint));

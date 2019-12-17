@@ -32,7 +32,6 @@
 #include "classfile/systemDictionary.hpp"
 #include "code/codeCache.hpp"
 #include "compiler/compileBroker.hpp"
-#include "gc/g1/g1HeapRegionEventSender.hpp"
 #include "gc/shared/gcConfiguration.hpp"
 #include "gc/shared/gcTrace.hpp"
 #include "gc/shared/gcVMOperations.hpp"
@@ -45,6 +44,7 @@
 #include "jfr/periodic/jfrNetworkUtilization.hpp"
 #include "jfr/recorder/jfrRecorder.hpp"
 #include "jfr/support/jfrThreadId.hpp"
+#include "jfr/utilities/jfrThreadIterator.hpp"
 #include "jfr/utilities/jfrTime.hpp"
 #include "jfrfiles/jfrPeriodic.hpp"
 #include "logging/log.hpp"
@@ -57,7 +57,6 @@
 #include "runtime/os.hpp"
 #include "runtime/os_perf.hpp"
 #include "runtime/thread.inline.hpp"
-#include "runtime/threadSMR.hpp"
 #include "runtime/sweeper.hpp"
 #include "runtime/vmThread.hpp"
 #include "services/classLoadingService.hpp"
@@ -65,6 +64,9 @@
 #include "services/threadService.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/globalDefinitions.hpp"
+#if INCLUDE_G1GC
+#include "gc/g1/g1HeapRegionEventSender.hpp"
+#endif
 #if INCLUDE_SHENANDOAHGC
 #include "gc/shenandoah/shenandoahJfrSupport.hpp"
 #endif
@@ -323,18 +325,8 @@ TRACE_REQUEST_FUNC(ObjectCount) {
   VMThread::execute(&op);
 }
 
-class VM_G1SendHeapRegionInfoEvents : public VM_Operation {
-  virtual void doit() {
-    G1HeapRegionEventSender::send_events();
-  }
-  virtual VMOp_Type type() const { return VMOp_HeapIterateOperation; }
-};
-
 TRACE_REQUEST_FUNC(G1HeapRegionInformation) {
-  if (UseG1GC) {
-    VM_G1SendHeapRegionInfoEvents op;
-    VMThread::execute(&op);
-  }
+  G1GC_ONLY(G1HeapRegionEventSender::send_events());
 }
 
 // Java Mission Control (JMC) uses (Java) Long.MIN_VALUE to describe that a
@@ -418,13 +410,12 @@ TRACE_REQUEST_FUNC(ThreadAllocationStatistics) {
   GrowableArray<jlong> allocated(initial_size);
   GrowableArray<traceid> thread_ids(initial_size);
   JfrTicks time_stamp = JfrTicks::now();
-  {
-    // Collect allocation statistics while holding threads lock
-    MutexLocker ml(Threads_lock);
-    for (JavaThreadIteratorWithHandle jtiwh; JavaThread *jt = jtiwh.next(); ) {
-      allocated.append(jt->cooked_allocated_bytes());
-      thread_ids.append(JFR_THREAD_ID(jt));
-    }
+  JfrJavaThreadIterator iter;
+  while (iter.has_next()) {
+    JavaThread* const jt = iter.next();
+    assert(jt != NULL, "invariant");
+    allocated.append(jt->cooked_allocated_bytes());
+    thread_ids.append(JFR_THREAD_ID(jt));
   }
 
   // Write allocation statistics to buffer.
@@ -566,8 +557,8 @@ TRACE_REQUEST_FUNC(CompilerStatistics) {
   event.set_standardCompileCount(CompileBroker::get_total_standard_compile_count());
   event.set_osrBytesCompiled(CompileBroker::get_sum_osr_bytes_compiled());
   event.set_standardBytesCompiled(CompileBroker::get_sum_standard_bytes_compiled());
-  event.set_nmetodsSize(CompileBroker::get_sum_nmethod_size());
-  event.set_nmetodCodeSize(CompileBroker::get_sum_nmethod_code_size());
+  event.set_nmethodsSize(CompileBroker::get_sum_nmethod_size());
+  event.set_nmethodCodeSize(CompileBroker::get_sum_nmethod_code_size());
   event.set_peakTimeSpent(CompileBroker::get_peak_compilation_time());
   event.set_totalTimeSpent(CompileBroker::get_total_compilation_time());
   event.commit();

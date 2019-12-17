@@ -66,34 +66,6 @@
   #endif
 #endif
 
-#if defined(_AIX)
-  #ifndef IP_BLOCK_SOURCE
-    #define IP_BLOCK_SOURCE                 58   /* Block data from a given source to a given group */
-    #define IP_UNBLOCK_SOURCE               59   /* Unblock data from a given source to a given group */
-    #define IP_ADD_SOURCE_MEMBERSHIP        60   /* Join a source-specific group */
-    #define IP_DROP_SOURCE_MEMBERSHIP       61   /* Leave a source-specific group */
-  #endif
-
-  #ifndef MCAST_BLOCK_SOURCE
-    #define MCAST_BLOCK_SOURCE              64
-    #define MCAST_UNBLOCK_SOURCE            65
-    #define MCAST_JOIN_SOURCE_GROUP         66
-    #define MCAST_LEAVE_SOURCE_GROUP        67
-
-    /* This means we're on AIX 5.3 and 'group_source_req' and 'ip_mreq_source' aren't defined as well */
-    struct group_source_req {
-        uint32_t gsr_interface;
-        struct sockaddr_storage gsr_group;
-        struct sockaddr_storage gsr_source;
-    };
-    struct ip_mreq_source {
-        struct in_addr  imr_multiaddr;  /* IP multicast address of group */
-        struct in_addr  imr_sourceaddr; /* IP address of source */
-        struct in_addr  imr_interface;  /* local IP address of interface */
-    };
-  #endif
-#endif /* _AIX */
-
 #define COPY_INET6_ADDRESS(env, source, target) \
     (*env)->GetByteArrayRegion(env, source, 0, 16, target)
 
@@ -186,22 +158,32 @@ Java_sun_nio_ch_Net_isExclusiveBindAvailable(JNIEnv *env, jclass clazz) {
 JNIEXPORT jboolean JNICALL
 Java_sun_nio_ch_Net_canIPv6SocketJoinIPv4Group0(JNIEnv* env, jclass cl)
 {
-#if defined(__APPLE__) || defined(_AIX)
-    /* for now IPv6 sockets cannot join IPv4 multicast groups */
-    return JNI_FALSE;
-#else
+#if defined(__linux__) || defined(__APPLE__) || defined(__solaris__)
+    /* IPv6 sockets can join IPv4 multicast groups */
     return JNI_TRUE;
+#else
+    /* IPv6 sockets cannot join IPv4 multicast groups */
+    return JNI_FALSE;
 #endif
 }
 
 JNIEXPORT jboolean JNICALL
 Java_sun_nio_ch_Net_canJoin6WithIPv4Group0(JNIEnv* env, jclass cl)
 {
-#ifdef __solaris__
+#if defined(__APPLE__) || defined(__solaris__)
+    /* IPV6_ADD_MEMBERSHIP can be used to join IPv4 multicast groups */
     return JNI_TRUE;
 #else
+    /* IPV6_ADD_MEMBERSHIP cannot be used to join IPv4 multicast groups */
     return JNI_FALSE;
 #endif
+}
+
+JNIEXPORT jboolean JNICALL
+Java_sun_nio_ch_Net_canUseIPv6OptionsWithIPv4LocalAddress0(JNIEnv* env, jclass cl)
+{
+    /* IPV6_XXX socket options can be used on IPv6 sockets bound to IPv4 address */
+    return JNI_TRUE;
 }
 
 JNIEXPORT jint JNICALL

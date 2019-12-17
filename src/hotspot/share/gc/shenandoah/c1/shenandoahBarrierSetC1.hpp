@@ -89,24 +89,38 @@ class ShenandoahLoadReferenceBarrierStub: public CodeStub {
   friend class ShenandoahBarrierSetC1;
 private:
   LIR_Opr _obj;
+  LIR_Opr _addr;
   LIR_Opr _result;
+  LIR_Opr _tmp1;
+  LIR_Opr _tmp2;
 
 public:
-  ShenandoahLoadReferenceBarrierStub(LIR_Opr obj, LIR_Opr result) :
-    _obj(obj), _result(result)
+  ShenandoahLoadReferenceBarrierStub(LIR_Opr obj, LIR_Opr addr, LIR_Opr result, LIR_Opr tmp1, LIR_Opr tmp2) :
+    _obj(obj), _addr(addr), _result(result), _tmp1(tmp1), _tmp2(tmp2)
   {
     assert(_obj->is_register(), "should be register");
+    assert(_addr->is_register(), "should be register");
     assert(_result->is_register(), "should be register");
+    assert(_tmp1->is_register(), "should be register");
+    assert(_tmp2->is_register(), "should be register");
   }
 
   LIR_Opr obj() const { return _obj; }
+  LIR_Opr addr() const { return _addr; }
   LIR_Opr result() const { return _result; }
+  LIR_Opr tmp1() const { return _tmp1; }
+  LIR_Opr tmp2() const { return _tmp2; }
 
   virtual void emit_code(LIR_Assembler* e);
   virtual void visit(LIR_OpVisitState* visitor) {
     visitor->do_slow_case();
     visitor->do_input(_obj);
+    visitor->do_temp(_obj);
+    visitor->do_input(_addr);
+    visitor->do_temp(_addr);
     visitor->do_temp(_result);
+    visitor->do_temp(_tmp1);
+    visitor->do_temp(_tmp2);
   }
 #ifndef PRODUCT
   virtual void print_name(outputStream* out) const { out->print("ShenandoahLoadReferenceBarrierStub"); }
@@ -174,22 +188,34 @@ public:
 class ShenandoahBarrierSetC1 : public BarrierSetC1 {
 private:
   CodeBlob* _pre_barrier_c1_runtime_code_blob;
+  CodeBlob* _load_reference_barrier_rt_code_blob;
 
   void pre_barrier(LIRGenerator* gen, CodeEmitInfo* info, DecoratorSet decorators, LIR_Opr addr_opr, LIR_Opr pre_val);
 
-  LIR_Opr load_reference_barrier(LIRGenerator* gen, LIR_Opr obj);
+  LIR_Opr load_reference_barrier(LIRGenerator* gen, LIR_Opr obj, LIR_Opr addr);
   LIR_Opr storeval_barrier(LIRGenerator* gen, LIR_Opr obj, CodeEmitInfo* info, DecoratorSet decorators);
 
-  LIR_Opr load_reference_barrier_impl(LIRGenerator* gen, LIR_Opr obj);
+  LIR_Opr load_reference_barrier_impl(LIRGenerator* gen, LIR_Opr obj, LIR_Opr addr);
 
   LIR_Opr ensure_in_register(LIRGenerator* gen, LIR_Opr obj);
 
 public:
-  CodeBlob* pre_barrier_c1_runtime_code_blob() { return _pre_barrier_c1_runtime_code_blob; }
+  ShenandoahBarrierSetC1();
+
+  CodeBlob* pre_barrier_c1_runtime_code_blob() {
+    assert(_pre_barrier_c1_runtime_code_blob != NULL, "");
+    return _pre_barrier_c1_runtime_code_blob;
+  }
+
+  CodeBlob* load_reference_barrier_rt_code_blob() {
+    assert(_load_reference_barrier_rt_code_blob != NULL, "");
+    return _load_reference_barrier_rt_code_blob;
+  }
 
 protected:
 
   virtual void store_at_resolved(LIRAccess& access, LIR_Opr value);
+  virtual LIR_Opr resolve_address(LIRAccess& access, bool resolve_in_register);
   virtual void load_at_resolved(LIRAccess& access, LIR_Opr result);
 
   virtual LIR_Opr atomic_cmpxchg_at_resolved(LIRAccess& access, LIRItem& cmp_value, LIRItem& new_value);

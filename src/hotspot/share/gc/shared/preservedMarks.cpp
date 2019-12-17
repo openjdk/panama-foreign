@@ -28,20 +28,21 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "utilities/macros.hpp"
 
 void PreservedMarks::restore() {
   while (!_stack.is_empty()) {
-    const OopAndMarkOop elem = _stack.pop();
+    const OopAndMarkWord elem = _stack.pop();
     elem.set_mark();
   }
   assert_empty();
 }
 
 void PreservedMarks::adjust_during_full_gc() {
-  StackIterator<OopAndMarkOop, mtGC> iter(_stack);
+  StackIterator<OopAndMarkWord, mtGC> iter(_stack);
   while (!iter.is_empty()) {
-    OopAndMarkOop* elem = iter.next_addr();
+    OopAndMarkWord* elem = iter.next_addr();
 
     oop obj = elem->get_oop();
     if (obj->is_forwarded()) {
@@ -55,7 +56,7 @@ void PreservedMarks::restore_and_increment(volatile size_t* const total_size_add
   restore();
   // Only do the atomic add if the size is > 0.
   if (stack_size > 0) {
-    Atomic::add(stack_size, total_size_addr);
+    Atomic::add(total_size_addr, stack_size);
   }
 }
 

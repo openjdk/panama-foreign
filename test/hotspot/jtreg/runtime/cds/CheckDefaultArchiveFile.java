@@ -25,9 +25,8 @@
  * @test Default CDS archive file
  * @summary JDK platforms/binaries do not support default CDS archive should
  *          not contain classes.jsa in the default location.
+ * @requires vm.cds
  * @library /test/lib
- * @modules java.base/jdk.internal.misc
- *          java.management
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions

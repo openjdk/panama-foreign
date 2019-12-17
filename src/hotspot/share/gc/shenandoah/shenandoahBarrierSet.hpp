@@ -41,6 +41,7 @@ public:
 private:
 
   ShenandoahHeap* _heap;
+  BufferNode::Allocator _satb_mark_queue_buffer_allocator;
   ShenandoahSATBMarkQueueSet _satb_mark_queue_set;
 
 public:
@@ -56,34 +57,25 @@ public:
     return barrier_set()->_satb_mark_queue_set;
   }
 
+  static bool need_load_reference_barrier(DecoratorSet decorators, BasicType type);
+  static bool use_load_reference_barrier_native(DecoratorSet decorators, BasicType type);
+  static bool need_keep_alive_barrier(DecoratorSet decorators, BasicType type);
+
   void print_on(outputStream* st) const;
 
   bool is_a(BarrierSet::Name bsn);
 
   bool is_aligned(HeapWord* hw);
 
-  void write_ref_array(HeapWord* start, size_t count);
-
   template <class T> void
-  write_ref_array_pre_work(T* dst, size_t count);
+  write_ref_array_pre_work(T* src, T* dst, size_t count, bool dest_uninitialized);
 
-  void write_ref_array_pre(oop* dst, size_t count, bool dest_uninitialized);
-
-  void write_ref_array_pre(narrowOop* dst, size_t count, bool dest_uninitialized);
-
-  // We export this to make it available in cases where the static
-  // type of the barrier set is known.  Note that it is non-virtual.
-  template <class T> inline void inline_write_ref_field_pre(T* field, oop new_val);
-
-  // These are the more general virtual versions.
-  void write_ref_field_pre_work(oop* field, oop new_val);
-  void write_ref_field_pre_work(narrowOop* field, oop new_val);
-  void write_ref_field_pre_work(void* field, oop new_val);
-
-  void write_ref_field_work(void* v, oop o, bool release = false);
-  void write_region(MemRegion mr);
-
-  oop oop_load_from_native_barrier(oop obj);
+  inline void arraycopy_pre(oop* src, oop* dst, size_t count);
+  inline void arraycopy_pre(narrowOop* src, narrowOop* dst, size_t count);
+  inline void arraycopy_update(oop* src, size_t count);
+  inline void arraycopy_update(narrowOop* src, size_t count);
+  inline void clone_barrier(oop src);
+  void clone_barrier_runtime(oop src);
 
   virtual void on_thread_create(Thread* thread);
   virtual void on_thread_destroy(Thread* thread);
@@ -93,59 +85,48 @@ public:
   static inline oop resolve_forwarded_not_null(oop p);
   static inline oop resolve_forwarded(oop p);
 
-  void storeval_barrier(oop obj);
-  void keep_alive_barrier(oop obj);
+  template <DecoratorSet decorators, typename T>
+  inline void satb_barrier(T* field);
+  inline void satb_enqueue(oop value);
+  inline void storeval_barrier(oop obj);
+
+  template <DecoratorSet decorators>
+  inline void keep_alive_if_weak(oop value);
+  inline void keep_alive_if_weak(DecoratorSet decorators, oop value);
+  inline void keep_alive_barrier(oop value);
+
+  inline void enqueue(oop obj);
 
   oop load_reference_barrier(oop obj);
-  oop load_reference_barrier_mutator(oop obj);
   oop load_reference_barrier_not_null(oop obj);
 
-  void enqueue(oop obj);
+  oop load_reference_barrier_mutator(oop obj, oop* load_addr);
+  oop load_reference_barrier_mutator(oop obj, narrowOop* load_addr);
+
+  template <class T>
+  oop load_reference_barrier_mutator_work(oop obj, T* load_addr);
+
+  oop load_reference_barrier_native(oop obj, oop* load_addr);
+  oop load_reference_barrier_native(oop obj, narrowOop* load_addr);
 
 private:
-  template <class T, bool STOREVAL_WRITE_BARRIER>
-  void write_ref_array_loop(HeapWord* start, size_t count);
+  template <class T>
+  inline void arraycopy_pre_work(T* src, T* dst, size_t count);
+  template <class T, bool HAS_FWD, bool EVAC, bool ENQUEUE>
+  inline void arraycopy_work(T* src, size_t count);
+  template <class T>
+  inline void arraycopy_update_impl(T* src, size_t count);
 
   oop load_reference_barrier_impl(oop obj);
 
-  static void keep_alive_if_weak(DecoratorSet decorators, oop value) {
-    assert((decorators & ON_UNKNOWN_OOP_REF) == 0, "Reference strength must be known");
-    const bool on_strong_oop_ref = (decorators & ON_STRONG_OOP_REF) != 0;
-    const bool peek              = (decorators & AS_NO_KEEPALIVE) != 0;
-    if (!peek && !on_strong_oop_ref && value != NULL) {
-      ShenandoahBarrierSet::barrier_set()->keep_alive_barrier(value);
-    }
-  }
-
-  template <typename T>
-  bool arraycopy_loop_1(T* src, T* dst, size_t length, Klass* bound,
-                        bool checkcast, bool satb, bool disjoint, ShenandoahBarrierSet::ArrayCopyStoreValMode storeval_mode);
-
-  template <typename T, bool CHECKCAST>
-  bool arraycopy_loop_2(T* src, T* dst, size_t length, Klass* bound,
-                        bool satb, bool disjoint, ShenandoahBarrierSet::ArrayCopyStoreValMode storeval_mode);
-
-  template <typename T, bool CHECKCAST, bool SATB>
-  bool arraycopy_loop_3(T* src, T* dst, size_t length, Klass* bound,
-                        bool disjoint, ShenandoahBarrierSet::ArrayCopyStoreValMode storeval_mode);
-
-  template <typename T, bool CHECKCAST, bool SATB, ShenandoahBarrierSet::ArrayCopyStoreValMode STOREVAL_MODE>
-  bool arraycopy_loop(T* src, T* dst, size_t length, Klass* bound, bool disjoint);
-
-  template <typename T, bool CHECKCAST, bool SATB, ShenandoahBarrierSet::ArrayCopyStoreValMode STOREVAL_MODE>
-  bool arraycopy_element(T* cur_src, T* cur_dst, Klass* bound, Thread* const thread, ShenandoahMarkingContext* const ctx);
+  template <class T>
+  oop load_reference_barrier_native_impl(oop obj, T* load_addr);
 
 public:
   // Callbacks for runtime accesses.
   template <DecoratorSet decorators, typename BarrierSetT = ShenandoahBarrierSet>
   class AccessBarrier: public BarrierSet::AccessBarrier<decorators, BarrierSetT> {
     typedef BarrierSet::AccessBarrier<decorators, BarrierSetT> Raw;
-
-    template <typename T>
-    static oop oop_atomic_cmpxchg_in_heap_impl(oop new_value, T* addr, oop compare_value);
-
-    template <typename T>
-    static oop oop_atomic_xchg_in_heap_impl(oop new_value, T* addr);
 
   public:
     // Heap oop accesses. These accessors get resolved when
@@ -160,12 +141,12 @@ public:
     static void oop_store_in_heap_at(oop base, ptrdiff_t offset, oop value);
 
     template <typename T>
-    static oop oop_atomic_cmpxchg_in_heap(oop new_value, T* addr, oop compare_value);
-    static oop oop_atomic_cmpxchg_in_heap_at(oop new_value, oop base, ptrdiff_t offset, oop compare_value);
+    static oop oop_atomic_cmpxchg_in_heap(T* addr, oop compare_value, oop new_value);
+    static oop oop_atomic_cmpxchg_in_heap_at(oop base, ptrdiff_t offset, oop compare_value, oop new_value);
 
     template <typename T>
-    static oop oop_atomic_xchg_in_heap(oop new_value, T* addr);
-    static oop oop_atomic_xchg_in_heap_at(oop new_value, oop base, ptrdiff_t offset);
+    static oop oop_atomic_xchg_in_heap(T* addr, oop new_value);
+    static oop oop_atomic_xchg_in_heap_at(oop base, ptrdiff_t offset, oop new_value);
 
     template <typename T>
     static bool oop_arraycopy_in_heap(arrayOop src_obj, size_t src_offset_in_bytes, T* src_raw,
@@ -184,10 +165,10 @@ public:
     static void oop_store_not_in_heap(T* addr, oop value);
 
     template <typename T>
-    static oop oop_atomic_cmpxchg_not_in_heap(oop new_value, T* addr, oop compare_value);
+    static oop oop_atomic_cmpxchg_not_in_heap(T* addr, oop compare_value, oop new_value);
 
     template <typename T>
-    static oop oop_atomic_xchg_not_in_heap(oop new_value, T* addr);
+    static oop oop_atomic_xchg_not_in_heap(T* addr, oop new_value);
 
   };
 

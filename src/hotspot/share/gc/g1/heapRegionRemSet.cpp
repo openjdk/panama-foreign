@@ -46,7 +46,7 @@ PerRegionTable* PerRegionTable::alloc(HeapRegion* hr) {
   PerRegionTable* fl = _free_list;
   while (fl != NULL) {
     PerRegionTable* nxt = fl->next();
-    PerRegionTable* res = Atomic::cmpxchg(nxt, &_free_list, fl);
+    PerRegionTable* res = Atomic::cmpxchg(&_free_list, fl, nxt);
     if (res == fl) {
       fl->init(hr, true);
       return fl;
@@ -219,7 +219,7 @@ void OtherRegionsTable::add_reference(OopOrNarrowOopStar from, uint tid) {
       // some mark bits may not yet seem cleared or a 'later' update
       // performed by a concurrent thread could be undone when the
       // zeroing becomes visible). This requires store ordering.
-      OrderAccess::release_store(&_fine_grain_regions[ind], prt);
+      Atomic::release_store(&_fine_grain_regions[ind], prt);
       _n_fine_entries++;
 
       // Transfer from sparse to fine-grain.
@@ -428,7 +428,7 @@ HeapRegionRemSet::HeapRegionRemSet(G1BlockOffsetTable* bot,
                                    HeapRegion* hr)
   : _bot(bot),
     _code_roots(),
-    _m(Mutex::leaf, FormatBuffer<128>("HeapRegionRemSet lock #%u", hr->hrm_index()), true, Monitor::_safepoint_check_never),
+    _m(Mutex::leaf, FormatBuffer<128>("HeapRegionRemSet lock #%u", hr->hrm_index()), true, Mutex::_safepoint_check_never),
     _other_regions(&_m),
     _hr(hr),
     _state(Untracked)

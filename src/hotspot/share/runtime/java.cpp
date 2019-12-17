@@ -56,7 +56,6 @@
 #include "prims/jvmtiExport.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/biasedLocking.hpp"
-#include "runtime/compilationPolicy.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/flags/flagSetting.hpp"
 #include "runtime/handles.inline.hpp"
@@ -691,6 +690,8 @@ void vm_shutdown_during_initialization(const char* error, const char* message) {
 JDK_Version JDK_Version::_current;
 const char* JDK_Version::_runtime_name;
 const char* JDK_Version::_runtime_version;
+const char* JDK_Version::_runtime_vendor_version;
+const char* JDK_Version::_runtime_vendor_vm_bug_url;
 
 void JDK_Version::initialize() {
   jdk_version_info info;
@@ -732,6 +733,7 @@ int JDK_Version::compare(const JDK_Version& other) const {
   return (e > o) ? 1 : ((e == o) ? 0 : -1);
 }
 
+/* See JEP 223 */
 void JDK_Version::to_string(char* buffer, size_t buflen) const {
   assert(buffer && buflen > 0, "call with useful buffer");
   size_t index = 0;
@@ -743,13 +745,12 @@ void JDK_Version::to_string(char* buffer, size_t buflen) const {
         &buffer[index], buflen - index, "%d.%d", _major, _minor);
     if (rc == -1) return;
     index += rc;
-    if (_security > 0) {
-      rc = jio_snprintf(&buffer[index], buflen - index, ".%d", _security);
+    if (_patch > 0) {
+      rc = jio_snprintf(&buffer[index], buflen - index, ".%d.%d", _security, _patch);
       if (rc == -1) return;
       index += rc;
-    }
-    if (_patch > 0) {
-      rc = jio_snprintf(&buffer[index], buflen - index, ".%d", _patch);
+    } else if (_security > 0) {
+      rc = jio_snprintf(&buffer[index], buflen - index, ".%d", _security);
       if (rc == -1) return;
       index += rc;
     }

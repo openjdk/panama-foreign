@@ -128,9 +128,14 @@ static char* next_OnError_command(char* buf, int buflen, const char** ptr) {
 
 static void print_bug_submit_message(outputStream *out, Thread *thread) {
   if (out == NULL) return;
-  out->print_raw_cr("# If you would like to submit a bug report, please visit:");
-  out->print_raw   ("#   ");
-  out->print_raw_cr(Arguments::java_vendor_url_bug());
+  const char *url = Arguments::java_vendor_url_bug();
+  if (url == NULL || *url == '\0')
+    url = JDK_Version::runtime_vendor_vm_bug_url();
+  if (url != NULL && *url != '\0') {
+    out->print_raw_cr("# If you would like to submit a bug report, please visit:");
+    out->print_raw   ("#   ");
+    out->print_raw_cr(url);
+  }
   // If the crash is in native code, encourage user to submit a bug to the
   // provider of that code.
   if (thread && thread->is_Java_thread() &&
@@ -321,15 +326,19 @@ static void report_vm_version(outputStream* st, char* buf, int buflen) {
                                 JDK_Version::runtime_name() : "";
    const char* runtime_version = JDK_Version::runtime_version() != NULL ?
                                    JDK_Version::runtime_version() : "";
+   const char* vendor_version = JDK_Version::runtime_vendor_version() != NULL ?
+                                  JDK_Version::runtime_vendor_version() : "";
    const char* jdk_debug_level = VM_Version::printable_jdk_debug_level() != NULL ?
                                    VM_Version::printable_jdk_debug_level() : "";
 
-   st->print_cr("# JRE version: %s (%s) (%sbuild %s)", runtime_name, buf,
-                 jdk_debug_level, runtime_version);
+   st->print_cr("# JRE version: %s%s%s (%s) (%sbuild %s)", runtime_name,
+                (*vendor_version != '\0') ? " " : "", vendor_version,
+                buf, jdk_debug_level, runtime_version);
 
    // This is the long version with some default settings added
-   st->print_cr("# Java VM: %s (%s%s, %s%s%s%s%s, %s, %s)",
+   st->print_cr("# Java VM: %s%s%s (%s%s, %s%s%s%s%s, %s, %s)",
                  VM_Version::vm_name(),
+                (*vendor_version != '\0') ? " " : "", vendor_version,
                  jdk_debug_level,
                  VM_Version::vm_release(),
                  VM_Version::vm_info_string(),
@@ -390,7 +399,7 @@ jlong VMError::get_current_timestamp() {
 
 void VMError::record_reporting_start_time() {
   const jlong now = get_current_timestamp();
-  Atomic::store(now, &_reporting_start_time);
+  Atomic::store(&_reporting_start_time, now);
 }
 
 jlong VMError::get_reporting_start_time() {
@@ -399,7 +408,7 @@ jlong VMError::get_reporting_start_time() {
 
 void VMError::record_step_start_time() {
   const jlong now = get_current_timestamp();
-  Atomic::store(now, &_step_start_time);
+  Atomic::store(&_step_start_time, now);
 }
 
 jlong VMError::get_step_start_time() {
@@ -407,7 +416,7 @@ jlong VMError::get_step_start_time() {
 }
 
 void VMError::clear_step_start_time() {
-  return Atomic::store((jlong)0, &_step_start_time);
+  return Atomic::store(&_step_start_time, (jlong)0);
 }
 
 void VMError::report(outputStream* st, bool _verbose) {
@@ -1205,7 +1214,7 @@ void VMError::print_vm_info(outputStream* st) {
   st->print_cr("END.");
 }
 
-volatile intptr_t VMError::first_error_tid = -1;
+volatile intptr_t VMError::_first_error_tid = -1;
 
 /** Expand a pattern into a buffer starting at pos and open a file using constructed path */
 static int expand_and_open(const char* pattern, bool overwrite_existing, char* buf, size_t buflen, size_t pos) {
@@ -1355,8 +1364,8 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
       os::abort(CreateCoredumpOnCrash);
   }
   intptr_t mytid = os::current_thread_id();
-  if (first_error_tid == -1 &&
-      Atomic::cmpxchg(mytid, &first_error_tid, (intptr_t)-1) == -1) {
+  if (_first_error_tid == -1 &&
+      Atomic::cmpxchg(&_first_error_tid, (intptr_t)-1, mytid) == -1) {
 
     // Initialize time stamps to use the same base.
     out.time_stamp().update_to(1);
@@ -1416,7 +1425,7 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
 
     // This is not the first error, see if it happened in a different thread
     // or in the same thread during error reporting.
-    if (first_error_tid != mytid) {
+    if (_first_error_tid != mytid) {
       char msgbuf[64];
       jio_snprintf(msgbuf, sizeof(msgbuf),
                    "[thread " INTX_FORMAT " also had an error]",
@@ -1797,11 +1806,14 @@ void VMError::controlled_crash(int how) {
   // Case 16 is tested by test/hotspot/jtreg/runtime/ErrorHandling/ThreadsListHandleInErrorHandlingTest.java.
   // Case 17 is tested by test/hotspot/jtreg/runtime/ErrorHandling/NestedThreadsListHandleInErrorHandlingTest.java.
 
-  // We grab Threads_lock to keep ThreadsSMRSupport::print_info_on()
+  // We try to grab Threads_lock to keep ThreadsSMRSupport::print_info_on()
   // from racing with Threads::add() or Threads::remove() as we
   // generate the hs_err_pid file. This makes our ErrorHandling tests
   // more stable.
-  MutexLocker ml(Threads_lock->owned_by_self() ? NULL : Threads_lock, Mutex::_no_safepoint_check_flag);
+  if (!Threads_lock->owned_by_self()) {
+    Threads_lock->try_lock();
+    // The VM is going to die so no need to unlock Thread_lock.
+  }
 
   switch (how) {
     case  1: vmassert(str == NULL, "expected null"); break;

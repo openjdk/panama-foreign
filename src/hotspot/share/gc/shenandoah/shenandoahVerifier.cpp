@@ -35,6 +35,9 @@
 #include "memory/iterator.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/compressedOops.inline.hpp"
+#include "runtime/atomic.hpp"
+#include "runtime/orderAccess.hpp"
+#include "utilities/align.hpp"
 
 // Avoid name collision on verify_oop (defined in macroAssembler_arm.hpp)
 #ifdef verify_oop
@@ -98,7 +101,7 @@ private:
 
     check(ShenandoahAsserts::_safe_unknown, obj, _heap->is_in(obj),
               "oop must be in heap");
-    check(ShenandoahAsserts::_safe_unknown, obj, check_obj_alignment(obj),
+    check(ShenandoahAsserts::_safe_unknown, obj, is_object_aligned(obj),
               "oop must be aligned");
 
     ShenandoahHeapRegion *obj_reg = _heap->heap_region_containing(obj);
@@ -138,7 +141,7 @@ private:
           // skip
           break;
         case ShenandoahVerifier::_verify_liveness_complete:
-          Atomic::add((uint) obj->size(), &_ld[obj_reg->region_number()]);
+          Atomic::add(&_ld[obj_reg->region_number()], (uint) obj->size());
           // fallthrough for fast failure for un-live regions:
         case ShenandoahVerifier::_verify_liveness_conservative:
           check(ShenandoahAsserts::_safe_oop, obj, obj_reg->has_live(),
@@ -153,12 +156,12 @@ private:
 
     ShenandoahHeapRegion* fwd_reg = NULL;
 
-    if (!oopDesc::equals_raw(obj, fwd)) {
+    if (obj != fwd) {
       check(ShenandoahAsserts::_safe_oop, obj, _heap->is_in(fwd),
              "Forwardee must be in heap");
       check(ShenandoahAsserts::_safe_oop, obj, !CompressedOops::is_null(fwd),
              "Forwardee is set");
-      check(ShenandoahAsserts::_safe_oop, obj, check_obj_alignment(fwd),
+      check(ShenandoahAsserts::_safe_oop, obj, is_object_aligned(fwd),
              "Forwardee must be aligned");
 
       // Do this before touching fwd->size()
@@ -183,7 +186,7 @@ private:
              "Forwardee end should be within the region");
 
       oop fwd2 = (oop) ShenandoahForwarding::get_forwardee_raw_unchecked(fwd);
-      check(ShenandoahAsserts::_safe_oop, obj, oopDesc::equals_raw(fwd, fwd2),
+      check(ShenandoahAsserts::_safe_oop, obj, (fwd == fwd2),
              "Double forwarding");
     } else {
       fwd_reg = obj_reg;
@@ -212,12 +215,12 @@ private:
         // skip
         break;
       case ShenandoahVerifier::_verify_forwarded_none: {
-        check(ShenandoahAsserts::_safe_all, obj, oopDesc::equals_raw(obj, fwd),
+        check(ShenandoahAsserts::_safe_all, obj, (obj == fwd),
                "Should not be forwarded");
         break;
       }
       case ShenandoahVerifier::_verify_forwarded_allow: {
-        if (!oopDesc::equals_raw(obj, fwd)) {
+        if (obj != fwd) {
           check(ShenandoahAsserts::_safe_all, obj, obj_reg != fwd_reg,
                  "Forwardee should be in another region");
         }
@@ -237,7 +240,7 @@ private:
         break;
       case ShenandoahVerifier::_verify_cset_forwarded:
         if (_heap->in_collection_set(obj)) {
-          check(ShenandoahAsserts::_safe_all, obj, !oopDesc::equals_raw(obj, fwd),
+          check(ShenandoahAsserts::_safe_all, obj, (obj != fwd),
                  "Object in collection set, should have forwardee");
         }
         break;
@@ -478,7 +481,7 @@ public:
       }
     }
 
-    Atomic::add(processed, &_processed);
+    Atomic::add(&_processed, processed);
   }
 };
 
@@ -517,7 +520,7 @@ public:
                                   _options);
 
     while (true) {
-      size_t v = Atomic::add(1u, &_claimed) - 1;
+      size_t v = Atomic::add(&_claimed, 1u) - 1;
       if (v < _heap->num_regions()) {
         ShenandoahHeapRegion* r = _heap->get_region(v);
         if (!r->is_humongous() && !r->is_trash()) {
@@ -537,7 +540,7 @@ public:
     if (_heap->complete_marking_context()->is_marked((oop)obj)) {
       verify_and_follow(obj, stack, cl, &processed);
     }
-    Atomic::add(processed, &_processed);
+    Atomic::add(&_processed, processed);
   }
 
   virtual void work_regular(ShenandoahHeapRegion *r, ShenandoahVerifierStack &stack, ShenandoahVerifyOopClosure &cl) {
@@ -570,7 +573,7 @@ public:
       }
     }
 
-    Atomic::add(processed, &_processed);
+    Atomic::add(&_processed, processed);
   }
 
   void verify_and_follow(HeapWord *addr, ShenandoahVerifierStack &stack, ShenandoahVerifyOopClosure &cl, size_t *processed) {
@@ -685,13 +688,17 @@ void ShenandoahVerifier::verify_at_safepoint(const char *label,
     _heap->heap_region_iterate(&cl);
     size_t heap_used = _heap->used();
     guarantee(cl.used() == heap_used,
-              "%s: heap used size must be consistent: heap-used = " SIZE_FORMAT "K, regions-used = " SIZE_FORMAT "K",
-              label, heap_used/K, cl.used()/K);
+              "%s: heap used size must be consistent: heap-used = " SIZE_FORMAT "%s, regions-used = " SIZE_FORMAT "%s",
+              label,
+              byte_size_in_proper_unit(heap_used), proper_unit_for_byte_size(heap_used),
+              byte_size_in_proper_unit(cl.used()), proper_unit_for_byte_size(cl.used()));
 
     size_t heap_committed = _heap->committed();
     guarantee(cl.committed() == heap_committed,
-              "%s: heap committed size must be consistent: heap-committed = " SIZE_FORMAT "K, regions-committed = " SIZE_FORMAT "K",
-              label, heap_committed/K, cl.committed()/K);
+              "%s: heap committed size must be consistent: heap-committed = " SIZE_FORMAT "%s, regions-committed = " SIZE_FORMAT "%s",
+              label,
+              byte_size_in_proper_unit(heap_committed), proper_unit_for_byte_size(heap_committed),
+              byte_size_in_proper_unit(cl.committed()), proper_unit_for_byte_size(cl.committed()));
   }
 
   // Internal heap region checks
@@ -751,12 +758,12 @@ void ShenandoahVerifier::verify_at_safepoint(const char *label,
       if (r->is_humongous()) {
         // For humongous objects, test if start region is marked live, and if so,
         // all humongous regions in that chain have live data equal to their "used".
-        juint start_live = OrderAccess::load_acquire(&ld[r->humongous_start_region()->region_number()]);
+        juint start_live = Atomic::load_acquire(&ld[r->humongous_start_region()->region_number()]);
         if (start_live > 0) {
           verf_live = (juint)(r->used() / HeapWordSize);
         }
       } else {
-        verf_live = OrderAccess::load_acquire(&ld[r->region_number()]);
+        verf_live = Atomic::load_acquire(&ld[r->region_number()]);
       }
 
       size_t reg_live = r->get_live_data_words();
@@ -952,7 +959,7 @@ private:
     if (!CompressedOops::is_null(o)) {
       oop obj = CompressedOops::decode_not_null(o);
       oop fwd = (oop) ShenandoahForwarding::get_forwardee_raw_unchecked(obj);
-      if (!oopDesc::equals_raw(obj, fwd)) {
+      if (obj != fwd) {
         ShenandoahAsserts::print_failure(ShenandoahAsserts::_safe_all, obj, p, NULL,
                                          "Verify Roots", "Should not be forwarded", __FILE__, __LINE__);
       }
@@ -984,7 +991,7 @@ private:
       }
 
       oop fwd = (oop) ShenandoahForwarding::get_forwardee_raw_unchecked(obj);
-      if (!oopDesc::equals_raw(obj, fwd)) {
+      if (obj != fwd) {
         ShenandoahAsserts::print_failure(ShenandoahAsserts::_safe_all, obj, p, NULL,
                 "Verify Roots In To-Space", "Should not be forwarded", __FILE__, __LINE__);
       }
@@ -998,6 +1005,13 @@ public:
 
 void ShenandoahVerifier::verify_roots_in_to_space() {
   ShenandoahRootVerifier verifier;
+  ShenandoahVerifyInToSpaceClosure cl;
+  verifier.oops_do(&cl);
+}
+
+void ShenandoahVerifier::verify_roots_in_to_space_except(ShenandoahRootVerifier::RootTypes types) {
+  ShenandoahRootVerifier verifier;
+  verifier.excludes(types);
   ShenandoahVerifyInToSpaceClosure cl;
   verifier.oops_do(&cl);
 }

@@ -32,6 +32,7 @@
 #include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
+#include "oops/klass.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/vframeArray.hpp"
 #include "utilities/align.hpp"
@@ -760,7 +761,8 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                                 int compile_id,
                                                 BasicType* in_sig_bt,
                                                 VMRegPair* in_regs,
-                                                BasicType ret_type) {
+                                                BasicType ret_type,
+                                                address critical_entry) {
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
     intptr_t start = (intptr_t)__ pc();
@@ -868,16 +870,16 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
 
     __ ldr(Rtemp, Address(obj_reg, oopDesc::mark_offset_in_bytes()));
 
-    assert(markOopDesc::unlocked_value == 1, "adjust this code");
-    __ tbz(Rtemp, exact_log2(markOopDesc::unlocked_value), slow_case);
+    assert(markWord::unlocked_value == 1, "adjust this code");
+    __ tbz(Rtemp, exact_log2(markWord::unlocked_value), slow_case);
 
     if (UseBiasedLocking) {
-      assert(is_power_of_2(markOopDesc::biased_lock_bit_in_place), "adjust this code");
-      __ tbnz(Rtemp, exact_log2(markOopDesc::biased_lock_bit_in_place), slow_case);
+      assert(is_power_of_2(markWord::biased_lock_bit_in_place), "adjust this code");
+      __ tbnz(Rtemp, exact_log2(markWord::biased_lock_bit_in_place), slow_case);
     }
 
-    __ bics(Rtemp, Rtemp, ~markOopDesc::hash_mask_in_place);
-    __ mov(R0, AsmOperand(Rtemp, lsr, markOopDesc::hash_shift), ne);
+    __ bics(Rtemp, Rtemp, ~markWord::hash_mask_in_place);
+    __ mov(R0, AsmOperand(Rtemp, lsr, markWord::hash_shift), ne);
     __ bx(LR, ne);
 
     __ bind(slow_case);
@@ -1179,7 +1181,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
 
     __ ldr(mark, Address(sync_obj, oopDesc::mark_offset_in_bytes()));
     __ sub(disp_hdr, FP, lock_slot_fp_offset);
-    __ tst(mark, markOopDesc::unlocked_value);
+    __ tst(mark, markWord::unlocked_value);
     __ b(fast_lock, ne);
 
     // Check for recursive lock

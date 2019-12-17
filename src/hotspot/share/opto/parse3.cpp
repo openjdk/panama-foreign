@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,8 +55,9 @@ void Parse::do_field_access(bool is_get, bool is_field) {
     return;
   }
 
-  // Deoptimize on putfield writes to call site target field.
-  if (!is_get && field->is_call_site_target()) {
+  // Deoptimize on putfield writes to call site target field outside of CallSite ctor.
+  if (!is_get && field->is_call_site_target() &&
+      !(method()->holder() == field_holder && method()->is_object_initializer())) {
     uncommon_trap(Deoptimization::Reason_unhandled,
                   Deoptimization::Action_reinterpret,
                   NULL, "put to call site target field");
@@ -139,7 +140,7 @@ void Parse::do_get_xxx(Node* obj, ciField* field, bool is_field) {
   DecoratorSet decorators = IN_HEAP;
   decorators |= is_vol ? MO_SEQ_CST : MO_UNORDERED;
 
-  bool is_obj = bt == T_OBJECT || bt == T_ARRAY;
+  bool is_obj = is_reference_type(bt);
 
   if (is_obj) {
     if (!field->type()->is_loaded()) {
@@ -210,7 +211,7 @@ void Parse::do_put_xxx(Node* obj, ciField* field, bool is_field) {
   DecoratorSet decorators = IN_HEAP;
   decorators |= is_vol ? MO_SEQ_CST : MO_UNORDERED;
 
-  bool is_obj = bt == T_OBJECT || bt == T_ARRAY;
+  bool is_obj = is_reference_type(bt);
 
   // Store the value.
   const Type* field_type;

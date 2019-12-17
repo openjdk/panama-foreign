@@ -29,6 +29,7 @@
  */
 import java.net.*;
 import java.io.*;
+import static java.net.Proxy.NO_PROXY;
 
 public class Responses {
 
@@ -56,7 +57,8 @@ public class Responses {
      * "HTTP/1.1 404 "
      */
     static class HttpServer implements Runnable {
-        ServerSocket ss;
+        final ServerSocket ss;
+        volatile boolean shutdown;
 
         public HttpServer() {
             try {
@@ -83,6 +85,7 @@ public class Responses {
         }
 
         public void shutdown() throws IOException {
+            shutdown = true;
             ss.close();
         }
 
@@ -90,7 +93,7 @@ public class Responses {
             Object[][] tests = getTests();
 
             try {
-                for (;;) {
+                while(!shutdown) {
                     Socket s = ss.accept();
 
                     BufferedReader in = new BufferedReader(
@@ -101,6 +104,7 @@ public class Responses {
                     int pos2 = req.indexOf(' ', pos1+1);
 
                     int i = Integer.parseInt(req.substring(pos1+2, pos2));
+                    System.out.println("Server replying to >" + tests[i][0] + "<");
 
                     PrintStream out = new PrintStream(
                                         new BufferedOutputStream(
@@ -117,6 +121,9 @@ public class Responses {
                     s.close();
                 }
             } catch (Exception e) {
+                if (!shutdown) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -143,7 +150,7 @@ public class Responses {
             System.out.println("Test with response: >" + tests[i][0] + "<");
 
             URL url = new URL("http://" + authority + "/" + i);
-            HttpURLConnection http = (HttpURLConnection)url.openConnection();
+            HttpURLConnection http = (HttpURLConnection)url.openConnection(NO_PROXY);
 
             try {
 
@@ -170,6 +177,7 @@ public class Responses {
                         actualPhrase + ", expected: " + expectedPhrase);
                 }
             } catch (IOException e) {
+                System.err.println("Test failed for >" + tests[i][0] + "<: " + e);
                 e.printStackTrace();
                 failures++;
             }

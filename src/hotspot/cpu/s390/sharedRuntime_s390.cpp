@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2016, 2018 SAP SE. All rights reserved.
+ * Copyright (c) 2016, 2019, SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,9 @@
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interp_masm.hpp"
 #include "memory/resourceArea.hpp"
+#include "nativeInst_s390.hpp"
 #include "oops/compiledICHolder.hpp"
+#include "oops/klass.inline.hpp"
 #include "registerSaver_s390.hpp"
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -891,7 +893,7 @@ static void verify_oop_args(MacroAssembler *masm,
   if (!VerifyOops) { return; }
 
   for (int i = 0; i < total_args_passed; i++) {
-    if (sig_bt[i] == T_OBJECT || sig_bt[i] == T_ARRAY) {
+    if (is_reference_type(sig_bt[i])) {
       VMReg r = regs[i].first();
       assert(r->is_valid(), "bad oop arg");
 
@@ -1526,8 +1528,8 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
                                                 int compile_id,
                                                 BasicType *in_sig_bt,
                                                 VMRegPair *in_regs,
-                                                BasicType ret_type) {
-#ifdef COMPILER2
+                                                BasicType ret_type,
+                                                address critical_entry) {
   int total_in_args = method->size_of_parameters();
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
@@ -1562,7 +1564,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   ///////////////////////////////////////////////////////////////////////
 
   bool is_critical_native = true;
-  address native_func = method->critical_native_function();
+  address native_func = critical_entry;
   if (native_func == NULL) {
     native_func = method->native_function();
     is_critical_native = false;
@@ -2325,7 +2327,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   __ reset_last_Java_frame();
 
   // Unpack oop result, e.g. JNIHandles::resolve result.
-  if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
+  if (is_reference_type(ret_type)) {
     __ resolve_jobject(Z_RET, /* tmp1 */ Z_R13, /* tmp2 */ Z_R7);
   }
 
@@ -2407,10 +2409,6 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   }
 
   return nm;
-#else
-  ShouldNotReachHere();
-  return NULL;
-#endif // COMPILER2
 }
 
 static address gen_c2i_adapter(MacroAssembler  *masm,
@@ -2628,7 +2626,7 @@ void SharedRuntime::gen_i2c_adapter(MacroAssembler *masm,
       } else {
         if (!r_2->is_valid()) {
           // Not sure we need to do this but it shouldn't hurt.
-          if (sig_bt[i] == T_OBJECT || sig_bt[i] == T_ADDRESS || sig_bt[i] == T_ARRAY) {
+          if (is_reference_type(sig_bt[i]) || sig_bt[i] == T_ADDRESS) {
             __ z_lg(r_1->as_Register(), ld_offset, ld_ptr);
           } else {
             __ z_l(r_1->as_Register(), ld_offset, ld_ptr);
@@ -2886,7 +2884,7 @@ void SharedRuntime::generate_deopt_blob() {
   // to Deoptimization::fetch_unroll_info below.
   // The (int) cast is necessary, because -((unsigned int)14)
   // is an unsigned int.
-  __ add2reg(Z_R14, -(int)HandlerImpl::size_deopt_handler());
+  __ add2reg(Z_R14, -(int)NativeCall::max_instruction_size());
 
   const Register   exec_mode_reg = Z_tmp_1;
 

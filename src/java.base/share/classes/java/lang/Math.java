@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,12 +92,12 @@ import jdk.internal.HotSpotIntrinsicCandidate;
  * The best practice is to choose the primitive type and algorithm to avoid
  * overflow. In cases where the size is {@code int} or {@code long} and
  * overflow errors need to be detected, the methods {@code addExact},
- * {@code subtractExact}, {@code multiplyExact}, and {@code toIntExact}
+ * {@code subtractExact}, {@code multiplyExact}, {@code toIntExact},
+ * {@code incrementExact}, {@code decrementExact} and {@code negateExact}
  * throw an {@code ArithmeticException} when the results overflow.
- * For other arithmetic operations such as divide, absolute value,
- * increment by one, decrement by one, and negation, overflow occurs only with
- * a specific minimum or maximum value and should be checked against
- * the minimum or maximum as appropriate.
+ * For the arithmetic operations divide and absolute value, overflow
+ * occurs only with a specific minimum or maximum value and
+ * should be checked against the minimum or maximum as appropriate.
  *
  * @author  unascribed
  * @author  Joseph D. Darcy
@@ -440,6 +440,7 @@ public final class Math {
      *          floating-point value that is greater than or equal to
      *          the argument and is equal to a mathematical integer.
      */
+    @HotSpotIntrinsicCandidate
     public static double ceil(double a) {
         return StrictMath.ceil(a); // default impl. delegates to StrictMath
     }
@@ -459,6 +460,7 @@ public final class Math {
      *          floating-point value that less than or equal to the argument
      *          and is equal to a mathematical integer.
      */
+    @HotSpotIntrinsicCandidate
     public static double floor(double a) {
         return StrictMath.floor(a); // default impl. delegates to StrictMath
     }
@@ -478,6 +480,7 @@ public final class Math {
      * @return  the closest floating-point value to {@code a} that is
      *          equal to a mathematical integer.
      */
+    @HotSpotIntrinsicCandidate
     public static double rint(double a) {
         return StrictMath.rint(a); // default impl. delegates to StrictMath
     }
@@ -952,6 +955,7 @@ public final class Math {
     /**
      * Returns the argument incremented by one, throwing an exception if the
      * result overflows an {@code int}.
+     * The overflow only occurs for {@linkplain Integer#MAX_VALUE the maximum value}.
      *
      * @param a the value to increment
      * @return the result
@@ -970,6 +974,7 @@ public final class Math {
     /**
      * Returns the argument incremented by one, throwing an exception if the
      * result overflows a {@code long}.
+     * The overflow only occurs for {@linkplain Long#MAX_VALUE the maximum value}.
      *
      * @param a the value to increment
      * @return the result
@@ -988,6 +993,7 @@ public final class Math {
     /**
      * Returns the argument decremented by one, throwing an exception if the
      * result overflows an {@code int}.
+     * The overflow only occurs for {@linkplain Integer#MIN_VALUE the minimum value}.
      *
      * @param a the value to decrement
      * @return the result
@@ -1006,6 +1012,7 @@ public final class Math {
     /**
      * Returns the argument decremented by one, throwing an exception if the
      * result overflows a {@code long}.
+     * The overflow only occurs for {@linkplain Long#MIN_VALUE the minimum value}.
      *
      * @param a the value to decrement
      * @return the result
@@ -1024,6 +1031,7 @@ public final class Math {
     /**
      * Returns the negation of the argument, throwing an exception if the
      * result overflows an {@code int}.
+     * The overflow only occurs for {@linkplain Integer#MIN_VALUE the minimum value}.
      *
      * @param a the value to negate
      * @return the result
@@ -1042,6 +1050,7 @@ public final class Math {
     /**
      * Returns the negation of the argument, throwing an exception if the
      * result overflows a {@code long}.
+     * The overflow only occurs for {@linkplain Long#MIN_VALUE the minimum value}.
      *
      * @param a the value to negate
      * @return the result
@@ -1058,7 +1067,7 @@ public final class Math {
     }
 
     /**
-     * Returns the value of the {@code long} argument;
+     * Returns the value of the {@code long} argument,
      * throwing an exception if the value overflows an {@code int}.
      *
      * @param value the long value
@@ -1250,16 +1259,17 @@ public final class Math {
      * Examples:
      * <ul>
      *   <li>If the signs of the arguments are the same, the results
-     *       of {@code floorMod} and the {@code %} operator are the same.  <br>
+     *       of {@code floorMod} and the {@code %} operator are the same.<br>
      *       <ul>
-     *       <li>{@code floorMod(4, 3) == 1}; &nbsp; and {@code (4 % 3) == 1}</li>
+     *       <li>{@code floorMod(+4, +3) == +1}; &nbsp; and {@code (+4 % +3) == +1}</li>
+     *       <li>{@code floorMod(-4, -3) == -1}; &nbsp; and {@code (-4 % -3) == -1}</li>
      *       </ul>
-     *   <li>If the signs of the arguments are different, the results differ from the {@code %} operator.<br>
-     *      <ul>
-     *      <li>{@code floorMod(+4, -3) == -2}; &nbsp; and {@code (+4 % -3) == +1} </li>
-     *      <li>{@code floorMod(-4, +3) == +2}; &nbsp; and {@code (-4 % +3) == -1} </li>
-     *      <li>{@code floorMod(-4, -3) == -1}; &nbsp; and {@code (-4 % -3) == -1 } </li>
-     *      </ul>
+     *   <li>If the signs of the arguments are different, the results
+     *       differ from the {@code %} operator.<br>
+     *       <ul>
+     *       <li>{@code floorMod(+4, -3) == -2}; &nbsp; and {@code (+4 % -3) == +1}</li>
+     *       <li>{@code floorMod(-4, +3) == +2}; &nbsp; and {@code (-4 % +3) == -1}</li>
+     *       </ul>
      *   </li>
      * </ul>
      * <p>

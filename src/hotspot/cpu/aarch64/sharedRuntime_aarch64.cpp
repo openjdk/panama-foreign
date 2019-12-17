@@ -34,6 +34,7 @@
 #include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
+#include "oops/klass.inline.hpp"
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/vframeArray.hpp"
@@ -1256,7 +1257,8 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                                 int compile_id,
                                                 BasicType* in_sig_bt,
                                                 VMRegPair* in_regs,
-                                                BasicType ret_type) {
+                                                BasicType ret_type,
+                                                address critical_entry) {
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
     intptr_t start = (intptr_t)__ pc();
@@ -1282,7 +1284,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                        (OopMapSet*)NULL);
   }
   bool is_critical_native = true;
-  address native_func = method->critical_native_function();
+  address native_func = critical_entry;
   if (native_func == NULL) {
     native_func = method->native_function();
     is_critical_native = false;
@@ -1959,7 +1961,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   __ reset_last_Java_frame(false);
 
   // Unbox oop result, e.g. JNIHandles::resolve result.
-  if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
+  if (is_reference_type(ret_type)) {
     __ resolve_jobject(r0, rthread, rscratch2);
   }
 

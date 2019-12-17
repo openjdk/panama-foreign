@@ -198,13 +198,17 @@ void G1FullCollector::phase1_mark_live_objects() {
   // Recursively traverse all live objects and mark them.
   GCTraceTime(Info, gc, phases) info("Phase 1: Mark live objects", scope()->timer());
 
-  // Do the actual marking.
-  G1FullGCMarkTask marking_task(this);
-  run_task(&marking_task);
+  {
+    // Do the actual marking.
+    G1FullGCMarkTask marking_task(this);
+    run_task(&marking_task);
+  }
 
-  // Process references discovered during marking.
-  G1FullGCReferenceProcessingExecutor reference_processing(this);
-  reference_processing.execute(scope()->timer(), scope()->tracer());
+  {
+    // Process references discovered during marking.
+    G1FullGCReferenceProcessingExecutor reference_processing(this);
+    reference_processing.execute(scope()->timer(), scope()->tracer());
+  }
 
   // Weak oops cleanup.
   {
@@ -282,7 +286,7 @@ void G1FullCollector::verify_after_marking() {
   // Note: we can verify only the heap here. When an object is
   // marked, the previous value of the mark word (including
   // identity hash values, ages, etc) is preserved, and the mark
-  // word is set to markOop::marked_value - effectively removing
+  // word is set to markWord::marked_value - effectively removing
   // any hash values from the mark word. These hash values are
   // used when verifying the dictionaries and so removing them
   // from the mark word can make verification of the dictionaries

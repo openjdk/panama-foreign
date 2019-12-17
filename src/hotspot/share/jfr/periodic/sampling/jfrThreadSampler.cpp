@@ -30,6 +30,7 @@
 #include "jfr/recorder/service/jfrOptionSet.hpp"
 #include "jfr/recorder/stacktrace/jfrStackTraceRepository.hpp"
 #include "jfr/support/jfrThreadId.hpp"
+#include "jfr/support/jfrThreadLocal.hpp"
 #include "jfr/utilities/jfrTime.hpp"
 #include "logging/log.hpp"
 #include "runtime/frame.inline.hpp"
@@ -352,9 +353,14 @@ static void clear_transition_block(JavaThread* jt) {
   }
 }
 
+static bool is_excluded(JavaThread* thread) {
+  assert(thread != NULL, "invariant");
+  return thread->is_hidden_from_external_view() || thread->in_deopt_handler() || thread->jfr_thread_local()->is_excluded();
+}
+
 bool JfrThreadSampleClosure::do_sample_thread(JavaThread* thread, JfrStackFrame* frames, u4 max_frames, JfrSampleType type) {
   assert(Threads_lock->owned_by_self(), "Holding the thread table lock.");
-  if (thread->is_hidden_from_external_view() || thread->in_deopt_handler()) {
+  if (is_excluded(thread)) {
     return false;
   }
 
@@ -516,7 +522,7 @@ void JfrThreadSampler::task_stacktrace(JfrSampleType type, JavaThread** last_thr
     elapsedTimer sample_time;
     sample_time.start();
     {
-      MutexLocker tlock(Threads_lock, Mutex::_no_safepoint_check_flag);
+      MutexLocker tlock(Threads_lock);
       ThreadsListHandle tlh;
       // Resolve a sample session relative start position index into the thread list array.
       // In cases where the last sampled thread is NULL or not-NULL but stale, find_index() returns -1.

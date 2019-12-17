@@ -54,6 +54,7 @@ import static org.graalvm.compiler.asm.aarch64.AArch64Assembler.Instruction.CNT;
 import static org.graalvm.compiler.asm.aarch64.AArch64Assembler.Instruction.CSEL;
 import static org.graalvm.compiler.asm.aarch64.AArch64Assembler.Instruction.CSINC;
 import static org.graalvm.compiler.asm.aarch64.AArch64Assembler.Instruction.CSNEG;
+import static org.graalvm.compiler.asm.aarch64.AArch64Assembler.Instruction.DC;
 import static org.graalvm.compiler.asm.aarch64.AArch64Assembler.Instruction.DMB;
 import static org.graalvm.compiler.asm.aarch64.AArch64Assembler.Instruction.EON;
 import static org.graalvm.compiler.asm.aarch64.AArch64Assembler.Instruction.EOR;
@@ -470,6 +471,7 @@ public abstract class AArch64Assembler extends Assembler {
     private static final int AddSubExtendedOp = 0x0B200000;
 
     private static final int MulOp = 0x1B000000;
+    private static final int SignedMulLongOp = 0x9B200000;
     private static final int DataProcessing1SourceOp = 0x5AC00000;
     private static final int DataProcessing2SourceOp = 0x1AC00000;
 
@@ -673,6 +675,7 @@ public abstract class AArch64Assembler extends Assembler {
 
         MRS(0xD5300000),
         MSR(0xD5100000),
+        DC(0xD5087000),
 
         BLR_NATIVE(0xc0000000),
 
@@ -705,6 +708,24 @@ public abstract class AArch64Assembler extends Assembler {
         private final int op0;
         private final int op1;
         private final int crn;
+        private final int crm;
+        private final int op2;
+    }
+
+    public enum DataCacheOperationType {
+        ZVA(0b011, 0b0100, 0b001);
+
+        DataCacheOperationType(int op1, int crm, int op2) {
+            this.op1 = op1;
+            this.crm = crm;
+            this.op2 = op2;
+        }
+
+        public int encoding() {
+            return op1 << 16 | crm << 8 | op2 << 5;
+        }
+
+        private final int op1;
         private final int crm;
         private final int op2;
     }
@@ -1015,7 +1036,7 @@ public abstract class AArch64Assembler extends Assembler {
     }
 
     private static int getConditionalBranchImm(int imm21) {
-        assert NumUtil.isSignedNbit(21, imm21) && (imm21 & 0x3) == 0 : "Immediate has to be 21bit signed number and word aligned";
+        assert NumUtil.isSignedNbit(21, imm21) && (imm21 & 0x3) == 0 : String.format("Immediate has to be 21bit signed number and word aligned got value 0x%x", imm21);
         int imm = (imm21 & NumUtil.getNbitNumberInt(21)) >> 2;
         return imm << ConditionalBranchImmOffset;
     }
@@ -1231,7 +1252,7 @@ public abstract class AArch64Assembler extends Assembler {
      * @param address all addressing modes allowed. May not be null.
      */
     public void str(int destSize, Register rt, AArch64Address address) {
-        assert rt.getRegisterCategory().equals(CPU);
+        assert rt.getRegisterCategory().equals(CPU) : rt;
         assert destSize == 8 || destSize == 16 || destSize == 32 || destSize == 64;
         int transferSize = NumUtil.log2Ceil(destSize / 8);
         loadStoreInstruction(STR, rt, address, General64, transferSize);
@@ -2293,7 +2314,7 @@ public abstract class AArch64Assembler extends Assembler {
     }
 
     /**
-     * unsigned multiply high. dst = (src1 * src2)[127:64]
+     * Unsigned multiply high. dst = (src1 * src2)[127:64]
      *
      * @param dst general purpose register. May not be null or the stackpointer.
      * @param src1 general purpose register. May not be null or the stackpointer.
@@ -2307,7 +2328,7 @@ public abstract class AArch64Assembler extends Assembler {
     }
 
     /**
-     * unsigned multiply add-long. xDst = xSrc3 + (wSrc1 * wSrc2)
+     * Unsigned multiply add-long. xDst = xSrc3 + (wSrc1 * wSrc2)
      *
      * @param dst general purpose register. May not be null or the stackpointer.
      * @param src1 general purpose register. May not be null or the stackpointer.
@@ -2323,7 +2344,7 @@ public abstract class AArch64Assembler extends Assembler {
     }
 
     /**
-     * signed multiply add-long. xDst = xSrc3 + (wSrc1 * wSrc2)
+     * Signed multiply-add long. xDst = xSrc3 + (wSrc1 * wSrc2)
      *
      * @param dst general purpose register. May not be null or the stackpointer.
      * @param src1 general purpose register. May not be null or the stackpointer.
@@ -2331,11 +2352,19 @@ public abstract class AArch64Assembler extends Assembler {
      * @param src3 general purpose register. May not be null or the stackpointer.
      */
     public void smaddl(Register dst, Register src1, Register src2, Register src3) {
-        assert !dst.equals(sp);
-        assert !src1.equals(sp);
-        assert !src2.equals(sp);
-        assert !src3.equals(sp);
-        emitInt(0b10011011001 << 21 | dst.encoding | rs1(src1) | rs2(src2) | rs3(src3));
+        smullInstruction(MADD, dst, src1, src2, src3);
+    }
+
+    /**
+     * Signed multiply-sub long. xDst = xSrc3 - (wSrc1 * wSrc2)
+     *
+     * @param dst general purpose register. May not be null or the stackpointer.
+     * @param src1 general purpose register. May not be null or the stackpointer.
+     * @param src2 general purpose register. May not be null or the stackpointer.
+     * @param src3 general purpose register. May not be null or the stackpointer.
+     */
+    public void smsubl(Register dst, Register src1, Register src2, Register src3) {
+        smullInstruction(MSUB, dst, src1, src2, src3);
     }
 
     private void mulInstruction(Instruction instr, Register dst, Register src1, Register src2, Register src3, InstructionType type) {
@@ -2344,6 +2373,14 @@ public abstract class AArch64Assembler extends Assembler {
         assert !src2.equals(sp);
         assert !src3.equals(sp);
         emitInt(type.encoding | instr.encoding | MulOp | rd(dst) | rs1(src1) | rs2(src2) | rs3(src3));
+    }
+
+    private void smullInstruction(Instruction instr, Register dst, Register src1, Register src2, Register src3) {
+        assert !dst.equals(sp);
+        assert !src1.equals(sp);
+        assert !src2.equals(sp);
+        assert !src3.equals(sp);
+        emitInt(instr.encoding | SignedMulLongOp | rd(dst) | rs1(src1) | rs2(src2) | rs3(src3));
     }
 
     /**
@@ -2959,6 +2996,10 @@ public abstract class AArch64Assembler extends Assembler {
 
     public void msr(SystemRegister systemRegister, Register src) {
         emitInt(MRS.encoding | systemRegister.encoding() | rt(src));
+    }
+
+    public void dc(DataCacheOperationType type, Register src) {
+        emitInt(DC.encoding | type.encoding() | rt(src));
     }
 
     public void annotatePatchingImmediate(int pos, Instruction instruction, int operandSizeBits, int offsetBits, int shift) {

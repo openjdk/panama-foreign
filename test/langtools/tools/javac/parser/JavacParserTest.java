@@ -1096,7 +1096,7 @@ public class JavacParserTest extends TestCase {
         String expectedErrors = "Test.java:1:178: compiler.err.switch.case.unexpected.statement\n";
         StringWriter out = new StringWriter();
         JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(out, fm, null,
-                Arrays.asList("-XDrawDiagnostics", "--enable-preview", "-source", SOURCE_VERSION),
+                Arrays.asList("-XDrawDiagnostics"),
                 null, Arrays.asList(new MyFileObject(code)));
 
         CompilationUnitTree cut = ct.parse().iterator().next();
@@ -1289,6 +1289,179 @@ public class JavacParserTest extends TestCase {
         }.scan(cut, null);
 
         assertTrue("testAnalyzeParensWithComma2", found[0]);
+    }
+
+    @Test
+    void testBrokenEnum1() throws IOException {
+        assert tool != null;
+
+        String code = "package test; class Test { enum E { A, B, C. D, E, F; } }";
+        StringWriter output = new StringWriter();
+        JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(output, fm, null, List.of("-XDrawDiagnostics"),
+                null, Arrays.asList(new MyFileObject(code)));
+        CompilationUnitTree cut = ct.parse().iterator().next();
+        List<String> actual = List.of(output.toString().split("\r?\n"));
+        List<String> expected = List.of("Test.java:1:44: compiler.err.expected3: ',', '}', ';'");
+
+        assertEquals("The expected and actual errors do not match, actual errors: " + actual,
+                     actual,
+                     expected);
+
+        String actualAST = cut.toString().replaceAll("\r*\n", "\n");
+        String expectedAST = "package test;\n" +
+                             "\n" +
+                             "class Test {\n" +
+                             "    \n" +
+                             "    enum E {\n" +
+                             "        /*public static final*/ A /* = new E() */ /*enum*/ ,\n" +
+                             "        /*public static final*/ B /* = new E() */ /*enum*/ ,\n" +
+                             "        /*public static final*/ C /* = new E() */ /*enum*/ ,\n" +
+                             "        /*public static final*/ D /* = new E() */ /*enum*/ ,\n" +
+                             "        /*public static final*/ E /* = new E() */ /*enum*/ ,\n" +
+                             "        /*public static final*/ F /* = new E() */ /*enum*/ ;\n" +
+                             "        (ERROR) <error>;\n" +
+                             "    }\n" +
+                             "}";
+        assertEquals("The expected and actual AST do not match, actual AST: " + actualAST,
+                     actualAST,
+                     expectedAST);
+    }
+
+    @Test
+    void testBrokenEnum2() throws IOException {
+        assert tool != null;
+
+        String code = "package test; class Test { enum E { A, B, C void t() {} } }";
+        StringWriter output = new StringWriter();
+        JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(output, fm, null, List.of("-XDrawDiagnostics"),
+                null, Arrays.asList(new MyFileObject(code)));
+        CompilationUnitTree cut = ct.parse().iterator().next();
+        List<String> actual = List.of(output.toString().split("\r?\n"));
+        List<String> expected = List.of("Test.java:1:44: compiler.err.expected3: ',', '}', ';'");
+
+        assertEquals("The expected and actual errors do not match, actual errors: " + actual,
+                     actual,
+                     expected);
+
+        String actualAST = cut.toString().replaceAll("\r*\n", "\n");
+        String expectedAST = "package test;\n" +
+                             "\n" +
+                             "class Test {\n" +
+                             "    \n" +
+                             "    enum E {\n" +
+                             "        /*public static final*/ A /* = new E() */ /*enum*/ ,\n" +
+                             "        /*public static final*/ B /* = new E() */ /*enum*/ ,\n" +
+                             "        /*public static final*/ C /* = new E() */ /*enum*/ ;\n" +
+                             "        \n" +
+                             "        void t() {\n" +
+                             "        }\n" +
+                             "    }\n" +
+                             "}";
+        assertEquals("The expected and actual AST do not match, actual AST: " + actualAST,
+                     actualAST,
+                     expectedAST);
+    }
+
+    @Test
+    void testBrokenEnum3() throws IOException {
+        assert tool != null;
+
+        String code = "package test; class Test { enum E { , void t() {} } }";
+        StringWriter output = new StringWriter();
+        JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(output, fm, null, List.of("-XDrawDiagnostics"),
+                null, Arrays.asList(new MyFileObject(code)));
+        CompilationUnitTree cut = ct.parse().iterator().next();
+        List<String> actual = List.of(output.toString().split("\r?\n"));
+        List<String> expected = List.of("Test.java:1:38: compiler.err.expected2: '}', ';'");
+
+        assertEquals("The expected and actual errors do not match, actual errors: " + actual,
+                     actual,
+                     expected);
+
+        String actualAST = cut.toString().replaceAll("\r*\n", "\n");
+        String expectedAST = "package test;\n" +
+                             "\n" +
+                             "class Test {\n" +
+                             "    \n" +
+                             "    enum E {\n" +
+                             ";\n" +
+                             "        \n" +
+                             "        void t() {\n" +
+                             "        }\n" +
+                             "    }\n" +
+                             "}";
+        assertEquals("The expected and actual AST do not match, actual AST: " + actualAST,
+                     actualAST,
+                     expectedAST);
+    }
+
+    @Test
+    void testBrokenEnum4() throws IOException {
+        assert tool != null;
+
+        String code = "package test; class Test { enum E { A, B, C, void t() {} } }";
+        StringWriter output = new StringWriter();
+        JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(output, fm, null, List.of("-XDrawDiagnostics"),
+                null, Arrays.asList(new MyFileObject(code)));
+        CompilationUnitTree cut = ct.parse().iterator().next();
+        List<String> actual = List.of(output.toString().split("\r?\n"));
+        List<String> expected = List.of("Test.java:1:46: compiler.err.enum.constant.expected");
+
+        assertEquals("The expected and actual errors do not match, actual errors: " + actual,
+                     actual,
+                     expected);
+
+        String actualAST = cut.toString().replaceAll("\r*\n", "\n");
+        String expectedAST = "package test;\n" +
+                             "\n" +
+                             "class Test {\n" +
+                             "    \n" +
+                             "    enum E {\n" +
+                             "        /*public static final*/ A /* = new E() */ /*enum*/ ,\n" +
+                             "        /*public static final*/ B /* = new E() */ /*enum*/ ,\n" +
+                             "        /*public static final*/ C /* = new E() */ /*enum*/ ;\n" +
+                             "        \n" +
+                             "        void t() {\n" +
+                             "        }\n" +
+                             "    }\n" +
+                             "}";
+        assertEquals("The expected and actual AST do not match, actual AST: " + actualAST,
+                     actualAST,
+                     expectedAST);
+    }
+
+    @Test
+    void testBrokenEnum5() throws IOException {
+        assert tool != null;
+
+        String code = "package test; class Test { enum E { A; void t() {} B; } }";
+        StringWriter output = new StringWriter();
+        JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(output, fm, null, List.of("-XDrawDiagnostics"),
+                null, Arrays.asList(new MyFileObject(code)));
+        CompilationUnitTree cut = ct.parse().iterator().next();
+        List<String> actual = List.of(output.toString().split("\r?\n"));
+        List<String> expected = List.of("Test.java:1:52: compiler.err.enum.constant.not.expected");
+
+        assertEquals("The expected and actual errors do not match, actual errors: " + actual,
+                     actual,
+                     expected);
+
+        String actualAST = cut.toString().replaceAll("\r*\n", "\n");
+        String expectedAST = "package test;\n" +
+                             "\n" +
+                             "class Test {\n" +
+                             "    \n" +
+                             "    enum E {\n" +
+                             "        /*public static final*/ A /* = new E() */ /*enum*/ ,\n" +
+                             "        /*public static final*/ B /* = new E() */ /*enum*/ ;\n" +
+                             "        \n" +
+                             "        void t() {\n" +
+                             "        }\n" +
+                             "    }\n" +
+                             "}";
+        assertEquals("The expected and actual AST do not match, actual AST: " + actualAST,
+                     actualAST,
+                     expectedAST);
     }
 
     void run(String[] args) throws Exception {

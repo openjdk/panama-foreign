@@ -43,6 +43,7 @@
 #include "opto/runtime.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "utilities/bitMap.inline.hpp"
 
 //----------------------------GraphKit-----------------------------------------
 // Main utility constructor.
@@ -1362,35 +1363,37 @@ Node* GraphKit::null_check_common(Node* value, BasicType type,
 
   // Cast obj to not-null on this path, if there is no null_control.
   // (If there is a null_control, a non-null value may come back to haunt us.)
-  if (type == T_OBJECT) {
-    Node* cast = cast_not_null(value, false);
-    if (null_control == NULL || (*null_control) == top())
-      replace_in_map(value, cast);
-    value = cast;
-  }
-
-  return value;
+  return cast_not_null(value, (null_control == NULL || (*null_control) == top()));
 }
 
 
 //------------------------------cast_not_null----------------------------------
 // Cast obj to not-null on this path
 Node* GraphKit::cast_not_null(Node* obj, bool do_replace_in_map) {
-  const Type *t = _gvn.type(obj);
-  const Type *t_not_null = t->join_speculative(TypePtr::NOTNULL);
-  // Object is already not-null?
-  if( t == t_not_null ) return obj;
-
-  Node *cast = new CastPPNode(obj,t_not_null);
-  cast->init_req(0, control());
-  cast = _gvn.transform( cast );
+  Node* cast = NULL;
+  const Type* t = _gvn.type(obj);
+  if (t->make_ptr() != NULL) {
+    const Type* t_not_null = t->join_speculative(TypePtr::NOTNULL);
+    // Object is already not-null?
+    if (t == t_not_null) {
+      return obj;
+    }
+    cast = ConstraintCastNode::make_cast(Op_CastPP, control(), obj, t_not_null, false);
+  } else if (t->isa_int() != NULL) {
+    cast = ConstraintCastNode::make_cast(Op_CastII, control(), obj, TypeInt::INT, true);
+  } else if (t->isa_long() != NULL) {
+    cast = ConstraintCastNode::make_cast(Op_CastLL, control(), obj, TypeLong::LONG, true);
+  } else {
+    fatal("unexpected type: %s", type2name(t->basic_type()));
+  }
+  cast = _gvn.transform(cast);
 
   // Scan for instances of 'obj' in the current JVM mapping.
   // These instances are known to be not-null after the test.
-  if (do_replace_in_map)
+  if (do_replace_in_map) {
     replace_in_map(obj, cast);
-
-  return cast;                  // Return casted value
+  }
+  return cast;
 }
 
 // Sometimes in intrinsics, we implicitly know an object is not null
@@ -1410,7 +1413,7 @@ Node* GraphKit::must_be_not_null(Node* value, bool do_replace_in_map) {
   _gvn.set_type(iff, iff->Value(&_gvn));
   Node *if_f = _gvn.transform(new IfFalseNode(iff));
   Node *frame = _gvn.transform(new ParmNode(C->start(), TypeFunc::FramePtr));
-  Node *halt = _gvn.transform(new HaltNode(if_f, frame));
+  Node* halt = _gvn.transform(new HaltNode(if_f, frame, "unexpected null in intrinsic"));
   C->root()->add_req(halt);
   Node *if_t = _gvn.transform(new IfTrueNode(iff));
   set_control(if_t);
@@ -1490,18 +1493,19 @@ Node* GraphKit::make_load(Node* ctl, Node* adr, const Type* t, BasicType bt,
                           bool require_atomic_access,
                           bool unaligned,
                           bool mismatched,
-                          bool unsafe) {
+                          bool unsafe,
+                          uint8_t barrier_data) {
   assert(adr_idx != Compile::AliasIdxTop, "use other make_load factory" );
   const TypePtr* adr_type = NULL; // debug-mode-only argument
   debug_only(adr_type = C->get_adr_type(adr_idx));
   Node* mem = memory(adr_idx);
   Node* ld;
   if (require_atomic_access && bt == T_LONG) {
-    ld = LoadLNode::make_atomic(ctl, mem, adr, adr_type, t, mo, control_dependency, unaligned, mismatched, unsafe);
+    ld = LoadLNode::make_atomic(ctl, mem, adr, adr_type, t, mo, control_dependency, unaligned, mismatched, unsafe, barrier_data);
   } else if (require_atomic_access && bt == T_DOUBLE) {
-    ld = LoadDNode::make_atomic(ctl, mem, adr, adr_type, t, mo, control_dependency, unaligned, mismatched, unsafe);
+    ld = LoadDNode::make_atomic(ctl, mem, adr, adr_type, t, mo, control_dependency, unaligned, mismatched, unsafe, barrier_data);
   } else {
-    ld = LoadNode::make(_gvn, ctl, mem, adr, adr_type, t, bt, mo, control_dependency, unaligned, mismatched, unsafe);
+    ld = LoadNode::make(_gvn, ctl, mem, adr, adr_type, t, bt, mo, control_dependency, unaligned, mismatched, unsafe, barrier_data);
   }
   ld = _gvn.transform(ld);
   if (((bt == T_OBJECT) && C->do_escape_analysis()) || C->eliminate_boxing()) {
@@ -2114,7 +2118,7 @@ void GraphKit::uncommon_trap(int trap_request,
   // The debug info is the only real input to this call.
 
   // Halt-and-catch fire here.  The above call should never return!
-  HaltNode* halt = new HaltNode(control(), frameptr());
+  HaltNode* halt = new HaltNode(control(), frameptr(), "uncommon trap returned which should never happen");
   _gvn.set_type_bottom(halt);
   root()->add_req(halt);
 
@@ -2274,7 +2278,7 @@ void GraphKit::record_profiled_arguments_for_speculation(ciMethod* dest_method, 
   int skip = Bytecodes::has_receiver(bc) ? 1 : 0;
   for (int j = skip, i = 0; j < nargs && i < TypeProfileArgsLimit; j++) {
     const Type *targ = tf->domain()->field_at(j + TypeFunc::Parms);
-    if (targ->basic_type() == T_OBJECT || targ->basic_type() == T_ARRAY) {
+    if (is_reference_type(targ->basic_type())) {
       ProfilePtrKind ptr_kind = ProfileMaybeNull;
       ciKlass* better_type = NULL;
       if (method()->argument_profiled_type(bci(), i, better_type, ptr_kind)) {
@@ -3307,18 +3311,6 @@ Node* GraphKit::insert_mem_bar_volatile(int opcode, int alias_idx, Node* precede
     set_memory(_gvn.transform(new ProjNode(membar, TypeFunc::Memory)),alias_idx);
   }
   return membar;
-}
-
-void GraphKit::insert_store_load_for_barrier() {
-  Node* mem = reset_memory();
-  MemBarNode* mb = MemBarNode::make(C, Op_MemBarVolatile, Compile::AliasIdxRaw);
-  mb->init_req(TypeFunc::Control, control());
-  mb->init_req(TypeFunc::Memory, mem);
-  Node* membar = _gvn.transform(mb);
-  set_control(_gvn.transform(new ProjNode(membar, TypeFunc::Control)));
-  Node* newmem = _gvn.transform(new ProjNode(membar, TypeFunc::Memory));
-  set_all_memory(mem);
-  set_memory(newmem, Compile::AliasIdxRaw);
 }
 
 //------------------------------shared_lock------------------------------------

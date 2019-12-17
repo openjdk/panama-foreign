@@ -27,7 +27,6 @@
 #include "gc/z/zNMethodData.hpp"
 #include "memory/allocation.hpp"
 #include "runtime/atomic.hpp"
-#include "runtime/orderAccess.hpp"
 #include "utilities/align.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/growableArray.hpp"
@@ -45,7 +44,7 @@ ZNMethodDataOops::ZNMethodDataOops(const GrowableArray<oop*>& immediates, bool h
     _has_non_immediates(has_non_immediates) {
   // Save all immediate oops
   for (size_t i = 0; i < immediates_count(); i++) {
-    immediates_begin()[i] = immediates.at(i);
+    immediates_begin()[i] = immediates.at(int(i));
   }
 }
 
@@ -78,7 +77,7 @@ ZReentrantLock* ZNMethodData::lock() {
 }
 
 ZNMethodDataOops* ZNMethodData::oops() const {
-  return OrderAccess::load_acquire(&_oops);
+  return Atomic::load_acquire(&_oops);
 }
 
 ZNMethodDataOops* ZNMethodData::swap_oops(ZNMethodDataOops* new_oops) {

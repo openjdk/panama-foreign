@@ -33,6 +33,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.IntStream;
 
 class Bundle {
     static enum Type {
@@ -56,7 +58,8 @@ class Bundle {
 
     private final static String[] COMPACT_NUMBER_PATTERN_KEYS = {
             "short.CompactNumberPatterns",
-            "long.CompactNumberPatterns"};
+            "long.CompactNumberPatterns"
+    };
 
     private final static String[] NUMBER_ELEMENT_KEYS = {
         "NumberElements/decimal",
@@ -191,7 +194,6 @@ class Bundle {
         for (index = 0; index < cldrBundles.length; index++) {
             if (cldrBundles[index].equals(id)) {
                 myMap.putAll(CLDRConverter.getCLDRBundle(cldrBundles[index]));
-                CLDRConverter.handleAliases(myMap);
                 break;
             }
         }
@@ -201,7 +203,6 @@ class Bundle {
         for (int i = cldrBundles.length - 1; i > index; i--) {
             if (!("no".equals(cldrBundles[i]) || cldrBundles[i].startsWith("no_"))) {
                 parentsMap.putAll(CLDRConverter.getCLDRBundle(cldrBundles[i]));
-                CLDRConverter.handleAliases(parentsMap);
             }
         }
         // Duplicate myMap as parentsMap for "root" so that the
@@ -213,73 +214,54 @@ class Bundle {
 
         // merge individual strings into arrays
 
-        // if myMap has any of the NumberPatterns members
-        for (String k : NUMBER_PATTERN_KEYS) {
-            if (myMap.containsKey(k)) {
-                String[] numberPatterns = new String[NUMBER_PATTERN_KEYS.length];
-                for (int i = 0; i < NUMBER_PATTERN_KEYS.length; i++) {
-                    String key = NUMBER_PATTERN_KEYS[i];
-                    String value = (String) myMap.remove(key);
-                    if (value == null) {
-                        value = (String) parentsMap.remove(key);
-                    }
-                    if (value == null || value.isEmpty()) {
-                        if (!key.endsWith("accounting")) {
-                            // print warning unless it is for "accounting",
-                            // which may be missing.
-                            CLDRConverter.warning("empty pattern for " + key);
-                        }
-                    }
-                    numberPatterns[i] = value;
-                }
-                myMap.put("NumberPatterns", numberPatterns);
-                break;
+        // if myMap has any of the NumberPatterns/NumberElements members, create a
+        // complete array of patterns/elements.
+        @SuppressWarnings("unchecked")
+        List<String> scripts = (List<String>) myMap.get("numberingScripts");
+        if (scripts != null) {
+            for (String script : scripts) {
+                myMap.put(script + ".NumberPatterns",
+                        createNumberArray(myMap, parentsMap, NUMBER_PATTERN_KEYS, script));
+                myMap.put(script + ".NumberElements",
+                        createNumberArray(myMap, parentsMap, NUMBER_ELEMENT_KEYS, script));
             }
         }
 
         for (String k : COMPACT_NUMBER_PATTERN_KEYS) {
             List<String> patterns = (List<String>) myMap.remove(k);
             if (patterns != null) {
-                // Replace any null entry with empty strings.
-                String[] arrPatterns = patterns.stream()
-                        .map(s -> s == null ? "" : s).toArray(String[]::new);
+                // Convert the map value from List<String> to String[], replacing any missing
+                // entry from the parents map, if any.
+                final List<String> pList = (List<String>)parentsMap.get(k);
+                int size = patterns.size();
+                int psize = pList != null ? pList.size() : 0;
+                String[] arrPatterns = IntStream.range(0, Math.max(size, psize))
+                    .mapToObj(i -> {
+                        String pattern;
+                        // first try itself.
+                        if (i < size) {
+                            pattern = patterns.get(i);
+                            if (!pattern.isEmpty()) {
+                                return pattern;
+                            }
+                        }
+                        // if not found, try parent
+                        if (i < psize) {
+                            pattern = pList.get(i);
+                            if (!pattern.isEmpty()) {
+                                return pattern;
+                            }
+                        }
+                        // bail out with empty string
+                        return "";
+                    })
+                    .toArray(String[]::new);
                 myMap.put(k, arrPatterns);
             }
         }
 
-        // if myMap has any of NUMBER_ELEMENT_KEYS, create a complete NumberElements.
-        String defaultScript = (String) myMap.get("DefaultNumberingSystem");
-        @SuppressWarnings("unchecked")
-        List<String> scripts = (List<String>) myMap.get("numberingScripts");
-        if (scripts != null) {
-            for (String script : scripts) {
-                for (String k : NUMBER_ELEMENT_KEYS) {
-                    String[] numberElements = new String[NUMBER_ELEMENT_KEYS.length];
-                    for (int i = 0; i < NUMBER_ELEMENT_KEYS.length; i++) {
-                        String key = script + "." + NUMBER_ELEMENT_KEYS[i];
-                        String value = (String) myMap.remove(key);
-                        if (value == null) {
-                            if (key.endsWith("/pattern")) {
-                                value = "#";
-                            } else {
-                                value = (String) parentsMap.get(key);
-                                if (value == null) {
-                                    // the last resort is "latn"
-                                    key = "latn." + NUMBER_ELEMENT_KEYS[i];
-                                    value = (String) parentsMap.get(key);
-                                    if (value == null) {
-                                        throw new InternalError("NumberElements: null for " + key);
-                                    }
-                                }
-                            }
-                        }
-                        numberElements[i] = value;
-                    }
-                    myMap.put(script + "." + "NumberElements", numberElements);
-                    break;
-                }
-            }
-        }
+        // Processes aliases here
+        CLDRConverter.handleAliases(myMap);
 
         // another hack: parentsMap is not used for date-time resources.
         if ("root".equals(id)) {
@@ -409,26 +391,23 @@ class Bundle {
     }
 
     private void handleMultipleInheritance(Map<String, Object> map, Map<String, Object> parents, String key) {
-        String formatKey = key + "/format";
-        Object format = map.get(formatKey);
+        String formatMapKey = key + "/format";
+        Object format = map.get(formatMapKey);
         if (format != null) {
-            map.remove(formatKey);
+            map.remove(formatMapKey);
             map.put(key, format);
-            if (fillInElements(parents, formatKey, format)) {
+            if (fillInElements(parents, formatMapKey, format)) {
                 map.remove(key);
             }
         }
-        String standaloneKey = key + "/stand-alone";
-        Object standalone = map.get(standaloneKey);
+        String standaloneMapKey = key + "/stand-alone";
+        Object standalone = map.get(standaloneMapKey);
         if (standalone != null) {
-            map.remove(standaloneKey);
-            String realKey = key;
-            if (format != null) {
-                realKey = "standalone." + key;
-            }
-            map.put(realKey, standalone);
-            if (fillInElements(parents, standaloneKey, standalone)) {
-                map.remove(realKey);
+            map.remove(standaloneMapKey);
+            String standaloneResourceKey = "standalone." + key;
+            map.put(standaloneResourceKey, standalone);
+            if (fillInElements(parents, standaloneMapKey, standalone)) {
+                map.remove(standaloneResourceKey);
             }
         }
     }
@@ -797,5 +776,46 @@ class Bundle {
     @FunctionalInterface
     private interface ConvertDateTimeLetters {
         void convert(CalendarType calendarType, char cldrLetter, int count, StringBuilder sb);
+    }
+
+    /**
+     * Returns a complete string array for NumberElements or NumberPatterns. If any
+     * array element is missing, it will fall back to parents map, as well as
+     * numbering script fallback.
+     */
+    private String[] createNumberArray(Map<String, Object> myMap, Map<String, Object>parentsMap,
+                                        String[] keys, String script) {
+        String[] numArray = new String[keys.length];
+        for (int i = 0; i < keys.length; i++) {
+            String key = script + "." + keys[i];
+            final int idx = i;
+            Optional.ofNullable(
+                myMap.getOrDefault(key,
+                    // if value not found in myMap, search for parentsMap
+                    parentsMap.getOrDefault(key,
+                        parentsMap.getOrDefault(keys[i],
+                            // the last resort is "latn"
+                            parentsMap.get("latn." + keys[i])))))
+                .ifPresentOrElse(v -> numArray[idx] = (String)v, () -> {
+                    if (keys == NUMBER_PATTERN_KEYS) {
+                        // NumberPatterns
+                        if (!key.endsWith("accounting")) {
+                            // throw error unless it is for "accounting",
+                            // which may be missing.
+                            throw new InternalError("NumberPatterns: null for " +
+                                                    key + ", id: " + id);
+                        }
+                    } else {
+                        // NumberElements
+                        assert keys == NUMBER_ELEMENT_KEYS;
+                        if (key.endsWith("/pattern")) {
+                            numArray[idx] = "#";
+                        } else {
+                            throw new InternalError("NumberElements: null for " +
+                                                    key + ", id: " + id);
+                        }
+                    }});
+        }
+        return numArray;
     }
 }

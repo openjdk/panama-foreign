@@ -37,6 +37,7 @@
 #include "gc/shared/referenceProcessor.hpp"
 #include "gc/shared/softRefPolicy.hpp"
 #include "gc/shared/strongRootsScope.hpp"
+#include "gc/shared/workgroup.hpp"
 #include "logging/log.hpp"
 #include "memory/metaspace.hpp"
 #include "utilities/growableArray.hpp"
@@ -44,7 +45,6 @@
 
 class AdjoiningGenerations;
 class GCHeapSummary;
-class GCTaskManager;
 class MemoryManager;
 class MemoryPool;
 class PSAdaptiveSizePolicy;
@@ -68,15 +68,14 @@ class ParallelScavengeHeap : public CollectedHeap {
   AdjoiningGenerations* _gens;
   unsigned int _death_march_count;
 
-  // The task manager
-  static GCTaskManager* _gc_task_manager;
-
   GCMemoryManager* _young_manager;
   GCMemoryManager* _old_manager;
 
   MemoryPool* _eden_pool;
   MemoryPool* _survivor_pool;
   MemoryPool* _old_pool;
+
+  WorkGang _workers;
 
   virtual void initialize_serviceability();
 
@@ -99,7 +98,11 @@ class ParallelScavengeHeap : public CollectedHeap {
     _old_manager(NULL),
     _eden_pool(NULL),
     _survivor_pool(NULL),
-    _old_pool(NULL) { }
+    _old_pool(NULL),
+    _workers("GC Thread",
+             ParallelGCThreads,
+             true /* are_GC_task_threads */,
+             false /* are_ConcurrentGC_threads */) { }
 
   // For use by VM operations
   enum CollectionType {
@@ -128,8 +131,6 @@ class ParallelScavengeHeap : public CollectedHeap {
   static PSGCAdaptivePolicyCounters* gc_policy_counters() { return _gc_policy_counters; }
 
   static ParallelScavengeHeap* heap();
-
-  static GCTaskManager* const gc_task_manager() { return _gc_task_manager; }
 
   CardTableBarrierSet* barrier_set();
   PSCardTable* card_table();
@@ -166,6 +167,9 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   bool is_in_young(oop p);  // reserved part
   bool is_in_old(oop p);    // reserved part
+
+  MemRegion reserved_region() const { return _reserved; }
+  HeapWord* base() const { return _reserved.start(); }
 
   // Memory allocation.   "gc_time_limit_was_exceeded" will
   // be set to true if the adaptive size policy determine that
@@ -209,7 +213,6 @@ class ParallelScavengeHeap : public CollectedHeap {
   size_t unsafe_max_tlab_alloc(Thread* thr) const;
 
   void object_iterate(ObjectClosure* cl);
-  void safe_object_iterate(ObjectClosure* cl) { object_iterate(cl); }
 
   HeapWord* block_start(const void* addr) const;
   bool block_is_obj(const HeapWord* addr) const;
@@ -226,6 +229,9 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   PreGenGCValues get_pre_gc_values() const;
   void print_heap_change(const PreGenGCValues& pre_gc_values) const;
+
+  // Used to print information about locations in the hs_err file.
+  virtual bool print_location(outputStream* st, void* addr) const;
 
   void verify(VerifyOption option /* ignored */);
 
@@ -252,6 +258,10 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   GCMemoryManager* old_gc_manager() const { return _old_manager; }
   GCMemoryManager* young_gc_manager() const { return _young_manager; }
+
+  WorkGang& workers() {
+    return _workers;
+  }
 };
 
 // Class that can be used to print information about the

@@ -55,7 +55,6 @@ class ConnectionGraph;
 class IdealGraphPrinter;
 class InlineTree;
 class Int_Array;
-class LoadBarrierNode;
 class Matcher;
 class MachConstantNode;
 class MachConstantBaseNode;
@@ -101,7 +100,6 @@ enum LoopOptsMode {
   LoopOptsNone,
   LoopOptsShenandoahExpand,
   LoopOptsShenandoahPostExpand,
-  LoopOptsZBarrierInsertion,
   LoopOptsSkipSplitIf,
   LoopOptsVerify
 };
@@ -416,6 +414,7 @@ class Compile : public Phase {
   bool                  _print_intrinsics;      // True if we should print intrinsics for this compilation
 #ifndef PRODUCT
   bool                  _trace_opto_output;
+  bool                  _print_ideal;
   bool                  _parsed_irreducible_loop; // True if ciTypeFlow detected irreducible loops during parsing
 #endif
   bool                  _has_irreducible_loop;  // Found irreducible loops
@@ -734,6 +733,7 @@ class Compile : public Phase {
 
 #ifndef PRODUCT
   bool          trace_opto_output() const       { return _trace_opto_output; }
+  bool          print_ideal() const             { return _print_ideal; }
   bool              parsed_irreducible_loop() const { return _parsed_irreducible_loop; }
   void          set_parsed_irreducible_loop(bool z) { _parsed_irreducible_loop = z; }
   int _in_dump_cnt;  // Required for dumping ir nodes.
@@ -933,9 +933,7 @@ class Compile : public Phase {
   void         record_dead_node(uint idx)  { if (_dead_node_list.test_set(idx)) return;
                                              _dead_node_count++;
                                            }
-  bool         is_dead_node(uint idx)      { return _dead_node_list.test(idx) != 0; }
-  uint         dead_node_count()           { return _dead_node_count; }
-  void         reset_dead_node_list()      { _dead_node_list.Reset();
+  void         reset_dead_node_list()      { _dead_node_list.reset();
                                              _dead_node_count = 0;
                                            }
   uint          live_nodes() const         {
@@ -1229,11 +1227,7 @@ class Compile : public Phase {
   bool           in_scratch_emit_size() const   { return _in_scratch_emit_size;     }
 
   enum ScratchBufferBlob {
-#if defined(PPC64)
     MAX_inst_size       = 2048,
-#else
-    MAX_inst_size       = 1024,
-#endif
     MAX_locs_size       = 128, // number of relocInfo elements
     MAX_const_size      = 128,
     MAX_stubs_size      = 128
@@ -1308,14 +1302,30 @@ class Compile : public Phase {
   // Process an OopMap Element while emitting nodes
   void Process_OopMap_Node(MachNode *mach, int code_offset);
 
+  class BufferSizingData {
+  public:
+    int _stub;
+    int _code;
+    int _const;
+    int _reloc;
+
+      BufferSizingData() :
+      _stub(0),
+      _code(0),
+      _const(0),
+      _reloc(0)
+      { };
+  };
+
   // Initialize code buffer
-  CodeBuffer* init_buffer(uint* blk_starts);
+  void        estimate_buffer_size(int& const_req);
+  CodeBuffer* init_buffer(BufferSizingData& buf_sizes);
 
   // Write out basic block data to code buffer
   void fill_buffer(CodeBuffer* cb, uint* blk_starts);
 
   // Determine which variable sized branches can be shortened
-  void shorten_branches(uint* blk_starts, int& code_size, int& reloc_size, int& stub_size);
+  void shorten_branches(uint* blk_starts, BufferSizingData& buf_sizes);
 
   // Compute the size of first NumberOfLoopInstrToAlign instructions
   // at the head of a loop.

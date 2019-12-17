@@ -28,14 +28,14 @@
 #include "jfr/leakprofiler/chains/edgeStore.hpp"
 #include "jfr/leakprofiler/chains/edgeUtils.hpp"
 #include "jfr/leakprofiler/utilities/unifiedOop.hpp"
-#include "oops/fieldStreams.hpp"
+#include "oops/fieldStreams.inline.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oopsHierarchy.hpp"
 #include "runtime/handles.inline.hpp"
 
 bool EdgeUtils::is_leak_edge(const Edge& edge) {
-  return (const Edge*)edge.pointee()->mark() == &edge;
+  return (const Edge*)edge.pointee()->mark().to_pointer() == &edge;
 }
 
 static int field_offset(const StoredEdge& edge) {

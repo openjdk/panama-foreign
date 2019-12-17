@@ -237,19 +237,7 @@ jint dump_heap(AttachOperation* op, outputStream* out) {
     // This helps reduces the amount of unreachable objects in the dump
     // and makes it easier to browse.
     HeapDumper dumper(live_objects_only /* request GC */);
-    int res = dumper.dump(op->arg(0));
-    if (res == 0) {
-      out->print_cr("Heap dump file created");
-    } else {
-      // heap dump failed
-      ResourceMark rm;
-      char* error = dumper.error_as_C_string();
-      if (error == NULL) {
-        out->print_cr("Dump failed - reason unknown");
-      } else {
-        out->print_cr("%s", error);
-      }
-    }
+    dumper.dump(op->arg(0), out);
   }
   return JNI_OK;
 }
@@ -331,7 +319,7 @@ static jint print_flag(AttachOperation* op, outputStream* out) {
     out->print_cr("flag name is missing");
     return JNI_ERR;
   }
-  JVMFlag* f = JVMFlag::find_flag((char*)name, strlen(name));
+  JVMFlag* f = JVMFlag::find_flag(name);
   if (f) {
     f->print_as_flag(out);
     out->cr();

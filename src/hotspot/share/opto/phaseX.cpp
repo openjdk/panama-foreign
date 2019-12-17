@@ -891,7 +891,10 @@ Node *PhaseGVN::transform_no_reclaim( Node *n ) {
 }
 
 bool PhaseGVN::is_dominator_helper(Node *d, Node *n, bool linear_only) {
-  if (d->is_top() || n->is_top()) {
+  if (d->is_top() || (d->is_Proj() && d->in(0)->is_top())) {
+    return false;
+  }
+  if (n->is_top() || (n->is_Proj() && n->in(0)->is_top())) {
     return false;
   }
   assert(d->is_CFG() && n->is_CFG(), "must have CFG nodes");
@@ -899,7 +902,7 @@ bool PhaseGVN::is_dominator_helper(Node *d, Node *n, bool linear_only) {
   while (d != n) {
     n = IfNode::up_one_dom(n, linear_only);
     i++;
-    if (n == NULL || i >= 10) {
+    if (n == NULL || i >= 100) {
       return false;
     }
   }
@@ -1648,14 +1651,14 @@ void PhaseIterGVN::add_users_to_worklist( Node *n ) {
     // of the mirror load depends on the type of 'n'. See LoadNode::Value().
     //   LoadBarrier?(LoadP(LoadP(AddP(foo:Klass, #java_mirror))))
     BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
-    bool has_load_barriers = bs->has_load_barriers();
+    bool has_load_barrier_nodes = bs->has_load_barrier_nodes();
 
     if (use_op == Op_LoadP && use->bottom_type()->isa_rawptr()) {
       for (DUIterator_Fast i2max, i2 = use->fast_outs(i2max); i2 < i2max; i2++) {
         Node* u = use->fast_out(i2);
         const Type* ut = u->bottom_type();
         if (u->Opcode() == Op_LoadP && ut->isa_instptr()) {
-          if (has_load_barriers) {
+          if (has_load_barrier_nodes) {
             // Search for load barriers behind the load
             for (DUIterator_Fast i3max, i3 = u->fast_outs(i3max); i3 < i3max; i3++) {
               Node* b = u->fast_out(i3);
@@ -1808,14 +1811,14 @@ void PhaseCCP::analyze() {
         // Loading the java mirror from a Klass requires two loads and the type
         // of the mirror load depends on the type of 'n'. See LoadNode::Value().
         BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
-        bool has_load_barriers = bs->has_load_barriers();
+        bool has_load_barrier_nodes = bs->has_load_barrier_nodes();
 
         if (m_op == Op_LoadP && m->bottom_type()->isa_rawptr()) {
           for (DUIterator_Fast i2max, i2 = m->fast_outs(i2max); i2 < i2max; i2++) {
             Node* u = m->fast_out(i2);
             const Type* ut = u->bottom_type();
             if (u->Opcode() == Op_LoadP && ut->isa_instptr() && ut != type(u)) {
-              if (has_load_barriers) {
+              if (has_load_barrier_nodes) {
                 // Search for load barriers behind the load
                 for (DUIterator_Fast i3max, i3 = u->fast_outs(i3max); i3 < i3max; i3++) {
                   Node* b = u->fast_out(i3);

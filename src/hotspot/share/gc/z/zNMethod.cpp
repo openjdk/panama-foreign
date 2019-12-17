@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "runtime/atomic.hpp"
-#include "runtime/orderAccess.hpp"
 #include "utilities/debug.hpp"
 
 static ZNMethodData* gc_data(const nmethod* nm) {
@@ -258,7 +257,7 @@ private:
   volatile bool _failed;
 
   void set_failed() {
-    Atomic::store(true, &_failed);
+    Atomic::store(&_failed, true);
   }
 
   void unlink(nmethod* nm) {
@@ -266,10 +265,11 @@ private:
     // handshake separating unlink and purge.
     nm->flush_dependencies(false /* delete_immediately */);
 
-    // We don't need to take the lock when unlinking nmethods from
+    // unlink_from_method will take the CompiledMethod_lock.
+    // In this case we don't strictly need it when unlinking nmethods from
     // the Method, because it is only concurrently unlinked by
     // the entry barrier, which acquires the per nmethod lock.
-    nm->unlink_from_method(false /* acquire_lock */);
+    nm->unlink_from_method();
 
     if (nm->is_osr_method()) {
       // Invalidate the osr nmethod before the handshake. The nmethod
@@ -293,12 +293,13 @@ public:
       return;
     }
 
-    ZLocker<ZReentrantLock> locker(ZNMethod::lock_for_nmethod(nm));
-
     if (nm->is_unloading()) {
+      ZLocker<ZReentrantLock> locker(ZNMethod::lock_for_nmethod(nm));
       unlink(nm);
       return;
     }
+
+    ZLocker<ZReentrantLock> locker(ZNMethod::lock_for_nmethod(nm));
 
     // Heal oops and disarm
     ZNMethodOopClosure cl;

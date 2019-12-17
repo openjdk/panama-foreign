@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,11 +32,16 @@ typedef uintptr_t (*ZBarrierSlowPath)(uintptr_t);
 
 class ZBarrier : public AllStatic {
 private:
+  static const bool Follow      = true;
+  static const bool DontFollow  = false;
+
   static const bool Strong      = false;
   static const bool Finalizable = true;
 
   static const bool Publish     = true;
   static const bool Overflow    = false;
+
+  static void self_heal(volatile oop* p, uintptr_t addr, uintptr_t heal_addr);
 
   template <ZBarrierFastPath fast_path, ZBarrierSlowPath slow_path> static oop barrier(volatile oop* p, oop o);
   template <ZBarrierFastPath fast_path, ZBarrierSlowPath slow_path> static oop weak_barrier(volatile oop* p, oop o);
@@ -46,12 +51,10 @@ private:
   static bool is_good_or_null_fast_path(uintptr_t addr);
   static bool is_weak_good_or_null_fast_path(uintptr_t addr);
 
-  static bool is_resurrection_blocked(volatile oop* p, oop* o);
-
   static bool during_mark();
   static bool during_relocate();
   template <bool finalizable> static bool should_mark_through(uintptr_t addr);
-  template <bool finalizable, bool publish> static uintptr_t mark(uintptr_t addr);
+  template <bool follow, bool finalizable, bool publish> static uintptr_t mark(uintptr_t addr);
   static uintptr_t remap(uintptr_t addr);
   static uintptr_t relocate(uintptr_t addr);
   static uintptr_t relocate_or_mark(uintptr_t addr);
@@ -69,6 +72,7 @@ private:
   static uintptr_t mark_barrier_on_oop_slow_path(uintptr_t addr);
   static uintptr_t mark_barrier_on_finalizable_oop_slow_path(uintptr_t addr);
   static uintptr_t mark_barrier_on_root_oop_slow_path(uintptr_t addr);
+  static uintptr_t mark_barrier_on_invisible_root_oop_slow_path(uintptr_t addr);
 
   static uintptr_t relocate_barrier_on_root_oop_slow_path(uintptr_t addr);
 
@@ -106,6 +110,7 @@ public:
   static void mark_barrier_on_oop_field(volatile oop* p, bool finalizable);
   static void mark_barrier_on_oop_array(volatile oop* p, size_t length, bool finalizable);
   static void mark_barrier_on_root_oop_field(oop* p);
+  static void mark_barrier_on_invisible_root_oop_field(oop* p);
 
   // Relocate barrier
   static void relocate_barrier_on_root_oop_field(oop* p);

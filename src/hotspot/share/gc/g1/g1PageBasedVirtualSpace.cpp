@@ -25,7 +25,7 @@
 #include "precompiled.hpp"
 #include "gc/g1/g1PageBasedVirtualSpace.hpp"
 #include "gc/shared/workgroup.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/os.inline.hpp"
@@ -122,6 +122,11 @@ bool G1PageBasedVirtualSpace::is_area_uncommitted(size_t start_page, size_t size
 
 char* G1PageBasedVirtualSpace::page_start(size_t index) const {
   return _low_boundary + index * _page_size;
+}
+
+size_t G1PageBasedVirtualSpace::page_size() const {
+  assert(_page_size > 0, "Page size is not yet initialized.");
+  return _page_size;
 }
 
 bool G1PageBasedVirtualSpace::is_after_last_page(size_t index) const {
@@ -256,7 +261,7 @@ public:
   virtual void work(uint worker_id) {
     size_t const actual_chunk_size = MAX2(chunk_size(), _page_size);
     while (true) {
-      char* touch_addr = Atomic::add(actual_chunk_size, &_cur_addr) - actual_chunk_size;
+      char* touch_addr = Atomic::add(&_cur_addr, actual_chunk_size) - actual_chunk_size;
       if (touch_addr < _start_addr || touch_addr >= _end_addr) {
         break;
       }
@@ -274,7 +279,7 @@ void G1PageBasedVirtualSpace::pretouch(size_t start_page, size_t size_in_pages, 
   if (pretouch_gang != NULL) {
     size_t num_chunks = MAX2((size_t)1, size_in_pages * _page_size / MAX2(G1PretouchTask::chunk_size(), _page_size));
 
-    uint num_workers = MIN2((uint)num_chunks, pretouch_gang->active_workers());
+    uint num_workers = MIN2((uint)num_chunks, pretouch_gang->total_workers());
     log_debug(gc, heap)("Running %s with %u workers for " SIZE_FORMAT " work units pre-touching " SIZE_FORMAT "B.",
                         cl.name(), num_workers, num_chunks, size_in_pages * _page_size);
     pretouch_gang->run_task(&cl, num_workers);

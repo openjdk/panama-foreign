@@ -50,6 +50,7 @@ void JVMCICompiler::initialize() {
 }
 
 void JVMCICompiler::bootstrap(TRAPS) {
+  assert(THREAD->is_Java_thread(), "must be");
   if (Arguments::mode() == Arguments::_int) {
     // Nothing to do in -Xint mode
     return;
@@ -66,7 +67,7 @@ void JVMCICompiler::bootstrap(TRAPS) {
   // Initialize compile queue with a selected set of methods.
   int len = objectMethods->length();
   for (int i = 0; i < len; i++) {
-    methodHandle mh = objectMethods->at(i);
+    methodHandle mh(THREAD, objectMethods->at(i));
     if (!mh->is_native() && !mh->is_static() && !mh->is_initializer()) {
       ResourceMark rm;
       int hot_count = 10; // TODO: what's the appropriate value?
@@ -80,7 +81,7 @@ void JVMCICompiler::bootstrap(TRAPS) {
   do {
     // Loop until there is something in the queue.
     do {
-      os::sleep(THREAD, 100, true);
+      ((JavaThread*)THREAD)->sleep(100);
       qsize = CompileBroker::queue_size(CompLevel_full_optimization);
     } while (!_bootstrap_compilation_request_handled && first_round && qsize == 0);
     first_round = false;
@@ -99,7 +100,7 @@ void JVMCICompiler::bootstrap(TRAPS) {
   JVMCI::compiler_runtime()->bootstrap_finished(CHECK);
 }
 
-bool JVMCICompiler::force_comp_at_level_simple(Method *method) {
+bool JVMCICompiler::force_comp_at_level_simple(const methodHandle& method) {
   if (UseJVMCINativeLibrary) {
     // This mechanism exists to force compilation of a JVMCI compiler by C1
     // to reduces the compilation time spent on the JVMCI compiler itself. In
@@ -122,7 +123,7 @@ bool JVMCICompiler::force_comp_at_level_simple(Method *method) {
     if (excludeModules.not_null()) {
       ModuleEntry* moduleEntry = method->method_holder()->module();
       for (int i = 0; i < excludeModules->length(); i++) {
-        if (oopDesc::equals(excludeModules->obj_at(i), moduleEntry->module())) {
+        if (excludeModules->obj_at(i) == moduleEntry->module()) {
           return true;
         }
       }

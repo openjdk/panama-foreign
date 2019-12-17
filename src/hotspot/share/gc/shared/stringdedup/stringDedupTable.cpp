@@ -35,6 +35,7 @@
 #include "oops/arrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/typeArrayOop.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/safepointVerifiers.hpp"
 
@@ -363,7 +364,7 @@ void StringDedupTable::deduplicate(oop java_string, StringDedupStat* stat) {
   }
 
   typeArrayOop existing_value = lookup_or_add(value, latin1, hash);
-  if (oopDesc::equals_raw(existing_value, value)) {
+  if (existing_value == value) {
     // Same value, already known
     stat->inc_known();
     return;
@@ -589,7 +590,7 @@ void StringDedupTable::finish_rehash(StringDedupTable* rehashed_table) {
 }
 
 size_t StringDedupTable::claim_table_partition(size_t partition_size) {
-  return Atomic::add(partition_size, &_claimed_index) - partition_size;
+  return Atomic::add(&_claimed_index, partition_size) - partition_size;
 }
 
 void StringDedupTable::verify() {
@@ -599,7 +600,7 @@ void StringDedupTable::verify() {
     while (*entry != NULL) {
       typeArrayOop value = (*entry)->obj();
       guarantee(value != NULL, "Object must not be NULL");
-      guarantee(Universe::heap()->is_in_reserved(value), "Object must be on the heap");
+      guarantee(Universe::heap()->is_in(value), "Object must be on the heap");
       guarantee(!value->is_forwarded(), "Object must not be forwarded");
       guarantee(value->is_typeArray(), "Object must be a typeArrayOop");
       bool latin1 = (*entry)->latin1();

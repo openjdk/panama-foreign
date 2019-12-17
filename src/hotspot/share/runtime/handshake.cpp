@@ -26,9 +26,9 @@
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/handshake.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/osThread.hpp"
 #include "runtime/semaphore.inline.hpp"
 #include "runtime/task.hpp"
@@ -137,7 +137,7 @@ class VM_HandshakeOneThread: public VM_Handshake {
       // There is an assumption in the code that the Threads_lock should be
       // locked during certain phases.
       {
-        MutexLocker ml(Threads_lock, Mutex::_no_safepoint_check_flag);
+        MutexLocker ml(Threads_lock);
         _target->handshake_process_by_vmthread();
       }
     } while (!poll_for_completed_thread());
@@ -186,7 +186,7 @@ class VM_HandshakeAllThreads: public VM_Handshake {
           // There is an assumption in the code that the Threads_lock should
           // be locked during certain phases.
           jtiwh.rewind();
-          MutexLocker ml(Threads_lock, Mutex::_no_safepoint_check_flag);
+          MutexLocker ml(Threads_lock);
           for (JavaThread *thr = jtiwh.next(); thr != NULL; thr = jtiwh.next()) {
             // A new thread on the ThreadsList will not have an operation,
             // hence it is skipped in handshake_process_by_vmthread.
@@ -289,20 +289,24 @@ void HandshakeState::clear_handshake(JavaThread* target) {
 void HandshakeState::process_self_inner(JavaThread* thread) {
   assert(Thread::current() == thread, "should call from thread");
   assert(!thread->is_terminated(), "should not be a terminated thread");
+  assert(thread->thread_state() != _thread_blocked, "should not be in a blocked state");
+  assert(thread->thread_state() != _thread_in_native, "should not be in native");
 
-  ThreadInVMForHandshake tivm(thread);
-  if (!_semaphore.trywait()) {
-    _semaphore.wait_with_safepoint_check(thread);
-  }
-  HandshakeOperation* op = OrderAccess::load_acquire(&_operation);
-  if (op != NULL) {
-    HandleMark hm(thread);
-    CautiouslyPreserveExceptionMark pem(thread);
-    // Disarm before execute the operation
-    clear_handshake(thread);
-    op->do_handshake(thread);
-  }
-  _semaphore.signal();
+  do {
+    ThreadInVMForHandshake tivm(thread);
+    if (!_semaphore.trywait()) {
+      _semaphore.wait_with_safepoint_check(thread);
+    }
+    HandshakeOperation* op = Atomic::load_acquire(&_operation);
+    if (op != NULL) {
+      HandleMark hm(thread);
+      CautiouslyPreserveExceptionMark pem(thread);
+      // Disarm before execute the operation
+      clear_handshake(thread);
+      op->do_handshake(thread);
+    }
+    _semaphore.signal();
+  } while (has_operation());
 }
 
 bool HandshakeState::vmthread_can_process_handshake(JavaThread* target) {

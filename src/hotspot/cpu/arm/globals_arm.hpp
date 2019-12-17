@@ -30,8 +30,6 @@
 // (see globals.hpp)
 //
 
-define_pd_global(bool,  ShareVtableStubs,         true);
-
 define_pd_global(bool,  ImplicitNullChecks,       true);  // Generate code for implicit null checks
 define_pd_global(bool,  UncommonNullCast,         true);  // Uncommon-trap NULLs past to check cast
 define_pd_global(bool,  TrapBasedNullChecks,      false); // Not needed
@@ -64,9 +62,6 @@ define_pd_global(bool,  RewriteBytecodes,         true);
 define_pd_global(bool,  RewriteFrequentPairs,     true);
 
 define_pd_global(bool,  PreserveFramePointer,     false);
-
-// GC Ergo Flags
-define_pd_global(size_t, CMSYoungGenPerWorker,    16*M);  // default max size of CMS young gen, per GC worker thread
 
 define_pd_global(uintx, TypeProfileLevel, 0);
 

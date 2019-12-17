@@ -41,12 +41,13 @@
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "oops/compiledICHolder.hpp"
+#include "oops/klass.inline.hpp"
 #include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/vframeArray.hpp"
+#include "runtime/vm_version.hpp"
 #include "utilities/align.hpp"
 #include "utilities/formatBuffer.hpp"
-#include "vm_version_x86.hpp"
 #include "vmreg_x86.inline.hpp"
 #ifdef COMPILER1
 #include "c1/c1_Runtime1.hpp"
@@ -1841,8 +1842,7 @@ static void verify_oop_args(MacroAssembler* masm,
   Register temp_reg = rbx;  // not part of any compiled calling seq
   if (VerifyOops) {
     for (int i = 0; i < method->size_of_parameters(); i++) {
-      if (sig_bt[i] == T_OBJECT ||
-          sig_bt[i] == T_ARRAY) {
+      if (is_reference_type(sig_bt[i])) {
         VMReg r = regs[i].first();
         assert(r->is_valid(), "bad oop arg");
         if (r->is_stack()) {
@@ -1949,7 +1949,8 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                                 int compile_id,
                                                 BasicType* in_sig_bt,
                                                 VMRegPair* in_regs,
-                                                BasicType ret_type) {
+                                                BasicType ret_type,
+                                                address critical_entry) {
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
     intptr_t start = (intptr_t)__ pc();
@@ -1972,7 +1973,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                        (OopMapSet*)NULL);
   }
   bool is_critical_native = true;
-  address native_func = method->critical_native_function();
+  address native_func = critical_entry;
   if (native_func == NULL) {
     native_func = method->native_function();
     is_critical_native = false;
@@ -2741,7 +2742,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   __ reset_last_Java_frame(false);
 
   // Unbox oop result, e.g. JNIHandles::resolve value.
-  if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
+  if (is_reference_type(ret_type)) {
     __ resolve_jobject(rax /* value */,
                        r15_thread /* thread */,
                        rcx /* tmp */);

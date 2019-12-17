@@ -3956,6 +3956,13 @@ operand eCXRegP(eRegP reg) %{
   interface(REG_INTER);
 %}
 
+operand eDXRegP(eRegP reg) %{
+  constraint(ALLOC_IN_RC(edx_reg));
+  match(reg);
+  format %{ "EDX" %}
+  interface(REG_INTER);
+%}
+
 operand eSIRegP(eRegP reg) %{
   constraint(ALLOC_IN_RC(esi_reg));
   match(reg);
@@ -7354,6 +7361,14 @@ instruct castII( rRegI dst ) %{
   ins_pipe( empty );
 %}
 
+instruct castLL( eRegL dst ) %{
+  match(Set dst (CastLL dst));
+  format %{ "#castLL of $dst" %}
+  ins_encode( /*empty encoding*/ );
+  ins_cost(0);
+  ins_pipe( empty );
+%}
+
 
 // Load-locked - same as a regular pointer load when used with compare-swap
 instruct loadPLocked(eRegP dst, memory mem) %{
@@ -9008,7 +9023,7 @@ instruct absI_rReg(rRegI dst, rRegI src, rRegI tmp, eFlagsReg cr)
   %}
 
   ins_pipe(ialu_reg_reg);
-%} 
+%}
 
 //----------Long Instructions------------------------------------------------
 // Add Long Register with Register

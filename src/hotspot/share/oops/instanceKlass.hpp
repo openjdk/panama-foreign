@@ -329,6 +329,8 @@ class InstanceKlass: public Klass {
 
   friend class SystemDictionary;
 
+  static bool _disable_method_binary_search;
+
  public:
   u2 loader_type() {
     return _misc_flags & loader_type_bits();
@@ -563,6 +565,14 @@ public:
 
   bool find_local_field_from_offset(int offset, bool is_static, fieldDescriptor* fd) const;
   bool find_field_from_offset(int offset, bool is_static, fieldDescriptor* fd) const;
+
+ private:
+  static int quick_search(const Array<Method*>* methods, const Symbol* name);
+
+ public:
+  static void disable_method_binary_search() {
+    _disable_method_binary_search = true;
+  }
 
   // find a local method (returns NULL if not found)
   Method* find_method(const Symbol* name, const Symbol* signature) const;
@@ -992,7 +1002,6 @@ public:
   void process_interfaces(Thread *thread);
 
   // virtual operations from Klass
-  bool is_leaf_class() const               { return _subklass == NULL; }
   GrowableArray<Klass*>* compute_secondary_supers(int num_extra_slots,
                                                   Array<InstanceKlass*>* transitive_interfaces);
   bool can_be_primary_super_slow() const;

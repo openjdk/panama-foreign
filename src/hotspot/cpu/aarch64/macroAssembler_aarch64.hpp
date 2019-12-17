@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2014, 2015, Red Hat Inc. All rights reserved.
+ * Copyright (c) 2014, 2019, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -442,11 +442,17 @@ private:
   int push(unsigned int bitset, Register stack);
   int pop(unsigned int bitset, Register stack);
 
+  int push_fp(unsigned int bitset, Register stack);
+  int pop_fp(unsigned int bitset, Register stack);
+
   void mov(Register dst, Address a);
 
 public:
   void push(RegSet regs, Register stack) { if (regs.bits()) push(regs.bits(), stack); }
   void pop(RegSet regs, Register stack) { if (regs.bits()) pop(regs.bits(), stack); }
+
+  void push_fp(RegSet regs, Register stack) { if (regs.bits()) push_fp(regs.bits(), stack); }
+  void pop_fp(RegSet regs, Register stack) { if (regs.bits()) pop_fp(regs.bits(), stack); }
 
   // Push and pop everything that might be clobbered by a native
   // runtime call except rscratch1 and rscratch2.  (They are always
@@ -1344,6 +1350,9 @@ public:
       spill(tmp1, true, dst_offset+8);
     }
   }
+
+  void cache_wb(Address line);
+  void cache_wbsync(bool is_pre);
 };
 
 #ifdef ASSERT

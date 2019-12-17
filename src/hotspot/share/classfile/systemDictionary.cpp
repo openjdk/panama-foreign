@@ -47,6 +47,7 @@
 #include "compiler/compileBroker.hpp"
 #include "gc/shared/gcTraceTime.inline.hpp"
 #include "gc/shared/oopStorage.inline.hpp"
+#include "gc/shared/oopStorageSet.hpp"
 #include "interpreter/bytecodeStream.hpp"
 #include "interpreter/interpreter.hpp"
 #include "jfr/jfrEvents.hpp"
@@ -78,7 +79,6 @@
 #include "runtime/java.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/mutexLocker.hpp"
-#include "runtime/orderAccess.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/signature.hpp"
 #include "services/classLoadingService.hpp"
@@ -108,15 +108,9 @@ InstanceKlass*      SystemDictionary::_box_klasses[T_VOID+1]      =  { NULL /*, 
 oop         SystemDictionary::_java_system_loader         =  NULL;
 oop         SystemDictionary::_java_platform_loader       =  NULL;
 
-bool        SystemDictionary::_has_checkPackageAccess     =  false;
-
 // Default ProtectionDomainCacheSize value
 
 const int defaultProtectionDomainCacheSize = 1009;
-
-OopStorage* SystemDictionary::_vm_global_oop_storage = NULL;
-OopStorage* SystemDictionary::_vm_weak_oop_storage = NULL;
-
 
 // ----------------------------------------------------------------------------
 // Java-level SystemLoader and PlatformLoader
@@ -180,7 +174,7 @@ bool SystemDictionary::is_system_class_loader(oop class_loader) {
     return false;
   }
   return (class_loader->klass() == SystemDictionary::jdk_internal_loader_ClassLoaders_AppClassLoader_klass() ||
-         oopDesc::equals(class_loader, _java_system_loader));
+         class_loader == _java_system_loader);
 }
 
 // Returns true if the passed class loader is the platform class loader.
@@ -396,7 +390,7 @@ InstanceKlass* SystemDictionary::resolve_super_or_fail(Symbol* child_name,
     if ((childk != NULL ) && (is_superclass) &&
         ((quicksuperk = childk->java_super()) != NULL) &&
          ((quicksuperk->name() == super_name) &&
-            (oopDesc::equals(quicksuperk->class_loader(), class_loader())))) {
+            (quicksuperk->class_loader() == class_loader()))) {
            return quicksuperk;
     } else {
       PlaceholderEntry* probe = placeholders()->get_entry(p_index, p_hash, child_name, loader_data);
@@ -450,8 +444,6 @@ void SystemDictionary::validate_protection_domain(InstanceKlass* klass,
                                                   Handle class_loader,
                                                   Handle protection_domain,
                                                   TRAPS) {
-  if(!has_checkPackageAccess()) return;
-
   // Now we have to call back to java to check if the initating class has access
   JavaValue result(T_VOID);
   LogTarget(Debug, protectiondomain) lt;
@@ -545,9 +537,9 @@ void SystemDictionary::double_lock_wait(Handle lockObject, TRAPS) {
   bool calledholdinglock
       = ObjectSynchronizer::current_thread_holds_lock((JavaThread*)THREAD, lockObject);
   assert(calledholdinglock,"must hold lock for notify");
-  assert((!oopDesc::equals(lockObject(), _system_loader_lock_obj) && !is_parallelCapable(lockObject)), "unexpected double_lock_wait");
+  assert((lockObject() != _system_loader_lock_obj && !is_parallelCapable(lockObject)), "unexpected double_lock_wait");
   ObjectSynchronizer::notifyall(lockObject, THREAD);
-  intptr_t recursions =  ObjectSynchronizer::complete_exit(lockObject, THREAD);
+  intx recursions =  ObjectSynchronizer::complete_exit(lockObject, THREAD);
   SystemDictionary_lock->wait();
   SystemDictionary_lock->unlock();
   ObjectSynchronizer::reenter(lockObject, recursions, THREAD);
@@ -853,7 +845,7 @@ InstanceKlass* SystemDictionary::resolve_instance_class_or_null(Symbol* name,
       // If everything was OK (no exceptions, no null return value), and
       // class_loader is NOT the defining loader, do a little more bookkeeping.
       if (!HAS_PENDING_EXCEPTION && k != NULL &&
-        !oopDesc::equals(k->class_loader(), class_loader())) {
+        k->class_loader() != class_loader()) {
 
         check_constraints(d_hash, k, class_loader, false, THREAD);
 
@@ -1006,7 +998,7 @@ InstanceKlass* SystemDictionary::parse_stream(Symbol* class_name,
   if (unsafe_anonymous_host != NULL) {
     // Create a new CLD for an unsafe anonymous class, that uses the same class loader
     // as the unsafe_anonymous_host
-    guarantee(oopDesc::equals(unsafe_anonymous_host->class_loader(), class_loader()), "should be the same");
+    guarantee(unsafe_anonymous_host->class_loader() == class_loader(), "should be the same");
     loader_data = ClassLoaderData::unsafe_anonymous_class_loader_data(class_loader);
   } else {
     loader_data = ClassLoaderData::class_loader_data(class_loader());
@@ -1208,10 +1200,8 @@ bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
   TempNewSymbol pkg_name = NULL;
   PackageEntry* pkg_entry = NULL;
   ModuleEntry* mod_entry = NULL;
-  const char* pkg_string = NULL;
   pkg_name = InstanceKlass::package_from_name(class_name, CHECK_false);
   if (pkg_name != NULL) {
-    pkg_string = pkg_name->as_C_string();
     if (loader_data != NULL) {
       pkg_entry = loader_data->packages()->lookup_only(pkg_name);
     }
@@ -1248,7 +1238,7 @@ bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
     // 3. or, the class is from an unamed module
     if (!ent->is_modules_image() && ik->is_shared_boot_class()) {
       // the class is from the -Xbootclasspath/a
-      if (pkg_string == NULL ||
+      if (pkg_name == NULL ||
           pkg_entry == NULL ||
           pkg_entry->in_unnamed_module()) {
         assert(mod_entry == NULL ||
@@ -1260,8 +1250,7 @@ bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
     return false;
   } else {
     bool res = SystemDictionaryShared::is_shared_class_visible_for_classloader(
-              ik, class_loader, pkg_string, pkg_name,
-              pkg_entry, mod_entry, CHECK_(false));
+              ik, class_loader, pkg_name, pkg_entry, mod_entry, CHECK_(false));
     return res;
   }
 }
@@ -1271,116 +1260,116 @@ InstanceKlass* SystemDictionary::load_shared_class(InstanceKlass* ik,
                                                    Handle protection_domain,
                                                    const ClassFileStream *cfs,
                                                    TRAPS) {
+  assert(ik != NULL, "sanity");
+  assert(!ik->is_unshareable_info_restored(), "shared class can be loaded only once");
+  Symbol* class_name = ik->name();
 
-  if (ik != NULL) {
-    Symbol* class_name = ik->name();
+  bool visible = is_shared_class_visible(
+                          class_name, ik, class_loader, CHECK_NULL);
+  if (!visible) {
+    return NULL;
+  }
 
-    bool visible = is_shared_class_visible(
-                            class_name, ik, class_loader, CHECK_NULL);
-    if (!visible) {
+  // Resolve the superclass and interfaces. They must be the same
+  // as in dump time, because the layout of <ik> depends on
+  // the specific layout of ik->super() and ik->local_interfaces().
+  //
+  // If unexpected superclass or interfaces are found, we cannot
+  // load <ik> from the shared archive.
+
+  if (ik->super() != NULL) {
+    Symbol*  cn = ik->super()->name();
+    Klass *s = resolve_super_or_fail(class_name, cn,
+                                     class_loader, protection_domain, true, CHECK_NULL);
+    if (s != ik->super()) {
+      // The dynamically resolved super class is not the same as the one we used during dump time,
+      // so we cannot use ik.
       return NULL;
-    }
-
-    // Resolve the superclass and interfaces. They must be the same
-    // as in dump time, because the layout of <ik> depends on
-    // the specific layout of ik->super() and ik->local_interfaces().
-    //
-    // If unexpected superclass or interfaces are found, we cannot
-    // load <ik> from the shared archive.
-
-    if (ik->super() != NULL) {
-      Symbol*  cn = ik->super()->name();
-      Klass *s = resolve_super_or_fail(class_name, cn,
-                                       class_loader, protection_domain, true, CHECK_NULL);
-      if (s != ik->super()) {
-        // The dynamically resolved super class is not the same as the one we used during dump time,
-        // so we cannot use ik.
-        return NULL;
-      } else {
-        assert(s->is_shared(), "must be");
-      }
-    }
-
-    Array<InstanceKlass*>* interfaces = ik->local_interfaces();
-    int num_interfaces = interfaces->length();
-    for (int index = 0; index < num_interfaces; index++) {
-      InstanceKlass* k = interfaces->at(index);
-      Symbol* name  = k->name();
-      Klass* i = resolve_super_or_fail(class_name, name, class_loader, protection_domain, false, CHECK_NULL);
-      if (k != i) {
-        // The dynamically resolved interface class is not the same as the one we used during dump time,
-        // so we cannot use ik.
-        return NULL;
-      } else {
-        assert(i->is_shared(), "must be");
-      }
-    }
-
-    InstanceKlass* new_ik = KlassFactory::check_shared_class_file_load_hook(
-        ik, class_name, class_loader, protection_domain, cfs, CHECK_NULL);
-    if (new_ik != NULL) {
-      // The class is changed by CFLH. Return the new class. The shared class is
-      // not used.
-      return new_ik;
-    }
-
-    // Adjust methods to recover missing data.  They need addresses for
-    // interpreter entry points and their default native method address
-    // must be reset.
-
-    // Updating methods must be done under a lock so multiple
-    // threads don't update these in parallel
-    //
-    // Shared classes are all currently loaded by either the bootstrap or
-    // internal parallel class loaders, so this will never cause a deadlock
-    // on a custom class loader lock.
-
-    ClassLoaderData* loader_data = ClassLoaderData::class_loader_data(class_loader());
-    {
-      HandleMark hm(THREAD);
-      Handle lockObject = compute_loader_lock_object(class_loader, THREAD);
-      check_loader_lock_contention(lockObject, THREAD);
-      ObjectLocker ol(lockObject, THREAD, true);
-      // prohibited package check assumes all classes loaded from archive call
-      // restore_unshareable_info which calls ik->set_package()
-      ik->restore_unshareable_info(loader_data, protection_domain, CHECK_NULL);
-    }
-
-    ik->print_class_load_logging(loader_data, NULL, NULL);
-
-    // For boot loader, ensure that GetSystemPackage knows that a class in this
-    // package was loaded.
-    if (class_loader.is_null()) {
-      int path_index = ik->shared_classpath_index();
-      ResourceMark rm;
-      ClassLoader::add_package(ik->name()->as_C_string(), path_index, THREAD);
-    }
-
-    if (DumpLoadedClassList != NULL && classlist_file->is_open()) {
-      // Only dump the classes that can be stored into CDS archive
-      if (SystemDictionaryShared::is_sharing_possible(loader_data)) {
-        ResourceMark rm(THREAD);
-        classlist_file->print_cr("%s", ik->name()->as_C_string());
-        classlist_file->flush();
-      }
-    }
-
-    // notify a class loaded from shared object
-    ClassLoadingService::notify_class_loaded(ik, true /* shared class */);
-
-    ik->set_has_passed_fingerprint_check(false);
-    if (UseAOT && ik->supers_have_passed_fingerprint_checks()) {
-      uint64_t aot_fp = AOTLoader::get_saved_fingerprint(ik);
-      uint64_t cds_fp = ik->get_stored_fingerprint();
-      if (aot_fp != 0 && aot_fp == cds_fp) {
-        // This class matches with a class saved in an AOT library
-        ik->set_has_passed_fingerprint_check(true);
-      } else {
-        ResourceMark rm;
-        log_info(class, fingerprint)("%s :  expected = " PTR64_FORMAT " actual = " PTR64_FORMAT, ik->external_name(), aot_fp, cds_fp);
-      }
+    } else {
+      assert(s->is_shared(), "must be");
     }
   }
+
+  Array<InstanceKlass*>* interfaces = ik->local_interfaces();
+  int num_interfaces = interfaces->length();
+  for (int index = 0; index < num_interfaces; index++) {
+    InstanceKlass* k = interfaces->at(index);
+    Symbol* name  = k->name();
+    Klass* i = resolve_super_or_fail(class_name, name, class_loader, protection_domain, false, CHECK_NULL);
+    if (k != i) {
+      // The dynamically resolved interface class is not the same as the one we used during dump time,
+      // so we cannot use ik.
+      return NULL;
+    } else {
+      assert(i->is_shared(), "must be");
+    }
+  }
+
+  InstanceKlass* new_ik = KlassFactory::check_shared_class_file_load_hook(
+      ik, class_name, class_loader, protection_domain, cfs, CHECK_NULL);
+  if (new_ik != NULL) {
+    // The class is changed by CFLH. Return the new class. The shared class is
+    // not used.
+    return new_ik;
+  }
+
+  // Adjust methods to recover missing data.  They need addresses for
+  // interpreter entry points and their default native method address
+  // must be reset.
+
+  // Updating methods must be done under a lock so multiple
+  // threads don't update these in parallel
+  //
+  // Shared classes are all currently loaded by either the bootstrap or
+  // internal parallel class loaders, so this will never cause a deadlock
+  // on a custom class loader lock.
+
+  ClassLoaderData* loader_data = ClassLoaderData::class_loader_data(class_loader());
+  {
+    HandleMark hm(THREAD);
+    Handle lockObject = compute_loader_lock_object(class_loader, THREAD);
+    check_loader_lock_contention(lockObject, THREAD);
+    ObjectLocker ol(lockObject, THREAD, true);
+    // prohibited package check assumes all classes loaded from archive call
+    // restore_unshareable_info which calls ik->set_package()
+    ik->restore_unshareable_info(loader_data, protection_domain, CHECK_NULL);
+  }
+
+  ik->print_class_load_logging(loader_data, NULL, NULL);
+
+  // For boot loader, ensure that GetSystemPackage knows that a class in this
+  // package was loaded.
+  if (class_loader.is_null()) {
+    int path_index = ik->shared_classpath_index();
+    ResourceMark rm;
+    ClassLoader::add_package(ik->name()->as_C_string(), path_index, THREAD);
+  }
+
+  if (DumpLoadedClassList != NULL && classlist_file->is_open()) {
+    // Only dump the classes that can be stored into CDS archive
+    if (SystemDictionaryShared::is_sharing_possible(loader_data)) {
+      ResourceMark rm(THREAD);
+      classlist_file->print_cr("%s", ik->name()->as_C_string());
+      classlist_file->flush();
+    }
+  }
+
+  // notify a class loaded from shared object
+  ClassLoadingService::notify_class_loaded(ik, true /* shared class */);
+
+  ik->set_has_passed_fingerprint_check(false);
+  if (UseAOT && ik->supers_have_passed_fingerprint_checks()) {
+    uint64_t aot_fp = AOTLoader::get_saved_fingerprint(ik);
+    uint64_t cds_fp = ik->get_stored_fingerprint();
+    if (aot_fp != 0 && aot_fp == cds_fp) {
+      // This class matches with a class saved in an AOT library
+      ik->set_has_passed_fingerprint_check(true);
+    } else {
+      ResourceMark rm;
+      log_info(class, fingerprint)("%s :  expected = " PTR64_FORMAT " actual = " PTR64_FORMAT, ik->external_name(), aot_fp, cds_fp);
+    }
+  }
+
   return ik;
 }
 #endif // INCLUDE_CDS
@@ -1435,6 +1424,11 @@ InstanceKlass* SystemDictionary::load_instance_class(Symbol* class_name, Handle 
         // a named package within the unnamed module.  In all cases,
         // limit visibility to search for the class only in the boot
         // loader's append path.
+        if (!ClassLoader::has_bootclasspath_append()) {
+           // If there is no bootclasspath append entry, no need to continue
+           // searching.
+           return NULL;
+        }
         search_only_bootloader_append = true;
       }
     }
@@ -1732,7 +1726,7 @@ void SystemDictionary::check_loader_lock_contention(Handle loader_lock, TRAPS) {
       == ObjectSynchronizer::owner_other) {
     // contention will likely happen, so increment the corresponding
     // contention counter.
-    if (oopDesc::equals(loader_lock(), _system_loader_lock_obj)) {
+    if (loader_lock() == _system_loader_lock_obj) {
       ClassLoader::sync_systemLoaderLockContentionRate()->inc();
     } else {
       ClassLoader::sync_nonSystemLoaderLockContentionRate()->inc();
@@ -1855,7 +1849,7 @@ void SystemDictionary::oops_do(OopClosure* f, bool include_handles) {
   invoke_method_table()->oops_do(f);
 
   if (include_handles) {
-    vm_global_oop_storage()->oops_do(f);
+    OopStorageSet::vm_global()->oops_do(f);
   }
 }
 
@@ -1977,6 +1971,10 @@ void SystemDictionary::resolve_well_known_classes(TRAPS) {
     resolve_wk_klasses_through(WK_KLASS_ENUM_NAME(Class_klass), scan, CHECK);
   }
 
+  assert(WK_KLASS(Object_klass) != NULL, "well-known classes should now be initialized");
+
+  java_lang_Object::register_natives(CHECK);
+
   // Calculate offsets for String and Class classes since they are loaded and
   // can be used after this point.
   java_lang_String::compute_offsets();
@@ -1994,14 +1992,14 @@ void SystemDictionary::resolve_well_known_classes(TRAPS) {
   resolve_wk_klasses_through(WK_KLASS_ENUM_NAME(Reference_klass), scan, CHECK);
 
   // Preload ref klasses and set reference types
-  InstanceKlass::cast(WK_KLASS(Reference_klass))->set_reference_type(REF_OTHER);
+  WK_KLASS(Reference_klass)->set_reference_type(REF_OTHER);
   InstanceRefKlass::update_nonstatic_oop_maps(WK_KLASS(Reference_klass));
 
   resolve_wk_klasses_through(WK_KLASS_ENUM_NAME(PhantomReference_klass), scan, CHECK);
-  InstanceKlass::cast(WK_KLASS(SoftReference_klass))->set_reference_type(REF_SOFT);
-  InstanceKlass::cast(WK_KLASS(WeakReference_klass))->set_reference_type(REF_WEAK);
-  InstanceKlass::cast(WK_KLASS(FinalReference_klass))->set_reference_type(REF_FINAL);
-  InstanceKlass::cast(WK_KLASS(PhantomReference_klass))->set_reference_type(REF_PHANTOM);
+  WK_KLASS(SoftReference_klass)->set_reference_type(REF_SOFT);
+  WK_KLASS(WeakReference_klass)->set_reference_type(REF_WEAK);
+  WK_KLASS(FinalReference_klass)->set_reference_type(REF_FINAL);
+  WK_KLASS(PhantomReference_klass)->set_reference_type(REF_PHANTOM);
 
   // JSR 292 classes
   WKID jsr292_group_start = WK_KLASS_ENUM_NAME(MethodHandle_klass);
@@ -2021,11 +2019,6 @@ void SystemDictionary::resolve_well_known_classes(TRAPS) {
   _box_klasses[T_LONG]    = WK_KLASS(Long_klass);
   //_box_klasses[T_OBJECT]  = WK_KLASS(object_klass);
   //_box_klasses[T_ARRAY]   = WK_KLASS(object_klass);
-
-  { // Compute whether we should use checkPackageAccess or NOT
-    Method* method = InstanceKlass::cast(ClassLoader_klass())->find_method(vmSymbols::checkPackageAccess_name(), vmSymbols::class_protectiondomain_signature());
-    _has_checkPackageAccess = (method != NULL);
-  }
 
 #ifdef ASSERT
   if (UseSharedSpaces) {
@@ -2137,26 +2130,6 @@ void SystemDictionary::update_dictionary(unsigned int d_hash,
 
   {
     MutexLocker mu1(SystemDictionary_lock, THREAD);
-
-    // See whether biased locking is enabled and if so set it for this
-    // klass.
-    // Note that this must be done past the last potential blocking
-    // point / safepoint. We might enable biased locking lazily using a
-    // VM_Operation to iterate the SystemDictionary and installing the
-    // biasable mark word into each InstanceKlass's prototype header.
-    // To avoid race conditions where we accidentally miss enabling the
-    // optimization for one class in the process of being added to the
-    // dictionary, we must not safepoint after the test of
-    // BiasedLocking::enabled().
-    if (UseBiasedLocking && BiasedLocking::enabled()) {
-      // Set biased locking bit for all loaded classes; it will be
-      // cleared if revocation occurs too often for this type
-      // NOTE that we must only do this when the class is initally
-      // defined, not each time it is referenced from a new class loader
-      if (oopDesc::equals(k->class_loader(), class_loader())) {
-        k->set_prototype_header(markOopDesc::biased_locking_prototype());
-      }
-    }
 
     // Make a new dictionary entry.
     Dictionary* dictionary = loader_data->dictionary();
@@ -2346,7 +2319,7 @@ Symbol* SystemDictionary::check_signature_loaders(Symbol* signature,
                                                Handle loader1, Handle loader2,
                                                bool is_method, TRAPS)  {
   // Nothing to do if loaders are the same.
-  if (oopDesc::equals(loader1(), loader2())) {
+  if (loader1() == loader2()) {
     return NULL;
   }
 
@@ -2364,9 +2337,9 @@ Symbol* SystemDictionary::check_signature_loaders(Symbol* signature,
 }
 
 
-methodHandle SystemDictionary::find_method_handle_intrinsic(vmIntrinsics::ID iid,
-                                                            Symbol* signature,
-                                                            TRAPS) {
+Method* SystemDictionary::find_method_handle_intrinsic(vmIntrinsics::ID iid,
+                                                       Symbol* signature,
+                                                       TRAPS) {
   methodHandle empty;
   assert(MethodHandles::is_signature_polymorphic(iid) &&
          MethodHandles::is_signature_polymorphic_intrinsic(iid) &&
@@ -2380,14 +2353,14 @@ methodHandle SystemDictionary::find_method_handle_intrinsic(vmIntrinsics::ID iid
   if (spe == NULL || spe->method() == NULL) {
     spe = NULL;
     // Must create lots of stuff here, but outside of the SystemDictionary lock.
-    m = Method::make_method_handle_intrinsic(iid, signature, CHECK_(empty));
+    m = Method::make_method_handle_intrinsic(iid, signature, CHECK_NULL);
     if (!Arguments::is_interpreter_only()) {
       // Generate a compiled form of the MH intrinsic.
       AdapterHandlerLibrary::create_native_wrapper(m);
       // Check if have the compiled code.
       if (!m->has_compiled_code()) {
-        THROW_MSG_(vmSymbols::java_lang_VirtualMachineError(),
-                   "Out of space in CodeCache for method handle intrinsic", empty);
+        THROW_MSG_NULL(vmSymbols::java_lang_VirtualMachineError(),
+                       "Out of space in CodeCache for method handle intrinsic");
       }
     }
     // Now grab the lock.  We might have to throw away the new method,
@@ -2410,12 +2383,11 @@ methodHandle SystemDictionary::find_method_handle_intrinsic(vmIntrinsics::ID iid
 }
 
 // Helper for unpacking the return value from linkMethod and linkCallSite.
-static methodHandle unpack_method_and_appendix(Handle mname,
-                                               Klass* accessing_klass,
-                                               objArrayHandle appendix_box,
-                                               Handle* appendix_result,
-                                               TRAPS) {
-  methodHandle empty;
+static Method* unpack_method_and_appendix(Handle mname,
+                                          Klass* accessing_klass,
+                                          objArrayHandle appendix_box,
+                                          Handle* appendix_result,
+                                          TRAPS) {
   if (mname.not_null()) {
     Method* m = java_lang_invoke_MemberName::vmtarget(mname());
     if (m != NULL) {
@@ -2433,35 +2405,34 @@ static methodHandle unpack_method_and_appendix(Handle mname,
       // the target is stored in the cpCache and if a reference to this
       // MemberName is dropped we need a way to make sure the
       // class_loader containing this method is kept alive.
+      methodHandle mh(THREAD, m); // record_dependency can safepoint.
       ClassLoaderData* this_key = accessing_klass->class_loader_data();
       this_key->record_dependency(m->method_holder());
-      return methodHandle(THREAD, m);
+      return mh();
     }
   }
-  THROW_MSG_(vmSymbols::java_lang_LinkageError(), "bad value from MethodHandleNatives", empty);
-  return empty;
+  THROW_MSG_NULL(vmSymbols::java_lang_LinkageError(), "bad value from MethodHandleNatives");
 }
 
-methodHandle SystemDictionary::find_method_handle_invoker(Klass* klass,
-                                                          Symbol* name,
-                                                          Symbol* signature,
-                                                          Klass* accessing_klass,
-                                                          Handle *appendix_result,
-                                                          TRAPS) {
-  methodHandle empty;
+Method* SystemDictionary::find_method_handle_invoker(Klass* klass,
+                                                     Symbol* name,
+                                                     Symbol* signature,
+                                                     Klass* accessing_klass,
+                                                     Handle *appendix_result,
+                                                     TRAPS) {
   assert(THREAD->can_call_java() ,"");
   Handle method_type =
-    SystemDictionary::find_method_handle_type(signature, accessing_klass, CHECK_(empty));
+    SystemDictionary::find_method_handle_type(signature, accessing_klass, CHECK_NULL);
 
   int ref_kind = JVM_REF_invokeVirtual;
-  oop name_oop = StringTable::intern(name, CHECK_(empty));
+  oop name_oop = StringTable::intern(name, CHECK_NULL);
   Handle name_str (THREAD, name_oop);
-  objArrayHandle appendix_box = oopFactory::new_objArray_handle(SystemDictionary::Object_klass(), 1, CHECK_(empty));
+  objArrayHandle appendix_box = oopFactory::new_objArray_handle(SystemDictionary::Object_klass(), 1, CHECK_NULL);
   assert(appendix_box->obj_at(0) == NULL, "");
 
   // This should not happen.  JDK code should take care of that.
   if (accessing_klass == NULL || method_type.is_null()) {
-    THROW_MSG_(vmSymbols::java_lang_InternalError(), "bad invokehandle", empty);
+    THROW_MSG_NULL(vmSymbols::java_lang_InternalError(), "bad invokehandle");
   }
 
   // call java.lang.invoke.MethodHandleNatives::linkMethod(... String, MethodType) -> MemberName
@@ -2477,7 +2448,7 @@ methodHandle SystemDictionary::find_method_handle_invoker(Klass* klass,
                          SystemDictionary::MethodHandleNatives_klass(),
                          vmSymbols::linkMethod_name(),
                          vmSymbols::linkMethod_signature(),
-                         &args, CHECK_(empty));
+                         &args, CHECK_NULL);
   Handle mname(THREAD, (oop) result.get_jobject());
   return unpack_method_and_appendix(mname, accessing_klass, appendix_box, appendix_result, THREAD);
 }
@@ -2534,7 +2505,7 @@ Handle SystemDictionary::find_java_mirror_for_type(Symbol* signature,
 
     // It's a primitive.  (Void has a primitive mirror too.)
     char ch = type->char_at(0);
-    assert(is_java_primitive(char2type(ch)) || ch == 'V', "");
+    assert(is_java_primitive(char2type(ch)) || ch == JVM_SIGNATURE_VOID, "");
     return Handle(THREAD, find_java_mirror_for_type(ch));
 
   } else if (FieldType::is_obj(type) || FieldType::is_array(type)) {
@@ -2781,11 +2752,12 @@ void SystemDictionary::invoke_bootstrap_method(BootstrapInfo& bootstrap_specifie
   Handle value(THREAD, (oop) result.get_jobject());
   if (is_indy) {
     Handle appendix;
-    methodHandle method = unpack_method_and_appendix(value,
-                                                     bootstrap_specifier.caller(),
-                                                     appendix_box,
-                                                     &appendix, CHECK);
-    bootstrap_specifier.set_resolved_method(method, appendix);
+    Method* method = unpack_method_and_appendix(value,
+                                                bootstrap_specifier.caller(),
+                                                appendix_box,
+                                                &appendix, CHECK);
+    methodHandle mh(THREAD, method);
+    bootstrap_specifier.set_resolved_method(mh, appendix);
   } else {
     bootstrap_specifier.set_resolved_value(value);
   }
@@ -2895,26 +2867,4 @@ int SystemDictionaryDCmd::num_arguments() {
   } else {
     return 0;
   }
-}
-
-void SystemDictionary::initialize_oop_storage() {
-  _vm_global_oop_storage =
-    new OopStorage("VM Global Oop Handles",
-                   VMGlobalAlloc_lock,
-                   VMGlobalActive_lock);
-
-  _vm_weak_oop_storage =
-    new OopStorage("VM Weak Oop Handles",
-                   VMWeakAlloc_lock,
-                   VMWeakActive_lock);
-}
-
-OopStorage* SystemDictionary::vm_global_oop_storage() {
-  assert(_vm_global_oop_storage != NULL, "Uninitialized");
-  return _vm_global_oop_storage;
-}
-
-OopStorage* SystemDictionary::vm_weak_oop_storage() {
-  assert(_vm_weak_oop_storage != NULL, "Uninitialized");
-  return _vm_weak_oop_storage;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,9 +119,6 @@ ReferenceProcessor::ReferenceProcessor(BoolObjectClosure* is_subject_to_discover
   _discovered_refs     = NEW_C_HEAP_ARRAY(DiscoveredList,
             _max_num_queues * number_of_subclasses_of_ref(), mtGC);
 
-  if (_discovered_refs == NULL) {
-    vm_exit_during_initialization("Could not allocated RefProc Array");
-  }
   _discoveredSoftRefs    = &_discovered_refs[0];
   _discoveredWeakRefs    = &_discoveredSoftRefs[_max_num_queues];
   _discoveredFinalRefs   = &_discoveredWeakRefs[_max_num_queues];
@@ -269,7 +266,7 @@ void DiscoveredListIterator::load_ptrs(DEBUG_ONLY(bool allow_null_referent)) {
 
   _referent_addr = java_lang_ref_Reference::referent_addr_raw(_current_discovered);
   _referent = java_lang_ref_Reference::referent(_current_discovered);
-  assert(Universe::heap()->is_in_reserved_or_null(_referent),
+  assert(Universe::heap()->is_in_or_null(_referent),
          "Wrong oop found in java.lang.Reference object");
   assert(allow_null_referent ?
              oopDesc::is_oop_or_null(_referent)
@@ -285,7 +282,7 @@ void DiscoveredListIterator::remove() {
 
   // First _prev_next ref actually points into DiscoveredList (gross).
   oop new_next;
-  if (oopDesc::equals_raw(_next_discovered, _current_discovered)) {
+  if (_next_discovered == _current_discovered) {
     // At the end of the list, we should make _prev point to itself.
     // If _ref is the first ref, then _prev_next will be in the DiscoveredList,
     // and _prev will be NULL.
@@ -336,7 +333,7 @@ inline void log_enqueued_ref(const DiscoveredListIterator& iter, const char* rea
     log_develop_trace(gc, ref)("Enqueue %s reference (" INTPTR_FORMAT ": %s)",
                                reason, p2i(iter.obj()), iter.obj()->klass()->internal_name());
   }
-  assert(oopDesc::is_oop(iter.obj(), UseConcMarkSweepGC), "Adding a bad reference");
+  assert(oopDesc::is_oop(iter.obj()), "Adding a bad reference");
 }
 
 size_t ReferenceProcessor::process_soft_ref_reconsider_work(DiscoveredList&    refs_list,
@@ -475,7 +472,7 @@ void
 ReferenceProcessor::clear_discovered_references(DiscoveredList& refs_list) {
   oop obj = NULL;
   oop next = refs_list.head();
-  while (!oopDesc::equals_raw(next, obj)) {
+  while (next != obj) {
     obj = next;
     next = java_lang_ref_Reference::discovered(obj);
     java_lang_ref_Reference::set_discovered_raw(obj, NULL);
@@ -747,7 +744,7 @@ void ReferenceProcessor::balance_queues(DiscoveredList ref_lists[])
         ref_lists[to_idx].inc_length(refs_to_move);
 
         // Remove the chain from the from list.
-        if (oopDesc::equals_raw(move_tail, new_head)) {
+        if (move_tail == new_head) {
           // We found the end of the from list.
           ref_lists[from_idx].set_head(NULL);
         } else {
@@ -1034,7 +1031,7 @@ ReferenceProcessor::add_to_discovered_list_mt(DiscoveredList& refs_list,
   // The last ref must have its discovered field pointing to itself.
   oop next_discovered = (current_head != NULL) ? current_head : obj;
 
-  oop retest = HeapAccess<AS_NO_KEEPALIVE>::oop_atomic_cmpxchg(next_discovered, discovered_addr, oop(NULL));
+  oop retest = HeapAccess<AS_NO_KEEPALIVE>::oop_atomic_cmpxchg(discovered_addr, oop(NULL), next_discovered);
 
   if (retest == NULL) {
     // This thread just won the right to enqueue the object.
@@ -1157,7 +1154,7 @@ bool ReferenceProcessor::discover_reference(oop obj, ReferenceType rt) {
       // Check assumption that an object is not potentially
       // discovered twice except by concurrent collectors that potentially
       // trace the same Reference object twice.
-      assert(UseConcMarkSweepGC || UseG1GC || UseShenandoahGC,
+      assert(UseG1GC || UseShenandoahGC,
              "Only possible with a concurrent marking collector");
       return true;
     }

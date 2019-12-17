@@ -41,8 +41,10 @@ import java.security.PrivilegedAction;
  * @since   1.5
  */
 class AnnotationInvocationHandler implements InvocationHandler, Serializable {
+    @java.io.Serial
     private static final long serialVersionUID = 6182022883658399397L;
     private final Class<? extends Annotation> type;
+    @SuppressWarnings("serial") // Not statically typed as Serializable
     private final Map<String, Object> memberValues;
 
     AnnotationInvocationHandler(Class<? extends Annotation> type, Map<String, Object> memberValues) {
@@ -603,6 +605,7 @@ class AnnotationInvocationHandler implements InvocationHandler, Serializable {
         return Arrays.hashCode((Object[]) value);
     }
 
+    @java.io.Serial
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
         ObjectInputStream.GetField fields = s.readFields();

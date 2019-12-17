@@ -38,7 +38,6 @@
 #include "prims/jvmtiEventController.inline.hpp"
 #include "prims/jvmtiImpl.hpp"
 #include "prims/jvmtiRedefineClasses.hpp"
-#include "runtime/atomic.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -588,7 +587,8 @@ bool VM_GetOrSetLocal::is_assignable(const char* ty_sign, Klass* klass, Thread* 
   assert(klass != NULL, "klass must not be NULL");
 
   int len = (int) strlen(ty_sign);
-  if (ty_sign[0] == 'L' && ty_sign[len-1] == ';') { // Need pure class/interface name
+  if (ty_sign[0] == JVM_SIGNATURE_CLASS &&
+      ty_sign[len-1] == JVM_SIGNATURE_ENDCLASS) { // Need pure class/interface name
     ty_sign++;
     len -= 2;
   }
@@ -723,13 +723,17 @@ bool VM_GetOrSetLocal::doit_prologue() {
   NULL_CHECK(_jvf, false);
 
   Method* method_oop = _jvf->method();
-  if (method_oop->is_native()) {
-    if (getting_receiver() && !method_oop->is_static()) {
-      return true;
-    } else {
-      _result = JVMTI_ERROR_OPAQUE_FRAME;
+  if (getting_receiver()) {
+    if (method_oop->is_static()) {
+      _result = JVMTI_ERROR_INVALID_SLOT;
       return false;
     }
+    return true;
+  }
+
+  if (method_oop->is_native()) {
+    _result = JVMTI_ERROR_OPAQUE_FRAME;
+    return false;
   }
 
   if (!check_slot_type_no_lvt(_jvf)) {
@@ -881,6 +885,7 @@ bool JvmtiSuspendControl::resume(JavaThread *java_thread) {
 
 void JvmtiSuspendControl::print() {
 #ifndef PRODUCT
+  ResourceMark rm;
   LogStreamHandle(Trace, jvmti) log_stream;
   log_stream.print("Suspended Threads: [");
   for (JavaThreadIteratorWithHandle jtiwh; JavaThread *thread = jtiwh.next(); ) {

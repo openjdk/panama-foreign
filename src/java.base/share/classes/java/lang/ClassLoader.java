@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Azul Systems, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -445,10 +446,10 @@ public abstract class ClassLoader {
      * @param  parent
      *         The parent class loader
      *
-     * @throws  SecurityException
-     *          If a security manager exists and its
-     *          {@code checkCreateClassLoader} method doesn't allow creation
-     *          of a new class loader.
+     * @throws SecurityException
+     *         If a security manager exists and its
+     *         {@code checkCreateClassLoader} method doesn't allow creation
+     *         of a new class loader.
      *
      * @since  1.2
      */
@@ -509,8 +510,8 @@ public abstract class ClassLoader {
      * to invoking {@link #loadClass(String, boolean) loadClass(name,
      * false)}.
      *
-     * @param  name
-     *         The <a href="#binary-name">binary name</a> of the class
+     * @param   name
+     *          The <a href="#binary-name">binary name</a> of the class
      *
      * @return  The resulting {@code Class} object
      *
@@ -551,11 +552,11 @@ public abstract class ClassLoader {
      * {@link #getClassLoadingLock getClassLoadingLock} method
      * during the entire class loading process.
      *
-     * @param  name
-     *         The <a href="#binary-name">binary name</a> of the class
+     * @param   name
+     *          The <a href="#binary-name">binary name</a> of the class
      *
-     * @param  resolve
-     *         If {@code true} then resolve the class
+     * @param   resolve
+     *          If {@code true} then resolve the class
      *
      * @return  The resulting {@code Class} object
      *
@@ -704,8 +705,8 @@ public abstract class ClassLoader {
      *
      * @implSpec The default implementation throws {@code ClassNotFoundException}.
      *
-     * @param  name
-     *         The <a href="#binary-name">binary name</a> of the class
+     * @param   name
+     *          The <a href="#binary-name">binary name</a> of the class
      *
      * @return  The resulting {@code Class} object
      *
@@ -2004,6 +2005,17 @@ public abstract class ClassLoader {
         return scl;
     }
 
+    /*
+     * Initialize default paths for native libraries search.
+     * Must be done early as JDK may load libraries during bootstrap.
+     *
+     * @see java.lang.System#initPhase1
+     */
+    static void initLibraryPaths() {
+        usr_paths = initializePath("java.library.path");
+        sys_paths = initializePath("sun.boot.library.path");
+    }
+
     // Returns true if the specified class loader can be found in this class
     // loader's delegation chain.
     boolean isAncestor(ClassLoader cl) {
@@ -2473,8 +2485,7 @@ public abstract class ClassLoader {
                  *
                  * We use a static stack to hold the list of libraries we are
                  * loading because this can happen only when called by the
-                 * same thread because Runtime.load and Runtime.loadLibrary
-                 * are synchronous.
+                 * same thread because this block is synchronous.
                  *
                  * If there is a pending load operation for the library, we
                  * immediately return success; otherwise, we raise
@@ -2619,10 +2630,9 @@ public abstract class ClassLoader {
                             boolean isAbsolute) {
         ClassLoader loader =
             (fromClass == null) ? null : fromClass.getClassLoader();
-        if (sys_paths == null) {
-            usr_paths = initializePath("java.library.path");
-            sys_paths = initializePath("sun.boot.library.path");
-        }
+        assert sys_paths != null : "should be initialized at this point";
+        assert usr_paths != null : "should be initialized at this point";
+
         if (isAbsolute) {
             if (loadLibrary0(fromClass, new File(name))) {
                 return;

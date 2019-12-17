@@ -29,12 +29,13 @@
 #include "classfile/systemDictionary.hpp"
 #include "classfile/systemDictionaryShared.hpp"
 #include "logging/log.hpp"
+#include "memory/archiveUtils.inline.hpp"
+#include "memory/dynamicArchive.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspace.hpp"
 #include "memory/metaspaceClosure.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
-#include "memory/dynamicArchive.hpp"
 #include "oops/compressedOops.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "prims/jvmtiRedefineClasses.hpp"
@@ -50,7 +51,6 @@
 #endif
 
 class DynamicArchiveBuilder : ResourceObj {
-  CHeapBitMap _ptrmap;
   static unsigned my_hash(const address& a) {
     return primitive_hash<address>(a);
   }
@@ -64,7 +64,7 @@ class DynamicArchiveBuilder : ResourceObj {
       16384, ResourceObj::C_HEAP> RelocationTable;
   RelocationTable _new_loc_table;
 
-  intx _buffer_to_target_delta;
+  static intx _buffer_to_target_delta;
 
   DumpRegion* _current_dump_space;
 
@@ -77,10 +77,7 @@ class DynamicArchiveBuilder : ResourceObj {
 
 public:
   void mark_pointer(address* ptr_loc) {
-    if (is_in_buffer_space(ptr_loc)) {
-      size_t idx = pointer_delta(ptr_loc, _alloc_bottom, sizeof(address));
-      _ptrmap.set_bit(idx);
-    }
+    ArchivePtrMarker::mark_pointer(ptr_loc);
   }
 
   DumpRegion* current_dump_space() const {
@@ -126,6 +123,28 @@ public:
   template <typename T> bool has_new_loc(T obj) {
     address* pp = _new_loc_table.get((address)obj);
     return pp != NULL;
+  }
+
+  static int dynamic_dump_method_comparator(Method* a, Method* b) {
+    Symbol* a_name = a->name();
+    Symbol* b_name = b->name();
+
+    if (a_name == b_name) {
+      return 0;
+    }
+
+    if (!MetaspaceShared::is_in_shared_metaspace(a_name)) {
+      // a_name points to a Symbol in the top archive.
+      // When this method is called, a_name is still pointing to the output space.
+      // Translate it to point to the output space, so that it can be compared with
+      // Symbols in the base archive.
+      a_name = (Symbol*)(address(a_name) + _buffer_to_target_delta);
+    }
+    if (!MetaspaceShared::is_in_shared_metaspace(b_name)) {
+      b_name = (Symbol*)(address(b_name) + _buffer_to_target_delta);
+    }
+
+    return a_name->fast_compare(b_name);
   }
 
 protected:
@@ -240,6 +259,16 @@ public:
 
       return true; // keep recursing until every object is visited exactly once.
     }
+
+    virtual void push_special(SpecialRef type, Ref* ref, intptr_t* p) {
+      assert(type == _method_entry_ref, "only special type allowed for now");
+      address obj = ref->obj();
+      address new_obj = _builder->get_new_loc(ref);
+      size_t offset = pointer_delta(p, obj,  sizeof(u1));
+      intptr_t* new_p = (intptr_t*)(new_obj + offset);
+      assert(*p == *new_p, "must be a copy");
+      ArchivePtrMarker::mark_pointer((address*)new_p);
+    }
   };
 
   class EmbeddedRefUpdater: public MetaspaceClosure {
@@ -331,7 +360,7 @@ public:
   public:
     EmbeddedRefMarker(DynamicArchiveBuilder* shuffler) : _builder(shuffler) {}
     virtual bool do_ref(Ref* ref, bool read_only) {
-      if (ref->not_null() && _builder->is_in_buffer_space(ref->obj())) {
+      if (ref->not_null()) {
         _builder->mark_pointer(ref->addr());
       }
       return false; // Do not recurse.
@@ -441,10 +470,10 @@ private:
                             p2i(obj), p2i(p), bytes,
                             MetaspaceObj::type_name(ref->msotype()));
     memcpy(p, obj, bytes);
-
     intptr_t* cloned_vtable = MetaspaceShared::fix_cpp_vtable_for_dynamic_archive(ref->msotype(), p);
     if (cloned_vtable != NULL) {
       update_pointer((address*)p, (address)cloned_vtable, "vtb", 0, /*is_mso_pointer*/false);
+      mark_pointer((address*)p);
     }
 
     return (address)p;
@@ -465,12 +494,14 @@ private:
   size_t estimate_class_file_size();
   address reserve_space_and_init_buffer_to_target_delta();
   void init_header(address addr);
+  void release_header();
   void make_trampolines();
   void make_klasses_shareable();
   void sort_methods(InstanceKlass* ik) const;
   void set_symbols_permanent();
   void relocate_buffer_to_target();
-  void write_archive(char* read_only_tables_start);
+  void write_archive(char* serialized_data_start);
+  void write_regions(FileMapInfo* dynamic_info);
 
   void init_first_dump_space(address reserved_bottom) {
     address first_space_base = reserved_bottom;
@@ -550,6 +581,9 @@ public:
     address reserved_bottom = reserve_space_and_init_buffer_to_target_delta();
     init_header(reserved_bottom);
 
+    CHeapBitMap ptrmap;
+    ArchivePtrMarker::initialize(&ptrmap, (address*)reserved_bottom, (address*)current_dump_space()->top());
+
     verify_estimate_size(sizeof(DynamicArchiveHeader), "header");
 
     log_info(cds, dynamic)("Copying %d klasses and %d symbols",
@@ -575,10 +609,6 @@ public:
       iterate_roots(&ro_copier);
     }
 
-    size_t bitmap_size = pointer_delta(current_dump_space()->top(),
-                                       _alloc_bottom, sizeof(address));
-    _ptrmap.initialize(bitmap_size);
-
     {
       log_info(cds)("Relocating embedded pointers ... ");
       ResourceMark rm;
@@ -595,7 +625,7 @@ public:
 
     verify_estimate_size(_estimated_metsapceobj_bytes, "MetaspaceObjs");
 
-    char* read_only_tables_start;
+    char* serialized_data_start;
     {
       set_symbols_permanent();
 
@@ -608,7 +638,7 @@ public:
       SymbolTable::write_to_archive(false);
       SystemDictionaryShared::write_to_archive(false);
 
-      read_only_tables_start = ro_space->top();
+      serialized_data_start = ro_space->top();
       WriteClosure wc(ro_space);
       SymbolTable::serialize_shared_table_header(&wc, false);
       SystemDictionaryShared::serialize_dictionary_headers(&wc, false);
@@ -634,7 +664,8 @@ public:
       relocate_buffer_to_target();
     }
 
-    write_archive(read_only_tables_start);
+    write_archive(serialized_data_start);
+    release_header();
 
     assert(_num_dump_regions_used == _total_dump_regions, "must be");
     verify_universe("After CDS dynamic dump");
@@ -652,7 +683,7 @@ public:
       it->push(&_symbols->at(i));
     }
 
-    _header->_shared_path_table.metaspace_pointers_do(it);
+    FileMapInfo::metaspace_pointers_do(it);
 
     // Do not call these again, as we have already collected all the classes and symbols
     // that we want to archive. Also, these calls would corrupt the tables when
@@ -664,6 +695,9 @@ public:
     it->finish();
   }
 };
+
+intx DynamicArchiveBuilder::_buffer_to_target_delta;
+
 
 size_t DynamicArchiveBuilder::estimate_archive_size() {
   // size of the symbol table and two dictionaries, plus the RunTimeSharedClassInfo's
@@ -687,26 +721,16 @@ size_t DynamicArchiveBuilder::estimate_archive_size() {
 
 address DynamicArchiveBuilder::reserve_space_and_init_buffer_to_target_delta() {
   size_t total = estimate_archive_size();
-  bool large_pages = false; // No large pages when dumping the CDS archive.
-  size_t increment = align_up(1*G, reserve_alignment());
-  char* addr = (char*)align_up(CompressedKlassPointers::base() + MetaspaceSize + increment,
-                               reserve_alignment());
-
-  ReservedSpace* rs = MetaspaceShared::reserve_shared_rs(
-                          total, reserve_alignment(), large_pages, addr);
-  while (!rs->is_reserved() && (addr + increment > addr)) {
-    addr += increment;
-    rs = MetaspaceShared::reserve_shared_rs(
-           total, reserve_alignment(), large_pages, addr);
-  }
-  if (!rs->is_reserved()) {
+  ReservedSpace rs = MetaspaceShared::reserve_shared_space(total);
+  if (!rs.is_reserved()) {
     log_error(cds, dynamic)("Failed to reserve %d bytes of output buffer.", (int)total);
     vm_direct_exit(0);
   }
 
-  address buffer_base = (address)rs->base();
+  address buffer_base = (address)rs.base();
   log_info(cds, dynamic)("Reserved output buffer space at    : " PTR_FORMAT " [%d bytes]",
                          p2i(buffer_base), (int)total);
+  MetaspaceShared::set_shared_rs(rs);
 
   // At run time, we will mmap the dynamic archive at target_space_bottom.
   // However, at dump time, we may not be able to write into the target_space,
@@ -733,16 +757,29 @@ void DynamicArchiveBuilder::init_header(address reserved_bottom) {
   init_first_dump_space(reserved_bottom);
 
   FileMapInfo* mapinfo = new FileMapInfo(false);
-  _header = (DynamicArchiveHeader*)mapinfo->_header;
+  assert(FileMapInfo::dynamic_info() == mapinfo, "must be");
+  _header = mapinfo->dynamic_header();
 
   Thread* THREAD = Thread::current();
   FileMapInfo* base_info = FileMapInfo::current_info();
-  int* crc = _header->_base_archive_crc;
-  *crc++ = base_info->crc(); // base archive header crc
+  _header->set_base_header_crc(base_info->crc());
   for (int i = 0; i < MetaspaceShared::n_regions; i++) {
-    *crc++ = base_info->space_crc(i);
+    _header->set_base_region_crc(i, base_info->space_crc(i));
   }
   _header->populate(base_info, os::vm_allocation_granularity());
+}
+
+void DynamicArchiveBuilder::release_header() {
+  // We temporarily allocated a dynamic FileMapInfo for dumping, which makes it appear we
+  // have mapped a dynamic archive, but we actually have not. We are in a safepoint now.
+  // Let's free it so that if class loading happens after we leave the safepoint, nothing
+  // bad will happen.
+  assert(SafepointSynchronize::is_at_safepoint(), "must be");
+  FileMapInfo *mapinfo = FileMapInfo::dynamic_info();
+  assert(mapinfo != NULL && _header == mapinfo->dynamic_header(), "must be");
+  delete mapinfo;
+  assert(!DynamicArchive::is_mapped(), "must be");
+  _header = NULL;
 }
 
 size_t DynamicArchiveBuilder::estimate_trampoline_size() {
@@ -788,6 +825,7 @@ void DynamicArchiveBuilder::make_trampolines() {
 void DynamicArchiveBuilder::make_klasses_shareable() {
   int i, count = _klasses->length();
 
+  InstanceKlass::disable_method_binary_search();
   for (i = 0; i < count; i++) {
     InstanceKlass* ik = _klasses->at(i);
     sort_methods(ik);
@@ -806,7 +844,7 @@ void DynamicArchiveBuilder::make_klasses_shareable() {
       ik->set_class_loader_type(ClassLoader::APP_LOADER);
     }
 
-    MetaspaceShared::rewrite_nofast_bytecodes_and_calculate_fingerprints(ik);
+    MetaspaceShared::rewrite_nofast_bytecodes_and_calculate_fingerprints(Thread::current(), ik);
     ik->remove_unshareable_info();
 
     assert(ik->array_klasses() == NULL, "sanity");
@@ -847,18 +885,24 @@ void DynamicArchiveBuilder::sort_methods(InstanceKlass* ik) const {
   }
 
 #ifdef ASSERT
-  {
+  if (ik->methods() != NULL) {
     for (int m = 0; m < ik->methods()->length(); m++) {
       Symbol* name = ik->methods()->at(m)->name();
+      assert(MetaspaceShared::is_in_shared_metaspace(name) || is_in_buffer_space(name), "must be");
+    }
+  }
+  if (ik->default_methods() != NULL) {
+    for (int m = 0; m < ik->default_methods()->length(); m++) {
+      Symbol* name = ik->default_methods()->at(m)->name();
       assert(MetaspaceShared::is_in_shared_metaspace(name) || is_in_buffer_space(name), "must be");
     }
   }
 #endif
 
   Thread* THREAD = Thread::current();
-  Method::sort_methods(ik->methods());
+  Method::sort_methods(ik->methods(), /*set_idnums=*/true, dynamic_dump_method_comparator);
   if (ik->default_methods() != NULL) {
-    Method::sort_methods(ik->default_methods(), /*set_idnums=*/false);
+    Method::sort_methods(ik->default_methods(), /*set_idnums=*/false, dynamic_dump_method_comparator);
   }
   ik->vtable().initialize_vtable(true, THREAD); assert(!HAS_PENDING_EXCEPTION, "cannot fail");
   ik->itable().initialize_itable(true, THREAD); assert(!HAS_PENDING_EXCEPTION, "cannot fail");
@@ -902,19 +946,63 @@ class RelocateBufferToTarget: public BitMapClosure {
   }
 };
 
-
 void DynamicArchiveBuilder::relocate_buffer_to_target() {
   RelocateBufferToTarget patcher(this, (address*)_alloc_bottom, _buffer_to_target_delta);
-  _ptrmap.iterate(&patcher);
+  ArchivePtrMarker::ptrmap()->iterate(&patcher);
 
-  Array<u8>* table = _header->_shared_path_table.table();
-  table = to_target(table);
- _header->_shared_path_table.set_table(table);
+  Array<u8>* table = FileMapInfo::shared_path_table().table();
+  SharedPathTable runtime_table(to_target(table), FileMapInfo::shared_path_table().size());
+  _header->set_shared_path_table(runtime_table);
+
+  address relocatable_base = (address)SharedBaseAddress;
+  address relocatable_end = (address)(current_dump_space()->top()) + _buffer_to_target_delta;
+
+  intx addr_delta = MetaspaceShared::final_delta();
+  if (addr_delta == 0) {
+    ArchivePtrMarker::compact(relocatable_base, relocatable_end);
+  } else {
+    // The base archive is NOT mapped at Arguments::default_SharedBaseAddress() (due to ASLR).
+    // This means that the current content of the dynamic archive is based on a random
+    // address. Let's relocate all the pointers, so that it can be mapped to
+    // Arguments::default_SharedBaseAddress() without runtime relocation.
+    //
+    // Note: both the base and dynamic archive are written with
+    // FileMapHeader::_shared_base_address == Arguments::default_SharedBaseAddress()
+
+    // Patch all pointers that are marked by ptrmap within this region,
+    // where we have just dumped all the metaspace data.
+    address patch_base = (address)_alloc_bottom;
+    address patch_end  = (address)current_dump_space()->top();
+
+    // the current value of the pointers to be patched must be within this
+    // range (i.e., must point to either the top archive (as currently mapped), or to the
+    // (targeted address of) the top archive)
+    address valid_old_base = relocatable_base;
+    address valid_old_end  = relocatable_end;
+    size_t base_plus_top_size = valid_old_end - valid_old_base;
+    size_t top_size = patch_end - patch_base;
+    size_t base_size = base_plus_top_size - top_size;
+    assert(base_plus_top_size > base_size, "no overflow");
+    assert(base_plus_top_size > top_size, "no overflow");
+
+    // after patching, the pointers must point inside this range
+    // (the requested location of the archive, as mapped at runtime).
+    address valid_new_base = (address)Arguments::default_SharedBaseAddress();
+    address valid_new_end  = valid_new_base + base_plus_top_size;
+
+    log_debug(cds)("Relocating archive from [" INTPTR_FORMAT " - " INTPTR_FORMAT "] to "
+                   "[" INTPTR_FORMAT " - " INTPTR_FORMAT "], delta = " INTX_FORMAT " bytes",
+                   p2i(patch_base + base_size), p2i(patch_end),
+                   p2i(valid_new_base + base_size), p2i(valid_new_end), addr_delta);
+
+    SharedDataRelocator<true> patcher((address*)patch_base, (address*)patch_end, valid_old_base, valid_old_end,
+                                      valid_new_base, valid_new_end, addr_delta, ArchivePtrMarker::ptrmap());
+    ArchivePtrMarker::ptrmap()->iterate(&patcher);
+    ArchivePtrMarker::compact(patcher.max_non_null_offset());
+  }
 }
 
-static void write_archive_info(FileMapInfo* dynamic_info, DynamicArchiveHeader *header) {
-  dynamic_info->write_header();
-  dynamic_info->align_file_position();
+void DynamicArchiveBuilder::write_regions(FileMapInfo* dynamic_info) {
   dynamic_info->write_region(MetaspaceShared::rw,
                              MetaspaceShared::read_write_dump_space()->base(),
                              MetaspaceShared::read_write_dump_space()->used(),
@@ -927,36 +1015,36 @@ static void write_archive_info(FileMapInfo* dynamic_info, DynamicArchiveHeader *
                              MetaspaceShared::misc_code_dump_space()->base(),
                              MetaspaceShared::misc_code_dump_space()->used(),
                              /*read_only=*/false,/*allow_exec=*/true);
+  dynamic_info->write_bitmap_region(ArchivePtrMarker::ptrmap());
 }
 
-void DynamicArchiveBuilder::write_archive(char* read_only_tables_start) {
+void DynamicArchiveBuilder::write_archive(char* serialized_data_start) {
   int num_klasses = _klasses->length();
   int num_symbols = _symbols->length();
 
-  _header->_read_only_tables_start = to_target(read_only_tables_start);
+  _header->set_serialized_data_start(to_target(serialized_data_start));
 
   FileMapInfo* dynamic_info = FileMapInfo::dynamic_info();
   assert(dynamic_info != NULL, "Sanity");
 
-  // Populate the file offsets, region crcs, etc. No data is written out.
-  write_archive_info(dynamic_info, _header);
-
-  // the header will no longer change. Compute its crc.
-  dynamic_info->set_header_crc(dynamic_info->compute_header_crc());
-
   // Now write the archived data including the file offsets.
   const char* archive_name = Arguments::GetSharedDynamicArchivePath();
   dynamic_info->open_for_write(archive_name);
-  write_archive_info(dynamic_info, _header);
+  write_regions(dynamic_info);
+  dynamic_info->set_final_requested_base((char*)Arguments::default_SharedBaseAddress());
+  dynamic_info->set_header_crc(dynamic_info->compute_header_crc());
+  dynamic_info->write_header();
   dynamic_info->close();
-
 
   address base = to_target(_alloc_bottom);
   address top  = address(current_dump_space()->top()) + _buffer_to_target_delta;
-  int file_size = int(top - base);
+  size_t file_size = pointer_delta(top, base, sizeof(char));
 
-  log_info(cds, dynamic)("Written dynamic archive " PTR_FORMAT " - " PTR_FORMAT " [%d bytes header, %d bytes total]",
-                         p2i(base), p2i(top), (int)_header->_header_size, file_size);
+  base += MetaspaceShared::final_delta();
+  top += MetaspaceShared::final_delta();
+  log_info(cds, dynamic)("Written dynamic archive " PTR_FORMAT " - " PTR_FORMAT
+                         " [" SIZE_FORMAT " bytes header, " SIZE_FORMAT " bytes total]",
+                         p2i(base), p2i(top), _header->header_size(), file_size);
   log_info(cds, dynamic)("%d klasses; %d symbols", num_klasses, num_symbols);
 }
 
@@ -1042,98 +1130,23 @@ bool DynamicArchive::is_in_target_space(void *obj) {
 }
 
 
-static DynamicArchiveHeader *_dynamic_header = NULL;
 DynamicArchiveBuilder* DynamicArchive::_builder = NULL;
 
-void DynamicArchive::map_failed(FileMapInfo* mapinfo) {
-  if (mapinfo->_header != NULL) {
-    os::free(mapinfo->_header);
-  }
-  delete mapinfo;
-}
-
-// Returns the top of the mapped address space
-address DynamicArchive::map() {
-  assert(UseSharedSpaces, "Sanity");
-
-  // Create the dynamic archive map info
-  FileMapInfo* mapinfo;
-  const char* filename = Arguments::GetSharedDynamicArchivePath();
-  struct stat st;
-  address result;
-  if ((filename != NULL) && (os::stat(filename, &st) == 0)) {
-    mapinfo = new FileMapInfo(false);
-    if (!mapinfo->open_for_read(filename)) {
-      result = NULL;
-    }
-    result = map_impl(mapinfo);
-    if (result == NULL) {
-      map_failed(mapinfo);
-      mapinfo->restore_shared_path_table();
-    }
-  } else {
-    if (filename != NULL) {
-      log_warning(cds, dynamic)("specified dynamic archive doesn't exist: %s", filename);
-    }
-    result = NULL;
-  }
-  return result;
-}
-
-address DynamicArchive::map_impl(FileMapInfo* mapinfo) {
-
-
-  // Read header
-  if (!mapinfo->initialize(false)) {
-    return NULL;
-  }
-
-  _dynamic_header = (DynamicArchiveHeader*)mapinfo->header();
-
-  int regions[] = {MetaspaceShared::rw,
-                   MetaspaceShared::ro,
-                   MetaspaceShared::mc};
-
-  size_t len = sizeof(regions)/sizeof(int);
-  char* saved_base[] = {NULL, NULL, NULL};
-  char* top = mapinfo->map_regions(regions, saved_base, len);
-  if (top == NULL) {
-    mapinfo->unmap_regions(regions, saved_base, len);
-    FileMapInfo::fail_continue("Unable to use dynamic archive. Failed map_region for using -Xshare:on.");
-    return NULL;
-  }
-
-  if (!validate(mapinfo)) {
-    return NULL;
-  }
-
-  if (_dynamic_header == NULL) {
-    return NULL;
-  }
-
-  intptr_t* buffer = (intptr_t*)_dynamic_header->_read_only_tables_start;
-  ReadClosure rc(&buffer);
-  SymbolTable::serialize_shared_table_header(&rc, false);
-  SystemDictionaryShared::serialize_dictionary_headers(&rc, false);
-
-  return (address)top;
-}
 
 bool DynamicArchive::validate(FileMapInfo* dynamic_info) {
   // Check if the recorded base archive matches with the current one
   FileMapInfo* base_info = FileMapInfo::current_info();
-  DynamicArchiveHeader* dynamic_header = (DynamicArchiveHeader*)dynamic_info->header();
-  int* crc = dynamic_header->_base_archive_crc;
+  DynamicArchiveHeader* dynamic_header = dynamic_info->dynamic_header();
 
   // Check the header crc
-  if (*crc++ != base_info->crc()) {
+  if (dynamic_header->base_header_crc() != base_info->crc()) {
     FileMapInfo::fail_continue("Archive header checksum verification failed.");
     return false;
   }
 
   // Check each space's crc
   for (int i = 0; i < MetaspaceShared::n_regions; i++) {
-    if (*crc++ != base_info->space_crc(i)) {
+    if (dynamic_header->base_region_crc(i) != base_info->space_crc(i)) {
       FileMapInfo::fail_continue("Archive region #%d checksum verification failed.", i);
       return false;
     }
@@ -1145,12 +1158,4 @@ bool DynamicArchive::validate(FileMapInfo* dynamic_info) {
     return false;
   }
   return true;
-}
-
-bool DynamicArchive::is_mapped() {
-  return (_dynamic_header != NULL);
-}
-
-void DynamicArchive::disable() {
-  _dynamic_header = NULL;
 }

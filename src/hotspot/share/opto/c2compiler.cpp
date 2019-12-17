@@ -102,7 +102,8 @@ void C2Compiler::compile_method(ciEnv* env, ciMethod* target, int entry_bci, Dir
   assert(is_initialized(), "Compiler thread must be initialized");
 
   bool subsume_loads = SubsumeLoads;
-  bool do_escape_analysis = DoEscapeAnalysis && !env->should_retain_local_variables();
+  bool do_escape_analysis = DoEscapeAnalysis && !env->should_retain_local_variables()
+                                             && !env->jvmti_can_get_owned_monitor_info();
   bool eliminate_boxing = EliminateAutoBox;
 
   while (!env->failing()) {
@@ -461,6 +462,20 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_minD:
     if (!Matcher::match_rule_supported(Op_MinD)) return false;
     break;
+  case vmIntrinsics::_writeback0:
+    if (!Matcher::match_rule_supported(Op_CacheWB)) return false;
+    break;
+  case vmIntrinsics::_writebackPreSync0:
+    if (!Matcher::match_rule_supported(Op_CacheWBPreSync)) return false;
+    break;
+  case vmIntrinsics::_writebackPostSync0:
+    if (!Matcher::match_rule_supported(Op_CacheWBPostSync)) return false;
+    break;
+  case vmIntrinsics::_rint:
+  case vmIntrinsics::_ceil:
+  case vmIntrinsics::_floor:
+    if (!Matcher::match_rule_supported(Op_RoundDoubleMode)) return false;
+    break;
   case vmIntrinsics::_hashCode:
   case vmIntrinsics::_identityHashCode:
   case vmIntrinsics::_getClass:
@@ -575,7 +590,6 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_storeFence:
   case vmIntrinsics::_fullFence:
   case vmIntrinsics::_currentThread:
-  case vmIntrinsics::_isInterrupted:
 #ifdef JFR_HAVE_INTRINSICS
   case vmIntrinsics::_counterTime:
   case vmIntrinsics::_getClassId:
@@ -610,6 +624,8 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_aescrypt_decryptBlock:
   case vmIntrinsics::_cipherBlockChaining_encryptAESCrypt:
   case vmIntrinsics::_cipherBlockChaining_decryptAESCrypt:
+  case vmIntrinsics::_electronicCodeBook_encryptAESCrypt:
+  case vmIntrinsics::_electronicCodeBook_decryptAESCrypt:
   case vmIntrinsics::_counterMode_AESCrypt:
   case vmIntrinsics::_sha_implCompress:
   case vmIntrinsics::_sha2_implCompress:

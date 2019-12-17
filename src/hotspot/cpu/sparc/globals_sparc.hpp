@@ -37,7 +37,6 @@
 // the load of the dispatch address and hence the jmp would still go to the location
 // according to the prior table. So, we let the thread continue and let it block by itself.
 define_pd_global(bool, DontYieldALot,               true);  // yield no more than 100 times per second
-define_pd_global(bool, ShareVtableStubs,            false); // improves performance markedly for mtrt and compress
 
 define_pd_global(bool, ImplicitNullChecks,          true);  // Generate code for implicit null checks
 define_pd_global(bool, TrapBasedNullChecks,         false); // Not needed on sparc.
@@ -74,9 +73,6 @@ define_pd_global(bool, RewriteBytecodes,     true);
 define_pd_global(bool, RewriteFrequentPairs, true);
 
 define_pd_global(bool, PreserveFramePointer, false);
-
-// GC Ergo Flags
-define_pd_global(size_t, CMSYoungGenPerWorker, 16*M);  // default max size of CMS young gen, per GC worker thread
 
 define_pd_global(uintx, TypeProfileLevel, 111);
 

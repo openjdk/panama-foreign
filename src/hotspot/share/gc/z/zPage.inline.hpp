@@ -39,14 +39,11 @@
 #include "utilities/debug.hpp"
 
 inline uint8_t ZPage::type_from_size(size_t size) const {
-  switch (size) {
-  case ZPageSizeSmall:
+  if (size == ZPageSizeSmall) {
     return ZPageTypeSmall;
-
-  case ZPageSizeMedium:
+  } else if (size == ZPageSizeMedium) {
     return ZPageTypeMedium;
-
-  default:
+  } else {
     return ZPageTypeLarge;
   }
 }
@@ -177,18 +174,6 @@ inline bool ZPage::is_in(uintptr_t addr) const {
   return offset >= start() && offset < top();
 }
 
-inline uintptr_t ZPage::block_start(uintptr_t addr) const {
-  if (block_is_obj(addr)) {
-    return addr;
-  } else {
-    return ZAddress::good(top());
-  }
-}
-
-inline bool ZPage::block_is_obj(uintptr_t addr) const {
-  return ZAddress::offset(addr) < top();
-}
-
 inline bool ZPage::is_marked() const {
   assert(is_relocatable(), "Invalid page state");
   return _livemap.is_marked();
@@ -219,11 +204,11 @@ inline bool ZPage::mark_object(uintptr_t addr, bool finalizable, bool& inc_live)
 
   // Set mark bit
   const size_t index = ((ZAddress::offset(addr) - start()) >> object_alignment_shift()) * 2;
-  return _livemap.set_atomic(index, finalizable, inc_live);
+  return _livemap.set(index, finalizable, inc_live);
 }
 
-inline void ZPage::inc_live_atomic(uint32_t objects, size_t bytes) {
-  _livemap.inc_live_atomic(objects, bytes);
+inline void ZPage::inc_live(uint32_t objects, size_t bytes) {
+  _livemap.inc_live(objects, bytes);
 }
 
 inline uint32_t ZPage::live_objects() const {
@@ -270,7 +255,7 @@ inline uintptr_t ZPage::alloc_object_atomic(size_t size) {
       return 0;
     }
 
-    const uintptr_t prev_top = Atomic::cmpxchg(new_top, &_top, addr);
+    const uintptr_t prev_top = Atomic::cmpxchg(&_top, addr, new_top);
     if (prev_top == addr) {
       // Success
       return ZAddress::good(addr);
@@ -314,7 +299,7 @@ inline bool ZPage::undo_alloc_object_atomic(uintptr_t addr, size_t size) {
       return false;
     }
 
-    const uintptr_t prev_top = Atomic::cmpxchg(new_top, &_top, old_top);
+    const uintptr_t prev_top = Atomic::cmpxchg(&_top, old_top, new_top);
     if (prev_top == old_top) {
       // Success
       return true;

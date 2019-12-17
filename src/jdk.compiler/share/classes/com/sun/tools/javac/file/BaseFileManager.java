@@ -44,6 +44,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -173,6 +174,10 @@ public abstract class BaseFileManager implements JavaFileManager {
     private long lastUsedTime = System.currentTimeMillis();
     protected long deferredCloseTimeout = 0;
 
+    public void clear() {
+        new HashSet<>(options.keySet()).forEach(k -> options.remove(k));
+    }
+
     protected ClassLoader getClassLoader(URL[] urls) {
         ClassLoader thisClassLoader = getClass().getClassLoader();
 
@@ -196,6 +201,10 @@ public abstract class BaseFileManager implements JavaFileManager {
 
     public boolean isDefaultBootClassPath() {
         return locations.isDefaultBootClassPath();
+    }
+
+    public boolean isDefaultSystemModulesPath() {
+        return locations.isDefaultSystemModulesPath();
     }
 
     // <editor-fold defaultstate="collapsed" desc="Option handling">

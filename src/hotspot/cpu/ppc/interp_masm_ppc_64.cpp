@@ -881,9 +881,9 @@ void InterpreterMacroAssembler::lock_object(Register monitor, Register object) {
   } else {
     // template code:
     //
-    // markOop displaced_header = obj->mark().set_unlocked();
+    // markWord displaced_header = obj->mark().set_unlocked();
     // monitor->lock()->set_displaced_header(displaced_header);
-    // if (Atomic::cmpxchg(/*ex=*/monitor, /*addr*/obj->mark_addr(), /*cmp*/displaced_header) == displaced_header) {
+    // if (Atomic::cmpxchg(/*addr*/obj->mark_addr(), /*cmp*/displaced_header, /*ex=*/monitor) == displaced_header) {
     //   // We stored the monitor address into the object's mark word.
     // } else if (THREAD->is_lock_owned((address)displaced_header))
     //   // Simple recursive case.
@@ -903,17 +903,17 @@ void InterpreterMacroAssembler::lock_object(Register monitor, Register object) {
 
     assert_different_registers(displaced_header, object_mark_addr, current_header, tmp);
 
-    // markOop displaced_header = obj->mark().set_unlocked();
+    // markWord displaced_header = obj->mark().set_unlocked();
 
-    // Load markOop from object into displaced_header.
+    // Load markWord from object into displaced_header.
     ld(displaced_header, oopDesc::mark_offset_in_bytes(), object);
 
     if (UseBiasedLocking) {
       biased_locking_enter(CCR0, object, displaced_header, tmp, current_header, done, &slow_case);
     }
 
-    // Set displaced_header to be (markOop of object | UNLOCK_VALUE).
-    ori(displaced_header, displaced_header, markOopDesc::unlocked_value);
+    // Set displaced_header to be (markWord of object | UNLOCK_VALUE).
+    ori(displaced_header, displaced_header, markWord::unlocked_value);
 
     // monitor->lock()->set_displaced_header(displaced_header);
 
@@ -921,7 +921,7 @@ void InterpreterMacroAssembler::lock_object(Register monitor, Register object) {
     std(displaced_header, BasicObjectLock::lock_offset_in_bytes() +
         BasicLock::displaced_header_offset_in_bytes(), monitor);
 
-    // if (Atomic::cmpxchg(/*ex=*/monitor, /*addr*/obj->mark_addr(), /*cmp*/displaced_header) == displaced_header) {
+    // if (Atomic::cmpxchg(/*addr*/obj->mark_addr(), /*cmp*/displaced_header, /*ex=*/monitor) == displaced_header) {
 
     // Store stack address of the BasicObjectLock (this is monitor) into object.
     addi(object_mark_addr, object, oopDesc::mark_offset_in_bytes());
@@ -949,12 +949,12 @@ void InterpreterMacroAssembler::lock_object(Register monitor, Register object) {
 
     // We did not see an unlocked object so try the fast recursive case.
 
-    // Check if owner is self by comparing the value in the markOop of object
+    // Check if owner is self by comparing the value in the markWord of object
     // (current_header) with the stack pointer.
     sub(current_header, current_header, R1_SP);
 
     assert(os::vm_page_size() > 0xfff, "page size too small - change the constant");
-    load_const_optimized(tmp, ~(os::vm_page_size()-1) | markOopDesc::lock_mask_in_place);
+    load_const_optimized(tmp, ~(os::vm_page_size()-1) | markWord::lock_mask_in_place);
 
     and_(R0/*==0?*/, current_header, tmp);
     // If condition is true we are done and hence we can store 0 in the displaced
@@ -997,7 +997,7 @@ void InterpreterMacroAssembler::unlock_object(Register monitor, bool check_for_e
     // if ((displaced_header = monitor->displaced_header()) == NULL) {
     //   // Recursive unlock. Mark the monitor unlocked by setting the object field to NULL.
     //   monitor->set_obj(NULL);
-    // } else if (Atomic::cmpxchg(displaced_header, obj->mark_addr(), monitor) == monitor) {
+    // } else if (Atomic::cmpxchg(obj->mark_addr(), monitor, displaced_header) == monitor) {
     //   // We swapped the unlocked mark in displaced_header into the object's mark word.
     //   monitor->set_obj(NULL);
     // } else {
@@ -1030,7 +1030,7 @@ void InterpreterMacroAssembler::unlock_object(Register monitor, bool check_for_e
     cmpdi(CCR0, displaced_header, 0);
     beq(CCR0, free_slot); // recursive unlock
 
-    // } else if (Atomic::cmpxchg(displaced_header, obj->mark_addr(), monitor) == monitor) {
+    // } else if (Atomic::cmpxchg(obj->mark_addr(), monitor, displaced_header) == monitor) {
     //   // We swapped the unlocked mark in displaced_header into the object's mark word.
     //   monitor->set_obj(NULL);
 
@@ -2265,7 +2265,7 @@ void InterpreterMacroAssembler::get_method_counters(Register method,
   cmpdi(CCR0, Rcounters, 0);
   bne(CCR0, has_counters);
   call_VM(noreg, CAST_FROM_FN_PTR(address,
-                                  InterpreterRuntime::build_method_counters), method, false);
+                                  InterpreterRuntime::build_method_counters), method);
   ld(Rcounters, in_bytes(Method::method_counters_offset()), method);
   cmpdi(CCR0, Rcounters, 0);
   beq(CCR0, skip); // No MethodCounters, OutOfMemory.
@@ -2313,7 +2313,7 @@ void InterpreterMacroAssembler::increment_invocation_counter(Register Rcounters,
 }
 
 void InterpreterMacroAssembler::verify_oop(Register reg, TosState state) {
-  if (state == atos) { MacroAssembler::verify_oop(reg); }
+  if (state == atos) { MacroAssembler::verify_oop(reg, FILE_AND_LINE); }
 }
 
 // Local helper function for the verify_oop_or_return_address macro.

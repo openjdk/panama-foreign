@@ -61,7 +61,7 @@ template <MEMFLAGS F> BasicHashtableEntry<F>* BasicHashtable<F>::new_entry(unsig
 
   if (entry == NULL) {
     if (_first_free_entry + _entry_size >= _end_block) {
-      int block_size = MIN2(512, MAX2((int)_table_size / 2, (int)_number_of_entries));
+      int block_size = MIN2(512, MAX3(2, (int)_table_size / 2, (int)_number_of_entries));
       int len = _entry_size * block_size;
       len = 1 << log2_int(len); // round down to power of 2
       assert(len >= _entry_size, "");
@@ -101,10 +101,8 @@ template <class T, MEMFLAGS F> HashtableEntry<T, F>* Hashtable<T, F>::allocate_n
 }
 
 template <MEMFLAGS F> void BasicHashtable<F>::free_buckets() {
-  if (NULL != _buckets) {
-    FREE_C_HEAP_ARRAY(HashtableBucket, _buckets);
-    _buckets = NULL;
-  }
+  FREE_C_HEAP_ARRAY(HashtableBucket, _buckets);
+  _buckets = NULL;
 }
 
 // For oops and Strings the size of the literal is interesting. For other types, nobody cares.
@@ -306,6 +304,7 @@ template class BasicHashtable<mtCode>;
 template class BasicHashtable<mtInternal>;
 template class BasicHashtable<mtModule>;
 template class BasicHashtable<mtCompiler>;
+template class BasicHashtable<mtTracing>;
 
 template void BasicHashtable<mtClass>::verify_table<DictionaryEntry>(char const*);
 template void BasicHashtable<mtModule>::verify_table<ModuleEntry>(char const*);

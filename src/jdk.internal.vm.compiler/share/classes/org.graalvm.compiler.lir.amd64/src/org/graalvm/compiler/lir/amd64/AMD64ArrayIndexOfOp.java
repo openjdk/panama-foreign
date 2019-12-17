@@ -564,7 +564,7 @@ public final class AMD64ArrayIndexOfOp extends AMD64LIRInstruction {
     private void emitArrayLoad(AMD64MacroAssembler asm, AVXKind.AVXSize vectorSize, Register vecDst, Register arrayPtr, Register index, int offset, boolean alignedLoad) {
         AMD64Address src = new AMD64Address(arrayPtr, index, arrayIndexScale, offset);
         if (asm.supports(CPUFeature.AVX)) {
-            VexMoveOp loadOp = alignedLoad ? VexMoveOp.VMOVDQA : VexMoveOp.VMOVDQU;
+            VexMoveOp loadOp = alignedLoad ? VexMoveOp.VMOVDQA32 : VexMoveOp.VMOVDQU32;
             loadOp.emit(asm, vectorSize, vecDst, src);
         } else {
             // SSE
@@ -643,5 +643,10 @@ public final class AMD64ArrayIndexOfOp extends AMD64LIRInstruction {
 
     private static boolean supports(LIRGeneratorTool tool, CPUFeature cpuFeature) {
         return ((AMD64) tool.target().arch).getFeatures().contains(cpuFeature);
+    }
+
+    @Override
+    public boolean needsClearUpperVectorRegisters() {
+        return true;
     }
 }

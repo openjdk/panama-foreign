@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,7 +139,7 @@ inline bool ClearNoncleanCardWrapper::clear_card_parallel(CardValue* entry) {
     if (CardTableRS::card_is_dirty_wrt_gen_iter(entry_val)
         || _ct->is_prev_youngergen_card_val(entry_val)) {
       CardValue res =
-        Atomic::cmpxchg(CardTableRS::clean_card_val(), entry, entry_val);
+        Atomic::cmpxchg(entry, entry_val, CardTableRS::clean_card_val());
       if (res == entry_val) {
         break;
       } else {
@@ -264,7 +264,7 @@ void CardTableRS::write_ref_field_gc_par(void* field, oop new_val) {
       // Mark it as both cur and prev youngergen; card cleaning thread will
       // eventually remove the previous stuff.
       CardValue new_val = cur_youngergen_and_prev_nonclean_card;
-      CardValue res = Atomic::cmpxchg(new_val, entry, entry_val);
+      CardValue res = Atomic::cmpxchg(entry, entry_val, new_val);
       // Did the CAS succeed?
       if (res == entry_val) return;
       // Otherwise, retry, to see the new value.
@@ -624,26 +624,11 @@ CardTableRS::CardTableRS(MemRegion whole_heap, bool scanned_concurrently) :
 }
 
 CardTableRS::~CardTableRS() {
-  if (_last_cur_val_in_gen) {
-    FREE_C_HEAP_ARRAY(CardValue, _last_cur_val_in_gen);
-    _last_cur_val_in_gen = NULL;
-  }
-  if (_lowest_non_clean) {
-    FREE_C_HEAP_ARRAY(CardArr, _lowest_non_clean);
-    _lowest_non_clean = NULL;
-  }
-  if (_lowest_non_clean_chunk_size) {
-    FREE_C_HEAP_ARRAY(size_t, _lowest_non_clean_chunk_size);
-    _lowest_non_clean_chunk_size = NULL;
-  }
-  if (_lowest_non_clean_base_chunk_index) {
-    FREE_C_HEAP_ARRAY(uintptr_t, _lowest_non_clean_base_chunk_index);
-    _lowest_non_clean_base_chunk_index = NULL;
-  }
-  if (_last_LNC_resizing_collection) {
-    FREE_C_HEAP_ARRAY(int, _last_LNC_resizing_collection);
-    _last_LNC_resizing_collection = NULL;
-  }
+  FREE_C_HEAP_ARRAY(CardValue, _last_cur_val_in_gen);
+  FREE_C_HEAP_ARRAY(CardArr, _lowest_non_clean);
+  FREE_C_HEAP_ARRAY(size_t, _lowest_non_clean_chunk_size);
+  FREE_C_HEAP_ARRAY(uintptr_t, _lowest_non_clean_base_chunk_index);
+  FREE_C_HEAP_ARRAY(int, _last_LNC_resizing_collection);
 }
 
 void CardTableRS::initialize() {
@@ -656,11 +641,7 @@ void CardTableRS::initialize() {
     NEW_C_HEAP_ARRAY(uintptr_t, _max_covered_regions, mtGC);
   _last_LNC_resizing_collection =
     NEW_C_HEAP_ARRAY(int, _max_covered_regions, mtGC);
-  if (_lowest_non_clean == NULL
-      || _lowest_non_clean_chunk_size == NULL
-      || _lowest_non_clean_base_chunk_index == NULL
-      || _last_LNC_resizing_collection == NULL)
-    vm_exit_during_initialization("couldn't allocate an LNC array.");
+
   for (int i = 0; i < _max_covered_regions; i++) {
     _lowest_non_clean[i] = NULL;
     _lowest_non_clean_chunk_size[i] = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -155,7 +155,7 @@ public final class AMD64ArrayCompareToOp extends AMD64LIRInstruction {
         AMD64Address.Scale scale2 = null;
 
         // if (ae != StrIntrinsicNode::LL) {
-        if (kind1 == JavaKind.Byte && kind2 == JavaKind.Byte) {
+        if (!(kind1 == JavaKind.Byte && kind2 == JavaKind.Byte)) {
             stride2x2 = 0x20;
         }
 
@@ -531,7 +531,7 @@ public final class AMD64ArrayCompareToOp extends AMD64LIRInstruction {
             masm.notq(cnt1);
             masm.bsfq(cnt2, cnt1);
             // if (ae != StrIntrinsicNode::LL) {
-            if (kind1 != JavaKind.Byte && kind2 != JavaKind.Byte) {
+            if (!(kind1 == JavaKind.Byte && kind2 == JavaKind.Byte)) {
                 // Divide diff by 2 to get number of chars
                 masm.sarl(cnt2, 1);
             }
@@ -578,5 +578,10 @@ public final class AMD64ArrayCompareToOp extends AMD64LIRInstruction {
             masm.movzbl(elem1, new AMD64Address(str1, index, scale1, 0));
             masm.movzwl(elem2, new AMD64Address(str2, index, scale2, 0));
         }
+    }
+
+    @Override
+    public boolean needsClearUpperVectorRegisters() {
+        return true;
     }
 }

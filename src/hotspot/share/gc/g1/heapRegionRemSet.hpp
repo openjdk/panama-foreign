@@ -28,6 +28,7 @@
 #include "gc/g1/g1CodeCacheRemSet.hpp"
 #include "gc/g1/g1FromCardCache.hpp"
 #include "gc/g1/sparsePRT.hpp"
+#include "runtime/atomic.hpp"
 #include "utilities/bitMap.hpp"
 
 // Remembered set for a heap region.  Represent a set of "cards" that
@@ -186,15 +187,11 @@ protected:
     _collision_list_next(NULL)
   {}
 
-  inline void add_card_work(CardIdx_t from_card, bool par);
-
-  inline void add_reference_work(OopOrNarrowOopStar from, bool par);
-
 public:
   // We need access in order to union things into the base table.
   BitMap* bm() { return &_bm; }
 
-  HeapRegion* hr() const { return OrderAccess::load_acquire(&_hr); }
+  HeapRegion* hr() const { return Atomic::load_acquire(&_hr); }
 
   jint occupied() const {
     // Overkill, but if we ever need it...
@@ -206,11 +203,7 @@ public:
 
   inline void add_reference(OopOrNarrowOopStar from);
 
-  inline void seq_add_reference(OopOrNarrowOopStar from);
-
   inline void add_card(CardIdx_t from_card_index);
-
-  void seq_add_card(CardIdx_t from_card_index);
 
   // (Destructively) union the bitmap of the current table into the given
   // bitmap (which is assumed to be of the same size.)
@@ -237,7 +230,7 @@ public:
     while (true) {
       PerRegionTable* fl = _free_list;
       last->set_next(fl);
-      PerRegionTable* res = Atomic::cmpxchg(prt, &_free_list, fl);
+      PerRegionTable* res = Atomic::cmpxchg(&_free_list, fl, prt);
       if (res == fl) {
         return;
       }
@@ -381,12 +374,6 @@ public:
     _state = Complete;
   }
 
-  // Used in the sequential case.
-  void add_reference(OopOrNarrowOopStar from) {
-    add_reference(from, 0);
-  }
-
-  // Used in the parallel case.
   void add_reference(OopOrNarrowOopStar from, uint tid) {
     RemSetState state = _state;
     if (state == Untracked) {

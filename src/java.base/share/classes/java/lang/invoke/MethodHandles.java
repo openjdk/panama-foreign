@@ -203,7 +203,7 @@ public class MethodHandles {
      * @param targetClass the target class
      * @param caller the caller lookup object
      * @return a lookup object for the target class, with private access
-     * @throws IllegalArgumentException if {@code targetClass} is a primitive type or array class
+     * @throws IllegalArgumentException if {@code targetClass} is a primitive type or void or array class
      * @throws NullPointerException if {@code targetClass} or {@code caller} is {@code null}
      * @throws SecurityException if denied by the security manager
      * @throws IllegalAccessException if any of the other access checks specified above fails
@@ -274,14 +274,13 @@ public class MethodHandles {
      * @param target a direct method handle to crack into symbolic reference components
      * @param expected a class object representing the desired result type {@code T}
      * @return a reference to the method, constructor, or field object
-     * @exception SecurityException if the caller is not privileged to call {@code setAccessible}
-     * @exception NullPointerException if either argument is {@code null}
-     * @exception IllegalArgumentException if the target is not a direct method handle
-     * @exception ClassCastException if the member is not of the expected type
+     * @throws    SecurityException if the caller is not privileged to call {@code setAccessible}
+     * @throws    NullPointerException if either argument is {@code null}
+     * @throws    IllegalArgumentException if the target is not a direct method handle
+     * @throws    ClassCastException if the member is not of the expected type
      * @since 1.8
      */
-    public static <T extends Member> T
-    reflectAs(Class<T> expected, MethodHandle target) {
+    public static <T extends Member> T reflectAs(Class<T> expected, MethodHandle target) {
         SecurityManager smgr = System.getSecurityManager();
         if (smgr != null)  smgr.checkPermission(ACCESS_PERMISSION);
         Lookup lookup = Lookup.IMPL_LOOKUP;  // use maximally privileged lookup
@@ -334,7 +333,7 @@ public class MethodHandles {
      * </tr>
      * <tr>
      *     <th scope="row">{@link java.lang.invoke.MethodHandles.Lookup#findStaticGetter lookup.findStaticGetter(C.class,"f",FT.class)}</th>
-     *     <td>{@code static}<br>{@code FT f;}</td><td>{@code (T) C.f;}</td>
+     *     <td>{@code static}<br>{@code FT f;}</td><td>{@code (FT) C.f;}</td>
      * </tr>
      * <tr>
      *     <th scope="row">{@link java.lang.invoke.MethodHandles.Lookup#findSetter lookup.findSetter(C.class,"f",FT.class)}</th>
@@ -377,8 +376,8 @@ public class MethodHandles {
      *     <td>{@code C(A*);}</td><td>{@code (C) aConstructor.newInstance(arg*);}</td>
      * </tr>
      * <tr>
-     *     <th scope="row">{@link java.lang.invoke.MethodHandles.Lookup#unreflect lookup.unreflect(aMethod)}</th>
-     *     <td>({@code static})?<br>{@code T m(A*);}</td><td>{@code (T) aMethod.invoke(thisOrNull, arg*);}</td>
+     *     <th scope="row">{@link java.lang.invoke.MethodHandles.Lookup#unreflectSpecial lookup.unreflectSpecial(aMethod,this.class)}</th>
+     *     <td>{@code T m(A*);}</td><td>{@code (T) super.m(arg*);}</td>
      * </tr>
      * <tr>
      *     <th scope="row">{@link java.lang.invoke.MethodHandles.Lookup#findClass lookup.findClass("C")}</th>
@@ -403,7 +402,7 @@ public class MethodHandles {
      * stands for a null reference if the accessed method or field is static,
      * and {@code this} otherwise.
      * The names {@code aMethod}, {@code aField}, and {@code aConstructor} stand
-     * for reflective objects corresponding to the given members.
+     * for reflective objects corresponding to the given members declared in type {@code C}.
      * <p>
      * The bytecode behavior for a {@code findClass} operation is a load of a constant class,
      * as if by {@code ldc CONSTANT_Class}.
@@ -1042,7 +1041,7 @@ public class MethodHandles {
      * <td style="text-align:center">IAE</td>
      * </tr>
      * <tr>
-     * <td>{@code ANY.in(X)}, for inaccessible <code>X</code></td>
+     * <td>{@code ANY.in(X)}, for inaccessible {@code X}</td>
      * <td></td>
      * <td></td>
      * <td></td>
@@ -1385,7 +1384,7 @@ public class MethodHandles {
         private Lookup(Class<?> lookupClass, Class<?> prevLookupClass, int allowedModes) {
             assert prevLookupClass == null || ((allowedModes & MODULE) == 0
                     && prevLookupClass.getModule() != lookupClass.getModule());
-
+            assert !lookupClass.isArray() && !lookupClass.isPrimitive();
             this.lookupClass = lookupClass;
             this.prevLookupClass = prevLookupClass;
             this.allowedModes = allowedModes;
@@ -1443,6 +1442,7 @@ public class MethodHandles {
          * @param requestedLookupClass the desired lookup class for the new lookup object
          * @return a lookup object which reports the desired lookup class, or the same object
          * if there is no change
+         * @throws IllegalArgumentException if {@code requestedLookupClass} is a primitive type or void or array class
          * @throws NullPointerException if the argument is null
          *
          * @revised 9
@@ -1452,6 +1452,11 @@ public class MethodHandles {
          */
         public Lookup in(Class<?> requestedLookupClass) {
             Objects.requireNonNull(requestedLookupClass);
+            if (requestedLookupClass.isPrimitive())
+                throw new IllegalArgumentException(requestedLookupClass + " is a primitive class");
+            if (requestedLookupClass.isArray())
+                throw new IllegalArgumentException(requestedLookupClass + " is an array class");
+
             if (allowedModes == TRUSTED)  // IMPL_LOOKUP can make any lookup at all
                 return new Lookup(requestedLookupClass, null, FULL_POWER_MODES);
             if (requestedLookupClass == this.lookupClass)
@@ -1754,12 +1759,11 @@ assertEquals("[x, y]", MH_asList.invoke("x", "y").toString());
          *                                or if the method is not {@code static},
          *                                or if the method's variable arity modifier bit
          *                                is set and {@code asVarargsCollector} fails
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
-        public
-        MethodHandle findStatic(Class<?> refc, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
+        public MethodHandle findStatic(Class<?> refc, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
             MemberName method = resolveOrFail(REF_invokeStatic, refc, name, type);
             return getDirectMethod(REF_invokeStatic, refc, method, findBoundCallerClass(method));
         }
@@ -1839,7 +1843,7 @@ assertEquals("", (String) MH_newString.invokeExact());
          *                                or if the method is {@code static},
          *                                or if the method's variable arity modifier bit
          *                                is set and {@code asVarargsCollector} fails
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
@@ -1913,7 +1917,7 @@ assertEquals("[x, y, z]", pb.command().toString());
          * @throws IllegalAccessException if access checking fails
          *                                or if the method's variable arity modifier bit
          *                                is set and {@code asVarargsCollector} fails
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
@@ -1936,13 +1940,13 @@ assertEquals("[x, y, z]", pb.command().toString());
          *
          * @param targetName the fully qualified name of the class to be looked up.
          * @return the requested class.
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *            <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws LinkageError if the linkage fails
          * @throws ClassNotFoundException if the class cannot be loaded by the lookup class' loader.
          * @throws IllegalAccessException if the class is not accessible, using the allowed access
          * modes.
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @since 9
          */
@@ -2014,7 +2018,7 @@ assertEquals("[x, y, z]", pb.command().toString());
          * @return the class that has been access-checked
          * @throws IllegalAccessException if the class is not accessible from the lookup class
          * and previous lookup class, if present, using the allowed access modes.
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @since 9
          * @see <a href="#cross-module-lookup">Cross-module lookups</a>
@@ -2096,7 +2100,7 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
          *                                or if the method is {@code static},
          *                                or if the method's variable arity modifier bit
          *                                is set and {@code asVarargsCollector} fails
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
@@ -2121,7 +2125,7 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
          * @return a method handle which can load values from the field
          * @throws NoSuchFieldException if the field does not exist
          * @throws IllegalAccessException if access checking fails, or if the field is {@code static}
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          * @see #findVarHandle(Class, String, Class)
@@ -2145,7 +2149,7 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
          * @throws NoSuchFieldException if the field does not exist
          * @throws IllegalAccessException if access checking fails, or if the field is {@code static}
          *                                or {@code final}
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          * @see #findVarHandle(Class, String, Class)
@@ -2218,7 +2222,7 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
          * @return a VarHandle giving access to non-static fields.
          * @throws NoSuchFieldException if the field does not exist
          * @throws IllegalAccessException if access checking fails, or if the field is {@code static}
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          * @since 9
@@ -2244,7 +2248,7 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
          * @return a method handle which can load values from the field
          * @throws NoSuchFieldException if the field does not exist
          * @throws IllegalAccessException if access checking fails, or if the field is not {@code static}
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
@@ -2269,7 +2273,7 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
          * @throws NoSuchFieldException if the field does not exist
          * @throws IllegalAccessException if access checking fails, or if the field is not {@code static}
          *                                or is {@code final}
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
@@ -2343,7 +2347,7 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
          * @return a VarHandle giving access to a static field
          * @throws NoSuchFieldException if the field does not exist
          * @throws IllegalAccessException if access checking fails, or if the field is not {@code static}
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          * @since 9
@@ -2397,7 +2401,7 @@ return mh1;
          * @throws IllegalAccessException if access checking fails
          *                                or if the method's variable arity modifier bit
          *                                is set and {@code asVarargsCollector} fails
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          * @see MethodHandle#bindTo
@@ -2504,7 +2508,7 @@ return mh1;
          * @throws NullPointerException if any argument is null
          */
         public MethodHandle unreflectSpecial(Method m, Class<?> specialCaller) throws IllegalAccessException {
-            checkSpecialCaller(specialCaller, null);
+            checkSpecialCaller(specialCaller, m.getDeclaringClass());
             Lookup specialLookup = this.in(specialCaller);
             MemberName method = new MemberName(m, true);
             assert(method.isMethod());
@@ -2699,10 +2703,10 @@ return mh1;
          * and was created by a lookup object for a different class.
          * @param target a direct method handle to crack into symbolic reference components
          * @return a symbolic reference which can be used to reconstruct this method handle from this lookup object
-         * @exception SecurityException if a security manager is present and it
+         * @throws    SecurityException if a security manager is present and it
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws IllegalArgumentException if the target is not a direct method handle or if access checking fails
-         * @exception NullPointerException if the target is {@code null}
+         * @throws    NullPointerException if the target is {@code null}
          * @see MethodHandleInfo
          * @since 1.8
          */
@@ -3171,7 +3175,8 @@ return mh1;
         /** Hook called from the JVM (via MethodHandleNatives) to link MH constants:
          */
         /*non-public*/
-        MethodHandle linkMethodHandleConstant(byte refKind, Class<?> defc, String name, Object type) throws ReflectiveOperationException {
+        MethodHandle linkMethodHandleConstant(byte refKind, Class<?> defc, String name, Object type)
+                throws ReflectiveOperationException {
             if (!(type instanceof Class || type instanceof MethodType))
                 throw new InternalError("unresolved MemberName");
             MemberName member = new MemberName(refKind, defc, name, type);
@@ -3207,8 +3212,7 @@ return mh1;
             }
             return mh;
         }
-        private
-        boolean canBeCached(byte refKind, Class<?> defc, MemberName member) {
+        private boolean canBeCached(byte refKind, Class<?> defc, MemberName member) {
             if (refKind == REF_invokeSpecial) {
                 return false;
             }
@@ -3242,8 +3246,7 @@ return mh1;
             }
             return true;
         }
-        private
-        MethodHandle getDirectMethodForConstant(byte refKind, Class<?> defc, MemberName member)
+        private MethodHandle getDirectMethodForConstant(byte refKind, Class<?> defc, MemberName member)
                 throws ReflectiveOperationException {
             if (MethodHandleNatives.refKindIsField(refKind)) {
                 return getDirectFieldNoSecurityManager(refKind, defc, member);
@@ -3276,8 +3279,7 @@ return mh1;
      * @jvms 6.5 {@code anewarray} Instruction
      * @since 9
      */
-    public static
-    MethodHandle arrayConstructor(Class<?> arrayClass) throws IllegalArgumentException {
+    public static MethodHandle arrayConstructor(Class<?> arrayClass) throws IllegalArgumentException {
         if (!arrayClass.isArray()) {
             throw newIllegalArgumentException("not an array class: " + arrayClass.getName());
         }
@@ -3302,8 +3304,7 @@ return mh1;
      * @jvms 6.5 {@code arraylength} Instruction
      * @since 9
      */
-    public static
-    MethodHandle arrayLength(Class<?> arrayClass) throws IllegalArgumentException {
+    public static MethodHandle arrayLength(Class<?> arrayClass) throws IllegalArgumentException {
         return MethodHandleImpl.makeArrayElementAccessor(arrayClass, MethodHandleImpl.ArrayAccess.LENGTH);
     }
 
@@ -3327,8 +3328,7 @@ return mh1;
      * @throws  IllegalArgumentException if arrayClass is not an array type
      * @jvms 6.5 {@code aaload} Instruction
      */
-    public static
-    MethodHandle arrayElementGetter(Class<?> arrayClass) throws IllegalArgumentException {
+    public static MethodHandle arrayElementGetter(Class<?> arrayClass) throws IllegalArgumentException {
         return MethodHandleImpl.makeArrayElementAccessor(arrayClass, MethodHandleImpl.ArrayAccess.GET);
     }
 
@@ -3352,8 +3352,7 @@ return mh1;
      * @throws IllegalArgumentException if arrayClass is not an array type
      * @jvms 6.5 {@code aastore} Instruction
      */
-    public static
-    MethodHandle arrayElementSetter(Class<?> arrayClass) throws IllegalArgumentException {
+    public static MethodHandle arrayElementSetter(Class<?> arrayClass) throws IllegalArgumentException {
         return MethodHandleImpl.makeArrayElementAccessor(arrayClass, MethodHandleImpl.ArrayAccess.SET);
     }
 
@@ -3417,8 +3416,7 @@ return mh1;
      * @throws IllegalArgumentException if arrayClass is not an array type
      * @since 9
      */
-    public static
-    VarHandle arrayElementVarHandle(Class<?> arrayClass) throws IllegalArgumentException {
+    public static VarHandle arrayElementVarHandle(Class<?> arrayClass) throws IllegalArgumentException {
         return VarHandles.makeArrayElementHandle(arrayClass);
     }
 
@@ -3498,8 +3496,7 @@ return mh1;
      * viewArrayClass is not supported as a variable type
      * @since 9
      */
-    public static
-    VarHandle byteArrayViewVarHandle(Class<?> viewArrayClass,
+    public static VarHandle byteArrayViewVarHandle(Class<?> viewArrayClass,
                                      ByteOrder byteOrder) throws IllegalArgumentException {
         Objects.requireNonNull(byteOrder);
         return VarHandles.byteArrayViewHandle(viewArrayClass,
@@ -3586,8 +3583,7 @@ return mh1;
      * viewArrayClass is not supported as a variable type
      * @since 9
      */
-    public static
-    VarHandle byteBufferViewVarHandle(Class<?> viewArrayClass,
+    public static VarHandle byteBufferViewVarHandle(Class<?> viewArrayClass,
                                       ByteOrder byteOrder) throws IllegalArgumentException {
         Objects.requireNonNull(byteOrder);
         return VarHandles.makeByteBufferViewHandle(viewArrayClass,
@@ -3643,8 +3639,7 @@ return invoker;
      *                  or if the resulting method handle's type would have
      *          <a href="MethodHandle.html#maxarity">too many parameters</a>
      */
-    public static
-    MethodHandle spreadInvoker(MethodType type, int leadingArgCount) {
+    public static MethodHandle spreadInvoker(MethodType type, int leadingArgCount) {
         if (leadingArgCount < 0 || leadingArgCount > type.parameterCount())
             throw newIllegalArgumentException("bad argument count", leadingArgCount);
         type = type.asSpreaderType(Object[].class, leadingArgCount, type.parameterCount() - leadingArgCount);
@@ -3686,8 +3681,7 @@ return invoker;
      * @throws IllegalArgumentException if the resulting method handle's type would have
      *          <a href="MethodHandle.html#maxarity">too many parameters</a>
      */
-    public static
-    MethodHandle exactInvoker(MethodType type) {
+    public static MethodHandle exactInvoker(MethodType type) {
         return type.invokers().exactInvoker();
     }
 
@@ -3725,8 +3719,7 @@ return invoker;
      * @throws IllegalArgumentException if the resulting method handle's type would have
      *          <a href="MethodHandle.html#maxarity">too many parameters</a>
      */
-    public static
-    MethodHandle invoker(MethodType type) {
+    public static MethodHandle invoker(MethodType type) {
         return type.invokers().genericInvoker();
     }
 
@@ -3744,8 +3737,7 @@ return invoker;
      *         any VarHandle whose access mode type is of the given type.
      * @since 9
      */
-    static public
-    MethodHandle varHandleExactInvoker(VarHandle.AccessMode accessMode, MethodType type) {
+    public static MethodHandle varHandleExactInvoker(VarHandle.AccessMode accessMode, MethodType type) {
         return type.invokers().varHandleMethodExactInvoker(accessMode);
     }
 
@@ -3773,13 +3765,12 @@ return invoker;
      *         type.
      * @since 9
      */
-    static public
-    MethodHandle varHandleInvoker(VarHandle.AccessMode accessMode, MethodType type) {
+    public static MethodHandle varHandleInvoker(VarHandle.AccessMode accessMode, MethodType type) {
         return type.invokers().varHandleMethodInvoker(accessMode);
     }
 
-    static /*non-public*/
-    MethodHandle basicInvoker(MethodType type) {
+    /*non-public*/
+    static MethodHandle basicInvoker(MethodType type) {
         return type.invokers().basicInvoker();
     }
 
@@ -3829,8 +3820,7 @@ return invoker;
      * @throws WrongMethodTypeException if the conversion cannot be made
      * @see MethodHandle#asType
      */
-    public static
-    MethodHandle explicitCastArguments(MethodHandle target, MethodType newType) {
+    public static MethodHandle explicitCastArguments(MethodHandle target, MethodType newType) {
         explicitCastArgumentsChecks(target, newType);
         // use the asTypeCache when possible:
         MethodType oldType = target.type();
@@ -3909,8 +3899,7 @@ assert((int)twice.invokeExact(21) == 42);
      *                  or if two corresponding parameter types in
      *                  {@code target.type()} and {@code newType} are not identical,
      */
-    public static
-    MethodHandle permuteArguments(MethodHandle target, MethodType newType, int... reorder) {
+    public static MethodHandle permuteArguments(MethodHandle target, MethodType newType, int... reorder) {
         reorder = reorder.clone();  // get a private copy
         MethodType oldType = target.type();
         permuteArgumentChecks(reorder, newType, oldType);
@@ -4069,8 +4058,7 @@ assert((int)twice.invokeExact(21) == 42);
      * @throws ClassCastException if the value cannot be converted to the required return type
      * @throws IllegalArgumentException if the given type is {@code void.class}
      */
-    public static
-    MethodHandle constant(Class<?> type, Object value) {
+    public static MethodHandle constant(Class<?> type, Object value) {
         if (type.isPrimitive()) {
             if (type == void.class)
                 throw newIllegalArgumentException("void type");
@@ -4093,8 +4081,7 @@ assert((int)twice.invokeExact(21) == 42);
      * @throws NullPointerException if the argument is null
      * @throws IllegalArgumentException if the given type is {@code void.class}
      */
-    public static
-    MethodHandle identity(Class<?> type) {
+    public static MethodHandle identity(Class<?> type) {
         Wrapper btw = (type.isPrimitive() ? Wrapper.forPrimitiveType(type) : Wrapper.OBJECT);
         int pos = btw.ordinal();
         MethodHandle ident = IDENTITY_MHS[pos];
@@ -4224,8 +4211,7 @@ assert((int)twice.invokeExact(21) == 42);
      *         type.
      * @see MethodHandle#bindTo
      */
-    public static
-    MethodHandle insertArguments(MethodHandle target, int pos, Object... values) {
+    public static MethodHandle insertArguments(MethodHandle target, int pos, Object... values) {
         int insCount = values.length;
         Class<?>[] ptypes = insertArgumentsChecks(target, insCount, pos);
         if (insCount == 0)  return target;
@@ -4300,8 +4286,8 @@ assertEquals("yz", (String) d0.invokeExact(123, "x", "y", "z"));
      * {@link #dropArguments(MethodHandle,int,Class...) dropArguments}{@code (target, pos, valueTypes.toArray(new Class[0]))}
      * </pre></blockquote>
      * @param target the method handle to invoke after the arguments are dropped
-     * @param valueTypes the type(s) of the argument(s) to drop
      * @param pos position of first argument to drop (zero for the leftmost)
+     * @param valueTypes the type(s) of the argument(s) to drop
      * @return a method handle which drops arguments of the given types,
      *         before calling the original method handle
      * @throws NullPointerException if the target is null,
@@ -4310,8 +4296,7 @@ assertEquals("yz", (String) d0.invokeExact(123, "x", "y", "z"));
      *                  or if {@code pos} is negative or greater than the arity of the target,
      *                  or if the new method handle's type would have too many parameters
      */
-    public static
-    MethodHandle dropArguments(MethodHandle target, int pos, List<Class<?>> valueTypes) {
+    public static MethodHandle dropArguments(MethodHandle target, int pos, List<Class<?>> valueTypes) {
         return dropArguments0(target, pos, copyTypes(valueTypes.toArray()));
     }
 
@@ -4319,8 +4304,7 @@ assertEquals("yz", (String) d0.invokeExact(123, "x", "y", "z"));
         return Arrays.asList(Arrays.copyOf(array, array.length, Class[].class));
     }
 
-    private static
-    MethodHandle dropArguments0(MethodHandle target, int pos, List<Class<?>> valueTypes) {
+    private static MethodHandle dropArguments0(MethodHandle target, int pos, List<Class<?>> valueTypes) {
         MethodType oldType = target.type();  // get NPE
         int dropped = dropArgumentChecks(oldType, pos, valueTypes);
         MethodType newType = oldType.insertParameterTypes(pos, valueTypes);
@@ -4382,8 +4366,8 @@ assertEquals("xz", (String) d12.invokeExact("x", 12, true, "z"));
      * {@link #dropArguments(MethodHandle,int,List) dropArguments}{@code (target, pos, Arrays.asList(valueTypes))}
      * </pre></blockquote>
      * @param target the method handle to invoke after the arguments are dropped
-     * @param valueTypes the type(s) of the argument(s) to drop
      * @param pos position of first argument to drop (zero for the leftmost)
+     * @param valueTypes the type(s) of the argument(s) to drop
      * @return a method handle which drops arguments of the given types,
      *         before calling the original method handle
      * @throws NullPointerException if the target is null,
@@ -4393,8 +4377,7 @@ assertEquals("xz", (String) d12.invokeExact("x", 12, true, "z"));
      *                  or if the new method handle's type would have
      *                  <a href="MethodHandle.html#maxarity">too many parameters</a>
      */
-    public static
-    MethodHandle dropArguments(MethodHandle target, int pos, Class<?>... valueTypes) {
+    public static MethodHandle dropArguments(MethodHandle target, int pos, Class<?>... valueTypes) {
         return dropArguments0(target, pos, copyTypes(valueTypes));
     }
 
@@ -4500,8 +4483,7 @@ assertEquals("xy", h3.invoke("x", "y", 1, "a", "b", "c"));
      *         {@code pos}.
      * @since 9
      */
-    public static
-    MethodHandle dropArgumentsToMatch(MethodHandle target, int skip, List<Class<?>> newTypes, int pos) {
+    public static MethodHandle dropArgumentsToMatch(MethodHandle target, int skip, List<Class<?>> newTypes, int pos) {
         Objects.requireNonNull(target);
         Objects.requireNonNull(newTypes);
         return dropArgumentsToMatch(target, skip, newTypes, pos, false);
@@ -4584,8 +4566,7 @@ assertEquals("XY", (String) f2.invokeExact("x", "y")); // XY
      *          or if the resulting method handle's type would have
      *          <a href="MethodHandle.html#maxarity">too many parameters</a>
      */
-    public static
-    MethodHandle filterArguments(MethodHandle target, int pos, MethodHandle... filters) {
+    public static MethodHandle filterArguments(MethodHandle target, int pos, MethodHandle... filters) {
         // In method types arguments start at index 0, while the LF
         // editor have the MH receiver at position 0 - adjust appropriately.
         final int MH_RECEIVER_OFFSET = 1;
@@ -4643,8 +4624,8 @@ assertEquals("XY", (String) f2.invokeExact("x", "y")); // XY
         return result.copyWithExtendL(newType, lform, filter);
     }
 
-    /*non-public*/ static
-    MethodHandle filterArgument(MethodHandle target, int pos, MethodHandle filter) {
+    /*non-public*/
+    static MethodHandle filterArgument(MethodHandle target, int pos, MethodHandle filter) {
         filterArgumentChecks(target, pos, filter);
         MethodType targetType = target.type();
         MethodType filterType = filter.type();
@@ -4790,8 +4771,7 @@ assertEquals("[top, [[up, down, strange], charm], bottom]",
      * @see MethodHandles#filterArguments
      * @see MethodHandles#filterReturnValue
      */
-    public static
-    MethodHandle collectArguments(MethodHandle target, int pos, MethodHandle filter) {
+    public static MethodHandle collectArguments(MethodHandle target, int pos, MethodHandle filter) {
         MethodType newType = collectArgumentsChecks(target, pos, filter);
         MethodType collectorType = filter.type();
         BoundMethodHandle result = target.rebind();
@@ -4884,8 +4864,7 @@ System.out.println((int) f0.invokeExact("x", "y")); // 2
      * @throws IllegalArgumentException if the argument list of {@code filter}
      *          does not match the return type of target as described above
      */
-    public static
-    MethodHandle filterReturnValue(MethodHandle target, MethodHandle filter) {
+    public static MethodHandle filterReturnValue(MethodHandle target, MethodHandle filter) {
         MethodType targetType = target.type();
         MethodType filterType = filter.type();
         filterReturnValueChecks(targetType, filterType);
@@ -4993,8 +4972,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      *          (skipping one matching the {@code combiner}'s return type)
      *          are not identical with the argument types of {@code combiner}
      */
-    public static
-    MethodHandle foldArguments(MethodHandle target, MethodHandle combiner) {
+    public static MethodHandle foldArguments(MethodHandle target, MethodHandle combiner) {
         return foldArguments(target, 0, combiner);
     }
 
@@ -5121,7 +5099,8 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      *          (2) the {@code N} argument types at positions {@code argPositions[1...N]} of the target signature are
      *              not identical with the argument types of {@code combiner}.
      */
-    /*non-public*/ static MethodHandle filterArgumentsWithCombiner(MethodHandle target, int position, MethodHandle combiner, int ... argPositions) {
+    /*non-public*/
+    static MethodHandle filterArgumentsWithCombiner(MethodHandle target, int position, MethodHandle combiner, int ... argPositions) {
         return argumentsWithCombiner(true, target, position, combiner, argPositions);
     }
 
@@ -5143,7 +5122,8 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      *              (skipping {@code position} where the {@code combiner}'s return will be folded in) are not identical
      *              with the argument types of {@code combiner}.
      */
-    /*non-public*/ static MethodHandle foldArgumentsWithCombiner(MethodHandle target, int position, MethodHandle combiner, int ... argPositions) {
+    /*non-public*/
+    static MethodHandle foldArgumentsWithCombiner(MethodHandle target, int position, MethodHandle combiner, int ... argPositions) {
         return argumentsWithCombiner(false, target, position, combiner, argPositions);
     }
 
@@ -5230,8 +5210,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      *          or if all three method types do not match (with the return
      *          type of {@code test} changed to match that of the target).
      */
-    public static
-    MethodHandle guardWithTest(MethodHandle test,
+    public static MethodHandle guardWithTest(MethodHandle test,
                                MethodHandle target,
                                MethodHandle fallback) {
         MethodType gtype = test.type();
@@ -5303,8 +5282,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      *          corresponding parameters
      * @see MethodHandles#tryFinally(MethodHandle, MethodHandle)
      */
-    public static
-    MethodHandle catchException(MethodHandle target,
+    public static MethodHandle catchException(MethodHandle target,
                                 Class<? extends Throwable> exType,
                                 MethodHandle handler) {
         MethodType ttype = target.type();
@@ -5335,8 +5313,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * @return method handle which can throw the given exceptions
      * @throws NullPointerException if either argument is null
      */
-    public static
-    MethodHandle throwException(Class<?> returnType, Class<? extends Throwable> exType) {
+    public static MethodHandle throwException(Class<?> returnType, Class<? extends Throwable> exType) {
         if (!Throwable.class.isAssignableFrom(exType))
             throw new ClassCastException(exType.getName());
         return MethodHandleImpl.throwException(methodType(returnType, exType));
@@ -6644,7 +6621,8 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         return iterableType;  // help the caller a bit
     }
 
-    /*non-public*/ static MethodHandle swapArguments(MethodHandle mh, int i, int j) {
+    /*non-public*/
+    static MethodHandle swapArguments(MethodHandle mh, int i, int j) {
         // there should be a better way to uncross my wires
         int arity = mh.type().parameterCount();
         int[] order = new int[arity];

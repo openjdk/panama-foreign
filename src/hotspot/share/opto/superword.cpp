@@ -699,24 +699,34 @@ void SuperWord::find_adjacent_refs() {
         // Put memory ops from remaining packs back on memops list for
         // the best alignment search.
         uint orig_msize = memops.size();
-        for (int i = 0; i < _packset.length(); i++) {
-          Node_List* p = _packset.at(i);
+        if (_packset.length() == 1 && orig_msize == 0) {
+          // If there are no remaining memory ops and only 1 pack we have only one choice
+          // for the alignment
+          Node_List* p = _packset.at(0);
+          assert(p->size() > 0, "sanity");
           MemNode* s = p->at(0)->as_Mem();
           assert(!same_velt_type(s, mem_ref), "sanity");
-          memops.push(s);
-        }
-        best_align_to_mem_ref = find_align_to_ref(memops);
-        if (best_align_to_mem_ref == NULL) {
-          if (TraceSuperWord) {
-            tty->print_cr("SuperWord::find_adjacent_refs(): best_align_to_mem_ref == NULL");
+          best_align_to_mem_ref = s;
+        } else {
+          for (int i = 0; i < _packset.length(); i++) {
+            Node_List* p = _packset.at(i);
+            MemNode* s = p->at(0)->as_Mem();
+            assert(!same_velt_type(s, mem_ref), "sanity");
+            memops.push(s);
           }
-          break;
+          best_align_to_mem_ref = find_align_to_ref(memops);
+          if (best_align_to_mem_ref == NULL) {
+            if (TraceSuperWord) {
+              tty->print_cr("SuperWord::find_adjacent_refs(): best_align_to_mem_ref == NULL");
+            }
+            break;
+          }
+          best_iv_adjustment = get_iv_adjustment(best_align_to_mem_ref);
+          NOT_PRODUCT(find_adjacent_refs_trace_1(best_align_to_mem_ref, best_iv_adjustment);)
+          // Restore list.
+          while (memops.size() > orig_msize)
+            (void)memops.pop();
         }
-        best_iv_adjustment = get_iv_adjustment(best_align_to_mem_ref);
-        NOT_PRODUCT(find_adjacent_refs_trace_1(best_align_to_mem_ref, best_iv_adjustment);)
-        // Restore list.
-        while (memops.size() > orig_msize)
-          (void)memops.pop();
       }
     } // unaligned memory accesses
 
@@ -2045,12 +2055,11 @@ bool SuperWord::profitable(Node_List* p) {
         for (uint k = 0; k < use->req(); k++) {
           Node* n = use->in(k);
           if (def == n) {
-            // reductions should only have a Phi use at the the loop
-            // head and out of loop uses
+            // Reductions should only have a Phi use at the loop head or a non-phi use
+            // outside of the loop if it is the last element of the pack (e.g. SafePoint).
             if (def->is_reduction() &&
                 ((use->is_Phi() && use->in(0) == _lpt->_head) ||
-                 !_lpt->is_member(_phase->get_loop(_phase->ctrl_or_self(use))))) {
-              assert(i == p->size()-1, "must be last element of the pack");
+                 (!_lpt->is_member(_phase->get_loop(_phase->ctrl_or_self(use))) && i == p->size()-1))) {
               continue;
             }
             if (!is_vector_use(use, k)) {
@@ -2402,6 +2411,12 @@ void SuperWord::output() {
         const TypePtr* atyp = n->adr_type();
         vn = StoreVectorNode::make(opc, ctl, mem, adr, atyp, val, vlen);
         vlen_in_bytes = vn->as_StoreVector()->memory_size();
+      } else if (VectorNode::is_roundopD(n)) {
+        Node* in1 = vector_opd(p, 1);
+        Node* in2 = low_adr->in(2);
+        assert(in2->is_Con(), "Constant rounding mode expected.");
+        vn = VectorNode::make(opc, in1, in2, vlen, velt_basic_type(n));
+        vlen_in_bytes = vn->as_Vector()->length_in_bytes();
       } else if (VectorNode::is_muladds2i(n)) {
         assert(n->req() == 5u, "MulAddS2I should have 4 operands.");
         Node* in1 = vector_opd(p, 1);

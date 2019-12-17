@@ -306,7 +306,7 @@ void Modules::define_module(jobject module, jboolean is_open, jstring version,
 
   oop loader = java_lang_Module::loader(module_handle());
   // Make sure loader is not the jdk.internal.reflect.DelegatingClassLoader.
-  if (!oopDesc::equals(loader, java_lang_ClassLoader::non_reflection_class_loader(loader))) {
+  if (loader != java_lang_ClassLoader::non_reflection_class_loader(loader)) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "Class loader is an invalid delegating class loader");
   }
@@ -331,7 +331,7 @@ void Modules::define_module(jobject module, jboolean is_open, jstring version,
     if (!h_loader.is_null() &&
         !SystemDictionary::is_platform_class_loader(h_loader()) &&
         (strncmp(package_name, JAVAPKG, JAVAPKG_LEN) == 0 &&
-          (package_name[JAVAPKG_LEN] == '/' || package_name[JAVAPKG_LEN] == '\0'))) {
+          (package_name[JAVAPKG_LEN] == JVM_SIGNATURE_SLASH || package_name[JAVAPKG_LEN] == '\0'))) {
       const char* class_loader_name = loader_data->loader_name_and_id();
       size_t pkg_len = strlen(package_name);
       char* pkg_name = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, pkg_len + 1);

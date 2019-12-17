@@ -34,10 +34,14 @@
 #include "interpreter/abstractInterpreter.hpp"
 #include "jvmci/compilerRuntime.hpp"
 #include "jvmci/jvmciRuntime.hpp"
+#include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/universe.hpp"
 #include "oops/compressedOops.hpp"
+#include "oops/klass.inline.hpp"
 #include "oops/method.inline.hpp"
+#include "runtime/atomic.hpp"
+#include "runtime/deoptimization.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/os.hpp"
 #include "runtime/safepointVerifiers.hpp"
@@ -91,7 +95,7 @@ Klass* AOTCodeHeap::lookup_klass(const char* name, int len, const Method* method
   Handle protection_domain(thread, caller->method_holder()->protection_domain());
 
   // Ignore wrapping L and ;
-  if (name[0] == 'L') {
+  if (name[0] == JVM_SIGNATURE_CLASS) {
     assert(len > 2, "small name %s", name);
     name++;
     len -= 2;
@@ -212,12 +216,8 @@ AOTLib::~AOTLib() {
 }
 
 AOTCodeHeap::~AOTCodeHeap() {
-  if (_classes != NULL) {
-    FREE_C_HEAP_ARRAY(AOTClass, _classes);
-  }
-  if (_code_to_aot != NULL) {
-    FREE_C_HEAP_ARRAY(CodeToAMethod, _code_to_aot);
-  }
+  FREE_C_HEAP_ARRAY(AOTClass, _classes);
+  FREE_C_HEAP_ARRAY(CodeToAMethod, _code_to_aot);
 }
 
 AOTLib::AOTLib(void* handle, const char* name, int dso_id) : _valid(true), _dl_handle(handle), _dso_id(dso_id) {
@@ -348,14 +348,17 @@ void AOTCodeHeap::publish_aot(const methodHandle& mh, AOTMethodData* method_data
   AOTCompiledMethod *aot = new AOTCompiledMethod(code, mh(), meta, metadata_table, metadata_size, state_adr, this, name, code_id, _aot_id);
   assert(_code_to_aot[code_id]._aot == NULL, "should be not initialized");
   _code_to_aot[code_id]._aot = aot; // Should set this first
-  if (Atomic::cmpxchg(in_use, &_code_to_aot[code_id]._state, not_set) != not_set) {
+  if (Atomic::cmpxchg(&_code_to_aot[code_id]._state, not_set, in_use) != not_set) {
     _code_to_aot[code_id]._aot = NULL; // Clean
   } else { // success
     // Publish method
 #ifdef TIERED
     mh->set_aot_code(aot);
 #endif
-    Method::set_code(mh, aot);
+    {
+      MutexLocker pl(CompiledMethod_lock, Mutex::_no_safepoint_check_flag);
+      Method::set_code(mh, aot);
+    }
     if (PrintAOT || (PrintCompilation && PrintAOT)) {
       PauseNoSafepointVerifier pnsv(&nsv); // aot code is registered already
       aot->print_on(tty, NULL);
@@ -401,9 +404,6 @@ void AOTCodeHeap::register_stubs() {
     int len = Bytes::get_Java_u2((address)stub_name);
     stub_name += 2;
     char* full_name = NEW_C_HEAP_ARRAY(char, len+5, mtCode);
-    if (full_name == NULL) { // No memory?
-      break;
-    }
     memcpy(full_name, "AOT ", 4);
     memcpy(full_name+4, stub_name, len);
     full_name[len+4] = 0;
@@ -411,7 +411,7 @@ void AOTCodeHeap::register_stubs() {
     AOTCompiledMethod* aot = new AOTCompiledMethod(entry, NULL, meta, metadata_table, metadata_size, state_adr, this, full_name, code_id, i);
     assert(_code_to_aot[code_id]._aot  == NULL, "should be not initialized");
     _code_to_aot[code_id]._aot  = aot;
-    if (Atomic::cmpxchg(in_use, &_code_to_aot[code_id]._state, not_set) != not_set) {
+    if (Atomic::cmpxchg(&_code_to_aot[code_id]._state, not_set, in_use) != not_set) {
       fatal("stab '%s' code state is %d", full_name, _code_to_aot[code_id]._state);
     }
     // Adjust code buffer boundaries only for stubs because they are last in the buffer.
@@ -452,7 +452,6 @@ void AOTCodeHeap::link_graal_runtime_symbols()  {
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_write_barrier_post", address, JVMCIRuntime::write_barrier_post);
 #endif
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_identity_hash_code", address, JVMCIRuntime::identity_hash_code);
-    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_thread_is_interrupted", address, JVMCIRuntime::thread_is_interrupted);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_exception_handler_for_pc", address, JVMCIRuntime::exception_handler_for_pc);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_test_deoptimize_call_int", address, JVMCIRuntime::test_deoptimize_call_int);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_jvmci_runtime_throw_and_post_jvmti_exception", address, JVMCIRuntime::throw_and_post_jvmti_exception);
@@ -532,6 +531,8 @@ void AOTCodeHeap::link_stub_routines_symbols() {
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_aescrypt_decryptBlock", address, StubRoutines::_aescrypt_decryptBlock);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_cipherBlockChaining_encryptAESCrypt", address, StubRoutines::_cipherBlockChaining_encryptAESCrypt);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_cipherBlockChaining_decryptAESCrypt", address, StubRoutines::_cipherBlockChaining_decryptAESCrypt);
+    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_electronicCodeBook_encryptAESCrypt", address, StubRoutines::_electronicCodeBook_encryptAESCrypt);
+    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_electronicCodeBook_decryptAESCrypt", address, StubRoutines::_electronicCodeBook_decryptAESCrypt);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_update_bytes_crc32", address, StubRoutines::_updateBytesCRC32);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_crc_table_adr", address, StubRoutines::_crc_table_adr);
 
@@ -721,7 +722,7 @@ void AOTCodeHeap::sweep_dependent_methods(int* indexes, int methods_cnt) {
   for (int i = 0; i < methods_cnt; ++i) {
     int code_id = indexes[i];
     // Invalidate aot code.
-    if (Atomic::cmpxchg(invalid, &_code_to_aot[code_id]._state, not_set) != not_set) {
+    if (Atomic::cmpxchg(&_code_to_aot[code_id]._state, not_set, invalid) != not_set) {
       if (_code_to_aot[code_id]._state == in_use) {
         AOTCompiledMethod* aot = _code_to_aot[code_id]._aot;
         assert(aot != NULL, "aot should be set");
@@ -733,8 +734,7 @@ void AOTCodeHeap::sweep_dependent_methods(int* indexes, int methods_cnt) {
     }
   }
   if (marked > 0) {
-    VM_Deoptimize op;
-    VMThread::execute(&op);
+    Deoptimization::deoptimize_all_marked();
   }
 }
 

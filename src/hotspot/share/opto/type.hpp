@@ -293,6 +293,7 @@ public:
   const TypeF      *isa_float_constant() const;  // Returns NULL if not a FloatCon
   const TypeTuple  *is_tuple() const;            // Collection of fields, NOT a pointer
   const TypeAry    *is_ary() const;              // Array, NOT array pointer
+  const TypeAry    *isa_ary() const;             // Returns NULL of not ary
   const TypeVect   *is_vect() const;             // Vector
   const TypeVect   *isa_vect() const;            // Returns NULL if not a Vector
   const TypePtr    *is_ptr() const;              // Asserts it is a ptr type
@@ -1634,6 +1635,10 @@ inline const TypeAry *Type::is_ary() const {
   return (TypeAry*)this;
 }
 
+inline const TypeAry *Type::isa_ary() const {
+  return ((_base == Array) ? (TypeAry*)this : NULL);
+}
+
 inline const TypeVect *Type::is_vect() const {
   assert( _base >= VectorS && _base <= VectorG, "Not a Vector" );
   return (TypeVect*)this;
@@ -1810,6 +1815,7 @@ inline bool Type::is_ptr_to_boxing_obj() const {
 #define Op_SubX      Op_SubL
 #define Op_XorX      Op_XorL
 #define Op_URShiftX  Op_URShiftL
+#define Op_LoadX     Op_LoadL
 // conversions
 #define ConvI2X(x)   ConvI2L(x)
 #define ConvL2X(x)   (x)
@@ -1857,6 +1863,7 @@ inline bool Type::is_ptr_to_boxing_obj() const {
 #define Op_SubX      Op_SubI
 #define Op_XorX      Op_XorI
 #define Op_URShiftX  Op_URShiftI
+#define Op_LoadX     Op_LoadI
 // conversions
 #define ConvI2X(x)   (x)
 #define ConvL2X(x)   ConvL2I(x)

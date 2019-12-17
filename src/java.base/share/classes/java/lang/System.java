@@ -74,6 +74,7 @@ import jdk.internal.logger.LazyLoggers;
 import jdk.internal.logger.LocalizedLoggerWrapper;
 import jdk.internal.util.SystemProps;
 import jdk.internal.vm.annotation.Stable;
+import sun.nio.fs.DefaultFileSystemProvider;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
 import sun.security.util.SecurityConstants;
@@ -93,10 +94,8 @@ import sun.security.util.SecurityConstants;
 public final class System {
     /* Register the natives via the static initializer.
      *
-     * VM will invoke the initializeSystemClass method to complete
-     * the initialization for this class separated from clinit.
-     * Note that to use properties set by the VM, see the constraints
-     * described in the initializeSystemClass method.
+     * The VM will invoke the initPhase1 method to complete the initialization
+     * of this class separate from <clinit>.
      */
     private static native void registerNatives();
     static {
@@ -339,6 +338,8 @@ public final class System {
             if (security == null) {
                 // ensure image reader is initialized
                 Object.class.getResource("java/lang/ANY");
+                // ensure the default file system is initialized
+                DefaultFileSystemProvider.theFileSystem();
             }
             if (sm != null) {
                 try {
@@ -2041,6 +2042,8 @@ public final class System {
 
         // register shared secrets
         setJavaLangAccess();
+
+        ClassLoader.initLibraryPaths();
 
         // Subsystems that are invoked during initialization can invoke
         // VM.isBooted() in order to avoid doing things that should

@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -508,7 +509,8 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
             String type = attributes.getValue("type");
             if (null == type) {
                 // format data for decimal number format
-                pushStringEntry(qName, attributes, "NumberPatterns/decimal");
+                pushStringEntry(qName, attributes,
+                    currentNumberingSystem + "NumberPatterns/decimal");
                 currentStyle = type;
             } else {
                 switch (type) {
@@ -531,9 +533,6 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
             } else {
                 switch (currentStyle) {
                     case "short":
-                        pushStringListEntry(qName, attributes,
-                                currentStyle+".CompactNumberPatterns");
-                        break;
                     case "long":
                         pushStringListEntry(qName, attributes,
                                 currentStyle+".CompactNumberPatterns");
@@ -544,45 +543,87 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
                 }
             }
             break;
+        case "currencyFormat":
+        case "percentFormat":
+            pushKeyContainer(qName, attributes, attributes.getValue("type"));
+            break;
+
         case "pattern":
             String containerName = currentContainer.getqName();
-            if (containerName.equals("decimalFormat")) {
-                if (currentStyle == null) {
-                    pushContainer(qName, attributes);
-                } else {
-                    // The compact number patterns parsing assumes that the order
-                    // of patterns are always in the increasing order of their
-                    // type attribute i.e. type = 1000...
-                    // Between the inflectional forms for a type (e.g.
-                    // count = "one" and count = "other" for type = 1000), it is
-                    // assumed that the count = "one" always appears before
-                    // count = "other"
-                    switch (currentStyle) {
-                        case "short":
-                        case "long":
-                            String count = attributes.getValue("count");
-                            // first pattern of count = "one" or count = "other"
-                            if ((count.equals("one") || count.equals("other"))
-                                    && compactCount.equals("")) {
-                                compactCount = count;
-                                pushStringListElement(qName, attributes,
-                                        (int) Math.log10(Double.parseDouble(attributes.getValue("type"))));
-                            } else if ((count.equals("one") || count.equals("other"))
-                                    && compactCount.equals(count)) {
-                                // extract patterns with similar "count"
-                                // attribute value
-                                pushStringListElement(qName, attributes,
-                                        (int) Math.log10(Double.parseDouble(attributes.getValue("type"))));
-                            } else {
-                                pushIgnoredContainer(qName);
-                            }
-                            break;
-                        default:
+            switch (containerName) {
+                case "currencyFormat":
+                case "percentFormat":
+                {
+                    // for FormatData
+                    // copy string for later assembly into NumberPatterns
+                    if (currentContainer instanceof KeyContainer) {
+                        String fStyle = ((KeyContainer)currentContainer).getKey();
+                        if (fStyle.equals("standard")) {
+                            pushStringEntry(qName, attributes,
+                                    currentNumberingSystem + "NumberPatterns/" + containerName.replaceFirst("Format", ""));
+                        } else if (fStyle.equals("accounting") && containerName.equals("currencyFormat")) {
+                            pushStringEntry(qName, attributes,
+                                    currentNumberingSystem + "NumberPatterns/accounting");
+                        } else {
                             pushIgnoredContainer(qName);
-                            break;
+                        }
+                    } else {
+                        pushIgnoredContainer(qName);
                     }
                 }
-            } else {
+                break;
+
+                case "decimalFormat":
+                    if (currentStyle == null) {
+                        pushContainer(qName, attributes);
+                    } else {
+                        // The compact number patterns parsing assumes that the order
+                        // of patterns are always in the increasing order of their
+                        // type attribute i.e. type = 1000...
+                        // Between the inflectional forms for a type (e.g.
+                        // count = "one" and count = "other" for type = 1000), it is
+                        // assumed that the count = "one" always appears before
+                        // count = "other"
+                        switch (currentStyle) {
+                            case "short":
+                            case "long":
+                                String count = attributes.getValue("count");
+                                // first pattern of count = "one" or count = "other"
+                                if ((count.equals("one") || count.equals("other"))
+                                        && compactCount.equals("")) {
+                                    compactCount = count;
+                                    pushStringListElement(qName, attributes,
+                                            (int) Math.log10(Double.parseDouble(attributes.getValue("type"))));
+                                } else if ((count.equals("one") || count.equals("other"))
+                                        && compactCount.equals(count)) {
+                                    // extract patterns with similar "count"
+                                    // attribute value
+                                    pushStringListElement(qName, attributes,
+                                            (int) Math.log10(Double.parseDouble(attributes.getValue("type"))));
+                                } else {
+                                    pushIgnoredContainer(qName);
+                                }
+                                break;
+                            default:
+                                pushIgnoredContainer(qName);
+                                break;
+                        }
+                    }
+                    break;
+                default:
+                    pushContainer(qName, attributes);
+                    break;
+            }
+            break;
+        case "currencyFormats":
+        case "decimalFormats":
+        case "percentFormats":
+            {
+                String script = attributes.getValue("numberSystem");
+                if (script != null) {
+                    addNumberingScript(script);
+                    currentNumberingSystem = script + ".";
+                }
                 pushContainer(qName, attributes);
             }
             break;
@@ -591,29 +632,6 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
                 // skipping type="short" data
                 // for FormatData
                 pushContainer(qName, attributes);
-            } else {
-                pushIgnoredContainer(qName);
-            }
-            break;
-        case "currencyFormat":
-            {
-                // for FormatData
-                // copy string for later assembly into NumberPatterns
-                String cfStyle = attributes.getValue("type");
-                if (cfStyle.equals("standard")) {
-                    pushStringEntry(qName, attributes, "NumberPatterns/currency");
-                } else if (cfStyle.equals("accounting")) {
-                    pushStringEntry(qName, attributes, "NumberPatterns/accounting");
-                } else {
-                    pushIgnoredContainer(qName);
-                }
-            }
-            break;
-        case "percentFormat":
-            // for FormatData
-            // copy string for later assembly into NumberPatterns
-            if (attributes.getValue("type").equals("standard")) {
-                pushStringEntry(qName, attributes, "NumberPatterns/percent");
             } else {
                 pushIgnoredContainer(qName);
             }
@@ -641,13 +659,7 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
                     break;
                 }
 
-                @SuppressWarnings("unchecked")
-                List<String> numberingScripts = (List<String>) get("numberingScripts");
-                if (numberingScripts == null) {
-                    numberingScripts = new ArrayList<>();
-                    put("numberingScripts", numberingScripts);
-                }
-                numberingScripts.add(script);
+                addNumberingScript(script);
                 put(currentNumberingSystem + "NumberElements/zero", digits.substring(0, 1));
                 pushContainer(qName, attributes);
             }
@@ -757,6 +769,8 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
             {
                 if (id.equals("root") && !isIgnored(attributes)
                         && ((currentContainer.getqName().equals("decimalFormatLength"))
+                        || (currentContainer.getqName().equals("currencyFormat"))
+                        || (currentContainer.getqName().equals("percentFormat"))
                         || (currentCalendarType != null && !currentCalendarType.lname().startsWith("islamic-")))) { // ignore islamic variants
                     pushAliasEntry(qName, attributes, attributes.getValue("path"));
                 } else {
@@ -912,6 +926,12 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
         case "decimalFormatLength": // used for compact number formatting patterns
             keyName = type + ".CompactNumberPatterns";
             break;
+        case "currencyFormat":
+        case "percentFormat":
+            keyName = currentNumberingSystem +
+                    "NumberPatterns/" +
+                    (type.equals("standard") ? containerqName.replaceFirst("Format", "") : type);
+            break;
         default:
             keyName = "";
             break;
@@ -958,6 +978,22 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
             return toJDKKey(qName, "", style);
         }
 
+        // currencyFormat
+        typeKey = "currencyFormat[@type='";
+        start = path.indexOf(typeKey);
+        if (start != -1) {
+            String style = path.substring(start + typeKey.length(), path.indexOf("']", start));
+            return toJDKKey(qName, "", style);
+        }
+
+        // percentFormat
+        typeKey = "percentFormat[@type='";
+        start = path.indexOf(typeKey);
+        if (start != -1) {
+            String style = path.substring(start + typeKey.length(), path.indexOf("']", start));
+            return toJDKKey(qName, "", style);
+        }
+
         return calType + "." + toJDKKey(qName, context, width);
     }
 
@@ -972,9 +1008,7 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
 
         case "defaultNumberingSystem":
             if (currentContainer instanceof StringEntry) {
-                defaultNumberingSystem = ((StringEntry) currentContainer).getValue();
-                assert defaultNumberingSystem != null;
-                put(((StringEntry) currentContainer).getKey(), defaultNumberingSystem);
+                defaultNumberingSystem = (String) putIfEntry();
             } else {
                 defaultNumberingSystem = null;
             }
@@ -1020,13 +1054,20 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
             compactCount = "";
             putIfEntry();
             break;
+        case "currencyFormats":
+        case "decimalFormats":
+        case "percentFormats":
+        case "symbols":
+            currentNumberingSystem = "";
+            putIfEntry();
+            break;
         default:
             putIfEntry();
         }
         currentContainer = currentContainer.getParent();
     }
 
-    private void putIfEntry() {
+    private Object putIfEntry() {
         if (currentContainer instanceof AliasEntry) {
             Entry<?> entry = (Entry<?>) currentContainer;
             String containerqName = entry.getParent().getqName();
@@ -1034,6 +1075,13 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
                 String srcKey = toJDKKey(containerqName, "", currentStyle);
                 String targetKey = getTarget(entry.getKey(), "", "", "");
                 CLDRConverter.aliases.put(srcKey, targetKey);
+            } else if (containerqName.equals("currencyFormat") ||
+                        containerqName.equals("percentFormat")) {
+                KeyContainer kc = (KeyContainer)entry.getParent();
+                CLDRConverter.aliases.put(
+                        toJDKKey(containerqName, "", kc.getKey()),
+                        getTarget(entry.getKey(), "", "", "")
+                );
             } else {
                 Set<String> keyNames = populateAliasKeys(containerqName, currentContext, currentWidth);
                 if (!keyNames.isEmpty()) {
@@ -1064,9 +1112,10 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
                 if (id.equals("root") && key.startsWith("MonthNames")) {
                     value = new DateFormatSymbols(Locale.US).getShortMonths();
                 }
-                put(entry.getKey(), value);
+                return put(entry.getKey(), value);
             }
         }
+        return null;
     }
 
     public String convertOldKeyName(String key) {
@@ -1084,6 +1133,18 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
                 return "tz";
             default:
                 return key;
+        }
+    }
+
+    private void addNumberingScript(String script) {
+        @SuppressWarnings("unchecked")
+        List<String> numberingScripts = (List<String>) get("numberingScripts");
+        if (numberingScripts == null) {
+            numberingScripts = new ArrayList<>();
+            put("numberingScripts", numberingScripts);
+        }
+        if (!numberingScripts.contains(script)) {
+            numberingScripts.add(script);
         }
     }
 }

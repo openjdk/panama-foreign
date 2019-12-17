@@ -26,8 +26,6 @@
  * @summary Check if the space utilization for shared spaces is adequate
  * @requires vm.cds
  * @library /test/lib
- * @modules java.base/jdk.internal.misc
- *          java.management
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
@@ -75,8 +73,8 @@ public class SpaceUtilizationCheck {
                 Matcher matcher = pattern.matcher(line);
                 if (matcher.find()) {
                     String name = matcher.group(1);
-                    if (name.equals("s0") || name.equals("s1")) {
-                      // String regions are listed at the end and they may not be fully occupied.
+                    if (name.equals("bm")) {
+                      // Bitmap space does not have a requested address.
                       break;
                     } else {
                       System.out.println("Checking " + name + " in : " + line);

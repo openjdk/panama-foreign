@@ -33,7 +33,7 @@
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
 #include "oops/arrayOop.hpp"
-#include "oops/markOop.hpp"
+#include "oops/markWord.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/jvmtiThreadState.hpp"
 #include "runtime/basicLock.hpp"
@@ -974,9 +974,9 @@ void InterpreterMacroAssembler::lock_object(Register monitor, Register object) {
 
   // template code:
   //
-  // markOop displaced_header = obj->mark().set_unlocked();
+  // markWord displaced_header = obj->mark().set_unlocked();
   // monitor->lock()->set_displaced_header(displaced_header);
-  // if (Atomic::cmpxchg(/*ex=*/monitor, /*addr*/obj->mark_addr(), /*cmp*/displaced_header) == displaced_header) {
+  // if (Atomic::cmpxchg(/*addr*/obj->mark_addr(), /*cmp*/displaced_header, /*ex=*/monitor) == displaced_header) {
   //   // We stored the monitor address into the object's mark word.
   // } else if (THREAD->is_lock_owned((address)displaced_header))
   //   // Simple recursive case.
@@ -993,17 +993,17 @@ void InterpreterMacroAssembler::lock_object(Register monitor, Register object) {
   NearLabel done;
   NearLabel slow_case;
 
-  // markOop displaced_header = obj->mark().set_unlocked();
+  // markWord displaced_header = obj->mark().set_unlocked();
 
-  // Load markOop from object into displaced_header.
+  // Load markWord from object into displaced_header.
   z_lg(displaced_header, oopDesc::mark_offset_in_bytes(), object);
 
   if (UseBiasedLocking) {
     biased_locking_enter(object, displaced_header, Z_R1, Z_R0, done, &slow_case);
   }
 
-  // Set displaced_header to be (markOop of object | UNLOCK_VALUE).
-  z_oill(displaced_header, markOopDesc::unlocked_value);
+  // Set displaced_header to be (markWord of object | UNLOCK_VALUE).
+  z_oill(displaced_header, markWord::unlocked_value);
 
   // monitor->lock()->set_displaced_header(displaced_header);
 
@@ -1011,7 +1011,7 @@ void InterpreterMacroAssembler::lock_object(Register monitor, Register object) {
   z_stg(displaced_header, BasicObjectLock::lock_offset_in_bytes() +
                           BasicLock::displaced_header_offset_in_bytes(), monitor);
 
-  // if (Atomic::cmpxchg(/*ex=*/monitor, /*addr*/obj->mark_addr(), /*cmp*/displaced_header) == displaced_header) {
+  // if (Atomic::cmpxchg(/*addr*/obj->mark_addr(), /*cmp*/displaced_header, /*ex=*/monitor) == displaced_header) {
 
   // Store stack address of the BasicObjectLock (this is monitor) into object.
   add2reg(object_mark_addr, oopDesc::mark_offset_in_bytes(), object);
@@ -1027,7 +1027,7 @@ void InterpreterMacroAssembler::lock_object(Register monitor, Register object) {
 
   // We did not see an unlocked object so try the fast recursive case.
 
-  // Check if owner is self by comparing the value in the markOop of object
+  // Check if owner is self by comparing the value in the markWord of object
   // (current_header) with the stack pointer.
   z_sgr(current_header, Z_SP);
 
@@ -1035,7 +1035,7 @@ void InterpreterMacroAssembler::lock_object(Register monitor, Register object) {
 
   // The prior sequence "LGR, NGR, LTGR" can be done better
   // (Z_R1 is temp and not used after here).
-  load_const_optimized(Z_R0, (~(os::vm_page_size()-1) | markOopDesc::lock_mask_in_place));
+  load_const_optimized(Z_R0, (~(os::vm_page_size()-1) | markWord::lock_mask_in_place));
   z_ngr(Z_R0, current_header); // AND sets CC (result eq/ne 0)
 
   // If condition is true we are done and hence we can store 0 in the displaced
@@ -1072,8 +1072,7 @@ void InterpreterMacroAssembler::lock_object(Register monitor, Register object) {
 void InterpreterMacroAssembler::unlock_object(Register monitor, Register object) {
 
   if (UseHeavyMonitors) {
-    call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::monitorexit),
-            monitor, /*check_for_exceptions=*/ true);
+    call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::monitorexit), monitor);
     return;
   }
 
@@ -1083,7 +1082,7 @@ void InterpreterMacroAssembler::unlock_object(Register monitor, Register object)
   // if ((displaced_header = monitor->displaced_header()) == NULL) {
   //   // Recursive unlock. Mark the monitor unlocked by setting the object field to NULL.
   //   monitor->set_obj(NULL);
-  // } else if (Atomic::cmpxchg(displaced_header, obj->mark_addr(), monitor) == monitor) {
+  // } else if (Atomic::cmpxchg(obj->mark_addr(), monitor, displaced_header) == monitor) {
   //   // We swapped the unlocked mark in displaced_header into the object's mark word.
   //   monitor->set_obj(NULL);
   // } else {
@@ -1124,7 +1123,7 @@ void InterpreterMacroAssembler::unlock_object(Register monitor, Register object)
                                                       BasicLock::displaced_header_offset_in_bytes()));
   z_bre(done); // displaced_header == 0 -> goto done
 
-  // } else if (Atomic::cmpxchg(displaced_header, obj->mark_addr(), monitor) == monitor) {
+  // } else if (Atomic::cmpxchg(obj->mark_addr(), monitor, displaced_header) == monitor) {
   //   // We swapped the unlocked mark in displaced_header into the object's mark word.
   //   monitor->set_obj(NULL);
 
@@ -1147,8 +1146,7 @@ void InterpreterMacroAssembler::unlock_object(Register monitor, Register object)
   // The lock has been converted into a heavy lock and hence
   // we need to get into the slow case.
   z_stg(object, obj_entry);   // Restore object entry, has been cleared above.
-  call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::monitorexit),
-          monitor,  /*check_for_exceptions=*/false);
+  call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::monitorexit), monitor);
 
   // }
 
@@ -1914,7 +1912,7 @@ void InterpreterMacroAssembler::get_method_counters(Register Rmethod,
   load_and_test_long(Rcounters, Address(Rmethod, Method::method_counters_offset()));
   z_brnz(has_counters);
 
-  call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::build_method_counters), Rmethod, false);
+  call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::build_method_counters), Rmethod);
   z_ltgr(Rcounters, Z_RET); // Runtime call returns MethodCounters object.
   z_brz(skip); // No MethodCounters, out of memory.
 
@@ -2095,7 +2093,7 @@ void InterpreterMacroAssembler::notify_method_entry() {
     Label jvmti_post_done;
     MacroAssembler::load_and_test_int(Z_R0, Address(Z_thread, JavaThread::interp_only_mode_offset()));
     z_bre(jvmti_post_done);
-    call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::post_method_entry), /*check_exceptions=*/false);
+    call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::post_method_entry));
     bind(jvmti_post_done);
   }
 }
@@ -2129,7 +2127,7 @@ void InterpreterMacroAssembler::notify_method_exit(bool native_method,
     MacroAssembler::load_and_test_int(Z_R0, Address(Z_thread, JavaThread::interp_only_mode_offset()));
     z_bre(jvmti_post_done);
     if (!native_method) push(state); // see frame::interpreter_frame_result()
-    call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::post_method_exit), /*check_exceptions=*/false);
+    call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::post_method_exit));
     if (!native_method) pop(state);
     bind(jvmti_post_done);
   }
