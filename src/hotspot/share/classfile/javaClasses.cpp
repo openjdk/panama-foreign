@@ -4744,7 +4744,6 @@ bool JavaClasses::is_supported_for_archiving(oop obj) {
   return true;
 }
 #endif
-
 #ifndef PRODUCT
 
 // These functions exist to assert the validity of hard-coded field offsets to guard
