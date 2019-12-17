@@ -184,9 +184,6 @@ private:
 
   G1CollectionSetChooser* cset_chooser() const;
 
-  // The number of bytes copied during the GC.
-  size_t _bytes_copied_during_gc;
-
   // Stash a pointer to the g1 heap.
   G1CollectedHeap* _g1h;
 
@@ -249,14 +246,6 @@ private:
 
 public:
   size_t pending_cards_at_gc_start() const { return _pending_cards_at_gc_start; }
-
-  size_t total_concurrent_refined_cards() const {
-    return _total_concurrent_refined_cards;
-  }
-
-  size_t total_mutator_refined_cards() const {
-    return _total_mutator_refined_cards;
-  }
 
   // Calculate the minimum number of old regions we'll add to the CSet
   // during a mixed GC.
@@ -328,7 +317,7 @@ public:
 
   // Record the start and end of an evacuation pause.
   void record_collection_pause_start(double start_time_sec);
-  virtual void record_collection_pause_end(double pause_time_ms, size_t heap_used_bytes_before_gc);
+  virtual void record_collection_pause_end(double pause_time_ms);
 
   // Record the start and end of a full collection.
   void record_full_collection_start();
@@ -346,17 +335,6 @@ public:
   void record_concurrent_mark_cleanup_end();
 
   void print_phases();
-
-  // Record how much space we copied during a GC. This is typically
-  // called when a GC alloc region is being retired.
-  void record_bytes_copied_during_gc(size_t bytes) {
-    _bytes_copied_during_gc += bytes;
-  }
-
-  // The amount of space we copied during a GC.
-  size_t bytes_copied_during_gc() const {
-    return _bytes_copied_during_gc;
-  }
 
   bool next_gc_should_be_mixed(const char* true_action_str,
                                const char* false_action_str) const;
