@@ -80,7 +80,6 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public MemorySegment acquire() {
-        scope.checkAlive();
         return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
     }
 
@@ -102,7 +101,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public final boolean isAlive() {
-        return scope.isAlive();
+        return scope.isAliveThreadSafe();
     }
 
     @Override
@@ -131,16 +130,15 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
             if (!(base() instanceof byte[])) {
                 throw new UnsupportedOperationException("Not an address to an heap-allocated byte array");
             }
-            _bb = ByteBuffer.wrap((byte[]) base(), (int)min - BYTE_ARR_BASE, (int) length);
+            _bb = nioAccess.newHeapByteBuffer((byte[]) base(), (int)min - BYTE_ARR_BASE, (int) length, this);
         } else {
-            _bb = nioAccess.newDirectByteBuffer(min, (int) length, null);
+            _bb = nioAccess.newDirectByteBuffer(min, (int) length, null, this);
         }
         if (isReadOnly()) {
             //scope is IMMUTABLE - obtain a RO byte buffer
             _bb = _bb.asReadOnlyBuffer();
         }
-        // need to wrap the buffer so that appropriate scope checks take place
-        return nioAccess.newScopedByteBuffer(this, _bb);
+        return _bb;
     }
 
     @Override
@@ -160,7 +158,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         if (owner != Thread.currentThread()) {
             throw new IllegalStateException("Attempt to access segment outside owning thread");
         }
-        scope.checkAlive();
+        scope.checkAliveConfined();
     }
 
     // Object methods
@@ -184,7 +182,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return base;
     }
 
-    private final boolean isSet(int mask) {
+    private boolean isSet(int mask) {
         return (this.mask & mask) != 0;
     }
 

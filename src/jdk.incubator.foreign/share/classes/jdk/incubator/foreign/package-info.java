@@ -28,7 +28,7 @@
  * <p> Classes to support low-level, safe and efficient memory access. For example:
  *
  * <pre>{@code
-static final VarHandle intHandle = MemoryHandles.varHandle(int.class);
+static final VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.BIG_ENDIAN);
 
 try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
    MemoryAddress base = segment.baseAddress();

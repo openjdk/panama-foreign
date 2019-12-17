@@ -27,6 +27,7 @@ package jdk.incubator.foreign;
 
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -75,7 +76,7 @@ import java.util.OptionalLong;
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ Long.hashCode(bitSize());
+        return Objects.hash(super.hashCode(), bitSize());
     }
 
     @Override

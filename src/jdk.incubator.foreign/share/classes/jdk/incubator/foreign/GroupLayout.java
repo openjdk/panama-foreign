@@ -31,6 +31,7 @@ import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.LongBinaryOperator;
@@ -163,7 +164,7 @@ public final class GroupLayout extends AbstractLayout {
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ kind.hashCode() ^ elements.hashCode();
+        return Objects.hash(super.hashCode(), kind, elements);
     }
 
     @Override
@@ -172,7 +173,7 @@ public final class GroupLayout extends AbstractLayout {
     }
 
     @Override
-    protected boolean hasNaturalAlignment() {
+    boolean hasNaturalAlignment() {
         return alignment == kind.alignof(elements);
     }
 

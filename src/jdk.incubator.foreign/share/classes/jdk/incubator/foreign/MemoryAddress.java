@@ -60,7 +60,7 @@ public interface MemoryAddress {
     MemoryAddress offset(long l);
 
     /**
-     * The offset of this MemoryAddress into the underlying segment.
+     * The offset of this memory address into the underlying segment.
      *
      * @return the offset
      */
@@ -90,7 +90,11 @@ public interface MemoryAddress {
     int hashCode();
 
     /**
-     * Perform bulk copy from source address to target address.
+     * Perform bulk copy from source address to target address. More specifically, the bytes at addresses {@code src}
+     * through {@code src.offset(bytes - 1)} are copied into addresses {@code dst} through {@code dst.offset(bytes - 1)}.
+     * If the source and address ranges overlap, then the copying is performed as if the bytes at addresses {@code src}
+     * through {@code src.offset(bytes - 1)} were first copied into a temporary segment with size {@code bytes},
+     * and then the contents of the temporary segment were copied into the bytes at addresses {@code dst} through {@code dst.offset(bytes - 1)}.
      * @param src the source address.
      * @param dst the target address.
      * @param bytes the number of bytes to be copied.

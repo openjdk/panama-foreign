@@ -79,7 +79,7 @@ import java.nio.file.Path;
  *     <li>closing a mapped memory segment results in the backing memory-mapped file to be unmapped</li>
  *     <li>closing an acquired memory segment <b>does not</b> result in the release of resources
  *     (see the section on <a href="#thread-confinement">thread confinement</a> for more details)</li>
- *     <li>closing a buffer, or a heap segment does not have any side-effect, other than making the marking the segment
+ *     <li>closing a buffer, or a heap segment does not have any side-effect, other than marking the segment
  *     as <em>not alive</em> (see {@link MemorySegment#isAlive()}). Also, since the buffer and heap segments might keep
  *     strong references to the original buffer or array instance, it is the responsibility of clients to ensure that
  *     these segments are discarded in a timely manner, so as not to prevent garbage collection to reclaim the underlying

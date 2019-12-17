@@ -34,11 +34,8 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 import java.lang.invoke.VarHandle;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.UnaryOperator;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 /**
  * This class provide support for constructing layout paths; that is, starting from a root path (see {@link #rootPath(MemoryLayout)},
@@ -55,12 +52,12 @@ public class LayoutPath {
     private final MemoryLayout layout;
     private final long offset;
     private final LayoutPath enclosing;
-    private final long[] scales;
+    private final long[] strides;
 
-    private LayoutPath(MemoryLayout layout, long offset, long[] scales, LayoutPath enclosing) {
+    private LayoutPath(MemoryLayout layout, long offset, long[] strides, LayoutPath enclosing) {
         this.layout = layout;
         this.offset = offset;
-        this.scales = scales;
+        this.strides = strides;
         this.enclosing = enclosing;
     }
 
@@ -70,7 +67,7 @@ public class LayoutPath {
         check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
         MemoryLayout elem = seq.elementLayout();
-        return LayoutPath.nestedPath(elem, offset, addScale(elem.bitSize()), this);
+        return LayoutPath.nestedPath(elem, offset, addStride(elem.bitSize()), this);
     }
 
     public LayoutPath sequenceElement(long start, long step) {
@@ -79,14 +76,20 @@ public class LayoutPath {
         checkSequenceBounds(seq, start);
         MemoryLayout elem = seq.elementLayout();
         long elemSize = elem.bitSize();
-        return LayoutPath.nestedPath(elem, offset + (start * elemSize), addScale(elemSize * step), this);
+        return LayoutPath.nestedPath(elem, offset + (start * elemSize), addStride(elemSize * step), this);
     }
 
     public LayoutPath sequenceElement(long index) {
         check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
         checkSequenceBounds(seq, index);
-        return LayoutPath.nestedPath(seq.elementLayout(), offset, scales, this);
+        long elemOffset = 0;
+        if (index > 0) {
+            //if index == 0, we do not depend on sequence element size, so skip
+            long elemSize = seq.elementLayout().bitSize();
+            elemOffset = elemSize * index;
+        }
+        return LayoutPath.nestedPath(seq.elementLayout(), offset + elemOffset, strides, this);
     }
 
     public LayoutPath groupElement(String name) {
@@ -107,7 +110,7 @@ public class LayoutPath {
         if (elem == null) {
             throw badLayoutPath("cannot resolve '" + name + "' in layout " + layout);
         }
-        return LayoutPath.nestedPath(elem, this.offset + offset, scales, this);
+        return LayoutPath.nestedPath(elem, this.offset + offset, strides, this);
     }
 
     // Layout path projections
@@ -130,20 +133,20 @@ public class LayoutPath {
 
         return JLI.memoryAddressViewVarHandle(
                 carrier,
-                layout.byteAlignment(),
+                layout.byteAlignment() - 1, //mask
                 ((ValueLayout) layout).order(),
                 Utils.bitsToBytesOrThrow(offset, IllegalStateException::new),
-                LongStream.of(scales).map(s -> Utils.bitsToBytesOrThrow(s, IllegalStateException::new)).toArray());
+                LongStream.of(strides).map(s -> Utils.bitsToBytesOrThrow(s, IllegalStateException::new)).toArray());
     }
 
     // Layout path construction
 
     public static LayoutPath rootPath(MemoryLayout layout) {
-        return new LayoutPath(layout, 0L, EMPTY_SCALES, null);
+        return new LayoutPath(layout, 0L, EMPTY_STRIDES, null);
     }
 
-    private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] scales, LayoutPath encl) {
-        return new LayoutPath(layout, offset, scales, encl);
+    private static LayoutPath nestedPath(MemoryLayout layout, long offset, long[] strides, LayoutPath encl) {
+        return new LayoutPath(layout, offset, strides, encl);
     }
 
     // Helper methods
@@ -170,6 +173,11 @@ public class LayoutPath {
         if (path.offset % alignment != 0) {
             throw new UnsupportedOperationException("Invalid alignment requirements for layout " + layout);
         }
+        for (long stride : path.strides) {
+            if (stride % alignment != 0) {
+                throw new UnsupportedOperationException("Alignment requirements for layout " + layout + " do not match stride " + stride);
+            }
+        }
         LayoutPath encl = path.enclosing;
         if (encl != null) {
             if (encl.layout.bitAlignment() < alignment) {
@@ -179,14 +187,14 @@ public class LayoutPath {
         }
     }
 
-    private long[] addScale(long scale) {
-        long[] newScales = new long[scales.length + 1];
-        System.arraycopy(scales, 0, newScales, 0, scales.length);
-        newScales[scales.length] = scale;
-        return newScales;
+    private long[] addStride(long stride) {
+        long[] newStrides = new long[strides.length + 1];
+        System.arraycopy(strides, 0, newStrides, 0, strides.length);
+        newStrides[strides.length] = stride;
+        return newStrides;
     }
 
-    private static long[] EMPTY_SCALES = new long[0];
+    private static long[] EMPTY_STRIDES = new long[0];
 
     /**
      * This class provides an immutable implementation for the {@code PathElement} interface. A path element implementation

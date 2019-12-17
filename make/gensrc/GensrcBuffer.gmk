@@ -287,16 +287,6 @@ $(eval $(call SetupGenBuffer,LongBuffer,  $(X_BUF), type:=long))
 $(eval $(call SetupGenBuffer,FloatBuffer, $(X_BUF), type:=float))
 $(eval $(call SetupGenBuffer,DoubleBuffer,$(X_BUF), type:=double))
 
-X_SCOPED_BUF := X-ScopedBuffer
-
-$(eval $(call SetupGenBuffer,ScopedByteBuffer,  $(X_SCOPED_BUF), type:=byte, BIN:=1))
-$(eval $(call SetupGenBuffer,ScopedCharBuffer,  $(X_SCOPED_BUF), type:=char))
-$(eval $(call SetupGenBuffer,ScopedShortBuffer, $(X_SCOPED_BUF), type:=short))
-$(eval $(call SetupGenBuffer,ScopedIntBuffer,   $(X_SCOPED_BUF), type:=int))
-$(eval $(call SetupGenBuffer,ScopedLongBuffer,  $(X_SCOPED_BUF), type:=long))
-$(eval $(call SetupGenBuffer,ScopedFloatBuffer, $(X_SCOPED_BUF), type:=float))
-$(eval $(call SetupGenBuffer,ScopedDoubleBuffer,$(X_SCOPED_BUF), type:=double))
-
 # Buffers whose contents are heap-allocated
 #
 HEAP_X_BUF := Heap-X-Buffer

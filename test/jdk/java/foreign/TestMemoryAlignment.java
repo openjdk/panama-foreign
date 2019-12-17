@@ -91,14 +91,15 @@ public class TestMemoryAlignment {
     @Test(dataProvider = "alignments")
     public void testUnalignedSequence(long align) {
         SequenceLayout layout = MemoryLayout.ofSequence(5, MemoryLayouts.BITS_32_BE.withBitAlignment(align));
-        VarHandle vh = layout.varHandle(int.class, PathElement.sequenceElement());
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            MemoryAddress addr = segment.baseAddress();
-            for (long i = 0 ; i < 5 ; i++) {
-                vh.set(addr, i, -42);
+        try {
+            VarHandle vh = layout.varHandle(int.class, PathElement.sequenceElement());
+            try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+                MemoryAddress addr = segment.baseAddress();
+                for (long i = 0 ; i < 5 ; i++) {
+                    vh.set(addr, i, -42);
+                }
             }
-            assertTrue(align <= 32); //if align <= 32, access is always aligned
-        } catch (IllegalStateException ex) {
+        } catch (UnsupportedOperationException ex) {
             assertTrue(align > 32); //if align > 32, access is always unaligned (for some elements)
         }
     }

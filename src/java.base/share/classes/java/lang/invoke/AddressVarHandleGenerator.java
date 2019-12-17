@@ -353,39 +353,32 @@ class AddressVarHandleGenerator {
      * Emits an actual return instruction conforming to the given return type.
      */
     private int returnInsn(Class<?> type) {
-        switch (LambdaForm.BasicType.basicType(type)) {
-            case I_TYPE:  return Opcodes.IRETURN;
-            case J_TYPE:  return Opcodes.LRETURN;
-            case F_TYPE:  return Opcodes.FRETURN;
-            case D_TYPE:  return Opcodes.DRETURN;
-            case L_TYPE:  return Opcodes.ARETURN;
-            case V_TYPE:  return RETURN;
-            default:
-                throw new InternalError("unknown return type: " + type);
-        }
+        return switch (LambdaForm.BasicType.basicType(type)) {
+            case I_TYPE -> Opcodes.IRETURN;
+            case J_TYPE -> Opcodes.LRETURN;
+            case F_TYPE -> Opcodes.FRETURN;
+            case D_TYPE -> Opcodes.DRETURN;
+            case L_TYPE -> Opcodes.ARETURN;
+            case V_TYPE -> RETURN;
+        };
     }
 
     private int loadInsn(Class<?> type) {
-        switch (LambdaForm.BasicType.basicType(type)) {
-            case I_TYPE:  return Opcodes.ILOAD;
-            case J_TYPE:  return LLOAD;
-            case F_TYPE:  return Opcodes.FLOAD;
-            case D_TYPE:  return Opcodes.DLOAD;
-            case L_TYPE:  return Opcodes.ALOAD;
-            default:
-                throw new InternalError("unknown local type: " + type);
-        }
+        return switch (LambdaForm.BasicType.basicType(type)) {
+            case I_TYPE -> Opcodes.ILOAD;
+            case J_TYPE -> LLOAD;
+            case F_TYPE -> Opcodes.FLOAD;
+            case D_TYPE -> Opcodes.DLOAD;
+            case L_TYPE -> Opcodes.ALOAD;
+            case V_TYPE -> throw new IllegalStateException("Cannot load void");
+        };
     }
 
     private static void iConstInsn(MethodVisitor mv, int i) {
         switch (i) {
-            case -1: mv.visitInsn(ICONST_M1); break;
-            case 0:  mv.visitInsn(ICONST_0);  break;
-            case 1:  mv.visitInsn(ICONST_1);  break;
-            case 2:  mv.visitInsn(ICONST_2);  break;
-            case 3:  mv.visitInsn(ICONST_3);  break;
-            case 4:  mv.visitInsn(ICONST_4);  break;
-            case 5:  mv.visitInsn(ICONST_5);  break;
+            case -1, 0, 1, 2, 3, 4, 5:
+                mv.visitInsn(ICONST_0 + i);
+                break;
             default:
                 if(i >= Byte.MIN_VALUE && i <= Byte.MAX_VALUE) {
                     mv.visitIntInsn(BIPUSH, i);

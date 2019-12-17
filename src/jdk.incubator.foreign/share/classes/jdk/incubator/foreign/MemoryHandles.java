@@ -49,12 +49,12 @@ import java.nio.ByteOrder;
 SequenceLayout seq = MemoryLayout.ofSequence(5,
     MemoryLayout.ofStruct(
         MemoryLayout.ofPaddingBits(32),
-        MemoryLayout.ofValueBits(32).withName("value")
+        MemoryLayout.ofValueBits(32, ByteOrder.BIG_ENDIAN).withName("value")
     ));
  * }</pre></blockquote>
  * To access the member layout named {@code value}, we can construct a memory access var handle as follows:
  * <blockquote><pre>{@code
-VarHandle handle = MemoryHandles.varHandle(int.class); //(MemoryAddress) -> int
+VarHandle handle = MemoryHandles.varHandle(int.class, ByteOrder.BIG_ENDIAN); //(MemoryAddress) -> int
 handle = MemoryHandles.withOffset(handle, 4); //(MemoryAddress) -> int
 handle = MemoryHandles.withStride(handle, 8); //(MemoryAddress, long) -> int
  * }</pre></blockquote>
@@ -78,6 +78,42 @@ offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
  * access coordinates, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
  * <em>static</em> constants which are can be acquired through the {@link MemoryHandles#withOffset(VarHandle, long)}
  * and the {@link MemoryHandles#withStride(VarHandle, long)} combinators, respectively.
+ *
+ * <h2><a id="memaccess-mode"></a>Alignment and access modes</h2>
+ *
+ * A memory access var handle is associated with an access size {@code S} and an alignment constraint {@code B}
+ * (both expressed in bytes). We say that a memory access operation is <em>fully aligned</em> if it occurs
+ * at a memory address {@code A} which is compatible with both alignment constraints {@code S} and {@code B}.
+ * If access is fully aligned then following access modes are supported and are
+ * guaranteed to support atomic access:
+ * <ul>
+ * <li>read write access modes for all {@code T}, with the exception of
+ *     access modes {@code get} and {@code set} for {@code long} and
+ *     {@code double} on 32-bit platforms.
+ * <li>atomic update access modes for {@code int}, {@code long},
+ *     {@code float} or {@code double}.
+ *     (Future major platform releases of the JDK may support additional
+ *     types for certain currently unsupported access modes.)
+ * <li>numeric atomic update access modes for {@code int} and {@code long}.
+ *     (Future major platform releases of the JDK may support additional
+ *     numeric types for certain currently unsupported access modes.)
+ * <li>bitwise atomic update access modes for {@code int} and {@code long}.
+ *     (Future major platform releases of the JDK may support additional
+ *     numeric types for certain currently unsupported access modes.)
+ * </ul>
+ *
+ * If {@code T} is {@code float} or {@code double} then atomic
+ * update access modes compare values using their bitwise representation
+ * (see {@link Float#floatToRawIntBits} and
+ * {@link Double#doubleToRawLongBits}, respectively).
+ * <p>
+ * Alternatively, a memory access operation is <em>partially aligned</em> if it occurs at a memory address {@code A}
+ * which is only compatible with the alignment constraint {@code B}; in such cases, access for anything other than the
+ * {@code get} and {@code set} access modes will result in an {@code IllegalStateException}. If access is partially aligned,
+ * atomic access is only guaranteed with respect to the largest power of two that divides the GCD of {@code A} and {@code S}.
+ * <p>
+ * Finally, in all other cases, we say that a memory access operation is <em>misaligned</em>; in such cases an
+ * {@code IllegalStateException} is thrown, irrespective of the access mode being used.
  */
 public final class MemoryHandles {
 
@@ -95,6 +131,9 @@ public final class MemoryHandles {
      *
      * The alignment constraint for the resulting memory access var handle is the same as the in memory size of the
      * carrier type, and the accessed offset is set at zero.
+     *
+     * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
+     * which are common to all memory access var handles.
      *
      * @param carrier the carrier type. Valid carriers are {@code byte}, {@code short}, {@code char}, {@code int},
      * {@code float}, {@code long}, and {@code double}.
@@ -117,6 +156,9 @@ public final class MemoryHandles {
      *
      * The accessed offset is zero.
      *
+     * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
+     * which are common to all memory access var handles.
+     *
      * @param carrier the carrier type. Valid carriers are {@code byte}, {@code short}, {@code char}, {@code int},
      * {@code float}, {@code long}, and {@code double}.
      * @param alignmentBytes the alignment constraint (in bytes). Must be a power of two.
@@ -132,7 +174,7 @@ public final class MemoryHandles {
             throw new IllegalArgumentException("Bad alignment: " + alignmentBytes);
         }
 
-        return JLI.memoryAddressViewVarHandle(carrier, alignmentBytes, byteOrder, 0, new long[]{});
+        return JLI.memoryAddressViewVarHandle(carrier, alignmentBytes - 1, byteOrder, 0, new long[]{});
     }
 
     /**
@@ -141,6 +183,9 @@ public final class MemoryHandles {
      * handle will access a memory location at offset <em>O' + O</em>.
      *
      * The resulting memory access var handle will feature the same access coordinates as the ones in the target memory access var handle.
+     *
+     * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
+     * which are common to all memory access var handles.
      *
      * @param target the target memory access handle to access after the offset adjustment.
      * @param bytesOffset the offset, in bytes. Must be positive or zero.
@@ -153,15 +198,15 @@ public final class MemoryHandles {
             throw new IllegalArgumentException("Illegal offset: " + bytesOffset);
         }
 
-        long align = JLI.memoryAddressAlignment(target);
+        long alignMask = JLI.memoryAddressAlignmentMask(target);
 
-        if (bytesOffset % align != 0) {
-            throw new IllegalArgumentException("Offset " + bytesOffset + " does not conform to alignment " + align);
+        if ((bytesOffset & alignMask) != 0) {
+            throw new IllegalArgumentException("Offset " + bytesOffset + " does not conform to alignment " + (alignMask + 1));
         }
 
         return JLI.memoryAddressViewVarHandle(
                 JLI.memoryAddressCarrier(target),
-                align,
+                alignMask,
                 JLI.memoryAddressByteOrder(target),
                 JLI.memoryAddressOffset(target) + bytesOffset,
                 JLI.memoryAddressStrides(target));
@@ -175,6 +220,9 @@ public final class MemoryHandles {
      * coordinate (of type {@code long}). The new access coordinate will be <em>prepended</em> to the ones available
      * in the target memory access var handles (if any).
      *
+     * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
+     * which are common to all memory access var handles.
+     *
      * @param target the target memory access handle to access after the scale adjustment.
      * @param bytesStride the stride, in bytes, by which to multiply the coordinate value. Must be greater than zero.
      * @return the new memory access var handle.
@@ -186,14 +234,13 @@ public final class MemoryHandles {
             throw new IllegalArgumentException("Stride must be positive: " + bytesStride);
         }
 
-        long align = JLI.memoryAddressAlignment(target);
+        long alignMask = JLI.memoryAddressAlignmentMask(target);
 
-        if (bytesStride % align != 0) {
-            throw new IllegalArgumentException("Stride " + bytesStride + " does not conform to alignment " + align);
+        if ((bytesStride & alignMask) != 0) {
+            throw new IllegalArgumentException("Stride " + bytesStride + " does not conform to alignment " + (alignMask + 1));
         }
 
         long offset = JLI.memoryAddressOffset(target);
-        Class<?> carrier = JLI.memoryAddressCarrier(target);
 
         long[] strides = JLI.memoryAddressStrides(target);
         long[] newStrides = new long[strides.length + 1];
@@ -202,7 +249,7 @@ public final class MemoryHandles {
 
         return JLI.memoryAddressViewVarHandle(
                 JLI.memoryAddressCarrier(target),
-                align,
+                alignMask,
                 JLI.memoryAddressByteOrder(target),
                 offset,
                 newStrides);

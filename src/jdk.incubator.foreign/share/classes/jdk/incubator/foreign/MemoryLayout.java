@@ -97,7 +97,7 @@ import java.util.OptionalLong;
 SequenceLayout seq = MemoryLayout.ofSequence(5,
     MemoryLayout.ofStruct(
         MemoryLayout.ofPaddingBits(32),
-        MemoryLayout.ofValueBits(32).withName("value")
+        MemoryLayout.ofValueBits(32, ByteOrder.BIG_ENDIAN).withName("value")
 ));
  * }</pre></blockquote>
  *
@@ -161,7 +161,7 @@ public interface MemoryLayout extends Constable {
     Optional<String> name();
 
     /**
-     * Attach a <em>name</em> to this layout.
+     * Creates a new layout which features the desired layout <em>name</em>.
      *
      * @param name the layout name.
      * @return a new layout which is the same as this layout, except for the <em>name</em> associated to it.
@@ -171,13 +171,13 @@ public interface MemoryLayout extends Constable {
 
     /**
      * Returns the alignment constraint associated with this layout, expressed in bits. Layout alignment defines a power
-     * of two A which is the bitwise alignment of the layout. If A&gt;=8 then A/8 is the number of bytes that must be aligned
-     * for any pointer that correctly points to this layout. Thus:
+     * of two {@code A} which is the bit-wise alignment of the layout. If {@code A <= 8} then {@code A/8} is the number of
+     * bytes that must be aligned for any pointer that correctly points to this layout. Thus:
      *
      * <ul>
-     * <li>A=8 means unaligned (in the usual sense), which is common in packets.</li>
-     * <li>A=64 means word aligned (on LP64), A=32 int aligned, A=16 short aligned, etc.</li>
-     * <li>A=512 is the most strict alignment required by the x86/SV ABI (for AVX-512 data).</li>
+     * <li>{@code A=8} means unaligned (in the usual sense), which is common in packets.</li>
+     * <li>{@code A=64} means word aligned (on LP64), {@code A=32} int aligned, {@code A=16} short aligned, etc.</li>
+     * <li>{@code A=512} is the most strict alignment required by the x86/SV ABI (for AVX-512 data).</li>
      * </ul>
      *
      * @return the layout alignment constraint, in bits.
@@ -186,13 +186,13 @@ public interface MemoryLayout extends Constable {
 
     /**
      * Returns the alignment constraint associated with this layout, expressed in bytes. Layout alignment defines a power
-     * of two A which is the bytewise alignment of the layout, where A is the number of bytes that must be aligned
+     * of two {@code A} which is the byte-wise alignment of the layout, where {@code A} is the number of bytes that must be aligned
      * for any pointer that correctly points to this layout. Thus:
      *
      * <ul>
-     * <li>A=1 means unaligned (in the usual sense), which is common in packets.</li>
-     * <li>A=8 means word aligned (on LP64), A=4 int aligned, A=2 short aligned, etc.</li>
-     * <li>A=64 is the most strict alignment required by the x86/SV ABI (for AVX-512 data).</li>
+     * <li>{@code A=1} means unaligned (in the usual sense), which is common in packets.</li>
+     * <li>{@code A=8} means word aligned (on LP64), {@code A=4} int aligned, {@code A=2} short aligned, etc.</li>
+     * <li>{@code A=64} is the most strict alignment required by the x86/SV ABI (for AVX-512 data).</li>
      * </ul>
      *
      * @return the layout alignment constraint, in bytes.
@@ -237,7 +237,8 @@ public interface MemoryLayout extends Constable {
      * where the path is considered rooted in this layout.
      *
      * @apiNote the resulting var handle will feature an additional {@code long} access coordinate for every
-     * unspecified sequence access component contained in this layout path.
+     * unspecified sequence access component contained in this layout path. Moreover, the resulting var handle
+     * features certain <a href="MemoryHandles.html#memaccess-mode">access mode restrictions</a>, which are common to all memory access var handles.
      *
      * @param carrier the var handle carrier type.
      * @param elements the layout path elements.

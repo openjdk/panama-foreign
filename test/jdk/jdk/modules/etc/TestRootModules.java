@@ -46,7 +46,6 @@ public class TestRootModules {
                     .findAny()
                     .isPresent())
             .map(ModuleDescriptor::name)
-            .filter(name -> !name.startsWith("jdk.incubator.")) //skip incubating modules
             .forEach(name -> {
                 if (!bootLayer.findModule(name).isPresent())
                     throw new RuntimeException(name + " not in boot layer");

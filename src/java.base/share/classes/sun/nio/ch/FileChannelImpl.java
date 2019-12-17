@@ -42,6 +42,7 @@ import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.Objects;
 
 import jdk.internal.access.JavaIOFileDescriptorAccess;
 import jdk.internal.access.JavaNioAccess;
@@ -870,11 +871,6 @@ public class FileChannelImpl
         // may be required to close file
         private static final NativeDispatcher nd = new FileDispatcherImpl();
 
-        // keep track of mapped buffer usage
-        static volatile int count;
-        static volatile long totalSize;
-        static volatile long totalCapacity;
-
         private volatile long address;
         protected final long size;
         protected final long cap;
@@ -898,11 +894,11 @@ public class FileChannelImpl
         }
 
         @Override
-        public void unmap() {
-            run();
+        public void run() {
+            unmap();
         }
 
-        public void run() {
+        public void unmap() {
             if (address == 0)
                 return;
             unmap0(address, size);
@@ -931,7 +927,7 @@ public class FileChannelImpl
         static volatile long totalCapacity;
 
         public DefaultUnmapper(long address, long size, long cap,
-                                     FileDescriptor fd, int pagePosition) {
+                               FileDescriptor fd, int pagePosition) {
             super(address, size, cap, fd, pagePosition);
             incrementStats();
         }
@@ -960,7 +956,7 @@ public class FileChannelImpl
         static volatile long totalCapacity;
 
         public SyncUnmapper(long address, long size, long cap,
-                                  FileDescriptor fd, int pagePosition) {
+                            FileDescriptor fd, int pagePosition) {
             super(address, size, cap, fd, pagePosition);
             incrementStats();
         }
@@ -995,18 +991,17 @@ public class FileChannelImpl
     public MappedByteBuffer map(MapMode mode, long position, long size) throws IOException {
         if (size > Integer.MAX_VALUE)
             throw new IllegalArgumentException("Size exceeds Integer.MAX_VALUE");
-        boolean isSync = isSync(mode);
-        int imode = imode(mode);
-        Unmapper unmapper = mapInternal(mode, position, size, imode, isSync);
+        boolean isSync = isSync(Objects.requireNonNull(mode, "Mode is null"));
+        int prot = toProt(mode);
+        Unmapper unmapper = mapInternal(mode, position, size, prot, isSync);
         if (unmapper == null) {
             // a valid file descriptor is not required
             FileDescriptor dummy = new FileDescriptor();
-            if ((!writable) || (imode == MAP_RO))
+            if ((!writable) || (prot == MAP_RO))
                 return Util.newMappedByteBufferR(0, 0, dummy, null, isSync);
             else
                 return Util.newMappedByteBuffer(0, 0, dummy, null, isSync);
-        }
-        else if ((!writable) || (imode == MAP_RO)) {
+        } else if ((!writable) || (prot == MAP_RO)) {
             return Util.newMappedByteBufferR((int)unmapper.cap,
                     unmapper.address + unmapper.pagePosition,
                     unmapper.fd,
@@ -1020,12 +1015,12 @@ public class FileChannelImpl
     }
 
     public Unmapper mapInternal(MapMode mode, long position, long size) throws IOException {
-        boolean isSync = isSync(mode);
-        int imode = imode(mode);
-        return mapInternal(mode, position, size, imode, isSync);
+        boolean isSync = isSync(Objects.requireNonNull(mode, "Mode is null"));
+        int prot = toProt(mode);
+        return mapInternal(mode, position, size, prot, isSync);
     }
 
-    private Unmapper mapInternal(MapMode mode, long position, long size, int imode, boolean isSync)
+    private Unmapper mapInternal(MapMode mode, long position, long size, int prot, boolean isSync)
         throws IOException
     {
         ensureOpen();
@@ -1038,7 +1033,7 @@ public class FileChannelImpl
         if (position + size < 0)
             throw new IllegalArgumentException("Position + size overflow");
 
-        checkMode(mode, imode, isSync);
+        checkMode(mode, prot, isSync);
         long addr = -1;
         int ti = -1;
         try {
@@ -1079,7 +1074,7 @@ public class FileChannelImpl
                 mapSize = size + pagePosition;
                 try {
                     // If map0 did not throw an exception, the address is valid
-                    addr = map0(imode, mapPosition, mapSize, isSync);
+                    addr = map0(prot, mapPosition, mapSize, isSync);
                 } catch (OutOfMemoryError x) {
                     // An OutOfMemoryError may indicate that we've exhausted
                     // memory so force gc and re-attempt map
@@ -1090,7 +1085,7 @@ public class FileChannelImpl
                         Thread.currentThread().interrupt();
                     }
                     try {
-                        addr = map0(imode, mapPosition, mapSize, isSync);
+                        addr = map0(prot, mapPosition, mapSize, isSync);
                     } catch (OutOfMemoryError y) {
                         // After a second OOME, fail
                         throw new IOException("Map failed", y);
@@ -1121,32 +1116,30 @@ public class FileChannelImpl
     }
 
     private boolean isSync(MapMode mode) {
-        if (mode == null)
-            throw new NullPointerException("Mode is null");
         return mode == ExtendedMapMode.READ_ONLY_SYNC ||
                 mode == ExtendedMapMode.READ_WRITE_SYNC;
     }
 
-    private int imode(MapMode mode) {
-        int imode;
-        if (mode == MapMode.READ_ONLY)
-            imode = MAP_RO;
-        else if (mode == MapMode.READ_WRITE)
-            imode = MAP_RW;
-        else if (mode == MapMode.PRIVATE)
-            imode = MAP_PV;
-        else if (mode == ExtendedMapMode.READ_ONLY_SYNC) {
-            imode = MAP_RO;
+    private int toProt(MapMode mode) {
+        int prot;
+        if (mode == MapMode.READ_ONLY) {
+            prot = MAP_RO;
+        } else if (mode == MapMode.READ_WRITE) {
+            prot = MAP_RW;
+        } else if (mode == MapMode.PRIVATE) {
+            prot = MAP_PV;
+        } else if (mode == ExtendedMapMode.READ_ONLY_SYNC) {
+            prot = MAP_RO;
         } else if (mode == ExtendedMapMode.READ_WRITE_SYNC) {
-            imode = MAP_RW;
+            prot = MAP_RW;
         } else {
-            imode = MAP_INVALID;
+            prot = MAP_INVALID;
         }
-        return imode;
+        return prot;
     }
 
-    private void checkMode(MapMode mode, int imode, boolean isSync) {
-        if (imode == MAP_INVALID) {
+    private void checkMode(MapMode mode, int prot, boolean isSync) {
+        if (prot == MAP_INVALID) {
             throw new UnsupportedOperationException();
         }
         if ((mode != MapMode.READ_ONLY) && mode != ExtendedMapMode.READ_ONLY_SYNC && !writable)
