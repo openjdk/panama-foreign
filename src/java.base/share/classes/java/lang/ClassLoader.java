@@ -74,8 +74,8 @@ import sun.security.util.SecurityConstants;
 
 //Panama
 import java.foreign.Library;
-import jdk.internal.foreign.SimpleSymbol;
-import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.foreign.invoke.SimpleSymbol;
+import jdk.internal.foreign.invoke.memory.BoundedPointer;
 
 /**
  * A class loader is an object that is responsible for loading classes. The

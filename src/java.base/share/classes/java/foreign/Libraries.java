@@ -25,7 +25,7 @@ package java.foreign;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.io.File;
 import java.util.Objects;
-import jdk.internal.foreign.LibrariesHelper;
+import jdk.internal.foreign.invoke.LibrariesHelper;
 
 public final class Libraries {
     // don't create
@@ -160,7 +160,7 @@ public final class Libraries {
     }
 
     private static Lookup checkLookup(Lookup lookup) {
-        if (!Objects.requireNonNull(lookup).hasPrivateAccess()) {
+        if (!Objects.requireNonNull(lookup).hasFullPrivilegeAccess()) {
             throw new IllegalArgumentException("Attempt to use non-private lookup object");
         }
         return lookup;

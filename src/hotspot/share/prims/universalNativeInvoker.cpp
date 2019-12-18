@@ -297,7 +297,7 @@ JVM_ENTRY(void, JVM_RegisterUniversalNativeInvokerMethods(JNIEnv *env, jclass UN
 
     int status = env->RegisterNatives(UNI_class, UNI_methods, sizeof(UNI_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.abi.UniversalNativeInvoker natives");
+              "register jdk.internal.foreign.invoke.abi.UniversalNativeInvoker natives");
   }
 }
 JVM_END

@@ -21,10 +21,10 @@
  * questions.
  */
 
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.CallingSequenceBuilder;
-import jdk.internal.foreign.abi.StorageClass;
-import jdk.internal.foreign.memory.Types;
+import jdk.internal.foreign.invoke.abi.CallingSequence;
+import jdk.internal.foreign.invoke.abi.CallingSequenceBuilder;
+import jdk.internal.foreign.invoke.abi.StorageClass;
+import jdk.internal.foreign.invoke.memory.Types;
 
 import java.foreign.layout.Layout;
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.testng.Assert.assertEquals;
-import static jdk.internal.foreign.abi.StorageClass.*;
+import static jdk.internal.foreign.invoke.abi.StorageClass.*;
 
 public class CallingSequenceTestBase {
 

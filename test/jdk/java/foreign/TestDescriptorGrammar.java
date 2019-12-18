@@ -27,11 +27,11 @@
  * @test
  * @bug 8192974
  * @summary overhaul descriptor string parsing
- * @modules java.base/jdk.internal.foreign.memory
+ * @modules java.base/jdk.internal.foreign.invoke.memory
  * @run main/othervm -Xmx1g TestDescriptorGrammar
  */
 
-import jdk.internal.foreign.memory.*;
+import jdk.internal.foreign.invoke.memory.*;
 
 import java.util.HashMap;
 import java.util.List;

@@ -49,7 +49,7 @@ JVM_ENTRY(void, JVM_RegisterUniversalUpcallHandlerMethods(JNIEnv *env, jclass UU
 
     int status = env->RegisterNatives(UUH_class, UUH_methods, sizeof(UUH_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.abi.UniversalUpcallHandler natives");
+              "register jdk.internal.foreign.invoke.abi.invoke.UniversalUpcallHandler natives");
   }
 }
 JVM_END

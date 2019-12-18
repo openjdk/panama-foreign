@@ -49,7 +49,7 @@ JVM_ENTRY(void, JVM_RegisterDirectUpcallHandlerMethods(JNIEnv *env, jclass DUH_c
 
     int status = env->RegisterNatives(DUH_class, DUH_methods, sizeof(DUH_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.abi.DirectUpcallHandler natives");
+              "register jdk.internal.foreign.invoke.abi.DirectUpcallHandler natives");
   }
 }
 JVM_END

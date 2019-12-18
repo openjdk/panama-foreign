@@ -25,7 +25,7 @@
 
 package java.foreign.memory;
 
-import jdk.internal.foreign.memory.CallbackImpl;
+import jdk.internal.foreign.invoke.memory.CallbackImpl;
 
 /**
  * This interface models native function pointers. This interface is typically parameterized by a type {@code T} which is

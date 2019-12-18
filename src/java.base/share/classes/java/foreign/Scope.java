@@ -29,8 +29,8 @@ import java.foreign.memory.Callback;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
-import jdk.internal.foreign.ScopeImpl;
-import jdk.internal.foreign.memory.BoundedArray;
+import jdk.internal.foreign.invoke.ScopeImpl;
+import jdk.internal.foreign.invoke.memory.BoundedArray;
 
 /**
  * A scope models a unit of resource lifecycle management. It provides primitives for memory allocation, as well

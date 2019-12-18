@@ -67,13 +67,13 @@ static void specialized_upcall_init(int nlongs, int ndoubles, int rettag) {
 
   char ret = decode_ret(rettag);
 
-  desc.print("(Ljdk/internal/foreign/abi/DirectUpcallHandler;%.*s%.*s)%c", nlongs, LONGS, ndoubles, DOUBLES, ret);
+  desc.print("(Ljdk/internal/foreign/invoke/abi/DirectUpcallHandler;%.*s%.*s)%c", nlongs, LONGS, ndoubles, DOUBLES, ret);
   if (nlongs + ndoubles == 0) {
     mname.print("invoke_%c_V", ret);
   } else {
     mname.print("invoke_%c_%.*s%.*s", ret, nlongs, LONGS, ndoubles, DOUBLES);
   }
-  cname.print("jdk/internal/foreign/abi/DirectUpcallHandler");
+  cname.print("jdk/internal/foreign/invoke/abi/DirectUpcallHandler");
 
   #if 0
     ::fprintf(stderr, "codes: %d, %d, %d\n", nlongs, ndoubles, rettag);

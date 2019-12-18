@@ -1,0 +1,235 @@
+/*
+ *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *  This code is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License version 2 only, as
+ *  published by the Free Software Foundation.  Oracle designates this
+ *  particular file as subject to the "Classpath" exception as provided
+ *  by Oracle in the LICENSE file that accompanied this code.
+ *
+ *  This code is distributed in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ *  version 2 for more details (a copy is included in the LICENSE file that
+ *  accompanied this code).
+ *
+ *  You should have received a copy of the GNU General Public License version
+ *  2 along with this work; if not, write to the Free Software Foundation,
+ *  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ *   Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ *  or visit www.oracle.com if you need additional information or have any
+ *  questions.
+ *
+ */
+package jdk.internal.foreign.invoke;
+
+import java.foreign.Library;
+import java.foreign.NativeMethodType;
+import java.foreign.Scope;
+import java.foreign.annotations.NativeHeader;
+import java.foreign.layout.Function;
+import java.foreign.layout.Layout;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
+import java.foreign.memory.Pointer.AccessMode;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
+import jdk.internal.foreign.invoke.abi.SystemABI;
+import jdk.internal.foreign.invoke.memory.BoundedPointer;
+import jdk.internal.foreign.invoke.memory.DescriptorParser;
+import jdk.internal.foreign.invoke.memory.MemoryBoundInfo;
+import jdk.internal.org.objectweb.asm.MethodVisitor;
+import jdk.internal.org.objectweb.asm.Type;
+
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ALOAD;
+import static jdk.internal.org.objectweb.asm.Opcodes.ARETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
+import static jdk.internal.org.objectweb.asm.Opcodes.I2B;
+import static jdk.internal.org.objectweb.asm.Opcodes.I2C;
+import static jdk.internal.org.objectweb.asm.Opcodes.I2S;
+import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
+
+class HeaderImplGenerator extends BinderClassGenerator {
+
+    // lookup helper to use for looking up symbols
+    private final SymbolLookup lookup;
+
+    // global variables map
+    private final Map<String, Layout> globalMap = new HashMap<>();
+
+    // global scope for this library
+    private final Scope libScope;
+
+    HeaderImplGenerator(Class<?> hostClass, String implClassName, Class<?> c, SymbolLookup lookup, Scope libScope) {
+        super(hostClass, implClassName, new Class<?>[] { c });
+        this.lookup = lookup;
+        this.libScope = libScope;
+        Stream.of(c.getAnnotation(NativeHeader.class).globals())
+                .map(DescriptorParser::parseLayout)
+                .forEach(l -> globalMap.put(l.name().get(), l));
+    }
+
+    @Override
+    protected void generateMembers(BinderClassWriter cw) {
+        generateScopeAccessor(cw);
+        super.generateMembers(cw);
+    }
+
+    @Override
+    protected void generateConstructor(BinderClassWriter cw) {
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(1,1);
+        mv.visitEnd();
+    }
+
+    private void generateScopeAccessor(BinderClassWriter cw) {
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "scope", MethodType.methodType(Scope.class).descriptorString(), null, null);
+        mv.visitCode();
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(libScope));
+        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Scope.class));
+        mv.visitInsn(ARETURN);
+        mv.visitMaxs(1,1);
+        mv.visitEnd();
+    }
+
+    @Override
+    protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
+        MemberInfo memberInfo = MemberInfo.of(method);
+        if (memberInfo instanceof FunctionInfo) {
+            generateFunctionMethod(cw, method, (FunctionInfo)memberInfo);
+        } else if (memberInfo instanceof VarInfo) {
+            generateGlobalVariableMethod(cw, method, (VarInfo)memberInfo);
+        } else if (memberInfo instanceof ConstantNumericInfo ||
+                memberInfo instanceof ConstantStringInfo) {
+            generateConstantMethod(cw, method, memberInfo);
+        }
+    }
+
+    void generateFunctionMethod(BinderClassWriter cw, Method method, FunctionInfo info) {
+        MethodType methodType = Util.methodTypeFor(method);
+        Function function = info.descriptor;
+        try {
+            String name = function.name().orElse(method.getName());
+            Library.Symbol symbol = lookup.lookup(name);
+            NativeMethodType nmt = Util.nativeMethodType(layoutResolver.resolve(function), method);
+            addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(),
+                    SystemABI.getInstance().downcallHandle(symbol, nmt));
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void generateGlobalVariableMethod(BinderClassWriter cw, Method method, VarInfo info) {
+        java.lang.reflect.Type type = info.accessorKind.carrier(method);
+        Class<?> c = Util.erasure(type);
+        Layout l = globalMap.get(info.name);
+        LayoutType<?> lt = Util.makeType(type, l);
+
+        String methodName = method.getName();
+        Pointer<?> p;
+
+        try {
+            String name = info.name;
+            long addr = lookup.lookup(name.isEmpty() ? methodName : name).getAddress().addr();
+            p = new BoundedPointer<>(lt, libScope, AccessMode.READ_WRITE, MemoryBoundInfo.ofNative(addr, lt.bytesSize()));
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(e);
+        }
+
+        MethodHandle target;
+        AccessorKind kind = info.accessorKind;
+        switch (kind) {
+            case GET:
+                target = lt.getter();
+                target = target.bindTo(p).asType(MethodType.methodType(c));
+                break;
+
+            case SET:
+                target = lt.setter();
+                target = target.bindTo(p).asType(MethodType.methodType(void.class, c));
+                break;
+
+            case PTR:
+                target = MethodHandles.constant(Pointer.class, p);
+                break;
+
+            default:
+                throw new InternalError("Unexpected access method type: " + kind);
+        }
+
+        addMethodFromHandle(cw, methodName, kind.getMethodType(c), false, target);
+    }
+
+    private void generateConstantMethod(BinderClassWriter cw, Method method, MemberInfo info) {
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(), Type.getMethodDescriptor(method), null, null);
+        if (info instanceof ConstantNumericInfo) {
+            long value = ((ConstantNumericInfo) info).numericConstant;
+            String desc = Type.getDescriptor(method.getReturnType());
+            switch (desc) {
+                case "Z": {
+                    mv.visitLdcInsn(value != 0);
+                    break;
+                }
+                case "C": {
+                    mv.visitLdcInsn((int)value);
+                    mv.visitInsn(I2C);
+                    break;
+                }
+                case "B": {
+                    mv.visitLdcInsn((int) value);
+                    mv.visitInsn(I2B);
+                    break;
+                }
+                case "S": {
+                    mv.visitLdcInsn((int) value);
+                    mv.visitInsn(I2S);
+                    break;
+                }
+                case "I": {
+                    mv.visitLdcInsn((int) value);
+                    break;
+                }
+                case "J": {
+                    mv.visitLdcInsn(value);
+                    break;
+                }
+                case "F": {
+                    mv.visitLdcInsn((float)Double.longBitsToDouble(value));
+                    break;
+                }
+                case "D": {
+                    mv.visitLdcInsn(Double.longBitsToDouble(value));
+                    break;
+                }
+                case "Ljava/foreign/memory/Pointer;": {
+                    Pointer<?> ptr = BoundedPointer.createNativeVoidPointer(libScope, value);
+                    mv.visitLdcInsn(cw.makeConstantPoolPatch(ptr));
+                    mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Pointer.class));
+                    break;
+                }
+            }
+        } else {
+            String value = ((ConstantStringInfo)info).stringConstant;
+            Pointer<?> ptrStr = libScope.allocateCString(value);
+            mv.visitLdcInsn(cw.makeConstantPoolPatch(ptrStr));
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Pointer.class));
+        }
+        mv.visitInsn(returnInsn(method.getReturnType()));
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+    }
+}

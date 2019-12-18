@@ -30,7 +30,7 @@ import java.lang.invoke.MethodType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import jdk.internal.foreign.Util;
+import jdk.internal.foreign.invoke.Util;
 
 /**
  * A native method type represents the arguments and return native types (expressed as {@link LayoutType} objects)

@@ -25,10 +25,10 @@
 
 package java.foreign.memory;
 
-import jdk.internal.foreign.LayoutResolver;
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.memory.LayoutTypeImpl;
-import jdk.internal.foreign.memory.References;
+import jdk.internal.foreign.invoke.LayoutResolver;
+import jdk.internal.foreign.invoke.Util;
+import jdk.internal.foreign.invoke.memory.LayoutTypeImpl;
+import jdk.internal.foreign.invoke.memory.References;
 
 import java.foreign.annotations.NativeCallback;
 import java.foreign.layout.Address;

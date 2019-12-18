@@ -24,19 +24,19 @@
 /*
  * @test
  * @library ..
- * @modules java.base/jdk.internal.foreign.abi java.base/jdk.internal.foreign.memory java.base/jdk.internal.foreign.abi.x64.windows
+ * @modules java.base/jdk.internal.foreign.invoke.abi java.base/jdk.internal.foreign.invoke.memory java.base/jdk.internal.foreign.invoke.abi.x64.windows
  * @run testng CallingSequenceTest
  */
 
-import jdk.internal.foreign.abi.x64.windows.CallingSequenceBuilderImpl;
-import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
-import jdk.internal.foreign.memory.Types;
+import jdk.internal.foreign.invoke.abi.x64.windows.CallingSequenceBuilderImpl;
+import jdk.internal.foreign.invoke.abi.x64.windows.Windowsx64ABI;
+import jdk.internal.foreign.invoke.memory.Types;
 import org.testng.annotations.Test;
 
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
 
-import static jdk.internal.foreign.abi.StorageClass.*;
+import static jdk.internal.foreign.invoke.abi.StorageClass.*;
 
 public class CallingSequenceTest extends CallingSequenceTestBase {
 

@@ -72,7 +72,7 @@ JVM_ENTRY(void, JVM_RegisterUpcallHandlerMethods(JNIEnv *env, jclass UH_class)) 
 
     int status = env->RegisterNatives(UH_class, UH_methods, sizeof(UH_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.abi.UpcallStubs natives");
+              "register jdk.internal.foreign.invoke.abi.UpcallStubs natives");
   }
 }
 JVM_END

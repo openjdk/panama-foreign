@@ -1,0 +1,219 @@
+/*
+ *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *  This code is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License version 2 only, as
+ *  published by the Free Software Foundation.  Oracle designates this
+ *  particular file as subject to the "Classpath" exception as provided
+ *  by Oracle in the LICENSE file that accompanied this code.
+ *
+ *  This code is distributed in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ *  version 2 for more details (a copy is included in the LICENSE file that
+ *  accompanied this code).
+ *
+ *  You should have received a copy of the GNU General Public License version
+ *  2 along with this work; if not, write to the Free Software Foundation,
+ *  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ *   Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ *  or visit www.oracle.com if you need additional information or have any
+ *  questions.
+ *
+ */
+
+package jdk.internal.foreign.invoke.abi;
+
+import java.foreign.Library;
+import java.foreign.NativeMethodType;
+import java.foreign.NativeTypes;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
+import java.lang.invoke.MethodHandle;
+import java.util.Arrays;
+
+import jdk.internal.foreign.invoke.ScopeImpl;
+import jdk.internal.foreign.invoke.Util;
+import jdk.internal.foreign.invoke.memory.MemoryBoundInfo;
+import jdk.internal.foreign.invoke.memory.BoundedPointer;
+import jdk.internal.vm.annotation.Stable;
+
+import static sun.security.action.GetBooleanAction.privilegedGetProperty;
+
+/**
+ * This class implements upcall invocation from native code through a so called 'universal adapter'. A universal upcall adapter
+ * takes an array of storage pointers, which describes the state of the CPU at the time of the upcall. This can be used
+ * by the Java code to fetch the upcall arguments and to store the results to the desired location, as per system ABI.
+ */
+public class UniversalUpcallHandler implements Library.Symbol {
+
+    private static final boolean DEBUG =
+        privilegedGetProperty("jdk.internal.foreign.UpcallHandler.DEBUG");
+
+    @Stable
+    private final MethodHandle mh;
+    private final NativeMethodType nmt;
+    private final CallingSequence callingSequence;
+    private final Pointer<?> entryPoint;
+    private final UniversalAdapter adapter;
+
+    public UniversalUpcallHandler(MethodHandle target, CallingSequence callingSequence, NativeMethodType nmt,
+                                  UniversalAdapter adapter) {
+        this.adapter = adapter;
+        mh = target.asSpreader(Object[].class, nmt.parameterCount());
+        this.nmt = nmt;
+        this.callingSequence = callingSequence;
+        this.entryPoint = BoundedPointer.createNativeVoidPointer(allocateUpcallStub());
+    }
+
+    @Override
+    public String getName() {
+        return toString();
+    }
+
+    @Override
+    public Pointer<?> getAddress() {
+        return entryPoint;
+    }
+
+    public static void invoke(UniversalUpcallHandler handler, long integers, long vectors,
+                              long stack, long integerReturn, long vectorReturn,
+                              long x87Return, long indirectResult) {
+        UpcallContext context = handler.new UpcallContext(integers, vectors, stack, integerReturn,
+                                                          vectorReturn, x87Return, indirectResult);
+        handler.invoke(context);
+    }
+
+    class UpcallContext {
+
+        private final Pointer<Long> integers;
+        private final Pointer<Long> vectors;
+        private final Pointer<Long> stack;
+        private final Pointer<Long> integerReturns;
+        private final Pointer<Long> vectorReturns;
+        private final Pointer<Long> x87Returns;
+        private final Pointer<Long> indirectResult;
+
+        UpcallContext(long integers, long vectors, long stack, long integerReturn,
+                      long vectorReturn, long x87Returns, long indirectResult) {
+            this.integers = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, integers, false);
+            this.vectors = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, vectors, false);
+            this.stack = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, stack, false);
+            this.integerReturns = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, integerReturn, true);
+            this.vectorReturns = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, vectorReturn, true);
+            this.x87Returns = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, x87Returns, true);
+            this.indirectResult = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, indirectResult, false);
+        }
+
+        Pointer<Long> getPtr(ArgumentBinding binding) {
+            Storage storage = binding.storage();
+            switch (storage.getStorageClass()) {
+            case INTEGER_ARGUMENT_REGISTER:
+                return integers.offset(storage.getStorageIndex());
+            case VECTOR_ARGUMENT_REGISTER:
+                return vectors.offset(storage.getStorageIndex() * storage.getMaxSize() / 8);
+            case STACK_ARGUMENT_SLOT:
+                return stack.offset(storage.getStorageIndex());
+            case INTEGER_RETURN_REGISTER:
+                return integerReturns.offset(storage.getStorageIndex());
+            case VECTOR_RETURN_REGISTER:
+                return vectorReturns.offset(storage.getStorageIndex() * storage.getMaxSize() / 8);
+            case X87_RETURN_REGISTER:
+                return x87Returns.offset(storage.getStorageIndex() * storage.getMaxSize() / 8);
+            case INDIRECT_RESULT_REGISTER:
+                return indirectResult.offset(storage.getStorageIndex());
+            default:
+                throw new Error("Unhandled storage: " + storage);
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        Pointer<Object> inMemoryPtr() {
+            assert callingSequence.returnsInMemory();
+            Pointer<Long> res = getPtr(callingSequence.returnInMemoryBinding());
+            long structAddr = res.get();
+            long size = Util.alignUp(nmt.returnType().bytesSize(), 8);
+            return new BoundedPointer<Object>((LayoutType)nmt.returnType(), ScopeImpl.UNCHECKED, Pointer.AccessMode.READ_WRITE,
+                    MemoryBoundInfo.ofNative(structAddr, size));
+        }
+
+        void setReturnPtr(long ptr) {
+            assert callingSequence.returnsInMemory();
+            integerReturns.set(ptr);
+        }
+
+        public String asString() {
+            StringBuilder result = new StringBuilder();
+            result.append("UpcallContext:\n");
+            if (callingSequence.returnsInMemory()) {
+                result.append("In memory pointer:\n".indent(2));
+                result.append(inMemoryPtr().toString().indent(4));
+            }
+            for (StorageClass cls : StorageClass.values()) {
+                result.append((cls + "\n").indent(2));
+                for (ArgumentBinding binding : callingSequence.bindings(cls)) {
+                    BoundedPointer<?> argPtr = (BoundedPointer<?>) getPtr(binding);
+                    if (argPtr.isAccessibleFor(Pointer.AccessMode.READ)) {
+                        result.append(argPtr.dump((int) binding.storage().getSize()).indent(4));
+                    }
+                }
+            }
+            return result.toString();
+        }
+    }
+
+    private void invoke(UpcallContext context) {
+        try {
+            // FIXME: Handle varargs upcalls here
+            if (DEBUG) {
+                System.err.println("=== UpcallHandler.invoke ===");
+                System.err.println(callingSequence.asString());
+                System.err.println(context.asString());
+            }
+
+            Object[] args = new Object[nmt.parameterCount()];
+            for (int i = 0 ; i < nmt.parameterCount() ; i++) {
+                args[i] = adapter.boxValue(nmt.parameterType(i), context::getPtr, callingSequence.argumentBindings(i));
+            }
+
+            if (DEBUG) {
+                System.err.println("Java arguments:");
+                System.err.println(Arrays.toString(args).indent(2));
+            }
+
+            Object o = mh.invoke(args);
+
+            if (DEBUG) {
+                System.err.println("Java return:");
+                System.err.println(o.toString().indent(2));
+            }
+
+            if (mh.type().returnType() != void.class) {
+                if (!callingSequence.returnsInMemory()) {
+                    adapter.unboxValue(o, nmt.returnType(), context::getPtr,
+                            callingSequence.returnBindings());
+                } else {
+                    Pointer<Object> inMemPtr = context.inMemoryPtr();
+                    inMemPtr.set(o);
+                    context.setReturnPtr(inMemPtr.addr()); // Write to RAX
+                }
+            }
+
+            if (DEBUG) {
+                System.err.println("Returning:");
+                System.err.println(context.asString().indent(2));
+            }
+        } catch (Throwable t) {
+            throw new IllegalStateException(t);
+        }
+    }
+
+    public native long allocateUpcallStub();
+
+    private static native void registerNatives();
+    static {
+        registerNatives();
+    }
+}

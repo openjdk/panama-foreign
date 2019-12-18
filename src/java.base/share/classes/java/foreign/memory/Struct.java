@@ -22,10 +22,9 @@
  */
 package java.foreign.memory;
 
-import jdk.internal.foreign.LayoutPaths;
-import jdk.internal.foreign.Util;
+import jdk.internal.foreign.invoke.LayoutPaths;
+import jdk.internal.foreign.invoke.Util;
 
-import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;

@@ -28,9 +28,9 @@ package java.foreign.memory;
 import java.util.Objects;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.memory.BoundedArray;
-import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.foreign.invoke.Util;
+import jdk.internal.foreign.invoke.memory.BoundedArray;
+import jdk.internal.foreign.invoke.memory.BoundedPointer;
 
 /**
  * This interface models a native array. An array is composed by a base pointer and a size.

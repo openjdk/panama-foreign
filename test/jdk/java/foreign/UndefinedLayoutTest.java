@@ -23,11 +23,11 @@
 
 /*
  * @test
- * @modules java.base/jdk.internal.foreign
+ * @modules java.base/jdk.internal.foreign.invoke
  * @run testng/othervm UndefinedLayoutTest
  */
 
-import jdk.internal.foreign.LayoutResolver;
+import jdk.internal.foreign.invoke.LayoutResolver;
 import org.testng.annotations.Test;
 
 import java.foreign.Libraries;

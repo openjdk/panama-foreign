@@ -24,7 +24,7 @@
 
 /**
  * @test
- * @modules java.base/jdk.internal.foreign.abi java.base/jdk.internal.foreign.memory java.base/jdk.internal.foreign.abi.aarch64
+ * @modules java.base/jdk.internal.foreign.invoke.abi java.base/jdk.internal.foreign.invoke.memory java.base/jdk.internal.foreign.invoke.abi.aarch64
  * @run testng CallingSequenceTest
  */
 
@@ -34,15 +34,13 @@ import java.foreign.layout.Group;
 import java.foreign.layout.Sequence;
 import java.foreign.layout.Layout;
 import java.foreign.memory.LayoutType;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Stream;
 
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.StorageClass;
-import jdk.internal.foreign.abi.aarch64.CallingSequenceBuilderImpl;
-import jdk.internal.foreign.abi.aarch64.AArch64ABI;
-import jdk.internal.foreign.memory.Types;
+import jdk.internal.foreign.invoke.abi.CallingSequence;
+import jdk.internal.foreign.invoke.abi.StorageClass;
+import jdk.internal.foreign.invoke.abi.aarch64.CallingSequenceBuilderImpl;
+import jdk.internal.foreign.invoke.abi.aarch64.AArch64ABI;
+import jdk.internal.foreign.invoke.memory.Types;
 
 import org.testng.annotations.Test;
 

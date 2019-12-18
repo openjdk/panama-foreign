@@ -23,10 +23,10 @@
 
 /*
  * @test
- * @modules java.base/jdk.internal.foreign.abi.x64
+ * @modules java.base/jdk.internal.foreign.invoke.abi.x64
  */
 
-import jdk.internal.foreign.abi.x64.ArgumentClass;
+import jdk.internal.foreign.invoke.abi.x64.ArgumentClass;
 
 public class ArgumentClassTest {
     private final BitMatrix tested = new BitMatrix(ArgumentClass.values().length, ArgumentClass.values().length);

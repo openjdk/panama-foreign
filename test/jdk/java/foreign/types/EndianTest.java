@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @modules java.base/jdk.internal.foreign.abi
+ * @modules java.base/jdk.internal.foreign.invoke.abi
  * @run testng EndianTest
  */
 
@@ -36,8 +36,6 @@ import java.foreign.annotations.NativeAddressof;
 import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
-import java.foreign.layout.Group;
-import java.foreign.layout.Value;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
@@ -45,7 +43,7 @@ import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteOrder;
-import jdk.internal.foreign.abi.SystemABI;
+import jdk.internal.foreign.invoke.abi.SystemABI;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;

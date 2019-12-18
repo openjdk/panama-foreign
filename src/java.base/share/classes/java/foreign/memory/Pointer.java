@@ -24,9 +24,9 @@ package java.foreign.memory;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import jdk.internal.foreign.ScopeImpl;
-import jdk.internal.foreign.memory.MemoryBoundInfo;
-import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.foreign.invoke.ScopeImpl;
+import jdk.internal.foreign.invoke.memory.MemoryBoundInfo;
+import jdk.internal.foreign.invoke.memory.BoundedPointer;
 
 import java.foreign.NativeTypes;
 import java.foreign.Scope;

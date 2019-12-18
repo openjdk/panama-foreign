@@ -136,12 +136,12 @@ extern "C" {
 static JNINativeMethod lookup_special_native_methods[] = {
   { CC"Java_jdk_internal_misc_Unsafe_registerNatives",             NULL, FN_PTR(JVM_RegisterJDKInternalMiscUnsafeMethods) },
   { CC"Java_java_lang_invoke_MethodHandleNatives_registerNatives", NULL, FN_PTR(JVM_RegisterMethodHandleMethods) },
-  { CC"Java_jdk_internal_foreign_memory_References_registerNatives",      NULL, FN_PTR(JVM_RegisterReferencesMethods) },
-  { CC"Java_jdk_internal_foreign_abi_UniversalNativeInvoker_registerNatives",      NULL, FN_PTR(JVM_RegisterUniversalNativeInvokerMethods) },
-  { CC"Java_jdk_internal_foreign_abi_DirectNativeInvoker_registerNatives",      NULL, FN_PTR(JVM_RegisterDirectNativeInvokerMethods) },
-  { CC"Java_jdk_internal_foreign_abi_UpcallStubs_registerNatives",      NULL, FN_PTR(JVM_RegisterUpcallHandlerMethods) },
-  { CC"Java_jdk_internal_foreign_abi_UniversalUpcallHandler_registerNatives",      NULL, FN_PTR(JVM_RegisterUniversalUpcallHandlerMethods) },
-  { CC"Java_jdk_internal_foreign_abi_DirectUpcallHandler_registerNatives",      NULL, FN_PTR(JVM_RegisterDirectUpcallHandlerMethods) },
+  { CC"Java_jdk_internal_foreign_invoke_memory_References_registerNatives",      NULL, FN_PTR(JVM_RegisterReferencesMethods) },
+  { CC"Java_jdk_internal_foreign_invoke_abi_UniversalNativeInvoker_registerNatives",      NULL, FN_PTR(JVM_RegisterUniversalNativeInvokerMethods) },
+  { CC"Java_jdk_internal_foreign_invoke_abi_DirectNativeInvoker_registerNatives",      NULL, FN_PTR(JVM_RegisterDirectNativeInvokerMethods) },
+  { CC"Java_jdk_internal_foreign_invoke_abi_UpcallStubs_registerNatives",      NULL, FN_PTR(JVM_RegisterUpcallHandlerMethods) },
+  { CC"Java_jdk_internal_foreign_invoke_abi_UniversalUpcallHandler_registerNatives",      NULL, FN_PTR(JVM_RegisterUniversalUpcallHandlerMethods) },
+  { CC"Java_jdk_internal_foreign_invoke_abi_DirectUpcallHandler_registerNatives",      NULL, FN_PTR(JVM_RegisterDirectUpcallHandlerMethods) },
   { CC"Java_jdk_internal_perf_Perf_registerNatives",               NULL, FN_PTR(JVM_RegisterPerfMethods)         },
   { CC"Java_sun_hotspot_WhiteBox_registerNatives",                 NULL, FN_PTR(JVM_RegisterWhiteBoxMethods)     },
 #if INCLUDE_JVMCI

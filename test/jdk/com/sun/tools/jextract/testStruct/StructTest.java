@@ -37,15 +37,15 @@ import java.lang.reflect.WildcardType;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import jdk.internal.foreign.LayoutResolver;
-import jdk.internal.foreign.memory.DescriptorParser;
+import jdk.internal.foreign.invoke.LayoutResolver;
+import jdk.internal.foreign.invoke.memory.DescriptorParser;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
 /*
  * @test
- * @modules jdk.jextract java.base/jdk.internal.foreign.memory java.base/jdk.internal.foreign
+ * @modules jdk.jextract java.base/jdk.internal.foreign.invoke.memory java.base/jdk.internal.foreign.invoke
  * @library ..
  * @build JextractToolRunner
  * @run testng StructTest

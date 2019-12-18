@@ -295,7 +295,7 @@ JVM_ENTRY(void, JVM_RegisterDirectNativeInvokerMethods(JNIEnv *env, jclass DNI_c
 
     int status = env->RegisterNatives(DNI_class, DNI_methods, sizeof(DNI_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.abi.DirectNativeInvoker natives");
+              "register jdk.internal.foreign.invoke.abi.DirectNativeInvoker natives");
   }
 }
 JVM_END

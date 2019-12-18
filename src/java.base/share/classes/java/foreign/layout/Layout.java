@@ -24,7 +24,7 @@
  */
 package java.foreign.layout;
 
-import jdk.internal.foreign.memory.DescriptorParser;
+import jdk.internal.foreign.invoke.memory.DescriptorParser;
 
 /**
  * This interface models the layout of a group of bits in a memory region.
