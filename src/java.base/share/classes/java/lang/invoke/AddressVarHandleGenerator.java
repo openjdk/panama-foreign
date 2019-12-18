@@ -83,7 +83,7 @@ class AddressVarHandleGenerator {
     private static final String DEBUG_DUMP_CLASSES_DIR_PROPERTY = "jdk.internal.foreign.ClassGenerator.DEBUG_DUMP_CLASSES_DIR";
 
     private static final boolean DEBUG =
-        GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.ClassGenerator.DEBUG");
+            GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.ClassGenerator.DEBUG");
 
     private static final Class<?> BASE_CLASS = VarHandleMemoryAddressBase.class;
 
@@ -98,6 +98,7 @@ class AddressVarHandleGenerator {
         helperClassCache.put(long.class, VarHandleMemoryAddressAsLongs.class);
         helperClassCache.put(float.class, VarHandleMemoryAddressAsFloats.class);
         helperClassCache.put(double.class, VarHandleMemoryAddressAsDoubles.class);
+        helperClassCache.put(MemoryAddressProxy.class, VarHandleMemoryAddressAsMemoryAddresses.class);
     }
 
     private static final File DEBUG_DUMP_CLASSES_DIR;
@@ -124,10 +125,14 @@ class AddressVarHandleGenerator {
         this.carrier = carrier;
         Class<?>[] components = new Class<?>[dimensions];
         Arrays.fill(components, long.class);
-        this.form = new VarForm(BASE_CLASS, MemoryAddressProxy.class, carrier, components);
+        this.form = new VarForm(BASE_CLASS, MemoryAddressProxy.class, this.carrier, components);
         this.helperClass = helperClassCache.get(carrier);
         this.implClassName = helperClass.getName().replace('.', '/') + dimensions;
     }
+
+    static Class<?> erase(Class<?> type) {
+            return type.isPrimitive() ? type : Object.class;
+        }
 
     /*
      * Generate a VarHandle memory access factory.
@@ -221,7 +226,7 @@ class AddressVarHandleGenerator {
         mv.visitFieldInsn(GETFIELD, Type.getInternalName(VarHandle.AccessMode.class), "at", Type.getDescriptor(VarHandle.AccessType.class));
         mv.visitLdcInsn(cw.makeConstantPoolPatch(MemoryAddressProxy.class));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(carrier));
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(erase(carrier)));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
 
         Class<?>[] dims = new Class<?>[dimensions];

@@ -28,12 +28,19 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
+import jdk.internal.foreign.abi.aarch64.AArch64ABI;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 import jdk.internal.misc.Unsafe;
+import sun.invoke.util.Wrapper;
 import sun.nio.ch.FileChannelImpl;
 import sun.security.action.GetBooleanAction;
 
@@ -57,6 +64,9 @@ public final class Utils {
 
     // The maximum alignment supported by malloc - typically 16 on 64-bit platforms.
     private final static long MAX_ALIGN = 16;
+
+    // the memory address var handle assumes that addresses have same size as a Java long
+    private final static long POINTER_SIZE = 8;
 
     private static final JavaNioAccess javaNioAccess = SharedSecrets.getJavaNioAccess();
 
@@ -105,6 +115,31 @@ public final class Utils {
 
     public static MemoryAddress resizeNativeAddress(MemoryAddress base, long byteSize) {
         return new MemoryAddressImpl((MemorySegmentImpl)Utils.makeNativeSegmentUnchecked(base, byteSize), 0);
+    }
+
+    public static void checkCarrier(Class<?> carrier) {
+        if (carrier == void.class || carrier == boolean.class ||
+                (!carrier.isPrimitive() && !isAddress(carrier))) {
+            throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
+        }
+    }
+
+    public static long carrierSize(Class<?> carrier) {
+        if (isAddress(carrier)) {
+            return POINTER_SIZE;
+        }
+        long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
+        return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
+    }
+
+    public static boolean isAddress(Class<?> carrier) {
+        return MemoryAddress.class == carrier ||
+                MemoryAddressProxy.class == carrier;
+    }
+
+    public static Class<?> adjustCarrier(Class<?> carrier) {
+        return carrier == MemoryAddress.class ?
+                MemoryAddressProxy.class : carrier;
     }
 
     // segment factories

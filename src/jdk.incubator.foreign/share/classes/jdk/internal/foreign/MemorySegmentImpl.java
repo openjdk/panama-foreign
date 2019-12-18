@@ -161,7 +161,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public final void checkValidState() {
-        if (owner != Thread.currentThread()) {
+        if (owner != null && owner != Thread.currentThread()) {
             throw new IllegalStateException("Attempt to access segment outside owning thread");
         }
         scope.checkAliveConfined();

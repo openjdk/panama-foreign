@@ -25,9 +25,11 @@
  */
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.foreign.MemoryAddressProxy;
 import sun.invoke.util.Wrapper;
 
 import jdk.incubator.foreign.GroupLayout;
@@ -124,15 +126,19 @@ public class LayoutPath {
             throw badLayoutPath("layout path does not select a value layout");
         }
 
-        if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class // illegal carrier?
-                || Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitSize()) { // carrier has the right size?
+        Utils.checkCarrier(carrier);
+
+        long size = Utils.carrierSize(carrier);
+
+        if ((size * 8) != layout.bitSize()) { // carrier has the right size?
             throw new IllegalArgumentException("Invalid carrier: " + carrier + ", for layout " + layout);
         }
 
         checkAlignment(this);
 
         return JLI.memoryAddressViewVarHandle(
-                carrier,
+                Utils.adjustCarrier(carrier),
+                size,
                 layout.byteAlignment() - 1, //mask
                 ((ValueLayout) layout).order(),
                 Utils.bitsToBytesOrThrow(offset, IllegalStateException::new),

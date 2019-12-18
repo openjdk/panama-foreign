@@ -27,6 +27,7 @@ package jdk.incubator.foreign;
 
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.foreign.Utils;
 import sun.invoke.util.Wrapper;
 
@@ -38,7 +39,7 @@ import java.nio.ByteOrder;
  * To obtain a memory access var handle, clients must start from one of the <em>leaf</em> methods
  * (see {@link MemoryHandles#varHandle(Class, ByteOrder)},
  * {@link MemoryHandles#varHandle(Class, long, ByteOrder)}). This determines the variable type
- * (all primitive types but {@code void} and {@code boolean} are supported), as well as the alignment constraint and the
+ * (all primitive types but {@code void} and {@code boolean} are supported, along with {@code MemoryAddress}), as well as the alignment constraint and the
  * byte order associated to a memory access var handle. The resulting memory access var handle can then be combined in various ways
  * to emulate different addressing modes. The var handles created by this class feature a <em>mandatory</em> coordinate type
  * (of type {@link MemoryAddress}), and zero or more {@code long} coordinate types, which can be used to emulate
@@ -136,15 +137,15 @@ public final class MemoryHandles {
      * which are common to all memory access var handles.
      *
      * @param carrier the carrier type. Valid carriers are {@code byte}, {@code short}, {@code char}, {@code int},
-     * {@code float}, {@code long}, and {@code double}.
+     * {@code float}, {@code long}, {@code double} and {@code MemoryAddress}.
      * @param byteOrder the required byte order.
      * @return the new memory access var handle.
      * @throws IllegalArgumentException when an illegal carrier type is used
      */
     public static VarHandle varHandle(Class<?> carrier, ByteOrder byteOrder) {
-        checkCarrier(carrier);
+        Utils.checkCarrier(carrier);
         return varHandle(carrier,
-                carrierSize(carrier),
+                Utils.carrierSize(carrier),
                 byteOrder);
     }
 
@@ -160,21 +161,21 @@ public final class MemoryHandles {
      * which are common to all memory access var handles.
      *
      * @param carrier the carrier type. Valid carriers are {@code byte}, {@code short}, {@code char}, {@code int},
-     * {@code float}, {@code long}, and {@code double}.
+     * {@code float}, {@code long}, {@code double} and {@code MemoryAddress}.
      * @param alignmentBytes the alignment constraint (in bytes). Must be a power of two.
      * @param byteOrder the required byte order.
      * @return the new memory access var handle.
      * @throws IllegalArgumentException if an illegal carrier type is used, or if {@code alignmentBytes} is not a power of two.
      */
     public static VarHandle varHandle(Class<?> carrier, long alignmentBytes, ByteOrder byteOrder) {
-        checkCarrier(carrier);
+        Utils.checkCarrier(carrier);
 
         if (alignmentBytes <= 0
                 || (alignmentBytes & (alignmentBytes - 1)) != 0) { // is power of 2?
             throw new IllegalArgumentException("Bad alignment: " + alignmentBytes);
         }
 
-        return JLI.memoryAddressViewVarHandle(carrier, alignmentBytes - 1, byteOrder, 0, new long[]{});
+        return JLI.memoryAddressViewVarHandle(Utils.adjustCarrier(carrier), Utils.carrierSize(carrier), alignmentBytes - 1, byteOrder, 0, new long[]{});
     }
 
     /**
@@ -206,6 +207,7 @@ public final class MemoryHandles {
 
         return JLI.memoryAddressViewVarHandle(
                 JLI.memoryAddressCarrier(target),
+                Utils.carrierSize(JLI.memoryAddressCarrier(target)),
                 alignMask,
                 JLI.memoryAddressByteOrder(target),
                 JLI.memoryAddressOffset(target) + bytesOffset,
@@ -249,20 +251,10 @@ public final class MemoryHandles {
 
         return JLI.memoryAddressViewVarHandle(
                 JLI.memoryAddressCarrier(target),
+                Utils.carrierSize(JLI.memoryAddressCarrier(target)),
                 alignMask,
                 JLI.memoryAddressByteOrder(target),
                 offset,
                 newStrides);
-    }
-
-    private static void checkCarrier(Class<?> carrier) {
-        if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
-            throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
-        }
-    }
-
-    private static long carrierSize(Class<?> carrier) {
-        long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
-        return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
     }
 }

@@ -1792,9 +1792,9 @@ abstract class MethodHandleImpl {
             }
 
             @Override
-            public VarHandle memoryAddressViewVarHandle(Class<?> carrier, long alignmentMask,
+            public VarHandle memoryAddressViewVarHandle(Class<?> carrier, long size, long alignmentMask,
                                                         ByteOrder order, long offset, long[] strides) {
-                return VarHandles.makeMemoryAddressViewHandle(carrier, alignmentMask, order, offset, strides);
+                return VarHandles.makeMemoryAddressViewHandle(carrier, size, alignmentMask, order, offset, strides);
             }
 
             @Override

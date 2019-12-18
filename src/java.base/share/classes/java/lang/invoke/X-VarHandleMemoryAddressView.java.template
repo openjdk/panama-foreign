@@ -27,17 +27,39 @@ package java.lang.invoke;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.lang.reflect.Field;
 import java.util.Objects;
 
 import static java.lang.invoke.MethodHandleStatics.UNSAFE;
 
 #warn
 
+#if[MemoryAddressProxy]
+final class VarHandleMemoryAddressAs$Type$es {
+#else[MemoryAddressProxy]
 final class VarHandleMemoryAddressAs$Type$s {
+#end[MemoryAddressProxy]
 
     static final boolean BE = UNSAFE.isBigEndian();
 
+#if[MemoryAddressProxy]
+    static final int VM_ALIGN = Long.BYTES - 1;
+
+    static final MethodHandle ADDRESS_FACTORY;
+    static final MemoryAddressProxy NULL_ADDRESS;
+
+    static {
+        try {
+            Class<?> addrClass = Class.forName("jdk.incubator.foreign.MemoryAddress");
+            NULL_ADDRESS = (MemoryAddressProxy)addrClass.getDeclaredField("NULL").get(null);
+            ADDRESS_FACTORY = MethodHandles.Lookup.IMPL_LOOKUP.findStatic(addrClass, "ofLong", MethodType.methodType(addrClass, long.class));
+        } catch (Throwable ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
+#else[MemoryAddressProxy]
     static final int VM_ALIGN = $BoxType$.BYTES - 1;
+#end[MemoryAddressProxy]
 
 #if[floatingPoint]
     @ForceInline
@@ -58,10 +80,44 @@ final class VarHandleMemoryAddressAs$Type$s {
         return n;
     }
 #else[byte]
+#if[MemoryAddressProxy]
+    @ForceInline
+    static $type$ convEndian(boolean big, $rawType$ n) {
+        long value = big == BE ? n : Long.reverseBytes(n);
+        return long2addr(value);
+    }
+
+    @ForceInline
+    static $rawType$ convEndian(boolean big, $type$ addr) {
+        long n = addr2long(addr);
+        return big == BE ? n : Long.reverseBytes(n);
+    }
+
+    @ForceInline
+    static $type$ long2addr($rawType$ value) {
+        try {
+            return value == 0L ?
+                NULL_ADDRESS :
+                ($type$)ADDRESS_FACTORY.invoke(value);
+        } catch (Throwable ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    @ForceInline
+    static $rawType$ addr2long($type$ ob) {
+        MemoryAddressProxy addr = (MemoryAddressProxy)ob;
+        if (addr.unsafeGetBase() != null) {
+           throw new UnsupportedOperationException("Heap address!");
+        }
+        return addr.unsafeGetOffset();
+    }
+#else[MemoryAddressProxy]
     @ForceInline
     static $type$ convEndian(boolean big, $type$ n) {
         return big == BE ? n : $BoxType$.reverseBytes(n);
     }
+#end[MemoryAddressProxy]
 #end[byte]
 #end[floatingPoint]
 
@@ -71,7 +127,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         oo.checkAccess(offset, length, ro);
         return oo;
     }
-    
+
     @ForceInline
     static long offset(MemoryAddressProxy bb, long offset, long alignmentMask) {
         long address = offsetNoVMAlignCheck(bb, offset, alignmentMask);
@@ -91,7 +147,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         }
         return address;
     }
-    
+
     @ForceInline
     static $type$ get0(VarHandleMemoryAddressBase handle, Object obb, long base) {
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, true);
@@ -107,10 +163,17 @@ final class VarHandleMemoryAddressAs$Type$s {
                 bb.unsafeGetBase(),
                 offsetNoVMAlignCheck(bb, base, handle.alignmentMask));
 #else[byte]
+#if[MemoryAddressProxy]
+        return long2addr(UNSAFE.getLongUnaligned(
+                bb.unsafeGetBase(),
+                offset(bb, base, handle.alignmentMask),
+                handle.be));
+#else[MemoryAddressProxy]
         return UNSAFE.get$Type$Unaligned(
                 bb.unsafeGetBase(),
                 offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 handle.be);
+#end[MemoryAddressProxy]
 #end[byte]
 #end[floatingPoint]
     }
@@ -131,11 +194,19 @@ final class VarHandleMemoryAddressAs$Type$s {
                 offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 value);
 #else[byte]
+#if[MemoryAddressProxy]
+        UNSAFE.putLongUnaligned(
+                bb.unsafeGetBase(),
+                offset(bb, base, handle.alignmentMask),
+                addr2long(value),
+                handle.be);
+#else[MemoryAddressProxy]
         UNSAFE.put$Type$Unaligned(
                 bb.unsafeGetBase(),
                 offsetNoVMAlignCheck(bb, base, handle.alignmentMask),
                 value,
                 handle.be);
+#end[MemoryAddressProxy]
 #end[byte]
 #end[floatingPoint]
     }
