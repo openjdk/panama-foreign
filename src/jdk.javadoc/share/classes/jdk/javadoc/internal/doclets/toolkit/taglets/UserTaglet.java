@@ -49,7 +49,7 @@ import static jdk.javadoc.doclet.Taglet.Location.*;
  */
 public class UserTaglet implements Taglet {
 
-    final private jdk.javadoc.doclet.Taglet userTaglet;
+    private final jdk.javadoc.doclet.Taglet userTaglet;
 
     public UserTaglet(jdk.javadoc.doclet.Taglet t) {
         userTaglet = t;
@@ -143,7 +143,7 @@ public class UserTaglet implements Taglet {
     public Content getTagletOutput(Element holder, TagletWriter writer) {
         Content output = writer.getOutputInstance();
         Utils utils = writer.configuration().utils;
-        List<? extends DocTree> tags = utils.getBlockTags(holder, getName());
+        List<? extends DocTree> tags = utils.getBlockTags(holder, this);
         if (!tags.isEmpty()) {
             String tagString = userTaglet.toString(tags, holder);
             if (tagString != null) {
