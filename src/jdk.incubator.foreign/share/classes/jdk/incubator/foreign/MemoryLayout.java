@@ -358,14 +358,14 @@ E * (S + I * F)
 
     /**
      * Compares the specified object with this layout for equality. Returns {@code true} if and only if the specified
-     * object is also a layout, and it is equal to this layout. Two layouts are s if they are of
+     * object is also a layout, and it is equal to this layout. Two layouts are considered equal if they are of
      * the same kind, have the same size, name and alignment constraints. Furthermore, depending on the layout kind, additional
      * conditions must be satisfied:
      * <ul>
-     *     <li>two value layouts are s if they have the same endianness (see {@link ValueLayout#order()})</li>
-     *     <li>two sequence layouts are s if they have the same element count (see {@link SequenceLayout#elementCount()}), and
+     *     <li>two value layouts are considered equal if they have the same endianness (see {@link ValueLayout#order()})</li>
+     *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
      *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
-     *     <li>two group layouts are s if they are of the same kind (see {@link GroupLayout#isStruct()},
+     *     <li>two group layouts are considered equal if they are of the same kind (see {@link GroupLayout#isStruct()},
      *     {@link GroupLayout#isUnion()}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
      * </ul>
      *
