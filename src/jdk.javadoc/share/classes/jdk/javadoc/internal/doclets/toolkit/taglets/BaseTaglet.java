@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.lang.model.element.Element;
 
 import com.sun.source.doctree.DocTree;
+import jdk.javadoc.doclet.Taglet.Location;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 
 /**
@@ -38,25 +39,22 @@ import jdk.javadoc.internal.doclets.toolkit.Content;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Jamie Ho
  */
 public class BaseTaglet implements Taglet {
-    /**
-     * The different kinds of place where any given tag may be used.
-     */
-    enum Site {
-        OVERVIEW, MODULE, PACKAGE, TYPE, CONSTRUCTOR, METHOD, FIELD
-    }
 
     protected final String name;
     private final boolean inline;
-    private final Set<Site> sites;
+    private final Set<Location> sites;
 
-    BaseTaglet(String name, boolean inline, Set<Site> sites) {
+    BaseTaglet(String name, boolean inline, Set<Location> sites) {
         this.name = name;
         this.inline = inline;
         this.sites = sites;
+    }
+
+    @Override
+    public Set<Location> getAllowedLocations() {
+        return sites;
     }
 
     /**
@@ -65,7 +63,7 @@ public class BaseTaglet implements Taglet {
      * otherwise.
      */
     public final boolean inConstructor() {
-        return sites.contains(Site.CONSTRUCTOR);
+        return sites.contains(Location.CONSTRUCTOR);
     }
 
     /**
@@ -74,7 +72,7 @@ public class BaseTaglet implements Taglet {
      * otherwise.
      */
     public final boolean inField() {
-        return  sites.contains(Site.FIELD);
+        return  sites.contains(Location.FIELD);
     }
 
     /**
@@ -83,7 +81,7 @@ public class BaseTaglet implements Taglet {
      * otherwise.
      */
     public final boolean inMethod() {
-        return  sites.contains(Site.METHOD);
+        return  sites.contains(Location.METHOD);
     }
 
     /**
@@ -92,7 +90,7 @@ public class BaseTaglet implements Taglet {
      * otherwise.
      */
     public final boolean inOverview() {
-        return  sites.contains(Site.OVERVIEW);
+        return  sites.contains(Location.OVERVIEW);
     }
 
     /**
@@ -101,7 +99,7 @@ public class BaseTaglet implements Taglet {
      * otherwise.
      */
     public final boolean inModule() {
-        return  sites.contains(Site.MODULE);
+        return  sites.contains(Location.MODULE);
     }
 
     /**
@@ -110,7 +108,7 @@ public class BaseTaglet implements Taglet {
      * otherwise.
      */
     public final boolean inPackage() {
-        return  sites.contains(Site.PACKAGE);
+        return  sites.contains(Location.PACKAGE);
     }
 
     /**
@@ -119,7 +117,7 @@ public class BaseTaglet implements Taglet {
      * otherwise.
      */
     public final boolean inType() {
-        return  sites.contains(Site.TYPE);
+        return  sites.contains(Location.TYPE);
     }
 
     /**

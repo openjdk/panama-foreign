@@ -582,7 +582,7 @@ VectorNode* VectorNode::scalar2vector(Node* s, uint vlen, const Type* opd_t) {
 
 VectorNode* VectorNode::shift_count(int opc, Node* cnt, uint vlen, BasicType bt) {
   // Match shift count type with shift vector type.
-  const TypeVect* vt = TypeVect::make(bt, vlen);
+  const TypeVect* vt = TypeVect::VECTS;
   switch (opc) {
   case Op_LShiftI:
   case Op_LShiftL:

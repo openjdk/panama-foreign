@@ -47,12 +47,16 @@ import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
- *
- * @author Atul M Dambalkar
  */
 public class HelpWriter extends HtmlDocletWriter {
 
     private final Navigation navBar;
+
+    private final String[][] SEARCH_EXAMPLES = {
+            {"j.l.obj", "\"java.lang.Object\""},
+            {"InpStr", "\"java.io.InputStream\""},
+            {"HM.cK", "\"java.util.HashMap.containsKey(Object)\""}
+    };
 
     /**
      * Constructor to construct HelpWriter object.
@@ -326,9 +330,20 @@ public class HelpWriter extends HtmlDocletWriter {
         Content searchHead = HtmlTree.HEADING(Headings.CONTENT_HEADING,
                 contents.getContent("doclet.help.search.head"));
         htmlTree = HtmlTree.SECTION(HtmlStyle.helpSection, searchHead);
-        Content searchBody = contents.getContent("doclet.help.search.body");
-        Content searchPara = HtmlTree.P(searchBody);
-        htmlTree.add(searchPara);
+        Content searchIntro = HtmlTree.P(contents.getContent("doclet.help.search.intro"));
+        Content searchExamples = new HtmlTree(HtmlTag.UL);
+        for (String[] example : SEARCH_EXAMPLES) {
+            searchExamples.add(HtmlTree.LI(
+                    contents.getContent("doclet.help.search.example",
+                            HtmlTree.CODE(new StringContent(example[0])), example[1])));
+        }
+        Content searchSpecLink = HtmlTree.A(
+                resources.getText("doclet.help.search.spec.url", Runtime.version().feature()),
+                contents.getContent("doclet.help.search.spec.title"));
+        Content searchRefer = HtmlTree.P(contents.getContent("doclet.help.search.refer", searchSpecLink));
+        htmlTree.add(searchIntro);
+        htmlTree.add(searchExamples);
+        htmlTree.add(searchRefer);
         ul.add(HtmlTree.LI(HtmlStyle.blockList, htmlTree));
 
         Content divContent = HtmlTree.DIV(HtmlStyle.contentContainer, ul);
