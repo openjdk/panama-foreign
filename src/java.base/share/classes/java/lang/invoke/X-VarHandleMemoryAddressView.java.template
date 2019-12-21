@@ -27,7 +27,6 @@ package java.lang.invoke;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.vm.annotation.ForceInline;
 
-import java.lang.reflect.Field;
 import java.util.Objects;
 
 import static java.lang.invoke.MethodHandleStatics.UNSAFE;
@@ -45,15 +44,15 @@ final class VarHandleMemoryAddressAs$Type$s {
 #if[MemoryAddressProxy]
     static final int VM_ALIGN = Long.BYTES - 1;
 
-    static final MethodHandle ADDRESS_FACTORY;
     static final MemoryAddressProxy NULL_ADDRESS;
+    static final MemberName MEMORY_ADDRESS_OF_LONG_MEMBER_NAME;
 
     static {
         try {
             Class<?> addrClass = Class.forName("jdk.incubator.foreign.MemoryAddress");
             NULL_ADDRESS = (MemoryAddressProxy)addrClass.getDeclaredField("NULL").get(null);
-            ADDRESS_FACTORY = MethodHandles.Lookup.IMPL_LOOKUP.findStatic(addrClass, "ofLong", MethodType.methodType(addrClass, long.class));
-        } catch (Throwable ex) {
+            MEMORY_ADDRESS_OF_LONG_MEMBER_NAME = new MemberName(addrClass.getMethod("ofLong", long.class));
+        } catch (Exception ex) {
             throw new ExceptionInInitializerError(ex);
         }
     }
@@ -98,7 +97,7 @@ final class VarHandleMemoryAddressAs$Type$s {
         try {
             return value == 0L ?
                 NULL_ADDRESS :
-                ($type$)ADDRESS_FACTORY.invoke(value);
+                MethodHandle.linkToStatic(value, MEMORY_ADDRESS_OF_LONG_MEMBER_NAME);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
