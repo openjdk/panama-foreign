@@ -7667,10 +7667,6 @@ bool LibraryCallKit::inline_vector_test() {
   Node* test = new VectorTestNode(opd1, opd2, booltest);
   test = _gvn.transform(test);
   set_vector_result(test);
-  tty->print("--------------------->>>>>>>");
-  test->dump();
-  opd1->dump();
-  opd2->dump();
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
   return true;
 }
