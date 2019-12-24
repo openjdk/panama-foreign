@@ -7093,16 +7093,22 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
 
 // <Sh extends VectorShuffle<E>,  E>
 //  Sh ShuffleIota(Class<?> E, Class<?> ShuffleClass, Vector.Species<E> s, int length,
-//                  int step, ShuffleIotaOperation<Sh, E> defaultImpl)
+//                  int start, int step, int wrap, ShuffleIotaOperation<Sh, E> defaultImpl)
 bool LibraryCallKit::inline_vector_shuffle_iota() {
   const TypeInstPtr* shuffle_klass = gvn().type(argument(1))->is_instptr();
   const TypeInt* vlen             = gvn().type(argument(3))->is_int();
-  Node* step                      = argument(4);
+  Node* start                     = argument(4);
+  const TypeInt* start_val        = gvn().type(start)->is_int();
+  Node* step                      = argument(5);
+  const TypeInt* step_val         = gvn().type(step)->is_int();
+  const TypeInt* wrap             = gvn().type(argument(6))->is_int();
 
-  if (!vlen->is_con() || shuffle_klass->const_oop() == NULL) {
+  if (!vlen->is_con() || !is_power_of_2(vlen->get_con()) || 
+      shuffle_klass->const_oop() == NULL || !wrap->is_con()) {
     return false; // not enough info for intrinsification
   }
 
+  int do_wrap = wrap->get_con();
   int num_elem = vlen->get_con();
   BasicType elem_bt = T_BYTE;
 
@@ -7118,17 +7124,47 @@ bool LibraryCallKit::inline_vector_shuffle_iota() {
   if (!arch_supports_vector(Op_AndV, num_elem, elem_bt, VecMaskNotUsed)) {
     return false;   
   }
+  if (!arch_supports_vector(Op_VectorBlend, num_elem, elem_bt, VecMaskUseLoad)) {
+    return false; 
+  }
+  if (!arch_supports_vector(Op_VectorMaskCmp, num_elem, elem_bt, VecMaskUseStore)) {
+    return false;
+  }
 
-  const TypeVect * vt = TypeVect::make(Type::get_const_basic_type(elem_bt), num_elem);
+  const Type * type_bt = Type::get_const_basic_type(elem_bt);
+  const TypeVect * vt  = TypeVect::make(type_bt, num_elem);
 
-  Node* iota =  _gvn.transform(new VectorLoadConstNode(gvn().makecon(TypeInt::ZERO), vt));
+  Node* res =  _gvn.transform(new VectorLoadConstNode(gvn().makecon(TypeInt::ZERO), vt));
 
-  Node* bcast_step = _gvn.transform(VectorNode::scalar2vector(step, num_elem, Type::get_const_basic_type(elem_bt)));
+  if(!step_val->is_con() || !is_power_of_2(step_val->get_con())) {
+    Node* bcast_step     = _gvn.transform(VectorNode::scalar2vector(step, num_elem, type_bt));
+    res = _gvn.transform(VectorNode::make(Op_MulI, res, bcast_step, num_elem, elem_bt));
+  } else if (step_val->get_con() > 1) {
+    Node* cnt = gvn().makecon(TypeInt::make(log2_int(step_val->get_con())));
+    res = _gvn.transform(VectorNode::make(Op_LShiftVB, res, cnt, vt));
+  }
 
-  Node* bcast_mod  = _gvn.transform(VectorNode::scalar2vector(gvn().makecon(TypeInt::make(num_elem-1)),
-                                               num_elem, Type::get_const_basic_type(elem_bt)));
-  Node* add = _gvn.transform(VectorNode::make(Op_AddI, iota, bcast_step, num_elem, elem_bt));
-  Node* res = _gvn.transform(VectorNode::make(Op_AndI, add,  bcast_mod, num_elem, elem_bt));
+  if (!start_val->is_con() || start_val->get_con() != 0) {
+    Node* bcast_start    = _gvn.transform(VectorNode::scalar2vector(start, num_elem, type_bt));
+    res = _gvn.transform(VectorNode::make(Op_AddI, res, bcast_start, num_elem, elem_bt));
+  }
+
+  Node * mod_val = gvn().makecon(TypeInt::make(num_elem-1));
+  Node * bcast_mod  = _gvn.transform(VectorNode::scalar2vector(mod_val, num_elem, type_bt));
+  if(do_wrap)  {
+    // Wrap the indices greater than lane count.
+    res = _gvn.transform(VectorNode::make(Op_AndI, res, bcast_mod, num_elem, elem_bt));
+  } else {
+    ConINode* pred_node = (ConINode*)_gvn.makecon(TypeInt::make(1));
+    Node * lane_cnt  = gvn().makecon(TypeInt::make(num_elem)); 
+    Node * bcast_lane_cnt = _gvn.transform(VectorNode::scalar2vector(lane_cnt, num_elem, type_bt));
+    Node* mask = _gvn.transform(new VectorMaskCmpNode(BoolTest::ge, bcast_lane_cnt, res, pred_node, vt));
+
+    // Make the indices greater than lane count as -ve values. This matches the java side implementation.
+    res = _gvn.transform(VectorNode::make(Op_AndI, res, bcast_mod, num_elem, elem_bt));
+    Node * biased_val = _gvn.transform(VectorNode::make(Op_SubI, res, bcast_lane_cnt, num_elem, elem_bt));
+    res = _gvn.transform(new VectorBlendNode(biased_val, res, mask));
+  }
 
   ciKlass* sbox_klass = shuffle_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* shuffle_box_type = TypeInstPtr::make_exact(TypePtr::NotNull, sbox_klass);

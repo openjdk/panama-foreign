@@ -143,8 +143,12 @@ final class Short64Vector extends ShortVector {
     Short64Shuffle iotaShuffle() { return Short64Shuffle.IOTA; }
 
     @ForceInline
-    Short64Shuffle iotaShuffle(int start) {
-        return (Short64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Short64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Short64Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
+    Short64Shuffle iotaShuffle(int start, int step, boolean wrap) {
+      if (wrap) {
+        return (Short64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Short64Shuffle.class, VSPECIES, VLENGTH, start, step, 1, (l, lstart, lstep) -> new Short64Shuffle(i -> (VectorIntrinsics.wrapToRange(i*lstep + lstart, l))));
+      } else {
+        return (Short64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Short64Shuffle.class, VSPECIES, VLENGTH, start, step, 0, (l, lstart, lstep) -> new Short64Shuffle(i -> (i*lstep + lstart)));
+      }
     }
 
     @Override

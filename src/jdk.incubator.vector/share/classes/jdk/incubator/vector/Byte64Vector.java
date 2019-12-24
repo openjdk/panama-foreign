@@ -143,8 +143,12 @@ final class Byte64Vector extends ByteVector {
     Byte64Shuffle iotaShuffle() { return Byte64Shuffle.IOTA; }
 
     @ForceInline
-    Byte64Shuffle iotaShuffle(int start) {
-        return (Byte64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Byte64Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
+    Byte64Shuffle iotaShuffle(int start, int step, boolean wrap) {
+      if (wrap) {
+        return (Byte64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte64Shuffle.class, VSPECIES, VLENGTH, start, step, 1, (l, lstart, lstep) -> new Byte64Shuffle(i -> (VectorIntrinsics.wrapToRange(i*lstep + lstart, l))));
+      } else {
+        return (Byte64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte64Shuffle.class, VSPECIES, VLENGTH, start, step, 0, (l, lstart, lstep) -> new Byte64Shuffle(i -> (i*lstep + lstart)));
+      }
     }
 
     @Override

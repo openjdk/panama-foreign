@@ -169,7 +169,7 @@ abstract class AbstractVector<E> extends Vector<E> {
 
     abstract AbstractShuffle<E> iotaShuffle();
 
-    abstract AbstractShuffle<E> iotaShuffle(int start);
+    abstract AbstractShuffle<E> iotaShuffle(int start, int step, boolean wrap);
 
     /*do not alias this byte array*/
     abstract AbstractShuffle<E> shuffleFromBytes(byte[] reorder);

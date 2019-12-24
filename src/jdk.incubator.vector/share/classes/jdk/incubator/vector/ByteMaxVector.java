@@ -143,8 +143,12 @@ final class ByteMaxVector extends ByteVector {
     ByteMaxShuffle iotaShuffle() { return ByteMaxShuffle.IOTA; }
 
     @ForceInline
-    ByteMaxShuffle iotaShuffle(int start) {
-        return (ByteMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ByteMaxShuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new ByteMaxShuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
+    ByteMaxShuffle iotaShuffle(int start, int step, boolean wrap) {
+      if (wrap) {
+        return (ByteMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ByteMaxShuffle.class, VSPECIES, VLENGTH, start, step, 1, (l, lstart, lstep) -> new ByteMaxShuffle(i -> (VectorIntrinsics.wrapToRange(i*lstep + lstart, l))));
+      } else {
+        return (ByteMaxShuffle)VectorIntrinsics.shuffleIota(ETYPE, ByteMaxShuffle.class, VSPECIES, VLENGTH, start, step, 0, (l, lstart, lstep) -> new ByteMaxShuffle(i -> (i*lstep + lstart)));
+      }
     }
 
     @Override

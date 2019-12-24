@@ -1563,7 +1563,7 @@
    do_name(vector_broadcast_coerced_name, "broadcastCoerced")                                                                                  \
                                                                                                                                                \
   do_intrinsic(_VectorShuffleIota, jdk_incubator_vector_VectorIntrinsics, vector_shuffle_step_iota_name, vector_shuffle_step_iota_sig, F_S)        \
-   do_signature(vector_shuffle_step_iota_sig, "(Ljava/lang/Class;Ljava/lang/Class;Ljdk/incubator/vector/VectorSpecies;IILjdk/incubator/vector/VectorIntrinsics$ShuffleIotaOperation;)Ljdk/incubator/vector/VectorShuffle;")                                         \
+   do_signature(vector_shuffle_step_iota_sig, "(Ljava/lang/Class;Ljava/lang/Class;Ljdk/incubator/vector/VectorSpecies;IIIILjdk/incubator/vector/VectorIntrinsics$ShuffleIotaOperation;)Ljdk/incubator/vector/VectorShuffle;")                                         \
    do_name(vector_shuffle_step_iota_name, "shuffleIota")                                                                                        \
                                                                                                                                                \
   do_intrinsic(_VectorShuffleToVector, jdk_incubator_vector_VectorIntrinsics, vector_shuffle_to_vector_name, vector_shuffle_to_vector_sig, F_S)     \

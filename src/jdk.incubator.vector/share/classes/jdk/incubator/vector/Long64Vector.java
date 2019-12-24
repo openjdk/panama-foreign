@@ -138,8 +138,12 @@ final class Long64Vector extends LongVector {
     Long64Shuffle iotaShuffle() { return Long64Shuffle.IOTA; }
 
     @ForceInline
-    Long64Shuffle iotaShuffle(int start) {
-        return (Long64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long64Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Long64Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
+    Long64Shuffle iotaShuffle(int start, int step, boolean wrap) {
+      if (wrap) {
+        return (Long64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long64Shuffle.class, VSPECIES, VLENGTH, start, step, 1, (l, lstart, lstep) -> new Long64Shuffle(i -> (VectorIntrinsics.wrapToRange(i*lstep + lstart, l))));
+      } else {
+        return (Long64Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Long64Shuffle.class, VSPECIES, VLENGTH, start, step, 0, (l, lstart, lstep) -> new Long64Shuffle(i -> (i*lstep + lstart)));
+      }
     }
 
     @Override

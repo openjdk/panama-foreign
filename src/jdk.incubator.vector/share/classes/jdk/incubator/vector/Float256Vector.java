@@ -143,8 +143,12 @@ final class Float256Vector extends FloatVector {
     Float256Shuffle iotaShuffle() { return Float256Shuffle.IOTA; }
 
     @ForceInline
-    Float256Shuffle iotaShuffle(int start) {
-        return (Float256Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Float256Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Float256Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
+    Float256Shuffle iotaShuffle(int start, int step, boolean wrap) {
+      if (wrap) {
+        return (Float256Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Float256Shuffle.class, VSPECIES, VLENGTH, start, step, 1, (l, lstart, lstep) -> new Float256Shuffle(i -> (VectorIntrinsics.wrapToRange(i*lstep + lstart, l))));
+      } else {
+        return (Float256Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Float256Shuffle.class, VSPECIES, VLENGTH, start, step, 0, (l, lstart, lstep) -> new Float256Shuffle(i -> (i*lstep + lstart)));
+      }
     }
 
     @Override

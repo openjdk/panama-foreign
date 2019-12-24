@@ -143,8 +143,12 @@ final class Byte128Vector extends ByteVector {
     Byte128Shuffle iotaShuffle() { return Byte128Shuffle.IOTA; }
 
     @ForceInline
-    Byte128Shuffle iotaShuffle(int start) {
-        return (Byte128Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte128Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Byte128Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
+    Byte128Shuffle iotaShuffle(int start, int step, boolean wrap) {
+      if (wrap) {
+        return (Byte128Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte128Shuffle.class, VSPECIES, VLENGTH, start, step, 1, (l, lstart, lstep) -> new Byte128Shuffle(i -> (VectorIntrinsics.wrapToRange(i*lstep + lstart, l))));
+      } else {
+        return (Byte128Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Byte128Shuffle.class, VSPECIES, VLENGTH, start, step, 0, (l, lstart, lstep) -> new Byte128Shuffle(i -> (i*lstep + lstart)));
+      }
     }
 
     @Override

@@ -143,8 +143,12 @@ final class Double128Vector extends DoubleVector {
     Double128Shuffle iotaShuffle() { return Double128Shuffle.IOTA; }
 
     @ForceInline
-    Double128Shuffle iotaShuffle(int start) {
-        return (Double128Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Double128Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Double128Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
+    Double128Shuffle iotaShuffle(int start, int step, boolean wrap) {
+      if (wrap) {
+        return (Double128Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Double128Shuffle.class, VSPECIES, VLENGTH, start, step, 1, (l, lstart, lstep) -> new Double128Shuffle(i -> (VectorIntrinsics.wrapToRange(i*lstep + lstart, l))));
+      } else {
+        return (Double128Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Double128Shuffle.class, VSPECIES, VLENGTH, start, step, 0, (l, lstart, lstep) -> new Double128Shuffle(i -> (i*lstep + lstart)));
+      }
     }
 
     @Override

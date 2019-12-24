@@ -126,16 +126,16 @@ import java.util.function.*;
 
     /* ============================================================================ */
     interface ShuffleIotaOperation<E> {
-        VectorShuffle<E> apply(int step, int length);
+        VectorShuffle<E> apply(int length, int start, int step);
     }
 
     @HotSpotIntrinsicCandidate
     static
     <E>
     VectorShuffle<E> shuffleIota(Class<?> E, Class<?> ShuffleClass, VectorSpecies<E> s, int length,
-                     int step, ShuffleIotaOperation<E> defaultImpl) {
+                     int start, int step, int wrap, ShuffleIotaOperation<E> defaultImpl) {
        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
-       return defaultImpl.apply(step, length);
+       return defaultImpl.apply(length, start, step);
     }
 
     interface ShuffleToVectorOperation<VM, Sh, E> {

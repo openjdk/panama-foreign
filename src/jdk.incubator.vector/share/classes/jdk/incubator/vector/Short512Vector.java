@@ -143,8 +143,12 @@ final class Short512Vector extends ShortVector {
     Short512Shuffle iotaShuffle() { return Short512Shuffle.IOTA; }
 
     @ForceInline
-    Short512Shuffle iotaShuffle(int start) {
-        return (Short512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Short512Shuffle.class, VSPECIES, VLENGTH, start, (val, l) -> new Short512Shuffle(i -> (VectorIntrinsics.wrapToRange(i + val, l))));
+    Short512Shuffle iotaShuffle(int start, int step, boolean wrap) {
+      if (wrap) {
+        return (Short512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Short512Shuffle.class, VSPECIES, VLENGTH, start, step, 1, (l, lstart, lstep) -> new Short512Shuffle(i -> (VectorIntrinsics.wrapToRange(i*lstep + lstart, l))));
+      } else {
+        return (Short512Shuffle)VectorIntrinsics.shuffleIota(ETYPE, Short512Shuffle.class, VSPECIES, VLENGTH, start, step, 0, (l, lstart, lstep) -> new Short512Shuffle(i -> (i*lstep + lstart)));
+      }
     }
 
     @Override
