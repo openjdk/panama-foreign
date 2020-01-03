@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,7 +63,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
     }
 
     long[] a, b, c, r;
-    boolean[] m, rm;
+    boolean[] m, mt, rm;
     int[] s;
 
     @Setup
@@ -76,6 +76,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
         r = fill(i -> (long)0);
 
         m = fillMask(size, i -> (i % 2) == 0);
+        mt = fillMask(size, i -> true);
         rm = fillMask(size, i -> false);
 
         s = fillInt(size, i -> RANDOM.nextInt(SPECIES.length()));
@@ -86,6 +87,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
     final IntFunction<long[]> fc = vl -> c;
     final IntFunction<long[]> fr = vl -> r;
     final IntFunction<boolean[]> fm = vl -> m;
+    final IntFunction<boolean[]> fmt = vl -> mt;
     final IntFunction<boolean[]> fmr = vl -> rm;
     final BiFunction<Integer,Integer,int[]> fs = (i,j) -> s;
 
@@ -976,38 +978,38 @@ public class Long512Vector extends AbstractVectorBenchmark {
     @Benchmark
     public Object IS_DEFAULT() {
         long[] a = fa.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Long> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
-                VectorMask<Long> mv = av.test(VectorOperators.IS_DEFAULT);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.test(VectorOperators.IS_DEFAULT));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object IS_NEGATIVE() {
         long[] a = fa.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Long> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
-                VectorMask<Long> mv = av.test(VectorOperators.IS_NEGATIVE);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.test(VectorOperators.IS_NEGATIVE));
             }
         }
+
         return m;
     }
-
 
 
 
@@ -1016,121 +1018,121 @@ public class Long512Vector extends AbstractVectorBenchmark {
     public Object LT() {
         long[] a = fa.apply(size);
         long[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Long> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
                 LongVector bv = LongVector.fromArray(SPECIES, b, i);
-                VectorMask<Long> mv = av.compare(VectorOperators.LT, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.LT, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object GT() {
         long[] a = fa.apply(size);
         long[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Long> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
                 LongVector bv = LongVector.fromArray(SPECIES, b, i);
-                VectorMask<Long> mv = av.compare(VectorOperators.GT, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.GT, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object EQ() {
         long[] a = fa.apply(size);
         long[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Long> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
                 LongVector bv = LongVector.fromArray(SPECIES, b, i);
-                VectorMask<Long> mv = av.compare(VectorOperators.EQ, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.EQ, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object NE() {
         long[] a = fa.apply(size);
         long[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Long> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
                 LongVector bv = LongVector.fromArray(SPECIES, b, i);
-                VectorMask<Long> mv = av.compare(VectorOperators.NE, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.NE, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object LE() {
         long[] a = fa.apply(size);
         long[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Long> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
                 LongVector bv = LongVector.fromArray(SPECIES, b, i);
-                VectorMask<Long> mv = av.compare(VectorOperators.LE, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.LE, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object GE() {
         long[] a = fa.apply(size);
         long[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Long> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector av = LongVector.fromArray(SPECIES, a, i);
                 LongVector bv = LongVector.fromArray(SPECIES, b, i);
-                VectorMask<Long> mv = av.compare(VectorOperators.GE, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.GE, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public void blend(Blackhole bh) {

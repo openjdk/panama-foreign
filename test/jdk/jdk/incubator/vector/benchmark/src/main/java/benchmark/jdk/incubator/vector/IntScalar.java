@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,7 @@ public class IntScalar extends AbstractVectorBenchmark {
     }
 
     int[] as, bs, cs, rs;
-    boolean[] ms, rms;
+    boolean[] ms, mt, rms;
     int[] ss;
 
     @Setup
@@ -66,6 +66,7 @@ public class IntScalar extends AbstractVectorBenchmark {
         cs = fill(i -> (int)(i+5));
         rs = fill(i -> (int)0);
         ms = fillMask(size, i -> (i % 2) == 0);
+        mt = fillMask(size, i -> true);
         rms = fillMask(size, i -> false);
 
         ss = fillInt(size, i -> RANDOM.nextInt(Math.max(i,1)));
@@ -76,6 +77,7 @@ public class IntScalar extends AbstractVectorBenchmark {
     final IntFunction<int[]> fc = vl -> cs;
     final IntFunction<int[]> fr = vl -> rs;
     final IntFunction<boolean[]> fm = vl -> ms;
+    final IntFunction<boolean[]> fmt = vl -> mt;
     final IntFunction<boolean[]> fmr = vl -> rms;
     final IntFunction<int[]> fs = vl -> ss;
 
@@ -947,14 +949,12 @@ public class IntScalar extends AbstractVectorBenchmark {
     @Benchmark
     public void IS_DEFAULT(Blackhole bh) {
         int[] as = fa.apply(size);
+        boolean r = true;
 
-        boolean r = false;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            r = false;
             for (int i = 0; i < as.length; i++) {
                 int a = as[i];
-                boolean m = bits(a)==0;
-                r &= m; // accumulate so JIT can't eliminate the computation
+                r &= (bits(a)==0); // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -964,14 +964,12 @@ public class IntScalar extends AbstractVectorBenchmark {
     @Benchmark
     public void IS_NEGATIVE(Blackhole bh) {
         int[] as = fa.apply(size);
+        boolean r = true;
 
-        boolean r = false;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            r = false;
             for (int i = 0; i < as.length; i++) {
                 int a = as[i];
-                boolean m = bits(a)<0;
-                r &= m; // accumulate so JIT can't eliminate the computation
+                r &= (bits(a)<0); // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -985,13 +983,11 @@ public class IntScalar extends AbstractVectorBenchmark {
     public void LT(Blackhole bh) {
         int[] as = fa.apply(size);
         int[] bs = fb.apply(size);
+        boolean r = true;
 
-        boolean r = false;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            r = false;
             for (int i = 0; i < as.length; i++) {
-                boolean m = (as[i] < bs[i]);
-                r &= m; // accumulate so JIT can't eliminate the computation
+                r &= (as[i] < bs[i]); // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -1002,13 +998,11 @@ public class IntScalar extends AbstractVectorBenchmark {
     public void GT(Blackhole bh) {
         int[] as = fa.apply(size);
         int[] bs = fb.apply(size);
+        boolean r = true;
 
-        boolean r = false;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            r = false;
             for (int i = 0; i < as.length; i++) {
-                boolean m = (as[i] > bs[i]);
-                r &= m; // accumulate so JIT can't eliminate the computation
+                r &= (as[i] > bs[i]); // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -1019,13 +1013,11 @@ public class IntScalar extends AbstractVectorBenchmark {
     public void EQ(Blackhole bh) {
         int[] as = fa.apply(size);
         int[] bs = fb.apply(size);
+        boolean r = true;
 
-        boolean r = false;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            r = false;
             for (int i = 0; i < as.length; i++) {
-                boolean m = (as[i] == bs[i]);
-                r &= m; // accumulate so JIT can't eliminate the computation
+                r &= (as[i] == bs[i]); // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -1036,13 +1028,11 @@ public class IntScalar extends AbstractVectorBenchmark {
     public void NE(Blackhole bh) {
         int[] as = fa.apply(size);
         int[] bs = fb.apply(size);
+        boolean r = true;
 
-        boolean r = false;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            r = false;
             for (int i = 0; i < as.length; i++) {
-                boolean m = (as[i] != bs[i]);
-                r &= m; // accumulate so JIT can't eliminate the computation
+                r &= (as[i] != bs[i]); // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -1053,13 +1043,11 @@ public class IntScalar extends AbstractVectorBenchmark {
     public void LE(Blackhole bh) {
         int[] as = fa.apply(size);
         int[] bs = fb.apply(size);
+        boolean r = true;
 
-        boolean r = false;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            r = false;
             for (int i = 0; i < as.length; i++) {
-                boolean m = (as[i] <= bs[i]);
-                r &= m; // accumulate so JIT can't eliminate the computation
+                r &= (as[i] <= bs[i]); // accumulate so JIT can't eliminate the computation
             }
         }
 
@@ -1070,13 +1058,11 @@ public class IntScalar extends AbstractVectorBenchmark {
     public void GE(Blackhole bh) {
         int[] as = fa.apply(size);
         int[] bs = fb.apply(size);
+        boolean r = true;
 
-        boolean r = false;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            r = false;
             for (int i = 0; i < as.length; i++) {
-                boolean m = (as[i] >= bs[i]);
-                r &= m; // accumulate so JIT can't eliminate the computation
+                r &= (as[i] >= bs[i]); // accumulate so JIT can't eliminate the computation
             }
         }
 

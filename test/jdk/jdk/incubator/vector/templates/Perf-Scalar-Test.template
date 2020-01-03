@@ -2,14 +2,12 @@
     @Benchmark
     public void [[TEST]][[TEST_TYPE]][[OP_NAME]](Blackhole bh) {
         $type$[] as = fa.apply(size);
+        boolean r = true;
 
-        boolean r = false;
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            r = false;
             for (int i = 0; i < as.length; i++) {
                 $type$ a = as[i];
-                boolean m = [[TEST_OP]];
-                r &= m; // accumulate so JIT can't eliminate the computation
+                r &= ([[TEST_OP]]); // accumulate so JIT can't eliminate the computation
             }
         }
 

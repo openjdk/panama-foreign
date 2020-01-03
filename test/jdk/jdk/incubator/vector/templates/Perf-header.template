@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,7 @@ public class $vectorbenchtype$ extends AbstractVectorBenchmark {
     }
 
     $type$[] a, b, c, r;
-    boolean[] m, rm;
+    boolean[] m, mt, rm;
     int[] s;
 
     @Setup
@@ -80,6 +80,7 @@ public class $vectorbenchtype$ extends AbstractVectorBenchmark {
         r = fill(i -> ($type$)0);
 
         m = fillMask(size, i -> (i % 2) == 0);
+        mt = fillMask(size, i -> true);
         rm = fillMask(size, i -> false);
 
         s = fillInt(size, i -> RANDOM.nextInt(SPECIES.length()));
@@ -90,6 +91,7 @@ public class $vectorbenchtype$ extends AbstractVectorBenchmark {
     final IntFunction<$type$[]> fc = vl -> c;
     final IntFunction<$type$[]> fr = vl -> r;
     final IntFunction<boolean[]> fm = vl -> m;
+    final IntFunction<boolean[]> fmt = vl -> mt;
     final IntFunction<boolean[]> fmr = vl -> rm;
     final BiFunction<Integer,Integer,int[]> fs = (i,j) -> s;
 

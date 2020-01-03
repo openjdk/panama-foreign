@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,7 +63,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
     }
 
     double[] a, b, c, r;
-    boolean[] m, rm;
+    boolean[] m, mt, rm;
     int[] s;
 
     @Setup
@@ -76,6 +76,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
         r = fill(i -> (double)0);
 
         m = fillMask(size, i -> (i % 2) == 0);
+        mt = fillMask(size, i -> true);
         rm = fillMask(size, i -> false);
 
         s = fillInt(size, i -> RANDOM.nextInt(SPECIES.length()));
@@ -86,6 +87,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
     final IntFunction<double[]> fc = vl -> c;
     final IntFunction<double[]> fr = vl -> r;
     final IntFunction<boolean[]> fm = vl -> m;
+    final IntFunction<boolean[]> fmt = vl -> mt;
     final IntFunction<boolean[]> fmr = vl -> rm;
     final BiFunction<Integer,Integer,int[]> fs = (i,j) -> s;
 
@@ -506,218 +508,218 @@ public class Double128Vector extends AbstractVectorBenchmark {
     @Benchmark
     public Object IS_DEFAULT() {
         double[] a = fa.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                VectorMask<Double> mv = av.test(VectorOperators.IS_DEFAULT);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.test(VectorOperators.IS_DEFAULT));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object IS_NEGATIVE() {
         double[] a = fa.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                VectorMask<Double> mv = av.test(VectorOperators.IS_NEGATIVE);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.test(VectorOperators.IS_NEGATIVE));
             }
         }
+
         return m;
     }
-
 
 
     @Benchmark
     public Object IS_FINITE() {
         double[] a = fa.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                VectorMask<Double> mv = av.test(VectorOperators.IS_FINITE);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.test(VectorOperators.IS_FINITE));
             }
         }
+
         return m;
     }
-
 
 
 
     @Benchmark
     public Object IS_NAN() {
         double[] a = fa.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                VectorMask<Double> mv = av.test(VectorOperators.IS_NAN);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.test(VectorOperators.IS_NAN));
             }
         }
+
         return m;
     }
-
 
 
 
     @Benchmark
     public Object IS_INFINITE() {
         double[] a = fa.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
-                VectorMask<Double> mv = av.test(VectorOperators.IS_INFINITE);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.test(VectorOperators.IS_INFINITE));
             }
         }
+
         return m;
     }
-
 
 
     @Benchmark
     public Object LT() {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                VectorMask<Double> mv = av.compare(VectorOperators.LT, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.LT, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object GT() {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                VectorMask<Double> mv = av.compare(VectorOperators.GT, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.GT, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object EQ() {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                VectorMask<Double> mv = av.compare(VectorOperators.EQ, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.EQ, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object NE() {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                VectorMask<Double> mv = av.compare(VectorOperators.NE, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.NE, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object LE() {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                VectorMask<Double> mv = av.compare(VectorOperators.LE, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.LE, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public Object GE() {
         double[] a = fa.apply(size);
         double[] b = fb.apply(size);
-        boolean[] ms = fm.apply(size);
+        boolean[] ms = fmt.apply(size);
         VectorMask<Double> m = VectorMask.fromArray(SPECIES, ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector av = DoubleVector.fromArray(SPECIES, a, i);
                 DoubleVector bv = DoubleVector.fromArray(SPECIES, b, i);
-                VectorMask<Double> mv = av.compare(VectorOperators.GE, bv);
 
-                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+                // accumulate results, so JIT can't eliminate relevant computations
+                m = m.and(av.compare(VectorOperators.GE, bv));
             }
         }
+
         return m;
     }
-
 
     @Benchmark
     public void blend(Blackhole bh) {

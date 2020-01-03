@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,7 @@ public class $Type$Scalar extends AbstractVectorBenchmark {
     }
 
     $type$[] as, bs, cs, rs;
-    boolean[] ms, rms;
+    boolean[] ms, mt, rms;
     int[] ss;
 
     @Setup
@@ -66,6 +66,7 @@ public class $Type$Scalar extends AbstractVectorBenchmark {
         cs = fill(i -> ($type$)(i+5));
         rs = fill(i -> ($type$)0);
         ms = fillMask(size, i -> (i % 2) == 0);
+        mt = fillMask(size, i -> true);
         rms = fillMask(size, i -> false);
 
         ss = fillInt(size, i -> RANDOM.nextInt(Math.max(i,1)));
@@ -76,6 +77,7 @@ public class $Type$Scalar extends AbstractVectorBenchmark {
     final IntFunction<$type$[]> fc = vl -> cs;
     final IntFunction<$type$[]> fr = vl -> rs;
     final IntFunction<boolean[]> fm = vl -> ms;
+    final IntFunction<boolean[]> fmt = vl -> mt;
     final IntFunction<boolean[]> fmr = vl -> rms;
     final IntFunction<int[]> fs = vl -> ss;
 
