@@ -1964,14 +1964,14 @@ private:
 
   void shldl(Register dst, Register src);
   void shldl(Register dst, Register src, int8_t imm8);
+  void shrdl(Register dst, Register src);
+  void shrdl(Register dst, Register src, int8_t imm8);
 
   void shll(Register dst, int imm8);
   void shll(Register dst);
 
   void shlq(Register dst, int imm8);
   void shlq(Register dst);
-
-  void shrdl(Register dst, Register src);
 
   void shrl(Register dst, int imm8);
   void shrl(Register dst);
@@ -2309,6 +2309,9 @@ private:
   // Variable shift right arithmetic packed integers
   void vpsravd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
   void evpsravq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+
+  void vpshldvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+  void vpshrdvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
 
   // And packed integers
   void pand(XMMRegister dst, XMMRegister src);
