@@ -59,6 +59,7 @@ BOOT_MODULES += \
     java.security.sasl \
     java.xml \
     jdk.incubator.foreign \
+    jdk.incubator.jextract \
     jdk.internal.vm.ci \
     jdk.jfr \
     jdk.management \
@@ -164,6 +165,7 @@ DOCS_MODULES += \
     jdk.jshell \
     jdk.jstatd \
     jdk.incubator.foreign \
+    jdk.incubator.jextract \
     jdk.localedata \
     jdk.management \
     jdk.management.agent \
