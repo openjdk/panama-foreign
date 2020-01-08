@@ -32,7 +32,7 @@ import jdk.internal.foreign.MemorySegmentImpl;
 /**
  * A memory address encodes an offset within a given {@link MemorySegment}. Memory addresses are typically obtained
  * using the {@link MemorySegment#baseAddress()} method; such addresses can then be adjusted as required,
- * using {@link MemoryAddress#offset(long)}.
+ * using {@link MemoryAddress#add(long)}.
  * <p>
  * A memory address is typically used as the first argument in a memory access var handle call, to perform some operation
  * on the underlying memory backing a given memory segment. Since a memory address is always associated with a memory segment,
@@ -54,11 +54,11 @@ import jdk.internal.foreign.MemorySegmentImpl;
  */
 public interface MemoryAddress {
     /**
-     * Creates a new memory address with given offset (in bytes) from current one.
-     * @param l specified offset (in bytes), relative to this address, which should be used to create the new address.
+     * Creates a new memory address with given offset (in bytes), which might be negative, from current one.
+     * @param offset specified offset (in bytes), relative to this address, which should be used to create the new address.
      * @return a new memory address with given offset from current one.
      */
-    MemoryAddress offset(long l);
+    MemoryAddress add(long offset);
 
     /**
      * The offset of this memory address into the underlying segment.
@@ -136,7 +136,6 @@ public interface MemoryAddress {
      * @return the new memory address instance.
      */
     static MemoryAddress ofLong(long value) {
-        return MemorySegmentImpl.NOTHING.baseAddress().offset(value);
+        return MemorySegmentImpl.NOTHING.baseAddress().add(value);
     }
-
 }

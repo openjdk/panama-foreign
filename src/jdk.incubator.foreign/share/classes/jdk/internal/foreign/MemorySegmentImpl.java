@@ -113,8 +113,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public boolean isAccessible() {
-        return owner == Thread.currentThread();
+    public Thread owner() {
+        return owner;
     }
 
     @Override
