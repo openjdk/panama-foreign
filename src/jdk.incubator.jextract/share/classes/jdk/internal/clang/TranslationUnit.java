@@ -87,10 +87,10 @@ public class TranslationUnit implements AutoCloseable {
                     null :
                     scope.track(MemorySegment.allocateNative(MemoryLayout.ofSequence(inMemoryFiles.length, Index_h.CXUnsavedFile$LAYOUT)));
             for (int i = 0; i < inMemoryFiles.length; i++) {
-                MemoryAddress start = files.baseAddress().add(i * Index_h.CXUnsavedFile$LAYOUT.byteSize());
-                Utils.setPointer(start.add(FILENAME_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].file)).baseAddress());
-                Utils.setPointer(start.add(CONTENTS_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].contents)).baseAddress());
-                Utils.setLong(start.add(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
+                MemoryAddress start = files.baseAddress().addOffset(i * Index_h.CXUnsavedFile$LAYOUT.byteSize());
+                Utils.setPointer(start.addOffset(FILENAME_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].file)).baseAddress());
+                Utils.setPointer(start.addOffset(CONTENTS_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].contents)).baseAddress());
+                Utils.setLong(start.addOffset(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
             }
             return Index_h.clang_reparseTranslationUnit(tu, inMemoryFiles.length,
                     files == null ? MemoryAddress.NULL : files.baseAddress(),
@@ -150,7 +150,7 @@ public class TranslationUnit implements AutoCloseable {
         }
 
         public MemorySegment getTokenSegment(int idx) {
-            MemoryAddress p = ar.add(idx * Index_h.CXToken$LAYOUT.byteSize());
+            MemoryAddress p = ar.addOffset(idx * Index_h.CXToken$LAYOUT.byteSize());
             return ForeignUnsafe.ofNativeUnchecked(p, Index_h.CXToken$LAYOUT.byteSize());
         }
 

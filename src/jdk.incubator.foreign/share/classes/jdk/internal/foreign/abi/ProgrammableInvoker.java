@@ -109,18 +109,18 @@ public class ProgrammableInvoker {
                 stackArgs = MemoryAddressImpl.NULL;
             }
 
-            VH_LONG.set(argsPtr.add(layout.arguments_next_pc), addr);
-            VH_LONG.set(argsPtr.add(layout.stack_args_bytes), stackArgsBytes);
-            VH_LONG.set(argsPtr.add(layout.stack_args), MemoryAddressImpl.addressof(stackArgs));
+            VH_LONG.set(argsPtr.addOffset(layout.arguments_next_pc), addr);
+            VH_LONG.set(argsPtr.addOffset(layout.stack_args_bytes), stackArgsBytes);
+            VH_LONG.set(argsPtr.addOffset(layout.stack_args), MemoryAddressImpl.addressof(stackArgs));
 
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
                 jdk.internal.foreign.abi.BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         s -> {
                             if (abi.arch.isStackType(s.type())) {
-                                return stackArgs.add(s.index() * abi.arch.typeSize(abi.arch.stackType()));
+                                return stackArgs.addOffset(s.index() * abi.arch.typeSize(abi.arch.stackType()));
                             }
-                            return argsPtr.add(layout.argOffset(s));
+                            return argsPtr.addOffset(layout.argOffset(s));
                         }, tempBuffers);
             }
 
@@ -139,7 +139,7 @@ public class ProgrammableInvoker {
             return function.returnLayout().isEmpty()
                     ? null
                     : jdk.internal.foreign.abi.BindingInterpreter.box(callingSequence.returnBindings(),
-                    s -> argsPtr.add(layout.retOffset(s))); // buffers are leaked
+                    s -> argsPtr.addOffset(layout.retOffset(s))); // buffers are leaked
         } finally {
             tempBuffers.forEach(MemorySegment::close);
         }

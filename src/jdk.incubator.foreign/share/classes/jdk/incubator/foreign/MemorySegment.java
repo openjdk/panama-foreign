@@ -148,7 +148,7 @@ public interface MemorySegment extends AutoCloseable {
      * The thread owning this segment.
      * @return the thread owning this segment.
      */
-    Thread owner();
+    Thread ownerThread();
 
     /**
      * The size (in bytes) of this memory segment.

@@ -76,7 +76,7 @@ class BindingInterpreter {
                     MemoryAddress ptr = ptrFunction.apply(binding.storage());
                     MemorySegment operand = (MemorySegment) currentValue;
                     MemoryAddress baseAddress = operand.baseAddress();
-                    MemoryAddress.copy(baseAddress.add(binding.offset()), ptr, binding.size());
+                    MemoryAddress.copy(baseAddress.addOffset(binding.offset()), ptr, binding.size());
                 } break;
                 case Binding.COPY_BUFFER_TAG: {
                     Binding.Copy binding = (Binding.Copy) b;
@@ -122,7 +122,7 @@ class BindingInterpreter {
                     MemoryAddress ptr = ptrFunction.apply(binding.storage());
                     MemorySegment operand = (MemorySegment) currentValue;
                     MemoryAddress baseAddress = operand.baseAddress();
-                    MemoryAddress.copy(ptr, baseAddress.add(binding.offset()), binding.size());
+                    MemoryAddress.copy(ptr, baseAddress.addOffset(binding.offset()), binding.size());
                 } break;
                 case Binding.COPY_BUFFER_TAG: {
                     Binding.Copy binding = (Binding.Copy) b;

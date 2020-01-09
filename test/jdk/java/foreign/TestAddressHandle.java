@@ -48,7 +48,7 @@ public class TestAddressHandle {
             } catch (IndexOutOfBoundsException ex) {
                 assertTrue(true);
             }
-            addrHandle.set(segment.baseAddress(), address.add(1));
+            addrHandle.set(segment.baseAddress(), address.addOffset(1));
             long result = (long)longHandle.get(segment.baseAddress());
             assertEquals(43L, result);
         }

@@ -51,16 +51,16 @@ public class TestMemoryCopy {
         int size = Math.min(s1.size(), s2.size());
         //prepare source and target segments
         for (int i = 0 ; i < size ; i++) {
-            BYTE_HANDLE.set(addr2.add(i), (byte)0);
+            BYTE_HANDLE.set(addr2.addOffset(i), (byte)0);
         }
         for (int i = 0 ; i < size ; i++) {
-            BYTE_HANDLE.set(addr1.add(i), (byte) i);
+            BYTE_HANDLE.set(addr1.addOffset(i), (byte) i);
         }
         //perform copy
         MemoryAddress.copy(addr1, addr2, size);
         //check that copy actually worked
         for (int i = 0 ; i < size ; i++) {
-            assertEquals((byte)i, BYTE_HANDLE.get(addr2.add(i)));
+            assertEquals((byte)i, BYTE_HANDLE.get(addr2.addOffset(i)));
         }
     }
 
