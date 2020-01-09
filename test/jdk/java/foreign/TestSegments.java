@@ -105,7 +105,7 @@ public class TestSegments {
             }
             long start = 0;
             MemoryAddress base = segment.baseAddress();
-            MemoryAddress last = base.add(10);
+            MemoryAddress last = base.addOffset(10);
             while (!base.equals(last)) {
                 MemorySegment slice = segment.asSlice(base.offset(), 10 - start);
                 for (long i = start ; i < 10 ; i++) {
@@ -114,7 +114,7 @@ public class TestSegments {
                             byteHandle.get(slice.baseAddress(), i - start)
                     );
                 }
-                base = base.add(1);
+                base = base.addOffset(1);
                 start++;
             }
         }

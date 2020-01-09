@@ -51,8 +51,8 @@ public class TestRebase {
             MemoryAddress base = s2.segment.baseAddress();
             MemoryAddress rebased = base.rebase(s1.segment);
             for (int i = 0; i < s2.size(); i++) {
-                int expected = (int) BYTE_VH.get(base.add(i));
-                int found = (int) BYTE_VH.get(rebased.add(i));
+                int expected = (int) BYTE_VH.get(base.addOffset(i));
+                int found = (int) BYTE_VH.get(rebased.addOffset(i));
                 assertEquals(found, expected);
             }
         } else if (s1.kind != s2.kind) {
@@ -68,9 +68,9 @@ public class TestRebase {
             MemoryAddress base = s2.segment.baseAddress();
             MemoryAddress rebased = base.rebase(s1.segment);
             for (int i = 0; i < s2.size(); i++) {
-                BYTE_VH.get(base.add(i));
+                BYTE_VH.get(base.addOffset(i));
                 try {
-                    BYTE_VH.get(rebased.add(i));
+                    BYTE_VH.get(rebased.addOffset(i));
                     fail("Rebased address on a disjoint segment is not out of bounds!");
                 } catch (IndexOutOfBoundsException ex) {
                     assertTrue(true);
@@ -127,7 +127,7 @@ public class TestRebase {
             //init root segment
             MemorySegment segment = kind.makeSegment(16);
             for (int i = 0 ; i < 16 ; i++) {
-                BYTE_VH.set(segment.baseAddress().add(i), (byte)i);
+                BYTE_VH.set(segment.baseAddress().addOffset(i), (byte)i);
             }
             //compute all slices
             for (int size : sizes) {

@@ -273,28 +273,28 @@ public class StdLibTest extends NativeTestHelper {
                 return (int)intHandle.get(base);
             }
             int min() {
-                return (int)intHandle.get(base.add(4));
+                return (int)intHandle.get(base.addOffset(4));
             }
             int hour() {
-                return (int)intHandle.get(base.add(8));
+                return (int)intHandle.get(base.addOffset(8));
             }
             int mday() {
-                return (int)intHandle.get(base.add(12));
+                return (int)intHandle.get(base.addOffset(12));
             }
             int mon() {
-                return (int)intHandle.get(base.add(16));
+                return (int)intHandle.get(base.addOffset(16));
             }
             int year() {
-                return (int)intHandle.get(base.add(20));
+                return (int)intHandle.get(base.addOffset(20));
             }
             int wday() {
-                return (int)intHandle.get(base.add(24));
+                return (int)intHandle.get(base.addOffset(24));
             }
             int yday() {
-                return (int)intHandle.get(base.add(28));
+                return (int)intHandle.get(base.addOffset(28));
             }
             boolean isdst() {
-                byte b = (byte)byteHandle.get(base.add(32));
+                byte b = (byte)byteHandle.get(base.addOffset(32));
                 return b == 0 ? false : true;
             }
 

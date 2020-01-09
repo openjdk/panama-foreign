@@ -78,7 +78,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     }
 
     @Override
-    public MemoryAddress add(long bytes) {
+    public MemoryAddress addOffset(long bytes) {
         return new MemoryAddressImpl(segment, offset + bytes);
     }
 

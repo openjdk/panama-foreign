@@ -117,7 +117,7 @@ public class TestVarArgs extends NativeTestHelper {
 
             for (int i = 0; i < args.size(); i++) {
                 VarArg a = args.get(i);
-                MemoryAddress writtenPtr = writeBack.baseAddress().add(i * WRITEBACK_BYTES_PER_ARG);
+                MemoryAddress writtenPtr = writeBack.baseAddress().addOffset(i * WRITEBACK_BYTES_PER_ARG);
                 Object written = a.vh.get(writtenPtr);
                 assertEquals(written, a.value);
             }

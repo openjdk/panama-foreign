@@ -111,7 +111,7 @@ class BufferLayout {
     }
 
     private static String getLongString(MemoryAddress buffer, long offset) {
-        return Long.toHexString((long) VH_LONG.get(buffer.add(offset)));
+        return Long.toHexString((long) VH_LONG.get(buffer.addOffset(offset)));
     }
 
     private static void dumpValues(jdk.internal.foreign.abi.Architecture arch, MemoryAddress buff, PrintStream stream,
@@ -120,7 +120,7 @@ class BufferLayout {
             VMStorage storage = entry.getKey();
             stream.print(storage.name());
             stream.print("={ ");
-            MemoryAddress start = buff.add(entry.getValue());
+            MemoryAddress start = buff.addOffset(entry.getValue());
             for (int i = 0; i < arch.typeSize(storage.type()) / 8; i += 8) {
                 stream.print(getLongString(start, i));
                 stream.print(" ");
