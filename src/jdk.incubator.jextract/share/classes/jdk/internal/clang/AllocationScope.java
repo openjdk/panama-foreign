@@ -49,8 +49,9 @@ class AllocationScope implements AutoCloseable {
 
     @Override
     public void close() {
+        var currentThread = Thread.currentThread();
         segments.stream()
-                .filter(MemorySegment::isAccessible)
+                .filter(ms -> ms.owner() == currentThread)
                 .forEach(MemorySegment::close);
     }
 }
