@@ -110,7 +110,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public Thread owner() {
+    public Thread ownerThread() {
         return owner;
     }
 
