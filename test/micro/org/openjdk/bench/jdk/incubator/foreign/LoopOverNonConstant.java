@@ -35,13 +35,15 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
+import sun.misc.Unsafe;
 
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
-import static jdk.incubator.foreign.MemoryLayouts.JAVA_BYTE;
+import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
@@ -51,37 +53,75 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_BYTE;
 @Fork(3)
 public class LoopOverNonConstant {
 
-    static final int SIZE = 1_000_000;
+    static final Unsafe unsafe = Utils.unsafe;
 
-    static final VarHandle VH_byte = MemoryLayout.ofSequence(JAVA_BYTE).varHandle(byte.class, sequenceElement());
+    static final int ELEM_SIZE = 1_000_000;
+    static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
+    static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
+
+    static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
     MemorySegment segment;
+    long unsafe_addr;
 
     ByteBuffer byteBuffer;
 
     @Setup
     public void setup() {
-        segment = MemorySegment.allocateNative(SIZE);
-        for (int i = 0; i < SIZE; i++) {
-            VH_byte.set(segment.baseAddress(), (long) i, (byte) i);
+        unsafe_addr = unsafe.allocateMemory(ALLOC_SIZE);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
+        }
+        segment = MemorySegment.allocateNative(ALLOC_SIZE);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            VH_int.set(segment.baseAddress(), (long) i, i);
         }
 
-        byteBuffer = ByteBuffer.allocateDirect(SIZE);
-        for (int i = 0; i < SIZE; i++) {
-            byteBuffer.put(i , (byte) i);
+        byteBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            byteBuffer.putInt(i * CARRIER_SIZE , i);
         }
     }
 
     @TearDown
     public void tearDown() {
         segment.close();
+        unsafe.invokeCleaner(byteBuffer);
+        unsafe.freeMemory(unsafe_addr);
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public int unsafe_get() {
+        return unsafe.getInt(unsafe_addr);
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public int segment_get() {
+        return (int) VH_int.get(segment.baseAddress(), 0L);
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public int BB_get() {
+        return byteBuffer.getInt(0);
+    }
+
+    @Benchmark
+    public int unsafe_loop() {
+        int res = 0;
+        for (int i = 0; i < ELEM_SIZE; i ++) {
+            res += unsafe.getInt(unsafe_addr + (i * CARRIER_SIZE));
+        }
+        return res;
     }
 
     @Benchmark
     public int segment_loop() {
         int sum = 0;
         MemoryAddress base = segment.baseAddress();
-        for (int i = 0; i < SIZE; i++) {
-            sum += (byte) VH_byte.get(base, (long) i);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            sum += (int) VH_int.get(base, (long) i);
         }
         return sum;
     }
@@ -90,8 +130,8 @@ public class LoopOverNonConstant {
     public int BB_loop() {
         int sum = 0;
         ByteBuffer bb = byteBuffer;
-        for (int i = 0; i < SIZE; i++) {
-            sum += bb.get(i);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            sum += bb.getInt(i * CARRIER_SIZE);
         }
         return sum;
     }
