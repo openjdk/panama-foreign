@@ -13761,39 +13761,13 @@ instruct vcvtDtoF_reg(vec dst, vec src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC2F(legVec dst, legVec src1, legVec src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 &&
+instruct vcmpCCF(legVec dst, legVec src1, legVec src2, immI8 cond) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCps  $dst,$src1,$src2\t! cmpCC packed2F" %}
+  format %{ "vcmpCCps  $dst,$src1,$src2\t! cmpCC packedF" %}
   ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
-    __ vcmpps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC4F(legVec dst, legVec src1, legVec src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCps  $dst,$src1,$src2\t! cmpCC packed4F" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
-    __ vcmpps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC8F(legVec dst, legVec src1, legVec src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCps  $dst,$src1,$src2\t! cmpCC packed8F" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
     __ vcmpps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
   %}
@@ -13818,39 +13792,13 @@ instruct vcmpCC16F(vec dst, vec src1, vec src2, immI8 cond, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC1D(legVec dst, legVec src1, legVec src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 &&
+instruct vcmpCCD(legVec dst, legVec src1, legVec src2, immI8 cond) %{
+  predicate(n->as_Vector()->length() >= 1 && n->as_Vector()->length() <= 4 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCpd  $dst,$src1,$src2\t! cmpCC packed1D" %}
+  format %{ "vcmpCCpd  $dst,$src1,$src2\t! cmpCC packedD" %}
   ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
-    __ vcmppd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC2D(legVec dst, legVec src1, legVec src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCpd  $dst,$src1,$src2\t! cmpCC packed2D" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
-    __ vcmppd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC4D(legVec dst, legVec src1, legVec src2, immI8 cond) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  format %{ "vcmpCCpd  $dst,$src1,$src2\t! cmpCC packed4D" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     Assembler::ComparisonPredicateFP cmp = Assembler::booltest_pred_to_comparison_pred_fp($cond$$constant);
     __ vcmppd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len);
   %}
@@ -13875,42 +13823,14 @@ instruct vcmpCC8D(vec dst, vec src1, vec src2, immI8 cond, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC2I(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 &&
+instruct vcmpCCI(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
+  predicate(n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
   effect(TEMP scratch);
-  format %{ "vpcmpCCd  $dst,$src1,$src2\n\t! cmpCC packed2I" %}
+  format %{ "vpcmpCCd  $dst,$src1,$src2\n\t! cmpCC packedI" %}
   ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::D, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC4I(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCd  $dst,$src1,$src2\n\t! cmpCC packed4I" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::D, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC8I(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCd  $dst,$src1,$src2\n\t! cmpCC packed8I" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
     __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::D, vector_len, $scratch$$Register);
   %}
@@ -13935,42 +13855,14 @@ instruct vcmpCC16I(vec dst, vec src1, vec src2, immI8 cond, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC8B(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 &&
+instruct vcmpCCB(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
+  predicate(n->as_Vector()->length() >= 8 && n->as_Vector()->length() <= 32 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
   effect(TEMP scratch);
-  format %{ "vpcmpCCb  $dst,$src1,$src2\n\t! cmpCC packed8B" %}
+  format %{ "vpcmpCCb  $dst,$src1,$src2\n\t! cmpCC packedB" %}
   ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::B, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC16B(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 16 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCb  $dst,$src1,$src2\n\t! cmpCC packed16B" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::B, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC32B(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 32 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCb  $dst,$src1,$src2\n\t! cmpCC packed32B" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
     __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::B, vector_len, $scratch$$Register);
   %}
@@ -13995,42 +13887,14 @@ instruct vcmpCC64B(vec dst, vec src1, vec src2, immI8 cond, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC4S(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
+instruct vcmpCCS(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
+  predicate(n->as_Vector()->length() >= 4 && n->as_Vector()->length() <= 16 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
   effect(TEMP scratch);
-  format %{ "vpcmpCCw  $dst,$src1,$src2\n\t! cmpCC packed4S" %}
+  format %{ "vpcmpCCw  $dst,$src1,$src2\n\t! cmpCC packedS" %}
   ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::W, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC8S(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCw  $dst,$src1,$src2\n\t! cmpCC packed8S" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::W, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC16S(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 16 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCw  $dst,$src1,$src2\n\t! cmpCC packed16S" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
     __ vpcmpCCbwd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, Assembler::W, vector_len, $scratch$$Register);
   %}
@@ -14055,42 +13919,14 @@ instruct vcmpCC32S(vec dst, vec src1, vec src2, immI8 cond, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpCC1L(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 &&
+instruct vcmpCCL(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
+  predicate(n->as_Vector()->length() >= 1 && n->as_Vector()->length() <= 4 &&
             n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
   effect(TEMP scratch);
-  format %{ "vpcmpCCq  $dst,$src1,$src2\n\t! cmpCC packed1L" %}
+  format %{ "vpcmpCCq  $dst,$src1,$src2\n\t! cmpCC packedL" %}
   ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC2L(vec dst, vec src1, vec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCq  $dst,$src1,$src2\n\t! cmpCC packed2L" %}
-  ins_encode %{
-    int vector_len = 0;
-    Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
-    __ vpcmpCCq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len, $scratch$$Register);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vcmpCC4L(legVec dst, legVec src1, legVec src2, immI8 cond, rRegL scratch) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 &&
-            n->in(1)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorMaskCmp (Binary src1 src2) cond));
-  effect(TEMP scratch);
-  format %{ "vpcmpCCq  $dst,$src1,$src2\n\t! cmpCC packed4L" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     Assembler::ComparisonPredicate cmp = Assembler::booltest_pred_to_comparison_pred($cond$$constant);
     __ vpcmpCCq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, cmp, vector_len, $scratch$$Register);
   %}
@@ -14539,11 +14375,11 @@ instruct extract64b(rRegI dst, vec src, vec tmp, immI idx) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct blendvps2F(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+instruct blendvpsF(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
+  predicate(UseAVX == 0 && UseSSE > 3 && (n->as_Vector()->length() == 2 || n->as_Vector()->length() == 4) && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorBlend (Binary dst src) mask));
   effect(TEMP xmm_0);
-  format %{ "blendvps  $dst,$src,$mask\t! packed2F" %}
+  format %{ "blendvps  $dst,$src,$mask\t! packedF" %}
   ins_encode %{
     if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
       __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
@@ -14553,48 +14389,12 @@ instruct blendvps2F(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vblendvps2F(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+instruct vblendvpsF(legVec dst, legVec src1, legVec src2, legVec mask) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vblendvps  $dst,$src1,$src2,$mask\t! packed2F" %}
+  format %{ "vblendvps  $dst,$src1,$src2,$mask\t! packedF" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vblendvps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct blendvps4F(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorBlend (Binary dst src) mask));
-  effect(TEMP xmm_0);
-  format %{ "blendvps  $dst,$src,$mask\t! packed4F" %}
-  ins_encode %{
-    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
-      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
-    }
-    __ blendvps($dst$$XMMRegister, $src$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vblendvps4F(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vblendvps  $dst,$src1,$src2,$mask\t! packed4F" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vblendvps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vblendvps8F(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vblendvps  $dst,$src1,$src2,$mask\t! packed8F" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     __ vblendvps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
@@ -14615,11 +14415,11 @@ instruct vblendvps16F(vec dst, vec src1, vec src2, vec mask, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb2I(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+instruct pblendvbI(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
+  predicate(UseAVX == 0 && UseSSE > 3 && (n->as_Vector()->length() == 2 || n->as_Vector()->length() == 4) && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorBlend (Binary dst src) mask));
   effect(TEMP xmm_0);
-  format %{ "vpblendvb  $dst,$src,$mask\t! blend packed2I" %}
+  format %{ "vpblendvb  $dst,$src,$mask\t! blend packedI" %}
   ins_encode %{
     if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
       __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
@@ -14629,48 +14429,12 @@ instruct pblendvb2I(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vpblendvb2I(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+instruct vpblendvbI(legVec dst, legVec src1, legVec src2, legVec mask) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() >= 2 && n->as_Vector()->length() <= 8 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed2I" %}
+  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packedI" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct pblendvb4I(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorBlend (Binary dst src) mask));
-  effect(TEMP xmm_0);
-  format %{ "vpblendvb  $dst,$src,$mask\t! blend packed4I" %}
-  ins_encode %{
-    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
-      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
-    }
-    __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vpblendvb4I(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed4I" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vpblendvb8I(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed8I" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
@@ -14691,11 +14455,11 @@ instruct vpblendmd16I(vec dst, vec src1, vec src2, vec mask, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb8B(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct pblendvbB(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
+  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() >= 8 && n->as_Vector()->length() <= 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorBlend (Binary dst src) mask));
   effect(TEMP xmm_0);
-  format %{ "pblendvb  $dst,$src,$mask\t! blend packed8B" %}
+  format %{ "pblendvb  $dst,$src,$mask\t! blend packedB" %}
   ins_encode %{
     if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
       __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
@@ -14705,48 +14469,12 @@ instruct pblendvb8B(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vpblendvb8B(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+instruct vpblendvbB(legVec dst, legVec src1, legVec src2, legVec mask) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() >= 8 && n->as_Vector()->length() <= 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed8B" %}
+  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packedB" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct pblendvb16B(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorBlend (Binary dst src) mask));
-  effect(TEMP xmm_0);
-  format %{ "pblendvb  $dst,$src,$mask\t! blend packed16B" %}
-  ins_encode %{
-    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
-      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
-    }
-    __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vpblendvb16B(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed16B" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vpblendvb32B(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed32B" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
@@ -14767,11 +14495,11 @@ instruct vpblendmb64B(vec dst, vec src1, vec src2, vec mask, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb4S(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct pblendvbS(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
+  predicate(UseAVX == 0 && UseSSE > 3 && (n->as_Vector()->length() == 4 || n->as_Vector()->length() == 8) && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorBlend (Binary dst src) mask));
   effect(TEMP xmm_0);
-  format %{ "pblendvb  $dst,$src,$mask\t! blend packed4S" %}
+  format %{ "pblendvb  $dst,$src,$mask\t! blend packedS" %}
   ins_encode %{
     if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
       __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
@@ -14781,48 +14509,12 @@ instruct pblendvb4S(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vpblendvb4S(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct vpblendvbS(legVec dst, legVec src1, legVec src2, legVec mask) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() >= 4 && n->as_Vector()->length() <= 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed4S" %}
+  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packedS" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct pblendvb8S(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorBlend (Binary dst src) mask));
-  effect(TEMP xmm_0);
-  format %{ "pblendvb  $dst,$src,$mask\t! blend packed8S" %}
-  ins_encode %{
-    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
-      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
-    }
-    __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vpblendvb8S(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed8S" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vpblendvb16S(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed16S" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
@@ -14843,11 +14535,11 @@ instruct vpblendmw32S(vec dst, vec src1, vec src2, vec mask, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb1L(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+instruct pblendvbL(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
+  predicate(UseAVX == 0 && UseSSE > 3 && (n->as_Vector()->length() == 1 || n->as_Vector()->length() == 2) && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorBlend (Binary dst src) mask));
   effect(TEMP xmm_0);
-  format %{ "pblendvb  $dst,$src,$mask\t! blend packed1L" %}
+  format %{ "pblendvb  $dst,$src,$mask\t! blend packedL" %}
   ins_encode %{
     if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
       __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
@@ -14857,48 +14549,12 @@ instruct pblendvb1L(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vpblendvb1L(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+instruct vpblendvbL(legVec dst, legVec src1, legVec src2, legVec mask) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() >= 1 && n->as_Vector()->length() <= 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed1L" %}
+  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packedL" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct pblendvb2L(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorBlend (Binary dst src) mask));
-  effect(TEMP xmm_0);
-  format %{ "pblendvb  $dst,$src,$mask\t! blend packed2L" %}
-  ins_encode %{
-    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
-      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
-    }
-    __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vpblendvb2L(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed2L" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vpblendvb4L(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vpblendvb  $dst,$src1,$src2,$mask\t! blend packed4L" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     __ vpblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
@@ -14919,11 +14575,11 @@ instruct vpblendmq8L(vec dst, vec src1, vec src2, vec mask, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct blendvpd1D(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+instruct blendvpdD(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
+  predicate(UseAVX == 0 && UseSSE > 3 && (n->as_Vector()->length() == 1 || n->as_Vector()->length() == 2) && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorBlend (Binary dst src) mask));
   effect(TEMP xmm_0);
-  format %{ "blendvpd  $dst,$src,$mask\t! packed1D" %}
+  format %{ "blendvpd  $dst,$src,$mask\t! packedD" %}
   ins_encode %{
     if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
       __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
@@ -14933,48 +14589,12 @@ instruct blendvpd1D(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vblendvpd1D(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+instruct vblendvpdD(legVec dst, legVec src1, legVec src2, legVec mask) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() >= 1 && n->as_Vector()->length() <= 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vblendvpd  $dst,$src1,$src2,$mask\t! packed1D" %}
+  format %{ "vblendvpd  $dst,$src1,$src2,$mask\t! packedD" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vblendvpd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct blendvpd2D(vec dst, vec src, vec mask, rxmm0 xmm_0) %{
-  predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorBlend (Binary dst src) mask));
-  effect(TEMP xmm_0);
-  format %{ "blendvpd  $dst,$src,$mask\t! packed2D" %}
-  ins_encode %{
-    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
-      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
-    }
-    __ blendvpd($dst$$XMMRegister, $src$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vblendvpd2D(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vblendvpd  $dst,$src1,$src2,$mask\t! packed2D" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vblendvpd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct vblendvpd4D(legVec dst, legVec src1, legVec src2, legVec mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-  match(Set dst (VectorBlend (Binary src1 src2) mask));
-  format %{ "vblendvpd  $dst,$src1,$src2,$mask\t! packed4D" %}
-  ins_encode %{
-    int vector_len = 1;
+    int vector_len = vector_length_encoding(this);
     __ vblendvpd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
