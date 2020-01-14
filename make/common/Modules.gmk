@@ -59,7 +59,6 @@ BOOT_MODULES += \
     java.security.sasl \
     java.xml \
     jdk.incubator.foreign \
-    jdk.incubator.jextract \
     jdk.internal.vm.ci \
     jdk.jfr \
     jdk.management \
@@ -118,6 +117,7 @@ PLATFORM_MODULES += \
     jdk.security.jgss \
     jdk.xml.dom \
     jdk.zipfs \
+    jdk.incubator.jextract \
     #
 
 ifeq ($(call isTargetOs, windows), true)
