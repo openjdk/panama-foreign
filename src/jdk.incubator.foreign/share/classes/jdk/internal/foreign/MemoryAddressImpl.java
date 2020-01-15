@@ -81,7 +81,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     // MemoryAddressProxy methods
 
     public void checkAccess(long offset, long length, boolean readOnly) {
-        segment.checkRange(this.offset + offset, length, !readOnly);
+        segment.checkRange(MemoryAddressProxy.addOffsets(this.offset, offset, this), length, !readOnly);
     }
 
     public long unsafeGetOffset() {
@@ -90,6 +90,11 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     public Object unsafeGetBase() {
         return segment.base();
+    }
+
+    @Override
+    public boolean isSmall() {
+        return segment.isSmall();
     }
 
     // Object methods

@@ -57,21 +57,13 @@ import static jdk.internal.org.objectweb.asm.Opcodes.BIPUSH;
 import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
 import static jdk.internal.org.objectweb.asm.Opcodes.GETFIELD;
 import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_0;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_1;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_2;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_3;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_4;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_5;
-import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_M1;
 import static jdk.internal.org.objectweb.asm.Opcodes.ILOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
-import static jdk.internal.org.objectweb.asm.Opcodes.LADD;
 import static jdk.internal.org.objectweb.asm.Opcodes.LALOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.LASTORE;
 import static jdk.internal.org.objectweb.asm.Opcodes.LLOAD;
-import static jdk.internal.org.objectweb.asm.Opcodes.LMUL;
 import static jdk.internal.org.objectweb.asm.Opcodes.NEWARRAY;
 import static jdk.internal.org.objectweb.asm.Opcodes.PUTFIELD;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
@@ -89,6 +81,11 @@ class AddressVarHandleGenerator {
 
     private static final HashMap<Class<?>, Class<?>> helperClassCache;
 
+    private final static MethodType OFFSET_OP_TYPE;
+
+    private final static MethodHandle ADD_OFFSETS_HANDLE;
+    private final static MethodHandle MUL_OFFSETS_HANDLE;
+
     static {
         helperClassCache = new HashMap<>();
         helperClassCache.put(byte.class, VarHandleMemoryAddressAsBytes.class);
@@ -98,6 +95,15 @@ class AddressVarHandleGenerator {
         helperClassCache.put(long.class, VarHandleMemoryAddressAsLongs.class);
         helperClassCache.put(float.class, VarHandleMemoryAddressAsFloats.class);
         helperClassCache.put(double.class, VarHandleMemoryAddressAsDoubles.class);
+
+        OFFSET_OP_TYPE = MethodType.methodType(long.class, long.class, long.class, MemoryAddressProxy.class);
+
+        try {
+            ADD_OFFSETS_HANDLE = MethodHandles.Lookup.IMPL_LOOKUP.findStatic(MemoryAddressProxy.class, "addOffsets", OFFSET_OP_TYPE);
+            MUL_OFFSETS_HANDLE = MethodHandles.Lookup.IMPL_LOOKUP.findStatic(MemoryAddressProxy.class, "multiplyOffsets", OFFSET_OP_TYPE);
+        } catch (Throwable ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
     }
 
     private static final File DEBUG_DUMP_CLASSES_DIR;
@@ -268,12 +274,36 @@ class AddressVarHandleGenerator {
             mv.visitVarInsn(ALOAD, 0); // load recv
             mv.visitFieldInsn(GETFIELD, Type.getInternalName(BASE_CLASS), "offset", "J");
             for (int i = 0 ; i < dimensions ; i++) {
+                // load ADD MH
+                mv.visitLdcInsn(cw.makeConstantPoolPatch(ADD_OFFSETS_HANDLE));
+                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
+
+                //fixup stack so that ADD MH ends up bottom
+                mv.visitInsn(Opcodes.DUP_X2);
+                mv.visitInsn(Opcodes.POP);
+
+                // load MUL MH
+                mv.visitLdcInsn(cw.makeConstantPoolPatch(MUL_OFFSETS_HANDLE));
+                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
+
                 mv.visitVarInsn(ALOAD, 0); // load recv
                 mv.visitTypeInsn(CHECKCAST, implClassName);
                 mv.visitFieldInsn(GETFIELD, implClassName, "dim" + i, "J");
                 mv.visitVarInsn(LLOAD, slot);
-                mv.visitInsn(LMUL);
-                mv.visitInsn(LADD);
+
+                mv.visitVarInsn(ALOAD, 1); // receiver
+                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MemoryAddressProxy.class));
+
+                //MUL
+                mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
+                        OFFSET_OP_TYPE.toMethodDescriptorString(), false);
+
+                mv.visitVarInsn(ALOAD, 1); // receiver
+                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MemoryAddressProxy.class));
+
+                //ADD
+                mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
+                        OFFSET_OP_TYPE.toMethodDescriptorString(), false);
                 slot += 2;
             }
 

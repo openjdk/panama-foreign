@@ -25,36 +25,36 @@
 
 #include "points.h"
 
-JNIEXPORT jlong JNICALL Java_org_openjdk_bench_java_foreign_points_support_JNIPoint_allocate
+JNIEXPORT jlong JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_points_support_JNIPoint_allocate
   (JNIEnv *env, jclass nativePointClass) {
     Point* p = malloc(sizeof *p);
     return (jlong) p;
 }
 
-JNIEXPORT void JNICALL Java_org_openjdk_bench_java_foreign_points_support_JNIPoint_free
+JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_points_support_JNIPoint_free
   (JNIEnv *env, jclass cls, jlong thisPoint) {
     free((Point*) thisPoint);
 }
 
-JNIEXPORT jint JNICALL Java_org_openjdk_bench_java_foreign_points_support_JNIPoint_getX
+JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_points_support_JNIPoint_getX
   (JNIEnv *env, jclass cls, jlong thisPoint) {
     Point* point = (Point*) thisPoint;
     return point->x;
 }
 
-JNIEXPORT void JNICALL Java_org_openjdk_bench_java_foreign_points_support_JNIPoint_setX
+JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_points_support_JNIPoint_setX
   (JNIEnv *env, jclass cls, jlong thisPoint, jint value) {
     Point* point = (Point*) thisPoint;
     point->x = value;
 }
 
-JNIEXPORT jint JNICALL Java_org_openjdk_bench_java_foreign_points_support_JNIPoint_getY
+JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_points_support_JNIPoint_getY
   (JNIEnv *env, jclass cls, jlong thisPoint) {
     Point* point = (Point*) thisPoint;
     return point->y;
 }
 
-JNIEXPORT void JNICALL Java_org_openjdk_bench_java_foreign_points_support_JNIPoint_setY
+JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_points_support_JNIPoint_setY
   (JNIEnv *env, jclass cls, jlong thisPoint, jint value) {
     Point* point = (Point*) thisPoint;
     point->y = value;
