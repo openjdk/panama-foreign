@@ -32,6 +32,7 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -58,6 +59,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final MemoryScope scope;
 
     final static int READ_ONLY = 1;
+    final static int SMALL = READ_ONLY << 1;
     final static long NONCE = new Random().nextLong();
 
     public static MemorySegmentImpl NOTHING =
@@ -65,7 +67,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     public MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
-        this.mask = mask;
+        this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
         this.min = min;
         this.base = base;
         this.owner = owner;
@@ -87,6 +89,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
+    @ForceInline
     public final MemoryAddress baseAddress() {
         return new MemoryAddressImpl(this, 0);
     }
@@ -167,6 +170,10 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         scope.checkAliveConfined();
     }
 
+    boolean isSmall() {
+        return isSet(SMALL);
+    }
+
     // Object methods
 
     @Override
@@ -199,12 +206,29 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     private void checkBounds(long offset, long length) {
+        if (isSmall()) {
+            checkBoundsSmall((int)offset, (int)length);
+        } else {
+            if (length < 0 ||
+                    offset < 0 ||
+                    offset > this.length - length) { // careful of overflow
+                throw outOfBoundException(offset, length);
+            }
+        }
+    }
+
+    @ForceInline
+    private void checkBoundsSmall(int offset, int length) {
         if (length < 0 ||
                 offset < 0 ||
-                offset > this.length - length) { // careful of overflow
-            throw new IndexOutOfBoundsException(String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
-                this, offset, length));
+                offset > (int)this.length - length) { // careful of overflow
+            throw outOfBoundException(offset, length);
         }
+    }
+
+    private IndexOutOfBoundsException outOfBoundException(long offset, long length) {
+        return new IndexOutOfBoundsException(String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
+                        this, offset, length));
     }
 
     private int id() {
