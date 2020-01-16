@@ -2625,10 +2625,19 @@ void Matcher::do_postselect_cleanup() {
 //----------------------------------------------------------------------
 
 // Convert (leg)Vec to (leg)Vec[SDXYZ].
-MachOper* Matcher::specialize_vector_operand_helper(Node* m, MachOper* original_opnd) {
-  const Type* t = m->bottom_type();
+MachOper* Matcher::specialize_vector_operand_helper(MachNode* m, uint opnd_idx, const Type* t) {
+  MachOper* original_opnd = m->_opnds[opnd_idx];
   uint ideal_reg = t->ideal_reg();
-  if (m->is_Mach() && !t->isa_vect()) {
+  // Handle special cases.
+  if (t->isa_vect()) {
+    // LShiftCntV/RShiftCntV report wide vector type, but Matcher::vector_shift_count_ideal_reg() as ideal register (see vectornode.hpp).
+    // Look for shift count use sites as well (at vector shift nodes).
+    int opc = m->ideal_Opcode();
+    if ((VectorNode::is_shift_count(opc)  && opnd_idx == 0) || // DEF operand of LShiftCntV/RShiftCntV
+        (VectorNode::is_vector_shift(opc) && opnd_idx == 2)) { // shift operand of a vector shift node
+      ideal_reg = Matcher::vector_shift_count_ideal_reg(t->is_vect()->length_in_bytes());
+    }
+  } else {
     // Chain instructions which convert scalar to vector (e.g., vshiftcntimm on x86) don't have vector type.
     int size_in_bytes = 4 * type2size[t->basic_type()];
     ideal_reg = Matcher::vector_ideal_reg(size_in_bytes);
@@ -2650,22 +2659,23 @@ void Matcher::specialize_temp_node(MachTempNode* tmp, MachNode* use, uint idx) {
 }
 
 // Compute concrete vector operand for a generic DEF/USE vector operand (of mach node m at index idx).
-MachOper* Matcher::specialize_vector_operand(MachNode* m, uint idx) {
-  assert(Matcher::is_generic_vector(m->_opnds[idx]), "repeated updates");
-  if (idx == 0) { // DEF
-    // Use mach node itself to compute vector operand type.
-    return specialize_vector_operand_helper(m, m->_opnds[0]);
+MachOper* Matcher::specialize_vector_operand(MachNode* m, uint opnd_idx) {
+  assert(Matcher::is_generic_vector(m->_opnds[opnd_idx]), "repeated updates");
+  Node* def = NULL;
+  if (opnd_idx == 0) { // DEF
+    def = m; // use mach node itself to compute vector operand type
   } else {
-    // Use def node to compute operand type.
-    int base_idx = m->operand_index(idx);
-    Node* in = m->in(base_idx);
-    if (in->is_MachTemp() && Matcher::is_generic_vector(in->as_Mach()->_opnds[0])) {
-      specialize_temp_node(in->as_MachTemp(), m, base_idx); // MachTemp node use site
-    } else if (in->is_Mach() && is_generic_reg2reg_move(in->as_Mach())) {
-      in = in->in(1)->as_Mach(); // skip over generic reg-to-reg moves
+    int base_idx = m->operand_index(opnd_idx);
+    def = m->in(base_idx);
+    if (def->is_Mach()) {
+      if (def->is_MachTemp() && Matcher::is_generic_vector(def->as_Mach()->_opnds[0])) {
+        specialize_temp_node(def->as_MachTemp(), m, base_idx); // MachTemp node use site
+      } else if (is_generic_reg2reg_move(def->as_Mach())) {
+        def = def->in(1); // skip over generic reg-to-reg moves
+      }
     }
-    return specialize_vector_operand_helper(in, m->_opnds[idx]);
   }
+  return specialize_vector_operand_helper(m, opnd_idx, def->bottom_type());
 }
 
 void Matcher::specialize_mach_node(MachNode* m) {
@@ -2693,10 +2703,7 @@ void Matcher::specialize_generic_vector_operands() {
   C->identify_useful_nodes(live_nodes);
 
   while (live_nodes.size() > 0) {
-    Node* n = live_nodes.pop();
-    if (!n->is_Mach())
-      continue;
-    MachNode * m = n->as_Mach();
+    MachNode* m = live_nodes.pop()->isa_Mach();
     if (m != NULL) {
       if (Matcher::is_generic_reg2reg_move(m)) {
         // Register allocator properly handles vec <=> leg moves using register masks.

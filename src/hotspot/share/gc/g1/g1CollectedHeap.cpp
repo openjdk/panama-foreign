@@ -1,5 +1,5 @@
- /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+/*
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -766,7 +766,7 @@ inline HeapWord* G1CollectedHeap::attempt_allocation(size_t min_word_size,
   return result;
 }
 
-void G1CollectedHeap::dealloc_archive_regions(MemRegion* ranges, size_t count, bool is_open) {
+void G1CollectedHeap::dealloc_archive_regions(MemRegion* ranges, size_t count) {
   assert(!is_init_completed(), "Expect to be called at JVM init time");
   assert(ranges != NULL, "MemRegion array NULL");
   assert(count != 0, "No MemRegions provided");
@@ -828,7 +828,7 @@ void G1CollectedHeap::dealloc_archive_regions(MemRegion* ranges, size_t count, b
     }
 
     // Notify mark-sweep that this is no longer an archive range.
-    G1ArchiveAllocator::clear_range_archive(ranges[i], is_open);
+    G1ArchiveAllocator::clear_range_archive(ranges[i]);
   }
 
   if (uncommitted_regions != 0) {
@@ -2151,6 +2151,13 @@ bool G1CollectedHeap::try_collect_concurrently(GCCause::Cause cause,
       return op.gc_succeeded();
     }
 
+    // If VMOp skipped initiating concurrent marking cycle because
+    // we're terminating, then we're done.
+    if (op.terminating()) {
+      LOG_COLLECT_CONCURRENTLY(cause, "skipped: terminating");
+      return false;
+    }
+
     // Lock to get consistent set of values.
     uint old_marking_started_after;
     uint old_marking_completed_after;
@@ -3180,8 +3187,7 @@ void G1CollectedHeap::restore_after_evac_failure(G1RedirtyCardsQueueSet* rdcqs) 
   double remove_self_forwards_start = os::elapsedTime();
 
   remove_self_forwarding_pointers(rdcqs);
-  SharedRestorePreservedMarksTaskExecutor task_executor(workers());
-  _preserved_marks_set.restore(&task_executor);
+  _preserved_marks_set.restore(workers());
 
   phase_times()->record_evac_fail_remove_self_forwards((os::elapsedTime() - remove_self_forwards_start) * 1000.0);
 }

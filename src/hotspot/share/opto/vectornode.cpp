@@ -582,7 +582,7 @@ VectorNode* VectorNode::scalar2vector(Node* s, uint vlen, const Type* opd_t) {
 
 VectorNode* VectorNode::shift_count(int opc, Node* cnt, uint vlen, BasicType bt) {
   // Match shift count type with shift vector type.
-  const TypeVect* vt = TypeVect::VECTS;
+  const TypeVect* vt = TypeVect::make(bt, vlen);
   switch (opc) {
   case Op_LShiftI:
   case Op_LShiftL:
@@ -597,6 +597,38 @@ VectorNode* VectorNode::shift_count(int opc, Node* cnt, uint vlen, BasicType bt)
   default:
     fatal("Missed vector creation for '%s'", NodeClassNames[opc]);
     return NULL;
+  }
+}
+
+bool VectorNode::is_vector_shift(int opc) {
+  assert(opc > _last_machine_leaf && opc < _last_opcode, "invalid opcode");
+  switch (opc) {
+  case Op_LShiftVB:
+  case Op_LShiftVS:
+  case Op_LShiftVI:
+  case Op_LShiftVL:
+  case Op_RShiftVB:
+  case Op_RShiftVS:
+  case Op_RShiftVI:
+  case Op_RShiftVL:
+  case Op_URShiftVB:
+  case Op_URShiftVS:
+  case Op_URShiftVI:
+  case Op_URShiftVL:
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool VectorNode::is_shift_count(int opc) {
+  assert(opc > _last_machine_leaf && opc < _last_opcode, "invalid opcode");
+  switch (opc) {
+  case Op_RShiftCntV:
+  case Op_LShiftCntV:
+    return true;
+  default:
+    return false;
   }
 }
 

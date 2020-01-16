@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -199,12 +200,8 @@ oop ShenandoahBarrierSet::load_reference_barrier_impl(oop obj) {
         _heap->in_collection_set(obj) &&
         obj == fwd) {
       Thread *t = Thread::current();
-      if (t->is_GC_task_thread()) {
-        return _heap->evacuate_object(obj, t);
-      } else {
-        ShenandoahEvacOOMScope oom_evac_scope;
-        return _heap->evacuate_object(obj, t);
-      }
+      ShenandoahEvacOOMScope oom_evac_scope;
+      return _heap->evacuate_object(obj, t);
     } else {
       return fwd;
     }
