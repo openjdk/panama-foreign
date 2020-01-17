@@ -333,7 +333,12 @@ public class CallGeneratorHelper extends NativeTestHelper {
         if (arg instanceof MemoryAddress) {
             cleanup(((MemoryAddress)arg).segment());
         } else if (arg instanceof MemorySegment) {
-            ((MemorySegment)arg).close();
+            try {
+                ((MemorySegment) arg).close();
+            } catch (IllegalStateException e) {
+                assertEquals(e.getMessage(), "Cannot close a root segment");
+                // fine, NOTHING segment for upcall stubs
+            }
         }
     }
 

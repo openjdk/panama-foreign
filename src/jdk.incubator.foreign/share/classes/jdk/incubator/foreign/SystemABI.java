@@ -25,6 +25,7 @@
  */
 package jdk.incubator.foreign;
 
+import jdk.internal.foreign.abi.UpcallStubs;
 import jdk.internal.foreign.abi.aarch64.AArch64ABI;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
@@ -57,6 +58,17 @@ public interface SystemABI {
      * @return the upcall symbol.
      */
     MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function);
+
+    /**
+     * Frees an upcall stub given it's memory address.
+     *
+     * @param address the memory address of the upcall stub, returned from
+     *                {@link SystemABI#upcallStub(MethodHandle, FunctionDescriptor)}.
+     * @throws IllegalArgumentException if the given address is not a valid upcall stub address.
+     */
+    default void freeUpcallStub(MemoryAddress address) {
+        UpcallStubs.freeUpcallStub(address);
+    }
 
     /**
      * Obtain an instance of the system ABI.
