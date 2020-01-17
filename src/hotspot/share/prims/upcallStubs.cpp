@@ -25,17 +25,20 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 
-JVM_ENTRY(static void, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
+JVM_ENTRY(static jboolean, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
   //acquire code cache lock
   MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   //find code blob
   CodeBlob* cb = CodeCache::find_blob((char*)addr);
-  assert(cb != NULL, "Attempting to free non-existent stub");
+  if (cb == NULL) {
+    return false;
+  }
   //free global JNI handle
   jobject* rec_ptr = (jobject*)(void*)cb -> content_begin();
   JNIHandles::destroy_global(*rec_ptr);
   //free code blob
   CodeCache::free(cb);
+  return true;
 JVM_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/
@@ -44,7 +47,7 @@ JVM_END
 
 // These are the native methods on jdk.internal.foreign.NativeInvoker.
 static JNINativeMethod UH_methods[] = {
-  {CC "freeUpcallStub",     CC "(J)V",                FN_PTR(UH_FreeUpcallStub)}
+  {CC "freeUpcallStub",     CC "(J)Z",                FN_PTR(UH_FreeUpcallStub)}
 };
 
 /**

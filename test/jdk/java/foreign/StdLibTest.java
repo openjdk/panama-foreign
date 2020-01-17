@@ -316,6 +316,7 @@ public class StdLibTest extends NativeTestHelper {
                 //call qsort
                 MemoryAddress qsortUpcallAddr = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction);
                 qsort.invokeExact(nativeArr.baseAddress(), seq.elementCount().getAsLong(), C_INT.byteSize(), qsortUpcallAddr);
+                abi.freeUpcallStub(qsortUpcallAddr);
 
                 //convert back to Java array
                 return LongStream.range(0, arr.length)

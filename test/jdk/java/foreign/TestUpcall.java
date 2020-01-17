@@ -48,6 +48,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -62,6 +63,8 @@ public class TestUpcall extends CallGeneratorHelper {
 
     static LibraryLookup lib = LibraryLookup.ofLibrary(MethodHandles.lookup(), "TestUpcall");
     static SystemABI abi = SystemABI.getInstance();
+    static final MemoryAddress dummyAddress;
+    static final Cleaner cleaner = Cleaner.create();
 
     static MethodHandle DUMMY;
     static MethodHandle PASS_AND_SAVE;
@@ -70,6 +73,9 @@ public class TestUpcall extends CallGeneratorHelper {
         try {
             DUMMY = MethodHandles.lookup().findStatic(TestUpcall.class, "dummy", MethodType.methodType(void.class));
             PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcall.class, "passAndSave", MethodType.methodType(Object.class, Object[].class, AtomicReference.class));
+
+            dummyAddress = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(false));
+            cleaner.register(dummyAddress, () -> abi.freeUpcallStub(dummyAddress));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -125,7 +131,7 @@ public class TestUpcall extends CallGeneratorHelper {
     @SuppressWarnings("unchecked")
     static MemoryAddress makeCallback(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
         if (params.isEmpty()) {
-            return abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(false));
+            return dummyAddress;
         }
 
         AtomicReference<Object[]> box = new AtomicReference<>();
@@ -162,7 +168,9 @@ public class TestUpcall extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, false, paramLayouts)
                 : FunctionDescriptor.ofVoid(false, paramLayouts);
-        return abi.upcallStub(mh, func);
+        MemoryAddress stub = abi.upcallStub(mh, func);
+        cleaner.register(stub, () -> abi.freeUpcallStub(stub));
+        return stub;
     }
 
     private static void assertStructEquals(MemorySegment s1, MemorySegment s2, MemoryLayout layout) {
