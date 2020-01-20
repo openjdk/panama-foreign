@@ -147,9 +147,9 @@ final class $vectortype$ extends $abstractvectortype$ {
     @ForceInline
     $shuffletype$ iotaShuffle(int start, int step, boolean wrap) {
       if (wrap) {
-        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, step, wrap, (l, lstart, lstep) -> new $shuffletype$(i -> (VectorIntrinsics.wrapToRange(i*lstep + lstart, l))));
+        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, step, 1, (l, lstart, lstep) -> new $shuffletype$(i -> (VectorIntrinsics.wrapToRange(i*lstep + lstart, l))));
       } else {
-        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, step, wrap, (l, lstart, lstep) -> new $shuffletype$(i -> (i*lstep + lstart)));
+        return ($shuffletype$)VectorIntrinsics.shuffleIota(ETYPE, $shuffletype$.class, VSPECIES, VLENGTH, start, step, 0, (l, lstart, lstep) -> new $shuffletype$(i -> (i*lstep + lstart)));
       }
     }
 
