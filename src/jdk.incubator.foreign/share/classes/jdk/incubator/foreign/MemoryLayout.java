@@ -221,7 +221,7 @@ public interface MemoryLayout extends Constable {
      * <li>{@code A=512} is the most strict alignment required by the x86/SV ABI (for AVX-512 data).</li>
      * </ul>
      *
-     * @implSpec if no explicit alignment constraint was set on this layout (see {@link #withBitAlignment(long)}),
+     * If no explicit alignment constraint was set on this layout (see {@link #withBitAlignment(long)}),
      * then this method returns the <a href="#layout-align">natural alignment</a> constraint (in bits) associated with this layout.
      *
      * @return the layout alignment constraint, in bits.
@@ -239,7 +239,7 @@ public interface MemoryLayout extends Constable {
      * <li>{@code A=64} is the most strict alignment required by the x86/SV ABI (for AVX-512 data).</li>
      * </ul>
      *
-     * @implSpec if no explicit alignment constraint was set on this layout (see {@link #withBitAlignment(long)}),
+     * If no explicit alignment constraint was set on this layout (see {@link #withBitAlignment(long)}),
      * then this method returns the <a href="#layout-align">natural alignment</a> constraint (in bytes) associated with this layout.
      *
      * @return the layout alignment constraint, in bytes.
