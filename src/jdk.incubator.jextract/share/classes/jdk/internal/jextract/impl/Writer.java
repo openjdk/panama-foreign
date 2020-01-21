@@ -49,7 +49,9 @@ public final class Writer {
         if (sources.isEmpty()) {
             return List.of();
         } else {
-            return InMemoryJavaCompiler.compile(sources, "-d", dest.toAbsolutePath().toString());
+            return InMemoryJavaCompiler.compile(sources, 
+                "--add-modules", "jdk.incubator.foreign",
+                "-d", dest.toAbsolutePath().toString());
         }
     }
 

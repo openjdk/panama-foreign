@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,17 +23,31 @@
  * questions.
  */
 
-/**
- * Internal option processing API
- *
- * @since 9
- */
-module jdk.internal.opt {
-    exports jdk.internal.joptsimple to
-        jdk.incubator.jextract,
-        jdk.jlink,
-        jdk.jshell;
+package jdk.incubator.jextract.tool;
 
-    exports jdk.internal.joptsimple.util to
-        jdk.incubator.jextract;
+import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Position;
+
+public class Filter {
+
+    public static Declaration.Scoped filter(Declaration.Scoped decl, String... validNames) {
+        Declaration[] newMembers = decl.members().stream()
+                .filter(d -> filterDecl(d, validNames))
+                .toArray(Declaration[]::new);
+        return Declaration.toplevel(decl.pos(), newMembers);
+    }
+
+    static boolean filterDecl(Declaration d, String... validNames) {
+        if (d.pos() == Position.NO_POSITION) {
+            return false;
+        } else {
+            for (String s : validNames) {
+                String pathName = d.pos().path().toString();
+                if (pathName.contains(s)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }

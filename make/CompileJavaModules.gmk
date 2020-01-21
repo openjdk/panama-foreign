@@ -425,7 +425,7 @@ jdk.internal.jvmstat_COPY += aliasmap
 
 ################################################################################
 
-jdk.incubator.jextract_COPY += .properties
+jdk.incubator.jextract_COPY += .properties .template
 
 ################################################################################
 
