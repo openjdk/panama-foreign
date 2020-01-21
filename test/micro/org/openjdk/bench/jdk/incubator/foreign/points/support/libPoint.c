@@ -20,44 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.bench.jdk.incubator.foreign.points.support;
+#include <math.h>
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+#include "points.h"
 
-public class BBPoint {
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
-    static {
-        System.loadLibrary("JNIPoint");
-    }
+EXPORT double distance(Point p1, Point p2) {
+    int xDist = abs(p1.x - p2.x);
+    int yDist = abs(p1.y - p2.y);
+    return sqrt((xDist * xDist) + (yDist * yDist));
+}
 
-    private final ByteBuffer buff;
-
-    public BBPoint(int x, int y) {
-        this.buff = ByteBuffer.allocateDirect(4 * 2).order(ByteOrder.nativeOrder());
-        setX(x);
-        setY(y);
-    }
-
-    public void setX(int x) {
-        buff.putInt(0, x);
-    }
-
-    public int getX() {
-        return buff.getInt(0);
-    }
-
-    public int getY() {
-        return buff.getInt(1);
-    }
-
-    public void setY(int y) {
-        buff.putInt(0, y);
-    }
-
-    public double distanceTo(BBPoint other) {
-        return distance(buff, other.buff);
-    }
-
-    private static native double distance(ByteBuffer p1, ByteBuffer p2);
+EXPORT double distance_ptrs(Point* p1, Point* p2) {
+    return distance(*p1, *p2);
 }
