@@ -140,6 +140,18 @@ public class TestLayouts {
         layout.hashCode();
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadUnboundSequenceLayoutResize() {
+        SequenceLayout seq = MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT);
+        seq.withElementCount(-1);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadBoundSequenceLayoutResize() {
+        SequenceLayout seq = MemoryLayout.ofSequence(10, MemoryLayouts.JAVA_INT);
+        seq.withElementCount(-1);
+    }
+
     @Test
     public void testEmptyGroup() {
         MemoryLayout struct = MemoryLayout.ofStruct();
