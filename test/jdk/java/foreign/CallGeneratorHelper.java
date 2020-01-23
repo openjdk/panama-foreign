@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.testng.annotations.*;
+
+import static jdk.incubator.foreign.MemoryLayouts.*;
 import static org.testng.Assert.*;
 
 public class CallGeneratorHelper extends NativeTestHelper {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,10 @@ import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
 import java.nio.ByteOrder;
+
+import static jdk.incubator.foreign.SystemABI.ABI_AARCH64;
+import static jdk.incubator.foreign.SystemABI.ABI_SYSV;
+import static jdk.incubator.foreign.SystemABI.ABI_WINDOWS;
 
 /**
  * This class defines useful layout constants. Some of the constants defined in this class are explicit in both
@@ -139,6 +143,139 @@ public final class MemoryLayouts {
      * A value layout constant whose size is the same as that of a Java {@code double}, and byte order set to {@link ByteOrder#nativeOrder()}.
      */
     public static final ValueLayout JAVA_DOUBLE = MemoryLayout.ofValueBits(64, ByteOrder.nativeOrder());
+
+    /**
+     * The {@code _Bool} native type.
+     */
+    public static final ValueLayout C_BOOL;
+
+    /**
+     * The {@code unsigned char} native type.
+     */
+    public static final ValueLayout C_UCHAR;
+
+    /**
+     * The {@code signed char} native type.
+     */
+    public static final ValueLayout C_SCHAR ;
+
+    /**
+     * The {@code char} native type.
+     */
+    public static final ValueLayout C_CHAR;
+
+    /**
+     * The {@code short} native type.
+     */
+    public static final ValueLayout C_SHORT;
+
+    /**
+     * The {@code unsigned short} native type.
+     */
+    public static final ValueLayout C_USHORT;
+
+    /**
+     * The {@code int} native type.
+     */
+    public static final ValueLayout C_INT;
+
+    /**
+     * The {@code unsigned int} native type.
+     */
+    public static final ValueLayout C_UINT;
+
+    /**
+     * The {@code long} native type.
+     */
+    public static final ValueLayout C_LONG;
+
+    /**
+     * The {@code unsigned long} native type.
+     */
+    public static final ValueLayout C_ULONG;
+
+    /**
+     * The {@code long long} native type.
+     */
+    public static final ValueLayout C_LONGLONG;
+
+    /**
+     * The {@code unsigned long long} native type.
+     */
+    public static final ValueLayout C_ULONGLONG;
+
+    /**
+     * The {@code float} native type.
+     */
+    public static final ValueLayout C_FLOAT;
+
+    /**
+     * The {@code double} native type.
+     */
+    public static final ValueLayout C_DOUBLE;
+
+    /**
+     * The {@code T*} native type.
+     */
+    public static final ValueLayout C_POINTER;
+
+    static {
+        SystemABI abi = SystemABI.getInstance();
+        switch (abi.name()) {
+            case ABI_SYSV -> {
+                C_BOOL = SysV.C_BOOL;
+                C_UCHAR = SysV.C_UCHAR;
+                C_SCHAR = SysV.C_SCHAR;
+                C_CHAR = SysV.C_CHAR;
+                C_SHORT = SysV.C_SHORT;
+                C_USHORT = SysV.C_USHORT;
+                C_INT = SysV.C_INT;
+                C_UINT = SysV.C_UINT;
+                C_LONG = SysV.C_LONG;
+                C_ULONG = SysV.C_ULONG;
+                C_LONGLONG = SysV.C_LONGLONG;
+                C_ULONGLONG = SysV.C_ULONGLONG;
+                C_FLOAT = SysV.C_FLOAT;
+                C_DOUBLE = SysV.C_DOUBLE;
+                C_POINTER = SysV.C_POINTER;
+            }
+            case ABI_WINDOWS -> {
+                C_BOOL = WinABI.C_BOOL;
+                C_UCHAR = WinABI.C_UCHAR;
+                C_SCHAR = WinABI.C_SCHAR;
+                C_CHAR = WinABI.C_CHAR;
+                C_SHORT = WinABI.C_SHORT;
+                C_USHORT = WinABI.C_USHORT;
+                C_INT = WinABI.C_INT;
+                C_UINT = WinABI.C_UINT;
+                C_LONG = WinABI.C_LONG;
+                C_ULONG = WinABI.C_ULONG;
+                C_LONGLONG = WinABI.C_LONGLONG;
+                C_ULONGLONG = WinABI.C_ULONGLONG;
+                C_FLOAT = WinABI.C_FLOAT;
+                C_DOUBLE = WinABI.C_DOUBLE;
+                C_POINTER = WinABI.C_POINTER;
+            }
+            case ABI_AARCH64 -> {
+                C_BOOL = AArch64ABI.C_BOOL;
+                C_UCHAR = AArch64ABI.C_UCHAR;
+                C_SCHAR = AArch64ABI.C_SCHAR;
+                C_CHAR = AArch64ABI.C_CHAR;
+                C_SHORT = AArch64ABI.C_SHORT;
+                C_USHORT = AArch64ABI.C_USHORT;
+                C_INT = AArch64ABI.C_INT;
+                C_UINT = AArch64ABI.C_UINT;
+                C_LONG = AArch64ABI.C_LONG;
+                C_ULONG = AArch64ABI.C_ULONG;
+                C_LONGLONG = AArch64ABI.C_LONGLONG;
+                C_ULONGLONG = AArch64ABI.C_ULONGLONG;
+                C_FLOAT = AArch64ABI.C_FLOAT;
+                C_DOUBLE = AArch64ABI.C_DOUBLE;
+                C_POINTER = AArch64ABI.C_POINTER;
+            }
+            default -> throw new IllegalStateException("Unsupported ABI: " + abi.name());
+        }
+    }
 
     /**
      * This class defines layout constants modelling standard primitive types supported by the x64 SystemV ABI.
