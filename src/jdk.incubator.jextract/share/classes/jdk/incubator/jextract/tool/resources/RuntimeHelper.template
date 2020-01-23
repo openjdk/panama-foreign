@@ -3,6 +3,8 @@
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 
 import java.lang.invoke.MethodHandle;
@@ -13,6 +15,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
+
+import static ${C_LANG}.*;
 
 public class RuntimeHelper {
 
@@ -62,9 +66,12 @@ public class RuntimeHelper {
 
     public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc) {
         return lookup(LIBRARIES, name).map(
-                addr -> ABI.downcallHandle(addr,
-                                           MethodType.fromMethodDescriptorString(desc, LOADER),
-                                           fdesc)).orElse(null);
+                addr -> {
+                    MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
+                    return fdesc.isVariadic() ?
+                        VarargsInvoker.make(addr, mt, fdesc) :
+                        ABI.downcallHandle(addr, mt, fdesc);
+                }).orElse(null);
     }
 
     public static final MemoryAddress upcallStub(MethodHandle handle, FunctionDescriptor fdesc) {
@@ -79,6 +86,123 @@ public class RuntimeHelper {
             return upcallStub(handle, fdesc);
         } catch (Throwable ex) {
             throw new AssertionError(ex);
+        }
+    }
+
+    private static class VarargsInvoker {
+        private static final MethodHandle INVOKE_MH;
+        private final MemoryAddress symbol;
+        private final MethodType varargs;
+        private final FunctionDescriptor function;
+
+        private VarargsInvoker(MemoryAddress symbol, MethodType type, FunctionDescriptor function) {
+            this.symbol = symbol;
+            this.varargs = type;
+            this.function = function;
+        }
+
+        static {
+            try {
+                INVOKE_MH = MethodHandles.lookup().findVirtual(VarargsInvoker.class, "invoke", MethodType.methodType(Object.class, Object[].class));
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static MethodHandle make(MemoryAddress symbol, MethodType type, FunctionDescriptor function) {
+            VarargsInvoker invoker = new VarargsInvoker(symbol, type, function);
+            return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, type.parameterCount())
+                    .asType(type);
+        }
+
+        private Object invoke(Object[] args) throws Throwable {
+            // one trailing Object[]
+            int nNamedArgs = function.argumentLayouts().size();
+            assert(args.length == nNamedArgs + 1);
+            // The last argument is the array of vararg collector
+            Object[] unnamedArgs = (Object[]) args[args.length - 1];
+
+            int argsCount = nNamedArgs + unnamedArgs.length;
+            Class<?>[] argTypes = new Class<?>[argsCount];
+            MemoryLayout[] argLayouts = new MemoryLayout[nNamedArgs + unnamedArgs.length];
+
+            int pos = 0;
+            for (pos = 0; pos < nNamedArgs; pos++) {
+                argTypes[pos] = varargs.parameterType(pos);
+                argLayouts[pos] = function.argumentLayouts().get(pos);
+            }
+
+            assert pos == nNamedArgs;
+            for (Object o: unnamedArgs) {
+                argTypes[pos] = normalize(o.getClass());
+                argLayouts[pos] = variadicLayout(argTypes[pos]);
+                pos++;
+            }
+            assert pos == argsCount;
+
+            MethodType mt = MethodType.methodType(varargs.returnType(), argTypes);
+            FunctionDescriptor f = (function.returnLayout().isEmpty()) ?
+                    FunctionDescriptor.ofVoid(false, argLayouts) :
+                    FunctionDescriptor.of(function.returnLayout().get(), false, argLayouts);
+            MethodHandle mh = SystemABI.getInstance().downcallHandle(symbol, mt, f);
+            // flatten argument list so that it can be passed to an asSpreader MH
+            Object[] allArgs = new Object[nNamedArgs + unnamedArgs.length];
+            System.arraycopy(args, 0, allArgs, 0, nNamedArgs);
+            System.arraycopy(unnamedArgs, 0, allArgs, nNamedArgs, unnamedArgs.length);
+
+            return mh.asSpreader(Object[].class, argsCount).invoke(allArgs);
+        }
+
+        private static Class<?> unboxIfNeeded(Class<?> clazz) {
+            if (clazz == Boolean.class) {
+                return boolean.class;
+            } else if (clazz == Void.class) {
+                return void.class;
+            } else if (clazz == Byte.class) {
+                return byte.class;
+            } else if (clazz == Character.class) {
+                return char.class;
+            } else if (clazz == Short.class) {
+                return short.class;
+            } else if (clazz == Integer.class) {
+                return int.class;
+            } else if (clazz == Long.class) {
+                return long.class;
+            } else if (clazz == Float.class) {
+                return float.class;
+            } else if (clazz == Double.class) {
+                return double.class;
+            } else {
+                return clazz;
+            }
+        }
+
+        private Class<?> normalize(Class<?> c) {
+            c = unboxIfNeeded(c);
+            if (c.isPrimitive()) {
+                return c;
+            }
+            if (MemoryAddress.class.isAssignableFrom(c)) {
+                return MemoryAddress.class;
+            }
+            if (MemorySegment.class.isAssignableFrom(c)) {
+                return MemorySegment.class;
+            }
+            throw new IllegalArgumentException("Invalid type for ABI: " + c.getTypeName());
+        }
+
+        private MemoryLayout variadicLayout(Class<?> c) {
+            if (c == char.class || c == byte.class || c == short.class || c == int.class || c == long.class) {
+                //it is ok to approximate with a machine word here; numerics arguments in a prototype-less
+                //function call are always rounded up to a register size anyway.
+                return C_LONG;
+            } else if (c == float.class || c == double.class) {
+                return C_DOUBLE;
+            } else if (MemoryAddress.class.isAssignableFrom(c)) {
+                return C_POINTER;
+            } else {
+                throw new IllegalArgumentException("Unhandled variadic argument class: " + c);
+            }
         }
     }
 }

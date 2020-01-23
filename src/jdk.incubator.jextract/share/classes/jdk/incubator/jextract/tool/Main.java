@@ -43,6 +43,7 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.spi.ToolProvider;
 
 /**
  * Simple extraction tool which generates a minimal Java API. Such an API consists mainly of static methods,
@@ -79,11 +80,11 @@ public class Main {
         this.err = err;
     }
 
-    private int printHelp(OptionParser parser) {
+    private int printHelp(OptionParser parser, int exitCode) {
         try {
             parser.printHelpOn(err);
         } catch (IOException ignored) {}
-        return OPTION_ERROR;
+        return exitCode;
     }
 
     public static void main(String[] args) {
@@ -98,10 +99,6 @@ public class Main {
 
     private int run(String[] args) {
         OptionParser parser = new OptionParser(false);
-        if (args.length == 0) {
-            return printHelp(parser);
-        }
-
         parser.accepts("C", format("help.C")).withRequiredArg();
         parser.accepts("I", format("help.I")).withRequiredArg();
         parser.acceptsAll(List.of("L", "library-path"), format("help.L")).withRequiredArg();
@@ -117,11 +114,15 @@ public class Main {
         try {
             optionSet = parser.parse(args);
         } catch (OptionException oe) {
-            return printHelp(parser);
+            return printHelp(parser, OPTION_ERROR);
         }
 
-        if (optionSet.has("h") || optionSet.nonOptionArguments().size() != 1) {
-            return printHelp(parser);
+        if (optionSet.has("h")) {
+            return printHelp(parser, SUCCESS);
+        }
+
+        if (optionSet.nonOptionArguments().size() != 1) {
+            return printHelp(parser, OPTION_ERROR);
         }
 
         Options.Builder builder = Options.builder();
@@ -209,5 +210,27 @@ public class Main {
             return RUNTIME_ERROR;
         }
         return SUCCESS;
+    }
+
+    public static class JextractToolProvider implements ToolProvider {
+        @Override
+        public String name() {
+            return "jextract";
+        }
+
+        @Override
+        public int run(PrintWriter out, PrintWriter err, String... args) {
+            // defensive check to throw security exception early.
+            // Note that the successful run of jextract under security
+            // manager would require far more permissions like loading
+            // library (clang), file system access etc.
+            if (System.getSecurityManager() != null) {
+                System.getSecurityManager().
+                    checkPermission(new RuntimePermission("jextract"));
+            }
+
+            Main instance = new Main(out, err);
+            return instance.run(args);
+        }
     }
 }

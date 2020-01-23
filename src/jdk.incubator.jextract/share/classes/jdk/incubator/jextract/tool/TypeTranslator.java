@@ -115,6 +115,9 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
         for (Type arg : type.argumentTypes()) {
             mtype = mtype.appendParameterTypes(getJavaType(arg));
         }
+        if (type.varargs()) {
+            mtype = mtype.appendParameterTypes(Object[].class);
+        }
         return mtype;
     }
 }
