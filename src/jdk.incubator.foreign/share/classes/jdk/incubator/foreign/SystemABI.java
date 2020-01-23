@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,21 @@ import java.lang.invoke.MethodType;
 public interface SystemABI {
 
     /**
+     * The name of the SysV ABI
+     */
+    String ABI_SYSV = "SysV";
+
+    /**
+     * The name of the Windows ABI
+     */
+    String ABI_WINDOWS = "Windows";
+
+    /**
+     * The name of the AArch64 ABI
+     */
+    String ABI_AARCH64 = "AArch64";
+
+    /**
      * Obtain a method handle which can be used to call a given native function,
      * given default calling covention.
      *
@@ -69,6 +84,13 @@ public interface SystemABI {
     default void freeUpcallStub(MemoryAddress address) {
         UpcallStubs.freeUpcallStub(address);
     }
+
+    /**
+     * Returns the name of this ABI.
+     *
+     * @return the name
+     */
+    String name();
 
     /**
      * Obtain an instance of the system ABI.
