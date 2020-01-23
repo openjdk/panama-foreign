@@ -110,7 +110,26 @@ SequenceLayout seq = MemoryLayout.ofSequence(5,
  *
  * We can obtain the offset of the member layout named <code>value</code> from <code>seq</code>, as follows:
  * <blockquote><pre>{@code
-long valueOffset = seq.offset(PathElement.sequenceElement(), PathElement.groupElement("value"));
+long valueOffset = seq.addOffset(PathElement.sequenceElement(), PathElement.groupElement("value"));
+ * }</pre></blockquote>
+ *
+ * Similarly, we can select the member layout named {@code value}, as follows:
+ * <blockquote><pre>{@code
+MemoryLayout value = seq.select(PathElement.sequenceElement(), PathElement.groupElement("value"));
+ * }</pre></blockquote>
+ *
+ * And, we can also replace the layout named {@code value} with another layout, as follows:
+ * <blockquote><pre>{@code
+MemoryLayout newSeq = seq.map(l -> MemoryLayout.ofPadding(32), PathElement.sequenceElement(), PathElement.groupElement("value"));
+ * }</pre></blockquote>
+ *
+ * That is, the above declaration is identical to the following, more verbose one:
+ * <blockquote><pre>{@code
+MemoryLayout newSeq = MemoryLayout.ofSequence(5,
+    MemoryLayout.ofStruct(
+        MemoryLayout.ofPaddingBits(32),
+        MemoryLayout.ofPaddingBits(32)
+));
  * }</pre></blockquote>
  *
  * Similarly, we can select the member layout named {@code value}, as follows:
@@ -168,6 +187,9 @@ public interface MemoryLayout extends Constable {
     /**
      * Does this layout have a specified size? A layout does not have a specified size if it is (or contains) a sequence layout whose
      * size is unspecified (see {@link SequenceLayout#elementCount()}).
+     *
+     * Value layouts (see {@link ValueLayout}) and padding layouts (see {@link MemoryLayout#ofPaddingBits(long)})
+     * <em>always</em> have a specified size, therefore this method always returns {@code true} in these cases.
      *
      * @return {@code true}, if this layout has a specified size.
      */
