@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -23,44 +23,36 @@
  */
 
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemoryLayouts.AArch64ABI;
+import jdk.incubator.foreign.MemoryLayouts.SysV;
+import jdk.incubator.foreign.MemoryLayouts.WinABI;
+import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.ArgumentClass;
-import sun.security.action.GetPropertyAction;
+
+import static jdk.incubator.foreign.SystemABI.ABI_AARCH64;
+import static jdk.incubator.foreign.SystemABI.ABI_SYSV;
+import static jdk.incubator.foreign.SystemABI.ABI_WINDOWS;
 
 public class NativeTestHelper {
 
-    private static final boolean isWindows;
-    private static final boolean isAArch64;
-    private static final boolean isX86;
+    public static final SystemABI ABI = SystemABI.getInstance();
 
-
-    static {
-        String arch = GetPropertyAction.privilegedGetProperty("os.arch");
-        isX86 = arch.equals("amd64") || arch.equals("x86_64");
-        isAArch64 = arch.equals("aarch64");
-        String os = GetPropertyAction.privilegedGetProperty("os.name");
-        isWindows = os.startsWith("Windows");
-    }
-
-    public static final ValueLayout C_CHAR = pick(MemoryLayouts.SysV.C_CHAR, MemoryLayouts.WinABI.C_CHAR, MemoryLayouts.AArch64ABI.C_CHAR);
-    public static final ValueLayout C_INT = pick(MemoryLayouts.SysV.C_INT, MemoryLayouts.WinABI.C_INT, MemoryLayouts.AArch64ABI.C_INT);
-    public static final ValueLayout C_FLOAT = pick(MemoryLayouts.SysV.C_FLOAT, MemoryLayouts.WinABI.C_FLOAT, MemoryLayouts.AArch64ABI.C_FLOAT);
-    public static final ValueLayout C_ULONG = pick(MemoryLayouts.SysV.C_ULONG, MemoryLayouts.WinABI.C_ULONG, MemoryLayouts.AArch64ABI.C_ULONG);
-    public static final ValueLayout C_DOUBLE = pick(MemoryLayouts.SysV.C_DOUBLE, MemoryLayouts.WinABI.C_DOUBLE, MemoryLayouts.AArch64ABI.C_DOUBLE);
-    public static final ValueLayout C_POINTER = pick(MemoryLayouts.SysV.C_POINTER, MemoryLayouts.WinABI.C_POINTER, MemoryLayouts.AArch64ABI.C_POINTER);
-    public static final ValueLayout C_LONGLONG = pick(MemoryLayouts.SysV.C_LONGLONG, MemoryLayouts.WinABI.C_LONGLONG, MemoryLayouts.AArch64ABI.C_LONGLONG);
-    public static final ValueLayout C_ULONGLONG = pick(MemoryLayouts.SysV.C_ULONGLONG, MemoryLayouts.WinABI.C_ULONGLONG, MemoryLayouts.AArch64ABI.C_ULONGLONG);
+    public static final ValueLayout C_CHAR = pick(SysV.C_CHAR, WinABI.C_CHAR, AArch64ABI.C_CHAR);
+    public static final ValueLayout C_INT = pick(SysV.C_INT, WinABI.C_INT, AArch64ABI.C_INT);
+    public static final ValueLayout C_FLOAT = pick(SysV.C_FLOAT, WinABI.C_FLOAT, AArch64ABI.C_FLOAT);
+    public static final ValueLayout C_ULONG = pick(SysV.C_ULONG, WinABI.C_ULONG, AArch64ABI.C_ULONG);
+    public static final ValueLayout C_DOUBLE = pick(SysV.C_DOUBLE, WinABI.C_DOUBLE, AArch64ABI.C_DOUBLE);
+    public static final ValueLayout C_POINTER = pick(SysV.C_POINTER, WinABI.C_POINTER, AArch64ABI.C_POINTER);
 
     private static ValueLayout pick(ValueLayout sysv, ValueLayout win, ValueLayout aarch) {
-        if (isX86) {
-            return isWindows ? win : sysv;
-        } else if (isAArch64) {
-            return aarch;
-        } else {
-            throw new UnsupportedOperationException("Unsupported platform");
-        }
+        return switch(ABI.name()) {
+            case ABI_SYSV -> sysv;
+            case ABI_WINDOWS -> win;
+            case ABI_AARCH64 -> aarch;
+            default -> throw new UnsupportedOperationException("Unsupported ABI: " + ABI.name());
+        };
     }
 
     public static boolean isIntegral(MemoryLayout layout) {
@@ -72,6 +64,6 @@ public class NativeTestHelper {
     }
 
     public static ValueLayout asVarArg(ValueLayout layout) {
-        return isWindows ? MemoryLayouts.WinABI.asVarArg(layout) : layout;
+        return ABI.name().equals(ABI_WINDOWS) ? WinABI.asVarArg(layout) : layout;
     }
 }
