@@ -78,24 +78,6 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
         this.pkgName = pkgName;
     }
 
-    private static String getCLangConstantsHolder() {
-        String prefix = "jdk.incubator.foreign.MemoryLayouts.";
-        String arch = System.getProperty("os.arch");
-        String os = System.getProperty("os.name");
-        if (arch.equals("amd64") || arch.equals("x86_64")) {
-            if (os.startsWith("Windows")) {
-                return prefix + "WinABI";
-            } else {
-                return prefix + "SysV";
-            }
-        } else if (arch.equals("aarch64")) {
-            return prefix + "AArch64ABI";
-        }
-        throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
-    }
-
-    private static final String C_LANG_CONSTANTS_HOLDER = getCLangConstantsHolder();
-
     public JavaFileObject[] generate(Declaration.Scoped decl) {
         builder.addPackagePrefix(pkgName);
         builder.classBegin(clsName);
@@ -117,7 +99,7 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
                     fileFromString(pkgName, clsName, src),
                     fileFromString(pkgName,"RuntimeHelper", (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
                             Files.readAllLines(Paths.get(runtimeHelper.toURI()))
-                            .stream().collect(Collectors.joining("\n")).replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER))
+                            .stream().collect(Collectors.joining("\n")))
             };
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
