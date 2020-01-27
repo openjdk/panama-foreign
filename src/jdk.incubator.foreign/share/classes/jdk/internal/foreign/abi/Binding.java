@@ -24,6 +24,8 @@ package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.MemoryLayout;
 
+import java.util.Objects;
+
 public abstract class Binding {
     static final int MOVE_TAG = 0;
     static final int DEREFERENCE_TAG = 1;
@@ -33,7 +35,7 @@ public abstract class Binding {
     static final int BASE_ADDRESS_TAG = 5;
     static final int DUP_TAG = 6;
 
-    final int tag;
+    private final int tag;
 
     private Binding(int tag) {
         this.tag = tag;
@@ -67,10 +69,24 @@ public abstract class Binding {
         @Override
         public String toString() {
             return "Move{" +
-                    "tag=" + tag +
+                    "tag=" + tag() +
                     ", storage=" + storage +
                     ", type=" + type +
                     '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Move move = (Move) o;
+            return storage.equals(move.storage) &&
+                    type.equals(move.type);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(tag(), storage, type);
         }
     }
 
@@ -98,10 +114,24 @@ public abstract class Binding {
         @Override
         public String toString() {
             return "Dereference{" +
-                    "tag=" + tag +
+                    "tag=" + tag() +
                     ", offset=" + offset +
                     ", type=" + type +
                     '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Dereference that = (Dereference) o;
+            return offset == that.offset &&
+                    type.equals(that.type);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(tag(), offset, type);
         }
     }
 
@@ -129,10 +159,24 @@ public abstract class Binding {
         @Override
         public String toString() {
             return "Copy{" +
-                    "tag=" + tag +
+                    "tag=" + tag() +
                     ", size=" + size +
                     ", alignment=" + alignment +
                     '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Copy copy = (Copy) o;
+            return size == copy.size &&
+                    alignment == copy.alignment;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(tag(), size, alignment);
         }
     }
 
@@ -160,9 +204,24 @@ public abstract class Binding {
         @Override
         public String toString() {
             return "AllocateBuffer{" +
+                    "tag=" + tag() +
                     "size=" + size +
                     ", alignment=" + alignment +
                     '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            AllocateBuffer that = (AllocateBuffer) o;
+            return size == that.size &&
+                    alignment == that.alignment;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(tag(), size, alignment);
         }
     }
 
@@ -176,7 +235,20 @@ public abstract class Binding {
 
         @Override
         public String toString() {
-            return "BoxAddress{}";
+            return "BoxAddress{" +
+                    "tag=" + tag() +
+                    "}";
+        }
+
+        @Override
+        public int hashCode() {
+            return tag();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            return o != null && getClass() == o.getClass();
         }
     }
 
@@ -190,7 +262,20 @@ public abstract class Binding {
 
         @Override
         public String toString() {
-            return "BaseAddress{}";
+            return "BaseAddress{" +
+                    "tag=" + tag() +
+                    "}";
+        }
+
+        @Override
+        public int hashCode() {
+            return tag();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            return o != null && getClass() == o.getClass();
         }
     }
 
@@ -204,7 +289,20 @@ public abstract class Binding {
 
         @Override
         public String toString() {
-            return "Dup{}";
+            return "Dup{" +
+                    "tag=" + tag() +
+                    "}";
+        }
+
+        @Override
+        public int hashCode() {
+            return tag();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            return o != null && getClass() == o.getClass();
         }
     }
 }

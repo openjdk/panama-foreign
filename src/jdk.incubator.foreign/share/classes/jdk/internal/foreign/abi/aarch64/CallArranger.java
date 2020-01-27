@@ -87,9 +87,9 @@ public class CallArranger {
     );
 
     // record
-    private static class Bindings {
-        final CallingSequence callingSequence;
-        final boolean isInMemoryReturn;
+    public static class Bindings {
+        public final CallingSequence callingSequence;
+        public final boolean isInMemoryReturn;
 
         Bindings(CallingSequence callingSequence, boolean isInMemoryReturn) {
             this.callingSequence = callingSequence;
@@ -97,7 +97,7 @@ public class CallArranger {
         }
     }
 
-    private static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+    public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         SharedUtils.checkFunctionTypes(mt, cDesc);
 
         CallingSequenceBuilder csb = new CallingSequenceBuilder(forUpcall);
@@ -378,6 +378,7 @@ public class CallArranger {
                             }
                             bindings.add(new Binding.Dereference(offset, type));
                             bindings.add(new Binding.Move(storage, type));
+                            offset += copy;
                         }
                     } else {
                         spillStructUnbox(bindings, layout);
@@ -402,7 +403,7 @@ public class CallArranger {
                     if (regs != null) {
                         long offset = 0;
                         for (int i = 0; i < group.memberLayouts().size(); i++) {
-                            VMStorage storage = regs[i++];
+                            VMStorage storage = regs[i];
                             final long size = group.memberLayouts().get(i).byteSize();
                             Class<?> type = SharedUtils.primitiveCarrierForSize(size);
                             if (i + 1 < group.memberLayouts().size()) {
@@ -503,7 +504,7 @@ public class CallArranger {
                     if (regs != null) {
                         long offset = 0;
                         for (int i = 0; i < group.memberLayouts().size(); i++) {
-                            VMStorage storage = regs[i++];
+                            VMStorage storage = regs[i];
                             final long size = group.memberLayouts().get(i).byteSize();
                             Class<?> type = SharedUtils.primitiveCarrierForSize(size);
                             bindings.add(new Binding.Dup());
