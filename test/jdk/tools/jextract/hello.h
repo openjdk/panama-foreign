@@ -21,5 +21,8 @@
  * questions.
  */
 
+/* make sure compiler built-in headers can be included */
+#include <stddef.h>
+
 void func(int);
 int printf(char* fmt, ...);

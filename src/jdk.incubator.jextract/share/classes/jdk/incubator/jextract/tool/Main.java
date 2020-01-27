@@ -130,6 +130,9 @@ public class Main {
             optionSet.valuesOf("I").forEach(p -> builder.addClangArg("-I" + p));
         }
 
+        Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
+        builder.addClangArg("-I" + builtinInc);
+
         if (optionSet.has("C")) {
             optionSet.valuesOf("C").forEach(p -> builder.addClangArg((String) p));
         }
