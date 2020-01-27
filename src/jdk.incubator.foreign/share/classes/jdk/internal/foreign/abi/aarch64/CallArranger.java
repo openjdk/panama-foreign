@@ -40,23 +40,14 @@ import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.ProgrammableInvoker;
 import jdk.internal.foreign.abi.ProgrammableUpcallHandler;
 import jdk.internal.foreign.abi.VMStorage;
-import jdk.internal.foreign.abi.aarch64.AArch64Architecture;
-import jdk.internal.foreign.abi.aarch64.ArgumentClassImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
-import static java.lang.invoke.MethodHandles.collectArguments;
-import static java.lang.invoke.MethodHandles.identity;
-import static java.lang.invoke.MethodHandles.insertArguments;
-import static java.lang.invoke.MethodHandles.permuteArguments;
-import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
 
 /**
@@ -69,10 +60,6 @@ public class CallArranger {
     private static final int STACK_SLOT_SIZE = 8;
     private static final int MAX_AGGREGATE_REGS_SIZE = 2;
     public static final int MAX_REGISTER_ARGUMENTS = 8;
-
-    private static final MethodHandle MH_ALLOC_BUFFER;
-    private static final MethodHandle MH_BASEADDRESS;
-    private static final MethodHandle MH_BUFFER_COPY;
 
     private static final VMStorage INDIRECT_RESULT = r8;
 
@@ -99,108 +86,64 @@ public class CallArranger {
         0    // No shadow space
     );
 
-    static {
-        try {
-            var lookup = MethodHandles.lookup();
-            MH_ALLOC_BUFFER = lookup.findStatic(MemorySegment.class, "allocateNative",
-                    methodType(MemorySegment.class, MemoryLayout.class));
-            MH_BASEADDRESS = lookup.findVirtual(MemorySegment.class, "baseAddress",
-                    methodType(MemoryAddress.class));
-            MH_BUFFER_COPY = lookup.findStatic(CallArranger.class, "bufferCopy",
-                    methodType(void.class, MemoryAddress.class, MemorySegment.class));
-        } catch (ReflectiveOperationException e) {
-            throw new BootstrapMethodError(e);
+    // record
+    private static class Bindings {
+        final CallingSequence callingSequence;
+        final boolean isInMemoryReturn;
+
+        Bindings(CallingSequence callingSequence, boolean isInMemoryReturn) {
+            this.callingSequence = callingSequence;
+            this.isInMemoryReturn = isInMemoryReturn;
         }
+    }
+
+    private static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+        SharedUtils.checkFunctionTypes(mt, cDesc);
+
+        CallingSequenceBuilder csb = new CallingSequenceBuilder();
+
+        BindingCalculator argCalc = forUpcall ? new BoxBindingCalculator(true) : new UnboxBindingCalculator(true);
+        BindingCalculator retCalc = forUpcall ? new UnboxBindingCalculator(false) : new BoxBindingCalculator(false);
+
+        boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
+        if (returnInMemory) {
+            csb.addArgumentBindings(MemoryAddress.class, MemoryLayouts.AArch64ABI.C_POINTER,
+                    argCalc.getIndirectBindings());
+        } else if (cDesc.returnLayout().isPresent()) {
+            Class<?> carrier = mt.returnType();
+            MemoryLayout layout = cDesc.returnLayout().get();
+            csb.setReturnBindings(carrier, layout, retCalc.getBindings(carrier, layout));
+        }
+
+        for (int i = 0; i < mt.parameterCount(); i++) {
+            Class<?> carrier = mt.parameterType(i);
+            MemoryLayout layout = cDesc.argumentLayouts().get(i);
+            csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
+        }
+
+        return new Bindings(csb.build(), returnInMemory);
     }
 
     public static MethodHandle arrangeDowncall(long addr, MethodType mt, FunctionDescriptor cDesc) {
-        assert mt.parameterCount() == cDesc.argumentLayouts().size() : "arity must match!";
-        assert (mt.returnType() != void.class) == cDesc.returnLayout().isPresent() : "return type presence must match!";
+        Bindings bindings = getBindings(mt, cDesc, false);
 
-        CallingSequenceBuilder csb = new CallingSequenceBuilder();
+        MethodHandle handle = new ProgrammableInvoker(C, addr, bindings.callingSequence).getBoundMethodHandle();
 
-        UnboxBindingCalculator argCalc = new UnboxBindingCalculator(true);
-        BoxBindingCalculator retCalc = new BoxBindingCalculator(false);
-
-        boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
-        if (returnInMemory) {
-            csb.addArgument(MemoryAddress.class, MemoryLayouts.AArch64ABI.C_POINTER,
-                    argCalc.getIndirectBindings());
-        } else if (cDesc.returnLayout().isPresent()) {
-            csb.setReturnBindings(mt.returnType(), cDesc.returnLayout().get(),
-                    retCalc.getBindings(mt.returnType(), cDesc.returnLayout().get()));
+        if (bindings.isInMemoryReturn) {
+            handle = SharedUtils.adaptDowncallForIMR(handle, cDesc);
         }
 
-        for (int i = 0; i < mt.parameterCount(); i++) {
-            MemoryLayout layout = cDesc.argumentLayouts().get(i);
-            csb.addArgument(mt.parameterType(i), layout,
-                    argCalc.getBindings(mt.parameterType(i), layout));
-        }
-
-        CallingSequence cs = csb.build();
-
-        MethodHandle rawHandle = new ProgrammableInvoker(C, addr, cs).getBoundMethodHandle();
-
-        // TODO: identical to Windows x86 - move to shared code?
-        if (returnInMemory) {
-            assert rawHandle.type().returnType() == void.class : "return expected to be void for in memory returns";
-            assert rawHandle.type().parameterType(0) == MemoryAddress.class : "MemoryAddress expected as first param";
-
-            MethodHandle ret = identity(MemorySegment.class); // (MemorySegment) MemorySegment
-            rawHandle = collectArguments(ret, 1, rawHandle); // (MemorySegment, MemoryAddress ...) MemorySegment
-            rawHandle = collectArguments(rawHandle, 1, MH_BASEADDRESS); // (MemorySegment, MemorySegment ...) MemorySegment
-            MethodType oldType = rawHandle.type(); // (MemorySegment, MemorySegment, ...) MemorySegment
-            MethodType newType = oldType.dropParameterTypes(0, 1); // (MemorySegment, ...) MemorySegment
-            int[] reorder = IntStream.concat(IntStream.of(0), IntStream.range(0, oldType.parameterCount() - 1)).toArray(); // [0, 0, 1, 2, 3, ...]
-            rawHandle = permuteArguments(rawHandle, newType, reorder); // (MemorySegment, ...) MemoryAddress
-            rawHandle = collectArguments(rawHandle, 0, insertArguments(MH_ALLOC_BUFFER, 0, cDesc.returnLayout().get())); // (...) MemoryAddress
-        }
-
-        return rawHandle;
+        return handle;
     }
 
     public static UpcallHandler arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc) {
-        assert mt.parameterCount() == cDesc.argumentLayouts().size() : "arity must match!";
-        assert (mt.returnType() != void.class) == cDesc.returnLayout().isPresent() : "return type presence must match!";
+        Bindings bindings = getBindings(mt, cDesc, true);
 
-        CallingSequenceBuilder csb = new CallingSequenceBuilder();
-
-        BoxBindingCalculator argCalc = new BoxBindingCalculator(true);
-        UnboxBindingCalculator retCalc = new UnboxBindingCalculator(false);
-
-        boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
-        if (returnInMemory) {
-            csb.addArgument(MemoryAddress.class, MemoryLayouts.AArch64ABI.C_POINTER,
-                    argCalc.getIndirectBindings());
-        } else if (cDesc.returnLayout().isPresent()) {
-            csb.setReturnBindings(mt.returnType(), cDesc.returnLayout().get(),
-                    retCalc.getBindings(mt.returnType(), cDesc.returnLayout().get()));
+        if (bindings.isInMemoryReturn) {
+            target = SharedUtils.adaptUpcallForIMR(target);
         }
 
-        for (int i = 0; i < mt.parameterCount(); i++) {
-            MemoryLayout layout = cDesc.argumentLayouts().get(i);
-            csb.addArgument(mt.parameterType(i), layout,
-                    argCalc.getBindings(mt.parameterType(i), layout));
-        }
-
-        // TODO: identical to Windows x86 - move to shared code?
-        if (returnInMemory) {
-            assert target.type().returnType() == MemorySegment.class : "Must return MemorySegment for IMR";
-
-            target = collectArguments(MH_BUFFER_COPY, 1, target); // erase return type
-            int[] reorder = IntStream.range(-1, target.type().parameterCount()).toArray();
-            reorder[0] = 0; // [0, 0, 1, 2, 3 ...]
-            target = collectArguments(identity(MemoryAddress.class), 1, target); // (MemoryAddress, MemoryAddress, ...) MemoryAddress
-            target = permuteArguments(target, target.type().dropParameterTypes(0, 1), reorder); // (MemoryAddress, ...) MemoryAddress
-        }
-
-        CallingSequence cs = csb.build();
-
-        return new ProgrammableUpcallHandler(C, target, cs);
-    }
-
-    private static void bufferCopy(MemoryAddress dest, MemorySegment buffer) {
-        MemoryAddress.copy(buffer.baseAddress(), Utils.resizeNativeAddress(dest, buffer.byteSize()), buffer.byteSize());
+        return new ProgrammableUpcallHandler(C, target, bindings.callingSequence);
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
@@ -351,7 +294,7 @@ public class CallArranger {
         }
     }
 
-    static class BindingCalculator {
+    static abstract class BindingCalculator {
         protected final StorageCalculator storageCalculator;
 
         protected BindingCalculator(boolean forArguments) {
@@ -374,6 +317,9 @@ public class CallArranger {
             }
         }
 
+        abstract List<Binding> getBindings(Class<?> carrier, MemoryLayout layout);
+
+        abstract List<Binding> getIndirectBindings();
     }
 
     static class UnboxBindingCalculator extends BindingCalculator {
@@ -381,6 +327,7 @@ public class CallArranger {
             super(forArguments);
         }
 
+        @Override
         List<Binding> getIndirectBindings() {
             List<Binding> bindings = new ArrayList<>();
             bindings.add(new Binding.BoxAddress());
@@ -388,6 +335,7 @@ public class CallArranger {
             return bindings;
         }
 
+        @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = classifyType(layout);
             List<Binding> bindings = new ArrayList<>();
@@ -470,6 +418,7 @@ public class CallArranger {
             super(forArguments);
         }
 
+        @Override
         List<Binding> getIndirectBindings() {
             List<Binding> bindings = new ArrayList<>();
             bindings.add(new Binding.Move(INDIRECT_RESULT, long.class));
@@ -478,6 +427,7 @@ public class CallArranger {
         }
 
         @SuppressWarnings("fallthrough")
+        @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = classifyType(layout);
             List<Binding> bindings = new ArrayList<>();

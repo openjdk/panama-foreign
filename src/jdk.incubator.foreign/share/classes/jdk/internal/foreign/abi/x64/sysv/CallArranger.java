@@ -55,11 +55,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static java.lang.invoke.MethodHandles.collectArguments;
-import static java.lang.invoke.MethodHandles.identity;
-import static java.lang.invoke.MethodHandles.insertArguments;
-import static java.lang.invoke.MethodHandles.permuteArguments;
-import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 import static jdk.internal.foreign.abi.x64.sysv.SysVx64ABI.MAX_INTEGER_ARGUMENT_REGISTERS;
 import static jdk.internal.foreign.abi.x64.sysv.SysVx64ABI.MAX_VECTOR_ARGUMENT_REGISTERS;
@@ -71,12 +66,6 @@ import static jdk.internal.foreign.abi.x64.sysv.SysVx64ABI.MAX_VECTOR_ARGUMENT_R
  * This includes taking care of synthetic arguments like pointers to return buffers for 'in-memory' returns.
  */
 public class CallArranger {
-    private static final int SSE_ARGUMENT_SIZE = 8;
-    private static final int STACK_SLOT_SIZE = 8;
-    private static final MethodHandle MH_ALLOC_BUFFER;
-    private static final MethodHandle MH_BASEADDRESS;
-    private static final MethodHandle MH_BUFFER_COPY;
-
     private static final ABIDescriptor CSysV = X86_64Architecture.abiFor(
         new VMStorage[] { rdi, rsi, rdx, rcx, r8, r9, rax },
         new VMStorage[] { xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7 },
@@ -89,107 +78,74 @@ public class CallArranger {
         0 //no shadow space
     );
 
-    static {
-        try {
-            var lookup = MethodHandles.lookup();
-            MH_ALLOC_BUFFER = lookup.findStatic(MemorySegment.class, "allocateNative",
-                    methodType(MemorySegment.class, MemoryLayout.class));
-            MH_BASEADDRESS = lookup.findVirtual(MemorySegment.class, "baseAddress",
-                    methodType(MemoryAddress.class));
-            MH_BUFFER_COPY = lookup.findStatic(CallArranger.class, "bufferCopy",
-                    methodType(void.class, MemoryAddress.class, MemorySegment.class));
-        } catch (ReflectiveOperationException e) {
-            throw new BootstrapMethodError(e);
+    // record
+    private static class Bindings {
+        final CallingSequence callingSequence;
+        final boolean isInMemoryReturn;
+        final int nVectorArgs;
+
+        Bindings(CallingSequence callingSequence, boolean isInMemoryReturn, int nVectorArgs) {
+            this.callingSequence = callingSequence;
+            this.isInMemoryReturn = isInMemoryReturn;
+            this.nVectorArgs = nVectorArgs;
         }
+    }
+
+    private static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+        SharedUtils.checkFunctionTypes(mt, cDesc);
+
+        CallingSequenceBuilder csb = new CallingSequenceBuilder();
+
+        BindingCalculator argCalc = forUpcall ? new BoxBindingCalculator(true) : new UnboxBindingCalculator(true);
+        BindingCalculator retCalc = forUpcall ? new UnboxBindingCalculator(false) : new BoxBindingCalculator(false);
+
+        boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
+        if (returnInMemory) {
+            Class<?> carrier = MemoryAddress.class;
+            MemoryLayout layout = MemoryLayouts.SysV.C_POINTER;
+            csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
+        } else if (cDesc.returnLayout().isPresent()) {
+            Class<?> carrier = mt.returnType();
+            MemoryLayout layout = cDesc.returnLayout().get();
+            csb.setReturnBindings(carrier, layout, retCalc.getBindings(carrier, layout));
+        }
+
+        for (int i = 0; i < mt.parameterCount(); i++) {
+            Class<?> carrier = mt.parameterType(i);
+            MemoryLayout layout = cDesc.argumentLayouts().get(i);
+            csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
+        }
+
+        if (!forUpcall) {
+            //add extra binding for number of used vector registers (used for variadic calls)
+            csb.addArgumentBindings(long.class, MemoryLayouts.SysV.C_LONG,
+                    List.of(new Binding.Move(rax, long.class)));
+        }
+
+        return new Bindings(csb.build(), returnInMemory, argCalc.storageCalculator.nVectorReg);
     }
 
     public static MethodHandle arrangeDowncall(long addr, MethodType mt, FunctionDescriptor cDesc) {
-        assert mt.parameterCount() == cDesc.argumentLayouts().size() : "arity must match!";
-        assert (mt.returnType() != void.class) == cDesc.returnLayout().isPresent() : "return type presence must match!";
+        Bindings bindings = getBindings(mt, cDesc, false);
 
-        CallingSequenceBuilder csb = new CallingSequenceBuilder();
+        MethodHandle handle = new ProgrammableInvoker(CSysV, addr, bindings.callingSequence).getBoundMethodHandle();
+        handle = MethodHandles.insertArguments(handle, handle.type().parameterCount() - 1, bindings.nVectorArgs);
 
-        UnboxBindingCalculator argCalc = new UnboxBindingCalculator(true);
-        BoxBindingCalculator retCalc = new BoxBindingCalculator(false);
-
-        boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
-        if (returnInMemory) {
-            csb.addArgument(MemoryAddress.class, MemoryLayouts.SysV.C_POINTER,
-                    argCalc.getBindings(MemoryAddress.class, MemoryLayouts.SysV.C_POINTER));
-        } else if (cDesc.returnLayout().isPresent()) {
-            csb.setReturnBindings(mt.returnType(), cDesc.returnLayout().get(),
-                    retCalc.getBindings(mt.returnType(), cDesc.returnLayout().get()));
+        if (bindings.isInMemoryReturn) {
+            handle = SharedUtils.adaptDowncallForIMR(handle, cDesc);
         }
 
-        for (int i = 0; i < mt.parameterCount(); i++) {
-            MemoryLayout layout = cDesc.argumentLayouts().get(i);
-            csb.addArgument(mt.parameterType(i), layout, argCalc.getBindings(mt.parameterType(i), layout));
-        }
-
-        //add extra binding for number of used vector registers (used for variadic calls)
-        csb.addArgument(long.class, MemoryLayouts.SysV.C_LONG,
-                List.of(new Binding.Move(rax, long.class)));
-
-        CallingSequence cs = csb.build();
-        MethodHandle rawHandle = new ProgrammableInvoker(CSysV, addr, cs).getBoundMethodHandle();
-        rawHandle = MethodHandles.insertArguments(rawHandle, rawHandle.type().parameterCount() - 1, argCalc.storageCalculator.nVectorReg);
-
-        if (returnInMemory) {
-            assert rawHandle.type().returnType() == void.class : "return expected to be void for in memory returns";
-            assert rawHandle.type().parameterType(0) == MemoryAddress.class : "MemoryAddress expected as first param";
-
-            MethodHandle ret = identity(MemorySegment.class); // (MemorySegment) MemorySegment
-            rawHandle = collectArguments(ret, 1, rawHandle); // (MemorySegment, MemoryAddress ...) MemorySegment
-            rawHandle = collectArguments(rawHandle, 1, MH_BASEADDRESS); // (MemorySegment, MemorySegment ...) MemorySegment
-            MethodType oldType = rawHandle.type(); // (MemorySegment, MemorySegment, ...) MemorySegment
-            MethodType newType = oldType.dropParameterTypes(0, 1); // (MemorySegment, ...) MemorySegment
-            int[] reorder = IntStream.concat(IntStream.of(0), IntStream.range(0, oldType.parameterCount() - 1)).toArray(); // [0, 0, 1, 2, 3, ...]
-            rawHandle = permuteArguments(rawHandle, newType, reorder); // (MemorySegment, ...) MemoryAddress
-            rawHandle = collectArguments(rawHandle, 0, insertArguments(MH_ALLOC_BUFFER, 0, cDesc.returnLayout().get())); // (...) MemoryAddress
-        }
-
-        return rawHandle;
+        return handle;
     }
 
     public static UpcallHandler arrangeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc) {
-        assert mt.parameterCount() == cDesc.argumentLayouts().size() : "arity must match!";
-        assert (mt.returnType() != void.class) == cDesc.returnLayout().isPresent() : "return type presence must match!";
+        Bindings bindings = getBindings(mt, cDesc, true);
 
-        CallingSequenceBuilder csb = new CallingSequenceBuilder();
-
-        BoxBindingCalculator argCalc = new BoxBindingCalculator(true);
-        UnboxBindingCalculator retCalc = new UnboxBindingCalculator(false);
-
-        boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
-        if (returnInMemory) {
-            csb.addArgument(MemoryAddress.class, MemoryLayouts.SysV.C_POINTER,
-                    argCalc.getBindings(MemoryAddress.class, MemoryLayouts.SysV.C_POINTER));
-        } else if (cDesc.returnLayout().isPresent()) {
-            csb.setReturnBindings(mt.returnType(), cDesc.returnLayout().get(),
-                    retCalc.getBindings(mt.returnType(), cDesc.returnLayout().get()));
+        if (bindings.isInMemoryReturn) {
+            target = SharedUtils.adaptUpcallForIMR(target);
         }
 
-        for (int i = 0; i < mt.parameterCount(); i++) {
-            MemoryLayout layout = cDesc.argumentLayouts().get(i);
-            csb.addArgument(mt.parameterType(i), layout, argCalc.getBindings(mt.parameterType(i), layout));
-        }
-
-        if (returnInMemory) {
-            assert target.type().returnType() == MemorySegment.class : "Must return MemorySegment for IMR";
-
-            target = collectArguments(MH_BUFFER_COPY, 1, target); // erase return type
-            int[] reorder = IntStream.range(-1, target.type().parameterCount()).toArray();
-            reorder[0] = 0; // [0, 0, 1, 2, 3 ...]
-            target = collectArguments(identity(MemoryAddress.class), 1, target); // (MemoryAddress, MemoryAddress, ...) MemoryAddress
-            target = permuteArguments(target, target.type().dropParameterTypes(0, 1), reorder); // (MemoryAddress, ...) MemoryAddress
-        }
-
-        CallingSequence cs = csb.build();
-        return new ProgrammableUpcallHandler(CSysV, target, cs);
-    }
-
-    private static void bufferCopy(MemoryAddress dest, MemorySegment buffer) {
-        MemoryAddress.copy(buffer.baseAddress(), Utils.resizeNativeAddress(dest, buffer.byteSize()), buffer.byteSize());
+        return new ProgrammableUpcallHandler(CSysV, target, bindings.callingSequence);
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
@@ -332,12 +288,14 @@ public class CallArranger {
         }
     }
 
-    static class BindingCalculator {
+    static abstract class BindingCalculator {
         protected final StorageCalculator storageCalculator;
 
         protected BindingCalculator(boolean forArguments) {
             this.storageCalculator = new StorageCalculator(forArguments);
         }
+
+        abstract List<Binding> getBindings(Class<?> carrier, MemoryLayout layout);
     }
 
     static class UnboxBindingCalculator extends BindingCalculator {
@@ -346,6 +304,7 @@ public class CallArranger {
             super(forArguments);
         }
 
+        @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = classifyLayout(layout);
             List<Binding> bindings = new ArrayList<>();
@@ -393,6 +352,7 @@ public class CallArranger {
         }
 
         @SuppressWarnings("fallthrough")
+        @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = classifyLayout(layout);
             List<Binding> bindings = new ArrayList<>();

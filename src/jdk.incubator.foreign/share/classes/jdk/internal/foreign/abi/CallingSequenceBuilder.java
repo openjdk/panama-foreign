@@ -36,8 +36,8 @@ public class CallingSequenceBuilder {
     private MethodType mt = MethodType.methodType(void.class);
     private FunctionDescriptor desc = FunctionDescriptor.ofVoid(false);
 
-    public final CallingSequenceBuilder addArgument(Class<?> carrier, MemoryLayout layout,
-                                                    List<Binding> bindings) {
+    public final CallingSequenceBuilder addArgumentBindings(Class<?> carrier, MemoryLayout layout,
+                                                            List<Binding> bindings) {
         inputBindings.add(bindings);
         mt = mt.appendParameterTypes(carrier);
         descAddArgument(layout);
