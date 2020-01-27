@@ -24,6 +24,9 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.Utils;
 
 import jdk.incubator.foreign.GroupLayout;
@@ -31,7 +34,37 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.stream.IntStream;
+
+import static java.lang.invoke.MethodHandles.collectArguments;
+import static java.lang.invoke.MethodHandles.identity;
+import static java.lang.invoke.MethodHandles.insertArguments;
+import static java.lang.invoke.MethodHandles.permuteArguments;
+import static java.lang.invoke.MethodType.methodType;
+
 public class SharedUtils {
+
+    private static final MethodHandle MH_ALLOC_BUFFER;
+    private static final MethodHandle MH_BASEADDRESS;
+    private static final MethodHandle MH_BUFFER_COPY;
+
+    static {
+        try {
+            var lookup = MethodHandles.lookup();
+            MH_ALLOC_BUFFER = lookup.findStatic(MemorySegment.class, "allocateNative",
+                    methodType(MemorySegment.class, MemoryLayout.class));
+            MH_BASEADDRESS = lookup.findVirtual(MemorySegment.class, "baseAddress",
+                    methodType(MemoryAddress.class));
+            MH_BUFFER_COPY = lookup.findStatic(SharedUtils.class, "bufferCopy",
+                    methodType(MemoryAddress.class, MemoryAddress.class, MemorySegment.class));
+        } catch (ReflectiveOperationException e) {
+            throw new BootstrapMethodError(e);
+        }
+    }
+
     /**
      * Align the specified type from a given address
      * @return The address the data should be at based on alignment requirement
@@ -88,5 +121,67 @@ public class SharedUtils {
     private static long alignmentOfContainer(GroupLayout ct) {
         // Most strict member
         return ct.memberLayouts().stream().mapToLong(t -> alignment(t, false)).max().orElse(1);
+    }
+
+    /**
+     * Takes a MethodHandle that takes an input buffer as a first argument (a MemoryAddress), and returns nothing,
+     * and adapts it to return a MemorySegment, by allocating a MemorySegment for the input
+     * buffer, calling the target MethodHandle, and then returning the allocated MemorySegment.
+     *
+     * This allows viewing a MethodHandle that makes use of in memory return (IMR) as a MethodHandle that just returns
+     * a MemorySegment without requiring a pre-allocated buffer as an explicit input.
+     *
+     * @param handle the target handle to adapt
+     * @param cDesc the function descriptor of the native function (with actual return layout)
+     * @return the adapted handle
+     */
+    public static MethodHandle adaptDowncallForIMR(MethodHandle handle, FunctionDescriptor cDesc) {
+        if (handle.type().returnType() != void.class)
+            throw new IllegalArgumentException("return expected to be void for in memory returns");
+        if (handle.type().parameterType(0) != MemoryAddress.class)
+            throw new IllegalArgumentException("MemoryAddress expected as first param");
+        if (cDesc.returnLayout().isEmpty())
+            throw new IllegalArgumentException("Return layout needed: " + cDesc);
+
+        MethodHandle ret = identity(MemorySegment.class); // (MemorySegment) MemorySegment
+        handle = collectArguments(ret, 1, handle); // (MemorySegment, MemoryAddress ...) MemorySegment
+        handle = collectArguments(handle, 1, MH_BASEADDRESS); // (MemorySegment, MemorySegment ...) MemorySegment
+        MethodType oldType = handle.type(); // (MemorySegment, MemorySegment, ...) MemorySegment
+        MethodType newType = oldType.dropParameterTypes(0, 1); // (MemorySegment, ...) MemorySegment
+        int[] reorder = IntStream.range(-1, newType.parameterCount()).toArray();
+        reorder[0] = 0; // [0, 0, 1, 2, 3, ...]
+        handle = permuteArguments(handle, newType, reorder); // (MemorySegment, ...) MemoryAddress
+        handle = collectArguments(handle, 0, insertArguments(MH_ALLOC_BUFFER, 0, cDesc.returnLayout().get())); // (...) MemoryAddress
+
+        return handle;
+    }
+
+    /**
+     * Takes a MethodHandle that returns a MemorySegment, and adapts it to take an input buffer as a first argument
+     * (a MemoryAddress), and upon invocation, copies the contents of the returned MemorySegment into the input buffer
+     * passed as the first argument.
+     *
+     * @param target the target handle to adapt
+     * @return the adapted handle
+     */
+    public static MethodHandle adaptUpcallForIMR(MethodHandle target) {
+        if (target.type().returnType() != MemorySegment.class)
+            throw new IllegalArgumentException("Must return MemorySegment for IMR");
+
+        target = collectArguments(MH_BUFFER_COPY, 1, target); // (MemoryAddress, ...) MemoryAddress
+
+        return target;
+    }
+
+    private static MemoryAddress bufferCopy(MemoryAddress dest, MemorySegment buffer) {
+        MemoryAddress.copy(buffer.baseAddress(), Utils.resizeNativeAddress(dest, buffer.byteSize()), buffer.byteSize());
+        return dest;
+    }
+
+    public static void checkFunctionTypes(MethodType mt, FunctionDescriptor cDesc) {
+        if (mt.parameterCount() != cDesc.argumentLayouts().size())
+            throw new IllegalArgumentException("arity must match!");
+        if ((mt.returnType() == void.class) == cDesc.returnLayout().isPresent())
+            throw new IllegalArgumentException("return type presence must match!");
     }
 }
