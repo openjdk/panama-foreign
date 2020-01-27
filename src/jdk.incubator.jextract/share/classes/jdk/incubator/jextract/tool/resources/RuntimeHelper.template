@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 
-import static jdk.incubator.foreign.MemoryLayouts.*;
+import static ${C_LANG}.*;
 
 public class RuntimeHelper {
 
@@ -195,7 +195,7 @@ public class RuntimeHelper {
             if (c == char.class || c == byte.class || c == short.class || c == int.class || c == long.class) {
                 //it is ok to approximate with a machine word here; numerics arguments in a prototype-less
                 //function call are always rounded up to a register size anyway.
-                return C_LONG;
+                return C_LONGLONG;
             } else if (c == float.class || c == double.class) {
                 return C_DOUBLE;
             } else if (MemoryAddress.class.isAssignableFrom(c)) {

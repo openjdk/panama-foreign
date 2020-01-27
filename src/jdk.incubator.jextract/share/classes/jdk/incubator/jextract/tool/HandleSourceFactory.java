@@ -30,6 +30,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SystemABI;
 
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
@@ -78,6 +79,23 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
         this.pkgName = pkgName;
     }
 
+    private static String getCLangConstantsHolder() {
+        String prefix = "jdk.incubator.foreign.MemoryLayouts.";
+        String abi = SystemABI.getInstance().name();
+        switch (abi) {
+            case SystemABI.ABI_SYSV:
+                return prefix + "SysV";
+            case SystemABI.ABI_WINDOWS:
+                return prefix + "WinABI";
+            case SystemABI.ABI_AARCH64:
+                return prefix + "AArch64ABI";
+            default:
+                throw new UnsupportedOperationException("Unsupported ABI: " + abi);
+        }
+    }
+
+    private static final String C_LANG_CONSTANTS_HOLDER = getCLangConstantsHolder();
+
     public JavaFileObject[] generate(Declaration.Scoped decl) {
         builder.addPackagePrefix(pkgName);
         builder.classBegin(clsName);
@@ -99,7 +117,7 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
                     fileFromString(pkgName, clsName, src),
                     fileFromString(pkgName,"RuntimeHelper", (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
                             Files.readAllLines(Paths.get(runtimeHelper.toURI()))
-                            .stream().collect(Collectors.joining("\n")))
+                            .stream().collect(Collectors.joining("\n")).replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER))
             };
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
