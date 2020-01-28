@@ -42,7 +42,7 @@ import java.lang.invoke.VarHandle;
  */
 public class AllocationScope implements AutoCloseable {
     private final MemorySegment segment, acquiredSegment;
-    long sp = 0L;
+    private long sp = 0L;
 
     /**
      * Returns the size, in bytes, of this allocation scope.
