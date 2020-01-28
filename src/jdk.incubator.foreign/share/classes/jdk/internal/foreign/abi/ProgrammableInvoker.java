@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ public class ProgrammableInvoker {
         this.function = callingSequence.functionDesc();
 
         this.stackArgsBytes = callingSequence.moveBindings()
-                .map(Binding.MoveBinding::storage)
+                .map(Binding.Move::storage)
                 .filter(s -> abi.arch.isStackType(s.type()))
                 .count()
                 * abi.arch.typeSize(abi.arch.stackType());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -269,7 +269,9 @@ public class CallArranger {
                 case STRUCT_REGISTER: {
                     assert carrier == MemorySegment.class;
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
-                    bindings.add(new Binding.Dereference(storage, 0, layout.byteSize()));
+                    Class<?> type = SharedUtils.primitiveCarrierForSize(layout.byteSize());
+                    bindings.add(new Binding.Dereference(0, type));
+                    bindings.add(new Binding.Move(storage, type));
                     break;
                 }
                 case STRUCT_REFERENCE: {
@@ -299,12 +301,13 @@ public class CallArranger {
                 }
                 case VARARG_FLOAT: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR, layout);
-                    bindings.add(new Binding.Move(storage, carrier));
-
                     if (!INSTANCE.isStackType(storage.type())) { // need extra for register arg
                         VMStorage extraStorage = storageCalculator.extraVarargsStorage();
+                        bindings.add(new Binding.Dup());
                         bindings.add(new Binding.Move(extraStorage, carrier));
                     }
+
+                    bindings.add(new Binding.Move(storage, carrier));
                     break;
                 }
                 default:
@@ -330,8 +333,11 @@ public class CallArranger {
                 case STRUCT_REGISTER: {
                     assert carrier == MemorySegment.class;
                     bindings.add(new Binding.AllocateBuffer(layout));
+                    bindings.add(new Binding.Dup());
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
-                    bindings.add(new Binding.Dereference(storage, 0, layout.byteSize()));
+                    Class<?> type = SharedUtils.primitiveCarrierForSize(layout.byteSize());
+                    bindings.add(new Binding.Move(storage, type));
+                    bindings.add(new Binding.Dereference(0, type));
                     break;
                 }
                 case STRUCT_REFERENCE: {
