@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ public abstract class Binding {
     static final int ALLOC_BUFFER_TAG = 3;
     static final int BOX_ADDRESS_TAG = 4;
     static final int BASE_ADDRESS_TAG = 5;
+    static final int DUP_TAG = 6;
 
     final int tag;
 
@@ -43,30 +44,20 @@ public abstract class Binding {
     }
 
     /**
-     * Common super class for move bindings. Useful for finding things like the total stack slots used.
+     * Moves from a primitve to a VMStorage
      */
-    public static abstract class MoveBinding extends Binding {
-        final VMStorage storage;
+    public static class Move extends Binding {
+        private final VMStorage storage;
+        private final Class<?> type;
 
-        public MoveBinding(int tag, VMStorage storage) {
-            super(tag);
+        public Move(VMStorage storage, Class<?> type) {
+            super(MOVE_TAG);
             this.storage = storage;
+            this.type = type;
         }
 
         public VMStorage storage() {
             return storage;
-        }
-    }
-
-    /**
-     * Moves from a primitve to a VMStorage
-     */
-    public static class Move extends MoveBinding {
-        private final Class<?> type;
-
-        public Move(VMStorage storage, Class<?> type) {
-            super(MOVE_TAG, storage);
-            this.type = type;
         }
 
         public Class<?> type() {
@@ -84,33 +75,32 @@ public abstract class Binding {
     }
 
     /**
-     * Moves from a MemorySegment base + offset to a VMStorage
+     * Loads or stores a Java primitive to a MemorySegment at a certain offset
      */
-    public static class Dereference extends MoveBinding {
+    public static class Dereference extends Binding {
         private final long offset;
-        private final long size;
+        private final Class<?> type;
 
-        public Dereference(VMStorage storage, long offset, long size) {
-            super(DEREFERENCE_TAG, storage);
+        public Dereference(long offset, Class<?> type) {
+            super(DEREFERENCE_TAG);
             this.offset = offset;
-            this.size = size;
+            this.type = type;
         }
 
         public long offset() {
             return offset;
         }
 
-        public long size() {
-            return size;
+        public Class<?> type() {
+            return type;
         }
 
         @Override
         public String toString() {
             return "Dereference{" +
                     "tag=" + tag +
-                    ", storage=" + storage +
                     ", offset=" + offset +
-                    ", size=" + size +
+                    ", type=" + type +
                     '}';
         }
     }
@@ -201,6 +191,20 @@ public abstract class Binding {
         @Override
         public String toString() {
             return "BaseAddress{}";
+        }
+    }
+
+    /**
+     * Duplicates a value on top of the interpreter stack
+     */
+    public static class Dup extends Binding {
+        public Dup() {
+            super(DUP_TAG);
+        }
+
+        @Override
+        public String toString() {
+            return "Dup{}";
         }
     }
 }

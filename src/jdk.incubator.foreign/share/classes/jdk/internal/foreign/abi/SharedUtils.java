@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -183,5 +183,19 @@ public class SharedUtils {
             throw new IllegalArgumentException("arity must match!");
         if ((mt.returnType() == void.class) == cDesc.returnLayout().isPresent())
             throw new IllegalArgumentException("return type presence must match!");
+    }
+
+    public static Class<?> primitiveCarrierForSize(long size) {
+        if (size == 1) {
+            return byte.class;
+        } else if(size == 2) {
+            return short.class;
+        } else if (size <= 4) {
+            return int.class;
+        } else if (size <= 8) {
+            return long.class;
+        }
+
+        throw new IllegalArgumentException("Size too large: " + size);
     }
 }

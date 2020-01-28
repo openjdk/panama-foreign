@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -317,8 +317,13 @@ public class CallArranger {
                     while (offset < layout.byteSize()) {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
                         VMStorage storage = regs[regIndex++];
-                        bindings.add(new Binding.Dereference(storage, offset, copy));
-                        offset += 8;
+                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                        if (offset + copy < layout.byteSize()) {
+                            bindings.add(new Binding.Dup());
+                        }
+                        bindings.add(new Binding.Dereference(offset, type));
+                        bindings.add(new Binding.Move(storage, type));
+                        offset += copy;
                     }
                     break;
                 }
@@ -366,8 +371,11 @@ public class CallArranger {
                     while (offset < layout.byteSize()) {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
                         VMStorage storage = regs[regIndex++];
-                        bindings.add(new Binding.Dereference(storage, offset, copy));
-                        offset += 8;
+                        bindings.add(new Binding.Dup());
+                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                        bindings.add(new Binding.Move(storage, type));
+                        bindings.add(new Binding.Dereference(offset, type));
+                        offset += copy;
                     }
                     break;
                 }

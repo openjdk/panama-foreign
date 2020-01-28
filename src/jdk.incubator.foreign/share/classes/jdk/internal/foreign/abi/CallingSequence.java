@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,11 +43,11 @@ public class CallingSequence {
         this.argumentBindings = argumentBindings;
     }
 
-    public Stream<Binding.MoveBinding> moveBindings() {
+    public Stream<Binding.Move> moveBindings() {
         return argumentBindings.stream()
                 .flatMap(List::stream)
-                .filter(Binding.MoveBinding.class::isInstance)
-                .map(Binding.MoveBinding.class::cast);
+                .filter(Binding.Move.class::isInstance)
+                .map(Binding.Move.class::cast);
     }
 
     public List<Binding> argumentBindings(int i) {

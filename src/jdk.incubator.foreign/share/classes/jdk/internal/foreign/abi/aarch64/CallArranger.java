@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2019, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -301,7 +301,7 @@ public class CallArranger {
             this.storageCalculator = new StorageCalculator(forArguments);
         }
 
-        protected void spillStruct(List<Binding> bindings, MemoryLayout layout) {
+        protected void spillStructUnbox(List<Binding> bindings, MemoryLayout layout) {
             // If a struct has been assigned register or HFA class but
             // there are not enough free registers to hold the entire
             // struct, it must be passed on the stack. I.e. not split
@@ -312,7 +312,29 @@ public class CallArranger {
                 long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
                 VMStorage storage =
                     storageCalculator.stackAlloc(copy, STACK_SLOT_SIZE);
-                bindings.add(new Binding.Dereference(storage, offset, copy));
+                if (offset + STACK_SLOT_SIZE < layout.byteSize()) {
+                    bindings.add(new Binding.Dup());
+                }
+                bindings.add(new Binding.Dereference(offset, long.class));
+                bindings.add(new Binding.Move(storage, long.class));
+                offset += STACK_SLOT_SIZE;
+            }
+        }
+
+        protected void spillStructBox(List<Binding> bindings, MemoryLayout layout) {
+            // If a struct has been assigned register or HFA class but
+            // there are not enough free registers to hold the entire
+            // struct, it must be passed on the stack. I.e. not split
+            // between registers and stack.
+
+            long offset = 0;
+            while (offset < layout.byteSize()) {
+                long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
+                VMStorage storage =
+                    storageCalculator.stackAlloc(copy, STACK_SLOT_SIZE);
+                bindings.add(new Binding.Dup());
+                bindings.add(new Binding.Move(storage, long.class));
+                bindings.add(new Binding.Dereference(offset, long.class));
                 offset += STACK_SLOT_SIZE;
             }
         }
@@ -350,11 +372,15 @@ public class CallArranger {
                         while (offset < layout.byteSize()) {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
                             VMStorage storage = regs[regIndex++];
-                            bindings.add(new Binding.Dereference(storage, offset, copy));
-                            offset += 8;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                            if (offset + copy < layout.byteSize()) {
+                                bindings.add(new Binding.Dup());
+                            }
+                            bindings.add(new Binding.Dereference(offset, type));
+                            bindings.add(new Binding.Move(storage, type));
                         }
                     } else {
-                        spillStruct(bindings, layout);
+                        spillStructUnbox(bindings, layout);
                     }
                     break;
                 }
@@ -374,16 +400,20 @@ public class CallArranger {
                     VMStorage[] regs = storageCalculator.regAlloc(
                         StorageClasses.VECTOR, group.memberLayouts().size());
                     if (regs != null) {
-                        int regIndex = 0;
                         long offset = 0;
-                        for (MemoryLayout elem : group.memberLayouts()) {
-                            VMStorage storage = regs[regIndex++];
-                            final long size = elem.byteSize();
-                            bindings.add(new Binding.Dereference(storage, offset, size));
+                        for (int i = 0; i < group.memberLayouts().size(); i++) {
+                            VMStorage storage = regs[i++];
+                            final long size = group.memberLayouts().get(i).byteSize();
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(size);
+                            if (i + 1 < group.memberLayouts().size()) {
+                                bindings.add(new Binding.Dup());
+                            }
+                            bindings.add(new Binding.Dereference(offset, type));
+                            bindings.add(new Binding.Move(storage, type));
                             offset += size;
                         }
                     } else {
-                        spillStruct(bindings, layout);
+                        spillStructUnbox(bindings, layout);
                     }
                     break;
                 }
@@ -443,11 +473,14 @@ public class CallArranger {
                         while (offset < layout.byteSize()) {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
                             VMStorage storage = regs[regIndex++];
-                            bindings.add(new Binding.Dereference(storage, offset, copy));
-                            offset += 8;
+                            bindings.add(new Binding.Dup());
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                            bindings.add(new Binding.Move(storage, type));
+                            bindings.add(new Binding.Dereference(offset, type));
+                            offset += copy;
                         }
                     } else {
-                        spillStruct(bindings, layout);
+                        spillStructBox(bindings, layout);
                     }
                     break;
                 }
@@ -468,16 +501,18 @@ public class CallArranger {
                     VMStorage[] regs = storageCalculator.regAlloc(
                         StorageClasses.VECTOR, group.memberLayouts().size());
                     if (regs != null) {
-                        int regIndex = 0;
                         long offset = 0;
-                        for (MemoryLayout elem : group.memberLayouts()) {
-                            VMStorage storage = regs[regIndex++];
-                            final long size = elem.byteSize();
-                            bindings.add(new Binding.Dereference(storage, offset, size));
+                        for (int i = 0; i < group.memberLayouts().size(); i++) {
+                            VMStorage storage = regs[i++];
+                            final long size = group.memberLayouts().get(i).byteSize();
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(size);
+                            bindings.add(new Binding.Dup());
+                            bindings.add(new Binding.Move(storage, type));
+                            bindings.add(new Binding.Dereference(offset, type));
                             offset += size;
                         }
                     } else {
-                        spillStruct(bindings, layout);
+                        spillStructBox(bindings, layout);
                     }
                     break;
                 }
