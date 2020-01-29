@@ -99,14 +99,14 @@ abstract class AbstractLayout implements MemoryLayout {
 
     @Override
     public long bitSize() {
-        return size.orElseThrow(this::badSizeException);
+        return size.orElseThrow(AbstractLayout::badSizeException);
     }
 
     static OptionalLong optSize(MemoryLayout layout) {
         return ((AbstractLayout)layout).size;
     }
 
-    private UnsupportedOperationException badSizeException() {
+    private static UnsupportedOperationException badSizeException() {
         return new UnsupportedOperationException("Cannot compute size of a layout which is, or depends on a sequence layout with unspecified size");
     }
 
