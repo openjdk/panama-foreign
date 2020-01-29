@@ -88,7 +88,7 @@ public class CallArranger {
         SharedUtils.checkFunctionTypes(mt, cDesc);
 
         class CallingSequenceBuilderHelper {
-            final CallingSequenceBuilder csb = new CallingSequenceBuilder();
+            final CallingSequenceBuilder csb = new CallingSequenceBuilder(forUpcall);
             final BindingCalculator argCalc =
                 forUpcall ? new BoxBindingCalculator(true) : new UnboxBindingCalculator(true);
             final BindingCalculator retCalc =

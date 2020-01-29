@@ -100,7 +100,7 @@ public class CallArranger {
     private static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         SharedUtils.checkFunctionTypes(mt, cDesc);
 
-        CallingSequenceBuilder csb = new CallingSequenceBuilder();
+        CallingSequenceBuilder csb = new CallingSequenceBuilder(forUpcall);
 
         BindingCalculator argCalc = forUpcall ? new BoxBindingCalculator(true) : new UnboxBindingCalculator(true);
         BindingCalculator retCalc = forUpcall ? new UnboxBindingCalculator(false) : new BoxBindingCalculator(false);
