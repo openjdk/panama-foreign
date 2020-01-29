@@ -1824,10 +1824,10 @@ abstract class MethodHandleImpl {
             }
 
             private VarHandleMemoryAddressBase checkMemAccessHandle(VarHandle handle) {
-                if (!(handle instanceof VarHandleMemoryAddressBase)) {
+                if (!(handle.asDirect() instanceof VarHandleMemoryAddressBase)) {
                     throw new IllegalArgumentException("Not a memory access varhandle: " + handle);
                 }
-                return (VarHandleMemoryAddressBase) handle;
+                return (VarHandleMemoryAddressBase) handle.asDirect();
             }
         });
     }

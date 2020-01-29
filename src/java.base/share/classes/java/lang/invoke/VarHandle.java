@@ -455,6 +455,14 @@ public abstract class VarHandle implements Constable {
         return new UnsupportedOperationException();
     }
 
+    boolean isDirect() {
+        return true;
+    }
+
+    VarHandle asDirect() {
+        return this;
+    }
+
     // Plain accessors
 
     /**
@@ -1958,7 +1966,7 @@ public abstract class VarHandle implements Constable {
      * signature-polymorphic method of the same name
      * @return a method handle bound to this VarHandle and the given access mode
      */
-    public final MethodHandle toMethodHandle(AccessMode accessMode) {
+    public MethodHandle toMethodHandle(AccessMode accessMode) {
         MemberName mn = AccessMode.getMemberName(accessMode.ordinal(), vform);
         if (mn != null) {
             MethodHandle mh = getMethodHandle(accessMode.ordinal());
@@ -2008,7 +2016,7 @@ public abstract class VarHandle implements Constable {
     }
 
     @ForceInline
-    final MethodHandle getMethodHandle(int mode) {
+    MethodHandle getMethodHandle(int mode) {
         TypesAndInvokers tis = getTypesAndInvokers();
         MethodHandle mh = tis.methodHandle_table[mode];
         if (mh == null) {
