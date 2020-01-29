@@ -1252,8 +1252,8 @@ private:
         obj = fwd;
       }
       assert(oopDesc::is_oop(obj), "must be a valid oop");
-      if (!_bitmap->is_marked((HeapWord*) obj)) {
-        _bitmap->mark((HeapWord*) obj);
+      if (!_bitmap->is_marked(obj)) {
+        _bitmap->mark(obj);
         _oop_stack->push(obj);
       }
     }
@@ -1362,7 +1362,7 @@ public:
 
     size_t max = _heap->num_regions();
     while (_index < max) {
-      size_t cur = Atomic::add(&_index, stride) - stride;
+      size_t cur = Atomic::fetch_and_add(&_index, stride);
       size_t start = cur;
       size_t end = MIN2(cur + stride, max);
       if (start >= max) break;
