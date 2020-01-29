@@ -1731,6 +1731,53 @@ public:
   void vshiftw(int opcode, XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vshiftq(int opcode, XMMRegister dst, XMMRegister src);
   void vshiftq(int opcode, XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+  // Int Reduction
+  void reducedw(int opcode, XMMRegister dst, XMMRegister src);
+  void vreducedw(int opcode, XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void reduce2I(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce4I(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce8I(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce16I(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+
+  // Byte Reduction
+  void reduceb(int opcode, XMMRegister dst, XMMRegister src);
+  void vreduceb(int opcode, XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void reduce8B(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce16B(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce32B(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce64B(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void mulreduce8B(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void mulreduce16B(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void mulreduce32B(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void mulreduce64B(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+
+  // Short Reduction
+  void reducew(int opcode, XMMRegister dst, XMMRegister src);
+  void vreducew(int opcode, XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void reduce4S(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce8S(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce16S(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce32S(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+
+  // Long Reduction
+  void reduceq(int opcode, XMMRegister dst, XMMRegister src);
+  void vreduceq(int opcode, XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void reduce2L(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce4L(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce8L(int opcode, Register dst, Register src1, XMMRegister src2, XMMRegister vtmp1, XMMRegister vtmp2);
+
+  // Float Reduction
+  void reducef(int opcode, XMMRegister dst, XMMRegister src);
+  void reduce2F(int opcode, XMMRegister dst, XMMRegister src, XMMRegister vtmp);
+  void reduce4F(int opcode, XMMRegister dst, XMMRegister src, XMMRegister vtmp);
+  void reduce8F(int opcode, XMMRegister dst, XMMRegister src, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce16F(int opcode, XMMRegister dst, XMMRegister src, XMMRegister vtmp1, XMMRegister vtmp2);
+
+  // Double Reduction
+  void reduced(int opcode, XMMRegister dst, XMMRegister src);
+  void reduce2D(int opcode, XMMRegister dst, XMMRegister src, XMMRegister vtmp);
+  void reduce4D(int opcode, XMMRegister dst, XMMRegister src, XMMRegister vtmp1, XMMRegister vtmp2);
+  void reduce8D(int opcode, XMMRegister dst, XMMRegister src, XMMRegister vtmp1, XMMRegister vtmp2);
 #endif
 
   // C2 compiled method's prolog code.
