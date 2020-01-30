@@ -110,7 +110,7 @@ abstract class RecordLayoutComputer {
     }
 
     MemoryLayout fieldLayout(Cursor c) {
-        MemoryLayout l = LayoutUtils.getLayout(c.type(), false);
+        MemoryLayout l = LayoutUtils.getLayout(c.type());
         String name = LayoutUtils.getName(c);
         if (c.isBitField()) {
             MemoryLayout sublayout = MemoryLayout.ofValueBits(c.getBitFieldWidth(), ByteOrder.nativeOrder());

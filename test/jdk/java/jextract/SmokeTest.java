@@ -47,63 +47,57 @@ public class SmokeTest {
         Type intType = ((Declaration.Variable)pointDecl.members().get(0)).type();
         checkGlobal(d, "p", Type.declared(pointDecl));
         checkFunction(d, "distance", intType, Type.declared(pointDecl), Type.declared(pointDecl));
+        Declaration.Variable ch_ptr_ptr = findDecl(d, "ch_ptr_ptr", Declaration.Variable.class);
+        checkFunction(d, "pointers", ch_ptr_ptr.type(), ch_ptr_ptr.type(), ch_ptr_ptr.type());
         checkConstant(d, "ZERO", intType, 0L);
     }
 
     Declaration.Scoped checkStruct(Declaration.Scoped toplevel, String name, String... fields) {
-        for (Declaration d : toplevel.members()) {
-            if (d instanceof Declaration.Scoped && d.name().equals(name)) {
-                Declaration.Scoped struct = (Declaration.Scoped)d;
-                assertEquals(struct.members().size(), fields.length);
-                for (int i = 0 ; i < fields.length ; i++) {
-                    assertEquals(struct.members().get(i).name(), fields[i]);
-                }
-                return struct;
-            }
+        Declaration.Scoped struct = findDecl(toplevel, name, Declaration.Scoped.class);
+        assertEquals(struct.members().size(), fields.length);
+        for (int i = 0 ; i < fields.length ; i++) {
+            assertEquals(struct.members().get(i).name(), fields[i]);
         }
-        fail();
-        return null;
+        return struct;
     }
 
     Declaration.Variable checkGlobal(Declaration.Scoped toplevel, String name, Type type) {
-        for (Declaration d : toplevel.members()) {
-            if (d instanceof Declaration.Variable && d.name().equals(name)) {
-                Declaration.Variable global = (Declaration.Variable)d;
-                assertTypeEquals(type, global.type());
-                return global;
-            }
-        }
-        fail();
-        return null;
+        Declaration.Variable global = findDecl(toplevel, name, Declaration.Variable.class);
+        assertTypeEquals(type, global.type());
+        return global;
     }
 
     Declaration.Function checkFunction(Declaration.Scoped toplevel, String name, Type ret, Type... params) {
-        for (Declaration d : toplevel.members()) {
-            if (d instanceof Declaration.Function && d.name().equals(name)) {
-                Declaration.Function function = (Declaration.Function)d;
-                assertTypeEquals(ret, function.type().returnType());
-                assertEquals(function.parameters().size(), params.length);
-                for (int i = 0 ; i < params.length ; i++) {
-                    assertTypeEquals(params[i], function.type().argumentTypes().get(i));
-                    assertTypeEquals(params[i], function.parameters().get(i).type());
-                }
-                return function;
+        Declaration.Function function = findDecl(toplevel, name, Declaration.Function.class);
+        assertTypeEquals(ret, function.type().returnType());
+        assertEquals(function.parameters().size(), params.length);
+        for (int i = 0 ; i < params.length ; i++) {
+            assertTypeEquals(params[i], function.type().argumentTypes().get(i));
+            Type paramType = function.parameters().get(i).type();
+            if (paramType instanceof Type.Array) {
+                assertTypeEquals(params[i], Type.pointer(((Type.Array) paramType).elementType()));
+            } else {
+                assertTypeEquals(params[i], function.parameters().get(i).type());
             }
         }
-        fail();
-        return null;
+        return function;
     }
 
     Declaration.Constant checkConstant(Declaration.Scoped toplevel, String name, Type type, Object value) {
+        Declaration.Constant constant = findDecl(toplevel, name, Declaration.Constant.class);
+        assertTypeEquals(type, constant.type());
+        assertEquals(value, constant.value());
+        return constant;
+    }
+
+    @SuppressWarnings("unchecked")
+    <D extends Declaration> D findDecl(Declaration.Scoped toplevel, String name, Class<D> declType) {
         for (Declaration d : toplevel.members()) {
-            if (d instanceof Declaration.Constant && d.name().equals(name)) {
-                Declaration.Constant constant = (Declaration.Constant)d;
-                assertTypeEquals(type, constant.type());
-                assertEquals(value, constant.value());
-                return constant;
+            if (declType.isAssignableFrom(d.getClass()) && d.name().equals(name)) {
+                return (D)d;
             }
         }
-        fail();
+        fail("No declaration with name " + name + " found in " + toplevel);
         return null;
     }
 

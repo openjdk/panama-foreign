@@ -172,7 +172,7 @@ class TreeMaker {
         return checkCache(c, Declaration.Scoped.class, () -> {
             if (c.isDefinition()) {
                 //just a declaration AND definition, we have a layout
-                MemoryLayout layout = LayoutUtils.getLayout(c.type(), false);
+                MemoryLayout layout = LayoutUtils.getLayout(c.type());
                 List<Declaration> adaptedDecls = layout instanceof GroupLayout ?
                         collectBitfields(layout, decls) :
                         decls;

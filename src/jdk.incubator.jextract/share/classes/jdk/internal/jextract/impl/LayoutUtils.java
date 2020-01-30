@@ -59,53 +59,7 @@ public final class LayoutUtils {
         return cursor.spelling();
     }
 
-    private static boolean isFunction(Type clang_type) {
-        switch (clang_type.kind()) {
-            case Unexposed:
-            case Typedef:
-            case Elaborated:
-                return isFunction(clang_type.canonicalType());
-            case FunctionProto:
-            case FunctionNoProto:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    public static FunctionDescriptor getFunction(Type t) {
-        assert isFunction(t) : "not a function type";
-        switch (t.kind()) {
-            case Unexposed:
-            case Typedef:
-            case Elaborated:
-                return parseFunctionInternal(t.canonicalType());
-            case FunctionProto:
-            case FunctionNoProto:
-                return parseFunctionInternal(t);
-            default:
-                throw new IllegalArgumentException(
-                        "Unsupported type kind: " + t.kind());
-        }
-    }
-
-    private static FunctionDescriptor parseFunctionInternal(Type t) {
-        final int argSize = t.numberOfArgs();
-        MemoryLayout[] args = new MemoryLayout[argSize];
-        for (int i = 0; i < argSize; i++) {
-            MemoryLayout l = getLayout(t.argType(i), true);
-            args[i] = l instanceof SequenceLayout ?
-                    C_POINTER.withAnnotation("pointee", ((SequenceLayout)l).elementLayout()) :
-                    l;
-        }
-        if (t.resultType().kind() == TypeKind.Void) {
-            return FunctionDescriptor.ofVoid(t.isVariadic(), args);
-        } else {
-            return FunctionDescriptor.of(getLayout(t.resultType(), false), t.isVariadic(), args);
-        }
-    }
-
-    public static MemoryLayout getLayout(Type t, boolean isArgument) {
+    public static MemoryLayout getLayout(Type t) {
         switch(t.kind()) {
             case Char_S:
             case Char_U:
@@ -140,24 +94,20 @@ public final class LayoutUtils {
             case Record:
                 return getRecordLayout(t);
             case Vector:
-                return MemoryLayout.ofSequence(t.getNumberOfElements(), getLayout(t.getElementType(), false));
+                return MemoryLayout.ofSequence(t.getNumberOfElements(), getLayout(t.getElementType()));
             case ConstantArray:
-                return isArgument ?
-                        C_POINTER :
-                        MemoryLayout.ofSequence(t.getNumberOfElements(), getLayout(t.getElementType(), false));
+                return MemoryLayout.ofSequence(t.getNumberOfElements(), getLayout(t.getElementType()));
             case IncompleteArray:
-                return isArgument ?
-                        C_POINTER :
-                        MemoryLayout.ofSequence(getLayout(t.getElementType(), false));
+                return MemoryLayout.ofSequence(getLayout(t.getElementType()));
             case Unexposed:
                 Type canonical = t.canonicalType();
                 if (canonical.equalType(t)) {
                     throw new IllegalStateException("Unknown type with same canonical type: " + t.spelling());
                 }
-                return getLayout(canonical, isArgument);
+                return getLayout(canonical);
             case Typedef:
             case Elaborated:
-                return getLayout(t.canonicalType(), isArgument);
+                return getLayout(t.canonicalType());
             case Pointer:
             case BlockPointer:
                 return C_POINTER;
@@ -175,50 +125,46 @@ public final class LayoutUtils {
     }
 
     public static MemoryLayout getLayoutInternal(jdk.incubator.jextract.Type t) {
-        return t.accept(layoutMaker, false);
+        return t.accept(layoutMaker, null);
     }
 
-    private static jdk.incubator.jextract.Type.Visitor<MemoryLayout, Boolean> layoutMaker = new jdk.incubator.jextract.Type.Visitor<MemoryLayout, Boolean>() {
+    private static jdk.incubator.jextract.Type.Visitor<MemoryLayout, Void> layoutMaker = new jdk.incubator.jextract.Type.Visitor<>() {
         @Override
-        public MemoryLayout visitPrimitive(jdk.incubator.jextract.Type.Primitive t, Boolean isArgument) {
+        public MemoryLayout visitPrimitive(jdk.incubator.jextract.Type.Primitive t, Void _ignored) {
             return t.layout().orElseThrow(UnsupportedOperationException::new);
         }
 
         @Override
-        public MemoryLayout visitDelegated(jdk.incubator.jextract.Type.Delegated t, Boolean isArgument) {
+        public MemoryLayout visitDelegated(jdk.incubator.jextract.Type.Delegated t, Void _ignored) {
             if (t.kind() == jdk.incubator.jextract.Type.Delegated.Kind.POINTER) {
                 return C_POINTER;
             } else {
-                return t.type().accept(this, isArgument);
+                return t.type().accept(this, null);
             }
         }
 
         @Override
-        public MemoryLayout visitFunction(jdk.incubator.jextract.Type.Function t, Boolean isArgument) {
+        public MemoryLayout visitFunction(jdk.incubator.jextract.Type.Function t, Void _ignored) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public MemoryLayout visitDeclared(jdk.incubator.jextract.Type.Declared t, Boolean isArgument) {
+        public MemoryLayout visitDeclared(jdk.incubator.jextract.Type.Declared t, Void _ignored) {
             return t.tree().layout().orElseThrow(UnsupportedOperationException::new);
         }
 
         @Override
-        public MemoryLayout visitArray(jdk.incubator.jextract.Type.Array t, Boolean isArgument) {
-            if (isArgument && t.kind() == jdk.incubator.jextract.Type.Array.Kind.ARRAY) {
-                return C_POINTER;
+        public MemoryLayout visitArray(jdk.incubator.jextract.Type.Array t, Void _ignored) {
+            MemoryLayout elem = t.elementType().accept(this, null);
+            if (t.elementCount().isPresent()) {
+                return MemoryLayout.ofSequence(t.elementCount().getAsLong(), elem);
             } else {
-                MemoryLayout elem = t.elementType().accept(this, false);
-                if (t.elementCount().isPresent()) {
-                    return MemoryLayout.ofSequence(t.elementCount().getAsLong(), elem);
-                } else {
-                    return MemoryLayout.ofSequence(elem);
-                }
+                return MemoryLayout.ofSequence(elem);
             }
         }
 
         @Override
-        public MemoryLayout visitType(jdk.incubator.jextract.Type t, Boolean isArgument) {
+        public MemoryLayout visitType(jdk.incubator.jextract.Type t, Void _ignored) {
             throw new UnsupportedOperationException();
         }
     };
@@ -229,7 +175,9 @@ public final class LayoutUtils {
 
     public static Optional<FunctionDescriptor> getDescriptor(jdk.incubator.jextract.Type.Function t) {
         try {
-            MemoryLayout[] args = t.argumentTypes().stream().map(a -> a.accept(layoutMaker, true)).toArray(MemoryLayout[]::new);
+            MemoryLayout[] args = t.argumentTypes().stream()
+                    .map(LayoutUtils::getLayoutInternal)
+                    .toArray(MemoryLayout[]::new);
             if (t.returnType() instanceof jdk.incubator.jextract.Type.Primitive &&
                     ((jdk.incubator.jextract.Type.Primitive) t.returnType()).kind() == jdk.incubator.jextract.Type.Primitive.Kind.Void) {
                 return Optional.of(FunctionDescriptor.ofVoid(t.varargs(), args));

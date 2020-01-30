@@ -36,5 +36,9 @@ struct Point p;
 //function
 int distance(struct Point p1, struct Point p2);
 
+//function with arrays
+char ** ch_ptr_ptr;
+char** pointers(char* arr1[], char* arr2[]);
+
 //and a constant
 #define ZERO 0

@@ -113,9 +113,9 @@ class TypeMaker {
                 List<Type> args = new ArrayList<>();
                 for (int i = 0; i < t.numberOfArgs(); i++) {
                     // argument could be function pointer declared locally
-                    args.add(makeType(t.argType(i)));
+                    args.add(lowerFunctionType(t.argType(i)));
                 }
-                return Type.function(t.isVariadic(), makeType(t.resultType()), args.toArray(new Type[0]));
+                return Type.function(t.isVariadic(), lowerFunctionType(t.resultType()), args.toArray(new Type[0]));
             }
             case Enum:
             case Record: {
@@ -147,4 +147,21 @@ class TypeMaker {
                 return TypeImpl.ERROR;
         }
     }
+
+    private Type lowerFunctionType(jdk.internal.clang.Type t) {
+        Type t2 = makeType(t);
+        return t2.accept(lowerFunctionType, null);
+    }
+
+    private Type.Visitor<Type, Void> lowerFunctionType = new Type.Visitor<>() {
+        @Override
+        public Type visitArray(Type.Array t, Void aVoid) {
+            return Type.pointer(() -> t.elementType());
+        }
+
+        @Override
+        public Type visitType(Type t, Void aVoid) {
+            return t;
+        }
+    };
 }
