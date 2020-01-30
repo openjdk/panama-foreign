@@ -140,12 +140,12 @@ public class LayoutPath {
 
         checkAlignment(this);
 
-        return JLI.memoryAddressViewVarHandle(
+        return Utils.fixUpVarHandle(JLI.memoryAddressViewVarHandle(
                 carrier,
                 layout.byteAlignment() - 1, //mask
                 ((ValueLayout) layout).order(),
                 Utils.bitsToBytesOrThrow(offset, IllegalStateException::new),
-                LongStream.of(strides).map(s -> Utils.bitsToBytesOrThrow(s, IllegalStateException::new)).toArray());
+                LongStream.of(strides).map(s -> Utils.bitsToBytesOrThrow(s, IllegalStateException::new)).toArray()));
     }
 
     public MemoryLayout layout() {

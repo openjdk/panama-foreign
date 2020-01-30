@@ -26,15 +26,21 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
 import sun.nio.ch.FileChannelImpl;
 import sun.security.action.GetBooleanAction;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
@@ -48,6 +54,17 @@ import java.util.function.Supplier;
 public final class Utils {
 
     private static Unsafe unsafe = Unsafe.getUnsafe();
+
+    private static final MethodHandle ADDRESS_FILTER;
+
+    static {
+        try {
+            ADDRESS_FILTER = MethodHandles.lookup().findStatic(Utils.class, "filterAddress",
+                    MethodType.methodType(MemoryAddressProxy.class, MemoryAddress.class));
+        } catch (Throwable ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
 
     // The maximum alignment supported by malloc - typically 16 on 64-bit platforms.
     private final static long MAX_ALIGN = 16;
@@ -153,5 +170,15 @@ public final class Utils {
         } else {
             throw new UnsupportedOperationException("Unsupported map mode: " + mapMode);
         }
+    }
+
+    public static VarHandle fixUpVarHandle(VarHandle handle) {
+        // This adaptation is required, otherwise the memory access var handle will have type MemoryAddressProxy,
+        // and not MemoryAddress (which the user expects), which causes performance issues with asType() adaptations.
+        return MethodHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
+    }
+
+    private static MemoryAddressProxy filterAddress(MemoryAddress addr) {
+        return (MemoryAddressImpl)addr;
     }
 }

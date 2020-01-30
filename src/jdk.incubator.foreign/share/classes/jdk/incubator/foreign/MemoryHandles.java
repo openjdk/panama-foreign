@@ -174,7 +174,7 @@ public final class MemoryHandles {
             throw new IllegalArgumentException("Bad alignment: " + alignmentBytes);
         }
 
-        return JLI.memoryAddressViewVarHandle(carrier, alignmentBytes - 1, byteOrder, 0, new long[]{});
+        return Utils.fixUpVarHandle(JLI.memoryAddressViewVarHandle(carrier, alignmentBytes - 1, byteOrder, 0, new long[]{}));
     }
 
     /**
@@ -204,12 +204,12 @@ public final class MemoryHandles {
             throw new IllegalArgumentException("Offset " + bytesOffset + " does not conform to alignment " + (alignMask + 1));
         }
 
-        return JLI.memoryAddressViewVarHandle(
+        return Utils.fixUpVarHandle(JLI.memoryAddressViewVarHandle(
                 JLI.memoryAddressCarrier(target),
                 alignMask,
                 JLI.memoryAddressByteOrder(target),
                 JLI.memoryAddressOffset(target) + bytesOffset,
-                JLI.memoryAddressStrides(target));
+                JLI.memoryAddressStrides(target)));
     }
 
     /**
@@ -247,12 +247,12 @@ public final class MemoryHandles {
         System.arraycopy(strides, 0, newStrides, 1, strides.length);
         newStrides[0] = bytesStride;
 
-        return JLI.memoryAddressViewVarHandle(
+        return Utils.fixUpVarHandle(JLI.memoryAddressViewVarHandle(
                 JLI.memoryAddressCarrier(target),
                 alignMask,
                 JLI.memoryAddressByteOrder(target),
                 offset,
-                newStrides);
+                newStrides));
     }
 
     private static void checkCarrier(Class<?> carrier) {
