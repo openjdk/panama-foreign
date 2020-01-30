@@ -1202,7 +1202,6 @@ private:
   void fld_d(Address adr);
   void fld_s(Address adr);
   void fld_s(int index);
-  void fld_x(Address adr);  // extended-precision (80-bit) format
 
   void fldcw(Address src);
 
@@ -1247,7 +1246,6 @@ private:
   void fstp_d(Address adr);
   void fstp_d(int index);
   void fstp_s(Address adr);
-  void fstp_x(Address adr); // extended-precision (80-bit) format
 
   void fsub(int i);
   void fsub_d(Address src);
@@ -1282,6 +1280,8 @@ private:
   void fldl2e();
 #endif // !_LP64
 
+  void fld_x(Address adr);  // extended-precision (80-bit) format
+  void fstp_x(Address adr); // extended-precision (80-bit) format
   void fxrstor(Address src);
   void xrstor(Address src);
 
