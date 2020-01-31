@@ -25,7 +25,6 @@
 /*
  * @test
  * @modules jdk.incubator.foreign
- *          java.base/jdk.internal.access.foreign
  * @run testng/othervm -Djava.lang.invoke.VarHandle.VAR_HANDLE_GUARDS=true -Djava.lang.invoke.VarHandle.VAR_HANDLE_IDENTITY_ADAPT=false -Xverify:all TestAdaptVarHandles
  * @run testng/othervm -Djava.lang.invoke.VarHandle.VAR_HANDLE_GUARDS=true -Djava.lang.invoke.VarHandle.VAR_HANDLE_IDENTITY_ADAPT=true -Xverify:all TestAdaptVarHandles
  * @run testng/othervm -Djava.lang.invoke.VarHandle.VAR_HANDLE_GUARDS=false -Djava.lang.invoke.VarHandle.VAR_HANDLE_IDENTITY_ADAPT=false -Xverify:all TestAdaptVarHandles
@@ -38,7 +37,6 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.access.foreign.MemoryAddressProxy;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
@@ -67,7 +65,7 @@ public class TestAdaptVarHandles {
             I2S = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "intToString", MethodType.methodType(String.class, int.class));
             S2L = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "stringToLong", MethodType.methodType(long.class, String.class));
             S2L_EX = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "stringToLongException", MethodType.methodType(long.class, String.class));
-            BASE_ADDR = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "baseAddress", MethodType.methodType(MemoryAddressProxy.class, MemorySegment.class));
+            BASE_ADDR = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "baseAddress", MethodType.methodType(MemoryAddress.class, MemorySegment.class));
             SUM_OFFSETS = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "sumOffsets", MethodType.methodType(long.class, long.class, long.class));
             VOID_FILTER = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "void_filter", MethodType.methodType(void.class, String.class));
 
@@ -281,7 +279,7 @@ public class TestAdaptVarHandles {
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
         VarHandle intHandle_swap = MethodHandles.permuteCoordinates(intHandle,
-                List.of(long.class, MemoryAddressProxy.class), new int[] { 1, 0 });
+                List.of(long.class, MemoryAddress.class), new int[] { 1, 0 });
         intHandle_swap.set(0L, segment.baseAddress(), 1);
         int oldValue = (int)intHandle_swap.getAndAdd(0L, segment.baseAddress(), 42);
         assertEquals(oldValue, 1);
@@ -414,8 +412,8 @@ public class TestAdaptVarHandles {
         return Long.valueOf(s);
     }
 
-    static MemoryAddressProxy baseAddress(MemorySegment segment) {
-        return (MemoryAddressProxy)segment.baseAddress();
+    static MemoryAddress baseAddress(MemorySegment segment) {
+        return segment.baseAddress();
     }
 
     static long sumOffsets(long l1, long l2) {
