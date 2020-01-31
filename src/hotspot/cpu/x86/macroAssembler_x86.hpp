@@ -1731,6 +1731,9 @@ public:
   void vshiftw(int opcode, XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vshiftq(int opcode, XMMRegister dst, XMMRegister src);
   void vshiftq(int opcode, XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+  void insert(BasicType typ, XMMRegister dst, Register val, int idx);
+  void vinsert(BasicType typ, XMMRegister dst, XMMRegister src, Register val, int idx);
+
   // Int Reduction
   void reducedw(int opcode, XMMRegister dst, XMMRegister src);
   void vreducedw(int opcode, XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);

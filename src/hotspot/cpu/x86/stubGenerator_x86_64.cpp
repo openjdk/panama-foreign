@@ -55,20 +55,20 @@
 extern "C"
 {
    float __svml_expf4_ha_ex(float a);
-   double __svml_exp1_ha_ex(double a); 
-   double __svml_exp2_ha_ex(double a);     
+   double __svml_exp1_ha_ex(double a);
+   double __svml_exp2_ha_ex(double a);
    float __svml_expf4_ha_l9(float a);
    float __svml_expf8_ha_l9(float a);
    float __svml_expf4_ha_e9(float a);
    float __svml_expf8_ha_e9(float a);
    float __svml_expf16_ha_z0(float a);
-   double __svml_exp1_ha_l9(double a);    
+   double __svml_exp1_ha_l9(double a);
    double __svml_exp2_ha_l9(double a);
    double __svml_exp4_ha_l9(double a);
-   double __svml_exp1_ha_e9(double a);    
+   double __svml_exp1_ha_e9(double a);
    double __svml_exp2_ha_e9(double a);
    double __svml_exp4_ha_e9(double a);
-   double __svml_exp8_ha_z0(double a); 
+   double __svml_exp8_ha_z0(double a);
    float  __svml_expm1f4_ha_ex(float a);
    double __svml_expm11_ha_ex(double a);
    double __svml_expm12_ha_ex(double a);
@@ -77,13 +77,13 @@ extern "C"
    float  __svml_expm1f4_ha_e9(float a);
    float  __svml_expm1f8_ha_e9(float a);
    float __svml_expm1f16_ha_z0(float a);
-   double __svml_expm11_ha_l9(double a); 
+   double __svml_expm11_ha_l9(double a);
    double __svml_expm12_ha_l9(double a);
    double __svml_expm14_ha_l9(double a);
-   double __svml_expm11_ha_e9(double a); 
+   double __svml_expm11_ha_e9(double a);
    double __svml_expm12_ha_e9(double a);
    double __svml_expm14_ha_e9(double a);
-   double __svml_expm18_ha_z0(double a); 
+   double __svml_expm18_ha_z0(double a);
    float __svml_log1pf4_ha_l9(float a);
    float __svml_log1pf8_ha_l9(float a);
    float __svml_log1pf4_ha_e9(float a);
@@ -115,7 +115,7 @@ extern "C"
    float __svml_log10f16_ha_z0(float a);
    double __svml_log101_ha_l9(double a);
    double __svml_log102_ha_l9(double a);
-   double __svml_log104_ha_l9(double a); 
+   double __svml_log104_ha_l9(double a);
    double __svml_log101_ha_e9(double a);
    double __svml_log102_ha_e9(double a);
    double __svml_log104_ha_e9(double a);
@@ -125,12 +125,12 @@ extern "C"
    float __svml_sinf4_ha_e9(float a);
    float __svml_sinf8_ha_e9(float a);
    float __svml_sinf16_ha_z0(float a);
-   double __svml_sin1_ha_l9(double a); 
+   double __svml_sin1_ha_l9(double a);
    double __svml_sin2_ha_l9(double a);
-   double __svml_sin4_ha_l9(double a); 
-   double __svml_sin1_ha_e9(double a); 
+   double __svml_sin4_ha_l9(double a);
+   double __svml_sin1_ha_e9(double a);
    double __svml_sin2_ha_e9(double a);
-   double __svml_sin4_ha_e9(double a); 
+   double __svml_sin4_ha_e9(double a);
    double __svml_sin8_ha_z0(double a);
    float __svml_cosf4_ha_l9(float a);
    float __svml_cosf8_ha_l9(float a);
@@ -179,7 +179,7 @@ extern "C"
    float __svml_coshf8_ha_l9(float a);
    float __svml_coshf4_ha_e9(float a);
    float __svml_coshf8_ha_e9(float a);
-   float __svml_coshf16_ha_z0(float a); 
+   float __svml_coshf16_ha_z0(float a);
    double __svml_tanh1_ha_l9(double a);
    double __svml_tanh2_ha_l9(double a);
    double __svml_tanh4_ha_l9(double a);
@@ -312,8 +312,8 @@ extern "C"
    float __svml_logf4_ha_ex(float a);
    float __svml_log1pf4_ha_ex(float a);
    float __svml_log10f4_ha_ex(float a);
-   double __svml_atan21_ha_ex(double a); 
-   double __svml_atan22_ha_ex(double a); 
+   double __svml_atan21_ha_ex(double a);
+   double __svml_atan22_ha_ex(double a);
    float __svml_atan2f4_ha_ex(float a);
    float __svml_hypotf4_ha_ex(float a);
    double __svml_hypot1_ha_ex(double a);
@@ -6942,7 +6942,7 @@ address generate_avx_ghash_processBlocks() {
           #if defined(__VECTOR_API_MATH_INTRINSICS_LINUX)
           if (UseAVX > 2) {
               StubRoutines::_vector_float512_exp = CAST_FROM_FN_PTR(address, __svml_expf16_ha_z0);
-              StubRoutines::_vector_double512_exp = CAST_FROM_FN_PTR(address, __svml_exp8_ha_z0); 
+              StubRoutines::_vector_double512_exp = CAST_FROM_FN_PTR(address, __svml_exp8_ha_z0);
               StubRoutines::_vector_float512_expm1 = CAST_FROM_FN_PTR(address, __svml_expm1f16_ha_z0);
               StubRoutines::_vector_double512_expm1 = CAST_FROM_FN_PTR(address, __svml_expm18_ha_z0);
               StubRoutines::_vector_float512_log1p = CAST_FROM_FN_PTR(address, __svml_log1pf16_ha_z0);

@@ -4442,6 +4442,46 @@ void MacroAssembler::vshiftq(int opcode, XMMRegister dst, XMMRegister nds, XMMRe
   }
 }
 
+void MacroAssembler::insert(BasicType typ, XMMRegister dst, Register val, int idx) {
+  switch(typ) {
+    case T_BYTE:
+      pinsrb(dst, val, idx);
+      break;
+    case T_SHORT:
+      pinsrw(dst, val, idx);
+      break;
+    case T_INT:
+      pinsrd(dst, val, idx);
+      break;
+    case T_LONG:
+      pinsrq(dst, val, idx);
+      break;
+    default:
+      assert(false,"Should not reach here.");
+      break;
+  }
+}
+
+void MacroAssembler::vinsert(BasicType typ, XMMRegister dst, XMMRegister src, Register val, int idx) {
+  switch(typ) {
+    case T_BYTE:
+      vpinsrb(dst, src, val, idx);
+      break;
+    case T_SHORT:
+      vpinsrw(dst, src, val, idx);
+      break;
+    case T_INT:
+      vpinsrd(dst, src, val, idx);
+      break;
+    case T_LONG:
+      vpinsrq(dst, src, val, idx);
+      break;
+    default:
+      assert(false,"Should not reach here.");
+      break;
+  }
+}
+
 void MacroAssembler::reducedw(int opcode, XMMRegister dst, XMMRegister src) {
   if(opcode == Op_AddReductionVI) {
     paddd(dst, src);
@@ -4762,10 +4802,10 @@ void MacroAssembler::reduceq(int opcode, XMMRegister dst, XMMRegister src) {
   } else if (opcode == Op_MinReductionV) {
     assert(UseAVX > 2, "required");
     vpminsq(dst, dst, src, Assembler::AVX_128bit);
-  } else if (opcode == Op_MaxReductionV) { 
+  } else if (opcode == Op_MaxReductionV) {
     assert(UseAVX > 2, "required");
     vpmaxsq(dst, dst, src, Assembler::AVX_128bit);
-  } else if (opcode == Op_MulReductionVL) { 
+  } else if (opcode == Op_MulReductionVL) {
     assert(VM_Version::supports_avx512dq(), "required");
     vpmullq(dst, dst, src, Assembler::AVX_128bit);
   } else {
