@@ -6951,12 +6951,12 @@ address generate_avx_ghash_processBlocks() {
               StubRoutines::_vector_double512_log = CAST_FROM_FN_PTR(address, __svml_log8_ha_z0);
               StubRoutines::_vector_float512_log10 = CAST_FROM_FN_PTR(address, __svml_log10f16_ha_z0);
               StubRoutines::_vector_double512_log10 = CAST_FROM_FN_PTR(address, __svml_log108_ha_z0);
-              StubRoutines::_vector_float512_sin = CAST_FROM_FN_PTR(address, __svml_sinf16_ha_z0);      
+              StubRoutines::_vector_float512_sin = CAST_FROM_FN_PTR(address, __svml_sinf16_ha_z0);
               StubRoutines::_vector_double512_sin = CAST_FROM_FN_PTR(address, __svml_sin8_ha_z0);
-              StubRoutines::_vector_float512_cos = CAST_FROM_FN_PTR(address, __svml_cosf16_ha_z0);      
+              StubRoutines::_vector_float512_cos = CAST_FROM_FN_PTR(address, __svml_cosf16_ha_z0);
               StubRoutines::_vector_double512_cos = CAST_FROM_FN_PTR(address, __svml_cos8_ha_z0);
               StubRoutines::_vector_float512_tan = CAST_FROM_FN_PTR(address, __svml_tanf16_ha_z0);
-              StubRoutines::_vector_double512_tan = CAST_FROM_FN_PTR(address, __svml_tan8_ha_z0);      
+              StubRoutines::_vector_double512_tan = CAST_FROM_FN_PTR(address, __svml_tan8_ha_z0);
               StubRoutines::_vector_float512_sinh = CAST_FROM_FN_PTR(address, __svml_sinhf16_ha_z0);
               StubRoutines::_vector_double512_sinh = CAST_FROM_FN_PTR(address, __svml_sinh8_ha_z0);
               StubRoutines::_vector_float512_cosh = CAST_FROM_FN_PTR(address, __svml_coshf16_ha_z0);
@@ -6980,11 +6980,11 @@ address generate_avx_ghash_processBlocks() {
           }
           #endif
         if (UseAVX==1) {
-          StubRoutines::_vector_float64_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_e9);  
+          StubRoutines::_vector_float64_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_e9);
           StubRoutines::_vector_float128_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_e9);
-          StubRoutines::_vector_float256_exp = CAST_FROM_FN_PTR(address, __svml_expf8_ha_e9); 
-          StubRoutines::_vector_double64_exp = CAST_FROM_FN_PTR(address, __svml_exp1_ha_e9);  
-          StubRoutines::_vector_double128_exp = CAST_FROM_FN_PTR(address, __svml_exp2_ha_e9); 
+          StubRoutines::_vector_float256_exp = CAST_FROM_FN_PTR(address, __svml_expf8_ha_e9);
+          StubRoutines::_vector_double64_exp = CAST_FROM_FN_PTR(address, __svml_exp1_ha_e9);
+          StubRoutines::_vector_double128_exp = CAST_FROM_FN_PTR(address, __svml_exp2_ha_e9);
           StubRoutines::_vector_double256_exp = CAST_FROM_FN_PTR(address, __svml_exp4_ha_e9);
           StubRoutines::_vector_float64_expm1 = CAST_FROM_FN_PTR(address, __svml_expm1f4_ha_e9);
           StubRoutines::_vector_float128_expm1 = CAST_FROM_FN_PTR(address, __svml_expm1f4_ha_e9);
@@ -7087,14 +7087,14 @@ address generate_avx_ghash_processBlocks() {
           StubRoutines::_vector_float256_atan2 = CAST_FROM_FN_PTR(address, __svml_atan2f8_ha_e9);
           StubRoutines::_vector_double64_atan2 = CAST_FROM_FN_PTR(address, __svml_atan21_ha_e9);
           StubRoutines::_vector_double128_atan2 = CAST_FROM_FN_PTR(address, __svml_atan22_ha_e9);
-          StubRoutines::_vector_double256_atan2 = CAST_FROM_FN_PTR(address, __svml_atan24_ha_e9);  
-        }  
+          StubRoutines::_vector_double256_atan2 = CAST_FROM_FN_PTR(address, __svml_atan24_ha_e9);
+        }
         else {
-          StubRoutines::_vector_float64_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_l9);  
+          StubRoutines::_vector_float64_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_l9);
           StubRoutines::_vector_float128_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_l9);
-          StubRoutines::_vector_float256_exp = CAST_FROM_FN_PTR(address, __svml_expf8_ha_l9); 
-          StubRoutines::_vector_double64_exp = CAST_FROM_FN_PTR(address, __svml_exp1_ha_l9);  
-          StubRoutines::_vector_double128_exp = CAST_FROM_FN_PTR(address, __svml_exp2_ha_l9); 
+          StubRoutines::_vector_float256_exp = CAST_FROM_FN_PTR(address, __svml_expf8_ha_l9);
+          StubRoutines::_vector_double64_exp = CAST_FROM_FN_PTR(address, __svml_exp1_ha_l9);
+          StubRoutines::_vector_double128_exp = CAST_FROM_FN_PTR(address, __svml_exp2_ha_l9);
           StubRoutines::_vector_double256_exp = CAST_FROM_FN_PTR(address, __svml_exp4_ha_l9);
           StubRoutines::_vector_float64_expm1 = CAST_FROM_FN_PTR(address, __svml_expm1f4_ha_l9);
           StubRoutines::_vector_float128_expm1 = CAST_FROM_FN_PTR(address, __svml_expm1f4_ha_l9);
@@ -7197,83 +7197,81 @@ address generate_avx_ghash_processBlocks() {
           StubRoutines::_vector_float256_atan2 = CAST_FROM_FN_PTR(address, __svml_atan2f8_ha_l9);
           StubRoutines::_vector_double64_atan2 = CAST_FROM_FN_PTR(address, __svml_atan21_ha_l9);
           StubRoutines::_vector_double128_atan2 = CAST_FROM_FN_PTR(address, __svml_atan22_ha_l9);
-          StubRoutines::_vector_double256_atan2 = CAST_FROM_FN_PTR(address, __svml_atan24_ha_l9);  
-      }  
-        
-       
+          StubRoutines::_vector_double256_atan2 = CAST_FROM_FN_PTR(address, __svml_atan24_ha_l9);
+      }
       } else if (UseSSE>=2) {
-        StubRoutines::_vector_float64_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_ex);  
-        StubRoutines::_vector_float128_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_ex);  
-        StubRoutines::_vector_double64_exp = CAST_FROM_FN_PTR(address, __svml_exp1_ha_ex);  
-        StubRoutines::_vector_double128_exp = CAST_FROM_FN_PTR(address, __svml_exp2_ha_ex);  
+        StubRoutines::_vector_float64_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_ex);
+        StubRoutines::_vector_float128_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_ex);
+        StubRoutines::_vector_double64_exp = CAST_FROM_FN_PTR(address, __svml_exp1_ha_ex);
+        StubRoutines::_vector_double128_exp = CAST_FROM_FN_PTR(address, __svml_exp2_ha_ex);
         StubRoutines::_vector_float64_expm1 = CAST_FROM_FN_PTR(address, __svml_expm1f4_ha_ex);
-        StubRoutines::_vector_float128_expm1 = CAST_FROM_FN_PTR(address, __svml_expm1f4_ha_ex);  
+        StubRoutines::_vector_float128_expm1 = CAST_FROM_FN_PTR(address, __svml_expm1f4_ha_ex);
         StubRoutines::_vector_double64_expm1 = CAST_FROM_FN_PTR(address, __svml_expm11_ha_ex);
-        StubRoutines::_vector_double128_expm1 = CAST_FROM_FN_PTR(address, __svml_expm12_ha_ex);   
-        StubRoutines::_vector_float64_acos = CAST_FROM_FN_PTR(address, __svml_acosf4_ha_ex);   
-        StubRoutines::_vector_float128_acos = CAST_FROM_FN_PTR(address, __svml_acosf4_ha_ex);  
+        StubRoutines::_vector_double128_expm1 = CAST_FROM_FN_PTR(address, __svml_expm12_ha_ex);
+        StubRoutines::_vector_float64_acos = CAST_FROM_FN_PTR(address, __svml_acosf4_ha_ex);
+        StubRoutines::_vector_float128_acos = CAST_FROM_FN_PTR(address, __svml_acosf4_ha_ex);
         StubRoutines::_vector_double64_acos = CAST_FROM_FN_PTR(address, __svml_acos1_ha_ex);
-        StubRoutines::_vector_double128_acos = CAST_FROM_FN_PTR(address, __svml_acos2_ha_ex);      
+        StubRoutines::_vector_double128_acos = CAST_FROM_FN_PTR(address, __svml_acos2_ha_ex);
         StubRoutines::_vector_float64_asin = CAST_FROM_FN_PTR(address, __svml_asinf4_ha_ex);
-        StubRoutines::_vector_float128_asin = CAST_FROM_FN_PTR(address, __svml_asinf4_ha_ex);  
+        StubRoutines::_vector_float128_asin = CAST_FROM_FN_PTR(address, __svml_asinf4_ha_ex);
         StubRoutines::_vector_double64_asin = CAST_FROM_FN_PTR(address, __svml_asin1_ha_ex);
-        StubRoutines::_vector_double128_asin = CAST_FROM_FN_PTR(address, __svml_asin2_ha_ex);      
+        StubRoutines::_vector_double128_asin = CAST_FROM_FN_PTR(address, __svml_asin2_ha_ex);
         StubRoutines::_vector_float64_atan = CAST_FROM_FN_PTR(address, __svml_atanf4_ha_ex);
-        StubRoutines::_vector_float128_atan = CAST_FROM_FN_PTR(address, __svml_atanf4_ha_ex);  
+        StubRoutines::_vector_float128_atan = CAST_FROM_FN_PTR(address, __svml_atanf4_ha_ex);
         StubRoutines::_vector_double64_atan = CAST_FROM_FN_PTR(address, __svml_atan1_ha_ex);
-        StubRoutines::_vector_double128_atan = CAST_FROM_FN_PTR(address, __svml_atan2_ha_ex);      
+        StubRoutines::_vector_double128_atan = CAST_FROM_FN_PTR(address, __svml_atan2_ha_ex);
         StubRoutines::_vector_float64_sin = CAST_FROM_FN_PTR(address, __svml_sinf4_ha_ex);
-        StubRoutines::_vector_float128_sin = CAST_FROM_FN_PTR(address, __svml_sinf4_ha_ex);  
+        StubRoutines::_vector_float128_sin = CAST_FROM_FN_PTR(address, __svml_sinf4_ha_ex);
         StubRoutines::_vector_double64_sin = CAST_FROM_FN_PTR(address, __svml_sin1_ha_ex);
-        StubRoutines::_vector_double128_sin = CAST_FROM_FN_PTR(address, __svml_sin2_ha_ex);      
+        StubRoutines::_vector_double128_sin = CAST_FROM_FN_PTR(address, __svml_sin2_ha_ex);
         StubRoutines::_vector_float64_cos = CAST_FROM_FN_PTR(address, __svml_cosf4_ha_ex);
-        StubRoutines::_vector_float128_cos = CAST_FROM_FN_PTR(address, __svml_cosf4_ha_ex);  
+        StubRoutines::_vector_float128_cos = CAST_FROM_FN_PTR(address, __svml_cosf4_ha_ex);
         StubRoutines::_vector_double64_cos = CAST_FROM_FN_PTR(address, __svml_cos1_ha_ex);
-        StubRoutines::_vector_double128_cos = CAST_FROM_FN_PTR(address, __svml_cos2_ha_ex);      
+        StubRoutines::_vector_double128_cos = CAST_FROM_FN_PTR(address, __svml_cos2_ha_ex);
         StubRoutines::_vector_float64_tan = CAST_FROM_FN_PTR(address, __svml_tanf4_ha_ex);
-        StubRoutines::_vector_float128_tan = CAST_FROM_FN_PTR(address, __svml_tanf4_ha_ex);  
+        StubRoutines::_vector_float128_tan = CAST_FROM_FN_PTR(address, __svml_tanf4_ha_ex);
         StubRoutines::_vector_double64_tan = CAST_FROM_FN_PTR(address, __svml_tan1_ha_ex);
-        StubRoutines::_vector_double128_tan = CAST_FROM_FN_PTR(address, __svml_tan2_ha_ex);      
+        StubRoutines::_vector_double128_tan = CAST_FROM_FN_PTR(address, __svml_tan2_ha_ex);
         StubRoutines::_vector_float64_sinh = CAST_FROM_FN_PTR(address, __svml_sinhf4_ha_ex);
-        StubRoutines::_vector_float128_sinh = CAST_FROM_FN_PTR(address, __svml_sinhf4_ha_ex);  
+        StubRoutines::_vector_float128_sinh = CAST_FROM_FN_PTR(address, __svml_sinhf4_ha_ex);
         StubRoutines::_vector_double64_sinh = CAST_FROM_FN_PTR(address, __svml_sinh1_ha_ex);
-        StubRoutines::_vector_double128_sinh = CAST_FROM_FN_PTR(address, __svml_sinh2_ha_ex);      
+        StubRoutines::_vector_double128_sinh = CAST_FROM_FN_PTR(address, __svml_sinh2_ha_ex);
         StubRoutines::_vector_float64_cosh = CAST_FROM_FN_PTR(address, __svml_coshf4_ha_ex);
         StubRoutines::_vector_float128_cosh = CAST_FROM_FN_PTR(address, __svml_coshf4_ha_ex);
-        StubRoutines::_vector_double64_cosh = CAST_FROM_FN_PTR(address, __svml_cosh1_ha_ex);  
-        StubRoutines::_vector_double128_cosh = CAST_FROM_FN_PTR(address, __svml_cosh2_ha_ex);      
+        StubRoutines::_vector_double64_cosh = CAST_FROM_FN_PTR(address, __svml_cosh1_ha_ex);
+        StubRoutines::_vector_double128_cosh = CAST_FROM_FN_PTR(address, __svml_cosh2_ha_ex);
         StubRoutines::_vector_float64_tanh = CAST_FROM_FN_PTR(address, __svml_tanhf4_ha_ex);
-        StubRoutines::_vector_float128_tanh = CAST_FROM_FN_PTR(address, __svml_tanhf4_ha_ex);  
+        StubRoutines::_vector_float128_tanh = CAST_FROM_FN_PTR(address, __svml_tanhf4_ha_ex);
         StubRoutines::_vector_double64_tanh = CAST_FROM_FN_PTR(address, __svml_tanh1_ha_ex);
-        StubRoutines::_vector_double128_tanh = CAST_FROM_FN_PTR(address, __svml_tanh2_ha_ex);      
+        StubRoutines::_vector_double128_tanh = CAST_FROM_FN_PTR(address, __svml_tanh2_ha_ex);
         StubRoutines::_vector_float64_log = CAST_FROM_FN_PTR(address, __svml_logf4_ha_ex);
-        StubRoutines::_vector_float128_log = CAST_FROM_FN_PTR(address, __svml_logf4_ha_ex);  
+        StubRoutines::_vector_float128_log = CAST_FROM_FN_PTR(address, __svml_logf4_ha_ex);
         StubRoutines::_vector_double64_log = CAST_FROM_FN_PTR(address, __svml_log1_ha_ex);
-        StubRoutines::_vector_double128_log = CAST_FROM_FN_PTR(address, __svml_log2_ha_ex);      
+        StubRoutines::_vector_double128_log = CAST_FROM_FN_PTR(address, __svml_log2_ha_ex);
         StubRoutines::_vector_float64_log10 = CAST_FROM_FN_PTR(address, __svml_log10f4_ha_ex);
-        StubRoutines::_vector_float128_log10 = CAST_FROM_FN_PTR(address, __svml_log10f4_ha_ex);  
+        StubRoutines::_vector_float128_log10 = CAST_FROM_FN_PTR(address, __svml_log10f4_ha_ex);
         StubRoutines::_vector_double64_log10 = CAST_FROM_FN_PTR(address, __svml_log101_ha_ex);
-        StubRoutines::_vector_double128_log10 = CAST_FROM_FN_PTR(address, __svml_log102_ha_ex);      
+        StubRoutines::_vector_double128_log10 = CAST_FROM_FN_PTR(address, __svml_log102_ha_ex);
         StubRoutines::_vector_float64_log1p = CAST_FROM_FN_PTR(address, __svml_log1pf4_ha_ex);
-        StubRoutines::_vector_float128_log1p = CAST_FROM_FN_PTR(address, __svml_log1pf4_ha_ex);  
+        StubRoutines::_vector_float128_log1p = CAST_FROM_FN_PTR(address, __svml_log1pf4_ha_ex);
         StubRoutines::_vector_double64_log1p = CAST_FROM_FN_PTR(address, __svml_log1p1_ha_ex);
-        StubRoutines::_vector_double128_log1p = CAST_FROM_FN_PTR(address, __svml_log1p2_ha_ex);      
+        StubRoutines::_vector_double128_log1p = CAST_FROM_FN_PTR(address, __svml_log1p2_ha_ex);
         StubRoutines::_vector_float64_atan2 = CAST_FROM_FN_PTR(address, __svml_atan2f4_ha_ex);
-        StubRoutines::_vector_float128_atan2 = CAST_FROM_FN_PTR(address, __svml_atan2f4_ha_ex); 
+        StubRoutines::_vector_float128_atan2 = CAST_FROM_FN_PTR(address, __svml_atan2f4_ha_ex);
         StubRoutines::_vector_double64_atan2 = CAST_FROM_FN_PTR(address, __svml_atan21_ha_ex);
-        StubRoutines::_vector_double128_atan2 = CAST_FROM_FN_PTR(address, __svml_atan22_ha_ex);      
+        StubRoutines::_vector_double128_atan2 = CAST_FROM_FN_PTR(address, __svml_atan22_ha_ex);
         StubRoutines::_vector_float64_hypot = CAST_FROM_FN_PTR(address, __svml_hypotf4_ha_ex);
-        StubRoutines::_vector_float128_hypot = CAST_FROM_FN_PTR(address, __svml_hypotf4_ha_ex);  
+        StubRoutines::_vector_float128_hypot = CAST_FROM_FN_PTR(address, __svml_hypotf4_ha_ex);
         StubRoutines::_vector_double64_hypot = CAST_FROM_FN_PTR(address, __svml_hypot1_ha_ex);
-        StubRoutines::_vector_double128_hypot = CAST_FROM_FN_PTR(address, __svml_hypot2_ha_ex);      
+        StubRoutines::_vector_double128_hypot = CAST_FROM_FN_PTR(address, __svml_hypot2_ha_ex);
         StubRoutines::_vector_float64_pow = CAST_FROM_FN_PTR(address, __svml_powf4_ha_ex);
-        StubRoutines::_vector_float128_pow = CAST_FROM_FN_PTR(address, __svml_powf4_ha_ex);  
+        StubRoutines::_vector_float128_pow = CAST_FROM_FN_PTR(address, __svml_powf4_ha_ex);
         StubRoutines::_vector_double64_pow = CAST_FROM_FN_PTR(address, __svml_pow1_ha_ex);
-        StubRoutines::_vector_double128_pow = CAST_FROM_FN_PTR(address, __svml_pow2_ha_ex);      
+        StubRoutines::_vector_double128_pow = CAST_FROM_FN_PTR(address, __svml_pow2_ha_ex);
         StubRoutines::_vector_float64_cbrt = CAST_FROM_FN_PTR(address, __svml_cbrtf4_ha_ex);
-        StubRoutines::_vector_float128_cbrt = CAST_FROM_FN_PTR(address, __svml_cbrtf4_ha_ex);  
+        StubRoutines::_vector_float128_cbrt = CAST_FROM_FN_PTR(address, __svml_cbrtf4_ha_ex);
         StubRoutines::_vector_double64_cbrt = CAST_FROM_FN_PTR(address, __svml_cbrt1_ha_ex);
-        StubRoutines::_vector_double128_cbrt = CAST_FROM_FN_PTR(address, __svml_cbrt2_ha_ex);      
+        StubRoutines::_vector_double128_cbrt = CAST_FROM_FN_PTR(address, __svml_cbrt2_ha_ex);
       }
   }
 #endif
