@@ -182,30 +182,29 @@ public class StdLibTest extends NativeTestHelper {
 
                 strcat = abi.downcallHandle(lookup.lookup("strcat"),
                         MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_POINTER, false, C_POINTER, C_POINTER));
+                        FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER));
 
                 strcmp = abi.downcallHandle(lookup.lookup("strcmp"),
                         MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_INT, false, C_POINTER, C_POINTER));
+                        FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER));
 
                 puts = abi.downcallHandle(lookup.lookup("puts"),
                         MethodType.methodType(int.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_INT, false, C_POINTER));
+                        FunctionDescriptor.of(C_INT, C_POINTER));
 
                 strlen = abi.downcallHandle(lookup.lookup("strlen"),
                         MethodType.methodType(int.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_INT, false, C_POINTER));
+                        FunctionDescriptor.of(C_INT, C_POINTER));
 
                 gmtime = abi.downcallHandle(lookup.lookup("gmtime"),
                         MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_POINTER, false, C_POINTER));
+                        FunctionDescriptor.of(C_POINTER, C_POINTER));
 
-                qsortComparFunction = FunctionDescriptor.of(C_INT, false,
-                        C_POINTER, C_POINTER);
+                qsortComparFunction = FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER);
 
                 qsort = abi.downcallHandle(lookup.lookup("qsort"),
                         MethodType.methodType(void.class, MemoryAddress.class, long.class, long.class, MemoryAddress.class),
-                        FunctionDescriptor.ofVoid(false, C_POINTER, C_ULONG, C_ULONG, C_POINTER));
+                        FunctionDescriptor.ofVoid(C_POINTER, C_ULONG, C_ULONG, C_POINTER));
 
                 //qsort upcall handle
                 qsortCompar = MethodHandles.lookup().findStatic(StdLibTest.StdLibHelper.class, "qsortCompare",
@@ -213,7 +212,7 @@ public class StdLibTest extends NativeTestHelper {
 
                 rand = abi.downcallHandle(lookup.lookup("rand"),
                         MethodType.methodType(int.class),
-                        FunctionDescriptor.of(C_INT, false));
+                        FunctionDescriptor.of(C_INT));
 
                 printfAddr = lookup.lookup("printf");
             } catch (Throwable ex) {
@@ -354,7 +353,7 @@ public class StdLibTest extends NativeTestHelper {
                 argLayouts.add(arg.layout);
             }
             MethodHandle mh = abi.downcallHandle(printfAddr, mt,
-                    FunctionDescriptor.of(C_INT, false, argLayouts.toArray(new MemoryLayout[0])));
+                    FunctionDescriptor.of(C_INT, argLayouts.toArray(new MemoryLayout[0])));
             return mh.asSpreader(1, Object[].class, args.size());
         }
     }

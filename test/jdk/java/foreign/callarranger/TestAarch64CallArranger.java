@@ -56,7 +56,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
     @Test
     public void testEmpty() {
         MethodType mt = MethodType.methodType(void.class);
-        FunctionDescriptor fd = FunctionDescriptor.ofVoid(false);
+        FunctionDescriptor fd = FunctionDescriptor.ofVoid();
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);
@@ -75,7 +75,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
                 int.class, int.class, int.class, int.class,
                 int.class, int.class, int.class, int.class,
                 int.class, int.class);
-        FunctionDescriptor fd = FunctionDescriptor.ofVoid(false,
+        FunctionDescriptor fd = FunctionDescriptor.ofVoid(
                 C_INT, C_INT, C_INT, C_INT,
                 C_INT, C_INT, C_INT, C_INT,
                 C_INT, C_INT);
@@ -106,7 +106,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
     public void testTwoIntTwoFloat() {
       MethodType mt = MethodType.methodType(void.class,
                 int.class, int.class, float.class, float.class);
-        FunctionDescriptor fd = FunctionDescriptor.ofVoid(false,
+        FunctionDescriptor fd = FunctionDescriptor.ofVoid(
                 C_INT, C_INT, C_FLOAT, C_FLOAT);
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
@@ -128,7 +128,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
     @Test(dataProvider = "structs")
     public void testStruct(MemoryLayout struct, Binding[] expectedBindings) {
         MethodType mt = MethodType.methodType(void.class, MemorySegment.class);
-        FunctionDescriptor fd = FunctionDescriptor.ofVoid(false, struct);
+        FunctionDescriptor fd = FunctionDescriptor.ofVoid(struct);
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);
@@ -179,7 +179,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         MemoryLayout struct2 = MemoryLayout.ofStruct(C_LONG, C_LONG, C_LONG);
 
         MethodType mt = MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class, int.class);
-        FunctionDescriptor fd = FunctionDescriptor.ofVoid(false, struct1, struct2, C_INT);
+        FunctionDescriptor fd = FunctionDescriptor.ofVoid(struct1, struct2, C_INT);
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);
@@ -211,13 +211,13 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         MemoryLayout struct = MemoryLayout.ofStruct(C_LONG, C_LONG, C_FLOAT);
 
         MethodType mt = MethodType.methodType(MemorySegment.class);
-        FunctionDescriptor fd = FunctionDescriptor.of(struct, false);
+        FunctionDescriptor fd = FunctionDescriptor.of(struct);
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
         assertTrue(bindings.isInMemoryReturn);
         CallingSequence callingSequence = bindings.callingSequence;
         assertEquals(callingSequence.methodType(), MethodType.methodType(void.class, MemoryAddress.class));
-        assertEquals(callingSequence.functionDesc(), FunctionDescriptor.ofVoid(false, C_POINTER));
+        assertEquals(callingSequence.functionDesc(), FunctionDescriptor.ofVoid(C_POINTER));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
             {
@@ -234,7 +234,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         MemoryLayout struct = MemoryLayout.ofStruct(C_LONG, C_LONG);
 
         MethodType mt = MethodType.methodType(MemorySegment.class);
-        FunctionDescriptor fd = FunctionDescriptor.of(struct, false);
+        FunctionDescriptor fd = FunctionDescriptor.of(struct);
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);
@@ -260,7 +260,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         MemoryLayout hfa = MemoryLayout.ofStruct(C_FLOAT, C_FLOAT);
 
         MethodType mt = MethodType.methodType(MemorySegment.class, float.class, int.class, MemorySegment.class);
-        FunctionDescriptor fd = FunctionDescriptor.of(hfa, false, C_FLOAT, C_INT, hfa);
+        FunctionDescriptor fd = FunctionDescriptor.of(hfa, C_FLOAT, C_INT, hfa);
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);
@@ -296,7 +296,7 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         MemoryLayout struct = MemoryLayout.ofStruct(C_FLOAT, C_FLOAT, C_FLOAT);
 
         MethodType mt = MethodType.methodType(void.class, MemorySegment.class, MemorySegment.class, MemorySegment.class);
-        FunctionDescriptor fd = FunctionDescriptor.ofVoid(false, struct, struct, struct);
+        FunctionDescriptor fd = FunctionDescriptor.ofVoid(struct, struct, struct);
         CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
 
         assertFalse(bindings.isInMemoryReturn);

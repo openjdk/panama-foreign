@@ -201,8 +201,8 @@ abstract class AbstractLayout implements MemoryLayout {
                 MethodTypeDesc.of(CD_GROUP_LAYOUT, CD_LAYOUT.arrayType()));
 
     static final MethodHandleDesc MH_VOID_FUNCTION = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_FUNCTION_DESC, "ofVoid",
-                MethodTypeDesc.of(CD_FUNCTION_DESC, ConstantDescs.CD_boolean, CD_LAYOUT.arrayType()));
+                MethodTypeDesc.of(CD_FUNCTION_DESC, CD_LAYOUT.arrayType()));
 
     static final MethodHandleDesc MH_FUNCTION = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_FUNCTION_DESC, "of",
-                MethodTypeDesc.of(CD_FUNCTION_DESC, CD_LAYOUT, ConstantDescs.CD_boolean, CD_LAYOUT.arrayType()));
+                MethodTypeDesc.of(CD_FUNCTION_DESC, CD_LAYOUT, CD_LAYOUT.arrayType()));
 }

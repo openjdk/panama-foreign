@@ -65,19 +65,11 @@ public class SysVx64ABI implements SystemABI {
 
     @Override
     public MethodHandle downcallHandle(MemoryAddress symbol, MethodType type, FunctionDescriptor function) {
-        if (function.isVariadic()) {
-            throw new IllegalArgumentException("Variadic function: " + function);
-        }
-
         return CallArranger.arrangeDowncall(MemoryAddressImpl.addressof(symbol), type, function);
     }
 
     @Override
     public MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function) {
-        if (function.isVariadic()) {
-            throw new IllegalArgumentException("Variadic function: " + function);
-        }
-
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
     }
 
