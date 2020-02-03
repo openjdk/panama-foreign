@@ -26,12 +26,165 @@ import jdk.incubator.foreign.MemoryLayout;
 
 import java.util.Objects;
 
+/**
+ * The binding operators defined in the Binding class can be combined into argument and return value processing 'recipes'.
+ *
+ * The binding operators are interpreted using a stack-base interpreter. Operators can either consume operands from the
+ * stack, or push them onto the stack.
+ *
+ * In the description of each binding we talk about 'boxing' and 'unboxing'.
+ *  - Unboxing is the process of taking a Java value and decomposing it, and storing components into machine
+ *    storage locations. As such, the binding interpreter stack starts with the Java value on it, and should end empty.
+ *  - Boxing is the process of re-composing a Java value by pulling components from machine storage locations.
+ *    If a MemorySegment is needed to store the result, one should be allocated using the ALLOCATE_BUFFER operator.
+ *    The binding interpreter stack starts off empty, and ends with the value to be returned as the only value on it.
+ * A binding operator can be interpreted differently based on whether we are boxing or unboxing a value. For example,
+ * the CONVERT_ADDRESS operator 'unboxes' a MemoryAddress to a long, but 'boxes' a long to a MemoryAddress.
+ *
+ * Here are some examples of binding recipes derived from C declarations, and according to the Windows ABI (recipes are
+ * ABI-specific). Note that each argument has it's own recipe, which is indicated by '[number]:' (though, the only
+ * example that has multiple arguments is the one using varargs).
+ *
+ * --------------------
+ *
+ * void f(int i);
+ *
+ * Argument bindings:
+ * 0: MOVE(rcx, int.class) // move an 'int' into the RCX register
+ *
+ * Return bindings:
+ * none
+ *
+ * --------------------
+ *
+ * void f(int* i);
+ *
+ * Argument bindings:
+ * 0: CONVERT_ADDRESS // the 'MemoryAddress' is converted into a 'long'
+ *    MOVE(rcx, long.class) // the 'long' is moved into the RCX register
+ *
+ * Return bindings:
+ * none
+ *
+ * --------------------
+ *
+ * int* f();
+ *
+ * Argument bindings:
+ * none
+ *
+ * Return bindings:
+ * 0: MOVE(rax, long) // load a 'long' from the RAX register
+ *    CONVERT_ADDRESS // convert the 'long' into a 'MemoryAddress'
+ *
+ * --------------------
+ *
+ * typedef struct { // fits into single register
+ * 	int x;
+ * 	int y;
+ * } MyStruct;
+ *
+ * void f(MyStruct ms);
+ *
+ * Argument bindings:
+ * 0: DEREFERENCE(0, long.class) // From the struct's memory region, load a 'long' from offset '0'
+ *    MOVE(rcx, long.class) // and copy that into the RCX regitster
+ *
+ * Return bindings:
+ * none
+ *
+ * --------------------
+ *
+ * typedef struct { // does not fit into single register
+ * 	__int64 x;
+ * 	__int64 y;
+ * } MyStruct;
+ *
+ * void f(MyStruct ms);
+ *
+ * For the Windows ABI:
+ *
+ * Argument bindings:
+ * 0: COPY(16, 8) // copy the memory region containing the struct
+ *    BASE_ADDRESS // take the base address of the copy
+ *    CONVERT_ADDRESS // converts the base address to a 'long'
+ *    MOVE(rcx, long.class) // moves the 'long' into the RCX register
+ *
+ * Return bindings:
+ * none
+ *
+ * For the SysV ABI:
+ *
+ * Argument bindings:
+ * 0: DUP // duplicates the MemoryRegion operand
+ *    DEREFERENCE(0, long.class) // loads a 'long' from offset '0'
+ *    MOVE(rdx, long.class) // moves the long into the RDX register
+ *    DEREFERENCE(8, long.class) // loads a 'long' from offset '8'
+ *    MOVE(rcx, long.class) // moves the long into the RCX register
+ *
+ * Return bindings:
+ * none
+ *
+ * --------------------
+ *
+ * typedef struct { // fits into single register
+ * 	int x;
+ * 	int y;
+ * } MyStruct;
+ *
+ * MyStruct f();
+ *
+ * Argument bindings:
+ * none
+ *
+ * Return bindings:
+ * 0: ALLOCATE(GroupLayout(C_INT, C_INT)) // allocate a buffer with the memory layout of the struct
+ *    DUP // duplicate the allocated buffer
+ *    MOVE(rax, long.class) // loads a 'long' from rax
+ *    DEREFERENCE(0, long.class) // stores a 'long' at offset 0
+ *
+ * --------------------
+ *
+ * typedef struct { // does not fit into single register
+ * 	__int64 x;
+ * 	__int64 y;
+ * } MyStruct;
+ *
+ * MyStruct f();
+ *
+ * !! uses synthetic argument, which is a pointer to a pre-allocated buffer
+ *
+ * Argument bindings:
+ * 0: CONVERT_ADDRESS // unbox the MemoryAddress synthetic argument
+ *    MOVE(rcx, long.class) // moves the 'long' into the RCX register
+ *
+ * Return bindings:
+ * none
+ *
+ * --------------------
+ *
+ * void f(int dummy, ...); // varargs
+ *
+ * f(0, 10f); // passing a float
+ *
+ * Argument bindings:
+ * 0: MOVE(rcx, int.class) // moves the 'int dummy' into the RCX register
+ *
+ * 1: DUP // duplicates the '10f' argument
+ *    MOVE(rdx, float.class) // move one copy into the RDX register
+ *    MOVE(xmm1, float.class) // moves the other copy into the xmm2 register
+ *
+ * Return bindings:
+ * none
+ *
+ * --------------------
+ */
 public abstract class Binding {
     static final int MOVE_TAG = 0;
     static final int DEREFERENCE_TAG = 1;
     static final int COPY_BUFFER_TAG = 2;
     static final int ALLOC_BUFFER_TAG = 3;
-    static final int BOX_ADDRESS_TAG = 4;
+    static final int CONVERT_ADDRESS_TAG = 4;
     static final int BASE_ADDRESS_TAG = 5;
     static final int DUP_TAG = 6;
 
@@ -45,14 +198,54 @@ public abstract class Binding {
         return tag;
     }
 
+    private static void checkType(Class<?> type) {
+        if (!type.isPrimitive() || type == void.class || type == boolean.class)
+            throw new IllegalArgumentException("Illegal type: " + type);
+    }
+
+    public static Move move(VMStorage storage, Class<?> type) {
+        checkType(type);
+        return new Move(storage, type);
+    }
+
+    public static Dereference dereference(long offset, Class<?> type) {
+        checkType(type);
+        if (offset < 0)
+            throw new IllegalArgumentException("Negative offset: " + offset);
+        return new Dereference(offset, type);
+    }
+
+    public static Copy copy(MemoryLayout layout) {
+        return new Copy(layout.byteSize(), layout.byteAlignment());
+    }
+
+    public static Allocate allocate(MemoryLayout layout) {
+        return new Allocate(layout.byteSize(), layout.byteAlignment());
+    }
+
+    public static ConvertAddress convertAddress() {
+        return ConvertAddress.INSTANCE;
+    }
+
+    public static BaseAddress baseAddress() {
+        return BaseAddress.INSTANCE;
+    }
+
+    public static Dup dup() {
+        return Dup.INSTANCE;
+    }
+
     /**
-     * Moves from a primitve to a VMStorage
+     * MOVE([storage location], [type])
+     *   When unboxing: pops a [type] from the operand stack, and moves it to [storage location]
+     *   When boxing: loads a [type] from [storage location], and pushes it onto the operand stack
+     * The [type] must be one of byte, short, char, int, long, float, or double
      */
     public static class Move extends Binding {
         private final VMStorage storage;
         private final Class<?> type;
 
-        public Move(VMStorage storage, Class<?> type) {
+        private Move(VMStorage storage, Class<?> type) {
             super(MOVE_TAG);
             this.storage = storage;
             this.type = type;
@@ -91,13 +284,18 @@ public abstract class Binding {
     }
 
     /**
-     * Loads or stores a Java primitive to a MemorySegment at a certain offset
+     * DEREFERENCE([offset into memory region], [type])
+     *   When unboxing: pops a MemorySegment from the operand stack,
+     *       loads a [type] from [offset into memory region] from it, and pushes it onto the operand stack
+     *   When boxing: pops a [type], and then a MemorySegment from the operand stack,
+     *       and then stores [type] to [offset into memory region] of the MemorySegment
+     * The [type] must be one of byte, short, char, int, long, float, or double
      */
     public static class Dereference extends Binding {
         private final long offset;
         private final Class<?> type;
 
-        public Dereference(long offset, Class<?> type) {
+        private Dereference(long offset, Class<?> type) {
             super(DEREFERENCE_TAG);
             this.offset = offset;
             this.type = type;
@@ -136,13 +334,16 @@ public abstract class Binding {
     }
 
     /**
-     * Copies from a MemoryAddress into a newly allocated MemorySegment
+     * COPY([size], [alignment])
+     *   Creates a new MemorySegment with the given [size] and [alignment],
+     * 	     and copies contents from a MemorySegment popped from the top of the operand stack into this new buffer,
+     * 	     and pushes the new buffer onto the operand stack
      */
     public static class Copy extends Binding {
         private final long size;
         private final long alignment;
 
-        public Copy(long size, long alignment) {
+        private Copy(long size, long alignment) {
             super(COPY_BUFFER_TAG);
             this.size = size;
             this.alignment = alignment;
@@ -181,16 +382,17 @@ public abstract class Binding {
     }
 
     /**
-     * Allocates a MemorySegment
+     * ALLOCATE([size], [alignment])
+     *   Creates a new MemorySegment with the give [size] and [alignment], and pushes it onto the operand stack.
      */
-    public static class AllocateBuffer extends Binding {
+    public static class Allocate extends Binding {
         private final long size;
         private final long alignment;
 
-        public AllocateBuffer(MemoryLayout layout) {
+        private Allocate(long size, long alignment) {
             super(ALLOC_BUFFER_TAG);
-            this.size = layout.byteSize();
-            this.alignment = layout.byteAlignment();
+            this.size = size;
+            this.alignment = alignment;
         }
 
         public long size() {
@@ -214,7 +416,7 @@ public abstract class Binding {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            AllocateBuffer that = (AllocateBuffer) o;
+            Allocate that = (Allocate) o;
             return size == that.size &&
                     alignment == that.alignment;
         }
@@ -226,11 +428,16 @@ public abstract class Binding {
     }
 
     /**
-     * Boxes or unboxes a MemoryAddress to a long and vice versa (depending on box/unbox interpreter)
+     * CONVERT_ADDRESS()
+     *   When unboxing: pops a 'MemoryAddress' from the operand stack, converts it to a 'long',
+     *       and pushes that onto the operand stack
+     *   When boxing: pops a 'long' from the operand stack, converts it to a 'MemoryAddress',
+     *       and pushes that onto the operand stack
      */
-    public static class BoxAddress extends Binding {
-        public BoxAddress() {
-            super(BOX_ADDRESS_TAG);
+    public static class ConvertAddress extends Binding {
+        private static final ConvertAddress INSTANCE = new ConvertAddress();
+        private ConvertAddress() {
+            super(CONVERT_ADDRESS_TAG);
         }
 
         @Override
@@ -253,10 +460,13 @@ public abstract class Binding {
     }
 
     /**
-     * Takes the base address of a MemorySegment
+     * BASE_ADDRESS()
+     *   Pops a MemorySegment from the operand stack, and takes the base address of the segment
+     *   (the MemoryAddress that points to the start), and pushes that onto the operand stack
      */
     public static class BaseAddress extends Binding {
-        public BaseAddress() {
+        private static final BaseAddress INSTANCE = new BaseAddress();
+        private BaseAddress() {
             super(BASE_ADDRESS_TAG);
         }
 
@@ -280,10 +490,13 @@ public abstract class Binding {
     }
 
     /**
-     * Duplicates a value on top of the interpreter stack
+     * DUP()
+     *   Duplicates the value on the top of the operand stack (without popping it!),
+     *   and pushes the duplicate onto the operand stack
      */
     public static class Dup extends Binding {
-        public Dup() {
+        private static final Dup INSTANCE = new Dup();
+        private Dup() {
             super(DUP_TAG);
         }
 

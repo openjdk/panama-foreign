@@ -74,7 +74,7 @@ public class BindingInterpreter {
                 case Binding.ALLOC_BUFFER_TAG: {
                     throw new UnsupportedOperationException();
                 }
-                case Binding.BOX_ADDRESS_TAG: {
+                case Binding.CONVERT_ADDRESS_TAG: {
                     stack.push(MemoryAddressImpl.addressof((MemoryAddress) stack.pop()));
                 } break;
                 case Binding.BASE_ADDRESS_TAG: {
@@ -114,10 +114,10 @@ public class BindingInterpreter {
                     stack.push(copy); // leaked
                 } break;
                 case Binding.ALLOC_BUFFER_TAG: {
-                    Binding.AllocateBuffer binding = (Binding.AllocateBuffer) b;
+                    Binding.Allocate binding = (Binding.Allocate) b;
                     stack.push(MemorySegment.allocateNative(binding.size(), binding.alignment()));
                 } break;
-                case Binding.BOX_ADDRESS_TAG: {
+                case Binding.CONVERT_ADDRESS_TAG: {
                     stack.push(MemoryAddress.ofLong((long) stack.pop()));
                 } break;
                 case Binding.BASE_ADDRESS_TAG: {

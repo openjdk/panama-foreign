@@ -122,7 +122,7 @@ public class CallingSequenceBuilder {
                     checkType(actualType, MemorySegment.class);
                     stack.push(MemoryAddress.class);
                 } break;
-                case Binding.BOX_ADDRESS_TAG: {
+                case Binding.CONVERT_ADDRESS_TAG: {
                     Class<?> actualType = stack.pop();
                     checkType(actualType, MemoryAddress.class);
                     stack.push(long.class);
@@ -162,7 +162,7 @@ public class CallingSequenceBuilder {
                     Class<?> segmentType = stack.pop();
                     checkType(segmentType, MemorySegment.class);
                 } break;
-                case Binding.BOX_ADDRESS_TAG: {
+                case Binding.CONVERT_ADDRESS_TAG: {
                     Class<?> actualType = stack.pop();
                     checkType(actualType, long.class);
                     stack.push(MemoryAddress.class);
