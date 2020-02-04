@@ -338,7 +338,8 @@ jdk_foreign = \
     java/foreign
 
 jdk_jextract = \
-    java/jextract
+    java/jextract \
+    tools/jextract
 
 #############################
 

@@ -21,9 +21,23 @@
  * questions.
  */
 
-/* make sure compiler built-in headers can be included */
-#include <stddef.h>
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
-void func(int);
-int printf(char* fmt, ...);
-void f();
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
+typedef struct Point {
+    int x;
+    int y;
+} Point;
+
+Point makePoint(int x, int y);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus

@@ -21,9 +21,9 @@
  * questions.
  */
 
-/* make sure compiler built-in headers can be included */
-#include <stddef.h>
+#include "struct.h"
 
-void func(int);
-int printf(char* fmt, ...);
-void f();
+EXPORT Point makePoint(int x, int y) {
+    Point pt = { x, y };
+    return pt;
+}

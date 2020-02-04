@@ -21,9 +21,23 @@
  * questions.
  */
 
-/* make sure compiler built-in headers can be included */
-#include <stddef.h>
+import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static test.jextract.struct.struct_h.*;
 
-void func(int);
-int printf(char* fmt, ...);
-void f();
+/*
+ * @test
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @run driver JtregJextract -l Struct -t test.jextract.struct -- struct.h
+ * @run testng LibStructTest
+ */
+public class LibStructTest {
+    @Test
+    public void testMakePoint() {
+        try (var seg = makePoint(42, -39)) {
+            assertEquals(Point$x$get(seg), 42);
+            assertEquals(Point$y$get(seg), -39);
+        }
+    }
+}

@@ -324,7 +324,8 @@ class JavaSourceBuilder {
         sb.append(PUB_MODS + mtype.returnType().getName() + " " + f.name() + " (");
         String delim = "";
         List<String> pNames = new ArrayList<>();
-        for (int i = 0 ; i < f.parameters().size() ; i++) {
+        final int numParams = f.parameters().size();
+        for (int i = 0 ; i < numParams; i++) {
             String pName = f.parameters().get(i).name();
             if (pName.isEmpty()) {
                 pName = "x" + i;
@@ -334,8 +335,11 @@ class JavaSourceBuilder {
             delim = ", ";
         }
         if (f.type().varargs()) {
-            String lastArg = "x" + f.parameters().size();
-            sb.append(", Object... " + lastArg);
+            String lastArg = "x" + numParams;
+            if (numParams > 0) {
+                sb.append(", ");
+            }
+            sb.append("Object... " + lastArg);
             pNames.add(lastArg);
         }
         sb.append(") {\n");
