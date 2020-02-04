@@ -33,7 +33,7 @@ version=0
 domain=openjdk.org
 
 [checks "whitespace"]
-files=.*\.java$|.*\.yml$|.*\.gradle$|.*.\txt$
+files=.*\.java$|.*\.cpp$|.*\.hpp$|.*\.c$|.*\.h$
 
 [checks "reviewers"]
 committers=1
