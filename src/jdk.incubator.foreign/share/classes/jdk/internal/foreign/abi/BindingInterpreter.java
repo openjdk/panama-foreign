@@ -50,19 +50,19 @@ public class BindingInterpreter {
         stack.push(arg);
         for (Binding b : bindings) {
             switch (b.tag()) {
-                case Binding.MOVE_TAG: {
+                case MOVE: {
                     Binding.Move binding = (Binding.Move) b;
                     MemoryAddress ptr = ptrFunction.apply(binding.storage());
                     writeOverSized(ptr, binding.type(), stack.pop());
                 } break;
-                case Binding.DEREFERENCE_TAG: {
+                case DEREFERENCE: {
                     Binding.Dereference deref = (Binding.Dereference) b;
                     MemorySegment operand = (MemorySegment) stack.pop();
                     MemoryAddress baseAddress = operand.baseAddress();
                     MemoryAddress readAddress = baseAddress.addOffset(deref.offset());
                     stack.push(read(readAddress, deref.type()));
                 } break;
-                case Binding.COPY_BUFFER_TAG: {
+                case COPY_BUFFER: {
                     Binding.Copy binding = (Binding.Copy) b;
                     MemorySegment operand = (MemorySegment) stack.pop();
                     assert operand.byteSize() == binding.size() : "operand size mismatch";
@@ -71,16 +71,16 @@ public class BindingInterpreter {
                     buffers.add(copy);
                     stack.push(copy);
                 } break;
-                case Binding.ALLOC_BUFFER_TAG: {
+                case ALLOC_BUFFER: {
                     throw new UnsupportedOperationException();
                 }
-                case Binding.CONVERT_ADDRESS_TAG: {
+                case CONVERT_ADDRESS: {
                     stack.push(MemoryAddressImpl.addressof((MemoryAddress) stack.pop()));
                 } break;
-                case Binding.BASE_ADDRESS_TAG: {
+                case BASE_ADDRESS: {
                     stack.push(((MemorySegment) stack.pop()).baseAddress());
                 } break;
-                case Binding.DUP_TAG: {
+                case DUP: {
                     stack.push(stack.peekLast());
                 } break;
                 default: throw new IllegalArgumentException("Unsupported tag: " + b);
@@ -92,12 +92,12 @@ public class BindingInterpreter {
         Deque<Object> stack = new ArrayDeque<>();
         for (Binding b : bindings) {
             switch (b.tag()) {
-                case Binding.MOVE_TAG: {
+                case MOVE: {
                     Binding.Move binding = (Binding.Move) b;
                     MemoryAddress ptr = ptrFunction.apply(binding.storage());
                     stack.push(read(ptr, binding.type()));
                 } break;
-                case Binding.DEREFERENCE_TAG: {
+                case DEREFERENCE: {
                     Binding.Dereference binding = (Binding.Dereference) b;
                     Object value = stack.pop();
                     MemorySegment operand = (MemorySegment) stack.pop();
@@ -105,7 +105,7 @@ public class BindingInterpreter {
                     MemoryAddress writeAddress = baseAddress.addOffset(binding.offset());
                     write(writeAddress, binding.type(), value);
                 } break;
-                case Binding.COPY_BUFFER_TAG: {
+                case COPY_BUFFER: {
                     Binding.Copy binding = (Binding.Copy) b;
                     MemoryAddress operand = (MemoryAddress) stack.pop();
                     operand = Utils.resizeNativeAddress(operand, binding.size());
@@ -113,17 +113,17 @@ public class BindingInterpreter {
                     MemoryAddress.copy(operand, copy.baseAddress(), binding.size());
                     stack.push(copy); // leaked
                 } break;
-                case Binding.ALLOC_BUFFER_TAG: {
+                case ALLOC_BUFFER: {
                     Binding.Allocate binding = (Binding.Allocate) b;
                     stack.push(MemorySegment.allocateNative(binding.size(), binding.alignment()));
                 } break;
-                case Binding.CONVERT_ADDRESS_TAG: {
+                case CONVERT_ADDRESS: {
                     stack.push(MemoryAddress.ofLong((long) stack.pop()));
                 } break;
-                case Binding.BASE_ADDRESS_TAG: {
+                case BASE_ADDRESS: {
                     stack.push(((MemorySegment) stack.pop()).baseAddress());
                 } break;
-                case Binding.DUP_TAG: {
+                case DUP: {
                     stack.push(stack.peekLast());
                 } break;
                 default: throw new IllegalArgumentException("Unsupported tag: " + b);

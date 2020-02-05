@@ -180,21 +180,23 @@ import java.util.Objects;
  * --------------------
  */
 public abstract class Binding {
-    static final int MOVE_TAG = 0;
-    static final int DEREFERENCE_TAG = 1;
-    static final int COPY_BUFFER_TAG = 2;
-    static final int ALLOC_BUFFER_TAG = 3;
-    static final int CONVERT_ADDRESS_TAG = 4;
-    static final int BASE_ADDRESS_TAG = 5;
-    static final int DUP_TAG = 6;
+    enum Tag {
+        MOVE,
+        DEREFERENCE,
+        COPY_BUFFER,
+        ALLOC_BUFFER,
+        CONVERT_ADDRESS,
+        BASE_ADDRESS,
+        DUP
+    }
 
-    private final int tag;
+    private final Tag tag;
 
-    private Binding(int tag) {
+    private Binding(Tag tag) {
         this.tag = tag;
     }
 
-    public int tag() {
+    public Tag tag() {
         return tag;
     }
 
@@ -246,7 +248,7 @@ public abstract class Binding {
         private final Class<?> type;
 
         private Move(VMStorage storage, Class<?> type) {
-            super(MOVE_TAG);
+            super(Tag.MOVE);
             this.storage = storage;
             this.type = type;
         }
@@ -296,7 +298,7 @@ public abstract class Binding {
         private final Class<?> type;
 
         private Dereference(long offset, Class<?> type) {
-            super(DEREFERENCE_TAG);
+            super(Tag.DEREFERENCE);
             this.offset = offset;
             this.type = type;
         }
@@ -344,7 +346,7 @@ public abstract class Binding {
         private final long alignment;
 
         private Copy(long size, long alignment) {
-            super(COPY_BUFFER_TAG);
+            super(Tag.COPY_BUFFER);
             this.size = size;
             this.alignment = alignment;
         }
@@ -390,7 +392,7 @@ public abstract class Binding {
         private final long alignment;
 
         private Allocate(long size, long alignment) {
-            super(ALLOC_BUFFER_TAG);
+            super(Tag.ALLOC_BUFFER);
             this.size = size;
             this.alignment = alignment;
         }
@@ -437,7 +439,7 @@ public abstract class Binding {
     public static class ConvertAddress extends Binding {
         private static final ConvertAddress INSTANCE = new ConvertAddress();
         private ConvertAddress() {
-            super(CONVERT_ADDRESS_TAG);
+            super(Tag.CONVERT_ADDRESS);
         }
 
         @Override
@@ -449,7 +451,7 @@ public abstract class Binding {
 
         @Override
         public int hashCode() {
-            return tag();
+            return tag().hashCode();
         }
 
         @Override
@@ -467,7 +469,7 @@ public abstract class Binding {
     public static class BaseAddress extends Binding {
         private static final BaseAddress INSTANCE = new BaseAddress();
         private BaseAddress() {
-            super(BASE_ADDRESS_TAG);
+            super(Tag.BASE_ADDRESS);
         }
 
         @Override
@@ -479,7 +481,7 @@ public abstract class Binding {
 
         @Override
         public int hashCode() {
-            return tag();
+            return tag().hashCode();
         }
 
         @Override
@@ -497,7 +499,7 @@ public abstract class Binding {
     public static class Dup extends Binding {
         private static final Dup INSTANCE = new Dup();
         private Dup() {
-            super(DUP_TAG);
+            super(Tag.DUP);
         }
 
         @Override
@@ -509,7 +511,7 @@ public abstract class Binding {
 
         @Override
         public int hashCode() {
-            return tag();
+            return tag().hashCode();
         }
 
         @Override
