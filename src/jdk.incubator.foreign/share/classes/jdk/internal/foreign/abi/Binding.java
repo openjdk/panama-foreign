@@ -24,6 +24,8 @@ package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.MemoryLayout;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -235,6 +237,57 @@ public abstract class Binding {
 
     public static Dup dup() {
         return Dup.INSTANCE;
+    }
+
+
+    public static Binding.Builder builder() {
+        return new Binding.Builder();
+    }
+
+    /**
+     * A builder helper class for generating lists of Bindings
+     */
+    public static class Builder {
+        private final List<Binding> bindings = new ArrayList<>();
+
+        public Binding.Builder move(VMStorage storage, Class<?> type) {
+            bindings.add(Binding.move(storage, type));
+            return this;
+        }
+
+        public Binding.Builder dereference(long offset, Class<?> type) {
+            bindings.add(Binding.dereference(offset, type));
+            return this;
+        }
+
+        public Binding.Builder copy(MemoryLayout layout) {
+            bindings.add(Binding.copy(layout));
+            return this;
+        }
+
+        public Binding.Builder allocate(MemoryLayout layout) {
+            bindings.add(Binding.allocate(layout));
+            return this;
+        }
+
+        public Binding.Builder convertAddress() {
+            bindings.add(Binding.convertAddress());
+            return this;
+        }
+
+        public Binding.Builder baseAddress() {
+            bindings.add(Binding.baseAddress());
+            return this;
+        }
+
+        public Binding.Builder dup() {
+            bindings.add(Binding.dup());
+            return this;
+        }
+
+        public List<Binding> build() {
+            return new ArrayList<>(bindings);
+        }
     }
 
     /**

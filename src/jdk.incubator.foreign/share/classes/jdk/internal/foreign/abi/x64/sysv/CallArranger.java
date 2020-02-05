@@ -120,7 +120,7 @@ public class CallArranger {
         if (!forUpcall) {
             //add extra binding for number of used vector registers (used for variadic calls)
             csb.addArgumentBindings(long.class, MemoryLayouts.SysV.C_LONG,
-                    List.of(move(rax, long.class)));
+                    Binding.builder().move(rax, long.class).build());
         }
 
         return new Bindings(csb.build(), returnInMemory, argCalc.storageCalculator.nVectorReg);
@@ -308,7 +308,7 @@ public class CallArranger {
         @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = classifyLayout(layout);
-            List<Binding> bindings = new ArrayList<>();
+            Binding.Builder bindings = Binding.builder();
             switch (argumentClass.kind) {
                 case STRUCT: {
                     assert carrier == MemorySegment.class;
@@ -320,34 +320,34 @@ public class CallArranger {
                         VMStorage storage = regs[regIndex++];
                         Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
                         if (offset + copy < layout.byteSize()) {
-                            bindings.add(dup());
+                            bindings.dup();
                         }
-                        bindings.add(dereference(offset, type));
-                        bindings.add(move(storage, type));
+                        bindings.dereference(offset, type)
+                                .move(storage, type);
                         offset += copy;
                     }
                     break;
                 }
                 case POINTER: {
-                    bindings.add(convertAddress());
+                    bindings.convertAddress();
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
-                    bindings.add(move(storage, long.class));
+                    bindings.move(storage, long.class);
                     break;
                 }
                 case INTEGER: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
-                    bindings.add(move(storage, carrier));
+                    bindings.move(storage, carrier);
                     break;
                 }
                 case FLOAT: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR);
-                    bindings.add(move(storage, carrier));
+                    bindings.move(storage, carrier);
                     break;
                 }
                 default:
                     throw new UnsupportedOperationException("Unhandled class " + argumentClass);
             }
-            return bindings;
+            return bindings.build();
         }
     }
 
@@ -361,45 +361,45 @@ public class CallArranger {
         @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = classifyLayout(layout);
-            List<Binding> bindings = new ArrayList<>();
+            Binding.Builder bindings = Binding.builder();
             switch (argumentClass.kind) {
                 case STRUCT: {
                     assert carrier == MemorySegment.class;
-                    bindings.add(allocate(layout));
+                    bindings.allocate(layout);
                     VMStorage[] regs = storageCalculator.structStorages(argumentClass);
                     int regIndex = 0;
                     long offset = 0;
                     while (offset < layout.byteSize()) {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
                         VMStorage storage = regs[regIndex++];
-                        bindings.add(dup());
+                        bindings.dup();
                         Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
-                        bindings.add(move(storage, type));
-                        bindings.add(dereference(offset, type));
+                        bindings.move(storage, type)
+                                .dereference(offset, type);
                         offset += copy;
                     }
                     break;
                 }
                 case POINTER: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
-                    bindings.add(move(storage, long.class));
-                    bindings.add(convertAddress());
+                    bindings.move(storage, long.class)
+                            .convertAddress();
                     break;
                 }
                 case INTEGER: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
-                    bindings.add(move(storage, carrier));
+                    bindings.move(storage, carrier);
                     break;
                 }
                 case FLOAT: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR);
-                    bindings.add(move(storage, carrier));
+                    bindings.move(storage, carrier);
                     break;
                 }
                 default:
                     throw new UnsupportedOperationException("Unhandled class " + argumentClass);
             }
-            return bindings;
+            return bindings.build();
         }
     }
 
