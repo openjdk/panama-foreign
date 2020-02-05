@@ -84,6 +84,6 @@ import java.util.function.BiFunction;
 
     @Override
     public MethodHandle toMethodHandle(AccessMode accessMode) {
-        return getMethodHandle(accessMode.ordinal()).bindTo(this);
+        return getMethodHandle(accessMode.ordinal()).bindTo(this.directTarget);
     }
 }
