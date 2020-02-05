@@ -50,6 +50,10 @@ public class CallingSequence {
                 .map(Binding.Move.class::cast);
     }
 
+    public int argumentCount() {
+        return argumentBindings.size();
+    }
+
     public List<Binding> argumentBindings(int i) {
         return argumentBindings.get(i);
     }

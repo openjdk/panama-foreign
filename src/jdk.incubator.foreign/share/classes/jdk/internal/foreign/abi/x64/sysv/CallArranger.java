@@ -79,10 +79,10 @@ public class CallArranger {
     );
 
     // record
-    private static class Bindings {
-        final CallingSequence callingSequence;
-        final boolean isInMemoryReturn;
-        final int nVectorArgs;
+    public static class Bindings {
+        public final CallingSequence callingSequence;
+        public final boolean isInMemoryReturn;
+        public final int nVectorArgs;
 
         Bindings(CallingSequence callingSequence, boolean isInMemoryReturn, int nVectorArgs) {
             this.callingSequence = callingSequence;
@@ -91,7 +91,7 @@ public class CallArranger {
         }
     }
 
-    private static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+    public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         SharedUtils.checkFunctionTypes(mt, cDesc);
 
         CallingSequenceBuilder csb = new CallingSequenceBuilder(forUpcall);
@@ -173,7 +173,7 @@ public class CallArranger {
 
         public static TypeClass ofValue(List<ArgumentClassImpl> classes) {
             if (classes.size() != 1) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Multiple classes not supported: " + classes);
             }
             final Kind kind;
             switch (classes.get(0)) {
