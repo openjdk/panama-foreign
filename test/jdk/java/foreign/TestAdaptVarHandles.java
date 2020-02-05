@@ -82,7 +82,7 @@ public class TestAdaptVarHandles {
     }
 
     @Test
-    public void testFilterValue() {
+    public void testFilterValue() throws Throwable {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = layout.varHandle(int.class);
@@ -96,7 +96,7 @@ public class TestAdaptVarHandles {
         assertTrue(swapped);
         oldValue = (String)i2SHandle.compareAndExchange(segment.baseAddress(), "12", "42");
         assertEquals(oldValue, "12");
-        value = (String)i2SHandle.get(segment.baseAddress());
+        value = (String)i2SHandle.toMethodHandle(VarHandle.AccessMode.GET).invokeExact(segment.baseAddress());
         assertEquals(value, "42");
     }
 
@@ -160,7 +160,7 @@ public class TestAdaptVarHandles {
     }
 
     @Test
-    public void testFilterCoordinates() {
+    public void testFilterCoordinates() throws Throwable {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
@@ -174,7 +174,7 @@ public class TestAdaptVarHandles {
         assertTrue(swapped);
         oldValue = (int)intHandle_longIndex.compareAndExchange(segment, "0", 12, 42);
         assertEquals(oldValue, 12);
-        value = (int)intHandle_longIndex.get(segment, "0");
+        value = (int)intHandle_longIndex.toMethodHandle(VarHandle.AccessMode.GET).invokeExact(segment, "0");
         assertEquals(value, 42);
     }
 
@@ -220,7 +220,7 @@ public class TestAdaptVarHandles {
     }
 
     @Test
-    public void testInsertCoordinates() {
+    public void testInsertCoordinates() throws Throwable {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
@@ -234,7 +234,7 @@ public class TestAdaptVarHandles {
         assertTrue(swapped);
         oldValue = (int)intHandle_longIndex.compareAndExchange(12, 42);
         assertEquals(oldValue, 12);
-        value = (int)intHandle_longIndex.get();
+        value = (int)intHandle_longIndex.toMethodHandle(VarHandle.AccessMode.GET).invokeExact();
         assertEquals(value, 42);
     }
 
@@ -274,12 +274,12 @@ public class TestAdaptVarHandles {
     }
 
     @Test
-    public void testPermuteCoordinates() {
+    public void testPermuteCoordinates() throws Throwable {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
         VarHandle intHandle_swap = MethodHandles.permuteCoordinates(intHandle,
-                List.of(long.class, MemoryAddress.class), new int[] { 1, 0 });
+                List.of(long.class, MemoryAddress.class), 1, 0);
         intHandle_swap.set(0L, segment.baseAddress(), 1);
         int oldValue = (int)intHandle_swap.getAndAdd(0L, segment.baseAddress(), 42);
         assertEquals(oldValue, 1);
@@ -289,7 +289,7 @@ public class TestAdaptVarHandles {
         assertTrue(swapped);
         oldValue = (int)intHandle_swap.compareAndExchange(0L, segment.baseAddress(), 12, 42);
         assertEquals(oldValue, 12);
-        value = (int)intHandle_swap.get(0L, segment.baseAddress());
+        value = (int)intHandle_swap.toMethodHandle(VarHandle.AccessMode.GET).invokeExact(0L, segment.baseAddress());
         assertEquals(value, 42);
     }
 
@@ -335,7 +335,7 @@ public class TestAdaptVarHandles {
     }
 
     @Test
-    public void testCollectCoordinates() {
+    public void testCollectCoordinates() throws Throwable {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
@@ -349,7 +349,7 @@ public class TestAdaptVarHandles {
         assertTrue(swapped);
         oldValue = (int)intHandle_sum.compareAndExchange(segment.baseAddress(), -2L, 2L, 12, 42);
         assertEquals(oldValue, 12);
-        value = (int)intHandle_sum.get(segment.baseAddress(), -2L, 2L);
+        value = (int)intHandle_sum.toMethodHandle(VarHandle.AccessMode.GET).invokeExact(segment.baseAddress(), -2L, 2L);
         assertEquals(value, 42);
     }
 
