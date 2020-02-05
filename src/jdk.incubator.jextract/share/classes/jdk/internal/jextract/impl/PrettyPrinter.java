@@ -28,6 +28,7 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Position;
 import jdk.incubator.jextract.Type;
 
 import java.util.stream.Collectors;
@@ -137,4 +138,14 @@ class PrettyPrinter implements Declaration.Visitor<Void, Void> {
             return "Unknown type: " + t.getClass().getName();
         }
     };
+
+    public static String type(Type type) {
+        return type.accept(typeVisitor, null);
+    }
+
+    public static String position(Position pos) {
+        return String.format("%s:%d:%d",
+                pos.path() == null ? "N/A" : pos.path().toString(),
+                pos.line(), pos.col());
+    }
 }

@@ -246,4 +246,9 @@ public abstract class TypeImpl implements Type {
             return kind;
         }
     }
+
+    @Override
+    public String toString() {
+        return PrettyPrinter.type(this);
+    }
 }

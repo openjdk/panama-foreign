@@ -34,6 +34,9 @@ import java.io.File;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.JextractTask;
 import jdk.incubator.jextract.Type;
+import java.util.spi.ToolProvider;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
@@ -50,6 +53,23 @@ public class SmokeTest {
         Declaration.Variable ch_ptr_ptr = findDecl(d, "ch_ptr_ptr", Declaration.Variable.class);
         checkFunction(d, "pointers", ch_ptr_ptr.type(), ch_ptr_ptr.type(), ch_ptr_ptr.type());
         checkConstant(d, "ZERO", intType, 0L);
+    }
+
+    @Test
+    public void testBadMacros() {
+        var task = JextractTask.newTask(false, new File(System.getProperty("test.src.path"), "badMacros.h").toPath());
+        Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
+        // This line is critical, otherwise the Constant declaration won't be included
+        Declaration.Scoped d = task.parse("-I", builtinInc.toString());
+        System.out.println(d.name() + " has " + d.members().size() + " members");
+        for (Declaration m: d.members()) {
+            System.out.println(m.name());
+            if (m instanceof Declaration.Constant) {
+                Declaration.Constant c = (Declaration.Constant) m;
+                System.out.println("Value: " + c.value());
+                System.out.println("Type: " + c.type());
+            }
+        }
     }
 
     Declaration.Scoped checkStruct(Declaration.Scoped toplevel, String name, String... fields) {
