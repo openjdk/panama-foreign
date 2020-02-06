@@ -47,7 +47,7 @@ import java.util.OptionalLong;
 /* package-private */ final class PaddingLayout extends AbstractLayout implements MemoryLayout {
 
     PaddingLayout(long size) {
-        this(size, size, Optional.empty());
+        this(size, 1, Optional.empty());
     }
 
     PaddingLayout(long size, long alignment, Optional<String> name) {
