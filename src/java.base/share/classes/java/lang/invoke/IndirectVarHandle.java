@@ -29,6 +29,7 @@ package java.lang.invoke;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
 
+import java.util.List;
 import java.util.function.BiFunction;
 
 /**
@@ -48,17 +49,31 @@ import java.util.function.BiFunction;
     private final VarHandle directTarget; // cache, for performance reasons
     private final VarHandle target;
     private final BiFunction<AccessMode, MethodHandle, MethodHandle> handleFactory;
+    private final Class<?> value;
+    private final Class<?>[] coordinates;
 
     IndirectVarHandle(VarHandle target, Class<?> value, Class<?>[] coordinates, BiFunction<AccessMode, MethodHandle, MethodHandle> handleFactory) {
         super(new VarForm(value, coordinates));
         this.handleFactory = handleFactory;
         this.target = target;
         this.directTarget = target.asDirect();
+        this.value = value;
+        this.coordinates = coordinates;
+    }
+
+    @Override
+    public Class<?> varType() {
+        return value;
+    }
+
+    @Override
+    public List<Class<?>> coordinateTypes() {
+        return List.of(coordinates);
     }
 
     @Override
     MethodType accessModeTypeUncached(AccessMode accessMode) {
-        return getMethodHandle(accessMode.ordinal()).type().dropParameterTypes(0, 1);
+        return accessMode.at.accessModeType(directTarget.getClass(), value, coordinates);
     }
 
     @Override
@@ -84,6 +99,6 @@ import java.util.function.BiFunction;
 
     @Override
     public MethodHandle toMethodHandle(AccessMode accessMode) {
-        return getMethodHandle(accessMode.ordinal()).bindTo(this.directTarget);
+        return getMethodHandle(accessMode.ordinal()).bindTo(directTarget);
     }
 }

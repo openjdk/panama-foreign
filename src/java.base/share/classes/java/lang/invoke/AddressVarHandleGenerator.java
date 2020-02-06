@@ -247,7 +247,7 @@ class AddressVarHandleGenerator {
     void addAccessModeMethodIfNeeded(VarHandle.AccessMode mode, BinderClassWriter cw) {
         String methName = mode.methodName();
         MethodType methType = form.getMethodType(mode.at.ordinal())
-                .insertParameterTypes(0, BASE_CLASS);
+                .insertParameterTypes(0, VarHandle.class);
 
         try {
             MethodType helperType = methType.insertParameterTypes(2, long.class);
@@ -272,6 +272,7 @@ class AddressVarHandleGenerator {
             // offset calculation
             int slot = 2;
             mv.visitVarInsn(ALOAD, 0); // load recv
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(BASE_CLASS));
             mv.visitFieldInsn(GETFIELD, Type.getInternalName(BASE_CLASS), "offset", "J");
             for (int i = 0 ; i < dimensions ; i++) {
                 // load ADD MH
