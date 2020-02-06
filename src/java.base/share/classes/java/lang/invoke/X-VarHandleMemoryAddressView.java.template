@@ -148,7 +148,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ get0(VarHandleMemoryAddressBase handle, Object obb, long base) {
+    static $type$ get0(VarHandle ob, Object obb, long base) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, true);
 #if[floatingPoint]
         $rawType$ rawValue = UNSAFE.get$RawType$Unaligned(
@@ -178,7 +179,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static void set0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static void set0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
 #if[floatingPoint]
         UNSAFE.put$RawType$Unaligned(
@@ -211,7 +213,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getVolatile0(VarHandleMemoryAddressBase handle, Object obb, long base) {
+    static $type$ getVolatile0(VarHandle ob, Object obb, long base) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, true);
         return convEndian(handle.be,
                           UNSAFE.get$RawType$Volatile(
@@ -220,7 +223,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static void setVolatile0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static void setVolatile0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         UNSAFE.put$RawType$Volatile(
                 bb.unsafeGetBase(),
@@ -229,7 +233,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base) {
+    static $type$ getAcquire0(VarHandle ob, Object obb, long base) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, true);
         return convEndian(handle.be,
                           UNSAFE.get$RawType$Acquire(
@@ -238,7 +243,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static void setRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static void setRelease0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         UNSAFE.put$RawType$Release(
                 bb.unsafeGetBase(),
@@ -247,7 +253,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getOpaque0(VarHandleMemoryAddressBase handle, Object obb, long base) {
+    static $type$ getOpaque0(VarHandle ob, Object obb, long base) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, true);
         return convEndian(handle.be,
                           UNSAFE.get$RawType$Opaque(
@@ -256,7 +263,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static void setOpaque0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static void setOpaque0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         UNSAFE.put$RawType$Opaque(
                 bb.unsafeGetBase(),
@@ -266,7 +274,8 @@ final class VarHandleMemoryAddressAs$Type$s {
 #if[CAS]
 
     @ForceInline
-    static boolean compareAndSet0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
+    static boolean compareAndSet0(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.compareAndSet$RawType$(
                 bb.unsafeGetBase(),
@@ -275,7 +284,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ compareAndExchange0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
+    static $type$ compareAndExchange0(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
                           UNSAFE.compareAndExchange$RawType$(
@@ -285,7 +295,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ compareAndExchangeAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
+    static $type$ compareAndExchangeAcquire0(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
                           UNSAFE.compareAndExchange$RawType$Acquire(
@@ -295,7 +306,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ compareAndExchangeRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
+    static $type$ compareAndExchangeRelease0(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
                           UNSAFE.compareAndExchange$RawType$Release(
@@ -305,7 +317,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static boolean weakCompareAndSetPlain0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
+    static boolean weakCompareAndSetPlain0(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$Plain(
                 bb.unsafeGetBase(),
@@ -314,7 +327,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static boolean weakCompareAndSet0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
+    static boolean weakCompareAndSet0(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$(
                 bb.unsafeGetBase(),
@@ -323,7 +337,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static boolean weakCompareAndSetAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
+    static boolean weakCompareAndSetAcquire0(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$Acquire(
                 bb.unsafeGetBase(),
@@ -332,7 +347,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static boolean weakCompareAndSetRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ expected, $type$ value) {
+    static boolean weakCompareAndSetRelease0(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$Release(
                 bb.unsafeGetBase(),
@@ -341,7 +357,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndSet0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndSet0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
                           UNSAFE.getAndSet$RawType$(
@@ -351,7 +368,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndSetAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndSetAcquire0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
                           UNSAFE.getAndSet$RawType$Acquire(
@@ -361,7 +379,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndSetRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndSetRelease0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         return convEndian(handle.be,
                           UNSAFE.getAndSet$RawType$Release(
@@ -373,7 +392,8 @@ final class VarHandleMemoryAddressAs$Type$s {
 #if[AtomicAdd]
 
     @ForceInline
-    static $type$ getAndAdd0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ delta) {
+    static $type$ getAndAdd0(VarHandle ob, Object obb, long base, $type$ delta) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndAdd$RawType$(
@@ -386,7 +406,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndAddAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ delta) {
+    static $type$ getAndAddAcquire0(VarHandle ob, Object obb, long base, $type$ delta) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndAdd$RawType$Acquire(
@@ -399,7 +420,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndAddRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ delta) {
+    static $type$ getAndAddRelease0(VarHandle ob, Object obb, long base, $type$ delta) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndAdd$RawType$Release(
@@ -426,7 +448,8 @@ final class VarHandleMemoryAddressAs$Type$s {
 #if[Bitwise]
 
     @ForceInline
-    static $type$ getAndBitwiseOr0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndBitwiseOr0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseOr$RawType$(
@@ -439,7 +462,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndBitwiseOrRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndBitwiseOrRelease0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseOr$RawType$Release(
@@ -452,7 +476,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndBitwiseOrAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndBitwiseOrAcquire0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseOr$RawType$Acquire(
@@ -477,7 +502,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndBitwiseAnd0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndBitwiseAnd0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseAnd$RawType$(
@@ -490,7 +516,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndBitwiseAndRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndBitwiseAndRelease0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseAnd$RawType$Release(
@@ -503,7 +530,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndBitwiseAndAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndBitwiseAndAcquire0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseAnd$RawType$Acquire(
@@ -529,7 +557,8 @@ final class VarHandleMemoryAddressAs$Type$s {
 
 
     @ForceInline
-    static $type$ getAndBitwiseXor0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndBitwiseXor0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseXor$RawType$(
@@ -542,7 +571,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndBitwiseXorRelease0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndBitwiseXorRelease0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseXor$RawType$Release(
@@ -555,7 +585,8 @@ final class VarHandleMemoryAddressAs$Type$s {
     }
 
     @ForceInline
-    static $type$ getAndBitwiseXorAcquire0(VarHandleMemoryAddressBase handle, Object obb, long base, $type$ value) {
+    static $type$ getAndBitwiseXorAcquire0(VarHandle ob, Object obb, long base, $type$ value) {
+        VarHandleMemoryAddressBase handle = (VarHandleMemoryAddressBase)ob;
         MemoryAddressProxy bb = checkAddress(obb, base, handle.length, false);
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseXor$RawType$Acquire(
