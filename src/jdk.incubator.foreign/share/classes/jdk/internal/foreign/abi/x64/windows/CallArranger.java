@@ -74,7 +74,7 @@ public class CallArranger {
     );
 
     // record
-    private static class Bindings {
+    public static class Bindings {
         public final CallingSequence callingSequence;
         public final boolean isInMemoryReturn;
 
@@ -84,7 +84,7 @@ public class CallArranger {
         }
     }
 
-    private static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
+    public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
         SharedUtils.checkFunctionTypes(mt, cDesc);
 
         class CallingSequenceBuilderHelper {
