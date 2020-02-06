@@ -60,21 +60,19 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
     protected final JavaSourceBuilder builder = new JavaSourceBuilder();
     protected final TypeTranslator typeTranslator = new TypeTranslator();
     private final List<String> libraryNames;
-    private final List<String> libraryPaths;
     private final String clsName;
     private final String pkgName;
 
-    static JavaFileObject[] generateRaw(Declaration.Scoped decl, String clsName, String pkgName, List<String> libraryNames, List<String> libraryPaths) {
-        return new HandleSourceFactory(clsName, pkgName, libraryNames, libraryPaths).generate(decl);
+    static JavaFileObject[] generateRaw(Declaration.Scoped decl, String clsName, String pkgName, List<String> libraryNames) {
+        return new HandleSourceFactory(clsName, pkgName, libraryNames).generate(decl);
     }
 
-    static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String clsName, String pkgName, List<String> libraryNames, List<String> libraryPaths) {
-        return new StaticWrapperSourceFactory(clsName, pkgName, libraryNames, libraryPaths).generate(decl);
+    static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String clsName, String pkgName, List<String> libraryNames) {
+        return new StaticWrapperSourceFactory(clsName, pkgName, libraryNames).generate(decl);
     }
 
-    public HandleSourceFactory(String clsName, String pkgName, List<String> libraryNames, List<String> libraryPaths) {
+    public HandleSourceFactory(String clsName, String pkgName, List<String> libraryNames) {
         this.libraryNames = libraryNames;
-        this.libraryPaths = libraryPaths;
         this.clsName = clsName;
         this.pkgName = pkgName;
     }
@@ -99,8 +97,7 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
     public JavaFileObject[] generate(Declaration.Scoped decl) {
         builder.addPackagePrefix(pkgName);
         builder.classBegin(clsName);
-        builder.addLibraries(libraryNames.toArray(new String[0]),
-                libraryPaths != null ? libraryPaths.toArray(new String[0]) : null);
+        builder.addLibraries(libraryNames.toArray(new String[0]));
         //generate all decls
         decl.members().forEach(this::generateDecl);
 

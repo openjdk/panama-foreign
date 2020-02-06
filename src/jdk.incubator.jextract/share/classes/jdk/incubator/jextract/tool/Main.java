@@ -101,11 +101,10 @@ public class Main {
         OptionParser parser = new OptionParser(false);
         parser.accepts("C", format("help.C")).withRequiredArg();
         parser.accepts("I", format("help.I")).withRequiredArg();
-        parser.acceptsAll(List.of("L", "library-path"), format("help.L")).withRequiredArg();
-        parser.accepts("compile", format("help.compile"));
+        parser.accepts("d", format("help.d")).withRequiredArg();
         parser.accepts("filter", format("help.filter")).withRequiredArg();
         parser.accepts("l", format("help.l")).withRequiredArg();
-        parser.accepts("output", format("help.output")).withRequiredArg();
+        parser.accepts("source", format("help.source"));
         parser.acceptsAll(List.of("t", "target-package"), format("help.t")).withRequiredArg();
         parser.acceptsAll(List.of("?", "h", "help"), format("help.h")).forHelp();
         parser.nonOptions(format("help.non.option"));
@@ -141,12 +140,12 @@ public class Main {
             optionSet.valuesOf("filter").forEach(p -> builder.addFilter((String) p));
         }
 
-        if (optionSet.has("output")) {
-            builder.setOutputDir(optionSet.valueOf("output").toString());
+        if (optionSet.has("d")) {
+            builder.setOutputDir(optionSet.valueOf("d").toString());
         }
 
-        if (optionSet.has("compile")) {
-            builder.setCompile();
+        if (optionSet.has("source")) {
+            builder.setGenerateSource();
         }
 
         boolean librariesSpecified = optionSet.has("l");
@@ -158,16 +157,6 @@ public class Main {
                     return OPTION_ERROR;
                 }
                 builder.addLibraryName(lib);
-            }
-        }
-
-        if (optionSet.has("L")) {
-            List<?> libpaths = optionSet.valuesOf("L");
-            if (librariesSpecified) {
-                libpaths.forEach(p -> builder.addLibraryPath((String) p));
-            } else {
-                // "L" with no "l" option!
-                err.println(format("warn.L.without.l"));
             }
         }
 
@@ -183,7 +172,7 @@ public class Main {
         }
 
         //parse
-        JextractTask jextractTask = JextractTask.newTask(options.compile, header);
+        JextractTask jextractTask = JextractTask.newTask(!options.source, header);
         Declaration.Scoped toplevel = jextractTask.parse(options.clangArgs.toArray(new String[0]));
 
         //filter
@@ -202,8 +191,7 @@ public class Main {
                 toplevel,
                 header.getFileName().toString().replace(".h", "_h"),
                 options.targetPackage,
-                options.libraryNames,
-                options.libraryPaths);
+                options.libraryNames);
             jextractTask.write(output, files);
         } catch (RuntimeException re) {
             err.println(re);

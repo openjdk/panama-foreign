@@ -100,11 +100,11 @@ class JavaSourceBuilder {
         sb.append("}\n\n");
     }
 
-    protected void addLibraries(String[] libraryNames, String[] libraryPaths) {
+    protected void addLibraries(String[] libraryNames) {
         incrAlign();
         indent();
         sb.append(PRI_MODS + "LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(");
-        sb.append(stringArray(libraryNames) + ", " + stringArray(libraryPaths) + ");\n");
+        sb.append(stringArray(libraryNames) + ");\n");
         decrAlign();
     }
 

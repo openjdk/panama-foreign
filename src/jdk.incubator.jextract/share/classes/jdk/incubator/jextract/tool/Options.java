@@ -35,25 +35,22 @@ public class Options {
     public final List<String> clangArgs;
     // The list of library names
     public final List<String> libraryNames;
-    // The list of library paths
-    public final List<String> libraryPaths;
     public final List<String> filters;
     // target package
     public final String targetPackage;
     // output directory
     public final String outputDir;
-    public final boolean compile;
+    public final boolean source;
 
     private Options(List<String> clangArgs, List<String> libraryNames,
-            List<String> libraryPaths, List<String> filters, String targetPackage,
-            String outputDir, boolean compile) {
+            List<String> filters, String targetPackage,
+            String outputDir, boolean source) {
         this.clangArgs = clangArgs;
         this.libraryNames = libraryNames;
-        this.libraryPaths = libraryPaths;
         this.filters = filters;
         this.targetPackage = targetPackage;
         this.outputDir = outputDir;
-        this.compile = compile;
+        this.source = source;
     }
 
     public static Builder builder() {
@@ -67,29 +64,26 @@ public class Options {
     public static class Builder {
         private final List<String> clangArgs;
         private final List<String> libraryNames;
-        private final List<String> libraryPaths;
         private final List<String> filters;
         private String targetPackage;
         private String outputDir;
-        private boolean compile;
+        private boolean source;
 
         public Builder() {
             this.clangArgs = new ArrayList<>();
             this.libraryNames = new ArrayList<>();
-            this.libraryPaths = new ArrayList<>();
             this.filters = new ArrayList<>();
             this.targetPackage = "";
-            this.outputDir = "gensrc";
-            this.compile = false;
+            this.outputDir = ".";
+            this.source = source;
         }
 
         public Options build() {
             return new Options(
                     Collections.unmodifiableList(clangArgs),
                     Collections.unmodifiableList(libraryNames),
-                    Collections.unmodifiableList(libraryPaths),
                     Collections.unmodifiableList(filters),
-                    targetPackage, outputDir, compile
+                    targetPackage, outputDir, source
             );
         }
 
@@ -99,10 +93,6 @@ public class Options {
 
         public void addLibraryName(String name) {
             libraryNames.add(name);
-        }
-
-        public void addLibraryPath(String path) {
-            libraryPaths.add(path);
         }
 
         public void setOutputDir(String outputDir) {
@@ -117,8 +107,8 @@ public class Options {
             filters.add(filter);
         }
 
-        public void setCompile() {
-            compile = true;
+        public void setGenerateSource() {
+            source = true;
         }
     }
 }
