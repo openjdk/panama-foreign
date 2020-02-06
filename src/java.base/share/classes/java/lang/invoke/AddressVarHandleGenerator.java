@@ -267,7 +267,6 @@ class AddressVarHandleGenerator {
             mv.visitCode();
 
             mv.visitVarInsn(ALOAD, 0); // handle impl
-            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(BASE_CLASS));
             mv.visitVarInsn(ALOAD, 1); // receiver
 
             // offset calculation
