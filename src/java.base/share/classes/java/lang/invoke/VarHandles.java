@@ -334,7 +334,7 @@ final class VarHandles {
         if (!VAR_HANDLE_IDENTITY_ADAPT) return target;
         target = MethodHandles.filterValue(target,
                         MethodHandles.identity(target.varType()), MethodHandles.identity(target.varType()));
-        MethodType mtype = target.accessModeType(VarHandle.AccessMode.GET);
+        MethodType mtype = target.accessModeType(VarHandle.AccessMode.GET).dropParameterTypes(0, 1);
         for (int i = 0 ; i < mtype.parameterCount() ; i++) {
             target = MethodHandles.filterCoordinates(target, i, MethodHandles.identity(mtype.parameterType(i)));
         }

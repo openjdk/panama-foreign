@@ -1890,7 +1890,7 @@ public abstract class VarHandle implements Constable {
      *
      * @return the variable type of variables referenced by this VarHandle
      */
-    public final Class<?> varType() {
+    public Class<?> varType() {
         MethodType typeSet = accessModeType(AccessMode.SET);
         return typeSet.parameterType(typeSet.parameterCount() - 1);
     }
@@ -1901,7 +1901,7 @@ public abstract class VarHandle implements Constable {
      * @return the coordinate types for this VarHandle. The returned
      * list is unmodifiable
      */
-    public final List<Class<?>> coordinateTypes() {
+    public List<Class<?>> coordinateTypes() {
         MethodType typeGet = accessModeType(AccessMode.GET);
         return typeGet.parameterList();
     }

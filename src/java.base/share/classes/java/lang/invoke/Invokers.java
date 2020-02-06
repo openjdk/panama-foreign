@@ -415,6 +415,7 @@ class Invokers {
         final int ARG_LIMIT = ARG_BASE + mtype.parameterCount();
         int nameCursor = ARG_LIMIT;
         final int VAD_ARG      = nameCursor++;
+        final int UNBOUND_VH   = nameCursor++;
         final int CHECK_TYPE   = nameCursor++;
         final int LINKER_CALL  = nameCursor++;
 
@@ -431,6 +432,8 @@ class Invokers {
         NamedFunction getter = speciesData.getterFunction(0);
         names[VAD_ARG] = new Name(getter, names[THIS_MH]);
 
+        names[UNBOUND_VH] = new Name(getFunction(NF_directVarHandleTarget), names[CALL_VH]);
+
         if (isExact) {
             names[CHECK_TYPE] = new Name(getFunction(NF_checkVarHandleExactType), names[CALL_VH], names[VAD_ARG]);
         } else {
@@ -438,7 +441,8 @@ class Invokers {
         }
         Object[] outArgs = new Object[ARG_LIMIT];
         outArgs[0] = names[CHECK_TYPE];
-        for (int i = 1; i < ARG_LIMIT; i++) {
+        outArgs[1] = names[UNBOUND_VH];
+        for (int i = 2; i < ARG_LIMIT; i++) {
             outArgs[i] = names[i];
         }
 
