@@ -60,7 +60,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
     public void testOutputClass() {
         Path helloOutput = getOutputFilePath("hellogen");
         Path helloH = getInputFilePath("hello.h");
-        run("--compile", "--output", helloOutput.toString(), helloH.toString()).checkSuccess();
+        run("-d", helloOutput.toString(), helloH.toString()).checkSuccess();
         try(Loader loader = classLoader(helloOutput)) {
             Class<?> cls = loader.loadClass("hello_h");
             // check a method for "void func(int)"
@@ -75,7 +75,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
     private void testTargetPackage(String targetPkgOption) {
         Path helloOutput = getOutputFilePath("hellogen");
         Path helloH = getInputFilePath("hello.h");
-        run(targetPkgOption, "com.acme", "--compile", "--output",
+        run(targetPkgOption, "com.acme", "-d",
             helloOutput.toString(), helloH.toString()).checkSuccess();
         try(Loader loader = classLoader(helloOutput)) {
             Class<?> cls = loader.loadClass("com.acme.hello_h");

@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class StaticWrapperSourceFactory extends HandleSourceFactory {
-    public StaticWrapperSourceFactory(String clsName, String pkgName, List<String> libraryNames, List<String> libraryPaths) {
-        super(clsName, pkgName, libraryNames, libraryPaths);
+    public StaticWrapperSourceFactory(String clsName, String pkgName, List<String> libraryNames) {
+        super(clsName, pkgName, libraryNames);
     }
 
     @Override

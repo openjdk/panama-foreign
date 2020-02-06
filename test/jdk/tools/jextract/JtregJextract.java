@@ -54,9 +54,8 @@ public class JtregJextract {
         jextrOpts.add("-C-nostdinc");
         jextrOpts.add("-I");
         jextrOpts.add(inputDir.toAbsolutePath().toString());
-        jextrOpts.add("--output");
+        jextrOpts.add("-d");
         jextrOpts.add(outputDir.toAbsolutePath().toString());
-        jextrOpts.add("--compile");
 
         int i = 0;
         while (i < args.length) {
@@ -65,7 +64,7 @@ public class JtregJextract {
                 break;
             }
 
-            if ("--compile".equals(opt) || "--output".equals(opt)) {
+            if ("-d".equals(opt)) {
                 i++;
                 continue;
             }
