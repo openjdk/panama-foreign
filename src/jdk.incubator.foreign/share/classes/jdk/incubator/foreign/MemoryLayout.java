@@ -76,7 +76,10 @@ import java.util.function.UnaryOperator;
  * <p>
  * Furthermore, all layouts feature a <em>natural alignment</em> which can be inferred as follows:
  * <ul>
- *     <li>for value and padding layout <em>L</em> whose size is <em>N</em>, the natural alignment of <em>L</em> is <em>N</em></li>
+ *     <li>for a padding layout <em>L</em>, the natural alignment is 1, regardless of its size; that is, in the absence
+ *     of an explicit alignment constraint, a padding layout should not affect the alignment constraint of the group
+ *     layout it is nested into</li>
+ *     <li>for a value layout <em>L</em> whose size is <em>N</em>, the natural alignment of <em>L</em> is <em>N</em></li>
  *     <li>for a sequence layout <em>S</em> whose element layout is <em>E</em>, the natural alignment of <em>S</em> is that of <em>E</em></li>
  *     <li>for a group layout <em>G</em> with member layouts <em>M1</em>, <em>M2</em>, ... <em>Mn</em> whose alignments are
  *     <em>A1</em>, <em>A2</em>, ... <em>An</em>, respectively, the natural alignment of <em>G</em> is <em>max(A1, A2 ... An)</em></li>
