@@ -598,8 +598,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
   # our toolchains are in a condition to support that. But what we loosely aim for is
   # C99 level.
   if test "x$TOOLCHAIN_TYPE" = xgcc || test "x$TOOLCHAIN_TYPE" = xclang || test "x$TOOLCHAIN_TYPE" = xxlc; then
-    # This raises the language level for older 4.8 gcc, while lowering it for later
-    # versions. clang and xlclang support the same flag.
+    # Explicitly set C99. clang and xlclang support the same flag.
     LANGSTD_CFLAGS="-std=c99"
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     # We can't turn on -std=c99 without breaking compilation of the splashscreen/png
@@ -816,7 +815,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_CPU_DEP],
     fi
 
     $1_CXXSTD_CXXFLAG="-std=gnu++98"
-    FLAGS_CXX_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [${$1_CXXSTD_CXXFLAG} -Werror],
+    FLAGS_CXX_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [${$1_CXXSTD_CXXFLAG}],
         PREFIX: $3, IF_FALSE: [$1_CXXSTD_CXXFLAG=""])
     $1_TOOLCHAIN_CFLAGS_JDK_CXXONLY="${$1_CXXSTD_CXXFLAG}"
     $1_TOOLCHAIN_CFLAGS_JVM="${$1_TOOLCHAIN_CFLAGS_JVM} ${$1_CXXSTD_CXXFLAG}"
@@ -943,10 +942,10 @@ AC_DEFUN([FLAGS_SETUP_GCC6_COMPILER_FLAGS],
   # Notably, value range propagation now assumes that the this pointer of C++
   # member functions is non-null.
   NO_DELETE_NULL_POINTER_CHECKS_CFLAG="-fno-delete-null-pointer-checks"
-  FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$NO_DELETE_NULL_POINTER_CHECKS_CFLAG -Werror],
+  FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$NO_DELETE_NULL_POINTER_CHECKS_CFLAG],
       PREFIX: $2, IF_FALSE: [NO_DELETE_NULL_POINTER_CHECKS_CFLAG=""])
   NO_LIFETIME_DSE_CFLAG="-fno-lifetime-dse"
-  FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$NO_LIFETIME_DSE_CFLAG -Werror],
+  FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$NO_LIFETIME_DSE_CFLAG],
       PREFIX: $2, IF_FALSE: [NO_LIFETIME_DSE_CFLAG=""])
   $1_GCC6_CFLAGS="${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
 ])
