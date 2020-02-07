@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,23 +19,33 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include <jni.h>
+/*
+ * @test
+ *
+ * @library /test/lib
+ *
+ * @build JstatdTest JstatGCUtilParser
+ * @run main/timeout=60 TestJstatdRmiPort
+ */
+public class TestJstatdRmiPort {
 
-#ifdef WINDOWS
-#include <windows.h>
-#else
-#include <unistd.h>
-#endif
+    public static void main(String[] args) throws Throwable {
+        testRmiPort();
+        testRegistryAndRmiPorts();
+    }
 
-JNIEXPORT void JNICALL Java_jdk_jfr_event_sampling_TestNative_longTime
-  (JNIEnv *env, jclass jc)
-{
-#ifdef WINDOWS
-  Sleep(2*1000);
-#else
-  usleep(2*1000*1000);
-#endif
+    private static void testRmiPort() throws Throwable {
+        JstatdTest test = new JstatdTest();
+        test.setUseDefaultRmiPort(false);
+        test.doTest();
+    }
+
+    private static void testRegistryAndRmiPorts() throws Throwable {
+        JstatdTest test = new JstatdTest();
+        test.setUseDefaultPort(false);
+        test.setUseDefaultRmiPort(false);
+        test.doTest();
+    }
 }
