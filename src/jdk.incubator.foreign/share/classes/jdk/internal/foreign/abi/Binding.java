@@ -82,8 +82,8 @@ import java.util.Objects;
  * --------------------
  *
  * typedef struct { // fits into single register
- * 	int x;
- * 	int y;
+ *   int x;
+ *   int y;
  * } MyStruct;
  *
  * void f(MyStruct ms);
@@ -98,8 +98,8 @@ import java.util.Objects;
  * --------------------
  *
  * typedef struct { // does not fit into single register
- * 	__int64 x;
- * 	__int64 y;
+ *   long long x;
+ *   long long y;
  * } MyStruct;
  *
  * void f(MyStruct ms);
@@ -130,8 +130,8 @@ import java.util.Objects;
  * --------------------
  *
  * typedef struct { // fits into single register
- * 	int x;
- * 	int y;
+ *   int x;
+ *   int y;
  * } MyStruct;
  *
  * MyStruct f();
@@ -148,8 +148,8 @@ import java.util.Objects;
  * --------------------
  *
  * typedef struct { // does not fit into single register
- * 	__int64 x;
- * 	__int64 y;
+ *   long long x;
+ *   long long y;
  * } MyStruct;
  *
  * MyStruct f();
@@ -341,9 +341,9 @@ public abstract class Binding {
     /**
      * DEREFERENCE([offset into memory region], [type])
      *   When unboxing: pops a MemorySegment from the operand stack,
-     *       loads a [type] from [offset into memory region] from it, and pushes it onto the operand stack
+     *     loads a [type] from [offset into memory region] from it, and pushes it onto the operand stack
      *   When boxing: pops a [type], and then a MemorySegment from the operand stack,
-     *       and then stores [type] to [offset into memory region] of the MemorySegment
+     *     and then stores [type] to [offset into memory region] of the MemorySegment
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
     public static class Dereference extends Binding {
@@ -391,8 +391,8 @@ public abstract class Binding {
     /**
      * COPY([size], [alignment])
      *   Creates a new MemorySegment with the given [size] and [alignment],
-     * 	     and copies contents from a MemorySegment popped from the top of the operand stack into this new buffer,
-     * 	     and pushes the new buffer onto the operand stack
+     *     and copies contents from a MemorySegment popped from the top of the operand stack into this new buffer,
+     *     and pushes the new buffer onto the operand stack
      */
     public static class Copy extends Binding {
         private final long size;
@@ -485,9 +485,9 @@ public abstract class Binding {
     /**
      * CONVERT_ADDRESS()
      *   When unboxing: pops a 'MemoryAddress' from the operand stack, converts it to a 'long',
-     *       and pushes that onto the operand stack
+     *     and pushes that onto the operand stack
      *   When boxing: pops a 'long' from the operand stack, converts it to a 'MemoryAddress',
-     *       and pushes that onto the operand stack
+     *     and pushes that onto the operand stack
      */
     public static class ConvertAddress extends Binding {
         private static final ConvertAddress INSTANCE = new ConvertAddress();
