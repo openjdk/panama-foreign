@@ -45,6 +45,7 @@ import org.testng.annotations.Test;
 import java.lang.invoke.MethodType;
 
 import static jdk.incubator.foreign.MemoryLayouts.AArch64ABI.*;
+import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -86,16 +87,16 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd);
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.Move(r0, int.class) },
-            { new Binding.Move(r1, int.class) },
-            { new Binding.Move(r2, int.class) },
-            { new Binding.Move(r3, int.class) },
-            { new Binding.Move(r4, int.class) },
-            { new Binding.Move(r5, int.class) },
-            { new Binding.Move(r6, int.class) },
-            { new Binding.Move(r7, int.class) },
-            { new Binding.Move(stackStorage(0), int.class) },
-            { new Binding.Move(stackStorage(1), int.class) },
+            { move(r0, int.class) },
+            { move(r1, int.class) },
+            { move(r2, int.class) },
+            { move(r3, int.class) },
+            { move(r4, int.class) },
+            { move(r5, int.class) },
+            { move(r6, int.class) },
+            { move(r7, int.class) },
+            { move(stackStorage(0), int.class) },
+            { move(stackStorage(1), int.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -115,10 +116,10 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd);
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.Move(r0, int.class) },
-            { new Binding.Move(r1, int.class) },
-            { new Binding.Move(v0, float.class) },
-            { new Binding.Move(v1, float.class) },
+            { move(r0, int.class) },
+            { move(r1, int.class) },
+            { move(v0, float.class) },
+            { move(v1, float.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -148,26 +149,26 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         return new Object[][]{
             // struct s { int32_t a, b; double c; };
             { MemoryLayout.ofStruct(C_INT, C_INT, C_DOUBLE), new Binding[] {
-                new Binding.Dup(),
+                dup(),
                     // s.a & s.b
-                    new Binding.Dereference(0, long.class), new Binding.Move(r0, long.class),
+                    dereference(0, long.class), move(r0, long.class),
                     // s.c --> note AArch64 passes this in an *integer* register
-                    new Binding.Dereference(8, long.class), new Binding.Move(r1, long.class),
+                    dereference(8, long.class), move(r1, long.class),
             }},
             // struct s { int32_t a, b; double c; int32_t d };
             { struct2, new Binding[] {
-                new Binding.Copy(struct2.byteSize(), struct2.byteAlignment()),
-                new Binding.BaseAddress(),
-                new Binding.BoxAddress(),
-                new Binding.Move(r0, long.class)
+                copy(struct2),
+                baseAddress(),
+                convertAddress(),
+                move(r0, long.class)
             }},
             // struct s { int32_t a[2]; float b[2] };
             { MemoryLayout.ofStruct(C_INT, C_INT, C_FLOAT, C_FLOAT), new Binding[] {
-                new Binding.Dup(),
+                dup(),
                     // s.a[0] & s.a[1]
-                    new Binding.Dereference(0, long.class), new Binding.Move(r0, long.class),
+                    dereference(0, long.class), move(r0, long.class),
                     // s.b[0] & s.b[1]
-                    new Binding.Dereference(8, long.class), new Binding.Move(r1, long.class),
+                    dereference(8, long.class), move(r1, long.class),
             }},
         };
     }
@@ -188,18 +189,18 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         checkArgumentBindings(callingSequence, new Binding[][]{
             {
-                new Binding.Copy(struct1.byteSize(), struct1.byteAlignment()),
-                new Binding.BaseAddress(),
-                new Binding.BoxAddress(),
-                new Binding.Move(r0, long.class)
+                copy(struct1),
+                baseAddress(),
+                convertAddress(),
+                move(r0, long.class)
             },
             {
-                new Binding.Copy(struct2.byteSize(), struct2.byteAlignment()),
-                new Binding.BaseAddress(),
-                new Binding.BoxAddress(),
-                new Binding.Move(r1, long.class)
+                copy(struct2),
+                baseAddress(),
+                convertAddress(),
+                move(r1, long.class)
             },
-            { new Binding.Move(r2, int.class) }
+            { move(r2, int.class) }
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -220,8 +221,8 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         checkArgumentBindings(callingSequence, new Binding[][]{
             {
-                new Binding.BoxAddress(),
-                new Binding.Move(r8, long.class)
+                convertAddress(),
+                move(r8, long.class)
             }
         });
 
@@ -244,13 +245,13 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         checkArgumentBindings(callingSequence, new Binding[][]{});
 
         checkReturnBindings(callingSequence, new Binding[]{
-            new Binding.AllocateBuffer(struct),
-            new Binding.Dup(),
-            new Binding.Move(r0, long.class),
-            new Binding.Dereference(0, long.class),
-            new Binding.Dup(),
-            new Binding.Move(r1, long.class),
-            new Binding.Dereference(8, long.class),
+            allocate(struct),
+            dup(),
+            move(r0, long.class),
+            dereference(0, long.class),
+            dup(),
+            move(r1, long.class),
+            dereference(8, long.class),
         });
     }
 
@@ -268,25 +269,25 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd);
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.Move(v0, float.class) },
-            { new Binding.Move(r0, int.class) },
+            { move(v0, float.class) },
+            { move(r0, int.class) },
             {
-                new Binding.Dup(),
-                new Binding.Dereference(0, int.class),
-                new Binding.Move(v1, int.class),
-                new Binding.Dereference(4, int.class),
-                new Binding.Move(v2, int.class)
+                dup(),
+                dereference(0, int.class),
+                move(v1, int.class),
+                dereference(4, int.class),
+                move(v2, int.class)
             }
         });
 
         checkReturnBindings(callingSequence, new Binding[]{
-            new Binding.AllocateBuffer(hfa),
-            new Binding.Dup(),
-            new Binding.Move(v0, int.class),
-            new Binding.Dereference(0, int.class),
-            new Binding.Dup(),
-            new Binding.Move(v1, int.class),
-            new Binding.Dereference(4, int.class),
+            allocate(hfa),
+            dup(),
+            move(v0, int.class),
+            dereference(0, int.class),
+            dup(),
+            move(v1, int.class),
+            dereference(4, int.class),
         });
     }
 
@@ -305,31 +306,31 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         checkArgumentBindings(callingSequence, new Binding[][]{
             {
-                new Binding.Dup(),
-                new Binding.Dereference(0, int.class),
-                new Binding.Move(v0, int.class),
-                new Binding.Dup(),
-                new Binding.Dereference(4, int.class),
-                new Binding.Move(v1, int.class),
-                new Binding.Dereference(8, int.class),
-                new Binding.Move(v2, int.class)
+                dup(),
+                dereference(0, int.class),
+                move(v0, int.class),
+                dup(),
+                dereference(4, int.class),
+                move(v1, int.class),
+                dereference(8, int.class),
+                move(v2, int.class)
             },
             {
-                new Binding.Dup(),
-                new Binding.Dereference(0, int.class),
-                new Binding.Move(v3, int.class),
-                new Binding.Dup(),
-                new Binding.Dereference(4, int.class),
-                new Binding.Move(v4, int.class),
-                new Binding.Dereference(8, int.class),
-                new Binding.Move(v5, int.class)
+                dup(),
+                dereference(0, int.class),
+                move(v3, int.class),
+                dup(),
+                dereference(4, int.class),
+                move(v4, int.class),
+                dereference(8, int.class),
+                move(v5, int.class)
             },
             {
-                new Binding.Dup(),
-                new Binding.Dereference(0, long.class),
-                new Binding.Move(stackStorage(0), long.class),
-                new Binding.Dereference(8, long.class),
-                new Binding.Move(stackStorage(1), long.class),
+                dup(),
+                dereference(0, long.class),
+                move(stackStorage(0), long.class),
+                dereference(8, long.class),
+                move(stackStorage(1), long.class),
             }
         });
 
