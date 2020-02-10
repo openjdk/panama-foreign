@@ -47,6 +47,7 @@ import java.lang.invoke.MethodType;
 
 import static jdk.incubator.foreign.MemoryLayouts.SysV.*;
 import static jdk.incubator.foreign.MemoryLayouts.WinABI.C_POINTER;
+import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -66,7 +67,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), descAddArgument(fd, C_LONG));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.Move(rax, long.class) }
+            { move(rax, long.class) }
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -88,13 +89,13 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), descAddArgument(fd, C_LONG));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.Move(rdi, int.class) },
-            { new Binding.Move(rsi, int.class) },
-            { new Binding.Move(rdx, int.class) },
-            { new Binding.Move(rcx, int.class) },
-            { new Binding.Move(r8, int.class) },
-            { new Binding.Move(r9, int.class) },
-            { new Binding.Move(rax, long.class) },
+            { move(rdi, int.class) },
+            { move(rsi, int.class) },
+            { move(rdx, int.class) },
+            { move(rcx, int.class) },
+            { move(r8, int.class) },
+            { move(r9, int.class) },
+            { move(rax, long.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -118,15 +119,15 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), descAddArgument(fd, C_LONG));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.Move(xmm0, double.class) },
-            { new Binding.Move(xmm1, double.class) },
-            { new Binding.Move(xmm2, double.class) },
-            { new Binding.Move(xmm3, double.class) },
-            { new Binding.Move(xmm4, double.class) },
-            { new Binding.Move(xmm5, double.class) },
-            { new Binding.Move(xmm6, double.class) },
-            { new Binding.Move(xmm7, double.class) },
-            { new Binding.Move(rax, long.class) },
+            { move(xmm0, double.class) },
+            { move(xmm1, double.class) },
+            { move(xmm2, double.class) },
+            { move(xmm3, double.class) },
+            { move(xmm4, double.class) },
+            { move(xmm5, double.class) },
+            { move(xmm6, double.class) },
+            { move(xmm7, double.class) },
+            { move(rax, long.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -152,25 +153,25 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), descAddArgument(fd, C_LONG));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.Move(rdi, long.class) },
-            { new Binding.Move(rsi, long.class) },
-            { new Binding.Move(rdx, long.class) },
-            { new Binding.Move(rcx, long.class) },
-            { new Binding.Move(r8, long.class) },
-            { new Binding.Move(r9, long.class) },
-            { new Binding.Move(stackStorage(0), long.class) },
-            { new Binding.Move(stackStorage(1), long.class) },
-            { new Binding.Move(xmm0, float.class) },
-            { new Binding.Move(xmm1, float.class) },
-            { new Binding.Move(xmm2, float.class) },
-            { new Binding.Move(xmm3, float.class) },
-            { new Binding.Move(xmm4, float.class) },
-            { new Binding.Move(xmm5, float.class) },
-            { new Binding.Move(xmm6, float.class) },
-            { new Binding.Move(xmm7, float.class) },
-            { new Binding.Move(stackStorage(2), float.class) },
-            { new Binding.Move(stackStorage(3), float.class) },
-            { new Binding.Move(rax, long.class) },
+            { move(rdi, long.class) },
+            { move(rsi, long.class) },
+            { move(rdx, long.class) },
+            { move(rcx, long.class) },
+            { move(r8, long.class) },
+            { move(r9, long.class) },
+            { move(stackStorage(0), long.class) },
+            { move(stackStorage(1), long.class) },
+            { move(xmm0, float.class) },
+            { move(xmm1, float.class) },
+            { move(xmm2, float.class) },
+            { move(xmm3, float.class) },
+            { move(xmm4, float.class) },
+            { move(xmm5, float.class) },
+            { move(xmm6, float.class) },
+            { move(xmm7, float.class) },
+            { move(stackStorage(2), float.class) },
+            { move(stackStorage(3), float.class) },
+            { move(rax, long.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -208,20 +209,21 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), descAddArgument(fd, C_LONG));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.Move(rdi, int.class) },
-            { new Binding.Move(rsi, int.class) },
-            { new Binding.Dup(),
-                new Binding.Dereference(0, long.class), new Binding.Move(rdx, long.class),
-                new Binding.Dereference(8, long.class), new Binding.Move(xmm0, long.class)
+            { move(rdi, int.class) },
+            { move(rsi, int.class) },
+            {
+                dup(),
+                dereference(0, long.class), move(rdx, long.class),
+                dereference(8, long.class), move(xmm0, long.class)
             },
-            { new Binding.Move(rcx, int.class) },
-            { new Binding.Move(r8, int.class) },
-            { new Binding.Move(xmm1, double.class) },
-            { new Binding.Move(xmm2, double.class) },
-            { new Binding.Move(r9, int.class) },
-            { new Binding.Move(stackStorage(0), int.class) },
-            { new Binding.Move(stackStorage(1), int.class) },
-            { new Binding.Move(rax, long.class) },
+            { move(rcx, int.class) },
+            { move(r8, int.class) },
+            { move(xmm1, double.class) },
+            { move(xmm2, double.class) },
+            { move(r9, int.class) },
+            { move(stackStorage(0), int.class) },
+            { move(stackStorage(1), int.class) },
+            { move(rax, long.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -249,8 +251,8 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), descAddArgument(fd, C_LONG));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.BoxAddress(), new Binding.Move(rdi, long.class) },
-            { new Binding.Move(rax, long.class) },
+            { convertAddress(), move(rdi, long.class) },
+            { move(rax, long.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -271,7 +273,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
         checkArgumentBindings(callingSequence, new Binding[][]{
             expectedBindings,
-            { new Binding.Move(rax, long.class) },
+            { move(rax, long.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -284,31 +286,31 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
     public static Object[][] structs() {
         return new Object[][]{
             { MemoryLayout.ofStruct(C_ULONG), new Binding[]{
-                    new Binding.Dereference(0, long.class), new Binding.Move(rdi, long.class)
+                    dereference(0, long.class), move(rdi, long.class)
                 }
             },
             { MemoryLayout.ofStruct(C_ULONG, C_ULONG), new Binding[]{
-                    new Binding.Dup(),
-                    new Binding.Dereference(0, long.class), new Binding.Move(rdi, long.class),
-                    new Binding.Dereference(8, long.class), new Binding.Move(rsi, long.class)
+                    dup(),
+                    dereference(0, long.class), move(rdi, long.class),
+                    dereference(8, long.class), move(rsi, long.class)
                 }
             },
             { MemoryLayout.ofStruct(C_ULONG, C_ULONG, C_ULONG), new Binding[]{
-                    new Binding.Dup(),
-                    new Binding.Dereference(0, long.class), new Binding.Move(stackStorage(0), long.class),
-                    new Binding.Dup(),
-                    new Binding.Dereference(8, long.class), new Binding.Move(stackStorage(1), long.class),
-                    new Binding.Dereference(16, long.class), new Binding.Move(stackStorage(2), long.class)
+                    dup(),
+                    dereference(0, long.class), move(stackStorage(0), long.class),
+                    dup(),
+                    dereference(8, long.class), move(stackStorage(1), long.class),
+                    dereference(16, long.class), move(stackStorage(2), long.class)
                 }
             },
             { MemoryLayout.ofStruct(C_ULONG, C_ULONG, C_ULONG, C_ULONG), new Binding[]{
-                    new Binding.Dup(),
-                    new Binding.Dereference(0, long.class), new Binding.Move(stackStorage(0), long.class),
-                    new Binding.Dup(),
-                    new Binding.Dereference(8, long.class), new Binding.Move(stackStorage(1), long.class),
-                    new Binding.Dup(),
-                    new Binding.Dereference(16, long.class), new Binding.Move(stackStorage(2), long.class),
-                    new Binding.Dereference(24, long.class), new Binding.Move(stackStorage(3), long.class)
+                    dup(),
+                    dereference(0, long.class), move(stackStorage(0), long.class),
+                    dup(),
+                    dereference(8, long.class), move(stackStorage(1), long.class),
+                    dup(),
+                    dereference(16, long.class), move(stackStorage(2), long.class),
+                    dereference(24, long.class), move(stackStorage(3), long.class)
                 }
             },
         };
@@ -328,17 +330,17 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), descAddArgument(fd, C_LONG));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.Move(rax, long.class) }
+            { move(rax, long.class) }
         });
 
         checkReturnBindings(callingSequence, new Binding[] {
-            new Binding.AllocateBuffer(struct),
-            new Binding.Dup(),
-            new Binding.Move(rax, long.class),
-            new Binding.Dereference(0, long.class),
-            new Binding.Dup(),
-            new Binding.Move(rdx, long.class),
-            new Binding.Dereference(8, long.class)
+            allocate(struct),
+            dup(),
+            move(rax, long.class),
+            dereference(0, long.class),
+            dup(),
+            move(rdx, long.class),
+            dereference(8, long.class)
         });
 
         assertEquals(bindings.nVectorArgs, 0);
@@ -358,8 +360,8 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), FunctionDescriptor.ofVoid(false, C_POINTER, C_LONG));
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { new Binding.BoxAddress(), new Binding.Move(rdi, long.class) },
-            { new Binding.Move(rax, long.class) }
+            { convertAddress(), move(rdi, long.class) },
+            { move(rax, long.class) }
         });
 
         checkReturnBindings(callingSequence, new Binding[] {});
