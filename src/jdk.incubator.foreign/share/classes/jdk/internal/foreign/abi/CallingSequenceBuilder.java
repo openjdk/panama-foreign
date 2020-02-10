@@ -106,39 +106,37 @@ public class CallingSequenceBuilder {
 
         for (Binding b : bindings) {
             switch (b.tag()) {
-                case MOVE: {
+                case MOVE -> {
                     Class<?> actualType = stack.pop();
                     Class<?> expectedType = ((Binding.Move) b).type();
                     checkType(actualType, expectedType);
-                } break;
-                case DEREFERENCE: {
+                }
+                case DEREFERENCE -> {
                     Class<?> actualType = stack.pop();
                     checkType(actualType, MemorySegment.class);
                     Class<?> newType = ((Binding.Dereference) b).type();
                     stack.push(newType);
-                } break;
-                case BASE_ADDRESS: {
+                }
+                case BASE_ADDRESS -> {
                     Class<?> actualType = stack.pop();
                     checkType(actualType, MemorySegment.class);
                     stack.push(MemoryAddress.class);
-                } break;
-                case CONVERT_ADDRESS: {
+                }
+                case CONVERT_ADDRESS -> {
                     Class<?> actualType = stack.pop();
                     checkType(actualType, MemoryAddress.class);
                     stack.push(long.class);
-                } break;
-                case ALLOC_BUFFER: {
-                    stack.push(MemorySegment.class);
-                } break;
-                case COPY_BUFFER: {
+                }
+                case ALLOC_BUFFER ->
+                    throw new UnsupportedOperationException();
+                case COPY_BUFFER -> {
                     Class<?> actualType = stack.pop();
                     checkType(actualType, MemorySegment.class);
                     stack.push(MemorySegment.class);
-                } break;
-                case DUP: {
+                }
+                case DUP ->
                     stack.push(stack.peekLast());
-                } break;
-                default: throw new IllegalArgumentException("Unknown binding: " + b);
+                default -> throw new IllegalArgumentException("Unknown binding: " + b);
             }
         }
 
@@ -152,38 +150,37 @@ public class CallingSequenceBuilder {
 
         for (Binding b : bindings) {
             switch (b.tag()) {
-                case MOVE: {
+                case MOVE -> {
                     Class<?> newType = ((Binding.Move) b).type();
                     stack.push(newType);
-                } break;
-                case DEREFERENCE: {
+                }
+                case DEREFERENCE -> {
                     Class<?> storeType = stack.pop();
                     checkType(storeType, ((Binding.Dereference) b).type());
                     Class<?> segmentType = stack.pop();
                     checkType(segmentType, MemorySegment.class);
-                } break;
-                case CONVERT_ADDRESS: {
+                }
+                case CONVERT_ADDRESS -> {
                     Class<?> actualType = stack.pop();
                     checkType(actualType, long.class);
                     stack.push(MemoryAddress.class);
-                } break;
-                case BASE_ADDRESS: {
+                }
+                case BASE_ADDRESS -> {
                     Class<?> actualType = stack.pop();
                     checkType(actualType, MemorySegment.class);
                     stack.push(MemoryAddress.class);
-                } break;
-                case ALLOC_BUFFER: {
+                }
+                case ALLOC_BUFFER -> {
                     stack.push(MemorySegment.class);
-                } break;
-                case COPY_BUFFER: {
+                }
+                case COPY_BUFFER -> {
                     Class<?> actualType = stack.pop();
                     checkType(actualType, MemoryAddress.class);
                     stack.push(MemorySegment.class);
-                } break;
-                case DUP: {
+                }
+                case DUP ->
                     stack.push(stack.peekLast());
-                } break;
-                default: throw new IllegalArgumentException("Unknown binding: " + b);
+                default -> throw new IllegalArgumentException("Unknown binding: " + b);
             }
         }
 
