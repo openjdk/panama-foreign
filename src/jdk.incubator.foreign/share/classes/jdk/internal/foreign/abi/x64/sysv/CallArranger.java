@@ -120,7 +120,7 @@ public class CallArranger {
         if (!forUpcall) {
             //add extra binding for number of used vector registers (used for variadic calls)
             csb.addArgumentBindings(long.class, MemoryLayouts.SysV.C_LONG,
-                    Binding.builder().move(rax, long.class).build());
+                    List.of(move(rax, long.class)));
         }
 
         return new Bindings(csb.build(), returnInMemory, argCalc.storageCalculator.nVectorReg);
