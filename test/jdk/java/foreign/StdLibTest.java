@@ -346,12 +346,12 @@ public class StdLibTest extends NativeTestHelper {
         private MethodHandle specializedPrintf(List<PrintfArg> args) {
             //method type
             MethodType mt = MethodType.methodType(int.class, MemoryAddress.class);
+            FunctionDescriptor fd = printfBase;
             for (PrintfArg arg : args) {
                 mt = mt.appendParameterTypes(arg.carrier);
+                fd = fd.appendArgumentLayouts(arg.layout);
             }
-            FunctionDescriptor printfSpec = StdLibHelper.printfBase.appendArgumentLayouts(
-                    args.stream().map(a -> a.layout).toArray(MemoryLayout[]::new));
-            MethodHandle mh = abi.downcallHandle(printfAddr, mt, printfSpec);
+            MethodHandle mh = abi.downcallHandle(printfAddr, mt, fd);
             return mh.asSpreader(1, Object[].class, args.size());
         }
     }
