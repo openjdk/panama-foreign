@@ -29,19 +29,25 @@
  * @run testng SmokeTest
  */
 
-import java.io.File;
-
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.function.Predicate;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.JextractTask;
 import jdk.incubator.jextract.Type;
-import org.testng.annotations.*;
-import static org.testng.Assert.*;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class SmokeTest {
 
     @Test
     public void testParser() {
-        var task = JextractTask.newTask(false, new File(System.getProperty("test.src.path"), "smoke.h").toPath());
+        Path header = Paths.get(System.getProperty("test.src.path", "."), "smoke.h");
+        var task = JextractTask.newTask(false, header);
         Declaration.Scoped d = task.parse("");
         Declaration.Scoped pointDecl = checkStruct(d, "Point", "x", "y");
         Type intType = ((Declaration.Variable)pointDecl.members().get(0)).type();
@@ -50,6 +56,28 @@ public class SmokeTest {
         Declaration.Variable ch_ptr_ptr = findDecl(d, "ch_ptr_ptr", Declaration.Variable.class);
         checkFunction(d, "pointers", ch_ptr_ptr.type(), ch_ptr_ptr.type(), ch_ptr_ptr.type());
         checkConstant(d, "ZERO", intType, 0L);
+    }
+
+    @Test
+    public void test8238712() {
+        Path header = Paths.get(System.getProperty("test.src.path", "."), "Test8238712.h");
+        var task = JextractTask.newTask(false, header);
+        Declaration.Scoped d = task.parse();
+        Declaration.Scoped structFoo = checkStruct(d, "foo", "n", "ptr");
+        Type intType = ((Declaration.Variable) structFoo.members().get(0)).type();
+        Type fooType = Type.declared(structFoo);
+        checkFunction(d, "withRecordTypeArg", intType, intType, fooType);
+        checkFunction(d, "returnRecordType", fooType);
+        // Opaque struct, have no field
+        Declaration.Scoped structBar = checkStruct(d, "bar");
+        assertTrue(structBar.layout().isEmpty());
+        Type barType = Type.declared(structBar);
+        // Function with opaque struct won't work but should have cursor for tool to handle
+        checkFunction(d, "returnBar", barType);
+        checkFunction(d, "withBar", Type.void_(), barType);
+        // Function use pointer to opaque struct should be OK
+        Type barPointer = Type.pointer(barType);
+        checkFunction(d, "nextBar", barPointer, barPointer);
     }
 
     Declaration.Scoped checkStruct(Declaration.Scoped toplevel, String name, String... fields) {
@@ -90,15 +118,26 @@ public class SmokeTest {
         return constant;
     }
 
+    Predicate<Declaration> byName(final String name) {
+        return d -> d.name().equals(name);
+    }
+
+    Predicate<Declaration> byNameAndType(final String name, Class<? extends Declaration> declType) {
+        return d -> declType.isAssignableFrom(d.getClass()) && d.name().equals(name);
+    }
+
+    Optional<Declaration> findDecl(Declaration.Scoped toplevel, Predicate<Declaration> filter) {
+        return toplevel.members().stream().filter(filter).findAny();
+    }
+
     @SuppressWarnings("unchecked")
     <D extends Declaration> D findDecl(Declaration.Scoped toplevel, String name, Class<D> declType) {
-        for (Declaration d : toplevel.members()) {
-            if (declType.isAssignableFrom(d.getClass()) && d.name().equals(name)) {
-                return (D)d;
-            }
+        Optional<Declaration> d = findDecl(toplevel, byNameAndType(name, declType));
+        if (d.isEmpty()) {
+            fail("No declaration with name " + name + " found in " + toplevel);
+            return null;
         }
-        fail("No declaration with name " + name + " found in " + toplevel);
-        return null;
+        return (D) d.get();
     }
 
     void assertTypeEquals(Type expected, Type found) {
