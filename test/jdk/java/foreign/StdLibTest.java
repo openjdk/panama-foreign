@@ -175,6 +175,7 @@ public class StdLibTest extends NativeTestHelper {
         final static FunctionDescriptor qsortComparFunction;
         final static MethodHandle rand;
         final static MemoryAddress printfAddr;
+        final static FunctionDescriptor printfBase;
 
         static {
             try {
@@ -215,6 +216,8 @@ public class StdLibTest extends NativeTestHelper {
                         FunctionDescriptor.of(C_INT));
 
                 printfAddr = lookup.lookup("printf");
+
+                printfBase = FunctionDescriptor.of(C_INT, C_POINTER);
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
@@ -346,14 +349,9 @@ public class StdLibTest extends NativeTestHelper {
             for (PrintfArg arg : args) {
                 mt = mt.appendParameterTypes(arg.carrier);
             }
-            //function
-            List<MemoryLayout> argLayouts = new ArrayList<>();
-            argLayouts.add(C_POINTER); //format
-            for (PrintfArg arg : args) {
-                argLayouts.add(arg.layout);
-            }
-            MethodHandle mh = abi.downcallHandle(printfAddr, mt,
-                    FunctionDescriptor.of(C_INT, argLayouts.toArray(new MemoryLayout[0])));
+            FunctionDescriptor printfSpec = StdLibHelper.printfBase.appendArgumentLayouts(
+                    args.stream().map(a -> a.layout).toArray(MemoryLayout[]::new));
+            MethodHandle mh = abi.downcallHandle(printfAddr, mt, printfSpec);
             return mh.asSpreader(1, Object[].class, args.size());
         }
     }
