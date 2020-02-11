@@ -329,8 +329,8 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
                 dup(),
                 dereference(0, long.class),
                 move(stackStorage(0), long.class),
-                dereference(8, long.class),
-                move(stackStorage(1), long.class),
+                dereference(8, int.class),
+                move(stackStorage(1), int.class),
             }
         });
 
