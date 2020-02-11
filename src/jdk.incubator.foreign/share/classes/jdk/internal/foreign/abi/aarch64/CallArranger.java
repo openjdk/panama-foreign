@@ -314,8 +314,9 @@ public class CallArranger {
                 if (offset + STACK_SLOT_SIZE < layout.byteSize()) {
                     bindings.dup();
                 }
-                bindings.dereference(offset, long.class)
-                        .move(storage, long.class);
+                Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                bindings.dereference(offset, type)
+                        .move(storage, type);
                 offset += STACK_SLOT_SIZE;
             }
         }
@@ -331,9 +332,10 @@ public class CallArranger {
                 long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
                 VMStorage storage =
                     storageCalculator.stackAlloc(copy, STACK_SLOT_SIZE);
+                Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
                 bindings.dup()
-                        .move(storage, long.class)
-                        .dereference(offset, long.class);
+                        .move(storage, type)
+                        .dereference(offset, type);
                 offset += STACK_SLOT_SIZE;
             }
         }
