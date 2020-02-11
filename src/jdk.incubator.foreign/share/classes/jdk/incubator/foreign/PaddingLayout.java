@@ -49,7 +49,7 @@ import java.util.OptionalLong;
 /* package-private */ final class PaddingLayout extends AbstractLayout implements MemoryLayout {
 
     PaddingLayout(long size) {
-        this(size, size, Map.of());
+        this(size, 1, Map.of());
     }
 
     PaddingLayout(long size, long alignment, Map<String, Constable> annotations) {
