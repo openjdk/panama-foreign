@@ -42,7 +42,14 @@ import static jdk.internal.jextract.impl.LayoutUtils.*;
         
 public final class Index_h {
 
-    private static final LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {"clang"}, new String[] {});
+    private static String libName() {
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            return "libclang";
+        }
+        return "clang";
+    }
+
+    private static final LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {libName()}, new String[] {});
     public static final long NULL = 0L;
     public static final int CINDEX_VERSION_MAJOR = (int)0L;
     public static final int CINDEX_VERSION_MINOR = (int)59L;
