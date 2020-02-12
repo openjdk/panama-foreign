@@ -43,7 +43,7 @@ public class CallingSequenceBuilder {
     private List<Binding> ouputBindings = List.of();
 
     private MethodType mt = MethodType.methodType(void.class);
-    private FunctionDescriptor desc = FunctionDescriptor.ofVoid(false);
+    private FunctionDescriptor desc = FunctionDescriptor.ofVoid();
 
     public CallingSequenceBuilder(boolean forUpcall) {
         this.forUpcall = forUpcall;
@@ -54,20 +54,8 @@ public class CallingSequenceBuilder {
         verifyBindings(true, carrier, bindings);
         inputBindings.add(bindings);
         mt = mt.appendParameterTypes(carrier);
-        descAddArgument(layout);
+        desc = desc.appendArgumentLayouts(layout);
         return this;
-    }
-
-    private void descAddArgument(MemoryLayout layout) {
-        boolean isVoid = desc.returnLayout().isEmpty();
-        var args = new ArrayList<>(desc.argumentLayouts());
-        args.add(layout);
-        var argsArray = args.toArray(MemoryLayout[]::new);
-        if (isVoid) {
-            desc = FunctionDescriptor.ofVoid(false, argsArray);
-        } else {
-            desc = FunctionDescriptor.of(desc.returnLayout().get(), false, argsArray);
-        }
     }
 
     public CallingSequenceBuilder setReturnBindings(Class<?> carrier, MemoryLayout layout,
@@ -75,7 +63,7 @@ public class CallingSequenceBuilder {
         verifyBindings(false, carrier, bindings);
         this.ouputBindings = bindings;
         mt = mt.changeReturnType(carrier);
-        desc = FunctionDescriptor.of(layout, false, desc.argumentLayouts().toArray(MemoryLayout[]::new));
+        desc = desc.changeReturnLayout(layout);
         return this;
     }
 
