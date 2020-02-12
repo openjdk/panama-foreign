@@ -25,6 +25,18 @@
  */
 package jdk.internal.jextract.impl;
 
+import java.nio.ByteOrder;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
@@ -34,18 +46,6 @@ import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.SourceLocation;
 
-import java.nio.ByteOrder;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
 class TreeMaker {
     private final Map<Cursor, Declaration> treeCache = new HashMap<>();
 
@@ -54,7 +54,18 @@ class TreeMaker {
     TypeMaker typeMaker = new TypeMaker(this);
 
     private <T extends Declaration> T checkCache(Cursor c, Class<T> clazz, Supplier<Declaration> factory) {
-        return clazz.cast(treeCache.computeIfAbsent(c, cx->factory.get()));
+        // The supplier function may lead to adding some other type, which will cause CME using computeIfAbsent.
+        // This implementation relax the constraint a bit only check for same key
+        Declaration rv;
+        if (treeCache.containsKey(c)) {
+            rv = treeCache.get(c);
+        } else {
+            rv = factory.get();
+            if (null != rv && treeCache.put(c, rv) != null) {
+                throw new ConcurrentModificationException();
+            }
+        }
+        return clazz.cast(rv);
     }
 
     interface ScopedFactoryLayout {

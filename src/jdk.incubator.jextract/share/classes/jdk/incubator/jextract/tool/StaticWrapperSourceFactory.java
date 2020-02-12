@@ -25,16 +25,14 @@
 
 package jdk.incubator.jextract.tool;
 
-import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.Type;
+import java.lang.invoke.MethodType;
+import java.util.List;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-
-import java.lang.invoke.MethodType;
-import java.util.List;
-import java.util.stream.Collectors;
+import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Type;
 
 public class StaticWrapperSourceFactory extends HandleSourceFactory {
     public StaticWrapperSourceFactory(String clsName, String pkgName, List<String> libraryNames) {
@@ -52,6 +50,7 @@ public class StaticWrapperSourceFactory extends HandleSourceFactory {
         FunctionDescriptor descriptor = Type.descriptorFor(funcTree.type()).orElse(null);
         if (descriptor == null) {
             //abort
+            return null;
         }
         builder.addMethodHandle(funcTree, mtype, descriptor);
         //generate static wrapper for function
