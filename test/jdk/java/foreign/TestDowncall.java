@@ -86,8 +86,8 @@ public class TestDowncall extends CallGeneratorHelper {
     static FunctionDescriptor function(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
         MemoryLayout[] paramLayouts = params.stream().map(p -> p.layout(fields)).toArray(MemoryLayout[]::new);
         return ret == Ret.VOID ?
-                FunctionDescriptor.ofVoid(false, paramLayouts) :
-                FunctionDescriptor.of(paramLayouts[0], false, paramLayouts);
+                FunctionDescriptor.ofVoid(paramLayouts) :
+                FunctionDescriptor.of(paramLayouts[0], paramLayouts);
     }
 
     static Object[] makeArgs(List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks) throws ReflectiveOperationException {

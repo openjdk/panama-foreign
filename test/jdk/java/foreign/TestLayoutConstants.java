@@ -49,10 +49,10 @@ public class TestLayoutConstants {
     }
 
     @Test(dataProvider = "functions")
-    public void testDescribeResolveFunction(MemoryLayout layout, boolean isVoid, boolean hasVarargs) {
+    public void testDescribeResolveFunction(MemoryLayout layout, boolean isVoid) {
         FunctionDescriptor expected = isVoid ?
-                FunctionDescriptor.ofVoid(hasVarargs, layout) :
-                FunctionDescriptor.of(layout, hasVarargs, layout);
+                FunctionDescriptor.ofVoid(layout) :
+                FunctionDescriptor.of(layout, layout);
         try {
             FunctionDescriptor actual = expected.describeConstable().get()
                     .resolveConstantDesc(MethodHandles.lookup());
@@ -112,20 +112,15 @@ public class TestLayoutConstants {
     @DataProvider(name = "functions")
     public Object[][] createFunctions() {
         Object[][] layouts = createLayouts();
-        Object[][] functions = new Object[layouts.length * 4][];
+        Object[][] functions = new Object[layouts.length * 2][];
         boolean[] values = new boolean[] { true, false };
         for (int i = 0 ; i < layouts.length ; i++) {
-            for (boolean hasVarargs : values) {
-                for (boolean isVoid : values) {
-                    int offset = 0;
-                    if (hasVarargs) {
-                        offset += 1;
-                    }
-                    if (isVoid) {
-                        offset += 2;
-                    }
-                    functions[i * 4 + offset] = new Object[] { layouts[i][0], isVoid, hasVarargs };
+            for (boolean isVoid : values) {
+                int offset = 0;
+                if (isVoid) {
+                    offset += 1;
                 }
+                functions[i * 2 + offset] = new Object[] { layouts[i][0], isVoid };
             }
         }
         return functions;

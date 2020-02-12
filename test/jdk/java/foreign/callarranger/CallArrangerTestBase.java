@@ -47,14 +47,4 @@ public class CallArrangerTestBase {
     public static void checkReturnBindings(CallingSequence callingSequence, Binding[] returnBindings) {
         assertEquals(callingSequence.returnBindings(), Arrays.asList(returnBindings));
     }
-
-    public static FunctionDescriptor descAddArgument(FunctionDescriptor desc, MemoryLayout... layouts) {
-        var args = new ArrayList<>(desc.argumentLayouts());
-        args.addAll(Arrays.asList(layouts));
-        var argsArray = args.toArray(MemoryLayout[]::new);
-        return desc.returnLayout().isEmpty()
-            ? FunctionDescriptor.ofVoid(false, argsArray)
-            : FunctionDescriptor.of(desc.returnLayout().get(), false, argsArray);
-    }
-
 }

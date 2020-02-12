@@ -98,7 +98,7 @@ public class TestVarArgs extends NativeTestHelper {
             argLayouts.add(C_INT); // size
             args.forEach(a -> argLayouts.add(asVarArg(a.layout)));
 
-            FunctionDescriptor desc = FunctionDescriptor.ofVoid(false, argLayouts.toArray(MemoryLayout[]::new));
+            FunctionDescriptor desc = FunctionDescriptor.ofVoid(argLayouts.toArray(MemoryLayout[]::new));
 
             List<Class<?>> carriers = new ArrayList<>();
             carriers.add(MemoryAddress.class); // call info

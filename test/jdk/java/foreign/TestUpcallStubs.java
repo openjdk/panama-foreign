@@ -55,7 +55,7 @@ public class TestUpcallStubs {
     }
 
     private static MemoryAddress getStub() {
-        return abi.upcallStub(MH_dummy, FunctionDescriptor.ofVoid(false));
+        return abi.upcallStub(MH_dummy, FunctionDescriptor.ofVoid());
     }
 
     @Test(expectedExceptions = IndexOutOfBoundsException.class)

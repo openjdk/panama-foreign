@@ -75,7 +75,7 @@ public class TestUpcall extends CallGeneratorHelper {
             DUMMY = MethodHandles.lookup().findStatic(TestUpcall.class, "dummy", MethodType.methodType(void.class));
             PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcall.class, "passAndSave", MethodType.methodType(Object.class, Object[].class, AtomicReference.class));
 
-            dummyAddress = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(false));
+            dummyAddress = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid());
             cleaner.register(dummyAddress, () -> abi.freeUpcallStub(dummyAddress));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
@@ -116,8 +116,8 @@ public class TestUpcall extends CallGeneratorHelper {
         paramLayouts.add(C_POINTER); // the callback
         MemoryLayout[] layouts = paramLayouts.toArray(new MemoryLayout[0]);
         return ret == Ret.VOID ?
-                FunctionDescriptor.ofVoid(false, layouts) :
-                FunctionDescriptor.of(layouts[0], false, layouts);
+                FunctionDescriptor.ofVoid(layouts) :
+                FunctionDescriptor.of(layouts[0], layouts);
     }
 
     static Object[] makeArgs(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
@@ -167,8 +167,8 @@ public class TestUpcall extends CallGeneratorHelper {
 
         MemoryLayout[] paramLayouts = params.stream().map(p -> p.layout(fields)).toArray(MemoryLayout[]::new);
         FunctionDescriptor func = ret != Ret.VOID
-                ? FunctionDescriptor.of(firstlayout, false, paramLayouts)
-                : FunctionDescriptor.ofVoid(false, paramLayouts);
+                ? FunctionDescriptor.of(firstlayout, paramLayouts)
+                : FunctionDescriptor.ofVoid(paramLayouts);
         MemoryAddress stub = abi.upcallStub(mh, func);
         cleaner.register(stub, () -> abi.freeUpcallStub(stub));
         return stub;

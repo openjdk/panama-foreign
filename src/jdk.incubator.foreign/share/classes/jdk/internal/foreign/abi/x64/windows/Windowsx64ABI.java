@@ -47,7 +47,7 @@ public class Windowsx64ABI implements SystemABI {
     public static final int MAX_REGISTER_ARGUMENTS = 4;
     public static final int MAX_REGISTER_RETURNS = 1;
 
-    public static final String VARARGS_ANNOTATION_NAME = "isVarArg";
+    public static final String VARARGS_ANNOTATION_NAME = "abi/windows/varargs";
 
     private static Windowsx64ABI instance;
 
@@ -60,19 +60,11 @@ public class Windowsx64ABI implements SystemABI {
 
     @Override
     public MethodHandle downcallHandle(MemoryAddress symbol, MethodType type, FunctionDescriptor function) {
-        if (function.isVariadic()) {
-            throw new IllegalArgumentException("Variadic function: " + function);
-        }
-
         return CallArranger.arrangeDowncall(MemoryAddressImpl.addressof(symbol), type, function);
     }
 
     @Override
     public MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function) {
-        if (function.isVariadic()) {
-            throw new IllegalArgumentException("Variadic function: " + function);
-        }
-
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
     }
 

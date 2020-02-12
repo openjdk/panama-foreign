@@ -42,11 +42,9 @@ public final class FunctionDescriptor implements Constable {
     
     private final MemoryLayout resLayout;
     private final MemoryLayout[] argLayouts;
-    private final boolean variadic;
 
-    private FunctionDescriptor(MemoryLayout resLayout, boolean variadic, MemoryLayout... argLayouts) {
+    private FunctionDescriptor(MemoryLayout resLayout, MemoryLayout... argLayouts) {
         this.resLayout = resLayout;
-        this.variadic = variadic;
         this.argLayouts = argLayouts;
     }
 
@@ -67,32 +65,43 @@ public final class FunctionDescriptor implements Constable {
     }
 
     /**
-     * Does this function accept a variable-arity argument list?
-     * @return true, if the function models a variadic function.
-     */
-    public boolean isVariadic() {
-        return variadic;
-    }
-
-    /**
      * Create a function descriptor with given return and argument layouts.
-     * @param varargs is this a variadic function
      * @param resLayout the return
      * @param argLayouts the argument layouts.
      * @return the new function descriptor.
      */
-    public static FunctionDescriptor of(MemoryLayout resLayout, boolean varargs, MemoryLayout... argLayouts) {
-        return new FunctionDescriptor(resLayout, varargs, argLayouts);
+    public static FunctionDescriptor of(MemoryLayout resLayout, MemoryLayout... argLayouts) {
+        return new FunctionDescriptor(resLayout, argLayouts);
     }
 
     /**
      * Create a void function descriptor with given argument layouts.
-     * @param varargs is this a variadic function
      * @param argLayouts the argument layouts.
      * @return the new function descriptor.
      */
-    public static FunctionDescriptor ofVoid(boolean varargs, MemoryLayout... argLayouts) {
-        return new FunctionDescriptor(null, varargs, argLayouts);
+    public static FunctionDescriptor ofVoid(MemoryLayout... argLayouts) {
+        return new FunctionDescriptor(null, argLayouts);
+    }
+
+    /**
+     * Create a new function descriptor with the given argument layouts appended to the argument layout array
+     * of this function descriptor.
+     * @param addedLayouts the layouts to append
+     * @return the new function descriptor
+     */
+    public FunctionDescriptor appendArgumentLayouts(MemoryLayout... addedLayouts) {
+        MemoryLayout[] newLayouts = Arrays.copyOf(argLayouts, argLayouts.length + addedLayouts.length);
+        System.arraycopy(addedLayouts, 0, newLayouts, argLayouts.length, addedLayouts.length);
+        return new FunctionDescriptor(resLayout, newLayouts);
+    }
+
+    /**
+     * Create a new function descriptor with the given memory layout as the new return layout.
+     * @param newReturn the new return layout
+     * @return the new function descriptor
+     */
+    public FunctionDescriptor changeReturnLayout(MemoryLayout newReturn) {
+        return new FunctionDescriptor(newReturn, argLayouts);
     }
 
     /**
@@ -101,11 +110,10 @@ public final class FunctionDescriptor implements Constable {
      */
     @Override
     public String toString() {
-        return String.format("(%s%s)%s",
+        return String.format("(%s)%s",
                 Stream.of(argLayouts)
                         .map(Object::toString)
                         .collect(Collectors.joining()),
-                variadic ? "*" : "",
                 returnLayout().map(Object::toString).orElse("v"));
     }
 
@@ -125,8 +133,7 @@ public final class FunctionDescriptor implements Constable {
             return false;
         }
         FunctionDescriptor f = (FunctionDescriptor) other;
-        return Objects.equals(resLayout, f.resLayout) && Arrays.equals(argLayouts, f.argLayouts) &&
-            variadic == f.variadic;
+        return Objects.equals(resLayout, f.resLayout) && Arrays.equals(argLayouts, f.argLayouts);
     }
 
     /**
@@ -135,7 +142,7 @@ public final class FunctionDescriptor implements Constable {
      */
     @Override
     public int hashCode() {
-        int hashCode = Arrays.hashCode(argLayouts) ^ Boolean.hashCode(variadic);
+        int hashCode = Arrays.hashCode(argLayouts);
         return resLayout == null ? hashCode : resLayout.hashCode() ^ hashCode;
     }
 
@@ -146,7 +153,6 @@ public final class FunctionDescriptor implements Constable {
         if (resLayout != null) {
             constants.add(resLayout.describeConstable().get());
         }
-        constants.add(variadic ? AbstractLayout.TRUE : AbstractLayout.FALSE);
         for (int i = 0 ; i < argLayouts.length ; i++) {
             constants.add(argLayouts[i].describeConstable().get());
         }
