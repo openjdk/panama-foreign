@@ -225,6 +225,9 @@ class JavaSourceBuilder {
         sb.append("\"" + mtype.toMethodDescriptorString() + "\",\n");
         indent();
         addFunction(desc);
+        sb.append(",\n");
+        indent();
+        sb.append(funcTree.type().varargs());
         decrAlign();
         sb.append("\n");
         indent();
@@ -244,9 +247,8 @@ class JavaSourceBuilder {
         } else {
             sb.append("FunctionDescriptor.ofVoid(");
         }
-        sb.append(f.isVariadic());
         if (!f.argumentLayouts().isEmpty()) {
-            sb.append(",\n");
+            sb.append("\n");
             incrAlign();
             String delim = "";
             for (MemoryLayout e : f.argumentLayouts()) {

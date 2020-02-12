@@ -36,7 +36,7 @@ typedef struct Point {
     int y;
 } Point;
 
-Point makePoint(int x, int y);
+EXPORT Point makePoint(int x, int y);
 
 #ifdef __cplusplus
 }

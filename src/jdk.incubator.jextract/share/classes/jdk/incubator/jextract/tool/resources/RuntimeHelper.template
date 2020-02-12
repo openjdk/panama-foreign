@@ -51,11 +51,11 @@ public class RuntimeHelper {
         return lookup(LIBRARIES, name).orElse(null);
     }
 
-    public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc) {
+    public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
         return lookup(LIBRARIES, name).map(
                 addr -> {
                     MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
-                    return fdesc.isVariadic() ?
+                    return variadic ?
                         VarargsInvoker.make(addr, mt, fdesc) :
                         ABI.downcallHandle(addr, mt, fdesc);
                 }).orElse(null);
@@ -129,8 +129,8 @@ public class RuntimeHelper {
 
             MethodType mt = MethodType.methodType(varargs.returnType(), argTypes);
             FunctionDescriptor f = (function.returnLayout().isEmpty()) ?
-                    FunctionDescriptor.ofVoid(false, argLayouts) :
-                    FunctionDescriptor.of(function.returnLayout().get(), false, argLayouts);
+                    FunctionDescriptor.ofVoid(argLayouts) :
+                    FunctionDescriptor.of(function.returnLayout().get(), argLayouts);
             MethodHandle mh = SystemABI.getInstance().downcallHandle(symbol, mt, f);
             // flatten argument list so that it can be passed to an asSpreader MH
             Object[] allArgs = new Object[nNamedArgs + unnamedArgs.length];

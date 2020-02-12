@@ -180,9 +180,9 @@ public final class LayoutUtils {
                     .toArray(MemoryLayout[]::new);
             if (t.returnType() instanceof jdk.incubator.jextract.Type.Primitive &&
                     ((jdk.incubator.jextract.Type.Primitive) t.returnType()).kind() == jdk.incubator.jextract.Type.Primitive.Kind.Void) {
-                return Optional.of(FunctionDescriptor.ofVoid(t.varargs(), args));
+                return Optional.of(FunctionDescriptor.ofVoid(args));
             } else {
-                return Optional.of(FunctionDescriptor.of(getLayoutInternal(t.returnType()), t.varargs(), args));
+                return Optional.of(FunctionDescriptor.of(getLayoutInternal(t.returnType()), args));
             }
         } catch (Throwable ex) {
             return Optional.empty();

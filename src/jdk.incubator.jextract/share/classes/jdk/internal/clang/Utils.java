@@ -55,12 +55,12 @@ public class Utils {
             STRLEN = SystemABI.getInstance().downcallHandle(
                     LibraryLookup.ofDefault().lookup("strlen"),
                     MethodType.methodType(int.class, MemoryAddress.class),
-                    FunctionDescriptor.of(LayoutUtils.C_INT, false, LayoutUtils.C_POINTER));
+                    FunctionDescriptor.of(LayoutUtils.C_INT, LayoutUtils.C_POINTER));
 
             STRCPY = SystemABI.getInstance().downcallHandle(
                     LibraryLookup.ofDefault().lookup("strcpy"),
                     MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
-                    FunctionDescriptor.of(LayoutUtils.C_POINTER, false, LayoutUtils.C_POINTER, LayoutUtils.C_POINTER));
+                    FunctionDescriptor.of(LayoutUtils.C_POINTER, LayoutUtils.C_POINTER, LayoutUtils.C_POINTER));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
