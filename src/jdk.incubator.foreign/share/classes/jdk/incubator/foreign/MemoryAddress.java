@@ -138,6 +138,8 @@ public interface MemoryAddress {
      * @return the new memory address instance.
      */
     static MemoryAddress ofLong(long value) {
-        return MemorySegmentImpl.NOTHING.baseAddress().addOffset(value);
+        return value == 0 ?
+                NULL :
+                MemorySegmentImpl.NOTHING.baseAddress().addOffset(value);
     }
 }
