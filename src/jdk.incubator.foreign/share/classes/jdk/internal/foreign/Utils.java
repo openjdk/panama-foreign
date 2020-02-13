@@ -32,6 +32,7 @@ import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemoryAddressProxy;
@@ -67,11 +68,17 @@ public final class Utils {
     private static Unsafe unsafe = Unsafe.getUnsafe();
 
     private static final MethodHandle ADDRESS_FILTER;
+    private static final MethodHandle LONG_TO_ADDRESS;
+    private static final MethodHandle ADDRESS_TO_LONG;
 
     static {
         try {
             ADDRESS_FILTER = MethodHandles.lookup().findStatic(Utils.class, "filterAddress",
                     MethodType.methodType(MemoryAddressProxy.class, MemoryAddress.class));
+            LONG_TO_ADDRESS = MethodHandles.lookup().findStatic(Utils.class, "longToAddress",
+                    MethodType.methodType(MemoryAddressProxy.class, long.class));
+            ADDRESS_TO_LONG = MethodHandles.lookup().findStatic(Utils.class, "addressToLong",
+                    MethodType.methodType(long.class, MemoryAddressProxy.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -85,6 +92,7 @@ public final class Utils {
     private final static long POINTER_SIZE = 8;
 
     private static final JavaNioAccess javaNioAccess = SharedSecrets.getJavaNioAccess();
+    private static final JavaLangInvokeAccess javaLangInvokeAccess = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
@@ -260,10 +268,23 @@ public final class Utils {
     public static VarHandle fixUpVarHandle(VarHandle handle) {
         // This adaptation is required, otherwise the memory access var handle will have type MemoryAddressProxy,
         // and not MemoryAddress (which the user expects), which causes performance issues with asType() adaptations.
-        return MethodHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
+        handle = MethodHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
+        return (javaLangInvokeAccess.memoryAddressCarrier(handle) == MemoryAddressProxy.class) ?
+                MethodHandles.filterValue(handle, ADDRESS_TO_LONG, LONG_TO_ADDRESS) :
+                handle;
     }
 
     private static MemoryAddressProxy filterAddress(MemoryAddress addr) {
         return (MemoryAddressImpl)addr;
+    }
+
+    private static MemoryAddressProxy longToAddress(long value) {
+        return value == 0L ?
+                (MemoryAddressImpl)MemoryAddress.NULL :
+                (MemoryAddressImpl)MemoryAddress.ofLong(value);
+    }
+
+    private static long addressToLong(MemoryAddressProxy value) {
+        return value.unsafeGetOffset();
     }
 }
