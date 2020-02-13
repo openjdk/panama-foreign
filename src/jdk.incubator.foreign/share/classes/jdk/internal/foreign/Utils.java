@@ -28,18 +28,13 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
-import jdk.internal.foreign.abi.aarch64.AArch64ABI;
-import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
-import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 import jdk.internal.misc.Unsafe;
 import sun.invoke.util.Wrapper;
 import sun.nio.ch.FileChannelImpl;
@@ -76,9 +71,9 @@ public final class Utils {
             ADDRESS_FILTER = MethodHandles.lookup().findStatic(Utils.class, "filterAddress",
                     MethodType.methodType(MemoryAddressProxy.class, MemoryAddress.class));
             LONG_TO_ADDRESS = MethodHandles.lookup().findStatic(Utils.class, "longToAddress",
-                    MethodType.methodType(MemoryAddressProxy.class, long.class));
+                    MethodType.methodType(MemoryAddress.class, long.class));
             ADDRESS_TO_LONG = MethodHandles.lookup().findStatic(Utils.class, "addressToLong",
-                    MethodType.methodType(long.class, MemoryAddressProxy.class));
+                    MethodType.methodType(long.class, MemoryAddress.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -278,13 +273,11 @@ public final class Utils {
         return (MemoryAddressImpl)addr;
     }
 
-    private static MemoryAddressProxy longToAddress(long value) {
-        return value == 0L ?
-                (MemoryAddressImpl)MemoryAddress.NULL :
-                (MemoryAddressImpl)MemoryAddress.ofLong(value);
+    private static MemoryAddress longToAddress(long value) {
+        return MemoryAddress.ofLong(value);
     }
 
-    private static long addressToLong(MemoryAddressProxy value) {
-        return value.unsafeGetOffset();
+    private static long addressToLong(MemoryAddress value) {
+        return ((MemoryAddressImpl)value).unsafeGetOffset();
     }
 }
