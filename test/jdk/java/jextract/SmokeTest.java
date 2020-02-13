@@ -80,6 +80,24 @@ public class SmokeTest {
         checkFunction(d, "nextBar", barPointer, barPointer);
     }
 
+    @Test
+    public void testBadMacros() {
+        Path header = Paths.get(System.getProperty("test.src.path", "."), "badMacros.h");
+        var task = JextractTask.newTask(false, header);
+        Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
+        // This line is critical, otherwise the Constant declaration won't be included
+        Declaration.Scoped d = task.parse("-I", builtinInc.toString());
+        System.out.println(d.name() + " has " + d.members().size() + " members");
+        for (Declaration m: d.members()) {
+            System.out.println(m.name());
+            if (m instanceof Declaration.Constant) {
+                Declaration.Constant c = (Declaration.Constant) m;
+                System.out.println("Value: " + c.value());
+                System.out.println("Type: " + c.type());
+            }
+        }
+    }
+
     Declaration.Scoped checkStruct(Declaration.Scoped toplevel, String name, String... fields) {
         Declaration.Scoped struct = findDecl(toplevel, name, Declaration.Scoped.class);
         assertEquals(struct.members().size(), fields.length);
