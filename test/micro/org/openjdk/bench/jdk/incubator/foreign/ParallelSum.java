@@ -27,6 +27,7 @@
 package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryLayout;
+import sun.misc.Unsafe;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.CompilerControl;
@@ -58,17 +59,25 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 @Fork(3)
 public class ParallelSum {
 
-    final static int ALLOC_SIZE = 4 * 1024 * 1024 * 256;
-    final static int ELEM_SIZE = ALLOC_SIZE / 4;
+    final static int CARRIER_SIZE = 4;
+    final static int ALLOC_SIZE = CARRIER_SIZE * 1024 * 1024 * 256;
+    final static int ELEM_SIZE = ALLOC_SIZE / CARRIER_SIZE;
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
 
+    static final Unsafe unsafe = Utils.unsafe;
+
     MemorySegment segment;
+    long address;
 
     ForkJoinPool pool = (ForkJoinPool) Executors.newWorkStealingPool();
 
 
     @Setup
     public void setup() {
+        address = unsafe.allocateMemory(ALLOC_SIZE);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            unsafe.putInt(address + (i * CARRIER_SIZE), i);
+        }
         segment = MemorySegment.allocateNative(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment.baseAddress(), (long) i, i);
@@ -77,13 +86,14 @@ public class ParallelSum {
 
     @TearDown
     public void tearDown() throws Throwable {
+        unsafe.freeMemory(address);
         segment.close();
         pool.shutdown();
         pool.awaitTermination(60, TimeUnit.SECONDS);
     }
 
     @Benchmark
-    public int testSerial() {
+    public int segment_serial() {
         int res = 0;
         MemoryAddress base = segment.baseAddress();
         for (int i = 0; i < ELEM_SIZE; i++) {
@@ -93,17 +103,31 @@ public class ParallelSum {
     }
 
     @Benchmark
-    public int testForkJoin() {
-        return pool.invoke(new Sum(segment));
+    public int unsafe_serial() {
+        int res = 0;
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            res += unsafe.getInt(address + (i * CARRIER_SIZE));
+        }
+        return res;
     }
 
-    static class Sum extends RecursiveTask<Integer> {
+    @Benchmark
+    public int segment_parallel() {
+        return pool.invoke(new SumSegment(segment));
+    }
+
+    @Benchmark
+    public int unsafe_parallel() {
+        return pool.invoke(new SumUnsafe(address, 0, ALLOC_SIZE));
+    }
+
+    static class SumSegment extends RecursiveTask<Integer> {
 
         final static int SPLIT_THRESHOLD = 4 * 1024 * 8;
 
         private final MemorySegment segment;
 
-        Sum(MemorySegment segment) {
+        SumSegment(MemorySegment segment) {
             this.segment = segment;
         }
 
@@ -112,19 +136,50 @@ public class ParallelSum {
             try (MemorySegment segment = this.segment.acquire()) {
                 int length = (int)segment.byteSize();
                 if (length > SPLIT_THRESHOLD) {
-                    Sum s1 = new Sum(segment.asSlice(0, length / 2));
-                    Sum s2 = new Sum(segment.asSlice(length / 2, length / 2));
+                    SumSegment s1 = new SumSegment(segment.asSlice(0, length / 2));
+                    SumSegment s2 = new SumSegment(segment.asSlice(length / 2, length / 2));
                     s1.fork();
                     s2.fork();
                     return s1.join() + s2.join();
                 } else {
                     int sum = 0;
                     MemoryAddress base = segment.baseAddress();
-                    for (int i = 0 ; i < length / 4 ; i++) {
+                    for (int i = 0 ; i < length / CARRIER_SIZE ; i++) {
                         sum += (int)VH_int.get(base, (long)i);
                     }
                     return sum;
                 }
+            }
+        }
+    }
+
+    static class SumUnsafe extends RecursiveTask<Integer> {
+
+        final static int SPLIT_THRESHOLD = 4 * 1024 * 8;
+
+        private final long address;
+        private final int start, length;
+
+        SumUnsafe(long address, int start, int length) {
+            this.address = address;
+            this.start = start;
+            this.length = length;
+        }
+
+        @Override
+        protected Integer compute() {
+            if (length > SPLIT_THRESHOLD) {
+                SumUnsafe s1 = new SumUnsafe(address, start, length / 2);
+                SumUnsafe s2 = new SumUnsafe(address, length / 2, length / 2);
+                s1.fork();
+                s2.fork();
+                return s1.join() + s2.join();
+            } else {
+                int res = 0;
+                for (int i = 0; i < length; i += CARRIER_SIZE) {
+                    res += unsafe.getInt(start + address + i);
+                }
+                return res;
             }
         }
     }
