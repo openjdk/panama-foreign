@@ -95,7 +95,7 @@ class AddressVarHandleGenerator {
         helperClassCache.put(long.class, VarHandleMemoryAddressAsLongs.class);
         helperClassCache.put(float.class, VarHandleMemoryAddressAsFloats.class);
         helperClassCache.put(double.class, VarHandleMemoryAddressAsDoubles.class);
-        helperClassCache.put(MemoryAddressProxy.class, VarHandleMemoryAddressAsMemoryAddresses.class);
+        helperClassCache.put(MemoryAddressProxy.class, VarHandleMemoryAddressAsLongs.class);
 
         OFFSET_OP_TYPE = MethodType.methodType(long.class, long.class, long.class, MemoryAddressProxy.class);
 
@@ -131,14 +131,15 @@ class AddressVarHandleGenerator {
         this.carrier = carrier;
         Class<?>[] components = new Class<?>[dimensions];
         Arrays.fill(components, long.class);
-        this.form = new VarForm(BASE_CLASS, MemoryAddressProxy.class, this.carrier, components);
+        this.form = new VarForm(BASE_CLASS, MemoryAddressProxy.class, lower(carrier), components);
         this.helperClass = helperClassCache.get(carrier);
         this.implClassName = helperClass.getName().replace('.', '/') + dimensions;
     }
 
-    static Class<?> erase(Class<?> type) {
-            return type.isPrimitive() ? type : Object.class;
-        }
+    static Class<?> lower(Class<?> type) {
+        return type == MemoryAddressProxy.class ?
+                long.class : type;
+    }
 
     /*
      * Generate a VarHandle memory access factory.
@@ -150,7 +151,7 @@ class AddressVarHandleGenerator {
             Class<?>[] components = new Class<?>[dimensions];
             Arrays.fill(components, long.class);
 
-            VarForm form = new VarForm(implCls, MemoryAddressProxy.class, carrier, components);
+            VarForm form = new VarForm(implCls, MemoryAddressProxy.class, lower(carrier), components);
 
             MethodType constrType = MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class, long.class, long[].class);
             MethodHandle constr = MethodHandles.Lookup.IMPL_LOOKUP.findConstructor(implCls, constrType);
@@ -232,7 +233,7 @@ class AddressVarHandleGenerator {
         mv.visitFieldInsn(GETFIELD, Type.getInternalName(VarHandle.AccessMode.class), "at", Type.getDescriptor(VarHandle.AccessType.class));
         mv.visitLdcInsn(cw.makeConstantPoolPatch(MemoryAddressProxy.class));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(erase(carrier)));
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(lower(carrier)));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
 
         Class<?>[] dims = new Class<?>[dimensions];

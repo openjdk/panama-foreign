@@ -71,14 +71,14 @@ public class TestTypeAccess {
         }
     }
 
-    @Test(expectedExceptions=ClassCastException.class)
+    @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryAddressValueGetAsPrimitive() {
         try (MemorySegment s = MemorySegment.allocateNative(8)) {
             int address = (int)ADDR_HANDLE.get(s.baseAddress());
         }
     }
 
-    @Test(expectedExceptions=ClassCastException.class)
+    @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryAddressValueSetAsPrimitive() {
         try (MemorySegment s = MemorySegment.allocateNative(8)) {
             ADDR_HANDLE.set(s.baseAddress(), 1);
