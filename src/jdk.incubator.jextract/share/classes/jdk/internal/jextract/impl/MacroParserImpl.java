@@ -81,16 +81,24 @@ class MacroParserImpl {
                     Optional.of((Macro)result) :
                     Optional.empty();
         } catch (Throwable ex) {
+            // This ate the NPE and cause skip of macros
+            // Why are we expecting exception here? Simply be defensive?
+            if (JextractTaskImpl.VERBOSE) {
+                System.err.println("Failed to handle macro " + macroName);
+                ex.printStackTrace(System.err);
+            }
             return Optional.empty();
         }
     }
 
     MacroResult reparse(String snippet) {
-        return reparser.reparse(snippet)
+        MacroResult rv = reparser.reparse(snippet)
                 .filter(c -> c.kind() == CursorKind.VarDecl &&
                         c.spelling().contains("jextract$"))
                 .map(c -> compute(c))
                 .findAny().get();
+        typeMaker.resolveTypeReferences();
+        return rv;
     }
 
     private Integer toNumber(String str) {

@@ -27,23 +27,47 @@
 package jdk.internal.jextract.impl;
 
 
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
-import jdk.incubator.jextract.Type.Primitive;
 import jdk.incubator.jextract.Type.Delegated;
-
-import java.util.ArrayList;
-import java.util.List;
+import jdk.incubator.jextract.Type.Primitive;
 
 class TypeMaker {
 
     TreeMaker treeMaker;
+    private final Map<jdk.internal.clang.Type, Type> typeCache = new HashMap<>();
+    private final List<TypeImpl.PointerImpl> pointers = new ArrayList<>();
 
     public TypeMaker(TreeMaker treeMaker) {
         this.treeMaker = treeMaker;
     }
 
+    /**
+     * Resolve all type references. This method should be called before discard clang cursors/types
+     */
+    void resolveTypeReferences() {
+        pointers.forEach(TypeImpl.PointerImpl::type);
+        pointers.clear();
+    }
+
     Type makeType(jdk.internal.clang.Type t) {
+        Type rv = typeCache.get(t);
+        if (rv != null) {
+            return rv;
+        }
+        rv = makeTypeInternal(t);
+        if (null != rv && typeCache.put(t, rv) != null) {
+            throw new ConcurrentModificationException();
+        }
+        return rv;
+    }
+
+    Type makeTypeInternal(jdk.internal.clang.Type t) {
         switch(t.kind()) {
             case Auto:
                 return makeType(t.canonicalType());
@@ -119,12 +143,18 @@ class TypeMaker {
             }
             case Enum:
             case Record: {
-                return Type.declared((Declaration.Scoped)treeMaker.createTree(t.getDeclarationCursor()));
+                if (treeMaker == null) {
+                    // Macro evaluation, type is meaningless as this can only be pointer and we only care value
+                    return Type.void_();
+                }
+                return Type.declared((Declaration.Scoped) treeMaker.createTree(t.getDeclarationCursor()));
             }
             case BlockPointer:
             case Pointer: {
-                jdk.internal.clang.Type __type = t.getPointeeType();
-                return Type.pointer(() -> makeType(__type));
+                // TODO: We can always erase type for macro evaluation, should we?
+                TypeImpl.PointerImpl rv = new TypeImpl.PointerImpl(() -> makeType(t.getPointeeType()));
+                pointers.add(rv);
+                return rv;
             }
             case Typedef: {
                 Type __type = makeType(t.canonicalType());
@@ -156,7 +186,7 @@ class TypeMaker {
     private Type.Visitor<Type, Void> lowerFunctionType = new Type.Visitor<>() {
         @Override
         public Type visitArray(Type.Array t, Void aVoid) {
-            return Type.pointer(() -> t.elementType());
+            return Type.pointer(t.elementType());
         }
 
         @Override

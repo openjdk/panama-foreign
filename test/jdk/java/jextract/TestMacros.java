@@ -32,23 +32,27 @@
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertNotNull;
 
 public class TestMacros extends JextractApiTestBase {
     @Test
     public void testBadMacros() {
+        // Somehow without this line, C_INT will be null after parse. Still looking for affirmative explanation.
+        assertNotNull(MemoryLayouts.C_INT);
+        // We need stdint.h for pointer macro, otherwise evaluation failed and Constant declaration is not created
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
-        // This line is critical, otherwise the Constant declaration won't be included
         Declaration.Scoped d = parse("badMacros.h", "-I", builtinInc.toString());
-        System.out.println(d.name() + " has " + d.members().size() + " members");
-        for (Declaration m: d.members()) {
-            System.out.println(m.name());
-            if (m instanceof Declaration.Constant) {
-                Declaration.Constant c = (Declaration.Constant) m;
-                System.out.println("Value: " + c.value());
-                System.out.println("Type: " + c.type());
-            }
-        }
+        assertNotNull(MemoryLayouts.C_INT);
+        checkConstant(d, "INVALID_INT_CONSUMER",
+            Type.pointer(Type.function(false, Type.void_(), Type.primitive(Type.Primitive.Kind.Int, MemoryLayouts.C_INT))),
+            0L);
+        Declaration.Scoped structFoo = checkStruct(d, "foo", "ptrFoo", "ptrBar");
+        // Record type in macro definition are erased to void
+        checkConstant(d, "NO_FOO", Type.pointer(Type.void_()), 0L);
     }
 }

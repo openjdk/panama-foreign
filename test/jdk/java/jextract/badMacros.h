@@ -30,4 +30,16 @@
 // Macro of constant struct pointer
 struct foo;
 typedef struct foo *foo_t;
+struct bar;
+
 #define NO_FOO ((foo_t)0)
+
+// Cyclic struct pointer within struct definitions
+struct foo {
+    foo_t ptrFoo;
+    struct bar *ptrBar;
+};
+
+struct bar {
+    foo_t ptrFoo;
+};
