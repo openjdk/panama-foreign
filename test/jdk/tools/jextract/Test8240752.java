@@ -22,6 +22,7 @@
  */
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
@@ -38,11 +39,11 @@ import static org.testng.Assert.assertTrue;
  */
 public class Test8240752 extends JextractToolRunner {
     private float getFloatConstant(Class<?> cls, String name) {
-        Field field = findField(cls, name);
-        assertNotNull(field);
-        assertEquals(field.getType(), float.class);
+        Method method = findMethod(cls, name);
+        assertNotNull(method);
+        assertEquals(method.getReturnType(), float.class);
         try {
-            return (float)field.get(null);
+            return (float)method.invoke(null);
         } catch (Exception exp) {
             System.err.println(exp);
             assertTrue(false, "should not reach here");
@@ -51,11 +52,11 @@ public class Test8240752 extends JextractToolRunner {
     }
 
     private double getDoubleConstant(Class<?> cls, String name) {
-        Field field = findField(cls, name);
-        assertNotNull(field);
-        assertEquals(field.getType(), double.class);
+        Method method = findMethod(cls, name);
+        assertNotNull(method);
+        assertEquals(method.getReturnType(), double.class);
         try {
-            return (double)field.get(null);
+            return (double)method.invoke(null);
         } catch (Exception exp) {
             System.err.println(exp);
             assertTrue(false, "should not reach here");

@@ -24,6 +24,7 @@
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -34,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.spi.ToolProvider;
 import jdk.incubator.foreign.MemoryLayout;
@@ -113,6 +115,10 @@ public class JextractToolRunner {
         }
     }
 
+    protected static JextractResult run(Object... options) {
+        return run(Arrays.stream(options).map(Objects::toString).toArray(String[]::new));
+    }
+
     protected static JextractResult run(String... options) {
         StringWriter writer = new StringWriter();
         PrintWriter pw = new PrintWriter(writer);
@@ -175,17 +181,17 @@ public class JextractToolRunner {
         }
     }
 
-    protected Field checkIntField(Class<?> cls, String name, int value) {
-        Field field = findField(cls, name);
-        assertNotNull(field);
-        assertEquals(field.getType(), int.class);
+    protected Method checkIntGetter(Class<?> cls, String name, int value) {
+        Method method = findMethod(cls, name);
+        assertNotNull(method);
+        assertEquals(method.getReturnType(), int.class);
         try {
-            assertEquals((int)field.get(null), value);
+            assertEquals((int)method.invoke(null), value);
         } catch (Exception exp) {
             System.err.println(exp);
             assertTrue(false, "should not reach here");
         }
-        return field;
+        return method;
     }
 
     protected static Method findMethod(Class<?> cls, String name, Class<?>... argTypes) {
@@ -211,7 +217,11 @@ public class JextractToolRunner {
         }
     }
 
-    protected Class<?> findClass(Class<?>[] clz, String name) {
+    protected static Class<?> findNestedClass(Class<?> clz, String name) {
+        return findClass(clz.getClasses(), name);
+    }
+
+    protected static Class<?> findClass(Class<?>[] clz, String name) {
         for (Class<?> cls: clz) {
             if (cls.getSimpleName().equals(name)) {
                 return cls;
@@ -220,23 +230,24 @@ public class JextractToolRunner {
         return null;
     }
 
+    protected Method checkMethod(Class<?> cls, String name, MethodType type) {
+        return checkMethod(cls, name, type.returnType(), type.parameterArray());
+    }
+
     protected Method checkMethod(Class<?> cls, String name, Class<?> returnType, Class<?>... args) {
-        try {
-            Method m = cls.getDeclaredMethod(name, args);
-            assertTrue(m.getReturnType() == returnType);
-            return m;
-        } catch (NoSuchMethodException nsme) {
-            fail("Expect method " + name);
-        }
-        return null;
+        Method m = findMethod(cls, name, args);
+        assertNotNull(m);
+        assertEquals(m.getReturnType(), returnType);
+        assertEquals(m.getParameterTypes(), args);
+        return m;
     }
 
     protected MemoryLayout findLayout(Class<?> cls, String name) {
-        Field field = findField(cls, name + "$LAYOUT");
-        assertNotNull(field);
-        assertEquals(field.getType(), MemoryLayout.class);
+        Method method = findMethod(cls, name + "$LAYOUT");
+        assertNotNull(method);
+        assertEquals(method.getReturnType(), MemoryLayout.class);
         try {
-            return (MemoryLayout)field.get(null);
+            return (MemoryLayout)method.invoke(null);
         } catch (Exception exp) {
             System.err.println(exp);
             assertTrue(false, "should not reach here");

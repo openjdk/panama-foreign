@@ -30,7 +30,6 @@ import jdk.incubator.jextract.JextractTask;
 import jdk.internal.joptsimple.OptionException;
 import jdk.internal.joptsimple.OptionParser;
 import jdk.internal.joptsimple.OptionSet;
-import jdk.internal.joptsimple.util.KeyValuePair;
 
 import javax.tools.JavaFileObject;
 import java.io.File;
@@ -147,7 +146,6 @@ public class Main {
         if (optionSet.has("source")) {
             builder.setGenerateSource();
         }
-
         boolean librariesSpecified = optionSet.has("l");
         if (librariesSpecified) {
             for (Object arg : optionSet.valuesOf("l")) {
@@ -187,7 +185,7 @@ public class Main {
 
             Path output = Path.of(options.outputDir);
 
-            JavaFileObject[] files = HandleSourceFactory.generateWrapped(
+            JavaFileObject[] files = OutputFactory.generateWrapped(
                 toplevel,
                 header.getFileName().toString().replace(".h", "_h"),
                 options.targetPackage,

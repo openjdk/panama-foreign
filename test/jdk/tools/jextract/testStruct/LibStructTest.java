@@ -55,7 +55,7 @@ public class LibStructTest {
 
     @Test
     public void testFieldTypes() {
-        GroupLayout g = (GroupLayout)AllTypes$LAYOUT;
+        GroupLayout g = (GroupLayout)AllTypes$LAYOUT();
         checkFieldABIType(g, "sc",  Type.SIGNED_CHAR);
         checkFieldABIType(g, "uc",  Type.UNSIGNED_CHAR);
         checkFieldABIType(g, "s",   Type.SHORT);
