@@ -309,7 +309,8 @@ public final class MemoryLayouts {
         /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = C_SCHAR;
+        public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
+                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
 
         /**
          * The {@code short} native type.
