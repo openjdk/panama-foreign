@@ -27,6 +27,8 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.SystemABI.NativeType;
 import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import jdk.internal.foreign.Utils;
 
@@ -40,16 +42,16 @@ import java.util.stream.IntStream;
 
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.MemoryLayouts.*;
 import static org.testng.Assert.*;
 
 public class CallGeneratorHelper extends NativeTestHelper {
+    static final SystemABI abi = SystemABI.getInstance();
     
-	static final int MAX_FIELDS = 3;
-	static final int MAX_PARAMS = 3;
-	static final int CHUNK_SIZE = 600;
+    static final int MAX_FIELDS = 3;
+    static final int MAX_PARAMS = 3;
+    static final int CHUNK_SIZE = 600;
 
-	static int functions = 0;
+    static int functions = 0;
 
     enum Ret {
         VOID,
@@ -57,10 +59,10 @@ public class CallGeneratorHelper extends NativeTestHelper {
     }
 
     enum StructFieldType {
-        INT("int", C_INT),
-        FLOAT("float", C_FLOAT),
-        DOUBLE("double", C_DOUBLE),
-        POINTER("void*", C_POINTER);
+        INT("int", abi.layoutFor(NativeType.INT).get()),
+        FLOAT("float", abi.layoutFor(NativeType.FLOAT).get()),
+        DOUBLE("double", abi.layoutFor(NativeType.DOUBLE).get()),
+        POINTER("void*", abi.layoutFor(NativeType.POINTER).get());
 
         final String typeStr;
         final MemoryLayout layout;
@@ -86,10 +88,10 @@ public class CallGeneratorHelper extends NativeTestHelper {
     }
 
     enum ParamType {
-        INT("int", C_INT),
-        FLOAT("float", C_FLOAT),
-        DOUBLE("double", C_DOUBLE),
-        POINTER("void*", C_POINTER),
+        INT("int", abi.layoutFor(NativeType.INT).get()),
+        FLOAT("float", abi.layoutFor(NativeType.FLOAT).get()),
+        DOUBLE("double", abi.layoutFor(NativeType.DOUBLE).get()),
+        POINTER("void*", abi.layoutFor(NativeType.POINTER).get()),
         STRUCT("struct S", null);
 
         private final String typeStr;

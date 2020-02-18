@@ -56,7 +56,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static jdk.incubator.foreign.MemoryLayouts.C_POINTER;
+import static jdk.incubator.foreign.SystemABI.NativeType.POINTER;
 import static org.testng.Assert.assertEquals;
 
 
@@ -113,7 +113,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
     static FunctionDescriptor function(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
         List<MemoryLayout> paramLayouts = params.stream().map(p -> p.layout(fields)).collect(Collectors.toList());
-        paramLayouts.add(C_POINTER); // the callback
+        paramLayouts.add(abi.layoutFor(POINTER).get()); // the callback
         MemoryLayout[] layouts = paramLayouts.toArray(new MemoryLayout[0]);
         return ret == Ret.VOID ?
                 FunctionDescriptor.ofVoid(layouts) :

@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi.x64.sysv;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -42,6 +43,7 @@ import java.lang.invoke.VarHandle;
 import java.util.*;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
+import static jdk.incubator.foreign.MemoryLayouts.SysV.*;
 
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
@@ -76,5 +78,47 @@ public class SysVx64ABI implements SystemABI {
     @Override
     public String name() {
         return SystemABI.ABI_SYSV;
+    }
+
+    @Override
+    public Optional<MemoryLayout> layoutFor(NativeType type) {
+        switch (type) {
+            case BOOL:
+                return Optional.of(C_BOOL);
+            case UNSIGNED_CHAR:
+                return Optional.of(C_UCHAR);
+            case SIGNED_CHAR:
+                return Optional.of(C_SCHAR);
+            case CHAR:
+                return Optional.of(C_CHAR);
+            case SHORT:
+                return Optional.of(C_SHORT);
+            case UNSIGNED_SHORT:
+                return Optional.of(C_USHORT);
+            case INT:
+                return Optional.of(C_INT);
+            case UNSIGNED_INT:
+                return Optional.of(C_UINT);
+            case LONG:
+                return Optional.of(C_LONG);
+            case UNSIGNED_LONG:
+                return Optional.of(C_ULONG);
+            case LONG_LONG:
+                return Optional.of(C_LONGLONG);
+            case UNSIGNED_LONG_LONG:
+                return Optional.of(C_ULONGLONG);
+            case FLOAT:
+                return Optional.of(C_FLOAT);
+            case DOUBLE:
+                return Optional.of(C_DOUBLE);
+            case LONG_DOUBLE:
+                return Optional.of(C_LONGDOUBLE);
+            case COMPLEX_LONG_DOUBLE:
+                return Optional.of(C_COMPLEX_LONGDOUBLE);
+            case POINTER:
+                return Optional.of(C_POINTER);
+            default:
+                return Optional.empty();
+        }
     }
 }

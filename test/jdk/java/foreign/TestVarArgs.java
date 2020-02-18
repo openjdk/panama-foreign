@@ -51,21 +51,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.*;
-import static jdk.incubator.foreign.MemoryLayouts.*;
+import static jdk.incubator.foreign.SystemABI.NativeType.*;
 import static org.testng.Assert.assertEquals;
 
 public class TestVarArgs extends NativeTestHelper {
+    static final SystemABI abi = SystemABI.getInstance();
 
     static final MemoryLayout ML_CallInfo = MemoryLayout.ofStruct(
-            C_POINTER.withName("writeback"), // writeback
-            C_POINTER.withName("argIDs")); // arg ids
+            abi.layoutFor(POINTER).get().withName("writeback"), // writeback
+            abi.layoutFor(POINTER).get().withName("argIDs")); // arg ids
 
     static final VarHandle VH_CallInfo_writeback = ML_CallInfo.varHandle(long.class, groupElement("writeback"));
     static final VarHandle VH_CallInfo_argIDs = ML_CallInfo.varHandle(long.class, groupElement("argIDs"));
 
-    static final VarHandle VH_IntArray = MemoryLayout.ofSequence(C_INT).varHandle(int.class, sequenceElement());
+    static final VarHandle VH_IntArray = MemoryLayout.ofSequence(abi.layoutFor(INT).get()).varHandle(int.class, sequenceElement());
 
-    static final SystemABI abi = SystemABI.getInstance();
     static final MemoryAddress varargsAddr;
 
     static {
@@ -82,7 +82,7 @@ public class TestVarArgs extends NativeTestHelper {
     public void testVarArgs(List<VarArg> args) throws Throwable {
         try (MemorySegment writeBack = MemorySegment.allocateNative(args.size() * WRITEBACK_BYTES_PER_ARG);
             MemorySegment callInfo = MemorySegment.allocateNative(ML_CallInfo);
-            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.ofSequence(args.size(), C_INT))) {
+            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.ofSequence(args.size(), abi.layoutFor(INT).get()))) {
 
             MemoryAddress callInfoPtr = callInfo.baseAddress();
 
@@ -94,8 +94,8 @@ public class TestVarArgs extends NativeTestHelper {
             }
 
             List<MemoryLayout> argLayouts = new ArrayList<>();
-            argLayouts.add(C_POINTER); // call info
-            argLayouts.add(C_INT); // size
+            argLayouts.add(abi.layoutFor(POINTER).get()); // call info
+            argLayouts.add(abi.layoutFor(INT).get()); // size
             args.forEach(a -> argLayouts.add(asVarArg(a.layout)));
 
             FunctionDescriptor desc = FunctionDescriptor.ofVoid(argLayouts.toArray(MemoryLayout[]::new));
@@ -150,11 +150,11 @@ public class TestVarArgs extends NativeTestHelper {
         }
 
         static VarArg intArg(int value) {
-            return new VarArg(VarArg.NativeType.INT, C_INT, int.class, value);
+            return new VarArg(VarArg.NativeType.INT, (ValueLayout)abi.layoutFor(INT).get(), int.class, value);
         }
 
         static VarArg doubleArg(double value) {
-            return new VarArg(VarArg.NativeType.DOUBLE, C_DOUBLE, double.class, value);
+            return new VarArg(VarArg.NativeType.DOUBLE, (ValueLayout)abi.layoutFor(DOUBLE).get(), double.class, value);
         }
 
         enum NativeType {

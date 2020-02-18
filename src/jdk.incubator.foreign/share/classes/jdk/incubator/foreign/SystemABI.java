@@ -32,12 +32,12 @@ import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.util.Optional;
 
 /**
  * This class models a system application binary interface (ABI).
  */
 public interface SystemABI {
-
     /**
      * The name of the SysV ABI
      */
@@ -110,4 +110,96 @@ public interface SystemABI {
         }
         throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
     }
+
+    public enum NativeType {
+        /**
+         * The {@code _Bool} native type.
+         */
+        BOOL,
+
+        /**
+         * The {@code unsigned char} native type.
+         */
+        UNSIGNED_CHAR,
+
+        /**
+         * The {@code signed char} native type.
+         */
+        SIGNED_CHAR,
+
+        /**
+         * The {@code char} native type.
+         */
+        CHAR,
+
+        /**
+         * The {@code short} native type.
+         */
+        SHORT,
+
+        /**
+         * The {@code unsigned short} native type.
+         */
+        UNSIGNED_SHORT,
+
+        /**
+         * The {@code int} native type.
+         */
+        INT,
+    
+        /**
+         * The {@code unsigned int} native type.
+         */
+        UNSIGNED_INT,
+
+        /**
+         * The {@code long} native type.
+         */
+        LONG,
+
+        /**
+         * The {@code unsigned long} native type.
+         */
+        UNSIGNED_LONG,
+
+        /**
+         * The {@code long long} native type.
+         */
+        LONG_LONG,
+
+        /**
+         * The {@code unsigned long long} native type.
+         */
+        UNSIGNED_LONG_LONG,
+
+        /**
+         * The {@code float} native type.
+         */
+        FLOAT,
+
+        /**
+         * The {@code double} native type.
+         */
+        DOUBLE,
+
+        /**
+         * The {@code long double} native type.
+         */
+        LONG_DOUBLE,
+
+        /**
+         * The {@code complex long double} native type.
+         */
+        COMPLEX_LONG_DOUBLE,
+
+        /**
+         * The {@code T*} native type.
+         */
+        POINTER;
+    }
+
+    /**
+     * Returns memory layout for the given native type if supported by the platform ABI.
+     */
+    public Optional<MemoryLayout> layoutFor(NativeType type);
 }

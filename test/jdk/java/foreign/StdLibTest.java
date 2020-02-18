@@ -62,10 +62,12 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.SystemABI.NativeType;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.MemoryLayouts.*;
+import static jdk.incubator.foreign.SystemABI.NativeType.*;
 import static org.testng.Assert.*;
 
 @Test
@@ -76,8 +78,8 @@ public class StdLibTest extends NativeTestHelper {
     final static VarHandle byteHandle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
     final static VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
     final static VarHandle longHandle = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
-    final static VarHandle byteArrHandle = arrayHandle(C_CHAR, byte.class);
-    final static VarHandle intArrHandle = arrayHandle(C_INT, int.class);
+    final static VarHandle byteArrHandle = arrayHandle(abi.layoutFor(CHAR).get(), byte.class);
+    final static VarHandle intArrHandle = arrayHandle(abi.layoutFor(INT).get(), int.class);
 
     static VarHandle arrayHandle(MemoryLayout elemLayout, Class<?> elemCarrier) {
         return MemoryLayout.ofSequence(1, elemLayout)
@@ -183,29 +185,30 @@ public class StdLibTest extends NativeTestHelper {
 
                 strcat = abi.downcallHandle(lookup.lookup("strcat"),
                         MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER));
+                        FunctionDescriptor.of(abi.layoutFor(POINTER).get(), abi.layoutFor(POINTER).get(), abi.layoutFor(POINTER).get()));
 
                 strcmp = abi.downcallHandle(lookup.lookup("strcmp"),
                         MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER));
+                        FunctionDescriptor.of(abi.layoutFor(INT).get(), abi.layoutFor(POINTER).get(), abi.layoutFor(POINTER).get()));
 
                 puts = abi.downcallHandle(lookup.lookup("puts"),
                         MethodType.methodType(int.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_INT, C_POINTER));
+                        FunctionDescriptor.of(abi.layoutFor(INT).get(), abi.layoutFor(POINTER).get()));
 
                 strlen = abi.downcallHandle(lookup.lookup("strlen"),
                         MethodType.methodType(int.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_INT, C_POINTER));
+                        FunctionDescriptor.of(abi.layoutFor(INT).get(), abi.layoutFor(POINTER).get()));
 
                 gmtime = abi.downcallHandle(lookup.lookup("gmtime"),
                         MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_POINTER, C_POINTER));
+                        FunctionDescriptor.of(abi.layoutFor(POINTER).get(), abi.layoutFor(POINTER).get()));
 
-                qsortComparFunction = FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER);
+                qsortComparFunction = FunctionDescriptor.of(abi.layoutFor(INT).get(), abi.layoutFor(POINTER).get(), abi.layoutFor(POINTER).get());
 
                 qsort = abi.downcallHandle(lookup.lookup("qsort"),
                         MethodType.methodType(void.class, MemoryAddress.class, long.class, long.class, MemoryAddress.class),
-                        FunctionDescriptor.ofVoid(C_POINTER, C_ULONG, C_ULONG, C_POINTER));
+                        FunctionDescriptor.ofVoid(abi.layoutFor(POINTER).get(), abi.layoutFor(UNSIGNED_LONG).get(),
+                            abi.layoutFor(UNSIGNED_LONG).get(), abi.layoutFor(POINTER).get()));
 
                 //qsort upcall handle
                 qsortCompar = MethodHandles.lookup().findStatic(StdLibTest.StdLibHelper.class, "qsortCompare",
@@ -213,11 +216,11 @@ public class StdLibTest extends NativeTestHelper {
 
                 rand = abi.downcallHandle(lookup.lookup("rand"),
                         MethodType.methodType(int.class),
-                        FunctionDescriptor.of(C_INT));
+                        FunctionDescriptor.of(abi.layoutFor(INT).get()));
 
                 printfAddr = lookup.lookup("printf");
 
-                printfBase = FunctionDescriptor.of(C_INT, C_POINTER);
+                printfBase = FunctionDescriptor.of(abi.layoutFor(INT).get(), abi.layoutFor(POINTER).get());
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
@@ -309,7 +312,7 @@ public class StdLibTest extends NativeTestHelper {
 
         int[] qsort(int[] arr) throws Throwable {
             //init native array
-            SequenceLayout seq = MemoryLayout.ofSequence(arr.length, C_INT);
+            SequenceLayout seq = MemoryLayout.ofSequence(arr.length, abi.layoutFor(INT).get());
 
             try (MemorySegment nativeArr = MemorySegment.allocateNative(seq)) {
 
@@ -318,7 +321,7 @@ public class StdLibTest extends NativeTestHelper {
 
                 //call qsort
                 MemoryAddress qsortUpcallAddr = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction);
-                qsort.invokeExact(nativeArr.baseAddress(), seq.elementCount().getAsLong(), C_INT.byteSize(), qsortUpcallAddr);
+                qsort.invokeExact(nativeArr.baseAddress(), seq.elementCount().getAsLong(), abi.layoutFor(INT).get().byteSize(), qsortUpcallAddr);
                 abi.freeUpcallStub(qsortUpcallAddr);
 
                 //convert back to Java array
@@ -411,10 +414,10 @@ public class StdLibTest extends NativeTestHelper {
     }
 
     enum PrintfArg {
-        INTEGRAL(int.class, asVarArg(C_INT), "%d", 42, 42),
-        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", makeNativeString("str").baseAddress(), "str"),
-        CHAR(char.class, asVarArg(C_CHAR), "%c", 'h', 'h'),
-        DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", 1.2345d, 1.2345d);
+        INTEGRAL(int.class, asVarArg((ValueLayout)abi.layoutFor(INT).get()), "%d", 42, 42),
+        STRING(MemoryAddress.class, asVarArg((ValueLayout)abi.layoutFor(POINTER).get()), "%s", makeNativeString("str").baseAddress(), "str"),
+        CHAR(char.class, asVarArg((ValueLayout)abi.layoutFor(NativeType.CHAR).get()), "%c", 'h', 'h'),
+        DOUBLE(double.class, asVarArg((ValueLayout)abi.layoutFor(NativeType.DOUBLE).get()), "%.4f", 1.2345d, 1.2345d);
 
         final Class<?> carrier;
         final MemoryLayout layout;
@@ -456,7 +459,7 @@ public class StdLibTest extends NativeTestHelper {
     }
 
     static MemorySegment makeNativeString(String value, int length) {
-        MemoryLayout strLayout = MemoryLayout.ofSequence(length, C_CHAR);
+        MemoryLayout strLayout = MemoryLayout.ofSequence(length, abi.layoutFor(CHAR).get());
         MemorySegment segment = MemorySegment.allocateNative(strLayout);
         MemoryAddress addr = segment.baseAddress();
         for (int i = 0 ; i < value.length() ; i++) {
