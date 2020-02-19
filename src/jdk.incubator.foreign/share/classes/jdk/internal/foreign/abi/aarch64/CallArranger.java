@@ -162,7 +162,12 @@ public class CallArranger {
     }
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        ArgumentClassImpl clazz = (ArgumentClassImpl)Utils.getAnnotation(type, ArgumentClassImpl.ABI_CLASS);
+        var optAbiType = type.abiType();
+        if (!optAbiType.isPresent()) {
+            //padding not allowed here
+            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
+        }
+        ArgumentClassImpl clazz = AArch64ABI.argumentClassFor(optAbiType.get());
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
@@ -197,14 +202,14 @@ public class CallArranger {
         if (!(baseType instanceof ValueLayout))
             return false;
 
-        ArgumentClassImpl baseArgClass =
-            (ArgumentClassImpl)Utils.getAnnotation(baseType, ArgumentClassImpl.ABI_CLASS);
+        var optAbiType = baseType.abiType();
+        ArgumentClassImpl baseArgClass = optAbiType.isPresent()? AArch64ABI.argumentClassFor(optAbiType.get()) : null;
         if (baseArgClass != ArgumentClassImpl.VECTOR)
            return false;
 
         for (MemoryLayout elem : groupLayout.memberLayouts()) {
-            ArgumentClassImpl argClass =
-                (ArgumentClassImpl)Utils.getAnnotation(elem, ArgumentClassImpl.ABI_CLASS);
+            optAbiType = elem.abiType();
+            ArgumentClassImpl argClass = optAbiType.isPresent()? AArch64ABI.argumentClassFor(optAbiType.get()) : null;
             if (!(elem instanceof ValueLayout) ||
                     elem.bitSize() != baseType.bitSize() ||
                     elem.bitAlignment() != baseType.bitAlignment() ||
