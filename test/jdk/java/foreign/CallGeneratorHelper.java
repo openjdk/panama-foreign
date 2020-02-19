@@ -28,7 +28,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.foreign.SystemABI.NativeType;
+import jdk.incubator.foreign.SystemABI.Type;
 import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import jdk.internal.foreign.Utils;
 
@@ -59,10 +59,10 @@ public class CallGeneratorHelper extends NativeTestHelper {
     }
 
     enum StructFieldType {
-        INT("int", abi.layoutFor(NativeType.INT).get()),
-        FLOAT("float", abi.layoutFor(NativeType.FLOAT).get()),
-        DOUBLE("double", abi.layoutFor(NativeType.DOUBLE).get()),
-        POINTER("void*", abi.layoutFor(NativeType.POINTER).get());
+        INT("int", abi.layoutFor(Type.INT).get()),
+        FLOAT("float", abi.layoutFor(Type.FLOAT).get()),
+        DOUBLE("double", abi.layoutFor(Type.DOUBLE).get()),
+        POINTER("void*", abi.layoutFor(Type.POINTER).get());
 
         final String typeStr;
         final MemoryLayout layout;
@@ -88,10 +88,10 @@ public class CallGeneratorHelper extends NativeTestHelper {
     }
 
     enum ParamType {
-        INT("int", abi.layoutFor(NativeType.INT).get()),
-        FLOAT("float", abi.layoutFor(NativeType.FLOAT).get()),
-        DOUBLE("double", abi.layoutFor(NativeType.DOUBLE).get()),
-        POINTER("void*", abi.layoutFor(NativeType.POINTER).get()),
+        INT("int", abi.layoutFor(Type.INT).get()),
+        FLOAT("float", abi.layoutFor(Type.FLOAT).get()),
+        DOUBLE("double", abi.layoutFor(Type.DOUBLE).get()),
+        POINTER("void*", abi.layoutFor(Type.POINTER).get()),
         STRUCT("struct S", null);
 
         private final String typeStr;

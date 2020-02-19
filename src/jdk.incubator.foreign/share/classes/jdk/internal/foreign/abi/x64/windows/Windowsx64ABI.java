@@ -29,10 +29,12 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SystemABI;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
 import jdk.internal.foreign.abi.*;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.util.Objects;
 import java.util.Optional;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
@@ -77,40 +79,35 @@ public class Windowsx64ABI implements SystemABI {
     }
 
     @Override
-    public Optional<MemoryLayout> layoutFor(NativeType type) {
-        switch (type) {
-            case BOOL:
-                return Optional.of(C_BOOL);
-            case UNSIGNED_CHAR:
-                return Optional.of(C_UCHAR);
-            case SIGNED_CHAR:
-                return Optional.of(C_SCHAR);
-            case CHAR:
-                return Optional.of(C_CHAR);
-            case SHORT:
-                return Optional.of(C_SHORT);
-            case UNSIGNED_SHORT:
-                return Optional.of(C_USHORT);
-            case INT:
-                return Optional.of(C_INT);
-            case UNSIGNED_INT:
-                return Optional.of(C_UINT);
-            case LONG:
-                return Optional.of(C_LONG);
-            case UNSIGNED_LONG:
-                return Optional.of(C_ULONG);
-            case LONG_LONG:
-                return Optional.of(C_LONGLONG);
-            case UNSIGNED_LONG_LONG:
-                return Optional.of(C_ULONGLONG);
-            case FLOAT:
-                return Optional.of(C_FLOAT);
-            case DOUBLE:
-                return Optional.of(C_DOUBLE);
-            case POINTER:
-                return Optional.of(C_POINTER);
-            default:
-                return Optional.empty();
-        }
+    public Optional<MemoryLayout> layoutFor(Type type) {
+        return switch (Objects.requireNonNull(type)) {
+            case BOOL -> Optional.of(C_BOOL);
+            case UNSIGNED_CHAR -> Optional.of(C_UCHAR);
+            case SIGNED_CHAR -> Optional.of(C_SCHAR);
+            case CHAR -> Optional.of(C_CHAR);
+            case SHORT -> Optional.of(C_SHORT);
+            case UNSIGNED_SHORT -> Optional.of(C_USHORT);
+            case INT -> Optional.of(C_INT);
+            case UNSIGNED_INT -> Optional.of(C_UINT);
+            case LONG -> Optional.of(C_LONG);
+            case UNSIGNED_LONG -> Optional.of(C_ULONG);
+            case LONG_LONG -> Optional.of(C_LONGLONG);
+            case UNSIGNED_LONG_LONG -> Optional.of(C_ULONGLONG);
+            case FLOAT -> Optional.of(C_FLOAT);
+            case DOUBLE -> Optional.of(C_DOUBLE);
+            case POINTER -> Optional.of(C_POINTER);
+            default -> Optional.empty();
+        };
+    }
+
+    static ArgumentClassImpl argumentClassFor(Type type) {
+        return switch (Objects.requireNonNull(type)) {
+            case BOOL, UNSIGNED_CHAR, SIGNED_CHAR, CHAR, SHORT, UNSIGNED_SHORT,
+                INT, UNSIGNED_INT, LONG, UNSIGNED_LONG, LONG_LONG, UNSIGNED_LONG_LONG ->
+                    ArgumentClassImpl.INTEGER;
+            case FLOAT, DOUBLE -> ArgumentClassImpl.SSE;
+            case POINTER -> ArgumentClassImpl.POINTER;
+            default -> null;
+        };
     }
 }

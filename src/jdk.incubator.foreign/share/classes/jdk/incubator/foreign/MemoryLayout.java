@@ -231,7 +231,7 @@ public interface MemoryLayout extends Constable {
      *
      * @return the layout ABI <em>type</em> (if any).
      */
-    Optional<SystemABI.NativeType> abiType();
+    Optional<SystemABI.Type> abiType();
 
     /**
      * Creates a new layout which features the desired layout <em>name</em>.

@@ -62,12 +62,12 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.foreign.SystemABI.NativeType;
+import jdk.incubator.foreign.SystemABI.Type;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.SystemABI.NativeType.*;
+import static jdk.incubator.foreign.SystemABI.Type.*;
 import static org.testng.Assert.*;
 
 @Test
@@ -416,8 +416,8 @@ public class StdLibTest extends NativeTestHelper {
     enum PrintfArg {
         INTEGRAL(int.class, asVarArg((ValueLayout)abi.layoutFor(INT).get()), "%d", 42, 42),
         STRING(MemoryAddress.class, asVarArg((ValueLayout)abi.layoutFor(POINTER).get()), "%s", makeNativeString("str").baseAddress(), "str"),
-        CHAR(char.class, asVarArg((ValueLayout)abi.layoutFor(NativeType.CHAR).get()), "%c", 'h', 'h'),
-        DOUBLE(double.class, asVarArg((ValueLayout)abi.layoutFor(NativeType.DOUBLE).get()), "%.4f", 1.2345d, 1.2345d);
+        CHAR(char.class, asVarArg((ValueLayout)abi.layoutFor(Type.CHAR).get()), "%c", 'h', 'h'),
+        DOUBLE(double.class, asVarArg((ValueLayout)abi.layoutFor(Type.DOUBLE).get()), "%.4f", 1.2345d, 1.2345d);
 
         final Class<?> carrier;
         final MemoryLayout layout;

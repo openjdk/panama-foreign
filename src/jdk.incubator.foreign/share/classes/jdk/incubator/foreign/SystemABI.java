@@ -111,7 +111,7 @@ public interface SystemABI {
         throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
     }
 
-    public enum NativeType {
+    public enum Type {
         /**
          * The {@code _Bool} native type.
          */
@@ -146,7 +146,7 @@ public interface SystemABI {
          * The {@code int} native type.
          */
         INT,
-    
+
         /**
          * The {@code unsigned int} native type.
          */
@@ -201,5 +201,5 @@ public interface SystemABI {
     /**
      * Returns memory layout for the given native type if supported by the platform ABI.
      */
-    public Optional<MemoryLayout> layoutFor(NativeType type);
+    public Optional<MemoryLayout> layoutFor(Type type);
 }

@@ -156,124 +156,107 @@ public final class MemoryLayouts {
          * The {@code _Bool} native type.
          */
         public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.BOOL)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.BOOL);
 
 
         /**
          * The {@code unsigned char} native type.
          */
         public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_CHAR)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_CHAR);
 
 
         /**
          * The {@code signed char} native type.
          */
         public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.SIGNED_CHAR)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SIGNED_CHAR);
 
 
         /**
          * The {@code char} native type.
          */
         public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.CHAR)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.CHAR);
 
         /**
          * The {@code short} native type.
          */
         public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.SHORT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SHORT);
 
         /**
          * The {@code unsigned short} native type.
          */
         public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_SHORT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_SHORT);
 
         /**
          * The {@code int} native type.
          */
         public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.INT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.INT);
 
         /**
          * The {@code unsigned int} native type.
          */
         public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_INT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_INT);
 
         /**
          * The {@code long} native type.
          */
         public static final ValueLayout C_LONG = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG);
 
         /**
          * The {@code unsigned long} native type.
          */
         public static final ValueLayout C_ULONG = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG);
 
 
         /**
          * The {@code long long} native type.
          */
         public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.LONG_LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_LONG);
 
         /**
          * The {@code unsigned long long} native type.
          */
         public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_LONG_LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG_LONG);
 
         /**
          * The {@code float} native type.
          */
         public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.FLOAT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.SSE);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.FLOAT);
 
         /**
          * The {@code double} native type.
          */
         public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.DOUBLE)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.SSE);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.DOUBLE);
 
         /**
          * The {@code long double} native type.
          */
         public static final ValueLayout C_LONGDOUBLE = MemoryLayout.ofValueBits(128, ByteOrder.LITTLE_ENDIAN)
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.LONG_DOUBLE)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.X87);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_DOUBLE);
 
         /**
          * The {@code complex long double} native type.
          */
         public static final GroupLayout C_COMPLEX_LONGDOUBLE = MemoryLayout.ofStruct(C_LONGDOUBLE, C_LONGDOUBLE)
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.COMPLEX_LONG_DOUBLE)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.COMPLEX_X87);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.COMPLEX_LONG_DOUBLE);
 
         /**
          * The {@code T*} native type.
          */
         public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.POINTER)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.POINTER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.POINTER);
     }
 
     /**
@@ -284,106 +267,91 @@ public final class MemoryLayouts {
          * The {@code _Bool} native type.
          */
         public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.BOOL)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.BOOL);
         
         /**
          * The {@code unsigned char} native type.
          */
         public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_CHAR)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_CHAR);
 
         /**
          * The {@code signed char} native type.
          */
         public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.SIGNED_CHAR)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SIGNED_CHAR);
 
         /**
          * The {@code char} native type.
          */
         public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.CHAR)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.CHAR);
 
         /**
          * The {@code short} native type.
          */
         public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.SHORT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SHORT);
 
         /**
          * The {@code unsigned short} native type.
          */
         public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_SHORT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_SHORT);
 
         /**
          * The {@code int} native type.
          */
         public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.INT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.INT);
 
         /**
          * The {@code unsigned int} native type.
          */
         public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_INT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_INT);
 
         /**
          * The {@code long} native type.
          */
         public static final ValueLayout C_LONG = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG);
 
         /**
          * The {@code unsigned long} native type.
          */
         public static final ValueLayout C_ULONG = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG);
 
         /**
          * The {@code long long} native type.
          */
         public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.LONG_LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_LONG);
 
         /**
          * The {@code unsigned long long} native type.
          */
         public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_LONG_LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG_LONG);
 
         /**
          * The {@code float} native type.
          */
         public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.FLOAT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.SSE);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.FLOAT);
 
         /**
          * The {@code double} native type.
          */
         public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.DOUBLE)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.SSE);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.DOUBLE);
 
         /**
          * The {@code T*} native type.
          */
         public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.POINTER)
-                .withAnnotation(ArgumentClass.ABI_CLASS, ArgumentClassImpl.POINTER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.POINTER);
 
         public static ValueLayout asVarArg(ValueLayout l) {
            return l.withAnnotation(Windowsx64ABI.VARARGS_ANNOTATION_NAME, "true");
@@ -398,105 +366,90 @@ public final class MemoryLayouts {
          * The {@code _Bool} native type.
          */
         public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.BOOL)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.BOOL);
 
         /**
          * The {@code unsigned char} native type.
          */
         public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_CHAR)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_CHAR);
 
         /**
          * The {@code signed char} native type.
          */
         public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.SIGNED_CHAR)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SIGNED_CHAR);
 
         /**
          * The {@code char} native type.
          */
         public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.CHAR)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.CHAR);
 
         /**
          * The {@code short} native type.
          */
         public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.SHORT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SHORT);
 
         /**
          * The {@code unsigned short} native type.
          */
         public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_SHORT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_SHORT);
 
         /**
          * The {@code int} native type.
          */
         public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.INT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.INT);
 
         /**
          * The {@code unsigned int} native type.
          */
         public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_INT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_INT);
 
         /**
          * The {@code long} native type.
          */
         public static final ValueLayout C_LONG = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG);
 
         /**
          * The {@code unsigned long} native type.
          */
         public static final ValueLayout C_ULONG = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG);
 
         /**
          * The {@code long long} native type.
          */
         public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.LONG_LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_LONG);
 
         /**
          * The {@code unsigned long long} native type.
          */
         public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.UNSIGNED_LONG_LONG)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.INTEGER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG_LONG);
 
         /**
          * The {@code float} native type.
          */
         public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.FLOAT)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.VECTOR);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.FLOAT);
 
         /**
          * The {@code double} native type.
          */
         public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.DOUBLE)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.VECTOR);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.DOUBLE);
 
         /**
          * The {@code T*} native type.
          */
         public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
-                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.NativeType.POINTER)
-                .withAnnotation(ArgumentClass.ABI_CLASS, jdk.internal.foreign.abi.aarch64.ArgumentClassImpl.POINTER);
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.POINTER);
     }
 }

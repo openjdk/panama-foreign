@@ -24,7 +24,7 @@ package jdk.internal.foreign.abi.x64;
 
 import jdk.internal.foreign.abi.ArgumentClass;
 
-public enum ArgumentClassImpl implements ArgumentClass {
+public enum ArgumentClassImpl {
     POINTER, INTEGER, SSE, SSEUP, X87, X87UP, COMPLEX_X87, NO_CLASS, MEMORY;
 
     public ArgumentClassImpl merge(ArgumentClassImpl other) {
@@ -65,12 +65,10 @@ public enum ArgumentClassImpl implements ArgumentClass {
         return this == INTEGER || this == POINTER;
     }
 
-    @Override
     public boolean isPointer() {
         return this == POINTER;
     }
 
-    @Override
     public boolean isIndirect() {
         return this == MEMORY;
     }
