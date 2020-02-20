@@ -53,12 +53,23 @@ public class JextractApiTestBase {
         return struct;
     }
 
+    public static Declaration.Variable checkConstant(Declaration.Scoped scope, String name, Type type) {
+        Declaration.Variable var = findDecl(scope, name, Declaration.Variable.class);
+        assertTypeEquals(type, var.type());
+        return var;
+    }
+
     public static Declaration.Variable checkGlobal(Declaration.Scoped toplevel, String name, Type type) {
-        Declaration.Variable global = findDecl(toplevel, name, Declaration.Variable.class);
-        assertTypeEquals(type, global.type());
+        Declaration.Variable global = checkConstant(toplevel, name, type);
+        assertEquals(global.kind(), Declaration.Variable.Kind.GLOBAL);
         return global;
     }
 
+    public static Declaration.Variable checkField(Declaration.Scoped record, String name, Type type) {
+        Declaration.Variable global = checkConstant(record, name, type);
+        assertEquals(global.kind(), Declaration.Variable.Kind.FIELD);
+        return global;
+    }
     public static Declaration.Function checkFunction(Declaration.Scoped toplevel, String name, Type ret, Type... params) {
         Declaration.Function function = findDecl(toplevel, name, Declaration.Function.class);
         assertTypeEquals(ret, function.type().returnType());

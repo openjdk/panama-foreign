@@ -26,15 +26,13 @@
 
 package jdk.internal.jextract.impl;
 
-import java.util.Objects;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.Type;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Type;
 
 public abstract class TypeImpl implements Type {
 
@@ -139,27 +137,19 @@ public abstract class TypeImpl implements Type {
 
     public static class PointerImpl extends DelegatedBase {
         private final Supplier<Type> pointeeFactory;
-        private Type pointee;
 
         public PointerImpl(Supplier<Type> pointeeFactory) {
             super(Kind.POINTER, Optional.empty());
             this.pointeeFactory = pointeeFactory;
-            this.pointee = null;
         }
 
         public PointerImpl(Type pointee) {
-            super(Kind.POINTER, Optional.empty());
-            pointeeFactory = null;
-            this.pointee = pointee;
+            this(() -> pointee);
         }
 
         @Override
         public Type type() {
-            if (pointee == null && pointeeFactory != null) {
-                pointee =pointeeFactory.get();
-                Objects.requireNonNull(pointee);
-            }
-            return pointee;
+            return pointeeFactory.get();
         }
     }
 

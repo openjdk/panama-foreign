@@ -53,6 +53,10 @@ class TreeMaker {
 
     TypeMaker typeMaker = new TypeMaker(this);
 
+    public void freeze() {
+        typeMaker.resolveTypeReferences();
+    }
+
     private <T extends Declaration> T checkCache(Cursor c, Class<T> clazz, Supplier<Declaration> factory) {
         // The supplier function may lead to adding some other type, which will cause CME using computeIfAbsent.
         // This implementation relax the constraint a bit only check for same key

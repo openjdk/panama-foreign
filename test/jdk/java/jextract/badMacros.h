@@ -27,12 +27,19 @@
 // Macro of constant function pointer
 #define INVALID_INT_CONSUMER         (void (*)(int))0
 
-// Macro of constant struct pointer
 struct foo;
 typedef struct foo *foo_t;
 struct bar;
 
+// Macro of constant struct pointer
 #define NO_FOO ((foo_t)0)
+
+// Cases where resolving introduce new type references
+// Pointer to pointer in macro
+#define INVALID_INT_ARRAY_PTR (int**) 0
+// Function pointer with pointer type argument
+void (*op)(int cnt, int* operands);
+void func(struct bar *pBar, struct foo *pFoo);
 
 // Cyclic struct pointer within struct definitions
 struct foo {
@@ -42,4 +49,8 @@ struct foo {
 
 struct bar {
     foo_t ptrFoo;
+    foo_t *arFooPtr;
 };
+
+// Function with array to pointer
+void withArray(foo_t ar[2]);

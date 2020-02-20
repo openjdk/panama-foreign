@@ -26,6 +26,7 @@
 
 /*
  * @test
+ * @bug 8239128
  * @build JextractApiTestBase
  * @run testng TestMacros
  */
@@ -35,24 +36,60 @@ import java.nio.file.Paths;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertNotNull;
 
 public class TestMacros extends JextractApiTestBase {
-    @Test
-    public void testBadMacros() {
+    Declaration.Scoped badMacro;
+    Declaration.Scoped foo;
+    Declaration.Scoped bar;
+    private final static Type C_INT = Type.primitive(Type.Primitive.Kind.Int, MemoryLayouts.C_INT);
+
+    @BeforeClass
+    public void parse() {
         // Somehow without this line, C_INT will be null after parse. Still looking for affirmative explanation.
         assertNotNull(MemoryLayouts.C_INT);
         // We need stdint.h for pointer macro, otherwise evaluation failed and Constant declaration is not created
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
-        Declaration.Scoped d = parse("badMacros.h", "-I", builtinInc.toString());
+        badMacro = parse("badMacros.h", "-I", builtinInc.toString());
         assertNotNull(MemoryLayouts.C_INT);
-        checkConstant(d, "INVALID_INT_CONSUMER",
-            Type.pointer(Type.function(false, Type.void_(), Type.primitive(Type.Primitive.Kind.Int, MemoryLayouts.C_INT))),
+
+        foo = checkStruct(badMacro, "foo", "ptrFoo", "ptrBar");
+        bar = checkStruct(badMacro, "bar", "ptrFoo", "arFooPtr");
+    }
+
+    @Test
+    public void testBadMacros() {
+        checkConstant(badMacro, "INVALID_INT_CONSUMER",
+            Type.pointer(Type.function(false, Type.void_(), C_INT)),
             0L);
-        Declaration.Scoped structFoo = checkStruct(d, "foo", "ptrFoo", "ptrBar");
         // Record type in macro definition are erased to void
-        checkConstant(d, "NO_FOO", Type.pointer(Type.void_()), 0L);
+        checkConstant(badMacro, "NO_FOO", Type.pointer(Type.void_()), 0L);
+        checkConstant(badMacro, "INVALID_INT_ARRAY_PTR", Type.pointer(Type.pointer(C_INT)), 0L);
+    }
+
+    @Test
+    public void verifyFunctions() {
+        checkFunction(badMacro, "func", Type.void_(),
+            Type.pointer(Type.declared(bar)), Type.pointer(Type.declared(foo)));
+        checkFunction(badMacro, "withArray", Type.void_(),
+            Type.pointer(Type.typedef("foo_t", Type.pointer(Type.declared(foo)))));
+    }
+
+    @Test
+    public void verifyGlobals() {
+        checkGlobal(badMacro, "op", Type.pointer(
+                Type.function(false, Type.void_(), C_INT, Type.pointer(C_INT))));
+    }
+
+    @Test
+    public void verifyFields() {
+        Type foo_t = Type.typedef("foo_t", Type.pointer(Type.declared(foo)));
+        checkField(foo, "ptrFoo", foo_t);
+        checkField(foo, "ptrBar", Type.pointer(Type.declared(bar)));
+        checkField(bar, "ptrFoo", foo_t);
+        checkField(bar, "arFooPtr", Type.pointer(foo_t));
     }
 }

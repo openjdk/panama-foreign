@@ -103,7 +103,9 @@ class Parser {
                 }
             });
 
-        return treeMaker.createHeader(tuCursor, decls);
+        Declaration.Scoped rv = treeMaker.createHeader(tuCursor, decls);
+        treeMaker.freeze();
+        return rv;
     }
 
     private boolean isMacro(Cursor c) {

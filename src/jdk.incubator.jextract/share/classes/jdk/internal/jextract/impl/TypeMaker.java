@@ -32,6 +32,8 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 import jdk.incubator.jextract.Type.Delegated;
@@ -41,7 +43,39 @@ class TypeMaker {
 
     TreeMaker treeMaker;
     private final Map<jdk.internal.clang.Type, Type> typeCache = new HashMap<>();
-    private final List<TypeImpl.PointerImpl> pointers = new ArrayList<>();
+    private List<ClangTypeReference> unresolved = new ArrayList<>();
+
+    private class ClangTypeReference implements Supplier<Type> {
+        jdk.internal.clang.Type origin;
+        Type derived;
+
+        private ClangTypeReference(jdk.internal.clang.Type origin) {
+            this.origin = origin;
+            derived = typeCache.get(origin);
+        }
+
+        public boolean isUnresolved() {
+            return null == derived;
+        }
+
+        public void resolve() {
+            derived = makeType(origin);
+            Objects.requireNonNull(derived, "Clang type cannot be resolved: " + origin.spelling());
+        }
+
+        public Type get() {
+            Objects.requireNonNull(derived, "Type is not yet resolved.");
+            return derived;
+        }
+    }
+
+    private ClangTypeReference reference(jdk.internal.clang.Type type) {
+        ClangTypeReference ref = new ClangTypeReference(type);
+        if (ref.isUnresolved()) {
+            unresolved.add(ref);
+        }
+        return ref;
+    }
 
     public TypeMaker(TreeMaker treeMaker) {
         this.treeMaker = treeMaker;
@@ -51,8 +85,13 @@ class TypeMaker {
      * Resolve all type references. This method should be called before discard clang cursors/types
      */
     void resolveTypeReferences() {
-        pointers.forEach(TypeImpl.PointerImpl::type);
-        pointers.clear();
+        List<ClangTypeReference> resolving = unresolved;
+        unresolved = new ArrayList<>();
+        while (! resolving.isEmpty()) {
+            resolving.forEach(ClangTypeReference::resolve);
+            resolving = unresolved;
+            unresolved = new ArrayList<>();
+        }
     }
 
     Type makeType(jdk.internal.clang.Type t) {
@@ -152,9 +191,7 @@ class TypeMaker {
             case BlockPointer:
             case Pointer: {
                 // TODO: We can always erase type for macro evaluation, should we?
-                TypeImpl.PointerImpl rv = new TypeImpl.PointerImpl(() -> makeType(t.getPointeeType()));
-                pointers.add(rv);
-                return rv;
+                return new TypeImpl.PointerImpl(reference(t.getPointeeType()));
             }
             case Typedef: {
                 Type __type = makeType(t.canonicalType());
