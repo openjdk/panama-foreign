@@ -162,11 +162,9 @@ public class CallArranger {
 
     private static TypeClass classifyValueType(ValueLayout type) {
         var optAbiType = type.abiType();
-        if (!optAbiType.isPresent()) {
-            //padding not allowed here
-            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
-        }
-        ArgumentClassImpl clazz = Windowsx64ABI.argumentClassFor(optAbiType.get());
+        //padding not allowed here
+        ArgumentClassImpl clazz = optAbiType.map(Windowsx64ABI::argumentClassFor).
+            orElseThrow(()->new IllegalStateException("Unexpected value layout: could not determine ABI class"));
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");

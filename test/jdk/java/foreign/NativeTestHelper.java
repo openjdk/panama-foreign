@@ -28,6 +28,7 @@ import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.SystemABI.Type;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.Utils;
+import java.util.function.Predicate;
 
 import static jdk.incubator.foreign.SystemABI.ABI_WINDOWS;
 
@@ -48,8 +49,7 @@ public class NativeTestHelper {
     }
 
     public static boolean isPointer(MemoryLayout layout) {
-        var optAbiType = layout.abiType();
-        return optAbiType.isPresent()? optAbiType.get() == Type.POINTER : false;
+        return layout.abiType().filter(Predicate.isEqual(Type.POINTER)).isPresent();
     }
 
     public static ValueLayout asVarArg(ValueLayout layout) {

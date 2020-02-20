@@ -142,7 +142,7 @@ public final class MemoryLayouts {
      */
     public static final ValueLayout JAVA_DOUBLE = MemoryLayout.ofValueBits(64, ByteOrder.nativeOrder());
 
-/**
+    /**
      * The {@code _Bool} native type.
      */
     public static final ValueLayout C_BOOL;
