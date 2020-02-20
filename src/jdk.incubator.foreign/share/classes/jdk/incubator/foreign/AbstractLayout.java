@@ -56,6 +56,13 @@ abstract class AbstractLayout implements MemoryLayout {
         return Optional.ofNullable((String)annotations.get(NAME));
     }
 
+    // memory layout annotation key for abi native type
+    static final String NATIVE_TYPE = "abi/native-type";
+
+    Optional<SystemABI.Type> optABIType() {
+        return Optional.ofNullable((SystemABI.Type)annotations.get(NATIVE_TYPE));
+    }
+
     @Override
     public AbstractLayout withName(String name) {
         return withAnnotation(NAME, name);
@@ -71,6 +78,11 @@ abstract class AbstractLayout implements MemoryLayout {
     @Override
     public final Optional<String> name() {
         return optName();
+    }
+
+    @Override
+    public final Optional<SystemABI.Type> abiType() {
+        return optABIType();
     }
 
     abstract AbstractLayout dup(long alignment, Map<String, Constable> annos);
