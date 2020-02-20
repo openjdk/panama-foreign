@@ -23,21 +23,17 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
-import jdk.internal.foreign.abi.ArgumentClass;
-
-public enum ArgumentClassImpl implements ArgumentClass {
+enum ArgumentClassImpl {
     POINTER, INTEGER, VECTOR, MEMORY;
 
     public boolean isIntegral() {
         return this == INTEGER || this == POINTER;
     }
 
-    @Override
     public boolean isPointer() {
         return this == POINTER;
     }
 
-    @Override
     public boolean isIndirect() {
         return this == MEMORY;
     }

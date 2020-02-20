@@ -25,9 +25,10 @@
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts.WinABI;
 import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.SystemABI.Type;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.ArgumentClass;
+import java.util.function.Predicate;
 
 import static jdk.incubator.foreign.SystemABI.ABI_WINDOWS;
 
@@ -36,11 +37,19 @@ public class NativeTestHelper {
     public static final SystemABI ABI = SystemABI.getInstance();
 
     public static boolean isIntegral(MemoryLayout layout) {
-        return ((ArgumentClass)Utils.getAnnotation(layout, ArgumentClass.ABI_CLASS)).isIntegral();
+        var optAbiType = layout.abiType();
+        if (!optAbiType.isPresent()) {
+            return false;
+        }
+        return switch(optAbiType.get()) {
+            case BOOL, UNSIGNED_CHAR, SIGNED_CHAR, CHAR, SHORT, UNSIGNED_SHORT,
+                INT, UNSIGNED_INT, LONG, UNSIGNED_LONG, LONG_LONG, UNSIGNED_LONG_LONG -> true;
+            default -> false;
+        };
     }
 
     public static boolean isPointer(MemoryLayout layout) {
-        return ((ArgumentClass)Utils.getAnnotation(layout, ArgumentClass.ABI_CLASS)).isPointer();
+        return layout.abiType().filter(Predicate.isEqual(Type.POINTER)).isPresent();
     }
 
     public static ValueLayout asVarArg(ValueLayout layout) {
