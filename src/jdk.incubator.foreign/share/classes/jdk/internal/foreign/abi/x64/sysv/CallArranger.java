@@ -429,8 +429,10 @@ public class CallArranger {
 
     private static List<ArgumentClassImpl> classifyValueType(ValueLayout type) {
         ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
-
-        ArgumentClassImpl clazz = (ArgumentClassImpl)Utils.getAnnotation(type, ArgumentClassImpl.ABI_CLASS);
+        var optAbiType = type.abiType();
+        //padding not allowed here
+        ArgumentClassImpl clazz = optAbiType.map(SysVx64ABI::argumentClassFor).
+            orElseThrow(()->new IllegalStateException("Unexpected value layout: could not determine ABI class"));
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
@@ -521,7 +523,8 @@ public class CallArranger {
     // TODO: handle zero length arrays
     // TODO: Handle nested structs (and primitives)
     private static List<ArgumentClassImpl> classifyStructType(GroupLayout type) {
-        ArgumentClassImpl clazz = (ArgumentClassImpl)Utils.getAnnotation(type, ArgumentClassImpl.ABI_CLASS);
+        var optAbiType = type.abiType();
+        var clazz = optAbiType.map(SysVx64ABI::argumentClassFor).orElse(null);
         if (clazz == ArgumentClassImpl.COMPLEX_X87) {
             return COMPLEX_X87_CLASSES;
         }
