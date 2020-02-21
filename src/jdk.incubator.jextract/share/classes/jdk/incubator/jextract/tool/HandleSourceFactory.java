@@ -92,7 +92,7 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
         }
     }
 
-    private static final String C_LANG_CONSTANTS_HOLDER = getCLangConstantsHolder();
+    static final String C_LANG_CONSTANTS_HOLDER = getCLangConstantsHolder();
 
     public JavaFileObject[] generate(Declaration.Scoped decl) {
         builder.addPackagePrefix(pkgName);

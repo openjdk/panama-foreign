@@ -60,22 +60,28 @@ public final class LayoutUtils {
     }
 
     public static MemoryLayout getLayout(Type t) {
+        System.out.println(t.spelling() + " -> " + t.kind());
         switch(t.kind()) {
-            case Char_S:
-            case Char_U:
             case UChar:
+            case Char_U:
+                return C_UCHAR;
             case SChar:
+            case Char_S:
                 return C_SCHAR;
-            case UShort:
             case Short:
                 return C_SHORT;
+            case UShort:
+                return C_USHORT;
             case Int:
-            case UInt:
                 return C_INT;
+            case UInt:
+                return C_UINT;
             case ULong:
+                return C_ULONG;
             case Long:
                 return C_LONG;
             case ULongLong:
+                return C_ULONGLONG;
             case LongLong:
                 return C_LONGLONG;
             case UInt128:

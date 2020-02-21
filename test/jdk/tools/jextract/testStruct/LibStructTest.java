@@ -21,6 +21,8 @@
  * questions.
  */
 
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.SystemABI.Type;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static test.jextract.struct.struct_h.*;
@@ -39,5 +41,52 @@ public class LibStructTest {
             assertEquals(Point$x$get(seg), 42);
             assertEquals(Point$y$get(seg), -39);
         }
+    }
+
+    @Test
+    public void testFieldTypes() {
+         GroupLayout g = (GroupLayout)AllTypes$LAYOUT;
+         int fieldCount = 0;
+         for (var ml : g.memberLayouts()) {
+             var type = ml.abiType().orElse(null);
+             if (type == null) {
+                 // ignore paddings
+                 continue;
+             }
+             switch (ml.name().get()) {
+                 case "sc":
+                     assertEquals(type, Type.SIGNED_CHAR);
+                     break;
+                 case "uc":
+                     assertEquals(type, Type.UNSIGNED_CHAR);
+                     break;
+                 case "s":
+                     assertEquals(type, Type.SHORT);
+                     break;
+                 case "us":
+                     assertEquals(type, Type.UNSIGNED_SHORT);
+                     break;
+                 case "i":
+                     assertEquals(type, Type.INT);
+                     break;
+                 case "ui":
+                     assertEquals(type, Type.UNSIGNED_INT);
+                     break;
+                 case "l":
+                     assertEquals(type, Type.LONG);
+                     break;
+                 case "ul":
+                     assertEquals(type, Type.UNSIGNED_LONG);
+                     break;
+                 case "ll":
+                     assertEquals(type, Type.LONG_LONG);
+                     break;
+                 case "ull":
+                     assertEquals(type, Type.UNSIGNED_LONG_LONG);
+                     break;
+             }
+             fieldCount++;
+         }
+         assertEquals(fieldCount, 10);
     }
 }

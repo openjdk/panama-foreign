@@ -30,8 +30,10 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemoryLayouts.SysV;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
 
 import java.lang.invoke.MethodType;
@@ -48,6 +50,7 @@ import java.util.stream.Stream;
  * method is called to get overall generated source string.
  */
 class JavaSourceBuilder {
+    private static final String ABI = SystemABI.getInstance().name();
     // buffer
     protected StringBuffer sb;
     // current line alignment (number of 4-spaces)
@@ -86,6 +89,9 @@ class JavaSourceBuilder {
         sb.append("import java.lang.invoke.VarHandle;\n");
         sb.append("import jdk.incubator.foreign.*;\n");
         sb.append("import jdk.incubator.foreign.MemoryLayout.PathElement;\n");
+        sb.append("import static ");
+        sb.append(HandleSourceFactory.C_LANG_CONSTANTS_HOLDER);
+        sb.append(".*;\n");
     }
 
     protected void classBegin(String name) {
@@ -125,24 +131,32 @@ class JavaSourceBuilder {
 
     private void addLayout(MemoryLayout l) {
         if (l instanceof ValueLayout) {
-            boolean found = false;
-            for (Field fs : MemoryLayouts.SysV.class.getDeclaredFields()) {
-                try {
-                    MemoryLayout constant = (MemoryLayout)fs.get(null);
-                    if (l.name().isPresent()) {
-                        constant = constant.withName(l.name().get());
-                    }
-                    if (constant.equals(l)) {
-                        found = true;
-                        sb.append("MemoryLayouts.SysV." + fs.getName());
-                        break;
-                    }
-                } catch (ReflectiveOperationException ex) {
-                    throw new AssertionError(ex);
+            SystemABI.Type type = l.abiType().orElseThrow(()->new AssertionError("Should not get here: " + l));
+            if (type == SystemABI.Type.LONG_DOUBLE) {
+                if (ABI != SystemABI.ABI_SYSV) {
+                    throw new RuntimeException("long double is supported only for SysV ABI");
+                } else {
+                    sb.append("C_LONGDOUBLE");
                 }
-            }
-            if (!found) {
-                throw new AssertionError("Should not get here: " + l);
+            } else {
+                sb.append(switch (type) {
+                    case BOOL -> "C_BOOL";
+                    case SIGNED_CHAR -> "C_SCHAR";
+                    case UNSIGNED_CHAR -> "C_UCHAR";
+                    case CHAR -> "C_CHAR";
+                    case SHORT -> "C_SHORT";
+                    case UNSIGNED_SHORT -> "C_USHORT";
+                    case INT -> "C_INT";
+                    case UNSIGNED_INT -> "C_UINT";
+                    case LONG -> "C_LONG";
+                    case UNSIGNED_LONG -> "C_ULONG";
+                    case LONG_LONG -> "C_LONGLONG";
+                    case UNSIGNED_LONG_LONG -> "C_ULONGLONG";
+                    case FLOAT -> "C_FLOAT";
+                    case DOUBLE -> "C_DOUBLE";
+                    case POINTER -> "C_POINTER";
+                    default -> { throw new RuntimeException("should not reach here: " + type); }
+                });
             }
         } else if (l instanceof SequenceLayout) {
             sb.append("MemoryLayout.ofSequence(");
@@ -152,23 +166,32 @@ class JavaSourceBuilder {
             addLayout(((SequenceLayout) l).elementLayout());
             sb.append(")");
         } else if (l instanceof GroupLayout) {
-            if (((GroupLayout) l).isStruct()) {
-                sb.append("MemoryLayout.ofStruct(\n");
+            SystemABI.Type type = l.abiType().orElse(null);
+            if (type == SystemABI.Type.COMPLEX_LONG_DOUBLE) {
+                if (ABI != SystemABI.ABI_SYSV) {
+                    throw new RuntimeException("complex long double is supported only for SysV ABI");
+                } else {
+                    sb.append("C_COMPLEX_LONGDOUBLE");
+                }
             } else {
-                sb.append("MemoryLayout.ofUnion(\n");
-            }
-            incrAlign();
-            String delim = "";
-            for (MemoryLayout e : ((GroupLayout) l).memberLayouts()) {
-                sb.append(delim);
+                if (((GroupLayout) l).isStruct()) {
+                    sb.append("MemoryLayout.ofStruct(\n");
+                } else {
+                    sb.append("MemoryLayout.ofUnion(\n");
+                }
+                incrAlign();
+                String delim = "";
+                for (MemoryLayout e : ((GroupLayout) l).memberLayouts()) {
+                    sb.append(delim);
+                    indent();
+                    addLayout(e);
+                    delim = ",\n";
+                }
+                sb.append("\n");
+                decrAlign();
                 indent();
-                addLayout(e);
-                delim = ",\n";
+                sb.append(")");
             }
-            sb.append("\n");
-            decrAlign();
-            indent();
-            sb.append(")");
         } else {
             //padding
             sb.append("MemoryLayout.ofPaddingBits(" + l.bitSize() + ")");
