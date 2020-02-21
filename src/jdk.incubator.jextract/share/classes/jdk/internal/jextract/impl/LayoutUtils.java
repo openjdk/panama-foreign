@@ -60,7 +60,6 @@ public final class LayoutUtils {
     }
 
     public static MemoryLayout getLayout(Type t) {
-        System.out.println(t.spelling() + " -> " + t.kind());
         switch(t.kind()) {
             case UChar:
             case Char_U:
