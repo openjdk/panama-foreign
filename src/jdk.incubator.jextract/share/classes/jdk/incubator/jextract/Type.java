@@ -26,15 +26,17 @@
 
 package jdk.incubator.jextract;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.internal.jextract.impl.LayoutUtils;
 import jdk.internal.jextract.impl.TypeImpl;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Instances of this class are used to model types in the foreign language.
@@ -404,7 +406,7 @@ public interface Type {
      * @return a new pointer type with no associated pointee information.
      */
     static Type.Delegated pointer() {
-        return new TypeImpl.PointerImpl(void_());
+        return new TypeImpl.PointerImpl(() -> new TypeImpl.PrimitiveImpl(Type.Primitive.Kind.Void));
     }
 
     /**
@@ -413,6 +415,15 @@ public interface Type {
      * @return a new pointer type with given pointee type.
      */
     static Type.Delegated pointer(Type pointee) {
+        return new TypeImpl.PointerImpl(() -> pointee);
+    }
+
+    /**
+     * Creates a new pointer type with given pointee type.
+     * @param pointee factory to (lazily) build the pointee type.
+     * @return a new pointer type with given pointee type (lazily built from factory).
+     */
+    static Type.Delegated pointer(Supplier<Type> pointee) {
         return new TypeImpl.PointerImpl(pointee);
     }
 
