@@ -105,6 +105,7 @@ class Parser {
 
         Declaration.Scoped rv = treeMaker.createHeader(tuCursor, decls);
         treeMaker.freeze();
+        index.close();
         return rv;
     }
 
