@@ -39,8 +39,6 @@ import jdk.incubator.jextract.Type;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertNotNull;
-
 public class TestMacros extends JextractApiTestBase {
     Declaration.Scoped badMacro;
     Declaration.Scoped foo;
@@ -49,12 +47,9 @@ public class TestMacros extends JextractApiTestBase {
 
     @BeforeClass
     public void parse() {
-        // Somehow without this line, C_INT will be null after parse. Still looking for affirmative explanation.
-        assertNotNull(MemoryLayouts.C_INT);
         // We need stdint.h for pointer macro, otherwise evaluation failed and Constant declaration is not created
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         badMacro = parse("badMacros.h", "-I", builtinInc.toString());
-        assertNotNull(MemoryLayouts.C_INT);
 
         foo = checkStruct(badMacro, "foo", "ptrFoo", "ptrBar");
         bar = checkStruct(badMacro, "bar", "ptrFoo", "arFooPtr");
