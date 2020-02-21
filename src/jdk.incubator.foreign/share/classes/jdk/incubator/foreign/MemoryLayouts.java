@@ -479,6 +479,12 @@ public final class MemoryLayouts {
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.DOUBLE);
 
         /**
+         * The {@code long double} native type.
+         */
+        public static final ValueLayout C_LONGDOUBLE = SharedLayouts.BITS_64_LE
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_DOUBLE);
+
+        /**
          * The {@code T*} native type.
          */
         public static final ValueLayout C_POINTER = SharedLayouts.BITS_64_LE
@@ -576,6 +582,12 @@ public final class MemoryLayouts {
          */
         public static final ValueLayout C_DOUBLE = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.DOUBLE);
+
+        /**
+         * The {@code long double} native type.
+         */
+        public static final ValueLayout C_LONGDOUBLE = MemoryLayout.ofValueBits(128, ByteOrder.LITTLE_ENDIAN)
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_DOUBLE);
 
         /**
          * The {@code T*} native type.
