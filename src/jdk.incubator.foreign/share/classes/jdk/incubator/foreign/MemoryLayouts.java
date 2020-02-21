@@ -50,22 +50,22 @@ public final class MemoryLayouts {
     /**
      * A value layout constant with size of one byte, and byte order set to {@link ByteOrder#LITTLE_ENDIAN}.
      */
-    public static final ValueLayout BITS_8_LE = MemoryLayout.ofValueBits(8, ByteOrder.LITTLE_ENDIAN);
+    public static final ValueLayout BITS_8_LE = SharedLayouts.BITS_8_LE;
 
     /**
      * A value layout constant with size of two bytes, and byte order set to {@link ByteOrder#LITTLE_ENDIAN}.
      */
-    public static final ValueLayout BITS_16_LE = MemoryLayout.ofValueBits(16, ByteOrder.LITTLE_ENDIAN);
+    public static final ValueLayout BITS_16_LE = SharedLayouts.BITS_16_LE;
 
     /**
      * A value layout constant with size of four bytes, and byte order set to {@link ByteOrder#LITTLE_ENDIAN}.
      */
-    public static final ValueLayout BITS_32_LE = MemoryLayout.ofValueBits(32, ByteOrder.LITTLE_ENDIAN);
+    public static final ValueLayout BITS_32_LE = SharedLayouts.BITS_32_LE;
 
     /**
      * A value layout constant with size of eight bytes, and byte order set to {@link ByteOrder#LITTLE_ENDIAN}.
      */
-    public static final ValueLayout BITS_64_LE = MemoryLayout.ofValueBits(64, ByteOrder.LITTLE_ENDIAN);
+    public static final ValueLayout BITS_64_LE = SharedLayouts.BITS_64_LE;
 
     /**
      * A value layout constant with size of one byte, and byte order set to {@link ByteOrder#BIG_ENDIAN}.
@@ -286,89 +286,89 @@ public final class MemoryLayouts {
         /**
          * The {@code _Bool} native type.
          */
-        public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_BOOL = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.BOOL);
 
 
         /**
          * The {@code unsigned char} native type.
          */
-        public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_UCHAR = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_CHAR);
 
 
         /**
          * The {@code signed char} native type.
          */
-        public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_SCHAR = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SIGNED_CHAR);
 
 
         /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_CHAR = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.CHAR);
 
         /**
          * The {@code short} native type.
          */
-        public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_LE
+        public static final ValueLayout C_SHORT = SharedLayouts.BITS_16_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SHORT);
 
         /**
          * The {@code unsigned short} native type.
          */
-        public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_LE
+        public static final ValueLayout C_USHORT = SharedLayouts.BITS_16_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_SHORT);
 
         /**
          * The {@code int} native type.
          */
-        public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_INT = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.INT);
 
         /**
          * The {@code unsigned int} native type.
          */
-        public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_UINT = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_INT);
 
         /**
          * The {@code long} native type.
          */
-        public static final ValueLayout C_LONG = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_LONG = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG);
 
         /**
          * The {@code unsigned long} native type.
          */
-        public static final ValueLayout C_ULONG = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_ULONG = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG);
 
 
         /**
          * The {@code long long} native type.
          */
-        public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_LONGLONG = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_LONG);
 
         /**
          * The {@code unsigned long long} native type.
          */
-        public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_ULONGLONG = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG_LONG);
 
         /**
          * The {@code float} native type.
          */
-        public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_FLOAT = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.FLOAT);
 
         /**
          * The {@code double} native type.
          */
-        public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_DOUBLE = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.DOUBLE);
 
         /**
@@ -386,7 +386,7 @@ public final class MemoryLayouts {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_POINTER = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.POINTER);
     }
 
@@ -397,91 +397,97 @@ public final class MemoryLayouts {
         /**
          * The {@code _Bool} native type.
          */
-        public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_BOOL = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.BOOL);
-        
+
         /**
          * The {@code unsigned char} native type.
          */
-        public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_UCHAR = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_CHAR);
 
         /**
          * The {@code signed char} native type.
          */
-        public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_SCHAR = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SIGNED_CHAR);
 
         /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_CHAR = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.CHAR);
 
         /**
          * The {@code short} native type.
          */
-        public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_LE
+        public static final ValueLayout C_SHORT = SharedLayouts.BITS_16_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SHORT);
 
         /**
          * The {@code unsigned short} native type.
          */
-        public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_LE
+        public static final ValueLayout C_USHORT = SharedLayouts.BITS_16_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_SHORT);
 
         /**
          * The {@code int} native type.
          */
-        public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_INT = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.INT);
 
         /**
          * The {@code unsigned int} native type.
          */
-        public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_UINT = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_INT);
 
         /**
          * The {@code long} native type.
          */
-        public static final ValueLayout C_LONG = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_LONG = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG);
 
         /**
          * The {@code unsigned long} native type.
          */
-        public static final ValueLayout C_ULONG = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_ULONG = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG);
 
         /**
          * The {@code long long} native type.
          */
-        public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_LONGLONG = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_LONG);
 
         /**
          * The {@code unsigned long long} native type.
          */
-        public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_ULONGLONG = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG_LONG);
 
         /**
          * The {@code float} native type.
          */
-        public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_FLOAT = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.FLOAT);
 
         /**
          * The {@code double} native type.
          */
-        public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_DOUBLE = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.DOUBLE);
+
+        /**
+         * The {@code long double} native type.
+         */
+        public static final ValueLayout C_LONGDOUBLE = SharedLayouts.BITS_64_LE
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_DOUBLE);
 
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_POINTER = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.POINTER);
 
         public static ValueLayout asVarArg(ValueLayout l) {
@@ -496,91 +502,104 @@ public final class MemoryLayouts {
         /**
          * The {@code _Bool} native type.
          */
-        public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_BOOL = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.BOOL);
 
         /**
          * The {@code unsigned char} native type.
          */
-        public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_UCHAR = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_CHAR);
 
         /**
          * The {@code signed char} native type.
          */
-        public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_SCHAR = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SIGNED_CHAR);
 
         /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
+        public static final ValueLayout C_CHAR = SharedLayouts.BITS_8_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.CHAR);
 
         /**
          * The {@code short} native type.
          */
-        public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_LE
+        public static final ValueLayout C_SHORT = SharedLayouts.BITS_16_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.SHORT);
 
         /**
          * The {@code unsigned short} native type.
          */
-        public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_LE
+        public static final ValueLayout C_USHORT = SharedLayouts.BITS_16_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_SHORT);
 
         /**
          * The {@code int} native type.
          */
-        public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_INT = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.INT);
 
         /**
          * The {@code unsigned int} native type.
          */
-        public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_UINT = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_INT);
 
         /**
          * The {@code long} native type.
          */
-        public static final ValueLayout C_LONG = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_LONG = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG);
 
         /**
          * The {@code unsigned long} native type.
          */
-        public static final ValueLayout C_ULONG = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_ULONG = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG);
 
         /**
          * The {@code long long} native type.
          */
-        public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_LONGLONG = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_LONG);
 
         /**
          * The {@code unsigned long long} native type.
          */
-        public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_ULONGLONG = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.UNSIGNED_LONG_LONG);
 
         /**
          * The {@code float} native type.
          */
-        public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
+        public static final ValueLayout C_FLOAT = SharedLayouts.BITS_32_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.FLOAT);
 
         /**
          * The {@code double} native type.
          */
-        public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_DOUBLE = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.DOUBLE);
+
+        /**
+         * The {@code long double} native type.
+         */
+        public static final ValueLayout C_LONGDOUBLE = MemoryLayout.ofValueBits(128, ByteOrder.LITTLE_ENDIAN)
+                .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.LONG_DOUBLE);
 
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_POINTER = SharedLayouts.BITS_64_LE
                 .withAnnotation(AbstractLayout.NATIVE_TYPE, SystemABI.Type.POINTER);
+    }
+
+    private static class SharedLayouts { // Separate class to prevent circular clinit references
+        public static final ValueLayout BITS_8_LE = MemoryLayout.ofValueBits(8, ByteOrder.LITTLE_ENDIAN);
+        public static final ValueLayout BITS_16_LE = MemoryLayout.ofValueBits(16, ByteOrder.LITTLE_ENDIAN);
+        public static final ValueLayout BITS_32_LE = MemoryLayout.ofValueBits(32, ByteOrder.LITTLE_ENDIAN);
+        public static final ValueLayout BITS_64_LE = MemoryLayout.ofValueBits(64, ByteOrder.LITTLE_ENDIAN);
     }
 }
