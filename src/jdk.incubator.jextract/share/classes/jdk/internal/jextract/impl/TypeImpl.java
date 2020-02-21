@@ -26,14 +26,13 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.Type;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Type;
 
 public abstract class TypeImpl implements Type {
 
@@ -137,12 +136,15 @@ public abstract class TypeImpl implements Type {
     }
 
     public static class PointerImpl extends DelegatedBase {
-
         private final Supplier<Type> pointeeFactory;
 
         public PointerImpl(Supplier<Type> pointeeFactory) {
             super(Kind.POINTER, Optional.empty());
             this.pointeeFactory = pointeeFactory;
+        }
+
+        public PointerImpl(Type pointee) {
+            this(() -> pointee);
         }
 
         @Override
@@ -245,5 +247,10 @@ public abstract class TypeImpl implements Type {
         public Kind kind() {
             return kind;
         }
+    }
+
+    @Override
+    public String toString() {
+        return PrettyPrinter.type(this);
     }
 }

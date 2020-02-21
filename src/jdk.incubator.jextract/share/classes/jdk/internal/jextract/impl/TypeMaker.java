@@ -27,23 +27,86 @@
 package jdk.internal.jextract.impl;
 
 
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
-import jdk.incubator.jextract.Type.Primitive;
 import jdk.incubator.jextract.Type.Delegated;
-
-import java.util.ArrayList;
-import java.util.List;
+import jdk.incubator.jextract.Type.Primitive;
 
 class TypeMaker {
 
     TreeMaker treeMaker;
+    private final Map<jdk.internal.clang.Type, Type> typeCache = new HashMap<>();
+    private List<ClangTypeReference> unresolved = new ArrayList<>();
+
+    private class ClangTypeReference implements Supplier<Type> {
+        jdk.internal.clang.Type origin;
+        Type derived;
+
+        private ClangTypeReference(jdk.internal.clang.Type origin) {
+            this.origin = origin;
+            derived = typeCache.get(origin);
+        }
+
+        public boolean isUnresolved() {
+            return null == derived;
+        }
+
+        public void resolve() {
+            derived = makeType(origin);
+            Objects.requireNonNull(derived, "Clang type cannot be resolved: " + origin.spelling());
+        }
+
+        public Type get() {
+            Objects.requireNonNull(derived, "Type is not yet resolved.");
+            return derived;
+        }
+    }
+
+    private ClangTypeReference reference(jdk.internal.clang.Type type) {
+        ClangTypeReference ref = new ClangTypeReference(type);
+        if (ref.isUnresolved()) {
+            unresolved.add(ref);
+        }
+        return ref;
+    }
 
     public TypeMaker(TreeMaker treeMaker) {
         this.treeMaker = treeMaker;
     }
 
+    /**
+     * Resolve all type references. This method should be called before discard clang cursors/types
+     */
+    void resolveTypeReferences() {
+        List<ClangTypeReference> resolving = unresolved;
+        unresolved = new ArrayList<>();
+        while (! resolving.isEmpty()) {
+            resolving.forEach(ClangTypeReference::resolve);
+            resolving = unresolved;
+            unresolved = new ArrayList<>();
+        }
+    }
+
     Type makeType(jdk.internal.clang.Type t) {
+        Type rv = typeCache.get(t);
+        if (rv != null) {
+            return rv;
+        }
+        rv = makeTypeInternal(t);
+        if (null != rv && typeCache.put(t, rv) != null) {
+            throw new ConcurrentModificationException();
+        }
+        return rv;
+    }
+
+    Type makeTypeInternal(jdk.internal.clang.Type t) {
         switch(t.kind()) {
             case Auto:
                 return makeType(t.canonicalType());
@@ -119,12 +182,16 @@ class TypeMaker {
             }
             case Enum:
             case Record: {
-                return Type.declared((Declaration.Scoped)treeMaker.createTree(t.getDeclarationCursor()));
+                if (treeMaker == null) {
+                    // Macro evaluation, type is meaningless as this can only be pointer and we only care value
+                    return Type.void_();
+                }
+                return Type.declared((Declaration.Scoped) treeMaker.createTree(t.getDeclarationCursor()));
             }
             case BlockPointer:
             case Pointer: {
-                jdk.internal.clang.Type __type = t.getPointeeType();
-                return Type.pointer(() -> makeType(__type));
+                // TODO: We can always erase type for macro evaluation, should we?
+                return new TypeImpl.PointerImpl(reference(t.getPointeeType()));
             }
             case Typedef: {
                 Type __type = makeType(t.canonicalType());
@@ -156,7 +223,7 @@ class TypeMaker {
     private Type.Visitor<Type, Void> lowerFunctionType = new Type.Visitor<>() {
         @Override
         public Type visitArray(Type.Array t, Void aVoid) {
-            return Type.pointer(() -> t.elementType());
+            return Type.pointer(t.elementType());
         }
 
         @Override

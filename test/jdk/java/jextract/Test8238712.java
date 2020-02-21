@@ -27,24 +27,33 @@
 /*
  * @test
  * @build JextractApiTestBase
- * @run testng SmokeTest
+ * @run testng Test8238712
  */
 
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;
 
-public class SmokeTest extends JextractApiTestBase {
+import static org.testng.Assert.assertTrue;
 
+public class Test8238712 extends JextractApiTestBase {
     @Test
-    public void testParser() {
-        Declaration.Scoped d = parse("smoke.h");
-        Declaration.Scoped pointDecl = checkStruct(d, "Point", "x", "y");
-        Type intType = ((Declaration.Variable)pointDecl.members().get(0)).type();
-        checkGlobal(d, "p", Type.declared(pointDecl));
-        checkFunction(d, "distance", intType, Type.declared(pointDecl), Type.declared(pointDecl));
-        Declaration.Variable ch_ptr_ptr = findDecl(d, "ch_ptr_ptr", Declaration.Variable.class);
-        checkFunction(d, "pointers", ch_ptr_ptr.type(), ch_ptr_ptr.type(), ch_ptr_ptr.type());
-        checkConstant(d, "ZERO", intType, 0L);
+    public void test8238712() {
+        Declaration.Scoped d = parse("Test8238712.h");
+        Declaration.Scoped structFoo = checkStruct(d, "foo", "n", "ptr");
+        Type intType = ((Declaration.Variable) structFoo.members().get(0)).type();
+        Type fooType = Type.declared(structFoo);
+        checkFunction(d, "withRecordTypeArg", intType, intType, fooType);
+        checkFunction(d, "returnRecordType", fooType);
+        // Opaque struct, have no field
+        Declaration.Scoped structBar = checkStruct(d, "bar");
+        assertTrue(structBar.layout().isEmpty());
+        Type barType = Type.declared(structBar);
+        // Function with opaque struct won't work but should have cursor for tool to handle
+        checkFunction(d, "returnBar", barType);
+        checkFunction(d, "withBar", Type.void_(), barType);
+        // Function use pointer to opaque struct should be OK
+        Type barPointer = Type.pointer(barType);
+        checkFunction(d, "nextBar", barPointer, barPointer);
     }
 }

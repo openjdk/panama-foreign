@@ -53,6 +53,10 @@ class TreeMaker {
 
     TypeMaker typeMaker = new TypeMaker(this);
 
+    public void freeze() {
+        typeMaker.resolveTypeReferences();
+    }
+
     private <T extends Declaration> T checkCache(Cursor c, Class<T> clazz, Supplier<Declaration> factory) {
         // The supplier function may lead to adding some other type, which will cause CME using computeIfAbsent.
         // This implementation relax the constraint a bit only check for same key
@@ -121,24 +125,31 @@ class TreeMaker {
 
     static class CursorPosition implements Position {
         private final Cursor cursor;
+        private final Path path;
+        private final int line;
+        private final int column;
 
         CursorPosition(Cursor cursor) {
             this.cursor = cursor;
+            SourceLocation.Location loc = cursor.getSourceLocation().getFileLocation();
+            this.path = loc.path();
+            this.line = loc.line();
+            this.column = loc.column();
         }
 
         @Override
         public Path path() {
-            return cursor.getSourceLocation().getFileLocation().path();
+            return path;
         }
 
         @Override
         public int line() {
-            return cursor.getSourceLocation().getFileLocation().line();
+            return line;
         }
 
         @Override
         public int col() {
-            return cursor.getSourceLocation().getFileLocation().column();
+            return column;
         }
 
         public Cursor cursor() {
