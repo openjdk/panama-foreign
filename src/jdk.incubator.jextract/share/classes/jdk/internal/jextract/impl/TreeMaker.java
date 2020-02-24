@@ -93,7 +93,7 @@ class TreeMaker {
             case FieldDecl:
                 return createVar(c.isBitField() ?
                         Declaration.Variable.Kind.BITFIELD : Declaration.Variable.Kind.FIELD, c, Declaration::field);
-            case ParamDecl:
+            case ParmDecl:
                 return createVar(Declaration.Variable.Kind.PARAMETER, c, Declaration::parameter);
             case FunctionDecl:
                 return createFunction(c);
@@ -235,7 +235,7 @@ class TreeMaker {
     }
 
     private Declaration.Variable createVar(Declaration.Variable.Kind kind, Cursor c, VarFactoryNoLayout varFactory) {
-        checkCursorAny(c, CursorKind.VarDecl, CursorKind.FieldDecl, CursorKind.ParamDecl);
+        checkCursorAny(c, CursorKind.VarDecl, CursorKind.FieldDecl, CursorKind.ParmDecl);
         if (c.isBitField()) {
             return checkCache(c, Declaration.Variable.class,
                     () -> Declaration.bitfield(toPos(c), c.spelling(), toType(c),
