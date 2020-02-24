@@ -271,7 +271,7 @@ public final class LayoutUtils {
             C_ULONGLONG = MemoryLayouts.WinABI.C_ULONGLONG;
             C_FLOAT = MemoryLayouts.WinABI.C_FLOAT;
             C_DOUBLE = MemoryLayouts.WinABI.C_DOUBLE;
-            C_LONGDOUBLE = C_DOUBLE;
+            C_LONGDOUBLE = MemoryLayouts.WinABI.C_LONGDOUBLE;
             C_POINTER = MemoryLayouts.WinABI.C_POINTER;
             INT8 = C_BOOL;
             INT16 = C_SHORT;
@@ -292,7 +292,7 @@ public final class LayoutUtils {
             C_ULONGLONG = MemoryLayouts.AArch64ABI.C_ULONGLONG;
             C_FLOAT = MemoryLayouts.AArch64ABI.C_FLOAT;
             C_DOUBLE = MemoryLayouts.AArch64ABI.C_DOUBLE;
-            C_LONGDOUBLE = C_DOUBLE;
+            C_LONGDOUBLE = MemoryLayouts.AArch64ABI.C_LONGDOUBLE;
             C_POINTER = MemoryLayouts.AArch64ABI.C_POINTER;
             INT8 = C_BOOL;
             INT16 = C_SHORT;
