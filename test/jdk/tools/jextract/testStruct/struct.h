@@ -38,6 +38,22 @@ typedef struct Point {
 
 EXPORT Point makePoint(int x, int y);
 
+struct AllTypes {
+    signed char sc;
+    unsigned char uc;
+    short s;
+    unsigned short us;
+    int i;
+    unsigned int ui;
+    long l;
+    unsigned long ul;
+    long long ll;
+    unsigned long long ull;
+    float f;
+    double d;
+    long double ld;
+};
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

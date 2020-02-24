@@ -21,6 +21,9 @@
  * questions.
  */
 
+import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.SystemABI.Type;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static test.jextract.struct.struct_h.*;
@@ -39,5 +42,27 @@ public class LibStructTest {
             assertEquals(Point$x$get(seg), 42);
             assertEquals(Point$y$get(seg), -39);
         }
+    }
+
+    private static void checkFieldABIType(GroupLayout group, String fieldName, Type expected) {
+        assertEquals(group.select(PathElement.groupElement(fieldName)).abiType().orElseThrow(), expected);
+    }
+
+    @Test
+    public void testFieldTypes() {
+        GroupLayout g = (GroupLayout)AllTypes$LAYOUT;
+        checkFieldABIType(g, "sc",  Type.SIGNED_CHAR);
+        checkFieldABIType(g, "uc",  Type.UNSIGNED_CHAR);
+        checkFieldABIType(g, "s",   Type.SHORT);
+        checkFieldABIType(g, "us",  Type.UNSIGNED_SHORT);
+        checkFieldABIType(g, "i",   Type.INT);
+        checkFieldABIType(g, "ui",  Type.UNSIGNED_INT);
+        checkFieldABIType(g, "l",   Type.LONG);
+        checkFieldABIType(g, "ul",  Type.UNSIGNED_LONG);
+        checkFieldABIType(g, "ll",  Type.LONG_LONG);
+        checkFieldABIType(g, "ull", Type.UNSIGNED_LONG_LONG);
+        checkFieldABIType(g, "f", Type.FLOAT);
+        checkFieldABIType(g, "d", Type.DOUBLE);
+        checkFieldABIType(g, "ld", Type.LONG_DOUBLE);
     }
 }

@@ -29,6 +29,7 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemoryLayouts.SysV;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
@@ -45,6 +46,7 @@ import java.util.Optional;
  * General Layout utility functions
  */
 public final class LayoutUtils {
+    private static SystemABI abi = SystemABI.getInstance();
     private LayoutUtils() {}
 
     public static String getName(Type type) {
@@ -61,21 +63,24 @@ public final class LayoutUtils {
 
     public static MemoryLayout getLayout(Type t) {
         switch(t.kind()) {
-            case Char_S:
-            case Char_U:
-            case UChar:
-            case SChar:
+            case UChar, Char_U:
+                return C_UCHAR;
+            case SChar, Char_S:
                 return C_SCHAR;
-            case UShort:
             case Short:
                 return C_SHORT;
+            case UShort:
+                return C_USHORT;
             case Int:
-            case UInt:
                 return C_INT;
+            case UInt:
+                return C_UINT;
             case ULong:
+                return C_ULONG;
             case Long:
                 return C_LONG;
             case ULongLong:
+                return C_ULONGLONG;
             case LongLong:
                 return C_LONGLONG;
             case UInt128:
@@ -91,6 +96,11 @@ public final class LayoutUtils {
                 return C_DOUBLE;
             case LongDouble:
                 return C_LONGDOUBLE;
+            case Complex:
+                if (!abi.name().equals(SystemABI.ABI_SYSV)) {
+                    throw new UnsupportedOperationException("unsupported: " + t.kind());
+                }
+                return SysV.C_COMPLEX_LONGDOUBLE;
             case Record:
                 return getRecordLayout(t);
             case Vector:
@@ -199,7 +209,7 @@ public final class LayoutUtils {
                 throw new IllegalStateException("Cannot infer container layout");
         }
     }
-    
+
     // platform-dependent layouts
 
     public static final ValueLayout C_BOOL;
@@ -225,7 +235,6 @@ public final class LayoutUtils {
     public static final ValueLayout INT64;
 
     static {
-        SystemABI abi = SystemABI.getInstance();
         if (abi instanceof SysVx64ABI) {
             C_BOOL = MemoryLayouts.SysV.C_BOOL;
             C_CHAR = MemoryLayouts.SysV.C_CHAR;
