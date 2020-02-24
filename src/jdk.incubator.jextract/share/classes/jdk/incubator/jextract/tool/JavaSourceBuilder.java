@@ -30,7 +30,6 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.MemoryLayouts.SysV;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
@@ -161,7 +160,7 @@ class JavaSourceBuilder {
         } else if (l instanceof GroupLayout) {
             SystemABI.Type type = l.abiType().orElse(null);
             if (type == SystemABI.Type.COMPLEX_LONG_DOUBLE) {
-                if (ABI != SystemABI.ABI_SYSV) {
+                if (!ABI.equals(SystemABI.ABI_SYSV)) {
                     throw new RuntimeException("complex long double is supported only for SysV ABI");
                 } else {
                     sb.append("C_COMPLEX_LONGDOUBLE");

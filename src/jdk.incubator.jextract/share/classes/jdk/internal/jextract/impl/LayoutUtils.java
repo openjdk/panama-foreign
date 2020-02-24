@@ -29,6 +29,7 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemoryLayouts.SysV;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
@@ -45,6 +46,7 @@ import java.util.Optional;
  * General Layout utility functions
  */
 public final class LayoutUtils {
+    private static SystemABI abi = SystemABI.getInstance();
     private LayoutUtils() {}
 
     public static String getName(Type type) {
@@ -94,6 +96,11 @@ public final class LayoutUtils {
                 return C_DOUBLE;
             case LongDouble:
                 return C_LONGDOUBLE;
+            case Complex:
+                if (!abi.name().equals(SystemABI.ABI_SYSV)) {
+                    throw new UnsupportedOperationException("unsupported: " + t.kind());
+                }
+                return SysV.C_COMPLEX_LONGDOUBLE;
             case Record:
                 return getRecordLayout(t);
             case Vector:
@@ -228,7 +235,6 @@ public final class LayoutUtils {
     public static final ValueLayout INT64;
 
     static {
-        SystemABI abi = SystemABI.getInstance();
         if (abi instanceof SysVx64ABI) {
             C_BOOL = MemoryLayouts.SysV.C_BOOL;
             C_CHAR = MemoryLayouts.SysV.C_CHAR;
