@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.SystemABI.Type;
 import org.testng.annotations.Test;
@@ -43,50 +44,25 @@ public class LibStructTest {
         }
     }
 
+    private static void checkFieldABIType(GroupLayout group, String fieldName, Type expected) {
+        assertEquals(group.select(PathElement.groupElement(fieldName)).abiType().orElseThrow(), expected);
+    }
+
     @Test
     public void testFieldTypes() {
-         GroupLayout g = (GroupLayout)AllTypes$LAYOUT;
-         int fieldCount = 0;
-         for (var ml : g.memberLayouts()) {
-             var type = ml.abiType().orElse(null);
-             if (type == null) {
-                 // ignore paddings
-                 continue;
-             }
-             switch (ml.name().get()) {
-                 case "sc":
-                     assertEquals(type, Type.SIGNED_CHAR);
-                     break;
-                 case "uc":
-                     assertEquals(type, Type.UNSIGNED_CHAR);
-                     break;
-                 case "s":
-                     assertEquals(type, Type.SHORT);
-                     break;
-                 case "us":
-                     assertEquals(type, Type.UNSIGNED_SHORT);
-                     break;
-                 case "i":
-                     assertEquals(type, Type.INT);
-                     break;
-                 case "ui":
-                     assertEquals(type, Type.UNSIGNED_INT);
-                     break;
-                 case "l":
-                     assertEquals(type, Type.LONG);
-                     break;
-                 case "ul":
-                     assertEquals(type, Type.UNSIGNED_LONG);
-                     break;
-                 case "ll":
-                     assertEquals(type, Type.LONG_LONG);
-                     break;
-                 case "ull":
-                     assertEquals(type, Type.UNSIGNED_LONG_LONG);
-                     break;
-             }
-             fieldCount++;
-         }
-         assertEquals(fieldCount, 10);
+        GroupLayout g = (GroupLayout)AllTypes$LAYOUT;
+        checkFieldABIType(g, "sc",  Type.SIGNED_CHAR);
+        checkFieldABIType(g, "uc",  Type.UNSIGNED_CHAR);
+        checkFieldABIType(g, "s",   Type.SHORT);
+        checkFieldABIType(g, "us",  Type.UNSIGNED_SHORT);
+        checkFieldABIType(g, "i",   Type.INT);
+        checkFieldABIType(g, "ui",  Type.UNSIGNED_INT);
+        checkFieldABIType(g, "l",   Type.LONG);
+        checkFieldABIType(g, "ul",  Type.UNSIGNED_LONG);
+        checkFieldABIType(g, "ll",  Type.LONG_LONG);
+        checkFieldABIType(g, "ull", Type.UNSIGNED_LONG_LONG);
+        checkFieldABIType(g, "f", Type.FLOAT);
+        checkFieldABIType(g, "d", Type.DOUBLE);
+        checkFieldABIType(g, "ld", Type.LONG_DOUBLE);
     }
 }

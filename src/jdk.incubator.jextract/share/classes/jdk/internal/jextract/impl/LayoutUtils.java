@@ -61,11 +61,9 @@ public final class LayoutUtils {
 
     public static MemoryLayout getLayout(Type t) {
         switch(t.kind()) {
-            case UChar:
-            case Char_U:
+            case UChar, Char_U:
                 return C_UCHAR;
-            case SChar:
-            case Char_S:
+            case SChar, Char_S:
                 return C_SCHAR;
             case Short:
                 return C_SHORT;
@@ -204,7 +202,7 @@ public final class LayoutUtils {
                 throw new IllegalStateException("Cannot infer container layout");
         }
     }
-    
+
     // platform-dependent layouts
 
     public static final ValueLayout C_BOOL;
