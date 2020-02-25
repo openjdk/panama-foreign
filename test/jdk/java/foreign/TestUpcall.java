@@ -30,10 +30,10 @@
  *          java.base/sun.security.action
  * @build NativeTestHelper CallGeneratorHelper TestUpcall
  *
- * @run testng/othervm -Djdk.internal.foreign.UpcallHandler.FASTPATH=none TestUpcall
- * @run testng/othervm TestUpcall
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit TestUpcall
  */
 
+import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.LibraryLookup;
@@ -63,7 +63,7 @@ import static org.testng.Assert.assertEquals;
 public class TestUpcall extends CallGeneratorHelper {
 
     static LibraryLookup lib = LibraryLookup.ofLibrary(MethodHandles.lookup(), "TestUpcall");
-    static SystemABI abi = SystemABI.getInstance();
+    static SystemABI abi = Foreign.getInstance().getSystemABI();
     static final MemoryAddress dummyAddress;
     static final Cleaner cleaner = Cleaner.create();
 

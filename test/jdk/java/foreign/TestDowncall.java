@@ -32,10 +32,10 @@
  *          java.base/sun.security.action
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
- * @run testng/othervm -Djdk.internal.foreign.NativeInvoker.FASTPATH=none TestDowncall
- * @run testng/othervm TestDowncall
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit TestDowncall
  */
 
+import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -55,7 +55,7 @@ import static org.testng.Assert.*;
 public class TestDowncall extends CallGeneratorHelper {
 
     static LibraryLookup lib = LibraryLookup.ofLibrary(MethodHandles.lookup(), "TestDowncall");
-    static SystemABI abi = SystemABI.getInstance();
+    static SystemABI abi = Foreign.getInstance().getSystemABI();
 
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)

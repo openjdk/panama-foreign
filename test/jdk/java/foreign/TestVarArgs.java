@@ -28,9 +28,10 @@
  *          jdk.incubator.foreign/jdk.internal.foreign
  *          jdk.incubator.foreign/jdk.internal.foreign.abi
  *          java.base/sun.security.action
- * @run testng TestVarArgs
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit TestVarArgs
  */
 
+import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -65,7 +66,7 @@ public class TestVarArgs extends NativeTestHelper {
 
     static final VarHandle VH_IntArray = MemoryLayout.ofSequence(C_INT).varHandle(int.class, sequenceElement());
 
-    static final SystemABI abi = SystemABI.getInstance();
+    static final SystemABI abi = Foreign.getInstance().getSystemABI();
     static final MemoryAddress varargsAddr;
 
     static {

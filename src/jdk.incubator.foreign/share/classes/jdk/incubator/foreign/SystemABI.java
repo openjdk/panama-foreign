@@ -36,6 +36,8 @@ import java.util.Optional;
 
 /**
  * This class models a system application binary interface (ABI).
+ *
+ * Instances of this class can be obtained by calling {@link Foreign#getSystemABI()}
  */
 public interface SystemABI {
     /**
@@ -92,26 +94,7 @@ public interface SystemABI {
      */
     String name();
 
-    /**
-     * Obtain an instance of the system ABI.
-     * @return system ABI.
-     */
-    static SystemABI getInstance() {
-        String arch = System.getProperty("os.arch");
-        String os = System.getProperty("os.name");
-        if (arch.equals("amd64") || arch.equals("x86_64")) {
-            if (os.startsWith("Windows")) {
-                return Windowsx64ABI.getInstance();
-            } else {
-                return SysVx64ABI.getInstance();
-            }
-        } else if (arch.equals("aarch64")) {
-            return AArch64ABI.getInstance();
-        }
-        throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
-    }
-
-    public enum Type {
+    enum Type {
         /**
          * The {@code _Bool} native type.
          */
@@ -201,5 +184,5 @@ public interface SystemABI {
     /**
      * Returns memory layout for the given native type if supported by the platform ABI.
      */
-    public Optional<MemoryLayout> layoutFor(Type type);
+    Optional<MemoryLayout> layoutFor(Type type);
 }
