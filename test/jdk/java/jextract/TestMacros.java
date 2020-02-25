@@ -28,7 +28,7 @@
  * @test
  * @bug 8239128
  * @build JextractApiTestBase
- * @run testng/othervm -Djdk.incubator.foreign.permitUncheckedSegments=true TestMacros
+ * @run testng/othervm -Djdk.incubator.foreign.restrictedMethods=permit TestMacros
  */
 
 import java.nio.file.Path;

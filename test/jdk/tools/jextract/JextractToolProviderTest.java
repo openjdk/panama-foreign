@@ -38,7 +38,7 @@ import static org.testng.Assert.assertTrue;
  * @modules jdk.incubator.jextract
  * @build JextractToolRunner
  * @run testng/othervm
- *          -Djdk.incubator.foreign.permitUncheckedSegments=true
+ *          -Djdk.incubator.foreign.restrictedMethods=permit
  *          -Duser.language=en
  *          --add-modules jdk.incubator.jextract
  *          JextractToolProviderTest
