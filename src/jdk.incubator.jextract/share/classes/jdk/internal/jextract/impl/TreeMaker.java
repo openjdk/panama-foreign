@@ -81,10 +81,6 @@ class TreeMaker {
         Declaration.Scoped make(Position pos, String name, Declaration... decls);
     }
 
-    interface VarFactoryNoLayout {
-        Declaration.Variable make(Position pos, String name, Type type, Map<String, List<ConstantDesc>> attrs);
-    }
-
     Map<String, List<ConstantDesc>> collectAttributes(Cursor c) {
         return c.children().filter(Cursor::isAttribute)
                 .collect(Collectors.groupingBy(
@@ -103,9 +99,9 @@ class TreeMaker {
                 return createEnumConstant(c);
             case FieldDecl:
                 return createVar(c.isBitField() ?
-                        Declaration.Variable.Kind.BITFIELD : Declaration.Variable.Kind.FIELD, c, Declaration::field, attrs);
+                        Declaration.Variable.Kind.BITFIELD : Declaration.Variable.Kind.FIELD, c, attrs);
             case ParmDecl:
-                return createVar(Declaration.Variable.Kind.PARAMETER, c, Declaration::parameter, attrs);
+                return createVar(Declaration.Variable.Kind.PARAMETER, c, attrs);
             case FunctionDecl:
                 return createFunction(c, attrs);
             case StructDecl:
@@ -116,7 +112,7 @@ class TreeMaker {
                 return createTypedef(c);
             }
             case VarDecl:
-                return createVar(Declaration.Variable.Kind.GLOBAL, c, Declaration::globalVariable, attrs);
+                return createVar(Declaration.Variable.Kind.GLOBAL, c, attrs);
             default:
                 return null;
         }
@@ -178,7 +174,7 @@ class TreeMaker {
             params.add((Declaration.Variable)createTree(c.getArgument(i)));
         }
         return checkCache(c, Declaration.Function.class,
-                ()->Declaration.function(toPos(c), c.spelling(), attrs, (Type.Function)toType(c), params.toArray(new Declaration.Variable[0])));
+                () -> new DeclarationImpl.FunctionImpl((Type.Function)toType(c), params, c.spelling(), toPos(c), attrs));
     }
 
     public Declaration.Constant createMacro(Cursor c, Optional<MacroParserImpl.Macro> macro) {
@@ -251,15 +247,17 @@ class TreeMaker {
         return null;
     }
 
-    private Declaration.Variable createVar(Declaration.Variable.Kind kind, Cursor c, VarFactoryNoLayout varFactory, Map<String, List<ConstantDesc>> attrs) {
+    private Declaration.Variable createVar(Declaration.Variable.Kind kind, Cursor c, Map<String, List<ConstantDesc>> attrs) {
         checkCursorAny(c, CursorKind.VarDecl, CursorKind.FieldDecl, CursorKind.ParmDecl);
         if (c.isBitField()) {
             return checkCache(c, Declaration.Variable.class,
-                    () -> Declaration.bitfield(toPos(c), c.spelling(), toType(c),
-                    MemoryLayout.ofValueBits(c.getBitFieldWidth(), ByteOrder.nativeOrder()), attrs));
+                    () -> DeclarationImpl.VariableImpl.of(toType(c),
+                            MemoryLayout.ofValueBits(c.getBitFieldWidth(), ByteOrder.nativeOrder()),
+                            Declaration.Variable.Kind.BITFIELD,
+                            c.spelling(), toPos(c), attrs));
         } else {
             return checkCache(c, Declaration.Variable.class,
-                    ()->varFactory.make(toPos(c), c.spelling(), toType(c), attrs));
+                    () -> DeclarationImpl.VariableImpl.of(toType(c), kind, c.spelling(), toPos(c), attrs));
         }
     }
 

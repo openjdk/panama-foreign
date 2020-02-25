@@ -68,7 +68,7 @@ public abstract class DeclarationImpl implements Declaration {
     }
 
     @Override
-    public Set<String> availableAttributes() { return Collections.unmodifiableSet(attributes.keySet()); }
+    public Set<String> attributeNames() { return Collections.unmodifiableSet(attributes.keySet()); }
 
     public static class VariableImpl extends DeclarationImpl implements Declaration.Variable {
 
@@ -76,19 +76,27 @@ public abstract class DeclarationImpl implements Declaration {
         final Type type;
         final Optional<MemoryLayout> layout;
 
-        public VariableImpl(Type type, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
-            this(type, LayoutUtils.getLayout(type), kind, name, pos, attrs);
-        }
-
-        public VariableImpl(Type type, MemoryLayout layout, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
-            this(type, Optional.of(layout), kind, name, pos, attrs);
-        }
-
         private VariableImpl(Type type, Optional<MemoryLayout> layout, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
             super(name, pos, attrs);
             this.kind = kind;
             this.type = type;
             this.layout = layout;
+        }
+
+        public VariableImpl(Type type, Variable.Kind kind, String name, Position pos) {
+            this(type, LayoutUtils.getLayout(type), kind, name, pos, Collections.emptyMap());
+        }
+
+        public VariableImpl(Type type, MemoryLayout layout, Variable.Kind kind, String name, Position pos) {
+            this(type, Optional.of(layout), kind, name, pos, Collections.emptyMap());
+        }
+
+        public static VariableImpl of(Type type, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+            return new VariableImpl(type, LayoutUtils.getLayout(type), kind, name, pos, attrs);
+        }
+
+        public static VariableImpl of(Type type, MemoryLayout layout, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+            return new VariableImpl(type, Optional.of(layout), kind, name, pos, attrs);
         }
 
         @Override
@@ -116,6 +124,10 @@ public abstract class DeclarationImpl implements Declaration {
 
         final List<Variable> params;
         final Type.Function type;
+
+        public FunctionImpl(Type.Function type, List<Variable> params, String name, Position pos) {
+            this(type, params, name, pos, Collections.emptyMap());
+        }
 
         public FunctionImpl(Type.Function type, List<Variable> params, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
             super(name, pos, attrs);

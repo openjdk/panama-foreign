@@ -53,7 +53,7 @@ class PrettyPrinter implements Declaration.Visitor<Void, Void> {
     StringBuilder builder = new StringBuilder();
 
     private void getAttributes(Declaration decl) {
-        Set<String> attrs = decl.availableAttributes();
+        Set<String> attrs = decl.attributeNames();
         if (attrs.isEmpty()) {
             return;
         }
