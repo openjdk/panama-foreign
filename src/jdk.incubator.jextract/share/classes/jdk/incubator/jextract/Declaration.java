@@ -26,13 +26,15 @@
 
 package jdk.incubator.jextract;
 
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.internal.jextract.impl.DeclarationImpl;
-
+import java.lang.constant.ConstantDesc;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.internal.jextract.impl.DeclarationImpl;
 
 /**
  * Instances of this class are used to model declaration elements in the foreign language.
@@ -53,6 +55,9 @@ public interface Declaration {
      * @return The name associated with this declaration.
      */
     String name();
+
+    Optional<List<ConstantDesc>> getAttribute(String name);
+    Set<String> availableAttributes();
 
     /**
      * Entry point for visiting declaration instances.
@@ -277,8 +282,8 @@ public interface Declaration {
      * @param type the global variable declaration type.
      * @return a new global variable declaration with given name and type.
      */
-    static Declaration.Variable globalVariable(Position pos, String name, Type type) {
-        return new DeclarationImpl.VariableImpl(type, Declaration.Variable.Kind.GLOBAL, name, pos);
+    static Declaration.Variable globalVariable(Position pos, String name, Type type, Map<String, List<ConstantDesc>> attrs) {
+        return new DeclarationImpl.VariableImpl(type, Declaration.Variable.Kind.GLOBAL, name, pos, attrs);
     }
 
     /**
@@ -288,8 +293,8 @@ public interface Declaration {
      * @param type the field declaration type.
      * @return a new field declaration with given name and type.
      */
-    static Declaration.Variable field(Position pos, String name, Type type) {
-        return new DeclarationImpl.VariableImpl(type, Declaration.Variable.Kind.FIELD, name, pos);
+    static Declaration.Variable field(Position pos, String name, Type type, Map<String, List<ConstantDesc>> attrs) {
+        return new DeclarationImpl.VariableImpl(type, Declaration.Variable.Kind.FIELD, name, pos, attrs);
     }
 
     /**
@@ -300,8 +305,8 @@ public interface Declaration {
      * @param layout the bitfield declaration layout.
      * @return a new bitfield declaration with given name, type and layout.
      */
-    static Declaration.Variable bitfield(Position pos, String name, Type type, MemoryLayout layout) {
-        return new DeclarationImpl.VariableImpl(type, layout, Declaration.Variable.Kind.BITFIELD, name, pos);
+    static Declaration.Variable bitfield(Position pos, String name, Type type, MemoryLayout layout, Map<String, List<ConstantDesc>> attrs) {
+        return new DeclarationImpl.VariableImpl(type, layout, Declaration.Variable.Kind.BITFIELD, name, pos, attrs);
     }
 
     /**
@@ -311,8 +316,8 @@ public interface Declaration {
      * @param type the parameter declaration type.
      * @return a new parameter declaration with given name and type.
      */
-    static Declaration.Variable parameter(Position pos, String name, Type type) {
-        return new DeclarationImpl.VariableImpl(type, Declaration.Variable.Kind.PARAMETER, name, pos);
+    static Declaration.Variable parameter(Position pos, String name, Type type, Map<String, List<ConstantDesc>> attrs) {
+        return new DeclarationImpl.VariableImpl(type, Declaration.Variable.Kind.PARAMETER, name, pos, attrs);
     }
 
     /**
@@ -459,9 +464,9 @@ public interface Declaration {
      * @param params the function declaration parameter declarations.
      * @return a new function declaration with given name, type and parameter declarations.
      */
-    static Declaration.Function function(Position pos, String name, Type.Function type, Declaration.Variable... params) {
+    static Declaration.Function function(Position pos, String name, Map<String, List<ConstantDesc>> attrs, Type.Function type, Declaration.Variable... params) {
         List<Variable> paramList = Stream.of(params).collect(Collectors.toList());
-        return new DeclarationImpl.FunctionImpl(type, paramList, name, pos);
+        return new DeclarationImpl.FunctionImpl(type, paramList, name, pos, attrs);
     }
 
     /**

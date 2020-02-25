@@ -26,22 +26,27 @@
 
 package jdk.internal.jextract.impl;
 
+import java.lang.constant.ConstantDesc;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Position;
 import jdk.incubator.jextract.Type;
 
-import java.util.List;
-import java.util.Optional;
-
 public abstract class DeclarationImpl implements Declaration {
 
     private final String name;
     private final Position pos;
+    private final Map<String, List<ConstantDesc>> attributes;
 
-    public DeclarationImpl(String name, Position pos) {
+    public DeclarationImpl(String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
         this.name = name;
         this.pos = pos;
+        this.attributes = attrs;
     }
 
     public String toString() {
@@ -57,22 +62,30 @@ public abstract class DeclarationImpl implements Declaration {
         return pos;
     }
 
+    @Override
+    public Optional<List<ConstantDesc>> getAttribute(String name) {
+        return Optional.ofNullable(attributes.get(name));
+    }
+
+    @Override
+    public Set<String> availableAttributes() { return Collections.unmodifiableSet(attributes.keySet()); }
+
     public static class VariableImpl extends DeclarationImpl implements Declaration.Variable {
 
         final Variable.Kind kind;
         final Type type;
         final Optional<MemoryLayout> layout;
 
-        public VariableImpl(Type type, Variable.Kind kind, String name, Position pos) {
-            this(type, LayoutUtils.getLayout(type), kind, name, pos);
+        public VariableImpl(Type type, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+            this(type, LayoutUtils.getLayout(type), kind, name, pos, attrs);
         }
 
-        public VariableImpl(Type type, MemoryLayout layout, Variable.Kind kind, String name, Position pos) {
-            this(type, Optional.of(layout), kind, name, pos);
+        public VariableImpl(Type type, MemoryLayout layout, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+            this(type, Optional.of(layout), kind, name, pos, attrs);
         }
 
-        private VariableImpl(Type type, Optional<MemoryLayout> layout, Variable.Kind kind, String name, Position pos) {
-            super(name, pos);
+        private VariableImpl(Type type, Optional<MemoryLayout> layout, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+            super(name, pos, attrs);
             this.kind = kind;
             this.type = type;
             this.layout = layout;
@@ -104,8 +117,8 @@ public abstract class DeclarationImpl implements Declaration {
         final List<Variable> params;
         final Type.Function type;
 
-        public FunctionImpl(Type.Function type, List<Variable> params, String name, Position pos) {
-            super(name, pos);
+        public FunctionImpl(Type.Function type, List<Variable> params, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+            super(name, pos, attrs);
             this.params = params;
             this.type = type;
         }
@@ -141,7 +154,7 @@ public abstract class DeclarationImpl implements Declaration {
         }
 
         ScopedImpl(Kind kind, Optional<MemoryLayout> optLayout, List<Declaration> declarations, String name, Position pos) {
-            super(name, pos);
+            super(name, pos, Collections.emptyMap());
             this.kind = kind;
             this.declarations = declarations;
             this.optLayout = optLayout;
@@ -174,7 +187,11 @@ public abstract class DeclarationImpl implements Declaration {
         final Type type;
 
         public ConstantImpl(Type type, Object value, String name, Position pos) {
-            super(name, pos);
+            this(type, value, name, pos, Collections.emptyMap());
+        }
+
+        public ConstantImpl(Type type, Object value, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+            super(name, pos, attrs);
             this.value = value;
             this.type = type;
         }

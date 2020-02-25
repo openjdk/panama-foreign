@@ -25,6 +25,7 @@
  */
 package jdk.internal.jextract.impl;
 
+import java.lang.constant.ConstantDesc;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -81,22 +82,32 @@ class TreeMaker {
     }
 
     interface VarFactoryNoLayout {
-        Declaration.Variable make(Position pos, String name, Type type);
+        Declaration.Variable make(Position pos, String name, Type type, Map<String, List<ConstantDesc>> attrs);
+    }
+
+    Map<String, List<ConstantDesc>> collectAttributes(Cursor c) {
+        return c.children().filter(Cursor::isAttribute)
+                .collect(Collectors.groupingBy(
+                        attr -> attr.kind().name(),
+                        Collectors.mapping(Cursor::spelling, Collectors.toList())
+                ));
     }
 
     public Declaration createTree(Cursor c) {
-        switch (Objects.requireNonNull(c).kind()) {
+        Objects.requireNonNull(c);
+        Map<String, List<ConstantDesc>> attrs = collectAttributes(c);
+        switch (c.kind()) {
             case EnumDecl:
                 return createScoped(c, Declaration.Scoped.Kind.ENUM, Declaration::enum_, Declaration::enum_);
             case EnumConstantDecl:
                 return createEnumConstant(c);
             case FieldDecl:
                 return createVar(c.isBitField() ?
-                        Declaration.Variable.Kind.BITFIELD : Declaration.Variable.Kind.FIELD, c, Declaration::field);
+                        Declaration.Variable.Kind.BITFIELD : Declaration.Variable.Kind.FIELD, c, Declaration::field, attrs);
             case ParmDecl:
-                return createVar(Declaration.Variable.Kind.PARAMETER, c, Declaration::parameter);
+                return createVar(Declaration.Variable.Kind.PARAMETER, c, Declaration::parameter, attrs);
             case FunctionDecl:
-                return createFunction(c);
+                return createFunction(c, attrs);
             case StructDecl:
                 return createScoped(c, Declaration.Scoped.Kind.STRUCT, Declaration::struct, Declaration::struct);
             case UnionDecl:
@@ -105,7 +116,7 @@ class TreeMaker {
                 return createTypedef(c);
             }
             case VarDecl:
-                return createVar(Declaration.Variable.Kind.GLOBAL, c, Declaration::globalVariable);
+                return createVar(Declaration.Variable.Kind.GLOBAL, c, Declaration::globalVariable, attrs);
             default:
                 return null;
         }
@@ -155,16 +166,19 @@ class TreeMaker {
         public Cursor cursor() {
             return cursor;
         }
+
+        @Override
+        public String toString() { return PrettyPrinter.position(this); }
     }
 
-    public Declaration.Function createFunction(Cursor c) {
+    public Declaration.Function createFunction(Cursor c, Map<String, List<ConstantDesc>> attrs) {
         checkCursor(c, CursorKind.FunctionDecl);
         List<Declaration.Variable> params = new ArrayList<>();
         for (int i = 0 ; i < c.numberOfArgs() ; i++) {
             params.add((Declaration.Variable)createTree(c.getArgument(i)));
         }
         return checkCache(c, Declaration.Function.class,
-                ()->Declaration.function(toPos(c), c.spelling(), (Type.Function)toType(c), params.toArray(new Declaration.Variable[0])));
+                ()->Declaration.function(toPos(c), c.spelling(), attrs, (Type.Function)toType(c), params.toArray(new Declaration.Variable[0])));
     }
 
     public Declaration.Constant createMacro(Cursor c, Optional<MacroParserImpl.Macro> macro) {
@@ -218,7 +232,10 @@ class TreeMaker {
     private List<Declaration> filterNestedDeclarations(List<Declaration> declarations) {
         return declarations.stream()
                 .filter(Objects::nonNull)
-                .filter(d -> !d.name().isEmpty() || ((CursorPosition)d.pos()).cursor.isAnonymousStruct())
+                .filter(d -> !d.name().isEmpty() ||
+                    ((CursorPosition)d.pos()).cursor.isAnonymousStruct() ||
+                    // Somehow clang isAnonymous() not apply to enum
+                    ((CursorPosition)d.pos()).cursor.kind() == CursorKind.EnumDecl)
                 .collect(Collectors.toList());
     }
 
@@ -234,15 +251,15 @@ class TreeMaker {
         return null;
     }
 
-    private Declaration.Variable createVar(Declaration.Variable.Kind kind, Cursor c, VarFactoryNoLayout varFactory) {
+    private Declaration.Variable createVar(Declaration.Variable.Kind kind, Cursor c, VarFactoryNoLayout varFactory, Map<String, List<ConstantDesc>> attrs) {
         checkCursorAny(c, CursorKind.VarDecl, CursorKind.FieldDecl, CursorKind.ParmDecl);
         if (c.isBitField()) {
             return checkCache(c, Declaration.Variable.class,
                     () -> Declaration.bitfield(toPos(c), c.spelling(), toType(c),
-                    MemoryLayout.ofValueBits(c.getBitFieldWidth(), ByteOrder.nativeOrder())));
+                    MemoryLayout.ofValueBits(c.getBitFieldWidth(), ByteOrder.nativeOrder()), attrs));
         } else {
             return checkCache(c, Declaration.Variable.class,
-                    ()->varFactory.make(toPos(c), c.spelling(), toType(c)));
+                    ()->varFactory.make(toPos(c), c.spelling(), toType(c), attrs));
         }
     }
 
