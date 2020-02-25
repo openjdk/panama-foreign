@@ -28,6 +28,6 @@ include LauncherCommon.gmk
 $(eval $(call SetupBuildLauncher, jextract,\
     CFLAGS := -DENABLE_ARG_FILES, \
     MAIN_CLASS := jdk.incubator.jextract.tool.Main, \
-		JAVA_ARGS := -Djdk.incubator.foreign.permitUncheckedSegments=true, \
+    JAVA_ARGS := -Djdk.incubator.foreign.permitUncheckedSegments=true, \
 ))
 
