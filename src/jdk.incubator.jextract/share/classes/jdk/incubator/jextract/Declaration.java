@@ -56,7 +56,17 @@ public interface Declaration {
      */
     String name();
 
+    /**
+     * The values of the specified attribute.
+     * @param name The attribute to retrieve
+     * @return The list of values associate with this attribute
+     */
     Optional<List<ConstantDesc>> getAttribute(String name);
+
+    /**
+     * The attributes associated with this declaration
+     * @return The attributes associated with this declaration
+     */
     Set<String> availableAttributes();
 
     /**
