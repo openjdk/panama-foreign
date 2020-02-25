@@ -255,14 +255,17 @@ class JavaSourceBuilder {
     }
 
     private void addFunction(FunctionDescriptor f) {
+        final boolean noArgs = f.argumentLayouts().isEmpty();
         if (f.returnLayout().isPresent()) {
             sb.append("FunctionDescriptor.of(");
             addLayout(f.returnLayout().get());
-            sb.append(", ");
+            if (!noArgs) {
+                sb.append(", ");
+            }
         } else {
             sb.append("FunctionDescriptor.ofVoid(");
         }
-        if (!f.argumentLayouts().isEmpty()) {
+        if (!noArgs) {
             sb.append("\n");
             incrAlign();
             String delim = "";
