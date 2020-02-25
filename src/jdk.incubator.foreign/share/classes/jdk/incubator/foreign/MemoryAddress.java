@@ -150,7 +150,7 @@ public interface MemoryAddress {
      * Obtain the base object (if any) associated with this address. This can be used in conjunction with
      * {@link #getUnsafeOffset(MemoryAddress)} in order to obtain a base/offset addressing coordinate pair
      * to be used with methods like {@link sun.misc.Unsafe#getInt(Object, long)} and the likes.
-     *
+     * <p>
      * This method is <em>unsafe</em>. It's use can result in putting the VM in a corrupt state when used incorrectly,
      * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
      * are no guarantees made about the behaviour of the program. Particularly, incorrect use is not guaranteed to
@@ -173,7 +173,7 @@ public interface MemoryAddress {
      * Alternatively, the offset represents the displacement of a field or an array element within the containing
      * base object. This can be used in conjunction with {@link #getUnsafeBase(MemoryAddress)} in order to obtain a base/offset
      * addressing coordinate pair to be used with methods like {@link sun.misc.Unsafe#getInt(Object, long)} and the likes.
-     *
+     * <p>
      * This method is <em>unsafe</em>. It's use can result in putting the VM in a corrupt state when used incorrectly,
      * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
      * are no guarantees made about the behaviour of the program. Particularly, incorrect use is not guaranteed to

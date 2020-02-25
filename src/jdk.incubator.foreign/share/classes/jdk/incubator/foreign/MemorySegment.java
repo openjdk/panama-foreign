@@ -430,13 +430,13 @@ public interface MemorySegment extends AutoCloseable {
      * Returns a new native memory segment with given base address and size. The returned segment has its own temporal
      * bounds, and can therefore be closed; closing such a segment does <em>not</em> result in any resource being
      * deallocated.
-     *
+     * <p>
      * This method is <em>unsafe</em>. It's use can result in putting the VM in a corrupt state when used incorrectly,
      * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
      * are no guarantees made about the behaviour of the program. Particularly, incorrect use is not guaranteed to
      * result in a VM crash, but might instead silently cause memory to be corrupted.
-     *
-     * Particularly, this method allows for making an otherwise in-accessible memory region accessible. However, there
+     * <p>
+     * This method allows for making an otherwise in-accessible memory region accessible. However, there
      * is no guarantee that this memory is safe to access, or that the given size for the new segment is not too large,
      * potentially resulting in out-of-bounds accesses. The developer is trusted to make the judgement that the use of the
      * returned memory segment is safe.
