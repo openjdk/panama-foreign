@@ -39,6 +39,7 @@ import jdk.internal.misc.Unsafe;
 import sun.invoke.util.Wrapper;
 import sun.nio.ch.FileChannelImpl;
 import sun.security.action.GetBooleanAction;
+import sun.security.action.GetPropertyAction;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
@@ -89,9 +90,22 @@ public final class Utils {
     private static final JavaNioAccess javaNioAccess = SharedSecrets.getJavaNioAccess();
     private static final JavaLangInvokeAccess javaLangInvokeAccess = SharedSecrets.getJavaLangInvokeAccess();
 
-    public static final boolean premitUncheckedSegments = GetBooleanAction.privilegedGetProperty("jdk.incubator.foreign.permitUncheckedSegments");
-    public static final boolean permitUnsafeInterop = GetBooleanAction.privilegedGetProperty("jdk.incubator.foreign.permitUnsafeInterop");
+    private static final String restrictedMethods = GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.restrictedMethods", "deny");
     private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
+
+    public static void checkUnsafeAccess(String sourceMethod) {
+        switch (restrictedMethods) {
+            case "deny" ->
+                throw new IllegalAccessError("Can not access unsafe method: " + sourceMethod + "." +
+                        " jdk.incubator.foreign.permitUnsafe is set to 'deny'");
+            case "warn" ->
+                System.err.println("WARNING: Accessing unsafe method: " + sourceMethod);
+            case "debug" ->
+                System.out.println("DEBUG: Accessing unsafe method: " + sourceMethod);
+            case "permit" -> {}
+            default -> {}
+        }
+    }
 
     public static long alignUp(long n, long alignment) {
         return (n + alignment - 1) & -alignment;

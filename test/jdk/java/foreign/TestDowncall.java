@@ -32,7 +32,7 @@
  *          java.base/sun.security.action
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
- * @run testng/othervm -Djdk.incubator.foreign.permitUnsafeInterop=true TestDowncall
+ * @run testng/othervm -Djdk.incubator.foreign.restrictedMethods=permit TestDowncall
  */
 
 import jdk.incubator.foreign.FunctionDescriptor;

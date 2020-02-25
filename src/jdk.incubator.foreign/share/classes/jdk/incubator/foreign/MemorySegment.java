@@ -28,7 +28,6 @@ package jdk.incubator.foreign;
 
 import java.nio.ByteBuffer;
 
-import jdk.internal.foreign.MemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 
 import java.io.IOException;
@@ -431,10 +430,10 @@ public interface MemorySegment extends AutoCloseable {
      * bounds, and can therefore be closed; closing such a segment does <em>not</em> result in any resource being
      * deallocated.
      * <p>
-     * This method is <em>unsafe</em>. It's use can result in putting the VM in a corrupt state when used incorrectly,
+     * This method is <em>unsafe</em>. Its use can result in putting the VM in a corrupt state when used incorrectly,
      * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
-     * are no guarantees made about the behaviour of the program. Particularly, incorrect use is not guaranteed to
-     * result in a VM crash, but might instead silently cause memory to be corrupted.
+     * are no guarantees made about the behaviour of the program. More specifically, incorrect uses of this method might
+     * result in a JVM crash or, worse, might silently result in memory corruption.
      * <p>
      * This method allows for making an otherwise in-accessible memory region accessible. However, there
      * is no guarantee that this memory is safe to access, or that the given size for the new segment is not too large,
@@ -445,12 +444,10 @@ public interface MemorySegment extends AutoCloseable {
      * @param byteSize the desired size.
      * @return a new native memory segment with given base address and size.
      * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address.
-     * @throws IllegalAccessError if the permission jkd.incubator.foreign.premitUncheckedSegments is not set
+     * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
      */
     static MemorySegment ofNativeUnchecked(MemoryAddress base, long byteSize) throws IllegalAccessError {
-        if (!Utils.premitUncheckedSegments) {
-            throw new IllegalAccessError("Can not create unchecked segments. Permission is not enabled");
-        }
+        Utils.checkUnsafeAccess("jdk.incubator.foreign.MemorySegment#ofNativeUnchecked");
         return Utils.makeNativeSegmentUnchecked(base, byteSize);
     }
 }

@@ -26,7 +26,7 @@
  * @test
  * @modules java.base/jdk.internal.misc
  *          jdk.incubator.foreign/jdk.incubator.foreign.unsafe
- * @run testng/othervm -Djdk.incubator.foreign.permitUnsafeInterop=true TestNative
+ * @run testng/othervm -Djdk.incubator.foreign.restrictedMethods=permit TestNative
  */
 
 import jdk.incubator.foreign.MemoryLayouts;

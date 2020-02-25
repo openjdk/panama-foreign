@@ -151,19 +151,17 @@ public interface MemoryAddress {
      * {@link #getUnsafeOffset(MemoryAddress)} in order to obtain a base/offset addressing coordinate pair
      * to be used with methods like {@link sun.misc.Unsafe#getInt(Object, long)} and the likes.
      * <p>
-     * This method is <em>unsafe</em>. It's use can result in putting the VM in a corrupt state when used incorrectly,
+     * This method is <em>unsafe</em>. Its use can result in putting the VM in a corrupt state when used incorrectly,
      * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
-     * are no guarantees made about the behaviour of the program. Particularly, incorrect use is not guaranteed to
-     * result in a VM crash, but might instead silently cause memory to be corrupted.
+     * are no guarantees made about the behaviour of the program. More specifically, incorrect uses of this method might
+     * result in a JVM crash or, worse, might silently result in memory corruption.
      *
      * @param address the address whose base object is to be obtained.
      * @return the base object associated with the address, or {@code null}.
-     * @throws IllegalAccessError if the permission jkd.incubator.foreign.permitUnsafeInterop is not set
+     * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
      */
     static Object getUnsafeBase(MemoryAddress address) throws IllegalAccessError {
-        if (!Utils.permitUnsafeInterop) {
-            throw new IllegalAccessError("Can not get unsafe base. Permission is not enabled");
-        }
+        Utils.checkUnsafeAccess("jdk.incubator.foreign.MemoryAddress#getUnsafeBase");
         return ((MemoryAddressImpl)address).unsafeGetBase();
     }
 
@@ -174,19 +172,17 @@ public interface MemoryAddress {
      * base object. This can be used in conjunction with {@link #getUnsafeBase(MemoryAddress)} in order to obtain a base/offset
      * addressing coordinate pair to be used with methods like {@link sun.misc.Unsafe#getInt(Object, long)} and the likes.
      * <p>
-     * This method is <em>unsafe</em>. It's use can result in putting the VM in a corrupt state when used incorrectly,
+     * This method is <em>unsafe</em>. Its use can result in putting the VM in a corrupt state when used incorrectly,
      * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
-     * are no guarantees made about the behaviour of the program. Particularly, incorrect use is not guaranteed to
-     * result in a VM crash, but might instead silently cause memory to be corrupted.
+     * are no guarantees made about the behaviour of the program. More specifically, incorrect uses of this method might
+     * result in a JVM crash or, worse, might silently result in memory corruption.
      *
      * @param address the address whose offset is to be obtained.
      * @return the offset associated with the address.
-     * @throws IllegalAccessError if the permission jkd.incubator.foreign.permitUnsafeInterop is not set
+     * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
      */
     static long getUnsafeOffset(MemoryAddress address) throws IllegalAccessError {
-        if (!Utils.permitUnsafeInterop) {
-            throw new IllegalAccessError("Can not get unsafe offset. Permission is not enabled");
-        }
+        Utils.checkUnsafeAccess("jdk.incubator.foreign.MemoryAddress#getUnsafeOffset");
         return ((MemoryAddressImpl)address).unsafeGetOffset();
     }
 }

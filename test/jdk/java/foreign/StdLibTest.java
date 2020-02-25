@@ -30,7 +30,7 @@
  *          jdk.incubator.foreign/jdk.internal.foreign.abi
  *          java.base/sun.security.action
  * @build NativeTestHelper StdLibTest
- * @run testng/othervm -Djdk.incubator.foreign.permitUncheckedSegments=true StdLibTest
+ * @run testng/othervm -Djdk.incubator.foreign.restrictedMethods=permit StdLibTest
  */
 
 import java.lang.invoke.MethodHandle;
