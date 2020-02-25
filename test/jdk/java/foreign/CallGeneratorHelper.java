@@ -27,7 +27,6 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import jdk.internal.foreign.Utils;
 
 import java.lang.invoke.VarHandle;
@@ -391,7 +390,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
             List<Consumer<Object>> fieldsCheck = new ArrayList<>();
             Object value = makeArg(l, fieldsCheck, check);
             if (isPointer(l)) {
-                value = ForeignUnsafe.getUnsafeOffset((MemoryAddress)value);
+                value = MemoryAddress.getUnsafeOffset((MemoryAddress)value);
             }
             //set value
             accessor.set(str.baseAddress(), value);

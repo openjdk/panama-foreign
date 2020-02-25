@@ -26,13 +26,12 @@
  * @test
  * @modules java.base/jdk.internal.misc
  *          jdk.incubator.foreign/jdk.incubator.foreign.unsafe
- * @run testng TestNative
+ * @run testng/othervm -Djdk.incubator.foreign.permitUnsafeInterop=true TestNative
  */
 
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
-import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import jdk.internal.misc.Unsafe;
 import org.testng.annotations.*;
 
@@ -118,7 +117,7 @@ public class TestNative {
         for (long i = 0 ; i < nelems ; i++) {
             Object handleValue = handleExtractor.apply(base, i);
             Object bufferValue = nativeBufferExtractor.apply(z, (int)i);
-            Object rawValue = nativeRawExtractor.apply(ForeignUnsafe.getUnsafeOffset(base), (int)i);
+            Object rawValue = nativeRawExtractor.apply(MemoryAddress.getUnsafeOffset(base), (int)i);
             if (handleValue instanceof Number) {
                 assertEquals(((Number)handleValue).longValue(), i);
                 assertEquals(((Number)bufferValue).longValue(), i);

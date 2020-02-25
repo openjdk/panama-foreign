@@ -28,6 +28,7 @@ package jdk.incubator.foreign;
 
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.MemorySegmentImpl;
+import jdk.internal.foreign.Utils;
 
 /**
  * A memory address encodes an offset within a given {@link MemorySegment}. Memory addresses are typically obtained
@@ -141,5 +142,51 @@ public interface MemoryAddress {
         return value == 0 ?
                 NULL :
                 MemorySegmentImpl.NOTHING.baseAddress().addOffset(value);
+    }
+
+    // The following methods can be used in conjunction with the java.foreign API.
+
+    /**
+     * Obtain the base object (if any) associated with this address. This can be used in conjunction with
+     * {@link #getUnsafeOffset(MemoryAddress)} in order to obtain a base/offset addressing coordinate pair
+     * to be used with methods like {@link sun.misc.Unsafe#getInt(Object, long)} and the likes.
+     *
+     * This method is <em>unsafe</em>. It's use can result in putting the VM in a corrupt state when used incorrectly,
+     * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
+     * are no guarantees made about the behaviour of the program. Particularly, incorrect use is not guaranteed to
+     * result in a VM crash, but might instead silently cause memory to be corrupted.
+     *
+     * @param address the address whose base object is to be obtained.
+     * @return the base object associated with the address, or {@code null}.
+     * @throws IllegalAccessError if the permission jkd.incubator.foreign.permitUnsafeInterop is not set
+     */
+    static Object getUnsafeBase(MemoryAddress address) throws IllegalAccessError {
+        if (!Utils.permitUnsafeInterop) {
+            throw new IllegalAccessError("Can not get unsafe base. Permission is not enabled");
+        }
+        return ((MemoryAddressImpl)address).unsafeGetBase();
+    }
+
+    /**
+     * Obtain the offset associated with this address. If {@link #getUnsafeBase(MemoryAddress)} returns {@code null} on the passed
+     * address, then the offset is to be interpreted as the (absolute) numerical value associated said address.
+     * Alternatively, the offset represents the displacement of a field or an array element within the containing
+     * base object. This can be used in conjunction with {@link #getUnsafeBase(MemoryAddress)} in order to obtain a base/offset
+     * addressing coordinate pair to be used with methods like {@link sun.misc.Unsafe#getInt(Object, long)} and the likes.
+     *
+     * This method is <em>unsafe</em>. It's use can result in putting the VM in a corrupt state when used incorrectly,
+     * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
+     * are no guarantees made about the behaviour of the program. Particularly, incorrect use is not guaranteed to
+     * result in a VM crash, but might instead silently cause memory to be corrupted.
+     *
+     * @param address the address whose offset is to be obtained.
+     * @return the offset associated with the address.
+     * @throws IllegalAccessError if the permission jkd.incubator.foreign.permitUnsafeInterop is not set
+     */
+    static long getUnsafeOffset(MemoryAddress address) throws IllegalAccessError {
+        if (!Utils.permitUnsafeInterop) {
+            throw new IllegalAccessError("Can not get unsafe offset. Permission is not enabled");
+        }
+        return ((MemoryAddressImpl)address).unsafeGetOffset();
     }
 }

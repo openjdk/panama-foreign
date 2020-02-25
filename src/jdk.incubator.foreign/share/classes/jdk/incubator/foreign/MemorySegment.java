@@ -28,6 +28,7 @@ package jdk.incubator.foreign;
 
 import java.nio.ByteBuffer;
 
+import jdk.internal.foreign.MemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 
 import java.io.IOException;
@@ -423,5 +424,33 @@ public interface MemorySegment extends AutoCloseable {
         }
 
         return Utils.makeNativeSegment(bytesSize, alignmentBytes);
+    }
+
+    /**
+     * Returns a new native memory segment with given base address and size. The returned segment has its own temporal
+     * bounds, and can therefore be closed; closing such a segment does <em>not</em> result in any resource being
+     * deallocated.
+     *
+     * This method is <em>unsafe</em>. It's use can result in putting the VM in a corrupt state when used incorrectly,
+     * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
+     * are no guarantees made about the behaviour of the program. Particularly, incorrect use is not guaranteed to
+     * result in a VM crash, but might instead silently cause memory to be corrupted.
+     *
+     * Particularly, this method allows for making an otherwise in-accessible memory region accessible. However, there
+     * is no guarantee that this memory is safe to access, or that the given size for the new segment is not too large,
+     * potentially resulting in out-of-bounds accesses. The developer is trusted to make the judgement that the use of the
+     * returned memory segment is safe.
+     *
+     * @param base the desired base address
+     * @param byteSize the desired size.
+     * @return a new native memory segment with given base address and size.
+     * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address.
+     * @throws IllegalAccessError if the permission jkd.incubator.foreign.premitUncheckedSegments is not set
+     */
+    static MemorySegment ofNativeUnchecked(MemoryAddress base, long byteSize) throws IllegalAccessError {
+        if (!Utils.premitUncheckedSegments) {
+            throw new IllegalAccessError("Can not create unchecked segments. Permission is not enabled");
+        }
+        return Utils.makeNativeSegmentUnchecked(base, byteSize);
     }
 }

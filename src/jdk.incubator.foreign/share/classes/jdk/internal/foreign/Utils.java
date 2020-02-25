@@ -89,6 +89,8 @@ public final class Utils {
     private static final JavaNioAccess javaNioAccess = SharedSecrets.getJavaNioAccess();
     private static final JavaLangInvokeAccess javaLangInvokeAccess = SharedSecrets.getJavaLangInvokeAccess();
 
+    public static final boolean premitUncheckedSegments = GetBooleanAction.privilegedGetProperty("jdk.incubator.foreign.permitUncheckedSegments");
+    public static final boolean permitUnsafeInterop = GetBooleanAction.privilegedGetProperty("jdk.incubator.foreign.permitUnsafeInterop");
     private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
     public static long alignUp(long n, long alignment) {

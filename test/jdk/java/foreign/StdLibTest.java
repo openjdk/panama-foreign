@@ -30,8 +30,7 @@
  *          jdk.incubator.foreign/jdk.internal.foreign.abi
  *          java.base/sun.security.action
  * @build NativeTestHelper StdLibTest
- * @run testng StdLibTest
- * @run testng/othervm -Djdk.internal.foreign.NativeInvoker.FASTPATH=none -Djdk.internal.foreign.UpcallHandler.FASTPATH=none StdLibTest
+ * @run testng/othervm -Djdk.incubator.foreign.permitUncheckedSegments=true StdLibTest
  */
 
 import java.lang.invoke.MethodHandle;
@@ -62,7 +61,6 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import org.testng.annotations.*;
 
 import static jdk.incubator.foreign.MemoryLayouts.*;
@@ -269,7 +267,7 @@ public class StdLibTest extends NativeTestHelper {
             static final long SIZE = 56;
 
             Tm(MemoryAddress base) {
-                this.base = base.rebase(ForeignUnsafe.ofNativeUnchecked(base, SIZE));
+                this.base = base.rebase(MemorySegment.ofNativeUnchecked(base, SIZE));
             }
 
             int sec() {

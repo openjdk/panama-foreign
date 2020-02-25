@@ -30,8 +30,7 @@
  *          java.base/sun.security.action
  * @build NativeTestHelper CallGeneratorHelper TestUpcall
  *
- * @run testng/othervm -Djdk.internal.foreign.UpcallHandler.FASTPATH=none TestUpcall
- * @run testng/othervm TestUpcall
+ * @run testng/othervm -Djdk.incubator.foreign.permitUnsafeInterop=true TestUpcall
  */
 
 import jdk.incubator.foreign.FunctionDescriptor;
