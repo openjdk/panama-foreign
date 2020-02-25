@@ -35,5 +35,4 @@ module jdk.incubator.foreign {
     exports jdk.internal.foreign.abi.aarch64 to jdk.incubator.jextract;
     exports jdk.internal.foreign.abi.x64.sysv to jdk.incubator.jextract;
     exports jdk.internal.foreign.abi.x64.windows to jdk.incubator.jextract;
-    exports jdk.incubator.foreign.unsafe to jdk.incubator.jextract;
 }

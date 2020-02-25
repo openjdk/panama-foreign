@@ -27,7 +27,7 @@
 /*
  * @test
  * @build JextractApiTestBase
- * @run testng SmokeTest
+ * @run testng/othervm -Djdk.incubator.foreign.permitUncheckedSegments=true SmokeTest
  */
 
 import jdk.incubator.jextract.Declaration;

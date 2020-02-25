@@ -29,7 +29,6 @@ package jdk.internal.clang;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import jdk.internal.clang.libclang.Index_h;
 import jdk.internal.jextract.impl.LayoutUtils;
 
@@ -151,7 +150,7 @@ public class TranslationUnit implements AutoCloseable {
 
         public MemorySegment getTokenSegment(int idx) {
             MemoryAddress p = ar.addOffset(idx * Index_h.CXToken$LAYOUT.byteSize());
-            return ForeignUnsafe.ofNativeUnchecked(p, Index_h.CXToken$LAYOUT.byteSize());
+            return MemorySegment.ofNativeUnchecked(p, Index_h.CXToken$LAYOUT.byteSize());
         }
 
         public Token getToken(int index) {
