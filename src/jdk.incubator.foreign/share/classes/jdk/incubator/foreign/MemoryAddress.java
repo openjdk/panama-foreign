@@ -149,10 +149,9 @@ public interface MemoryAddress {
     /**
      * Returns the absolute address represented by the given off-heap memory address as a {@code long}.
      * <p>
-     * This method is <em>unsafe</em>. Its use can result in putting the VM in a corrupt state when used incorrectly,
-     * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
-     * are no guarantees made about the behaviour of the program. More specifically, incorrect uses of this method might
-     * result in a JVM crash or, worse, might silently result in memory corruption.
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param address the address to turn into a {@code long}
      * @return the address as a {@code long}
@@ -160,7 +159,7 @@ public interface MemoryAddress {
      * @throws IllegalStateException if the given address is not an off-heap address
      */
     static long asLong(MemoryAddress address) throws IllegalAccessError {
-        Utils.checkUnsafeAccess("jdk.incubator.foreign.MemoryAddress#getUnsafeOffset");
+        Utils.checkRestrictedAcccess("jdk.incubator.foreign.MemoryAddress#asLong");
         return MemoryAddressImpl.addressof(address);
     }
 }

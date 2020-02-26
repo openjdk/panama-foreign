@@ -93,15 +93,32 @@ public final class Utils {
     private static final String restrictedMethods = GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.restrictedMethods", "deny");
     private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
-    public static void checkUnsafeAccess(String sourceMethod) {
+    private static boolean isBootModuleCaller() {
+        Class<?> caller = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
+                .walk(s -> s.skip(3).findFirst().orElseThrow().getDeclaringClass());
+        return ModuleLayer.boot().modules().contains(caller.getModule());
+    }
+
+    public static void checkRestrictedAcccess(String sourceMethod) {
         switch (restrictedMethods) {
-            case "deny" ->
-                throw new IllegalAccessError("Can not access unsafe method: " + sourceMethod + "." +
-                        " jdk.incubator.foreign.permitUnsafe is set to 'deny'");
-            case "warn" ->
-                System.err.println("WARNING: Accessing unsafe method: " + sourceMethod);
-            case "debug" ->
-                System.out.println("DEBUG: Accessing unsafe method: " + sourceMethod);
+            case "deny" -> {
+                if (isBootModuleCaller()) return;
+                throw new IllegalAccessError("Can not access restricted method: " + sourceMethod + "." +
+                        " jdk.incubator.foreign.restrictedMethods is set to 'deny'");
+            }
+            case "warn" -> {
+                if (isBootModuleCaller()) return;
+                System.err.println("WARNING: Accessing restricted method: " + sourceMethod);
+            }
+            case "debug" -> {
+                StringBuilder sb = new StringBuilder("DEBUG: Accessing restricted method: " + sourceMethod);
+                StackWalker.getInstance().walk(s -> {
+                    s.skip(2)
+                     .forEach(f -> sb.append(System.lineSeparator()).append("\tat " + f));
+                    return null;
+                });
+                System.out.println(sb.toString());
+            }
             case "permit" -> {}
             default -> {}
         }

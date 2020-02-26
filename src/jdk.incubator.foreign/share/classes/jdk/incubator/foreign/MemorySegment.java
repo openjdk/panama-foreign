@@ -430,10 +430,9 @@ public interface MemorySegment extends AutoCloseable {
      * bounds, and can therefore be closed; closing such a segment does <em>not</em> result in any resource being
      * deallocated.
      * <p>
-     * This method is <em>unsafe</em>. Its use can result in putting the VM in a corrupt state when used incorrectly,
-     * and is provided solely to cover use-cases that can not otherwise be addressed safely. When used incorrectly, there
-     * are no guarantees made about the behaviour of the program. More specifically, incorrect uses of this method might
-     * result in a JVM crash or, worse, might silently result in memory corruption.
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
      * <p>
      * This method allows for making an otherwise in-accessible memory region accessible. However, there
      * is no guarantee that this memory is safe to access, or that the given size for the new segment is not too large,
@@ -447,7 +446,7 @@ public interface MemorySegment extends AutoCloseable {
      * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
      */
     static MemorySegment ofNativeUnchecked(MemoryAddress base, long byteSize) throws IllegalAccessError {
-        Utils.checkUnsafeAccess("jdk.incubator.foreign.MemorySegment#ofNativeUnchecked");
+        Utils.checkRestrictedAcccess("jdk.incubator.foreign.MemorySegment#ofNativeUnchecked");
         return Utils.makeNativeSegmentUnchecked(base, byteSize);
     }
 }
