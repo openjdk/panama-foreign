@@ -390,7 +390,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
             List<Consumer<Object>> fieldsCheck = new ArrayList<>();
             Object value = makeArg(l, fieldsCheck, check);
             if (isPointer(l)) {
-                value = MemoryAddress.getUnsafeOffset((MemoryAddress)value);
+                value = MemoryAddress.asLong((MemoryAddress)value);
             }
             //set value
             accessor.set(str.baseAddress(), value);

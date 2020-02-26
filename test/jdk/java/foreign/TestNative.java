@@ -117,7 +117,7 @@ public class TestNative {
         for (long i = 0 ; i < nelems ; i++) {
             Object handleValue = handleExtractor.apply(base, i);
             Object bufferValue = nativeBufferExtractor.apply(z, (int)i);
-            Object rawValue = nativeRawExtractor.apply(MemoryAddress.getUnsafeOffset(base), (int)i);
+            Object rawValue = nativeRawExtractor.apply(MemoryAddress.asLong(base), (int)i);
             if (handleValue instanceof Number) {
                 assertEquals(((Number)handleValue).longValue(), i);
                 assertEquals(((Number)bufferValue).longValue(), i);
