@@ -31,8 +31,6 @@
  * @run testng TestAttributes
  */
 
-import java.lang.constant.ConstantDesc;
-import java.util.List;
 import java.util.stream.Collectors;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.jextract.Declaration;
@@ -46,7 +44,7 @@ public class TestAttributes extends JextractApiTestBase {
     private final static String ASMLABEL = "AsmLabelAttr";
 
     private void validateAsmLabel(Declaration d, boolean isAdd) {
-        List<ConstantDesc> attrs = d.getAttribute(ASMLABEL).get();
+        var attrs = d.getAttribute(ASMLABEL).get();
         String value = isMacOSX ? "_" : "";
         value += d.name();
         value += isAdd ? "A" : "B";

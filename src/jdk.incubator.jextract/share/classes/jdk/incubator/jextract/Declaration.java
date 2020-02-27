@@ -26,8 +26,9 @@
 
 package jdk.incubator.jextract;
 
-import java.lang.constant.ConstantDesc;
+import java.lang.constant.Constable;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,11 +57,24 @@ public interface Declaration {
     String name();
 
     /**
+     * Get a declaration with specified attributes
+     * @param attributes The map of attribute names and their values
+     * @return the Declaration with attributes
+     */
+    Declaration withAttributes(Map<String, List<Constable>> attributes);
+
+    /**
+     * Get a declaration without current attributes
+     * @return the Declatation without any attributes
+     */
+    Declaration stripAttributes();
+
+    /**
      * The values of the specified attribute.
      * @param name The attribute to retrieve
      * @return The list of values associate with this attribute
      */
-    Optional<List<ConstantDesc>> getAttribute(String name);
+    Optional<List<Constable>> getAttribute(String name);
 
     /**
      * The attributes associated with this declaration

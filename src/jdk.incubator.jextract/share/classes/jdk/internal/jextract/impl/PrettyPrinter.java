@@ -26,7 +26,7 @@
 
 package jdk.internal.jextract.impl;
 
-import java.lang.constant.ConstantDesc;
+import java.lang.constant.Constable;
 import java.util.Set;
 import java.util.stream.Collectors;
 import jdk.incubator.foreign.MemoryLayout;
@@ -64,7 +64,7 @@ class PrettyPrinter implements Declaration.Visitor<Void, Void> {
             builder.append(k);
             builder.append(" -> [");
             builder.append(decl.getAttribute(k).get().stream()
-                .map(ConstantDesc::toString)
+                .map(Constable::toString)
                 .collect(Collectors.joining(", ")));
             builder.append("]\n");
         }

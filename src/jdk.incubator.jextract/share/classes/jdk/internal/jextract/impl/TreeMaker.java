@@ -25,7 +25,7 @@
  */
 package jdk.internal.jextract.impl;
 
-import java.lang.constant.ConstantDesc;
+import java.lang.constant.Constable;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -58,7 +58,7 @@ class TreeMaker {
         typeMaker.resolveTypeReferences();
     }
 
-    private <T extends Declaration> T checkCache(Cursor c, Class<T> clazz, Supplier<Declaration> factory) {
+    private Declaration checkCache(Cursor c, Supplier<Declaration> factory) {
         // The supplier function may lead to adding some other type, which will cause CME using computeIfAbsent.
         // This implementation relax the constraint a bit only check for same key
         Declaration rv;
@@ -70,7 +70,7 @@ class TreeMaker {
                 throw new ConcurrentModificationException();
             }
         }
-        return clazz.cast(rv);
+        return rv;
     }
 
     interface ScopedFactoryLayout {
@@ -81,7 +81,11 @@ class TreeMaker {
         Declaration.Scoped make(Position pos, String name, Declaration... decls);
     }
 
-    Map<String, List<ConstantDesc>> collectAttributes(Cursor c) {
+    interface VarFactoryNoLayout {
+        Declaration.Variable make(Position pos, String name, Type type);
+    }
+
+    Map<String, List<Constable>> collectAttributes(Cursor c) {
         return c.children().filter(Cursor::isAttribute)
                 .collect(Collectors.groupingBy(
                         attr -> attr.kind().name(),
@@ -91,7 +95,13 @@ class TreeMaker {
 
     public Declaration createTree(Cursor c) {
         Objects.requireNonNull(c);
-        Map<String, List<ConstantDesc>> attrs = collectAttributes(c);
+        return checkCache(c, () -> {
+            Declaration rv = createTreeInternal(c);
+            return (rv == null) ? null : rv.withAttributes(collectAttributes(c));
+        });
+    }
+
+    private Declaration createTreeInternal(Cursor c) {
         switch (c.kind()) {
             case EnumDecl:
                 return createScoped(c, Declaration.Scoped.Kind.ENUM, Declaration::enum_, Declaration::enum_);
@@ -99,11 +109,11 @@ class TreeMaker {
                 return createEnumConstant(c);
             case FieldDecl:
                 return createVar(c.isBitField() ?
-                        Declaration.Variable.Kind.BITFIELD : Declaration.Variable.Kind.FIELD, c, attrs);
+                        Declaration.Variable.Kind.BITFIELD : Declaration.Variable.Kind.FIELD, c, Declaration::field);
             case ParmDecl:
-                return createVar(Declaration.Variable.Kind.PARAMETER, c, attrs);
+                return createVar(Declaration.Variable.Kind.PARAMETER, c, Declaration::parameter);
             case FunctionDecl:
-                return createFunction(c, attrs);
+                return createFunction(c);
             case StructDecl:
                 return createScoped(c, Declaration.Scoped.Kind.STRUCT, Declaration::struct, Declaration::struct);
             case UnionDecl:
@@ -112,7 +122,7 @@ class TreeMaker {
                 return createTypedef(c);
             }
             case VarDecl:
-                return createVar(Declaration.Variable.Kind.GLOBAL, c, attrs);
+                return createVar(Declaration.Variable.Kind.GLOBAL, c, Declaration::globalVariable);
             default:
                 return null;
         }
@@ -164,17 +174,19 @@ class TreeMaker {
         }
 
         @Override
-        public String toString() { return PrettyPrinter.position(this); }
+        public String toString() {
+            return PrettyPrinter.position(this);
+        }
     }
 
-    public Declaration.Function createFunction(Cursor c, Map<String, List<ConstantDesc>> attrs) {
+    public Declaration.Function createFunction(Cursor c) {
         checkCursor(c, CursorKind.FunctionDecl);
         List<Declaration.Variable> params = new ArrayList<>();
         for (int i = 0 ; i < c.numberOfArgs() ; i++) {
             params.add((Declaration.Variable)createTree(c.getArgument(i)));
         }
-        return checkCache(c, Declaration.Function.class,
-                () -> new DeclarationImpl.FunctionImpl((Type.Function)toType(c), params, c.spelling(), toPos(c), attrs));
+        return Declaration.function(toPos(c), c.spelling(), (Type.Function)toType(c),
+                params.toArray(new Declaration.Variable[0]));
     }
 
     public Declaration.Constant createMacro(Cursor c, Optional<MacroParserImpl.Macro> macro) {
@@ -183,46 +195,41 @@ class TreeMaker {
             return null;
         } else {
             MacroParserImpl.Macro parsedMacro = macro.get();
-            return checkCache(c, Declaration.Constant.class,
-                    ()->Declaration.constant(toPos(c), c.spelling(), parsedMacro.value, parsedMacro.type()));
+            return Declaration.constant(toPos(c), c.spelling(), parsedMacro.value, parsedMacro.type());
         }
     }
 
     public Declaration.Constant createEnumConstant(Cursor c) {
-        return checkCache(c, Declaration.Constant.class,
-                ()->Declaration.constant(toPos(c), c.spelling(), c.getEnumConstantValue(), typeMaker.makeType(c.type())));
+        return Declaration.constant(toPos(c), c.spelling(), c.getEnumConstantValue(), typeMaker.makeType(c.type()));
     }
 
     public Declaration.Scoped createHeader(Cursor c, List<Declaration> decls) {
-        return checkCache(c, Declaration.Scoped.class,
-                ()->Declaration.toplevel(toPos(c), filterNestedDeclarations(decls).toArray(new Declaration[0])));
+        return Declaration.toplevel(toPos(c), filterNestedDeclarations(decls).toArray(new Declaration[0]));
     }
 
     public Declaration.Scoped createScoped(Cursor c, Declaration.Scoped.Kind scopeKind, ScopedFactoryLayout factoryLayout, ScopedFactoryNoLayout factoryNoLayout) {
         List<Declaration> decls = filterNestedDeclarations(c.children()
                 .map(this::createTree).collect(Collectors.toList()));
-        return checkCache(c, Declaration.Scoped.class, () -> {
-            if (c.isDefinition()) {
-                //just a declaration AND definition, we have a layout
-                MemoryLayout layout = LayoutUtils.getLayout(c.type());
-                List<Declaration> adaptedDecls = layout instanceof GroupLayout ?
-                        collectBitfields(layout, decls) :
-                        decls;
-                return factoryLayout.make(toPos(c), c.spelling(), layout, adaptedDecls.toArray(new Declaration[0]));
-            } else {
-                //just a declaration
-                if (scopeKind == Declaration.Scoped.Kind.STRUCT ||
-                        scopeKind == Declaration.Scoped.Kind.UNION ||
-                        scopeKind == Declaration.Scoped.Kind.ENUM ||
-                        scopeKind == Declaration.Scoped.Kind.CLASS) {
-                    //if there's a real definition somewhere else, skip this redundant declaration
-                    if (!c.getDefinition().isInvalid()) {
-                        return null;
-                    }
+        if (c.isDefinition()) {
+            //just a declaration AND definition, we have a layout
+            MemoryLayout layout = LayoutUtils.getLayout(c.type());
+            List<Declaration> adaptedDecls = layout instanceof GroupLayout ?
+                    collectBitfields(layout, decls) :
+                    decls;
+            return factoryLayout.make(toPos(c), c.spelling(), layout, adaptedDecls.toArray(new Declaration[0]));
+        } else {
+            //just a declaration
+            if (scopeKind == Declaration.Scoped.Kind.STRUCT ||
+                    scopeKind == Declaration.Scoped.Kind.UNION ||
+                    scopeKind == Declaration.Scoped.Kind.ENUM ||
+                    scopeKind == Declaration.Scoped.Kind.CLASS) {
+                //if there's a real definition somewhere else, skip this redundant declaration
+                if (!c.getDefinition().isInvalid()) {
+                    return null;
                 }
-                return factoryNoLayout.make(toPos(c), c.spelling(), decls.toArray(new Declaration[0]));
             }
-        });
+            return factoryNoLayout.make(toPos(c), c.spelling(), decls.toArray(new Declaration[0]));
+        }
     }
 
     private List<Declaration> filterNestedDeclarations(List<Declaration> declarations) {
@@ -240,24 +247,19 @@ class TreeMaker {
         if (decl.isPresent() && decl.get().isDefinition() && decl.get().spelling().isEmpty()) {
             Declaration def = createTree(decl.get());
             if (def instanceof Declaration.Scoped) {
-                return checkCache(c, Declaration.Scoped.class,
-                        () -> Declaration.typedef(toPos(c), c.spelling(), def));
+                return Declaration.typedef(toPos(c), c.spelling(), def);
             }
         }
         return null;
     }
 
-    private Declaration.Variable createVar(Declaration.Variable.Kind kind, Cursor c, Map<String, List<ConstantDesc>> attrs) {
+    private Declaration.Variable createVar(Declaration.Variable.Kind kind, Cursor c, VarFactoryNoLayout varFactory) {
         checkCursorAny(c, CursorKind.VarDecl, CursorKind.FieldDecl, CursorKind.ParmDecl);
         if (c.isBitField()) {
-            return checkCache(c, Declaration.Variable.class,
-                    () -> DeclarationImpl.VariableImpl.of(toType(c),
-                            MemoryLayout.ofValueBits(c.getBitFieldWidth(), ByteOrder.nativeOrder()),
-                            Declaration.Variable.Kind.BITFIELD,
-                            c.spelling(), toPos(c), attrs));
+            return Declaration.bitfield(toPos(c), c.spelling(), toType(c),
+                    MemoryLayout.ofValueBits(c.getBitFieldWidth(), ByteOrder.nativeOrder()));
         } else {
-            return checkCache(c, Declaration.Variable.class,
-                    () -> DeclarationImpl.VariableImpl.of(toType(c), kind, c.spelling(), toPos(c), attrs));
+            return varFactory.make(toPos(c), c.spelling(), toType(c));
         }
     }
 

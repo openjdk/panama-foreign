@@ -26,7 +26,7 @@
 
 package jdk.internal.jextract.impl;
 
-import java.lang.constant.ConstantDesc;
+import java.lang.constant.Constable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,12 +41,12 @@ public abstract class DeclarationImpl implements Declaration {
 
     private final String name;
     private final Position pos;
-    private final Map<String, List<ConstantDesc>> attributes;
+    private final Optional<Map<String, List<Constable>>> attributes;
 
-    public DeclarationImpl(String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+    public DeclarationImpl(String name, Position pos, Map<String, List<Constable>> attrs) {
         this.name = name;
         this.pos = pos;
-        this.attributes = attrs;
+        this.attributes = Optional.ofNullable(attrs);
     }
 
     public String toString() {
@@ -63,12 +63,14 @@ public abstract class DeclarationImpl implements Declaration {
     }
 
     @Override
-    public Optional<List<ConstantDesc>> getAttribute(String name) {
-        return Optional.ofNullable(attributes.get(name));
+    public Optional<List<Constable>> getAttribute(String name) {
+        return attributes.map(attrs -> attrs.get(name));
     }
 
     @Override
-    public Set<String> attributeNames() { return Collections.unmodifiableSet(attributes.keySet()); }
+    public Set<String> attributeNames() { return Collections.unmodifiableSet(
+            attributes.map(Map::keySet).orElse(Collections.emptySet()));
+    }
 
     public static class VariableImpl extends DeclarationImpl implements Declaration.Variable {
 
@@ -76,7 +78,7 @@ public abstract class DeclarationImpl implements Declaration {
         final Type type;
         final Optional<MemoryLayout> layout;
 
-        private VariableImpl(Type type, Optional<MemoryLayout> layout, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+        private VariableImpl(Type type, Optional<MemoryLayout> layout, Variable.Kind kind, String name, Position pos, Map<String, List<Constable>> attrs) {
             super(name, pos, attrs);
             this.kind = kind;
             this.type = type;
@@ -84,19 +86,11 @@ public abstract class DeclarationImpl implements Declaration {
         }
 
         public VariableImpl(Type type, Variable.Kind kind, String name, Position pos) {
-            this(type, LayoutUtils.getLayout(type), kind, name, pos, Collections.emptyMap());
+            this(type, LayoutUtils.getLayout(type), kind, name, pos, null);
         }
 
         public VariableImpl(Type type, MemoryLayout layout, Variable.Kind kind, String name, Position pos) {
-            this(type, Optional.of(layout), kind, name, pos, Collections.emptyMap());
-        }
-
-        public static VariableImpl of(Type type, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
-            return new VariableImpl(type, LayoutUtils.getLayout(type), kind, name, pos, attrs);
-        }
-
-        public static VariableImpl of(Type type, MemoryLayout layout, Variable.Kind kind, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
-            return new VariableImpl(type, Optional.of(layout), kind, name, pos, attrs);
+            this(type, Optional.of(layout), kind, name, pos, null);
         }
 
         @Override
@@ -118,6 +112,16 @@ public abstract class DeclarationImpl implements Declaration {
         public Optional<MemoryLayout> layout() {
             return layout;
         }
+
+        @Override
+        public Variable withAttributes(Map<String, List<Constable>> attrs) {
+            return new VariableImpl(type, layout, kind, name(), pos(), attrs);
+        }
+
+        @Override
+        public Variable stripAttributes() {
+            return new VariableImpl(type, layout, kind, name(), pos(), null);
+        }
     }
 
     public static class FunctionImpl extends DeclarationImpl implements Declaration.Function {
@@ -126,10 +130,10 @@ public abstract class DeclarationImpl implements Declaration {
         final Type.Function type;
 
         public FunctionImpl(Type.Function type, List<Variable> params, String name, Position pos) {
-            this(type, params, name, pos, Collections.emptyMap());
+            this(type, params, name, pos, null);
         }
 
-        public FunctionImpl(Type.Function type, List<Variable> params, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+        public FunctionImpl(Type.Function type, List<Variable> params, String name, Position pos, Map<String, List<Constable>> attrs) {
             super(name, pos, attrs);
             this.params = params;
             this.type = type;
@@ -149,6 +153,16 @@ public abstract class DeclarationImpl implements Declaration {
         public Type.Function type() {
             return type;
         }
+
+        @Override
+        public Function withAttributes(Map<String, List<Constable>> attrs) {
+            return new FunctionImpl(type, params, name(), pos(), attrs);
+        }
+
+        @Override
+        public Function stripAttributes() {
+            return new FunctionImpl(type, params, name(), pos(), null);
+        }
     }
 
     public static class ScopedImpl extends DeclarationImpl implements Declaration.Scoped {
@@ -158,15 +172,16 @@ public abstract class DeclarationImpl implements Declaration {
         private final Optional<MemoryLayout> optLayout;
 
         public ScopedImpl(Kind kind, MemoryLayout layout, List<Declaration> declarations, String name, Position pos) {
-            this(kind, Optional.of(layout), declarations, name, pos);
+            this(kind, Optional.of(layout), declarations, name, pos, null);
         }
 
         public ScopedImpl(Kind kind, List<Declaration> declarations, String name, Position pos) {
-            this(kind, Optional.empty(), declarations, name, pos);
+            this(kind, Optional.empty(), declarations, name, pos, null);
         }
 
-        ScopedImpl(Kind kind, Optional<MemoryLayout> optLayout, List<Declaration> declarations, String name, Position pos) {
-            super(name, pos, Collections.emptyMap());
+        ScopedImpl(Kind kind, Optional<MemoryLayout> optLayout, List<Declaration> declarations,
+                String name, Position pos, Map<String, List<Constable>> attrs) {
+            super(name, pos, attrs);
             this.kind = kind;
             this.declarations = declarations;
             this.optLayout = optLayout;
@@ -191,6 +206,16 @@ public abstract class DeclarationImpl implements Declaration {
         public Kind kind() {
             return kind;
         }
+
+        @Override
+        public Scoped withAttributes(Map<String, List<Constable>> attrs) {
+            return new ScopedImpl(kind, optLayout, declarations, name(), pos(), attrs);
+        }
+
+        @Override
+        public Scoped stripAttributes() {
+            return new ScopedImpl(kind, optLayout, declarations, name(), pos(), null);
+        }
     }
 
     public static class ConstantImpl extends DeclarationImpl implements Declaration.Constant {
@@ -199,10 +224,10 @@ public abstract class DeclarationImpl implements Declaration {
         final Type type;
 
         public ConstantImpl(Type type, Object value, String name, Position pos) {
-            this(type, value, name, pos, Collections.emptyMap());
+            this(type, value, name, pos, null);
         }
 
-        public ConstantImpl(Type type, Object value, String name, Position pos, Map<String, List<ConstantDesc>> attrs) {
+        public ConstantImpl(Type type, Object value, String name, Position pos, Map<String, List<Constable>> attrs) {
             super(name, pos, attrs);
             this.value = value;
             this.type = type;
@@ -221,6 +246,16 @@ public abstract class DeclarationImpl implements Declaration {
         @Override
         public Type type() {
             return type;
+        }
+
+        @Override
+        public Constant withAttributes(Map<String, List<Constable>> attrs) {
+            return new ConstantImpl(type, value, name(), pos(), attrs);
+        }
+
+        @Override
+        public Constant stripAttributes() {
+            return new ConstantImpl(type, value, name(), pos(), null);
         }
     }
 }
