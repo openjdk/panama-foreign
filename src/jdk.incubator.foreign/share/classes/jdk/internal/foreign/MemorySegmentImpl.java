@@ -60,14 +60,19 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     final static int READ_ONLY = 1;
     final static int SMALL = READ_ONLY << 1;
+    final static int NO_ACCESS = SMALL << 1;
     final static long NONCE = new Random().nextLong();
 
     public static MemorySegmentImpl NOTHING =
-            new MemorySegmentImpl(0, null, 0, 0, null, MemoryScope.GLOBAL);
+            new MemorySegmentImpl(0, null, 0, NO_ACCESS, null, MemoryScope.GLOBAL);
 
-    public MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
+    public MemorySegmentImpl(long min, Object base, long length, Thread owner, MemoryScope scope) {
+        this(min, base, length, length > Integer.MAX_VALUE ? 0 : SMALL, owner, scope);
+    }
+
+    private MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
-        this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
+        this.mask = mask;
         this.min = min;
         this.base = base;
         this.owner = owner;
@@ -185,7 +190,9 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
-        if (isReadOnly() && writeAccess) {
+        if (isSet(NO_ACCESS)) {
+            throw new UnsupportedOperationException("Segment cannot be dereferenced");
+        } else if (isReadOnly() && writeAccess) {
             throw new UnsupportedOperationException("Cannot write to read-only memory segment");
         }
         checkBounds(offset, length);

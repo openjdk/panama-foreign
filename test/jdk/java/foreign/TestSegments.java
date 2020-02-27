@@ -96,6 +96,20 @@ public class TestSegments {
     }
 
     @Test
+    public void testNothingSegmentAccess() {
+        VarHandle longHandle = MemoryLayouts.JAVA_LONG.varHandle(long.class);
+        long[] values = { 0L, Integer.MAX_VALUE - 1, (long)Integer.MAX_VALUE + 1 };
+        for (long value : values) {
+            MemoryAddress addr = MemoryAddress.ofLong(value);
+            try {
+                longHandle.get(addr);
+            } catch (UnsupportedOperationException ex) {
+                assertTrue(ex.getMessage().contains("cannot be dereferenced"));
+            }
+        }
+    }
+
+    @Test
     public void testSlices() {
         VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
                 .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
