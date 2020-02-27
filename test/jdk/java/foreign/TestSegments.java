@@ -104,7 +104,7 @@ public class TestSegments {
             try {
                 longHandle.get(addr);
             } catch (UnsupportedOperationException ex) {
-                assertTrue(ex.getMessage().contains("cannot be dereferenced"));
+                assertTrue(ex.getMessage().contains("cannot be accessed"));
             }
         }
     }

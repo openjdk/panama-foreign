@@ -191,7 +191,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
         if (isSet(NO_ACCESS)) {
-            throw new UnsupportedOperationException("Segment cannot be dereferenced");
+            throw new UnsupportedOperationException("Segment cannot be accessed");
         } else if (isReadOnly() && writeAccess) {
             throw new UnsupportedOperationException("Cannot write to read-only memory segment");
         }

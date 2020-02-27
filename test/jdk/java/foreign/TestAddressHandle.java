@@ -45,7 +45,7 @@ public class TestAddressHandle {
             try {
                 longHandle.get(address); // check OOB
                 fail();
-            } catch (IndexOutOfBoundsException ex) {
+            } catch (UnsupportedOperationException ex) {
                 assertTrue(true);
             }
             addrHandle.set(segment.baseAddress(), address.addOffset(1));
