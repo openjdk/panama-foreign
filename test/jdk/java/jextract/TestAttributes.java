@@ -31,13 +31,19 @@
  * @run testng TestAttributes
  */
 
+import java.lang.constant.Constable;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 public class TestAttributes extends JextractApiTestBase {
     private final static Type C_INT = Type.primitive(Type.Primitive.Kind.Int, MemoryLayouts.C_INT);
@@ -99,5 +105,60 @@ public class TestAttributes extends JextractApiTestBase {
     public void testB() {
         Declaration.Scoped d = parse("libAsmSymbol.h");
         validateHeader(d, false);
+    }
+
+    private static  Constable getSingleValue(Declaration d, String name) {
+        List<Constable> values = d.getAttribute(name).get();
+        assertEquals(1, values.size());
+        return values.get(0);
+    }
+
+    @Test
+    public void testAddAttribute() {
+        final String ts = "timestamp";
+        Declaration.Scoped d = parse("libAsmSymbol.h");
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
+        Declaration withAttrs = d.withAttribute("header", d.name())
+                .withAttribute(ts, timestamp);
+
+        assertEquals(getSingleValue(withAttrs, "header"), d.name());
+        assertEquals(getSingleValue(withAttrs, ts), timestamp);
+
+        String timestamp2 = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        Declaration withNewAttrs = withAttrs.withAttribute(ts, timestamp2);
+        assertEquals(getSingleValue(withNewAttrs, ts), timestamp2);
+
+        // Make sure original Declaration is not altered
+        assertEquals(getSingleValue(withAttrs, ts), timestamp);
+
+        // Add more value to same attribute
+        withNewAttrs = withAttrs.withAttribute(ts, Stream.concat(
+                withAttrs.getAttribute(ts).map(List::stream).orElse(Stream.empty()),
+                Stream.of(timestamp2)
+            ).toArray(Constable[]::new));
+        assertEquals(withNewAttrs.getAttribute(ts).get(), List.of(timestamp, timestamp2));
+        assertEquals(getSingleValue(withNewAttrs,"header"), d.name());
+
+        // Remove attribute
+        withAttrs = withNewAttrs.withAttribute(ts);
+        assertTrue(withAttrs.getAttribute(ts).isEmpty());
+
+        // Strip attribute
+        withNewAttrs = withNewAttrs.stripAttributes();
+        assertTrue(withNewAttrs.attributeNames().isEmpty());
+    }
+
+    @Test
+    public void replaceFunctionSymbol() {
+        Declaration.Scoped d = parse("libAsmSymbol.h", "-DADD");
+        validateHeader(d, true);
+
+        var members = d.members().stream()
+            .map(m -> m.getAttribute(ASMLABEL)
+                    .map(attr -> m.withAttribute(ASMLABEL, attr.get(0).toString().replace('A', 'B')))
+                    .orElse(m))
+            .toArray(Declaration[]::new);
+        Declaration.Scoped patched = Declaration.toplevel(d.pos(), members);
+        validateHeader(patched, false);
     }
 }

@@ -28,7 +28,6 @@ package jdk.incubator.jextract;
 
 import java.lang.constant.Constable;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,11 +56,15 @@ public interface Declaration {
     String name();
 
     /**
-     * Get a declaration with specified attributes
-     * @param attributes The map of attribute names and their values
+     * Get a declaration with specified attribute.
+     * Set the values to the specified attribute while other attributes remains unchanged. If the specified attribute
+     * already exist, the new values are replacing the old ones. By not specifying any value, the attribute will become
+     * empty as {@link #getAttribute(String) getAttribute(name).isEmpty()} will return true.
+     * @param name The attribute name
+     * @param values More attribute values
      * @return the Declaration with attributes
      */
-    Declaration withAttributes(Map<String, List<Constable>> attributes);
+    Declaration withAttribute(String name, Constable... values);
 
     /**
      * Get a declaration without current attributes

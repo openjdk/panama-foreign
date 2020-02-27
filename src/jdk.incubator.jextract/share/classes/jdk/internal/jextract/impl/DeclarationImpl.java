@@ -28,6 +28,7 @@ package jdk.internal.jextract.impl;
 
 import java.lang.constant.Constable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -71,6 +72,18 @@ public abstract class DeclarationImpl implements Declaration {
     public Set<String> attributeNames() { return Collections.unmodifiableSet(
             attributes.map(Map::keySet).orElse(Collections.emptySet()));
     }
+
+    @Override
+    public Declaration withAttribute(String name, Constable... values) {
+        if (values == null || values.length == 0) {
+            return withAttributes(null);
+        }
+        var attrs = attributes.map(HashMap::new).orElseGet(HashMap::new);
+        attrs.put(name, List.of(values));
+        return withAttributes(attrs);
+    }
+
+    abstract protected Declaration withAttributes(Map<String, List<Constable>> attrs);
 
     public static class VariableImpl extends DeclarationImpl implements Declaration.Variable {
 

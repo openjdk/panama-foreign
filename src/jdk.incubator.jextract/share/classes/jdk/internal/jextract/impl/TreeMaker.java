@@ -96,7 +96,7 @@ class TreeMaker {
     public Declaration createTree(Cursor c) {
         Objects.requireNonNull(c);
         return checkCache(c, () -> {
-            Declaration rv = createTreeInternal(c);
+            var rv = (DeclarationImpl) createTreeInternal(c);
             return (rv == null) ? null : rv.withAttributes(collectAttributes(c));
         });
     }
