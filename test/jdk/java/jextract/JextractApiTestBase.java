@@ -36,6 +36,10 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 public class JextractApiTestBase {
+    static final boolean isMacOSX =
+            System.getProperty("os.name", "unknown").contains("OS X");
+    static final boolean isWindows =
+            System.getProperty("os.name", "unknown").startsWith("Windows");
 
     public static  Declaration.Scoped parse(String headerFilename, String... parseOptions) {
         Path header = Paths.get(System.getProperty("test.src.path", "."), headerFilename);
@@ -76,10 +80,9 @@ public class JextractApiTestBase {
         assertEquals(global.kind(), Declaration.Variable.Kind.BITFIELD);
         assertEquals(global.layout().get().bitSize(), size);
         return global;
-    }
+    } 
 
-    public static Declaration.Function checkFunction(Declaration.Scoped toplevel, String name, Type ret, Type... params) {
-        Declaration.Function function = findDecl(toplevel, name, Declaration.Function.class);
+    public static void checkFunction(Declaration.Function function, Type ret, Type... params) {
         assertTypeEquals(ret, function.type().returnType());
         assertEquals(function.parameters().size(), params.length);
         for (int i = 0 ; i < params.length ; i++) {
@@ -91,6 +94,11 @@ public class JextractApiTestBase {
                 assertTypeEquals(params[i], function.parameters().get(i).type());
             }
         }
+    }
+
+    public static Declaration.Function checkFunction(Declaration.Scoped toplevel,String name , Type ret, Type... params) {
+        Declaration.Function function = findDecl(toplevel, name, Declaration.Function.class);
+        checkFunction(function, ret,params);
         return function;
     }
 

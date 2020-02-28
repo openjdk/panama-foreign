@@ -26,13 +26,14 @@
 
 package jdk.incubator.jextract;
 
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.internal.jextract.impl.DeclarationImpl;
-
+import java.lang.constant.Constable;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.internal.jextract.impl.DeclarationImpl;
 
 /**
  * Instances of this class are used to model declaration elements in the foreign language.
@@ -53,6 +54,36 @@ public interface Declaration {
      * @return The name associated with this declaration.
      */
     String name();
+
+    /**
+     * Get a declaration with specified attribute.
+     * Set the values to the specified attribute while other attributes remains unchanged. If the specified attribute
+     * already exist, the new values are replacing the old ones. By not specifying any value, the attribute will become
+     * empty as {@link #getAttribute(String) getAttribute(name).isEmpty()} will return true.
+     * @param name The attribute name
+     * @param values More attribute values
+     * @return the Declaration with attributes
+     */
+    Declaration withAttribute(String name, Constable... values);
+
+    /**
+     * Get a declaration without current attributes
+     * @return the Declatation without any attributes
+     */
+    Declaration stripAttributes();
+
+    /**
+     * The values of the specified attribute.
+     * @param name The attribute to retrieve
+     * @return The list of values associate with this attribute
+     */
+    Optional<List<Constable>> getAttribute(String name);
+
+    /**
+     * The attributes associated with this declaration
+     * @return The attributes associated with this declaration
+     */
+    Set<String> attributeNames();
 
     /**
      * Entry point for visiting declaration instances.

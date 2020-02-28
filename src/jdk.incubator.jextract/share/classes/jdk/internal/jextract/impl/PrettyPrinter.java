@@ -26,12 +26,13 @@
 
 package jdk.internal.jextract.impl;
 
+import java.lang.constant.Constable;
+import java.util.Set;
+import java.util.stream.Collectors;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Position;
 import jdk.incubator.jextract.Type;
-
-import java.util.stream.Collectors;
 
 class PrettyPrinter implements Declaration.Visitor<Void, Void> {
 
@@ -51,6 +52,25 @@ class PrettyPrinter implements Declaration.Visitor<Void, Void> {
     
     StringBuilder builder = new StringBuilder();
 
+    private void getAttributes(Declaration decl) {
+        Set<String> attrs = decl.attributeNames();
+        if (attrs.isEmpty()) {
+            return;
+        }
+        incr();
+        indent();
+        for (String k: attrs) {
+            builder.append("Attr: ");
+            builder.append(k);
+            builder.append(" -> [");
+            builder.append(decl.getAttribute(k).get().stream()
+                .map(Constable::toString)
+                .collect(Collectors.joining(", ")));
+            builder.append("]\n");
+        }
+        decr();
+    }
+
     public String print(Declaration decl) {
         decl.accept(this, null);
         return builder.toString();
@@ -61,6 +81,7 @@ class PrettyPrinter implements Declaration.Visitor<Void, Void> {
         indent();
         builder.append("Scoped: " + d.kind() + " " + d.name() + d.layout().map(l -> " layout = " + l).orElse(""));
         builder.append("\n");
+        getAttributes(d);
         incr();
         d.members().forEach(m -> m.accept(this, null));
         decr();
@@ -72,6 +93,7 @@ class PrettyPrinter implements Declaration.Visitor<Void, Void> {
         indent();
         builder.append("Function: " + d.name() + " type = " + d.type().accept(typeVisitor, null));
         builder.append("\n");
+        getAttributes(d);
         incr();
         d.parameters().forEach(m -> m.accept(this, null));
         decr();
@@ -83,6 +105,7 @@ class PrettyPrinter implements Declaration.Visitor<Void, Void> {
         indent();
         builder.append("Variable: " + d.kind() + " " + d.name() + " type = " + d.type().accept(typeVisitor, null) + ", layout = " + d.layout());
         builder.append("\n");
+        getAttributes(d);
         return null;
     }
 
@@ -91,6 +114,7 @@ class PrettyPrinter implements Declaration.Visitor<Void, Void> {
         indent();
         builder.append("Constant: " + d.name() + " " + d.value() + " type = " + d.type().accept(typeVisitor, null));
         builder.append("\n");
+        getAttributes(d);
         return null;
     }
 
