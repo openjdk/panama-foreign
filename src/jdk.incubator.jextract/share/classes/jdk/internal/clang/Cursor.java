@@ -59,6 +59,8 @@ public final class Cursor {
         return Index_h.clang_isCursorDefinition(cursor) != 0;
     }
 
+    public boolean isAttribute() { return Index_h.clang_isAttribute(kind) != 0; }
+
     public boolean isAnonymousStruct() {
         return Index_h.clang_Cursor_isAnonymousRecordDecl(cursor) != 0;
     }
