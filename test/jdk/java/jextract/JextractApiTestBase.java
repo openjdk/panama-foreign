@@ -80,7 +80,7 @@ public class JextractApiTestBase {
         assertEquals(global.kind(), Declaration.Variable.Kind.BITFIELD);
         assertEquals(global.layout().get().bitSize(), size);
         return global;
-    } 
+    }
 
     public static void checkFunction(Declaration.Function function, Type ret, Type... params) {
         assertTypeEquals(ret, function.type().returnType());
