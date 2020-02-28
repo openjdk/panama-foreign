@@ -70,6 +70,14 @@ public class JextractApiTestBase {
         assertEquals(global.kind(), Declaration.Variable.Kind.FIELD);
         return global;
     }
+
+    public static Declaration.Variable checkBitField(Declaration.Scoped record, String name, Type type, int size) {
+        Declaration.Variable global = checkConstant(record, name, type);
+        assertEquals(global.kind(), Declaration.Variable.Kind.BITFIELD);
+        assertEquals(global.layout().get().bitSize(), size);
+        return global;
+    }
+
     public static Declaration.Function checkFunction(Declaration.Scoped toplevel, String name, Type ret, Type... params) {
         Declaration.Function function = findDecl(toplevel, name, Declaration.Function.class);
         assertTypeEquals(ret, function.type().returnType());

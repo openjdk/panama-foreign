@@ -47,6 +47,7 @@ import java.lang.constant.Constable;
 import java.lang.reflect.Field;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
@@ -130,6 +131,16 @@ public final class Utils {
 
     public static Constable getAnnotation(MemoryLayout layout, String name) {
         return getAnnotations(layout).get(name);
+    }
+
+    public static MemoryLayout withAnnotation(MemoryLayout layout, String name, Constable value) {
+        try {
+            Method m = ValueLayout.class.getSuperclass().getDeclaredMethod("withAnnotation", String.class, Constable.class);
+            m.setAccessible(true);
+            return (MemoryLayout)m.invoke(layout, name, value);
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
     public static MemoryAddress resizeNativeAddress(MemoryAddress base, long byteSize) {
