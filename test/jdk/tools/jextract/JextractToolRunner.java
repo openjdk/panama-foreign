@@ -170,6 +170,19 @@ public class JextractToolRunner {
         }
     }
 
+    protected Field checkIntField(Class<?> cls, String name, int value) {
+        Field field = findField(cls, name);
+        assertNotNull(field);
+        assertEquals(field.getType(), int.class);
+        try {
+            assertEquals((int)field.get(null), value);
+        } catch (Exception exp) {
+            System.err.println(exp);
+            assertTrue(false, "should not reach here");
+        }
+        return field;
+    }
+
     protected static Method findMethod(Class<?> cls, String name, Class<?>... argTypes) {
         try {
             return cls.getMethod(name, argTypes);

@@ -232,13 +232,14 @@ class TreeMaker {
         }
     }
 
+    private static boolean isEnum(Declaration d) {
+        return d instanceof Declaration.Scoped && ((Declaration.Scoped)d).kind() == Declaration.Scoped.Kind.ENUM;
+    }
+
     private List<Declaration> filterNestedDeclarations(List<Declaration> declarations) {
         return declarations.stream()
                 .filter(Objects::nonNull)
-                .filter(d -> !d.name().isEmpty() ||
-                    ((CursorPosition)d.pos()).cursor.isAnonymousStruct() ||
-                    // Somehow clang isAnonymous() not apply to enum
-                    ((CursorPosition)d.pos()).cursor.kind() == CursorKind.EnumDecl)
+                .filter(d -> isEnum(d) || !d.name().isEmpty() || ((CursorPosition)d.pos()).cursor.isAnonymousStruct())
                 .collect(Collectors.toList());
     }
 
