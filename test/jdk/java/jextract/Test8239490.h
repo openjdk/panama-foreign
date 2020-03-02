@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,18 +23,14 @@
  * questions.
  */
 
-/**
- * Defines the experimental foreign memory access API.
- *
- * {@Incubating}
- *
- * @moduleGraph
- */
-module jdk.incubator.foreign {
-    exports jdk.incubator.foreign;
-    exports jdk.internal.foreign.abi.aarch64 to jdk.incubator.jextract;
-    exports jdk.internal.foreign.abi.x64.sysv to jdk.incubator.jextract;
-    exports jdk.internal.foreign.abi.x64.windows to jdk.incubator.jextract;
-    exports jdk.incubator.foreign.unsafe to jdk.incubator.jextract;
-    exports jdk.internal.foreign to jdk.incubator.jextract;
-}
+struct Foo {
+    unsigned int a:1;
+    unsigned int b:1;
+    unsigned int c:30;
+};
+
+struct Bar {
+    unsigned int x:1;
+    unsigned int y:31;
+    struct Foo z[1];
+};

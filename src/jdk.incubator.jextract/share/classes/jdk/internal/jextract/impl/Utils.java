@@ -35,6 +35,7 @@ import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
 
 import javax.lang.model.SourceVersion;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -279,14 +280,12 @@ class Utils {
         return ch >= ' ' && ch <= '~';
     }
 
-    private static HashMap<MemoryLayout, GroupLayout> bitfieldContents = new HashMap<>();
-
     public static Optional<GroupLayout> getContents(MemoryLayout layout) {
-        return Optional.ofNullable(bitfieldContents.remove(layout));
+        return Optional.ofNullable((GroupLayout)jdk.internal.foreign.Utils.getAnnotation(layout, "contents"));
     }
 
+    @SuppressWarnings("unchecked")
     public static <Z extends MemoryLayout> Z addContents(Z layout, GroupLayout contents) {
-        bitfieldContents.put(layout, contents);
-        return layout;
+        return (Z)jdk.internal.foreign.Utils.withAnnotation(layout, "contents", contents);
     }
 }

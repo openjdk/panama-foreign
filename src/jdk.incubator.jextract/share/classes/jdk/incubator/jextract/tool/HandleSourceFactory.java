@@ -161,7 +161,8 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
             return null;
         }
         Class<?> clazz = typeTranslator.getJavaType(type);
-        if (clazz == MemoryAddress.class || clazz == MemorySegment.class || layout.byteSize() > 8) {
+        if (tree.kind() == Declaration.Variable.Kind.BITFIELD || clazz == MemoryAddress.class ||
+                clazz == MemorySegment.class || layout.byteSize() > 8) {
             //skip
             return null;
         }
