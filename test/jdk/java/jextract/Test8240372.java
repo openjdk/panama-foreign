@@ -21,33 +21,25 @@
  * questions.
  */
 
-// Macro of constant function pointer
-#define INVALID_INT_CONSUMER         (void (*)(int))0
+/*
+ * @test
+ * @build JextractApiTestBase
+ * @run testng Test8240372
+ */
 
-struct foo;
-typedef struct foo *foo_t;
-struct bar;
+import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Type;
+import org.testng.annotations.Test;
 
-// Macro of constant struct pointer
-#define NO_FOO ((foo_t)0)
+import static jdk.incubator.foreign.MemoryLayouts.C_INT;
 
-// Cases where resolving introduce new type references
-// Pointer to pointer in macro
-#define INVALID_INT_ARRAY_PTR (int**) 0
-// Function pointer with pointer type argument
-void (*op)(int cnt, int* operands);
-void func(struct bar *pBar, struct foo *pFoo);
+public class Test8240372 extends JextractApiTestBase {
+    @Test
+    public void test8239490() {
+        Declaration.Scoped d = parse("Test8240372.h");
 
-// Cyclic struct pointer within struct definitions
-struct foo {
-    foo_t ptrFoo;
-    struct bar *ptrBar;
-};
-
-struct bar {
-    foo_t ptrFoo;
-    foo_t *arFooPtr;
-};
-
-// Function with array to pointer
-void withArray(foo_t ar[2]);
+        Type funcType = Type.function(false, Type.void_(), Type.primitive(Type.Primitive.Kind.Int, C_INT));
+        Type typedefType = Type.typedef("CB", funcType);
+        checkFunction(d, "func_cb", Type.void_(), typedefType);
+    }
+}
