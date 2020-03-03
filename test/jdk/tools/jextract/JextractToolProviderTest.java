@@ -98,26 +98,4 @@ public class JextractToolProviderTest extends JextractToolRunner {
     public void testTargetPackageLongOption() {
         testTargetPackage("--target-package");
     }
-
-     @Test
-    public void testAnonymousEnum() {
-        Path anonenumOutput = getOutputFilePath("anonenumgen");
-        Path anonenumH = getInputFilePath("anonenum.h");
-        run("-d", anonenumOutput.toString(), anonenumH.toString()).checkSuccess();
-        try(Loader loader = classLoader(anonenumOutput)) {
-            Class<?> cls = loader.loadClass("anonenum_h");
-            checkIntField(cls, "RED", 0xff0000);
-            checkIntField(cls, "GREEN", 0x00ff00);
-            checkIntField(cls, "BLUE", 0x0000ff);
-            checkIntField(cls, "Java", 0);
-            checkIntField(cls, "C", 1);
-            checkIntField(cls, "CPP", 2);
-            checkIntField(cls, "Python", 3);
-            checkIntField(cls, "Ruby", 4);
-            checkIntField(cls, "ONE", 1);
-            checkIntField(cls, "TWO", 2);
-        } finally {
-            deleteDir(anonenumOutput);
-        }
-    }
 }

@@ -27,6 +27,7 @@
 package jdk.internal.jextract.impl;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
@@ -41,6 +42,13 @@ public abstract class TypeImpl implements Type {
         return false;
     }
 
+    static boolean equals(Type t1, Type.Delegated t2) {
+        assert t1 != null;
+        assert t2 != null;
+
+        return (t2.kind() == Delegated.Kind.TYPEDEF)? t1.equals(t2.type()) : false;
+    }
+
     public static final TypeImpl ERROR = new TypeImpl() {
         @Override
         public <R, D> R accept(Visitor<R, D> visitor, D data) {
@@ -53,7 +61,7 @@ public abstract class TypeImpl implements Type {
         }
     };
 
-    public static class PrimitiveImpl extends TypeImpl implements Type.Primitive {
+    public static final class PrimitiveImpl extends TypeImpl implements Type.Primitive {
 
         private final Primitive.Kind kind;
         private final Optional<MemoryLayout> layoutOpt;
@@ -68,8 +76,8 @@ public abstract class TypeImpl implements Type {
 
         private PrimitiveImpl(Kind kind, Optional<MemoryLayout> layoutOpt) {
             super();
-            this.kind = kind;
-            this.layoutOpt = layoutOpt;
+            this.kind = Objects.requireNonNull(kind);
+            this.layoutOpt = Objects.requireNonNull(layoutOpt);
         }
 
         @Override
@@ -86,6 +94,21 @@ public abstract class TypeImpl implements Type {
         public Optional<MemoryLayout> layout() {
             return layoutOpt;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Type.Primitive)) {
+                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+            }
+            Type.Primitive primitive = (Type.Primitive) o;
+            return kind == primitive.kind();
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(kind);
+        }
     }
 
     static abstract class DelegatedBase extends TypeImpl implements Type.Delegated {
@@ -93,8 +116,8 @@ public abstract class TypeImpl implements Type {
         Optional<String> name;
 
         DelegatedBase(Kind kind, Optional<String> name) {
-            this.kind = kind;
-            this.name = name;
+            this.kind = Objects.requireNonNull(kind);
+            this.name = Objects.requireNonNull(name);
         }
 
         @Override
@@ -103,17 +126,33 @@ public abstract class TypeImpl implements Type {
         }
 
         @Override
-        public Delegated.Kind kind() {
+        public final Delegated.Kind kind() {
             return kind;
         }
 
         @Override
-        public Optional<String> name() {
+        public final Optional<String> name() {
             return name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Type.Delegated)) {
+                return (o instanceof Type)? equals((Type)o, this) : false;
+            }
+            Type.Delegated that = (Type.Delegated) o;
+            return kind == that.kind() &&
+                    name.equals(that.name());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(kind, name);
         }
     }
 
-    public static class QualifiedImpl extends DelegatedBase {
+    public static final class QualifiedImpl extends DelegatedBase {
         private final Type type;
 
         public QualifiedImpl(Kind kind, Type type) {
@@ -133,14 +172,30 @@ public abstract class TypeImpl implements Type {
         public Type type() {
             return type;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Type.Delegated)) return false;
+            if (!super.equals(o)) {
+                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+            }
+            Type.Delegated qualified = (Type.Delegated) o;
+            return Objects.equals(type, qualified.type());
+        }
+
+        @Override
+        public int hashCode() {
+            return (kind() == Kind.TYPEDEF)? type().hashCode() : Objects.hash(super.hashCode(), type);
+        }
     }
 
-    public static class PointerImpl extends DelegatedBase {
+    public static final class PointerImpl extends DelegatedBase {
         private final Supplier<Type> pointeeFactory;
 
         public PointerImpl(Supplier<Type> pointeeFactory) {
             super(Kind.POINTER, Optional.empty());
-            this.pointeeFactory = pointeeFactory;
+            this.pointeeFactory = Objects.requireNonNull(pointeeFactory);
         }
 
         public PointerImpl(Type pointee) {
@@ -153,13 +208,13 @@ public abstract class TypeImpl implements Type {
         }
     }
 
-    public static class DeclaredImpl extends TypeImpl implements Type.Declared {
+    public static final class DeclaredImpl extends TypeImpl implements Type.Declared {
 
         private final Declaration.Scoped declaration;
 
         public DeclaredImpl(Declaration.Scoped declaration) {
             super();
-            this.declaration = declaration;
+            this.declaration = Objects.requireNonNull(declaration);
         }
 
         @Override
@@ -171,9 +226,24 @@ public abstract class TypeImpl implements Type {
         public Declaration.Scoped tree() {
             return declaration;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Type.Declared)) {
+                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+            }
+            Type.Declared declared = (Type.Declared) o;
+            return declaration.equals(declared.tree());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(declaration);
+        }
     }
 
-    public static class FunctionImpl extends TypeImpl implements Type.Function {
+    public static final class FunctionImpl extends TypeImpl implements Type.Function {
 
         private final boolean varargs;
         private final List<Type> argtypes;
@@ -182,8 +252,8 @@ public abstract class TypeImpl implements Type {
         public FunctionImpl(boolean varargs, List<Type> argtypes, Type restype) {
             super();
             this.varargs = varargs;
-            this.argtypes = argtypes;
-            this.restype = restype;
+            this.argtypes = Objects.requireNonNull(argtypes);
+            this.restype = Objects.requireNonNull(restype);
         }
 
         @Override
@@ -205,9 +275,26 @@ public abstract class TypeImpl implements Type {
         public Type returnType() {
             return restype;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Type.Function)) {
+                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+            }
+            Type.Function function = (Type.Function) o;
+            return varargs == function.varargs() &&
+                    argtypes.equals(function.argumentTypes()) &&
+                    restype.equals(function.returnType());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(varargs, argtypes, restype);
+        }
     }
 
-    public static class ArrayImpl extends TypeImpl implements Type.Array {
+    public static final class ArrayImpl extends TypeImpl implements Type.Array {
 
         private final Kind kind;
         private final OptionalLong elemCount;
@@ -223,9 +310,9 @@ public abstract class TypeImpl implements Type {
 
         private ArrayImpl(Kind kind, Type elemType, OptionalLong elemCount) {
             super();
-            this.kind = kind;
-            this.elemCount = elemCount;
-            this.elemType = elemType;
+            this.kind = Objects.requireNonNull(kind);
+            this.elemCount = Objects.requireNonNull(elemCount);
+            this.elemType = Objects.requireNonNull(elemType);
         }
 
         @Override
@@ -246,6 +333,22 @@ public abstract class TypeImpl implements Type {
         @Override
         public Kind kind() {
             return kind;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Type.Array)) {
+                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+            }
+            Type.Array array = (Type.Array) o;
+            return kind == array.kind() &&
+                    elemType.equals(array.elementType());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(kind, elemType);
         }
     }
 

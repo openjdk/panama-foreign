@@ -36,6 +36,9 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 import java.util.spi.ToolProvider;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.SystemABI.Type;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
@@ -224,6 +227,23 @@ public class JextractToolRunner {
             fail("Expect method " + name);
         }
         return null;
+    }
+
+    protected MemoryLayout findLayout(Class<?> cls, String name) {
+        Field field = findField(cls, name + "$LAYOUT");
+        assertNotNull(field);
+        assertEquals(field.getType(), MemoryLayout.class);
+        try {
+            return (MemoryLayout)field.get(null);
+        } catch (Exception exp) {
+            System.err.println(exp);
+            assertTrue(false, "should not reach here");
+        }
+        return null;
+    }
+
+    protected static void checkFieldABIType(MemoryLayout layout, String fieldName, Type expected) {
+        assertEquals(layout.select(PathElement.groupElement(fieldName)).abiType().orElseThrow(), expected);
     }
 
     protected static class Loader implements AutoCloseable {

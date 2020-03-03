@@ -62,6 +62,23 @@ public interface Type {
     <R,D> R accept(Visitor<R, D> visitor, D data);
 
     /**
+     * Compares the specified object with this Type for equality.  Returns
+     * {@code true} if and only if the specified object is also a Type and both
+     * the Types are <i>equal</i>.
+     *
+     * @param o the object to be compared for equality with this Type
+     * @return {@code true} if the specified object is equal to this Type
+     */
+    boolean equals(Object o);
+
+    /**
+     * Returns the hash code value for this Type.
+     *
+     * @return the hash code value for this Type.
+     */
+    int hashCode();
+
+    /**
      * A primitive type.
      */
     interface Primitive extends Type {

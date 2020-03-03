@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import jdk.incubator.foreign.MemoryLayout;
@@ -85,7 +86,20 @@ public abstract class DeclarationImpl implements Declaration {
 
     abstract protected Declaration withAttributes(Map<String, List<Constable>> attrs);
 
-    public static class VariableImpl extends DeclarationImpl implements Declaration.Variable {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Declaration)) return false;
+        Declaration decl = (Declaration) o;
+        return name().equals(decl.name());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
+
+    public static final class VariableImpl extends DeclarationImpl implements Declaration.Variable {
 
         final Variable.Kind kind;
         final Type type;
@@ -93,9 +107,9 @@ public abstract class DeclarationImpl implements Declaration {
 
         private VariableImpl(Type type, Optional<MemoryLayout> layout, Variable.Kind kind, String name, Position pos, Map<String, List<Constable>> attrs) {
             super(name, pos, attrs);
-            this.kind = kind;
-            this.type = type;
-            this.layout = layout;
+            this.kind = Objects.requireNonNull(kind);
+            this.type = Objects.requireNonNull(type);
+            this.layout = Objects.requireNonNull(layout);
         }
 
         public VariableImpl(Type type, Variable.Kind kind, String name, Position pos) {
@@ -135,9 +149,24 @@ public abstract class DeclarationImpl implements Declaration {
         public Variable stripAttributes() {
             return new VariableImpl(type, layout, kind, name(), pos(), null);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Declaration.Variable)) return false;
+            if (!super.equals(o)) return false;
+            Declaration.Variable variable = (Declaration.Variable) o;
+            return kind == variable.kind() &&
+                    type.equals(variable.type());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), kind, type);
+        }
     }
 
-    public static class FunctionImpl extends DeclarationImpl implements Declaration.Function {
+    public static final class FunctionImpl extends DeclarationImpl implements Declaration.Function {
 
         final List<Variable> params;
         final Type.Function type;
@@ -148,8 +177,8 @@ public abstract class DeclarationImpl implements Declaration {
 
         public FunctionImpl(Type.Function type, List<Variable> params, String name, Position pos, Map<String, List<Constable>> attrs) {
             super(name, pos, attrs);
-            this.params = params;
-            this.type = type;
+            this.params = Objects.requireNonNull(params);
+            this.type = Objects.requireNonNull(type);
         }
 
         @Override
@@ -176,6 +205,21 @@ public abstract class DeclarationImpl implements Declaration {
         public Function stripAttributes() {
             return new FunctionImpl(type, params, name(), pos(), null);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Declaration.Function)) return false;
+            if (!super.equals(o)) return false;
+
+            Declaration.Function function = (Declaration.Function) o;
+            return type.equals(function.type());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), type);
+        }
     }
 
     public static class ScopedImpl extends DeclarationImpl implements Declaration.Scoped {
@@ -195,9 +239,9 @@ public abstract class DeclarationImpl implements Declaration {
         ScopedImpl(Kind kind, Optional<MemoryLayout> optLayout, List<Declaration> declarations,
                 String name, Position pos, Map<String, List<Constable>> attrs) {
             super(name, pos, attrs);
-            this.kind = kind;
-            this.declarations = declarations;
-            this.optLayout = optLayout;
+            this.kind = Objects.requireNonNull(kind);
+            this.declarations = Objects.requireNonNull(declarations);
+            this.optLayout = Objects.requireNonNull(optLayout);
         }
 
         @Override
@@ -229,9 +273,24 @@ public abstract class DeclarationImpl implements Declaration {
         public Scoped stripAttributes() {
             return new ScopedImpl(kind, optLayout, declarations, name(), pos(), null);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Declaration.Scoped)) return false;
+            if (!super.equals(o)) return false;
+            Declaration.Scoped scoped = (Declaration.Scoped) o;
+            return kind == scoped.kind() &&
+                    declarations.equals(scoped.members());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), kind, declarations);
+        }
     }
 
-    public static class ConstantImpl extends DeclarationImpl implements Declaration.Constant {
+    public static final class ConstantImpl extends DeclarationImpl implements Declaration.Constant {
 
         final Object value;
         final Type type;
@@ -242,8 +301,8 @@ public abstract class DeclarationImpl implements Declaration {
 
         public ConstantImpl(Type type, Object value, String name, Position pos, Map<String, List<Constable>> attrs) {
             super(name, pos, attrs);
-            this.value = value;
-            this.type = type;
+            this.value = Objects.requireNonNull(value);
+            this.type = Objects.requireNonNull(type);
         }
 
         @Override
@@ -269,6 +328,21 @@ public abstract class DeclarationImpl implements Declaration {
         @Override
         public Constant stripAttributes() {
             return new ConstantImpl(type, value, name(), pos(), null);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Declaration.Constant)) return false;
+            if (!super.equals(o)) return false;
+            Declaration.Constant constant = (Declaration.Constant) o;
+            return value.equals(constant.value()) &&
+                    type.equals(constant.type());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), value, type);
         }
     }
 }
