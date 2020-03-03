@@ -76,7 +76,7 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
 
     @Override
     public Class<?> visitFunction(Type.Function t, Void aVoid) {
-        throw new UnsupportedOperationException();
+        return MemoryAddress.class; // function pointer
     }
 
     @Override
