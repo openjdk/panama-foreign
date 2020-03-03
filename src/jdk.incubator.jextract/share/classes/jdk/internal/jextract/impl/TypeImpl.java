@@ -42,6 +42,13 @@ public abstract class TypeImpl implements Type {
         return false;
     }
 
+    static boolean equals(Type t1, Type.Delegated t2) {
+        assert t1 != null;
+        assert t2 != null;
+
+        return (t2.kind() == Delegated.Kind.TYPEDEF)? t1.equals(t2.type()) : false;
+    }
+
     public static final TypeImpl ERROR = new TypeImpl() {
         @Override
         public <R, D> R accept(Visitor<R, D> visitor, D data) {
@@ -91,7 +98,9 @@ public abstract class TypeImpl implements Type {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof Type.Primitive)) return false;
+            if (!(o instanceof Type.Primitive)) {
+                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+            }
             Type.Primitive primitive = (Type.Primitive) o;
             return kind == primitive.kind();
         }
@@ -117,19 +126,21 @@ public abstract class TypeImpl implements Type {
         }
 
         @Override
-        public Delegated.Kind kind() {
+        public final Delegated.Kind kind() {
             return kind;
         }
 
         @Override
-        public Optional<String> name() {
+        public final Optional<String> name() {
             return name;
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof Type.Delegated)) return false;
+            if (!(o instanceof Type.Delegated)) {
+                return (o instanceof Type)? equals((Type)o, this) : false;
+            }
             Type.Delegated that = (Type.Delegated) o;
             return kind == that.kind() &&
                     name.equals(that.name());
@@ -166,14 +177,16 @@ public abstract class TypeImpl implements Type {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Type.Delegated)) return false;
-            if (!super.equals(o)) return false;
+            if (!super.equals(o)) {
+                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+            }
             Type.Delegated qualified = (Type.Delegated) o;
             return Objects.equals(type, qualified.type());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(super.hashCode(), type);
+            return (kind() == Kind.TYPEDEF)? type().hashCode() : Objects.hash(super.hashCode(), type);
         }
     }
 
@@ -217,7 +230,9 @@ public abstract class TypeImpl implements Type {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof Type.Declared)) return false;
+            if (!(o instanceof Type.Declared)) {
+                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+            }
             Type.Declared declared = (Type.Declared) o;
             return declaration.equals(declared.tree());
         }
@@ -264,7 +279,9 @@ public abstract class TypeImpl implements Type {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof Type.Function)) return false;
+            if (!(o instanceof Type.Function)) {
+                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+            }
             Type.Function function = (Type.Function) o;
             return varargs == function.varargs() &&
                     argtypes.equals(function.argumentTypes()) &&
@@ -321,7 +338,9 @@ public abstract class TypeImpl implements Type {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof Type.Array)) return false;
+            if (!(o instanceof Type.Array)) {
+                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+            }
             Type.Array array = (Type.Array) o;
             return kind == array.kind() &&
                     elemType.equals(array.elementType());

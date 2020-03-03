@@ -34,11 +34,35 @@ void func2(int);
 void func2(int abc);
 void func2(int xyz);
 
+typedef int INT;
+void func(INT);
+void func(INT abc);
+void func(INT xyz);
+void func2(INT);
+void func2(INT abc);
+void func2(INT xyz);
+
+typedef int* INTPTR;
+void func3(INTPTR x);
+void func3(int* x);
+void func4(INTPTR x);
+void func4(int* x);
+
+typedef int Integer;
+void func(Integer x);
+void func5(int x);
+void func5(Integer x);
+void func5(INT x);
+
 struct Point;
 struct Point {
    int i;
    int j;
 };
+
+typedef struct Point POINT;
+double distance(struct Point p);
+double distance(POINT p);
 
 struct Point3D {
     int i;

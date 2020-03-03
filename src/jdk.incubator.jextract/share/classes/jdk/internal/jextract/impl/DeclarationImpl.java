@@ -94,6 +94,11 @@ public abstract class DeclarationImpl implements Declaration {
         return name().equals(decl.name());
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
+
     public static final class VariableImpl extends DeclarationImpl implements Declaration.Variable {
 
         final Variable.Kind kind;
@@ -157,7 +162,7 @@ public abstract class DeclarationImpl implements Declaration {
 
         @Override
         public int hashCode() {
-            return Objects.hash(kind, type);
+            return Objects.hash(super.hashCode(), kind, type);
         }
     }
 
@@ -206,13 +211,14 @@ public abstract class DeclarationImpl implements Declaration {
             if (this == o) return true;
             if (!(o instanceof Declaration.Function)) return false;
             if (!super.equals(o)) return false;
+
             Declaration.Function function = (Declaration.Function) o;
             return type.equals(function.type());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(params, type);
+            return Objects.hash(super.hashCode(), type);
         }
     }
 
@@ -280,7 +286,7 @@ public abstract class DeclarationImpl implements Declaration {
 
         @Override
         public int hashCode() {
-            return Objects.hash(kind, declarations);
+            return Objects.hash(super.hashCode(), kind, declarations);
         }
     }
 
@@ -336,7 +342,7 @@ public abstract class DeclarationImpl implements Declaration {
 
         @Override
         public int hashCode() {
-            return Objects.hash(value, type);
+            return Objects.hash(super.hashCode(), value, type);
         }
     }
 }

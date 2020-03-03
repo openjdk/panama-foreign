@@ -25,7 +25,9 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.nio.file.Path;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI.Type;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -52,6 +54,18 @@ public class RepeatedDeclsTest extends JextractToolRunner {
 
             // check a method for "void func2(int)"
             assertNotNull(findMethod(cls, "func2", int.class));
+
+            // check a method for "void func3(int*)"
+            assertNotNull(findMethod(cls, "func3", MemoryAddress.class));
+
+            // check a method for "void func4(int*)"
+            assertNotNull(findMethod(cls, "func4", MemoryAddress.class));
+
+            // check a method for "void func5(int)"
+            assertNotNull(findMethod(cls, "func5", int.class));
+
+            // check a method for "double distance(struct Point)"
+            assertNotNull(findMethod(cls, "distance", MemorySegment.class));
 
             // check a getter method for "i"
             assertNotNull(findMethod(cls, "i$get"));
