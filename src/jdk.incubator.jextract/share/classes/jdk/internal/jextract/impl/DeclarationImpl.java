@@ -86,7 +86,15 @@ public abstract class DeclarationImpl implements Declaration {
 
     abstract protected Declaration withAttributes(Map<String, List<Constable>> attrs);
 
-    public static class VariableImpl extends DeclarationImpl implements Declaration.Variable {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Declaration)) return false;
+        Declaration decl = (Declaration) o;
+        return name().equals(decl.name());
+    }
+
+    public static final class VariableImpl extends DeclarationImpl implements Declaration.Variable {
 
         final Variable.Kind kind;
         final Type type;
@@ -140,10 +148,11 @@ public abstract class DeclarationImpl implements Declaration {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            VariableImpl variable = (VariableImpl) o;
-            return kind == variable.kind &&
-                    type.equals(variable.type);
+            if (!(o instanceof Declaration.Variable)) return false;
+            if (!super.equals(o)) return false;
+            Declaration.Variable variable = (Declaration.Variable) o;
+            return kind == variable.kind() &&
+                    type.equals(variable.type());
         }
 
         @Override
@@ -152,7 +161,7 @@ public abstract class DeclarationImpl implements Declaration {
         }
     }
 
-    public static class FunctionImpl extends DeclarationImpl implements Declaration.Function {
+    public static final class FunctionImpl extends DeclarationImpl implements Declaration.Function {
 
         final List<Variable> params;
         final Type.Function type;
@@ -195,10 +204,10 @@ public abstract class DeclarationImpl implements Declaration {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            FunctionImpl function = (FunctionImpl) o;
-            return params.equals(function.params) &&
-                    type.equals(function.type);
+            if (!(o instanceof Declaration.Function)) return false;
+            if (!super.equals(o)) return false;
+            Declaration.Function function = (Declaration.Function) o;
+            return type.equals(function.type());
         }
 
         @Override
@@ -262,10 +271,11 @@ public abstract class DeclarationImpl implements Declaration {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ScopedImpl scoped = (ScopedImpl) o;
-            return kind == scoped.kind &&
-                    declarations.equals(scoped.declarations);
+            if (!(o instanceof Declaration.Scoped)) return false;
+            if (!super.equals(o)) return false;
+            Declaration.Scoped scoped = (Declaration.Scoped) o;
+            return kind == scoped.kind() &&
+                    declarations.equals(scoped.members());
         }
 
         @Override
@@ -274,7 +284,7 @@ public abstract class DeclarationImpl implements Declaration {
         }
     }
 
-    public static class ConstantImpl extends DeclarationImpl implements Declaration.Constant {
+    public static final class ConstantImpl extends DeclarationImpl implements Declaration.Constant {
 
         final Object value;
         final Type type;
@@ -317,10 +327,11 @@ public abstract class DeclarationImpl implements Declaration {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ConstantImpl constant = (ConstantImpl) o;
-            return value.equals(constant.value) &&
-                    type.equals(constant.type);
+            if (!(o instanceof Declaration.Constant)) return false;
+            if (!super.equals(o)) return false;
+            Declaration.Constant constant = (Declaration.Constant) o;
+            return value.equals(constant.value()) &&
+                    type.equals(constant.type());
         }
 
         @Override

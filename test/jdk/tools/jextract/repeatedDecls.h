@@ -28,7 +28,11 @@ int i;
 int i;
 
 void func(int);
-void func(int);
+void func(int abc);
+void func(int xyz);
+void func2(int);
+void func2(int abc);
+void func2(int xyz);
 
 struct Point;
 struct Point {

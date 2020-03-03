@@ -91,9 +91,9 @@ public abstract class TypeImpl implements Type {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            PrimitiveImpl primitive = (PrimitiveImpl) o;
-            return kind == primitive.kind;
+            if (!(o instanceof Type.Primitive)) return false;
+            Type.Primitive primitive = (Type.Primitive) o;
+            return kind == primitive.kind();
         }
 
         @Override
@@ -129,10 +129,10 @@ public abstract class TypeImpl implements Type {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            DelegatedBase that = (DelegatedBase) o;
-            return kind == that.kind &&
-                    name.equals(that.name);
+            if (!(o instanceof Type.Delegated)) return false;
+            Type.Delegated that = (Type.Delegated) o;
+            return kind == that.kind() &&
+                    name.equals(that.name());
         }
 
         @Override
@@ -141,7 +141,7 @@ public abstract class TypeImpl implements Type {
         }
     }
 
-    public static class QualifiedImpl extends DelegatedBase {
+    public static final class QualifiedImpl extends DelegatedBase {
         private final Type type;
 
         public QualifiedImpl(Kind kind, Type type) {
@@ -165,10 +165,10 @@ public abstract class TypeImpl implements Type {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (!(o instanceof Type.Delegated)) return false;
             if (!super.equals(o)) return false;
-            QualifiedImpl qualified = (QualifiedImpl) o;
-            return Objects.equals(type, qualified.type);
+            Type.Delegated qualified = (Type.Delegated) o;
+            return Objects.equals(type, qualified.type());
         }
 
         @Override
@@ -177,7 +177,7 @@ public abstract class TypeImpl implements Type {
         }
     }
 
-    public static class PointerImpl extends DelegatedBase {
+    public static final class PointerImpl extends DelegatedBase {
         private final Supplier<Type> pointeeFactory;
 
         public PointerImpl(Supplier<Type> pointeeFactory) {
@@ -195,7 +195,7 @@ public abstract class TypeImpl implements Type {
         }
     }
 
-    public static class DeclaredImpl extends TypeImpl implements Type.Declared {
+    public static final class DeclaredImpl extends TypeImpl implements Type.Declared {
 
         private final Declaration.Scoped declaration;
 
@@ -217,9 +217,9 @@ public abstract class TypeImpl implements Type {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            DeclaredImpl declared = (DeclaredImpl) o;
-            return declaration.equals(declared.declaration);
+            if (!(o instanceof Type.Declared)) return false;
+            Type.Declared declared = (Type.Declared) o;
+            return declaration.equals(declared.tree());
         }
 
         @Override
@@ -228,7 +228,7 @@ public abstract class TypeImpl implements Type {
         }
     }
 
-    public static class FunctionImpl extends TypeImpl implements Type.Function {
+    public static final class FunctionImpl extends TypeImpl implements Type.Function {
 
         private final boolean varargs;
         private final List<Type> argtypes;
@@ -264,11 +264,11 @@ public abstract class TypeImpl implements Type {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            FunctionImpl function = (FunctionImpl) o;
-            return varargs == function.varargs &&
-                    argtypes.equals(function.argtypes) &&
-                    restype.equals(function.restype);
+            if (!(o instanceof Type.Function)) return false;
+            Type.Function function = (Type.Function) o;
+            return varargs == function.varargs() &&
+                    argtypes.equals(function.argumentTypes()) &&
+                    restype.equals(function.returnType());
         }
 
         @Override
@@ -277,7 +277,7 @@ public abstract class TypeImpl implements Type {
         }
     }
 
-    public static class ArrayImpl extends TypeImpl implements Type.Array {
+    public static final class ArrayImpl extends TypeImpl implements Type.Array {
 
         private final Kind kind;
         private final OptionalLong elemCount;
@@ -321,10 +321,10 @@ public abstract class TypeImpl implements Type {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ArrayImpl array = (ArrayImpl) o;
-            return kind == array.kind &&
-                    elemType.equals(array.elemType);
+            if (!(o instanceof Type.Array)) return false;
+            Type.Array array = (Type.Array) o;
+            return kind == array.kind() &&
+                    elemType.equals(array.elementType());
         }
 
         @Override
