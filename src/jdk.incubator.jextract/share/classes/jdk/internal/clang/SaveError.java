@@ -25,31 +25,37 @@
  */
 package jdk.internal.clang;
 
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.clang.libclang.Index_h;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.function.Function;
 
-public class LibClang {
-    private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");
-    private static final boolean NO_CRASH_RECOVERY = Boolean.getBoolean("libclang.disable_crash_recovery");
+import static java.util.stream.Collectors.toMap;
+import static jdk.internal.clang.libclang.Index_h.CXSaveError_InvalidTU;
+import static jdk.internal.clang.libclang.Index_h.CXSaveError_None;
+import static jdk.internal.clang.libclang.Index_h.CXSaveError_TranslationErrors;
+import static jdk.internal.clang.libclang.Index_h.CXSaveError_Unknown;
 
-    public static Index createIndex(boolean local) {
-        Index index = new Index(Index_h.clang_createIndex(local ? 1 : 0, 0));
-        Index_h.clang_toggleCrashRecovery(NO_CRASH_RECOVERY ? 0 : 1);
-        if (DEBUG && NO_CRASH_RECOVERY) {
-            System.err.println("LibClang crash recovery disabled");
-        }
-        return index;
+public enum SaveError {
+    None(CXSaveError_None),
+    Unknown(CXSaveError_Unknown),
+    TranslationErrors(CXSaveError_TranslationErrors),
+    InvalidTU(CXSaveError_InvalidTU);
+
+    private final int code;
+
+    SaveError(int code) {
+        this.code = code;
     }
 
-    public static String CXStrToString(MemorySegment cxstr) {
-        MemoryAddress buf = Index_h.clang_getCString(cxstr);
-        String str = Utils.toJavaString(buf);
-        Index_h.clang_disposeString(cxstr);
-        return str;
+    public int code() {
+        return code;
     }
 
-    public static String version() {
-        return CXStrToString(Index_h.clang_getClangVersion());
+    private static final Map<Integer, SaveError> lookup = Arrays.stream(values())
+            .collect(toMap(SaveError::code, Function.identity()));
+
+    public static SaveError valueOf(int code) {
+        return lookup.computeIfAbsent(code, k -> { throw new NoSuchElementException("No SaveError with code: " + k); });
     }
 }

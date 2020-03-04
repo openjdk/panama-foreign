@@ -80,9 +80,7 @@ class MacroParserImpl {
             return result.success() ?
                     Optional.of((Macro)result) :
                     Optional.empty();
-        } catch (Throwable ex) {
-            // This ate the NPE and cause skip of macros
-            // Why are we expecting exception here? Simply be defensive?
+        } catch (BadMacroException ex) {
             if (JextractTaskImpl.VERBOSE) {
                 System.err.println("Failed to handle macro " + macroName);
                 ex.printStackTrace(System.err);

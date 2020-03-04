@@ -62,9 +62,8 @@ public class TranslationUnit implements AutoCloseable {
 
     public final void save(Path path) throws TranslationUnitSaveException {
         try (MemorySegment pathStr = Utils.toNativeString(path.toAbsolutePath().toString())) {
-            int res = Index_h.clang_saveTranslationUnit(tu,
-                    pathStr.baseAddress(), 0);
-            if (res != 0) {
+            SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr.baseAddress(), 0));
+            if (res != SaveError.None) {
                 throw new TranslationUnitSaveException(path);
             }
         }
@@ -81,7 +80,7 @@ public class TranslationUnit implements AutoCloseable {
     static long CONTENTS_OFFSET = Index_h.CXUnsavedFile$LAYOUT.offset(MemoryLayout.PathElement.groupElement("Contents")) / 8;
     static long LENGTH_OFFSET = Index_h.CXUnsavedFile$LAYOUT.offset(MemoryLayout.PathElement.groupElement("Length")) / 8;
 
-    public int reparse(Index.UnsavedFile... inMemoryFiles) {
+    public void reparse(Index.UnsavedFile... inMemoryFiles) {
         try (AllocationScope scope = new AllocationScope()) {
             MemorySegment files = inMemoryFiles.length == 0 ?
                     null :
@@ -92,9 +91,15 @@ public class TranslationUnit implements AutoCloseable {
                 Utils.setPointer(start.addOffset(CONTENTS_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].contents)).baseAddress());
                 Utils.setLong(start.addOffset(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
             }
-            return Index_h.clang_reparseTranslationUnit(tu, inMemoryFiles.length,
-                    files == null ? MemoryAddress.NULL : files.baseAddress(),
-                    Index_h.clang_defaultReparseOptions(tu));
+            ErrorCode code = ErrorCode.valueOf(Index_h.clang_reparseTranslationUnit(
+                        tu,
+                        inMemoryFiles.length,
+                        files == null ? MemoryAddress.NULL : files.baseAddress(),
+                        Index_h.clang_defaultReparseOptions(tu)));
+
+            if (code != ErrorCode.Success) {
+                throw new IllegalStateException("Re-parsing failed: " + code);
+            }
         }
     }
 
