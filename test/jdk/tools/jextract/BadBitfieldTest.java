@@ -36,12 +36,12 @@
  * Resulting struct on SysV is 16 bytes, but 24 on MSx64
  *
  * MSVC: (/d1reportSingleClassLayoutFoo)
- * class Foo	size(24):
+ * class Foo    size(24):
  *      +---
- *  0.	| a (bitstart=0,nbits=45)
- *  8.	| b (bitstart=0,nbits=24)
- *  8.	| c (bitstart=24,nbits=1)
- * 16.	| d (bitstart=0,nbits=58)
+ *  0.    | a (bitstart=0,nbits=45)
+ *  8.    | b (bitstart=0,nbits=24)
+ *  8.    | c (bitstart=24,nbits=1)
+ * 16.    | d (bitstart=0,nbits=58)
  *      +---
  *
  * SysV: (PAHole)
