@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.nio.file.Path;
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -84,12 +85,14 @@ public class RepeatedDeclsTest extends JextractToolRunner {
             // check Point layout
             MemoryLayout pointLayout = findLayout(cls, "Point");
             assertNotNull(pointLayout);
+            assertTrue(((GroupLayout)pointLayout).isStruct());
             checkFieldABIType(pointLayout, "i",  Type.INT);
             checkFieldABIType(pointLayout, "j",  Type.INT);
 
             // check Point3D layout
             MemoryLayout point3DLayout = findLayout(cls, "Point3D");
             assertNotNull(point3DLayout);
+            assertTrue(((GroupLayout)point3DLayout).isStruct());
             checkFieldABIType(point3DLayout, "i",  Type.INT);
             checkFieldABIType(point3DLayout, "j",  Type.INT);
             checkFieldABIType(point3DLayout, "k",  Type.INT);

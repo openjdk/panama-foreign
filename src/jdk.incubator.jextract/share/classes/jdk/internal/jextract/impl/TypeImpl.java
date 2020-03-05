@@ -46,7 +46,7 @@ public abstract class TypeImpl implements Type {
         assert t1 != null;
         assert t2 != null;
 
-        return (t2.kind() == Delegated.Kind.TYPEDEF)? t1.equals(t2.type()) : false;
+        return (t2.kind() == Delegated.Kind.TYPEDEF) && t1.equals(t2.type());
     }
 
     public static final TypeImpl ERROR = new TypeImpl() {
@@ -99,7 +99,7 @@ public abstract class TypeImpl implements Type {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Type.Primitive)) {
-                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+                return (o instanceof Delegated) && equals(this, (Delegated)o);
             }
             Type.Primitive primitive = (Type.Primitive) o;
             return kind == primitive.kind();
@@ -139,7 +139,7 @@ public abstract class TypeImpl implements Type {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Type.Delegated)) {
-                return (o instanceof Type)? equals((Type)o, this) : false;
+                return (o instanceof Type) && equals((Type)o, this);
             }
             Type.Delegated that = (Type.Delegated) o;
             return kind == that.kind() &&
@@ -178,7 +178,7 @@ public abstract class TypeImpl implements Type {
             if (this == o) return true;
             if (!(o instanceof Type.Delegated)) return false;
             if (!super.equals(o)) {
-                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+                return (o instanceof Delegated) && equals(this, (Delegated) o);
             }
             Type.Delegated qualified = (Type.Delegated) o;
             return Objects.equals(type, qualified.type());
@@ -231,7 +231,7 @@ public abstract class TypeImpl implements Type {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Type.Declared)) {
-                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+                return (o instanceof Delegated) && equals(this, (Delegated) o);
             }
             Type.Declared declared = (Type.Declared) o;
             return declaration.equals(declared.tree());
@@ -280,7 +280,7 @@ public abstract class TypeImpl implements Type {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Type.Function)) {
-                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+                return (o instanceof Delegated) && equals(this, (Delegated) o);
             }
             Type.Function function = (Type.Function) o;
             return varargs == function.varargs() &&
@@ -339,7 +339,7 @@ public abstract class TypeImpl implements Type {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Type.Array)) {
-                return (o instanceof Type.Delegated)? equals(this, (Type.Delegated)o) : false;
+                return (o instanceof Delegated) && equals(this, (Delegated) o);
             }
             Type.Array array = (Type.Array) o;
             return kind == array.kind() &&

@@ -171,22 +171,22 @@ public class Main {
             return INPUT_ERROR;
         }
 
-        //parse
-        JextractTask jextractTask = JextractTask.newTask(!options.source, header);
-        Declaration.Scoped toplevel = jextractTask.parse(options.clangArgs.toArray(new String[0]));
-
-        //filter
-        if (!options.filters.isEmpty()) {
-            toplevel = Filter.filter(toplevel, options.filters.toArray(new String[0]));
-        }
-
-        if (Main.DEBUG) {
-            System.out.println(toplevel);
-        }
-
-        Path output = Path.of(options.outputDir);
-        //generate
+        //parse    //generate
         try {
+            JextractTask jextractTask = JextractTask.newTask(!options.source, header);
+            Declaration.Scoped toplevel = jextractTask.parse(options.clangArgs.toArray(new String[0]));
+
+            //filter
+            if (!options.filters.isEmpty()) {
+                toplevel = Filter.filter(toplevel, options.filters.toArray(new String[0]));
+            }
+
+            if (Main.DEBUG) {
+                System.out.println(toplevel);
+            }
+
+            Path output = Path.of(options.outputDir);
+
             JavaFileObject[] files = HandleSourceFactory.generateWrapped(
                 toplevel,
                 header.getFileName().toString().replace(".h", "_h"),
