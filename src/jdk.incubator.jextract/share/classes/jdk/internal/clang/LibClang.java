@@ -36,8 +36,8 @@ public class LibClang {
     public static Index createIndex(boolean local) {
         Index index = new Index(Index_h.clang_createIndex(local ? 1 : 0, 0));
         Index_h.clang_toggleCrashRecovery(CRASH_RECOVERY ? 1 : 0);
-        if (DEBUG && !CRASH_RECOVERY) {
-            System.err.println("LibClang crash recovery disabled");
+        if (DEBUG) {
+            System.err.println("LibClang crash recovery " + (CRASH_RECOVERY ? "enabled" : "disabled"));
         }
         return index;
     }
