@@ -31,12 +31,12 @@ import jdk.internal.clang.libclang.Index_h;
 
 public class LibClang {
     private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");
-    private static final boolean NO_CRASH_RECOVERY = Boolean.getBoolean("libclang.disable_crash_recovery");
+    private static final boolean CRASH_RECOVERY = Boolean.getBoolean("libclang.crash_recovery");
 
     public static Index createIndex(boolean local) {
         Index index = new Index(Index_h.clang_createIndex(local ? 1 : 0, 0));
-        Index_h.clang_toggleCrashRecovery(NO_CRASH_RECOVERY ? 0 : 1);
-        if (DEBUG && NO_CRASH_RECOVERY) {
+        Index_h.clang_toggleCrashRecovery(CRASH_RECOVERY ? 1 : 0);
+        if (DEBUG && !CRASH_RECOVERY) {
             System.err.println("LibClang crash recovery disabled");
         }
         return index;

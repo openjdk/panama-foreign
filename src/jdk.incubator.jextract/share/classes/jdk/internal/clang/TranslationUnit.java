@@ -64,7 +64,7 @@ public class TranslationUnit implements AutoCloseable {
         try (MemorySegment pathStr = Utils.toNativeString(path.toAbsolutePath().toString())) {
             SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr.baseAddress(), 0));
             if (res != SaveError.None) {
-                throw new TranslationUnitSaveException(path);
+                throw new TranslationUnitSaveException(path, res);
             }
         }
     }
@@ -210,8 +210,11 @@ public class TranslationUnit implements AutoCloseable {
 
         static final long serialVersionUID = 1L;
 
-        TranslationUnitSaveException(Path path) {
-            super("Cannot save translation unit to: " + path.toAbsolutePath());
+        private final SaveError error;
+
+        TranslationUnitSaveException(Path path, SaveError error) {
+            super("Cannot save translation unit to: " + path.toAbsolutePath() + ". Error: " + error);
+            this.error = error;
         }
     }
 }
