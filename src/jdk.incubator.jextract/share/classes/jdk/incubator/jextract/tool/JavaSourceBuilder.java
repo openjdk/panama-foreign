@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.lang.model.SourceVersion;
 
 /**
  * A helper class to generate header interface class in source form.
@@ -122,7 +123,7 @@ class JavaSourceBuilder {
     protected void addLayout(String elementName, MemoryLayout layout) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + "MemoryLayout " + elementName + "$LAYOUT = ");
+        sb.append(PUB_MODS + "MemoryLayout " + javaSafeIdentifier(elementName) + "$LAYOUT = ");
         addLayout(layout);
         sb.append(";\n");
         decrAlign();
@@ -196,9 +197,10 @@ class JavaSourceBuilder {
     protected void addVarHandle(String name, Class<?> type, String parentName) {
         incrAlign();
         indent();
+        parentName = parentName != null? javaSafeIdentifier(parentName) : parentName;
+        name = javaSafeIdentifier(name);
         String vhName = parentName != null ?
-                parentName + "$" + name :
-                name;
+                parentName + "$" + name : name;
         sb.append(PUB_MODS + "VarHandle " + vhName + " = ");
         if (parentName != null) {
             addHandlePath(type, parentName, name);
@@ -230,7 +232,7 @@ class JavaSourceBuilder {
     protected void addMethodHandle(Declaration.Function funcTree, MethodType mtype, FunctionDescriptor desc) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + "MethodHandle " + funcTree.name() + " = ");
+        sb.append(PUB_MODS + "MethodHandle " + javaSafeIdentifier(funcTree.name()) + " = ");
         sb.append("RuntimeHelper.downcallHandle(\n");
         incrAlign();
         indent();
@@ -285,7 +287,7 @@ class JavaSourceBuilder {
     protected void addAddress(String name) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + "MemoryAddress " + name + "$ADDR" + " = ");
+        sb.append(PUB_MODS + "MemoryAddress " + javaSafeIdentifier(name) + "$ADDR" + " = ");
         addAddressLookup(name);
         sb.append(";\n");
         decrAlign();
@@ -297,7 +299,7 @@ class JavaSourceBuilder {
         if (type == MemoryAddress.class || type == MemorySegment.class) {
             //todo, skip for now (address constants and string constants)
         } else {
-            sb.append(PUB_MODS + type.getName() + " " + name);
+            sb.append(PUB_MODS + type.getName() + " " + javaSafeIdentifier(name));
             sb.append(" = ");
             if (type == float.class) {
                 sb.append(value);
@@ -341,7 +343,7 @@ class JavaSourceBuilder {
     protected void addStaticFunctionWrapper(Declaration.Function f, MethodType mtype) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + mtype.returnType().getName() + " " + f.name() + " (");
+        sb.append(PUB_MODS + mtype.returnType().getName() + " " + javaSafeIdentifier(f.name()) + " (");
         String delim = "";
         List<String> pNames = new ArrayList<>();
         final int numParams = f.parameters().size();
@@ -350,6 +352,7 @@ class JavaSourceBuilder {
             if (pName.isEmpty()) {
                 pName = "x" + i;
             }
+            pName = javaSafeIdentifier(pName);
             pNames.add(pName);
             sb.append(delim + mtype.parameterType(i).getName() + " " + pName);
             delim = ", ";
@@ -400,7 +403,7 @@ class JavaSourceBuilder {
     void addFunctionalInterface(String name, MethodType mtype) {
         incrAlign();
         indent();
-        sb.append("public interface " + name + " {\n");
+        sb.append("public interface " + javaSafeIdentifier(name) + " {\n");
         incrAlign();
         indent();
         sb.append(mtype.returnType().getName() + " apply(");
@@ -434,7 +437,8 @@ class JavaSourceBuilder {
     void addGetter(String name, Class<?> type, Declaration parent) {
         incrAlign();
         indent();
-        String vhName = (parent != null ? (parent.name() + "$") : "") + name;
+        name = javaSafeIdentifier(name);
+        String vhName = (parent != null ? (javaSafeIdentifier(parent.name()) + "$") : "") + name;
         String param = parent != null ? (MemorySegment.class.getName() + " seg") : "";
         sb.append(PUB_MODS + type.getName() + " " + vhName + "$get(" + param + ") {\n");
         incrAlign();
@@ -451,7 +455,8 @@ class JavaSourceBuilder {
     void addSetter(String name, Class<?> type, Declaration parent) {
         incrAlign();
         indent();
-        String vhName = (parent != null ? (parent.name() + "$") : "") + name;
+        name = javaSafeIdentifier(name);
+        String vhName = (parent != null ? (javaSafeIdentifier(parent.name()) + "$") : "") + name;
         String param = parent != null ? (MemorySegment.class.getName() + " seg, ") : "";
         sb.append(PUB_MODS + "void " + vhName + "$set(" + param + type.getName() + " x) {\n");
         incrAlign();
@@ -483,5 +488,13 @@ class JavaSourceBuilder {
 
     protected void decrAlign() {
         align--;
+    }
+
+    protected final String javaSafeIdentifier(String name) {
+        // We never get the problem of Java non-identifiers (like 123, ab-xy) as
+        // C identifiers. But we may have a java keyword used as a C identifier.
+        assert SourceVersion.isIdentifier(name);
+
+        return SourceVersion.isKeyword(name)? (name + "_") : name;
     }
 }
