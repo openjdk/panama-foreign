@@ -30,10 +30,13 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.clang.libclang.Index_h;
 
+import java.lang.invoke.VarHandle;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+
+import static jdk.internal.jextract.impl.LayoutUtils.C_POINTER;
 
 public class Index implements AutoCloseable {
     // Pointer to CXIndex
@@ -63,25 +66,40 @@ public class Index implements AutoCloseable {
     public static class ParsingFailedException extends RuntimeException {
         private static final long serialVersionUID = -1L;
         private final Path srcFile;
+        private final ErrorCode code;
 
-        public ParsingFailedException(Path srcFile) {
-            super("Failed to parse " + srcFile.toAbsolutePath().toString());
+        public ParsingFailedException(Path srcFile, ErrorCode code) {
+            super("Failed to parse " + srcFile.toAbsolutePath().toString() + ": " + code);
             this.srcFile = srcFile;
+            this.code = code;
         }
     }
 
-    public TranslationUnit parseTU(String file, int options, String... args)
+    private static final VarHandle VH_MemoryAddress = C_POINTER.varHandle(MemoryAddress.class);
+
+    public TranslationUnit parseTU(String file, Consumer<Diagnostic> dh, int options, String... args)
     throws ParsingFailedException {
         try (MemorySegment src = Utils.toNativeString(file) ;
-             MemorySegment cargs = Utils.toNativeStringArray(args)) {
-            MemoryAddress tu = Index_h.clang_parseTranslationUnit(
-                    ptr, src.baseAddress(), cargs == null ? MemoryAddress.NULL : cargs.baseAddress(), args.length, MemoryAddress.NULL, 0, options);
+             MemorySegment cargs = Utils.toNativeStringArray(args);
+             MemorySegment outAddress = MemorySegment.allocateNative(C_POINTER)) {
+            ErrorCode code = ErrorCode.valueOf(Index_h.clang_parseTranslationUnit2(
+                    ptr,
+                    src.baseAddress(),
+                    cargs == null ? MemoryAddress.NULL : cargs.baseAddress(),
+                    args.length, MemoryAddress.NULL,
+                    0,
+                    options,
+                    outAddress.baseAddress()));
 
-            if (tu == null || tu == MemoryAddress.NULL) {
-                throw new ParsingFailedException(Path.of(file).toAbsolutePath());
+            MemoryAddress tu = (MemoryAddress) VH_MemoryAddress.get(outAddress.baseAddress());
+            TranslationUnit rv = new TranslationUnit(tu);
+            // even if we failed to parse, we might still have diagnostics
+            rv.processDiagnostics(dh);
+
+            if (code != ErrorCode.Success) {
+                throw new ParsingFailedException(Path.of(file).toAbsolutePath(), code);
             }
 
-            TranslationUnit rv = new TranslationUnit(tu);
             translationUnits.add(rv);
             return rv;
         }
@@ -98,14 +116,12 @@ public class Index implements AutoCloseable {
 
     public TranslationUnit parse(String file, Consumer<Diagnostic> dh, boolean detailedPreprocessorRecord, String... args)
     throws ParsingFailedException {
-        TranslationUnit tu = parse(file, detailedPreprocessorRecord, args);
-        tu.processDiagnostics(dh);
-        return tu;
+        return parseTU(file, dh, defaultOptions(detailedPreprocessorRecord), args);
     }
 
     public TranslationUnit parse(String file, boolean detailedPreprocessorRecord, String... args)
     throws ParsingFailedException {
-        return parseTU(file, defaultOptions(detailedPreprocessorRecord), args);
+        return parse(file, dh -> {}, detailedPreprocessorRecord, args);
     }
 
     @Override
@@ -122,4 +138,5 @@ public class Index implements AutoCloseable {
         }
         ptr = MemoryAddress.NULL;
     }
+
 }

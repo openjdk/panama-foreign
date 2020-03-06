@@ -25,31 +25,39 @@
  */
 package jdk.internal.clang;
 
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.clang.libclang.Index_h;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.function.Function;
 
-public class LibClang {
-    private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");
-    private static final boolean CRASH_RECOVERY = Boolean.getBoolean("libclang.crash_recovery");
+import static java.util.stream.Collectors.toMap;
+import static jdk.internal.clang.libclang.Index_h.CXError_ASTReadError;
+import static jdk.internal.clang.libclang.Index_h.CXError_Crashed;
+import static jdk.internal.clang.libclang.Index_h.CXError_Failure;
+import static jdk.internal.clang.libclang.Index_h.CXError_InvalidArguments;
+import static jdk.internal.clang.libclang.Index_h.CXError_Success;
 
-    public static Index createIndex(boolean local) {
-        Index index = new Index(Index_h.clang_createIndex(local ? 1 : 0, 0));
-        Index_h.clang_toggleCrashRecovery(CRASH_RECOVERY ? 1 : 0);
-        if (DEBUG) {
-            System.err.println("LibClang crash recovery " + (CRASH_RECOVERY ? "enabled" : "disabled"));
-        }
-        return index;
+public enum ErrorCode {
+    Success(CXError_Success),
+    Failue(CXError_Failure),
+    Crashed(CXError_Crashed),
+    InvalidArguments(CXError_InvalidArguments),
+    ASTReadError(CXError_ASTReadError);
+
+    private final int code;
+
+    ErrorCode(int code) {
+        this.code = code;
     }
 
-    public static String CXStrToString(MemorySegment cxstr) {
-        MemoryAddress buf = Index_h.clang_getCString(cxstr);
-        String str = Utils.toJavaString(buf);
-        Index_h.clang_disposeString(cxstr);
-        return str;
+    public int code() {
+        return code;
     }
 
-    public static String version() {
-        return CXStrToString(Index_h.clang_getClangVersion());
+    private static final Map<Integer, ErrorCode> lookup = Arrays.stream(values())
+            .collect(toMap(ErrorCode::code, Function.identity()));
+
+    public static ErrorCode valueOf(int code) {
+        return lookup.computeIfAbsent(code, k -> { throw new NoSuchElementException("No ErrorCode with code: " + k); });
     }
 }
