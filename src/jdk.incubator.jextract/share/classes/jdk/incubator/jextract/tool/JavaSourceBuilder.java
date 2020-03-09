@@ -302,14 +302,28 @@ class JavaSourceBuilder {
             sb.append(PUB_MODS + type.getName() + " " + javaSafeIdentifier(name));
             sb.append(" = ");
             if (type == float.class) {
-                sb.append(value);
-                sb.append("f");
+                float f = ((Number)value).floatValue();
+                if (Float.isNaN(f)) {
+                    sb.append("Float.NaN");
+                } else if (Float.isInfinite(f)) {
+                    sb.append(f > 0? "Float.POSITIVE_INFINITY" : "Float.NEGATIVE_INFINITY");
+                } else {
+                    sb.append(value);
+                    sb.append("f");
+                }
             } else if (type == long.class) {
                 sb.append(value);
                 sb.append("L");
             } else if (type == double.class) {
-                sb.append(value);
-                sb.append("d");
+                double d = ((Number)value).doubleValue();
+                if (Double.isNaN(d)) {
+                    sb.append("Double.NaN");
+                } else if (Double.isInfinite(d)) {
+                    sb.append(d > 0? "Double.POSITIVE_INFINITY" : "Double.NEGATIVE_INFINITY");
+                } else {
+                   sb.append(value);
+                   sb.append("d");
+                }
             } else {
                 sb.append("(" + type.getName() + ")");
                 sb.append(value + "L");
