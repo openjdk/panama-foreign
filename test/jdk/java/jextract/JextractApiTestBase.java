@@ -30,6 +30,7 @@ import jdk.incubator.jextract.JextractTask;
 import jdk.incubator.jextract.Type;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 public class JextractApiTestBase {
@@ -45,13 +46,26 @@ public class JextractApiTestBase {
         return task.parse(parseOptions);
     }
 
-    public static Declaration.Scoped checkStruct(Declaration.Scoped toplevel, String name, String... fields) {
-        Declaration.Scoped struct = findDecl(toplevel, name, Declaration.Scoped.class);
-        assertEquals(struct.members().size(), fields.length);
-        for (int i = 0 ; i < fields.length ; i++) {
-            assertEquals(struct.members().get(i).name(), fields[i]);
+    public static Declaration.Scoped checkScoped(Declaration.Scoped toplevel, String name, Declaration.Scoped.Kind kind,  String... fields) {
+        Declaration.Scoped scoped = findDecl(toplevel, name, Declaration.Scoped.class);
+        assertEquals(scoped.members().size(), fields.length);
+        assertTrue(scoped.kind() == kind);
+        for (int i = 0; i < fields.length; i++) {
+            assertEquals(scoped.members().get(i).name(), fields[i]);
         }
-        return struct;
+        return scoped;
+    }
+
+    public static Declaration.Scoped checkStruct(Declaration.Scoped toplevel, String name, String... fields) {
+        return checkScoped(toplevel, name, Declaration.Scoped.Kind.STRUCT, fields);
+    }
+
+    public static Declaration.Scoped checkBitfields(Declaration.Scoped toplevel, String name, String... fields) {
+        return checkScoped(toplevel, name, Declaration.Scoped.Kind.BITFIELDS, fields);
+    }
+
+    public static Declaration.Scoped checkUnion(Declaration.Scoped toplevel, String name, String... fields) {
+        return checkScoped(toplevel, name, Declaration.Scoped.Kind.UNION, fields);
     }
 
     public static Declaration.Variable checkConstant(Declaration.Scoped scope, String name, Type type) {

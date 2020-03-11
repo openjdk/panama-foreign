@@ -28,32 +28,13 @@
  */
 
 import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-
-public class Test8239490 extends JextractApiTestBase {
+public class Test8240853 extends JextractApiTestBase {
     @Test
-    public void test8239490() {
-        Declaration.Scoped d = parse("Test8239490.h");
+    public void test8240853() {
+        Declaration.Scoped d = parse("Test8240853.h");
         // check Foo
-        String[] fooBitfieldNames = { "a", "b", "c" };
-        int[] fooBitfieldSizes = { 1, 1, 30 };
-        Declaration.Scoped structFoo = checkStruct(d, "Foo", "");
-        Declaration.Scoped bitfieldsFoo = checkBitfields(structFoo, "", "a", "b", "c");
-        Type intType = ((Declaration.Variable)bitfieldsFoo.members().get(0)).type();
-        for (int i = 0 ; i < fooBitfieldNames.length ; i++) {
-            checkBitField(bitfieldsFoo, fooBitfieldNames[i], intType, fooBitfieldSizes[i]);
-        }
-        // check Bar
-        String[] barBitfieldNames = { "x", "y" };
-        int[] barBitfieldSizes = { 1, 31 };
-        Declaration.Scoped structBar = checkStruct(d, "Bar", "", "z");
-        Declaration.Scoped bitfieldsBar = checkBitfields(structBar, "", "x", "y");
-        for (int i = 0 ; i < barBitfieldNames.length ; i++) {
-            checkBitField(bitfieldsBar, barBitfieldNames[i], intType, barBitfieldSizes[i]);
-        }
-        checkField(structBar, "z", Type.array(1, Type.declared(structFoo)));
+        checkUnion(d, "Foo", "i", "l");
     }
 }

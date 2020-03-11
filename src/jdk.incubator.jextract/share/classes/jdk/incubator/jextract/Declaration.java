@@ -121,7 +121,7 @@ public interface Declaration {
          * @return The parameters associated with this function declaration.
          */
         List<Variable> parameters();
-        
+
         /**
          * The foreign type associated with this function declaration.
          * @return The foreign type associated with this function declaration.
@@ -446,7 +446,7 @@ public interface Declaration {
      */
     static Declaration.Scoped union(Position pos, String name, MemoryLayout layout, Declaration... decls) {
         List<Declaration> declList = Stream.of(decls).collect(Collectors.toList());
-        return new DeclarationImpl.ScopedImpl(Declaration.Scoped.Kind.STRUCT, layout, declList, name, pos);
+        return new DeclarationImpl.ScopedImpl(Declaration.Scoped.Kind.UNION, layout, declList, name, pos);
     }
 
     /**
