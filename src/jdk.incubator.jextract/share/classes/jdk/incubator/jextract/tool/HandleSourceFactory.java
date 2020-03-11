@@ -34,7 +34,6 @@ import jdk.incubator.foreign.SystemABI;
 
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.invoke.MethodType;
@@ -43,9 +42,10 @@ import java.net.URL;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -55,13 +55,60 @@ import java.util.stream.Collectors;
  * particular Tree is processed or skipped.
  */
 public class HandleSourceFactory implements Declaration.Visitor<Void, Declaration> {
-
     private final Set<String> constants = new HashSet<>();
+    // To detect duplicate Variable and Function declarations.
+    private final Set<Declaration.Variable> variables = new HashSet<>();
+    private final Set<Declaration.Function> functions = new HashSet<>();
+
+    private final Set<String> structsAndVars = new HashSet<>();
+    private final Map<String, String> mangledNames = new HashMap<>();
+
     protected final JavaSourceBuilder builder = new JavaSourceBuilder();
     protected final TypeTranslator typeTranslator = new TypeTranslator();
     private final List<String> libraryNames;
     private final String clsName;
     private final String pkgName;
+
+    // have we visited this Variable earlier?
+    protected boolean visitedVariable(Declaration.Variable tree) {
+        return !variables.add(tree);
+    }
+
+    // have we visited this Function earlier?
+    protected boolean visitedFunction(Declaration.Function tree) {
+        return !functions.add(tree);
+    }
+
+    // have we visited a struct/union or a global variable of given name?
+    protected boolean visitedStructOrVariable(String name) {
+        return !structsAndVars.add(name);
+    }
+
+    private void setMangledName(String name, String prefix) {
+        if (!name.isEmpty() && visitedStructOrVariable(name)) {
+            mangledNames.put(name, prefix + name);
+        }
+    }
+
+    protected void setMangledName(Declaration.Scoped d) {
+        switch (d.kind()) {
+            case STRUCT:
+                setMangledName(d.name(), "struct$");
+                break;
+            case UNION:
+                setMangledName(d.name(), "union$");
+                break;
+        }
+    }
+
+    protected void setMangledName(Declaration.Variable v) {
+        setMangledName(v.name(), "var$");
+    }
+
+    protected String getMangledName(Declaration d) {
+        String name = d.name();
+        return name.isEmpty()? name : mangledNames.getOrDefault(name, name);
+    }
 
     static JavaFileObject[] generateRaw(Declaration.Scoped decl, String clsName, String pkgName, List<String> libraryNames) {
         return new HandleSourceFactory(clsName, pkgName, libraryNames).generate(decl);
@@ -150,10 +197,21 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
 
     @Override
     public Void visitVariable(Declaration.Variable tree, Declaration parent) {
+        if (parent == null && visitedVariable(tree)) {
+            return null;
+        }
+
         String fieldName = tree.name();
         String symbol = tree.name();
         assert !symbol.isEmpty();
         assert !fieldName.isEmpty();
+
+        // FIXME: we need tree transformer. The mangling should be a separate tree transform phase
+        if (parent == null) {
+            setMangledName(tree);
+            fieldName = getMangledName(tree);
+        }
+
         Type type = tree.type();
         MemoryLayout layout = tree.layout().orElse(Type.layoutFor(type).orElse(null));
         if (layout == null) {
@@ -169,7 +227,7 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
 
         if (parent != null) {
             //struct field
-            builder.addVarHandle(fieldName, clazz, parent.name());
+            builder.addVarHandle(fieldName, clazz, getMangledName(parent));
         } else {
             builder.addLayout(fieldName, layout);
             builder.addVarHandle(fieldName, clazz, null);
@@ -181,6 +239,10 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
 
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
+        if (visitedFunction(funcTree)) {
+            return null;
+        }
+
         FunctionDescriptor descriptor = Type.descriptorFor(funcTree.type()).orElse(null);
         if (descriptor == null) {
             //abort
@@ -211,17 +273,21 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
             return null;
         }
         String name = d.name();
+        // FIXME: we need tree transformer. The mangling should be a separate tree transform phase
         if (d.name().isEmpty() && parent != null) {
-            name = parent.name();
+            name = getMangledName(parent);
+        } else {
+            setMangledName(d);
+            name = getMangledName(d);
         }
-
         if (!d.name().isEmpty() || !isRecord(parent)) {
             //only add explicit struct layout if the struct is not to be flattened inside another struct
             switch (d.kind()) {
                 case STRUCT:
-                case UNION:
+                case UNION: {
                     builder.addLayout(name, d.layout().get());
                     break;
+                }
             }
         }
         d.members().forEach(fieldTree -> fieldTree.accept(this, d.name().isEmpty() ? parent : d));

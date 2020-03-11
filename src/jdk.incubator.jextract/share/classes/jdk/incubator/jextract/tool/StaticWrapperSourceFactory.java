@@ -26,9 +26,7 @@
 package jdk.incubator.jextract.tool;
 
 import java.lang.invoke.MethodType;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -37,9 +35,6 @@ import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 public class StaticWrapperSourceFactory extends HandleSourceFactory {
-    private final Set<Declaration.Variable> variables = new HashSet<>();
-    private final Set<Declaration.Function> functions = new HashSet<>();
-
     public StaticWrapperSourceFactory(String clsName, String pkgName, List<String> libraryNames) {
         super(clsName, pkgName, libraryNames);
     }
@@ -51,9 +46,10 @@ public class StaticWrapperSourceFactory extends HandleSourceFactory {
 
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
-        if (! functions.add(funcTree)) {
+        if (visitedFunction(funcTree)) {
             return null;
         }
+
         MethodType mtype = typeTranslator.getMethodType(funcTree.type());
         FunctionDescriptor descriptor = Type.descriptorFor(funcTree.type()).orElse(null);
         if (descriptor == null) {
@@ -99,7 +95,7 @@ public class StaticWrapperSourceFactory extends HandleSourceFactory {
 
     @Override
     public Void visitVariable(Declaration.Variable tree, Declaration parent) {
-        if (parent == null && !(variables.add(tree))) {
+        if (parent == null && visitedVariable(tree)) {
             return null;
         }
 
@@ -107,6 +103,13 @@ public class StaticWrapperSourceFactory extends HandleSourceFactory {
         String symbol = tree.name();
         assert !symbol.isEmpty();
         assert !fieldName.isEmpty();
+
+        // FIXME: we need tree transformer. The mangling should be a separate tree transform phase
+        if (parent == null) {
+            setMangledName(tree);
+            fieldName = getMangledName(tree);
+        }
+
         Type type = tree.type();
         MemoryLayout layout = tree.layout().orElse(Type.layoutFor(type).orElse(null));
         if (layout == null) {
@@ -120,17 +123,18 @@ public class StaticWrapperSourceFactory extends HandleSourceFactory {
             return null;
         }
 
+        String parentName = parent != null? getMangledName(parent) : null;
         if (parent != null) {
             //struct field
-            builder.addVarHandle(fieldName, clazz, parent.name());
+            builder.addVarHandle(fieldName, clazz, parentName);
         } else {
             builder.addLayout(fieldName, layout);
             builder.addVarHandle(fieldName, clazz, null);
             builder.addAddress(fieldName);
         }
         //add getter and setters
-        builder.addGetter(fieldName, clazz, parent);
-        builder.addSetter(fieldName, clazz, parent);
+        builder.addGetter(fieldName, clazz, parentName);
+        builder.addSetter(fieldName, clazz, parentName);
 
         return null;
     }

@@ -448,11 +448,11 @@ class JavaSourceBuilder {
         decrAlign();
     }
 
-    void addGetter(String name, Class<?> type, Declaration parent) {
+    void addGetter(String name, Class<?> type, String parent) {
         incrAlign();
         indent();
         name = javaSafeIdentifier(name);
-        String vhName = (parent != null ? (javaSafeIdentifier(parent.name()) + "$") : "") + name;
+        String vhName = (parent != null ? (javaSafeIdentifier(parent) + "$") : "") + name;
         String param = parent != null ? (MemorySegment.class.getName() + " seg") : "";
         sb.append(PUB_MODS + type.getName() + " " + vhName + "$get(" + param + ") {\n");
         incrAlign();
@@ -466,11 +466,11 @@ class JavaSourceBuilder {
         decrAlign();
     }
 
-    void addSetter(String name, Class<?> type, Declaration parent) {
+    void addSetter(String name, Class<?> type, String parent) {
         incrAlign();
         indent();
         name = javaSafeIdentifier(name);
-        String vhName = (parent != null ? (javaSafeIdentifier(parent.name()) + "$") : "") + name;
+        String vhName = (parent != null ? (javaSafeIdentifier(parent) + "$") : "") + name;
         String param = parent != null ? (MemorySegment.class.getName() + " seg, ") : "";
         sb.append(PUB_MODS + "void " + vhName + "$set(" + param + type.getName() + " x) {\n");
         incrAlign();
