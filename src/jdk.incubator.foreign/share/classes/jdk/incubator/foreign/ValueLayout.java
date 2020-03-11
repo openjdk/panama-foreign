@@ -56,8 +56,8 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
         this(order, size, size, Map.of());
     }
 
-    ValueLayout(ByteOrder order, long size, long alignment, Map<String, Constable> annotations) {
-        super(OptionalLong.of(size), alignment, annotations);
+    ValueLayout(ByteOrder order, long size, long alignment, Map<String, Constable> attributes) {
+        super(OptionalLong.of(size), alignment, attributes);
         this.order = order;
     }
 
@@ -77,7 +77,7 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
      * @return a new value layout with given byte order.
      */
     public ValueLayout withOrder(ByteOrder order) {
-        return new ValueLayout(order, bitSize(), alignment, annotations);
+        return new ValueLayout(order, bitSize(), alignment, attributes);
     }
 
     @Override
@@ -110,14 +110,14 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     @Override
-    ValueLayout dup(long alignment, Map<String, Constable> annotations) {
-        return new ValueLayout(order, bitSize(), alignment, annotations);
+    ValueLayout dup(long alignment, Map<String, Constable> attributes) {
+        return new ValueLayout(order, bitSize(), alignment, attributes);
     }
 
     @Override
     public Optional<DynamicConstantDesc<ValueLayout>> describeConstable() {
-        return Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
-                CD_VALUE_LAYOUT, MH_VALUE, bitSize(), order == ByteOrder.BIG_ENDIAN ? BIG_ENDIAN : LITTLE_ENDIAN));
+        return Optional.of(decorateLayoutConstant(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
+                CD_VALUE_LAYOUT, MH_VALUE, bitSize(), order == ByteOrder.BIG_ENDIAN ? BIG_ENDIAN : LITTLE_ENDIAN)));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
@@ -137,5 +137,13 @@ public final class ValueLayout extends AbstractLayout implements MemoryLayout {
     @Override
     public ValueLayout withBitAlignment(long alignmentBits) {
         return (ValueLayout)super.withBitAlignment(alignmentBits);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ValueLayout withAttribute(String name, Constable value) {
+        return (ValueLayout)super.withAttribute(name, value);
     }
 }

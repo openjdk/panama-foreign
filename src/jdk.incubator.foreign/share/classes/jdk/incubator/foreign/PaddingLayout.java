@@ -52,8 +52,8 @@ import java.util.OptionalLong;
         this(size, 1, Map.of());
     }
 
-    PaddingLayout(long size, long alignment, Map<String, Constable> annotations) {
-        super(OptionalLong.of(size), alignment, annotations);
+    PaddingLayout(long size, long alignment, Map<String, Constable> attributes) {
+        super(OptionalLong.of(size), alignment, attributes);
     }
 
     @Override
@@ -82,14 +82,19 @@ import java.util.OptionalLong;
     }
 
     @Override
-    PaddingLayout dup(long alignment, Map<String, Constable> annotations) {
-        return new PaddingLayout(bitSize(), alignment, annotations);
+    PaddingLayout dup(long alignment, Map<String, Constable> attributes) {
+        return new PaddingLayout(bitSize(), alignment, attributes);
+    }
+
+    @Override
+    public boolean hasNaturalAlignment() {
+        return true;
     }
 
     @Override
     public Optional<DynamicConstantDesc<MemoryLayout>> describeConstable() {
-        return Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "padding",
-                CD_LAYOUT, MH_PADDING, bitSize()));
+        return Optional.of(decorateLayoutConstant(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "padding",
+                CD_MEMORY_LAYOUT, MH_PADDING, bitSize())));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
@@ -109,5 +114,13 @@ import java.util.OptionalLong;
     @Override
     public PaddingLayout withBitAlignment(long alignmentBits) {
         return (PaddingLayout)super.withBitAlignment(alignmentBits);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public PaddingLayout withAttribute(String name, Constable value) {
+        return (PaddingLayout)super.withAttribute(name, value);
     }
 }
