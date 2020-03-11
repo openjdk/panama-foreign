@@ -104,6 +104,7 @@ public class StaticWrapperSourceFactory extends HandleSourceFactory {
         assert !symbol.isEmpty();
         assert !fieldName.isEmpty();
 
+        // FIXME: we need tree transformer. The mangling should be a separate tree transform phase
         if (parent == null) {
             setMangledName(tree);
             fieldName = getMangledName(tree);

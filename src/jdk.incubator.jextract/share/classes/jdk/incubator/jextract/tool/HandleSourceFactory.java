@@ -206,6 +206,7 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
         assert !symbol.isEmpty();
         assert !fieldName.isEmpty();
 
+        // FIXME: we need tree transformer. The mangling should be a separate tree transform phase
         if (parent == null) {
             setMangledName(tree);
             fieldName = getMangledName(tree);
@@ -272,6 +273,7 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
             return null;
         }
         String name = d.name();
+        // FIXME: we need tree transformer. The mangling should be a separate tree transform phase
         if (d.name().isEmpty() && parent != null) {
             name = getMangledName(parent);
         } else {
