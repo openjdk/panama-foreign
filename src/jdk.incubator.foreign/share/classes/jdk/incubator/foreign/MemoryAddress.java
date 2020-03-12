@@ -118,7 +118,9 @@ public interface MemoryAddress {
      * associated with either {@code src} or {@code dst}.
      * @throws IllegalStateException if either the source address or the target address belong to memory segments
      * which have been already closed, or if access occurs from a thread other than the thread owning either segment.
-     * @throws UnsupportedOperationException if {@code dst} is associated with a read-only segment (see {@link MemorySegment#isReadOnly()}).
+     * @throws UnsupportedOperationException if either {@code src} or {@code dst} do not feature required access modes;
+     * more specifically, {@code src} should be associated with a segment with {@link MemorySegment#READ} access mode,
+     * while {@code dst} should be associated with a segment with {@link MemorySegment#WRITE} access mode.
      */
     static void copy(MemoryAddress src, MemoryAddress dst, long bytes) {
         MemoryAddressImpl.copy((MemoryAddressImpl)src, (MemoryAddressImpl)dst, bytes);
