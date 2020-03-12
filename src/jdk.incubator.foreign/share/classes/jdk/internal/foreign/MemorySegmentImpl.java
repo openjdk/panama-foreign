@@ -35,6 +35,8 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
@@ -58,11 +60,16 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final Thread owner;
     final MemoryScope scope;
 
-    final static int READ_ONLY = 1;
-    final static int SMALL = READ_ONLY << 1;
+    final static int SMALL = ACQUIRE << 1;
     final static long NONCE = new Random().nextLong();
 
-    public MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
+    final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE;
+
+    public MemorySegmentImpl(long min, Object base, long length, Thread owner, MemoryScope scope) {
+        this(min, base, length, DEFAULT_MASK, owner, scope);
+    }
+
+    private MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
         this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
         this.min = min;
@@ -75,13 +82,15 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public final MemorySegmentImpl asSlice(long offset, long newSize) {
-        checkValidState();
         checkBounds(offset, newSize);
         return new MemorySegmentImpl(min + offset, base, newSize, mask, owner, scope);
     }
 
     @Override
     public MemorySegment acquire() {
+        if (!isSet(ACQUIRE)) {
+            throw unsupportedAccessMode(ACQUIRE);
+        }
         return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
     }
 
@@ -97,19 +106,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public final MemorySegmentImpl asReadOnly() {
-        checkValidState();
-        return new MemorySegmentImpl(min, base, length, mask | READ_ONLY, owner, scope);
-    }
-
-    @Override
     public final boolean isAlive() {
         return scope.isAliveThreadSafe();
-    }
-
-    @Override
-    public final boolean isReadOnly() {
-        return isSet(READ_ONLY);
     }
 
     @Override
@@ -119,13 +117,18 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public final void close() {
+        if (!isSet(CLOSE)) {
+            throw unsupportedAccessMode(CLOSE);
+        }
         checkValidState();
         scope.close();
     }
 
     @Override
     public ByteBuffer asByteBuffer() {
-        checkValidState();
+        if (!isSet(READ)) {
+            throw unsupportedAccessMode(READ);
+        }
         checkIntSize("ByteBuffer");
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
         ByteBuffer _bb;
@@ -137,7 +140,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         } else {
             _bb = nioAccess.newDirectByteBuffer(min, (int) length, null, this);
         }
-        if (isReadOnly()) {
+        if (!isSet(WRITE)) {
             //scope is IMMUTABLE - obtain a RO byte buffer
             _bb = _bb.asReadOnlyBuffer();
         }
@@ -145,8 +148,25 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
+    public MemorySegment withAccessModes(int accessModes) {
+        if ((~this.mask & accessModes) != 0) {
+            throw new UnsupportedOperationException("Cannot acquire more access modes");
+        }
+        return new MemorySegmentImpl(min, base, length, accessModes, owner, scope);
+    }
+
+    @Override
+    public boolean hasAccessModes(int accessModes) {
+        return (this.mask & accessModes) == accessModes;
+    }
+
+    @Override
+    public int accessModes() {
+        return mask;
+    }
+
+    @Override
     public byte[] toByteArray() {
-        checkValidState();
         checkIntSize("byte[]");
         byte[] arr = new byte[(int)length];
         MemorySegment arrSegment = MemorySegment.ofArray(arr);
@@ -179,8 +199,10 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
-        if (isReadOnly() && writeAccess) {
-            throw new UnsupportedOperationException("Cannot write to read-only memory segment");
+        if (writeAccess && !isSet(WRITE)) {
+            throw unsupportedAccessMode(WRITE);
+        } else if (!writeAccess && !isSet(READ)) {
+            throw unsupportedAccessMode(READ);
         }
         checkBounds(offset, length);
     }
@@ -218,6 +240,28 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
                 offset > (int)this.length - length) { // careful of overflow
             throw outOfBoundException(offset, length);
         }
+    }
+
+    UnsupportedOperationException unsupportedAccessMode(int expected) {
+        return new UnsupportedOperationException((String.format("Required access mode %s ; current access modes: %s",
+                modeStrings(expected).get(0), modeStrings(mask))));
+    }
+
+    private List<String> modeStrings(int mode) {
+        List<String> modes = new ArrayList<>();
+        if ((mode & READ) != 0) {
+            modes.add("READ");
+        }
+        if ((mode & WRITE) != 0) {
+            modes.add("WRITE");
+        }
+        if ((mode & CLOSE) != 0) {
+            modes.add("CLOSE");
+        }
+        if ((mode & ACQUIRE) != 0) {
+            modes.add("ACQUIRE");
+        }
+        return modes;
     }
 
     private IndexOutOfBoundsException outOfBoundException(long offset, long length) {

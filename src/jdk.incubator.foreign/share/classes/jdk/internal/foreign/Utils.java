@@ -101,7 +101,7 @@ public final class Utils {
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         MemoryScope scope = new MemoryScope(null, () -> unsafe.freeMemory(buf));
-        MemorySegment segment = new MemorySegmentImpl(buf, null, alignedSize, 0, Thread.currentThread(), scope);
+        MemorySegment segment = new MemorySegmentImpl(buf, null, alignedSize, Thread.currentThread(), scope);
         if (alignedBuf != buf) {
             long delta = alignedBuf - buf;
             segment = segment.asSlice(delta, bytesSize);
@@ -139,7 +139,7 @@ public final class Utils {
 
     private static MemorySegment makeArraySegment(Object arr, int size, int base, int scale) {
         MemoryScope scope = new MemoryScope(null, null);
-        return new MemorySegmentImpl(base, arr, size * scale, 0, Thread.currentThread(), scope);
+        return new MemorySegmentImpl(base, arr, size * scale, Thread.currentThread(), scope);
     }
 
     public static MemorySegment makeBufferSegment(ByteBuffer bb) {
@@ -150,7 +150,7 @@ public final class Utils {
         int limit = bb.limit();
 
         MemoryScope bufferScope = new MemoryScope(bb, null);
-        return new MemorySegmentImpl(bbAddress + pos, base, limit - pos, 0, Thread.currentThread(), bufferScope);
+        return new MemorySegmentImpl(bbAddress + pos, base, limit - pos, Thread.currentThread(), bufferScope);
     }
 
     // create and map a file into a fresh segment
@@ -159,7 +159,7 @@ public final class Utils {
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
             MemoryScope scope = new MemoryScope(null, unmapperProxy::unmap);
-            return new MemorySegmentImpl(unmapperProxy.address(), null, bytesSize, 0, Thread.currentThread(), scope);
+            return new MemorySegmentImpl(unmapperProxy.address(), null, bytesSize, Thread.currentThread(), scope);
         }
     }
 

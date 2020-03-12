@@ -38,6 +38,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
@@ -121,6 +122,22 @@ public class TestSegments {
         }
     }
 
+    @Test(dataProvider = "accessModes")
+    public void testAccessModes(int accessModes) {
+        int[] arr = new int[1];
+        for (AccessActions action : AccessActions.values()) {
+            MemorySegment segment = MemorySegment.ofArray(arr);
+            MemorySegment restrictedSegment = segment.withAccessModes(accessModes);
+            boolean shouldFail = !restrictedSegment.hasAccessModes(action.accessMode);
+            try {
+                action.run(restrictedSegment);
+                assertFalse(shouldFail);
+            } catch (UnsupportedOperationException ex) {
+                assertTrue(shouldFail);
+            }
+        }
+    }
+
     @DataProvider(name = "badSizeAndAlignments")
     public Object[][] sizesAndAlignments() {
         return new Object[][] {
@@ -176,16 +193,18 @@ public class TestSegments {
         final Method method;
         final Object[] params;
 
+        final static List<String> CONFINED_NAMES = List.of(
+                "close",
+                "toByteArray"
+        );
+
         public SegmentMember(Method method, Object[] params) {
             this.method = method;
             this.params = params;
         }
 
         boolean isConfined() {
-            return method.getName().startsWith("as") ||
-                    method.getName().startsWith("to") ||
-                    method.getName().equals("close") ||
-                    method.getName().equals("slice");
+            return CONFINED_NAMES.contains(method.getName());
         }
 
         @Override
@@ -218,5 +237,52 @@ public class TestSegments {
         } else {
             return null;
         }
+    }
+
+    @DataProvider(name = "accessModes")
+    public Object[][] accessModes() {
+        int nActions = AccessActions.values().length;
+        Object[][] results = new Object[1 << nActions][];
+        for (int accessModes = 0 ; accessModes < results.length ; accessModes++) {
+            results[accessModes] = new Object[] { accessModes };
+        }
+        return results;
+    }
+
+    enum AccessActions {
+        ACQUIRE(MemorySegment.ACQUIRE) {
+            @Override
+            void run(MemorySegment segment) {
+                segment.acquire();
+            }
+        },
+        CLOSE(MemorySegment.CLOSE) {
+            @Override
+            void run(MemorySegment segment) {
+                segment.close();
+            }
+        },
+        READ(MemorySegment.READ) {
+            @Override
+            void run(MemorySegment segment) {
+                INT_HANDLE.get(segment.baseAddress());
+            }
+        },
+        WRITE(MemorySegment.WRITE) {
+            @Override
+            void run(MemorySegment segment) {
+                INT_HANDLE.set(segment.baseAddress(), 42);
+            }
+        };
+
+        final int accessMode;
+
+        static VarHandle INT_HANDLE = MemoryLayouts.JAVA_INT.varHandle(int.class);
+
+        AccessActions(int accessMode) {
+            this.accessMode = accessMode;
+        }
+
+        abstract void run(MemorySegment segment);
     }
 }
