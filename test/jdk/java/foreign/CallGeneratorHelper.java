@@ -44,12 +44,12 @@ import static jdk.incubator.foreign.MemoryLayouts.*;
 import static org.testng.Assert.*;
 
 public class CallGeneratorHelper extends NativeTestHelper {
-    
-	static final int MAX_FIELDS = 3;
-	static final int MAX_PARAMS = 3;
-	static final int CHUNK_SIZE = 600;
 
-	static int functions = 0;
+    static final int MAX_FIELDS = 3;
+    static final int MAX_PARAMS = 3;
+    static final int CHUNK_SIZE = 600;
+
+    static int functions = 0;
 
     enum Ret {
         VOID,
@@ -155,7 +155,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
         }
     }
 
-	@DataProvider(name = "functions")
+    @DataProvider(name = "functions")
     public static Object[][] functions() {
         List<Object[]> downcalls = new ArrayList<>();
         for (Ret r : Ret.values()) {
@@ -337,8 +337,8 @@ public class CallGeneratorHelper extends NativeTestHelper {
         } else if (arg instanceof MemorySegment) {
             try {
                 ((MemorySegment) arg).close();
-            } catch (IllegalStateException e) {
-                assertEquals(e.getMessage(), "Cannot close a root segment");
+            } catch (UnsupportedOperationException e) {
+                assertTrue(e.getMessage().contains("Required access mode"));
                 // fine, NOTHING segment for upcall stubs
             }
         }
