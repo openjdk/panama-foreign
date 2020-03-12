@@ -127,9 +127,10 @@ public class TestSegments {
         int[] arr = new int[1];
         for (AccessActions action : AccessActions.values()) {
             MemorySegment segment = MemorySegment.ofArray(arr);
-            boolean shouldFail = (accessModes & action.accessMode) == 0;
+            MemorySegment restrictedSegment = segment.withAccessModes(accessModes);
+            boolean shouldFail = !restrictedSegment.hasAccessModes(action.accessMode);
             try {
-                action.run(segment.withAccessModes(accessModes));
+                action.run(restrictedSegment);
                 assertFalse(shouldFail);
             } catch (UnsupportedOperationException ex) {
                 assertTrue(shouldFail);
@@ -241,7 +242,7 @@ public class TestSegments {
     @DataProvider(name = "accessModes")
     public Object[][] accessModes() {
         int nActions = AccessActions.values().length;
-        Object[][] results = new Object[nActions * nActions][];
+        Object[][] results = new Object[1 << nActions][];
         for (int accessModes = 0 ; accessModes < results.length ; accessModes++) {
             results[accessModes] = new Object[] { accessModes };
         }

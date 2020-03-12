@@ -156,6 +156,11 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
+    public boolean hasAccessModes(int accessModes) {
+        return (this.mask & accessModes) == accessModes;
+    }
+
+    @Override
     public int accessModes() {
         return mask;
     }

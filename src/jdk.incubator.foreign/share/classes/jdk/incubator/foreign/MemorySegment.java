@@ -186,6 +186,13 @@ public interface MemorySegment extends AutoCloseable {
     MemorySegment withAccessModes(int accessModes);
 
     /**
+     * Does this segment support a given set of access modes?
+     * @param accessModes an ORed mask of zero or more access modes.
+     * @return true, if the access modes in {@accessModes} are stricter than the ones supported by this segment.
+     */
+    boolean hasAccessModes(int accessModes);
+
+    /**
      * Returns the <a href="#access-modes">access modes</a> associated with this segment; the result is represented as ORed values from
      * {@link #READ}, {@link #WRITE}, {@link #CLOSE} and {@link #ACQUIRE}.
      * @return the access modes associated with this segment.

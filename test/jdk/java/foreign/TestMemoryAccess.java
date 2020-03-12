@@ -84,7 +84,7 @@ public class TestMemoryAccess {
     private void testAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, MemoryLayout layout, VarHandle handle, Checker checker) {
         MemoryAddress outer_address;
         try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(layout))) {
-            boolean isRO = (segment.accessModes() & MemorySegment.WRITE) == 0;
+            boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
             MemoryAddress addr = segment.baseAddress();
             try {
                 checker.check(handle, addr);
@@ -116,7 +116,7 @@ public class TestMemoryAccess {
     private void testArrayAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, SequenceLayout seq, VarHandle handle, ArrayChecker checker) {
         MemoryAddress outer_address;
         try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq))) {
-            boolean isRO = (segment.accessModes() & MemorySegment.WRITE) == 0;
+            boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
             MemoryAddress addr = segment.baseAddress();
             try {
                 for (int i = 0; i < seq.elementCount().getAsLong(); i++) {
@@ -185,7 +185,7 @@ public class TestMemoryAccess {
     private void testMatrixAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, SequenceLayout seq, VarHandle handle, MatrixChecker checker) {
         MemoryAddress outer_address;
         try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq))) {
-            boolean isRO = (segment.accessModes() & MemorySegment.WRITE) == 0;
+            boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
             MemoryAddress addr = segment.baseAddress();
             try {
                 for (int i = 0; i < seq.elementCount().getAsLong(); i++) {
