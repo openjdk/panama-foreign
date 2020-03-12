@@ -390,7 +390,8 @@ public class TestByteBuffer {
         try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
             leaked = segment;
         }
-        leaked.asByteBuffer();
+        ByteBuffer byteBuffer = leaked.asByteBuffer(); // ok
+        byteBuffer.get(); // should throw
     }
 
     @Test(expectedExceptions = { UnsupportedOperationException.class,
