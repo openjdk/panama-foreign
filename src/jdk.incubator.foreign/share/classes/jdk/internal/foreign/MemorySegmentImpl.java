@@ -60,7 +60,10 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final Thread owner;
     final MemoryScope scope;
 
-    final static int SMALL = ACQUIRE << 1;
+    final static int ACCESS_MASK = READ | WRITE | CLOSE | ACQUIRE;
+    final static int FIRST_RESERVED_FLAG = 1 << 16; // upper 16 bits are reserved
+    final static int SMALL = FIRST_RESERVED_FLAG;
+
     final static long NONCE = new Random().nextLong();
 
     final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE;
@@ -149,7 +152,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public MemorySegment withAccessModes(int accessModes) {
-        if ((~this.mask & accessModes) != 0) {
+        checkAccessModes(accessModes);
+        if ((~accessModes() & accessModes) != 0) {
             throw new UnsupportedOperationException("Cannot acquire more access modes");
         }
         return new MemorySegmentImpl(min, base, length, accessModes, owner, scope);
@@ -157,12 +161,19 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public boolean hasAccessModes(int accessModes) {
-        return (this.mask & accessModes) == accessModes;
+        checkAccessModes(accessModes);
+        return (accessModes() & accessModes) == accessModes;
+    }
+
+    private void checkAccessModes(int accessModes) {
+        if ((accessModes & ~ACCESS_MASK) != 0) {
+            throw new IllegalArgumentException("Invalid access modes");
+        }
     }
 
     @Override
     public int accessModes() {
-        return mask;
+        return mask & ACCESS_MASK;
     }
 
     @Override
