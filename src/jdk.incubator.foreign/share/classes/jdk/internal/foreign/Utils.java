@@ -140,7 +140,7 @@ public final class Utils {
     }
 
     private static MemorySegment makeArraySegment(Object arr, int size, int base, int scale) {
-        MemorySourceImpl source = new MemorySourceImpl.OfHeap<Object>(size, arr, null, null);
+        MemorySourceImpl source = new MemorySourceImpl.OfHeap(size, arr, null, null);
         return new MemorySegmentImpl(base,  size * scale, Thread.currentThread(), source.acquire());
     }
 
@@ -158,7 +158,7 @@ public final class Utils {
             MemorySourceImpl source = new MemorySourceImpl.OfNative(bbAddress, cap, bb, null);
             return new MemorySegmentImpl(pos, limit - pos, Thread.currentThread(), source.acquire());
         } else {
-            MemorySourceImpl source = new MemorySourceImpl.OfHeap<Object>(cap, base, bb, null);
+            MemorySourceImpl source = new MemorySourceImpl.OfHeap(cap, base, bb, null);
             return new MemorySegmentImpl(bbAddress + pos, limit - pos, Thread.currentThread(), source.acquire());
         }
     }

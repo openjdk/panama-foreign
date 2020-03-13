@@ -25,12 +25,12 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.MappedMemorySource;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.MemorySource;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -38,7 +38,6 @@ public abstract class MemorySourceImpl implements MemorySource {
 
     //reference to keep hold onto
     final Object ref;
-    final Kind kind;
     final long size;
 
     int activeCount = UNACQUIRED;
@@ -59,8 +58,7 @@ public abstract class MemorySourceImpl implements MemorySource {
 
     final Runnable cleanupAction;
 
-    public MemorySourceImpl(Kind kind, long size, Object ref, Runnable cleanupAction) {
-        this.kind = kind;
+    public MemorySourceImpl(long size, Object ref, Runnable cleanupAction) {
         this.size = size;
         this.ref = ref;
         this.cleanupAction = cleanupAction;
@@ -72,11 +70,6 @@ public abstract class MemorySourceImpl implements MemorySource {
 
     long unsafeAddress() {
         return 0L;
-    }
-
-    @Override
-    public Kind kind() {
-        return kind;
     }
 
     @Override
@@ -136,19 +129,13 @@ public abstract class MemorySourceImpl implements MemorySource {
         }
     }
 
-    public static class OfHeap<X> extends MemorySourceImpl implements MemorySource.OfHeap<X> {
+    public static class OfHeap extends MemorySourceImpl {
 
-        final X base;
+        final Object base;
 
-        public OfHeap(long size, X base, Object ref, Runnable cleanupAction) {
-            super(Kind.HEAP, size, ref, cleanupAction);
+        public OfHeap(long size, Object base, Object ref, Runnable cleanupAction) {
+            super(size, ref, cleanupAction);
             this.base = base;
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public X getObject() {
-            return base;
         }
 
         @Override
@@ -157,18 +144,13 @@ public abstract class MemorySourceImpl implements MemorySource {
         }
     }
 
-    public static class OfNative extends MemorySourceImpl implements MemorySource.OfNative {
+    public static class OfNative extends MemorySourceImpl {
 
         final long addr;
 
         public OfNative(long addr, long size, Object ref, Runnable cleanupAction) {
-            super(Kind.NATIVE, size, ref, cleanupAction);
+            super(size, ref, cleanupAction);
             this.addr = addr;
-        }
-
-        @Override
-        public long address() {
-            return addr;
         }
 
         @Override
@@ -177,25 +159,15 @@ public abstract class MemorySourceImpl implements MemorySource {
         }
     }
 
-    public static class OfMapped extends MemorySourceImpl implements MemorySource.OfMapped {
+    public static class OfMapped extends MemorySourceImpl implements MappedMemorySource {
 
         final Path path;
         final long address;
 
         public OfMapped(long address, Path path, long size, Object ref, Runnable cleanupAction) {
-            super(Kind.MAPPED, size, ref, cleanupAction);
+            super(size, ref, cleanupAction);
             this.path = path;
             this.address = address;
-        }
-
-        @Override
-        public Optional<Path> path() {
-            return Optional.ofNullable(path);
-        }
-
-        @Override
-        public long address() {
-            return address;
         }
 
         @Override
