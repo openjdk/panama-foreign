@@ -31,6 +31,7 @@
  */
 
 
+import jdk.incubator.foreign.MappedMemorySource;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -227,6 +228,7 @@ public class TestByteBuffer {
         try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
             MemoryAddress base = segment.baseAddress();
             initTuples(base);
+            ((MappedMemorySource)segment.source()).force();
         }
 
         //read from channel

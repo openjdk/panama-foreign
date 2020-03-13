@@ -32,10 +32,12 @@ import jdk.incubator.foreign.MemorySource;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
+import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -144,6 +146,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
                 throw new UnsupportedOperationException("Not an address to an heap-allocated byte array");
             }
             _bb = nioAccess.newHeapByteBuffer((byte[]) base(), (int)min - BYTE_ARR_BASE, (int) length, this);
+        } else if (unmapper() != null) {
+            _bb = nioAccess.newMappedByteBuffer(unmapper(), addr() + min, (int) length, null, this);
         } else {
             _bb = nioAccess.newDirectByteBuffer(addr() + min, (int) length, null, this);
         }
@@ -226,6 +230,10 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     long addr() {
         return scope.source.unsafeAddress();
+    }
+
+    UnmapperProxy unmapper() {
+        return scope.source.unmapper();
     }
 
     Object base() {

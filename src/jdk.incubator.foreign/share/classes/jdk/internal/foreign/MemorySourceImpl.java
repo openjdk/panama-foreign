@@ -28,17 +28,27 @@ package jdk.internal.foreign;
 import jdk.incubator.foreign.MappedMemorySource;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.MemorySource;
+import jdk.internal.access.foreign.UnmapperProxy;
+import jdk.internal.ref.CleanerFactory;
+import jdk.internal.ref.PhantomCleanable;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.nio.MappedByteBuffer;
 import java.nio.file.Path;
 import java.util.Optional;
 
+/**
+ * Implementation of a memory source. A memory source acts as a shared, <am>atomic</am> reference counter for all the memory segments
+ * which are derived from it. The counter can be incremented (upon calling the {@link #acquire()} method),
+ * and is decremented (when a previously acquired memory scope is later closed).
+ */
 public abstract class MemorySourceImpl implements MemorySource {
 
     //reference to keep hold onto
     final Object ref;
     final long size;
+    PhantomCleanable<?> cleaneable;
 
     int activeCount = UNACQUIRED;
 
@@ -53,7 +63,7 @@ public abstract class MemorySourceImpl implements MemorySource {
     }
 
     final static int UNACQUIRED = 0;
-    final static int CLOSED = -1;
+    final static int RELEASED = -1;
     final static int MAX_ACQUIRE = Integer.MAX_VALUE;
 
     final Runnable cleanupAction;
@@ -72,6 +82,10 @@ public abstract class MemorySourceImpl implements MemorySource {
         return 0L;
     }
 
+    UnmapperProxy unmapper() {
+        return null;
+    }
+
     @Override
     public long byteSize() {
         return size;
@@ -79,7 +93,19 @@ public abstract class MemorySourceImpl implements MemorySource {
 
     @Override
     public void registerCleaner() {
-        throw new UnsupportedOperationException();
+        if (cleanupAction != null) {
+            MemoryScope scope = acquire();
+            try {
+                //Note: if we are here nobody else could be attempting to call the cleanupAction in release()
+                synchronized (this) {
+                    if (cleaneable == null) {
+                        cleaneable = (PhantomCleanable<?>) CleanerFactory.cleaner().register(this, cleanupAction);
+                    }
+                }
+            } finally {
+                scope.close();
+            }
+        }
     }
 
     /**
@@ -88,14 +114,14 @@ public abstract class MemorySourceImpl implements MemorySource {
 
     @Override
     public boolean isReleased() {
-        return ((int)COUNT_HANDLE.getVolatile(this)) != CLOSED;
+        return ((int)COUNT_HANDLE.getVolatile(this)) == RELEASED;
     }
 
-    MemoryScope acquire() {
+    public MemoryScope acquire() {
         int value;
         do {
             value = (int)COUNT_HANDLE.getVolatile(this);
-            if (value == CLOSED) {
+            if (value == RELEASED) {
                 //segment is not alive!
                 throw new IllegalStateException("Segment is not alive");
             } else if (value == MAX_ACQUIRE) {
@@ -105,7 +131,7 @@ public abstract class MemorySourceImpl implements MemorySource {
         } while (!COUNT_HANDLE.compareAndSet(this, value, value + 1));
         return new MemoryScope(this) {
             @Override
-            void close() {
+            public void close() {
                 super.close();
                 source.release();
             }
@@ -122,9 +148,13 @@ public abstract class MemorySourceImpl implements MemorySource {
             }
         } while (!COUNT_HANDLE.compareAndSet(this, value, value - 1));
         //auto-close
-        if ((boolean)COUNT_HANDLE.compareAndSet(this, UNACQUIRED, CLOSED)) {
+        if ((boolean)COUNT_HANDLE.compareAndSet(this, UNACQUIRED, RELEASED)) {
+            // Note: if we are here it means that nobody else could be in the middle of a registerCleaner
             if (cleanupAction != null) {
                 cleanupAction.run();
+                if (cleaneable != null) {
+                    cleaneable.clear();
+                }
             }
         }
     }
@@ -161,28 +191,32 @@ public abstract class MemorySourceImpl implements MemorySource {
 
     public static class OfMapped extends MemorySourceImpl implements MappedMemorySource {
 
-        final Path path;
-        final long address;
+        final UnmapperProxy unmapperProxy;
 
-        public OfMapped(long address, Path path, long size, Object ref, Runnable cleanupAction) {
+        public OfMapped(UnmapperProxy unmapperProxy, long size, Object ref, Runnable cleanupAction) {
             super(size, ref, cleanupAction);
-            this.path = path;
-            this.address = address;
+            this.unmapperProxy = unmapperProxy;
         }
 
         @Override
         long unsafeAddress() {
-            return address;
+            return unmapperProxy.address();
         }
 
         @Override
         public void force() {
-            throw new UnsupportedOperationException();
+            try (MemorySegment segment = new MemorySegmentImpl(0L, size, Thread.currentThread(), acquire())) {
+                force(segment);
+            }
         }
 
         @Override
         public void force(MemorySegment segment) {
-            throw new UnsupportedOperationException();
+            if (segment.source() instanceof MappedMemorySource) {
+                ((MappedByteBuffer)segment.asByteBuffer()).force();
+            } else {
+                throw new IllegalArgumentException("Not a mapped memory segment");
+            }
         }
     }
 }

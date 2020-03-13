@@ -43,6 +43,7 @@ public class TestSharedAccess {
 
     @Test
     public void testShared() throws Throwable {
+        MemorySegment closedSegment;
         try (MemorySegment s = MemorySegment.allocateNative(4)) {
             setInt(s, 42);
             assertEquals(getInt(s), 42);
@@ -62,16 +63,19 @@ public class TestSharedAccess {
                     throw new IllegalStateException(e);
                 }
             });
+            closedSegment = s;
         }
+        assertTrue(closedSegment.source().isReleased());
     }
 
     @Test
     public void testCloseWithPendingAcquire() {
-        MemorySegment acquired;
-        try (MemorySegment segment = MemorySegment.allocateNative(8)) {
-            acquired = segment.acquire();
-        } //ok
+        MemorySegment segment = MemorySegment.allocateNative(8);
+        MemorySegment acquired = segment.acquire();
+        segment.close();
+        assertFalse(segment.source().isReleased());
         acquired.close();
+        assertTrue(segment.source().isReleased());
     }
 
     static int getInt(MemorySegment handle) {

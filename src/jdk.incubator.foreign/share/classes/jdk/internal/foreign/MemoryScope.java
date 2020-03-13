@@ -26,16 +26,9 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.MemorySource;
-
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-
 /**
  * This class manages the temporal bounds associated with a memory segment. A scope has a liveness bit, which is updated
- * when the scope is closed (this operation is triggered by {@link MemorySegmentImpl#close()}). Furthermore, a scope is
- * associated with an <em>atomic</em> counter which can be incremented (upon calling the {@link #acquire()} method),
- * and is decremented (when a previously acquired segment is later closed).
+ * when the scope is closed (this operation is triggered by {@link MemorySegmentImpl#close()}).
  */
 public class MemoryScope {
 
@@ -47,7 +40,7 @@ public class MemoryScope {
         this.source = source;
     }
 
-    void close() {
+    public void close() {
         isAlive = false;
     }
 }

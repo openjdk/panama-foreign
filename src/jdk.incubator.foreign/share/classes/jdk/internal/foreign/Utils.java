@@ -150,9 +150,10 @@ public final class Utils {
         int cap = bb.capacity();
         long bbAddress = javaNioAccess.getBufferAddress(bb);
         Object base = javaNioAccess.getBufferBase(bb);
+        UnmapperProxy unmapper = javaNioAccess.unmapper(bb);
 
-        if (javaNioAccess.isMappedBuffer(bb)) {
-            MemorySourceImpl source = new MemorySourceImpl.OfMapped(bbAddress, null, cap, bb, null);
+        if (unmapper != null) {
+            MemorySourceImpl source = new MemorySourceImpl.OfMapped(unmapper, cap, bb, null);
             return new MemorySegmentImpl(pos, limit - pos, Thread.currentThread(), source.acquire());
         } else if (base == null) {
             MemorySourceImpl source = new MemorySourceImpl.OfNative(bbAddress, cap, bb, null);
@@ -168,7 +169,7 @@ public final class Utils {
         if (bytesSize <= 0) throw new IllegalArgumentException("Requested bytes size must be > 0.");
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
-            MemorySourceImpl source = new MemorySourceImpl.OfMapped(unmapperProxy.address(), path, bytesSize, null, unmapperProxy::unmap);
+            MemorySourceImpl source = new MemorySourceImpl.OfMapped(unmapperProxy, bytesSize, null, unmapperProxy::unmap);
             return new MemorySegmentImpl(0L, bytesSize, Thread.currentThread(), source.acquire());
         }
     }
