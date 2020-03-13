@@ -43,7 +43,7 @@ import java.util.OptionalLong;
 public abstract class AllocationScope implements AutoCloseable {
 
     /**
-     * If this allocation scope is bound, returns the size, in bytes, of this allocation scope.
+     * If this allocation scope is bounded, returns the size, in bytes, of this allocation scope.
      * @return the size, in bytes, of this allocation scope (if available).
      */
     public abstract OptionalLong byteSize();
