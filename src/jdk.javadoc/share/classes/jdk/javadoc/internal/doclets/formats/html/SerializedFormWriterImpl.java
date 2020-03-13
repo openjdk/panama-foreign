@@ -34,8 +34,7 @@ import jdk.javadoc.internal.doclets.formats.html.markup.Entity;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation.PageMode;
+import jdk.javadoc.internal.doclets.formats.html.Navigation.PageMode;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.SerializedFormWriter;
@@ -63,7 +62,7 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
     public SerializedFormWriterImpl(HtmlConfiguration configuration) {
         super(configuration, DocPaths.SERIALIZED_FORM);
         visibleClasses = configuration.getIncludedTypeElements();
-        this.navBar = new Navigation(null, configuration, PageMode.SERIALIZEDFORM, path);
+        this.navBar = new Navigation(null, configuration, PageMode.SERIALIZED_FORM, path);
     }
 
     /**
@@ -78,9 +77,9 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
         Content headerContent = new ContentBuilder();
         addTop(headerContent);
         navBar.setUserHeader(getUserHeaderFooter(true));
-        headerContent.add(navBar.getContent(true));
+        headerContent.add(navBar.getContent(Navigation.Position.TOP));
         Content h1Content = new StringContent(header);
-        Content heading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING, true,
+        Content heading = HtmlTree.HEADING_TITLE(Headings.PAGE_TITLE_HEADING,
                 HtmlStyle.title, h1Content);
         Content div = HtmlTree.DIV(HtmlStyle.header, heading);
         bodyContents.setHeader(headerContent)
@@ -118,7 +117,7 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
      */
     @Override
     public Content getPackageHeader(String packageName) {
-        Content heading = HtmlTree.HEADING(Headings.SerializedForm.PACKAGE_HEADING, true,
+        Content heading = HtmlTree.HEADING_TITLE(Headings.SerializedForm.PACKAGE_HEADING,
                 contents.packageLabel);
         heading.add(Entity.NO_BREAK_SPACE);
         heading.add(packageName);
@@ -242,14 +241,14 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
     public void addFooter() {
         Content htmlTree = HtmlTree.FOOTER();
         navBar.setUserFooter(getUserHeaderFooter(false));
-        htmlTree.add(navBar.getContent(false));
+        htmlTree.add(navBar.getContent(Navigation.Position.BOTTOM));
         addBottom(htmlTree);
         bodyContents.setFooter(htmlTree);
     }
 
     @Override
     public void printDocument(Content serializedTree) throws DocFileIOException {
-        serializedTree.add(bodyContents.toContent());
+        serializedTree.add(bodyContents);
         printHtmlDocument(null, "serialized forms", serializedTree);
     }
 
