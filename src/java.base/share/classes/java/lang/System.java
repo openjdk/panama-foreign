@@ -62,7 +62,8 @@ import java.util.function.Supplier;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import jdk.internal.access.foreign.NativeLibraryProxy;
+import jdk.internal.loader.NativeLibraries;
+import jdk.internal.loader.NativeLibrary;
 import jdk.internal.util.StaticProperty;
 import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.ServicesCatalog;
@@ -2277,25 +2278,6 @@ public final class System {
 
             public void setCause(Throwable t, Throwable cause) {
                 t.setCause(cause);
-            }
-
-            public void loadLibrary(Class<?> caller, String library) {
-                assert library.indexOf(java.io.File.separatorChar) < 0;
-                ClassLoader.loadLibrary(caller, library, false);
-            }
-
-            //Panama
-            @Override
-            public NativeLibraryProxy loadLibrary(MethodHandles.Lookup lookup, String libname) {
-                return Runtime.getRuntime().loadLibrary(lookup, libname);
-            }
-            @Override
-            public NativeLibraryProxy load(MethodHandles.Lookup lookup, String libname) {
-                return Runtime.getRuntime().load0(lookup.lookupClass(), libname);
-            }
-            @Override
-            public NativeLibraryProxy defaultLibrary() {
-                return Runtime.getRuntime().defaultLibrary();
             }
         });
     }

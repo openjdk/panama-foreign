@@ -1905,9 +1905,8 @@ bool Compile::must_alias(const TypePtr* adr_type, int alias_idx) {
 bool Compile::can_alias(const TypePtr* adr_type, int alias_idx) {
   if (alias_idx == AliasIdxTop)         return false; // the empty category
   if (adr_type == NULL)                 return false; // NULL serves as TypePtr::TOP
-  // Known instance doesn't alias with bottom memory
-  if (alias_idx == AliasIdxBot)         return !adr_type->is_known_instance();                   // the universal category
-  if (adr_type->base() == Type::AnyPtr) return !C->get_adr_type(alias_idx)->is_known_instance(); // TypePtr::BOTTOM or its twins
+  if (alias_idx == AliasIdxBot)         return true;  // the universal category
+  if (adr_type->base() == Type::AnyPtr) return true;  // TypePtr::BOTTOM or its twins
 
   // the only remaining possible overlap is identity
   int adr_idx = get_alias_index(adr_type);
@@ -4241,9 +4240,6 @@ int Compile::static_subtype_check(ciKlass* superk, ciKlass* subk) {
       if (!ik->is_final()) {
         // Add a dependency if there is a chance of a later subclass.
         dependencies()->assert_leaf_type(ik);
-      }
-      if (ik->is_abstract()) {
-        return SSC_always_false;
       }
       return SSC_easy_test;     // (3) caller can do a simple ptr comparison
     }
