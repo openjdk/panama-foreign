@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2019, Azul Systems, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,9 +27,6 @@
 package java.lang;
 
 import java.io.*;
-import java.lang.ClassLoader.NativeLibrary;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
 import java.math.BigInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,9 +35,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
 
-import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.access.foreign.NativeLibraryProxy;
+import jdk.internal.loader.NativeLibrary;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -738,16 +734,17 @@ public class Runtime {
         load0(Reflection.getCallerClass(), filename);
     }
 
-    NativeLibraryProxy load0(Class<?> fromClass, String filename) {
+    void load0(Class<?> fromClass, String filename) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(filename);
         }
-        if (!(new File(filename).isAbsolute())) {
+        File file = new File(filename);
+        if (!file.isAbsolute()) {
             throw new UnsatisfiedLinkError(
                 "Expecting an absolute path of the library: " + filename);
         }
-        return ClassLoader.loadLibrary(fromClass, filename, true);
+        ClassLoader.loadLibrary(fromClass, file);
     }
 
     /**
@@ -800,23 +797,7 @@ public class Runtime {
         loadLibrary0(Reflection.getCallerClass(), libname);
     }
 
-    /**
-     * Panama specific: find library given name and lookup.
-     * See {@link JavaLangAccess#loadLibrary(Lookup, String)}.
-     */
-    NativeLibrary loadLibrary(MethodHandles.Lookup lookup, String libname) {
-        return loadLibrary0(lookup.lookupClass(), libname);
-    }
-
-    /**
-     * Panama specific: find default system library.
-     * See {@link JavaLangAccess#defaultLibrary()}.
-     */
-    NativeLibrary defaultLibrary() {
-        return NativeLibrary.defaultLibrary;
-    }
-
-    NativeLibrary loadLibrary0(Class<?> fromClass, String libname) {
+    void loadLibrary0(Class<?> fromClass, String libname) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(libname);
@@ -825,7 +806,7 @@ public class Runtime {
             throw new UnsatisfiedLinkError(
                 "Directory separator should not appear in library name: " + libname);
         }
-        return ClassLoader.loadLibrary(fromClass, libname, false);
+        ClassLoader.loadLibrary(fromClass, libname);
     }
 
     /**
