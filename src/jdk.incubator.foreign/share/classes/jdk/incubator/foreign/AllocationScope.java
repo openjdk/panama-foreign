@@ -36,7 +36,7 @@ import java.util.OptionalLong;
  * This class provides a scope of given size, within which several allocations can be performed. An allocation scope can be backed
  * either by heap, or off-heap memory. Allocation scopes can be either <em>bounded</em> or <em>unbounded</em>, depending on whether the size
  * of the allocation scope is known statically. If an application knows before-hand how much memory it needs to allocate the values it needs,
- * using a <em>bound</em> allocation scope will typically provide better performances than independently allocating the memory
+ * using a <em>bounded</em> allocation scope will typically provide better performances than independently allocating the memory
  * for each value (e.g. using {@link MemorySegment#allocateNative(long)}), or using an <em>unbounded</em> allocation scope.
  * For this reason, using a bound allocation scope is recommended in cases where programs might need to emulate native stack allocation.
  */
