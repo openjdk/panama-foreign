@@ -26,13 +26,12 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.access.JavaLangAccess;
-import jdk.internal.access.SharedSecrets;
 
+import java.io.File;
 import java.lang.invoke.MethodHandles.Lookup;
 import jdk.incubator.foreign.LibraryLookup;
-import jdk.internal.access.foreign.NativeLibraryProxy;
+import jdk.internal.loader.NativeLibraries;
+import jdk.internal.loader.NativeLibrary;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,7 +41,13 @@ import java.util.Optional;
 public final class LibrariesHelper {
     private LibrariesHelper() {}
 
-    private static final JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
+    private final static ClassValue<NativeLibraries> nativeLibrary = new ClassValue<>() {
+        @Override
+        protected NativeLibraries computeValue(Class<?> type) {
+            return new NativeLibraries(type.getClassLoader());
+        }
+    };
+
 
     /**
      * Load the specified shared library.
@@ -51,7 +56,8 @@ public final class LibrariesHelper {
      * @param name Name of the shared library to load.
      */
     public static LibraryLookup loadLibrary(Lookup lookup, String name) {
-        return new LibraryLookupImpl(jlAccess.loadLibrary(lookup, name));
+        return new LibraryLookupImpl(nativeLibrary.get(lookup.lookupClass())
+                .loadLibrary(lookup.lookupClass(), name));
     }
 
     /**
@@ -61,7 +67,13 @@ public final class LibrariesHelper {
      * @param path Path of the shared library to load.
      */
     public static LibraryLookup load(Lookup lookup, String path) {
-        return new LibraryLookupImpl(jlAccess.load(lookup, path));
+        File file = new File(path);
+        if (!file.isAbsolute()) {
+            throw new UnsatisfiedLinkError(
+                    "Expecting an absolute path of the library: " + path);
+        }
+        return new LibraryLookupImpl(nativeLibrary.get(lookup.lookupClass())
+                .loadLibrary(lookup.lookupClass(), file));
     }
 
     // return the absolute path of the library of given name by searching
@@ -73,19 +85,19 @@ public final class LibrariesHelper {
     }
 
     public static LibraryLookup getDefaultLibrary() {
-        return new LibraryLookupImpl(jlAccess.defaultLibrary());
+        return new LibraryLookupImpl(NativeLibraries.defaultLibrary);
     }
 
     static class LibraryLookupImpl implements LibraryLookup {
-        NativeLibraryProxy proxy;
+        NativeLibrary library;
 
-        LibraryLookupImpl(NativeLibraryProxy proxy) {
-            this.proxy = proxy;
+        LibraryLookupImpl(NativeLibrary library) {
+            this.library = library;
         }
 
         @Override
         public MemoryAddress lookup(String name) throws NoSuchMethodException {
-            long addr = proxy.lookup(name);
+            long addr = library.lookup(name);
             return MemoryAddress.ofLong(addr);
         }
     }

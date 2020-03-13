@@ -286,30 +286,6 @@ public class HtmlDocletWriter {
         private static final Pattern docrootPattern =
                 Pattern.compile(Pattern.quote("{@docroot}"), Pattern.CASE_INSENSITIVE);
 
-    /**
-     * Get the script to show or hide the All classes link.
-     *
-     * @param id id of the element to show or hide
-     * @return a content tree for the script
-     */
-    public Content getAllClassesLinkScript(String id) {
-        Script script = new Script("<!--\n" +
-                "  allClassesLink = document.getElementById(")
-                .appendStringLiteral(id)
-                .append(");\n" +
-                "  if(window==top) {\n" +
-                "    allClassesLink.style.display = \"block\";\n" +
-                "  }\n" +
-                "  else {\n" +
-                "    allClassesLink.style.display = \"none\";\n" +
-                "  }\n" +
-                "  //-->\n");
-        Content div = HtmlTree.DIV(script.asContent());
-        Content div_noscript = HtmlTree.DIV(contents.noScriptMessage);
-        Content noScript = HtmlTree.NOSCRIPT(div_noscript);
-        div.add(noScript);
-        return div;
-    }
 
     /**
      * Add method information.
@@ -464,7 +440,7 @@ public class HtmlDocletWriter {
                 .setIndex(options.createIndex(), mainBodyScript)
                 .addContent(extraHeadContent);
 
-        Content htmlTree = HtmlTree.HTML(configuration.getLocale().getLanguage(), head.toContent(), body);
+        Content htmlTree = HtmlTree.HTML(configuration.getLocale().getLanguage(), head, body);
         HtmlDocument htmlDocument = new HtmlDocument(htmlComment, htmlTree);
         htmlDocument.write(DocFile.createFileForOutput(configuration, path));
     }
@@ -1357,8 +1333,8 @@ public class HtmlDocletWriter {
     {
         final Content result = new ContentBuilder() {
             @Override
-            public void add(CharSequence text) {
-                super.add(utils.normalizeNewlines(text));
+            public ContentBuilder add(CharSequence text) {
+                return super.add(utils.normalizeNewlines(text));
             }
         };
         CommentHelper ch = utils.getCommentHelper(element);
