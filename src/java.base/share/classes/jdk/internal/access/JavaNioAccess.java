@@ -68,6 +68,11 @@ public interface JavaNioAccess {
     long getBufferAddress(ByteBuffer bb);
 
     /**
+     * Used by {@code jdk.internal.foreign.Utils}.
+     */
+    boolean isMappedBuffer(ByteBuffer bb);
+
+    /**
      * Used by byte buffer var handle views.
      */
     void checkSegment(Buffer buffer);

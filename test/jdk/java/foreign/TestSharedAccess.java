@@ -65,11 +65,13 @@ public class TestSharedAccess {
         }
     }
 
-    @Test(expectedExceptions=IllegalStateException.class)
-    public void testBadCloseWithPendingAcquire() {
+    @Test
+    public void testCloseWithPendingAcquire() {
+        MemorySegment acquired;
         try (MemorySegment segment = MemorySegment.allocateNative(8)) {
-            segment.acquire();
-        } //should fail here!
+            acquired = segment.acquire();
+        } //ok
+        acquired.close();
     }
 
     static int getInt(MemorySegment handle) {

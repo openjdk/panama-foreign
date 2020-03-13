@@ -200,6 +200,12 @@ public interface MemorySegment extends AutoCloseable {
     int accessModes();
 
     /**
+     * Returns the memory source associated with this segment.
+     * @return the memory source associated with this segment.
+     */
+    MemorySource source();
+
+    /**
      * Obtains a new memory segment view whose base address is the same as the base address of this segment plus a given offset,
      * and whose new size is specified by the given argument.
      * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.

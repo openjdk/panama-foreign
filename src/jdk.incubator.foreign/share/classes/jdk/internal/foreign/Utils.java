@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySource;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemoryAddressProxy;
@@ -42,6 +43,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -100,8 +102,8 @@ public final class Utils {
             unsafe.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemoryScope scope = new MemoryScope(null, () -> unsafe.freeMemory(buf));
-        MemorySegment segment = new MemorySegmentImpl(buf, null, alignedSize, Thread.currentThread(), scope);
+        MemorySourceImpl source = new MemorySourceImpl.OfNative(buf, alignedSize, null, () -> unsafe.freeMemory(buf));
+        MemorySegment segment = new MemorySegmentImpl(0, alignedSize, Thread.currentThread(), source.acquire());
         if (alignedBuf != buf) {
             long delta = alignedBuf - buf;
             segment = segment.asSlice(delta, bytesSize);
@@ -138,19 +140,27 @@ public final class Utils {
     }
 
     private static MemorySegment makeArraySegment(Object arr, int size, int base, int scale) {
-        MemoryScope scope = new MemoryScope(null, null);
-        return new MemorySegmentImpl(base, arr, size * scale, Thread.currentThread(), scope);
+        MemorySourceImpl source = new MemorySourceImpl.OfHeap<Object>(size, arr, null, null);
+        return new MemorySegmentImpl(base,  size * scale, Thread.currentThread(), source.acquire());
     }
 
     public static MemorySegment makeBufferSegment(ByteBuffer bb) {
+        int pos = bb.position();
+        int limit = bb.limit();
+        int cap = bb.capacity();
         long bbAddress = javaNioAccess.getBufferAddress(bb);
         Object base = javaNioAccess.getBufferBase(bb);
 
-        int pos = bb.position();
-        int limit = bb.limit();
-
-        MemoryScope bufferScope = new MemoryScope(bb, null);
-        return new MemorySegmentImpl(bbAddress + pos, base, limit - pos, Thread.currentThread(), bufferScope);
+        if (javaNioAccess.isMappedBuffer(bb)) {
+            MemorySourceImpl source = new MemorySourceImpl.OfMapped(bbAddress, null, cap, bb, null);
+            return new MemorySegmentImpl(pos, limit - pos, Thread.currentThread(), source.acquire());
+        } else if (base == null) {
+            MemorySourceImpl source = new MemorySourceImpl.OfNative(bbAddress, cap, bb, null);
+            return new MemorySegmentImpl(pos, limit - pos, Thread.currentThread(), source.acquire());
+        } else {
+            MemorySourceImpl source = new MemorySourceImpl.OfHeap<Object>(cap, base, bb, null);
+            return new MemorySegmentImpl(bbAddress + pos, limit - pos, Thread.currentThread(), source.acquire());
+        }
     }
 
     // create and map a file into a fresh segment
@@ -158,8 +168,8 @@ public final class Utils {
         if (bytesSize <= 0) throw new IllegalArgumentException("Requested bytes size must be > 0.");
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
-            MemoryScope scope = new MemoryScope(null, unmapperProxy::unmap);
-            return new MemorySegmentImpl(unmapperProxy.address(), null, bytesSize, Thread.currentThread(), scope);
+            MemorySourceImpl source = new MemorySourceImpl.OfMapped(unmapperProxy.address(), path, bytesSize, null, unmapperProxy::unmap);
+            return new MemorySegmentImpl(0L, bytesSize, Thread.currentThread(), source.acquire());
         }
     }
 

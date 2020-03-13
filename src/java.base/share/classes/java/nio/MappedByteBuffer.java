@@ -109,6 +109,10 @@ public abstract class MappedByteBuffer
         this.isSync = false;
     }
 
+    boolean isMapped() {
+        return fd != null;
+    }
+
     // Returns the distance (in bytes) of the buffer start from the
     // largest page aligned address of the mapping less than or equal
     // to the start address.

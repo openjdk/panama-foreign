@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySource;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
@@ -56,7 +57,6 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final long length;
     final int mask;
     final long min;
-    final Object base;
     final Thread owner;
     final MemoryScope scope;
 
@@ -68,15 +68,14 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE;
 
-    public MemorySegmentImpl(long min, Object base, long length, Thread owner, MemoryScope scope) {
-        this(min, base, length, DEFAULT_MASK, owner, scope);
+    public MemorySegmentImpl(long min, long length, Thread owner, MemoryScope scope) {
+        this(min, length, DEFAULT_MASK, owner, scope);
     }
 
-    private MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
+    private MemorySegmentImpl(long min, long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
         this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
         this.min = min;
-        this.base = base;
         this.owner = owner;
         this.scope = scope;
     }
@@ -86,7 +85,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     @Override
     public final MemorySegmentImpl asSlice(long offset, long newSize) {
         checkBounds(offset, newSize);
-        return new MemorySegmentImpl(min + offset, base, newSize, mask, owner, scope);
+        return new MemorySegmentImpl(min + offset, newSize, mask, owner, scope);
     }
 
     @Override
@@ -94,7 +93,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         if (!isSet(ACQUIRE)) {
             throw unsupportedAccessMode(ACQUIRE);
         }
-        return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
+        return new MemorySegmentImpl(min, length, mask, Thread.currentThread(), scope.source.acquire());
     }
 
     @Override
@@ -110,7 +109,12 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public final boolean isAlive() {
-        return scope.isAliveThreadSafe();
+        return scope.isAlive;
+    }
+
+    @Override
+    public MemorySource source() {
+        return scope.source;
     }
 
     @Override
@@ -141,7 +145,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
             }
             _bb = nioAccess.newHeapByteBuffer((byte[]) base(), (int)min - BYTE_ARR_BASE, (int) length, this);
         } else {
-            _bb = nioAccess.newDirectByteBuffer(min, (int) length, null, this);
+            _bb = nioAccess.newDirectByteBuffer(addr() + min, (int) length, null, this);
         }
         if (!isSet(WRITE)) {
             //scope is IMMUTABLE - obtain a RO byte buffer
@@ -156,7 +160,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         if ((~accessModes() & accessModes) != 0) {
             throw new UnsupportedOperationException("Cannot acquire more access modes");
         }
-        return new MemorySegmentImpl(min, base, length, accessModes, owner, scope);
+        return new MemorySegmentImpl(min, length, accessModes, owner, scope);
     }
 
     @Override
@@ -192,7 +196,9 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         if (owner != Thread.currentThread()) {
             throw new IllegalStateException("Attempt to access segment outside owning thread");
         }
-        scope.checkAliveConfined();
+        if (!scope.isAlive) {
+            throw new IllegalStateException("Scope is not alive");
+        }
     }
 
     boolean isSmall() {
@@ -218,8 +224,12 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         checkBounds(offset, length);
     }
 
+    long addr() {
+        return scope.source.unsafeAddress();
+    }
+
     Object base() {
-        return base;
+        return scope.source.unsafeBase();
     }
 
     private boolean isSet(int mask) {
@@ -282,7 +292,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     private int id() {
         //compute a stable and random id for this memory segment
-        return Math.abs(Objects.hash(base, min, NONCE));
+        return Math.abs(Objects.hash(scope.source.unsafeBase(), min, NONCE));
     }
 
 }

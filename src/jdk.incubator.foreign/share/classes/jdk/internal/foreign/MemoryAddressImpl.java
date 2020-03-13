@@ -85,7 +85,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     }
 
     public long unsafeGetOffset() {
-        return segment.min + offset;
+        return segment.addr() + segment.min + offset;
     }
 
     public Object unsafeGetBase() {

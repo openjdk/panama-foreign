@@ -783,6 +783,15 @@ public abstract class Buffer {
                 }
 
                 @Override
+                public boolean isMappedBuffer(ByteBuffer bb) {
+                    if (bb instanceof MappedByteBuffer) {
+                        return ((MappedByteBuffer) bb).isMapped();
+                    } else {
+                        return false;
+                    }
+                }
+
+                @Override
                 public void checkSegment(Buffer buffer) {
                     buffer.checkSegment();
                 }
