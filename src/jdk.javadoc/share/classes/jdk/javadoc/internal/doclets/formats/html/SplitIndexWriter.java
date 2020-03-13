@@ -27,13 +27,14 @@ package jdk.javadoc.internal.doclets.formats.html;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
+import jdk.javadoc.internal.doclets.formats.html.SearchIndexItem.Category;
 import jdk.javadoc.internal.doclets.formats.html.markup.BodyContents;
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
 import jdk.javadoc.internal.doclets.formats.html.markup.Entity;
@@ -46,7 +47,6 @@ import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
 import jdk.javadoc.internal.doclets.toolkit.util.IndexBuilder;
-
 
 /**
  * Generate Separate Index Files for all the member names with Indexing in
@@ -90,12 +90,15 @@ public class SplitIndexWriter extends AbstractIndexWriter {
      * @throws DocFileIOException if there is a problem generating the index files
      */
     public static void generate(HtmlConfiguration configuration,
-                                IndexBuilder indexBuilder) throws DocFileIOException {
+                                IndexBuilder indexBuilder) throws DocFileIOException
+    {
         DocPath path = DocPaths.INDEX_FILES;
         SortedSet<Character> keys = new TreeSet<>(indexBuilder.asMap().keySet());
-        Collection<SearchIndexItem> searchItems =
-                configuration.searchItems.get(SearchIndexItem.Category.SEARCH_TAGS);
-        keys.addAll(buildSearchTagIndex(searchItems).keySet());
+        Set<Character> searchItemsKeys = configuration.searchItems
+                .itemsOfCategories(Category.INDEX, Category.SYSTEM_PROPERTY)
+                .map(i -> keyCharacter(i.getLabel()))
+                .collect(Collectors.toSet());
+        keys.addAll(searchItemsKeys);
         ListIterator<Character> li = new ArrayList<>(keys).listIterator();
         while (li.hasNext()) {
             Character ch = li.next();
@@ -125,7 +128,7 @@ public class SplitIndexWriter extends AbstractIndexWriter {
         Content headerContent = new ContentBuilder();
         addTop(headerContent);
         navBar.setUserHeader(getUserHeaderFooter(true));
-        headerContent.add(navBar.getContent(true));
+        headerContent.add(navBar.getContent(Navigation.Position.TOP));
         Content main = new ContentBuilder();
         main.add(HtmlTree.DIV(HtmlStyle.header,
                 HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING,
@@ -144,13 +147,12 @@ public class SplitIndexWriter extends AbstractIndexWriter {
         main.add(mainContent);
         HtmlTree footer = HtmlTree.FOOTER();
         navBar.setUserFooter(getUserHeaderFooter(false));
-        footer.add(navBar.getContent(false));
+        footer.add(navBar.getContent(Navigation.Position.BOTTOM));
         addBottom(footer);
         body.add(new BodyContents()
                 .setHeader(headerContent)
                 .addMainContent(main)
-                .setFooter(footer)
-                .toContent());
+                .setFooter(footer));
         String description = "index: " + unicode;
         printHtmlDocument(null, description, body);
     }
@@ -175,7 +177,7 @@ public class SplitIndexWriter extends AbstractIndexWriter {
             contentTree.add(links.createLink(pathToRoot.resolve(DocPaths.ALLPACKAGES_INDEX),
                                              contents.allPackagesLabel));
         }
-        if (!searchItems.get(SearchIndexItem.Category.SEARCH_TAGS).isEmpty()) {
+        if (searchItems.containsAnyOfCategories(Category.SYSTEM_PROPERTY)) {
             contentTree.add(getVerticalSeparator());
             contentTree.add(links.createLink(pathToRoot.resolve(DocPaths.SYSTEM_PROPERTIES),
                                              contents.systemPropertiesLabel));
