@@ -128,6 +128,7 @@ public class TestSegments {
         for (AccessActions action : AccessActions.values()) {
             MemorySegment segment = MemorySegment.ofArray(arr);
             MemorySegment restrictedSegment = segment.withAccessModes(accessModes);
+            assertEquals(restrictedSegment.accessModes(), accessModes);
             boolean shouldFail = !restrictedSegment.hasAccessModes(action.accessMode);
             try {
                 action.run(restrictedSegment);
@@ -136,6 +137,20 @@ public class TestSegments {
                 assertTrue(shouldFail);
             }
         }
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadWithAccessModes() {
+        int[] arr = new int[1];
+        MemorySegment segment = MemorySegment.ofArray(arr);
+        segment.withAccessModes((1 << AccessActions.values().length) + 1);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadHasAccessModes() {
+        int[] arr = new int[1];
+        MemorySegment segment = MemorySegment.ofArray(arr);
+        segment.hasAccessModes((1 << AccessActions.values().length) + 1);
     }
 
     @DataProvider(name = "badSizeAndAlignments")
