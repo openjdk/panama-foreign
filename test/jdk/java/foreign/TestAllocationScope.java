@@ -63,17 +63,18 @@ public class TestAllocationScope {
                     try {
                         address.segment().close();
                         fail();
-                    } catch (IllegalStateException uoe) {
+                    } catch (UnsupportedOperationException uoe) {
                         //failure is expected
                         assertTrue(true);
                     }
                 }
+                boolean isBound = scope.byteSize().isPresent();
                 try {
-                    allocationFunction.allocate(scope, alignedLayout, value); //too much, should fail
-                    fail();
+                    allocationFunction.allocate(scope, alignedLayout, value); //too much, should fail if bound
+                    assertFalse(isBound);
                 } catch (OutOfMemoryError ex) {
-                    //failure is expected
-                    assertTrue(true);
+                    //failure is expected if bound
+                    assertTrue(isBound);
                 }
             }
             // addresses should be invalid now
@@ -87,37 +88,102 @@ public class TestAllocationScope {
     @DataProvider(name = "allocationScopes")
     static Object[][] allocationScopes() {
         return new Object[][] {
-                { (byte)42, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_8_BE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
-                { (short)42, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_16_BE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
-                { 42, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_32_BE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
-                { 42f, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_32_BE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
-                { 42L, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_64_BE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
-                { 42d, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_64_BE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
-                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_64_BE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+                { (byte)42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_8_BE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_16_BE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_32_BE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_32_BE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_BE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_BE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_BE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
                 
-                { (byte)42, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_8_BE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
-                { (short)42, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_16_BE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
-                { 42, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_32_BE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
-                { 42f, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_32_BE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
-                { 42L, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_64_BE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
-                { 42d, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_64_BE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
-                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_64_BE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+                { (byte)42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_8_BE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_16_BE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_32_BE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_32_BE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_BE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_BE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_BE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
                 
-                { (byte)42, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_8_LE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
-                { (short)42, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_16_LE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
-                { 42, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_32_LE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
-                { 42f, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_32_LE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
-                { 42L, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_64_LE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
-                { 42d, (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_64_LE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
-                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::heapScope, MemoryLayouts.BITS_64_LE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+                { (byte)42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_8_LE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_16_LE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_32_LE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_32_LE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_LE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_LE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_LE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
                 
-                { (byte)42, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_8_LE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
-                { (short)42, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_16_LE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
-                { 42, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_32_LE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
-                { 42f, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_32_LE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
-                { 42L, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_64_LE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
-                { 42d, (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_64_LE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
-                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::nativeScope, MemoryLayouts.BITS_64_LE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+                { (byte)42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_8_LE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_16_LE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_32_LE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_32_LE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_LE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_LE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_LE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+
+                { (byte)42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_8_BE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_16_BE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_32_BE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_32_BE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_BE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_BE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_BE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+
+                { (byte)42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_8_BE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_16_BE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_32_BE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_32_BE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_BE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_BE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_BE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+
+                { (byte)42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_8_LE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_16_LE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_32_LE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_32_LE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_LE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_LE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::boundedHeapScope, MemoryLayouts.BITS_64_LE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+
+                { (byte)42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_8_LE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_16_LE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_32_LE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_32_LE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_LE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_LE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)AllocationScope::boundedNativeScope, MemoryLayouts.BITS_64_LE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+
+
+                { (byte)42, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_8_BE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_16_BE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_32_BE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_32_BE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_64_BE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_64_BE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_64_BE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+
+                { (byte)42, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_8_BE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_16_BE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_32_BE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_32_BE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_64_BE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_64_BE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_64_BE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+
+                { (byte)42, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_8_LE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_16_LE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_32_LE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_32_LE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_64_LE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_64_LE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)size -> AllocationScope.unboundedHeapScope(), MemoryLayouts.BITS_64_LE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
+
+                { (byte)42, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_8_LE, byte.class, (AllocationFunction<Byte>)AllocationScope::allocate },
+                { (short)42, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_16_LE, short.class, (AllocationFunction<Short>)AllocationScope::allocate },
+                { 42, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_32_LE, int.class, (AllocationFunction<Integer>)AllocationScope::allocate },
+                { 42f, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_32_LE, float.class, (AllocationFunction<Float>)AllocationScope::allocate },
+                { 42L, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_64_LE, long.class, (AllocationFunction<Long>)AllocationScope::allocate },
+                { 42d, (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_64_LE, double.class, (AllocationFunction<Double>)AllocationScope::allocate },
+                { MemoryAddress.ofLong(42), (ScopeFactory)size -> AllocationScope.unboundedNativeScope(), MemoryLayouts.BITS_64_LE, MemoryAddress.class, (AllocationFunction<MemoryAddress>)AllocationScope::allocate },
         };
     }
 

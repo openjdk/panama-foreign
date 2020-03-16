@@ -26,44 +26,33 @@
 
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.MemorySegmentImpl;
-import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.BoundedAllocationScope;
+import jdk.internal.foreign.UnboundedAllocationScope;
 
 import java.lang.invoke.VarHandle;
+import java.util.OptionalLong;
 
 /**
  * This class provides a scope of given size, within which several allocations can be performed. An allocation scope can be backed
- * either by heap, or off-heap memory (see {@link AllocationScope#heapScope(int)} and {@link AllocationScope#nativeScope(long)},
- * respectively). If an application knows before-hand how much memory it needs to allocate the values it needs,
- * using an allocation scope will typically provide better performances than independently allocating the memory for each value
- * (e.g. using {@link MemorySegment#allocateNative(long)}). For this reason, using an allocation scope is recommended
- * in cases where programs might need to emulate native stack allocation.
+ * either by heap, or off-heap memory. Allocation scopes can be either <em>bounded</em> or <em>unbounded</em>, depending on whether the size
+ * of the allocation scope is known statically. If an application knows before-hand how much memory it needs to allocate the values it needs,
+ * using a <em>bounded</em> allocation scope will typically provide better performances than independently allocating the memory
+ * for each value (e.g. using {@link MemorySegment#allocateNative(long)}), or using an <em>unbounded</em> allocation scope.
+ * For this reason, using a bounded allocation scope is recommended in cases where programs might need to emulate native stack allocation.
  */
-public class AllocationScope implements AutoCloseable {
-    private final MemorySegment segment, acquiredSegment;
-    private long sp = 0L;
+public abstract class AllocationScope implements AutoCloseable {
 
     /**
-     * Returns the size, in bytes, of this allocation scope.
-     * @return the size, in bytes, of this allocation scope.
+     * If this allocation scope is bounded, returns the size, in bytes, of this allocation scope.
+     * @return the size, in bytes, of this allocation scope (if available).
      */
-    public long byteSize() {
-        return segment.byteSize();
-    }
+    public abstract OptionalLong byteSize();
 
     /**
      * Returns the number of allocated bytes in this allocation scope.
      * @return the number of allocated bytes in this allocation scope.
      */
-    public long allocatedBytes() {
-        return sp;
-    }
-
-    private AllocationScope(MemorySegment segment) {
-        this.segment = segment;
-        this.acquiredSegment = segment.acquire();
-    }
+    public abstract long allocatedBytes();
 
     /**
      * Allocate a block of memory in this allocation scope with given layout and initialize it with given byte value.
@@ -224,43 +213,46 @@ public class AllocationScope implements AutoCloseable {
      * @throws OutOfMemoryError if there is not enough space left in this allocation scope, that is, if
      * {@code limit() - size() < bytesSize}.
      */
-    public MemoryAddress allocate(long bytesSize, long bytesAlignment) {
-        long min = ((MemoryAddressImpl)segment.baseAddress()).unsafeGetOffset();
-        long start = Utils.alignUp(min + sp, bytesAlignment) - min;
-        try {
-            MemorySegment slice = segment.asSlice(start, bytesSize);
-            sp = start + bytesSize;
-            return slice.baseAddress();
-        } catch (IndexOutOfBoundsException ex) {
-            throw new OutOfMemoryError("Not enough space left to allocate");
-        }
-    }
+    public abstract MemoryAddress allocate(long bytesSize, long bytesAlignment);
 
     /**
      * Close this allocation scope; calling this method will render any address obtained through this allocation scope
      * unusable and might release any backing memory resources associated with this allocation scope.
      */
     @Override
-    public void close() {
-        acquiredSegment.close();
-        segment.close();
+    public abstract void close();
+
+    /**
+     * Creates a new bounded native allocation scope, backed by off-heap memory.
+     * @param size the size of the allocation scope.
+     * @return a new bounded native allocation scope, with given size (in bytes).
+     */
+    public static AllocationScope boundedNativeScope(long size) {
+        return new BoundedAllocationScope(MemorySegment.allocateNative(size));
     }
 
     /**
-     * Creates a new native allocation scope. A native allocation scope is backed by off-heap memory.
+     * Creates a new bounded heap allocation scope, backed by heap memory.
      * @param size the size of the allocation scope.
-     * @return a new native allocation scope, with given size (in bytes).
+     * @return a new bounded heap allocation scope, with given size (in bytes).
      */
-    public static AllocationScope nativeScope(long size) {
-        return new AllocationScope(MemorySegment.allocateNative(size));
+    public static AllocationScope boundedHeapScope(int size) {
+        return new BoundedAllocationScope(MemorySegment.ofArray(new byte[size]));
     }
 
     /**
-     * Creates a new heap allocation scope. A heap allocation scope is backed by heap memory.
-     * @param size the size of the allocation scope.
-     * @return a new heap allocation scope, with given size (in bytes).
+     * Creates a new unbounded native allocation scope, backed by off-heap memory.
+     * @return a new unbounded native allocation scope.
      */
-    public static AllocationScope heapScope(int size) {
-        return new AllocationScope(MemorySegment.ofArray(new byte[size]));
+    public static AllocationScope unboundedNativeScope() {
+        return new UnboundedAllocationScope(MemorySegment::allocateNative);
+    }
+
+    /**
+     * Creates a new unbounded heap allocation scope, backed by heap memory.
+     * @return a new unbounded heap allocation scope.
+     */
+    public static AllocationScope unboundedHeapScope() {
+        return new UnboundedAllocationScope((size) -> MemorySegment.ofArray(new byte[(int) size]));
     }
 }
