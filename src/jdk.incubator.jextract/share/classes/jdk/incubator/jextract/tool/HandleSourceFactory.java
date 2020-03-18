@@ -31,6 +31,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
+import jdk.internal.foreign.InternalForeign;
 
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
@@ -126,7 +127,7 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
 
     private static String getCLangConstantsHolder() {
         String prefix = "jdk.incubator.foreign.MemoryLayouts.";
-        String abi = SystemABI.getInstance().name();
+        String abi = InternalForeign.getInstancePriviledged().getSystemABI().name();
         switch (abi) {
             case SystemABI.ABI_SYSV:
                 return prefix + "SysV";

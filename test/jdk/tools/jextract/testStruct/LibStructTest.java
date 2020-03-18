@@ -33,7 +33,7 @@ import static test.jextract.struct.struct_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Struct -t test.jextract.struct -- struct.h
- * @run testng LibStructTest
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit LibStructTest
  */
 public class LibStructTest {
     @Test

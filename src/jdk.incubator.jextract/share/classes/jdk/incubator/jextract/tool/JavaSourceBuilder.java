@@ -34,6 +34,7 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.InternalForeign;
 
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
@@ -50,7 +51,7 @@ import javax.lang.model.SourceVersion;
  * method is called to get overall generated source string.
  */
 class JavaSourceBuilder {
-    private static final String ABI = SystemABI.getInstance().name();
+    private static final String ABI = InternalForeign.getInstancePriviledged().getSystemABI().name();
     // buffer
     protected StringBuffer sb;
     // current line alignment (number of 4-spaces)

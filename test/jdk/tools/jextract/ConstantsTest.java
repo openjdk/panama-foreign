@@ -38,7 +38,7 @@ import static org.testng.Assert.assertTrue;
  * @test
  * @modules jdk.incubator.jextract
  * @build ConstantsTest
- * @run testng ConstantsTest
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit ConstantsTest
  */
 public class ConstantsTest extends JextractToolRunner {
     private Class<?> constants;

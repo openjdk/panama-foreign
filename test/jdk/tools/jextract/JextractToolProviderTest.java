@@ -38,7 +38,7 @@ import static org.testng.Assert.assertTrue;
  * @modules jdk.incubator.jextract
  * @build JextractToolRunner
  * @bug 8240181
- * @run testng/othervm -Duser.language=en --add-modules jdk.incubator.jextract JextractToolProviderTest
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit -Duser.language=en --add-modules jdk.incubator.jextract JextractToolProviderTest
  */
 public class JextractToolProviderTest extends JextractToolRunner {
     @Test
