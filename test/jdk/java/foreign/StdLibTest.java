@@ -452,28 +452,10 @@ public class StdLibTest extends NativeTestHelper {
     }
 
     static MemorySegment makeNativeString(String value) {
-        return makeNativeString(value, value.length() + 1);
-    }
-
-    static MemorySegment makeNativeString(String value, int length) {
-        MemoryLayout strLayout = MemoryLayout.ofSequence(length, C_CHAR);
-        MemorySegment segment = MemorySegment.allocateNative(strLayout);
-        MemoryAddress addr = segment.baseAddress();
-        for (int i = 0 ; i < value.length() ; i++) {
-            byteArrHandle.set(addr, i, (byte)value.charAt(i));
-        }
-        byteArrHandle.set(addr, (long)value.length(), (byte)0);
-        return segment;
+        return ForeignUnsafe.makeNativeString(value);
     }
 
     static String toJavaString(MemoryAddress address) {
-        StringBuilder buf = new StringBuilder();
-        byte curr = (byte)byteArrHandle.get(address, 0);
-        long offset = 0;
-        while (curr != 0) {
-            buf.append((char)curr);
-            curr = (byte)byteArrHandle.get(address, ++offset);
-        }
-        return buf.toString();
+        return ForeignUnsafe.toJavaString(address);
     }
 }
