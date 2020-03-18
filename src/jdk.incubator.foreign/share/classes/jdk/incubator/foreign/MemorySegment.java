@@ -35,8 +35,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 /**
- * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
- * and temporal bounds. Spatial bounds ensure that memory access operations on a memory segment cannot affect a memory location
+ * A memory segment is a view over a given memory source (see {@link MemorySource}), which is associated with both spatial
+ * and temporal <em>bounds</em>. Spatial bounds ensure that memory access operations on a memory segment cannot affect a memory location
  * which falls <em>outside</em> the boundaries of the memory segment being accessed. Temporal checks ensure that memory access
  * operations on a segment cannot occur after a memory segment has been closed (see {@link MemorySegment#close()}).
  * <p>
@@ -52,39 +52,32 @@ import java.nio.file.Path;
  * There are multiple ways to obtain a memory segment. First, memory segments backed by off-heap memory can
  * be allocated using one of the many factory methods provided (see {@link MemorySegment#allocateNative(MemoryLayout)},
  * {@link MemorySegment#allocateNative(long)} and {@link MemorySegment#allocateNative(long, long)}). Memory segments obtained
- * in this way are called <em>native memory segments</em>.
+ * in this way are backed by a <em>native</em> memory source (see {@link MemorySource}).
  * <p>
  * It is also possible to obtain a memory segment backed by an existing heap-allocated Java array,
  * using one of the provided factory methods (e.g. {@link MemorySegment#ofArray(int[])}). Memory segments obtained
- * in this way are called <em>array memory segments</em>.
+ * in this way are backed by a <em>heap</em> memory source (see {@link MemorySource}).
  * <p>
- * It is possible to obtain a memory segment backed by an existing Java byte buffer (see {@link ByteBuffer}),
- * using the factory method {@link MemorySegment#ofByteBuffer(ByteBuffer)}.
- * Memory segments obtained in this way are called <em>buffer memory segments</em>. Note that buffer memory segments might
- * be backed by native memory (as in the case of native memory segments) or heap memory (as in the case of array memory segments),
- * depending on the characteristics of the byte buffer instance the segment is associated with. For instance, a buffer memory
- * segment obtained from a byte buffer created with the {@link ByteBuffer#allocateDirect(int)} method will be backed
- * by native memory.
+ * It is possible to obtain a memory segment backed by a memory-mapped file using the factory method
+ * {@link MemorySegment#mapFromPath(Path, long, FileChannel.MapMode)}. Such memory segments are backed by a
+ * <em>mapped</em> memory source (see {@link MappedMemorySource}).
  * <p>
- * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
- * {@link MemorySegment#mapFromPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>.
+ * Finally, it is also possible to obtain a memory segment backed by an existing Java byte buffer (see {@link ByteBuffer}),
+ * using the factory method {@link MemorySegment#ofByteBuffer(ByteBuffer)}. Memory segments obtained in this can be
+ * backed by a native memory source, an heap memory source, or a mapped memory source, depending on the characteristics
+ * of the byte buffer instance the segment is associated with. For instance, a memory segment obtained from a byte buffer
+ * created with the {@link ByteBuffer#allocateDirect(int)} method will be backed by a native memory source; a memory segment
+ * obtained from a byte buffer created with the {@link ByteBuffer#allocate(int)} will be backed by a heap memory source;
+ * finally, a memory segment obtained from a byte buffer created with the {@link FileChannel#map(FileChannel.MapMode, long, long)} method
+ * will be backed by a mapped memory source.
  *
  * <h2>Closing a memory segment</h2>
  *
- * Memory segments are closed explicitly (see {@link MemorySegment#close()}). In general when a segment is closed, all off-heap
- * resources associated with it are released; this has different meanings depending on the kind of memory segment being
- * considered:
- * <ul>
- *     <li>closing a native memory segment results in <em>freeing</em> the native memory associated with it</li>
- *     <li>closing a mapped memory segment results in the backing memory-mapped file to be unmapped</li>
- *     <li>closing an acquired memory segment <b>does not</b> result in the release of resources
- *     (see the section on <a href="#thread-confinement">thread confinement</a> for more details)</li>
- *     <li>closing a buffer, or a heap segment does not have any side-effect, other than marking the segment
- *     as <em>not alive</em> (see {@link MemorySegment#isAlive()}). Also, since the buffer and heap segments might keep
- *     strong references to the original buffer or array instance, it is the responsibility of clients to ensure that
- *     these segments are discarded in a timely manner, so as not to prevent garbage collection to reclaim the underlying
- *     objects.</li>
- * </ul>
+ * Memory segments are closed explicitly (see {@link MemorySegment#close()}). When a memory segment is closed,
+ * the segment, and all memory addresses (see {@link MemoryAddress}) derived from it are rendered invalid. This means
+ * that e.g. dereferencing a memory address derived from a segment that has been closed will result in a runtime
+ * exception. Closing a memory segment <em>might</em> additionally result in <a href="MemorySource.html#releasing-sources">
+ * releasing</a> the memory source backing that memory segment.
  *
  * <h2><a id = "thread-confinement">Thread confinement</a></h2>
  *
@@ -95,12 +88,9 @@ import java.nio.file.Path;
  * owner thread will result in a runtime failure.
  * <p>
  * If a memory segment S owned by thread A needs to be used by thread B, B needs to explicitly <em>acquire</em> S,
- * which will create a so called <em>acquired</em> memory segment owned by B (see {@link #acquire()}) backed by the same resources
- * as S. A memory segment can be acquired multiple times by one or more threads; in that case, a memory segment S cannot
- * be closed until all the acquired memory segments derived from S have been closed. Furthermore, closing an acquired
- * memory segment does <em>not</em> trigger any deallocation action. It is therefore important that clients remember to
- * explicitly close the original segment from which the acquired memory segments have been obtained in order to truly
- * ensure that off-heap resources associated with the memory segment are released.
+ * which will create a new memory segment owned by B (see {@link #acquire()}) backed by the same memory
+ * source as S. A memory segment can be acquired multiple times by one or more threads; in that case, the underlying memory
+ * source will not be released until <em>all</em> the memory segments derived from it have been closed.
  *
  * <h2><a id = "access-modes">Access modes</a></h2>
  *
@@ -152,12 +142,11 @@ public interface MemorySegment extends AutoCloseable {
     MemoryAddress baseAddress();
 
     /**
-     * Obtains an <a href="#thread-confinement">acquired</a> memory segment which can be used to access memory associated
-     * with this segment from the current thread. As a side-effect, this segment cannot be closed until the acquired
-     * view has been closed too (see {@link #close()}).
-     * @return an <a href="#thread-confinement">acquired</a> memory segment which can be used to access memory associated
+     * Obtains a new memory segment backed by the same memory source as this segment which can be used to access memory associated
      * with this segment from the current thread.
-     * @throws IllegalStateException if this segment has been closed.
+     * @return a new memory segment backed by the same memory source as this segment which can be used to access memory associated
+     * with this segment from the current thread.
+     * @throws IllegalStateException if the memory source associated with this segment has been released (see {@link MemorySource#isReleased()}).
      */
     MemorySegment acquire();
 
@@ -265,106 +254,109 @@ public interface MemorySegment extends AutoCloseable {
     byte[] toByteArray();
 
     /**
-     * Creates a new buffer memory segment that models the memory associated with the given byte
-     * buffer. The segment starts relative to the buffer's position (inclusive)
-     * and ends relative to the buffer's limit (exclusive).
+     * Creates a new memory segment view of the memory associated with a given byte buffer.
+     * The segment starts relative to the buffer's position (inclusive) and ends relative to the buffer's limit (exclusive).
      * <p>
      * The resulting memory segment keeps a reference to the backing buffer, to ensure it remains <em>reachable</em>
      * for the life-time of the segment.
      *
      * @param bb the byte buffer backing the buffer memory segment.
-     * @return a new buffer memory segment.
+     * @return a new memory segment. The memory source of the returned segment depends on the characteristics of {@code bb}. More specifically,
+     * if {@code bb} has been created with the {@link ByteBuffer#allocateDirect(int)} method, the resulting segment will be
+     * backed by a native memory source; if {@code bb} has been created with the {@link ByteBuffer#allocate(int)} method,
+     * the resulting sement will be backed by a heap memory source; finally, if {@code bb} has been created with the
+     * {@link FileChannel#map(FileChannel.MapMode, long, long)} method, the resulting segment  will be backed by a mapped memory source.
      */
     static MemorySegment ofByteBuffer(ByteBuffer bb) {
         return Utils.makeBufferSegment(bb);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated byte array.
+     * Creates a new memory segment view of the memory associated with a given heap-allocated byte array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
      * for the life-time of the segment.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return a new memory segment backed by an heap memory source.
      */
     static MemorySegment ofArray(byte[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated char array.
+     * Creates a new memory segment view of the memory associated with a given heap-allocated char array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
      * for the life-time of the segment.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return a new memory segment backed by an heap memory source.
      */
     static MemorySegment ofArray(char[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated short array.
+     * Creates a new memory segment view of the memory associated with a given heap-allocated short array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
      * for the life-time of the segment.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return a new memory segment backed by an heap memory source.
      */
     static MemorySegment ofArray(short[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated int array.
+     * Creates a new memory segment view of the memory associated with a given heap-allocated int array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
      * for the life-time of the segment.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return a new memory segment backed by an heap memory source.
      */
     static MemorySegment ofArray(int[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated float array.
+     * Creates a new memory segment view of the memory associated with a given heap-allocated float array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
      * for the life-time of the segment.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return a new memory segment backed by an heap memory source.
      */
     static MemorySegment ofArray(float[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated long array.
+     * Creates a new memory segment view of the memory associated with a given heap-allocated long array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
      * for the life-time of the segment.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return a new memory segment backed by an heap memory source.
      */
     static MemorySegment ofArray(long[] arr) {
         return Utils.makeArraySegment(arr);
     }
 
     /**
-     * Creates a new array memory segment that models the memory associated with a given heap-allocated double array.
+     * Creates a new memory segment view of the memory associated with a given heap-allocated double array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
      * for the life-time of the segment.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
+     * @return a new memory segment backed by an heap memory source.
      */
     static MemorySegment ofArray(double[] arr) {
         return Utils.makeArraySegment(arr);
@@ -383,7 +375,7 @@ public interface MemorySegment extends AutoCloseable {
      * to make sure the backing off-heap memory block is deallocated accordingly. Failure to do so will result in off-heap memory leaks.
      *
      * @param layout the layout of the off-heap memory block backing the native memory segment.
-     * @return a new native memory segment.
+     * @return a new memory segment backed by a native memory source.
      * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraint.
      */
     static MemorySegment allocateNative(MemoryLayout layout) {
@@ -403,7 +395,7 @@ allocateNative(bytesSize, 1);
      * to make sure the backing off-heap memory block is deallocated accordingly. Failure to do so will result in off-heap memory leaks.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @return a new native memory segment.
+     * @return a new memory segment backed by a native memory source.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      */
     static MemorySegment allocateNative(long bytesSize) {
@@ -419,7 +411,7 @@ allocateNative(bytesSize, 1);
      * @param path the path to the file to memory map.
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
      * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}.
-     * @return a new mapped memory segment.
+     * @return a new memory segment backed by a mapped memory source.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws UnsupportedOperationException if an unsupported map mode is specified.
      * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
@@ -438,7 +430,7 @@ allocateNative(bytesSize, 1);
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
-     * @return a new native memory segment.
+     * @return a new memory segment backed by a native memory source.
      * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes < 0}, or if {@code alignmentBytes}
      * is not a power of 2.
      */

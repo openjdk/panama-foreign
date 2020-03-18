@@ -26,7 +26,13 @@
 package jdk.incubator.foreign;
 
 /**
- * An mapped memory source models a memory region which is memory-mapped form a given path.
+ * A mapped memory source describes an underlying memory region which is memory-mapped from a given path.
+ * As such, it provides additional operations to allow for syncing the contents of the mapped memory source with
+ * the ones of the underlying file backing the memory mapping (see {@link #force()} and {@link #force(MemorySegment)}).
+ *
+ * @apiNote In the future, if the Java language permits, {@link MemorySource}
+ * may become a {@code sealed} interface, which would prohibit subclassing except by
+ * explicitly permitted types.
  */
 public interface MappedMemorySource extends MemorySource {
     /**

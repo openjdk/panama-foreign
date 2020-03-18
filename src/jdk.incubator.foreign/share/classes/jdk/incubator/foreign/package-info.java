@@ -59,10 +59,9 @@ try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
  * <h2><a id="deallocation"></a>Deterministic deallocation</h2>
  *
  * When writing code that manipulates memory segments, especially if backed by memory which resides outside the Java heap, it is
- * crucial that the resources associated with a memory segment are released when the segment is no longer in use, by calling the {@link jdk.incubator.foreign.MemorySegment#close()}
- * method either explicitly, or implicitly, by relying on try-with-resources construct (as demonstrated in the example above).
- * Closing a given memory segment is an <em>atomic</em> operation which can either succeed - and result in the underlying
- * memory associated with the segment to be released, or <em>fail</em> with an exception.
+ * crucial that the memory source associated with a memory segment is <a href="MemorySource.html#releasing-sources">released</a>
+ * when the segment is no longer in use; this is achieved by calling the {@link jdk.incubator.foreign.MemorySegment#close()} method,
+ * either explicitly, or implicitly, by relying on try-with-resources construct (as demonstrated in the example above).
  * <p>
  * The deterministic deallocation model differs significantly from the implicit strategies adopted within other APIs, most
  * notably the {@link java.nio.ByteBuffer} API: in that case, when a native byte buffer is created (see {@link java.nio.ByteBuffer#allocateDirect(int)}),

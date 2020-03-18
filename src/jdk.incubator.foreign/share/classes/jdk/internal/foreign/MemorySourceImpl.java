@@ -48,7 +48,7 @@ public abstract class MemorySourceImpl implements MemorySource {
     //reference to keep hold onto
     final Object ref;
     final long size;
-    PhantomCleanable<?> cleaneable;
+    volatile PhantomCleanable<?> cleaneable;
 
     int activeCount = UNACQUIRED;
 
@@ -153,6 +153,7 @@ public abstract class MemorySourceImpl implements MemorySource {
             if (cleanupAction != null) {
                 cleanupAction.run();
                 if (cleaneable != null) {
+                    // if we are here, we are explicitly releasing (e.g. close()), so we need to unregister the cleaneable
                     cleaneable.clear();
                 }
             }
