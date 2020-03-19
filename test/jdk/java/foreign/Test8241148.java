@@ -69,16 +69,17 @@ public class Test8241148 {
 
     @Test
     public void test() throws Throwable {
-        try (var seg = ForeignUnsafe.makeNativeString("java")) {
+        try (var seg = ForeignUnsafe.toCString("java")) {
             assertEquals((int) strlen.invoke(seg.baseAddress()), 4);
         }
-        try (var pathSeg = ForeignUnsafe.makeNativeString("PATH")) {
+        try (var pathSeg = ForeignUnsafe.toCString("PATH")) {
             var path = (MemoryAddress) getenv.invoke(pathSeg.baseAddress());
             if (!path.equals(NULL)) {
                 int len = (int) strlen.invoke(path);
                 var pathStr = ForeignUnsafe.toJavaString(path);
                 assertEquals(pathStr.length(), len);
                 System.out.println("PATH = " + pathStr);
+                assertEquals(pathStr, System.getenv("PATH"));
             }
         }
     }

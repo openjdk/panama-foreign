@@ -27,6 +27,7 @@
 package jdk.incubator.foreign.unsafe;
 
 import java.lang.invoke.VarHandle;
+import java.nio.charset.Charset;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -95,24 +96,34 @@ public final class ForeignUnsafe {
      * @param str the Java String
      * @return a new native memory segment
      */
-    public static MemorySegment makeNativeString(String str) {
-        return makeNativeString(str, str.length() + 1);
+    public static MemorySegment toCString(String str) {
+        return toCString(str.getBytes());
     }
 
-    private static MemorySegment makeNativeString(String str, int length) {
-        MemoryLayout strLayout = MemoryLayout.ofSequence(length, C_CHAR);
+    /**
+     * Returns a new native memory segment holding contents of the given Java String
+     * @param str The Java String
+     * @param charset The Charset to be used to encode the String
+     * @return a new native memory segment
+     */
+    public static MemorySegment toCString(String str, Charset charset) {
+        return toCString(str.getBytes(charset));
+    }
+
+    private static MemorySegment toCString(byte[] bytes) {
+        MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
         MemorySegment segment = MemorySegment.allocateNative(strLayout);
         MemoryAddress addr = segment.baseAddress();
-        for (int i = 0 ; i < str.length() ; i++) {
-            byteArrHandle.set(addr, i, (byte)str.charAt(i));
+        for (int i = 0 ; i < bytes.length; i++) {
+            byteArrHandle.set(addr, i, bytes[i]);
         }
-        byteArrHandle.set(addr, (long)str.length(), (byte)0);
+        byteArrHandle.set(addr, (long)bytes.length, (byte)0);
         return segment;
     }
 
     /**
      * Returns a Java String from the contents of the given C '\0' terminated string
-     * @param addr the address of the C string
+     * @param addr The address of the C string
      * @return a Java String
      */
     public static String toJavaString(MemoryAddress addr) {

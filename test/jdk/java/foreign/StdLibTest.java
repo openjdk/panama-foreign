@@ -225,7 +225,7 @@ public class StdLibTest extends NativeTestHelper {
 
         String strcat(String s1, String s2) throws Throwable {
             try (MemorySegment buf = MemorySegment.allocateNative(s1.length() + s2.length() + 1) ;
-                 MemorySegment other = makeNativeString(s2)) {
+                 MemorySegment other = toCString(s2)) {
                 char[] chars = s1.toCharArray();
                 for (long i = 0 ; i < chars.length ; i++) {
                     byteArrHandle.set(buf.baseAddress(), i, (byte)chars[(int)i]);
@@ -236,20 +236,20 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         int strcmp(String s1, String s2) throws Throwable {
-            try (MemorySegment ns1 = makeNativeString(s1) ;
-                 MemorySegment ns2 = makeNativeString(s2)) {
+            try (MemorySegment ns1 = toCString(s1) ;
+                 MemorySegment ns2 = toCString(s2)) {
                 return (int)strcmp.invokeExact(ns1.baseAddress(), ns2.baseAddress());
             }
         }
 
         int puts(String msg) throws Throwable {
-            try (MemorySegment s = makeNativeString(msg)) {
+            try (MemorySegment s = toCString(msg)) {
                 return (int)puts.invokeExact(s.baseAddress());
             }
         }
 
         int strlen(String msg) throws Throwable {
-            try (MemorySegment s = makeNativeString(msg)) {
+            try (MemorySegment s = toCString(msg)) {
                 return (int)strlen.invokeExact(s.baseAddress());
             }
         }
@@ -337,7 +337,7 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         int printf(String format, List<PrintfArg> args) throws Throwable {
-            try (MemorySegment formatStr = makeNativeString(format)) {
+            try (MemorySegment formatStr = toCString(format)) {
                 return (int)specializedPrintf(args).invokeExact(formatStr.baseAddress(),
                         args.stream().map(a -> a.nativeValue).toArray());
             }
@@ -412,7 +412,7 @@ public class StdLibTest extends NativeTestHelper {
 
     enum PrintfArg {
         INTEGRAL(int.class, asVarArg(C_INT), "%d", 42, 42),
-        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", makeNativeString("str").baseAddress(), "str"),
+        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", toCString("str").baseAddress(), "str"),
         CHAR(char.class, asVarArg(C_CHAR), "%c", 'h', 'h'),
         DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", 1.2345d, 1.2345d);
 
@@ -451,8 +451,8 @@ public class StdLibTest extends NativeTestHelper {
         }
     }
 
-    static MemorySegment makeNativeString(String value) {
-        return ForeignUnsafe.makeNativeString(value);
+    static MemorySegment toCString(String value) {
+        return ForeignUnsafe.toCString(value);
     }
 
     static String toJavaString(MemoryAddress address) {
