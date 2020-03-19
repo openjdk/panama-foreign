@@ -28,23 +28,15 @@ package jdk.internal.foreign.abi.aarch64;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryHandles;
-import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.abi.*;
 
-import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
-import java.util.function.Function;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 import static jdk.incubator.foreign.MemoryLayouts.AArch64ABI.*;
 
 /**

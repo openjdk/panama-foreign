@@ -326,7 +326,6 @@ public class CallArranger {
             this.storageCalculator = new StorageCalculator(forArguments);
         }
 
-        @SuppressWarnings("fallthrough")
         @Override
         public List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = classifyType(layout);

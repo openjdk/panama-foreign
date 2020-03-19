@@ -28,7 +28,6 @@ package jdk.incubator.foreign;
 import java.lang.constant.Constable;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
-import java.lang.constant.MethodHandleDesc;
 import java.nio.ByteOrder;
 import java.util.Map;
 import java.util.Objects;

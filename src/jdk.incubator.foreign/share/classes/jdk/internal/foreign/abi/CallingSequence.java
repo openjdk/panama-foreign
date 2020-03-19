@@ -66,8 +66,8 @@ public class CallingSequence {
         StringBuilder sb = new StringBuilder();
 
         sb.append("CallingSequence: {\n");
-        sb.append("  MethodType: " + mt);
-        sb.append("  FunctionDescriptor: " + desc);
+        sb.append("  MethodType: ").append(mt);
+        sb.append("  FunctionDescriptor: ").append(desc);
         sb.append("  Argument Bindings:\n");
         for (int i = 0; i < mt.parameterCount(); i++) {
             sb.append("    ").append(i).append(": ").append(argumentBindings.get(i)).append("\n");

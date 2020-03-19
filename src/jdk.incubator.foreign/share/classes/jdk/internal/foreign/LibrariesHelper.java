@@ -89,7 +89,7 @@ public final class LibrariesHelper {
     }
 
     static class LibraryLookupImpl implements LibraryLookup {
-        NativeLibrary library;
+        final NativeLibrary library;
 
         LibraryLookupImpl(NativeLibrary library) {
             this.library = library;

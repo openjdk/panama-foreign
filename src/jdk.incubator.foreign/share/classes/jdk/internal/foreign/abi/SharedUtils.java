@@ -77,10 +77,6 @@ public class SharedUtils {
         return ((addr - 1) | (alignment - 1)) + 1;
     }
 
-    public static long alignDown(long addr, long alignment) {
-        return addr & ~(alignment - 1);
-    }
-
     /**
      * The alignment requirement for a given type
      * @param isVar indicate if the type is a standalone variable. This change how
@@ -106,7 +102,7 @@ public class SharedUtils {
     }
 
     private static long alignmentOfArray(SequenceLayout ar, boolean isVar) {
-        if (ar.elementCount().getAsLong() == 0) {
+        if (ar.elementCount().orElseThrow() == 0) {
             // VLA or incomplete
             return 16;
         } else if ((ar.byteSize()) >= 16 && isVar) {

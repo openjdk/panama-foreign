@@ -27,8 +27,6 @@ import jdk.internal.foreign.abi.ABIDescriptor;
 import jdk.internal.foreign.abi.Architecture;
 import jdk.internal.foreign.abi.VMStorage;
 
-import java.util.stream.IntStream;
-
 public class AArch64Architecture implements Architecture {
     public static final Architecture INSTANCE = new AArch64Architecture();
 

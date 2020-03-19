@@ -40,7 +40,7 @@ public class CallingSequenceBuilder {
 
     private final boolean forUpcall;
     private final List<List<Binding>> inputBindings = new ArrayList<>();
-    private List<Binding> ouputBindings = List.of();
+    private List<Binding> outputBindings = List.of();
 
     private MethodType mt = MethodType.methodType(void.class);
     private FunctionDescriptor desc = FunctionDescriptor.ofVoid();
@@ -61,14 +61,14 @@ public class CallingSequenceBuilder {
     public CallingSequenceBuilder setReturnBindings(Class<?> carrier, MemoryLayout layout,
                                                     List<Binding> bindings) {
         verifyBindings(false, carrier, bindings);
-        this.ouputBindings = bindings;
+        this.outputBindings = bindings;
         mt = mt.changeReturnType(carrier);
         desc = desc.changeReturnLayout(layout);
         return this;
     }
 
     public CallingSequence build() {
-        return new CallingSequence(mt, desc, inputBindings, ouputBindings);
+        return new CallingSequence(mt, desc, inputBindings, outputBindings);
     }
 
     private void verifyBindings(boolean forArguments, Class<?> carrier, List<Binding> bindings) {
