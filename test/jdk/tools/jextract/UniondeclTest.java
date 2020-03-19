@@ -33,7 +33,7 @@ import static org.testng.Assert.assertTrue;
  * @test
  * @modules jdk.incubator.jextract
  * @build JextractToolRunner
- * @run testng UniondeclTest
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit UniondeclTest
  */
 public class UniondeclTest extends JextractToolRunner {
     @Test
