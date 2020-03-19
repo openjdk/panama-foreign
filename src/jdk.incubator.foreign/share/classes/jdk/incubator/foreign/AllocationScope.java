@@ -63,7 +63,7 @@ public abstract class AllocationScope implements AutoCloseable {
      * @return an address which points to the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this allocation scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
-     * @throws IllegalArgumentException if {@code layout.byteSize()) does not conform to the size of a byte value.
+     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a byte value.
      */
     public MemoryAddress allocate(MemoryLayout layout, byte value) {
         VarHandle handle = layout.varHandle(byte.class);
@@ -81,7 +81,7 @@ public abstract class AllocationScope implements AutoCloseable {
      * @return an address which points to the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this allocation scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
-     * @throws IllegalArgumentException if {@code layout.byteSize()) does not conform to the size of a short value.
+     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a short value.
      */
     public MemoryAddress allocate(MemoryLayout layout, short value) {
         VarHandle handle = layout.varHandle(short.class);
@@ -99,7 +99,7 @@ public abstract class AllocationScope implements AutoCloseable {
      * @return an address which points to the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this allocation scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
-     * @throws IllegalArgumentException if {@code layout.byteSize()) does not conform to the size of a int value.
+     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a int value.
      */
     public MemoryAddress allocate(MemoryLayout layout, int value) {
         VarHandle handle = layout.varHandle(int.class);
@@ -117,7 +117,7 @@ public abstract class AllocationScope implements AutoCloseable {
      * @return an address which points to the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this allocation scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
-     * @throws IllegalArgumentException if {@code layout.byteSize()) does not conform to the size of a float value.
+     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a float value.
      */
     public MemoryAddress allocate(MemoryLayout layout, float value) {
         VarHandle handle = layout.varHandle(float.class);
@@ -135,7 +135,7 @@ public abstract class AllocationScope implements AutoCloseable {
      * @return an address which points to the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this allocation scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
-     * @throws IllegalArgumentException if {@code layout.byteSize()) does not conform to the size of a long value.
+     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a long value.
      */
     public MemoryAddress allocate(MemoryLayout layout, long value) {
         VarHandle handle = layout.varHandle(long.class);
@@ -153,7 +153,7 @@ public abstract class AllocationScope implements AutoCloseable {
      * @return an address which points to the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this allocation scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
-     * @throws IllegalArgumentException if {@code layout.byteSize()) does not conform to the size of a double value.
+     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a double value.
      */
     public MemoryAddress allocate(MemoryLayout layout, double value) {
         VarHandle handle = layout.varHandle(double.class);
@@ -167,10 +167,11 @@ public abstract class AllocationScope implements AutoCloseable {
      * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * address must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
+     * @param value the value to be set on the newly allocated memory block.
      * @return an address which points to the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this allocation scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
-     * @throws IllegalArgumentException if {@code layout.byteSize()) does not conform to the size of an address value.
+     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of an address value.
      */
     public MemoryAddress allocate(MemoryLayout layout, MemoryAddress value) {
         VarHandle handle = layout.varHandle(MemoryAddress.class);

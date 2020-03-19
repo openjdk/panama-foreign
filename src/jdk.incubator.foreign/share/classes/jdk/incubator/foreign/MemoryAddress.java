@@ -75,7 +75,7 @@ public interface MemoryAddress {
 
     /**
      * Reinterpret this address as an offset into the provided segment.
-     * @param segment
+     * @param segment the segment to be rebased
      * @return a new address pointing to the same memory location through the provided segment
      * @throws IllegalArgumentException if the provided segment is not a valid rebase target for this address. This
      * can happen, for instance, if an heap-based addressed is rebased to an off-heap memory segment.
@@ -129,7 +129,6 @@ public interface MemoryAddress {
     /**
      * A native memory address instance modelling the {@code NULL} pointer. This address is backed by a memory segment
      * which can be neither closed, nor dereferenced.
-     * @return the NULL memory address.
      */
     MemoryAddress NULL = MemorySegmentImpl.NOTHING.baseAddress();
 
