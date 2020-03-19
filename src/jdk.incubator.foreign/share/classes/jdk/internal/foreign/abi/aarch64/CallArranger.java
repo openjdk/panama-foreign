@@ -243,7 +243,7 @@ public class CallArranger {
     static class StorageCalculator {
         private final boolean forArguments;
 
-        private int nRegs[] = new int[] { 0, 0 };
+        private final int[] nRegs = new int[] { 0, 0 };
         private long stackOffset = 0;
 
         public StorageCalculator(boolean forArguments) {
@@ -461,7 +461,6 @@ public class CallArranger {
                 .build();
         }
 
-        @SuppressWarnings("fallthrough")
         @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = classifyType(layout);

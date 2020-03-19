@@ -357,7 +357,6 @@ public class CallArranger {
             super(forArguments);
         }
 
-        @SuppressWarnings("fallthrough")
         @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
             TypeClass argumentClass = classifyLayout(layout);
@@ -437,9 +436,6 @@ public class CallArranger {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
         }
-        if (clazz == ArgumentClassImpl.POINTER) {
-            clazz = ArgumentClassImpl.POINTER;
-        }
         classes.add(clazz);
         if (clazz == ArgumentClassImpl.INTEGER) {
             // int128
@@ -469,7 +465,7 @@ public class CallArranger {
         }
 
         long offset = 0;
-        final long count = type.elementCount().getAsLong();
+        final long count = type.elementCount().orElseThrow();
         for (long idx = 0; idx < count; idx++) {
             MemoryLayout t = type.elementLayout();
             offset = SharedUtils.align(t, false, offset);
@@ -550,7 +546,7 @@ public class CallArranger {
             // ignore zero-length array for now
             // TODO: handle zero length arrays here
             if (t instanceof SequenceLayout) {
-                if (((SequenceLayout) t).elementCount().getAsLong() == 0) {
+                if (((SequenceLayout) t).elementCount().orElseThrow() == 0) {
                     continue;
                 }
             }

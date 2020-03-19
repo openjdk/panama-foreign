@@ -67,7 +67,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final static long NONCE = new Random().nextLong();
 
     final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE;
-    public static MemorySegmentImpl NOTHING = new MemorySegmentImpl();
+    public static final MemorySegmentImpl NOTHING = new MemorySegmentImpl();
 
     private MemorySegmentImpl() {
         this.length = 0L;

@@ -31,7 +31,6 @@ import jdk.internal.misc.Unsafe;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 
-import java.lang.ref.Reference;
 import java.util.Objects;
 
 /**

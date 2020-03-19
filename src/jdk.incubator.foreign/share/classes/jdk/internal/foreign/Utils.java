@@ -61,7 +61,7 @@ import java.util.function.Supplier;
  */
 public final class Utils {
 
-    private static Unsafe unsafe = Unsafe.getUnsafe();
+    private static final Unsafe unsafe = Unsafe.getUnsafe();
 
     private static final MethodHandle ADDRESS_FILTER;
     private static final MethodHandle LONG_TO_ADDRESS;

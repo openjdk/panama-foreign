@@ -27,11 +27,6 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.InternalForeign;
-import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.aarch64.AArch64ABI;
-import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
-import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
 import java.nio.charset.Charset;
 

@@ -26,9 +26,6 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.abi.UpcallStubs;
-import jdk.internal.foreign.abi.aarch64.AArch64ABI;
-import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
-import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -56,8 +53,7 @@ public interface SystemABI {
     String ABI_AARCH64 = "AArch64";
 
     /**
-     * Obtain a method handle which can be used to call a given native function,
-     * given default calling covention.
+     * Obtain a method handle which can be used to call a given native function.
      *
      * @param symbol downcall symbol.
      * @param type the method type.
@@ -67,7 +63,7 @@ public interface SystemABI {
     MethodHandle downcallHandle(MemoryAddress symbol, MethodType type, FunctionDescriptor function);
 
     /**
-     * Obtain the pointer to a native stub (using default calling convention) which
+     * Obtain the pointer to a native stub which
      * can be used to upcall into a given method handle.
      *
      * @param target the target method handle.
@@ -178,7 +174,7 @@ public interface SystemABI {
         /**
          * The {@code T*} native type.
          */
-        POINTER;
+        POINTER
     }
 
     /**
