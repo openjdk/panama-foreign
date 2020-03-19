@@ -58,6 +58,8 @@ public final class MemoryScope {
 
     final Runnable cleanupAction;
 
+    final static MemoryScope GLOBAL = new MemoryScope(null, null);
+
     public MemoryScope(Object ref, Runnable cleanupAction) {
         this.ref = ref;
         this.cleanupAction = cleanupAction;

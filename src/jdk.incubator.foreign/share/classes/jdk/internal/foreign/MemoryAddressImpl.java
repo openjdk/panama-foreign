@@ -31,7 +31,6 @@ import jdk.internal.misc.Unsafe;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 
-import java.lang.ref.Reference;
 import java.util.Objects;
 
 /**
@@ -78,6 +77,16 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
         return new MemoryAddressImpl(segment, offset + bytes);
     }
 
+    @Override
+    public MemoryAddress rebase(MemorySegment segment) {
+        MemorySegmentImpl segmentImpl = (MemorySegmentImpl)segment;
+        if (segmentImpl.base != this.segment.base) {
+            throw new IllegalArgumentException("Invalid rebase target: " + segment);
+        }
+        return new MemoryAddressImpl((MemorySegmentImpl)segment,
+                unsafeGetOffset() - ((MemoryAddressImpl)segment.baseAddress()).unsafeGetOffset());
+    }
+
     // MemoryAddressProxy methods
 
     public void checkAccess(long offset, long length, boolean readOnly) {
@@ -118,5 +127,23 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     @Override
     public String toString() {
         return "MemoryAddress{ region: " + segment + " offset=0x" + Long.toHexString(offset) + " }";
+    }
+
+    // helper methods
+
+    public static long addressof(MemoryAddress address) {
+        MemoryAddressImpl addressImpl = (MemoryAddressImpl)address;
+        if (addressImpl.unsafeGetBase() != null) {
+            throw new IllegalStateException("Heap address!");
+        }
+        return addressImpl.unsafeGetOffset();
+    }
+
+    public static MemoryAddress ofLongUnchecked(long value) {
+        return ofLongUnchecked(value, Long.MAX_VALUE);
+    }
+
+    public static MemoryAddress ofLongUnchecked(long value, long byteSize) {
+        return new MemoryAddressImpl((MemorySegmentImpl)Utils.makeNativeSegmentUnchecked(value, byteSize), 0);
     }
 }

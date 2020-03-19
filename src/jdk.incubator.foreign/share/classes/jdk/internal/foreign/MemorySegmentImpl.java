@@ -70,6 +70,16 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     final static long NONCE = new Random().nextLong();
 
     final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE;
+    public static final MemorySegmentImpl NOTHING = new MemorySegmentImpl();
+
+    private MemorySegmentImpl() {
+        this.length = 0L;
+        this.mask = 0;
+        this.min = 0L;
+        this.base = null;
+        this.owner = null;
+        this.scope = MemoryScope.GLOBAL;
+    }
 
     public MemorySegmentImpl(long min, Object base, long length, Thread owner, MemoryScope scope) {
         this(min, base, length, DEFAULT_MASK, owner, scope);

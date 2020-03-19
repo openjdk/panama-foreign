@@ -30,6 +30,8 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Method;
@@ -40,13 +42,12 @@ import java.util.List;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
-import org.testng.annotations.*;
-
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 public class TestSegments {
 
@@ -94,6 +95,20 @@ public class TestSegments {
         try (MemorySegment segment = MemorySegment.allocateNative(1000)) {
             for (long i = 0 ; i < segment.byteSize() ; i++) {
                 assertEquals(0, (byte)byteHandle.get(segment.baseAddress(), i));
+            }
+        }
+    }
+
+    @Test
+    public void testNothingSegmentAccess() {
+        VarHandle longHandle = MemoryLayouts.JAVA_LONG.varHandle(long.class);
+        long[] values = { 0L, Integer.MAX_VALUE - 1, (long) Integer.MAX_VALUE + 1 };
+        for (long value : values) {
+            MemoryAddress addr = MemoryAddress.ofLong(value);
+            try {
+                longHandle.get(addr);
+            } catch (UnsupportedOperationException ex) {
+                assertTrue(ex.getMessage().contains("Required access mode"));
             }
         }
     }

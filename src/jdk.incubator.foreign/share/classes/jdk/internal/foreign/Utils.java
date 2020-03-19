@@ -53,7 +53,7 @@ import java.util.function.Supplier;
  */
 public final class Utils {
 
-    private static Unsafe unsafe = Unsafe.getUnsafe();
+    private static final Unsafe unsafe = Unsafe.getUnsafe();
 
     private static final MethodHandle ADDRESS_FILTER;
 
@@ -107,6 +107,18 @@ public final class Utils {
             segment = segment.asSlice(delta, bytesSize);
         }
         return segment;
+    }
+
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress base, long bytesSize) {
+        if (((MemorySegmentImpl)base.segment()).base != null) {
+            throw new IllegalArgumentException("Not a native address: " + base);
+        }
+        return makeNativeSegmentUnchecked(((MemoryAddressImpl)base).unsafeGetOffset(), bytesSize);
+    }
+
+    public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize) {
+        MemoryScope scope = new MemoryScope(null, null);
+        return new MemorySegmentImpl(min, null, bytesSize, Thread.currentThread(), scope);
     }
 
     public static MemorySegment makeArraySegment(byte[] arr) {
