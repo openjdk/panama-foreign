@@ -55,7 +55,6 @@ public class SysVx64ABI implements SystemABI {
     public static final int MAX_VECTOR_RETURN_REGISTERS = 2;
     public static final int MAX_X87_RETURN_REGISTERS = 2;
 
-    private static final String fastPath = privilegedGetProperty("jdk.internal.foreign.NativeInvoker.FASTPATH");
     private static SysVx64ABI instance;
 
     public static SysVx64ABI getInstance() {
