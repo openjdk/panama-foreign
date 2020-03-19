@@ -26,11 +26,14 @@
 
 package jdk.incubator.foreign.unsafe;
 
+import java.lang.invoke.VarHandle;
+import java.nio.charset.Charset;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.MemorySegmentImpl;
 import jdk.internal.foreign.Utils;
+import static jdk.incubator.foreign.MemoryLayouts.C_CHAR;
 
 /**
  * Unsafe methods to allow interop between sun.misc.unsafe and memory access API.
@@ -80,5 +83,60 @@ public final class ForeignUnsafe {
      */
     public static MemorySegment ofNativeUnchecked(MemoryAddress base, long byteSize) {
         return Utils.makeNativeSegmentUnchecked(base, byteSize);
+    }
+
+    private static VarHandle arrayHandle(MemoryLayout elemLayout, Class<?> elemCarrier) {
+        return MemoryLayout.ofSequence(1, elemLayout)
+                .varHandle(elemCarrier, MemoryLayout.PathElement.sequenceElement());
+    }
+    private final static VarHandle byteArrHandle = arrayHandle(C_CHAR, byte.class);
+
+    /**
+     * Returns a new native memory segment holding contents of the given Java String
+     * @param str the Java String
+     * @return a new native memory segment
+     */
+    public static MemorySegment toCString(String str) {
+        return toCString(str.getBytes());
+    }
+
+    /**
+     * Returns a new native memory segment holding contents of the given Java String
+     * @param str The Java String
+     * @param charset The Charset to be used to encode the String
+     * @return a new native memory segment
+     */
+    public static MemorySegment toCString(String str, Charset charset) {
+        return toCString(str.getBytes(charset));
+    }
+
+    private static MemorySegment toCString(byte[] bytes) {
+        MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
+        MemorySegment segment = MemorySegment.allocateNative(strLayout);
+        MemoryAddress addr = segment.baseAddress();
+        for (int i = 0 ; i < bytes.length; i++) {
+            byteArrHandle.set(addr, i, bytes[i]);
+        }
+        byteArrHandle.set(addr, (long)bytes.length, (byte)0);
+        return segment;
+    }
+
+    /**
+     * Returns a Java String from the contents of the given C '\0' terminated string
+     * @param addr The address of the C string
+     * @return a Java String
+     */
+    public static String toJavaString(MemoryAddress addr) {
+        StringBuilder buf = new StringBuilder();
+        try (MemorySegment seg = ofNativeUnchecked(addr, Long.MAX_VALUE)) {
+            MemoryAddress baseAddr = seg.baseAddress();
+            byte curr = (byte) byteArrHandle.get(baseAddr, 0);
+            long offset = 0;
+            while (curr != 0) {
+                buf.append((char) curr);
+                curr = (byte) byteArrHandle.get(baseAddr, ++offset);
+            }
+        }
+        return buf.toString();
     }
 }
