@@ -32,7 +32,6 @@ import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 
 import org.testng.annotations.*;
-import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static jdk.incubator.foreign.MemoryLayouts.*;
 import static org.testng.Assert.*;
 
@@ -72,14 +71,13 @@ public class Test8241148 {
         try (var seg = ForeignUnsafe.toCString("java")) {
             assertEquals((int) strlen.invoke(seg.baseAddress()), 4);
         }
-        try (var pathSeg = ForeignUnsafe.toCString("PATH")) {
-            var path = (MemoryAddress) getenv.invoke(pathSeg.baseAddress());
-            if (!path.equals(NULL)) {
-                int len = (int) strlen.invoke(path);
-                var pathStr = ForeignUnsafe.toJavaString(path);
-                assertEquals(pathStr.length(), len);
-                System.out.println("PATH = " + pathStr);
-                assertEquals(pathStr, System.getenv("PATH"));
+        var envMap = System.getenv();
+        for (var entry : envMap.entrySet()) {
+            try (var envVar = ForeignUnsafe.toCString(entry.getKey())) {
+                var envValue = (MemoryAddress) getenv.invoke(envVar.baseAddress());
+                var envValueStr = ForeignUnsafe.toJavaString(envValue);
+                assertEquals(entry.getValue(), envValueStr);
+                System.out.println(entry.getKey() + " = " + envValueStr);
             }
         }
     }
