@@ -219,7 +219,7 @@ public final class MemoryLayouts {
     public static final ValueLayout C_POINTER;
 
     static {
-        SystemABI abi = InternalForeign.getInstancePriviledged().getSystemABI();
+        SystemABI abi = InternalForeign.getInstancePrivileged().getSystemABI();
         switch (abi.name()) {
             case ABI_SYSV -> {
                 C_BOOL = SysV.C_BOOL;

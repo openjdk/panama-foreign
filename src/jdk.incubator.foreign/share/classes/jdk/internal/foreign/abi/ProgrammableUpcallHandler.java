@@ -23,7 +23,6 @@
 
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.internal.foreign.MemoryAddressImpl;
@@ -55,7 +54,6 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
     @Stable
     private final MethodHandle mh;
     private final MethodType type;
-    private final FunctionDescriptor function;
     private final CallingSequence callingSequence;
     private final long entryPoint;
 
@@ -66,7 +64,6 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
         this.abi = abi;
         this.layout = BufferLayout.of(abi);
         this.type = callingSequence.methodType();
-        this.function = callingSequence.functionDesc();
         this.callingSequence = callingSequence;
         this.mh = target.asSpreader(Object[].class, callingSequence.methodType().parameterCount());
         this.entryPoint = allocateUpcallStub(abi, layout);

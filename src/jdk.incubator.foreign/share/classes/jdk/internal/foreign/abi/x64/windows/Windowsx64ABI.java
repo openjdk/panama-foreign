@@ -37,7 +37,6 @@ import java.lang.invoke.MethodType;
 import java.util.Objects;
 import java.util.Optional;
 
-import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 import static jdk.incubator.foreign.MemoryLayouts.WinABI.*;
 
 /**

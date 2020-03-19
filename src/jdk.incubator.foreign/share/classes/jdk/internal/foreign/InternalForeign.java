@@ -49,11 +49,11 @@ public class InternalForeign implements Foreign {
     private InternalForeign() {}
 
     public static InternalForeign getInstance() {
-        checkRestrictedAcccess();
-        return getInstancePriviledged();
+        checkRestrictedAccess();
+        return getInstancePrivileged();
     }
 
-    public static InternalForeign getInstancePriviledged() {
+    public static InternalForeign getInstancePrivileged() {
         return INSTANCE;
     }
 
@@ -83,7 +83,7 @@ public class InternalForeign implements Foreign {
         throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
     }
 
-    private static void checkRestrictedAcccess() {
+    private static void checkRestrictedAccess() {
         switch (foreignAccess) {
             case "deny" -> throwIllegalAccessError(foreignAccess);
             case "warn" -> System.err.println("WARNING: Accessing jdk.incubator.foreign.Foreign.");
@@ -91,7 +91,7 @@ public class InternalForeign implements Foreign {
                 StringBuilder sb = new StringBuilder("DEBUG: Accessing jdk.incubator.foreign.Foreign.");
                 StackWalker.getInstance().walk(s -> {
                      s
-                     .forEach(f -> sb.append(System.lineSeparator()).append("\tat " + f));
+                     .forEach(f -> sb.append(System.lineSeparator()).append("\tat ").append(f));
                     return null;
                 });
                 System.out.println(sb.toString());

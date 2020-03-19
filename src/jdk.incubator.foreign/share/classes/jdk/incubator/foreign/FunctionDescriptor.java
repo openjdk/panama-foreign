@@ -153,8 +153,8 @@ public final class FunctionDescriptor implements Constable {
         if (resLayout != null) {
             constants.add(resLayout.describeConstable().get());
         }
-        for (int i = 0 ; i < argLayouts.length ; i++) {
-            constants.add(argLayouts[i].describeConstable().get());
+        for (MemoryLayout argLayout : argLayouts) {
+            constants.add(argLayout.describeConstable().get());
         }
         return Optional.of(DynamicConstantDesc.ofNamed(
                     ConstantDescs.BSM_INVOKE, "function", AbstractLayout.CD_FUNCTION_DESC, constants.toArray(new ConstantDesc[0])));

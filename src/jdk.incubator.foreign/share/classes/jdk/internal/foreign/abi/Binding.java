@@ -90,7 +90,7 @@ import java.util.Objects;
  *
  * Argument bindings:
  * 0: DEREFERENCE(0, long.class) // From the struct's memory region, load a 'long' from offset '0'
- *    MOVE(rcx, long.class) // and copy that into the RCX regitster
+ *    MOVE(rcx, long.class) // and copy that into the RCX register
  *
  * Return bindings:
  * none
