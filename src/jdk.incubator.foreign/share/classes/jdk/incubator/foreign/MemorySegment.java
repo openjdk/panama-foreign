@@ -188,7 +188,7 @@ public interface MemorySegment extends AutoCloseable {
     /**
      * Does this segment support a given set of access modes?
      * @param accessModes an ORed mask of zero or more access modes.
-     * @return true, if the access modes in {@accessModes} are stricter than the ones supported by this segment.
+     * @return true, if the access modes in {@code accessModes} are stricter than the ones supported by this segment.
      */
     boolean hasAccessModes(int accessModes);
 

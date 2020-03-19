@@ -200,6 +200,8 @@ public interface SystemABI {
 
     /**
      * Returns memory layout for the given native type if supported by the platform ABI.
+     * @param type the native type for which the layout is to be retrieved.
+     * @return the layout (if any) associated with {@code type}
      */
     public Optional<MemoryLayout> layoutFor(Type type);
 }
