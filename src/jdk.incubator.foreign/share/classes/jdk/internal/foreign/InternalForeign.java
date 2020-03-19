@@ -18,7 +18,7 @@
  *  2 along with this work; if not, write to the Free Software Foundation,
  *  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *   Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ *  Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  *  or visit www.oracle.com if you need additional information or have any
  *  questions.
  *
@@ -91,7 +91,6 @@ public class InternalForeign implements Foreign {
                 StringBuilder sb = new StringBuilder("DEBUG: Accessing jdk.incubator.foreign.Foreign.");
                 StackWalker.getInstance().walk(s -> {
                      s
-                     .skip(1) // skip checkRestrictedAccess
                      .forEach(f -> sb.append(System.lineSeparator()).append("\tat " + f));
                     return null;
                 });
