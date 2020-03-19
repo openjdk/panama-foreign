@@ -25,11 +25,12 @@
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+
+import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 
 import org.testng.annotations.*;
 import static jdk.incubator.foreign.MemoryLayouts.*;
@@ -42,16 +43,17 @@ import static org.testng.Assert.*;
  * @modules jdk.incubator.foreign/jdk.incubator.foreign.unsafe
  *          jdk.incubator.foreign/jdk.internal.foreign
  *          jdk.incubator.foreign/jdk.internal.foreign.abi
- * @run testng Test8241148
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit Test8241148
  */
 @Test
 public class Test8241148 {
+    private final static Foreign FOREIGN = Foreign.getInstance();
     private final static MethodHandle getenv;
     private final static MethodHandle strlen;
 
     static {
         try {
-            SystemABI abi = SystemABI.getInstance();
+            SystemABI abi = FOREIGN.getSystemABI();
             LibraryLookup lookup = LibraryLookup.ofDefault();
 
             getenv = abi.downcallHandle(lookup.lookup("getenv"),
@@ -68,14 +70,14 @@ public class Test8241148 {
 
     @Test
     public void test() throws Throwable {
-        try (var seg = ForeignUnsafe.toCString("java")) {
+        try (var seg = FOREIGN.toCString("java")) {
             assertEquals((int) strlen.invoke(seg.baseAddress()), 4);
         }
         var envMap = System.getenv();
         for (var entry : envMap.entrySet()) {
-            try (var envVar = ForeignUnsafe.toCString(entry.getKey())) {
+            try (var envVar = FOREIGN.toCString(entry.getKey())) {
                 var envValue = (MemoryAddress) getenv.invoke(envVar.baseAddress());
-                var envValueStr = ForeignUnsafe.toJavaString(envValue);
+                var envValueStr = FOREIGN.toJavaString(envValue);
                 assertEquals(entry.getValue(), envValueStr);
                 System.out.println(entry.getKey() + " = " + envValueStr);
             }

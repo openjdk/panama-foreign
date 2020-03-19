@@ -30,8 +30,7 @@
  *          jdk.incubator.foreign/jdk.internal.foreign.abi
  *          java.base/sun.security.action
  * @build NativeTestHelper StdLibTest
- * @run testng StdLibTest
- * @run testng/othervm -Djdk.internal.foreign.NativeInvoker.FASTPATH=none -Djdk.internal.foreign.UpcallHandler.FASTPATH=none StdLibTest
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit StdLibTest
  */
 
 import java.lang.invoke.MethodHandle;
@@ -54,6 +53,7 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -62,7 +62,6 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.foreign.unsafe.ForeignUnsafe;
 import org.testng.annotations.*;
 
 import static jdk.incubator.foreign.MemoryLayouts.*;
@@ -71,7 +70,8 @@ import static org.testng.Assert.*;
 @Test
 public class StdLibTest extends NativeTestHelper {
 
-    final static SystemABI abi = SystemABI.getInstance();
+    final static Foreign FOREIGN = Foreign.getInstance();
+    final static SystemABI abi = FOREIGN.getSystemABI();
 
     final static VarHandle byteHandle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
     final static VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
@@ -269,7 +269,7 @@ public class StdLibTest extends NativeTestHelper {
             static final long SIZE = 56;
 
             Tm(MemoryAddress base) {
-                this.base = base.rebase(ForeignUnsafe.ofNativeUnchecked(base, SIZE));
+                this.base = base.rebase(FOREIGN.ofNativeUnchecked(base, SIZE));
             }
 
             int sec() {
@@ -452,10 +452,10 @@ public class StdLibTest extends NativeTestHelper {
     }
 
     static MemorySegment toCString(String value) {
-        return ForeignUnsafe.toCString(value);
+        return FOREIGN.toCString(value);
     }
 
     static String toJavaString(MemoryAddress address) {
-        return ForeignUnsafe.toJavaString(address);
+        return FOREIGN.toJavaString(address);
     }
 }

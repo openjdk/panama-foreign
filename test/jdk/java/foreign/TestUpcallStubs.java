@@ -24,9 +24,10 @@
 
 /*
  * @test
- * @run testng TestUpcallStubs
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit TestUpcallStubs
  */
 
+import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
@@ -42,7 +43,7 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 
 public class TestUpcallStubs {
 
-    static final SystemABI abi = SystemABI.getInstance();
+    static final SystemABI abi = Foreign.getInstance().getSystemABI();
     static final MethodHandle MH_dummy;
 
     static {

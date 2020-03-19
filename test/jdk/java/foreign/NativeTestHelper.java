@@ -22,6 +22,7 @@
  *
  */
 
+import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts.WinABI;
 import jdk.incubator.foreign.SystemABI;
@@ -34,7 +35,7 @@ import static jdk.incubator.foreign.SystemABI.ABI_WINDOWS;
 
 public class NativeTestHelper {
 
-    public static final SystemABI ABI = SystemABI.getInstance();
+    public static final SystemABI ABI = Foreign.getInstance().getSystemABI();
 
     public static boolean isIntegral(MemoryLayout layout) {
         var optAbiType = layout.abiType();
