@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8215038 8239487
+ * @bug 8215038 8239487 8240476
  * @summary Add a page that lists all system properties
  * @library /tools/lib ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
@@ -65,26 +65,35 @@ public class TestSystemPropertyPage extends JavadocTester {
                 "<a href=\"system-properties.html\">System Properties</a>");
 
         checkOutput("system-properties.html", true,
+                "<div class=\"flex-box\">\n" +
+                "<header role=\"banner\" class=\"flex-header\">",
+
+                "<div class=\"flex-content\">\n" +
+                "<main role=\"main\">\n" +
+                "<div class=\"header\">\n" +
+                "<h1>System Properties</h1>\n" +
+                "</div>",
+
                 "<table>\n" +
-                "<caption><span>System Properties Summary</span><span class=\"tabEnd\">&nbsp;</span></caption>\n" +
+                "<caption><span>System Properties Summary</span><span class=\"tab-end\">&nbsp;</span></caption>\n" +
                 "<thead>\n" +
                 "<tr>\n" +
-                "<th class=\"colFirst\" scope=\"col\">Property</th>\n" +
-                "<th class=\"colLast\" scope=\"col\">Referenced In</th>\n" +
+                "<th class=\"col-first\" scope=\"col\">Property</th>\n" +
+                "<th class=\"col-last\" scope=\"col\">Referenced In</th>\n" +
                 "</tr>\n" +
                 "</thead>\n" +
                 "<tbody>\n" +
-                "<tr class=\"altColor\">\n" +
-                "<th class=\"colFirst\" scope=\"row\">user.address</th>\n" +
-                "<td class=\"colLast\">\n" +
+                "<tr class=\"alt-color\">\n" +
+                "<th class=\"col-first\" scope=\"row\">user.address</th>\n" +
+                "<td class=\"col-last\">\n" +
                 "<div class=\"block\">" +
                         "<code><a href=\"pkg2/B.html#user.address\">class pkg2.B</a></code>" +
                         ", <a href=\"pkg1/doc-files/WithTitle.html#user.address\"><code>package pkg1: </code>Example Title</a></div>\n" +
                 "</td>\n" +
                 "</tr>\n" +
-                "<tr class=\"rowColor\">\n" +
-                "<th class=\"colFirst\" scope=\"row\">user.name</th>\n" +
-                "<td class=\"colLast\">\n" +
+                "<tr class=\"row-color\">\n" +
+                "<th class=\"col-first\" scope=\"row\">user.name</th>\n" +
+                "<td class=\"col-last\">\n" +
                 "<div class=\"block\">" +
                         "<a href=\"index.html#user.name\">Overview</a>" +
                         ", <code><a href=\"pkg1/A.html#user.name\">class pkg1.A</a></code>" +
