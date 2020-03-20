@@ -1420,6 +1420,13 @@ void ShenandoahHeap::op_init_mark() {
   if (ShenandoahPacing) {
     pacer()->setup_for_mark();
   }
+
+  // Arm nmethods for concurrent marking. When a nmethod is about to be executed,
+  // we need to make sure that all its metadata are marked. alternative is to remark
+  // thread roots at final mark pause, but it can be potential latency killer.
+  if (ShenandoahConcurrentRoots::should_do_concurrent_class_unloading()) {
+    ShenandoahCodeRoots::arm_nmethods();
+  }
 }
 
 void ShenandoahHeap::op_mark() {
@@ -1879,6 +1886,13 @@ void ShenandoahHeap::op_degenerated(ShenandoahDegenPoint point) {
         return;
       }
 
+      if (!has_forwarded_objects() && ShenandoahConcurrentRoots::can_do_concurrent_class_unloading()) {
+        // Disarm nmethods that armed for concurrent mark. On normal cycle, it would
+        // be disarmed while conc-roots phase is running.
+        // TODO: Call op_conc_roots() here instead
+        ShenandoahCodeRoots::disarm_nmethods();
+      }
+
       op_cleanup();
 
     case _degenerated_evac:
@@ -2333,16 +2347,14 @@ void ShenandoahHeap::assert_gc_workers(uint nworkers) {
   assert(nworkers > 0 && nworkers <= max_workers(), "Sanity");
 
   if (ShenandoahSafepoint::is_at_shenandoah_safepoint()) {
-    if (UseDynamicNumberOfGCThreads ||
-        (FLAG_IS_DEFAULT(ParallelGCThreads) && ForceDynamicNumberOfGCThreads)) {
+    if (UseDynamicNumberOfGCThreads) {
       assert(nworkers <= ParallelGCThreads, "Cannot use more than it has");
     } else {
       // Use ParallelGCThreads inside safepoints
-      assert(nworkers == ParallelGCThreads, "Use ParalleGCThreads within safepoints");
+      assert(nworkers == ParallelGCThreads, "Use ParallelGCThreads within safepoints");
     }
   } else {
-    if (UseDynamicNumberOfGCThreads ||
-        (FLAG_IS_DEFAULT(ConcGCThreads) && ForceDynamicNumberOfGCThreads)) {
+    if (UseDynamicNumberOfGCThreads) {
       assert(nworkers <= ConcGCThreads, "Cannot use more than it has");
     } else {
       // Use ConcGCThreads outside safepoints
@@ -2395,7 +2407,6 @@ private:
       if (r->is_active() && !r->is_cset()) {
         _heap->marked_object_oop_iterate(r, &cl, update_watermark);
       }
-      r->set_update_watermark(r->bottom());
       if (ShenandoahPacing) {
         _heap->pacer()->report_updaterefs(pointer_delta(update_watermark, r->bottom()));
       }
