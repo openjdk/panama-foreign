@@ -127,7 +127,7 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
 
     private static String getCLangConstantsHolder() {
         String prefix = "jdk.incubator.foreign.MemoryLayouts.";
-        String abi = InternalForeign.getInstancePriviledged().getSystemABI().name();
+        String abi = InternalForeign.getInstancePrivileged().getSystemABI().name();
         switch (abi) {
             case SystemABI.ABI_SYSV:
                 return prefix + "SysV";
