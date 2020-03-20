@@ -44,7 +44,7 @@ import java.util.Optional;
 
 public class RuntimeHelper {
 
-    private final static SystemABI ABI = InternalForeign.getInstancePriviledged().getSystemABI();
+    private final static SystemABI ABI = InternalForeign.getInstancePrivileged().getSystemABI();
 
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();
 

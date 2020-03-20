@@ -51,7 +51,7 @@ import javax.lang.model.SourceVersion;
  * method is called to get overall generated source string.
  */
 class JavaSourceBuilder {
-    private static final String ABI = InternalForeign.getInstancePriviledged().getSystemABI().name();
+    private static final String ABI = InternalForeign.getInstancePrivileged().getSystemABI().name();
     // buffer
     protected StringBuffer sb;
     // current line alignment (number of 4-spaces)

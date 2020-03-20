@@ -40,7 +40,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class TranslationUnit implements AutoCloseable {
-    private static final Foreign FOREIGN = InternalForeign.getInstancePriviledged();
+    private static final Foreign FOREIGN = InternalForeign.getInstancePrivileged();
 
     private MemoryAddress tu;
 

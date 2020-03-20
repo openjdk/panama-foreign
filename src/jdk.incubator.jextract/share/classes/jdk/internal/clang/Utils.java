@@ -53,12 +53,12 @@ public class Utils {
 
     static {
         try {
-            STRLEN = InternalForeign.getInstancePriviledged().getSystemABI().downcallHandle(
+            STRLEN = InternalForeign.getInstancePrivileged().getSystemABI().downcallHandle(
                     LibraryLookup.ofDefault().lookup("strlen"),
                     MethodType.methodType(int.class, MemoryAddress.class),
                     FunctionDescriptor.of(LayoutUtils.C_INT, LayoutUtils.C_POINTER));
 
-            STRCPY = InternalForeign.getInstancePriviledged().getSystemABI().downcallHandle(
+            STRCPY = InternalForeign.getInstancePrivileged().getSystemABI().downcallHandle(
                     LibraryLookup.ofDefault().lookup("strcpy"),
                     MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
                     FunctionDescriptor.of(LayoutUtils.C_POINTER, LayoutUtils.C_POINTER, LayoutUtils.C_POINTER));

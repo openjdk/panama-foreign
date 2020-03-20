@@ -47,7 +47,7 @@ import java.util.Optional;
  * General Layout utility functions
  */
 public final class LayoutUtils {
-    private static SystemABI abi = InternalForeign.getInstancePriviledged().getSystemABI();
+    private static SystemABI abi = InternalForeign.getInstancePrivileged().getSystemABI();
     private LayoutUtils() {}
 
     public static String getName(Type type) {
