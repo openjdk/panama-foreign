@@ -31,4 +31,9 @@ The foreign-jextract branch depends on the foreign-abi branch, which in turn dep
 
 Building notes
 ===================
-Jextract requires [LLVM 9.x](https://releases.llvm.org/download.html) as a dependency. So, to build the foreign-jextract branch, the flag `--with-libclang=/path/to/llvm/root` must be supplied when generating a build configuration. Please see [doc/building.md](https://github.com/openjdk/panama-foreign/blob/foreign-jextract/doc/building.md) for general building instructions.
+Jextract requires [LLVM 9.x](https://releases.llvm.org/download.html) as a dependency. So, to build the foreign-jextract branch, the flag `--with-libclang=/path/to/llvm/root` must be supplied when generating a build configuration. Please see [doc/building.md](doc/building.md) for general building instructions.
+
+Samples
+=======
+
+Please see [doc/panama_jextract.md](doc/panama_jextract.md) for examples on how to use `jextract` to work with common native libraries.
