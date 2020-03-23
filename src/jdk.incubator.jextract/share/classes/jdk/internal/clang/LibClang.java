@@ -25,17 +25,46 @@
  */
 package jdk.internal.clang;
 
+import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SystemABI;
 import jdk.internal.clang.libclang.Index_h;
+import jdk.internal.foreign.InternalForeign;
+import jdk.internal.jextract.impl.LayoutUtils;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 
 public class LibClang {
     private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");
     private static final boolean CRASH_RECOVERY = Boolean.getBoolean("libclang.crash_recovery");
 
+    private final static MemorySegment disableCrashRecovery =
+            Utils.toNativeString("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY)
+                .withAccessModes(MemorySegment.READ);
+
+    static {
+        if (!CRASH_RECOVERY) {
+            //this is an hack - needed because clang_toggleCrashRecovery only takes effect _after_ the
+            //first call to createIndex.
+            try {
+                SystemABI abi = InternalForeign.getInstancePrivileged().getSystemABI();
+                String putenv = abi.name().equals(SystemABI.ABI_WINDOWS) ?
+                        "_putenv" : "putenv";
+                MethodHandle PUT_ENV = abi.downcallHandle(LibraryLookup.ofDefault().lookup(putenv),
+                                MethodType.methodType(int.class, MemoryAddress.class),
+                                FunctionDescriptor.of(LayoutUtils.C_INT, LayoutUtils.C_POINTER));
+                int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.baseAddress());
+            } catch (Throwable ex) {
+                throw new ExceptionInInitializerError(ex);
+            }
+        }
+    }
+
     public static Index createIndex(boolean local) {
         Index index = new Index(Index_h.clang_createIndex(local ? 1 : 0, 0));
-        Index_h.clang_toggleCrashRecovery(CRASH_RECOVERY ? 1 : 0);
         if (DEBUG) {
             System.err.println("LibClang crash recovery " + (CRASH_RECOVERY ? "enabled" : "disabled"));
         }
