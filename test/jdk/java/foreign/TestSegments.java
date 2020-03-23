@@ -97,6 +97,41 @@ public class TestSegments {
     }
 
     @Test
+    public void testHeapSource() {
+        int[] arr = { 1, 2, 3};
+        MemorySegment segment = MemorySegment.ofArray(arr);
+        assertFalse(segment.source().isNative());
+        assertEquals(segment.source().base(), arr);
+        try {
+            segment.source().address(segment.baseAddress()); //should not work - not a native segment
+            fail();
+        } catch (UnsupportedOperationException ex) {
+            //ok
+        }
+    }
+
+    @Test
+    public void testNativeSource() {
+        try (MemorySegment segment = MemorySegment.allocateNative(4);
+             MemorySegment other = MemorySegment.allocateNative(4)) {
+            assertTrue(segment.source().isNative());
+            segment.source().address(segment.baseAddress()); //should work
+            try {
+                other.source().address(segment.baseAddress()); //should not work - wrong segment
+                fail();
+            } catch (IllegalArgumentException ex) {
+                //ok
+            }
+            try {
+                segment.source().base(); //should not work - not a heap segment
+                fail();
+            } catch (UnsupportedOperationException ex) {
+                //ok
+            }
+        }
+    }
+
+    @Test
     public void testSlices() {
         VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
                 .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());

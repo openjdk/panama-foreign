@@ -58,7 +58,7 @@ public interface MemorySource {
     boolean isReleased();
 
     /**
-     * Register this memory source against a {@link java.lang.ref.Cleaner}; this means that when all memory segments
+     * Registers this memory source against a {@link java.lang.ref.Cleaner}; this means that when all memory segments
      * backed by this memory sources become unreacheable, this memory source will be automatically released.
      */
     void registerCleaner();
@@ -68,4 +68,25 @@ public interface MemorySource {
      * @return the size (in bytes) of this memory source.
      */
     long byteSize();
+
+    /**
+     * Is this a memory source backed by off-heap memory?
+     * @return true, if this is either a native or mapped memory source.
+     */
+    boolean isNative();
+
+    /**
+     * Return the raw native address from a {@link MemoryAddress} instance associated with this memory source.
+     * @return the raw native address associated with {@code address}.
+     * @throws UnsupportedOperationException if {@link #isNative()} returns {@code false}.
+     * @throws IllegalArgumentException if {@code address} is not associated with this memory source.
+     */
+    long address(MemoryAddress address);
+
+    /**
+     * Return the base object associated with this heap memory source.
+     * @return the base object associated with this heap memory source.
+     * @throws UnsupportedOperationException if {@link #isNative()} returns {@code true}.
+     */
+    Object base();
 }

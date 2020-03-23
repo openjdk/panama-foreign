@@ -26,6 +26,7 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MappedMemorySource;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.MemorySource;
 import jdk.internal.access.foreign.UnmapperProxy;
@@ -160,6 +161,12 @@ public abstract class MemorySourceImpl implements MemorySource {
         }
     }
 
+    void checkSegmentSource(MemorySegment segment) {
+        if (segment.source() != this) {
+            throw new IllegalArgumentException("Segment does not belong to this memory source");
+        }
+    }
+
     public static class OfHeap extends MemorySourceImpl {
 
         final Object base;
@@ -167,6 +174,21 @@ public abstract class MemorySourceImpl implements MemorySource {
         public OfHeap(long size, Object base, Object ref, Runnable cleanupAction) {
             super(size, ref, cleanupAction);
             this.base = base;
+        }
+
+        @Override
+        public boolean isNative() {
+            return false;
+        }
+
+        @Override
+        public Object base() {
+            return unsafeBase();
+        }
+
+        @Override
+        public long address(MemoryAddress address) {
+            throw new UnsupportedOperationException("Not a native memory source");
         }
 
         @Override
@@ -185,23 +207,34 @@ public abstract class MemorySourceImpl implements MemorySource {
         }
 
         @Override
+        public boolean isNative() {
+            return true;
+        }
+
+        @Override
+        public long address(MemoryAddress address) {
+            checkSegmentSource(address.segment());
+            return address.offset() + ((MemorySegmentImpl)address.segment()).min + unsafeAddress();
+        }
+
+        @Override
+        public Object base() {
+            throw new UnsupportedOperationException("Not a heap memory source");
+        }
+
+        @Override
         long unsafeAddress() {
             return addr;
         }
     }
 
-    public static class OfMapped extends MemorySourceImpl implements MappedMemorySource {
+    public static class OfMapped extends OfNative implements MappedMemorySource {
 
         final UnmapperProxy unmapperProxy;
 
         public OfMapped(UnmapperProxy unmapperProxy, long size, Object ref, Runnable cleanupAction) {
-            super(size, ref, cleanupAction);
+            super(unmapperProxy.address(), size, ref, cleanupAction);
             this.unmapperProxy = unmapperProxy;
-        }
-
-        @Override
-        long unsafeAddress() {
-            return unmapperProxy.address();
         }
 
         @Override
@@ -213,11 +246,8 @@ public abstract class MemorySourceImpl implements MemorySource {
 
         @Override
         public void force(MemorySegment segment) {
-            if (segment.source() instanceof MappedMemorySource) {
-                ((MappedByteBuffer)segment.asByteBuffer()).force();
-            } else {
-                throw new IllegalArgumentException("Not a mapped memory segment");
-            }
+            checkSegmentSource(segment);
+            ((MappedByteBuffer)segment.asByteBuffer()).force();
         }
     }
 }

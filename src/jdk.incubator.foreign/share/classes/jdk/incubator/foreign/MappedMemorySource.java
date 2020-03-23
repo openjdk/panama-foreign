@@ -28,7 +28,7 @@ package jdk.incubator.foreign;
 /**
  * A mapped memory source describes an underlying memory region which is memory-mapped from a given path.
  * As such, it provides additional operations to allow for syncing the contents of the mapped memory source with
- * the ones of the underlying file backing the memory mapping (see {@link #force()} and {@link #force(MemorySegment)}).
+ * that of the underlying file backing the memory mapping (see {@link #force()} and {@link #force(MemorySegment)}).
  *
  * @apiNote In the future, if the Java language permits, {@link MemorySource}
  * may become a {@code sealed} interface, which would prohibit subclassing except by
@@ -47,7 +47,7 @@ public interface MappedMemorySource extends MemorySource {
      * <p> If the path associated to this memory source does not reside on a local device,
      * then no such guarantee is made.
      *
-     * <p> If this the map mode associated with this memory source is not ({@link
+     * <p> If the map mode associated with this memory source is not ({@link
      * java.nio.channels.FileChannel.MapMode#READ_WRITE}) then invoking this method may have no effect.
      * This method may or may not have an effect for implementation-specific mapping modes.</p>
      *
@@ -76,6 +76,7 @@ public interface MappedMemorySource extends MemorySource {
      *
      * @throws IllegalStateException if the memory region backing this memory source has already been released (see
      * {@link #isReleased()}).
+     * @throws IllegalArgumentException if {@code segment} is not derived from this memory source.
      */
     void force(MemorySegment segment);
 }
