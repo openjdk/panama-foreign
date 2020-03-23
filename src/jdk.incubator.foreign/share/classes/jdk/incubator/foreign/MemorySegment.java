@@ -356,7 +356,7 @@ public interface MemorySegment extends AutoCloseable {
      * for the life-time of the segment.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new memory segment backed by an heap memory source.
+     * @return a new memory segment backed by a heap memory source.
      */
     static MemorySegment ofArray(double[] arr) {
         return Utils.makeArraySegment(arr);
