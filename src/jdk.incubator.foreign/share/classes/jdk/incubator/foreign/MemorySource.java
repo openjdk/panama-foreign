@@ -77,6 +77,7 @@ public interface MemorySource {
 
     /**
      * Return the raw native address from a {@link MemoryAddress} instance associated with this memory source.
+     * @param address the {@link MemoryAddress} instance whose raw native address is to be retrieved.
      * @return the raw native address associated with {@code address}.
      * @throws UnsupportedOperationException if {@link #isNative()} returns {@code false}.
      * @throws IllegalArgumentException if {@code address} is not associated with this memory source.
