@@ -187,7 +187,7 @@ public interface SystemABI {
          *
          * @param ml the layout to retrieve the ABI type of
          * @return the retrieved ABI type
-         * @throws IllegalArgumentException if the given layout does not have an ABI type annotation
+         * @throws IllegalArgumentException if the given layout does not have an ABI type attribute
          */
         public static Type fromLayout(MemoryLayout ml) throws IllegalArgumentException {
             return ml.attribute(NATIVE_TYPE, SystemABI.Type.class)
