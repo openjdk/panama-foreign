@@ -185,7 +185,7 @@ public class CallArranger {
         } else if(clazz == ArgumentClassImpl.POINTER) {
             return TypeClass.POINTER;
         } else if (clazz == ArgumentClassImpl.SSE) {
-            if (type.attribute(VARARGS_ATTRIBUTE_NAME).map(String.class::cast).map(Boolean::parseBoolean).orElse(false)) {
+            if (type.attribute(VARARGS_ATTRIBUTE_NAME, String.class).map(Boolean::parseBoolean).orElse(false)) {
                 return TypeClass.VARARG_FLOAT;
             }
             return TypeClass.FLOAT;
