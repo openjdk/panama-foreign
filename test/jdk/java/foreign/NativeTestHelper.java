@@ -38,11 +38,7 @@ public class NativeTestHelper {
     public static final SystemABI ABI = Foreign.getInstance().getSystemABI();
 
     public static boolean isIntegral(MemoryLayout layout) {
-        var optAbiType = layout.attribute(SystemABI.NATIVE_TYPE, SystemABI.Type.class);
-        if (!optAbiType.isPresent()) {
-            return false;
-        }
-        return switch(optAbiType.get()) {
+        return switch(SystemABI.Type.fromLayout(layout)) {
             case BOOL, UNSIGNED_CHAR, SIGNED_CHAR, CHAR, SHORT, UNSIGNED_SHORT,
                 INT, UNSIGNED_INT, LONG, UNSIGNED_LONG, LONG_LONG, UNSIGNED_LONG_LONG -> true;
             default -> false;
@@ -50,8 +46,7 @@ public class NativeTestHelper {
     }
 
     public static boolean isPointer(MemoryLayout layout) {
-        return layout.attribute(SystemABI.NATIVE_TYPE, SystemABI.Type.class)
-                     .filter(Predicate.isEqual(Type.POINTER)).isPresent();
+        return SystemABI.Type.fromLayout(layout) == Type.POINTER;
     }
 
     public static ValueLayout asVarArg(ValueLayout layout) {
