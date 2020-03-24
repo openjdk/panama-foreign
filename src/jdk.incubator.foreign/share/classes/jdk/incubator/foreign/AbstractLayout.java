@@ -150,7 +150,7 @@ abstract class AbstractLayout implements MemoryLayout {
         }
         return s;
     }
-    
+
     <T> DynamicConstantDesc<T> decorateLayoutConstant(DynamicConstantDesc<T> desc) {
         if (!hasNaturalAlignment()) {
             desc = DynamicConstantDesc.ofNamed(BSM_INVOKE, "withBitAlignment", desc.constantType(), MH_WITH_BIT_ALIGNMENT,
