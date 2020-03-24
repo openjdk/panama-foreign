@@ -179,7 +179,20 @@ public interface SystemABI {
         /**
          * The {@code T*} native type.
          */
-        POINTER
+        POINTER;
+
+        /**
+         * Retrieve the ABI type attached to the given layout,
+         * or throw an {@code IllegalArgumentException} if there is none
+         *
+         * @param ml the layout to retrieve the ABI type of
+         * @return the retrieved ABI type
+         * @throws IllegalArgumentException if the given layout does not have an ABI type annotation
+         */
+        public static Type fromLayout(MemoryLayout ml) throws IllegalArgumentException {
+            return ml.attribute(NATIVE_TYPE, SystemABI.Type.class)
+                     .orElseThrow(() -> new IllegalArgumentException("No ABI attribute present"));
+        }
     }
 
     /**

@@ -43,6 +43,7 @@ import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.abi.x64.X86_64Architecture;
 import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
 import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -162,10 +163,7 @@ public class CallArranger {
     }
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        var optAbiType = type.attribute(SystemABI.NATIVE_TYPE, SystemABI.Type.class);
-        //padding not allowed here
-        ArgumentClassImpl clazz = optAbiType.map(Windowsx64ABI::argumentClassFor).
-            orElseThrow(()->new IllegalStateException("Unexpected value layout: could not determine ABI class"));
+        ArgumentClassImpl clazz = Windowsx64ABI.argumentClassFor(SystemABI.Type.fromLayout(type));
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");

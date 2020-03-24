@@ -108,7 +108,7 @@ public class TestLayoutConstants {
                                 MemoryLayouts.BITS_32_BE)) },
                 { MemoryLayouts.BITS_32_LE.withName("myInt") },
                 { MemoryLayouts.BITS_32_LE.withBitAlignment(8) },
-                { MemoryLayouts.BITS_32_LE.withAttribute("xyz", "xyz") },
+                { MemoryLayouts.BITS_32_LE.withAttribute("xyz", "abc") },
         };
     }
 
