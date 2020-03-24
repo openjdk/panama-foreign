@@ -294,17 +294,6 @@ public interface MemoryLayout extends Constable {
     Optional<Constable> attribute(String name);
 
     /**
-     * Returns the attribute with the given name and the given type if it exists, or an empty optional
-     *
-     * @param name the name of the attribute
-     * @param type the type to filter by
-     * @return the optional attribute
-     */
-    default <T extends Constable> Optional<T> attribute(String name, Class<T> type) {
-        return attribute(name).filter(type::isInstance).map(type::cast);
-    }
-
-    /**
      * Returns a new MemoryLayout with the given additional attribute
      *
      * @param name the name of the attribute

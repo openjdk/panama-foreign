@@ -517,7 +517,9 @@ public class CallArranger {
     // TODO: handle zero length arrays
     // TODO: Handle nested structs (and primitives)
     private static List<ArgumentClassImpl> classifyStructType(GroupLayout type) {
-        if (type.attribute(SystemABI.NATIVE_TYPE, SystemABI.Type.class)
+        if (type.attribute(SystemABI.NATIVE_TYPE)
+                .filter(SystemABI.Type.class::isInstance)
+                .map(SystemABI.Type.class::cast)
                 .map(SysVx64ABI::argumentClassFor)
                 .filter(ArgumentClassImpl.COMPLEX_X87::equals)
                 .isPresent()) {

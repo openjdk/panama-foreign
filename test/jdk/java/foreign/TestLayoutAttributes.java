@@ -42,7 +42,7 @@ public class TestLayoutAttributes {
     public void testAttribute() {
         MemoryLayout ml = MemoryLayouts.BITS_32_LE
                 .withAttribute("MyAttribute", 10L);
-        assertEquals((long) ml.attribute("MyAttribute", Long.class).orElseThrow(), 10L);
+        assertEquals((long) ml.attribute("MyAttribute").orElseThrow(), 10L);
     }
 
     @Test
@@ -53,20 +53,11 @@ public class TestLayoutAttributes {
     }
 
     @Test
-    public void testAttributeTypeFilter() {
-        MemoryLayout ml = MemoryLayouts.BITS_32_LE
-                .withAttribute("MyAttribute", 10L);
-        assertTrue(ml.attribute("MyAttribute", Integer.class).isEmpty());
-        assertTrue(ml.attribute("MyAttribute", Long.class).isPresent());
-        assertTrue(ml.attribute("MyAttribute").isPresent());
-    }
-
-    @Test
     public void testNameAttribute() {
         MemoryLayout ml = MemoryLayouts.BITS_32_LE
                 .withName("foo");
         assertEquals(ml.name().orElseThrow(), "foo");
-        assertEquals(ml.attribute("name", String.class).orElseThrow(), "foo");
+        assertEquals(ml.attribute("name").orElseThrow(), "foo");
     }
 
     @Test
