@@ -53,6 +53,11 @@ public interface SystemABI {
     String ABI_AARCH64 = "AArch64";
 
     /**
+     * memory layout attribute key for abi native type
+     */
+    String NATIVE_TYPE = "abi/native-type";
+
+    /**
      * Obtain a method handle which can be used to call a given native function.
      *
      * @param symbol downcall symbol.
