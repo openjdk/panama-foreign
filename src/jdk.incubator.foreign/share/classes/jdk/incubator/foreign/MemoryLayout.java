@@ -305,7 +305,7 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * Returns a new MemoryLayout with the given addtional attribute
+     * Returns a new MemoryLayout with the given additional attribute
      *
      * @param name the name of the attribute
      * @param value the value of the attribute

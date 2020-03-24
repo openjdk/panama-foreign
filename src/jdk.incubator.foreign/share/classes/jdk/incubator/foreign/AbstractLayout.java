@@ -67,6 +67,11 @@ abstract class AbstractLayout implements MemoryLayout {
     }
 
     @Override
+    public final Optional<String> name() {
+        return attribute(NAME).map(String.class::cast);
+    }
+
+    @Override
     public Optional<Constable> attribute(String name) {
         return Optional.ofNullable(attributes.get(name));
     }
@@ -81,11 +86,6 @@ abstract class AbstractLayout implements MemoryLayout {
         Map<String, Constable> newAttributes = new HashMap<>(attributes);
         newAttributes.put(name, value);
         return dup(alignment, newAttributes);
-    }
-
-    @Override
-    public final Optional<String> name() {
-        return attribute(NAME).map(String.class::cast);
     }
 
     abstract AbstractLayout dup(long alignment, Map<String, Constable> annos);
