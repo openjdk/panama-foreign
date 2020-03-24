@@ -29,6 +29,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
@@ -161,7 +162,7 @@ public class CallArranger {
     }
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        var optAbiType = type.abiType();
+        var optAbiType = type.attribute(SystemABI.NATIVE_TYPE, SystemABI.Type.class);
         //padding not allowed here
         ArgumentClassImpl clazz = optAbiType.map(Windowsx64ABI::argumentClassFor).
             orElseThrow(()->new IllegalStateException("Unexpected value layout: could not determine ABI class"));

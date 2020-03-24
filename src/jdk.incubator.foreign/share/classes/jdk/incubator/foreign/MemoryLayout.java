@@ -228,13 +228,6 @@ public interface MemoryLayout extends Constable {
     Optional<String> name();
 
     /**
-     * Return the ABI <em>type</em> (if any) associated with this layout.
-     *
-     * @return the layout ABI <em>type</em> (if any).
-     */
-    Optional<SystemABI.Type> abiType();
-
-    /**
      * Creates a new layout which features the desired layout <em>name</em>.
      *
      * @param name the layout name.
@@ -299,6 +292,17 @@ public interface MemoryLayout extends Constable {
      * @return the optional attribute
      */
     Optional<Constable> attribute(String name);
+
+    /**
+     * Returns the attribute with the given name and the given type if it exists, or an empty optional
+     *
+     * @param name the name of the attribute
+     * @param type the type to filter by
+     * @return the optional attribute
+     */
+    default <T extends Constable> Optional<T> attribute(String name, Class<T> type) {
+        return attribute(name).filter(type::isInstance).map(type::cast);
+    }
 
     /**
      * Returns a new MemoryLayout with the given addtional attribute

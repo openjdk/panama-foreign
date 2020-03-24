@@ -50,8 +50,6 @@ import static java.lang.constant.ConstantDescs.CD_long;
 abstract class AbstractLayout implements MemoryLayout {
     // memory layout attribute key for layout name
     static final String NAME = "name";
-    // memory layout attribute key for abi native type
-    static final String NATIVE_TYPE = "abi/native-type";
 
     private final OptionalLong size;
     final long alignment;
@@ -88,11 +86,6 @@ abstract class AbstractLayout implements MemoryLayout {
     @Override
     public final Optional<String> name() {
         return attribute(NAME).map(String.class::cast);
-    }
-
-    @Override
-    public final Optional<SystemABI.Type> abiType() {
-        return attribute(NATIVE_TYPE).map(SystemABI.Type.class::cast);
     }
 
     abstract AbstractLayout dup(long alignment, Map<String, Constable> annos);

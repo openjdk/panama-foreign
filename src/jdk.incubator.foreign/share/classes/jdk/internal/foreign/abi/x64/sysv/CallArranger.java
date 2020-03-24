@@ -32,6 +32,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
@@ -428,7 +429,7 @@ public class CallArranger {
 
     private static List<ArgumentClassImpl> classifyValueType(ValueLayout type) {
         ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
-        var optAbiType = type.abiType();
+        var optAbiType = type.attribute(SystemABI.NATIVE_TYPE, SystemABI.Type.class);
         //padding not allowed here
         ArgumentClassImpl clazz = optAbiType.map(SysVx64ABI::argumentClassFor).
             orElseThrow(()->new IllegalStateException("Unexpected value layout: could not determine ABI class"));
@@ -519,7 +520,7 @@ public class CallArranger {
     // TODO: handle zero length arrays
     // TODO: Handle nested structs (and primitives)
     private static List<ArgumentClassImpl> classifyStructType(GroupLayout type) {
-        var optAbiType = type.abiType();
+        var optAbiType = type.attribute(SystemABI.NATIVE_TYPE, SystemABI.Type.class);
         var clazz = optAbiType.map(SysVx64ABI::argumentClassFor).orElse(null);
         if (clazz == ArgumentClassImpl.COMPLEX_X87) {
             return COMPLEX_X87_CLASSES;
