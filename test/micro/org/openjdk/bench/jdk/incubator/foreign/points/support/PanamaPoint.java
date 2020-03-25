@@ -43,8 +43,8 @@ import static jdk.incubator.foreign.MemoryLayouts.*;
 public class PanamaPoint implements AutoCloseable {
 
     public static final MemoryLayout LAYOUT = MemoryLayout.ofStruct(
-        MemoryLayouts.JAVA_INT.withOrder(ByteOrder.nativeOrder()).withName("x"),
-        MemoryLayouts.JAVA_INT.withOrder(ByteOrder.nativeOrder()).withName("y")
+        MemoryLayouts.C_INT.withOrder(ByteOrder.nativeOrder()).withName("x"),
+        MemoryLayouts.C_INT.withOrder(ByteOrder.nativeOrder()).withName("y")
     );
 
     private static final VarHandle VH_x = LAYOUT.varHandle(int.class, groupElement("x"));
