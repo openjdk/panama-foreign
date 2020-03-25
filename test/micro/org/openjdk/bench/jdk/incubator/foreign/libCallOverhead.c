@@ -30,5 +30,5 @@
 EXPORT void func() {}
 
 EXPORT int identity(int x) {
-	return x;
+  return x;
 }

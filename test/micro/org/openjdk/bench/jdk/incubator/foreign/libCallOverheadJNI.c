@@ -25,7 +25,7 @@
 void func() {}
 
 int identity(int x) {
-	return x;
+  return x;
 }
 
 JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverhead_blank
