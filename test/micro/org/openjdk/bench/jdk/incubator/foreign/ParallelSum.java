@@ -27,6 +27,8 @@
 package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.SequenceLayout;
 import sun.misc.Unsafe;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -43,10 +45,16 @@ import org.openjdk.jmh.annotations.Warmup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Spliterator;
+import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
@@ -63,6 +71,8 @@ public class ParallelSum {
     final static int ALLOC_SIZE = CARRIER_SIZE * 1024 * 1024 * 256;
     final static int ELEM_SIZE = ALLOC_SIZE / CARRIER_SIZE;
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
+
+    final static SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(ELEM_SIZE, MemoryLayouts.JAVA_INT);
 
     static final Unsafe unsafe = Utils.unsafe;
 
@@ -113,44 +123,28 @@ public class ParallelSum {
 
     @Benchmark
     public int segment_parallel() {
-        return pool.invoke(new SumSegment(segment));
+        return pool.invoke(new SumSegment(segment.spliterator(SEQUENCE_LAYOUT)));
+    }
+
+    @Benchmark
+    public int segment_stream_parallel() {
+        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
+                .reduce(0, ParallelSum::doWork, Integer::sum);
+    }
+
+    static int doWork(int start, MemorySegment segment) {
+        int sum = start;
+        MemoryAddress base = segment.baseAddress();
+        int length = (int)segment.byteSize();
+        for (int i = 0 ; i < length / CARRIER_SIZE ; i++) {
+            sum += (int)VH_int.get(base, (long)i);
+        }
+        return sum;
     }
 
     @Benchmark
     public int unsafe_parallel() {
         return pool.invoke(new SumUnsafe(address, 0, ALLOC_SIZE));
-    }
-
-    static class SumSegment extends RecursiveTask<Integer> {
-
-        final static int SPLIT_THRESHOLD = 4 * 1024 * 8;
-
-        private final MemorySegment segment;
-
-        SumSegment(MemorySegment segment) {
-            this.segment = segment;
-        }
-
-        @Override
-        protected Integer compute() {
-            try (MemorySegment segment = this.segment.acquire()) {
-                int length = (int)segment.byteSize();
-                if (length > SPLIT_THRESHOLD) {
-                    SumSegment s1 = new SumSegment(segment.asSlice(0, length / 2));
-                    SumSegment s2 = new SumSegment(segment.asSlice(length / 2, length / 2));
-                    s1.fork();
-                    s2.fork();
-                    return s1.join() + s2.join();
-                } else {
-                    int sum = 0;
-                    MemoryAddress base = segment.baseAddress();
-                    for (int i = 0 ; i < length / CARRIER_SIZE ; i++) {
-                        sum += (int)VH_int.get(base, (long)i);
-                    }
-                    return sum;
-                }
-            }
-        }
     }
 
     static class SumUnsafe extends RecursiveTask<Integer> {
@@ -181,6 +175,40 @@ public class ParallelSum {
                 }
                 return res;
             }
+        }
+    }
+
+    static class SumSegment extends RecursiveTask<Integer> {
+
+        final static int SPLIT_THRESHOLD = 1024 * 8;
+
+        private final Spliterator<MemorySegment> splitter;
+        private int result;
+
+        SumSegment(Spliterator<MemorySegment> splitter) {
+            this.splitter = splitter;
+        }
+
+        @Override
+        protected Integer compute() {
+            if (splitter.estimateSize() > SPLIT_THRESHOLD) {
+                SumSegment sub = new SumSegment(splitter.trySplit());
+                sub.fork();
+                return compute() + sub.join();
+            } else {
+                splitter.tryAdvance(this::doWork);
+                return result;
+            }
+        }
+
+        void doWork(MemorySegment segment) {
+            int sum = 0;
+            MemoryAddress base = segment.baseAddress();
+            int length = (int)segment.byteSize();
+            for (int i = 0; i < length / CARRIER_SIZE; i++) {
+                sum += (int) VH_int.get(base, (long) i);
+            }
+            result = sum;
         }
     }
 }

@@ -27,13 +27,18 @@
  * @run testng TestSharedAccess
  */
 
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.*;
 
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.*;
 
@@ -43,15 +48,35 @@ public class TestSharedAccess {
 
     @Test
     public void testShared() throws Throwable {
-        try (MemorySegment s = MemorySegment.allocateNative(4)) {
-            setInt(s, 42);
-            assertEquals(getInt(s), 42);
+        SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
+        try (MemorySegment s = MemorySegment.allocateNative(layout)) {
+            for (int i = 0 ; i < layout.elementCount().getAsLong() ; i++) {
+                setInt(s.baseAddress().addOffset(i * 4), 42);
+            }
             List<Thread> threads = new ArrayList<>();
-            for (int i = 0 ; i < 1000 ; i++) {
-                threads.add(new Thread(() -> {
-                    try (MemorySegment local = s.acquire()) {
-                        assertEquals(getInt(local), 42);
+            List<Spliterator<MemorySegment>> spliterators = new ArrayList<>();
+            spliterators.add(s.spliterator(layout));
+            while (true) {
+                boolean progress = false;
+                List<Spliterator<MemorySegment>> newSpliterators = new ArrayList<>();
+                for (Spliterator<MemorySegment> spliterator : spliterators) {
+                    Spliterator<MemorySegment> sub = spliterator.trySplit();
+                    if (sub != null) {
+                        progress = true;
+                        newSpliterators.add(sub);
                     }
+                }
+                spliterators.addAll(newSpliterators);
+                if (!progress) break;
+            }
+
+            AtomicInteger accessCount = new AtomicInteger();
+            for (Spliterator<MemorySegment> spliterator : spliterators) {
+                threads.add(new Thread(() -> {
+                    spliterator.tryAdvance(local -> {
+                        assertEquals(getInt(local.baseAddress()), 42);
+                        accessCount.incrementAndGet();
+                    });
                 }));
             }
             threads.forEach(Thread::start);
@@ -62,21 +87,31 @@ public class TestSharedAccess {
                     throw new IllegalStateException(e);
                 }
             });
+            assertEquals(accessCount.get(), 1024);
         }
     }
 
     @Test(expectedExceptions=IllegalStateException.class)
-    public void testBadCloseWithPendingAcquire() {
-        try (MemorySegment segment = MemorySegment.allocateNative(8)) {
-            segment.acquire();
+    public void testBadCloseWithPendingAcquire() throws InterruptedException {
+        try (MemorySegment segment = MemorySegment.allocateNative(16)) {
+            Spliterator<MemorySegment> spliterator = segment.spliterator(MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
+            Runnable r = () -> spliterator.forEachRemaining(s -> {
+                try {
+                    Thread.sleep(5000 * 100);
+                } catch (InterruptedException ex) {
+                    throw new AssertionError(ex);
+                }
+            });
+            new Thread(r).start();
+            Thread.sleep(5000);
         } //should fail here!
     }
 
-    static int getInt(MemorySegment handle) {
-        return (int)intHandle.getVolatile(handle.baseAddress());
+    static int getInt(MemoryAddress address) {
+        return (int)intHandle.getVolatile(address);
     }
 
-    static void setInt(MemorySegment handle, int value) {
-        intHandle.setVolatile(handle.baseAddress(), value);
+    static void setInt(MemoryAddress address, int value) {
+        intHandle.setVolatile(address, value);
     }
 }

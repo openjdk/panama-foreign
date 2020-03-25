@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SequenceLayout;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
@@ -39,6 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 
 /**
  * This class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
@@ -90,11 +93,12 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public MemorySegment acquire() {
-        if (!isSet(ACQUIRE)) {
-            throw unsupportedAccessMode(ACQUIRE);
+    public Spliterator<MemorySegment> spliterator(SequenceLayout sequenceLayout) {
+        checkValidState();
+        if (sequenceLayout.byteSize() != byteSize()) {
+            throw new IllegalArgumentException();
         }
-        return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
+        return new SegmentSplitter(sequenceLayout.elementLayout().byteSize(), sequenceLayout.elementCount().getAsLong(), this);
     }
 
     @Override
@@ -208,6 +212,18 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     // Helper methods
 
+    private MemorySegmentImpl acquire() {
+        if (!isSet(ACQUIRE)) {
+            throw unsupportedAccessMode(ACQUIRE);
+        }
+        return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
+    }
+
+    void release() {
+        checkValidState();
+        scope.release();
+    }
+
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
         if (writeAccess && !isSet(WRITE)) {
@@ -285,4 +301,53 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return Math.abs(Objects.hash(base, min, NONCE));
     }
 
+    static class SegmentSplitter implements Spliterator<MemorySegment> {
+        MemorySegmentImpl segment;
+        long elemCount;
+        final long elementSize;
+
+        SegmentSplitter(long elementSize, long elemCount, MemorySegmentImpl segment) {
+            this.segment = segment;
+            this.elementSize = elementSize;
+            this.elemCount = elemCount;
+        }
+
+        @Override
+        public SegmentSplitter trySplit() {
+            if (segment != null && elemCount > 1) {
+                MemorySegmentImpl old = segment;
+                long rem = elemCount % 2;
+                elemCount  = elemCount / 2;
+                long lobound = elemCount * elementSize;
+                long hibound = lobound + (rem * elementSize);
+                segment = old.asSlice(0, lobound);
+                return new SegmentSplitter(elementSize, elemCount + rem, old.asSlice(lobound, hibound));
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super MemorySegment> action) {
+            if (segment != null) {
+                MemorySegmentImpl acquired = segment.acquire();
+                action.accept(acquired.withAccessModes(segment.accessModes() & ~CLOSE));
+                acquired.release();
+                segment = null;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public long estimateSize() {
+            return elemCount;
+        }
+
+        @Override
+        public int characteristics() {
+            return NONNULL | SUBSIZED | SIZED | IMMUTABLE;
+        }
+    }
 }

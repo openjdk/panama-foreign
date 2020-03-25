@@ -91,10 +91,10 @@ public final class MemoryScope {
                 throw new IllegalStateException("Segment acquire limit exceeded");
             }
         } while (!COUNT_HANDLE.compareAndSet(this, value, value + 1));
-        return new MemoryScope(ref, this::release);
+        return this;
     }
 
-    private void release() {
+    void release() {
         int value;
         do {
             value = (int)COUNT_HANDLE.getVolatile(this);
