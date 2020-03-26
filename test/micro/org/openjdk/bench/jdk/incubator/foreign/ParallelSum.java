@@ -79,9 +79,6 @@ public class ParallelSum {
     MemorySegment segment;
     long address;
 
-    ForkJoinPool pool = (ForkJoinPool) Executors.newWorkStealingPool();
-
-
     @Setup
     public void setup() {
         address = unsafe.allocateMemory(ALLOC_SIZE);
@@ -98,8 +95,6 @@ public class ParallelSum {
     public void tearDown() throws Throwable {
         unsafe.freeMemory(address);
         segment.close();
-        pool.shutdown();
-        pool.awaitTermination(60, TimeUnit.SECONDS);
     }
 
     @Benchmark
@@ -123,7 +118,7 @@ public class ParallelSum {
 
     @Benchmark
     public int segment_parallel() {
-        return pool.invoke(new SumSegment(segment.spliterator(SEQUENCE_LAYOUT)));
+        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT)).invoke();
     }
 
     @Benchmark
@@ -138,7 +133,7 @@ public class ParallelSum {
 
     @Benchmark
     public int unsafe_parallel() {
-        return pool.invoke(new SumUnsafe(address, 0, ALLOC_SIZE));
+        return new SumUnsafe(address, 0, ALLOC_SIZE).invoke();
     }
 
     static class SumUnsafe extends RecursiveTask<Integer> {
