@@ -184,7 +184,6 @@ public class CallArranger {
             return TypeClass.POINTER;
         } else if (clazz == ArgumentClassImpl.SSE) {
             if (type.attribute(VARARGS_ATTRIBUTE_NAME)
-                    .filter(String.class::isInstance)
                     .map(String.class::cast)
                     .map(Boolean::parseBoolean).orElse(false)) {
                 return TypeClass.VARARG_FLOAT;

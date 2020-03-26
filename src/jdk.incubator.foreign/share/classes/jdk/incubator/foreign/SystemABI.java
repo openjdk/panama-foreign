@@ -191,7 +191,6 @@ public interface SystemABI {
          */
         public static Type fromLayout(MemoryLayout ml) throws IllegalArgumentException {
             return ml.attribute(NATIVE_TYPE)
-                     .filter(SystemABI.Type.class::isInstance)
                      .map(SystemABI.Type.class::cast)
                      .orElseThrow(() -> new IllegalArgumentException("No ABI attribute present"));
         }
