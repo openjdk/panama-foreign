@@ -51,7 +51,7 @@ public class Windowsx64ABI implements SystemABI {
     public static final int MAX_REGISTER_ARGUMENTS = 4;
     public static final int MAX_REGISTER_RETURNS = 1;
 
-    public static final String VARARGS_ANNOTATION_NAME = "abi/windows/varargs";
+    public static final String VARARGS_ATTRIBUTE_NAME = "abi/windows/varargs";
 
     private static Windowsx64ABI instance;
 

@@ -118,31 +118,6 @@ public final class Utils {
         return layout.getClass() == PADDING_CLASS;
     }
 
-    @SuppressWarnings("unchecked")
-    public static Map<String, Constable> getAnnotations(MemoryLayout layout) {
-        try {
-            Field f = ValueLayout.class.getSuperclass().getDeclaredField("annotations");
-            f.setAccessible(true);
-            return (Map<String, Constable>) f.get(layout);
-        } catch (ReflectiveOperationException ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
-
-    public static Constable getAnnotation(MemoryLayout layout, String name) {
-        return getAnnotations(layout).get(name);
-    }
-
-    public static MemoryLayout withAnnotation(MemoryLayout layout, String name, Constable value) {
-        try {
-            Method m = ValueLayout.class.getSuperclass().getDeclaredMethod("withAnnotation", String.class, Constable.class);
-            m.setAccessible(true);
-            return (MemoryLayout)m.invoke(layout, name, value);
-        } catch (ReflectiveOperationException ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
-
     public static MemoryAddress resizeNativeAddress(MemoryAddress base, long byteSize) {
         return new MemoryAddressImpl((MemorySegmentImpl)Utils.makeNativeSegmentUnchecked(base, byteSize), 0);
     }
