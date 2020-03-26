@@ -117,7 +117,6 @@ PLATFORM_MODULES += \
     jdk.security.jgss \
     jdk.xml.dom \
     jdk.zipfs \
-    jdk.incubator.jextract \
     #
 
 ifeq ($(call isTargetOs, windows), true)
@@ -192,6 +191,7 @@ LANGTOOLS_MODULES := \
     jdk.javadoc \
     jdk.jdeps \
     jdk.jshell \
+    jdk.incubator.jextract \
     #
 
 HOTSPOT_MODULES := \
