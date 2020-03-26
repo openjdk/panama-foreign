@@ -20,44 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.bench.jdk.incubator.foreign.points.support;
+#include <jni.h>
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+void func() {}
 
-public class BBPoint {
+int identity(int x) {
+  return x;
+}
 
-    static {
-        System.loadLibrary("JNIPoint");
-    }
+JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverhead_blank
+  (JNIEnv *env, jclass cls) {
+    func();
+}
 
-    private final ByteBuffer buff;
-
-    public BBPoint(int x, int y) {
-        this.buff = ByteBuffer.allocateDirect(4 * 2).order(ByteOrder.nativeOrder());
-        setX(x);
-        setY(y);
-    }
-
-    public void setX(int x) {
-        buff.putInt(0, x);
-    }
-
-    public int getX() {
-        return buff.getInt(0);
-    }
-
-    public int getY() {
-        return buff.getInt(1);
-    }
-
-    public void setY(int y) {
-        buff.putInt(0, y);
-    }
-
-    public double distanceTo(BBPoint other) {
-        return distance(buff, other.buff);
-    }
-
-    private static native double distance(ByteBuffer p1, ByteBuffer p2);
+JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverhead_identity
+  (JNIEnv *env, jclass cls, jint x) {
+    return identity(x);
 }
