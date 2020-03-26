@@ -41,6 +41,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
@@ -227,13 +228,6 @@ public interface MemoryLayout extends Constable {
     Optional<String> name();
 
     /**
-     * Return the ABI <em>type</em> (if any) associated with this layout.
-     *
-     * @return the layout ABI <em>type</em> (if any).
-     */
-    Optional<SystemABI.Type> abiType();
-
-    /**
      * Creates a new layout which features the desired layout <em>name</em>.
      *
      * @param name the layout name.
@@ -290,6 +284,30 @@ public interface MemoryLayout extends Constable {
      * @throws IllegalArgumentException if {@code bitAlignment} is not a power of two, or if it's less than than 8.
      */
     MemoryLayout withBitAlignment(long bitAlignment);
+
+    /**
+     * Returns the attribute with the given name if it exists, or an empty optional
+     *
+     * @param name the name of the attribute
+     * @return the optional attribute
+     */
+    Optional<Constable> attribute(String name);
+
+    /**
+     * Returns a new MemoryLayout with the given additional attribute
+     *
+     * @param name the name of the attribute
+     * @param value the value of the attribute
+     * @return the new MemoryLayout
+     */
+    MemoryLayout withAttribute(String name, Constable value);
+
+    /**
+     * Returns a stream of the names of the attributes of this layout
+     *
+     * @return the stream of names
+     */
+    Stream<String> attributes();
 
     /**
      * Computes the offset, in bits, of the layout selected by a given layout path, where the path is considered rooted in this
