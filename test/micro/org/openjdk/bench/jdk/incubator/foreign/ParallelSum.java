@@ -169,7 +169,7 @@ public class ParallelSum {
 
     static class SumSegment extends CountedCompleter<Integer> {
 
-        final static int SPLIT_THRESHOLD = 9586980;//1024 * 8;
+        final static int SPLIT_THRESHOLD = 1024 * 8;
 
         int localSum = 0;
         List<SumSegment> children = new LinkedList<>();
