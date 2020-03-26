@@ -34,7 +34,6 @@ import jdk.incubator.foreign.SystemABI;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
@@ -43,8 +42,8 @@ import static jdk.incubator.foreign.MemoryLayouts.*;
 public class PanamaPoint implements AutoCloseable {
 
     public static final MemoryLayout LAYOUT = MemoryLayout.ofStruct(
-        MemoryLayouts.C_INT.withOrder(ByteOrder.nativeOrder()).withName("x"),
-        MemoryLayouts.C_INT.withOrder(ByteOrder.nativeOrder()).withName("y")
+        MemoryLayouts.C_INT.withName("x"),
+        MemoryLayouts.C_INT.withName("y")
     );
 
     private static final VarHandle VH_x = LAYOUT.varHandle(int.class, groupElement("x"));
