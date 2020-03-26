@@ -32,7 +32,6 @@ import jdk.incubator.foreign.SequenceLayout;
 import sun.misc.Unsafe;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.CompilerControl;
 import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
@@ -49,11 +48,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.concurrent.CountedCompleter;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.function.ToIntFunction;
 import java.util.stream.StreamSupport;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
@@ -73,6 +70,8 @@ public class ParallelSum {
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
 
     final static SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(ELEM_SIZE, MemoryLayouts.JAVA_INT);
+    final static int BULK_FACTOR = 512;
+    final static SequenceLayout SEQUENCE_LAYOUT_BULK = MemoryLayout.ofSequence(ELEM_SIZE / BULK_FACTOR, MemoryLayout.ofSequence(BULK_FACTOR, MemoryLayouts.JAVA_INT));
 
     static final Unsafe unsafe = Utils.unsafe;
 
@@ -118,17 +117,37 @@ public class ParallelSum {
 
     @Benchmark
     public int segment_parallel() {
-        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT)).invoke();
+        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT), ParallelSum::segmentToInt).invoke();
+    }
+
+    @Benchmark
+    public int segment_parallel_bulk() {
+        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT_BULK), ParallelSum::segmentToIntBulk).invoke();
     }
 
     @Benchmark
     public int segment_stream_parallel() {
         return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
-                .reduce(0, ParallelSum::doWork, Integer::sum);
+                .mapToInt(ParallelSum::segmentToInt).sum();
     }
 
-    static int doWork(int start, MemorySegment segment) {
-        return start + (int) VH_int.get(segment.baseAddress(), 0L);
+    @Benchmark
+    public int segment_stream_parallel_bulk() {
+        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT_BULK), true)
+                .mapToInt(ParallelSum::segmentToIntBulk).sum();
+    }
+
+    static int segmentToInt(MemorySegment slice) {
+        return (int) VH_int.get(slice.baseAddress(), 0L);
+    }
+
+    static int segmentToIntBulk(MemorySegment slice) {
+        int res = 0;
+        MemoryAddress base = slice.baseAddress();
+        for (int i = 0; i < BULK_FACTOR ; i++) {
+            res += (int)VH_int.get(base, (long) i);
+        }
+        return res;
     }
 
     @Benchmark
@@ -167,47 +186,31 @@ public class ParallelSum {
         }
     }
 
-    static class SumSegment extends CountedCompleter<Integer> {
+    static class SumSegment extends RecursiveTask<Integer> {
 
         final static int SPLIT_THRESHOLD = 1024 * 8;
 
-        int localSum = 0;
-        List<SumSegment> children = new LinkedList<>();
+        private final Spliterator<MemorySegment> splitter;
+        private final ToIntFunction<MemorySegment> mapper;
+        int result;
 
-        private Spliterator<MemorySegment> segmentSplitter;
-
-        SumSegment(Spliterator<MemorySegment> segmentSplitter) {
-            this(null, segmentSplitter);
-        }
-
-        SumSegment(SumSegment parent, Spliterator<MemorySegment> segmentSplitter) {
-            super(parent);
-            this.segmentSplitter = segmentSplitter;
+        SumSegment(Spliterator<MemorySegment> splitter, ToIntFunction<MemorySegment> mapper) {
+            this.splitter = splitter;
+            this.mapper = mapper;
         }
 
         @Override
-        public void compute() {
-            Spliterator<MemorySegment> sub;
-            while (segmentSplitter.estimateSize() > SPLIT_THRESHOLD &&
-                    (sub = segmentSplitter.trySplit()) != null) {
-                addToPendingCount(1);
-                SumSegment child = new SumSegment(this, sub);
-                children.add(child);
-                child.fork();
+        protected Integer compute() {
+            if (splitter.estimateSize() > SPLIT_THRESHOLD) {
+                SumSegment sub = new SumSegment(splitter.trySplit(), mapper);
+                sub.fork();
+                return compute() + sub.join();
+            } else {
+                splitter.forEachRemaining(s -> {
+                    result += mapper.applyAsInt(s);
+                });
+                return result;
             }
-            segmentSplitter.forEachRemaining(s -> {
-                localSum += (int) VH_int.get(s.baseAddress(), 0L);
-            });
-            tryComplete();
-        }
-
-        @Override
-        public Integer getRawResult() {
-            int sum = localSum;
-            for (SumSegment c : children) {
-                sum += c.getRawResult();
-            }
-            return sum;
         }
     }
 }

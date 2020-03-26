@@ -117,8 +117,8 @@ public class TestSpliterator {
                 children.add(child);
                 child.fork();
             }
-            segmentSplitter.forEachRemaining(s -> {
-                localSum += sumSingle(0, s);
+            segmentSplitter.forEachRemaining(slice -> {
+                localSum += sumSingle(0, slice);
             });
             tryComplete();
         }
@@ -151,8 +151,8 @@ public class TestSpliterator {
                 sub.fork();
                 return compute() + sub.join();
             } else {
-                splitter.forEachRemaining(a -> {
-                    result += sumSingle(0, a);
+                splitter.forEachRemaining(slice -> {
+                    result += sumSingle(0, slice);
                 });
                 return result;
             }

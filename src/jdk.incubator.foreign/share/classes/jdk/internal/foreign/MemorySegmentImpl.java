@@ -31,6 +31,7 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -75,6 +76,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         this(min, base, length, DEFAULT_MASK, owner, scope);
     }
 
+    @ForceInline
     private MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
         this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
@@ -92,6 +94,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return asSliceNoCheck(offset, newSize);
     }
 
+    @ForceInline
     private MemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
         return new MemorySegmentImpl(min + offset, base, newSize, mask, owner, scope);
     }
@@ -133,6 +136,10 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
             throw unsupportedAccessMode(CLOSE);
         }
         checkValidState();
+        closeNoCheck();
+    }
+
+    private void closeNoCheck() {
         scope.close();
     }
 
@@ -224,11 +231,6 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
     }
 
-    void release() {
-        checkValidState();
-        scope.release();
-    }
-
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
         if (writeAccess && !isSet(WRITE)) {
@@ -310,7 +312,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         MemorySegmentImpl segment;
         long elemCount;
         final long elementSize;
-        long offset = 0L;
+        long currentIndex;
 
         SegmentSplitter(long elementSize, long elemCount, MemorySegmentImpl segment) {
             this.segment = segment;
@@ -337,10 +339,13 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         public boolean tryAdvance(Consumer<? super MemorySegment> action) {
             if (segment != null) {
                 MemorySegmentImpl acquired = segment.acquire();
-                action.accept(acquired.asSliceNoCheck(offset, elementSize));
-                acquired.release();
-                offset += elementSize;
-                if (offset == segment.byteSize()) {
+                try {
+                    action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
+                } finally {
+                    acquired.closeNoCheck();
+                }
+                currentIndex++;
+                if (currentIndex == elemCount) {
                     segment = null;
                 }
                 return true;
@@ -353,21 +358,22 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         public void forEachRemaining(Consumer<? super MemorySegment> action) {
             MemorySegmentImpl acquired = segment.acquire();
             try {
-                if (segment.isSmall()) {
-                    int size = (int)segment.byteSize();
+                if (acquired.isSmall()) {
+                    int index = (int)currentIndex;
+                    int limit = (int)elemCount;
                     int elemSize = (int)elementSize;
-                    for (int i = (int)offset ; i < size ; i += elemSize) {
-                        action.accept(acquired.asSliceNoCheck(i, elemSize));
+                    for ( ; index < limit ; index++) {
+                        action.accept(acquired.asSliceNoCheck(index * elemSize, elemSize));
                     }
+                    currentIndex = index;
                 } else {
-                    long size = segment.byteSize();
-                    long elemSize = elementSize;
-                    for (long i = offset; i < size; i += elemSize) {
-                        action.accept(acquired.asSliceNoCheck(i, elemSize));
+                    while (currentIndex < elemCount) {
+                        action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
+                        currentIndex++;
                     }
                 }
             } finally {
-                acquired.release();
+                acquired.closeNoCheck();
                 segment = null;
             }
         }
