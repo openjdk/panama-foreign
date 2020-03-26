@@ -87,8 +87,12 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     // MemorySegment methods
 
     @Override
-    public final MemorySegmentImpl asSlice(long offset, long newSize) {
+    public final MemorySegment asSlice(long offset, long newSize) {
         checkBounds(offset, newSize);
+        return asSliceNoCheck(offset, newSize);
+    }
+
+    private MemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
         return new MemorySegmentImpl(min + offset, base, newSize, mask, owner, scope);
     }
 
@@ -98,7 +102,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         if (sequenceLayout.byteSize() != byteSize()) {
             throw new IllegalArgumentException();
         }
-        return new SegmentSplitter(sequenceLayout.elementLayout().byteSize(), sequenceLayout.elementCount().getAsLong(), this);
+        return new SegmentSplitter(sequenceLayout.elementLayout().byteSize(), sequenceLayout.elementCount().getAsLong(),
+                this.withAccessModes(accessModes() & ~CLOSE));
     }
 
     @Override
@@ -155,7 +160,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public MemorySegment withAccessModes(int accessModes) {
+    public MemorySegmentImpl withAccessModes(int accessModes) {
         checkAccessModes(accessModes);
         if ((~accessModes() & accessModes) != 0) {
             throw new UnsupportedOperationException("Cannot acquire more access modes");
@@ -305,6 +310,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         MemorySegmentImpl segment;
         long elemCount;
         final long elementSize;
+        long offset = 0L;
 
         SegmentSplitter(long elementSize, long elemCount, MemorySegmentImpl segment) {
             this.segment = segment;
@@ -320,8 +326,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
                 elemCount  = elemCount / 2;
                 long lobound = elemCount * elementSize;
                 long hibound = lobound + (rem * elementSize);
-                segment = old.asSlice(0, lobound);
-                return new SegmentSplitter(elementSize, elemCount + rem, old.asSlice(lobound, hibound));
+                segment = old.asSliceNoCheck(0, lobound);
+                return new SegmentSplitter(elementSize, elemCount + rem, old.asSliceNoCheck(lobound, hibound));
             } else {
                 return null;
             }
@@ -331,12 +337,38 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         public boolean tryAdvance(Consumer<? super MemorySegment> action) {
             if (segment != null) {
                 MemorySegmentImpl acquired = segment.acquire();
-                action.accept(acquired.withAccessModes(segment.accessModes() & ~CLOSE));
+                action.accept(acquired.asSliceNoCheck(offset, elementSize));
                 acquired.release();
-                segment = null;
+                offset += elementSize;
+                if (offset == segment.byteSize()) {
+                    segment = null;
+                }
                 return true;
             } else {
                 return false;
+            }
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super MemorySegment> action) {
+            MemorySegmentImpl acquired = segment.acquire();
+            try {
+                if (segment.isSmall()) {
+                    int size = (int)segment.byteSize();
+                    int elemSize = (int)elementSize;
+                    for (int i = (int)offset ; i < size ; i += elemSize) {
+                        action.accept(acquired.asSliceNoCheck(i, elemSize));
+                    }
+                } else {
+                    long size = segment.byteSize();
+                    long elemSize = elementSize;
+                    for (long i = offset; i < size; i += elemSize) {
+                        action.accept(acquired.asSliceNoCheck(i, elemSize));
+                    }
+                }
+            } finally {
+                acquired.release();
+                segment = null;
             }
         }
 

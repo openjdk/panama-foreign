@@ -133,13 +133,7 @@ public class ParallelSum {
     }
 
     static int doWork(int start, MemorySegment segment) {
-        int sum = start;
-        MemoryAddress base = segment.baseAddress();
-        int length = (int)segment.byteSize();
-        for (int i = 0 ; i < length / CARRIER_SIZE ; i++) {
-            sum += (int)VH_int.get(base, (long)i);
-        }
-        return sum;
+        return start + (int) VH_int.get(segment.baseAddress(), 0L);
     }
 
     @Benchmark
@@ -178,37 +172,47 @@ public class ParallelSum {
         }
     }
 
-    static class SumSegment extends RecursiveTask<Integer> {
+    static class SumSegment extends CountedCompleter<Integer> {
 
-        final static int SPLIT_THRESHOLD = 1024 * 8;
+        final static int SPLIT_THRESHOLD = 9586980;//1024 * 8;
 
-        private final Spliterator<MemorySegment> splitter;
-        private int result;
+        int localSum = 0;
+        List<SumSegment> children = new LinkedList<>();
 
-        SumSegment(Spliterator<MemorySegment> splitter) {
-            this.splitter = splitter;
+        private Spliterator<MemorySegment> segmentSplitter;
+
+        SumSegment(Spliterator<MemorySegment> segmentSplitter) {
+            this(null, segmentSplitter);
+        }
+
+        SumSegment(SumSegment parent, Spliterator<MemorySegment> segmentSplitter) {
+            super(parent);
+            this.segmentSplitter = segmentSplitter;
         }
 
         @Override
-        protected Integer compute() {
-            if (splitter.estimateSize() > SPLIT_THRESHOLD) {
-                SumSegment sub = new SumSegment(splitter.trySplit());
-                sub.fork();
-                return compute() + sub.join();
-            } else {
-                splitter.tryAdvance(this::doWork);
-                return result;
+        public void compute() {
+            Spliterator<MemorySegment> sub;
+            while (segmentSplitter.estimateSize() > SPLIT_THRESHOLD &&
+                    (sub = segmentSplitter.trySplit()) != null) {
+                addToPendingCount(1);
+                SumSegment child = new SumSegment(this, sub);
+                children.add(child);
+                child.fork();
             }
+            segmentSplitter.forEachRemaining(s -> {
+                localSum += (int) VH_int.get(s.baseAddress(), 0L);
+            });
+            tryComplete();
         }
 
-        void doWork(MemorySegment segment) {
-            int sum = 0;
-            MemoryAddress base = segment.baseAddress();
-            int length = (int)segment.byteSize();
-            for (int i = 0; i < length / CARRIER_SIZE; i++) {
-                sum += (int) VH_int.get(base, (long) i);
+        @Override
+        public Integer getRawResult() {
+            int sum = localSum;
+            for (SumSegment c : children) {
+                sum += c.getRawResult();
             }
-            result = sum;
+            return sum;
         }
     }
 }
