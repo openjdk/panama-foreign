@@ -23,8 +23,11 @@
 
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.SystemABI.Type;
 import org.testng.annotations.Test;
+
+import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
 import static org.testng.Assert.assertEquals;
 import static test.jextract.struct.struct_h.*;
 
@@ -45,7 +48,9 @@ public class LibStructTest {
     }
 
     private static void checkFieldABIType(GroupLayout group, String fieldName, Type expected) {
-        assertEquals(group.select(PathElement.groupElement(fieldName)).abiType().orElseThrow(), expected);
+        assertEquals(group.select(PathElement.groupElement(fieldName)).attribute(NATIVE_TYPE)
+                                                                      .map(SystemABI.Type.class::cast)
+                                                                      .orElseThrow(), expected);
     }
 
     @Test
