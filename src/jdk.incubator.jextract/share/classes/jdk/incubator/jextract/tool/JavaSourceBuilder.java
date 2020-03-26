@@ -45,6 +45,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.lang.model.SourceVersion;
 
+import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
+
 /**
  * A helper class to generate header interface class in source form.
  * After aggregating various constituents of a .java source, build
@@ -132,7 +134,9 @@ class JavaSourceBuilder {
 
     private void addLayout(MemoryLayout l) {
         if (l instanceof ValueLayout) {
-            SystemABI.Type type = l.abiType().orElseThrow(()->new AssertionError("Should not get here: " + l));
+            SystemABI.Type type = l.attribute(NATIVE_TYPE)
+                                   .map(SystemABI.Type.class::cast)
+                                   .orElseThrow(()->new AssertionError("Should not get here: " + l));
             sb.append(switch (type) {
                 case BOOL -> "C_BOOL";
                 case SIGNED_CHAR -> "C_SCHAR";
@@ -160,7 +164,9 @@ class JavaSourceBuilder {
             addLayout(((SequenceLayout) l).elementLayout());
             sb.append(")");
         } else if (l instanceof GroupLayout) {
-            SystemABI.Type type = l.abiType().orElse(null);
+            SystemABI.Type type = l.attribute(NATIVE_TYPE)
+                                   .map(SystemABI.Type.class::cast)
+                                   .orElse(null);
             if (type == SystemABI.Type.COMPLEX_LONG_DOUBLE) {
                 if (!ABI.equals(SystemABI.ABI_SYSV)) {
                     throw new RuntimeException("complex long double is supported only for SysV ABI");

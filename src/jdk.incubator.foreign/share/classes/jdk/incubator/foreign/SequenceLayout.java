@@ -71,10 +71,10 @@ public final class SequenceLayout extends AbstractLayout {
         this(elemCount, elementLayout, elementLayout.bitAlignment(), Map.of());
     }
 
-    SequenceLayout(OptionalLong elemCount, MemoryLayout elementLayout, long alignment, Map<String, Constable> annotations) {
+    SequenceLayout(OptionalLong elemCount, MemoryLayout elementLayout, long alignment, Map<String, Constable> attributes) {
         super(elemCount.isPresent() && AbstractLayout.optSize(elementLayout).isPresent() ?
                 OptionalLong.of(elemCount.getAsLong() * elementLayout.bitSize()) :
-                OptionalLong.empty(), alignment, annotations);
+                OptionalLong.empty(), alignment, attributes);
         this.elemCount = elemCount;
         this.elementLayout = elementLayout;
     }
@@ -106,7 +106,7 @@ public final class SequenceLayout extends AbstractLayout {
      */
     public SequenceLayout withElementCount(long elementCount) {
         AbstractLayout.checkSize(elementCount, true);
-        return new SequenceLayout(OptionalLong.of(elementCount), elementLayout, alignment, annotations);
+        return new SequenceLayout(OptionalLong.of(elementCount), elementLayout, alignment, attributes);
     }
 
     @Override
@@ -136,8 +136,8 @@ public final class SequenceLayout extends AbstractLayout {
     }
 
     @Override
-    SequenceLayout dup(long alignment, Map<String, Constable> annotations) {
-        return new SequenceLayout(elementCount(), elementLayout, alignment, annotations);
+    SequenceLayout dup(long alignment, Map<String, Constable> attributes) {
+        return new SequenceLayout(elementCount(), elementLayout, alignment, attributes);
     }
 
     @Override
@@ -147,11 +147,11 @@ public final class SequenceLayout extends AbstractLayout {
 
     @Override
     public Optional<DynamicConstantDesc<SequenceLayout>> describeConstable() {
-        return elemCount.isPresent() ?
-                Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
-                        CD_SEQUENCE_LAYOUT, MH_SIZED_SEQUENCE, elemCount.getAsLong(), elementLayout.describeConstable().get())) :
-                Optional.of(DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
-                        CD_SEQUENCE_LAYOUT, MH_UNSIZED_SEQUENCE, elementLayout.describeConstable().get()));
+        return Optional.of(decorateLayoutConstant(elemCount.isPresent() ?
+                DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
+                        CD_SEQUENCE_LAYOUT, MH_SIZED_SEQUENCE, elemCount.getAsLong(), elementLayout.describeConstable().get()) :
+                DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
+                        CD_SEQUENCE_LAYOUT, MH_UNSIZED_SEQUENCE, elementLayout.describeConstable().get())));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
@@ -171,5 +171,13 @@ public final class SequenceLayout extends AbstractLayout {
     @Override
     public SequenceLayout withBitAlignment(long alignmentBits) {
         return (SequenceLayout)super.withBitAlignment(alignmentBits);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SequenceLayout withAttribute(String name, Constable value) {
+        return (SequenceLayout)super.withAttribute(name, value);
     }
 }

@@ -31,6 +31,7 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -105,8 +106,8 @@ public final class GroupLayout extends AbstractLayout {
         this(kind, elements, kind.alignof(elements), Map.of());
     }
 
-    GroupLayout(Kind kind, List<MemoryLayout> elements, long alignment, Map<String, Constable> annotations) {
-        super(kind.sizeof(elements), alignment, annotations);
+    GroupLayout(Kind kind, List<MemoryLayout> elements, long alignment, Map<String, Constable> attributes) {
+        super(kind.sizeof(elements), alignment, attributes);
         this.kind = kind;
         this.elements = elements;
     }
@@ -170,8 +171,8 @@ public final class GroupLayout extends AbstractLayout {
     }
 
     @Override
-    GroupLayout dup(long alignment, Map<String, Constable> annotations) {
-        return new GroupLayout(kind, elements, alignment, annotations);
+    GroupLayout dup(long alignment, Map<String, Constable> attributes) {
+        return new GroupLayout(kind, elements, alignment, attributes);
     }
 
     @Override
@@ -186,9 +187,9 @@ public final class GroupLayout extends AbstractLayout {
         for (int i = 0 ; i < elements.size() ; i++) {
             constants[i + 1] = elements.get(i).describeConstable().get();
         }
-        return Optional.of(DynamicConstantDesc.ofNamed(
+        return Optional.of(decorateLayoutConstant(DynamicConstantDesc.ofNamed(
                     ConstantDescs.BSM_INVOKE, kind.name().toLowerCase(),
-                CD_GROUP_LAYOUT, constants));
+                CD_GROUP_LAYOUT, constants)));
     }
 
     //hack: the declarations below are to make javadoc happy; we could have used generics in AbstractLayout
@@ -208,5 +209,13 @@ public final class GroupLayout extends AbstractLayout {
     @Override
     public GroupLayout withBitAlignment(long alignmentBits) {
         return (GroupLayout)super.withBitAlignment(alignmentBits);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public GroupLayout withAttribute(String name, Constable value) {
+        return (GroupLayout)super.withAttribute(name, value);
     }
 }

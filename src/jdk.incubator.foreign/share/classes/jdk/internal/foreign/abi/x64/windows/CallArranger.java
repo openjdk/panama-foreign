@@ -29,6 +29,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
@@ -42,6 +43,7 @@ import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.abi.x64.X86_64Architecture;
 import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
 import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -49,7 +51,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
-import static jdk.internal.foreign.abi.x64.windows.Windowsx64ABI.VARARGS_ANNOTATION_NAME;
+import static jdk.internal.foreign.abi.x64.windows.Windowsx64ABI.VARARGS_ATTRIBUTE_NAME;
 
 /**
  * For the Windowx x64 C ABI specifically, this class uses the ProgrammableInvoker API, namely CallingSequenceBuilder2
@@ -161,10 +163,7 @@ public class CallArranger {
     }
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        var optAbiType = type.abiType();
-        //padding not allowed here
-        ArgumentClassImpl clazz = optAbiType.map(Windowsx64ABI::argumentClassFor).
-            orElseThrow(()->new IllegalStateException("Unexpected value layout: could not determine ABI class"));
+        ArgumentClassImpl clazz = Windowsx64ABI.argumentClassFor(SystemABI.Type.fromLayout(type));
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
@@ -184,7 +183,9 @@ public class CallArranger {
         } else if(clazz == ArgumentClassImpl.POINTER) {
             return TypeClass.POINTER;
         } else if (clazz == ArgumentClassImpl.SSE) {
-            if (Boolean.parseBoolean((String) Utils.getAnnotation(type, VARARGS_ANNOTATION_NAME))) {
+            if (type.attribute(VARARGS_ATTRIBUTE_NAME)
+                    .map(String.class::cast)
+                    .map(Boolean::parseBoolean).orElse(false)) {
                 return TypeClass.VARARG_FLOAT;
             }
             return TypeClass.FLOAT;

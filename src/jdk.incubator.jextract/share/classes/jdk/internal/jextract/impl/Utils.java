@@ -281,11 +281,11 @@ class Utils {
     }
 
     public static Optional<GroupLayout> getContents(MemoryLayout layout) {
-        return Optional.ofNullable((GroupLayout)jdk.internal.foreign.Utils.getAnnotation(layout, "contents"));
+        return layout.attribute("contents").map(GroupLayout.class::cast);
     }
 
     @SuppressWarnings("unchecked")
     public static <Z extends MemoryLayout> Z addContents(Z layout, GroupLayout contents) {
-        return (Z)jdk.internal.foreign.Utils.withAnnotation(layout, "contents", contents);
+        return (Z) layout.withAttribute("contents", contents);
     }
 }
