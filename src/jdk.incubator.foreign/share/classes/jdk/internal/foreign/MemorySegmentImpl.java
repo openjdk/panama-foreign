@@ -31,7 +31,6 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -323,13 +322,14 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         @Override
         public SegmentSplitter trySplit() {
             if (currentIndex == 0 && elemCount > 1) {
-                MemorySegmentImpl old = segment;
+                MemorySegmentImpl parent = segment;
                 long rem = elemCount % 2;
-                elemCount  = elemCount / 2;
-                long lobound = elemCount * elementSize;
+                long split = elemCount / 2;
+                long lobound = split * elementSize;
                 long hibound = lobound + (rem * elementSize);
-                segment = old.asSliceNoCheck(0, lobound);
-                return new SegmentSplitter(elementSize, elemCount + rem, old.asSliceNoCheck(lobound, hibound));
+                elemCount  = split + rem;
+                segment = parent.asSliceNoCheck(lobound, hibound);
+                return new SegmentSplitter(elementSize, split, parent.asSliceNoCheck(0, lobound));
             } else {
                 return null;
             }
@@ -344,10 +344,10 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
                     action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
                 } finally {
                     acquired.closeNoCheck();
-                }
-                currentIndex++;
-                if (currentIndex == elemCount) {
-                    segment = null;
+                    currentIndex++;
+                    if (currentIndex == elemCount) {
+                        segment = null;
+                    }
                 }
                 return true;
             } else {
@@ -368,15 +368,14 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
                         for (; index < limit; index++) {
                             action.accept(acquired.asSliceNoCheck(index * elemSize, elemSize));
                         }
-                        currentIndex = index;
                     } else {
-                        while (currentIndex < elemCount) {
-                            action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
-                            currentIndex++;
+                        for (long i = currentIndex ; i < elemCount ; i++) {
+                            action.accept(acquired.asSliceNoCheck(i * elementSize, elementSize));
                         }
                     }
                 } finally {
                     acquired.closeNoCheck();
+                    currentIndex = elemCount;
                     segment = null;
                 }
             }
@@ -389,7 +388,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
         @Override
         public int characteristics() {
-            return NONNULL | SUBSIZED | SIZED | IMMUTABLE;
+            return NONNULL | SUBSIZED | SIZED | IMMUTABLE | ORDERED;
         }
     }
 }

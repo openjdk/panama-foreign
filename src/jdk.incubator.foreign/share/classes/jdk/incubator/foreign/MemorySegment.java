@@ -95,7 +95,7 @@ import java.util.function.Consumer;
  * owner thread will result in a runtime failure.
  * <p>
  * In some cases, it might be useful for multiple threads to process the contents of the same memory segment concurrently
- * (e.g. in the case of parallel processing); while memory segments provide string confinement guarantees, it is possible
+ * (e.g. in the case of parallel processing); while memory segments provide strong confinement guarantees, it is possible
  * to obtain a {@link Spliterator} from a segment, which can be used to slice the segment and allow multiple thread to
  * work in parallel on disjoint segment slices (this assumes that the access mode {@link #ACQUIRE} is set).
  * For instance, the following code can be used to sum all int values in a memory segment in parallel:
@@ -157,11 +157,11 @@ public interface MemorySegment extends AutoCloseable {
     MemoryAddress baseAddress();
 
     /**
-     * Returns a spliterator for this memory segment. The returned spliterator must feature the
-     * {@link Spliterator#SIZED}, {@link Spliterator#SUBSIZED}, {@link Spliterator#IMMUTABLE} and {@link Spliterator#NONNULL}
+     * Returns a spliterator for this memory segment. The returned spliterator reports {@link Spliterator#SIZED},
+     * {@link Spliterator#SUBSIZED}, {@link Spliterator#IMMUTABLE}, {@link Spliterator#NONNULL} and {@link Spliterator#ORDERED}
      * characteristics.
      * <p>
-     * The returned spliterator should split the segment according to the specified sequence layout; that is,
+     * The returned spliterator splits the segment according to the specified sequence layout; that is,
      * if the supplied layout is a sequence layout whose element count is {@code N}, then calling {@link Spliterator#trySplit()}
      * will result in a spliterator serving approximatively {@code N/2} elements (depending on whether N is even or not).
      * As such, splitting is possible as long as {@code N >= 2}.
