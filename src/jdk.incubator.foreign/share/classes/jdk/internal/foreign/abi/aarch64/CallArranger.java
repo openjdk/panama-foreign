@@ -203,9 +203,11 @@ public class CallArranger {
            return false;
 
         for (MemoryLayout elem : groupLayout.memberLayouts()) {
+            if (!(elem instanceof ValueLayout))
+                return false;
+
             ArgumentClassImpl argClass = AArch64ABI.argumentClassFor(SystemABI.Type.fromLayout(elem));
-            if (!(elem instanceof ValueLayout) ||
-                    elem.bitSize() != baseType.bitSize() ||
+            if (elem.bitSize() != baseType.bitSize() ||
                     elem.bitAlignment() != baseType.bitAlignment() ||
                     baseArgClass != argClass) {
                 return false;
