@@ -100,18 +100,11 @@ import java.util.function.Consumer;
  * work in parallel on disjoint segment slices (this assumes that the access mode {@link #ACQUIRE} is set).
  * For instance, the following code can be used to sum all int values in a memory segment in parallel:
  * <blockquote><pre>{@code
-SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(ELEM_SIZE, MemoryLayouts.JAVA_INT);
-VarHandle VH_int = SEQUENCE_LAYOUT.varHandle(int.class, PathElement.sequenceElement());
-BiFunction<Integer, MemorySegment> reduceOp = (sum, segment) -> {
-        MemoryAddress base = segment.baseAddress();
-        int length = (int)segment.byteSize();
-        for (int i = 0 ; i < length / CARRIER_SIZE ; i++) {
-            sum += (int)VH_int.get(base, (long)i);
-        }
-        return sum;
-};
+SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
+VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
 int sum = StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
-        .reduce(0, reduceOp, Integer::sum);
+            .mapToInt(segment -> (int)VH_int.get(segment.baseAddress))
+            .sum();
  * }</pre></blockquote>
  *
  * <h2><a id = "access-modes">Access modes</a></h2>

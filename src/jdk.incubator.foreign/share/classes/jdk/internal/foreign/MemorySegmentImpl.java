@@ -225,7 +225,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     // Helper methods
 
     private MemorySegmentImpl acquire() {
-        if (!isSet(ACQUIRE)) {
+        if (Thread.currentThread() != owner && !isSet(ACQUIRE)) {
             throw unsupportedAccessMode(ACQUIRE);
         }
         return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
@@ -322,7 +322,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
         @Override
         public SegmentSplitter trySplit() {
-            if (segment != null && elemCount > 1) {
+            if (currentIndex == 0 && elemCount > 1) {
                 MemorySegmentImpl old = segment;
                 long rem = elemCount % 2;
                 elemCount  = elemCount / 2;
@@ -337,7 +337,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
         @Override
         public boolean tryAdvance(Consumer<? super MemorySegment> action) {
-            if (segment != null) {
+            Objects.requireNonNull(action);
+            if (currentIndex < elemCount) {
                 MemorySegmentImpl acquired = segment.acquire();
                 try {
                     action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
@@ -356,25 +357,28 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
         @Override
         public void forEachRemaining(Consumer<? super MemorySegment> action) {
-            MemorySegmentImpl acquired = segment.acquire();
-            try {
-                if (acquired.isSmall()) {
-                    int index = (int)currentIndex;
-                    int limit = (int)elemCount;
-                    int elemSize = (int)elementSize;
-                    for ( ; index < limit ; index++) {
-                        action.accept(acquired.asSliceNoCheck(index * elemSize, elemSize));
+            Objects.requireNonNull(action);
+            if (currentIndex < elemCount) {
+                MemorySegmentImpl acquired = segment.acquire();
+                try {
+                    if (acquired.isSmall()) {
+                        int index = (int) currentIndex;
+                        int limit = (int) elemCount;
+                        int elemSize = (int) elementSize;
+                        for (; index < limit; index++) {
+                            action.accept(acquired.asSliceNoCheck(index * elemSize, elemSize));
+                        }
+                        currentIndex = index;
+                    } else {
+                        while (currentIndex < elemCount) {
+                            action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
+                            currentIndex++;
+                        }
                     }
-                    currentIndex = index;
-                } else {
-                    while (currentIndex < elemCount) {
-                        action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
-                        currentIndex++;
-                    }
+                } finally {
+                    acquired.closeNoCheck();
+                    segment = null;
                 }
-            } finally {
-                acquired.closeNoCheck();
-                segment = null;
             }
         }
 

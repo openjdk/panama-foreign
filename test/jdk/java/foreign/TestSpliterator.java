@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Spliterator;
 import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 import java.util.stream.StreamSupport;
 
@@ -77,6 +78,23 @@ public class TestSpliterator {
                 .reduce(0L, TestSpliterator::sumSingle, Long::sum);
         assertEquals(streamParallel, expected);
         segment.close();
+    }
+
+    public void testSumSameThread() {
+        SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
+
+        //setup
+        MemorySegment segment = MemorySegment.allocateNative(layout);
+        for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
+            INT_HANDLE.set(segment.baseAddress(), (long) i, i);
+        }
+        long expected = LongStream.range(0, layout.elementCount().getAsLong()).sum();
+
+        //check that a segment w/o ACQUIRE access mode can still be used from same thread
+        AtomicLong spliteratorSum = new AtomicLong();
+        segment.withAccessModes(MemorySegment.READ)
+                .spliterator(layout).forEachRemaining(s -> spliteratorSum.addAndGet(sumSingle(0L, s)));
+        assertEquals(spliteratorSum.get(), expected);
     }
 
     static long sumSingle(long acc, MemorySegment segment) {
