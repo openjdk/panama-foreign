@@ -745,20 +745,6 @@ void MacroAssembler::pushptr(AddressLiteral src) {
   }
 }
 
-void MacroAssembler::reset_last_Java_frame(bool clear_fp) {
-  // we must set sp to zero to clear frame
-  movptr(Address(r15_thread, JavaThread::last_Java_sp_offset()), NULL_WORD);
-  // must clear fp, so that compiled frames are not confused; it is
-  // possible that we need it only for debugging
-  if (clear_fp) {
-    movptr(Address(r15_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
-  }
-
-  // Always clear the pc because it could have been set by make_walkable()
-  movptr(Address(r15_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
-  vzeroupper();
-}
-
 void MacroAssembler::set_last_Java_frame(Register last_java_sp,
                                          Register last_java_fp,
                                          address  last_java_pc) {
@@ -2674,20 +2660,24 @@ void MacroAssembler::push_IU_state() {
   pusha();
 }
 
+void MacroAssembler::reset_last_Java_frame(bool clear_fp) {
+  reset_last_Java_frame(r15_thread, clear_fp);
+}
+
 void MacroAssembler::reset_last_Java_frame(Register java_thread, bool clear_fp) { // determine java_thread register
   if (!java_thread->is_valid()) {
     java_thread = rdi;
     get_thread(java_thread);
   }
   // we must set sp to zero to clear frame
-  movptr(Address(java_thread, JavaThread::last_Java_sp_offset()), NULL_WORD);
+  movslq(Address(java_thread, JavaThread::last_Java_sp_offset()), NULL_WORD);
+  // must clear fp, so that compiled frames are not confused; it is
+  // possible that we need it only for debugging
   if (clear_fp) {
-    movptr(Address(java_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
+    movslq(Address(java_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
   }
-
   // Always clear the pc because it could have been set by make_walkable()
-  movptr(Address(java_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
-
+  movslq(Address(java_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
   vzeroupper();
 }
 
@@ -7879,6 +7869,30 @@ void MacroAssembler::byte_array_inflate(Register src, Register dst, Register len
   jcc(Assembler::notZero, copy_chars_loop);
 
   bind(done);
+}
+
+void MacroAssembler::spill_register(VMReg reg) {
+  assert(reg->is_reg(), "must be a register");
+  if (reg->is_Register()) {
+    push(reg->as_Register());
+  } else if (reg->is_XMMRegister()) {
+    subptr(rsp, 16); // 16 bytes
+    movdqu(Address(rsp, 0), reg->as_XMMRegister());
+  } else {
+    ShouldNotReachHere();
+  }
+}
+
+void MacroAssembler::fill_register(VMReg reg) {
+  assert(reg->is_reg(), "must be a register");
+  if (reg->is_Register()) {
+    pop(reg->as_Register());
+  } else if (reg->is_XMMRegister()) {
+    movdqu(reg->as_XMMRegister(), Address(rsp, 0));
+    addptr(rsp, 16); // 16 bytes
+  } else {
+    ShouldNotReachHere();
+  }
 }
 
 #ifdef _LP64

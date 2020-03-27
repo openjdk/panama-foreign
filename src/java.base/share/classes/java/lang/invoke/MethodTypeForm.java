@@ -86,7 +86,8 @@ final class MethodTypeForm {
             LF_TF                      = 18,  // tryFinally
             LF_LOOP                    = 19,  // loop
             LF_INVSPECIAL_IFC          = 20,  // DMH invokeSpecial of (private) interface method
-            LF_LIMIT                   = 21;
+            LF_INVNATIVE               = 21,  // NMH invokeNative
+            LF_LIMIT                   = 22;
 
     /** Return the type corresponding uniquely (1-1) to this MT-form.
      *  It might have any primitive returns or arguments, but will have no references except Object.

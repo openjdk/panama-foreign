@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,28 +19,24 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
+package jdk.internal.invoke;
 
-#include "precompiled.hpp"
-#include "ci/ciNullObject.hpp"
-#include "ci/ciObjArray.hpp"
-#include "ci/ciUtilities.inline.hpp"
-#include "oops/objArrayOop.inline.hpp"
+public class ABIDescriptor {
+    public final VMStorage[][] inputStorage;
+    public final VMStorage[][] outputStorage;
 
-// ciObjArray
-//
-// This class represents an objArrayOop in the HotSpot virtual
-// machine.
+    final VMStorage[][] volatileStorage;
 
-ciObject* ciObjArray::obj_at(int index) {
-  VM_ENTRY_MARK;
-  objArrayOop array = get_objArrayOop();
-  assert(index >= 0 && index < array->length(), "OOB access");
-  oop o = array->obj_at(index);
-  if (o == NULL) {
-    return ciNullObject::make();
-  } else {
-    return CURRENT_ENV->get_object(o);
-  }
+    final int stackAlignment;
+    public final int shadowSpace;
+
+    public ABIDescriptor(VMStorage[][] inputStorage, VMStorage[][] outputStorage,
+                         VMStorage[][] volatileStorage, int stackAlignment, int shadowSpace) {
+        this.inputStorage = inputStorage;
+        this.outputStorage = outputStorage;
+        this.volatileStorage = volatileStorage;
+        this.stackAlignment = stackAlignment;
+        this.shadowSpace = shadowSpace;
+    }
 }

@@ -25,6 +25,9 @@
 
 package jdk.internal.access;
 
+import jdk.internal.invoke.ABIDescriptor;
+import jdk.internal.invoke.VMStorage;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
@@ -189,4 +192,20 @@ public interface JavaLangInvokeAccess {
      * Used by {@code jdk.incubator.foreign.MemoryHandles}.
      */
     VarHandle insertCoordinates(VarHandle target, int pos, Object... values);
+
+    /**
+     * Returns a native method handle with given arguments as fallback and steering info.
+     *
+     * Will allow JIT to intrinsify.
+     *
+     * @param type the type of the method handle
+     * @param fallback the fallback handle
+     * @param addr the native address
+     * @param abi the ABIDescriptor
+     * @param argMoves the argument moves
+     * @param returnMoves the return moves
+     * @return the native method handle
+     */
+    MethodHandle nativeMethodHandle(MethodType type, MethodHandle fallback, long addr, ABIDescriptor abi,
+                                    VMStorage[] argMoves, VMStorage[] returnMoves, boolean needTransition);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,24 +23,31 @@
  */
 
 #include "precompiled.hpp"
-#include "ci/ciNullObject.hpp"
-#include "ci/ciObjArray.hpp"
+#include "ci/ciClassList.hpp"
 #include "ci/ciUtilities.inline.hpp"
-#include "oops/objArrayOop.inline.hpp"
+#include "ci/ciABIDescriptor.hpp"
 
-// ciObjArray
-//
-// This class represents an objArrayOop in the HotSpot virtual
-// machine.
-
-ciObject* ciObjArray::obj_at(int index) {
+ciObjArray* ciABIDescriptor::input_storage() const {
   VM_ENTRY_MARK;
-  objArrayOop array = get_objArrayOop();
-  assert(index >= 0 && index < array->length(), "OOB access");
-  oop o = array->obj_at(index);
-  if (o == NULL) {
-    return ciNullObject::make();
-  } else {
-    return CURRENT_ENV->get_object(o);
-  }
+  return CURRENT_ENV->get_object(jdk_internal_invoke_ABIDescriptor::inputStorage(get_oop()))->as_obj_array();
+}
+
+ciObjArray* ciABIDescriptor::output_storage() const {
+  VM_ENTRY_MARK;
+  return CURRENT_ENV->get_object(jdk_internal_invoke_ABIDescriptor::outputStorage(get_oop()))->as_obj_array();
+}
+
+ciObjArray* ciABIDescriptor::volatile_storage() const {
+  VM_ENTRY_MARK;
+  return CURRENT_ENV->get_object(jdk_internal_invoke_ABIDescriptor::volatileStorage(get_oop()))->as_obj_array();
+}
+
+jint ciABIDescriptor::stack_alignment() const {
+  VM_ENTRY_MARK;
+  return jdk_internal_invoke_ABIDescriptor::stackAlignment(get_oop());
+}
+
+jint ciABIDescriptor::shadow_space() const {
+  VM_ENTRY_MARK;
+  return jdk_internal_invoke_ABIDescriptor::shadowSpace(get_oop());
 }

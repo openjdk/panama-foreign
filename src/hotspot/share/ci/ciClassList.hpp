@@ -48,6 +48,9 @@ class   ciNullObject;
 class   ciInstance;
 class     ciCallSite;
 class     ciMemberName;
+class     ciNativeEntryPoint;
+class     ciABIDescriptor;
+class     ciVMStorage;
 class     ciMethodHandle;
 class     ciMethodType;
 class     ciArray;
@@ -97,6 +100,9 @@ friend class ciObject;                 \
 friend class ciNullObject;             \
 friend class ciInstance;               \
 friend class ciMemberName;             \
+friend class ciNativeEntryPoint;       \
+friend class ciABIDescriptor;          \
+friend class ciVMStorage;              \
 friend class ciMethod;                 \
 friend class ciMethodData;             \
 friend class ciMethodHandle;           \

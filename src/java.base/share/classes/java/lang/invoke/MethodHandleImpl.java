@@ -27,6 +27,8 @@ package java.lang.invoke;
 
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.invoke.ABIDescriptor;
+import jdk.internal.invoke.VMStorage;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.reflect.CallerSensitive;
@@ -1831,6 +1833,12 @@ abstract class MethodHandleImpl {
             @Override
             public long[] memoryAddressStrides(VarHandle handle) {
                 return checkMemoryAccessHandle(handle).strides();
+            }
+
+            @Override
+            public MethodHandle nativeMethodHandle(MethodType type, MethodHandle fallback, long addr, ABIDescriptor abi,
+                                                   VMStorage[] argMoves, VMStorage[] returnMoves, boolean needTransition) {
+                return NativeMethodHandle.make(type, fallback, addr, abi, argMoves, returnMoves, needTransition);
             }
 
             @Override

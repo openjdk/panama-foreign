@@ -30,6 +30,7 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.UpcallHandler;
 import jdk.internal.foreign.abi.ABIDescriptor;
@@ -116,6 +117,8 @@ public class CallArranger {
             csb.addArgumentBindings(long.class, SysV.C_LONG,
                     List.of(move(rax, long.class)));
         }
+
+        csb.setTrivial(Utils.isTrivial(cDesc));
 
         return new Bindings(csb.build(), returnInMemory, argCalc.storageCalculator.nVectorReg);
     }

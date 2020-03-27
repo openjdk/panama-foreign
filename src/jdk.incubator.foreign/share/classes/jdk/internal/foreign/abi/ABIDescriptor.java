@@ -22,6 +22,8 @@
  */
 package jdk.internal.foreign.abi;
 
+import java.util.Arrays;
+
 public class ABIDescriptor {
     final Architecture arch;
 
@@ -33,7 +35,7 @@ public class ABIDescriptor {
     final int stackAlignment;
     final int shadowSpace;
 
-    public ABIDescriptor(Architecture arch, jdk.internal.foreign.abi.VMStorage[][] inputStorage, jdk.internal.foreign.abi.VMStorage[][] outputStorage,
+    public ABIDescriptor(Architecture arch, VMStorage[][] inputStorage, VMStorage[][] outputStorage,
                          VMStorage[][] volatileStorage, int stackAlignment, int shadowSpace) {
         this.arch = arch;
         this.inputStorage = inputStorage;
@@ -41,5 +43,21 @@ public class ABIDescriptor {
         this.volatileStorage = volatileStorage;
         this.stackAlignment = stackAlignment;
         this.shadowSpace = shadowSpace;
+    }
+
+    public jdk.internal.invoke.ABIDescriptor toInternal() {
+        return new jdk.internal.invoke.ABIDescriptor(
+                Arrays.stream(inputStorage).map(a -> Arrays.stream(a)
+                        .map(VMStorage::toInternal).toArray(jdk.internal.invoke.VMStorage[]::new))
+                        .toArray(jdk.internal.invoke.VMStorage[][]::new),
+                Arrays.stream(outputStorage).map(a -> Arrays.stream(a)
+                        .map(VMStorage::toInternal).toArray(jdk.internal.invoke.VMStorage[]::new))
+                        .toArray(jdk.internal.invoke.VMStorage[][]::new),
+                Arrays.stream(volatileStorage).map(a -> Arrays.stream(a)
+                        .map(VMStorage::toInternal).toArray(jdk.internal.invoke.VMStorage[]::new))
+                        .toArray(jdk.internal.invoke.VMStorage[][]::new),
+                stackAlignment,
+                shadowSpace
+        );
     }
 }

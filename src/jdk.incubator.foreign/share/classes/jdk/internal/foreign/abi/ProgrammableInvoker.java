@@ -26,6 +26,8 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
+import jdk.internal.access.JavaLangInvokeAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
 
@@ -63,6 +65,10 @@ public class ProgrammableInvoker {
         privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.DEBUG");
     private static final boolean NO_SPEC =
         privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.NO_SPEC");
+    private static final boolean NO_INTRINSICS =
+        privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS");
+
+    private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
 
@@ -152,6 +158,17 @@ public class ProgrammableInvoker {
                                             .asCollector(Object[].class, leafType.parameterCount())
                                             .asType(leafType);
 
+        if (!(NO_INTRINSICS || retMoves.length > 1)) {
+            handle = JLIA.nativeMethodHandle(
+                    leafType,
+                    handle,
+                    addr.toRawLongValue(),
+                    abi.toInternal(),
+                    toInternalStorage(argMoves),
+                    toInternalStorage(retMoves),
+                    !callingSequence.isTrivial());
+        }
+
         if (NO_SPEC || retMoves.length > 1) {
             Map<VMStorage, Integer> argIndexMap = indexMap(argMoves);
             Map<VMStorage, Integer> retIndexMap = indexMap(retMoves);
@@ -164,6 +181,13 @@ public class ProgrammableInvoker {
          }
 
         return handle;
+    }
+
+    private static jdk.internal.invoke.VMStorage[] toInternalStorage(Binding.Move[] argMoves) {
+        return Arrays.stream(argMoves)
+                     .map(Binding.Move::storage)
+                     .map(VMStorage::toInternal)
+                     .toArray(jdk.internal.invoke.VMStorage[]::new);
     }
 
     private MethodHandle specialize(MethodHandle leafHandle) {
@@ -213,6 +237,14 @@ public class ProgrammableInvoker {
             specializedHandle = collectArguments(specializedHandle, 0, insertArguments(MH_MAKE_ALLOCATOR, 0, bufferCopySize));
         }
         return specializedHandle;
+    }
+
+    private static long toRawLongValue(MemoryAddress address) {
+        return address.toRawLongValue(); // Workaround for JDK-8239083
+    }
+
+    private static MemoryAddress ofLong(long address) {
+        return MemoryAddress.ofLong(address); // Workaround for JDK-8239083
     }
 
     private Map<VMStorage, Integer> indexMap(Binding.Move[] moves) {

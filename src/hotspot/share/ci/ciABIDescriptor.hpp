@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,25 +22,27 @@
  *
  */
 
-#include "precompiled.hpp"
-#include "ci/ciNullObject.hpp"
-#include "ci/ciObjArray.hpp"
-#include "ci/ciUtilities.inline.hpp"
-#include "oops/objArrayOop.inline.hpp"
+#ifndef SHARE_VM_CI_CIABIDESCRIPTOR_HPP
+#define SHARE_VM_CI_CIABIDESCRIPTOR_HPP
 
-// ciObjArray
+#include "ci/ciInstance.hpp"
+#include "ciObjArray.hpp"
+
+// ciABIDescriptor
 //
-// This class represents an objArrayOop in the HotSpot virtual
-// machine.
+// The class represents a jdk.internal.foreign.abi.ABIDescriptor object.
+class ciABIDescriptor : public ciInstance {
+public:
+  ciABIDescriptor(instanceHandle h_i) : ciInstance(h_i) {}
 
-ciObject* ciObjArray::obj_at(int index) {
-  VM_ENTRY_MARK;
-  objArrayOop array = get_objArrayOop();
-  assert(index >= 0 && index < array->length(), "OOB access");
-  oop o = array->obj_at(index);
-  if (o == NULL) {
-    return ciNullObject::make();
-  } else {
-    return CURRENT_ENV->get_object(o);
-  }
-}
+  // What kind of ciObject is this?
+  bool is_abi_descriptor() const { return true; }
+
+  ciObjArray* input_storage() const;
+  ciObjArray* output_storage() const;
+  ciObjArray* volatile_storage() const;
+  jint stack_alignment() const;
+  jint shadow_space() const;
+};
+
+#endif // SHARE_VM_CI_CIABIDESCRIPTOR_HPP

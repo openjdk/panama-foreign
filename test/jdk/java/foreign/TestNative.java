@@ -24,8 +24,7 @@
 
 /*
  * @test
- * @modules java.base/jdk.internal.misc
- *          jdk.incubator.foreign/jdk.internal.foreign
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @run testng/othervm -Dforeign.restricted=permit TestNative
  */
 
@@ -35,7 +34,6 @@ import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
-import jdk.internal.misc.Unsafe;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -57,12 +55,6 @@ import static jdk.incubator.foreign.MemorySegment.*;
 import static org.testng.Assert.*;
 
 public class TestNative {
-
-    static Unsafe UNSAFE;
-
-    static {
-        UNSAFE = Unsafe.getUnsafe();
-    }
 
     static SequenceLayout bytes = MemoryLayout.ofSequence(100,
             MemoryLayouts.JAVA_BYTE.withOrder(ByteOrder.nativeOrder())

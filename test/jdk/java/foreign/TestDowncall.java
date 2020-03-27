@@ -35,7 +35,16 @@
  *   TestDowncall
  * @run testng/othervm
  *   -Dforeign.restricted=permit
+ *   -Djdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS=true
+ *   TestDowncall
+ * @run testng/othervm
+ *   -Dforeign.restricted=permit
  *   -Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true
+ *   TestDowncall
+ * @run testng/othervm
+ *   -Dforeign.restricted=permit
+ *   -Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true
+ *   -Djdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS=true
  *   TestDowncall
  */
 

@@ -107,6 +107,9 @@ public:
   virtual bool is_array()                   { return false; }
   virtual bool is_obj_array()               { return false; }
   virtual bool is_type_array()              { return false; }
+  virtual bool is_native_entry_point()const { return false; }
+  virtual bool is_abi_descriptor()    const { return false; }
+  virtual bool is_vm_storage()        const { return false; }
 
   // Is this a type or value which has no associated class?
   // It is true of primitive types and null objects.
@@ -159,6 +162,18 @@ public:
   ciTypeArray* as_type_array() {
     assert(is_type_array(), "bad cast");
     return (ciTypeArray*)this;
+  }
+  ciNativeEntryPoint* as_native_entry_point() {
+    assert(is_native_entry_point(), "bad cast");
+    return (ciNativeEntryPoint*)this;
+  }
+  ciABIDescriptor* as_abi_descriptor() {
+    assert(is_abi_descriptor(), "bad cast");
+    return (ciABIDescriptor*)this;
+  }
+  ciVMStorage* as_vm_storage() {
+    assert(is_vm_storage(), "bad cast");
+    return (ciVMStorage*)this;
   }
 
   // Print debugging output about this ciObject.

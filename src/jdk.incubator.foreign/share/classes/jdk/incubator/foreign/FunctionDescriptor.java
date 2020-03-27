@@ -28,7 +28,10 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,13 +42,30 @@ import java.util.stream.Stream;
  * is used to model the signature of native functions.
  */
 public final class FunctionDescriptor implements Constable {
+    public static final String IS_TRIVIAL = "abi/is_trivial";
     
     private final MemoryLayout resLayout;
     private final MemoryLayout[] argLayouts;
+    private final Map<String, Constable> attributes;
 
-    private FunctionDescriptor(MemoryLayout resLayout, MemoryLayout... argLayouts) {
+    private FunctionDescriptor(MemoryLayout resLayout, Map<String, Constable> attributes, MemoryLayout... argLayouts) {
         this.resLayout = resLayout;
+        this.attributes = Collections.unmodifiableMap(attributes);
         this.argLayouts = argLayouts;
+    }
+
+    public Optional<Constable> attribute(String name) {
+        return Optional.ofNullable(attributes.get(name));
+    }
+
+    public Stream<String> attributes() {
+        return attributes.keySet().stream();
+    }
+
+    public FunctionDescriptor withAttribute(String name, Constable value) {
+        Map<String, Constable> newAttributes = new HashMap<>(attributes);
+        newAttributes.put(name, value);
+        return new FunctionDescriptor(resLayout, newAttributes, argLayouts);
     }
 
     /**
@@ -71,7 +91,7 @@ public final class FunctionDescriptor implements Constable {
      * @return the new function descriptor.
      */
     public static FunctionDescriptor of(MemoryLayout resLayout, MemoryLayout... argLayouts) {
-        return new FunctionDescriptor(resLayout, argLayouts);
+        return new FunctionDescriptor(resLayout, Map.of(), argLayouts);
     }
 
     /**
@@ -80,7 +100,7 @@ public final class FunctionDescriptor implements Constable {
      * @return the new function descriptor.
      */
     public static FunctionDescriptor ofVoid(MemoryLayout... argLayouts) {
-        return new FunctionDescriptor(null, argLayouts);
+        return new FunctionDescriptor(null, Map.of(), argLayouts);
     }
 
     /**
@@ -92,7 +112,7 @@ public final class FunctionDescriptor implements Constable {
     public FunctionDescriptor appendArgumentLayouts(MemoryLayout... addedLayouts) {
         MemoryLayout[] newLayouts = Arrays.copyOf(argLayouts, argLayouts.length + addedLayouts.length);
         System.arraycopy(addedLayouts, 0, newLayouts, argLayouts.length, addedLayouts.length);
-        return new FunctionDescriptor(resLayout, newLayouts);
+        return new FunctionDescriptor(resLayout, attributes, newLayouts);
     }
 
     /**
@@ -101,7 +121,7 @@ public final class FunctionDescriptor implements Constable {
      * @return the new function descriptor
      */
     public FunctionDescriptor changeReturnLayout(MemoryLayout newReturn) {
-        return new FunctionDescriptor(newReturn, argLayouts);
+        return new FunctionDescriptor(newReturn, attributes, argLayouts);
     }
 
     /**

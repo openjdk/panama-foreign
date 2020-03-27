@@ -120,6 +120,8 @@ public class CallArranger {
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
         }
 
+        csb.setTrivial(Utils.isTrivial(cDesc));
+
         return new Bindings(csb.build(), returnInMemory);
     }
 

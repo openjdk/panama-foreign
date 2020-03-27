@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi;
+package jdk.internal.invoke;
 
 import java.util.Objects;
 
@@ -69,9 +69,5 @@ public class VMStorage {
                 ", index=" + index +
                 ", debugName='" + debugName + '\'' +
                 '}';
-    }
-
-    public jdk.internal.invoke.VMStorage toInternal() {
-        return new jdk.internal.invoke.VMStorage(type, index, debugName);
     }
 }
