@@ -169,7 +169,7 @@ public interface MemorySegment extends AutoCloseable {
      * The returned spliterator effectively allows to slice a segment into disjoint sub-segments, which can then
      * be processed in parallel by multiple threads (if the access mode {@link #ACQUIRE} is set).
      * While closing the segment (see {@link #close()}) during pending concurrent execution will generally
-     * fail with an exception, it is possible to close a segment when a spliterator has been obtained but not thread
+     * fail with an exception, it is possible to close a segment when a spliterator has been obtained but no thread
      * is actively working on it using {@link Spliterator#tryAdvance(Consumer)}; in such cases, any subsequent call
      * to {@link Spliterator#tryAdvance(Consumer)} will fail with an exception.
      * @param layout the layout to be used for splitting.
