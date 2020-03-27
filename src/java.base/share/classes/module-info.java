@@ -286,6 +286,7 @@ module java.base {
     exports sun.security.action to
         java.desktop,
         java.security.jgss,
+        jdk.crypto.ec,
         jdk.incubator.foreign;
     exports sun.security.internal.interfaces to
         jdk.crypto.cryptoki;
