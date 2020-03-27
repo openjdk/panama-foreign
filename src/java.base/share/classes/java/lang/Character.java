@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -3285,7 +3285,7 @@ class Character implements java.io.Serializable, Comparable<Character> {
                              "SYMBOLS AND PICTOGRAPHS EXTENDED-A",
                              "SYMBOLSANDPICTOGRAPHSEXTENDED-A");
 
-        private static final int blockStarts[] = {
+        private static final int[] blockStarts = {
             0x0000,   // 0000..007F; Basic Latin
             0x0080,   // 0080..00FF; Latin-1 Supplement
             0x0100,   // 0100..017F; Latin Extended-A
@@ -8068,7 +8068,7 @@ class Character implements java.io.Serializable, Comparable<Character> {
             UNKNOWN,                  // E01F0..10FFFF
         };
 
-        private static HashMap<String, Character.UnicodeScript> aliases;
+        private static final HashMap<String, Character.UnicodeScript> aliases;
         static {
             aliases = new HashMap<>((int)(153 / 0.75f + 1.0f));
             aliases.put("ADLM", ADLAM);
@@ -8421,8 +8421,7 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * @return  a string representation of this object.
      */
     public String toString() {
-        char buf[] = {value};
-        return String.valueOf(buf);
+        return String.valueOf(value);
     }
 
     /**
@@ -9732,7 +9731,7 @@ class Character implements java.io.Serializable, Comparable<Character> {
     }
 
     /**
-     * Determines if the specified character (Unicode code point) is an alphabet.
+     * Determines if the specified character (Unicode code point) is alphabetic.
      * <p>
      * A character is considered to be alphabetic if its general category type,
      * provided by {@link Character#getType(int) getType(codePoint)}, is any of
