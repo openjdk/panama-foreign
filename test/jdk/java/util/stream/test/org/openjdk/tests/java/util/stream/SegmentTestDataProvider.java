@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import org.testng.annotations.DataProvider;
 
 public class SegmentTestDataProvider {
-    
+
     static VarHandle BYTE_HANDLE = MemoryLayouts.JAVA_BYTE.varHandle(byte.class);
     static VarHandle CHAR_HANDLE = MemoryLayouts.JAVA_CHAR.varHandle(char.class);
     static VarHandle SHORT_HANDLE = MemoryLayouts.JAVA_SHORT.varHandle(short.class);
@@ -49,7 +49,7 @@ public class SegmentTestDataProvider {
     static VarHandle LONG_HANDLE = MemoryLayouts.JAVA_LONG.varHandle(long.class);
     static VarHandle FLOAT_HANDLE = MemoryLayouts.JAVA_FLOAT.varHandle(float.class);
     static VarHandle DOUBLE_HANDLE = MemoryLayouts.JAVA_DOUBLE.varHandle(double.class);
-    
+
     static boolean compareSegmentsByte(Collection<MemorySegment> segments1, Collection<MemorySegment> segments2, boolean isOrdered) {
         Function<MemorySegment, Byte> mapper = segment -> (byte)BYTE_HANDLE.get(segment.baseAddress());
         List<Byte> list1 = segments1.stream()
