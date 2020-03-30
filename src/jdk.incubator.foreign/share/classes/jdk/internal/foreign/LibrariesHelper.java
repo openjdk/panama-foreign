@@ -41,10 +41,11 @@ import java.util.Optional;
 public final class LibrariesHelper {
     private LibrariesHelper() {}
 
+    // FIXME - revisit this (refcount for unload)
     private final static ClassValue<NativeLibraries> nativeLibrary = new ClassValue<>() {
         @Override
         protected NativeLibraries computeValue(Class<?> type) {
-            return new NativeLibraries(type.getClassLoader());
+            return NativeLibraries.jniNativeLibraries(type.getClassLoader());
         }
     };
 
