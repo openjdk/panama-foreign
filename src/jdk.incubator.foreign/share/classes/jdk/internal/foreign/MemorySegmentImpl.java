@@ -240,6 +240,11 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
     }
 
+    public MemorySegment asUnconfined() {
+        checkValidState();
+        return new MemorySegmentImpl(min, base, length, mask, null, scope);
+    }
+
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
         if (writeAccess && !isSet(WRITE)) {

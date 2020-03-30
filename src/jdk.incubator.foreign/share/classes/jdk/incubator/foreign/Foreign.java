@@ -27,6 +27,7 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.InternalForeign;
+import jdk.internal.foreign.MemorySegmentImpl;
 
 import java.nio.charset.Charset;
 
@@ -97,6 +98,16 @@ public interface Foreign {
      * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
      */
     MemorySegment ofNativeUnchecked(MemoryAddress base, long byteSize) throws IllegalAccessError;
+
+    /**
+     * Returns a non-confined memory segment that has the same spatial and temporal bounds as the provided segment.
+     * Since the returned segment can be effectively accessed by multiple threads in an unconstrained fashion,
+     * this method should be used with care, as it might lead to JVM crashes - e.g. in the case where a thread {@code A}
+     * closes a segment while another thread {@code B} is accessing it.
+     * @param segment the segment from which an unconfined view is to be created.
+     * @return a non-confined memory segment that has the same spatial and temporal bounds as the provided segment.
+     */
+    MemorySegment asUnconfined(MemorySegment segment);
 
     /**
      * Obtain an instance of the system ABI.
