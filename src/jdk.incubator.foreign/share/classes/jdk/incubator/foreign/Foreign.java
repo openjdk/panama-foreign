@@ -97,7 +97,17 @@ public interface Foreign {
      * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address.
      * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
      */
-    MemorySegment ofNativeUnchecked(MemoryAddress base, long byteSize) throws IllegalAccessError;
+    MemoryAddress withSize(MemoryAddress base, long byteSize);
+
+    default MemoryAddress withSize(MemoryAddress base, MemoryLayout layout) {
+        return withSize(base, layout.byteSize());
+    }
+
+    MemorySegment asMallocSegment(MemoryAddress base, long byteSize);
+
+    default MemoryAddress asMallocSegment(MemoryAddress base, MemoryLayout layout) {
+        return withSize(base, layout.byteSize());
+    }
 
     /**
      * Returns a non-confined memory segment that has the same spatial and temporal bounds as the provided segment.
