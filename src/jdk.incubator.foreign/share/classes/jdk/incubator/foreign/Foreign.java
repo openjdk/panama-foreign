@@ -104,6 +104,10 @@ public interface Foreign {
      * Since the returned segment can be effectively accessed by multiple threads in an unconstrained fashion,
      * this method should be used with care, as it might lead to JVM crashes - e.g. in the case where a thread {@code A}
      * closes a segment while another thread {@code B} is accessing it.
+     * <p>
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
      * @param segment the segment from which an unconfined view is to be created.
      * @return a non-confined memory segment that has the same spatial and temporal bounds as the provided segment.
      */
