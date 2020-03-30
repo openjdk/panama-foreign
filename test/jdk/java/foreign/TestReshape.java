@@ -125,7 +125,7 @@ public class TestReshape {
             return shapes.iterator();
         }
     }
-    
+
     static MemoryLayout POINT = MemoryLayout.ofStruct(
             MemoryLayouts.JAVA_INT,
             MemoryLayouts.JAVA_INT
