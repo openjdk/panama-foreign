@@ -37,7 +37,9 @@ import java.lang.reflect.Modifier;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
@@ -224,6 +226,7 @@ public class TestSegments {
 
         final static List<String> CONFINED_NAMES = List.of(
                 "close",
+                "spliterator",
                 "toByteArray"
         );
 
@@ -282,7 +285,27 @@ public class TestSegments {
         ACQUIRE(MemorySegment.ACQUIRE) {
             @Override
             void run(MemorySegment segment) {
-                segment.acquire();
+                Spliterator<MemorySegment> spliterator =
+                        segment.spliterator(MemoryLayout.ofSequence(segment.byteSize(), MemoryLayouts.JAVA_BYTE));
+                AtomicReference<RuntimeException> exception = new AtomicReference<>();
+                Runnable action = () -> {
+                    try {
+                        spliterator.tryAdvance(s -> { });
+                    } catch (RuntimeException e) {
+                        exception.set(e);
+                    }
+                };
+                Thread thread = new Thread(action);
+                thread.start();
+                try {
+                    thread.join();
+                } catch (InterruptedException ex) {
+                    throw new AssertionError(ex);
+                }
+                RuntimeException e = exception.get();
+                if (e != null) {
+                    throw e;
+                }
             }
         },
         CLOSE(MemorySegment.CLOSE) {

@@ -33,6 +33,8 @@ import jdk.internal.foreign.Utils;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
@@ -77,8 +79,6 @@ import java.nio.file.Path;
  * <ul>
  *     <li>closing a native memory segment results in <em>freeing</em> the native memory associated with it</li>
  *     <li>closing a mapped memory segment results in the backing memory-mapped file to be unmapped</li>
- *     <li>closing an acquired memory segment <b>does not</b> result in the release of resources
- *     (see the section on <a href="#thread-confinement">thread confinement</a> for more details)</li>
  *     <li>closing a buffer, or a heap segment does not have any side-effect, other than marking the segment
  *     as <em>not alive</em> (see {@link MemorySegment#isAlive()}). Also, since the buffer and heap segments might keep
  *     strong references to the original buffer or array instance, it is the responsibility of clients to ensure that
@@ -94,13 +94,18 @@ import java.nio.file.Path;
  * the segment using a memory access var handle. Any attempt to perform such operations from a thread other than the
  * owner thread will result in a runtime failure.
  * <p>
- * If a memory segment S owned by thread A needs to be used by thread B, B needs to explicitly <em>acquire</em> S,
- * which will create a so called <em>acquired</em> memory segment owned by B (see {@link #acquire()}) backed by the same resources
- * as S. A memory segment can be acquired multiple times by one or more threads; in that case, a memory segment S cannot
- * be closed until all the acquired memory segments derived from S have been closed. Furthermore, closing an acquired
- * memory segment does <em>not</em> trigger any deallocation action. It is therefore important that clients remember to
- * explicitly close the original segment from which the acquired memory segments have been obtained in order to truly
- * ensure that off-heap resources associated with the memory segment are released.
+ * In some cases, it might be useful for multiple threads to process the contents of the same memory segment concurrently
+ * (e.g. in the case of parallel processing); while memory segments provide strong confinement guarantees, it is possible
+ * to obtain a {@link Spliterator} from a segment, which can be used to slice the segment and allow multiple thread to
+ * work in parallel on disjoint segment slices (this assumes that the access mode {@link #ACQUIRE} is set).
+ * For instance, the following code can be used to sum all int values in a memory segment in parallel:
+ * <blockquote><pre>{@code
+SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
+VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
+int sum = StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
+            .mapToInt(segment -> (int)VH_int.get(segment.baseAddress))
+            .sum();
+ * }</pre></blockquote>
  *
  * <h2><a id = "access-modes">Access modes</a></h2>
  *
@@ -152,14 +157,27 @@ public interface MemorySegment extends AutoCloseable {
     MemoryAddress baseAddress();
 
     /**
-     * Obtains an <a href="#thread-confinement">acquired</a> memory segment which can be used to access memory associated
-     * with this segment from the current thread. As a side-effect, this segment cannot be closed until the acquired
-     * view has been closed too (see {@link #close()}).
-     * @return an <a href="#thread-confinement">acquired</a> memory segment which can be used to access memory associated
-     * with this segment from the current thread.
-     * @throws IllegalStateException if this segment has been closed.
+     * Returns a spliterator for this memory segment. The returned spliterator reports {@link Spliterator#SIZED},
+     * {@link Spliterator#SUBSIZED}, {@link Spliterator#IMMUTABLE}, {@link Spliterator#NONNULL} and {@link Spliterator#ORDERED}
+     * characteristics.
+     * <p>
+     * The returned spliterator splits the segment according to the specified sequence layout; that is,
+     * if the supplied layout is a sequence layout whose element count is {@code N}, then calling {@link Spliterator#trySplit()}
+     * will result in a spliterator serving approximatively {@code N/2} elements (depending on whether N is even or not).
+     * As such, splitting is possible as long as {@code N >= 2}.
+     * <p>
+     * The returned spliterator effectively allows to slice a segment into disjoint sub-segments, which can then
+     * be processed in parallel by multiple threads (if the access mode {@link #ACQUIRE} is set).
+     * While closing the segment (see {@link #close()}) during pending concurrent execution will generally
+     * fail with an exception, it is possible to close a segment when a spliterator has been obtained but no thread
+     * is actively working on it using {@link Spliterator#tryAdvance(Consumer)}; in such cases, any subsequent call
+     * to {@link Spliterator#tryAdvance(Consumer)} will fail with an exception.
+     * @param layout the layout to be used for splitting.
+     * @return the element spliterator for this segment
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment
      */
-    MemorySegment acquire();
+    Spliterator<MemorySegment> spliterator(SequenceLayout layout);
 
     /**
      * The thread owning this segment.
@@ -222,7 +240,8 @@ public interface MemorySegment extends AutoCloseable {
      * the kind of memory segment being closed, calling this method further trigger deallocation of all the resources
      * associated with the memory segment.
      * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment.
+     * thread owning this segment, or if the segment cannot be closed because it is being operated upon by a different
+     * thread (see {@link #spliterator(SequenceLayout)}).
      * @throws UnsupportedOperationException if this segment does not support the {@link #CLOSE} access mode.
      */
     void close();
@@ -473,7 +492,8 @@ allocateNative(bytesSize, 1);
     int CLOSE = WRITE << 1;
 
     /**
-     * Acquire access mode; calling {@link #acquire()} is supported by a segment which supports this access mode.
+     * Acquire access mode; this segment support sharing with threads other than the owner thread, via spliterator
+     * (see {@link #spliterator(SequenceLayout)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
