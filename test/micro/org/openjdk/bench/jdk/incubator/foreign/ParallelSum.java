@@ -71,7 +71,7 @@ public class ParallelSum {
 
     final static SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(ELEM_SIZE, MemoryLayouts.JAVA_INT);
     final static int BULK_FACTOR = 512;
-    final static SequenceLayout SEQUENCE_LAYOUT_BULK = MemoryLayout.ofSequence(ELEM_SIZE / BULK_FACTOR, MemoryLayout.ofSequence(BULK_FACTOR, MemoryLayouts.JAVA_INT));
+    final static SequenceLayout SEQUENCE_LAYOUT_BULK = SEQUENCE_LAYOUT.reshape(-1, BULK_FACTOR);
 
     static final Unsafe unsafe = Utils.unsafe;
 
