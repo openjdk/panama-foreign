@@ -82,7 +82,6 @@ try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
  * the same memory segment concurrently. The memory access API addresses this problem by imposing strong
  * <a href="MemorySegment.html#thread-confinement"><em>thread-confinement</em></a> guarantees on memory segments: each
  * memory segment is associated with an owner thread, which is the only thread that can either access or close the segment.
- * A thread other than the owner thread will have to explicitly <em>acquire</em> a segment in order to be able to use it.
  * <p>
  * Together, spatial and temporal safety ensure that each memory access operation either succeeds - and accesses a valid
  * memory location - or fails.
