@@ -170,8 +170,8 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
                     // s.b[0] & s.b[1]
                     dereference(8, long.class), move(r1, long.class),
             }},
-            // struct s { int32_t a; /* padding */ double b };
-            { MemoryLayout.ofStruct(C_INT, MemoryLayout.ofPaddingBits(32), C_DOUBLE),
+            // struct s { float a; /* padding */ double b };
+            { MemoryLayout.ofStruct(C_FLOAT, MemoryLayout.ofPaddingBits(32), C_DOUBLE),
               new Binding[] {
                 dup(),
                 // s.a
