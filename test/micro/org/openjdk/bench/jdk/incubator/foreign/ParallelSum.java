@@ -27,10 +27,11 @@
 package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.SequenceLayout;
 import sun.misc.Unsafe;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.CompilerControl;
 import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
@@ -43,10 +44,14 @@ import org.openjdk.jmh.annotations.Warmup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Spliterator;
+import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
+import java.util.function.ToIntFunction;
+import java.util.stream.StreamSupport;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
@@ -64,13 +69,14 @@ public class ParallelSum {
     final static int ELEM_SIZE = ALLOC_SIZE / CARRIER_SIZE;
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
 
+    final static SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(ELEM_SIZE, MemoryLayouts.JAVA_INT);
+    final static int BULK_FACTOR = 512;
+    final static SequenceLayout SEQUENCE_LAYOUT_BULK = MemoryLayout.ofSequence(ELEM_SIZE / BULK_FACTOR, MemoryLayout.ofSequence(BULK_FACTOR, MemoryLayouts.JAVA_INT));
+
     static final Unsafe unsafe = Utils.unsafe;
 
     MemorySegment segment;
     long address;
-
-    ForkJoinPool pool = (ForkJoinPool) Executors.newWorkStealingPool();
-
 
     @Setup
     public void setup() {
@@ -88,8 +94,6 @@ public class ParallelSum {
     public void tearDown() throws Throwable {
         unsafe.freeMemory(address);
         segment.close();
-        pool.shutdown();
-        pool.awaitTermination(60, TimeUnit.SECONDS);
     }
 
     @Benchmark
@@ -113,44 +117,42 @@ public class ParallelSum {
 
     @Benchmark
     public int segment_parallel() {
-        return pool.invoke(new SumSegment(segment));
+        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT), ParallelSum::segmentToInt).invoke();
+    }
+
+    @Benchmark
+    public int segment_parallel_bulk() {
+        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT_BULK), ParallelSum::segmentToIntBulk).invoke();
+    }
+
+    @Benchmark
+    public int segment_stream_parallel() {
+        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
+                .mapToInt(ParallelSum::segmentToInt).sum();
+    }
+
+    @Benchmark
+    public int segment_stream_parallel_bulk() {
+        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT_BULK), true)
+                .mapToInt(ParallelSum::segmentToIntBulk).sum();
+    }
+
+    static int segmentToInt(MemorySegment slice) {
+        return (int) VH_int.get(slice.baseAddress(), 0L);
+    }
+
+    static int segmentToIntBulk(MemorySegment slice) {
+        int res = 0;
+        MemoryAddress base = slice.baseAddress();
+        for (int i = 0; i < BULK_FACTOR ; i++) {
+            res += (int)VH_int.get(base, (long) i);
+        }
+        return res;
     }
 
     @Benchmark
     public int unsafe_parallel() {
-        return pool.invoke(new SumUnsafe(address, 0, ALLOC_SIZE));
-    }
-
-    static class SumSegment extends RecursiveTask<Integer> {
-
-        final static int SPLIT_THRESHOLD = 4 * 1024 * 8;
-
-        private final MemorySegment segment;
-
-        SumSegment(MemorySegment segment) {
-            this.segment = segment;
-        }
-
-        @Override
-        protected Integer compute() {
-            try (MemorySegment segment = this.segment.acquire()) {
-                int length = (int)segment.byteSize();
-                if (length > SPLIT_THRESHOLD) {
-                    SumSegment s1 = new SumSegment(segment.asSlice(0, length / 2));
-                    SumSegment s2 = new SumSegment(segment.asSlice(length / 2, length / 2));
-                    s1.fork();
-                    s2.fork();
-                    return s1.join() + s2.join();
-                } else {
-                    int sum = 0;
-                    MemoryAddress base = segment.baseAddress();
-                    for (int i = 0 ; i < length / CARRIER_SIZE ; i++) {
-                        sum += (int)VH_int.get(base, (long)i);
-                    }
-                    return sum;
-                }
-            }
-        }
+        return new SumUnsafe(address, 0, ALLOC_SIZE).invoke();
     }
 
     static class SumUnsafe extends RecursiveTask<Integer> {
@@ -180,6 +182,34 @@ public class ParallelSum {
                     res += unsafe.getInt(start + address + i);
                 }
                 return res;
+            }
+        }
+    }
+
+    static class SumSegment extends RecursiveTask<Integer> {
+
+        final static int SPLIT_THRESHOLD = 1024 * 8;
+
+        private final Spliterator<MemorySegment> splitter;
+        private final ToIntFunction<MemorySegment> mapper;
+        int result;
+
+        SumSegment(Spliterator<MemorySegment> splitter, ToIntFunction<MemorySegment> mapper) {
+            this.splitter = splitter;
+            this.mapper = mapper;
+        }
+
+        @Override
+        protected Integer compute() {
+            if (splitter.estimateSize() > SPLIT_THRESHOLD) {
+                SumSegment sub = new SumSegment(splitter.trySplit(), mapper);
+                sub.fork();
+                return compute() + sub.join();
+            } else {
+                splitter.forEachRemaining(s -> {
+                    result += mapper.applyAsInt(s);
+                });
+                return result;
             }
         }
     }

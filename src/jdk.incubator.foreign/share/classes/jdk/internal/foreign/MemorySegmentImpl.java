@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SequenceLayout;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
@@ -39,6 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 
 /**
  * This class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
@@ -82,6 +85,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         this(min, base, length, DEFAULT_MASK, owner, scope);
     }
 
+    @ForceInline
     private MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
         this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
@@ -94,17 +98,24 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     // MemorySegment methods
 
     @Override
-    public final MemorySegmentImpl asSlice(long offset, long newSize) {
+    public final MemorySegment asSlice(long offset, long newSize) {
         checkBounds(offset, newSize);
+        return asSliceNoCheck(offset, newSize);
+    }
+
+    @ForceInline
+    private MemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
         return new MemorySegmentImpl(min + offset, base, newSize, mask, owner, scope);
     }
 
     @Override
-    public MemorySegment acquire() {
-        if (!isSet(ACQUIRE)) {
-            throw unsupportedAccessMode(ACQUIRE);
+    public Spliterator<MemorySegment> spliterator(SequenceLayout sequenceLayout) {
+        checkValidState();
+        if (sequenceLayout.byteSize() != byteSize()) {
+            throw new IllegalArgumentException();
         }
-        return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
+        return new SegmentSplitter(sequenceLayout.elementLayout().byteSize(), sequenceLayout.elementCount().getAsLong(),
+                this.withAccessModes(accessModes() & ~CLOSE));
     }
 
     @Override
@@ -134,6 +145,10 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
             throw unsupportedAccessMode(CLOSE);
         }
         checkValidState();
+        closeNoCheck();
+    }
+
+    private void closeNoCheck() {
         scope.close();
     }
 
@@ -161,7 +176,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public MemorySegment withAccessModes(int accessModes) {
+    public MemorySegmentImpl withAccessModes(int accessModes) {
         checkAccessModes(accessModes);
         if ((~accessModes() & accessModes) != 0) {
             throw new UnsupportedOperationException("Cannot acquire more access modes");
@@ -217,6 +232,13 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     // Helper methods
+
+    private MemorySegmentImpl acquire() {
+        if (Thread.currentThread() != owner && !isSet(ACQUIRE)) {
+            throw unsupportedAccessMode(ACQUIRE);
+        }
+        return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
+    }
 
     void checkRange(long offset, long length, boolean writeAccess) {
         checkValidState();
@@ -295,4 +317,88 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return Math.abs(Objects.hash(base, min, NONCE));
     }
 
+    static class SegmentSplitter implements Spliterator<MemorySegment> {
+        MemorySegmentImpl segment;
+        long elemCount;
+        final long elementSize;
+        long currentIndex;
+
+        SegmentSplitter(long elementSize, long elemCount, MemorySegmentImpl segment) {
+            this.segment = segment;
+            this.elementSize = elementSize;
+            this.elemCount = elemCount;
+        }
+
+        @Override
+        public SegmentSplitter trySplit() {
+            if (currentIndex == 0 && elemCount > 1) {
+                MemorySegmentImpl parent = segment;
+                long rem = elemCount % 2;
+                long split = elemCount / 2;
+                long lobound = split * elementSize;
+                long hibound = lobound + (rem * elementSize);
+                elemCount  = split + rem;
+                segment = parent.asSliceNoCheck(lobound, hibound);
+                return new SegmentSplitter(elementSize, split, parent.asSliceNoCheck(0, lobound));
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super MemorySegment> action) {
+            Objects.requireNonNull(action);
+            if (currentIndex < elemCount) {
+                MemorySegmentImpl acquired = segment.acquire();
+                try {
+                    action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
+                } finally {
+                    acquired.closeNoCheck();
+                    currentIndex++;
+                    if (currentIndex == elemCount) {
+                        segment = null;
+                    }
+                }
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super MemorySegment> action) {
+            Objects.requireNonNull(action);
+            if (currentIndex < elemCount) {
+                MemorySegmentImpl acquired = segment.acquire();
+                try {
+                    if (acquired.isSmall()) {
+                        int index = (int) currentIndex;
+                        int limit = (int) elemCount;
+                        int elemSize = (int) elementSize;
+                        for (; index < limit; index++) {
+                            action.accept(acquired.asSliceNoCheck(index * elemSize, elemSize));
+                        }
+                    } else {
+                        for (long i = currentIndex ; i < elemCount ; i++) {
+                            action.accept(acquired.asSliceNoCheck(i * elementSize, elementSize));
+                        }
+                    }
+                } finally {
+                    acquired.closeNoCheck();
+                    currentIndex = elemCount;
+                    segment = null;
+                }
+            }
+        }
+
+        @Override
+        public long estimateSize() {
+            return elemCount;
+        }
+
+        @Override
+        public int characteristics() {
+            return NONNULL | SUBSIZED | SIZED | IMMUTABLE | ORDERED;
+        }
+    }
 }

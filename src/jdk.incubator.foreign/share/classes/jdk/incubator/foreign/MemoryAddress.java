@@ -90,7 +90,7 @@ public interface MemoryAddress {
      * can happen, for instance, if the segment associated with one address is a <em>slice</em>
      * (see {@link MemorySegment#asSlice(long, long)}) of the segment associated with the other address. Moreover,
      * two addresses might be considered equals despite differences in the temporal bounds associated with their
-     * corresponding segments (this is possible, for example, as a result of calls to {@link MemorySegment#acquire()}).
+     * corresponding segments.
      *
      * @param that the object to be compared for equality with this address.
      * @return {@code true} if the specified object is equal to this address.
