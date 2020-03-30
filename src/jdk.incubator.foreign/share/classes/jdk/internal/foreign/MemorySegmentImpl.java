@@ -204,7 +204,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
 
     @Override
     public final void checkValidState() {
-        if (owner != Thread.currentThread()) {
+        if (owner != null && owner != Thread.currentThread()) {
             throw new IllegalStateException("Attempt to access segment outside owning thread");
         }
         scope.checkAliveConfined();
@@ -228,6 +228,11 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
             throw unsupportedAccessMode(ACQUIRE);
         }
         return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
+    }
+
+    public MemorySegment asUnconfined() {
+        checkValidState();
+        return new MemorySegmentImpl(min, base, length, mask, null, scope);
     }
 
     void checkRange(long offset, long length, boolean writeAccess) {
