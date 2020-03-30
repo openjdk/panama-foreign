@@ -30,15 +30,14 @@
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
-import org.testng.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.LongStream;
 
+import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
 public class TestReshape {
@@ -126,6 +125,11 @@ public class TestReshape {
             return shapes.iterator();
         }
     }
+    
+    static MemoryLayout POINT = MemoryLayout.ofStruct(
+            MemoryLayouts.JAVA_INT,
+            MemoryLayouts.JAVA_INT
+    );
 
     @DataProvider(name = "shapes")
     Object[][] shapes() {
@@ -178,6 +182,13 @@ public class TestReshape {
                 { MemoryLayouts.JAVA_DOUBLE, new long[] { 2, 8, 16 } },
                 { MemoryLayouts.JAVA_DOUBLE, new long[] { 16, 8, 2 } },
                 { MemoryLayouts.JAVA_DOUBLE, new long[] { 8, 16, 2 } },
+
+                { POINT, new long[] { 256 } },
+                { POINT, new long[] { 16, 16 } },
+                { POINT, new long[] { 4, 4, 4, 4 } },
+                { POINT, new long[] { 2, 8, 16 } },
+                { POINT, new long[] { 16, 8, 2 } },
+                { POINT, new long[] { 8, 16, 2 } },
         };
     }
 }
