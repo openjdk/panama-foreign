@@ -27,7 +27,9 @@
 package jdk.incubator.foreign.unsafe;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.MemorySegmentImpl;
 
 /**
  * Unsafe methods to allow interop between sun.misc.unsafe and memory access API.
@@ -64,5 +66,17 @@ public final class ForeignUnsafe {
      */
     public static long getUnsafeOffset(MemoryAddress address) {
         return ((MemoryAddressImpl)address).unsafeGetOffset();
+    }
+
+    /**
+     * Returns a non-confined memory segment that has the same spatial and temporal bounds as the provided segment.
+     * Since the returned segment can be effectively accessed by multiple threads in an unconstrained fashion,
+     * this method should be used with care, as it might lead to JVM crashes - e.g. in the case where a thread {@code A}
+     * closes a segment while another thread {@code B} is accessing it.
+     * @param segment the segment from which an unconfined view is to be created.
+     * @return a non-confined memory segment that has the same spatial and temporal bounds as the provided segment.
+     */
+    public static MemorySegment asUnconfined(MemorySegment segment) {
+        return ((MemorySegmentImpl)segment).asUnconfined();
     }
 }
