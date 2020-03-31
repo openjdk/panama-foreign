@@ -86,7 +86,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @ForceInline
-    private MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
+    MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
         this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
         this.min = min;
