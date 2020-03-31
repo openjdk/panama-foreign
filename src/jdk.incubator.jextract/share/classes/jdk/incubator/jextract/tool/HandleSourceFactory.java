@@ -43,6 +43,7 @@ import java.net.URL;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -155,15 +156,17 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
         builder.classEnd();
         String src = builder.build();
 
-        URL runtimeHelper = HandleSourceFactory.class.getResource("resources/RuntimeHelper.template");
+        URL runtimeHelper = HandleSourceFactory.class.getResource("resources/RuntimeHelper.java.template");
 
         try {
-            return new JavaFileObject[] {
-                    fileFromString(pkgName, clsName, src),
-                    fileFromString(pkgName,"RuntimeHelper", (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
+            List<JavaFileObject> files = new ArrayList<>();
+            files.add(fileFromString(pkgName, clsName, src));
+            files.add(fileFromString(pkgName,"RuntimeHelper", (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
                             Files.readAllLines(Paths.get(runtimeHelper.toURI()))
-                            .stream().collect(Collectors.joining("\n")).replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER))
-            };
+                            .stream().collect(Collectors.joining("\n")).replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER)));
+            files.add(getCstringFile(pkgName));
+            files.addAll(getPrimitiveTypeFiles(pkgName));
+            return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         } catch (URISyntaxException ex2) {
@@ -184,6 +187,49 @@ public class HandleSourceFactory implements Declaration.Visitor<Void, Declaratio
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    private JavaFileObject getCstringFile(String pkgName) throws IOException, URISyntaxException {
+        var cstringFile = HandleSourceFactory.class.getResource("resources/Cstring.java.template");
+        var lines = Files.readAllLines(Paths.get(cstringFile.toURI()));
+        String pkgPrefix = pkgName.isEmpty()? "" : "package " + pkgName + ";\n";
+        String contents =  pkgPrefix +
+                lines.stream().collect(Collectors.joining("\n"));
+        return fileFromString(pkgName,"Cstring", contents);
+    }
+
+    private List<JavaFileObject> getPrimitiveTypeFiles(String pkgName) throws IOException, URISyntaxException {
+        var abi = InternalForeign.getInstancePrivileged().getSystemABI();
+        var cXJavaFile = HandleSourceFactory.class.getResource("resources/C-X.java.template");
+        var lines = Files.readAllLines(Paths.get(cXJavaFile.toURI()));
+
+        List<JavaFileObject> files = new ArrayList<>();
+        String pkgPrefix = pkgName.isEmpty()? "" : "package " + pkgName + ";\n";
+        for (SystemABI.Type type : SystemABI.Type.values()) {
+            // FIXME: ignore pointer and complex type
+            if (type == SystemABI.Type.POINTER || type == SystemABI.Type.COMPLEX_LONG_DOUBLE) {
+                continue;
+            }
+
+            String typeName = type.name().toLowerCase();
+            MemoryLayout layout = abi.layoutFor(type).get();
+            String contents =  pkgPrefix +
+                    lines.stream().collect(Collectors.joining("\n")).
+                            replace("-X", typeName).
+                            replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER).
+                            replace("${LAYOUT}", TypeTranslator.typeToLayoutName(type)).
+                            replace("${CARRIER}", classForType(type, layout).getName());
+            files.add(fileFromString(pkgName,"C" + typeName, contents));
+        }
+        return files;
+    }
+
+    private static Class<?> classForType(SystemABI.Type type, MemoryLayout layout) {
+        boolean isFloat = switch(type) {
+            case FLOAT, DOUBLE, LONG_DOUBLE -> true;
+            default-> false;
+        };
+        return TypeTranslator.layoutToClass(isFloat, layout);
     }
 
     private JavaFileObject fileFromString(String pkgName, String clsName, String contents) {

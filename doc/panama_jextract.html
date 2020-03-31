@@ -115,6 +115,13 @@
 <li><a href="#java-code-that-uses-libcurl">Java code that uses libcurl</a></li>
 <li><a href="#running-the-java-code-that-uses-libcurl">Running the java code that uses libcurl</a></li>
 </ul></li>
+<li><a href="#using-blas-library">Using BLAS library</a>
+<ul>
+<li><a href="#installing-openblas-mac-os">Installing OpenBLAS (Mac OS)</a></li>
+<li><a href="#jextracting-cblas.h-macos">jextracting cblas.h (MacOS)</a></li>
+<li><a href="#java-sample-code-that-uses-cblas-library">Java sample code that uses cblas library</a></li>
+<li><a href="#compiling-and-running-the-above-lapack-sample">Compiling and running the above LAPACK sample</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -267,5 +274,98 @@
 <span id="cb15-2"><a href="#cb15-2"></a><span class="co"># run this shell script by passing a URL as first argument</span></span>
 <span id="cb15-3"><a href="#cb15-3"></a><span class="ex">java</span> -Djdk.incubator.foreign.Foreign=permit --add-modules \</span>
 <span id="cb15-4"><a href="#cb15-4"></a>    jdk.incubator.foreign -Djava.library.path=/usr/lib CurlMain.java <span class="va">$*</span></span></code></pre></div>
+<h2 id="using-blas-library">Using BLAS library</h2>
+<p>BLAS is a popular library that allows fast matrix and vector computation: <a href="http://www.netlib.org/blas/">http://www.netlib.org/blas/</a>.</p>
+<h3 id="installing-openblas-mac-os">Installing OpenBLAS (Mac OS)</h3>
+<p>On Mac, blas is available as part of the OpenBLAS library: <a href="https://github.com/xianyi/OpenBLAS/wiki">https://github.com/xianyi/OpenBLAS/wiki</a></p>
+<p>OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version.</p>
+<p>You can install openblas using HomeBrew</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1"></a></span>
+<span id="cb16-2"><a href="#cb16-2"></a><span class="ex">brew</span> install openblas</span></code></pre></div>
+<p>It installs include and lib directories under /usr/local/opt/openblas</p>
+<h3 id="jextracting-cblas.h-macos">jextracting cblas.h (MacOS)</h3>
+<p>The following command can be used to extract cblas.h on MacOs</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1"></a></span>
+<span id="cb17-2"><a href="#cb17-2"></a><span class="ex">jextract</span> -C <span class="st">&quot;-D FORCE_OPENBLAS_COMPLEX_STRUCT&quot;</span> \</span>
+<span id="cb17-3"><a href="#cb17-3"></a>  -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \</span>
+<span id="cb17-4"><a href="#cb17-4"></a>  --filter cblas.h \</span>
+<span id="cb17-5"><a href="#cb17-5"></a>  -l openblas -t blas /usr/local/opt/openblas/include/cblas.h</span></code></pre></div>
+<h3 id="java-sample-code-that-uses-cblas-library">Java sample code that uses cblas library</h3>
+<div class="sourceCode" id="cb18"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb18-1"><a href="#cb18-1"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.AllocationScope;</span></span>
+<span id="cb18-2"><a href="#cb18-2"></a><span class="kw">import</span><span class="im"> blas.*;</span></span>
+<span id="cb18-3"><a href="#cb18-3"></a><span class="kw">import static</span><span class="im"> blas.RuntimeHelper.*;</span></span>
+<span id="cb18-4"><a href="#cb18-4"></a><span class="kw">import static</span><span class="im"> blas.cblas_h.*;</span></span>
+<span id="cb18-5"><a href="#cb18-5"></a></span>
+<span id="cb18-6"><a href="#cb18-6"></a><span class="kw">public</span> <span class="kw">class</span> TestBlas {</span>
+<span id="cb18-7"><a href="#cb18-7"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb18-8"><a href="#cb18-8"></a>        <span class="dt">int</span> Layout;</span>
+<span id="cb18-9"><a href="#cb18-9"></a>        <span class="dt">int</span> transa;</span>
+<span id="cb18-10"><a href="#cb18-10"></a></span>
+<span id="cb18-11"><a href="#cb18-11"></a>        <span class="dt">double</span> alpha, beta;</span>
+<span id="cb18-12"><a href="#cb18-12"></a>        <span class="dt">int</span> m, n, lda, incx, incy, i;</span>
+<span id="cb18-13"><a href="#cb18-13"></a></span>
+<span id="cb18-14"><a href="#cb18-14"></a>        Layout = CblasColMajor;</span>
+<span id="cb18-15"><a href="#cb18-15"></a>        transa = CblasNoTrans;</span>
+<span id="cb18-16"><a href="#cb18-16"></a></span>
+<span id="cb18-17"><a href="#cb18-17"></a>        m = <span class="dv">4</span>; <span class="co">/* Size of Column ( the number of rows ) */</span></span>
+<span id="cb18-18"><a href="#cb18-18"></a>        n = <span class="dv">4</span>; <span class="co">/* Size of Row ( the number of columns ) */</span></span>
+<span id="cb18-19"><a href="#cb18-19"></a>        lda = <span class="dv">4</span>; <span class="co">/* Leading dimension of 5 * 4 matrix is 5 */</span></span>
+<span id="cb18-20"><a href="#cb18-20"></a>        incx = <span class="dv">1</span>;</span>
+<span id="cb18-21"><a href="#cb18-21"></a>        incy = <span class="dv">1</span>;</span>
+<span id="cb18-22"><a href="#cb18-22"></a>        alpha = <span class="dv">1</span>;</span>
+<span id="cb18-23"><a href="#cb18-23"></a>        beta = <span class="dv">0</span>;</span>
+<span id="cb18-24"><a href="#cb18-24"></a></span>
+<span id="cb18-25"><a href="#cb18-25"></a>        <span class="dt">double</span>[] a = <span class="kw">new</span> <span class="dt">double</span>[m*n];</span>
+<span id="cb18-26"><a href="#cb18-26"></a>        <span class="dt">double</span>[] x = <span class="kw">new</span> <span class="dt">double</span>[n];</span>
+<span id="cb18-27"><a href="#cb18-27"></a>        <span class="dt">double</span>[] y = <span class="kw">new</span> <span class="dt">double</span>[n];</span>
+<span id="cb18-28"><a href="#cb18-28"></a></span>
+<span id="cb18-29"><a href="#cb18-29"></a>        <span class="co">/* The elements of the first column */</span></span>
+<span id="cb18-30"><a href="#cb18-30"></a>        a[<span class="dv">0</span>] = <span class="fl">1.</span><span class="dv">0</span>;</span>
+<span id="cb18-31"><a href="#cb18-31"></a>        a[<span class="dv">1</span>] = <span class="fl">2.</span><span class="dv">0</span>;</span>
+<span id="cb18-32"><a href="#cb18-32"></a>        a[<span class="dv">2</span>] = <span class="fl">3.</span><span class="dv">0</span>;</span>
+<span id="cb18-33"><a href="#cb18-33"></a>        a[<span class="dv">3</span>] = <span class="fl">4.</span><span class="dv">0</span>;</span>
+<span id="cb18-34"><a href="#cb18-34"></a>        <span class="co">/* The elements of the second column */</span></span>
+<span id="cb18-35"><a href="#cb18-35"></a>        a[m] = <span class="fl">1.</span><span class="dv">0</span>;</span>
+<span id="cb18-36"><a href="#cb18-36"></a>        a[m + <span class="dv">1</span>] = <span class="fl">1.</span><span class="dv">0</span>;</span>
+<span id="cb18-37"><a href="#cb18-37"></a>        a[m + <span class="dv">2</span>] = <span class="fl">1.</span><span class="dv">0</span>;</span>
+<span id="cb18-38"><a href="#cb18-38"></a>        a[m + <span class="dv">3</span>] = <span class="fl">1.</span><span class="dv">0</span>;</span>
+<span id="cb18-39"><a href="#cb18-39"></a>        <span class="co">/* The elements of the third column */</span></span>
+<span id="cb18-40"><a href="#cb18-40"></a>        a[m * <span class="dv">2</span>] = <span class="fl">3.</span><span class="dv">0</span>;</span>
+<span id="cb18-41"><a href="#cb18-41"></a>        a[m * <span class="dv">2</span> + <span class="dv">1</span>] = <span class="fl">4.</span><span class="dv">0</span>;</span>
+<span id="cb18-42"><a href="#cb18-42"></a>        a[m * <span class="dv">2</span> + <span class="dv">2</span>] = <span class="fl">5.</span><span class="dv">0</span>;</span>
+<span id="cb18-43"><a href="#cb18-43"></a>        a[m * <span class="dv">2</span> + <span class="dv">3</span>] = <span class="fl">6.</span><span class="dv">0</span>;</span>
+<span id="cb18-44"><a href="#cb18-44"></a>        <span class="co">/* The elements of the fourth column */</span></span>
+<span id="cb18-45"><a href="#cb18-45"></a>        a[m * <span class="dv">3</span>] = <span class="fl">5.</span><span class="dv">0</span>;</span>
+<span id="cb18-46"><a href="#cb18-46"></a>        a[m * <span class="dv">3</span> + <span class="dv">1</span>] = <span class="fl">6.</span><span class="dv">0</span>;</span>
+<span id="cb18-47"><a href="#cb18-47"></a>        a[m * <span class="dv">3</span> + <span class="dv">2</span>] = <span class="fl">7.</span><span class="dv">0</span>;</span>
+<span id="cb18-48"><a href="#cb18-48"></a>        a[m * <span class="dv">3</span> + <span class="dv">3</span>] = <span class="fl">8.</span><span class="dv">0</span>;</span>
+<span id="cb18-49"><a href="#cb18-49"></a></span>
+<span id="cb18-50"><a href="#cb18-50"></a>        <span class="co">/* The elemetns of x and y */</span></span>
+<span id="cb18-51"><a href="#cb18-51"></a>        x[<span class="dv">0</span>] = <span class="fl">1.</span><span class="dv">0</span>;</span>
+<span id="cb18-52"><a href="#cb18-52"></a>        x[<span class="dv">1</span>] = <span class="fl">2.</span><span class="dv">0</span>;</span>
+<span id="cb18-53"><a href="#cb18-53"></a>        x[<span class="dv">2</span>] = <span class="fl">1.</span><span class="dv">0</span>;</span>
+<span id="cb18-54"><a href="#cb18-54"></a>        x[<span class="dv">3</span>] = <span class="fl">1.</span><span class="dv">0</span>;</span>
+<span id="cb18-55"><a href="#cb18-55"></a>        y[<span class="dv">0</span>] = <span class="fl">0.</span><span class="dv">0</span>;</span>
+<span id="cb18-56"><a href="#cb18-56"></a>        y[<span class="dv">1</span>] = <span class="fl">0.</span><span class="dv">0</span>;</span>
+<span id="cb18-57"><a href="#cb18-57"></a>        y[<span class="dv">2</span>] = <span class="fl">0.</span><span class="dv">0</span>;</span>
+<span id="cb18-58"><a href="#cb18-58"></a>        y[<span class="dv">3</span>] = <span class="fl">0.</span><span class="dv">0</span>;</span>
+<span id="cb18-59"><a href="#cb18-59"></a>        <span class="kw">try</span> (AllocationScope scope = AllocationScope.<span class="fu">unboundedNativeScope</span>()) {</span>
+<span id="cb18-60"><a href="#cb18-60"></a>            var aPtr = Cdouble.<span class="fu">allocateArray</span>(a, scope);</span>
+<span id="cb18-61"><a href="#cb18-61"></a>            var xPtr = Cdouble.<span class="fu">allocateArray</span>(x, scope);</span>
+<span id="cb18-62"><a href="#cb18-62"></a>            var yPtr = Cdouble.<span class="fu">allocateArray</span>(y, scope);</span>
+<span id="cb18-63"><a href="#cb18-63"></a></span>
+<span id="cb18-64"><a href="#cb18-64"></a>            <span class="fu">cblas_dgemv</span>(Layout, transa, m, n, alpha, aPtr, lda, xPtr, incx, beta, yPtr, incy);</span>
+<span id="cb18-65"><a href="#cb18-65"></a>            <span class="co">/* Print y */</span></span>
+<span id="cb18-66"><a href="#cb18-66"></a>            <span class="kw">for</span> (i = <span class="dv">0</span>; i &lt; n; i++) {</span>
+<span id="cb18-67"><a href="#cb18-67"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">print</span>(<span class="bu">String</span><span class="fu">.format</span>(<span class="st">&quot; y</span><span class="sc">%d</span><span class="st"> = </span><span class="sc">%f\n</span><span class="st">&quot;</span>, i, Cdouble.<span class="fu">get</span>(yPtr, (<span class="dt">long</span>)i)));</span>
+<span id="cb18-68"><a href="#cb18-68"></a>            }</span>
+<span id="cb18-69"><a href="#cb18-69"></a>        }</span>
+<span id="cb18-70"><a href="#cb18-70"></a>    }</span>
+<span id="cb18-71"><a href="#cb18-71"></a>}</span></code></pre></div>
+<h3 id="compiling-and-running-the-above-lapack-sample">Compiling and running the above LAPACK sample</h3>
+<div class="sourceCode" id="cb19"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1"></a></span>
+<span id="cb19-2"><a href="#cb19-2"></a><span class="ex">java</span> -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign \</span>
+<span id="cb19-3"><a href="#cb19-3"></a>    -Djava.library.path=/usr/local/opt/openblas/lib \</span>
+<span id="cb19-4"><a href="#cb19-4"></a>    TestBlas.java</span></code></pre></div>
 </body>
 </html>

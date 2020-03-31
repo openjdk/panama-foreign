@@ -230,3 +230,123 @@ java -Djdk.incubator.foreign.Foreign=permit --add-modules \
     jdk.incubator.foreign -Djava.library.path=/usr/lib CurlMain.java $*
 
 ```
+
+## Using BLAS library
+
+BLAS is a popular library that allows fast matrix and vector computation: [http://www.netlib.org/blas/](http://www.netlib.org/blas/).
+
+### Installing OpenBLAS (Mac OS)
+
+On Mac, blas is available as part of the OpenBLAS library: [https://github.com/xianyi/OpenBLAS/wiki](https://github.com/xianyi/OpenBLAS/wiki)
+
+OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version.
+
+You can install openblas using HomeBrew
+
+```sh
+
+brew install openblas
+
+```
+
+It installs include and lib directories under /usr/local/opt/openblas
+
+### jextracting cblas.h (MacOS)
+
+The following command can be used to extract cblas.h on MacOs
+
+```sh
+
+jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
+  -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \
+  --filter cblas.h \
+  -l openblas -t blas /usr/local/opt/openblas/include/cblas.h
+
+```
+
+### Java sample code that uses cblas library
+
+```java
+import jdk.incubator.foreign.AllocationScope;
+import blas.*;
+import static blas.RuntimeHelper.*;
+import static blas.cblas_h.*;
+
+public class TestBlas {
+    public static void main(String[] args) {
+        int Layout;
+        int transa;
+
+        double alpha, beta;
+        int m, n, lda, incx, incy, i;
+
+        Layout = CblasColMajor;
+        transa = CblasNoTrans;
+
+        m = 4; /* Size of Column ( the number of rows ) */
+        n = 4; /* Size of Row ( the number of columns ) */
+        lda = 4; /* Leading dimension of 5 * 4 matrix is 5 */
+        incx = 1;
+        incy = 1;
+        alpha = 1;
+        beta = 0;
+
+        double[] a = new double[m*n];
+        double[] x = new double[n];
+        double[] y = new double[n];
+
+        /* The elements of the first column */
+        a[0] = 1.0;
+        a[1] = 2.0;
+        a[2] = 3.0;
+        a[3] = 4.0;
+        /* The elements of the second column */
+        a[m] = 1.0;
+        a[m + 1] = 1.0;
+        a[m + 2] = 1.0;
+        a[m + 3] = 1.0;
+        /* The elements of the third column */
+        a[m * 2] = 3.0;
+        a[m * 2 + 1] = 4.0;
+        a[m * 2 + 2] = 5.0;
+        a[m * 2 + 3] = 6.0;
+        /* The elements of the fourth column */
+        a[m * 3] = 5.0;
+        a[m * 3 + 1] = 6.0;
+        a[m * 3 + 2] = 7.0;
+        a[m * 3 + 3] = 8.0;
+
+        /* The elemetns of x and y */
+        x[0] = 1.0;
+        x[1] = 2.0;
+        x[2] = 1.0;
+        x[3] = 1.0;
+        y[0] = 0.0;
+        y[1] = 0.0;
+        y[2] = 0.0;
+        y[3] = 0.0;
+        try (AllocationScope scope = AllocationScope.unboundedNativeScope()) {
+            var aPtr = Cdouble.allocateArray(a, scope);
+            var xPtr = Cdouble.allocateArray(x, scope);
+            var yPtr = Cdouble.allocateArray(y, scope);
+
+            cblas_dgemv(Layout, transa, m, n, alpha, aPtr, lda, xPtr, incx, beta, yPtr, incy);
+            /* Print y */
+            for (i = 0; i < n; i++) {
+                System.out.print(String.format(" y%d = %f\n", i, Cdouble.get(yPtr, (long)i)));
+            }
+        }
+    }
+}
+
+```
+
+### Compiling and running the above LAPACK sample
+
+```sh
+
+java -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign \
+    -Djava.library.path=/usr/local/opt/openblas/lib \
+    TestBlas.java
+
+```
