@@ -24,9 +24,10 @@
 
 /*
  * @test
- * @run testng TestSharedAccess
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit TestSharedAccess
  */
 
+import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -90,6 +91,30 @@ public class TestSharedAccess {
             assertEquals(accessCount.get(), 1024);
         }
     }
+
+    @Test
+    public void testSharedUnsafe() throws Throwable {
+        try (MemorySegment s = MemorySegment.allocateNative(4)) {
+            setInt(s.baseAddress(), 42);
+            assertEquals(getInt(s.baseAddress()), 42);
+            List<Thread> threads = new ArrayList<>();
+            MemorySegment sharedSegment = Foreign.getInstance().asUnconfined(s);
+            for (int i = 0 ; i < 1000 ; i++) {
+                threads.add(new Thread(() -> {
+                    assertEquals(getInt(sharedSegment.baseAddress()), 42);
+                }));
+            }
+            threads.forEach(Thread::start);
+            threads.forEach(t -> {
+                try {
+                    t.join();
+                } catch (Throwable e) {
+                    throw new IllegalStateException(e);
+                }
+            });
+        }
+    }
+
 
     @Test(expectedExceptions=IllegalStateException.class)
     public void testBadCloseWithPendingAcquire() throws InterruptedException {
