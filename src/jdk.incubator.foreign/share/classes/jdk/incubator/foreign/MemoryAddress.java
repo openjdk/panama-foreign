@@ -127,21 +127,13 @@ public interface MemoryAddress {
     }
 
     /**
-     * A native memory address instance modelling the {@code NULL} pointer. This address is backed by a memory segment
-     * which can be neither closed, nor dereferenced.
-     */
-    MemoryAddress NULL = MemorySegmentImpl.NOTHING.baseAddress();
-
-    /**
      * Obtain a new memory address instance from given long address. The returned address is backed by a memory segment
      * which can be neither closed, nor dereferenced.
      * @param value the long address.
      * @return the new memory address instance.
      */
     static MemoryAddress ofLong(long value) {
-        return value == 0 ?
-                NULL :
-                MemorySegmentImpl.NOTHING.baseAddress().addOffset(value);
+        return MemorySegmentImpl.NOTHING.baseAddress().addOffset(value);
     }
 
 }

@@ -132,18 +132,10 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     // helper methods
 
     public static long addressof(MemoryAddress address) {
-        MemoryAddressImpl addressImpl = (MemoryAddressImpl)address;
+        MemoryAddressImpl addressImpl = (MemoryAddressImpl) address;
         if (addressImpl.unsafeGetBase() != null) {
             throw new IllegalStateException("Heap address!");
         }
         return addressImpl.unsafeGetOffset();
-    }
-
-    public static MemoryAddress ofLongUnchecked(long value) {
-        return ofLongUnchecked(value, Long.MAX_VALUE);
-    }
-
-    public static MemoryAddress ofLongUnchecked(long value, long byteSize) {
-        return new MemoryAddressImpl((MemorySegmentImpl)Utils.makeNativeSegmentUnchecked(value, byteSize), 0);
     }
 }
