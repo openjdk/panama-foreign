@@ -133,7 +133,7 @@ public final class SequenceLayout extends AbstractLayout {
     var reshapeSeqImplicit2 = seq.reshape(2, -1);
      * }</pre>
      * @param elementCounts an array of element counts, of which at most one can be {@code -1}.
-     * @return a new sequence layout where element element layouts in the flattened projection of this
+     * @return a new sequence layout where element layouts in the flattened projection of this
      * sequence layout (see {@link #flatten()}) are re-arranged into one or more nested sequence layouts.
      * @throws NullPointerException if {@code elementCounts == null}.
      * @throws UnsupportedOperationException if this sequence layout does not have an element count.
