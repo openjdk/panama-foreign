@@ -202,19 +202,25 @@ public final class SequenceLayout extends AbstractLayout {
      * }</pre>
      * @return a new sequence layout with the same size as this layout (but, possibly, with different
      * element count), whose element layout is not a sequence layout.
-     * @throws UnsupportedOperationException if this sequence layout does not have an element count.
+     * @throws UnsupportedOperationException if this sequence layout, or one of the nested sequence layouts being
+     * flattened, does not have an element count.
      */
     public SequenceLayout flatten() {
         if (!elementCount().isPresent()) {
-            throw new UnsupportedOperationException("Cannot flatten a sequence layout whose element count is unspecified");
+            throw badUnboundSequenceLayout();
         }
         long count = elementCount().getAsLong();
         MemoryLayout elemLayout = elementLayout();
         while (elemLayout instanceof SequenceLayout) {
-            count = count * ((SequenceLayout)elemLayout).elementCount().getAsLong();
-            elemLayout = ((SequenceLayout)elemLayout).elementLayout();
+            SequenceLayout elemSeq = (SequenceLayout)elemLayout;
+            count = count * elemSeq.elementCount().orElseThrow(this::badUnboundSequenceLayout);
+            elemLayout = elemSeq.elementLayout();
         }
         return MemoryLayout.ofSequence(count, elemLayout);
+    }
+
+    private UnsupportedOperationException badUnboundSequenceLayout() {
+        return new UnsupportedOperationException("Cannot flatten a sequence layout whose element count is unspecified");
     }
 
     @Override
