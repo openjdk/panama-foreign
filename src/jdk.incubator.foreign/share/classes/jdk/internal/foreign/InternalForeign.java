@@ -68,6 +68,11 @@ public class InternalForeign implements Foreign {
     }
 
     @Override
+    public MemorySegment asUnconfined(MemorySegment segment) {
+        return ((MemorySegmentImpl)segment).asUnconfined();
+    }
+
+    @Override
     public SystemABI getSystemABI() {
         String arch = System.getProperty("os.arch");
         String os = System.getProperty("os.name");
