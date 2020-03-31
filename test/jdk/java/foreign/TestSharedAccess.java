@@ -24,17 +24,16 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.incubator.foreign.unsafe
- * @run testng TestSharedAccess
+ * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit TestSharedAccess
  */
 
+import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.unsafe.ForeignUnsafe;
-import org.testng.annotations.*;
+import org.testng.annotations.Test;
 
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ import java.util.List;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 public class TestSharedAccess {
 
@@ -99,7 +98,7 @@ public class TestSharedAccess {
             setInt(s.baseAddress(), 42);
             assertEquals(getInt(s.baseAddress()), 42);
             List<Thread> threads = new ArrayList<>();
-            MemorySegment sharedSegment = ForeignUnsafe.asUnconfined(s);
+            MemorySegment sharedSegment = Foreign.getInstance().asUnconfined(s);
             for (int i = 0 ; i < 1000 ; i++) {
                 threads.add(new Thread(() -> {
                     assertEquals(getInt(sharedSegment.baseAddress()), 42);

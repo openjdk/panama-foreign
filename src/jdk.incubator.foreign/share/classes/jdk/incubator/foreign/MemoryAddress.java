@@ -27,6 +27,7 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.MemorySegmentImpl;
 
 /**
  * A memory address encodes an offset within a given {@link MemorySegment}. Memory addresses are typically obtained
@@ -73,6 +74,15 @@ public interface MemoryAddress {
     MemorySegment segment();
 
     /**
+     * Reinterpret this address as an offset into the provided segment.
+     * @param segment the segment to be rebased
+     * @return a new address pointing to the same memory location through the provided segment
+     * @throws IllegalArgumentException if the provided segment is not a valid rebase target for this address. This
+     * can happen, for instance, if an heap-based addressed is rebased to an off-heap memory segment.
+     */
+    MemoryAddress rebase(MemorySegment segment);
+
+    /**
      * Compares the specified object with this address for equality. Returns {@code true} if and only if the specified
      * object is also an address, and it refers to the same memory location as this address.
      *
@@ -114,6 +124,16 @@ public interface MemoryAddress {
      */
     static void copy(MemoryAddress src, MemoryAddress dst, long bytes) {
         MemoryAddressImpl.copy((MemoryAddressImpl)src, (MemoryAddressImpl)dst, bytes);
+    }
+
+    /**
+     * Obtain a new memory address instance from given long address. The returned address is backed by a memory segment
+     * which can be neither closed, nor dereferenced.
+     * @param value the long address.
+     * @return the new memory address instance.
+     */
+    static MemoryAddress ofLong(long value) {
+        return MemorySegmentImpl.NOTHING.baseAddress().addOffset(value);
     }
 
 }

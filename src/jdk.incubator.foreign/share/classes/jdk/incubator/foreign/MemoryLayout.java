@@ -41,6 +41,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
@@ -285,6 +286,30 @@ public interface MemoryLayout extends Constable {
     MemoryLayout withBitAlignment(long bitAlignment);
 
     /**
+     * Returns the attribute with the given name if it exists, or an empty optional
+     *
+     * @param name the name of the attribute
+     * @return the optional attribute
+     */
+    Optional<Constable> attribute(String name);
+
+    /**
+     * Returns a new MemoryLayout with the given additional attribute
+     *
+     * @param name the name of the attribute
+     * @param value the value of the attribute
+     * @return the new MemoryLayout
+     */
+    MemoryLayout withAttribute(String name, Constable value);
+
+    /**
+     * Returns a stream of the names of the attributes of this layout
+     *
+     * @return the stream of names
+     */
+    Stream<String> attributes();
+
+    /**
      * Computes the offset, in bits, of the layout selected by a given layout path, where the path is considered rooted in this
      * layout.
      *
@@ -470,7 +495,7 @@ E * (S + I * F)
      * the same kind, have the same size, name and alignment constraints. Furthermore, depending on the layout kind, additional
      * conditions must be satisfied:
      * <ul>
-     *     <li>two value layouts are considered equal if they have the same endianness (see {@link ValueLayout#order()})</li>
+     *     <li>two value layouts are considered equal if they have the same byte order (see {@link ValueLayout#order()})</li>
      *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
      *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
      *     <li>two group layouts are considered equal if they are of the same kind (see {@link GroupLayout#isStruct()},
