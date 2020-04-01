@@ -27,9 +27,13 @@ package jdk.incubator.foreign;
 
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
 import sun.invoke.util.Wrapper;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
@@ -123,6 +127,27 @@ public final class MemoryHandles {
         //sorry, just the one!
     }
 
+    private static final MethodHandle LONG_TO_ADDRESS;
+    private static final MethodHandle ADDRESS_TO_LONG;
+    private static final MethodHandle ADD_OFFSET;
+    private static final MethodHandle ADD_STRIDE;
+
+    static {
+        try {
+            LONG_TO_ADDRESS = MethodHandles.lookup().findStatic(MemoryHandles.class, "longToAddress",
+                    MethodType.methodType(MemoryAddress.class, long.class));
+            ADDRESS_TO_LONG = MethodHandles.lookup().findStatic(MemoryHandles.class, "addressToLong",
+                    MethodType.methodType(long.class, MemoryAddress.class));
+            ADD_OFFSET = MethodHandles.lookup().findStatic(MemoryHandles.class, "addOffset",
+                    MethodType.methodType(MemoryAddress.class, MemoryAddress.class, long.class));
+
+            ADD_STRIDE = MethodHandles.lookup().findStatic(MemoryHandles.class, "addStride",
+                    MethodType.methodType(MemoryAddress.class, MemoryAddress.class, long.class, long.class));
+        } catch (Throwable ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
+
     /**
      * Creates a memory access var handle with the given carrier type and byte order.
      *
@@ -174,7 +199,7 @@ public final class MemoryHandles {
             throw new IllegalArgumentException("Bad alignment: " + alignmentBytes);
         }
 
-        return Utils.fixUpVarHandle(JLI.memoryAddressViewVarHandle(carrier, alignmentBytes - 1, byteOrder, 0, new long[]{}));
+        return Utils.fixUpVarHandle(JLI.memoryAccessVarHandle(carrier, alignmentBytes - 1, byteOrder, 0, new long[]{}));
     }
 
     /**
@@ -190,26 +215,27 @@ public final class MemoryHandles {
      * @param target the target memory access handle to access after the offset adjustment.
      * @param bytesOffset the offset, in bytes. Must be positive or zero.
      * @return the new memory access var handle.
-     * @throws IllegalArgumentException when the target var handle is not a memory access var handle,
-     * or when {@code bytesOffset < 0}, or otherwise incompatible with the alignment constraint.
+     * @throws IllegalArgumentException if {@code bytesOffset < 0}
      */
     public static VarHandle withOffset(VarHandle target, long bytesOffset) {
         if (bytesOffset < 0) {
             throw new IllegalArgumentException("Illegal offset: " + bytesOffset);
         }
 
-        long alignMask = JLI.memoryAddressAlignmentMask(target);
-
-        if ((bytesOffset & alignMask) != 0) {
-            throw new IllegalArgumentException("Offset " + bytesOffset + " does not conform to alignment " + (alignMask + 1));
+        if (JLI.isMemoryAccessVarHandle(target) &&
+                (bytesOffset & JLI.memoryAddressAlignmentMask(target)) == 0) {
+            //flatten
+            return Utils.fixUpVarHandle(JLI.memoryAccessVarHandle(
+                    JLI.memoryAddressCarrier(target),
+                    JLI.memoryAddressAlignmentMask(target),
+                    JLI.memoryAddressByteOrder(target),
+                    JLI.memoryAddressOffset(target) + bytesOffset,
+                    JLI.memoryAddressStrides(target)));
+        } else {
+            //slow path
+            VarHandle res = MethodHandles.collectCoordinates(target, 0, ADD_OFFSET);
+            return MethodHandles.insertCoordinates(res, 1, bytesOffset);
         }
-
-        return Utils.fixUpVarHandle(JLI.memoryAddressViewVarHandle(
-                JLI.memoryAddressCarrier(target),
-                alignMask,
-                JLI.memoryAddressByteOrder(target),
-                JLI.memoryAddressOffset(target) + bytesOffset,
-                JLI.memoryAddressStrides(target)));
     }
 
     /**
@@ -226,33 +252,62 @@ public final class MemoryHandles {
      * @param target the target memory access handle to access after the scale adjustment.
      * @param bytesStride the stride, in bytes, by which to multiply the coordinate value. Must be greater than zero.
      * @return the new memory access var handle.
-     * @throws IllegalArgumentException when the target var handle is not a memory access var handle,
-     * or if {@code bytesStride <= 0}, or otherwise incompatible with the alignment constraint.
+     * @throws IllegalArgumentException if {@code bytesStride <= 0}
      */
     public static VarHandle withStride(VarHandle target, long bytesStride) {
         if (bytesStride == 0) {
             throw new IllegalArgumentException("Stride must be positive: " + bytesStride);
         }
 
-        long alignMask = JLI.memoryAddressAlignmentMask(target);
+        if (JLI.isMemoryAccessVarHandle(target) &&
+                (bytesStride & JLI.memoryAddressAlignmentMask(target)) == 0) {
+            //flatten
+            long[] strides = JLI.memoryAddressStrides(target);
+            long[] newStrides = new long[strides.length + 1];
+            System.arraycopy(strides, 0, newStrides, 1, strides.length);
+            newStrides[0] = bytesStride;
 
-        if ((bytesStride & alignMask) != 0) {
-            throw new IllegalArgumentException("Stride " + bytesStride + " does not conform to alignment " + (alignMask + 1));
+            return Utils.fixUpVarHandle(JLI.memoryAccessVarHandle(
+                    JLI.memoryAddressCarrier(target),
+                    JLI.memoryAddressAlignmentMask(target),
+                    JLI.memoryAddressByteOrder(target),
+                    JLI.memoryAddressOffset(target),
+                    newStrides));
+        } else {
+            //slow path
+            VarHandle res = MethodHandles.collectCoordinates(target, 0, ADD_STRIDE);
+            return MethodHandles.insertCoordinates(res, 2, bytesStride);
+        }
+    }
+
+    /**
+     * Adapt an existing var handle into a new var handle whose carrier type is {@link MemoryAddress}.
+     * That is, when calling {@link VarHandle#get(Object...)} on the returned var handle,
+     * the read numeric value will be turned into a memory address (as if by calling {@link MemoryAddress#ofLong(long)});
+     * similarly, when calling {@link VarHandle#set(Object...)}, the memory address to be set will be converted
+     * into a numeric value, and then written into memory. The amount of bytes read (resp. written) from (resp. to)
+     * memory depends on the carrier of the original memory access var handle.
+     * *
+     * @param target the memory access var handle to be adapted
+     * @return a new memory access var handle whose carrier type is {@link MemoryAddress}.
+     * @throws IllegalArgumentException if the carrier type of {@code varHandle} is either {@code float},
+     * or {@code double}, or is not a primitive type.
+     */
+    public static VarHandle asAddressVarHandle(VarHandle target) {
+        Class<?> carrier = target.varType();
+        if (!carrier.isPrimitive() || carrier == float.class || carrier == double.class) {
+            throw new IllegalArgumentException("Unsupported carrier type: " + carrier.getName());
         }
 
-        long offset = JLI.memoryAddressOffset(target);
-
-        long[] strides = JLI.memoryAddressStrides(target);
-        long[] newStrides = new long[strides.length + 1];
-        System.arraycopy(strides, 0, newStrides, 1, strides.length);
-        newStrides[0] = bytesStride;
-
-        return Utils.fixUpVarHandle(JLI.memoryAddressViewVarHandle(
-                JLI.memoryAddressCarrier(target),
-                alignMask,
-                JLI.memoryAddressByteOrder(target),
-                offset,
-                newStrides));
+        if (carrier != long.class) {
+            // slow-path, we need to adapt
+            return MethodHandles.filterValue(target,
+                    MethodHandles.explicitCastArguments(ADDRESS_TO_LONG, MethodType.methodType(carrier, MemoryAddress.class)),
+                    MethodHandles.explicitCastArguments(LONG_TO_ADDRESS, MethodType.methodType(MemoryAddress.class, carrier)));
+        } else {
+            // fast-path
+            return MethodHandles.filterValue(target, ADDRESS_TO_LONG, LONG_TO_ADDRESS);
+        }
     }
 
     private static void checkCarrier(Class<?> carrier) {
@@ -264,5 +319,21 @@ public final class MemoryHandles {
     private static long carrierSize(Class<?> carrier) {
         long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
         return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
+    }
+
+    private static MemoryAddress longToAddress(long value) {
+        return MemoryAddress.ofLong(value);
+    }
+
+    private static long addressToLong(MemoryAddress value) {
+        return ((MemoryAddressImpl)value).unsafeGetOffset();
+    }
+
+    private static MemoryAddress addOffset(MemoryAddress address, long offset) {
+        return address.addOffset(offset);
+    }
+
+    private static MemoryAddress addStride(MemoryAddress address, long index, long stride) {
+        return address.addOffset(index * stride);
     }
 }

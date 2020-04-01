@@ -320,7 +320,7 @@ final class VarHandles {
 
         Map<Integer, MethodHandle> carrierFactory = ADDRESS_FACTORIES.get(carrier);
         MethodHandle fac = carrierFactory.computeIfAbsent(strides.length,
-                dims -> new AddressVarHandleGenerator(carrier, dims)
+                dims -> new MemoryAccessVarHandleGenerator(carrier, dims)
                             .generateHandleFactory());
 
         try {

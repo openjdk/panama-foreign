@@ -5256,9 +5256,8 @@ System.out.println((int) f0.invokeExact("x", "y")); // 2
         }
 
         List<Class<?>> newCoordinates = new ArrayList<>(targetCoordinates);
-        for (Class<?> arg : filter.type().parameterList()) {
-            newCoordinates.add(pos, arg);
-        }
+        newCoordinates.remove(pos);
+        newCoordinates.addAll(pos, filter.type().parameterList());
 
         return new IndirectVarHandle(target, target.varType(), newCoordinates.toArray(new Class<?>[0]),
                 (mode, modeHandle) -> MethodHandles.collectArguments(modeHandle, 1 + pos, filter));

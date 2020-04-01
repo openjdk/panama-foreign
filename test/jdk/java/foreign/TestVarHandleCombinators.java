@@ -53,10 +53,12 @@ public class TestVarHandleCombinators {
         assertEquals((byte) vh.get(addr, 2), (byte) -1);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testUnalignedElement() {
         VarHandle vh = MemoryHandles.varHandle(byte.class, 4, ByteOrder.nativeOrder());
-        MemoryHandles.withStride(vh, 2);
+        vh = MemoryHandles.withStride(vh, 2);
+        MemorySegment segment = MemorySegment.ofArray(new byte[4]);
+        vh.get(segment.baseAddress(), 1L); //should throw
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -86,7 +88,7 @@ public class TestVarHandleCombinators {
         assertEquals((byte) vh.get(address), (byte) 10);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testAlignBadAccess() {
         VarHandle vh = MemoryHandles.varHandle(byte.class, 2, ByteOrder.nativeOrder());
         vh = MemoryHandles.withOffset(vh, 1); // offset by 1 byte
@@ -103,10 +105,12 @@ public class TestVarHandleCombinators {
         MemoryHandles.withOffset(vh, -1);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testUnalignedOffset() {
         VarHandle vh = MemoryHandles.varHandle(byte.class, 4, ByteOrder.nativeOrder());
-        MemoryHandles.withOffset(vh, 2);
+        vh = MemoryHandles.withOffset(vh, 2);
+        MemorySegment segment = MemorySegment.ofArray(new byte[4]);
+        vh.get(segment.baseAddress()); //should throw
     }
 
     @Test
