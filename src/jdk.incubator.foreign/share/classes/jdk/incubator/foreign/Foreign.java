@@ -97,34 +97,6 @@ public interface Foreign {
     MemoryAddress withSize(MemoryAddress base, long byteSize);
 
     /**
-     * Returns a new memory address attached to a native memory segment with given base address and size,
-     * obtained by the provided layout. Calling this method is equivalent to the following:
-     *
-     * <blockquote><pre>{@code
-    withSize(base, layout.byteSize());
-     * }</pre></blockquote>
-     *
-     * The segment attached to the returned address has <em>no temporal bounds</em> and cannot be closed; as such,
-     * the returned address is assumed to always be <em>alive</em>. Also, the segment attached to the returned address
-     * has <em>no confinement thread</em>; this means that the returned address can be used by multiple threads.
-     * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     * @param base the desired base address
-     * @param layout the desired layout.
-     * @return a new memory address attached to a native memory segment with given base address and size, where
-     * the size is identical to {@code layout.byteSize()}.
-     * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address,
-     * or if the segment associated with {@code base} is not the <em>primordial</em> segment.
-     * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
-     */
-    default MemoryAddress withSize(MemoryAddress base, MemoryLayout layout) {
-        return withSize(base, layout.byteSize());
-    }
-
-    /**
      * Returns a new native memory segment with given base address and size; the returned segment has its own temporal
      * bounds, and can therefore be closed; closing such a segment results in releasing the native memory by calling
      * <em>free</em> on the base address of the returned memory segment. As for other ordinary memory segments,
@@ -142,35 +114,6 @@ public interface Foreign {
      * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
      */
     MemorySegment asMallocSegment(MemoryAddress base, long byteSize);
-
-    /**
-     * Returns a new native memory segment with given base address and size, obtained by the provided layout.
-     * Calling this method is equivalent to the following:
-     *
-     * <blockquote><pre>{@code
-    asMallocSegment(base, layout.byteSize());
-     * }</pre></blockquote>
-     *
-     * The returned segment has its own temporal bounds, and can therefore be closed; closing such a segment results
-     * in releasing the native memory by calling <em>free</em> on the base address of the returned memory segment.
-     * As for other ordinary memory segments, the returned segment will also be confined on the current thread
-     * (see {@link Thread#currentThread()}).
-     * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     * @param base the desired base address
-     * @param layout the desired layout.
-     * @return a new native memory segment with given base address and size, where the size is identical to
-     * {@code layout.byteSize()}.
-     * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address,
-     * or if the segment associated with {@code base} is not the <em>primordial</em> segment.
-     * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
-     */
-    default MemoryAddress asMallocSegment(MemoryAddress base, MemoryLayout layout) {
-        return withSize(base, layout.byteSize());
-    }
 
     /**
      * Returns a non-confined memory segment that has the same spatial and temporal bounds as the provided segment.
