@@ -163,7 +163,7 @@ public class Readline {
             // print char* as is
             System.out.println(p);
             // convert char* ptr from readline as Java String & print it
-            System.out.println("Hello, " + Cstring.toString(p));
+            System.out.println("Hello, " + Cstring.toJavaString(p));
         }
     }
 }
@@ -294,7 +294,7 @@ public class TestBlas {
         incy = 1;
         alpha = 1;
         beta = 0;
-      try (AllocationScope scope = AllocationScope.unboundedNativeScope()) {
+        try (AllocationScope scope = AllocationScope.unboundedNativeScope()) {
             var a = Cdouble.allocateArray(m*n, scope);
             var x = Cdouble.allocateArray(n, scope);
             var y = Cdouble.allocateArray(n, scope);

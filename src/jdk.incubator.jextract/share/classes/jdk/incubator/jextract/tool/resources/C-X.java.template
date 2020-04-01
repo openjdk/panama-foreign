@@ -23,6 +23,11 @@ public final class C-X {
     private static final VarHandle handle = LAYOUT.varHandle(CARRIER);
     private static final VarHandle arrayHandle = arrayHandle(LAYOUT, CARRIER);
 
+    private static void copy(MemoryAddress addr, ${CARRIER}[] arr) {
+        var heapSegment = MemorySegment.ofArray(arr);
+        MemoryAddress.copy(heapSegment.baseAddress(), addr, arr.length * sizeof());
+    }
+
     public static ${CARRIER} get(MemoryAddress addr) {
         return (${CARRIER}) handle.get(addr);
     }
@@ -79,8 +84,14 @@ public final class C-X {
         return LAYOUT.byteSize();
     }
 
-    public static void copy(MemoryAddress addr, ${CARRIER}[] arr) {
-        var heapSegment = MemorySegment.ofArray(arr);
-        MemoryAddress.copy(heapSegment.baseAddress(), addr, arr.length * sizeof());
+    public static ${CARRIER}[] toJavaArray(MemorySegment seg) {
+        var segSize = seg.byteSize();
+        var elemSize = sizeof();
+        if (segSize % elemSize != 0) {
+            throw new UnsupportedOperationException("segment cannot contain integral number of elements");
+        }
+        ${CARRIER}[] array = new ${CARRIER}[(int) (segSize / elemSize)];
+        MemoryAddress.copy(seg.baseAddress(), MemorySegment.ofArray(array).baseAddress(), array.length * elemSize);
+        return array;
     }
 }

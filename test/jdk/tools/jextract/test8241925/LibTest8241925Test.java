@@ -56,18 +56,24 @@ public class LibTest8241925Test {
             addr = Cint.allocateArray(intArray, scope);
             int sum = sum(addr, intArray.length);
             assertEquals(sum, IntStream.of(intArray).sum());
+            int[] convertedArray = Cint.toJavaArray(addr.segment());
+            assertEquals(convertedArray, intArray);
 
             double[] dblArray = { 34.5, 67.56, 78.2, 8.45 };
             addr = Cdouble.allocateArray(dblArray, scope);
             double sumd = sum_fp(addr, dblArray.length);
             assertEquals(sumd, DoubleStream.of(dblArray).sum(), 0.1);
+            double[] convertedDblArray = Cdouble.toJavaArray(addr.segment());
+            for (int i = 0; i < dblArray.length; i++) {
+                assertEquals(dblArray[i], convertedDblArray[i], 0.1);
+            }
 
-            assertEquals(Cstring.toString(name()), "java");
+            assertEquals(Cstring.toJavaString(name()), "java");
 
             var dest = Cchar.allocateArray(12, scope);
             Cstring.copy(dest, "hello ");
             var src = Cstring.toCString("world", scope);
-            assertEquals(Cstring.toString(concatenate(dest, src)), "hello world");
+            assertEquals(Cstring.toJavaString(concatenate(dest, src)), "hello world");
         }
     }
 }

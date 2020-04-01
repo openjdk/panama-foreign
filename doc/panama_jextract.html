@@ -229,7 +229,7 @@
 <span id="cb11-14"><a href="#cb11-14"></a>            <span class="co">// print char* as is</span></span>
 <span id="cb11-15"><a href="#cb11-15"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(p);</span>
 <span id="cb11-16"><a href="#cb11-16"></a>            <span class="co">// convert char* ptr from readline as Java String &amp; print it</span></span>
-<span id="cb11-17"><a href="#cb11-17"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Hello, &quot;</span> + Cstring.<span class="fu">toString</span>(p));</span>
+<span id="cb11-17"><a href="#cb11-17"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Hello, &quot;</span> + Cstring.<span class="fu">toJavaString</span>(p));</span>
 <span id="cb11-18"><a href="#cb11-18"></a>        }</span>
 <span id="cb11-19"><a href="#cb11-19"></a>    }</span>
 <span id="cb11-20"><a href="#cb11-20"></a>}</span></code></pre></div>
@@ -318,7 +318,7 @@
 <span id="cb18-22"><a href="#cb18-22"></a>        incy = <span class="dv">1</span>;</span>
 <span id="cb18-23"><a href="#cb18-23"></a>        alpha = <span class="dv">1</span>;</span>
 <span id="cb18-24"><a href="#cb18-24"></a>        beta = <span class="dv">0</span>;</span>
-<span id="cb18-25"><a href="#cb18-25"></a>      <span class="kw">try</span> (AllocationScope scope = AllocationScope.<span class="fu">unboundedNativeScope</span>()) {</span>
+<span id="cb18-25"><a href="#cb18-25"></a>        <span class="kw">try</span> (AllocationScope scope = AllocationScope.<span class="fu">unboundedNativeScope</span>()) {</span>
 <span id="cb18-26"><a href="#cb18-26"></a>            var a = Cdouble.<span class="fu">allocateArray</span>(m*n, scope);</span>
 <span id="cb18-27"><a href="#cb18-27"></a>            var x = Cdouble.<span class="fu">allocateArray</span>(n, scope);</span>
 <span id="cb18-28"><a href="#cb18-28"></a>            var y = Cdouble.<span class="fu">allocateArray</span>(n, scope);</span>

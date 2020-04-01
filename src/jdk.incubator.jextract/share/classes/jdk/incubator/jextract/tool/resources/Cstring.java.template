@@ -67,7 +67,7 @@ public final class Cstring {
         return toCString(str.getBytes(charset), scope);
     }
 
-    public static String toString(MemoryAddress addr) {
+    public static String toJavaString(MemoryAddress addr) {
         StringBuilder buf = new StringBuilder();
         try (MemorySegment seg = foreign.ofNativeUnchecked(addr, Long.MAX_VALUE)) {
             MemoryAddress baseAddr = seg.baseAddress();
