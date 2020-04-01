@@ -94,6 +94,7 @@ public class Windowsx64ABI implements SystemABI {
             case UNSIGNED_LONG_LONG -> Optional.of(C_ULONGLONG);
             case FLOAT -> Optional.of(C_FLOAT);
             case DOUBLE -> Optional.of(C_DOUBLE);
+            case LONG_DOUBLE -> Optional.of(C_LONGDOUBLE);
             case POINTER -> Optional.of(C_POINTER);
             default -> Optional.empty();
         };
