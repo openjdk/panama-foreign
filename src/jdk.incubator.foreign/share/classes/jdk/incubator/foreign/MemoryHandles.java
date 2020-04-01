@@ -203,24 +203,26 @@ public final class MemoryHandles {
     }
 
     /**
-     * Creates a memory access var handle with a fixed offset added to the accessed offset. That is,
-     * if the target memory access var handle accesses a memory location at offset <em>O</em>, the new memory access var
-     * handle will access a memory location at offset <em>O' + O</em>.
+     * Returns a var handle that adds a <em>fixed</em> offset to the incoming {@link MemoryAddress} coordinate
+     * and then propagates such value to the target var handle. That is,
+     * when the returned var handle receives a memory address coordinate pointing at a memory location at
+     * offset <em>O</em>, a memory address coordinate pointing at a memory location at offset <em>O' + O</em>
+     * is created, and then passed to the target var handle.
      *
-     * The resulting memory access var handle will feature the same access coordinates as the ones in the target memory access var handle.
-     *
-     * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
-     * which are common to all memory access var handles.
+     * The returned var handle will feature the same type and access coordinates as the target var handle.
      *
      * @param target the target memory access handle to access after the offset adjustment.
      * @param bytesOffset the offset, in bytes. Must be positive or zero.
-     * @return the new memory access var handle.
-     * @throws IllegalArgumentException if {@code bytesOffset < 0}
+     * @return the adapted var handle.
+     * @throws IllegalArgumentException if {@code bytesOffset < 0}, or if the first access coordinate type
+     * is not of type {@link MemoryAddress}.
      */
     public static VarHandle withOffset(VarHandle target, long bytesOffset) {
         if (bytesOffset < 0) {
             throw new IllegalArgumentException("Illegal offset: " + bytesOffset);
         }
+
+        checkAddressFirstCoordinate(target);
 
         if (JLI.isMemoryAccessVarHandle(target) &&
                 (bytesOffset & JLI.memoryAddressAlignmentMask(target)) == 0) {
@@ -239,25 +241,29 @@ public final class MemoryHandles {
     }
 
     /**
-     * Creates a memory access var handle with a <em>variable</em> offset added to the accessed offset.
-     * That is, if the target memory access var handle accesses a memory location at offset <em>O</em>,
-     * the new memory access var handle will access a memory location at offset <em>(S * X) + O</em>, where <em>S</em>
-     * is a constant <em>stride</em>, whereas <em>X</em> is a dynamic value that will be provided as an additional access
-     * coordinate (of type {@code long}). The new access coordinate will be <em>prepended</em> to the ones available
-     * in the target memory access var handles (if any).
+     * Returns a var handle which adds a <em>variable</em> offset to the incoming {@link MemoryAddress}
+     * access coordinate value and then propagates such value to the target var handle.
+     * That is, when the returned var handle receives a memory address coordinate pointing at a memory location at
+     * offset <em>O</em>, a new memory address coordinate pointing at a memory location at offset <em>(S * X) + O</em>
+     * is created, and then passed to the target var handle,
+     * where <em>S</em> is a constant <em>stride</em>, whereas <em>X</em> is a dynamic value that will be
+     * provided as an additional access coordinate (of type {@code long}).
      *
-     * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
-     * which are common to all memory access var handles.
+     * The returned var handle will feature the same type as the target var handle; an additional access coordinate
+     * of type {@code long} will be <em>prepended</em> to the access coordinate types of the target var handle.
      *
      * @param target the target memory access handle to access after the scale adjustment.
      * @param bytesStride the stride, in bytes, by which to multiply the coordinate value. Must be greater than zero.
-     * @return the new memory access var handle.
-     * @throws IllegalArgumentException if {@code bytesStride <= 0}
+     * @return the adapted var handle.
+     * @throws IllegalArgumentException if {@code bytesStride <= 0}, or if the first access coordinate type
+     * is not of type {@link MemoryAddress}.
      */
     public static VarHandle withStride(VarHandle target, long bytesStride) {
         if (bytesStride == 0) {
             throw new IllegalArgumentException("Stride must be positive: " + bytesStride);
         }
+
+        checkAddressFirstCoordinate(target);
 
         if (JLI.isMemoryAccessVarHandle(target) &&
                 (bytesStride & JLI.memoryAddressAlignmentMask(target)) == 0) {
@@ -287,9 +293,9 @@ public final class MemoryHandles {
      * similarly, when calling {@link VarHandle#set(Object...)}, the memory address to be set will be converted
      * into a numeric value, and then written into memory. The amount of bytes read (resp. written) from (resp. to)
      * memory depends on the carrier of the original memory access var handle.
-     * *
+     *
      * @param target the memory access var handle to be adapted
-     * @return a new memory access var handle whose carrier type is {@link MemoryAddress}.
+     * @return the adapted var handle.
      * @throws IllegalArgumentException if the carrier type of {@code varHandle} is either {@code float},
      * or {@code double}, or is not a primitive type.
      */
@@ -307,6 +313,13 @@ public final class MemoryHandles {
         } else {
             // fast-path
             return MethodHandles.filterValue(target, ADDRESS_TO_LONG, LONG_TO_ADDRESS);
+        }
+    }
+
+    private static void checkAddressFirstCoordinate(VarHandle handle) {
+        if (handle.coordinateTypes().size() < 1 ||
+                handle.coordinateTypes().get(0) != MemoryAddress.class) {
+            throw new IllegalArgumentException("Expected var handle with leading coordinate of type MemoryAddress");
         }
     }
 
