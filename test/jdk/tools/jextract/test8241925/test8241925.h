@@ -37,6 +37,10 @@ EXPORT int sum(int* arr, int num);
 EXPORT void square_fp(double* v);
 EXPORT double sum_fp(double* arr, int num);
 
+EXPORT const char* name(void);
+
+EXPORT char* concatenate(char* dest, char* src);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

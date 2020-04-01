@@ -101,17 +101,18 @@ jextract -l python2.7 \
 ```java
 
 import jdk.incubator.foreign.Foreign;
+import org.python.Cstring;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 // import jextracted python 'header' class
+import static org.python.RuntimeHelper.*;
 import static org.python.Python_h.*;
 
 public class PythonMain {
     public static void main(String[] args) {
-        var f = Foreign.getInstance();
         String script = "print(sum([33, 55, 66])); print('Hello from Python!')\n";
 
         Py_Initialize();
-        try (var s = f.toCString(script)) {
+        try (var s = Cstring.toCString(script)) {
             var str = s.baseAddress();
             PyRun_SimpleStringFlags(str, NULL);
             Py_Finalize();
@@ -148,12 +149,13 @@ jextract -l readline -t org.unix \
 ```java
 
 import jdk.incubator.foreign.Foreign;
+import org.unix.Cstring;
+import static org.unix.RuntimeHelper.*;
 import static org.unix.readline_h.*;
 
 public class Readline {
     public static void main(String[] args) {
-        var f = Foreign.getInstance();
-        try (var s = f.toCString("name? ")) {
+        try (var s = Cstring.toCString("name? ")) {
             var pstr = s.baseAddress();
             // call "readline" API
             var p = readline(pstr);
@@ -161,7 +163,7 @@ public class Readline {
             // print char* as is
             System.out.println(p);
             // convert char* ptr from readline as Java String & print it
-            System.out.println("Hello, " + f.toJavaString(p));
+            System.out.println("Hello, " + Cstring.toString(p));
         }
     }
 }
@@ -196,17 +198,18 @@ jextract -t org.unix -lcurl \
 ```java
 
 import jdk.incubator.foreign.Foreign;
+import org.unix.Cstring;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
+import static org.unix.RuntimeHelper.*;
 import static org.unix.curl_h.*;
 
 public class CurlMain {
    public static void main(String[] args) {
-       var f = Foreign.getInstance();
        var urlStr = args[0];
        curl_global_init(CURL_GLOBAL_DEFAULT);
        var curl = curl_easy_init();
        if(!curl.equals(NULL)) {
-           try (var s = f.toCString(urlStr)) {
+           try (var s = Cstring.toCString(urlStr)) {
                var url = s.baseAddress();
                curl_easy_setopt(curl, CURLOPT_URL, url);
                int res = curl_easy_perform(curl);
@@ -267,6 +270,7 @@ jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
 ### Java sample code that uses cblas library
 
 ```java
+
 import jdk.incubator.foreign.AllocationScope;
 import blas.*;
 import static blas.RuntimeHelper.*;
@@ -290,50 +294,44 @@ public class TestBlas {
         incy = 1;
         alpha = 1;
         beta = 0;
+      try (AllocationScope scope = AllocationScope.unboundedNativeScope()) {
+            var a = Cdouble.allocateArray(m*n, scope);
+            var x = Cdouble.allocateArray(n, scope);
+            var y = Cdouble.allocateArray(n, scope);
 
-        double[] a = new double[m*n];
-        double[] x = new double[n];
-        double[] y = new double[n];
-
-        /* The elements of the first column */
-        a[0] = 1.0;
-        a[1] = 2.0;
-        a[2] = 3.0;
-        a[3] = 4.0;
-        /* The elements of the second column */
-        a[m] = 1.0;
-        a[m + 1] = 1.0;
-        a[m + 2] = 1.0;
-        a[m + 3] = 1.0;
-        /* The elements of the third column */
-        a[m * 2] = 3.0;
-        a[m * 2 + 1] = 4.0;
-        a[m * 2 + 2] = 5.0;
-        a[m * 2 + 3] = 6.0;
-        /* The elements of the fourth column */
-        a[m * 3] = 5.0;
-        a[m * 3 + 1] = 6.0;
-        a[m * 3 + 2] = 7.0;
-        a[m * 3 + 3] = 8.0;
-
-        /* The elemetns of x and y */
-        x[0] = 1.0;
-        x[1] = 2.0;
-        x[2] = 1.0;
-        x[3] = 1.0;
-        y[0] = 0.0;
-        y[1] = 0.0;
-        y[2] = 0.0;
-        y[3] = 0.0;
-        try (AllocationScope scope = AllocationScope.unboundedNativeScope()) {
-            var aPtr = Cdouble.allocateArray(a, scope);
-            var xPtr = Cdouble.allocateArray(x, scope);
-            var yPtr = Cdouble.allocateArray(y, scope);
-
-            cblas_dgemv(Layout, transa, m, n, alpha, aPtr, lda, xPtr, incx, beta, yPtr, incy);
+            /* The elements of the first column */
+            Cdouble.set(a, 0, 1.0);
+            Cdouble.set(a, 1, 2.0);
+            Cdouble.set(a, 2, 3.0);
+            Cdouble.set(a, 3, 4.0);
+            /* The elements of the second column */
+            Cdouble.set(a, m, 1.0);
+            Cdouble.set(a, m + 1, 1.0);
+            Cdouble.set(a, m + 2, 1.0);
+            Cdouble.set(a, m + 3, 1.0);
+            /* The elements of the third column */
+            Cdouble.set(a, m*2, 3.0);
+            Cdouble.set(a, m*2 + 1, 4.0);
+            Cdouble.set(a, m*2 + 2, 5.0);
+            Cdouble.set(a, m*2 + 3, 6.0);
+            /* The elements of the fourth column */
+            Cdouble.set(a, m*3, 5.0);
+            Cdouble.set(a, m*3 + 1, 6.0);
+            Cdouble.set(a, m*3 + 2, 7.0);
+            Cdouble.set(a, m*3 + 3, 8.0);
+            /* The elemetns of x and y */
+            Cdouble.set(x, 0, 1.0);
+            Cdouble.set(x, 1, 2.0);
+            Cdouble.set(x, 2, 1.0);
+            Cdouble.set(x, 3, 1.0);
+            Cdouble.set(y, 0, 0.0);
+            Cdouble.set(y, 1, 0.0);
+            Cdouble.set(y, 2, 0.0);
+            Cdouble.set(y, 3, 0.0);
+            cblas_dgemv(Layout, transa, m, n, alpha, a, lda, x, incx, beta, y, incy);
             /* Print y */
             for (i = 0; i < n; i++) {
-                System.out.print(String.format(" y%d = %f\n", i, Cdouble.get(yPtr, (long)i)));
+                System.out.print(String.format(" y%d = %f\n", i, Cdouble.get(y, (long)i)));
             }
         }
     }

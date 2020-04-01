@@ -22,6 +22,7 @@
  */
 
 #include "test8241925.h"
+#include <string.h>
 
 EXPORT void square(int* v) {
     *v = (*v) * (*v);
@@ -47,4 +48,14 @@ EXPORT double sum_fp(double* arr, int num) {
         res += arr[i];
     }
     return res;
+}
+
+const char* cptr = "java";
+
+EXPORT const char* name(void) {
+    return cptr;
+}
+
+EXPORT char* concatenate(char* dest, char* src) {
+    return strcat(dest, src);
 }

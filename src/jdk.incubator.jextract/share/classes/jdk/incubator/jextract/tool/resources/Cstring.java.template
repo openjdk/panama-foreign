@@ -22,10 +22,9 @@ public final class Cstring {
     }
     private final static VarHandle byteArrHandle = arrayHandle(C_CHAR, byte.class);
 
-    private static void copyString(MemoryAddress addr, byte[] bytes) {
-        for (int i = 0 ; i < bytes.length; i++) {
-            byteArrHandle.set(addr, i, bytes[i]);
-        }
+    private static void copy(MemoryAddress addr, byte[] bytes) {
+        var heapSegment = MemorySegment.ofArray(bytes);
+        MemoryAddress.copy(heapSegment.baseAddress(), addr, bytes.length);
         byteArrHandle.set(addr, (long)bytes.length, (byte)0);
     }
 
@@ -33,8 +32,23 @@ public final class Cstring {
         MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
         MemorySegment segment = MemorySegment.allocateNative(strLayout);
         MemoryAddress addr = segment.baseAddress();
-        copyString(addr, bytes);
+        copy(addr, bytes);
         return segment;
+    }
+
+    private static MemoryAddress toCString(byte[] bytes, AllocationScope scope) {
+        MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
+        MemoryAddress addr = scope.allocate(strLayout);
+        copy(addr, bytes);
+        return addr;
+    }
+
+    public static void copy(MemoryAddress addr, String str) {
+        copy(addr, str.getBytes());
+    }
+
+    public static void copy(MemoryAddress addr, String str, Charset charset) {
+        copy(addr, str.getBytes(charset));
     }
 
     public static MemorySegment toCString(String str) {
@@ -45,18 +59,15 @@ public final class Cstring {
          return toCString(str.getBytes(charset));
     }
 
+    public static MemoryAddress toCString(String str, AllocationScope scope) {
+        return toCString(str.getBytes(), scope);
+    }
+
     public static MemoryAddress toCString(String str, Charset charset, AllocationScope scope) {
         return toCString(str.getBytes(charset), scope);
     }
 
-    private static MemoryAddress toCString(byte[] bytes, AllocationScope scope) {
-        MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
-        MemoryAddress addr = scope.allocate(strLayout);
-        copyString(addr, bytes);
-        return addr;
-    }
-
-    public String toString(MemoryAddress addr) {
+    public static String toString(MemoryAddress addr) {
         StringBuilder buf = new StringBuilder();
         try (MemorySegment seg = foreign.ofNativeUnchecked(addr, Long.MAX_VALUE)) {
             MemoryAddress baseAddr = seg.baseAddress();

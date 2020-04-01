@@ -61,6 +61,13 @@ public class LibTest8241925Test {
             addr = Cdouble.allocateArray(dblArray, scope);
             double sumd = sum_fp(addr, dblArray.length);
             assertEquals(sumd, DoubleStream.of(dblArray).sum(), 0.1);
+
+            assertEquals(Cstring.toString(name()), "java");
+
+            var dest = Cchar.allocateArray(12, scope);
+            Cstring.copy(dest, "hello ");
+            var src = Cstring.toCString("world", scope);
+            assertEquals(Cstring.toString(concatenate(dest, src)), "hello world");
         }
     }
 }
