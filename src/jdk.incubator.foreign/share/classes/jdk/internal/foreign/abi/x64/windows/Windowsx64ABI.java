@@ -64,7 +64,7 @@ public class Windowsx64ABI implements SystemABI {
 
     @Override
     public MethodHandle downcallHandle(MemoryAddress symbol, MethodType type, FunctionDescriptor function) {
-        return CallArranger.arrangeDowncall(MemoryAddressImpl.addressof(symbol), type, function);
+        return CallArranger.arrangeDowncall(symbol.toRawLongValue(), type, function);
     }
 
     @Override

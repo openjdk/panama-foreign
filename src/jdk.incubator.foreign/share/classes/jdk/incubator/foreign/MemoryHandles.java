@@ -339,7 +339,7 @@ public final class MemoryHandles {
     }
 
     private static long addressToLong(MemoryAddress value) {
-        return MemoryAddressImpl.addressof(value);
+        return value.toRawLongValue();
     }
 
     private static MemoryAddress addOffset(MemoryAddress address, long offset) {

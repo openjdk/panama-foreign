@@ -25,7 +25,6 @@
  */
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.Foreign;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.misc.Unsafe;
 
@@ -45,10 +44,6 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     private final MemorySegmentImpl segment;
     private final long offset;
-
-    public MemoryAddressImpl(MemorySegmentImpl segment) {
-        this(segment, 0);
-    }
 
     public MemoryAddressImpl(MemorySegmentImpl segment, long offset) {
         this.segment = Objects.requireNonNull(segment);
@@ -71,6 +66,14 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     @Override
     public long offset() {
         return offset;
+    }
+
+    @Override
+    public long toRawLongValue() {
+        if (unsafeGetBase() != null) {
+            throw new UnsupportedOperationException("Not a native address");
+        }
+        return unsafeGetOffset();
     }
 
     @Override
@@ -133,16 +136,6 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     @Override
     public String toString() {
         return "MemoryAddress{ region: " + segment + " offset=0x" + Long.toHexString(offset) + " }";
-    }
-
-    // helper methods
-
-    public static long addressof(MemoryAddress address) {
-        MemoryAddressImpl addressImpl = (MemoryAddressImpl)address;
-        if (addressImpl.unsafeGetBase() != null) {
-            throw new IllegalStateException("Heap address!");
-        }
-        return addressImpl.unsafeGetOffset();
     }
 
     public static MemoryAddress ofLongUnchecked(long value) {
