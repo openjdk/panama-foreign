@@ -27,7 +27,6 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.InternalForeign;
-import jdk.internal.foreign.MemorySegmentImpl;
 
 /**
  * A class containing various methods relating to native interop.
