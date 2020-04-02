@@ -90,14 +90,12 @@ public final class Cstring {
 
     public static String toJavaString(MemoryAddress addr) {
         StringBuilder buf = new StringBuilder();
-        try (MemorySegment seg = foreign.ofNativeUnchecked(addr, Long.MAX_VALUE)) {
-            MemoryAddress baseAddr = seg.baseAddress();
-            byte curr = (byte) byteArrHandle.get(baseAddr, 0);
-            long offset = 0;
-            while (curr != 0) {
-                buf.append((char) curr);
-                curr = (byte) byteArrHandle.get(baseAddr, ++offset);
-            }
+        MemoryAddress sizedAddr = foreign.withSize(addr, Long.MAX_VALUE);
+        byte curr = (byte) byteArrHandle.get(sizedAddr, 0);
+        long offset = 0;
+        while (curr != 0) {
+            buf.append((char) curr);
+            curr = (byte) byteArrHandle.get(sizedAddr, ++offset);
         }
         return buf.toString();
     }
