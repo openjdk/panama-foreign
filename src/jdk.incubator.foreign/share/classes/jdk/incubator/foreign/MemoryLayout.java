@@ -393,6 +393,12 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
+     * Is this a padding layout (e.g. a layout created from {@link #ofPaddingBits(long)} ?
+     * @return true, if this layout is a padding layout.
+     */
+    boolean isPadding();
+
+    /**
      * Instances of this class are used to form <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>. There
      * are two kinds of path elements: <em>group path elements</em> and <em>sequence path elements</em>. Group
      * path elements are used to select a given named member layout within a {@link GroupLayout}. Sequence
