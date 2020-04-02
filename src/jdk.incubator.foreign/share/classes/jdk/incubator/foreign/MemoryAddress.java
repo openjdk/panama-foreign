@@ -61,14 +61,20 @@ public interface MemoryAddress {
     MemoryAddress addOffset(long offset);
 
     /**
-     * The offset of this memory address into the underlying segment.
-     *
-     * @return the offset
+     * Returns the offset of this memory address into the underlying segment.
+     * @return the offset of this memory address into the underlying segment.
      */
     long offset();
 
     /**
-     * The memory segment this address belongs to.
+     * Returns the raw long value associated to this memory address.
+     * @return The raw long value associated to this memory address.
+     * @throws UnsupportedOperationException if this memory address is associated with an heap segment.
+     */
+    long toRawLongValue();
+
+    /**
+     * Returns the memory segment this address belongs to.
      * @return The memory segment this address belongs to.
      */
     MemorySegment segment();

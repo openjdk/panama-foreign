@@ -27,24 +27,18 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
-import sun.invoke.util.Wrapper;
 import sun.nio.ch.FileChannelImpl;
 import sun.security.action.GetBooleanAction;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.constant.Constable;
-import java.lang.reflect.Field;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Method;
@@ -53,7 +47,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -64,17 +57,11 @@ public final class Utils {
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
     private static final MethodHandle ADDRESS_FILTER;
-    private static final MethodHandle LONG_TO_ADDRESS;
-    private static final MethodHandle ADDRESS_TO_LONG;
 
     static {
         try {
             ADDRESS_FILTER = MethodHandles.lookup().findStatic(Utils.class, "filterAddress",
                     MethodType.methodType(MemoryAddressProxy.class, MemoryAddress.class));
-            LONG_TO_ADDRESS = MethodHandles.lookup().findStatic(Utils.class, "longToAddress",
-                    MethodType.methodType(MemoryAddress.class, long.class));
-            ADDRESS_TO_LONG = MethodHandles.lookup().findStatic(Utils.class, "addressToLong",
-                    MethodType.methodType(long.class, MemoryAddress.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -84,11 +71,7 @@ public final class Utils {
     // 64-bit platforms and 8 on 32-bit platforms.
     private final static long MAX_ALIGN = Unsafe.ADDRESS_SIZE == 4 ? 8 : 16;
 
-    // the memory address var handle assumes that addresses have same size as a Java long
-    private final static long POINTER_SIZE = 8;
-
     private static final JavaNioAccess javaNioAccess = SharedSecrets.getJavaNioAccess();
-    private static final JavaLangInvokeAccess javaLangInvokeAccess = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
@@ -102,45 +85,6 @@ public final class Utils {
         } else {
             throw exFactory.get();
         }
-    }
-
-    static final Class<?> PADDING_CLASS;
-
-    static {
-        try {
-            PADDING_CLASS = Class.forName("jdk.incubator.foreign.PaddingLayout");
-        } catch (ReflectiveOperationException ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
-
-    public static boolean isPadding(MemoryLayout layout) {
-        return layout.getClass() == PADDING_CLASS;
-    }
-
-    public static void checkCarrier(Class<?> carrier) {
-        if (carrier == void.class || carrier == boolean.class ||
-                (!carrier.isPrimitive() && !isAddress(carrier))) {
-            throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
-        }
-    }
-
-    public static long carrierSize(Class<?> carrier) {
-        if (isAddress(carrier)) {
-            return POINTER_SIZE;
-        }
-        long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
-        return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
-    }
-
-    public static boolean isAddress(Class<?> carrier) {
-        return MemoryAddress.class == carrier ||
-                MemoryAddressProxy.class == carrier;
-    }
-
-    public static Class<?> adjustCarrier(Class<?> carrier) {
-        return carrier == MemoryAddress.class ?
-                MemoryAddressProxy.class : carrier;
     }
 
     // segment factories
@@ -242,21 +186,10 @@ public final class Utils {
     public static VarHandle fixUpVarHandle(VarHandle handle) {
         // This adaptation is required, otherwise the memory access var handle will have type MemoryAddressProxy,
         // and not MemoryAddress (which the user expects), which causes performance issues with asType() adaptations.
-        handle = MethodHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
-        return (javaLangInvokeAccess.memoryAddressCarrier(handle) == MemoryAddressProxy.class) ?
-                MethodHandles.filterValue(handle, ADDRESS_TO_LONG, LONG_TO_ADDRESS) :
-                handle;
+        return MethodHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
     }
 
     private static MemoryAddressProxy filterAddress(MemoryAddress addr) {
         return (MemoryAddressImpl)addr;
-    }
-
-    private static MemoryAddress longToAddress(long value) {
-        return MemoryAddress.ofLong(value);
-    }
-
-    private static long addressToLong(MemoryAddress value) {
-        return ((MemoryAddressImpl)value).unsafeGetOffset();
     }
 }

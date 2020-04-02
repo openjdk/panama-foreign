@@ -93,7 +93,7 @@ public class SharedUtils {
             return alignmentOfArray((SequenceLayout) t, isVar);
         } else if (t instanceof GroupLayout) {
             return alignmentOfContainer((GroupLayout) t);
-        } else if (Utils.isPadding(t)) {
+        } else if (t.isPadding()) {
             return 1;
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);

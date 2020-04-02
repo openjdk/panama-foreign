@@ -71,13 +71,13 @@ import static jdk.internal.org.objectweb.asm.Opcodes.DUP;
 import static jdk.internal.org.objectweb.asm.Opcodes.SIPUSH;
 import static jdk.internal.org.objectweb.asm.Opcodes.T_LONG;
 
-class AddressVarHandleGenerator {
+class MemoryAccessVarHandleGenerator {
     private static final String DEBUG_DUMP_CLASSES_DIR_PROPERTY = "jdk.internal.foreign.ClassGenerator.DEBUG_DUMP_CLASSES_DIR";
 
     private static final boolean DEBUG =
-            GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.ClassGenerator.DEBUG");
+        GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.ClassGenerator.DEBUG");
 
-    private static final Class<?> BASE_CLASS = VarHandleMemoryAddressBase.class;
+    private static final Class<?> BASE_CLASS = MemoryAccessVarHandleBase.class;
 
     private static final HashMap<Class<?>, Class<?>> helperClassCache;
 
@@ -88,14 +88,13 @@ class AddressVarHandleGenerator {
 
     static {
         helperClassCache = new HashMap<>();
-        helperClassCache.put(byte.class, VarHandleMemoryAddressAsBytes.class);
-        helperClassCache.put(short.class, VarHandleMemoryAddressAsShorts.class);
-        helperClassCache.put(char.class, VarHandleMemoryAddressAsChars.class);
-        helperClassCache.put(int.class, VarHandleMemoryAddressAsInts.class);
-        helperClassCache.put(long.class, VarHandleMemoryAddressAsLongs.class);
-        helperClassCache.put(float.class, VarHandleMemoryAddressAsFloats.class);
-        helperClassCache.put(double.class, VarHandleMemoryAddressAsDoubles.class);
-        helperClassCache.put(MemoryAddressProxy.class, VarHandleMemoryAddressAsLongs.class);
+        helperClassCache.put(byte.class, MemoryAccessVarHandleByteHelper.class);
+        helperClassCache.put(short.class, MemoryAccessVarHandleShortHelper.class);
+        helperClassCache.put(char.class, MemoryAccessVarHandleCharHelper.class);
+        helperClassCache.put(int.class, MemoryAccessVarHandleIntHelper.class);
+        helperClassCache.put(long.class, MemoryAccessVarHandleLongHelper.class);
+        helperClassCache.put(float.class, MemoryAccessVarHandleFloatHelper.class);
+        helperClassCache.put(double.class, MemoryAccessVarHandleDoubleHelper.class);
 
         OFFSET_OP_TYPE = MethodType.methodType(long.class, long.class, long.class, MemoryAddressProxy.class);
 
@@ -126,19 +125,14 @@ class AddressVarHandleGenerator {
     private final Class<?> helperClass;
     private final VarForm form;
 
-    AddressVarHandleGenerator(Class<?> carrier, int dims) {
+    MemoryAccessVarHandleGenerator(Class<?> carrier, int dims) {
         this.dimensions = dims;
         this.carrier = carrier;
         Class<?>[] components = new Class<?>[dimensions];
         Arrays.fill(components, long.class);
-        this.form = new VarForm(BASE_CLASS, MemoryAddressProxy.class, lower(carrier), components);
+        this.form = new VarForm(BASE_CLASS, MemoryAddressProxy.class, carrier, components);
         this.helperClass = helperClassCache.get(carrier);
         this.implClassName = helperClass.getName().replace('.', '/') + dimensions;
-    }
-
-    static Class<?> lower(Class<?> type) {
-        return type == MemoryAddressProxy.class ?
-                long.class : type;
     }
 
     /*
@@ -151,7 +145,7 @@ class AddressVarHandleGenerator {
             Class<?>[] components = new Class<?>[dimensions];
             Arrays.fill(components, long.class);
 
-            VarForm form = new VarForm(implCls, MemoryAddressProxy.class, lower(carrier), components);
+            VarForm form = new VarForm(implCls, MemoryAddressProxy.class, carrier, components);
 
             MethodType constrType = MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class, long.class, long[].class);
             MethodHandle constr = MethodHandles.Lookup.IMPL_LOOKUP.findConstructor(implCls, constrType);
@@ -233,7 +227,7 @@ class AddressVarHandleGenerator {
         mv.visitFieldInsn(GETFIELD, Type.getInternalName(VarHandle.AccessMode.class), "at", Type.getDescriptor(VarHandle.AccessType.class));
         mv.visitLdcInsn(cw.makeConstantPoolPatch(MemoryAddressProxy.class));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(lower(carrier)));
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(carrier));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
 
         Class<?>[] dims = new Class<?>[dimensions];

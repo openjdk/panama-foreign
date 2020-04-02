@@ -174,10 +174,20 @@ public abstract class AllocationScope implements AutoCloseable {
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of an address value.
      */
     public MemoryAddress allocate(MemoryLayout layout, MemoryAddress value) {
-        VarHandle handle = layout.varHandle(MemoryAddress.class);
+        VarHandle handle = MemoryHandles.asAddressVarHandle(layout.varHandle(carrierForSize(layout.byteSize())));
         MemoryAddress addr = allocate(layout);
         handle.set(addr, value);
         return addr;
+    }
+
+    private static Class<?> carrierForSize(long size) {
+        return switch ((int)size) {
+            case 1 -> byte.class;
+            case 2 -> short.class;
+            case 4 -> int.class;
+            case 8 -> long.class;
+            default -> throw new IllegalArgumentException("Bad layout size: " + size);
+        };
     }
 
     /**

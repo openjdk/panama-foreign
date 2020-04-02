@@ -52,20 +52,14 @@ public class InternalForeign implements Foreign {
     }
 
     @Override
-    public long asLong(MemoryAddress address) throws IllegalAccessError {
-        return MemoryAddressImpl.addressof(address);
-    }
-
-    @Override
     public MemoryAddress withSize(MemoryAddress base, long byteSize) throws IllegalAccessError {
-        return Utils.makeNativeSegmentUnchecked(asLong(base), byteSize, null, false)
+        return Utils.makeNativeSegmentUnchecked(base.toRawLongValue(), byteSize, null, false)
                 .baseAddress();
     }
 
     @Override
     public MemorySegment asMallocSegment(MemoryAddress base, long byteSize) throws IllegalAccessError {
-        long addr = asLong(base);
-        return Utils.makeNativeSegmentUnchecked(addr, byteSize, Thread.currentThread(), true);
+        return Utils.makeNativeSegmentUnchecked(base.toRawLongValue(), byteSize, Thread.currentThread(), true);
     }
 
     @Override

@@ -310,13 +310,17 @@ final class VarHandles {
      * @param strides the scale factors with which to multiply given access coordinates.
      * @return the created VarHandle.
      */
-    static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, long size, long alignmentMask,
+    static VarHandle makeMemoryAddressViewHandle(Class<?> carrier, long alignmentMask,
                                                  ByteOrder byteOrder, long offset, long[] strides) {
+        if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
+            throw new IllegalArgumentException("Invalid carrier: " + carrier.getName());
+        }
+        long size = Wrapper.forPrimitiveType(carrier).bitWidth() / 8;
         boolean be = byteOrder == ByteOrder.BIG_ENDIAN;
 
         Map<Integer, MethodHandle> carrierFactory = ADDRESS_FACTORIES.get(carrier);
         MethodHandle fac = carrierFactory.computeIfAbsent(strides.length,
-                dims -> new AddressVarHandleGenerator(carrier, dims)
+                dims -> new MemoryAccessVarHandleGenerator(carrier, dims)
                             .generateHandleFactory());
 
         try {

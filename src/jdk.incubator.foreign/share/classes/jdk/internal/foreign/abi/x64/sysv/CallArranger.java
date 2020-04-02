@@ -540,7 +540,7 @@ public class CallArranger {
         final int count = type.memberLayouts().size();
         for (int idx = 0; idx < count; idx++) {
             MemoryLayout t = type.memberLayouts().get(idx);
-            if (Utils.isPadding(t)) {
+            if (t.isPadding()) {
                 continue;
             }
             // ignore zero-length array for now

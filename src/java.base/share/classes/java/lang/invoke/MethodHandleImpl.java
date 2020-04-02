@@ -1792,42 +1792,60 @@ abstract class MethodHandleImpl {
             }
 
             @Override
-            public VarHandle memoryAddressViewVarHandle(Class<?> carrier, long size, long alignmentMask,
-                                                        ByteOrder order, long offset, long[] strides) {
-                return VarHandles.makeMemoryAddressViewHandle(carrier, size, alignmentMask, order, offset, strides);
+            public VarHandle memoryAccessVarHandle(Class<?> carrier, long alignmentMask,
+                                                   ByteOrder order, long offset, long[] strides) {
+                return VarHandles.makeMemoryAddressViewHandle(carrier, alignmentMask, order, offset, strides);
             }
 
             @Override
             public Class<?> memoryAddressCarrier(VarHandle handle) {
-                return checkMemAccessHandle(handle).carrier();
+                return checkMemoryAccessHandle(handle).carrier();
             }
 
             @Override
             public long memoryAddressAlignmentMask(VarHandle handle) {
-                return checkMemAccessHandle(handle).alignmentMask;
+                return checkMemoryAccessHandle(handle).alignmentMask;
             }
 
             @Override
             public ByteOrder memoryAddressByteOrder(VarHandle handle) {
-                return checkMemAccessHandle(handle).be ?
+                return checkMemoryAccessHandle(handle).be ?
                         ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
             }
 
             @Override
             public long memoryAddressOffset(VarHandle handle) {
-                return checkMemAccessHandle(handle).offset;
+                return checkMemoryAccessHandle(handle).offset;
             }
 
             @Override
             public long[] memoryAddressStrides(VarHandle handle) {
-                return checkMemAccessHandle(handle).strides();
+                return checkMemoryAccessHandle(handle).strides();
             }
 
-            private VarHandleMemoryAddressBase checkMemAccessHandle(VarHandle handle) {
-                if (!(handle.asDirect() instanceof VarHandleMemoryAddressBase)) {
+            @Override
+            public boolean isMemoryAccessVarHandle(VarHandle handle) {
+                return asMemoryAccessVarHandle(handle) != null;
+            }
+
+            private MemoryAccessVarHandleBase asMemoryAccessVarHandle(VarHandle handle) {
+                if (handle instanceof MemoryAccessVarHandleBase) {
+                    return (MemoryAccessVarHandleBase)handle;
+                } else if (handle.target() instanceof MemoryAccessVarHandleBase) {
+                    // skip first adaptation, since we have to step over MemoryAddressProxy
+                    // see JDK-8237349
+                    return (MemoryAccessVarHandleBase)handle.target();
+                } else {
+                    return null;
+                }
+            }
+
+            private MemoryAccessVarHandleBase checkMemoryAccessHandle(VarHandle handle) {
+                MemoryAccessVarHandleBase base = asMemoryAccessVarHandle(handle);
+                if (base == null) {
                     throw new IllegalArgumentException("Not a memory access varhandle: " + handle);
                 }
-                return (VarHandleMemoryAddressBase) handle.asDirect();
+                return base;
             }
         });
     }

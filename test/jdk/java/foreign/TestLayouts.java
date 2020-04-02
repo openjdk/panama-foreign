@@ -208,6 +208,11 @@ public class TestLayouts {
         assertEquals(struct.byteAlignment(), 8);
     }
 
+    @Test(dataProvider = "layoutKinds")
+    public void testPadding(LayoutKind kind) {
+        assertEquals(kind == LayoutKind.PADDING, kind.layout.isPadding());
+    }
+
     @Test(dataProvider="layoutsAndAlignments")
     public void testAlignmentString(MemoryLayout layout, long bitAlign) {
         long[] alignments = { 8, 16, 32, 64, 128 };
@@ -254,6 +259,13 @@ public class TestLayouts {
             values[(i * 2) + 1] = new Object[] { layoutKinds[i].layout, 18 }; // not a power of 2
         }
         return values;
+    }
+
+    @DataProvider(name = "layoutKinds")
+    public Object[][] layoutsKinds() {
+        return Stream.of(LayoutKind.values())
+                .map(lk -> new Object[] { lk })
+                .toArray(Object[][]::new);
     }
 
     enum SizedLayoutFactory {
