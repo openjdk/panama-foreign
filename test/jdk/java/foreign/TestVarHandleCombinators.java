@@ -62,10 +62,13 @@ public class TestVarHandleCombinators {
         vh.get(segment.baseAddress(), 1L); //should throw
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testBadStrideElement() {
+    public void testZeroStrideElement() {
         VarHandle vh = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
-        MemoryHandles.withStride(vh, 0); //scale factor cant be zero
+        VarHandle strided_vh = MemoryHandles.withStride(vh, 0);
+        MemorySegment segment = MemorySegment.ofArray(new int[] { 42 });
+        for (int i = 0 ; i < 100 ; i++) {
+            assertEquals((int)vh.get(segment.baseAddress()), strided_vh.get(segment.baseAddress(), (long)i));
+        }
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -106,10 +109,13 @@ public class TestVarHandleCombinators {
         vh.set(address, (byte) 10); // should be bad align
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testOffsetNegative() {
-        VarHandle vh = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
-        MemoryHandles.withOffset(vh, -1);
+    public void testZeroOffsetElement() {
+        VarHandle vh = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
+        VarHandle offset_vh = MemoryHandles.withOffset(vh, 0);
+        MemorySegment segment = MemorySegment.ofArray(new int[] { 42 });
+        for (int i = 0 ; i < 100 ; i++) {
+            assertEquals((int)vh.get(segment.baseAddress()), offset_vh.get(segment.baseAddress(), (long)i));
+        }
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)

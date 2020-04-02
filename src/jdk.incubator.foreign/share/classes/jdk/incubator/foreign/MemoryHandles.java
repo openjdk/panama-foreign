@@ -214,12 +214,11 @@ public final class MemoryHandles {
      * @param target the target memory access handle to access after the offset adjustment.
      * @param bytesOffset the offset, in bytes. Must be positive or zero.
      * @return the adapted var handle.
-     * @throws IllegalArgumentException if {@code bytesOffset < 0}, or if the first access coordinate type
-     * is not of type {@link MemoryAddress}.
+     * @throws IllegalArgumentException if the first access coordinate type is not of type {@link MemoryAddress}.
      */
     public static VarHandle withOffset(VarHandle target, long bytesOffset) {
-        if (bytesOffset < 0) {
-            throw new IllegalArgumentException("Illegal offset: " + bytesOffset);
+        if (bytesOffset == 0) {
+            return target; //nothing to do
         }
 
         checkAddressFirstCoordinate(target);
@@ -250,17 +249,17 @@ public final class MemoryHandles {
      * provided as an additional access coordinate (of type {@code long}).
      *
      * The returned var handle will feature the same type as the target var handle; an additional access coordinate
-     * of type {@code long} will be <em>prepended</em> to the access coordinate types of the target var handle.
+     * of type {@code long} will be added to the access coordinate types of the target var handle at the position
+     * immediately following the leading access coordinate of type {@link MemoryAddress}.
      *
      * @param target the target memory access handle to access after the scale adjustment.
      * @param bytesStride the stride, in bytes, by which to multiply the coordinate value. Must be greater than zero.
      * @return the adapted var handle.
-     * @throws IllegalArgumentException if {@code bytesStride <= 0}, or if the first access coordinate type
-     * is not of type {@link MemoryAddress}.
+     * @throws IllegalArgumentException if the first access coordinate type is not of type {@link MemoryAddress}.
      */
     public static VarHandle withStride(VarHandle target, long bytesStride) {
         if (bytesStride == 0) {
-            throw new IllegalArgumentException("Stride must be positive: " + bytesStride);
+            return MethodHandles.dropCoordinates(target, 1, long.class); // dummy coordinate
         }
 
         checkAddressFirstCoordinate(target);
@@ -296,12 +295,13 @@ public final class MemoryHandles {
      *
      * @param target the memory access var handle to be adapted
      * @return the adapted var handle.
-     * @throws IllegalArgumentException if the carrier type of {@code varHandle} is either {@code float},
-     * or {@code double}, or is not a primitive type.
+     * @throws IllegalArgumentException if the carrier type of {@code varHandle} is either {@code boolean},
+     * {@code float}, or {@code double}, or is not a primitive type.
      */
     public static VarHandle asAddressVarHandle(VarHandle target) {
         Class<?> carrier = target.varType();
-        if (!carrier.isPrimitive() || carrier == float.class || carrier == double.class) {
+        if (!carrier.isPrimitive() || carrier == boolean.class ||
+                carrier == float.class || carrier == double.class) {
             throw new IllegalArgumentException("Unsupported carrier type: " + carrier.getName());
         }
 
@@ -339,7 +339,7 @@ public final class MemoryHandles {
     }
 
     private static long addressToLong(MemoryAddress value) {
-        return ((MemoryAddressImpl)value).unsafeGetOffset();
+        return MemoryAddressImpl.addressof(value);
     }
 
     private static MemoryAddress addOffset(MemoryAddress address, long offset) {

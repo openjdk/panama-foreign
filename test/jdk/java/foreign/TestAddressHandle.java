@@ -38,6 +38,27 @@ import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
 public class TestAddressHandle {
+
+    static final MethodHandle INT_TO_BOOL;
+    static final MethodHandle BOOL_TO_INT;
+    static final MethodHandle INT_TO_STRING;
+    static final MethodHandle STRING_TO_INT;
+
+    static {
+        try {
+            INT_TO_BOOL = MethodHandles.lookup().findStatic(TestAddressHandle.class, "intToBool",
+                    MethodType.methodType(boolean.class, int.class));
+            BOOL_TO_INT = MethodHandles.lookup().findStatic(TestAddressHandle.class, "boolToInt",
+                    MethodType.methodType(int.class, boolean.class));
+            INT_TO_STRING = MethodHandles.lookup().findStatic(TestAddressHandle.class, "intToString",
+                    MethodType.methodType(String.class, int.class));
+            STRING_TO_INT = MethodHandles.lookup().findStatic(TestAddressHandle.class, "stringToInt",
+                    MethodType.methodType(int.class, String.class));
+        } catch (Throwable ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
+
     @Test(dataProvider = "addressHandles")
     public void testAddressHandle(VarHandle addrHandle) {
         VarHandle longHandle = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
@@ -79,6 +100,20 @@ public class TestAddressHandle {
         MemoryHandles.asAddressVarHandle(doubleHandle);
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadAdaptBoolean() {
+        VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
+        VarHandle boolHandle = MethodHandles.filterValue(intHandle, BOOL_TO_INT, INT_TO_BOOL);
+        MemoryHandles.asAddressVarHandle(boolHandle);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadAdaptString() {
+        VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
+        VarHandle stringHandle = MethodHandles.filterValue(intHandle, STRING_TO_INT, INT_TO_STRING);
+        MemoryHandles.asAddressVarHandle(stringHandle);
+    }
+
     @DataProvider(name = "addressHandles")
     static Object[][] addressHandles() {
         return new Object[][] {
@@ -107,5 +142,21 @@ public class TestAddressHandle {
                 { MemoryHandles.asAddressVarHandle(MemoryHandles.withOffset(MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder()), 0)) },
                 { MemoryHandles.asAddressVarHandle(MemoryLayouts.JAVA_BYTE.varHandle(byte.class)) }
         };
+    }
+
+    static int boolToInt(boolean value) {
+        return value ? 1 : 0;
+    }
+
+    static boolean intToBool(int value) {
+        return value != 0;
+    }
+
+    static int stringToInt(String value) {
+        return value.length();
+    }
+
+    static String intToString(int value) {
+        return String.valueOf(value);
     }
 }
