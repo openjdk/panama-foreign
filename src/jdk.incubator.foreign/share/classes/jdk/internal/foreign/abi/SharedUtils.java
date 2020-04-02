@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.foreign.InternalForeign;
 import jdk.internal.foreign.Utils;
 
 import jdk.incubator.foreign.GroupLayout;
@@ -50,6 +51,8 @@ public class SharedUtils {
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BASEADDRESS;
     private static final MethodHandle MH_BUFFER_COPY;
+
+    private static InternalForeign foreign = InternalForeign.getInstancePrivileged();
 
     static {
         try {
@@ -170,7 +173,7 @@ public class SharedUtils {
     }
 
     private static MemoryAddress bufferCopy(MemoryAddress dest, MemorySegment buffer) {
-        MemoryAddress.copy(buffer.baseAddress(), Utils.resizeNativeAddress(dest, buffer.byteSize()), buffer.byteSize());
+        MemoryAddress.copy(buffer.baseAddress(), foreign.withSize(dest, buffer.byteSize()), buffer.byteSize());
         return dest;
     }
 

@@ -78,26 +78,42 @@ public interface Foreign {
     long asLong(MemoryAddress address) throws IllegalAccessError;
 
     /**
-     * Returns a new native memory segment with given base address and size. The returned segment has its own temporal
-     * bounds, and can therefore be closed; closing such a segment does <em>not</em> result in any resource being
-     * deallocated.
+     * Returns a new memory address attached to a native memory segment with given base address and size. The segment
+     * attached to the returned address has <em>no temporal bounds</em> and cannot be closed; as such,
+     * the returned address is assumed to always be <em>alive</em>. Also, the segment attached to the returned address
+     * has <em>no confinement thread</em>; this means that the returned address can be used by multiple threads.
      * <p>
      * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     * @param base the desired base address
+     * @param byteSize the desired size (in bytes).
+     * @return a new memory address attached to a native memory segment with given base address and size.
+     * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address,
+     * or if the segment associated with {@code base} is not the <em>primordial</em> segment.
+     * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
+     */
+    MemoryAddress withSize(MemoryAddress base, long byteSize);
+
+    /**
+     * Returns a new native memory segment with given base address and size; the returned segment has its own temporal
+     * bounds, and can therefore be closed; closing such a segment results in releasing the native memory by calling
+     * <em>free</em> on the base address of the returned memory segment. As for other ordinary memory segments,
+     * the returned segment will also be confined on the current thread (see {@link Thread#currentThread()}).
      * <p>
-     * This method allows for making an otherwise in-accessible memory region accessible. However, there
-     * is no guarantee that this memory is safe to access, or that the given size for the new segment is not too large,
-     * potentially resulting in out-of-bounds accesses. The developer is trusted to make the judgement that the use of the
-     * returned memory segment is safe.
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param base the desired base address
      * @param byteSize the desired size.
      * @return a new native memory segment with given base address and size.
-     * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address.
+     * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address,
+     * or if the segment associated with {@code base} is not the <em>primordial</em> segment.
      * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
      */
-    MemorySegment ofNativeUnchecked(MemoryAddress base, long byteSize) throws IllegalAccessError;
+    MemorySegment asMallocSegment(MemoryAddress base, long byteSize);
 
     /**
      * Returns a non-confined memory segment that has the same spatial and temporal bounds as the provided segment.
