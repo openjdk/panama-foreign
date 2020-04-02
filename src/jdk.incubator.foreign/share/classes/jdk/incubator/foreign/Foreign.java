@@ -27,9 +27,6 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.InternalForeign;
-import jdk.internal.foreign.MemorySegmentImpl;
-
-import java.nio.charset.Charset;
 
 /**
  * A class containing various methods relating to native interop.
@@ -118,26 +115,4 @@ public interface Foreign {
      * @return system ABI.
      */
     SystemABI getSystemABI();
-
-    /**
-     * Returns a new native memory segment holding contents of the given Java String
-     * @param str the Java String
-     * @return a new native memory segment
-     */
-    MemorySegment toCString(String str);
-
-    /**
-     * Returns a new native memory segment holding contents of the given Java String
-     * @param str The Java String
-     * @param charset The Charset to be used to encode the String
-     * @return a new native memory segment
-     */
-    MemorySegment toCString(String str, Charset charset);
-
-    /**
-     * Returns a Java String from the contents of the given C '\0' terminated string
-     * @param addr The address of the C string
-     * @return a Java String
-     */
-    String toJavaString(MemoryAddress addr);
 }
