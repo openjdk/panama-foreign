@@ -28,10 +28,12 @@ package jdk.internal.foreign;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
+import sun.invoke.util.Wrapper;
 
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
+
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
@@ -132,19 +134,15 @@ public class LayoutPath {
             throw badLayoutPath("layout path does not select a value layout");
         }
 
-        Utils.checkCarrier(carrier);
-
-        long size = Utils.carrierSize(carrier);
-
-        if ((size * 8) != layout.bitSize()) { // carrier has the right size?
+        if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class // illegal carrier?
+                || Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitSize()) { // carrier has the right size?
             throw new IllegalArgumentException("Invalid carrier: " + carrier + ", for layout " + layout);
         }
 
         checkAlignment(this);
 
-        return Utils.fixUpVarHandle(JLI.memoryAddressViewVarHandle(
-                Utils.adjustCarrier(carrier),
-                size,
+        return Utils.fixUpVarHandle(JLI.memoryAccessVarHandle(
+                carrier,
                 layout.byteAlignment() - 1, //mask
                 ((ValueLayout) layout).order(),
                 Utils.bitsToBytesOrThrow(offset, IllegalStateException::new),

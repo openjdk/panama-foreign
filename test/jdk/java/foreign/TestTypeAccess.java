@@ -41,7 +41,7 @@ public class TestTypeAccess {
 
     static final VarHandle INT_HANDLE = MemoryLayouts.JAVA_INT.varHandle(int.class);
 
-    static final VarHandle ADDR_HANDLE = MemoryHandles.varHandle(MemoryAddress .class, ByteOrder.nativeOrder());
+    static final VarHandle ADDR_HANDLE = MemoryHandles.asAddressVarHandle(INT_HANDLE);
 
     @Test(expectedExceptions=ClassCastException.class)
     public void testMemoryAddressCoordinateAsString() {

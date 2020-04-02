@@ -5041,7 +5041,6 @@ System.out.println((int) f0.invokeExact("x", "y")); // 2
     public static VarHandle filterCoordinates(VarHandle target, int pos, MethodHandle... filters) {
         Objects.nonNull(target);
         Objects.nonNull(filters);
-        if (filters.length == 0) return target;
 
         List<Class<?>> targetCoordinates = target.coordinateTypes();
         if (pos < 0 || pos >= targetCoordinates.size()) {
@@ -5049,6 +5048,8 @@ System.out.println((int) f0.invokeExact("x", "y")); // 2
         } else if (pos + filters.length > targetCoordinates.size()) {
             throw new IllegalArgumentException("Too many filters");
         }
+
+        if (filters.length == 0) return target;
 
         List<Class<?>> newCoordinates = new ArrayList<>(targetCoordinates);
         for (int i = 0 ; i < filters.length ; i++) {
@@ -5095,7 +5096,6 @@ System.out.println((int) f0.invokeExact("x", "y")); // 2
     public static VarHandle insertCoordinates(VarHandle target, int pos, Object... values) {
         Objects.nonNull(target);
         Objects.nonNull(values);
-        if (values.length == 0) return target;
 
         List<Class<?>> targetCoordinates = target.coordinateTypes();
         if (pos < 0 || pos >= targetCoordinates.size()) {
@@ -5103,6 +5103,8 @@ System.out.println((int) f0.invokeExact("x", "y")); // 2
         } else if (pos + values.length > targetCoordinates.size()) {
             throw new IllegalArgumentException("Too many values");
         }
+
+        if (values.length == 0) return target;
 
         List<Class<?>> newCoordinates = new ArrayList<>(targetCoordinates);
         for (int i = 0 ; i < values.length ; i++) {
@@ -5256,12 +5258,49 @@ System.out.println((int) f0.invokeExact("x", "y")); // 2
         }
 
         List<Class<?>> newCoordinates = new ArrayList<>(targetCoordinates);
-        for (Class<?> arg : filter.type().parameterList()) {
-            newCoordinates.add(pos, arg);
-        }
+        newCoordinates.remove(pos);
+        newCoordinates.addAll(pos, filter.type().parameterList());
 
         return new IndirectVarHandle(target, target.varType(), newCoordinates.toArray(new Class<?>[0]),
                 (mode, modeHandle) -> MethodHandles.collectArguments(modeHandle, 1 + pos, filter));
+    }
+
+    /**
+     * Returns a var handle which will discard some dummy coordinates before delegating to the
+     * target var handle. As a consequence, the resulting var handle will feature more
+     * coordinate types than the target var handle.
+     * <p>
+     * The {@code pos} argument may range between zero and <i>N</i>, where <i>N</i> is the arity of the
+     * target var handle's coordinate types. If {@code pos} is zero, the dummy coordinates will precede
+     * the target's real arguments; if {@code pos} is <i>N</i> they will come after.
+     * <p>
+     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode} and
+     * atomic access guarantees as those featured by the target var handle.
+     *
+     * @param target the var handle to invoke after the dummy coordinates are dropped
+     * @param pos position of first coordinate to drop (zero for the leftmost)
+     * @param valueTypes the type(s) of the coordinate(s) to drop
+     * @return an adapter var handle which drops some dummy coordinates,
+     *         before calling the target var handle
+     * @throws NullPointerException if either {@code target}, {@code valueTypes} are {@code == null}.
+     * @throws IllegalArgumentException if {@code pos} is not between 0 and the target var handle coordinate arity, inclusive.
+     */
+    public static VarHandle dropCoordinates(VarHandle target, int pos, Class<?>... valueTypes) {
+        Objects.nonNull(target);
+        Objects.nonNull(valueTypes);
+
+        List<Class<?>> targetCoordinates = target.coordinateTypes();
+        if (pos < 0 || pos > targetCoordinates.size()) {
+            throw newIllegalArgumentException("Invalid position " + pos + " for coordinate types", targetCoordinates);
+        }
+
+        if (valueTypes.length == 0) return target;
+
+        List<Class<?>> newCoordinates = new ArrayList<>(targetCoordinates);
+        newCoordinates.addAll(pos, List.of(valueTypes));
+
+        return new IndirectVarHandle(target, target.varType(), newCoordinates.toArray(new Class<?>[0]),
+                (mode, modeHandle) -> MethodHandles.dropArguments(modeHandle, 1 + pos, valueTypes));
     }
 
     private static void noCheckedExceptions(MethodHandle handle) {

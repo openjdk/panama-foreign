@@ -113,8 +113,14 @@ public interface JavaLangInvokeAccess {
      * Used by {@code jdk.internal.foreign.LayoutPath} and
      * {@code jdk.incubator.foreign.MemoryHandles}.
      */
-    VarHandle memoryAddressViewVarHandle(Class<?> carrier, long size, long alignmentMask,
-                                         ByteOrder order, long offset, long[] strides);
+    VarHandle memoryAccessVarHandle(Class<?> carrier, long alignmentMask,
+                                    ByteOrder order, long offset, long[] strides);
+
+    /**
+     * Is {@code handle} a memory access varhandle?
+     * Used by {@code jdk.incubator.foreign.MemoryHandles}.
+     */
+    boolean isMemoryAccessVarHandle(VarHandle handle);
 
     /**
      * Returns the carrier associated with a memory access var handle.

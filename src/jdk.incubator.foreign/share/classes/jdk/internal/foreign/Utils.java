@@ -29,7 +29,6 @@ package jdk.internal.foreign;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
@@ -43,8 +42,6 @@ import sun.security.action.GetBooleanAction;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.constant.Constable;
-import java.lang.reflect.Field;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
@@ -52,7 +49,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -63,17 +59,11 @@ public final class Utils {
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
     private static final MethodHandle ADDRESS_FILTER;
-    private static final MethodHandle LONG_TO_ADDRESS;
-    private static final MethodHandle ADDRESS_TO_LONG;
 
     static {
         try {
             ADDRESS_FILTER = MethodHandles.lookup().findStatic(Utils.class, "filterAddress",
                     MethodType.methodType(MemoryAddressProxy.class, MemoryAddress.class));
-            LONG_TO_ADDRESS = MethodHandles.lookup().findStatic(Utils.class, "longToAddress",
-                    MethodType.methodType(MemoryAddress.class, long.class));
-            ADDRESS_TO_LONG = MethodHandles.lookup().findStatic(Utils.class, "addressToLong",
-                    MethodType.methodType(long.class, MemoryAddress.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -241,21 +231,10 @@ public final class Utils {
     public static VarHandle fixUpVarHandle(VarHandle handle) {
         // This adaptation is required, otherwise the memory access var handle will have type MemoryAddressProxy,
         // and not MemoryAddress (which the user expects), which causes performance issues with asType() adaptations.
-        handle = MethodHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
-        return (javaLangInvokeAccess.memoryAddressCarrier(handle) == MemoryAddressProxy.class) ?
-                MethodHandles.filterValue(handle, ADDRESS_TO_LONG, LONG_TO_ADDRESS) :
-                handle;
+        return MethodHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
     }
 
     private static MemoryAddressProxy filterAddress(MemoryAddress addr) {
         return (MemoryAddressImpl)addr;
-    }
-
-    private static MemoryAddress longToAddress(long value) {
-        return MemoryAddress.ofLong(value);
-    }
-
-    private static long addressToLong(MemoryAddress value) {
-        return ((MemoryAddressImpl)value).unsafeGetOffset();
     }
 }
