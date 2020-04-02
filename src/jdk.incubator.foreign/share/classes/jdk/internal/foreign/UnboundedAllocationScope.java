@@ -37,8 +37,8 @@ import java.util.function.LongFunction;
 public class UnboundedAllocationScope extends NativeAllocationScope {
 
     private static final long BLOCK_SIZE = 4 * 1024;
+    private static final long MAX_ALLOC_SIZE = BLOCK_SIZE / 2;
 
-    private final LongFunction<MemorySegment> segmentFactory;
     private final List<MemorySegment> usedSegments = new ArrayList<>();
     private MemorySegment segment;
     private long sp = 0L;
@@ -54,14 +54,13 @@ public class UnboundedAllocationScope extends NativeAllocationScope {
         return size;
     }
 
-    public UnboundedAllocationScope(LongFunction<MemorySegment> segmentFactory) {
-        this.segmentFactory = segmentFactory;
-        this.segment = segmentFactory.apply(BLOCK_SIZE);
+    public UnboundedAllocationScope() {
+        this.segment = MemorySegment.allocateNative(BLOCK_SIZE);
     }
 
     @Override
     public MemoryAddress allocate(long bytesSize, long bytesAlignment) {
-        if (bytesSize > BLOCK_SIZE) {
+        if (bytesSize > MAX_ALLOC_SIZE) {
             MemorySegment segment = MemorySegment.allocateNative(bytesSize, bytesAlignment);
             usedSegments.add(segment);
             return segment.withAccessModes(MemorySegment.READ | MemorySegment.WRITE | MemorySegment.ACQUIRE)
@@ -79,10 +78,10 @@ public class UnboundedAllocationScope extends NativeAllocationScope {
             } catch (IndexOutOfBoundsException ex) {
                 sp = 0L;
                 usedSegments.add(segment);
-                segment = segmentFactory.apply(BLOCK_SIZE);
+                segment = MemorySegment.allocateNative(BLOCK_SIZE);
             }
         }
-        throw new OutOfMemoryError("Allocation request exceeds scope block size");
+        throw new AssertionError("Cannot get here!");
     }
 
     @Override

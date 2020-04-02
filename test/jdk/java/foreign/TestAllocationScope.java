@@ -88,6 +88,17 @@ public class TestAllocationScope {
         }
     }
 
+    static final int SIZE_256M = 1024 * 1024 * 256;
+
+    @Test
+    public void testBigAllocationInUnboundedScope() {
+        try (NativeAllocationScope scope = NativeAllocationScope.unboundedScope()) {
+            for (int i = 8 ; i < SIZE_256M ; i *= 8) {
+                MemoryAddress address = scope.allocate(i);
+                assertEquals(address.segment().byteSize(), i);
+            }
+        }
+    }
 
     @DataProvider(name = "allocationScopes")
     static Object[][] allocationScopes() {

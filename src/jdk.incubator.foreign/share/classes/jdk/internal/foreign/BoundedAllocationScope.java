@@ -45,8 +45,8 @@ public class BoundedAllocationScope extends NativeAllocationScope {
         return sp;
     }
 
-    public BoundedAllocationScope(MemorySegment segment) {
-        this.segment = segment;
+    public BoundedAllocationScope(long size) {
+        this.segment = MemorySegment.allocateNative(size);
     }
 
     @Override

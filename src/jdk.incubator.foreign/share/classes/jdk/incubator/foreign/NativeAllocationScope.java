@@ -239,7 +239,7 @@ public abstract class NativeAllocationScope implements AutoCloseable {
      * @return a new bounded allocation scope, with given size (in bytes).
      */
     public static NativeAllocationScope boundedScope(long size) {
-        return new BoundedAllocationScope(MemorySegment.allocateNative(size));
+        return new BoundedAllocationScope(size);
     }
 
     /**
@@ -247,6 +247,6 @@ public abstract class NativeAllocationScope implements AutoCloseable {
      * @return a new unbounded allocation scope.
      */
     public static NativeAllocationScope unboundedScope() {
-        return new UnboundedAllocationScope(MemorySegment::allocateNative);
+        return new UnboundedAllocationScope();
     }
 }
