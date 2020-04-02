@@ -63,8 +63,15 @@ public class InternalForeign implements Foreign {
     }
 
     @Override
-    public MemorySegment ofNativeUnchecked(MemoryAddress base, long byteSize) throws IllegalAccessError {
-        return Utils.makeNativeSegmentUnchecked(base, byteSize);
+    public MemoryAddress withSize(MemoryAddress base, long byteSize) throws IllegalAccessError {
+        return Utils.makeNativeSegmentUnchecked(asLong(base), byteSize, null, false)
+                .baseAddress();
+    }
+
+    @Override
+    public MemorySegment asMallocSegment(MemoryAddress base, long byteSize) throws IllegalAccessError {
+        long addr = asLong(base);
+        return Utils.makeNativeSegmentUnchecked(addr, byteSize, Thread.currentThread(), true);
     }
 
     @Override
@@ -141,14 +148,12 @@ public class InternalForeign implements Foreign {
     @Override
     public String toJavaString(MemoryAddress addr) {
         StringBuilder buf = new StringBuilder();
-        try (MemorySegment seg = ofNativeUnchecked(addr, Long.MAX_VALUE)) {
-            MemoryAddress baseAddr = seg.baseAddress();
-            byte curr = (byte) Lazy.byteArrHandle.get(baseAddr, 0);
-            long offset = 0;
-            while (curr != 0) {
-                buf.append((char) curr);
-                curr = (byte) Lazy.byteArrHandle.get(baseAddr, ++offset);
-            }
+        MemoryAddress baseAddr = withSize(addr, Long.MAX_VALUE);
+        byte curr = (byte) Lazy.byteArrHandle.get(baseAddr, 0);
+        long offset = 0;
+        while (curr != 0) {
+            buf.append((char) curr);
+            curr = (byte) Lazy.byteArrHandle.get(baseAddr, ++offset);
         }
         return buf.toString();
     }
