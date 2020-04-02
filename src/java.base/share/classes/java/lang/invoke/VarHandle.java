@@ -463,6 +463,8 @@ public abstract class VarHandle implements Constable {
         return this;
     }
 
+    VarHandle target() { return null; }
+
     // Plain accessors
 
     /**

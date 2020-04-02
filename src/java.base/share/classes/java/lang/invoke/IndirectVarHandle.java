@@ -86,6 +86,10 @@ import java.util.function.BiFunction;
         return directTarget;
     }
 
+    VarHandle target() {
+        return target;
+    }
+
     @Override
     @ForceInline
     MethodHandle getMethodHandle(int mode) {

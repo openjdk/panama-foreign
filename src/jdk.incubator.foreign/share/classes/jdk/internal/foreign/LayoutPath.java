@@ -141,7 +141,7 @@ public class LayoutPath {
 
         checkAlignment(this);
 
-        return Utils.fixUpVarHandle(JLI.memoryAddressViewVarHandle(
+        return Utils.fixUpVarHandle(JLI.memoryAccessVarHandle(
                 carrier,
                 layout.byteAlignment() - 1, //mask
                 ((ValueLayout) layout).order(),

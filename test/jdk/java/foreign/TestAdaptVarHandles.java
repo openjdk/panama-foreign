@@ -394,6 +394,48 @@ public class TestAdaptVarHandles {
         MethodHandles.collectCoordinates(intHandle, 0, S2L_EX);
     }
 
+    @Test
+    public void testDropCoordinates() throws Throwable {
+        ValueLayout layout = MemoryLayouts.JAVA_INT;
+        MemorySegment segment = MemorySegment.allocateNative(layout);
+        VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
+        VarHandle intHandle_dummy = MethodHandles.dropCoordinates(intHandle, 1, float.class, String.class);
+        intHandle_dummy.set(segment.baseAddress(), 1f, "hello", 0L, 1);
+        int oldValue = (int)intHandle_dummy.getAndAdd(segment.baseAddress(), 1f, "hello", 0L, 42);
+        assertEquals(oldValue, 1);
+        int value = (int)intHandle_dummy.get(segment.baseAddress(), 1f, "hello", 0L);
+        assertEquals(value, 43);
+        boolean swapped = (boolean)intHandle_dummy.compareAndSet(segment.baseAddress(), 1f, "hello", 0L, 43, 12);
+        assertTrue(swapped);
+        oldValue = (int)intHandle_dummy.compareAndExchange(segment.baseAddress(), 1f, "hello", 0L, 12, 42);
+        assertEquals(oldValue, 12);
+        value = (int)intHandle_dummy.toMethodHandle(VarHandle.AccessMode.GET).invokeExact(segment.baseAddress(), 1f, "hello", 0L);
+        assertEquals(value, 42);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadDropCoordinatesNegativePos() {
+        VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
+        MethodHandles.dropCoordinates(intHandle, -1);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadDropCoordinatesPosTooBig() {
+        VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
+        MethodHandles.dropCoordinates(intHandle, 2);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testBadDropCoordinatesNullValueTypes() {
+        VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
+        MethodHandles.dropCoordinates(intHandle, 1, null);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testBadDropCoordinatesNullTarget() {
+        MethodHandles.dropCoordinates(null, 1);
+    }
+
     //helper methods
 
     static int stringToInt(String s) {
