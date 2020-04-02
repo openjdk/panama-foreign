@@ -45,6 +45,11 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     private final MemorySegmentImpl segment;
     private final long offset;
 
+    public MemoryAddressImpl(long offset) {
+        this.segment = MemorySegmentImpl.NOTHING;
+        this.offset = offset;
+    }
+
     public MemoryAddressImpl(MemorySegmentImpl segment, long offset) {
         this.segment = Objects.requireNonNull(segment);
         this.offset = offset;
@@ -64,7 +69,10 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     // MemoryAddress methods
 
     @Override
-    public long offset() {
+    public long segmentOffset() {
+        if (segment() == null) {
+            throw new UnsupportedOperationException("Address does not have a segment");
+        }
         return offset;
     }
 
@@ -78,7 +86,8 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     @Override
     public MemorySegment segment() {
-        return segment;
+        return segment != MemorySegmentImpl.NOTHING ?
+                segment : null;
     }
 
     @Override

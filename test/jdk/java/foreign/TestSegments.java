@@ -30,6 +30,8 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Method;
@@ -40,11 +42,8 @@ import java.util.List;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
-
-import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
 
@@ -101,7 +100,7 @@ public class TestSegments {
     @Test
     public void testNothingSegmentAccess() {
         VarHandle longHandle = MemoryLayouts.JAVA_LONG.varHandle(long.class);
-        long[] values = { 0L, Integer.MAX_VALUE - 1, (long)Integer.MAX_VALUE + 1 };
+        long[] values = { 0L, Integer.MAX_VALUE - 1, (long) Integer.MAX_VALUE + 1 };
         for (long value : values) {
             MemoryAddress addr = MemoryAddress.ofLong(value);
             try {
@@ -110,6 +109,13 @@ public class TestSegments {
                 assertTrue(ex.getMessage().contains("Required access mode"));
             }
         }
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testNothingSegmentOffset() {
+        MemoryAddress addr = MemoryAddress.ofLong(42);
+        assertNull(addr.segment());
+        addr.segmentOffset();
     }
 
     @Test
@@ -125,7 +131,7 @@ public class TestSegments {
             MemoryAddress base = segment.baseAddress();
             MemoryAddress last = base.addOffset(10);
             while (!base.equals(last)) {
-                MemorySegment slice = segment.asSlice(base.offset(), 10 - start);
+                MemorySegment slice = segment.asSlice(base.segmentOffset(), 10 - start);
                 for (long i = start ; i < 10 ; i++) {
                     assertEquals(
                             byteHandle.get(segment.baseAddress(), i),
