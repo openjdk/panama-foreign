@@ -397,7 +397,9 @@ public class TestByteBuffer {
     @Test(expectedExceptions = { UnsupportedOperationException.class,
                                  IllegalArgumentException.class })
     public void testTooBigForByteBuffer() {
-        MemorySegment.allocateNative((long) Integer.MAX_VALUE * 2).asByteBuffer();
+        try (MemorySegment segment = MemorySegment.allocateNative((long)Integer.MAX_VALUE + 10L)) {
+            segment.asByteBuffer();
+        }
     }
 
     @Test(dataProvider="resizeOps")

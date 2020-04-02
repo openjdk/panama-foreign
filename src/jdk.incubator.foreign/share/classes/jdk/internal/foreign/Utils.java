@@ -109,16 +109,13 @@ public final class Utils {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress base, long bytesSize) {
-        if (((MemorySegmentImpl)base.segment()).base != null) {
-            throw new IllegalArgumentException("Not a native address: " + base);
+    public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize, Thread owner, boolean allowClose) {
+        MemoryScope scope = new MemoryScope(null, allowClose ? () -> unsafe.freeMemory(min) : null);
+        int mask = MemorySegmentImpl.DEFAULT_MASK;
+        if (!allowClose) {
+            mask &= ~MemorySegment.CLOSE;
         }
-        return makeNativeSegmentUnchecked(((MemoryAddressImpl)base).unsafeGetOffset(), bytesSize);
-    }
-
-    public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize) {
-        MemoryScope scope = new MemoryScope(null, null);
-        return new MemorySegmentImpl(min, null, bytesSize, Thread.currentThread(), scope);
+        return new MemorySegmentImpl(min, null, bytesSize, mask, owner, scope);
     }
 
     public static MemorySegment makeArraySegment(byte[] arr) {
