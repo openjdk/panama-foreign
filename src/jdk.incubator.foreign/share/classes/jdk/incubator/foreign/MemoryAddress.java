@@ -37,7 +37,7 @@ import jdk.internal.foreign.MemorySegmentImpl;
  * dereferenced using a memory access var handle (see {@link MemoryHandles}).
  * <p>
  * If an address does not have any associated segment, it is said to be <em>unchecked</em>. Unchecked memory
- * address do not feature known spatial or temporal bounds; as such, attempting a memory dereference operation
+ * addresses do not feature known spatial or temporal bounds; as such, attempting a memory dereference operation
  * using an unchecked memory address will result in a runtime exception. Unchecked addresses can be obtained
  * e.g. by calling the {@link #ofLong(long)} method.
  * <p>
