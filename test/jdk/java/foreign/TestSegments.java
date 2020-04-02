@@ -45,9 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 public class TestSegments {
 
@@ -113,6 +111,13 @@ public class TestSegments {
         }
     }
 
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testNothingSegmentOffset() {
+        MemoryAddress addr = MemoryAddress.ofLong(42);
+        assertNull(addr.segment());
+        addr.segmentOffset();
+    }
+
     @Test
     public void testSlices() {
         VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
@@ -126,7 +131,7 @@ public class TestSegments {
             MemoryAddress base = segment.baseAddress();
             MemoryAddress last = base.addOffset(10);
             while (!base.equals(last)) {
-                MemorySegment slice = segment.asSlice(base.offset(), 10 - start);
+                MemorySegment slice = segment.asSlice(base.segmentOffset(), 10 - start);
                 for (long i = start ; i < 10 ; i++) {
                     assertEquals(
                             byteHandle.get(segment.baseAddress(), i),
