@@ -112,7 +112,7 @@ public class TestNative {
                                               BiFunction<Z, Integer, Object> nativeBufferExtractor,
                                               BiFunction<Long, Integer, Object> nativeRawExtractor) {
         long nelems = layout.elementCount().getAsLong();
-        ByteBuffer bb = base.segment().asSlice(base.offset(), (int)layout.byteSize()).asByteBuffer();
+        ByteBuffer bb = base.segment().asSlice(base.segmentOffset(), (int)layout.byteSize()).asByteBuffer();
         Z z = bufferFactory.apply(bb);
         for (long i = 0 ; i < nelems ; i++) {
             Object handleValue = handleExtractor.apply(base, i);

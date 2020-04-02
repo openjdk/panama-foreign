@@ -65,9 +65,9 @@ public class TestAddressHandle {
         try (MemorySegment segment = MemorySegment.allocateNative(8)) {
             longHandle.set(segment.baseAddress(), 42L);
             MemoryAddress address = (MemoryAddress)addrHandle.get(segment.baseAddress());
-            assertEquals(address.offset(), 42L);
+            assertEquals(address.toRawLongValue(), 42L);
             try {
-                longHandle.get(address); // check OOB
+                longHandle.get(address); // check that address cannot be de-referenced
                 fail();
             } catch (UnsupportedOperationException ex) {
                 assertTrue(true);
