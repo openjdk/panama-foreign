@@ -77,7 +77,7 @@ public class BindingInterpreter {
                 case ALLOC_BUFFER ->
                     throw new UnsupportedOperationException();
                 case CONVERT_ADDRESS ->
-                    stack.push(MemoryAddressImpl.addressof((MemoryAddress) stack.pop()));
+                    stack.push(((MemoryAddress) stack.pop()).toRawLongValue());
                 case BASE_ADDRESS ->
                     stack.push(((MemorySegment) stack.pop()).baseAddress());
                 case DUP ->

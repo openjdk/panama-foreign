@@ -111,7 +111,7 @@ public class ProgrammableInvoker {
 
             VH_LONG.set(argsPtr.addOffset(layout.arguments_next_pc), addr);
             VH_LONG.set(argsPtr.addOffset(layout.stack_args_bytes), stackArgsBytes);
-            VH_LONG.set(argsPtr.addOffset(layout.stack_args), MemoryAddressImpl.addressof(stackArgs));
+            VH_LONG.set(argsPtr.addOffset(layout.stack_args), stackArgs.toRawLongValue());
 
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
@@ -129,7 +129,7 @@ public class ProgrammableInvoker {
                 layout.dump(abi.arch, argsPtr, System.err);
             }
 
-            invokeNative(stubAddress, MemoryAddressImpl.addressof(argsPtr));
+            invokeNative(stubAddress, argsPtr.toRawLongValue());
 
             if (DEBUG) {
                 System.err.println("Buffer state after:");

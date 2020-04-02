@@ -27,15 +27,12 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
-import sun.invoke.util.Wrapper;
 import sun.nio.ch.FileChannelImpl;
 import sun.security.action.GetBooleanAction;
 
@@ -73,11 +70,7 @@ public final class Utils {
     // 64-bit platforms and 8 on 32-bit platforms.
     private final static long MAX_ALIGN = Unsafe.ADDRESS_SIZE == 4 ? 8 : 16;
 
-    // the memory address var handle assumes that addresses have same size as a Java long
-    private final static long POINTER_SIZE = 8;
-
     private static final JavaNioAccess javaNioAccess = SharedSecrets.getJavaNioAccess();
-    private static final JavaLangInvokeAccess javaLangInvokeAccess = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
@@ -91,45 +84,6 @@ public final class Utils {
         } else {
             throw exFactory.get();
         }
-    }
-
-    static final Class<?> PADDING_CLASS;
-
-    static {
-        try {
-            PADDING_CLASS = Class.forName("jdk.incubator.foreign.PaddingLayout");
-        } catch (ReflectiveOperationException ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
-
-    public static boolean isPadding(MemoryLayout layout) {
-        return layout.getClass() == PADDING_CLASS;
-    }
-
-    public static void checkCarrier(Class<?> carrier) {
-        if (carrier == void.class || carrier == boolean.class ||
-                (!carrier.isPrimitive() && !isAddress(carrier))) {
-            throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
-        }
-    }
-
-    public static long carrierSize(Class<?> carrier) {
-        if (isAddress(carrier)) {
-            return POINTER_SIZE;
-        }
-        long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
-        return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
-    }
-
-    public static boolean isAddress(Class<?> carrier) {
-        return MemoryAddress.class == carrier ||
-                MemoryAddressProxy.class == carrier;
-    }
-
-    public static Class<?> adjustCarrier(Class<?> carrier) {
-        return carrier == MemoryAddress.class ?
-                MemoryAddressProxy.class : carrier;
     }
 
     // segment factories

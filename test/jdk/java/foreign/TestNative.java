@@ -25,20 +25,19 @@
 /*
  * @test
  * @modules java.base/jdk.internal.misc
- *          jdk.incubator.foreign/jdk.incubator.foreign.unsafe
- * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit TestNative
+ *          jdk.incubator.foreign
+ * @run testng TestNative
  */
 
-import jdk.incubator.foreign.Foreign;
-import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
-import jdk.internal.misc.Unsafe;
-import org.testng.annotations.*;
-
-import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
+import jdk.internal.misc.Unsafe;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import java.lang.invoke.VarHandle;
 import java.nio.Buffer;
@@ -55,7 +54,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 public class TestNative {
 
@@ -118,7 +117,7 @@ public class TestNative {
         for (long i = 0 ; i < nelems ; i++) {
             Object handleValue = handleExtractor.apply(base, i);
             Object bufferValue = nativeBufferExtractor.apply(z, (int)i);
-            Object rawValue = nativeRawExtractor.apply(Foreign.getInstance().asLong(base), (int)i);
+            Object rawValue = nativeRawExtractor.apply(base.toRawLongValue(), (int)i);
             if (handleValue instanceof Number) {
                 assertEquals(((Number)handleValue).longValue(), i);
                 assertEquals(((Number)bufferValue).longValue(), i);

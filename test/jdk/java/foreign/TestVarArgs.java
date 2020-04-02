@@ -87,8 +87,8 @@ public class TestVarArgs extends NativeTestHelper {
 
             MemoryAddress callInfoPtr = callInfo.baseAddress();
 
-            VH_CallInfo_writeback.set(callInfoPtr, MemoryAddressImpl.addressof(writeBack.baseAddress()));
-            VH_CallInfo_argIDs.set(callInfoPtr, MemoryAddressImpl.addressof(argIDs.baseAddress()));
+            VH_CallInfo_writeback.set(callInfoPtr, writeBack.baseAddress().toRawLongValue());
+            VH_CallInfo_argIDs.set(callInfoPtr, argIDs.baseAddress().toRawLongValue());
 
             for (int i = 0; i < args.size(); i++) {
                 VH_IntArray.set(argIDs.baseAddress(), (long) i, args.get(i).id.ordinal());

@@ -27,6 +27,7 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.InternalForeign;
+import jdk.internal.foreign.MemorySegmentImpl;
 
 /**
  * A class containing various methods relating to native interop.
@@ -59,20 +60,6 @@ public interface Foreign {
     static Foreign getInstance() throws IllegalAccessError {
         return InternalForeign.getInstance();
     }
-
-    /**
-     * Returns the absolute address represented by the given off-heap memory address as a {@code long}.
-     * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     * @param address the address to turn into a {@code long}
-     * @return the address as a {@code long}
-     * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
-     * @throws IllegalStateException if the given address is not an off-heap address
-     */
-    long asLong(MemoryAddress address) throws IllegalAccessError;
 
     /**
      * Returns a new memory address attached to a native memory segment with given base address and size. The segment

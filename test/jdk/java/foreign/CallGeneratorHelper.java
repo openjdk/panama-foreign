@@ -22,13 +22,11 @@
  *
  */
 
-import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.Utils;
 
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
@@ -386,12 +384,12 @@ public class CallGeneratorHelper extends NativeTestHelper {
 
     static void initStruct(MemorySegment str, GroupLayout g, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         for (MemoryLayout l : g.memberLayouts()) {
-            if (Utils.isPadding(l)) continue;
+            if (l.isPadding()) continue;
             VarHandle accessor = g.varHandle(structFieldCarrier(l), MemoryLayout.PathElement.groupElement(l.name().get()));
             List<Consumer<Object>> fieldsCheck = new ArrayList<>();
             Object value = makeArg(l, fieldsCheck, check);
             if (isPointer(l)) {
-                value = Foreign.getInstance().asLong((MemoryAddress)value);
+                value = ((MemoryAddress)value).toRawLongValue();
             }
             //set value
             accessor.set(str.baseAddress(), value);
