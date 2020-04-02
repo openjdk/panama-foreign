@@ -95,7 +95,10 @@ public class TestAllocationScope {
         try (NativeAllocationScope scope = NativeAllocationScope.unboundedScope()) {
             for (int i = 8 ; i < SIZE_256M ; i *= 8) {
                 MemoryAddress address = scope.allocate(i);
+                //check size
                 assertEquals(address.segment().byteSize(), i);
+                //check alignment
+                assertTrue(address.segment().baseAddress().toRawLongValue() % i == 0);
             }
         }
     }
