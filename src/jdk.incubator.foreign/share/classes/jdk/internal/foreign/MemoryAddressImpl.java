@@ -25,6 +25,7 @@
  */
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.Foreign;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.misc.Unsafe;
 
@@ -40,6 +41,7 @@ import java.util.Objects;
 public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
+    private static final InternalForeign foreign = InternalForeign.getInstancePrivileged();
 
     private final MemorySegmentImpl segment;
     private final long offset;
@@ -148,6 +150,6 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     }
 
     public static MemoryAddress ofLongUnchecked(long value, long byteSize) {
-        return new MemoryAddressImpl((MemorySegmentImpl)Utils.makeNativeSegmentUnchecked(value, byteSize), 0);
+        return foreign.withSize(MemoryAddress.ofLong(value), byteSize);
     }
 }
