@@ -68,6 +68,14 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     }
 
     @Override
+    public long toRawLongValue() {
+        if (unsafeGetBase() != null) {
+            throw new UnsupportedOperationException("Not a native address");
+        }
+        return unsafeGetOffset();
+    }
+
+    @Override
     public MemorySegment segment() {
         return segment;
     }
@@ -127,15 +135,5 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     @Override
     public String toString() {
         return "MemoryAddress{ region: " + segment + " offset=0x" + Long.toHexString(offset) + " }";
-    }
-
-    // helper methods
-
-    public static long addressof(MemoryAddress address) {
-        MemoryAddressImpl addressImpl = (MemoryAddressImpl) address;
-        if (addressImpl.unsafeGetBase() != null) {
-            throw new IllegalStateException("Heap address!");
-        }
-        return addressImpl.unsafeGetOffset();
     }
 }

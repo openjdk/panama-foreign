@@ -48,11 +48,6 @@ public class InternalForeign implements Foreign {
     }
 
     @Override
-    public long asLong(MemoryAddress address) throws IllegalAccessError {
-        return MemoryAddressImpl.addressof(address);
-    }
-
-    @Override
     public MemorySegment ofNativeUnchecked(MemoryAddress base, long byteSize) throws IllegalAccessError {
         return Utils.makeNativeSegmentUnchecked(base, byteSize);
     }

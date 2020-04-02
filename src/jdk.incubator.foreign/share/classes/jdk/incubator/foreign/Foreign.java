@@ -62,20 +62,6 @@ public interface Foreign {
     }
 
     /**
-     * Returns the absolute address represented by the given off-heap memory address as a {@code long}.
-     * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     * @param address the address to turn into a {@code long}
-     * @return the address as a {@code long}
-     * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
-     * @throws IllegalStateException if the given address is not an off-heap address
-     */
-    long asLong(MemoryAddress address) throws IllegalAccessError;
-
-    /**
      * Returns a new native memory segment with given base address and size. The returned segment has its own temporal
      * bounds, and can therefore be closed; closing such a segment does <em>not</em> result in any resource being
      * deallocated.
