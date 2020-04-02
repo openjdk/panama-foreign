@@ -169,6 +169,11 @@ abstract class AbstractLayout implements MemoryLayout {
     }
 
     @Override
+    public boolean isPadding() {
+        return this instanceof PaddingLayout;
+    }
+
+    @Override
     public int hashCode() {
         return attributes.hashCode() << Long.hashCode(alignment);
     }
