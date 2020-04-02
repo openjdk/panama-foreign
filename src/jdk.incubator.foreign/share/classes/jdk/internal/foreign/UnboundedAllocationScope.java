@@ -25,7 +25,7 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.AllocationScope;
+import jdk.incubator.foreign.NativeAllocationScope;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 
@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.OptionalLong;
 import java.util.function.LongFunction;
 
-public class UnboundedAllocationScope extends AllocationScope {
+public class UnboundedAllocationScope extends NativeAllocationScope {
 
     private static final long BLOCK_SIZE = 4 * 1024;
 
@@ -61,6 +61,12 @@ public class UnboundedAllocationScope extends AllocationScope {
 
     @Override
     public MemoryAddress allocate(long bytesSize, long bytesAlignment) {
+        if (bytesSize > BLOCK_SIZE) {
+            MemorySegment segment = MemorySegment.allocateNative(bytesSize, bytesAlignment);
+            usedSegments.add(segment);
+            return segment.withAccessModes(MemorySegment.READ | MemorySegment.WRITE | MemorySegment.ACQUIRE)
+                    .baseAddress();
+        }
         for (int i = 0; i < 2; i++) {
             long min = ((MemoryAddressImpl) segment.baseAddress()).unsafeGetOffset();
             long start = Utils.alignUp(min + sp, bytesAlignment) - min;
