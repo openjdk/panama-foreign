@@ -27,18 +27,12 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 import jdk.internal.foreign.abi.aarch64.AArch64ABI;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 import sun.security.action.GetPropertyAction;
-
-import java.lang.invoke.VarHandle;
-import java.nio.charset.Charset;
-
-import static jdk.incubator.foreign.MemoryLayouts.C_CHAR;
 
 public class InternalForeign implements Foreign {
 
@@ -116,51 +110,5 @@ public class InternalForeign implements Foreign {
     private static void throwIllegalAccessError(String value) {
         throw new IllegalAccessError("Can not access jdk.incubator.foreign.Foreign." +
                 " System property 'jdk.incubator.foreign.Foreign' is set to '" + value + "'");
-    }
-
-    private static VarHandle arrayHandle(MemoryLayout elemLayout, Class<?> elemCarrier) {
-        return MemoryLayout.ofSequence(1, elemLayout)
-                .varHandle(elemCarrier, MemoryLayout.PathElement.sequenceElement());
-    }
-
-
-    @Override
-    public MemorySegment toCString(String str) {
-        return toCString(str.getBytes());
-    }
-
-    @Override
-    public MemorySegment toCString(String str, Charset charset) {
-        return toCString(str.getBytes(charset));
-    }
-
-    private MemorySegment toCString(byte[] bytes) {
-        MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
-        MemorySegment segment = MemorySegment.allocateNative(strLayout);
-        MemoryAddress addr = segment.baseAddress();
-        for (int i = 0 ; i < bytes.length; i++) {
-            Lazy.byteArrHandle.set(addr, i, bytes[i]);
-        }
-        Lazy.byteArrHandle.set(addr, (long)bytes.length, (byte)0);
-        return segment;
-    }
-
-    @Override
-    public String toJavaString(MemoryAddress addr) {
-        StringBuilder buf = new StringBuilder();
-        MemoryAddress baseAddr = withSize(addr, Long.MAX_VALUE);
-        byte curr = (byte) Lazy.byteArrHandle.get(baseAddr, 0);
-        long offset = 0;
-        while (curr != 0) {
-            buf.append((char) curr);
-            curr = (byte) Lazy.byteArrHandle.get(baseAddr, ++offset);
-        }
-        return buf.toString();
-    }
-
-    // need to lazily initialize this to prevent circular init
-    // MemoryLayouts -> Foreign -> MemoryLayouts
-    private static class Lazy {
-        final static VarHandle byteArrHandle = arrayHandle(C_CHAR, byte.class);
     }
 }
