@@ -1833,6 +1833,7 @@ abstract class MethodHandleImpl {
                     return (MemoryAccessVarHandleBase)handle;
                 } else if (handle.target() instanceof MemoryAccessVarHandleBase) {
                     // skip first adaptation, since we have to step over MemoryAddressProxy
+                    // see JDK-8237349
                     return (MemoryAccessVarHandleBase)handle.target();
                 } else {
                     return null;

@@ -34,6 +34,7 @@ import org.testng.annotations.Test;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
@@ -65,6 +66,12 @@ public class TestVarHandleCombinators {
     public void testBadStrideElement() {
         VarHandle vh = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
         MemoryHandles.withStride(vh, 0); //scale factor cant be zero
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testStrideWrongHandle() {
+        VarHandle vh = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.nativeOrder());
+        MemoryHandles.withStride(vh, 10);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -103,6 +110,12 @@ public class TestVarHandleCombinators {
     public void testOffsetNegative() {
         VarHandle vh = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
         MemoryHandles.withOffset(vh, -1);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testOffsetWrongHandle() {
+        VarHandle vh = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.nativeOrder());
+        MemoryHandles.withOffset(vh, 1);
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
