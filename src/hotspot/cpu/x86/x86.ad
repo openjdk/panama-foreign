@@ -1177,7 +1177,7 @@ int HandlerImpl::emit_exception_handler(CodeBuffer& cbuf) {
 
   // Note that the code buffer's insts_mark is always relative to insts.
   // That's why we must use the macroassembler to generate a handler.
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   address base = __ start_a_stub(size_exception_handler());
   if (base == NULL) {
     ciEnv::current()->record_failure("CodeCache is full");
@@ -1195,7 +1195,7 @@ int HandlerImpl::emit_deopt_handler(CodeBuffer& cbuf) {
 
   // Note that the code buffer's insts_mark is always relative to insts.
   // That's why we must use the macroassembler to generate a handler.
-  MacroAssembler _masm(&cbuf);
+  C2_MacroAssembler _masm(&cbuf);
   address base = __ start_a_stub(size_deopt_handler());
   if (base == NULL) {
     ciEnv::current()->record_failure("CodeCache is full");
@@ -1363,6 +1363,11 @@ const bool Matcher::match_rule_supported(int opcode) {
         return false; // 128bit vroundpd is not available
       }
       break;
+    case Op_MacroLogicV:
+      if (UseAVX < 3 || !UseVectorMacroLogic) {
+        return false;
+      }
+      break;
 #ifndef _LP64
     case Op_AddReductionVF:
     case Op_AddReductionVD:
@@ -1408,6 +1413,7 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
   //   * implementation limitations
   //   * some 512bit vector operations on FLOAT and DOUBLE types require AVX512DQ
   //   * 128bit vroundpd instruction is present only in AVX1
+  int size_in_bits = vlen * type2aelembytes(bt) * BitsPerByte;
   switch (opcode) {
     case Op_AbsVF:
     case Op_NegVF:
@@ -1424,6 +1430,12 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
     case Op_CMoveVF:
       if (vlen != 8) {
         return false; // implementation limitation (only vcmov8F_reg is present)
+      }
+      break;
+    case Op_MacroLogicV:
+      if (!VM_Version::supports_evex() ||
+          ((size_in_bits != 512) && !VM_Version::supports_avx512vl())) {
+        return false;
       }
       break;
     case Op_CMoveVD:
@@ -1716,7 +1728,7 @@ static int vec_mov_helper(CodeBuffer *cbuf, bool do_size, int src_lo, int dst_lo
          (dst_lo & 1) == 0 && (dst_lo + 1) == dst_hi,
          "no non-adjacent vector moves" );
   if (cbuf) {
-    MacroAssembler _masm(cbuf);
+    C2_MacroAssembler _masm(cbuf);
     int offset = __ offset();
     switch (ireg) {
     case Op_VecS: // copy whole register
@@ -1782,7 +1794,7 @@ int vec_spill_helper(CodeBuffer *cbuf, bool do_size, bool is_load,
   // into scratch buffer is used to get size in 64-bit VM.
   LP64_ONLY( assert(!do_size, "this method calculates size only for 32-bit VM"); )
   if (cbuf) {
-    MacroAssembler _masm(cbuf);
+    C2_MacroAssembler _masm(cbuf);
     int offset = __ offset();
     if (is_load) {
       switch (ireg) {
@@ -1985,7 +1997,7 @@ static inline jlong replicate8_imm(int con, int width) {
 #endif
 
   void MachNopNode::emit(CodeBuffer &cbuf, PhaseRegAlloc*) const {
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     __ nop(_count);
   }
 
@@ -2000,7 +2012,7 @@ static inline jlong replicate8_imm(int con, int width) {
 #endif
 
   void MachBreakpointNode::emit(CodeBuffer &cbuf, PhaseRegAlloc* ra_) const {
-    MacroAssembler _masm(&cbuf);
+    C2_MacroAssembler _masm(&cbuf);
     __ int3();
   }
 
@@ -2016,7 +2028,7 @@ encode %{
     if (VerifyStackAtCalls) {
       // Check that stack depth is unchanged: find majik cookie on stack
       int framesize = ra_->reg2offset_unchecked(OptoReg::add(ra_->_matcher._old_SP, -3*VMRegImpl::slots_per_word));
-      MacroAssembler _masm(&cbuf);
+      C2_MacroAssembler _masm(&cbuf);
       Label L;
       __ cmpptr(Address(rsp, framesize), (int32_t)0xbadb100d);
       __ jccb(Assembler::equal, L);
@@ -3356,6 +3368,20 @@ instruct ReplI_zero(vec dst, immI0 zero) %{
   ins_pipe( fpu_reg_reg );
 %}
 
+instruct ReplI_M1(vec dst, immI_M1 con) %{
+  predicate(UseAVX > 0);
+  match(Set dst (ReplicateB con));
+  match(Set dst (ReplicateS con));
+  match(Set dst (ReplicateI con));
+  effect(TEMP dst);
+  format %{ "vallones $dst" %}
+  ins_encode %{
+    int vector_len = vector_length_encoding(this);
+    __ vallones($dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 // ====================ReplicateL=======================================
 
 #ifdef _LP64
@@ -3486,6 +3512,18 @@ instruct ReplL_zero(vec dst, immL0 zero) %{
     }
   %}
   ins_pipe( fpu_reg_reg );
+%}
+
+instruct ReplL_M1(vec dst, immL_M1 con) %{
+  predicate(UseAVX > 0);
+  match(Set dst (ReplicateL con));
+  effect(TEMP dst);
+  format %{ "vallones $dst" %}
+  ins_encode %{
+    int vector_len = vector_length_encoding(this);
+    __ vallones($dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
 %}
 
 // ====================ReplicateF=======================================
@@ -5151,6 +5189,30 @@ instruct vpopcountI(vec dst, vec src) %{
 
     int vector_len = vector_length_encoding(this);
     __ vpopcntd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// --------------------------------- Bitwise Ternary Logic ----------------------------------
+
+instruct vpternlogdB(vec dst, vec src2, vec src3, immU8 func) %{
+  match(Set dst (MacroLogicV (Binary dst src2) (Binary src3 func)));
+  effect(TEMP dst);
+  format %{ "vpternlogd $dst,$src2,$src3,$func\t! vector ternary logic" %}
+  ins_encode %{
+    int vector_len = vector_length_encoding(this);
+    __ vpternlogd($dst$$XMMRegister, $func$$constant, $src2$$XMMRegister, $src3$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vpternlogdB_mem(vec dst, vec src2, memory src3, immU8 func) %{
+  match(Set dst (MacroLogicV (Binary dst src2) (Binary (LoadVector src3) func)));
+  effect(TEMP dst);
+  format %{ "vpternlogd $dst,$src2,$src3,$func\t! vector ternary logic" %}
+  ins_encode %{
+    int vector_len = vector_length_encoding(this);
+    __ vpternlogd($dst$$XMMRegister, $func$$constant, $src2$$XMMRegister, $src3$$Address, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
