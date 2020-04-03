@@ -36,7 +36,7 @@
 class VMStructs;
 class ShenandoahHeapRegionStateConstant;
 
-class ShenandoahHeapRegion : public CHeapObj<mtGC> {
+class ShenandoahHeapRegion {
   friend class VMStructs;
   friend class ShenandoahHeapRegionStateConstant;
 private:
@@ -238,9 +238,7 @@ private:
   static PaddedAllocSeqNum _alloc_seq_num;
 
   // Never updated fields
-  ShenandoahHeap* const _heap;
-  MemRegion const _reserved;
-  size_t const _region_number;
+  size_t const _index;
   HeapWord* const _bottom;
   HeapWord* const _end;
 
@@ -256,7 +254,6 @@ private:
 
   size_t _tlab_allocs;
   size_t _gclab_allocs;
-  size_t _shared_allocs;
 
   uint64_t _seqnum_last_alloc_mutator;
 
@@ -265,11 +262,8 @@ private:
 
   HeapWord* _update_watermark;
 
-  // Claim some space at the end to protect next region
-  shenandoah_padding(0);
-
 public:
-  ShenandoahHeapRegion(ShenandoahHeap* heap, HeapWord* start, size_t size_words, size_t index, bool committed);
+  ShenandoahHeapRegion(HeapWord* start, size_t index, bool committed);
 
   static const size_t MIN_NUM_REGIONS = 10;
 
@@ -356,7 +350,9 @@ public:
     return _alloc_seq_num.value - 1;
   }
 
-  size_t region_number() const;
+  inline size_t index() const {
+    return _index;
+  }
 
   // Allocation (return NULL if full)
   inline HeapWord* allocate(size_t word_size, ShenandoahAllocRequest::Type type);
@@ -409,11 +405,7 @@ public:
   size_t get_tlab_allocs() const;
   size_t get_gclab_allocs() const;
 
-  uint64_t seqnum_last_alloc_mutator()  const {
-    assert(_heap->is_traversal_mode(), "Sanity");
-    return _seqnum_last_alloc_mutator;
-  }
-
+  inline uint64_t seqnum_last_alloc_mutator() const;
   void update_seqnum_last_alloc_mutator();
 
   HeapWord* get_update_watermark() const {
