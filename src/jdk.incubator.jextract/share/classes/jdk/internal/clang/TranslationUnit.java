@@ -159,7 +159,7 @@ public class TranslationUnit implements AutoCloseable {
 
         public MemorySegment getTokenSegment(int idx) {
             MemoryAddress p = ar.addOffset(idx * Index_h.CXToken$LAYOUT.byteSize());
-            return FOREIGN.ofNativeUnchecked(p, Index_h.CXToken$LAYOUT.byteSize());
+            return FOREIGN.withSize(p, Index_h.CXToken$LAYOUT.byteSize()).segment();
         }
 
         public Token getToken(int index) {

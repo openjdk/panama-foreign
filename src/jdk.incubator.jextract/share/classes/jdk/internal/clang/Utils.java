@@ -45,7 +45,7 @@ public class Utils {
     public static final VarHandle BYTE_ARR_VH = MemoryHandles.withStride(BYTE_VH, 1);
     public static final VarHandle INT_VH = LayoutUtils.C_INT.varHandle(int.class);
     public static final VarHandle LONG_VH = LayoutUtils.C_LONGLONG.varHandle(long.class);
-    public static final VarHandle POINTER_VH = LayoutUtils.C_POINTER.varHandle(MemoryAddress.class);
+    public static final VarHandle POINTER_VH = MemoryHandles.asAddressVarHandle(LayoutUtils.C_POINTER.varHandle(long.class));
     public static final VarHandle POINTER_ARR_VH = MemoryHandles.withStride(POINTER_VH, 8);
 
     private static final MethodHandle STRLEN;
