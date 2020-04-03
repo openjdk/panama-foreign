@@ -166,7 +166,7 @@ public interface SystemABI {
         public static final String NAME = "SysV";
 
         public final static String CLASS_ATTRIBUTE_NAME = "abi/sysv/class";
-        
+
         public enum ArgumentClass {
             INTEGER,
             SSE,
