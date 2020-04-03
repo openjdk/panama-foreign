@@ -1169,8 +1169,6 @@ private:
 
 #ifndef _LP64
  private:
-  // operands that only take the original 32bit registers
-  void emit_operand32(Register reg, Address adr);
 
   void emit_farith(int b1, int b2, int i);
 
@@ -1313,6 +1311,9 @@ private:
   void f2xm1();
   void fldl2e();
 #endif // !_LP64
+
+  // operands that only take the original 32bit registers
+  void emit_operand32(Register reg, Address adr);
 
   void fld_x(Address adr);  // extended-precision (80-bit) format
   void fstp_x(Address adr); // extended-precision (80-bit) format
