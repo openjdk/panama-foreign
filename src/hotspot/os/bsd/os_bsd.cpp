@@ -1576,6 +1576,8 @@ void os::print_os_info(outputStream* st) {
   os::Posix::print_rlimit_info(st);
 
   os::Posix::print_load_average(st);
+
+  VM_Version::print_platform_virtualization_info(st);
 }
 
 void os::pd_print_cpu_info(outputStream* st, char* buf, size_t buflen) {
@@ -3179,20 +3181,6 @@ jint os::init_2(void) {
 #endif
 
   return JNI_OK;
-}
-
-// Mark the polling page as unreadable
-void os::make_polling_page_unreadable(void) {
-  if (!guard_memory((char*)_polling_page, Bsd::page_size())) {
-    fatal("Could not disable polling page");
-  }
-}
-
-// Mark the polling page as readable
-void os::make_polling_page_readable(void) {
-  if (!bsd_mprotect((char *)_polling_page, Bsd::page_size(), PROT_READ)) {
-    fatal("Could not enable polling page");
-  }
 }
 
 int os::active_processor_count() {
