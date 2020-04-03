@@ -107,7 +107,7 @@ public class CallArranger {
 
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
-            csb.addArgumentBindings(MemoryAddress.class, MemoryLayouts.AArch64ABI.C_POINTER,
+            csb.addArgumentBindings(MemoryAddress.class, SystemABI.AArch64.C_POINTER,
                     argCalc.getIndirectBindings());
         } else if (cDesc.returnLayout().isPresent()) {
             Class<?> carrier = mt.returnType();
@@ -163,7 +163,7 @@ public class CallArranger {
     }
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        ArgumentClassImpl clazz = AArch64ABI.argumentClassFor(SystemABI.Type.fromLayout(type));
+        ArgumentClassImpl clazz = AArch64ABI.argumentClassFor(type);
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
@@ -198,7 +198,7 @@ public class CallArranger {
         if (!(baseType instanceof ValueLayout))
             return false;
 
-        ArgumentClassImpl baseArgClass = AArch64ABI.argumentClassFor(SystemABI.Type.fromLayout(baseType));
+        ArgumentClassImpl baseArgClass = AArch64ABI.argumentClassFor(baseType);
         if (baseArgClass != ArgumentClassImpl.VECTOR)
            return false;
 
@@ -206,7 +206,7 @@ public class CallArranger {
             if (!(elem instanceof ValueLayout))
                 return false;
 
-            ArgumentClassImpl argClass = AArch64ABI.argumentClassFor(SystemABI.Type.fromLayout(elem));
+            ArgumentClassImpl argClass = AArch64ABI.argumentClassFor(elem);
             if (elem.bitSize() != baseType.bitSize() ||
                     elem.bitAlignment() != baseType.bitAlignment() ||
                     baseArgClass != argClass) {

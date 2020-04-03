@@ -50,8 +50,8 @@ import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Optional;
 
+import static jdk.incubator.foreign.SystemABI.Win64.VARARGS_ATTRIBUTE_NAME;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
-import static jdk.internal.foreign.abi.x64.windows.Windowsx64ABI.VARARGS_ATTRIBUTE_NAME;
 
 /**
  * For the Windowx x64 C ABI specifically, this class uses the ProgrammableInvoker API, namely CallingSequenceBuilder2
@@ -108,7 +108,7 @@ public class CallArranger {
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
             Class<?> carrier = MemoryAddress.class;
-            MemoryLayout layout = MemoryLayouts.WinABI.C_POINTER;
+            MemoryLayout layout = SystemABI.Win64.C_POINTER;
             csb.addArgumentBindings(carrier, layout);
             if (forUpcall) {
                 csb.setReturnBindings(carrier, layout);
@@ -163,7 +163,7 @@ public class CallArranger {
     }
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        ArgumentClassImpl clazz = Windowsx64ABI.argumentClassFor(SystemABI.Type.fromLayout(type));
+        ArgumentClassImpl clazz = Windowsx64ABI.argumentClassFor(type);
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");

@@ -104,7 +104,7 @@ public class CallArranger {
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
             Class<?> carrier = MemoryAddress.class;
-            MemoryLayout layout = MemoryLayouts.SysV.C_POINTER;
+            MemoryLayout layout = SystemABI.SysV.C_POINTER;
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
         } else if (cDesc.returnLayout().isPresent()) {
             Class<?> carrier = mt.returnType();
@@ -120,7 +120,7 @@ public class CallArranger {
 
         if (!forUpcall) {
             //add extra binding for number of used vector registers (used for variadic calls)
-            csb.addArgumentBindings(long.class, MemoryLayouts.SysV.C_LONG,
+            csb.addArgumentBindings(long.class, SystemABI.SysV.C_LONG,
                     List.of(move(rax, long.class)));
         }
 
@@ -429,7 +429,7 @@ public class CallArranger {
 
     private static List<ArgumentClassImpl> classifyValueType(ValueLayout type) {
         ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
-        ArgumentClassImpl clazz = SysVx64ABI.argumentClassFor(SystemABI.Type.fromLayout(type));
+        ArgumentClassImpl clazz = SysVx64ABI.argumentClassFor(type);
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
@@ -517,9 +517,7 @@ public class CallArranger {
     // TODO: handle zero length arrays
     // TODO: Handle nested structs (and primitives)
     private static List<ArgumentClassImpl> classifyStructType(GroupLayout type) {
-        if (type.attribute(SystemABI.NATIVE_TYPE)
-                .map(SystemABI.Type.class::cast)
-                .map(SysVx64ABI::argumentClassFor)
+        if (type.attribute(SystemABI.SysV.CLASS_ATTRIBUTE_NAME)
                 .filter(ArgumentClassImpl.COMPLEX_X87::equals)
                 .isPresent()) {
             return COMPLEX_X87_CLASSES;
