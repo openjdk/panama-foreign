@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,28 +23,32 @@
  * questions.
  */
 
-package jdk.javadoc.internal.doclets.toolkit.taglets;
+package jdk.javadoc.internal.doclets.toolkit;
 
 /**
- * A taglet that adds the initial line of documentation to the JavaFX
- * property getters.
+ * Common behavior for writing members of a type.
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public class PropertyGetterTaglet extends BasePropertyTaglet {
+public interface MemberWriter {
 
     /**
-     * Construct a new PropertyGetterTaglet.
+     * Returns a list to be used for the members of a given kind.
+     *
+     * @return a list to be used for the members of a given kind
+     * @see #getMemberListItem(Content)
      */
-    public PropertyGetterTaglet () {
-        super("propertyGetter");
-    }
+    Content getMemberList();
 
-    @Override
-    String getText(TagletWriter tagletWriter) {
-        return tagletWriter.configuration().getDocResources().getText("doclet.PropertyGetter");
-    }
+    /**
+     * Returns an item for the list of elements of a given kind.
+     *
+     * @param content the content tree of the member to be documented
+     * @return an item for the list of elements of a given kind
+     * @see #getMemberList()
+     */
+    Content getMemberListItem(Content content);
 }
