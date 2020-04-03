@@ -33,14 +33,14 @@ import java.lang.invoke.VarHandle;
 import java.util.OptionalLong;
 
 /**
- * This class provides a scope of given size, within which several allocations can be performed. An allocation scope can be backed
- * either by heap, or off-heap memory. Allocation scopes can be either <em>bounded</em> or <em>unbounded</em>, depending on whether the size
+ * This class provides a scope of given size, within which several allocations can be performed. An allocation scope is backed
+ * by off-heap memory. Allocation scopes can be either <em>bounded</em> or <em>unbounded</em>, depending on whether the size
  * of the allocation scope is known statically. If an application knows before-hand how much memory it needs to allocate the values it needs,
  * using a <em>bounded</em> allocation scope will typically provide better performances than independently allocating the memory
  * for each value (e.g. using {@link MemorySegment#allocateNative(long)}), or using an <em>unbounded</em> allocation scope.
  * For this reason, using a bounded allocation scope is recommended in cases where programs might need to emulate native stack allocation.
  */
-public abstract class AllocationScope implements AutoCloseable {
+public abstract class NativeAllocationScope implements AutoCloseable {
 
     /**
      * If this allocation scope is bounded, returns the size, in bytes, of this allocation scope.
@@ -234,36 +234,19 @@ public abstract class AllocationScope implements AutoCloseable {
     public abstract void close();
 
     /**
-     * Creates a new bounded native allocation scope, backed by off-heap memory.
+     * Creates a new bounded allocation scope, backed by off-heap memory.
      * @param size the size of the allocation scope.
-     * @return a new bounded native allocation scope, with given size (in bytes).
+     * @return a new bounded allocation scope, with given size (in bytes).
      */
-    public static AllocationScope boundedNativeScope(long size) {
-        return new BoundedAllocationScope(MemorySegment.allocateNative(size));
+    public static NativeAllocationScope boundedScope(long size) {
+        return new BoundedAllocationScope(size);
     }
 
     /**
-     * Creates a new bounded heap allocation scope, backed by heap memory.
-     * @param size the size of the allocation scope.
-     * @return a new bounded heap allocation scope, with given size (in bytes).
+     * Creates a new unbounded allocation scope, backed by off-heap memory.
+     * @return a new unbounded allocation scope.
      */
-    public static AllocationScope boundedHeapScope(int size) {
-        return new BoundedAllocationScope(MemorySegment.ofArray(new byte[size]));
-    }
-
-    /**
-     * Creates a new unbounded native allocation scope, backed by off-heap memory.
-     * @return a new unbounded native allocation scope.
-     */
-    public static AllocationScope unboundedNativeScope() {
-        return new UnboundedAllocationScope(MemorySegment::allocateNative);
-    }
-
-    /**
-     * Creates a new unbounded heap allocation scope, backed by heap memory.
-     * @return a new unbounded heap allocation scope.
-     */
-    public static AllocationScope unboundedHeapScope() {
-        return new UnboundedAllocationScope((size) -> MemorySegment.ofArray(new byte[(int) size]));
+    public static NativeAllocationScope unboundedScope() {
+        return new UnboundedAllocationScope();
     }
 }

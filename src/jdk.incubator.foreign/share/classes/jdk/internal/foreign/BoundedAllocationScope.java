@@ -25,13 +25,13 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.AllocationScope;
+import jdk.incubator.foreign.NativeAllocationScope;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 
 import java.util.OptionalLong;
 
-public class BoundedAllocationScope extends AllocationScope {
+public class BoundedAllocationScope extends NativeAllocationScope {
     private final MemorySegment segment;
     private long sp = 0L;
 
@@ -45,8 +45,8 @@ public class BoundedAllocationScope extends AllocationScope {
         return sp;
     }
 
-    public BoundedAllocationScope(MemorySegment segment) {
-        this.segment = segment;
+    public BoundedAllocationScope(long size) {
+        this.segment = MemorySegment.allocateNative(size);
     }
 
     @Override
