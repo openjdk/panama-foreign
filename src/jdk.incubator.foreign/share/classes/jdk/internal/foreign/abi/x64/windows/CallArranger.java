@@ -26,7 +26,6 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
@@ -41,9 +40,8 @@ import jdk.internal.foreign.abi.ProgrammableInvoker;
 import jdk.internal.foreign.abi.ProgrammableUpcallHandler;
 import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.abi.x64.X86_64Architecture;
-import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
+import jdk.internal.foreign.abi.x64.sysv.ArgumentClassImpl;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -163,7 +161,7 @@ public class CallArranger {
     }
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        ArgumentClassImpl clazz = Windowsx64ABI.argumentClassFor(type);
+        SystemABI.Win64.ArgumentClass clazz = Windowsx64ABI.argumentClassFor(type);
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
@@ -178,11 +176,11 @@ public class CallArranger {
         // but must be considered volatile across function calls."
         // https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=vs-2019
 
-        if (clazz == ArgumentClassImpl.INTEGER) {
+        if (clazz == SystemABI.Win64.ArgumentClass.INTEGER) {
             return TypeClass.INTEGER;
-        } else if(clazz == ArgumentClassImpl.POINTER) {
+        } else if(clazz == SystemABI.Win64.ArgumentClass.POINTER) {
             return TypeClass.POINTER;
-        } else if (clazz == ArgumentClassImpl.SSE) {
+        } else if (clazz == SystemABI.Win64.ArgumentClass.SSE) {
             if (type.attribute(VARARGS_ATTRIBUTE_NAME)
                     .map(String.class::cast)
                     .map(Boolean::parseBoolean).orElse(false)) {

@@ -63,13 +63,7 @@ public class AArch64ABI implements SystemABI {
         return AArch64.NAME;
     }
 
-    static ArgumentClassImpl argumentClassFor(MemoryLayout layout) {
-        AArch64.ArgumentClass argClass = (AArch64.ArgumentClass)layout.attribute(AArch64.CLASS_ATTRIBUTE_NAME).get();
-        return switch (argClass) {
-            case INTEGER -> ArgumentClassImpl.INTEGER;
-            case VECTOR -> ArgumentClassImpl.VECTOR;
-            case POINTER -> ArgumentClassImpl.POINTER;
-            default -> null;
-        };
+    static AArch64.ArgumentClass argumentClassFor(MemoryLayout layout) {
+        return (AArch64.ArgumentClass)layout.attribute(AArch64.CLASS_ATTRIBUTE_NAME).get();
     }
 }

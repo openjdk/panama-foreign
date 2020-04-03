@@ -29,7 +29,6 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SystemABI;
 import jdk.internal.foreign.abi.*;
-import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;

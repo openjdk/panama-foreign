@@ -28,7 +28,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SystemABI;
-import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
+import jdk.internal.foreign.abi.x64.sysv.ArgumentClassImpl;
 import jdk.internal.foreign.abi.*;
 
 import java.lang.invoke.MethodHandle;
@@ -70,13 +70,7 @@ public class Windowsx64ABI implements SystemABI {
         return Win64.NAME;
     }
 
-    static ArgumentClassImpl argumentClassFor(MemoryLayout layout) {
-        Win64.ArgumentClass argClass = (Win64.ArgumentClass)layout.attribute(Win64.CLASS_ATTRIBUTE_NAME).get();
-        return switch (argClass) {
-            case INTEGER -> ArgumentClassImpl.INTEGER;
-            case SSE -> ArgumentClassImpl.SSE;
-            case POINTER -> ArgumentClassImpl.POINTER;
-            default -> null;
-        };
+    static Win64.ArgumentClass argumentClassFor(MemoryLayout layout) {
+        return (Win64.ArgumentClass)layout.attribute(Win64.CLASS_ATTRIBUTE_NAME).get();
     }
 }
