@@ -151,7 +151,9 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
 public interface MemorySegment extends AutoCloseable {
 
     /**
-     * The base memory address associated with this memory segment.
+     * The base memory address associated with this memory segment. The returned address is
+     * a <em>checked</em> memory address and can therefore be used in derefrence operations
+     * (see {@link MemoryAddress}).
      * @return The base memory address.
      */
     MemoryAddress baseAddress();
