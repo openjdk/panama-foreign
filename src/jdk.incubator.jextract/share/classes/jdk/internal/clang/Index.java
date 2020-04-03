@@ -27,6 +27,7 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.clang.libclang.Index_h;
 
@@ -75,7 +76,8 @@ public class Index implements AutoCloseable {
         }
     }
 
-    private static final VarHandle VH_MemoryAddress = C_POINTER.varHandle(MemoryAddress.class);
+    private static final VarHandle VH_MemoryAddress =
+            MemoryHandles.asAddressVarHandle(C_POINTER.varHandle(long.class));
 
     public TranslationUnit parseTU(String file, Consumer<Diagnostic> dh, int options, String... args)
     throws ParsingFailedException {

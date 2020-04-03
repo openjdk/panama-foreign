@@ -271,7 +271,7 @@ jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
 
 ```java
 
-import jdk.incubator.foreign.AllocationScope;
+import jdk.incubator.foreign.NativeAllocationScope;
 import blas.*;
 import static blas.RuntimeHelper.*;
 import static blas.cblas_h.*;
@@ -294,7 +294,7 @@ public class TestBlas {
         incy = 1;
         alpha = 1;
         beta = 0;
-        try (AllocationScope scope = AllocationScope.unboundedNativeScope()) {
+        try (NativeAllocationScope scope = NativeAllocationScope.unboundedScope()) {
             var a = Cdouble.allocateArray(m*n, scope);
             var x = Cdouble.allocateArray(n, scope);
             var y = Cdouble.allocateArray(n, scope);

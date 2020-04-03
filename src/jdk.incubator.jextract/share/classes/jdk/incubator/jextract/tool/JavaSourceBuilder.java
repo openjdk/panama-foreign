@@ -199,20 +199,30 @@ class JavaSourceBuilder {
 
     protected void addHandlePath(Class<?> type, String strName, String fieldName) {
         String ty = type.getName();
-        if (ty.contains("MemoryAddress")) {
+        boolean isAddress = ty.contains("MemoryAddress");
+        if (isAddress) {
+            sb.append("MemoryHandles.asAddressVarHandle(");
             ty = "long";
         }
         sb.append(strName + "$LAYOUT.varHandle(" + ty + ".class, ");
         sb.append("PathElement.groupElement(\"" + fieldName +"\")");
         sb.append(")");
+        if (isAddress) {
+            sb.append(")");
+        }
     }
 
     protected void addHandlePath(Class<?> type, String varName) {
         String ty = type.getName();
-        if (ty.contains("MemoryAddress")) {
+        boolean isAddress = ty.contains("MemoryAddress");
+        if (isAddress) {
+            sb.append("MemoryHandles.asAddressVarHandle(");
             ty = "long";
         }
         sb.append(varName + "$LAYOUT.varHandle(" + ty + ".class)");
+        if (isAddress) {
+            sb.append(")");
+        }
     }
 
     protected void addMethodHandle(Declaration.Function funcTree, MethodType mtype, FunctionDescriptor desc) {
