@@ -73,8 +73,8 @@ public interface Foreign {
      * @param base the desired base address
      * @param byteSize the desired size (in bytes).
      * @return a new memory address attached to a native memory segment with given base address and size.
-     * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address,
-     * or if the segment associated with {@code base} is not the <em>primordial</em> segment.
+     * @throws IllegalArgumentException if {@code base} does not encapsulate an <em>unchecked</em> native memory address,
+     * e.g. if {@code base.segment() != null}.
      * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
      */
     MemoryAddress withSize(MemoryAddress base, long byteSize);
@@ -92,8 +92,8 @@ public interface Foreign {
      * @param base the desired base address
      * @param byteSize the desired size.
      * @return a new native memory segment with given base address and size.
-     * @throws IllegalArgumentException if {@code base} does not encapsulate a native memory address,
-     * or if the segment associated with {@code base} is not the <em>primordial</em> segment.
+     * @throws IllegalArgumentException if {@code base} does not encapsulate an <em>unchecked</em> native memory address,
+      * e.g. if {@code base.segment() != null}.
      * @throws IllegalAccessError if the permission jkd.incubator.foreign.restrictedMethods is set to 'deny'
      */
     MemorySegment asMallocSegment(MemoryAddress base, long byteSize);
