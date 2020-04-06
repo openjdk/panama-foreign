@@ -37,13 +37,13 @@ import java.lang.invoke.VarHandle;
 
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
-import static jdk.incubator.foreign.SystemABI.*;
+import static jdk.incubator.foreign.MemoryLayouts.*;
 
 public class PanamaPoint implements AutoCloseable {
 
     public static final MemoryLayout LAYOUT = MemoryLayout.ofStruct(
-        C_INT.withName("x"),
-        C_INT.withName("y")
+        MemoryLayouts.C_INT.withName("x"),
+        MemoryLayouts.C_INT.withName("y")
     );
 
     private static final VarHandle VH_x = LAYOUT.varHandle(int.class, groupElement("x"));

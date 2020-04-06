@@ -62,7 +62,7 @@ import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.SystemABI.*;
+import static jdk.incubator.foreign.MemoryLayouts.*;
 import static org.testng.Assert.*;
 
 @Test
