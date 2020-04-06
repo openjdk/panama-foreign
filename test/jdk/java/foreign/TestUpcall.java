@@ -56,7 +56,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static jdk.incubator.foreign.SystemABI.C_POINTER;
+import static jdk.incubator.foreign.MemoryLayouts.C_POINTER;
 import static org.testng.Assert.assertEquals;
 
 
