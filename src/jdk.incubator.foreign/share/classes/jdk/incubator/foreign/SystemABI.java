@@ -148,6 +148,11 @@ public interface SystemABI {
      ValueLayout C_DOUBLE = Utils.pick(SysV.C_DOUBLE, Win64.C_DOUBLE, AArch64.C_DOUBLE);
 
     /**
+     * The {@code long double} native type.
+     */
+    ValueLayout C_LONGDOUBLE = Utils.pick(SysV.C_LONGDOUBLE, Win64.C_LONGDOUBLE, AArch64.C_LONGDOUBLE);
+
+    /**
      * The {@code T*} native type.
      */
      ValueLayout C_POINTER = Utils.pick(SysV.C_POINTER, Win64.C_POINTER, AArch64.C_POINTER);
@@ -302,7 +307,7 @@ public interface SystemABI {
 
         public enum ArgumentClass {
             INTEGER,
-            SSE,
+            FLOAT,
             POINTER;
         }
 
@@ -382,19 +387,19 @@ public interface SystemABI {
          * The {@code float} native type.
          */
         public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.SSE);
+                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.FLOAT);
 
         /**
          * The {@code double} native type.
          */
         public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.SSE);
+                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.FLOAT);
 
         /**
          * The {@code long double} native type.
          */
         public static final ValueLayout C_LONGDOUBLE = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.SSE);
+                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.FLOAT);
 
         /**
          * The {@code T*} native type.

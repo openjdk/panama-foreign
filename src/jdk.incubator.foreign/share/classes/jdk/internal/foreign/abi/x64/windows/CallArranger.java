@@ -40,7 +40,6 @@ import jdk.internal.foreign.abi.ProgrammableInvoker;
 import jdk.internal.foreign.abi.ProgrammableUpcallHandler;
 import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.abi.x64.X86_64Architecture;
-import jdk.internal.foreign.abi.x64.sysv.ArgumentClassImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.invoke.MethodHandle;
@@ -180,7 +179,7 @@ public class CallArranger {
             return TypeClass.INTEGER;
         } else if(clazz == SystemABI.Win64.ArgumentClass.POINTER) {
             return TypeClass.POINTER;
-        } else if (clazz == SystemABI.Win64.ArgumentClass.SSE) {
+        } else if (clazz == SystemABI.Win64.ArgumentClass.FLOAT) {
             if (type.attribute(VARARGS_ATTRIBUTE_NAME)
                     .map(String.class::cast)
                     .map(Boolean::parseBoolean).orElse(false)) {

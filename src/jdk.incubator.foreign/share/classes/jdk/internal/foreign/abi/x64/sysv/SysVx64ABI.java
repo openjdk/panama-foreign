@@ -32,6 +32,7 @@ import jdk.internal.foreign.abi.*;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.util.Optional;
 
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
@@ -67,15 +68,17 @@ public class SysVx64ABI implements SystemABI {
         return SysV.NAME;
     }
 
-    static ArgumentClassImpl argumentClassFor(MemoryLayout layout) {
-        SysV.ArgumentClass argClass = (SysV.ArgumentClass)layout.attribute(SysV.CLASS_ATTRIBUTE_NAME).get();
-        return switch (argClass) {
+    static Optional<ArgumentClassImpl> argumentClassFor(MemoryLayout layout) {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Optional<SysV.ArgumentClass> argClassOpt =
+                (Optional<SysV.ArgumentClass>)(Optional)layout.attribute(SysV.CLASS_ATTRIBUTE_NAME);
+        return argClassOpt.map(argClass -> switch (argClass) {
             case INTEGER -> ArgumentClassImpl.INTEGER;
             case SSE -> ArgumentClassImpl.SSE;
             case X87 -> ArgumentClassImpl.X87;
             case COMPLEX_87 -> ArgumentClassImpl.COMPLEX_X87;
             case POINTER -> ArgumentClassImpl.POINTER;
             default -> null;
-        };
+        });
     }
 }
