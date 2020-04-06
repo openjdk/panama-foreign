@@ -45,7 +45,8 @@ import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodType;
 
-import static jdk.incubator.foreign.SystemABI.SysV.*;
+import static jdk.incubator.foreign.MemoryLayouts.SysV.*;
+import static jdk.incubator.foreign.MemoryLayouts.WinABI.C_POINTER;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 import static org.testng.Assert.assertEquals;
