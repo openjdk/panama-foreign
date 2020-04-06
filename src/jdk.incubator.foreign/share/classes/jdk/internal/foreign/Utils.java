@@ -27,7 +27,9 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SystemABI;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemoryAddressProxy;
@@ -191,5 +193,15 @@ public final class Utils {
 
     private static MemoryAddressProxy filterAddress(MemoryAddress addr) {
         return (MemoryAddressImpl)addr;
+    }
+
+    public static <Z extends MemoryLayout> Z pick(Z sysv, Z win64, Z aarch64) {
+        SystemABI abi = InternalForeign.getInstancePrivileged().getSystemABI();
+        return switch (abi.name()) {
+            case SystemABI.SysV.NAME -> sysv;
+            case SystemABI.Win64.NAME -> win64;
+            case SystemABI.AArch64.NAME -> aarch64;
+            default -> throw new ExceptionInInitializerError("Unexpected ABI: " + abi.name());
+        };
     }
 }
