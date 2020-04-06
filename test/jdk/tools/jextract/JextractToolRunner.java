@@ -40,6 +40,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.SystemABI.Type;
+import jdk.test.lib.util.FileUtils;
 
 import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
 import static org.testng.Assert.assertEquals;
@@ -125,7 +126,7 @@ public class JextractToolRunner {
 
     protected static void deleteFile(Path path) {
         try {
-            Files.deleteIfExists(path);
+            FileUtils.deleteFileIfExistsWithRetry(path);
         } catch (IOException ioExp) {
             throw new RuntimeException(ioExp);
         }
@@ -133,19 +134,7 @@ public class JextractToolRunner {
 
     protected static void deleteDir(Path path) {
         try {
-            Files.walkFileTree(path, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    deleteFile(file);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-                    deleteFile(dir);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            FileUtils.deleteFileTreeWithRetry(path);
         } catch (IOException ioExp) {
             throw new RuntimeException(ioExp);
         }

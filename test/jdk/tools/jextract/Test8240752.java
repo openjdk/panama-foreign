@@ -31,6 +31,7 @@ import static org.testng.Assert.assertTrue;
 /*
  * @test
  * @modules jdk.incubator.jextract
+ * @library /test/lib
  * @build JextractToolRunner
  * @bug 8240752
  * @summary jextract generates non-compilable code for special floating point values
