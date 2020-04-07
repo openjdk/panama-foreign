@@ -207,13 +207,13 @@ class ConstantHelper {
             }
         } else if (type.isPrimitive()) {
             if (type == int.class || type == byte.class || type == short.class || type == char.class) {
-                return emitGetter(name, type, mv -> emitConInt(mv, ((Long) value).intValue()));
+                return emitConIntGetter(name, type, ((Long) value).intValue());
             } else if (type == float.class) {
-                return emitGetter(name, type, mv -> emitConFloat(mv, ((Double) value).floatValue()));
+                return emitConFloatGetter(name, type, ((Double) value).floatValue());
             } else if (type == long.class) {
-                return emitGetter(name, type, mv -> emitConLong(mv, (Long) value));
+                return emitConLongGetter(name, type, (Long) value);
             } else if (type == double.class) {
-                return emitGetter(name, type, mv -> emitConDouble(mv, (Double) value));
+                return emitConDoubleGetter(name, type, (Double) value);
             } else { // boolean and void
                 throw new IllegalStateException("Unhandled primitive target type: " + type);
             }
@@ -346,6 +346,22 @@ class ConstantHelper {
                     mt.describeConstable().orElseThrow()
             );
         });
+    }
+
+    private DirectMethodHandleDesc emitConDoubleGetter(String name, Class<?> type, double value) {
+        return emitGetter(name, type, mv -> emitConDouble(mv, value));
+    }
+
+    private DirectMethodHandleDesc emitConLongGetter(String name, Class<?> type, long value) {
+        return emitGetter(name, type, mv -> emitConLong(mv, value));
+    }
+
+    private DirectMethodHandleDesc emitConFloatGetter(String name, Class<?> type, float value) {
+        return emitGetter(name, type, mv -> emitConFloat(mv, value));
+    }
+
+    private DirectMethodHandleDesc emitConIntGetter(String name, Class<?> type, int value) {
+        return emitGetter(name, type, mv -> emitConInt(mv, value));
     }
 
     private DirectMethodHandleDesc emitCondyGetter(String name, Class<?> type, ConstantDesc desc) {

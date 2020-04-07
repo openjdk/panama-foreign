@@ -70,23 +70,23 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final String clsName;
     private final String pkgName;
 
-    // have we visited this Variable earlier?
-    protected boolean visitedVariable(Declaration.Variable tree) {
+    // have we seen this Variable earlier?
+    protected boolean variableSeen(Declaration.Variable tree) {
         return !variables.add(tree);
     }
 
-    // have we visited this Function earlier?
-    protected boolean visitedFunction(Declaration.Function tree) {
+    // have we seen this Function earlier?
+    protected boolean functionSeen(Declaration.Function tree) {
         return !functions.add(tree);
     }
 
     // have we visited a struct/union or a global variable of given name?
-    protected boolean visitedStructOrVariable(String name) {
+    protected boolean structOrVariableSeen(String name) {
         return !structsAndVars.add(name);
     }
 
     private void setMangledName(String name, String prefix) {
-        if (!name.isEmpty() && visitedStructOrVariable(name)) {
+        if (!name.isEmpty() && structOrVariableSeen(name)) {
             mangledNames.put(name, prefix + name);
         }
     }
@@ -234,7 +234,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        builder.addConstant(Utils.javaSafeIdentifier(constant.name()), typeTranslator.getJavaType(constant.type()), constant.value());
+        builder.addConstantGetter(Utils.javaSafeIdentifier(constant.name()), typeTranslator.getJavaType(constant.type()), constant.value());
         return null;
     }
 
@@ -261,7 +261,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             switch (d.kind()) {
                 case STRUCT:
                 case UNION: {
-                    builder.addLayout(Utils.javaSafeIdentifier(name), d.layout().get());
+                    builder.addLayoutGetter(Utils.javaSafeIdentifier(name), d.layout().get());
                     break;
                 }
             }
@@ -272,7 +272,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
-        if (visitedFunction(funcTree)) {
+        if (functionSeen(funcTree)) {
             return null;
         }
 
@@ -283,7 +283,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
         String mhName = Utils.javaSafeIdentifier(funcTree.name());
-        builder.addMethodHandle(mhName, funcTree.name(), mtype, descriptor, funcTree.type().varargs());
+        builder.addMethodHandleGetter(mhName, funcTree.name(), mtype, descriptor, funcTree.type().varargs());
         //generate static wrapper for function
         List<String> paramNames = funcTree.parameters()
                                           .stream()
@@ -327,7 +327,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitVariable(Declaration.Variable tree, Declaration parent) {
-        if (parent == null && visitedVariable(tree)) {
+        if (parent == null && variableSeen(tree)) {
             return null;
         }
 
@@ -362,13 +362,13 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             String parentName = Utils.javaSafeIdentifier(getMangledName(parentC));
             fieldName = parentName + "$" + fieldName;
             MemoryLayout parentLayout = parentLayout(parentC);
-            builder.addVarHandle(fieldName, tree.name(), treeLayout, clazz, parentLayout);
+            builder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
             builder.addGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
             builder.addSetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
         } else {
-            builder.addLayout(fieldName, layout);
-            builder.addVarHandle(fieldName, tree.name(), treeLayout, clazz, null);
-            builder.addAddress(fieldName, tree.name());
+            builder.addLayoutGetter(fieldName, layout);
+            builder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz, null);
+            builder.addAddressGetter(fieldName, tree.name());
             builder.addGetter(fieldName, tree.name(), treeLayout, clazz, null);
             builder.addSetter(fieldName, tree.name(), treeLayout, clazz, null);
         }

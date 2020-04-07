@@ -24,17 +24,15 @@
  */
 package jdk.incubator.jextract.tool;
 
-import jdk.incubator.foreign.FunctionDescriptor;
-
 import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 
-class Utils {
+final class Utils {
+
+    private Utils() {}
 
     private static URI fileName(String pkgName, String clsName, String extension) {
         String pkgPrefix = pkgName.isEmpty() ? "" : pkgName.replaceAll("\\.", "/") + "/";
