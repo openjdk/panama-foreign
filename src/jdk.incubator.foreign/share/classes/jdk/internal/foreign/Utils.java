@@ -100,8 +100,7 @@ public final class Utils {
             unsafe.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemoryScope scope = new MemoryScope(null, () -> unsafe.freeMemory(buf));
-        MemorySegment segment = new MemorySegmentImpl(buf, null, alignedSize, Thread.currentThread(), scope);
+        MemorySegment segment = new MemorySegmentImpl(buf, null, alignedSize, Thread.currentThread(), null, () -> unsafe.freeMemory(buf));
         if (alignedBuf != buf) {
             long delta = alignedBuf - buf;
             segment = segment.asSlice(delta, bytesSize);
@@ -110,12 +109,11 @@ public final class Utils {
     }
 
     public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize, Thread owner, boolean allowClose) {
-        MemoryScope scope = new MemoryScope(null, allowClose ? () -> unsafe.freeMemory(min) : null);
         int mask = MemorySegmentImpl.DEFAULT_MASK;
         if (!allowClose) {
             mask &= ~MemorySegment.CLOSE;
         }
-        return new MemorySegmentImpl(min, null, bytesSize, mask, owner, scope);
+        return new MemorySegmentImpl(min, null, bytesSize, mask, owner, null, allowClose ? () -> unsafe.freeMemory(min) : null);
     }
 
     public static MemorySegment makeArraySegment(byte[] arr) {
@@ -147,8 +145,7 @@ public final class Utils {
     }
 
     private static MemorySegment makeArraySegment(Object arr, int size, int base, int scale) {
-        MemoryScope scope = new MemoryScope(null, null);
-        return new MemorySegmentImpl(base, arr, size * scale, Thread.currentThread(), scope);
+        return new MemorySegmentImpl(base, arr, size * scale, Thread.currentThread(), null, null);
     }
 
     public static MemorySegment makeBufferSegment(ByteBuffer bb) {
@@ -158,8 +155,7 @@ public final class Utils {
         int pos = bb.position();
         int limit = bb.limit();
 
-        MemoryScope bufferScope = new MemoryScope(bb, null);
-        return new MemorySegmentImpl(bbAddress + pos, base, limit - pos, Thread.currentThread(), bufferScope);
+        return new MemorySegmentImpl(bbAddress + pos, base, limit - pos, Thread.currentThread(), bb, null);
     }
 
     // create and map a file into a fresh segment
@@ -167,8 +163,7 @@ public final class Utils {
         if (bytesSize <= 0) throw new IllegalArgumentException("Requested bytes size must be > 0.");
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
-            MemoryScope scope = new MemoryScope(null, unmapperProxy::unmap);
-            return new MemorySegmentImpl(unmapperProxy.address(), null, bytesSize, Thread.currentThread(), scope);
+            return new MemorySegmentImpl(unmapperProxy.address(), null, bytesSize, Thread.currentThread(), null, unmapperProxy::unmap);
         }
     }
 

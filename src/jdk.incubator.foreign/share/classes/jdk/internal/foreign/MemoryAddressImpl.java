@@ -41,15 +41,15 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
-    private final MemorySegmentImpl segment;
+    private final AbstractMemorySegment segment;
     private final long offset;
 
     public MemoryAddressImpl(long offset) {
-        this.segment = MemorySegmentImpl.NOTHING;
+        this.segment = NothingSegment.NOTHING;
         this.offset = offset;
     }
 
-    public MemoryAddressImpl(MemorySegmentImpl segment, long offset) {
+    public MemoryAddressImpl(AbstractMemorySegment segment, long offset) {
         this.segment = Objects.requireNonNull(segment);
         this.offset = offset;
     }
@@ -85,7 +85,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     @Override
     public MemorySegment segment() {
-        return segment != MemorySegmentImpl.NOTHING ?
+        return segment != NothingSegment.NOTHING ?
                 segment : null;
     }
 
@@ -96,11 +96,11 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     @Override
     public MemoryAddress rebase(MemorySegment segment) {
-        MemorySegmentImpl segmentImpl = (MemorySegmentImpl)segment;
-        if (segmentImpl.base != this.segment.base) {
+        AbstractMemorySegment segmentImpl = (AbstractMemorySegment) segment;
+        if (segmentImpl.base() != this.segment.base()) {
             throw new IllegalArgumentException("Invalid rebase target: " + segment);
         }
-        return new MemoryAddressImpl((MemorySegmentImpl)segment,
+        return new MemoryAddressImpl((AbstractMemorySegment) segment,
                 unsafeGetOffset() - ((MemoryAddressImpl)segment.baseAddress()).unsafeGetOffset());
     }
 
@@ -111,7 +111,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     }
 
     public long unsafeGetOffset() {
-        return segment.min + offset;
+        return segment.min() + offset;
     }
 
     public Object unsafeGetBase() {
