@@ -206,14 +206,14 @@ import static org.unix.curl_h.*;
 public class CurlMain {
    public static void main(String[] args) {
        var urlStr = args[0];
-       curl_global_init(CURL_GLOBAL_DEFAULT);
+       curl_global_init(CURL_GLOBAL_DEFAULT());
        var curl = curl_easy_init();
        if(!curl.equals(NULL)) {
            try (var s = Cstring.toCString(urlStr)) {
                var url = s.baseAddress();
-               curl_easy_setopt(curl, CURLOPT_URL, url);
+               curl_easy_setopt(curl, CURLOPT_URL(), url);
                int res = curl_easy_perform(curl);
-               if (res != CURLE_OK) {
+               if (res != CURLE_OK()) {
                    curl_easy_cleanup(curl);
                }
            }
@@ -284,8 +284,8 @@ public class TestBlas {
         double alpha, beta;
         int m, n, lda, incx, incy, i;
 
-        Layout = CblasColMajor;
-        transa = CblasNoTrans;
+        Layout = CblasColMajor();
+        transa = CblasNoTrans();
 
         m = 4; /* Size of Column ( the number of rows ) */
         n = 4; /* Size of Row ( the number of columns ) */
