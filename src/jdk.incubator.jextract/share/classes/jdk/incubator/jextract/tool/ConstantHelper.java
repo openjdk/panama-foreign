@@ -28,6 +28,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.ConstantDynamic;
 import jdk.internal.org.objectweb.asm.Handle;
@@ -91,6 +92,13 @@ class ConstantHelper {
             desc(methodType(MemoryAddress.class, long.class))
     );
 
+    private static final DirectMethodHandleDesc MH_MemorySegment_baseAddress = MethodHandleDesc.ofMethod(
+            Kind.INTERFACE_VIRTUAL,
+            desc(MemorySegment.class),
+            "baseAddress",
+            desc(methodType(MemoryAddress.class))
+    );
+
     private static final DirectMethodHandleDesc BSM_GET_STATIC_FINAL = ConstantDescs.ofConstantBootstrap(
             CD_ConstantBootstraps,
             "getStaticFinal",
@@ -102,6 +110,7 @@ class ConstantHelper {
     private static final ConstantDesc FALSE = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "FALSE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
     private static final ClassDesc CD_PathElelemt = desc(MemoryLayout.PathElement.class);
     private static final ClassDesc CD_MemoryAddress = desc(MemoryAddress.class);
+    private static final ClassDesc CD_MemorySegment = desc(MemorySegment.class);
 
     private final DirectMethodHandleDesc MH_downcallHandle;
     private final DirectMethodHandleDesc MH_lookupGlobalVariable;
@@ -114,7 +123,7 @@ class ConstantHelper {
 
     private final Map<String, DirectMethodHandleDesc> pool = new HashMap<>();
 
-    ConstantHelper(String parentClassName, ClassDesc runtimeHelper, String[] libraryNames) {
+    ConstantHelper(String parentClassName, ClassDesc runtimeHelper, ClassDesc cString, String[] libraryNames) {
         this.cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         String className = parentClassName + "$constants";
         this.CD_constantsHelper = ClassDesc.of(className);
@@ -140,10 +149,10 @@ class ConstantHelper {
                         String.class)
         );
         this.MH_makeCString = findRuntimeHelperBootstrap(
-                runtimeHelper,
-                "makeCString",
+                cString,
+                "toCString",
                 methodType(
-                        MemoryAddress.class,
+                        MemorySegment.class,
                         String.class)
         );
 
@@ -403,7 +412,9 @@ class ConstantHelper {
     }
 
     private ConstantDesc cStringDesc(String value) {
-        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "CSTRING", CD_MemoryAddress, MH_makeCString, value);
+        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "BASEADDRESS", CD_MemoryAddress, MH_MemorySegment_baseAddress,
+            DynamicConstantDesc.ofNamed(BSM_INVOKE, "CSTRING", CD_MemorySegment, MH_makeCString, value)
+        );
     }
 
     private ConstantDesc methodHandleDesc(String name, MethodType mtype, FunctionDescriptor funcDesc, boolean varargs) {

@@ -88,7 +88,8 @@ class JavaSourceBuilder {
     public void classBegin(String name) {
         className = name;
         String qualName = pkgName.isEmpty() ? name : pkgName + "." + name;
-        constantHelper = new ConstantHelper(qualName, ClassDesc.of(pkgName, "RuntimeHelper"), libraryNames);
+        constantHelper = new ConstantHelper(qualName,
+                ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of(pkgName, "Cstring"), libraryNames);
 
         addPackagePrefix();
         addImportSection();
