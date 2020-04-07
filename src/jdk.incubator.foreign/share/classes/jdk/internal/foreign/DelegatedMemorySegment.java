@@ -25,19 +25,22 @@
 
 package jdk.internal.foreign;
 
-import java.nio.ByteBuffer;
-
 public class DelegatedMemorySegment extends AbstractMemorySegment {
-    AbstractMemorySegment memorySegment;
-    long offset;
-    long size;
-    int mask;
+    final AbstractMemorySegment memorySegment;
+    final long offset;
+    final long size;
+    final int mask;
 
     DelegatedMemorySegment(AbstractMemorySegment memorySegment, long offset, long size, int mask) {
         this.memorySegment = memorySegment;
         this.offset = offset;
         this.size = size;
-        this.mask = mask;
+        this.mask = size > Integer.MAX_VALUE ? mask : (mask | SMALL);
+    }
+
+    @Override
+    AbstractMemorySegment root() {
+        return memorySegment;
     }
 
     @Override
@@ -78,6 +81,11 @@ public class DelegatedMemorySegment extends AbstractMemorySegment {
     @Override
     long min() {
         return memorySegment.min() + offset;
+    }
+
+    @Override
+    long offset() {
+        return offset;
     }
 
     @Override

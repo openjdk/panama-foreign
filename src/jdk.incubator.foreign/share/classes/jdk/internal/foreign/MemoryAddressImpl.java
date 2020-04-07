@@ -122,7 +122,6 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     public boolean isSmall() {
         return segment.isSmall();
     }
-
     // Object methods
 
     @Override

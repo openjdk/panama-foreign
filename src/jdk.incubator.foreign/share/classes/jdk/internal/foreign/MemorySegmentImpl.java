@@ -88,6 +88,16 @@ public final class MemorySegmentImpl extends AbstractMemorySegment {
     }
 
     @Override
+    AbstractMemorySegment root() {
+        return this;
+    }
+
+    @Override
+    long offset() {
+        return 0L;
+    }
+
+    @Override
     public final boolean isAlive() {
         return isAliveThreadSafe();
     }

@@ -66,6 +66,16 @@ public class NothingSegment extends AbstractMemorySegment {
     }
 
     @Override
+    AbstractMemorySegment root() {
+        return this;
+    }
+
+    @Override
+    long offset() {
+        return 0L;
+    }
+
+    @Override
     public long byteSize() {
         return 0;
     }

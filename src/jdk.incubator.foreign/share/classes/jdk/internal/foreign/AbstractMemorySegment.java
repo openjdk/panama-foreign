@@ -61,8 +61,10 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
 
     @ForceInline
     private AbstractMemorySegment asSliceNoCheck(long offset, long newSize) {
-        return new DelegatedMemorySegment(this, offset, newSize, accessModes());
+        return new DelegatedMemorySegment(root(), offset() + offset, newSize, accessModes());
     }
+
+    abstract long offset();
 
     @Override
     public Spliterator<MemorySegment> spliterator(SequenceLayout sequenceLayout) {
@@ -103,6 +105,8 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         return _bb;
     }
 
+    abstract AbstractMemorySegment root();
+
     @Override
     public final int accessModes() {
         return accessModesInternal() & ACCESS_MASK;
@@ -118,7 +122,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         if ((~accessModes() & accessModes) != 0) {
             throw new UnsupportedOperationException("Cannot acquire more access modes");
         }
-        return new DelegatedMemorySegment(this, 0L, byteSize(), accessModes);
+        return new DelegatedMemorySegment(root(), 0L, byteSize(), accessModes);
     }
 
     @Override
