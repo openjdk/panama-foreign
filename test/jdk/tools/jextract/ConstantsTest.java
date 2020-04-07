@@ -26,12 +26,16 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.SystemABI.Type;
+
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 
 /*
@@ -64,15 +68,15 @@ public class ConstantsTest extends JextractToolRunner {
 
     @Test(dataProvider = "definedConstants")
     public void checkConstantsSignatures(String name, Class<?> type, Object value) {
-        var f = findField(constants, name);
+        var f = findMethod(constants, name);
         assertNotNull(f);
-        assertTrue(f.getType() == type);
+        assertSame(f.getReturnType(), type);
     }
 
     @Test(dataProvider = "definedConstants")
-    public void checkConstantsValues(String name, Class<?> type, Predicate<Object> checker) throws ReflectiveOperationException {
-        Object actual = findField(constants, name).get(null);
-        assertTrue(checker.test(actual));
+    public void checkConstantsValues(String name, Class<?> type, Consumer<Object> checker) throws ReflectiveOperationException {
+        Object actual = findMethod(constants, name).invoke(null);
+        checker.accept(actual);
     }
 
     @Test(dataProvider = "missingConstants")
@@ -93,7 +97,7 @@ public class ConstantsTest extends JextractToolRunner {
                 { "FIVE", long.class, equalsTo(5L) },
                 { "SIX", int.class, equalsTo(6) },
                 { "FLOAT_VALUE", float.class, equalsTo(1.32f) },
-                { "DOUBLE_VALUE", double.class, equalsTo(1.32) },
+                { "DOUBLE_VALUE", double.class, (Consumer<Double>) (actual -> assertEquals(actual, 1.32, 0.1)) },
                 { "CHAR_VALUE", int.class, equalsTo(104) }, //integer char constants have type int
                 { "MULTICHAR_VALUE", int.class, equalsTo(26728) },  //integer char constants have type int
                 { "BOOL_VALUE", byte.class, equalsTo((byte)1) },
@@ -101,8 +105,8 @@ public class ConstantsTest extends JextractToolRunner {
         };
     }
 
-    static Predicate<Object> equalsTo(Object that) {
-        return o -> o.equals(that);
+    static Consumer<Object> equalsTo(Object expected) {
+        return actual -> assertEquals(actual, expected);
     }
 
     @DataProvider

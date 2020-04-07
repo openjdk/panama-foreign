@@ -133,7 +133,7 @@ public class Utils {
             byte curr = (byte)BYTE_ARR_VH.get(str.baseAddress(), 0);
             long offset = 0;
             while (curr != 0) {
-                buf.append((char)curr);
+                buf.append((char)curr); // interpreting as UTF-16 ?
                 curr = (byte)BYTE_ARR_VH.get(str.baseAddress(), ++offset);
             }
             return buf.toString();

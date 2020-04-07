@@ -75,7 +75,7 @@ public class Options {
             this.filters = new ArrayList<>();
             this.targetPackage = "";
             this.outputDir = ".";
-            this.source = source;
+            this.source = false;
         }
 
         public Options build() {
