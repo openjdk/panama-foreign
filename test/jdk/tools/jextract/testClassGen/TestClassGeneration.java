@@ -28,7 +28,7 @@
  *          jdk.incubator.foreign/jdk.internal.foreign
  *          jdk.incubator.foreign/jdk.internal.foreign.abi
  *          java.base/sun.security.action
- * @library ..
+ * @library .. /test/lib
  * @build JextractToolRunner
  * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit -Duser.language=en TestClassGeneration
  */
