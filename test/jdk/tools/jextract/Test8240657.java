@@ -28,6 +28,7 @@ import static org.testng.Assert.assertNotNull;
 /*
  * @test
  * @modules jdk.incubator.jextract
+ * @library /test/lib
  * @build JextractToolRunner
  * @bug 8240657
  * @summary when Java keywords are used as identifiers in C header, jextract generates non-compilable java code

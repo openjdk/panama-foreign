@@ -39,6 +39,7 @@ import static org.testng.Assert.assertTrue;
  * @bug 8240300
  * @summary jextract produces non compilable code with repeated declarations
  * @modules jdk.incubator.jextract
+ * @library /test/lib
  * @build JextractToolRunner
  * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit RepeatedDeclsTest
  */

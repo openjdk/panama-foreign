@@ -25,6 +25,7 @@
  * @test
  * @requires os.family != "windows"
  * @modules jdk.incubator.jextract
+ * @library /test/lib
  * @build BadBitfieldTest
  * @run testng BadBitfieldTest
  */
