@@ -84,6 +84,7 @@ public final class MemoryScope {
         }
     }
 
+    @ForceInline
     MemoryScope acquire() {
         int value;
         do {
@@ -110,6 +111,7 @@ public final class MemoryScope {
         } while (!COUNT_HANDLE.compareAndSet(this, value, value - 1));
     }
 
+    @ForceInline
     void close() {
         if (!COUNT_HANDLE.compareAndSet(this, UNACQUIRED, CLOSED)) {
             //first check if already closed...

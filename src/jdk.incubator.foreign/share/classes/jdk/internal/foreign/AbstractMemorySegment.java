@@ -73,6 +73,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     abstract AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope);
 
     @Override
+    @ForceInline
     public final MemorySegment asSlice(long offset, long newSize) {
         checkBounds(offset, newSize);
         return asSliceNoCheck(offset, newSize);
@@ -80,7 +81,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
 
     @ForceInline
     private AbstractMemorySegment asSliceNoCheck(long offset, long newSize) {
-        return dup(offset, newSize, accessModes(), owner, scope);
+        return dup(offset, newSize, mask, owner, scope);
     }
 
     @Override
@@ -172,6 +173,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         closeNoCheck();
     }
 
+    @ForceInline
     private final void closeNoCheck() {
         scope.close();
     }
