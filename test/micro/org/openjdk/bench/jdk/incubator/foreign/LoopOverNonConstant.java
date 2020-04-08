@@ -137,9 +137,9 @@ public class LoopOverNonConstant {
     }
 
     @Benchmark
-    public int segment_loop_slice() {
+    public int segment_loop_readonly() {
         int sum = 0;
-        MemoryAddress base = segment.asSlice(0, segment.byteSize()).baseAddress();
+        MemoryAddress base = segment.withAccessModes(MemorySegment.READ).baseAddress();
         for (int i = 0; i < ELEM_SIZE; i++) {
             sum += (int) VH_int.get(base, (long) i);
         }
