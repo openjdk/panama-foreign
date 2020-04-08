@@ -58,9 +58,10 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     final Thread owner;
     final MemoryScope scope;
 
+    @ForceInline
     AbstractMemorySegment(long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
-        this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
+        this.mask = mask;
         this.owner = owner;
         this.scope = scope;
     }
@@ -68,8 +69,6 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     abstract long min();
 
     abstract Object base();
-
-    abstract AbstractMemorySegment dup(long size, int mask, Thread owner, MemoryScope scope);
 
     abstract AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope);
 
@@ -149,7 +148,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         if ((~accessModes() & accessModes) != 0) {
             throw new UnsupportedOperationException("Cannot acquire more access modes");
         }
-        return dup(length, accessModes, owner, scope);
+        return dup(0, length, accessModes | (mask & SMALL), owner, scope);
     }
 
     @Override
@@ -170,7 +169,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
             throw unsupportedAccessMode(CLOSE);
         }
         checkValidState();
-        scope.close();
+        closeNoCheck();
     }
 
     private final void closeNoCheck() {
@@ -181,7 +180,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         if (Thread.currentThread() != ownerThread() && !isSet(ACQUIRE)) {
             throw unsupportedAccessMode(ACQUIRE);
         }
-        return dup(length, mask, Thread.currentThread(), scope.acquire());
+        return dup(0, length, mask, Thread.currentThread(), scope.acquire());
     }
 
     @Override
@@ -219,7 +218,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
 
     AbstractMemorySegment asUnconfined() {
         checkValidState();
-        return dup(length, mask, null, scope);
+        return dup(0, length, mask, null, scope);
     }
 
     private boolean isSet(int mask) {

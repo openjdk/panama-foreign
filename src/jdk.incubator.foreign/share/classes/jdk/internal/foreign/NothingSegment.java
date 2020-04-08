@@ -46,10 +46,5 @@ public class NothingSegment extends AbstractMemorySegment {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    AbstractMemorySegment dup(long size, int mask, Thread owner, MemoryScope scope) {
-        throw new UnsupportedOperationException();
-    }
-
     public static final NothingSegment NOTHING = new NothingSegment();
 }

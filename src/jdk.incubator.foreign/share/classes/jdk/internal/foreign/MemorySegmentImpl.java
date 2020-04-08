@@ -45,7 +45,8 @@ public final class MemorySegmentImpl extends AbstractMemorySegment {
     final Object base;
 
     public MemorySegmentImpl(long min, Object base, long length, Thread owner, MemoryScope scope) {
-        this(min, base, length, DEFAULT_MASK, owner, scope);
+        this(min, base, length,
+                length > Integer.MAX_VALUE ? DEFAULT_MASK : DEFAULT_MASK | SMALL, owner, scope);
     }
 
     @ForceInline
@@ -53,11 +54,6 @@ public final class MemorySegmentImpl extends AbstractMemorySegment {
         super(length, mask, owner, scope);
         this.min = min;
         this.base = base;
-    }
-
-    @Override
-    AbstractMemorySegment dup(long size, int mask, Thread owner, MemoryScope scope) {
-        return new MemorySegmentImpl(min, base, size, mask, owner, scope);
     }
 
     @Override
