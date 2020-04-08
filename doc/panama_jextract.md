@@ -388,11 +388,10 @@ public class TestLapack {
             ldb = 5;
 
             /* Print Entry Matrix */
-            print_matrix_colmajor("Entry Matrix A", m, n, Cdouble.toJavaArray(A.segment()), lda );
+            print_matrix_colmajor("Entry Matrix A", m, n, A, lda );
             /* Print Right Rand Side */
-            print_matrix_colmajor("Right Hand Side b", n, nrhs, Cdouble.toJavaArray(b.segment()), ldb );
+            print_matrix_colmajor("Right Hand Side b", n, nrhs, b, ldb );
             System.out.println();
-
 
             /* Executable statements */
             //            printf( "LAPACKE_dgels (col-major, high-level) Example Program Results\n" );
@@ -400,18 +399,18 @@ public class TestLapack {
             info = LAPACKE_dgels(LAPACK_COL_MAJOR(), (byte)'N', m, n, nrhs, A, lda, b, ldb);
 
             /* Print Solution */
-            print_matrix_colmajor("Solution", n, nrhs, Cdouble.toJavaArray(b.segment()), ldb );
+            print_matrix_colmajor("Solution", n, nrhs, b, ldb );
             System.out.println();
             System.exit(info);
         }
     }
 
-    static void print_matrix_colmajor(String msg, int m, int n, double[] mat, int ldm) {
+    static void print_matrix_colmajor(String msg, int m, int n, MemoryAddress mat, int ldm) {
         int i, j;
         System.out.printf("\n %s\n", msg);
 
         for( i = 0; i < m; i++ ) {
-            for( j = 0; j < n; j++ ) System.out.printf(" %6.2f", mat[i+j*ldm]);
+            for( j = 0; j < n; j++ ) System.out.printf(" %6.2f", Cdouble.get(mat, i+j*ldm));
             System.out.printf( "\n" );
         }
     }

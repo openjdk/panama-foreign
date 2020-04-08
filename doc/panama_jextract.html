@@ -401,34 +401,33 @@
 <span id="cb21-24"><a href="#cb21-24"></a>            ldb = <span class="dv">5</span>;</span>
 <span id="cb21-25"><a href="#cb21-25"></a></span>
 <span id="cb21-26"><a href="#cb21-26"></a>            <span class="co">/* Print Entry Matrix */</span></span>
-<span id="cb21-27"><a href="#cb21-27"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Entry Matrix A&quot;</span>, m, n, Cdouble.<span class="fu">toJavaArray</span>(A.<span class="fu">segment</span>()), lda );</span>
+<span id="cb21-27"><a href="#cb21-27"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Entry Matrix A&quot;</span>, m, n, A, lda );</span>
 <span id="cb21-28"><a href="#cb21-28"></a>            <span class="co">/* Print Right Rand Side */</span></span>
-<span id="cb21-29"><a href="#cb21-29"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Right Hand Side b&quot;</span>, n, nrhs, Cdouble.<span class="fu">toJavaArray</span>(b.<span class="fu">segment</span>()), ldb );</span>
+<span id="cb21-29"><a href="#cb21-29"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Right Hand Side b&quot;</span>, n, nrhs, b, ldb );</span>
 <span id="cb21-30"><a href="#cb21-30"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</span>
 <span id="cb21-31"><a href="#cb21-31"></a></span>
-<span id="cb21-32"><a href="#cb21-32"></a></span>
-<span id="cb21-33"><a href="#cb21-33"></a>            <span class="co">/* Executable statements */</span></span>
-<span id="cb21-34"><a href="#cb21-34"></a>            <span class="co">//            printf( &quot;LAPACKE_dgels (col-major, high-level) Example Program Results\n&quot; );</span></span>
-<span id="cb21-35"><a href="#cb21-35"></a>            <span class="co">/* Solve least squares problem*/</span></span>
-<span id="cb21-36"><a href="#cb21-36"></a>            info = <span class="fu">LAPACKE_dgels</span>(<span class="fu">LAPACK_COL_MAJOR</span>(), (<span class="dt">byte</span>)<span class="ch">&#39;N&#39;</span>, m, n, nrhs, A, lda, b, ldb);</span>
-<span id="cb21-37"><a href="#cb21-37"></a></span>
-<span id="cb21-38"><a href="#cb21-38"></a>            <span class="co">/* Print Solution */</span></span>
-<span id="cb21-39"><a href="#cb21-39"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Solution&quot;</span>, n, nrhs, Cdouble.<span class="fu">toJavaArray</span>(b.<span class="fu">segment</span>()), ldb );</span>
-<span id="cb21-40"><a href="#cb21-40"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</span>
-<span id="cb21-41"><a href="#cb21-41"></a>            <span class="bu">System</span>.<span class="fu">exit</span>(info);</span>
-<span id="cb21-42"><a href="#cb21-42"></a>        }</span>
-<span id="cb21-43"><a href="#cb21-43"></a>    }</span>
-<span id="cb21-44"><a href="#cb21-44"></a></span>
-<span id="cb21-45"><a href="#cb21-45"></a>    <span class="dt">static</span> <span class="dt">void</span> <span class="fu">print_matrix_colmajor</span>(<span class="bu">String</span> msg, <span class="dt">int</span> m, <span class="dt">int</span> n, <span class="dt">double</span>[] mat, <span class="dt">int</span> ldm) {</span>
-<span id="cb21-46"><a href="#cb21-46"></a>        <span class="dt">int</span> i, j;</span>
-<span id="cb21-47"><a href="#cb21-47"></a>        <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, msg);</span>
-<span id="cb21-48"><a href="#cb21-48"></a></span>
-<span id="cb21-49"><a href="#cb21-49"></a>        <span class="kw">for</span>( i = <span class="dv">0</span>; i &lt; m; i++ ) {</span>
-<span id="cb21-50"><a href="#cb21-50"></a>            <span class="kw">for</span>( j = <span class="dv">0</span>; j &lt; n; j++ ) <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot; </span><span class="sc">%6.2f</span><span class="st">&quot;</span>, mat[i+j*ldm]);</span>
-<span id="cb21-51"><a href="#cb21-51"></a>            <span class="bu">System</span>.<span class="fu">out.printf</span>( <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span> );</span>
-<span id="cb21-52"><a href="#cb21-52"></a>        }</span>
-<span id="cb21-53"><a href="#cb21-53"></a>    }</span>
-<span id="cb21-54"><a href="#cb21-54"></a>}</span></code></pre></div>
+<span id="cb21-32"><a href="#cb21-32"></a>            <span class="co">/* Executable statements */</span></span>
+<span id="cb21-33"><a href="#cb21-33"></a>            <span class="co">//            printf( &quot;LAPACKE_dgels (col-major, high-level) Example Program Results\n&quot; );</span></span>
+<span id="cb21-34"><a href="#cb21-34"></a>            <span class="co">/* Solve least squares problem*/</span></span>
+<span id="cb21-35"><a href="#cb21-35"></a>            info = <span class="fu">LAPACKE_dgels</span>(<span class="fu">LAPACK_COL_MAJOR</span>(), (<span class="dt">byte</span>)<span class="ch">&#39;N&#39;</span>, m, n, nrhs, A, lda, b, ldb);</span>
+<span id="cb21-36"><a href="#cb21-36"></a></span>
+<span id="cb21-37"><a href="#cb21-37"></a>            <span class="co">/* Print Solution */</span></span>
+<span id="cb21-38"><a href="#cb21-38"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Solution&quot;</span>, n, nrhs, b, ldb );</span>
+<span id="cb21-39"><a href="#cb21-39"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</span>
+<span id="cb21-40"><a href="#cb21-40"></a>            <span class="bu">System</span>.<span class="fu">exit</span>(info);</span>
+<span id="cb21-41"><a href="#cb21-41"></a>        }</span>
+<span id="cb21-42"><a href="#cb21-42"></a>    }</span>
+<span id="cb21-43"><a href="#cb21-43"></a></span>
+<span id="cb21-44"><a href="#cb21-44"></a>    <span class="dt">static</span> <span class="dt">void</span> <span class="fu">print_matrix_colmajor</span>(<span class="bu">String</span> msg, <span class="dt">int</span> m, <span class="dt">int</span> n, MemoryAddress mat, <span class="dt">int</span> ldm) {</span>
+<span id="cb21-45"><a href="#cb21-45"></a>        <span class="dt">int</span> i, j;</span>
+<span id="cb21-46"><a href="#cb21-46"></a>        <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, msg);</span>
+<span id="cb21-47"><a href="#cb21-47"></a></span>
+<span id="cb21-48"><a href="#cb21-48"></a>        <span class="kw">for</span>( i = <span class="dv">0</span>; i &lt; m; i++ ) {</span>
+<span id="cb21-49"><a href="#cb21-49"></a>            <span class="kw">for</span>( j = <span class="dv">0</span>; j &lt; n; j++ ) <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot; </span><span class="sc">%6.2f</span><span class="st">&quot;</span>, Cdouble.<span class="fu">get</span>(mat, i+j*ldm));</span>
+<span id="cb21-50"><a href="#cb21-50"></a>            <span class="bu">System</span>.<span class="fu">out.printf</span>( <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span> );</span>
+<span id="cb21-51"><a href="#cb21-51"></a>        }</span>
+<span id="cb21-52"><a href="#cb21-52"></a>    }</span>
+<span id="cb21-53"><a href="#cb21-53"></a>}</span></code></pre></div>
 <h3 id="compiling-and-running-the-above-lapack-sample-1">Compiling and running the above LAPACK sample</h3>
 <div class="sourceCode" id="cb22"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1"></a></span>
 <span id="cb22-2"><a href="#cb22-2"></a><span class="ex">java</span> -Djdk.incubator.foreign.Foreign=permit \</span>
