@@ -90,8 +90,6 @@ jextract -l python2.7 \
   -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \
   -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/python2.7/ \
   -t org.python \
-  --filter pythonrun.h \
-  --filter python.h \
    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/python2.7/Python.h
 
 ```
@@ -139,7 +137,6 @@ java -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign 
 
 jextract -l readline -t org.unix \
   -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include \
-  --filter readline.h \
    /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/readline/readline.h
 
 ```
@@ -187,8 +184,6 @@ java -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign 
 jextract -t org.unix -lcurl \
   -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/ \
   -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/curl/ \
-  --filter easy.h \
-  --filter curl.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/curl/curl.h
 
 ```
@@ -262,7 +257,6 @@ The following command can be used to extract cblas.h on MacOs
 
 jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
   -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \
-  --filter cblas.h \
   -l openblas -t blas /usr/local/opt/openblas/include/cblas.h
 
 ```
@@ -346,5 +340,91 @@ public class TestBlas {
 java -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/local/opt/openblas/lib \
     TestBlas.java
+
+```
+
+## Using LAPACK library (Mac OS)
+
+On Mac OS, lapack is installed under /usr/local/opt/lapack directory.
+
+### jextracting lapacke.h
+
+```sh
+
+jextract \
+   -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \
+   -l lapacke -t lapack \
+   --filter lapacke.h \
+   /usr/local/opt/lapack/include/lapacke.h
+
+```
+
+### Java sample code that uses LAPACK library
+
+```java
+
+import jdk.incubator.foreign.NativeAllocationScope;
+import lapack.*;
+import static lapack.lapacke_h.*;
+
+public class TestLapack {
+    public static void main(String[] args) {
+
+        /* Locals */
+        try (var scope = NativeAllocationScope.unboundedScope()) {
+            var A = Cdouble.allocateArray(new double[]{
+                    1, 2, 3, 4, 5, 1, 3, 5, 2, 4, 1, 4, 2, 5, 3
+            }, scope);
+            var b = Cdouble.allocateArray(new double[]{
+                    -10, 12, 14, 16, 18, -3, 14, 12, 16, 16
+            }, scope);
+            int info, m, n, lda, ldb, nrhs;
+
+            /* Initialization */
+            m = 5;
+            n = 3;
+            nrhs = 2;
+            lda = 5;
+            ldb = 5;
+
+            /* Print Entry Matrix */
+            print_matrix_colmajor("Entry Matrix A", m, n, A, lda );
+            /* Print Right Rand Side */
+            print_matrix_colmajor("Right Hand Side b", n, nrhs, b, ldb );
+            System.out.println();
+
+            /* Executable statements */
+            //            printf( "LAPACKE_dgels (col-major, high-level) Example Program Results\n" );
+            /* Solve least squares problem*/
+            info = LAPACKE_dgels(LAPACK_COL_MAJOR(), (byte)'N', m, n, nrhs, A, lda, b, ldb);
+
+            /* Print Solution */
+            print_matrix_colmajor("Solution", n, nrhs, b, ldb );
+            System.out.println();
+            System.exit(info);
+        }
+    }
+
+    static void print_matrix_colmajor(String msg, int m, int n, MemoryAddress mat, int ldm) {
+        int i, j;
+        System.out.printf("\n %s\n", msg);
+
+        for( i = 0; i < m; i++ ) {
+            for( j = 0; j < n; j++ ) System.out.printf(" %6.2f", Cdouble.get(mat, i+j*ldm));
+            System.out.printf( "\n" );
+        }
+    }
+}
+
+```
+
+### Compiling and running the above LAPACK sample
+
+```sh
+
+java -Djdk.incubator.foreign.Foreign=permit \
+    --add-modules jdk.incubator.foreign \
+    -Djava.library.path=/usr/local/opt/lapack/lib \
+    TestLapack.java
 
 ```
