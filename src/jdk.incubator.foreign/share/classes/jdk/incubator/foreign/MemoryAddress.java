@@ -121,7 +121,13 @@ public interface MemoryAddress {
      * through {@code src.addOffset(bytes - 1)} are copied into addresses {@code dst} through {@code dst.addOffset(bytes - 1)}.
      * If the source and address ranges overlap, then the copying is performed as if the bytes at addresses {@code src}
      * through {@code src.addOffset(bytes - 1)} were first copied into a temporary segment with size {@code bytes},
-     * and then the contents of the temporary segment were copied into the bytes at addresses {@code dst} through {@code dst.addOffset(bytes - 1)}.
+     * and then the contents of the temporary segment were copied into the bytes at addresses {@code dst} through
+     * {@code dst.addOffset(bytes - 1)}.
+     * <p>
+     * The result of a bulk copy is unspecified if, in the uncommon case, the source and target address ranges do not
+     * overlap, but refer to overlapping regions of the same backing storage using different addresses.  For example,
+     * this may occur if the same file is {@link MemorySegment#mapFromPath mapped} to two segments.
+     *
      * @param src the source address.
      * @param dst the target address.
      * @param bytes the number of bytes to be copied.
