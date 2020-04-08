@@ -28,21 +28,7 @@ package jdk.internal.foreign;
 public class NothingSegment extends AbstractMemorySegment {
 
     private NothingSegment() {
-    }
-
-    @Override
-    int accessModesInternal() {
-        return 0;
-    }
-
-    @Override
-    AbstractMemorySegment asUnconfined() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    void closeNoCheck() {
-        throw new UnsupportedOperationException();
+        super(0, 0, null, MemoryScope.GLOBAL);
     }
 
     @Override
@@ -56,38 +42,13 @@ public class NothingSegment extends AbstractMemorySegment {
     }
 
     @Override
-    AbstractMemorySegment acquireNoCheck() {
-        return this;
+    AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Thread ownerThread() {
-        return null;
-    }
-
-    @Override
-    AbstractMemorySegment root() {
-        return this;
-    }
-
-    @Override
-    long offset() {
-        return 0L;
-    }
-
-    @Override
-    public long byteSize() {
-        return 0;
-    }
-
-    @Override
-    public boolean isAlive() {
-        return true;
-    }
-
-    @Override
-    public void checkValidState() {
-        //do nothing
+    AbstractMemorySegment dup(long size, int mask, Thread owner, MemoryScope scope) {
+        throw new UnsupportedOperationException();
     }
 
     public static final NothingSegment NOTHING = new NothingSegment();

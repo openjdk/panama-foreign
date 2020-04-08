@@ -41,75 +41,28 @@ import java.lang.invoke.VarHandle;
  */
 public final class MemorySegmentImpl extends AbstractMemorySegment {
 
-    final long length;
-    final int mask;
     final long min;
     final Object base;
-    final Thread owner;
-    final Object ref; //reference to keep hold onto
-    final Runnable cleanupAction;
 
-    int activeCount = UNACQUIRED;
-
-    final static VarHandle COUNT_HANDLE;
-
-    static {
-        try {
-            COUNT_HANDLE = MethodHandles.lookup().findVarHandle(MemorySegmentImpl.class, "activeCount", int.class);
-        } catch (Throwable ex) {
-            throw new ExceptionInInitializerError(ex);
-        }
-    }
-
-    final static int UNACQUIRED = 0;
-    final static int CLOSED = -1;
-    final static int MAX_ACQUIRE = Integer.MAX_VALUE;
-
-    public MemorySegmentImpl(long min, Object base, long length, Thread owner, Object ref, Runnable cleanupAction) {
-        this(min, base, length, DEFAULT_MASK, owner, ref, cleanupAction);
+    public MemorySegmentImpl(long min, Object base, long length, Thread owner, MemoryScope scope) {
+        this(min, base, length, DEFAULT_MASK, owner, scope);
     }
 
     @ForceInline
-    MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, Object ref, Runnable cleanupAction) {
-        this.length = length;
-        this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
+    MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
+        super(length, mask, owner, scope);
         this.min = min;
         this.base = base;
-        this.owner = owner;
-        this.ref = ref;
-        this.cleanupAction = cleanupAction;
-    }
-
-    // MemorySegment methods
-
-    @Override
-    public final long byteSize() {
-        return length;
     }
 
     @Override
-    AbstractMemorySegment root() {
-        return this;
+    AbstractMemorySegment dup(long size, int mask, Thread owner, MemoryScope scope) {
+        return new MemorySegmentImpl(min, base, size, mask, owner, scope);
     }
 
     @Override
-    long offset() {
-        return 0L;
-    }
-
-    @Override
-    public final boolean isAlive() {
-        return isAliveThreadSafe();
-    }
-
-    @Override
-    public Thread ownerThread() {
-        return owner;
-    }
-
-    @Override
-    int accessModesInternal() {
-        return mask;
+    AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+        return new MemorySegmentImpl(min + offset, base, size, mask, owner, scope);
     }
 
     @Override
@@ -120,78 +73,5 @@ public final class MemorySegmentImpl extends AbstractMemorySegment {
     @Override
     Object base() {
         return base;
-    }
-
-    // MemorySegmentProxy methods
-
-    @Override
-    public final void checkValidState() {
-        if (owner != null && owner != Thread.currentThread()) {
-            throw new IllegalStateException("Attempt to access segment outside owning thread");
-        }
-        checkAliveConfined();
-    }
-
-    // Helper methods
-
-    @Override
-    AbstractMemorySegment asUnconfined() {
-        checkValidState();
-        return new MemorySegmentImpl(min, base, length, mask, null, ref, cleanupAction);
-    }
-
-    /**
-     * This method performs a full, thread-safe liveness check; can be used outside confinement thread.
-     */
-    final boolean isAliveThreadSafe() {
-        return ((int)COUNT_HANDLE.getVolatile(this)) != CLOSED;
-    }
-
-    /**
-     * This method performs a quick liveness check; must be called from the confinement thread.
-     */
-    final void checkAliveConfined() {
-        if (activeCount == CLOSED) {
-            throw new IllegalStateException("Segment is not alive");
-        }
-    }
-
-    AbstractMemorySegment acquireNoCheck() {
-        int value;
-        do {
-            value = (int)COUNT_HANDLE.getVolatile(this);
-            if (value == CLOSED) {
-                //segment is not alive!
-                throw new IllegalStateException("Segment is not alive");
-            } else if (value == MAX_ACQUIRE) {
-                //overflow
-                throw new IllegalStateException("Segment acquire limit exceeded");
-            }
-        } while (!COUNT_HANDLE.compareAndSet(this, value, value + 1));
-        return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), ref, this::release);
-    }
-
-    private void release() {
-        int value;
-        do {
-            value = (int)COUNT_HANDLE.getVolatile(this);
-            if (value <= UNACQUIRED) {
-                //cannot get here - we can't close segment twice
-                throw new IllegalStateException();
-            }
-        } while (!COUNT_HANDLE.compareAndSet(this, value, value - 1));
-    }
-
-    @Override
-    void closeNoCheck() {
-        if (!COUNT_HANDLE.compareAndSet(this, UNACQUIRED, CLOSED)) {
-            //first check if already closed...
-            checkAliveConfined();
-            //...if not, then we have acquired views that are still active
-            throw new IllegalStateException("Cannot close a segment that has active acquired views");
-        }
-        if (cleanupAction != null) {
-            cleanupAction.run();
-        }
     }
 }

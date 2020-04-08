@@ -53,6 +53,26 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final int BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
 
+    final long length;
+    final int mask;
+    final Thread owner;
+    final MemoryScope scope;
+
+    AbstractMemorySegment(long length, int mask, Thread owner, MemoryScope scope) {
+        this.length = length;
+        this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
+        this.owner = owner;
+        this.scope = scope;
+    }
+
+    abstract long min();
+
+    abstract Object base();
+
+    abstract AbstractMemorySegment dup(long size, int mask, Thread owner, MemoryScope scope);
+
+    abstract AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope);
+
     @Override
     public final MemorySegment asSlice(long offset, long newSize) {
         checkBounds(offset, newSize);
@@ -61,10 +81,8 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
 
     @ForceInline
     private AbstractMemorySegment asSliceNoCheck(long offset, long newSize) {
-        return new DelegatedMemorySegment(root(), offset() + offset, newSize, accessModes());
+        return dup(offset, newSize, accessModes(), owner, scope);
     }
-
-    abstract long offset();
 
     @Override
     public Spliterator<MemorySegment> spliterator(SequenceLayout sequenceLayout) {
@@ -96,7 +114,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
             }
             _bb = nioAccess.newHeapByteBuffer((byte[]) base(), (int)min() - AbstractMemorySegment.BYTE_ARR_BASE, (int) byteSize(), this);
         } else {
-            _bb = nioAccess.newDirectByteBuffer(min(), (int) byteSize(), null, this);
+            _bb = nioAccess.newDirectByteBuffer(min(), (int) this.length, null, this);
         }
         if (!isSet(WRITE)) {
             //scope is IMMUTABLE - obtain a RO byte buffer
@@ -105,16 +123,25 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         return _bb;
     }
 
-    abstract AbstractMemorySegment root();
-
     @Override
     public final int accessModes() {
-        return accessModesInternal() & ACCESS_MASK;
+        return mask & ACCESS_MASK;
     }
 
-    abstract int accessModesInternal();
+    @Override
+    public final long byteSize() {
+        return length;
+    }
 
-    abstract AbstractMemorySegment asUnconfined();
+    @Override
+    public final boolean isAlive() {
+        return scope.isAliveThreadSafe();
+    }
+
+    @Override
+    public Thread ownerThread() {
+        return owner;
+    }
 
     @Override
     public AbstractMemorySegment withAccessModes(int accessModes) {
@@ -122,7 +149,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         if ((~accessModes() & accessModes) != 0) {
             throw new UnsupportedOperationException("Cannot acquire more access modes");
         }
-        return new DelegatedMemorySegment(root(), 0L, byteSize(), accessModes);
+        return dup(length, accessModes, owner, scope);
     }
 
     @Override
@@ -143,26 +170,26 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
             throw unsupportedAccessMode(CLOSE);
         }
         checkValidState();
-        closeNoCheck();
+        scope.close();
+    }
+
+    private final void closeNoCheck() {
+        scope.close();
     }
 
     final AbstractMemorySegment acquire() {
         if (Thread.currentThread() != ownerThread() && !isSet(ACQUIRE)) {
             throw unsupportedAccessMode(ACQUIRE);
         }
-        return acquireNoCheck();
+        return dup(length, mask, Thread.currentThread(), scope.acquire());
     }
-
-    abstract AbstractMemorySegment acquireNoCheck();
-
-    abstract void closeNoCheck();
 
     @Override
     public final byte[] toByteArray() {
         checkIntSize("byte[]");
-        byte[] arr = new byte[(int)byteSize()];
+        byte[] arr = new byte[(int)length];
         MemorySegment arrSegment = MemorySegment.ofArray(arr);
-        MemoryAddress.copy(baseAddress(), arrSegment.baseAddress(), byteSize());
+        MemoryAddress.copy(baseAddress(), arrSegment.baseAddress(), length);
         return arr;
     }
 
@@ -180,17 +207,28 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         checkBounds(offset, length);
     }
 
-    abstract long min();
+    @Override
+    public final void checkValidState() {
+        if (owner != null && owner != Thread.currentThread()) {
+            throw new IllegalStateException("Attempt to access segment outside owning thread");
+        }
+        scope.checkAliveConfined();
+    }
 
-    abstract Object base();
+    // Helper methods
+
+    AbstractMemorySegment asUnconfined() {
+        checkValidState();
+        return dup(length, mask, null, scope);
+    }
 
     private boolean isSet(int mask) {
-        return (this.accessModesInternal() & mask) != 0;
+        return (this.mask & mask) != 0;
     }
 
     private void checkIntSize(String typeName) {
-        if (byteSize() > (Integer.MAX_VALUE - 8)) { //conservative check
-            throw new UnsupportedOperationException(String.format("Segment is too large to wrap as %s. Size: %d", typeName, byteSize()));
+        if (length > (Integer.MAX_VALUE - 8)) { //conservative check
+            throw new UnsupportedOperationException(String.format("Segment is too large to wrap as %s. Size: %d", typeName, length));
         }
     }
 
@@ -200,7 +238,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         } else {
             if (length < 0 ||
                     offset < 0 ||
-                    offset > byteSize() - length) { // careful of overflow
+                    offset > this.length - length) { // careful of overflow
                 throw outOfBoundException(offset, length);
             }
         }
@@ -210,14 +248,14 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     private void checkBoundsSmall(int offset, int length) {
         if (length < 0 ||
                 offset < 0 ||
-                offset > (int)byteSize() - length) { // careful of overflow
+                offset > (int)this.length - length) { // careful of overflow
             throw outOfBoundException(offset, length);
         }
     }
 
     UnsupportedOperationException unsupportedAccessMode(int expected) {
         return new UnsupportedOperationException((String.format("Required access mode %s ; current access modes: %s",
-                modeStrings(expected).get(0), modeStrings(accessModesInternal()))));
+                modeStrings(expected).get(0), modeStrings(mask))));
     }
 
     private List<String> modeStrings(int mode) {
@@ -336,6 +374,6 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
 
     @Override
     public String toString() {
-        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + byteSize() + " }";
+        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + length + " }";
     }
 }
