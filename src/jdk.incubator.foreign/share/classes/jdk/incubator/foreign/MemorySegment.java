@@ -28,7 +28,10 @@ package jdk.incubator.foreign;
 
 import java.nio.ByteBuffer;
 
-import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.AbstractMemorySegment;
+import jdk.internal.foreign.HeapMemorySegment;
+import jdk.internal.foreign.MappedMemorySegment;
+import jdk.internal.foreign.NativeMemorySegment;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -291,7 +294,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new buffer memory segment.
      */
     static MemorySegment ofByteBuffer(ByteBuffer bb) {
-        return Utils.makeBufferSegment(bb);
+        return AbstractMemorySegment.ofBuffer(bb);
     }
 
     /**
@@ -304,7 +307,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(byte[] arr) {
-        return Utils.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -317,7 +320,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(char[] arr) {
-        return Utils.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -330,7 +333,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(short[] arr) {
-        return Utils.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -343,7 +346,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(int[] arr) {
-        return Utils.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -356,7 +359,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(float[] arr) {
-        return Utils.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -369,7 +372,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(long[] arr) {
-        return Utils.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -382,7 +385,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(double[] arr) {
-        return Utils.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -440,7 +443,7 @@ allocateNative(bytesSize, 1);
      * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
      */
     static MemorySegment mapFromPath(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
-        return Utils.makeMappedSegment(path, bytesSize, mapMode);
+        return MappedMemorySegment.makeMappedSegment(path, bytesSize, mapMode);
     }
 
     /**
@@ -467,7 +470,7 @@ allocateNative(bytesSize, 1);
             throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
         }
 
-        return Utils.makeNativeSegment(bytesSize, alignmentBytes);
+        return NativeMemorySegment.makeNativeSegment(bytesSize, alignmentBytes);
     }
 
     // access mode masks

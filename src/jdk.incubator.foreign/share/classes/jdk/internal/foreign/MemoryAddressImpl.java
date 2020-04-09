@@ -45,7 +45,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     private final long offset;
 
     public MemoryAddressImpl(long offset) {
-        this.segment = NothingSegment.NOTHING;
+        this.segment = AbstractMemorySegment.NOTHING;
         this.offset = offset;
     }
 
@@ -85,7 +85,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     @Override
     public MemorySegment segment() {
-        return segment != NothingSegment.NOTHING ?
+        return segment != AbstractMemorySegment.NOTHING ?
                 segment : null;
     }
 

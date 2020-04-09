@@ -27,7 +27,6 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.MemorySegmentImpl;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained using the

@@ -50,8 +50,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     final static long NONCE = new Random().nextLong();
     final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE;
 
-    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
-    private static final int BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
+    static JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
     final long length;
     final int mask;
@@ -71,6 +70,12 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     abstract Object base();
 
     abstract AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope);
+
+    abstract ByteBuffer makeByteBuffer();
+
+    static int defaultAccessModes(long size) {
+        return size > Integer.MAX_VALUE ? DEFAULT_MASK : DEFAULT_MASK | SMALL;
+    }
 
     @Override
     @ForceInline
@@ -106,16 +111,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
             throw unsupportedAccessMode(READ);
         }
         checkIntSize("ByteBuffer");
-        JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
-        ByteBuffer _bb;
-        if (base() != null) {
-            if (!(base() instanceof byte[])) {
-                throw new UnsupportedOperationException("Not an address to an heap-allocated byte array");
-            }
-            _bb = nioAccess.newHeapByteBuffer((byte[]) base(), (int)min() - AbstractMemorySegment.BYTE_ARR_BASE, (int) byteSize(), this);
-        } else {
-            _bb = nioAccess.newDirectByteBuffer(min(), (int) this.length, null, this);
-        }
+        ByteBuffer _bb = makeByteBuffer();
         if (!isSet(WRITE)) {
             //scope is IMMUTABLE - obtain a RO byte buffer
             _bb = _bb.asReadOnlyBuffer();
@@ -377,4 +373,40 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     public String toString() {
         return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + length + " }";
     }
+
+    public static AbstractMemorySegment ofBuffer(ByteBuffer bb) {
+        long bbAddress = nioAccess.getBufferAddress(bb);
+        Object base = nioAccess.getBufferBase(bb);
+
+        int pos = bb.position();
+        int limit = bb.limit();
+
+        MemoryScope bufferScope = new MemoryScope(bb, null);
+        int size = limit - pos;
+        return base != null ?
+                new HeapMemorySegment(bbAddress + pos, base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope) :
+                new NativeMemorySegment(bbAddress + pos, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+    }
+
+    public static AbstractMemorySegment NOTHING = new AbstractMemorySegment(0, 0, null, MemoryScope.GLOBAL) {
+        @Override
+        ByteBuffer makeByteBuffer() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        long min() {
+            return 0;
+        }
+
+        @Override
+        Object base() {
+            return null;
+        }
+
+        @Override
+        AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+            throw new UnsupportedOperationException();
+        }
+    };
 }

@@ -61,6 +61,7 @@ public class LoopOverNonConstant {
 
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
     MemorySegment segment;
+    MemorySegment heapSegment;
     long unsafe_addr;
 
     ByteBuffer byteBuffer;
@@ -75,6 +76,8 @@ public class LoopOverNonConstant {
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment.baseAddress(), (long) i, i);
         }
+        heapSegment = MemorySegment.ofArray(new byte[ALLOC_SIZE]);
+        MemoryAddress.copy(segment.baseAddress(), heapSegment.baseAddress(), ALLOC_SIZE);
 
         byteBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
         for (int i = 0; i < ELEM_SIZE; i++) {
@@ -85,6 +88,7 @@ public class LoopOverNonConstant {
     @TearDown
     public void tearDown() {
         segment.close();
+        heapSegment.close();
         unsafe.invokeCleaner(byteBuffer);
         unsafe.freeMemory(unsafe_addr);
     }
@@ -120,6 +124,16 @@ public class LoopOverNonConstant {
     public int segment_loop() {
         int sum = 0;
         MemoryAddress base = segment.baseAddress();
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            sum += (int) VH_int.get(base, (long) i);
+        }
+        return sum;
+    }
+
+    @Benchmark
+    public int segment_loop_heap() {
+        int sum = 0;
+        MemoryAddress base = heapSegment.baseAddress();
         for (int i = 0; i < ELEM_SIZE; i++) {
             sum += (int) VH_int.get(base, (long) i);
         }
