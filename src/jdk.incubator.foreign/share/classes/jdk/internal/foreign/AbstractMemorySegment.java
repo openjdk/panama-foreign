@@ -384,7 +384,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         MemoryScope bufferScope = new MemoryScope(bb, null);
         int size = limit - pos;
         return base != null ?
-                new HeapMemorySegment(bbAddress + pos, base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope) :
+                new HeapMemorySegment.OfByte(bbAddress + pos, (byte[])base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope) :
                 new NativeMemorySegment(bbAddress + pos, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
     }
 

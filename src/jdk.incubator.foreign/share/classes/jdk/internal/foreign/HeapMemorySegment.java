@@ -43,24 +43,19 @@ import java.util.Objects;
  * segment is either in an invalid state (e.g. it has already been closed) or if access occurs from a thread other
  * than the owner thread. See {@link MemoryScope} for more details on management of temporal bounds.
  */
-public final class HeapMemorySegment extends AbstractMemorySegment {
+public abstract class HeapMemorySegment<H> extends AbstractMemorySegment {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final int BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
 
     final long offset;
-    final Object base;
+    final H base;
 
     @ForceInline
-    HeapMemorySegment(long offset, Object base, long length, int mask, Thread owner, MemoryScope scope) {
+    HeapMemorySegment(long offset, H base, long length, int mask, Thread owner, MemoryScope scope) {
         super(length, mask, owner, scope);
         this.offset = offset;
         this.base = base;
-    }
-
-    @Override
-    AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
-        return new HeapMemorySegment(this.offset + offset, base, size, mask, owner, scope);
     }
 
     @Override
@@ -77,45 +72,171 @@ public final class HeapMemorySegment extends AbstractMemorySegment {
         return offset;
     }
 
-    @Override
-    Object base() {
-        return Objects.requireNonNull(base);
+    public static class OfByte extends HeapMemorySegment<byte[]> {
+        OfByte(long offset, byte[] base, long length, int mask, Thread owner, MemoryScope scope) {
+            super(offset, base, length, mask, owner, scope);
+        }
+
+        @Override
+        AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+            return new OfByte(this.offset + offset, base, size, mask, owner, scope);
+        }
+
+        @Override
+        Object base() {
+            return Objects.requireNonNull(base);
+        }
+
+        public static MemorySegment makeArraySegment(byte[] arr) {
+            int base = Unsafe.ARRAY_BYTE_BASE_OFFSET;
+            int scale = Unsafe.ARRAY_BYTE_INDEX_SCALE;
+            MemoryScope scope = new MemoryScope(null, null);
+            return new OfByte(base, arr, arr.length * scale,
+                    DEFAULT_MASK | SMALL, Thread.currentThread(), scope);
+        }
     }
 
-    // factories
+    public static class OfChar extends HeapMemorySegment<char[]> {
+        OfChar(long offset, char[] base, long length, int mask, Thread owner, MemoryScope scope) {
+            super(offset, base, length, mask, owner, scope);
+        }
 
-    public static MemorySegment makeArraySegment(byte[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
+        @Override
+        AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+            return new OfChar(this.offset + offset, base, size, mask, owner, scope);
+        }
+
+        @Override
+        Object base() {
+            return Objects.requireNonNull(base);
+        }
+
+        public static MemorySegment makeArraySegment(char[] arr) {
+            int base = Unsafe.ARRAY_CHAR_BASE_OFFSET;
+            int scale = Unsafe.ARRAY_CHAR_INDEX_SCALE;
+            MemoryScope scope = new MemoryScope(null, null);
+            return new OfChar(base, arr, arr.length * scale,
+                    DEFAULT_MASK | SMALL, Thread.currentThread(), scope);
+        }
     }
 
-    public static MemorySegment makeArraySegment(char[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE);
+    public static class OfShort extends HeapMemorySegment<short[]> {
+        OfShort(long offset, short[] base, long length, int mask, Thread owner, MemoryScope scope) {
+            super(offset, base, length, mask, owner, scope);
+        }
+
+        @Override
+        AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+            return new OfShort(this.offset + offset, base, size, mask, owner, scope);
+        }
+
+        @Override
+        Object base() {
+            return Objects.requireNonNull(base);
+        }
+
+        public static MemorySegment makeArraySegment(short[] arr) {
+            int base = Unsafe.ARRAY_SHORT_BASE_OFFSET;
+            int scale = Unsafe.ARRAY_SHORT_INDEX_SCALE;
+            MemoryScope scope = new MemoryScope(null, null);
+            return new OfShort(base, arr, arr.length * scale,
+                    DEFAULT_MASK | SMALL, Thread.currentThread(), scope);
+        }
     }
 
-    public static MemorySegment makeArraySegment(short[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_SHORT_BASE_OFFSET, Unsafe.ARRAY_SHORT_INDEX_SCALE);
+    public static class OfInt extends HeapMemorySegment<int[]> {
+        OfInt(long offset, int[] base, long length, int mask, Thread owner, MemoryScope scope) {
+            super(offset, base, length, mask, owner, scope);
+        }
+
+        @Override
+        AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+            return new OfInt(this.offset + offset, base, size, mask, owner, scope);
+        }
+
+        @Override
+        Object base() {
+            return Objects.requireNonNull(base);
+        }
+
+        public static MemorySegment makeArraySegment(int[] arr) {
+            int base = Unsafe.ARRAY_INT_BASE_OFFSET;
+            int scale = Unsafe.ARRAY_INT_INDEX_SCALE;
+            MemoryScope scope = new MemoryScope(null, null);
+            return new OfInt(base, arr, arr.length * scale,
+                    DEFAULT_MASK | SMALL, Thread.currentThread(), scope);
+        }
     }
 
-    public static MemorySegment makeArraySegment(int[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
+    public static class OfLong extends HeapMemorySegment<long[]> {
+        OfLong(long offset, long[] base, long length, int mask, Thread owner, MemoryScope scope) {
+            super(offset, base, length, mask, owner, scope);
+        }
+
+        @Override
+        AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+            return new OfLong(this.offset + offset, base, size, mask, owner, scope);
+        }
+
+        @Override
+        Object base() {
+            return Objects.requireNonNull(base);
+        }
+
+        public static MemorySegment makeArraySegment(long[] arr) {
+            int base = Unsafe.ARRAY_LONG_BASE_OFFSET;
+            int scale = Unsafe.ARRAY_LONG_INDEX_SCALE;
+            MemoryScope scope = new MemoryScope(null, null);
+            return new OfLong(base, arr, arr.length * scale,
+                    DEFAULT_MASK | SMALL, Thread.currentThread(), scope);
+        }
     }
 
-    public static MemorySegment makeArraySegment(float[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_FLOAT_BASE_OFFSET, Unsafe.ARRAY_FLOAT_INDEX_SCALE);
+    public static class OfFloat extends HeapMemorySegment<float[]> {
+        OfFloat(long offset, float[] base, long length, int mask, Thread owner, MemoryScope scope) {
+            super(offset, base, length, mask, owner, scope);
+        }
+
+        @Override
+        AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+            return new OfFloat(this.offset + offset, base, size, mask, owner, scope);
+        }
+
+        @Override
+        Object base() {
+            return Objects.requireNonNull(base);
+        }
+
+        public static MemorySegment makeArraySegment(float[] arr) {
+            int base = Unsafe.ARRAY_FLOAT_BASE_OFFSET;
+            int scale = Unsafe.ARRAY_FLOAT_INDEX_SCALE;
+            MemoryScope scope = new MemoryScope(null, null);
+            return new OfFloat(base, arr, arr.length * scale,
+                    DEFAULT_MASK | SMALL, Thread.currentThread(), scope);
+        }
     }
 
-    public static MemorySegment makeArraySegment(long[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_LONG_BASE_OFFSET, Unsafe.ARRAY_LONG_INDEX_SCALE);
-    }
+    public static class OfDouble extends HeapMemorySegment<double[]> {
+        OfDouble(long offset, double[] base, long length, int mask, Thread owner, MemoryScope scope) {
+            super(offset, base, length, mask, owner, scope);
+        }
 
-    public static MemorySegment makeArraySegment(double[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-    }
+        @Override
+        AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+            return new OfDouble(this.offset + offset, base, size, mask, owner, scope);
+        }
 
-    private static MemorySegment makeArraySegment(Object arr, int size, int base, int scale) {
-        MemoryScope scope = new MemoryScope(null, null);
-        int length = size * scale;
-        return new HeapMemorySegment(base, arr, length,
-                DEFAULT_MASK | SMALL, Thread.currentThread(), scope);
+        @Override
+        Object base() {
+            return Objects.requireNonNull(base);
+        }
+
+        public static MemorySegment makeArraySegment(double[] arr) {
+            int base = Unsafe.ARRAY_DOUBLE_BASE_OFFSET;
+            int scale = Unsafe.ARRAY_DOUBLE_INDEX_SCALE;
+            MemoryScope scope = new MemoryScope(null, null);
+            return new OfDouble(base, arr, arr.length * scale,
+                    DEFAULT_MASK | SMALL, Thread.currentThread(), scope);
+        }
     }
 }
