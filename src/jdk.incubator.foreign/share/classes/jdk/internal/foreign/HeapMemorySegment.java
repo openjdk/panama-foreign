@@ -55,7 +55,7 @@ public final class HeapMemorySegment extends AbstractMemorySegment {
     HeapMemorySegment(long offset, Object base, long length, int mask, Thread owner, MemoryScope scope) {
         super(length, mask, owner, scope);
         this.offset = offset;
-        this.base = Objects.requireNonNull(base);
+        this.base = base;
     }
 
     @Override
@@ -79,7 +79,7 @@ public final class HeapMemorySegment extends AbstractMemorySegment {
 
     @Override
     Object base() {
-        return base;
+        return Objects.requireNonNull(base);
     }
 
     // factories
@@ -114,8 +114,8 @@ public final class HeapMemorySegment extends AbstractMemorySegment {
 
     private static MemorySegment makeArraySegment(Object arr, int size, int base, int scale) {
         MemoryScope scope = new MemoryScope(null, null);
-        long length = size * scale;
+        int length = size * scale;
         return new HeapMemorySegment(base, arr, length,
-                defaultAccessModes(length), Thread.currentThread(), scope);
+                DEFAULT_MASK | SMALL, Thread.currentThread(), scope);
     }
 }
