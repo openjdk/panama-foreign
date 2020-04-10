@@ -93,13 +93,11 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    @ForceInline
     public final MemorySegment asSlice(long offset, long newSize) {
         checkBounds(offset, newSize);
         return asSliceNoCheck(offset, newSize);
     }
 
-    @ForceInline
     private AbstractMemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
         return dup(offset, newSize, mask, owner, scope);
     }
@@ -184,7 +182,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         closeNoCheck();
     }
 
-    @ForceInline
     private final void closeNoCheck() {
         scope.close();
     }
@@ -256,7 +253,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         }
     }
 
-    @ForceInline
     private void checkBoundsSmall(int offset, int length) {
         if (length < 0 ||
                 offset < 0 ||

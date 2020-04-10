@@ -26,8 +26,6 @@
 
 package jdk.internal.foreign;
 
-import jdk.internal.vm.annotation.ForceInline;
-
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
@@ -77,14 +75,12 @@ public final class MemoryScope {
     /**
      * This method performs a quick liveness check; must be called from the confinement thread.
      */
-    @ForceInline
     final void checkAliveConfined() {
         if (activeCount == CLOSED) {
             throw new IllegalStateException("Segment is not alive");
         }
     }
 
-    @ForceInline
     MemoryScope acquire() {
         int value;
         do {
@@ -111,7 +107,6 @@ public final class MemoryScope {
         } while (!COUNT_HANDLE.compareAndSet(this, value, value - 1));
     }
 
-    @ForceInline
     void close() {
         if (!COUNT_HANDLE.compareAndSet(this, UNACQUIRED, CLOSED)) {
             //first check if already closed...
