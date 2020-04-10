@@ -428,8 +428,6 @@ java -Djdk.incubator.foreign.Foreign=permit \
     TestLapack.java
 
 ```
-<<<<<<< HEAD
-
 ## Using libproc library to list processes from Java (Mac OS)
 
 ### jextract libproc.h
