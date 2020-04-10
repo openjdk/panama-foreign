@@ -113,7 +113,7 @@ public final class LayoutUtils {
             case Unexposed:
                 Type canonical = t.canonicalType();
                 if (canonical.equalType(t)) {
-                    throw new IllegalStateException("Unknown type with same canonical type: " + t.spelling());
+                    throw new TypeMaker.TypeException("Unknown type with same canonical type: " + t.spelling());
                 }
                 return getLayout(canonical);
             case Typedef:

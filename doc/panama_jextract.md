@@ -131,7 +131,7 @@ java -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign 
 
 ## Using readline library from Java code (Mac OS)
 
-### jextract a jar file for readline.h
+### jextract readline.h
 
 ```sh
 
@@ -177,7 +177,7 @@ java -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign 
 
 ## Using libcurl from Java (Mac OS)
 
-### jextract a jar for curl.h
+### jextract curl.h
 
 ```sh
 
@@ -426,5 +426,65 @@ java -Djdk.incubator.foreign.Foreign=permit \
     --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/local/opt/lapack/lib \
     TestLapack.java
+
+```
+## Using libproc library to list processes from Java (Mac OS)
+
+### jextract libproc.h
+
+```sh
+
+jextract -t org.unix \
+  -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \
+  --filter libproc.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/libproc.h
+
+```
+
+### Java program that uses libproc to list processes
+
+```java
+
+import jdk.incubator.foreign.NativeAllocationScope;
+import org.unix.*;
+import static jdk.incubator.foreign.MemoryAddress.NULL;
+import static org.unix.libproc_h.*;
+
+public class LibprocMain {
+    private static final int NAME_BUF_MAX = 256;
+
+    public static void main(String[] args) {
+        try (var scope = NativeAllocationScope.unboundedScope()) {
+            // get the number of processes
+            int numPids = proc_listallpids(NULL, 0);
+            // allocate an array
+            var pids = Cint.allocateArray(numPids, scope);
+            // list all the pids into the native array
+            proc_listallpids(pids, numPids);
+            // convert native array to java array
+            int[] jpids = Cint.toJavaArray(pids.segment());
+            // buffer for process name
+            var nameBuf = Cchar.allocateArray(NAME_BUF_MAX,scope);
+            for (int i = 0; i < jpids.length; i++) {
+                int pid = jpids[i];
+                // get the process name
+                proc_name(pid, nameBuf, NAME_BUF_MAX);
+                String procName = Cstring.toJavaString(nameBuf);
+                // print pid and process name
+                System.out.printf("%d %s\n", pid, procName);
+            }
+        }
+    }
+}
+
+```
+
+### Compiling and running the libproc sample
+
+```sh
+
+java -Djdk.incubator.foreign.Foreign=permit \
+    --add-modules jdk.incubator.foreign \
+    -Djava.library.path=/usr/lib LibprocMain.java
 
 ```

@@ -212,7 +212,14 @@ class TreeMaker {
                 .map(this::createTree).collect(Collectors.toList()));
         if (c.isDefinition()) {
             //just a declaration AND definition, we have a layout
-            MemoryLayout layout = LayoutUtils.getLayout(c.type());
+            MemoryLayout layout = null;
+            try {
+                layout = LayoutUtils.getLayout(c.type());
+            } catch (TypeMaker.TypeException ex) {
+                System.err.println(ex);
+                System.err.println("WARNING: generating empty struct: " + c.spelling());
+                return factoryNoLayout.make(toPos(c), c.spelling(), decls.toArray(new Declaration[0]));
+            }
             List<Declaration> adaptedDecls = layout instanceof GroupLayout ?
                     collectBitfields(layout, decls) :
                     decls;
@@ -260,7 +267,15 @@ class TreeMaker {
             return Declaration.bitfield(toPos(c), c.spelling(), toType(c),
                     MemoryLayout.ofValueBits(c.getBitFieldWidth(), ByteOrder.nativeOrder()));
         } else {
-            return varFactory.make(toPos(c), c.spelling(), toType(c));
+            Type type = null;
+            try {
+                type = toType(c);
+            } catch (TypeMaker.TypeException ex) {
+                System.err.println(ex);
+                System.err.println("WARNING: ignoring variable: " + c.spelling());
+                return null;
+            }
+            return varFactory.make(toPos(c), c.spelling(), type);
         }
     }
 

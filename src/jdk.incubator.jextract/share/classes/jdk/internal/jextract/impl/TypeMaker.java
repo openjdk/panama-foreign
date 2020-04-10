@@ -106,6 +106,14 @@ class TypeMaker {
         return rv;
     }
 
+    static class TypeException extends RuntimeException {
+        static final long serialVersionUID = 1L;
+
+        TypeException(String msg) {
+            super(msg);
+        }
+    }
+
     Type makeTypeInternal(jdk.internal.clang.Type t) {
         switch(t.kind()) {
             case Auto:
@@ -160,7 +168,7 @@ class TypeMaker {
             case Elaborated:
                 jdk.internal.clang.Type canonical = t.canonicalType();
                 if (canonical.equalType(t)) {
-                    throw new IllegalStateException("Unknown type with same canonical type: " + t.spelling());
+                    throw new TypeException("Unknown type with same canonical type: " + t.spelling());
                 }
                 return makeType(canonical);
             case ConstantArray: {
