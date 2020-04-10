@@ -160,7 +160,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if ((~accessModes() & accessModes) != 0) {
             throw new UnsupportedOperationException("Cannot acquire more access modes");
         }
-        return dup(0, length, accessModes | (mask & SMALL), owner, scope);
+        return dup(0, length, (mask & ~ACCESS_MASK) | accessModes, owner, scope);
     }
 
     @Override
