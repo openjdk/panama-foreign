@@ -49,18 +49,18 @@ public class InternalForeign implements Foreign {
 
     @Override
     public MemoryAddress withSize(MemoryAddress base, long byteSize) throws IllegalAccessError {
-        return NativeMemorySegment.makeNativeSegmentUnchecked(base.toRawLongValue(), byteSize, null, false)
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(base.toRawLongValue(), byteSize, null, false)
                 .baseAddress();
     }
 
     @Override
     public MemorySegment asMallocSegment(MemoryAddress base, long byteSize) throws IllegalAccessError {
-        return NativeMemorySegment.makeNativeSegmentUnchecked(base.toRawLongValue(), byteSize, Thread.currentThread(), true);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(base.toRawLongValue(), byteSize, Thread.currentThread(), true);
     }
 
     @Override
     public MemorySegment asUnconfined(MemorySegment segment) {
-        return ((NativeMemorySegment)segment).asUnconfined();
+        return ((NativeMemorySegmentImpl)segment).asUnconfined();
     }
 
     private static void checkRestrictedAccess() {

@@ -36,14 +36,10 @@ import sun.security.action.GetBooleanAction;
 import java.nio.ByteBuffer;
 
 /**
- * This class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
- * about the segment's spatial and temporal bounds, as well as the addressing coordinates (base + offset) which allows
- * unsafe access; each memory segment implementation is associated with an owner thread which is set at creation time.
- * Access to certain sensitive operations on the memory segment will fail with {@code IllegalStateException} if the
- * segment is either in an invalid state (e.g. it has already been closed) or if access occurs from a thread other
- * than the owner thread. See {@link MemoryScope} for more details on management of temporal bounds.
+ * Implementation for native memory segments. A native memory segment is essentially a wrapper around
+ * a native long address.
  */
-public class NativeMemorySegment extends AbstractMemorySegment {
+public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
@@ -56,14 +52,14 @@ public class NativeMemorySegment extends AbstractMemorySegment {
     final long min;
 
     @ForceInline
-    NativeMemorySegment(long min, long length, int mask, Thread owner, MemoryScope scope) {
+    NativeMemorySegmentImpl(long min, long length, int mask, Thread owner, MemoryScope scope) {
         super(length, mask, owner, scope);
         this.min = min;
     }
 
     @Override
-    AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
-        return new NativeMemorySegment(min + offset, size, mask, owner, scope);
+    AbstractMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+        return new NativeMemorySegmentImpl(min + offset, size, mask, owner, scope);
     }
 
     @Override
@@ -97,7 +93,7 @@ public class NativeMemorySegment extends AbstractMemorySegment {
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         MemoryScope scope = new MemoryScope(null, () -> unsafe.freeMemory(buf));
-        MemorySegment segment = new NativeMemorySegment(buf, alignedSize, defaultAccessModes(alignedSize),
+        MemorySegment segment = new NativeMemorySegmentImpl(buf, alignedSize, defaultAccessModes(alignedSize),
                 Thread.currentThread(), scope);
         if (alignedBuf != buf) {
             long delta = alignedBuf - buf;
@@ -112,6 +108,6 @@ public class NativeMemorySegment extends AbstractMemorySegment {
         if (!allowClose) {
             mask &= ~MemorySegment.CLOSE;
         }
-        return new NativeMemorySegment(min, bytesSize, mask, owner, scope);
+        return new NativeMemorySegmentImpl(min, bytesSize, mask, owner, scope);
     }
 }

@@ -38,11 +38,17 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-public class MappedMemorySegment extends NativeMemorySegment {
+/**
+ * Implementation for a mapped memory segments. A mapped memory segment is a native memory segment, which
+ * additionally features an {@link UnmapperProxy} object. This object provides detailed information about the
+ * memory mapped segment, such as the file descriptor associated with the mapping. This information is crucial
+ * in order to correctly reconstruct a byte buffer object from the segment (see {@link #makeByteBuffer()}).
+ */
+public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     private final UnmapperProxy unmapper;
 
-    MappedMemorySegment(long min, UnmapperProxy unmapper, long length, int mask, Thread owner, MemoryScope scope) {
+    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, Thread owner, MemoryScope scope) {
         super(min, length, mask, owner, scope);
         this.unmapper = unmapper;
     }
@@ -53,14 +59,15 @@ public class MappedMemorySegment extends NativeMemorySegment {
         return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null, this);
     }
 
-    // create and map a file into a fresh segment
+    // factories
+
     public static MemorySegment makeMappedSegment(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
         if (bytesSize <= 0) throw new IllegalArgumentException("Requested bytes size must be > 0.");
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
             MemoryScope scope = new MemoryScope(null, unmapperProxy::unmap);
-            return new MappedMemorySegment(unmapperProxy.address(), unmapperProxy, defaultAccessModes(bytesSize),
-                    AbstractMemorySegment.DEFAULT_MASK, Thread.currentThread(), scope);
+            return new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, defaultAccessModes(bytesSize),
+                    AbstractMemorySegmentImpl.DEFAULT_MASK, Thread.currentThread(), scope);
         }
     }
 

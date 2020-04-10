@@ -37,31 +37,30 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * This class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
- * about the segment's spatial and temporal bounds, as well as the addressing coordinates (base + offset) which allows
- * unsafe access; each memory segment implementation is associated with an owner thread which is set at creation time.
- * Access to certain sensitive operations on the memory segment will fail with {@code IllegalStateException} if the
- * segment is either in an invalid state (e.g. it has already been closed) or if access occurs from a thread other
- * than the owner thread. See {@link MemoryScope} for more details on management of temporal bounds.
+ * Implementation for heap memory segments. An heap memory segment is composed by an offset and
+ * a base object (typically an array). To enhance performances, the access to the base object needs to feature
+ * sharp type information, as well as sharp null-check information. For this reason, the factories for heap segments
+ * use a lambda to implement the base object accessor, so that the type information will remain sharp (e.g.
+ * the static compiler will generate specialized base accessor for us).
  */
-public class HeapMemorySegment<H> extends AbstractMemorySegment {
+public class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final int BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
 
     final long offset;
-    final Supplier<H> base;
+    final Supplier<H> baseProvider;
 
     @ForceInline
-    HeapMemorySegment(long offset, Supplier<H> base, long length, int mask, Thread owner, MemoryScope scope) {
+    HeapMemorySegmentImpl(long offset, Supplier<H> baseProvider, long length, int mask, Thread owner, MemoryScope scope) {
         super(length, mask, owner, scope);
         this.offset = offset;
-        this.base = base;
+        this.baseProvider = baseProvider;
     }
 
     @Override
     H base() {
-        return Objects.requireNonNull(base.get());
+        return Objects.requireNonNull(baseProvider.get());
     }
 
     @Override
@@ -70,8 +69,8 @@ public class HeapMemorySegment<H> extends AbstractMemorySegment {
     }
 
     @Override
-    AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
-        return new HeapMemorySegment<H>(offset, base, size, mask, owner, scope);
+    AbstractMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+        return new HeapMemorySegmentImpl<H>(this.offset + offset, baseProvider, size, mask, owner, scope);
     }
 
     @Override
@@ -120,9 +119,9 @@ public class HeapMemorySegment<H> extends AbstractMemorySegment {
                 Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
     }
 
-    static <Z> HeapMemorySegment<Z> makeHeapSegment(Supplier<Z> obj, int length, int base, int scale) {
+    static <Z> HeapMemorySegmentImpl<Z> makeHeapSegment(Supplier<Z> obj, int length, int base, int scale) {
         int byteSize = length * scale;
         MemoryScope scope = new MemoryScope(null, null);
-        return new HeapMemorySegment<>(base, obj, byteSize, defaultAccessModes(byteSize), Thread.currentThread(), scope);
+        return new HeapMemorySegmentImpl<>(base, obj, byteSize, defaultAccessModes(byteSize), Thread.currentThread(), scope);
     }
 }

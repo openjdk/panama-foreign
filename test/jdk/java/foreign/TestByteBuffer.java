@@ -54,7 +54,6 @@ import java.nio.CharBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.nio.InvalidMarkException;
 import java.nio.LongBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
@@ -64,19 +63,17 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import jdk.internal.foreign.HeapMemorySegment;
-import jdk.internal.foreign.MappedMemorySegment;
+import jdk.internal.foreign.HeapMemorySegmentImpl;
+import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.NativeMemorySegment;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
 import org.testng.SkipException;
 import org.testng.annotations.*;
 import sun.nio.ch.DirectBuffer;
@@ -602,9 +599,9 @@ public class TestByteBuffer {
 
     @DataProvider(name = "bufferSources")
     public static Object[][] bufferSources() {
-        Predicate<MemorySegment> heapTest = segment -> segment instanceof HeapMemorySegment;
-        Predicate<MemorySegment> nativeTest = segment -> segment instanceof NativeMemorySegment;
-        Predicate<MemorySegment> mappedTest = segment -> segment instanceof MappedMemorySegment;
+        Predicate<MemorySegment> heapTest = segment -> segment instanceof HeapMemorySegmentImpl;
+        Predicate<MemorySegment> nativeTest = segment -> segment instanceof NativeMemorySegmentImpl;
+        Predicate<MemorySegment> mappedTest = segment -> segment instanceof MappedMemorySegmentImpl;
         try (FileChannel channel = FileChannel.open(tempPath)) {
             return new Object[][]{
                     { ByteBuffer.wrap(new byte[256]), heapTest },

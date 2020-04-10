@@ -32,7 +32,6 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
@@ -44,7 +43,16 @@ import java.util.Random;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
-public abstract class AbstractMemorySegment implements MemorySegment, MemorySegmentProxy {
+/**
+ * This abstract class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
+ * about the segment's spatial and temporal bounds; each memory segment implementation is associated with an owner thread which is set at creation time.
+ * Access to certain sensitive operations on the memory segment will fail with {@code IllegalStateException} if the
+ * segment is either in an invalid state (e.g. it has already been closed) or if access occurs from a thread other
+ * than the owner thread. See {@link MemoryScope} for more details on management of temporal bounds. Subclasses
+ * are defined for each memory segment kind, see {@link NativeMemorySegmentImpl}, {@link HeapMemorySegmentImpl} and
+ * {@link MappedMemorySegmentImpl}.
+ */
+public abstract class AbstractMemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
 
     private static final boolean enableSmallSegments =
             Boolean.parseBoolean(GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.SmallSegments", "true"));
@@ -63,7 +71,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     final MemoryScope scope;
 
     @ForceInline
-    AbstractMemorySegment(long length, int mask, Thread owner, MemoryScope scope) {
+    AbstractMemorySegmentImpl(long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
         this.mask = mask;
         this.owner = owner;
@@ -74,7 +82,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
 
     abstract Object base();
 
-    abstract AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope);
+    abstract AbstractMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope);
 
     abstract ByteBuffer makeByteBuffer();
 
@@ -92,7 +100,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     }
 
     @ForceInline
-    private AbstractMemorySegment asSliceNoCheck(long offset, long newSize) {
+    private AbstractMemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
         return dup(offset, newSize, mask, owner, scope);
     }
 
@@ -147,7 +155,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     }
 
     @Override
-    public AbstractMemorySegment withAccessModes(int accessModes) {
+    public AbstractMemorySegmentImpl withAccessModes(int accessModes) {
         checkAccessModes(accessModes);
         if ((~accessModes() & accessModes) != 0) {
             throw new UnsupportedOperationException("Cannot acquire more access modes");
@@ -181,7 +189,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         scope.close();
     }
 
-    final AbstractMemorySegment acquire() {
+    final AbstractMemorySegmentImpl acquire() {
         if (Thread.currentThread() != ownerThread() && !isSet(ACQUIRE)) {
             throw unsupportedAccessMode(ACQUIRE);
         }
@@ -221,7 +229,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
 
     // Helper methods
 
-    AbstractMemorySegment asUnconfined() {
+    AbstractMemorySegmentImpl asUnconfined() {
         checkValidState();
         return dup(0, length, mask, null, scope);
     }
@@ -290,12 +298,12 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     }
 
     static class SegmentSplitter implements Spliterator<MemorySegment> {
-        AbstractMemorySegment segment;
+        AbstractMemorySegmentImpl segment;
         long elemCount;
         final long elementSize;
         long currentIndex;
 
-        SegmentSplitter(long elementSize, long elemCount, AbstractMemorySegment segment) {
+        SegmentSplitter(long elementSize, long elemCount, AbstractMemorySegmentImpl segment) {
             this.segment = segment;
             this.elementSize = elementSize;
             this.elemCount = elemCount;
@@ -304,7 +312,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         @Override
         public SegmentSplitter trySplit() {
             if (currentIndex == 0 && elemCount > 1) {
-                AbstractMemorySegment parent = segment;
+                AbstractMemorySegmentImpl parent = segment;
                 long rem = elemCount % 2;
                 long split = elemCount / 2;
                 long lobound = split * elementSize;
@@ -321,7 +329,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         public boolean tryAdvance(Consumer<? super MemorySegment> action) {
             Objects.requireNonNull(action);
             if (currentIndex < elemCount) {
-                AbstractMemorySegment acquired = segment.acquire();
+                AbstractMemorySegmentImpl acquired = segment.acquire();
                 try {
                     action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
                 } finally {
@@ -341,7 +349,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         public void forEachRemaining(Consumer<? super MemorySegment> action) {
             Objects.requireNonNull(action);
             if (currentIndex < elemCount) {
-                AbstractMemorySegment acquired = segment.acquire();
+                AbstractMemorySegmentImpl acquired = segment.acquire();
                 try {
                     if (acquired.isSmall()) {
                         int index = (int) currentIndex;
@@ -381,7 +389,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + length + " }";
     }
 
-    public static AbstractMemorySegment ofBuffer(ByteBuffer bb) {
+    public static AbstractMemorySegmentImpl ofBuffer(ByteBuffer bb) {
         long bbAddress = nioAccess.getBufferAddress(bb);
         Object base = nioAccess.getBufferBase(bb);
         UnmapperProxy unmapper = nioAccess.unmapper(bb);
@@ -392,15 +400,15 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         MemoryScope bufferScope = new MemoryScope(bb, null);
         int size = limit - pos;
         if (base != null) {
-            return new HeapMemorySegment<>(bbAddress + pos, () -> (byte[])base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+            return new HeapMemorySegmentImpl<>(bbAddress + pos, () -> (byte[])base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
         } else if (unmapper == null) {
-            return new NativeMemorySegment(bbAddress + pos, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+            return new NativeMemorySegmentImpl(bbAddress + pos, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
         } else {
-            return new MappedMemorySegment(bbAddress + pos, unmapper, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
         }
     }
 
-    public static AbstractMemorySegment NOTHING = new AbstractMemorySegment(0, 0, null, MemoryScope.GLOBAL) {
+    public static AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(0, 0, null, MemoryScope.GLOBAL) {
         @Override
         ByteBuffer makeByteBuffer() {
             throw new UnsupportedOperationException();
@@ -417,7 +425,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         }
 
         @Override
-        AbstractMemorySegment dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+        AbstractMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
             throw new UnsupportedOperationException();
         }
     };
