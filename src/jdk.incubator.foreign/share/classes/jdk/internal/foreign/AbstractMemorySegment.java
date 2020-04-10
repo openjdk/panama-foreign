@@ -34,6 +34,7 @@ import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
+import sun.security.action.GetPropertyAction;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -44,6 +45,9 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 
 public abstract class AbstractMemorySegment implements MemorySegment, MemorySegmentProxy {
+
+    private static final boolean enableSmallSegments =
+            Boolean.parseBoolean(GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.SmallSegments", "true"));
 
     final static int ACCESS_MASK = READ | WRITE | CLOSE | ACQUIRE;
     final static int FIRST_RESERVED_FLAG = 1 << 16; // upper 16 bits are reserved
@@ -75,7 +79,9 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     abstract ByteBuffer makeByteBuffer();
 
     static int defaultAccessModes(long size) {
-        return size > Integer.MAX_VALUE ? DEFAULT_MASK : DEFAULT_MASK | SMALL;
+        return (enableSmallSegments && size < Integer.MAX_VALUE) ?
+                DEFAULT_MASK | SMALL :
+                DEFAULT_MASK;
     }
 
     @Override
@@ -386,7 +392,7 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
         MemoryScope bufferScope = new MemoryScope(bb, null);
         int size = limit - pos;
         if (base != null) {
-            return new HeapMemorySegment.OfByte(bbAddress + pos, (byte[])base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+            return new HeapMemorySegment<>(bbAddress + pos, () -> (byte[])base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
         } else if (unmapper == null) {
             return new NativeMemorySegment(bbAddress + pos, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
         } else {

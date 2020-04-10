@@ -307,7 +307,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(byte[] arr) {
-        return HeapMemorySegment.OfByte.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -320,7 +320,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(char[] arr) {
-        return HeapMemorySegment.OfChar.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -333,7 +333,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(short[] arr) {
-        return HeapMemorySegment.OfShort.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -346,7 +346,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(int[] arr) {
-        return HeapMemorySegment.OfInt.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -359,7 +359,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(float[] arr) {
-        return HeapMemorySegment.OfFloat.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -372,7 +372,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(long[] arr) {
-        return HeapMemorySegment.OfLong.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
@@ -385,7 +385,7 @@ public interface MemorySegment extends AutoCloseable {
      * @return a new array memory segment.
      */
     static MemorySegment ofArray(double[] arr) {
-        return HeapMemorySegment.OfDouble.makeArraySegment(arr);
+        return HeapMemorySegment.makeArraySegment(arr);
     }
 
     /**
