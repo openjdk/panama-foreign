@@ -2063,9 +2063,9 @@ public final class String
      * <blockquote>
      * <code>
      * {@link java.util.regex.Pattern}.{@link
-     * java.util.regex.Pattern#compile compile}(<i>regex</i>).{@link
+     * java.util.regex.Pattern#compile(String) compile}(<i>regex</i>).{@link
      * java.util.regex.Pattern#matcher(java.lang.CharSequence) matcher}(<i>str</i>).{@link
-     * java.util.regex.Matcher#replaceFirst replaceFirst}(<i>repl</i>)
+     * java.util.regex.Matcher#replaceFirst(String) replaceFirst}(<i>repl</i>)
      * </code>
      * </blockquote>
      *
@@ -2108,9 +2108,9 @@ public final class String
      * <blockquote>
      * <code>
      * {@link java.util.regex.Pattern}.{@link
-     * java.util.regex.Pattern#compile compile}(<i>regex</i>).{@link
+     * java.util.regex.Pattern#compile(String) compile}(<i>regex</i>).{@link
      * java.util.regex.Pattern#matcher(java.lang.CharSequence) matcher}(<i>str</i>).{@link
-     * java.util.regex.Matcher#replaceAll replaceAll}(<i>repl</i>)
+     * java.util.regex.Matcher#replaceAll(String) replaceAll}(<i>repl</i>)
      * </code>
      * </blockquote>
      *
@@ -2275,7 +2275,7 @@ public final class String
      * <blockquote>
      * <code>
      * {@link java.util.regex.Pattern}.{@link
-     * java.util.regex.Pattern#compile compile}(<i>regex</i>).{@link
+     * java.util.regex.Pattern#compile(String) compile}(<i>regex</i>).{@link
      * java.util.regex.Pattern#split(java.lang.CharSequence,int) split}(<i>str</i>,&nbsp;<i>n</i>)
      * </code>
      * </blockquote>
@@ -2973,8 +2973,6 @@ public final class String
      * @since 13
      *
      */
-    @jdk.internal.PreviewFeature(feature=jdk.internal.PreviewFeature.Feature.TEXT_BLOCKS,
-                                 essentialAPI=true)
     public String stripIndent() {
         int length = length();
         if (length == 0) {
@@ -3107,8 +3105,6 @@ public final class String
      *
      * @since 13
      */
-    @jdk.internal.PreviewFeature(feature=jdk.internal.PreviewFeature.Feature.TEXT_BLOCKS,
-                                 essentialAPI=true)
     public String translateEscapes() {
         if (isEmpty()) {
             return "";
@@ -3369,8 +3365,6 @@ public final class String
      * @since 13
      *
      */
-    @jdk.internal.PreviewFeature(feature=jdk.internal.PreviewFeature.Feature.TEXT_BLOCKS,
-                                 essentialAPI=true)
     public String formatted(Object... args) {
         return new Formatter().format(this, args).toString();
     }
