@@ -448,9 +448,15 @@ public class TestByteBuffer {
     public void testBufferToSegment(ByteBuffer bb, Predicate<MemorySegment> segmentChecker) {
         MemorySegment segment = MemorySegment.ofByteBuffer(bb);
         assertTrue(segmentChecker.test(segment));
+        assertTrue(segmentChecker.test(segment.asSlice(0, segment.byteSize())));
+        assertTrue(segmentChecker.test(segment.withAccessModes(MemorySegment.READ)));
+        assertEquals(bb.capacity(), segment.byteSize());
         //another round trip
         segment = MemorySegment.ofByteBuffer(segment.asByteBuffer());
         assertTrue(segmentChecker.test(segment));
+        assertTrue(segmentChecker.test(segment.asSlice(0, segment.byteSize())));
+        assertTrue(segmentChecker.test(segment.withAccessModes(MemorySegment.READ)));
+        assertEquals(bb.capacity(), segment.byteSize());
     }
 
     @DataProvider(name = "bufferOps")

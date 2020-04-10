@@ -59,6 +59,11 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
         return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null, this);
     }
 
+    @Override
+    AbstractMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+        return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, owner, scope);
+    }
+
     // factories
 
     public static MemorySegment makeMappedSegment(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
@@ -66,8 +71,8 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
             MemoryScope scope = new MemoryScope(null, unmapperProxy::unmap);
-            return new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, defaultAccessModes(bytesSize),
-                    AbstractMemorySegmentImpl.DEFAULT_MASK, Thread.currentThread(), scope);
+            return new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
+                    defaultAccessModes(bytesSize), Thread.currentThread(), scope);
         }
     }
 
