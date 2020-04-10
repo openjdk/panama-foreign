@@ -39,6 +39,7 @@ import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SequenceLayout;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -58,6 +59,8 @@ import java.nio.LongBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,10 +69,14 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import jdk.internal.foreign.HeapMemorySegment;
+import jdk.internal.foreign.MappedMemorySegment;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.NativeMemorySegment;
 import org.testng.SkipException;
 import org.testng.annotations.*;
 import sun.nio.ch.DirectBuffer;
@@ -77,6 +84,20 @@ import sun.nio.ch.DirectBuffer;
 import static org.testng.Assert.*;
 
 public class TestByteBuffer {
+
+    static Path tempPath;
+
+    static {
+        try {
+            File file = File.createTempFile("buffer", "txt");
+            file.deleteOnExit();
+            tempPath = file.toPath();
+            Files.write(file.toPath(), new byte[256], StandardOpenOption.WRITE);
+
+        } catch (IOException ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
 
     static SequenceLayout tuples = MemoryLayout.ofSequence(500,
             MemoryLayout.ofStruct(
@@ -203,7 +224,7 @@ public class TestByteBuffer {
                 MemorySegment segment = MemorySegment.ofByteBuffer(mbb);
                 MemoryAddress base = segment.baseAddress();
                 initTuples(base);
-                mbb.force();
+                ((MappedByteBuffer)segment.asByteBuffer()).force(); //force via segment
             });
         }
 
@@ -426,6 +447,15 @@ public class TestByteBuffer {
         }
     }
 
+    @Test(dataProvider="bufferSources")
+    public void testBufferToSegment(ByteBuffer bb, Predicate<MemorySegment> segmentChecker) {
+        MemorySegment segment = MemorySegment.ofByteBuffer(bb);
+        assertTrue(segmentChecker.test(segment));
+        //another round trip
+        segment = MemorySegment.ofByteBuffer(segment.asByteBuffer());
+        assertTrue(segmentChecker.test(segment));
+    }
+
     @DataProvider(name = "bufferOps")
     public static Object[][] bufferOps() throws Throwable {
         return new Object[][]{
@@ -567,6 +597,23 @@ public class TestByteBuffer {
             }
         } else {
             return null;
+        }
+    }
+
+    @DataProvider(name = "bufferSources")
+    public static Object[][] bufferSources() {
+        Predicate<MemorySegment> heapTest = segment -> segment instanceof HeapMemorySegment;
+        Predicate<MemorySegment> nativeTest = segment -> segment instanceof NativeMemorySegment;
+        Predicate<MemorySegment> mappedTest = segment -> segment instanceof MappedMemorySegment;
+        try (FileChannel channel = FileChannel.open(tempPath)) {
+            return new Object[][]{
+                    { ByteBuffer.wrap(new byte[256]), heapTest },
+                    { ByteBuffer.allocate(256), heapTest },
+                    { ByteBuffer.allocateDirect(256), nativeTest },
+                    { channel.map(FileChannel.MapMode.READ_ONLY, 0L, 256), mappedTest }
+            };
+        } catch (IOException ex) {
+            throw new ExceptionInInitializerError(ex);
         }
     }
 }

@@ -26,10 +26,13 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.access.JavaNioAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
 import sun.nio.ch.FileChannelImpl;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -37,8 +40,17 @@ import java.nio.file.StandardOpenOption;
 
 public class MappedMemorySegment extends NativeMemorySegment {
 
-    MappedMemorySegment(long min, long length, int mask, Thread owner, MemoryScope scope) {
+    private final UnmapperProxy unmapper;
+
+    MappedMemorySegment(long min, UnmapperProxy unmapper, long length, int mask, Thread owner, MemoryScope scope) {
         super(min, length, mask, owner, scope);
+        this.unmapper = unmapper;
+    }
+
+    @Override
+    ByteBuffer makeByteBuffer() {
+        JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
+        return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null, this);
     }
 
     // create and map a file into a fresh segment
@@ -47,7 +59,7 @@ public class MappedMemorySegment extends NativeMemorySegment {
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
             MemoryScope scope = new MemoryScope(null, unmapperProxy::unmap);
-            return new MappedMemorySegment(unmapperProxy.address(), defaultAccessModes(bytesSize),
+            return new MappedMemorySegment(unmapperProxy.address(), unmapperProxy, defaultAccessModes(bytesSize),
                     AbstractMemorySegment.DEFAULT_MASK, Thread.currentThread(), scope);
         }
     }

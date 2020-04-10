@@ -29,6 +29,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
+import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
@@ -768,6 +769,11 @@ public abstract class Buffer {
                 }
 
                 @Override
+                public ByteBuffer newMappedByteBuffer(UnmapperProxy unmapperProxy, long address, int cap, Object obj, MemorySegmentProxy segment) {
+                    return new DirectByteBuffer(address, cap, obj, unmapperProxy.fileDescriptor(), unmapperProxy.isSync(), segment);
+                }
+
+                @Override
                 public ByteBuffer newHeapByteBuffer(byte[] hb, int offset, int capacity, MemorySegmentProxy segment) {
                     return new HeapByteBuffer(hb, offset, capacity, segment);
                 }
@@ -780,6 +786,15 @@ public abstract class Buffer {
                 @Override
                 public long getBufferAddress(ByteBuffer bb) {
                     return bb.address;
+                }
+
+                @Override
+                public UnmapperProxy unmapper(ByteBuffer bb) {
+                    if (bb instanceof MappedByteBuffer) {
+                        return ((MappedByteBuffer)bb).unmapper();
+                    } else {
+                        return null;
+                    }
                 }
 
                 @Override

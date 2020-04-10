@@ -31,6 +31,7 @@ import jdk.incubator.foreign.SequenceLayout;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
+import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
@@ -377,15 +378,20 @@ public abstract class AbstractMemorySegment implements MemorySegment, MemorySegm
     public static AbstractMemorySegment ofBuffer(ByteBuffer bb) {
         long bbAddress = nioAccess.getBufferAddress(bb);
         Object base = nioAccess.getBufferBase(bb);
+        UnmapperProxy unmapper = nioAccess.unmapper(bb);
 
         int pos = bb.position();
         int limit = bb.limit();
 
         MemoryScope bufferScope = new MemoryScope(bb, null);
         int size = limit - pos;
-        return base != null ?
-                new HeapMemorySegment.OfByte(bbAddress + pos, (byte[])base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope) :
-                new NativeMemorySegment(bbAddress + pos, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+        if (base != null) {
+            return new HeapMemorySegment.OfByte(bbAddress + pos, (byte[])base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+        } else if (unmapper == null) {
+            return new NativeMemorySegment(bbAddress + pos, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+        } else {
+            return new MappedMemorySegment(bbAddress + pos, unmapper, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+        }
     }
 
     public static AbstractMemorySegment NOTHING = new AbstractMemorySegment(0, 0, null, MemoryScope.GLOBAL) {
