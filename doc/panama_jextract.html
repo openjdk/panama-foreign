@@ -105,13 +105,13 @@
 </ul></li>
 <li><a href="#using-readline-library-from-java-code-mac-os">Using readline library from Java code (Mac OS)</a>
 <ul>
-<li><a href="#jextract-a-jar-file-for-readline.h">jextract a jar file for readline.h</a></li>
+<li><a href="#jextract-readline.h">jextract readline.h</a></li>
 <li><a href="#java-code-that-uses-readline">Java code that uses readline</a></li>
 <li><a href="#running-the-java-code-that-uses-readline">Running the java code that uses readline</a></li>
 </ul></li>
 <li><a href="#using-libcurl-from-java-mac-os">Using libcurl from Java (Mac OS)</a>
 <ul>
-<li><a href="#jextract-a-jar-for-curl.h">jextract a jar for curl.h</a></li>
+<li><a href="#jextract-curl.h">jextract curl.h</a></li>
 <li><a href="#java-code-that-uses-libcurl">Java code that uses libcurl</a></li>
 <li><a href="#running-the-java-code-that-uses-libcurl">Running the java code that uses libcurl</a></li>
 </ul></li>
@@ -127,6 +127,12 @@
 <li><a href="#jextracting-lapacke.h">jextracting lapacke.h</a></li>
 <li><a href="#java-sample-code-that-uses-lapack-library">Java sample code that uses LAPACK library</a></li>
 <li><a href="#compiling-and-running-the-above-lapack-sample-1">Compiling and running the above LAPACK sample</a></li>
+</ul></li>
+<li><a href="#using-libproc-library-to-list-processes-from-java-mac-os">Using libproc library to list processes from Java (Mac OS)</a>
+<ul>
+<li><a href="#jextract-libproc.h">jextract libproc.h</a></li>
+<li><a href="#java-program-that-uses-libproc-to-list-processes">Java program that uses libproc to list processes</a></li>
+<li><a href="#compiling-and-running-the-libproc-sample">Compiling and running the libproc sample</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -210,7 +216,7 @@
 <span id="cb9-2"><a href="#cb9-2"></a><span class="ex">java</span> -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign \</span>
 <span id="cb9-3"><a href="#cb9-3"></a>    -Djava.library.path=/System/Library/Frameworks/Python.framework/Versions/2.7/lib PythonMain.java</span></code></pre></div>
 <h2 id="using-readline-library-from-java-code-mac-os">Using readline library from Java code (Mac OS)</h2>
-<h3 id="jextract-a-jar-file-for-readline.h">jextract a jar file for readline.h</h3>
+<h3 id="jextract-readline.h">jextract readline.h</h3>
 <div class="sourceCode" id="cb10"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1"></a></span>
 <span id="cb10-2"><a href="#cb10-2"></a><span class="ex">jextract</span> -l readline -t org.unix \</span>
 <span id="cb10-3"><a href="#cb10-3"></a>  -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include \</span>
@@ -241,7 +247,7 @@
     -Djava.library.path=/usr/local/opt/readline/lib/ Readline.java
 </code></pre>
 <h2 id="using-libcurl-from-java-mac-os">Using libcurl from Java (Mac OS)</h2>
-<h3 id="jextract-a-jar-for-curl.h">jextract a jar for curl.h</h3>
+<h3 id="jextract-curl.h">jextract curl.h</h3>
 <div class="sourceCode" id="cb13"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1"></a></span>
 <span id="cb13-2"><a href="#cb13-2"></a><span class="ex">jextract</span> -t org.unix -lcurl \</span>
 <span id="cb13-3"><a href="#cb13-3"></a>  -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/ \</span>
@@ -434,5 +440,50 @@
 <span id="cb22-3"><a href="#cb22-3"></a>    --add-modules jdk.incubator.foreign \</span>
 <span id="cb22-4"><a href="#cb22-4"></a>    -Djava.library.path=/usr/local/opt/lapack/lib \</span>
 <span id="cb22-5"><a href="#cb22-5"></a>    TestLapack.java</span></code></pre></div>
+<h2 id="using-libproc-library-to-list-processes-from-java-mac-os">Using libproc library to list processes from Java (Mac OS)</h2>
+<h3 id="jextract-libproc.h">jextract libproc.h</h3>
+<div class="sourceCode" id="cb23"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1"></a></span>
+<span id="cb23-2"><a href="#cb23-2"></a><span class="ex">jextract</span> -t org.unix \</span>
+<span id="cb23-3"><a href="#cb23-3"></a>  -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \</span>
+<span id="cb23-4"><a href="#cb23-4"></a>  --filter libproc.h \</span>
+<span id="cb23-5"><a href="#cb23-5"></a>  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/libproc.h</span></code></pre></div>
+<h3 id="java-program-that-uses-libproc-to-list-processes">Java program that uses libproc to list processes</h3>
+<div class="sourceCode" id="cb24"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb24-1"><a href="#cb24-1"></a></span>
+<span id="cb24-2"><a href="#cb24-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeAllocationScope;</span></span>
+<span id="cb24-3"><a href="#cb24-3"></a><span class="kw">import</span><span class="im"> org.unix.*;</span></span>
+<span id="cb24-4"><a href="#cb24-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
+<span id="cb24-5"><a href="#cb24-5"></a><span class="kw">import static</span><span class="im"> org.unix.libproc_h.*;</span></span>
+<span id="cb24-6"><a href="#cb24-6"></a></span>
+<span id="cb24-7"><a href="#cb24-7"></a><span class="kw">public</span> <span class="kw">class</span> LibprocMain {</span>
+<span id="cb24-8"><a href="#cb24-8"></a>    <span class="kw">private</span> <span class="dt">static</span> <span class="dt">final</span> <span class="dt">int</span> NAME_BUF_MAX = <span class="dv">256</span>;</span>
+<span id="cb24-9"><a href="#cb24-9"></a></span>
+<span id="cb24-10"><a href="#cb24-10"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb24-11"><a href="#cb24-11"></a>        <span class="kw">try</span> (var scope = NativeAllocationScope.<span class="fu">unboundedScope</span>()) {</span>
+<span id="cb24-12"><a href="#cb24-12"></a>            <span class="co">// get the number of processes</span></span>
+<span id="cb24-13"><a href="#cb24-13"></a>            <span class="dt">int</span> numPids = <span class="fu">proc_listallpids</span>(NULL, <span class="dv">0</span>);</span>
+<span id="cb24-14"><a href="#cb24-14"></a>            <span class="co">// allocate an array</span></span>
+<span id="cb24-15"><a href="#cb24-15"></a>            var pids = Cint.<span class="fu">allocateArray</span>(numPids, scope);</span>
+<span id="cb24-16"><a href="#cb24-16"></a>            <span class="co">// list all the pids into the native array</span></span>
+<span id="cb24-17"><a href="#cb24-17"></a>            <span class="fu">proc_listallpids</span>(pids, numPids);</span>
+<span id="cb24-18"><a href="#cb24-18"></a>            <span class="co">// convert native array to java array</span></span>
+<span id="cb24-19"><a href="#cb24-19"></a>            <span class="dt">int</span>[] jpids = Cint.<span class="fu">toJavaArray</span>(pids.<span class="fu">segment</span>());</span>
+<span id="cb24-20"><a href="#cb24-20"></a>            <span class="co">// buffer for process name</span></span>
+<span id="cb24-21"><a href="#cb24-21"></a>            var nameBuf = Cchar.<span class="fu">allocateArray</span>(NAME_BUF_MAX,scope);</span>
+<span id="cb24-22"><a href="#cb24-22"></a>            <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; jpids.<span class="fu">length</span>; i++) {</span>
+<span id="cb24-23"><a href="#cb24-23"></a>                <span class="dt">int</span> pid = jpids[i];</span>
+<span id="cb24-24"><a href="#cb24-24"></a>                <span class="co">// get the process name</span></span>
+<span id="cb24-25"><a href="#cb24-25"></a>                <span class="fu">proc_name</span>(pid, nameBuf, NAME_BUF_MAX);</span>
+<span id="cb24-26"><a href="#cb24-26"></a>                <span class="bu">String</span> procName = Cstring.<span class="fu">toJavaString</span>(nameBuf);</span>
+<span id="cb24-27"><a href="#cb24-27"></a>                <span class="co">// print pid and process name</span></span>
+<span id="cb24-28"><a href="#cb24-28"></a>                <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%d</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, pid, procName);</span>
+<span id="cb24-29"><a href="#cb24-29"></a>            }</span>
+<span id="cb24-30"><a href="#cb24-30"></a>        }</span>
+<span id="cb24-31"><a href="#cb24-31"></a>    }</span>
+<span id="cb24-32"><a href="#cb24-32"></a>}</span></code></pre></div>
+<h3 id="compiling-and-running-the-libproc-sample">Compiling and running the libproc sample</h3>
+<div class="sourceCode" id="cb25"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1"></a></span>
+<span id="cb25-2"><a href="#cb25-2"></a><span class="ex">java</span> -Djdk.incubator.foreign.Foreign=permit \</span>
+<span id="cb25-3"><a href="#cb25-3"></a>    --add-modules jdk.incubator.foreign \</span>
+<span id="cb25-4"><a href="#cb25-4"></a>    -Djava.library.path=/usr/lib LibprocMain.java</span></code></pre></div>
 </body>
 </html>
