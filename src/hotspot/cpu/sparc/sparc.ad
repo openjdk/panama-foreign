@@ -471,6 +471,13 @@ class HandlerImpl {
   }
 };
 
+class Node::PD {
+public:
+  enum NodeFlags {
+    _last_flag = Node::_last_flag
+  };
+};
+
 %}
 
 source %{
@@ -482,6 +489,17 @@ source %{
 static FloatRegister reg_to_SingleFloatRegister_object(int register_encoding);
 static FloatRegister reg_to_DoubleFloatRegister_object(int register_encoding);
 static Register reg_to_register_object(int register_encoding);
+
+void PhaseOutput::pd_perform_mach_node_analysis() {
+}
+
+int MachNode::pd_alignment_required() const {
+  return 1;
+}
+
+int MachNode::compute_padding(int current_offset) const {
+  return 0;
+}
 
 // Used by the DFA in dfa_sparc.cpp.
 // Check for being able to use a V9 branch-on-register.  Requires a
@@ -1944,10 +1962,15 @@ const RegMask Matcher::method_handle_invoke_SP_save_mask() {
 
 const bool Matcher::convi2l_type_required = true;
 
+// Should the matcher clone input 'm' of node 'n'?
+bool Matcher::pd_clone_node(Node* n, Node* m, Matcher::MStack& mstack) {
+  return false;
+}
+
 // Should the Matcher clone shifts on addressing modes, expecting them
 // to be subsumed into complex addressing expressions or compute them
 // into registers?
-bool Matcher::clone_address_expressions(AddPNode* m, Matcher::MStack& mstack, VectorSet& address_visited) {
+bool Matcher::pd_clone_address_expressions(AddPNode* m, Matcher::MStack& mstack, VectorSet& address_visited) {
   return clone_base_plus_offset_address(m, mstack, address_visited);
 }
 
