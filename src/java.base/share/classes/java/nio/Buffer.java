@@ -798,8 +798,8 @@ public abstract class Buffer {
                 }
 
                 @Override
-                public void checkSegment(Buffer buffer) {
-                    buffer.checkSegment();
+                public MemorySegmentProxy bufferSegment(Buffer buffer) {
+                    return buffer.segment;
                 }
             });
     }

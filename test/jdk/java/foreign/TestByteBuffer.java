@@ -447,16 +447,27 @@ public class TestByteBuffer {
     @Test(dataProvider="bufferSources")
     public void testBufferToSegment(ByteBuffer bb, Predicate<MemorySegment> segmentChecker) {
         MemorySegment segment = MemorySegment.ofByteBuffer(bb);
+        assertEquals(segment.hasAccessModes(MemorySegment.WRITE), !bb.isReadOnly());
         assertTrue(segmentChecker.test(segment));
         assertTrue(segmentChecker.test(segment.asSlice(0, segment.byteSize())));
         assertTrue(segmentChecker.test(segment.withAccessModes(MemorySegment.READ)));
         assertEquals(bb.capacity(), segment.byteSize());
         //another round trip
         segment = MemorySegment.ofByteBuffer(segment.asByteBuffer());
+        assertEquals(segment.hasAccessModes(MemorySegment.WRITE), !bb.isReadOnly());
         assertTrue(segmentChecker.test(segment));
         assertTrue(segmentChecker.test(segment.asSlice(0, segment.byteSize())));
         assertTrue(segmentChecker.test(segment.withAccessModes(MemorySegment.READ)));
         assertEquals(bb.capacity(), segment.byteSize());
+    }
+
+    @Test
+    public void testRoundTripAccess() {
+        try(MemorySegment ms = MemorySegment.allocateNative(4)) {
+            MemorySegment msNoAccess = ms.withAccessModes(MemorySegment.READ); // READ is required to make BB
+            MemorySegment msRoundTrip = MemorySegment.ofByteBuffer(msNoAccess.asByteBuffer());
+            assertEquals(msNoAccess.accessModes(), msRoundTrip.accessModes());
+        }
     }
 
     @DataProvider(name = "bufferOps")
@@ -608,12 +619,18 @@ public class TestByteBuffer {
         Predicate<MemorySegment> heapTest = segment -> segment instanceof HeapMemorySegmentImpl;
         Predicate<MemorySegment> nativeTest = segment -> segment instanceof NativeMemorySegmentImpl;
         Predicate<MemorySegment> mappedTest = segment -> segment instanceof MappedMemorySegmentImpl;
-        try (FileChannel channel = FileChannel.open(tempPath)) {
+        try (FileChannel channel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             return new Object[][]{
                     { ByteBuffer.wrap(new byte[256]), heapTest },
                     { ByteBuffer.allocate(256), heapTest },
                     { ByteBuffer.allocateDirect(256), nativeTest },
-                    { channel.map(FileChannel.MapMode.READ_ONLY, 0L, 256), mappedTest }
+                    { channel.map(FileChannel.MapMode.READ_WRITE, 0L, 256), mappedTest },
+
+                    { ByteBuffer.wrap(new byte[256]).asReadOnlyBuffer(), heapTest },
+                    { ByteBuffer.allocate(256).asReadOnlyBuffer(), heapTest },
+                    { ByteBuffer.allocateDirect(256).asReadOnlyBuffer(), nativeTest },
+                    { channel.map(FileChannel.MapMode.READ_WRITE, 0L, 256).asReadOnlyBuffer(),
+                            nativeTest /* this seems to be an existing bug in the BB implementation */ }
             };
         } catch (IOException ex) {
             throw new ExceptionInInitializerError(ex);
