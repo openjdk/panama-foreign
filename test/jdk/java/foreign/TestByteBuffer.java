@@ -461,6 +461,15 @@ public class TestByteBuffer {
         assertEquals(bb.capacity(), segment.byteSize());
     }
 
+    @Test
+    public void testRoundTripAccess() {
+        try(MemorySegment ms = MemorySegment.allocateNative(4)) {
+            MemorySegment msNoAccess = ms.withAccessModes(MemorySegment.READ); // READ is required to make BB
+            MemorySegment msRoundTrip = MemorySegment.ofByteBuffer(msNoAccess.asByteBuffer());
+            assertEquals(msNoAccess.accessModes(), msRoundTrip.accessModes());
+        }
+    }
+
     @DataProvider(name = "bufferOps")
     public static Object[][] bufferOps() throws Throwable {
         return new Object[][]{
