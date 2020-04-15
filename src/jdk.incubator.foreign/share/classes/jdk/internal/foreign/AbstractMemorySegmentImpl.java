@@ -63,7 +63,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     final static long NONCE = new Random().nextLong();
     final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE;
 
-    static JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
+    final static JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
     final long length;
     final int mask;
