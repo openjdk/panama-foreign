@@ -54,8 +54,6 @@ import java.util.function.Supplier;
  */
 public final class Utils {
 
-    private static final Unsafe unsafe = Unsafe.getUnsafe();
-
     private static final MethodHandle ADDRESS_FILTER;
 
     static {
@@ -67,14 +65,6 @@ public final class Utils {
         }
     }
 
-    // The maximum alignment supported by malloc - typically 16 on
-    // 64-bit platforms and 8 on 32-bit platforms.
-    private final static long MAX_ALIGN = Unsafe.ADDRESS_SIZE == 4 ? 8 : 16;
-
-    private static final JavaNioAccess javaNioAccess = SharedSecrets.getJavaNioAccess();
-
-    private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
-
     public static long alignUp(long n, long alignment) {
         return (n + alignment - 1) & -alignment;
     }
@@ -84,102 +74,6 @@ public final class Utils {
             return bits / 8;
         } else {
             throw exFactory.get();
-        }
-    }
-
-    // segment factories
-
-    public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes) {
-        long alignedSize = bytesSize;
-
-        if (alignmentBytes > MAX_ALIGN) {
-            alignedSize = bytesSize + (alignmentBytes - 1);
-        }
-
-        long buf = unsafe.allocateMemory(alignedSize);
-        if (!skipZeroMemory) {
-            unsafe.setMemory(buf, alignedSize, (byte)0);
-        }
-        long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemoryScope scope = new MemoryScope(null, () -> unsafe.freeMemory(buf));
-        MemorySegment segment = new MemorySegmentImpl(buf, null, alignedSize, Thread.currentThread(), scope);
-        if (alignedBuf != buf) {
-            long delta = alignedBuf - buf;
-            segment = segment.asSlice(delta, bytesSize);
-        }
-        return segment;
-    }
-
-    public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize, Thread owner, boolean allowClose) {
-        MemoryScope scope = new MemoryScope(null, allowClose ? () -> unsafe.freeMemory(min) : null);
-        int mask = MemorySegmentImpl.DEFAULT_MASK;
-        if (!allowClose) {
-            mask &= ~MemorySegment.CLOSE;
-        }
-        return new MemorySegmentImpl(min, null, bytesSize, mask, owner, scope);
-    }
-
-    public static MemorySegment makeArraySegment(byte[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
-    }
-
-    public static MemorySegment makeArraySegment(char[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE);
-    }
-
-    public static MemorySegment makeArraySegment(short[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_SHORT_BASE_OFFSET, Unsafe.ARRAY_SHORT_INDEX_SCALE);
-    }
-
-    public static MemorySegment makeArraySegment(int[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
-    }
-
-    public static MemorySegment makeArraySegment(float[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_FLOAT_BASE_OFFSET, Unsafe.ARRAY_FLOAT_INDEX_SCALE);
-    }
-
-    public static MemorySegment makeArraySegment(long[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_LONG_BASE_OFFSET, Unsafe.ARRAY_LONG_INDEX_SCALE);
-    }
-
-    public static MemorySegment makeArraySegment(double[] arr) {
-        return makeArraySegment(arr, arr.length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-    }
-
-    private static MemorySegment makeArraySegment(Object arr, int size, int base, int scale) {
-        MemoryScope scope = new MemoryScope(null, null);
-        return new MemorySegmentImpl(base, arr, size * scale, Thread.currentThread(), scope);
-    }
-
-    public static MemorySegment makeBufferSegment(ByteBuffer bb) {
-        long bbAddress = javaNioAccess.getBufferAddress(bb);
-        Object base = javaNioAccess.getBufferBase(bb);
-
-        int pos = bb.position();
-        int limit = bb.limit();
-
-        MemoryScope bufferScope = new MemoryScope(bb, null);
-        return new MemorySegmentImpl(bbAddress + pos, base, limit - pos, Thread.currentThread(), bufferScope);
-    }
-
-    // create and map a file into a fresh segment
-    public static MemorySegment makeMappedSegment(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
-        if (bytesSize <= 0) throw new IllegalArgumentException("Requested bytes size must be > 0.");
-        try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
-            UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
-            MemoryScope scope = new MemoryScope(null, unmapperProxy::unmap);
-            return new MemorySegmentImpl(unmapperProxy.address(), null, bytesSize, Thread.currentThread(), scope);
-        }
-    }
-
-    private static OpenOption[] openOptions(FileChannel.MapMode mapMode) {
-        if (mapMode == FileChannel.MapMode.READ_ONLY) {
-            return new OpenOption[] { StandardOpenOption.READ };
-        } else if (mapMode == FileChannel.MapMode.READ_WRITE || mapMode == FileChannel.MapMode.PRIVATE) {
-            return new OpenOption[] { StandardOpenOption.READ, StandardOpenOption.WRITE };
-        } else {
-            throw new UnsupportedOperationException("Unsupported map mode: " + mapMode);
         }
     }
 

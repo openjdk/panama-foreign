@@ -42,15 +42,15 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final InternalForeign foreign = InternalForeign.getInstancePrivileged();
 
-    private final MemorySegmentImpl segment;
+    private final AbstractMemorySegmentImpl segment;
     private final long offset;
 
     public MemoryAddressImpl(long offset) {
-        this.segment = MemorySegmentImpl.NOTHING;
+        this.segment = AbstractMemorySegmentImpl.NOTHING;
         this.offset = offset;
     }
 
-    public MemoryAddressImpl(MemorySegmentImpl segment, long offset) {
+    public MemoryAddressImpl(AbstractMemorySegmentImpl segment, long offset) {
         this.segment = Objects.requireNonNull(segment);
         this.offset = offset;
     }
@@ -86,7 +86,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     @Override
     public MemorySegment segment() {
-        return segment != MemorySegmentImpl.NOTHING ?
+        return segment != AbstractMemorySegmentImpl.NOTHING ?
                 segment : null;
     }
 
@@ -97,11 +97,11 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     @Override
     public MemoryAddress rebase(MemorySegment segment) {
-        MemorySegmentImpl segmentImpl = (MemorySegmentImpl)segment;
-        if (segmentImpl.base != this.segment.base) {
+        AbstractMemorySegmentImpl segmentImpl = (AbstractMemorySegmentImpl) segment;
+        if (segmentImpl.base() != this.segment.base()) {
             throw new IllegalArgumentException("Invalid rebase target: " + segment);
         }
-        return new MemoryAddressImpl((MemorySegmentImpl)segment,
+        return new MemoryAddressImpl((AbstractMemorySegmentImpl) segment,
                 unsafeGetOffset() - ((MemoryAddressImpl)segment.baseAddress()).unsafeGetOffset());
     }
 
@@ -112,7 +112,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     }
 
     public long unsafeGetOffset() {
-        return segment.min + offset;
+        return segment.min() + offset;
     }
 
     public Object unsafeGetBase() {
@@ -123,7 +123,6 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     public boolean isSmall() {
         return segment.isSmall();
     }
-
     // Object methods
 
     @Override
