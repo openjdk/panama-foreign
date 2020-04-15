@@ -1,27 +1,26 @@
 /*
- *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
- *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- *  This code is free software; you can redistribute it and/or modify it
- *  under the terms of the GNU General Public License version 2 only, as
- *  published by the Free Software Foundation.  Oracle designates this
- *  particular file as subject to the "Classpath" exception as provided
- *  by Oracle in the LICENSE file that accompanied this code.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
- *  This code is distributed in the hope that it will be useful, but WITHOUT
- *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- *  version 2 for more details (a copy is included in the LICENSE file that
- *  accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- *  You should have received a copy of the GNU General Public License version
- *  2 along with this work; if not, write to the Free Software Foundation,
- *  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *   Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- *  or visit www.oracle.com if you need additional information or have any
- *  questions.
- *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package jdk.internal.foreign;
@@ -32,8 +31,9 @@ import jdk.incubator.foreign.SequenceLayout;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
-import jdk.internal.misc.Unsafe;
+import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.vm.annotation.ForceInline;
+import sun.security.action.GetPropertyAction;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -44,58 +44,53 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 
 /**
- * This class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
- * about the segment's spatial and temporal bounds, as well as the addressing coordinates (base + offset) which allows
- * unsafe access; each memory segment implementation is associated with an owner thread which is set at creation time.
+ * This abstract class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
+ * about the segment's spatial and temporal bounds; each memory segment implementation is associated with an owner thread which is set at creation time.
  * Access to certain sensitive operations on the memory segment will fail with {@code IllegalStateException} if the
  * segment is either in an invalid state (e.g. it has already been closed) or if access occurs from a thread other
- * than the owner thread. See {@link MemoryScope} for more details on management of temporal bounds.
+ * than the owner thread. See {@link MemoryScope} for more details on management of temporal bounds. Subclasses
+ * are defined for each memory segment kind, see {@link NativeMemorySegmentImpl}, {@link HeapMemorySegmentImpl} and
+ * {@link MappedMemorySegmentImpl}.
  */
-public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
+public abstract class AbstractMemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
 
-    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
-    private static final int BYTE_ARR_BASE = UNSAFE.arrayBaseOffset(byte[].class);
-
-    final long length;
-    final int mask;
-    final long min;
-    final Object base;
-    final Thread owner;
-    final MemoryScope scope;
+    private static final boolean enableSmallSegments =
+            Boolean.parseBoolean(GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.SmallSegments", "true"));
 
     final static int ACCESS_MASK = READ | WRITE | CLOSE | ACQUIRE;
     final static int FIRST_RESERVED_FLAG = 1 << 16; // upper 16 bits are reserved
     final static int SMALL = FIRST_RESERVED_FLAG;
-
     final static long NONCE = new Random().nextLong();
-
     final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE;
-    public static final MemorySegmentImpl NOTHING = new MemorySegmentImpl();
 
-    private MemorySegmentImpl() {
-        this.length = 0L;
-        this.mask = 0;
-        this.min = 0L;
-        this.base = null;
-        this.owner = null;
-        this.scope = MemoryScope.GLOBAL;
-    }
+    final static JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
-    public MemorySegmentImpl(long min, Object base, long length, Thread owner, MemoryScope scope) {
-        this(min, base, length, DEFAULT_MASK, owner, scope);
-    }
+    final long length;
+    final int mask;
+    final Thread owner;
+    final MemoryScope scope;
 
     @ForceInline
-    MemorySegmentImpl(long min, Object base, long length, int mask, Thread owner, MemoryScope scope) {
+    AbstractMemorySegmentImpl(long length, int mask, Thread owner, MemoryScope scope) {
         this.length = length;
-        this.mask = length > Integer.MAX_VALUE ? mask : (mask | SMALL);
-        this.min = min;
-        this.base = base;
+        this.mask = mask;
         this.owner = owner;
         this.scope = scope;
     }
 
-    // MemorySegment methods
+    abstract long min();
+
+    abstract Object base();
+
+    abstract AbstractMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope);
+
+    abstract ByteBuffer makeByteBuffer();
+
+    static int defaultAccessModes(long size) {
+        return (enableSmallSegments && size < Integer.MAX_VALUE) ?
+                DEFAULT_MASK | SMALL :
+                DEFAULT_MASK;
+    }
 
     @Override
     public final MemorySegment asSlice(long offset, long newSize) {
@@ -103,9 +98,8 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         return asSliceNoCheck(offset, newSize);
     }
 
-    @ForceInline
-    private MemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
-        return new MemorySegmentImpl(min + offset, base, newSize, mask, owner, scope);
+    private AbstractMemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
+        return dup(offset, newSize, mask, owner, scope);
     }
 
     @Override
@@ -125,6 +119,25 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
+    public final ByteBuffer asByteBuffer() {
+        if (!isSet(READ)) {
+            throw unsupportedAccessMode(READ);
+        }
+        checkIntSize("ByteBuffer");
+        ByteBuffer _bb = makeByteBuffer();
+        if (!isSet(WRITE)) {
+            //scope is IMMUTABLE - obtain a RO byte buffer
+            _bb = _bb.asReadOnlyBuffer();
+        }
+        return _bb;
+    }
+
+    @Override
+    public final int accessModes() {
+        return mask & ACCESS_MASK;
+    }
+
+    @Override
     public final long byteSize() {
         return length;
     }
@@ -140,48 +153,12 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public final void close() {
-        if (!isSet(CLOSE)) {
-            throw unsupportedAccessMode(CLOSE);
-        }
-        checkValidState();
-        closeNoCheck();
-    }
-
-    private void closeNoCheck() {
-        scope.close();
-    }
-
-    @Override
-    public ByteBuffer asByteBuffer() {
-        if (!isSet(READ)) {
-            throw unsupportedAccessMode(READ);
-        }
-        checkIntSize("ByteBuffer");
-        JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
-        ByteBuffer _bb;
-        if (base() != null) {
-            if (!(base() instanceof byte[])) {
-                throw new UnsupportedOperationException("Not an address to an heap-allocated byte array");
-            }
-            _bb = nioAccess.newHeapByteBuffer((byte[]) base(), (int)min - BYTE_ARR_BASE, (int) length, this);
-        } else {
-            _bb = nioAccess.newDirectByteBuffer(min, (int) length, null, this);
-        }
-        if (!isSet(WRITE)) {
-            //scope is IMMUTABLE - obtain a RO byte buffer
-            _bb = _bb.asReadOnlyBuffer();
-        }
-        return _bb;
-    }
-
-    @Override
-    public MemorySegmentImpl withAccessModes(int accessModes) {
+    public AbstractMemorySegmentImpl withAccessModes(int accessModes) {
         checkAccessModes(accessModes);
         if ((~accessModes() & accessModes) != 0) {
             throw new UnsupportedOperationException("Cannot acquire more access modes");
         }
-        return new MemorySegmentImpl(min, base, length, accessModes, owner, scope);
+        return dup(0, length, (mask & ~ACCESS_MASK) | accessModes, owner, scope);
     }
 
     @Override
@@ -197,52 +174,36 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
     }
 
     @Override
-    public int accessModes() {
-        return mask & ACCESS_MASK;
+    public final void close() {
+        if (!isSet(CLOSE)) {
+            throw unsupportedAccessMode(CLOSE);
+        }
+        checkValidState();
+        closeNoCheck();
+    }
+
+    private final void closeNoCheck() {
+        scope.close();
+    }
+
+    final AbstractMemorySegmentImpl acquire() {
+        if (Thread.currentThread() != ownerThread() && !isSet(ACQUIRE)) {
+            throw unsupportedAccessMode(ACQUIRE);
+        }
+        return dup(0, length, mask, Thread.currentThread(), scope.acquire());
     }
 
     @Override
-    public byte[] toByteArray() {
+    public final byte[] toByteArray() {
         checkIntSize("byte[]");
         byte[] arr = new byte[(int)length];
         MemorySegment arrSegment = MemorySegment.ofArray(arr);
-        MemoryAddress.copy(this.baseAddress(), arrSegment.baseAddress(), length);
+        MemoryAddress.copy(baseAddress(), arrSegment.baseAddress(), length);
         return arr;
-    }
-
-    // MemorySegmentProxy methods
-
-    @Override
-    public final void checkValidState() {
-        if (owner != null && owner != Thread.currentThread()) {
-            throw new IllegalStateException("Attempt to access segment outside owning thread");
-        }
-        scope.checkAliveConfined();
     }
 
     boolean isSmall() {
         return isSet(SMALL);
-    }
-
-    // Object methods
-
-    @Override
-    public String toString() {
-        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + byteSize() + " }";
-    }
-
-    // Helper methods
-
-    private MemorySegmentImpl acquire() {
-        if (Thread.currentThread() != owner && !isSet(ACQUIRE)) {
-            throw unsupportedAccessMode(ACQUIRE);
-        }
-        return new MemorySegmentImpl(min, base, length, mask, Thread.currentThread(), scope.acquire());
-    }
-
-    public MemorySegment asUnconfined() {
-        checkValidState();
-        return new MemorySegmentImpl(min, base, length, mask, null, scope);
     }
 
     void checkRange(long offset, long length, boolean writeAccess) {
@@ -255,8 +216,19 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         checkBounds(offset, length);
     }
 
-    Object base() {
-        return base;
+    @Override
+    public final void checkValidState() {
+        if (owner != null && owner != Thread.currentThread()) {
+            throw new IllegalStateException("Attempt to access segment outside owning thread");
+        }
+        scope.checkAliveConfined();
+    }
+
+    // Helper methods
+
+    AbstractMemorySegmentImpl asUnconfined() {
+        checkValidState();
+        return dup(0, length, mask, null, scope);
     }
 
     private boolean isSet(int mask) {
@@ -281,7 +253,6 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         }
     }
 
-    @ForceInline
     private void checkBoundsSmall(int offset, int length) {
         if (length < 0 ||
                 offset < 0 ||
@@ -317,18 +288,18 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
                         this, offset, length));
     }
 
-    private int id() {
+    protected int id() {
         //compute a stable and random id for this memory segment
-        return Math.abs(Objects.hash(base, min, NONCE));
+        return Math.abs(Objects.hash(base(), min(), NONCE));
     }
 
     static class SegmentSplitter implements Spliterator<MemorySegment> {
-        MemorySegmentImpl segment;
+        AbstractMemorySegmentImpl segment;
         long elemCount;
         final long elementSize;
         long currentIndex;
 
-        SegmentSplitter(long elementSize, long elemCount, MemorySegmentImpl segment) {
+        SegmentSplitter(long elementSize, long elemCount, AbstractMemorySegmentImpl segment) {
             this.segment = segment;
             this.elementSize = elementSize;
             this.elemCount = elemCount;
@@ -337,7 +308,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         @Override
         public SegmentSplitter trySplit() {
             if (currentIndex == 0 && elemCount > 1) {
-                MemorySegmentImpl parent = segment;
+                AbstractMemorySegmentImpl parent = segment;
                 long rem = elemCount % 2;
                 long split = elemCount / 2;
                 long lobound = split * elementSize;
@@ -354,7 +325,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         public boolean tryAdvance(Consumer<? super MemorySegment> action) {
             Objects.requireNonNull(action);
             if (currentIndex < elemCount) {
-                MemorySegmentImpl acquired = segment.acquire();
+                AbstractMemorySegmentImpl acquired = segment.acquire();
                 try {
                     action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
                 } finally {
@@ -374,7 +345,7 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
         public void forEachRemaining(Consumer<? super MemorySegment> action) {
             Objects.requireNonNull(action);
             if (currentIndex < elemCount) {
-                MemorySegmentImpl acquired = segment.acquire();
+                AbstractMemorySegmentImpl acquired = segment.acquire();
                 try {
                     if (acquired.isSmall()) {
                         int index = (int) currentIndex;
@@ -406,4 +377,52 @@ public final class MemorySegmentImpl implements MemorySegment, MemorySegmentProx
             return NONNULL | SUBSIZED | SIZED | IMMUTABLE | ORDERED;
         }
     }
+
+    // Object methods
+
+    @Override
+    public String toString() {
+        return "MemorySegment{ id=0x" + Long.toHexString(id()) + " limit: " + length + " }";
+    }
+
+    public static AbstractMemorySegmentImpl ofBuffer(ByteBuffer bb) {
+        long bbAddress = nioAccess.getBufferAddress(bb);
+        Object base = nioAccess.getBufferBase(bb);
+        UnmapperProxy unmapper = nioAccess.unmapper(bb);
+
+        int pos = bb.position();
+        int limit = bb.limit();
+
+        MemoryScope bufferScope = new MemoryScope(bb, null);
+        int size = limit - pos;
+        if (base != null) {
+            return new HeapMemorySegmentImpl<>(bbAddress + pos, () -> (byte[])base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+        } else if (unmapper == null) {
+            return new NativeMemorySegmentImpl(bbAddress + pos, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+        } else {
+            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+        }
+    }
+
+    public static AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(0, 0, null, MemoryScope.GLOBAL) {
+        @Override
+        ByteBuffer makeByteBuffer() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        long min() {
+            return 0;
+        }
+
+        @Override
+        Object base() {
+            return null;
+        }
+
+        @Override
+        AbstractMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+            throw new UnsupportedOperationException();
+        }
+    };
 }

@@ -50,6 +50,7 @@ import java.util.Spliterator;
 import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntFunction;
 import java.util.function.ToIntFunction;
 import java.util.stream.StreamSupport;
 
@@ -117,38 +118,37 @@ public class ParallelSum {
 
     @Benchmark
     public int segment_parallel() {
-        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT), ParallelSum::segmentToInt).invoke();
+        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT), SEGMENT_TO_INT).invoke();
     }
 
     @Benchmark
     public int segment_parallel_bulk() {
-        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT_BULK), ParallelSum::segmentToIntBulk).invoke();
+        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT_BULK), SEGMENT_TO_INT_BULK).invoke();
     }
 
     @Benchmark
     public int segment_stream_parallel() {
         return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
-                .mapToInt(ParallelSum::segmentToInt).sum();
+                .mapToInt(SEGMENT_TO_INT).sum();
     }
 
     @Benchmark
     public int segment_stream_parallel_bulk() {
         return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT_BULK), true)
-                .mapToInt(ParallelSum::segmentToIntBulk).sum();
+                .mapToInt(SEGMENT_TO_INT_BULK).sum();
     }
 
-    static int segmentToInt(MemorySegment slice) {
-        return (int) VH_int.get(slice.baseAddress(), 0L);
-    }
+    final static ToIntFunction<MemorySegment> SEGMENT_TO_INT = slice ->
+        (int) VH_int.get(slice.baseAddress(), 0L);
 
-    static int segmentToIntBulk(MemorySegment slice) {
+    final static ToIntFunction<MemorySegment> SEGMENT_TO_INT_BULK = slice -> {
         int res = 0;
         MemoryAddress base = slice.baseAddress();
         for (int i = 0; i < BULK_FACTOR ; i++) {
             res += (int)VH_int.get(base, (long) i);
         }
         return res;
-    }
+    };
 
     @Benchmark
     public int unsafe_parallel() {
@@ -186,31 +186,50 @@ public class ParallelSum {
         }
     }
 
-    static class SumSegment extends RecursiveTask<Integer> {
+    static class SumSegment extends CountedCompleter<Integer> {
 
         final static int SPLIT_THRESHOLD = 1024 * 8;
 
-        private final Spliterator<MemorySegment> splitter;
+        int localSum = 0;
         private final ToIntFunction<MemorySegment> mapper;
-        int result;
+        List<SumSegment> children = new LinkedList<>();
 
-        SumSegment(Spliterator<MemorySegment> splitter, ToIntFunction<MemorySegment> mapper) {
-            this.splitter = splitter;
+        private Spliterator<MemorySegment> segmentSplitter;
+
+        SumSegment(Spliterator<MemorySegment> segmentSplitter, ToIntFunction<MemorySegment> mapper) {
+            this(null, segmentSplitter, mapper);
+        }
+
+        SumSegment(SumSegment parent, Spliterator<MemorySegment> segmentSplitter, ToIntFunction<MemorySegment> mapper) {
+            super(parent);
+            this.segmentSplitter = segmentSplitter;
             this.mapper = mapper;
         }
 
         @Override
-        protected Integer compute() {
-            if (splitter.estimateSize() > SPLIT_THRESHOLD) {
-                SumSegment sub = new SumSegment(splitter.trySplit(), mapper);
-                sub.fork();
-                return compute() + sub.join();
-            } else {
-                splitter.forEachRemaining(s -> {
-                    result += mapper.applyAsInt(s);
-                });
-                return result;
+        public void compute() {
+            Spliterator<MemorySegment> sub;
+            while (segmentSplitter.estimateSize() > SPLIT_THRESHOLD &&
+                    (sub = segmentSplitter.trySplit()) != null) {
+                addToPendingCount(1);
+                SumSegment child = new SumSegment(this, sub, mapper);
+                children.add(child);
+                child.fork();
             }
+            segmentSplitter.forEachRemaining(s -> {
+                localSum += mapper.applyAsInt(s);
+            });
+            propagateCompletion();
+        }
+
+        @Override
+        public Integer getRawResult() {
+            int sum = localSum;
+            for (SumSegment c : children) {
+                sum += c.getRawResult();
+            }
+            children = null;
+            return sum;
         }
     }
 }

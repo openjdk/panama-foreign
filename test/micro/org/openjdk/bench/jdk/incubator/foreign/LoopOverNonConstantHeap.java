@@ -51,47 +51,40 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Fork(3)
-public class LoopOverNonConstant {
+public class LoopOverNonConstantHeap {
 
     static final Unsafe unsafe = Utils.unsafe;
 
     static final int ELEM_SIZE = 1_000_000;
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
+    static final int UNSAFE_BYTE_BASE = unsafe.arrayBaseOffset(byte[].class);
 
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
     MemorySegment segment;
-    long unsafe_addr;
+    byte[] base;
 
     ByteBuffer byteBuffer;
 
     @Setup
     public void setup() {
-        unsafe_addr = unsafe.allocateMemory(ALLOC_SIZE);
+        base = new byte[ALLOC_SIZE];
         for (int i = 0; i < ELEM_SIZE; i++) {
-            unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
+            unsafe.putInt(base, UNSAFE_BYTE_BASE + (i * CARRIER_SIZE) , i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE);
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            VH_int.set(segment.baseAddress(), (long) i, i);
-        }
-        byteBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            byteBuffer.putInt(i * CARRIER_SIZE , i);
-        }
+        segment = MemorySegment.ofArray(base);
+        byteBuffer = ByteBuffer.wrap(base).order(ByteOrder.nativeOrder());
     }
 
     @TearDown
     public void tearDown() {
         segment.close();
-        unsafe.invokeCleaner(byteBuffer);
-        unsafe.freeMemory(unsafe_addr);
     }
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public int unsafe_get() {
-        return unsafe.getInt(unsafe_addr);
+        return unsafe.getInt(base, UNSAFE_BYTE_BASE);
     }
 
     @Benchmark
@@ -110,7 +103,7 @@ public class LoopOverNonConstant {
     public int unsafe_loop() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += unsafe.getInt(unsafe_addr + (i * CARRIER_SIZE));
+            res += unsafe.getInt(base, UNSAFE_BYTE_BASE + (i * CARRIER_SIZE));
         }
         return res;
     }
