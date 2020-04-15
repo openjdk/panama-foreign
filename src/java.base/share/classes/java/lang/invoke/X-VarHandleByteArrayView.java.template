@@ -26,6 +26,7 @@ package java.lang.invoke;
 
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.util.Preconditions;
 import jdk.internal.vm.annotation.ForceInline;
@@ -564,7 +565,10 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
 
         @ForceInline
         static int index(ByteBuffer bb, int index) {
-            nioAccess.checkSegment(bb);
+            MemorySegmentProxy segmentProxy = nioAccess.bufferSegment(bb);
+            if (segmentProxy != null) {
+                segmentProxy.checkValidState();
+            }
             return Preconditions.checkIndex(index, UNSAFE.getInt(bb, BUFFER_LIMIT) - ALIGN, null);
         }
 

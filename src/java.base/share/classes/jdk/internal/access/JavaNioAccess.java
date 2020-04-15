@@ -84,7 +84,7 @@ public interface JavaNioAccess {
     UnmapperProxy unmapper(ByteBuffer bb);
 
     /**
-     * Used by byte buffer var handle views.
+     * Used by {@code jdk.internal.foreign.AbstractMemorySegmentImpl} and byte buffer var handle views.
      */
-    void checkSegment(Buffer buffer);
+    MemorySegmentProxy bufferSegment(Buffer buffer);
 }
