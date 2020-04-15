@@ -37,9 +37,16 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.TimeUnit;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
@@ -51,13 +58,27 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Fork(3)
-public class LoopOverNonConstant {
+public class LoopOverNonConstantMapped {
 
     static final Unsafe unsafe = Utils.unsafe;
 
     static final int ELEM_SIZE = 1_000_000;
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
+
+    static final Path tempPath;
+
+    static {
+        try {
+            File file = File.createTempFile("buffer", "txt");
+            file.deleteOnExit();
+            tempPath = file.toPath();
+            Files.write(file.toPath(), new byte[ALLOC_SIZE], StandardOpenOption.WRITE);
+
+        } catch (IOException ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
 
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
     MemorySegment segment;
@@ -66,26 +87,22 @@ public class LoopOverNonConstant {
     ByteBuffer byteBuffer;
 
     @Setup
-    public void setup() {
-        unsafe_addr = unsafe.allocateMemory(ALLOC_SIZE);
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
+    public void setup() throws IOException {
+        try (FileChannel channel = FileChannel.open(tempPath, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+            byteBuffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, ALLOC_SIZE).order(ByteOrder.nativeOrder());
+            for (int i = 0; i < ELEM_SIZE; i++) {
+                byteBuffer.putInt(i * CARRIER_SIZE, i);
+            }
+            ((MappedByteBuffer)byteBuffer).force();
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE);
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            VH_int.set(segment.baseAddress(), (long) i, i);
-        }
-        byteBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            byteBuffer.putInt(i * CARRIER_SIZE , i);
-        }
+        segment = MemorySegment.mapFromPath(tempPath, ALLOC_SIZE, FileChannel.MapMode.READ_WRITE);
+        unsafe_addr = segment.baseAddress().toRawLongValue();
     }
 
     @TearDown
     public void tearDown() {
         segment.close();
         unsafe.invokeCleaner(byteBuffer);
-        unsafe.freeMemory(unsafe_addr);
     }
 
     @Benchmark

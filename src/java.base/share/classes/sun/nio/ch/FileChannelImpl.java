@@ -895,6 +895,11 @@ public class FileChannelImpl
         }
 
         @Override
+        public FileDescriptor fileDescriptor() {
+            return fd;
+        }
+
+        @Override
         public void run() {
             unmap();
         }
@@ -947,6 +952,10 @@ public class FileChannelImpl
                 totalCapacity -= cap;
             }
         }
+
+        public boolean isSync() {
+            return false;
+        }
     }
 
     private static class SyncUnmapper extends Unmapper {
@@ -975,6 +984,10 @@ public class FileChannelImpl
                 totalSize -= size;
                 totalCapacity -= cap;
             }
+        }
+
+        public boolean isSync() {
+            return true;
         }
     }
 
