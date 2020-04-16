@@ -28,6 +28,10 @@ package jdk.internal.foreign;
 import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SystemABI;
+import jdk.internal.foreign.abi.aarch64.AArch64ABI;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 import sun.security.action.GetPropertyAction;
 
 public class InternalForeign implements Foreign {
@@ -69,6 +73,22 @@ public class InternalForeign implements Foreign {
     @Override
     public MemorySegment asUnconfined(MemorySegment segment) {
         return ((NativeMemorySegmentImpl)segment).asUnconfined();
+    }
+
+    @Override
+    public SystemABI getSystemABI() {
+        String arch = System.getProperty("os.arch");
+        String os = System.getProperty("os.name");
+        if (arch.equals("amd64") || arch.equals("x86_64")) {
+            if (os.startsWith("Windows")) {
+                return Windowsx64ABI.getInstance();
+            } else {
+                return SysVx64ABI.getInstance();
+            }
+        } else if (arch.equals("aarch64")) {
+            return AArch64ABI.getInstance();
+        }
+        throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
     }
 
     private static void checkRestrictedAccess() {

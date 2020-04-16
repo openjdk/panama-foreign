@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandles;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
@@ -60,6 +61,8 @@ import java.util.function.Supplier;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import jdk.internal.loader.NativeLibraries;
+import jdk.internal.loader.NativeLibrary;
 import jdk.internal.util.StaticProperty;
 import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.ServicesCatalog;

@@ -1,0 +1,96 @@
+/*
+ *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *  This code is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License version 2 only, as
+ *  published by the Free Software Foundation.  Oracle designates this
+ *  particular file as subject to the "Classpath" exception as provided
+ *  by Oracle in the LICENSE file that accompanied this code.
+ *
+ *  This code is distributed in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ *  version 2 for more details (a copy is included in the LICENSE file that
+ *  accompanied this code).
+ *
+ *  You should have received a copy of the GNU General Public License version
+ *  2 along with this work; if not, write to the Free Software Foundation,
+ *  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ *   Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ *  or visit www.oracle.com if you need additional information or have any
+ *  questions.
+ *
+ */
+package jdk.incubator.foreign;
+
+import jdk.internal.foreign.LibrariesHelper;
+
+import java.io.File;
+import java.lang.invoke.MethodHandles;
+import java.util.Objects;
+
+/**
+ * A native library lookup. Exposes lookup operation for searching symbols, see {@link LibraryLookup#lookup(String)}.
+ */
+public interface LibraryLookup {
+
+    /**
+     * Lookups a symbol with given name in this library.
+     * @param name the symbol name.
+     * @return the library symbol (if any)
+     * @throws NoSuchMethodException if no symbol with given name could be found.
+     */
+    MemoryAddress lookup(String name) throws NoSuchMethodException;
+
+    /**
+     * Obtain a default library lookup object.
+     * @return the default library lookup object.
+     */
+    static LibraryLookup ofDefault() {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.foreign.getDefaultLibrary"));
+        }
+        return LibrariesHelper.getDefaultLibrary();
+    }
+
+    /**
+     * Obtain a library lookup object corresponding to a library identified by given path.
+     * @param lookup the contextual lookup object.
+     * @param path the library path.
+     * @return a library lookup object for given path.
+     */
+    static LibraryLookup ofPath(MethodHandles.Lookup lookup, String path) {
+        Objects.requireNonNull(path);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkLink(path);
+        }
+        if (!(new File(path).isAbsolute())) {
+            throw new UnsatisfiedLinkError(
+                    "Expecting an absolute path of the library: " + path);
+        }
+        return LibrariesHelper.load(lookup, path);
+    }
+
+    /**
+     * Obtain a library lookup object corresponding to a library identified by given library name.
+     * @param lookup the contextual lookup object.
+     * @param libName the library name.
+     * @return a library lookup object for given library name.
+     */
+    static LibraryLookup ofLibrary(MethodHandles.Lookup lookup, String libName) {
+        Objects.requireNonNull(libName);
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkLink(libName);
+        }
+        if (libName.indexOf(File.separatorChar) != -1) {
+            throw new UnsatisfiedLinkError(
+                    "Directory separator should not appear in library name: " + libName);
+        }
+        return LibrariesHelper.loadLibrary(lookup, libName);
+    }
+}

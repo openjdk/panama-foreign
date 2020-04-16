@@ -71,7 +71,7 @@ final class MemoryAccessVarHandle$Type$Helper {
         oo.checkAccess(offset, length, ro);
         return oo;
     }
-    
+
     @ForceInline
     static long offset(MemoryAddressProxy bb, long offset, long alignmentMask) {
         long address = offsetNoVMAlignCheck(bb, offset, alignmentMask);
@@ -91,7 +91,7 @@ final class MemoryAccessVarHandle$Type$Helper {
         }
         return address;
     }
-    
+
     @ForceInline
     static $type$ get0(VarHandle ob, Object obb, long base) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;

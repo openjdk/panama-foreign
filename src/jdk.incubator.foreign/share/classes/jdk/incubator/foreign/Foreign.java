@@ -112,4 +112,9 @@ public interface Foreign {
      */
     MemorySegment asUnconfined(MemorySegment segment);
 
+    /**
+     * Obtain an instance of the system ABI.
+     * @return system ABI.
+     */
+    SystemABI getSystemABI();
 }
