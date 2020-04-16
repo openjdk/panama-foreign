@@ -36,9 +36,13 @@ import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.*;
 
 import java.lang.invoke.VarHandle;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Spliterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.*;
@@ -130,6 +134,41 @@ public class TestSharedAccess {
             new Thread(r).start();
             Thread.sleep(5000);
         } //should fail here!
+    }
+
+    @Test
+    public void testOutsideConfinementThread() throws Throwable {
+        CountDownLatch a = new CountDownLatch(1);
+        CountDownLatch b = new CountDownLatch(1);
+        CompletableFuture<?> r;
+        try (MemorySegment s1 = MemorySegment.allocateNative(MemoryLayout.ofSequence(2, MemoryLayouts.JAVA_INT))) {
+            r = CompletableFuture.runAsync(() -> {
+                try {
+                    ByteBuffer bb = s1.asByteBuffer();
+
+                    MemorySegment s2 = MemorySegment.ofByteBuffer(bb);
+                    a.countDown();
+
+                    try {
+                        b.await();
+                    } catch (InterruptedException e) {
+                    }
+
+                    MemoryAddress base = s2.baseAddress();
+                    setInt(base.addOffset(4), -42);
+                    fail();
+                } catch (IllegalStateException ex) {
+                    assertTrue(ex.getMessage().contains("owning thread"));
+                }
+            });
+
+            a.await();
+            MemoryAddress base = s1.baseAddress();
+            setInt(base.addOffset(4), 42);
+        }
+
+        b.countDown();
+        r.get();
     }
 
     static int getInt(MemoryAddress address) {

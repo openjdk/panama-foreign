@@ -395,12 +395,21 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
         MemoryScope bufferScope = new MemoryScope(bb, null);
         int size = limit - pos;
+
+        MemorySegment bufferSegment = (MemorySegment)nioAccess.bufferSegment(bb);
+        int modes = bufferSegment == null ?
+                defaultAccessModes(size) : bufferSegment.accessModes();
+        Thread owner = bufferSegment == null ?
+                Thread.currentThread() : bufferSegment.ownerThread();
+        if (bb.isReadOnly()) {
+            modes &= ~WRITE;
+        }
         if (base != null) {
-            return new HeapMemorySegmentImpl<>(bbAddress + pos, () -> (byte[])base, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+            return new HeapMemorySegmentImpl<>(bbAddress + pos, () -> (byte[])base, size, modes, owner, bufferScope);
         } else if (unmapper == null) {
-            return new NativeMemorySegmentImpl(bbAddress + pos, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+            return new NativeMemorySegmentImpl(bbAddress + pos, size, modes, owner, bufferScope);
         } else {
-            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, defaultAccessModes(size), Thread.currentThread(), bufferScope);
+            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, modes, owner, bufferScope);
         }
     }
 

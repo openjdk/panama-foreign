@@ -53,13 +53,21 @@ public class InternalForeign implements Foreign {
 
     @Override
     public MemoryAddress withSize(MemoryAddress base, long byteSize) throws IllegalAccessError {
+        checkRawNativeAddress(base);
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(base.toRawLongValue(), byteSize, null, false)
                 .baseAddress();
     }
 
     @Override
     public MemorySegment asMallocSegment(MemoryAddress base, long byteSize) throws IllegalAccessError {
+        checkRawNativeAddress(base);
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(base.toRawLongValue(), byteSize, Thread.currentThread(), true);
+    }
+
+    private void checkRawNativeAddress(MemoryAddress base) {
+        if (base.segment() != AbstractMemorySegmentImpl.NOTHING) {
+            throw new IllegalArgumentException("Not an unchecked memory address");
+        }
     }
 
     @Override
