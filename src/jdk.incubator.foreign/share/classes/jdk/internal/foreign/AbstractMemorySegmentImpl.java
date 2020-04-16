@@ -392,15 +392,21 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
         int pos = bb.position();
         int limit = bb.limit();
-
-        MemoryScope bufferScope = new MemoryScope(bb, null);
         int size = limit - pos;
 
-        MemorySegment bufferSegment = (MemorySegment)nioAccess.bufferSegment(bb);
-        int modes = bufferSegment == null ?
-                defaultAccessModes(size) : bufferSegment.accessModes();
-        Thread owner = bufferSegment == null ?
-                Thread.currentThread() : bufferSegment.ownerThread();
+        AbstractMemorySegmentImpl bufferSegment = (AbstractMemorySegmentImpl)nioAccess.bufferSegment(bb);
+        final MemoryScope bufferScope;
+        int modes;
+        final Thread owner;
+        if (bufferSegment != null) {
+            bufferScope = bufferSegment.scope;
+            modes = bufferSegment.mask;
+            owner = bufferSegment.owner;
+        } else {
+            bufferScope = new MemoryScope(bb, null);
+            modes = defaultAccessModes(size);
+            owner = Thread.currentThread();
+        }
         if (bb.isReadOnly()) {
             modes &= ~WRITE;
         }
