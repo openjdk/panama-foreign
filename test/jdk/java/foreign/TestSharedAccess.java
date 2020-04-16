@@ -136,6 +136,23 @@ public class TestSharedAccess {
         } //should fail here!
     }
 
+    @Test(expectedExceptions=IllegalStateException.class)
+    public void testBadCloseWithPendingAcquireBuffer() throws InterruptedException {
+        MemorySegment segment = MemorySegment.allocateNative(16);
+        Spliterator<MemorySegment> spliterator = segment.spliterator(MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
+        Runnable r = () -> spliterator.forEachRemaining(s -> {
+            try {
+                Thread.sleep(5000 * 100);
+            } catch (InterruptedException ex) {
+                throw new AssertionError(ex);
+            }
+        });
+        new Thread(r).start();
+        Thread.sleep(5000);
+        segment = MemorySegment.ofByteBuffer(segment.asByteBuffer()); // original segment is lost
+        segment.close(); // this should still fail
+    }
+
     @Test
     public void testOutsideConfinementThread() throws Throwable {
         CountDownLatch a = new CountDownLatch(1);
