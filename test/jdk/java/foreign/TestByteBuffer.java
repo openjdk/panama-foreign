@@ -470,6 +470,16 @@ public class TestByteBuffer {
         }
     }
 
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testDeadAccessOnClosedBufferSegment() {
+        MemorySegment s1 = MemorySegment.allocateNative(MemoryLayouts.JAVA_INT);
+        MemorySegment s2 = MemorySegment.ofByteBuffer(s1.asByteBuffer());
+
+        s1.close(); // memory freed
+
+        intHandle.set(s2.baseAddress(), 0L, 10); // Dead access!
+    }
+
     @DataProvider(name = "bufferOps")
     public static Object[][] bufferOps() throws Throwable {
         return new Object[][]{
