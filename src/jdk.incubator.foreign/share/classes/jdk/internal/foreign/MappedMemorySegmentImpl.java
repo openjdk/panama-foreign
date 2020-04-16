@@ -64,6 +64,20 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
         return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, owner, scope);
     }
 
+    // mapped segment methods
+
+    public void load() {
+        nioAccess.load(min, unmapper.isSync(), length);
+    }
+
+    public boolean isLoaded() {
+        return nioAccess.isLoaded(min, unmapper.isSync(), length);
+    }
+
+    public void force() {
+        nioAccess.force(unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
+    }
+
     // factories
 
     public static MemorySegment makeMappedSegment(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {

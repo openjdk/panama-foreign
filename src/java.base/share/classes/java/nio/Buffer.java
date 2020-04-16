@@ -33,6 +33,7 @@ import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.io.FileDescriptor;
 import java.util.Spliterator;
 
 /**
@@ -800,6 +801,21 @@ public abstract class Buffer {
                 @Override
                 public MemorySegmentProxy bufferSegment(Buffer buffer) {
                     return buffer.segment;
+                }
+
+                @Override
+                public void force(FileDescriptor fd, long address, boolean isSync, long offset, long size) {
+                    MappedMemoryUtils.force(fd, address, isSync, offset, size);
+                }
+
+                @Override
+                public void load(long address, boolean isSync, long size) {
+                    MappedMemoryUtils.load(address, isSync, size);
+                }
+
+                @Override
+                public boolean isLoaded(long address, boolean isSync, long size) {
+                    return MappedMemoryUtils.isLoaded(address, isSync, size);
                 }
             });
     }

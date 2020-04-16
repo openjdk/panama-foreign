@@ -28,6 +28,7 @@ package jdk.internal.access;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
 
+import java.io.FileDescriptor;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
@@ -87,4 +88,19 @@ public interface JavaNioAccess {
      * Used by {@code jdk.internal.foreign.AbstractMemorySegmentImpl} and byte buffer var handle views.
      */
     MemorySegmentProxy bufferSegment(Buffer buffer);
+
+    /**
+     * Used by {@code jdk.internal.foreign.MappedMemorySegmentImpl} and byte buffer var handle views.
+     */
+    void force(FileDescriptor fd, long address, boolean isSync, long offset, long size);
+
+    /**
+     * Used by {@code jdk.internal.foreign.MappedMemorySegmentImpl} and byte buffer var handle views.
+     */
+    void load(long address, boolean isSync, long size);
+
+    /**
+     * Used by {@code jdk.internal.foreign.MappedMemorySegmentImpl} and byte buffer var handle views.
+     */
+    boolean isLoaded(long address, boolean isSync, long size);
 }
