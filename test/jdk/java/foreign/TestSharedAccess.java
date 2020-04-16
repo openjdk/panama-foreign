@@ -30,10 +30,10 @@
 import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.SequenceLayout;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
@@ -45,9 +45,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 public class TestSharedAccess {
 
