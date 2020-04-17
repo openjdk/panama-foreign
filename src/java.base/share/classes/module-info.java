@@ -173,7 +173,9 @@ module java.base {
     exports jdk.internal.org.objectweb.asm to
         jdk.jartool,
         jdk.jfr,
-        jdk.jlink;
+        jdk.jlink,
+        jdk.scripting.nashorn,
+        jdk.incubator.jextract;
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jfr,
         jdk.jlink;
