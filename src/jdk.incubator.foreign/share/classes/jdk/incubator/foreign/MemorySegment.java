@@ -205,6 +205,11 @@ public interface MemorySegment extends AutoCloseable {
      * Obtains a new memory segment backed by the same underlying memory region as this segment,
      * but with different owner thread. As a side-effect, this segment will be marked as <em>not alive</em>,
      * and subsequent operations on this segment will result in runtime errors.
+     * <p>
+     * It is important that the segment returned by this method is published by clients in a safe fashion
+     * (e.g. through a {@code volatile} field, or some other form of synchronization). Failures to do so might
+     * result in the new owner thread reading stale values from the memory region backing this segment.
+     *
      * @param newOwner the new owner thread.
      * @return a new memory segment backed by the same underlying memory region as this segment,
      *      owned by {@code newOwner}.
