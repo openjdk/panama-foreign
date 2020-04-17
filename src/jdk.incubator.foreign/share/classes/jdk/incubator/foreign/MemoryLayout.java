@@ -41,6 +41,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
@@ -76,7 +77,10 @@ import java.util.function.UnaryOperator;
  * <p>
  * Furthermore, all layouts feature a <em>natural alignment</em> which can be inferred as follows:
  * <ul>
- *     <li>for value and padding layout <em>L</em> whose size is <em>N</em>, the natural alignment of <em>L</em> is <em>N</em></li>
+ *     <li>for a padding layout <em>L</em>, the natural alignment is 1, regardless of its size; that is, in the absence
+ *     of an explicit alignment constraint, a padding layout should not affect the alignment constraint of the group
+ *     layout it is nested into</li>
+ *     <li>for a value layout <em>L</em> whose size is <em>N</em>, the natural alignment of <em>L</em> is <em>N</em></li>
  *     <li>for a sequence layout <em>S</em> whose element layout is <em>E</em>, the natural alignment of <em>S</em> is that of <em>E</em></li>
  *     <li>for a group layout <em>G</em> with member layouts <em>M1</em>, <em>M2</em>, ... <em>Mn</em> whose alignments are
  *     <em>A1</em>, <em>A2</em>, ... <em>An</em>, respectively, the natural alignment of <em>G</em> is <em>max(A1, A2 ... An)</em></li>
@@ -111,6 +115,25 @@ SequenceLayout seq = MemoryLayout.ofSequence(5,
  * We can obtain the offset of the member layout named <code>value</code> from <code>seq</code>, as follows:
  * <blockquote><pre>{@code
 long valueOffset = seq.addOffset(PathElement.sequenceElement(), PathElement.groupElement("value"));
+ * }</pre></blockquote>
+ *
+ * Similarly, we can select the member layout named {@code value}, as follows:
+ * <blockquote><pre>{@code
+MemoryLayout value = seq.select(PathElement.sequenceElement(), PathElement.groupElement("value"));
+ * }</pre></blockquote>
+ *
+ * And, we can also replace the layout named {@code value} with another layout, as follows:
+ * <blockquote><pre>{@code
+MemoryLayout newSeq = seq.map(l -> MemoryLayout.ofPadding(32), PathElement.sequenceElement(), PathElement.groupElement("value"));
+ * }</pre></blockquote>
+ *
+ * That is, the above declaration is identical to the following, more verbose one:
+ * <blockquote><pre>{@code
+MemoryLayout newSeq = MemoryLayout.ofSequence(5,
+    MemoryLayout.ofStruct(
+        MemoryLayout.ofPaddingBits(32),
+        MemoryLayout.ofPaddingBits(32)
+));
  * }</pre></blockquote>
  *
  * Similarly, we can select the member layout named {@code value}, as follows:
@@ -263,6 +286,30 @@ public interface MemoryLayout extends Constable {
     MemoryLayout withBitAlignment(long bitAlignment);
 
     /**
+     * Returns the attribute with the given name if it exists, or an empty optional
+     *
+     * @param name the name of the attribute
+     * @return the optional attribute
+     */
+    Optional<Constable> attribute(String name);
+
+    /**
+     * Returns a new MemoryLayout with the given additional attribute
+     *
+     * @param name the name of the attribute
+     * @param value the value of the attribute
+     * @return the new MemoryLayout
+     */
+    MemoryLayout withAttribute(String name, Constable value);
+
+    /**
+     * Returns a stream of the names of the attributes of this layout
+     *
+     * @return the stream of names
+     */
+    Stream<String> attributes();
+
+    /**
      * Computes the offset, in bits, of the layout selected by a given layout path, where the path is considered rooted in this
      * layout.
      *
@@ -344,6 +391,12 @@ public interface MemoryLayout extends Constable {
         }
         return finalizer.apply(path);
     }
+
+    /**
+     * Is this a padding layout (e.g. a layout created from {@link #ofPaddingBits(long)} ?
+     * @return true, if this layout is a padding layout.
+     */
+    boolean isPadding();
 
     /**
      * Instances of this class are used to form <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>. There
@@ -448,7 +501,7 @@ E * (S + I * F)
      * the same kind, have the same size, name and alignment constraints. Furthermore, depending on the layout kind, additional
      * conditions must be satisfied:
      * <ul>
-     *     <li>two value layouts are considered equal if they have the same endianness (see {@link ValueLayout#order()})</li>
+     *     <li>two value layouts are considered equal if they have the same byte order (see {@link ValueLayout#order()})</li>
      *     <li>two sequence layouts are considered equal if they have the same element count (see {@link SequenceLayout#elementCount()}), and
      *     if their element layouts (see {@link SequenceLayout#elementLayout()}) are also equal</li>
      *     <li>two group layouts are considered equal if they are of the same kind (see {@link GroupLayout#isStruct()},
