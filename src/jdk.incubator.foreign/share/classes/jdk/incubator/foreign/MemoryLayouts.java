@@ -214,6 +214,11 @@ public final class MemoryLayouts {
     public static final ValueLayout C_DOUBLE;
 
     /**
+     * The {@code long double} native type.
+     */
+    public static final ValueLayout C_LONGDOUBLE;
+
+    /**
      * The {@code T*} native type.
      */
     public static final ValueLayout C_POINTER;
@@ -236,6 +241,7 @@ public final class MemoryLayouts {
                 C_ULONGLONG = SysV.C_ULONGLONG;
                 C_FLOAT = SysV.C_FLOAT;
                 C_DOUBLE = SysV.C_DOUBLE;
+                C_LONGDOUBLE = SysV.C_LONGDOUBLE;
                 C_POINTER = SysV.C_POINTER;
             }
             case ABI_WINDOWS -> {
@@ -253,6 +259,7 @@ public final class MemoryLayouts {
                 C_ULONGLONG = WinABI.C_ULONGLONG;
                 C_FLOAT = WinABI.C_FLOAT;
                 C_DOUBLE = WinABI.C_DOUBLE;
+                C_LONGDOUBLE = WinABI.C_LONGDOUBLE;
                 C_POINTER = WinABI.C_POINTER;
             }
             case ABI_AARCH64 -> {
@@ -270,6 +277,7 @@ public final class MemoryLayouts {
                 C_ULONGLONG = AArch64ABI.C_ULONGLONG;
                 C_FLOAT = AArch64ABI.C_FLOAT;
                 C_DOUBLE = AArch64ABI.C_DOUBLE;
+                C_LONGDOUBLE = AArch64ABI.C_LONGDOUBLE;
                 C_POINTER = AArch64ABI.C_POINTER;
             }
             default -> throw new IllegalStateException("Unsupported ABI: " + abi.name());
