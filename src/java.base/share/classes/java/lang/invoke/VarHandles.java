@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static java.lang.invoke.MethodHandleStatics.UNSAFE;
+import static java.lang.invoke.MethodHandleStatics.VAR_HANDLE_IDENTITY_ADAPT;
 
 final class VarHandles {
 
@@ -49,49 +50,49 @@ final class VarHandles {
         if (!f.isStatic()) {
             long foffset = MethodHandleNatives.objectFieldOffset(f);
             if (!type.isPrimitive()) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleReferences.FieldInstanceReadOnly(refc, foffset, type)
-                       : new VarHandleReferences.FieldInstanceReadWrite(refc, foffset, type);
+                       : new VarHandleReferences.FieldInstanceReadWrite(refc, foffset, type));
             }
             else if (type == boolean.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleBooleans.FieldInstanceReadOnly(refc, foffset)
-                       : new VarHandleBooleans.FieldInstanceReadWrite(refc, foffset);
+                       : new VarHandleBooleans.FieldInstanceReadWrite(refc, foffset));
             }
             else if (type == byte.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleBytes.FieldInstanceReadOnly(refc, foffset)
-                       : new VarHandleBytes.FieldInstanceReadWrite(refc, foffset);
+                       : new VarHandleBytes.FieldInstanceReadWrite(refc, foffset));
             }
             else if (type == short.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleShorts.FieldInstanceReadOnly(refc, foffset)
-                       : new VarHandleShorts.FieldInstanceReadWrite(refc, foffset);
+                       : new VarHandleShorts.FieldInstanceReadWrite(refc, foffset));
             }
             else if (type == char.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleChars.FieldInstanceReadOnly(refc, foffset)
-                       : new VarHandleChars.FieldInstanceReadWrite(refc, foffset);
+                       : new VarHandleChars.FieldInstanceReadWrite(refc, foffset));
             }
             else if (type == int.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleInts.FieldInstanceReadOnly(refc, foffset)
-                       : new VarHandleInts.FieldInstanceReadWrite(refc, foffset);
+                       : new VarHandleInts.FieldInstanceReadWrite(refc, foffset));
             }
             else if (type == long.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleLongs.FieldInstanceReadOnly(refc, foffset)
-                       : new VarHandleLongs.FieldInstanceReadWrite(refc, foffset);
+                       : new VarHandleLongs.FieldInstanceReadWrite(refc, foffset));
             }
             else if (type == float.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleFloats.FieldInstanceReadOnly(refc, foffset)
-                       : new VarHandleFloats.FieldInstanceReadWrite(refc, foffset);
+                       : new VarHandleFloats.FieldInstanceReadWrite(refc, foffset));
             }
             else if (type == double.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleDoubles.FieldInstanceReadOnly(refc, foffset)
-                       : new VarHandleDoubles.FieldInstanceReadWrite(refc, foffset);
+                       : new VarHandleDoubles.FieldInstanceReadWrite(refc, foffset));
             }
             else {
                 throw new UnsupportedOperationException();
@@ -110,49 +111,49 @@ final class VarHandles {
             Object base = MethodHandleNatives.staticFieldBase(f);
             long foffset = MethodHandleNatives.staticFieldOffset(f);
             if (!type.isPrimitive()) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleReferences.FieldStaticReadOnly(base, foffset, type)
-                       : new VarHandleReferences.FieldStaticReadWrite(base, foffset, type);
+                       : new VarHandleReferences.FieldStaticReadWrite(base, foffset, type));
             }
             else if (type == boolean.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleBooleans.FieldStaticReadOnly(base, foffset)
-                       : new VarHandleBooleans.FieldStaticReadWrite(base, foffset);
+                       : new VarHandleBooleans.FieldStaticReadWrite(base, foffset));
             }
             else if (type == byte.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleBytes.FieldStaticReadOnly(base, foffset)
-                       : new VarHandleBytes.FieldStaticReadWrite(base, foffset);
+                       : new VarHandleBytes.FieldStaticReadWrite(base, foffset));
             }
             else if (type == short.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleShorts.FieldStaticReadOnly(base, foffset)
-                       : new VarHandleShorts.FieldStaticReadWrite(base, foffset);
+                       : new VarHandleShorts.FieldStaticReadWrite(base, foffset));
             }
             else if (type == char.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleChars.FieldStaticReadOnly(base, foffset)
-                       : new VarHandleChars.FieldStaticReadWrite(base, foffset);
+                       : new VarHandleChars.FieldStaticReadWrite(base, foffset));
             }
             else if (type == int.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleInts.FieldStaticReadOnly(base, foffset)
-                       : new VarHandleInts.FieldStaticReadWrite(base, foffset);
+                       : new VarHandleInts.FieldStaticReadWrite(base, foffset));
             }
             else if (type == long.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleLongs.FieldStaticReadOnly(base, foffset)
-                       : new VarHandleLongs.FieldStaticReadWrite(base, foffset);
+                       : new VarHandleLongs.FieldStaticReadWrite(base, foffset));
             }
             else if (type == float.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleFloats.FieldStaticReadOnly(base, foffset)
-                       : new VarHandleFloats.FieldStaticReadWrite(base, foffset);
+                       : new VarHandleFloats.FieldStaticReadWrite(base, foffset));
             }
             else if (type == double.class) {
-                return f.isFinal() && !isWriteAllowedOnFinalFields
+                return maybeAdapt(f.isFinal() && !isWriteAllowedOnFinalFields
                        ? new VarHandleDoubles.FieldStaticReadOnly(base, foffset)
-                       : new VarHandleDoubles.FieldStaticReadWrite(base, foffset);
+                       : new VarHandleDoubles.FieldStaticReadWrite(base, foffset));
             }
             else {
                 throw new UnsupportedOperationException();
@@ -203,31 +204,31 @@ final class VarHandles {
         int ashift = 31 - Integer.numberOfLeadingZeros(ascale);
 
         if (!componentType.isPrimitive()) {
-            return new VarHandleReferences.Array(aoffset, ashift, arrayClass);
+            return maybeAdapt(new VarHandleReferences.Array(aoffset, ashift, arrayClass));
         }
         else if (componentType == boolean.class) {
-            return new VarHandleBooleans.Array(aoffset, ashift);
+            return maybeAdapt(new VarHandleBooleans.Array(aoffset, ashift));
         }
         else if (componentType == byte.class) {
-            return new VarHandleBytes.Array(aoffset, ashift);
+            return maybeAdapt(new VarHandleBytes.Array(aoffset, ashift));
         }
         else if (componentType == short.class) {
-            return new VarHandleShorts.Array(aoffset, ashift);
+            return maybeAdapt(new VarHandleShorts.Array(aoffset, ashift));
         }
         else if (componentType == char.class) {
-            return new VarHandleChars.Array(aoffset, ashift);
+            return maybeAdapt(new VarHandleChars.Array(aoffset, ashift));
         }
         else if (componentType == int.class) {
-            return new VarHandleInts.Array(aoffset, ashift);
+            return maybeAdapt(new VarHandleInts.Array(aoffset, ashift));
         }
         else if (componentType == long.class) {
-            return new VarHandleLongs.Array(aoffset, ashift);
+            return maybeAdapt(new VarHandleLongs.Array(aoffset, ashift));
         }
         else if (componentType == float.class) {
-            return new VarHandleFloats.Array(aoffset, ashift);
+            return maybeAdapt(new VarHandleFloats.Array(aoffset, ashift));
         }
         else if (componentType == double.class) {
-            return new VarHandleDoubles.Array(aoffset, ashift);
+            return maybeAdapt(new VarHandleDoubles.Array(aoffset, ashift));
         }
         else {
             throw new UnsupportedOperationException();
@@ -242,22 +243,22 @@ final class VarHandles {
         Class<?> viewComponentType = viewArrayClass.getComponentType();
 
         if (viewComponentType == long.class) {
-            return new VarHandleByteArrayAsLongs.ArrayHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsLongs.ArrayHandle(be));
         }
         else if (viewComponentType == int.class) {
-            return new VarHandleByteArrayAsInts.ArrayHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsInts.ArrayHandle(be));
         }
         else if (viewComponentType == short.class) {
-            return new VarHandleByteArrayAsShorts.ArrayHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsShorts.ArrayHandle(be));
         }
         else if (viewComponentType == char.class) {
-            return new VarHandleByteArrayAsChars.ArrayHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsChars.ArrayHandle(be));
         }
         else if (viewComponentType == double.class) {
-            return new VarHandleByteArrayAsDoubles.ArrayHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsDoubles.ArrayHandle(be));
         }
         else if (viewComponentType == float.class) {
-            return new VarHandleByteArrayAsFloats.ArrayHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsFloats.ArrayHandle(be));
         }
 
         throw new UnsupportedOperationException();
@@ -271,22 +272,22 @@ final class VarHandles {
         Class<?> viewComponentType = viewArrayClass.getComponentType();
 
         if (viewComponentType == long.class) {
-            return new VarHandleByteArrayAsLongs.ByteBufferHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsLongs.ByteBufferHandle(be));
         }
         else if (viewComponentType == int.class) {
-            return new VarHandleByteArrayAsInts.ByteBufferHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsInts.ByteBufferHandle(be));
         }
         else if (viewComponentType == short.class) {
-            return new VarHandleByteArrayAsShorts.ByteBufferHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsShorts.ByteBufferHandle(be));
         }
         else if (viewComponentType == char.class) {
-            return new VarHandleByteArrayAsChars.ByteBufferHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsChars.ByteBufferHandle(be));
         }
         else if (viewComponentType == double.class) {
-            return new VarHandleByteArrayAsDoubles.ByteBufferHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsDoubles.ByteBufferHandle(be));
         }
         else if (viewComponentType == float.class) {
-            return new VarHandleByteArrayAsFloats.ByteBufferHandle(be);
+            return maybeAdapt(new VarHandleByteArrayAsFloats.ByteBufferHandle(be));
         }
 
         throw new UnsupportedOperationException();
@@ -319,14 +320,25 @@ final class VarHandles {
 
         Map<Integer, MethodHandle> carrierFactory = ADDRESS_FACTORIES.get(carrier);
         MethodHandle fac = carrierFactory.computeIfAbsent(strides.length,
-                dims -> new AddressVarHandleGenerator(carrier, dims)
+                dims -> new MemoryAccessVarHandleGenerator(carrier, dims)
                             .generateHandleFactory());
 
         try {
-            return (VarHandle)fac.invoke(be, size, offset, alignmentMask, strides);
+            return maybeAdapt((VarHandle)fac.invoke(be, size, offset, alignmentMask, strides));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
+    }
+
+    private static VarHandle maybeAdapt(VarHandle target) {
+        if (!VAR_HANDLE_IDENTITY_ADAPT) return target;
+        target = MethodHandles.filterValue(target,
+                        MethodHandles.identity(target.varType()), MethodHandles.identity(target.varType()));
+        MethodType mtype = target.accessModeType(VarHandle.AccessMode.GET).dropParameterTypes(0, 1);
+        for (int i = 0 ; i < mtype.parameterCount() ; i++) {
+            target = MethodHandles.filterCoordinates(target, i, MethodHandles.identity(mtype.parameterType(i)));
+        }
+        return target;
     }
 
 //    /**
@@ -365,7 +377,7 @@ final class VarHandles {
 //                "@ForceInline\n" +
 //                "@LambdaForm.Compiled\n" +
 //                "final static <METHOD> throws Throwable {\n" +
-//                "    if (handle.vform.methodType_table[ad.type] == ad.symbolicMethodType) {\n" +
+//                "    if (handle.isDirect() && handle.vform.methodType_table[ad.type] == ad.symbolicMethodType) {\n" +
 //                "        <RESULT_ERASED>MethodHandle.linkToStatic(<LINK_TO_STATIC_ARGS>);<RETURN_ERASED>\n" +
 //                "    }\n" +
 //                "    else {\n" +
@@ -378,10 +390,10 @@ final class VarHandles {
 //                "@ForceInline\n" +
 //                "@LambdaForm.Compiled\n" +
 //                "final static <METHOD> throws Throwable {\n" +
-//                "    if (handle.vform.methodType_table[ad.type] == ad.symbolicMethodType) {\n" +
+//                "    if (handle.isDirect() && handle.vform.methodType_table[ad.type] == ad.symbolicMethodType) {\n" +
 //                "        MethodHandle.linkToStatic(<LINK_TO_STATIC_ARGS>);\n" +
 //                "    }\n" +
-//                "    else if (handle.vform.getMethodType_V(ad.type) == ad.symbolicMethodType) {\n" +
+//                "    else if (handle.isDirect() && handle.vform.getMethodType_V(ad.type) == ad.symbolicMethodType) {\n" +
 //                "        MethodHandle.linkToStatic(<LINK_TO_STATIC_ARGS>);\n" +
 //                "    }\n" +
 //                "    else {\n" +

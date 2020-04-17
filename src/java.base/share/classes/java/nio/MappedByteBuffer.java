@@ -30,6 +30,7 @@ import java.lang.ref.Reference;
 import java.util.Objects;
 
 import jdk.internal.access.foreign.MemorySegmentProxy;
+import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
 
 
@@ -107,6 +108,31 @@ public abstract class MappedByteBuffer
         super(mark, pos, lim, cap, segment);
         this.fd = null;
         this.isSync = false;
+    }
+
+    UnmapperProxy unmapper() {
+        return fd != null ?
+                new UnmapperProxy() {
+                    @Override
+                    public long address() {
+                        return address;
+                    }
+
+                    @Override
+                    public FileDescriptor fileDescriptor() {
+                        return fd;
+                    }
+
+                    @Override
+                    public boolean isSync() {
+                        return isSync;
+                    }
+
+                    @Override
+                    public void unmap() {
+                        throw new UnsupportedOperationException();
+                    }
+                } : null;
     }
 
     // Returns the distance (in bytes) of the buffer start from the
