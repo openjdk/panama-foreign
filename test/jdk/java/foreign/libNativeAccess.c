@@ -23,6 +23,7 @@
  */
 
 #include "jni.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 
@@ -113,4 +114,9 @@ Java_TestNative_getDoubleBuffer(JNIEnv *env, jclass cls, jobject buf, jint index
 JNIEXPORT jlong JNICALL
 Java_TestNative_getCapacity(JNIEnv *env, jclass cls, jobject buf) {
     return (*env)->GetDirectBufferCapacity(env, buf);
+}
+
+JNIEXPORT jlong JNICALL
+Java_TestNative_allocate(JNIEnv *env, jclass cls, jobject buf, jint size) {
+    return (jlong)malloc(size);
 }

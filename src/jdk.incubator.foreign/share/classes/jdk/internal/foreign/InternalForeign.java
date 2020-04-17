@@ -65,7 +65,7 @@ public class InternalForeign implements Foreign {
     }
 
     private void checkRawNativeAddress(MemoryAddress base) {
-        if (base.segment() != AbstractMemorySegmentImpl.NOTHING) {
+        if (base.segment() != null) {
             throw new IllegalArgumentException("Not an unchecked memory address");
         }
     }
