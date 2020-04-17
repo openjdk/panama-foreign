@@ -100,6 +100,10 @@ import java.util.function.Consumer;
  * the segment using a memory access var handle. Any attempt to perform such operations from a thread other than the
  * owner thread will result in a runtime failure.
  * <p>
+ * Memory segments support <em>serial thread confinement</em>; that is, ownership of a memory segment can change (see
+ * {@link #withOwnerThread(Thread)}). This allows, for instance, for two threads {@code A} and {@code B} to share
+ * a segment in a controlled, cooperative and race-free fashion.
+ * <p>
  * In some cases, it might be useful for multiple threads to process the contents of the same memory segment concurrently
  * (e.g. in the case of parallel processing); while memory segments provide strong confinement guarantees, it is possible
  * to obtain a {@link Spliterator} from a segment, which can be used to slice the segment and allow multiple thread to
@@ -196,6 +200,22 @@ public interface MemorySegment extends AutoCloseable {
      * @return the thread owning this segment.
      */
     Thread ownerThread();
+
+    /**
+     * Obtains a new memory segment backed by the same underlying memory region as this segment,
+     * but with different owner thread. As a side-effect, this segment will be marked as <em>not alive</em>,
+     * and subsequent operations on this segment will result in runtime errors.
+     * @param newOwner the new owner thread.
+     * @return a new memory segment backed by the same underlying memory region as this segment,
+     *      owned by {@code newOwner}.
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment, or if the segment cannot be closed because it is being operated upon by a different
+     * thread (see {@link #spliterator(SequenceLayout)}).
+     * @throws NullPointerException if {@code newOwner == null}
+     * @throws IllegalArgumentException if the segment is already a confined segment owner by {@code newOnwer}.
+     * @throws UnsupportedOperationException if this segment does not support the {@link #HANDOFF} access mode.
+     */
+    MemorySegment withOwnerThread(Thread newOwner);
 
     /**
      * The size (in bytes) of this memory segment.
@@ -546,4 +566,12 @@ allocateNative(bytesSize, 1);
      * @see MemorySegment#withAccessModes(int)
      */
     int ACQUIRE = CLOSE << 1;
+
+    /**
+     * Handoff access mode; this segment support serial thread-confinement via thread ownership changes
+     * (see {@link #withOwnerThread(Thread)}).
+     * @see MemorySegment#accessModes()
+     * @see MemorySegment#withAccessModes(int)
+     */
+    int HANDOFF = ACQUIRE << 1;
 }

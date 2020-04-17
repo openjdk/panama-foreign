@@ -41,7 +41,10 @@ import java.util.List;
 import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -50,6 +53,32 @@ import static org.testng.Assert.fail;
 public class TestSharedAccess {
 
     static final VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
+
+    @Test
+    public void testConfined() throws Throwable {
+        Thread owner = Thread.currentThread();
+        MemorySegment s = MemorySegment.allocateNative(4);
+        AtomicReference<MemorySegment> confined = new AtomicReference<>(s);
+        setInt(s.baseAddress(), 42);
+        assertEquals(getInt(s.baseAddress()), 42);
+        List<Thread> threads = new ArrayList<>();
+        for (int i = 0 ; i < 1000 ; i++) {
+            threads.add(new Thread(() -> {
+                assertEquals(getInt(confined.get().baseAddress()), 42);
+                confined.set(confined.get().withOwnerThread(owner));
+            }));
+        }
+        threads.forEach(t -> {
+            confined.set(confined.get().withOwnerThread(t));
+            t.start();
+            try {
+                t.join();
+            } catch (Throwable e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        confined.get().close();
+    }
 
     @Test
     public void testShared() throws Throwable {
@@ -120,40 +149,65 @@ public class TestSharedAccess {
         }
     }
 
-
     @Test(expectedExceptions=IllegalStateException.class)
-    public void testBadCloseWithPendingAcquire() throws InterruptedException {
-        try (MemorySegment segment = MemorySegment.allocateNative(16)) {
-            Spliterator<MemorySegment> spliterator = MemorySegment.spliterator(segment,
-                    MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
-            Runnable r = () -> spliterator.forEachRemaining(s -> {
-                try {
-                    Thread.sleep(5000 * 100);
-                } catch (InterruptedException ex) {
-                    throw new AssertionError(ex);
-                }
-            });
-            new Thread(r).start();
-            Thread.sleep(5000);
-        } //should fail here!
+    public void testBadCloseWithPendingAcquire() {
+        withAcquired(MemorySegment::close);
     }
 
     @Test(expectedExceptions=IllegalStateException.class)
-    public void testBadCloseWithPendingAcquireBuffer() throws InterruptedException {
+    public void testBadCloseWithPendingAcquireBuffer() {
+        withAcquired(segment -> {
+            segment = MemorySegment.ofByteBuffer(segment.asByteBuffer()); // original segment is lost
+            segment.close(); // this should still fail
+        });
+    }
+
+    @Test(expectedExceptions=IllegalStateException.class)
+    public void testBadHandoffWithPendingAcquire() {
+        withAcquired(segment -> segment.withOwnerThread(new Thread()));
+    }
+
+    @Test(expectedExceptions=IllegalStateException.class)
+    public void testBadHandoffWithPendingAcquireBuffer() {
+        withAcquired(segment -> {
+            segment = MemorySegment.ofByteBuffer(segment.asByteBuffer()); // original segment is lost
+            segment.withOwnerThread(new Thread()); // this should still fail
+        });
+    }
+
+    @Test(expectedExceptions=IllegalArgumentException.class)
+    public void testBadHandoffSameThread() {
+        MemorySegment.ofArray(new int[4]).withOwnerThread(Thread.currentThread());
+    }
+
+    @Test(expectedExceptions=NullPointerException.class)
+    public void testBadHandoffNullThread() {
+        MemorySegment.ofArray(new int[4]).withOwnerThread(null);
+    }
+
+    private void withAcquired(Consumer<MemorySegment> acquiredAction) {
+        CountDownLatch holder = new CountDownLatch(1);
         MemorySegment segment = MemorySegment.allocateNative(16);
         Spliterator<MemorySegment> spliterator = MemorySegment.spliterator(segment,
                 MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
-        Runnable r = () -> spliterator.forEachRemaining(s -> {
+        CountDownLatch acquired = new CountDownLatch(1);
+        Runnable r = () -> spliterator.tryAdvance(s -> {
             try {
-                Thread.sleep(5000 * 100);
+                acquired.countDown();
+                holder.await();
             } catch (InterruptedException ex) {
                 throw new AssertionError(ex);
             }
         });
         new Thread(r).start();
-        Thread.sleep(5000);
-        segment = MemorySegment.ofByteBuffer(segment.asByteBuffer()); // original segment is lost
-        segment.close(); // this should still fail
+        try {
+            acquired.await();
+            acquiredAction.accept(segment);
+        } catch (InterruptedException ex) {
+            throw new AssertionError(ex);
+        } finally {
+            holder.countDown();
+        }
     }
 
     @Test
