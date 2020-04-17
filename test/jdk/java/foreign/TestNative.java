@@ -56,7 +56,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.*;
 
 public class TestNative {
 
@@ -150,6 +150,8 @@ public class TestNative {
 
     public static native long getCapacity(Buffer buffer);
 
+    public static native long allocate(int size);
+
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
@@ -169,6 +171,24 @@ public class TestNative {
             assertEquals(buf.capacity(), expected);
             assertEquals(getCapacity(buf), expected);
         }
+    }
+
+    @Test
+    public void testResize() {
+        MemoryAddress addr = MemoryAddress.ofLong(42);
+        assertNull(addr.segment());
+        MemoryAddress sized = InternalForeign.getInstancePrivileged().withSize(addr, 12);
+        assertEquals(sized.segment().byteSize(), 12);
+    }
+
+    @Test
+    public void testMallocSegment() {
+        MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
+        assertNull(addr.segment());
+        MemorySegment mallocSegment = InternalForeign.getInstancePrivileged().asMallocSegment(addr, 12);
+        assertEquals(mallocSegment.byteSize(), 12);
+        mallocSegment.close(); //free here
+        assertTrue(!mallocSegment.isAlive());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
