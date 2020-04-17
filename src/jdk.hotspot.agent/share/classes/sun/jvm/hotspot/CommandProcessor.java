@@ -128,7 +128,7 @@ public class CommandProcessor {
     }
 
     public static class NonBootFilter implements ClassFilter {
-        private HashMap emitted = new HashMap();
+        private HashMap<Symbol, InstanceKlass> emitted = new HashMap<>();
         public boolean canInclude(InstanceKlass kls) {
             if (kls.getClassLoader() == null) return false;
             if (emitted.get(kls.getName()) != null) {
@@ -156,7 +156,7 @@ public class CommandProcessor {
             return t;
         }
 
-        void add(String s, ArrayList t) {
+        void add(String s, ArrayList<String> t) {
             if (s.length() > 0) {
                 t.add(s);
             }
@@ -167,7 +167,7 @@ public class CommandProcessor {
 
             // check for quoting
             int quote = cmd.indexOf('"');
-            ArrayList t = new ArrayList();
+            ArrayList<String> t = new ArrayList<>();
             if (quote != -1) {
                 while (cmd.length() > 0) {
                     if (quote != -1) {
@@ -682,7 +682,7 @@ public class CommandProcessor {
                 } else if (tokens == 0) {
                     out.println("Available commands:");
                     Object[] keys = commands.keySet().toArray();
-                    Arrays.sort(keys, new Comparator() {
+                    Arrays.sort(keys, new Comparator<>() {
                              public int compare(Object o1, Object o2) {
                                  return o1.toString().compareTo(o2.toString());
                              }
@@ -993,8 +993,8 @@ public class CommandProcessor {
                 // be read back.
                 Iterator i = agent.getTypeDataBase().getTypes();
                 // Make sure the types are emitted in an order than can be read back in
-                HashSet emitted = new HashSet();
-                Stack pending = new Stack();
+                HashSet<String> emitted = new HashSet<>();
+                Stack<Type> pending = new Stack<>();
                 while (i.hasNext()) {
                     Type n = (Type)i.next();
                     if (emitted.contains(n.getName())) {
@@ -1205,7 +1205,7 @@ public class CommandProcessor {
                 }
             }
         },
-        new Command("intConstant", "intConstant [ name [ value ] ]", true) {
+        new Command("intConstant", "intConstant [ name [ value ] ]", false) {
             public void doit(Tokens t) {
                 if (t.countTokens() != 1 && t.countTokens() != 0 && t.countTokens() != 2) {
                     usage();
@@ -1228,7 +1228,7 @@ public class CommandProcessor {
                 }
             }
         },
-        new Command("longConstant", "longConstant [ name [ value ] ]", true) {
+        new Command("longConstant", "longConstant [ name [ value ] ]", false) {
             public void doit(Tokens t) {
                 if (t.countTokens() != 1 && t.countTokens() != 0 && t.countTokens() != 2) {
                     usage();
@@ -1251,7 +1251,7 @@ public class CommandProcessor {
                 }
             }
         },
-        new Command("field", "field [ type [ name fieldtype isStatic offset address ] ]", true) {
+        new Command("field", "field [ type [ name fieldtype isStatic offset address ] ]", false) {
             public void doit(Tokens t) {
                 if (t.countTokens() != 1 && t.countTokens() != 0 && t.countTokens() != 6) {
                     usage();
@@ -1323,7 +1323,7 @@ public class CommandProcessor {
                 }
             }
         },
-        new Command("type", "type [ type [ name super isOop isInteger isUnsigned size ] ]", true) {
+        new Command("type", "type [ type [ name super isOop isInteger isUnsigned size ] ]", false) {
             public void doit(Tokens t) {
                 if (t.countTokens() != 1 && t.countTokens() != 0 && t.countTokens() != 6) {
                     usage();
@@ -1389,8 +1389,8 @@ public class CommandProcessor {
                 } else {
                     Iterator i = agent.getTypeDataBase().getTypes();
                     // Make sure the types are emitted in an order than can be read back in
-                    HashSet emitted = new HashSet();
-                    Stack pending = new Stack();
+                    HashSet<String> emitted = new HashSet<>();
+                    Stack<Type> pending = new Stack<>();
                     while (i.hasNext()) {
                         Type n = (Type)i.next();
                         if (emitted.contains(n.getName())) {
@@ -1640,7 +1640,7 @@ public class CommandProcessor {
                 if (t.countTokens() != 0) {
                     usage();
                 } else {
-                    ArrayList nmethods = new ArrayList();
+                    ArrayList<NMethod> nmethods = new ArrayList<>();
                     Threads threads = VM.getVM().getThreads();
                     HTMLGenerator gen = new HTMLGenerator(false);
                     for (int i = 0; i < threads.getNumberOfThreads(); i++) {
@@ -1832,8 +1832,8 @@ public class CommandProcessor {
     };
 
     private boolean verboseExceptions = false;
-    private ArrayList history = new ArrayList();
-    private HashMap commands = new HashMap();
+    private ArrayList<String> history = new ArrayList<>();
+    private HashMap<String, Command> commands = new HashMap<>();
     private boolean doEcho = false;
 
     private Command findCommand(String key) {
