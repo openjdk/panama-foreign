@@ -72,7 +72,8 @@ import java.util.function.Consumer;
  * by native memory.
  * <p>
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
- * {@link MemorySegment#mapFromPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>.
+ * {@link MemorySegment#mapFromPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>
+ * (see {@link MappedMemorySegment}).
  *
  * <h2>Closing a memory segment</h2>
  *
@@ -146,7 +147,7 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  *
  * @apiNote In the future, if the Java language permits, {@link MemorySegment}
  * may become a {@code sealed} interface, which would prohibit subclassing except by
- * explicitly permitted types.
+ * {@link MappedMemorySegment} and other explicitly permitted subtypes.
  *
  * @implSpec
  * Implementations of this interface are immutable and thread-safe.
@@ -440,7 +441,8 @@ allocateNative(bytesSize, 1);
      *
      * @param path the path to the file to memory map.
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
-     * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}.
+     * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the chosen mapping mode
+     *                might affect the behavior of the returned memory mapped segment (see {@link MappedMemorySegment#force()}).
      * @return a new mapped memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws UnsupportedOperationException if an unsupported map mode is specified.
