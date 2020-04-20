@@ -51,6 +51,13 @@ Java_java_nio_MappedMemoryUtils_load0(JNIEnv *env, jobject obj, jlong address,
 }
 
 JNIEXPORT void JNICALL
+Java_java_nio_MappedMemoryUtils_unload0(JNIEnv *env, jobject obj, jlong address,
+                                     jlong len)
+{
+    // no madvise available
+}
+
+JNIEXPORT void JNICALL
 Java_java_nio_MappedMemoryUtils_force0(JNIEnv *env, jobject obj, jobject fdo,
                                       jlong address, jlong len)
 {

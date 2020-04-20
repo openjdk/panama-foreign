@@ -94,11 +94,21 @@ public interface MappedMemorySegment extends MemorySegment {
      * Loads this segment's content into physical memory.
      *
      * <p> This method makes a best effort to ensure that, when it returns,
-     * this segment's content is resident in physical memory.  Invoking this
+     * this segment's contents is resident in physical memory.  Invoking this
      * method may cause some number of page faults and I/O operations to
      * occur. </p>
      */
     void load();
+
+    /**
+     * Unloads this segment's content from physical memory.
+     *
+     * <p> This method makes a best effort to ensure that this segment's contents are
+     * are no longer resident in physical memory. Accessing this segment's contents
+     * after invoking this method may cause some number of page faults and I/O operations to
+     * occur (as this segment's contents might need to be paged back in). </p>
+     */
+    void unload();
 
     /**
      * Tells whether or not this segment's content is resident in physical

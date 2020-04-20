@@ -100,6 +100,11 @@ public interface JavaNioAccess {
     void load(long address, boolean isSync, long size);
 
     /**
+     * Used by {@code jdk.internal.foreign.MappedMemorySegmentImpl}.
+     */
+    void unload(long address, boolean isSync, long size);
+
+    /**
      * Used by {@code jdk.internal.foreign.MappedMemorySegmentImpl} and byte buffer var handle views.
      */
     boolean isLoaded(long address, boolean isSync, long size);

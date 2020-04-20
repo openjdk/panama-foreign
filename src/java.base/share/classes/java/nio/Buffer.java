@@ -814,6 +814,11 @@ public abstract class Buffer {
                 }
 
                 @Override
+                public void unload(long address, boolean isSync, long size) {
+                    MappedMemoryUtils.unload(address, isSync, size);
+                }
+
+                @Override
                 public boolean isLoaded(long address, boolean isSync, long size) {
                     return MappedMemoryUtils.isLoaded(address, isSync, size);
                 }

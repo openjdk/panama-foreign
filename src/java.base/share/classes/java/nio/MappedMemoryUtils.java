@@ -75,6 +75,18 @@ import java.io.FileDescriptor;
     // not used, but a potential target for a store, see load() for details.
     private static byte unused;
 
+    static void unload(long address, boolean isSync, long size) {
+        // no need to load a sync mapped buffer
+        if (isSync) {
+            return;
+        }
+        if ((address == 0) || (size == 0))
+            return;
+        long offset = mappingOffset(address);
+        long length = mappingLength(offset, size);
+        unload0(mappingAddress(address, offset), length);
+    }
+
     static void force(FileDescriptor fd, long address, boolean isSync, long index, long length) {
         if (isSync) {
             // simply force writeback of associated cache lines
@@ -90,6 +102,7 @@ import java.io.FileDescriptor;
 
     private static native boolean isLoaded0(long address, long length, int pageCount);
     private static native void load0(long address, long length);
+    private static native void unload0(long address, long length);
     private static native void force0(FileDescriptor fd, long address, long length);
 
     // utility methods

@@ -83,6 +83,11 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl implements 
     }
 
     @Override
+    public void unload() {
+        nioAccess.unload(min, unmapper.isSync(), length);
+    }
+
+    @Override
     public boolean isLoaded() {
         return nioAccess.isLoaded(min, unmapper.isSync(), length);
     }

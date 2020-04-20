@@ -114,6 +114,16 @@ Java_java_nio_MappedMemoryUtils_load0(JNIEnv *env, jobject obj, jlong address,
     }
 }
 
+JNIEXPORT void JNICALL
+Java_java_nio_MappedMemoryUtils_unload0(JNIEnv *env, jobject obj, jlong address,
+                                     jlong len)
+{
+    char *a = (char *)jlong_to_ptr(address);
+    int result = madvise((caddr_t)a, (size_t)len, MADV_DONTNEED);
+    if (result == -1) {
+        JNU_ThrowIOExceptionWithLastError(env, "madvise failed");
+    }
+}
 
 JNIEXPORT void JNICALL
 Java_java_nio_MappedMemoryUtils_force0(JNIEnv *env, jobject obj, jobject fdo,
