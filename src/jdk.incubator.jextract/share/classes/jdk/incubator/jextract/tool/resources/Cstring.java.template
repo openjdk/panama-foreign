@@ -69,7 +69,9 @@ public final class Cstring {
 
     public static String toJavaString(MemoryAddress addr) {
         StringBuilder buf = new StringBuilder();
-        MemoryAddress baseAddr = foreign.withSize(addr, Long.MAX_VALUE);
+        MemoryAddress baseAddr = addr.segment() == null ?
+                foreign.withSize(addr, Long.MAX_VALUE) :
+                addr;
         byte curr = (byte) byteArrHandle.get(baseAddr, 0);
         long offset = 0;
         while (curr != 0) {

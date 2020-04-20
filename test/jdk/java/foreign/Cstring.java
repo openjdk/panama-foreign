@@ -90,7 +90,9 @@ public final class Cstring {
 
     public static String toJavaString(MemoryAddress addr) {
         StringBuilder buf = new StringBuilder();
-        MemoryAddress sizedAddr = foreign.withSize(addr, Long.MAX_VALUE);
+        MemoryAddress sizedAddr = addr.segment() == null ?
+                foreign.withSize(addr, Long.MAX_VALUE) :
+                addr;
         byte curr = (byte) byteArrHandle.get(sizedAddr, 0);
         long offset = 0;
         while (curr != 0) {
