@@ -154,9 +154,9 @@ public class TestClassGeneration extends JextractToolRunner {
     @Test(dataProvider = "stringConstants")
     public void testStringConstant(String name, String expectedValue) throws Throwable {
         Method getter = checkMethod(cls, name, MemoryAddress.class);
-        MemoryAddress ma = (MemoryAddress) getter.invoke(null);
+        MemoryAddress actual = (MemoryAddress) getter.invoke(null);
         byte[] expected = expectedValue.getBytes(StandardCharsets.UTF_8);
-        MemoryAddress actual = FOREIGN.withSize(ma, expected.length);
+        assertEquals(actual.segment().byteSize(), expected.length + 1);
         for (int i = 0; i < expected.length; i++) {
             assertEquals((byte) VH_bytes.get(actual, (long) i), expected[i]);
         }
