@@ -206,8 +206,8 @@ public interface MemorySegment extends AutoCloseable {
      * but with different owner thread. As a side-effect, this segment will be marked as <em>not alive</em>,
      * and subsequent operations on this segment will result in runtime errors.
      * <p>
-     * Write accesses to the segment’s content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
-     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses to the segment’s contents on
+     * Write accesses to the segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
+     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses to the segment's contents on
      * the new owner thread.
      *
      * @param newOwner the new owner thread.
