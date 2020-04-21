@@ -42,7 +42,7 @@ import java.util.function.Supplier;
  */
 public final class Utils {
 
-    private static final String foreignAccess = Optional.ofNullable(VM.getSavedProperty("foreign.unsafe"))
+    private static final String foreignRestrictedAccess = Optional.ofNullable(VM.getSavedProperty("foreign.restricted"))
             .orElse("deny");
 
     private static final MethodHandle ADDRESS_FILTER;
@@ -78,26 +78,24 @@ public final class Utils {
         return (MemoryAddressImpl)addr;
     }
 
-    public static void checkRestrictedAccess() {
-        switch (foreignAccess) {
-            case "deny" -> throwIllegalAccessError(foreignAccess);
-            case "warn" -> System.err.println("WARNING: Accessing jdk.incubator.foreign.Foreign.");
+    public static void checkRestrictedAccess(String method) {
+        switch (foreignRestrictedAccess) {
+            case "deny" -> throwIllegalAccessError(foreignRestrictedAccess, method);
+            case "warn" -> System.err.println("WARNING: Accessing restricted foreign method: " + method);
             case "debug" -> {
-                StringBuilder sb = new StringBuilder("DEBUG: Accessing jdk.incubator.foreign.Foreign.");
-                StackWalker.getInstance().walk(s -> {
-                    s
-                            .forEach(f -> sb.append(System.lineSeparator()).append("\tat ").append(f));
-                    return null;
-                });
-                System.out.println(sb.toString());
+                StringBuilder sb = new StringBuilder("DEBUG: restricted foreign method: \" + method");
+                StackWalker.getInstance().forEach(f -> sb.append(System.lineSeparator())
+                        .append("\tat ")
+                        .append(f));
+                System.err.println(sb.toString());
             }
             case "permit" -> {}
-            default -> throwIllegalAccessError(foreignAccess);
+            default -> throwIllegalAccessError(foreignRestrictedAccess, method);
         }
     }
 
-    private static void throwIllegalAccessError(String value) {
-        throw new IllegalAccessError("Can not access jdk.incubator.foreign.Foreign." +
-                " System property 'jdk.incubator.foreign.Foreign' is set to '" + value + "'");
+    private static void throwIllegalAccessError(String value, String method) {
+        throw new IllegalAccessError("Illegal access to restricted foreign method: " + method +
+                " ; system property 'foreign.restricted' is set to '" + value + "'");
     }
 }

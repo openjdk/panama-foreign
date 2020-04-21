@@ -26,7 +26,7 @@
  * @test
  * @modules java.base/jdk.internal.misc
  *          jdk.incubator.foreign/jdk.internal.foreign
- * @run testng/othervm -Dforeign.unsafe=permit TestNative
+ * @run testng/othervm -Dforeign.restricted=permit TestNative
  */
 
 import jdk.incubator.foreign.MemoryAddress;
@@ -175,7 +175,7 @@ public class TestNative {
     public void testMallocSegment() {
         MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
         assertNull(addr.segment());
-        MemorySegment mallocSegment = MemorySegment.ofNativeUnsafe(addr, 12, null,
+        MemorySegment mallocSegment = MemorySegment.ofNativeRestricted(addr, 12, null,
                 () -> UNSAFE.freeMemory(addr.toRawLongValue()), null);
         assertEquals(mallocSegment.byteSize(), 12);
         mallocSegment.close(); //free here
@@ -185,13 +185,13 @@ public class TestNative {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadResize() {
         try (MemorySegment segment = MemorySegment.allocateNative(4)) {
-            MemorySegment.ofNativeUnsafe(segment.baseAddress(), 0, null, null, null);
+            MemorySegment.ofNativeRestricted(segment.baseAddress(), 0, null, null, null);
         }
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testNullUnsafeSegment() {
-        MemorySegment.ofNativeUnsafe(null, 10, null, null, null);
+        MemorySegment.ofNativeRestricted(null, 10, null, null, null);
     }
 
     static {

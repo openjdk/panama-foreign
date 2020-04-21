@@ -24,7 +24,7 @@
 
 /*
  * @test
- * @run testng/othervm -Dforeign.unsafe=permit TestSharedAccess
+ * @run testng/othervm -Dforeign.restricted=permit TestSharedAccess
  */
 
 import jdk.incubator.foreign.MemoryAddress;
@@ -102,7 +102,7 @@ public class TestSharedAccess {
             setInt(s.baseAddress(), 42);
             assertEquals(getInt(s.baseAddress()), 42);
             List<Thread> threads = new ArrayList<>();
-            MemorySegment sharedSegment = MemorySegment.ofNativeUnsafe(
+            MemorySegment sharedSegment = MemorySegment.ofNativeRestricted(
                     s.baseAddress(), s.byteSize(), null, null, null);
             for (int i = 0 ; i < 1000 ; i++) {
                 threads.add(new Thread(() -> {

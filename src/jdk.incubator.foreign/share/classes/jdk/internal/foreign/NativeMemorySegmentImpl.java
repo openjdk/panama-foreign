@@ -103,14 +103,8 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Thread owner, AutoCloseable cleanup, Object attachment) {
-        MemoryScope scope = new MemoryScope(attachment, extractCleanup(cleanup));
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Thread owner, Runnable cleanup, Object attachment) {
+        MemoryScope scope = new MemoryScope(attachment, cleanup);
         return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), owner, scope);
-    }
-
-    private static AutoCloseable extractCleanup(AutoCloseable cleanup) {
-        return (cleanup instanceof AbstractMemorySegmentImpl) ?
-            ((AbstractMemorySegmentImpl) cleanup).scope.cleanupAction :
-            cleanup;
     }
 }

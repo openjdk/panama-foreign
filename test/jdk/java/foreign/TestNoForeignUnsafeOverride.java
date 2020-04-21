@@ -35,11 +35,11 @@ import org.testng.annotations.Test;
 
 public class TestNoForeignUnsafeOverride {
     static {
-        System.setProperty("foreign.unsafe", "permit");
+        System.setProperty("foreign.restricted", "permit");
     }
 
     @Test(expectedExceptions = IllegalAccessError.class)
     public void testUnsafeAccess() {
-        MemorySegment.ofNativeUnsafe(MemoryAddress.ofLong(42), 10, null, null, null);
+        MemorySegment.ofNativeRestricted(MemoryAddress.ofLong(42), 10, null, null, null);
     }
 }

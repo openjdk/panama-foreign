@@ -481,21 +481,6 @@ allocateNative(bytesSize, 1);
      * action. This method can be very useful when interacting with custom native memory sources (e.g. custom allocators,
      * GPU memory, etc.), where an address to some underlying memory region is typically obtained from native code
      * (often as a plain {@code long} value).
-     * <p>Since the cleanup action is an {@link AutoCloseable} object, another memory segment can be used to specify a
-     * cleanup operation; this can be useful in cases where the user would like to take an existing native segment
-     * and tweak some of the properties of the original segment - as demonstrated below:
-     * <blockquote><pre>{@code
-    MemorySegment segment = MemorySegment.allocateNative(100);
-    MemorySegment unconfinedSegment = MemorySegment.ofNativeUnsafe(
-                                              segment.baseAddress(),
-                                              segment.byteSize(),
-                                              null,
-                                              segment,
-                                              null);
-     * }</pre></blockquote>
-     * The above code takes an existing native segment and creates an unsafe segment that refers to the same
-     * underlying memory region as that of the original segment, but where thread-confinement constraints
-     * have been dropped.
      * <p>
      * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -512,16 +497,16 @@ allocateNative(bytesSize, 1);
      * @return a new native memory segment with given base address, size, owner, cleanup action and object attachment.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      * @throws UnsupportedOperationException if {@code addr} is associated with an heap segment.
-     * @throws IllegalAccessError if the runtime property {@code foreign.unsafe} is not set to either
-     * @throws NullPointerException if {@code addr == null}.
+     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
+     * @throws NullPointerException if {@code addr == null}.
      */
-    static MemorySegment ofNativeUnsafe(MemoryAddress addr, long bytesSize, Thread owner, AutoCloseable cleanup, Object attachment) {
+    static MemorySegment ofNativeRestricted(MemoryAddress addr, long bytesSize, Thread owner, Runnable cleanup, Object attachment) {
         Objects.requireNonNull(addr);
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
-        Utils.checkRestrictedAccess();
+        Utils.checkRestrictedAccess("MemorySegment.ofNativeUnsafe");
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, bytesSize, owner, cleanup, attachment);
     }
 
