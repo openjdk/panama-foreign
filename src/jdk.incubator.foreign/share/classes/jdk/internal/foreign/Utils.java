@@ -28,6 +28,9 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.internal.access.foreign.MemoryAddressProxy;
+import jdk.internal.foreign.abi.aarch64.AArch64ABI;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 import jdk.internal.misc.VM;
 
 import java.lang.invoke.MethodHandle;

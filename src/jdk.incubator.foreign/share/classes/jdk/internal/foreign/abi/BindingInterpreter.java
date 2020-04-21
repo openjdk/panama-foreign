@@ -25,7 +25,6 @@ package jdk.internal.foreign.abi;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.InternalForeign;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
 
@@ -44,8 +43,6 @@ public class BindingInterpreter {
     private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
     private static final VarHandle VH_FLOAT = MemoryHandles.varHandle(float.class, ByteOrder.nativeOrder());
     private static final VarHandle VH_DOUBLE = MemoryHandles.varHandle(double.class, ByteOrder.nativeOrder());
-
-    private static InternalForeign foreign = InternalForeign.getInstancePrivileged();
 
     static void unbox(Object arg, List<Binding> bindings, Function<VMStorage,
             MemoryAddress> ptrFunction, List<? super MemorySegment> buffers) {
@@ -107,7 +104,7 @@ public class BindingInterpreter {
                 case COPY_BUFFER -> {
                     Binding.Copy binding = (Binding.Copy) b;
                     MemoryAddress operand = (MemoryAddress) stack.pop();
-                    operand = foreign.withSize(operand, binding.size());
+                    operand = MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), binding.size());
                     MemorySegment copy = MemorySegment.allocateNative(binding.size(), binding.alignment());
                     MemoryAddress.copy(operand, copy.baseAddress(), binding.size());
                     stack.push(copy); // leaked
