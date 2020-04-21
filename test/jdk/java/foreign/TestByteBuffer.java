@@ -31,6 +31,7 @@
  */
 
 
+import jdk.incubator.foreign.MappedMemorySegment;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -221,7 +222,7 @@ public class TestByteBuffer {
                 MemorySegment segment = MemorySegment.ofByteBuffer(mbb);
                 MemoryAddress base = segment.baseAddress();
                 initTuples(base);
-                ((MappedByteBuffer)segment.asByteBuffer()).force(); //force via segment
+                mbb.force();
             });
         }
 
@@ -242,9 +243,10 @@ public class TestByteBuffer {
         f.deleteOnExit();
 
         //write to channel
-        try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
+        try (MappedMemorySegment segment = MemorySegment.mapFromPath(f.toPath(), tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
             MemoryAddress base = segment.baseAddress();
             initTuples(base);
+            segment.force();
         }
 
         //read from channel

@@ -96,11 +96,11 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     @Override
     public MemoryAddress rebase(MemorySegment segment) {
-        AbstractMemorySegmentImpl segmentImpl = (AbstractMemorySegmentImpl) segment;
+        AbstractMemorySegmentImpl segmentImpl = (AbstractMemorySegmentImpl)segment;
         if (segmentImpl.base() != this.segment.base()) {
             throw new IllegalArgumentException("Invalid rebase target: " + segment);
         }
-        return new MemoryAddressImpl((AbstractMemorySegmentImpl) segment,
+        return new MemoryAddressImpl((AbstractMemorySegmentImpl)segment,
                 unsafeGetOffset() - ((MemoryAddressImpl)segment.baseAddress()).unsafeGetOffset());
     }
 

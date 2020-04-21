@@ -93,7 +93,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public final MemorySegment asSlice(long offset, long newSize) {
+    public AbstractMemorySegmentImpl asSlice(long offset, long newSize) {
         checkBounds(offset, newSize);
         return asSliceNoCheck(offset, newSize);
     }
@@ -102,14 +102,14 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         return dup(offset, newSize, mask, owner, scope);
     }
 
-    @Override
-    public Spliterator<MemorySegment> spliterator(SequenceLayout sequenceLayout) {
-        checkValidState();
-        if (sequenceLayout.byteSize() != byteSize()) {
+    @SuppressWarnings("unchecked")
+    public static <S extends MemorySegment> Spliterator<S> spliterator(S segment, SequenceLayout sequenceLayout) {
+        ((AbstractMemorySegmentImpl)segment).checkValidState();
+        if (sequenceLayout.byteSize() != segment.byteSize()) {
             throw new IllegalArgumentException();
         }
-        return new SegmentSplitter(sequenceLayout.elementLayout().byteSize(), sequenceLayout.elementCount().getAsLong(),
-                this.withAccessModes(accessModes() & ~CLOSE));
+        return (Spliterator<S>)new SegmentSplitter(sequenceLayout.elementLayout().byteSize(), sequenceLayout.elementCount().getAsLong(),
+                (AbstractMemorySegmentImpl)segment.withAccessModes(segment.accessModes() & ~CLOSE));
     }
 
     @Override
