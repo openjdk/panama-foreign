@@ -66,13 +66,13 @@ public class TestSpliterator {
         long serial = sum(0, segment);
         assertEquals(serial, expected);
         //parallel counted completer
-        long parallelCounted = new SumSegmentCounted(null, segment.spliterator(layout), threshold).invoke();
+        long parallelCounted = new SumSegmentCounted(null, MemorySegment.spliterator(segment, layout), threshold).invoke();
         assertEquals(parallelCounted, expected);
         //parallel recursive action
-        long parallelRecursive = new SumSegmentRecursive(segment.spliterator(layout), threshold).invoke();
+        long parallelRecursive = new SumSegmentRecursive(MemorySegment.spliterator(segment, layout), threshold).invoke();
         assertEquals(parallelRecursive, expected);
         //parallel stream
-        long streamParallel = StreamSupport.stream(segment.spliterator(layout), true)
+        long streamParallel = StreamSupport.stream(MemorySegment.spliterator(segment, layout), true)
                 .reduce(0L, TestSpliterator::sumSingle, Long::sum);
         assertEquals(streamParallel, expected);
         segment.close();
@@ -90,8 +90,8 @@ public class TestSpliterator {
 
         //check that a segment w/o ACQUIRE access mode can still be used from same thread
         AtomicLong spliteratorSum = new AtomicLong();
-        segment.withAccessModes(MemorySegment.READ)
-                .spliterator(layout).forEachRemaining(s -> spliteratorSum.addAndGet(sumSingle(0L, s)));
+        MemorySegment.spliterator(segment.withAccessModes(MemorySegment.READ), layout)
+                .forEachRemaining(s -> spliteratorSum.addAndGet(sumSingle(0L, s)));
         assertEquals(spliteratorSum.get(), expected);
     }
 

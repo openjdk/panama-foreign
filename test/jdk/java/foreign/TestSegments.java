@@ -232,7 +232,6 @@ public class TestSegments {
 
         final static List<String> CONFINED_NAMES = List.of(
                 "close",
-                "spliterator",
                 "toByteArray"
         );
 
@@ -292,7 +291,7 @@ public class TestSegments {
             @Override
             void run(MemorySegment segment) {
                 Spliterator<MemorySegment> spliterator =
-                        segment.spliterator(MemoryLayout.ofSequence(segment.byteSize(), MemoryLayouts.JAVA_BYTE));
+                        MemorySegment.spliterator(segment, MemoryLayout.ofSequence(segment.byteSize(), MemoryLayouts.JAVA_BYTE));
                 AtomicReference<RuntimeException> exception = new AtomicReference<>();
                 Runnable action = () -> {
                     try {

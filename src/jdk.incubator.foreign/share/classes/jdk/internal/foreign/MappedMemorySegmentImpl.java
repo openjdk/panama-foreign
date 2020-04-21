@@ -25,7 +25,7 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MappedMemorySegment;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
@@ -44,7 +44,7 @@ import java.nio.file.StandardOpenOption;
  * memory mapped segment, such as the file descriptor associated with the mapping. This information is crucial
  * in order to correctly reconstruct a byte buffer object from the segment (see {@link #makeByteBuffer()}).
  */
-public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
+public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl implements MappedMemorySegment {
 
     private final UnmapperProxy unmapper;
 
@@ -60,13 +60,46 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     @Override
-    AbstractMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+    MappedMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
         return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, owner, scope);
+    }
+
+    // mapped segment methods
+
+
+    @Override
+    public MappedMemorySegmentImpl asSlice(long offset, long newSize) {
+        return (MappedMemorySegmentImpl)super.asSlice(offset, newSize);
+    }
+
+    @Override
+    public MappedMemorySegmentImpl withAccessModes(int accessModes) {
+        return (MappedMemorySegmentImpl)super.withAccessModes(accessModes);
+    }
+
+    @Override
+    public void load() {
+        nioAccess.load(min, unmapper.isSync(), length);
+    }
+
+    @Override
+    public void unload() {
+        nioAccess.unload(min, unmapper.isSync(), length);
+    }
+
+    @Override
+    public boolean isLoaded() {
+        return nioAccess.isLoaded(min, unmapper.isSync(), length);
+    }
+
+    @Override
+    public void force() {
+        nioAccess.force(unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
     }
 
     // factories
 
-    public static MemorySegment makeMappedSegment(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
+    public static MappedMemorySegment makeMappedSegment(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
         if (bytesSize <= 0) throw new IllegalArgumentException("Requested bytes size must be > 0.");
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
