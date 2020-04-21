@@ -27,6 +27,7 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryHandles;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.misc.VM;
 
@@ -41,9 +42,6 @@ import java.util.function.Supplier;
  * This class contains misc helper functions to support creation of memory segments.
  */
 public final class Utils {
-
-    private static final String foreignRestrictedAccess = Optional.ofNullable(VM.getSavedProperty("foreign.restricted"))
-            .orElse("deny");
 
     private static final MethodHandle ADDRESS_FILTER;
 
@@ -71,7 +69,7 @@ public final class Utils {
     public static VarHandle fixUpVarHandle(VarHandle handle) {
         // This adaptation is required, otherwise the memory access var handle will have type MemoryAddressProxy,
         // and not MemoryAddress (which the user expects), which causes performance issues with asType() adaptations.
-        return MethodHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
+        return MemoryHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
     }
 
     private static MemoryAddressProxy filterAddress(MemoryAddress addr) {
