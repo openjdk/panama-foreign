@@ -56,11 +56,11 @@ public final class MemoryScope {
     final static int CLOSED = -1;
     final static int MAX_ACQUIRE = Integer.MAX_VALUE;
 
-    final Runnable cleanupAction;
+    final AutoCloseable cleanupAction;
 
     final static MemoryScope GLOBAL = new MemoryScope(null, null);
 
-    public MemoryScope(Object ref, Runnable cleanupAction) {
+    public MemoryScope(Object ref, AutoCloseable cleanupAction) {
         this.ref = ref;
         this.cleanupAction = cleanupAction;
     }
@@ -115,7 +115,11 @@ public final class MemoryScope {
             throw new IllegalStateException("Cannot close a segment that has active acquired views");
         }
         if (cleanupAction != null) {
-            cleanupAction.run();
+            try {
+                cleanupAction.close();
+            } catch (Exception ex) {
+                throw new IllegalStateException("Unexpected exception while closing the segment", ex);
+            }
         }
     }
 }
