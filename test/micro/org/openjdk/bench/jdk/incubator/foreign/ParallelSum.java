@@ -118,23 +118,23 @@ public class ParallelSum {
 
     @Benchmark
     public int segment_parallel() {
-        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT), SEGMENT_TO_INT).invoke();
+        return new SumSegment(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), SEGMENT_TO_INT).invoke();
     }
 
     @Benchmark
     public int segment_parallel_bulk() {
-        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT_BULK), SEGMENT_TO_INT_BULK).invoke();
+        return new SumSegment(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT_BULK), SEGMENT_TO_INT_BULK).invoke();
     }
 
     @Benchmark
     public int segment_stream_parallel() {
-        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
+        return StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
                 .mapToInt(SEGMENT_TO_INT).sum();
     }
 
     @Benchmark
     public int segment_stream_parallel_bulk() {
-        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT_BULK), true)
+        return StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT_BULK), true)
                 .mapToInt(SEGMENT_TO_INT_BULK).sum();
     }
 

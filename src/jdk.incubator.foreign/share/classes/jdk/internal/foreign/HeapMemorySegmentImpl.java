@@ -69,7 +69,7 @@ public class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    AbstractMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+    HeapMemorySegmentImpl<H> dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
         return new HeapMemorySegmentImpl<H>(this.offset + offset, baseProvider, size, mask, owner, scope);
     }
 

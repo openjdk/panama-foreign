@@ -58,7 +58,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    AbstractMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
+    NativeMemorySegmentImpl dup(long offset, long size, int mask, Thread owner, MemoryScope scope) {
         return new NativeMemorySegmentImpl(min + offset, size, mask, owner, scope);
     }
 

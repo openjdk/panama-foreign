@@ -72,7 +72,8 @@ import java.util.function.Consumer;
  * by native memory.
  * <p>
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
- * {@link MemorySegment#mapFromPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>.
+ * {@link MemorySegment#mapFromPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>
+ * (see {@link MappedMemorySegment}).
  *
  * <h2>Closing a memory segment</h2>
  *
@@ -146,7 +147,7 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  *
  * @apiNote In the future, if the Java language permits, {@link MemorySegment}
  * may become a {@code sealed} interface, which would prohibit subclassing except by
- * explicitly permitted types.
+ * {@link MappedMemorySegment} and other explicitly permitted subtypes.
  *
  * @implSpec
  * Implementations of this interface are immutable and thread-safe.
@@ -162,7 +163,7 @@ public interface MemorySegment extends AutoCloseable {
     MemoryAddress baseAddress();
 
     /**
-     * Returns a spliterator for this memory segment. The returned spliterator reports {@link Spliterator#SIZED},
+     * Returns a spliterator for the given memory segment. The returned spliterator reports {@link Spliterator#SIZED},
      * {@link Spliterator#SUBSIZED}, {@link Spliterator#IMMUTABLE}, {@link Spliterator#NONNULL} and {@link Spliterator#ORDERED}
      * characteristics.
      * <p>
@@ -177,12 +178,16 @@ public interface MemorySegment extends AutoCloseable {
      * fail with an exception, it is possible to close a segment when a spliterator has been obtained but no thread
      * is actively working on it using {@link Spliterator#tryAdvance(Consumer)}; in such cases, any subsequent call
      * to {@link Spliterator#tryAdvance(Consumer)} will fail with an exception.
+     * @param segment the segment to be used for splitting.
      * @param layout the layout to be used for splitting.
+     * @param <S> the memory segment type
      * @return the element spliterator for this segment
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * @throws IllegalStateException if the segment is not <em>alive</em>, or if access occurs from a thread other than the
      * thread owning this segment
      */
-    Spliterator<MemorySegment> spliterator(SequenceLayout layout);
+    static <S extends MemorySegment> Spliterator<S> spliterator(S segment, SequenceLayout layout) {
+        return AbstractMemorySegmentImpl.spliterator(segment, layout);
+    }
 
     /**
      * The thread owning this segment.
@@ -246,7 +251,7 @@ public interface MemorySegment extends AutoCloseable {
      * associated with the memory segment.
      * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
      * thread owning this segment, or if the segment cannot be closed because it is being operated upon by a different
-     * thread (see {@link #spliterator(SequenceLayout)}).
+     * thread (see {@link #spliterator(MemorySegment, SequenceLayout)}).
      * @throws UnsupportedOperationException if this segment does not support the {@link #CLOSE} access mode.
      */
     void close();
@@ -436,13 +441,14 @@ allocateNative(bytesSize, 1);
      *
      * @param path the path to the file to memory map.
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
-     * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}.
+     * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the chosen mapping mode
+     *                might affect the behavior of the returned memory mapped segment (see {@link MappedMemorySegment#force()}).
      * @return a new mapped memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws UnsupportedOperationException if an unsupported map mode is specified.
      * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
      */
-    static MemorySegment mapFromPath(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
+    static MappedMemorySegment mapFromPath(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
         return MappedMemorySegmentImpl.makeMappedSegment(path, bytesSize, mapMode);
     }
 
@@ -498,7 +504,7 @@ allocateNative(bytesSize, 1);
 
     /**
      * Acquire access mode; this segment support sharing with threads other than the owner thread, via spliterator
-     * (see {@link #spliterator(SequenceLayout)}).
+     * (see {@link #spliterator(MemorySegment, SequenceLayout)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */

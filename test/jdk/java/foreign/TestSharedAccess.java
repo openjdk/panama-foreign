@@ -60,7 +60,7 @@ public class TestSharedAccess {
             }
             List<Thread> threads = new ArrayList<>();
             List<Spliterator<MemorySegment>> spliterators = new ArrayList<>();
-            spliterators.add(s.spliterator(layout));
+            spliterators.add(MemorySegment.spliterator(s, layout));
             while (true) {
                 boolean progress = false;
                 List<Spliterator<MemorySegment>> newSpliterators = new ArrayList<>();
@@ -123,7 +123,8 @@ public class TestSharedAccess {
     @Test(expectedExceptions=IllegalStateException.class)
     public void testBadCloseWithPendingAcquire() throws InterruptedException {
         try (MemorySegment segment = MemorySegment.allocateNative(16)) {
-            Spliterator<MemorySegment> spliterator = segment.spliterator(MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
+            Spliterator<MemorySegment> spliterator = MemorySegment.spliterator(segment,
+                    MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
             Runnable r = () -> spliterator.forEachRemaining(s -> {
                 try {
                     Thread.sleep(5000 * 100);
