@@ -26,6 +26,7 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
@@ -102,12 +103,8 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(long min, long bytesSize, Thread owner, boolean allowClose) {
-        MemoryScope scope = new MemoryScope(null, allowClose ? () -> unsafe.freeMemory(min) : null);
-        int mask = defaultAccessModes(bytesSize);
-        if (!allowClose) {
-            mask &= ~MemorySegment.CLOSE;
-        }
-        return new NativeMemorySegmentImpl(min, bytesSize, mask, owner, scope);
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Thread owner, Runnable cleanup, Object attachment) {
+        MemoryScope scope = new MemoryScope(attachment, cleanup);
+        return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), owner, scope);
     }
 }

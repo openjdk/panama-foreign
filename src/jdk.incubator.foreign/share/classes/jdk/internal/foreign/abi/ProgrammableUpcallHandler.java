@@ -25,7 +25,6 @@ package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
-import jdk.internal.foreign.InternalForeign;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.vm.annotation.Stable;
@@ -51,8 +50,6 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
         privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.DEBUG");
 
     private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
-
-    private static InternalForeign foreign = InternalForeign.getInstancePrivileged();
 
     @Stable
     private final MethodHandle mh;
@@ -88,7 +85,7 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
                 layout.dump(abi.arch, buffer, System.err);
             }
 
-            MemoryAddress bufferBase = foreign.withSize(buffer, layout.size);
+            MemoryAddress bufferBase = MemoryAddressImpl.ofLongUnchecked(buffer.toRawLongValue(), layout.size);
             MemoryAddress stackArgsBase = MemoryAddressImpl.ofLongUnchecked((long)VH_LONG.get(buffer.rebase(bufferBase.segment()).addOffset(layout.stack_args)));
             Object[] args = new Object[type.parameterCount()];
             for (int i = 0 ; i < type.parameterCount() ; i++) {

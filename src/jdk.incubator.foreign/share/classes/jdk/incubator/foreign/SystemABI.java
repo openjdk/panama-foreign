@@ -25,7 +25,12 @@
  */
 package jdk.incubator.foreign;
 
+import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
+import jdk.internal.foreign.abi.aarch64.AArch64ABI;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -202,4 +207,19 @@ public interface SystemABI {
      * @return the layout (if any) associated with {@code type}
      */
     Optional<MemoryLayout> layoutFor(Type type);
+
+    /**
+     * Obtain an instance of the system ABI.
+     * <p>
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     * @return system ABI.
+     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
+     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
+     */
+    static SystemABI getSystemABI() {
+        Utils.checkRestrictedAccess("SystemABI.getSystemABI");
+        return SharedUtils.getSystemABI();
+    }
 }

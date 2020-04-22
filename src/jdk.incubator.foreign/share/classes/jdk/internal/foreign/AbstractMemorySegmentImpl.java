@@ -226,11 +226,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     // Helper methods
 
-    AbstractMemorySegmentImpl asUnconfined() {
-        checkValidState();
-        return dup(0, length, mask, null, scope);
-    }
-
     private boolean isSet(int mask) {
         return (this.mask & mask) != 0;
     }

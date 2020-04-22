@@ -32,10 +32,12 @@ import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
+import jdk.internal.foreign.Utils;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
@@ -477,6 +479,41 @@ allocateNative(bytesSize, 1);
         }
 
         return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes);
+    }
+
+    /**
+     * Returns a new native memory segment with given base address and size; the returned segment has its own temporal
+     * bounds, and can therefore be closed; closing such a segment can optionally result in calling an user-provided cleanup
+     * action. This method can be very useful when interacting with custom native memory sources (e.g. custom allocators,
+     * GPU memory, etc.), where an address to some underlying memory region is typically obtained from native code
+     * (often as a plain {@code long} value).
+     * <p>
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     * @param addr the desired base address
+     * @param bytesSize the desired size.
+     * @param owner the desired owner thread. If {@code owner == null}, the returned segment is <em>not</em> confined.
+     * @param cleanup a cleanup action to be executed when the {@link MemorySegment#close()} method is called on the
+     *                returned segment. If {@code cleanup == null}, no cleanup action is executed.
+     * @param attachment an object that must be kept alive by the returned segment; this can be useful when
+     *                   the returned segment depends on memory which could be released if a certain object
+     *                   is determined to be unreacheable. In most cases this will be set to {@code null}.
+     * @return a new native memory segment with given base address, size, owner, cleanup action and object attachment.
+     * @throws IllegalArgumentException if {@code bytesSize <= 0}.
+     * @throws UnsupportedOperationException if {@code addr} is associated with an heap segment.
+     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
+     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
+     * @throws NullPointerException if {@code addr == null}.
+     */
+    static MemorySegment ofNativeRestricted(MemoryAddress addr, long bytesSize, Thread owner, Runnable cleanup, Object attachment) {
+        Objects.requireNonNull(addr);
+        if (bytesSize <= 0) {
+            throw new IllegalArgumentException("Invalid size : " + bytesSize);
+        }
+        Utils.checkRestrictedAccess("MemorySegment.ofNativeUnsafe");
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, bytesSize, owner, cleanup, attachment);
     }
 
     // access mode masks

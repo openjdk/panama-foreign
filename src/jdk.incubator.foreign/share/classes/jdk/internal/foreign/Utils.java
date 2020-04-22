@@ -27,31 +27,26 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.access.JavaNioAccess;
-import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemoryAddressProxy;
-import jdk.internal.access.foreign.UnmapperProxy;
-import jdk.internal.misc.Unsafe;
-import sun.nio.ch.FileChannelImpl;
-import sun.security.action.GetBooleanAction;
+import jdk.internal.foreign.abi.aarch64.AArch64ABI;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
+import jdk.internal.misc.VM;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
  * This class contains misc helper functions to support creation of memory segments.
  */
 public final class Utils {
+
+    private static final String foreignRestrictedAccess = Optional.ofNullable(VM.getSavedProperty("foreign.restricted"))
+            .orElse("deny");
 
     private static final MethodHandle ADDRESS_FILTER;
 
@@ -84,5 +79,26 @@ public final class Utils {
 
     private static MemoryAddressProxy filterAddress(MemoryAddress addr) {
         return (MemoryAddressImpl)addr;
+    }
+
+    public static void checkRestrictedAccess(String method) {
+        switch (foreignRestrictedAccess) {
+            case "deny" -> throwIllegalAccessError(foreignRestrictedAccess, method);
+            case "warn" -> System.err.println("WARNING: Accessing restricted foreign method: " + method);
+            case "debug" -> {
+                StringBuilder sb = new StringBuilder("DEBUG: restricted foreign method: \" + method");
+                StackWalker.getInstance().forEach(f -> sb.append(System.lineSeparator())
+                        .append("\tat ")
+                        .append(f));
+                System.err.println(sb.toString());
+            }
+            case "permit" -> {}
+            default -> throwIllegalAccessError(foreignRestrictedAccess, method);
+        }
+    }
+
+    private static void throwIllegalAccessError(String value, String method) {
+        throw new IllegalAccessError("Illegal access to restricted foreign method: " + method +
+                " ; system property 'foreign.restricted' is set to '" + value + "'");
     }
 }
