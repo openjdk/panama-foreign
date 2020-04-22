@@ -107,15 +107,20 @@ public final class MemoryScope {
         } while (!COUNT_HANDLE.compareAndSet(this, value, value - 1));
     }
 
-    void close() {
+    void close(boolean doCleanup) {
         if (!COUNT_HANDLE.compareAndSet(this, UNACQUIRED, CLOSED)) {
             //first check if already closed...
             checkAliveConfined();
             //...if not, then we have acquired views that are still active
             throw new IllegalStateException("Cannot close a segment that has active acquired views");
         }
-        if (cleanupAction != null) {
+        if (doCleanup && cleanupAction != null) {
             cleanupAction.run();
         }
+    }
+
+    MemoryScope dup() {
+        close(false);
+        return new MemoryScope(ref, cleanupAction);
     }
 }
