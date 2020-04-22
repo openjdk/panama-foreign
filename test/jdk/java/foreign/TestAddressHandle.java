@@ -103,14 +103,14 @@ public class TestAddressHandle {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadAdaptBoolean() {
         VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
-        VarHandle boolHandle = MethodHandles.filterValue(intHandle, BOOL_TO_INT, INT_TO_BOOL);
+        VarHandle boolHandle = MemoryHandles.filterValue(intHandle, BOOL_TO_INT, INT_TO_BOOL);
         MemoryHandles.asAddressVarHandle(boolHandle);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadAdaptString() {
         VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
-        VarHandle stringHandle = MethodHandles.filterValue(intHandle, STRING_TO_INT, INT_TO_STRING);
+        VarHandle stringHandle = MemoryHandles.filterValue(intHandle, STRING_TO_INT, INT_TO_STRING);
         MemoryHandles.asAddressVarHandle(stringHandle);
     }
 

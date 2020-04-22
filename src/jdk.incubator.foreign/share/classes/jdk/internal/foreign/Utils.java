@@ -27,6 +27,7 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryHandles;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.misc.VM;
 
@@ -71,7 +72,7 @@ public final class Utils {
     public static VarHandle fixUpVarHandle(VarHandle handle) {
         // This adaptation is required, otherwise the memory access var handle will have type MemoryAddressProxy,
         // and not MemoryAddress (which the user expects), which causes performance issues with asType() adaptations.
-        return MethodHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
+        return MemoryHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
     }
 
     private static MemoryAddressProxy filterAddress(MemoryAddress addr) {

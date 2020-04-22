@@ -33,7 +33,6 @@
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ValueLayout;
@@ -45,7 +44,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.util.List;
-import java.util.function.Function;
 
 public class TestAdaptVarHandles {
 
@@ -86,7 +84,7 @@ public class TestAdaptVarHandles {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = layout.varHandle(int.class);
-        VarHandle i2SHandle = MethodHandles.filterValue(intHandle, S2I, I2S);
+        VarHandle i2SHandle = MemoryHandles.filterValue(intHandle, S2I, I2S);
         i2SHandle.set(segment.baseAddress(), "1");
         String oldValue = (String)i2SHandle.getAndAdd(segment.baseAddress(), "42");
         assertEquals(oldValue, "1");
@@ -102,61 +100,61 @@ public class TestAdaptVarHandles {
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadFilterNullTarget() {
-        MethodHandles.filterValue(null, S2I, I2S);
+        MemoryHandles.filterValue(null, S2I, I2S);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadFilterNullUnbox() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterValue(intHandle, null, I2S);
+        MemoryHandles.filterValue(intHandle, null, I2S);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadFilterNullBox() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterValue(intHandle, S2I, null);
+        MemoryHandles.filterValue(intHandle, S2I, null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterCarrier() {
         VarHandle floatHandle = MemoryLayouts.JAVA_FLOAT.varHandle(float.class);
-        MethodHandles.filterValue(floatHandle, S2I, I2S);
+        MemoryHandles.filterValue(floatHandle, S2I, I2S);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterUnboxArity() {
         VarHandle floatHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterValue(floatHandle, S2I.bindTo(""), I2S);
+        MemoryHandles.filterValue(floatHandle, S2I.bindTo(""), I2S);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterBoxArity() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterValue(intHandle, S2I, I2S.bindTo(42));
+        MemoryHandles.filterValue(intHandle, S2I, I2S.bindTo(42));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterBoxException() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterValue(intHandle, I2S, S2L_EX);
+        MemoryHandles.filterValue(intHandle, I2S, S2L_EX);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterUnboxException() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterValue(intHandle, S2L_EX, I2S);
+        MemoryHandles.filterValue(intHandle, S2L_EX, I2S);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterBoxHandleException() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterValue(intHandle, S2I, I2S_EX);
+        MemoryHandles.filterValue(intHandle, S2I, I2S_EX);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterUnboxHandleException() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterValue(intHandle, S2I_EX, I2S);
+        MemoryHandles.filterValue(intHandle, S2I_EX, I2S);
     }
 
     @Test
@@ -164,7 +162,7 @@ public class TestAdaptVarHandles {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
-        VarHandle intHandle_longIndex = MethodHandles.filterCoordinates(intHandle, 0, BASE_ADDR, S2L);
+        VarHandle intHandle_longIndex = MemoryHandles.filterCoordinates(intHandle, 0, BASE_ADDR, S2L);
         intHandle_longIndex.set(segment, "0", 1);
         int oldValue = (int)intHandle_longIndex.getAndAdd(segment, "0", 42);
         assertEquals(oldValue, 1);
@@ -180,43 +178,43 @@ public class TestAdaptVarHandles {
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadFilterCoordinatesNullTarget() {
-        MethodHandles.filterCoordinates(null, 0, S2I);
+        MemoryHandles.filterCoordinates(null, 0, S2I);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadFilterCoordinatesNullFilters() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterCoordinates(intHandle, 0, null);
+        MemoryHandles.filterCoordinates(intHandle, 0, null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterCoordinatesNegativePos() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterCoordinates(intHandle, -1, SUM_OFFSETS);
+        MemoryHandles.filterCoordinates(intHandle, -1, SUM_OFFSETS);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterCoordinatesPosTooBig() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.filterCoordinates(intHandle, 1, SUM_OFFSETS);
+        MemoryHandles.filterCoordinates(intHandle, 1, SUM_OFFSETS);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterCoordinatesWrongFilterType() {
         VarHandle intHandle = MemoryHandles.withStride(MemoryLayouts.JAVA_INT.varHandle(int.class), 4);
-        MethodHandles.filterCoordinates(intHandle, 1, S2I);
+        MemoryHandles.filterCoordinates(intHandle, 1, S2I);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterCoordinatesWrongFilterException() {
         VarHandle intHandle = MemoryHandles.withStride(MemoryLayouts.JAVA_INT.varHandle(int.class), 4);
-        MethodHandles.filterCoordinates(intHandle, 1, S2L_EX);
+        MemoryHandles.filterCoordinates(intHandle, 1, S2L_EX);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadFilterCoordinatesTooManyFilters() {
         VarHandle intHandle = MemoryHandles.withStride(MemoryLayouts.JAVA_INT.varHandle(int.class), 4);
-        MethodHandles.filterCoordinates(intHandle, 1, S2L, S2L);
+        MemoryHandles.filterCoordinates(intHandle, 1, S2L, S2L);
     }
 
     @Test
@@ -224,7 +222,7 @@ public class TestAdaptVarHandles {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
-        VarHandle intHandle_longIndex = MethodHandles.insertCoordinates(intHandle, 0, segment.baseAddress(), 0L);
+        VarHandle intHandle_longIndex = MemoryHandles.insertCoordinates(intHandle, 0, segment.baseAddress(), 0L);
         intHandle_longIndex.set(1);
         int oldValue = (int)intHandle_longIndex.getAndAdd(42);
         assertEquals(oldValue, 1);
@@ -240,37 +238,37 @@ public class TestAdaptVarHandles {
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadInsertCoordinatesNullTarget() {
-        MethodHandles.insertCoordinates(null, 0, 42);
+        MemoryHandles.insertCoordinates(null, 0, 42);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadInsertCoordinatesNullValues() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.insertCoordinates(intHandle, 0, null);
+        MemoryHandles.insertCoordinates(intHandle, 0, null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadInsertCoordinatesNegativePos() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.insertCoordinates(intHandle, -1, 42);
+        MemoryHandles.insertCoordinates(intHandle, -1, 42);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadInsertCoordinatesPosTooBig() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.insertCoordinates(intHandle, 1, 42);
+        MemoryHandles.insertCoordinates(intHandle, 1, 42);
     }
 
     @Test(expectedExceptions = ClassCastException.class)
     public void testBadInsertCoordinatesWrongCoordinateType() {
         VarHandle intHandle = MemoryHandles.withStride(MemoryLayouts.JAVA_INT.varHandle(int.class), 4);
-        MethodHandles.insertCoordinates(intHandle, 1, "Hello");
+        MemoryHandles.insertCoordinates(intHandle, 1, "Hello");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadInsertCoordinatesTooManyValues() {
         VarHandle intHandle = MemoryHandles.withStride(MemoryLayouts.JAVA_INT.varHandle(int.class), 4);
-        MethodHandles.insertCoordinates(intHandle, 1, 0L, 0L);
+        MemoryHandles.insertCoordinates(intHandle, 1, 0L, 0L);
     }
 
     @Test
@@ -278,7 +276,7 @@ public class TestAdaptVarHandles {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
-        VarHandle intHandle_swap = MethodHandles.permuteCoordinates(intHandle,
+        VarHandle intHandle_swap = MemoryHandles.permuteCoordinates(intHandle,
                 List.of(long.class, MemoryAddress.class), 1, 0);
         intHandle_swap.set(0L, segment.baseAddress(), 1);
         int oldValue = (int)intHandle_swap.getAndAdd(0L, segment.baseAddress(), 42);
@@ -295,43 +293,43 @@ public class TestAdaptVarHandles {
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadPermuteCoordinatesNullTarget() {
-        MethodHandles.permuteCoordinates(null, List.of());
+        MemoryHandles.permuteCoordinates(null, List.of());
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadPermuteCoordinatesNullCoordinates() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.permuteCoordinates(intHandle, null);
+        MemoryHandles.permuteCoordinates(intHandle, null);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadPermuteCoordinatesNullReorder() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.permuteCoordinates(intHandle, List.of(int.class), null);
+        MemoryHandles.permuteCoordinates(intHandle, List.of(int.class), null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadPermuteCoordinatesTooManyCoordinates() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.permuteCoordinates(intHandle, List.of(int.class, int.class), new int[2]);
+        MemoryHandles.permuteCoordinates(intHandle, List.of(int.class, int.class), new int[2]);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadPermuteCoordinatesTooFewCoordinates() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.permuteCoordinates(intHandle, List.of());
+        MemoryHandles.permuteCoordinates(intHandle, List.of());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadPermuteCoordinatesIndexTooBig() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.permuteCoordinates(intHandle, List.of(int.class, int.class), 3);
+        MemoryHandles.permuteCoordinates(intHandle, List.of(int.class, int.class), 3);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadPermuteCoordinatesIndexTooSmall() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.permuteCoordinates(intHandle, List.of(int.class, int.class), -1);
+        MemoryHandles.permuteCoordinates(intHandle, List.of(int.class, int.class), -1);
     }
 
     @Test
@@ -339,7 +337,7 @@ public class TestAdaptVarHandles {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
-        VarHandle intHandle_sum = MethodHandles.collectCoordinates(intHandle, 1, SUM_OFFSETS);
+        VarHandle intHandle_sum = MemoryHandles.collectCoordinates(intHandle, 1, SUM_OFFSETS);
         intHandle_sum.set(segment.baseAddress(), -2L, 2L, 1);
         int oldValue = (int)intHandle_sum.getAndAdd(segment.baseAddress(), -2L, 2L, 42);
         assertEquals(oldValue, 1);
@@ -355,43 +353,43 @@ public class TestAdaptVarHandles {
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadCollectCoordinatesNullTarget() {
-        MethodHandles.collectCoordinates(null, 0, SUM_OFFSETS);
+        MemoryHandles.collectCoordinates(null, 0, SUM_OFFSETS);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadCollectCoordinatesNullFilters() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.collectCoordinates(intHandle, 0, null);
+        MemoryHandles.collectCoordinates(intHandle, 0, null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadCollectCoordinatesNegativePos() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.collectCoordinates(intHandle, -1, SUM_OFFSETS);
+        MemoryHandles.collectCoordinates(intHandle, -1, SUM_OFFSETS);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadCollectCoordinatesPosTooBig() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.collectCoordinates(intHandle, 1, SUM_OFFSETS);
+        MemoryHandles.collectCoordinates(intHandle, 1, SUM_OFFSETS);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadCollectCoordinatesWrongFilterType() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.collectCoordinates(intHandle, 0, SUM_OFFSETS);
+        MemoryHandles.collectCoordinates(intHandle, 0, SUM_OFFSETS);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadCollectCoordinatesWrongVoidFilterType() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.collectCoordinates(intHandle, 0, VOID_FILTER);
+        MemoryHandles.collectCoordinates(intHandle, 0, VOID_FILTER);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadCollectCoordinatesWrongFilterException() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.collectCoordinates(intHandle, 0, S2L_EX);
+        MemoryHandles.collectCoordinates(intHandle, 0, S2L_EX);
     }
 
     @Test
@@ -399,7 +397,7 @@ public class TestAdaptVarHandles {
         ValueLayout layout = MemoryLayouts.JAVA_INT;
         MemorySegment segment = MemorySegment.allocateNative(layout);
         VarHandle intHandle = MemoryHandles.withStride(layout.varHandle(int.class), 4);
-        VarHandle intHandle_dummy = MethodHandles.dropCoordinates(intHandle, 1, float.class, String.class);
+        VarHandle intHandle_dummy = MemoryHandles.dropCoordinates(intHandle, 1, float.class, String.class);
         intHandle_dummy.set(segment.baseAddress(), 1f, "hello", 0L, 1);
         int oldValue = (int)intHandle_dummy.getAndAdd(segment.baseAddress(), 1f, "hello", 0L, 42);
         assertEquals(oldValue, 1);
@@ -416,24 +414,24 @@ public class TestAdaptVarHandles {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadDropCoordinatesNegativePos() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.dropCoordinates(intHandle, -1);
+        MemoryHandles.dropCoordinates(intHandle, -1);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadDropCoordinatesPosTooBig() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.dropCoordinates(intHandle, 2);
+        MemoryHandles.dropCoordinates(intHandle, 2);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadDropCoordinatesNullValueTypes() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
-        MethodHandles.dropCoordinates(intHandle, 1, null);
+        MemoryHandles.dropCoordinates(intHandle, 1, null);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testBadDropCoordinatesNullTarget() {
-        MethodHandles.dropCoordinates(null, 1);
+        MemoryHandles.dropCoordinates(null, 1);
     }
 
     //helper methods
