@@ -27,13 +27,17 @@ package jdk.internal.foreign.abi;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.InternalForeign;
+import jdk.incubator.foreign.SystemABI;
+import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
 
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.abi.aarch64.AArch64ABI;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -51,8 +55,6 @@ public class SharedUtils {
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BASEADDRESS;
     private static final MethodHandle MH_BUFFER_COPY;
-
-    private static InternalForeign foreign = InternalForeign.getInstancePrivileged();
 
     static {
         try {
@@ -173,7 +175,9 @@ public class SharedUtils {
     }
 
     private static MemoryAddress bufferCopy(MemoryAddress dest, MemorySegment buffer) {
-        MemoryAddress.copy(buffer.baseAddress(), foreign.withSize(dest, buffer.byteSize()), buffer.byteSize());
+        MemoryAddress.copy(buffer.baseAddress(),
+                MemoryAddressImpl.ofLongUnchecked(dest.toRawLongValue(), buffer.byteSize()),
+                buffer.byteSize());
         return dest;
     }
 
@@ -196,5 +200,20 @@ public class SharedUtils {
         }
 
         throw new IllegalArgumentException("Size too large: " + size);
+    }
+
+    public static SystemABI getSystemABI() {
+        String arch = System.getProperty("os.arch");
+        String os = System.getProperty("os.name");
+        if (arch.equals("amd64") || arch.equals("x86_64")) {
+            if (os.startsWith("Windows")) {
+                return Windowsx64ABI.getInstance();
+            } else {
+                return SysVx64ABI.getInstance();
+            }
+        } else if (arch.equals("aarch64")) {
+            return AArch64ABI.getInstance();
+        }
+        throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
     }
 }

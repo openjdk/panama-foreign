@@ -40,7 +40,6 @@ import java.util.Objects;
 public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProxy {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
-    private static final InternalForeign foreign = InternalForeign.getInstancePrivileged();
 
     private final AbstractMemorySegmentImpl segment;
     private final long offset;
@@ -151,6 +150,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     }
 
     public static MemoryAddress ofLongUnchecked(long value, long byteSize) {
-        return foreign.withSize(MemoryAddress.ofLong(value), byteSize);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
+                MemoryAddress.ofLong(value), byteSize, null, null, null).baseAddress();
     }
 }

@@ -24,7 +24,6 @@
 import java.lang.invoke.VarHandle;
 import java.nio.charset.Charset;
 import jdk.incubator.foreign.NativeAllocationScope;
-import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -34,8 +33,6 @@ public final class Cstring {
     // don't create!
     private Cstring() {
     }
-
-    private static final Foreign foreign = Foreign.getInstance();
 
     private static VarHandle arrayHandle(MemoryLayout elemLayout, Class<?> elemCarrier) {
         return MemoryLayout.ofSequence(elemLayout)
@@ -90,7 +87,10 @@ public final class Cstring {
 
     public static String toJavaString(MemoryAddress addr) {
         StringBuilder buf = new StringBuilder();
-        MemoryAddress sizedAddr = foreign.withSize(addr, Long.MAX_VALUE);
+        MemoryAddress sizedAddr = addr.segment() != null ?
+                addr :
+                MemorySegment.ofNativeRestricted(addr, Long.MAX_VALUE, Thread.currentThread(),
+                        null, null).baseAddress();
         byte curr = (byte) byteArrHandle.get(sizedAddr, 0);
         long offset = 0;
         while (curr != 0) {
