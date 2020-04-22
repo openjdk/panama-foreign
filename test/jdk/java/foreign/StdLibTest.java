@@ -28,7 +28,7 @@
  *          jdk.incubator.foreign/jdk.internal.foreign.abi
  *          java.base/sun.security.action
  * @build NativeTestHelper StdLibTest
- * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit StdLibTest
+ * @run testng/othervm -Dforeign.restricted=permit StdLibTest
  */
 
 import java.lang.invoke.MethodHandle;
@@ -51,7 +51,6 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -68,8 +67,7 @@ import static org.testng.Assert.*;
 @Test
 public class StdLibTest extends NativeTestHelper {
 
-    final static Foreign FOREIGN = Foreign.getInstance();
-    final static SystemABI abi = FOREIGN.getSystemABI();
+    final static SystemABI abi = SystemABI.getSystemABI();
 
     final static VarHandle byteHandle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
     final static VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
@@ -261,12 +259,13 @@ public class StdLibTest extends NativeTestHelper {
         static class Tm {
 
             //Tm pointer should never be freed directly, as it points to shared memory
-            private MemoryAddress base;
+            private final MemoryAddress base;
 
             static final long SIZE = 56;
 
             Tm(MemoryAddress base) {
-                this.base = FOREIGN.withSize(base, SIZE);
+                this.base = MemorySegment.ofNativeRestricted(base, SIZE, Thread.currentThread(),
+                        null, null).baseAddress();
             }
 
             int sec() {
