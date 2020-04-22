@@ -141,7 +141,8 @@ public class TestSharedAccess {
     @Test(expectedExceptions=IllegalStateException.class)
     public void testBadCloseWithPendingAcquireBuffer() throws InterruptedException {
         MemorySegment segment = MemorySegment.allocateNative(16);
-        Spliterator<MemorySegment> spliterator = segment.spliterator(MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
+        Spliterator<MemorySegment> spliterator = MemorySegment.spliterator(segment,
+                MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
         Runnable r = () -> spliterator.forEachRemaining(s -> {
             try {
                 Thread.sleep(5000 * 100);
