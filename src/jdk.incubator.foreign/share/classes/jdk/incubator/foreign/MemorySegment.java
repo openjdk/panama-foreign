@@ -512,7 +512,7 @@ allocateNative(bytesSize, 1);
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
-        Utils.checkRestrictedAccess("MemorySegment.ofNativeUnsafe");
+        Utils.checkRestrictedAccess("MemorySegment.ofNativeRestricted");
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, bytesSize, owner, cleanup, attachment);
     }
 
