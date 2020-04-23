@@ -35,6 +35,7 @@ import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
+import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,11 +58,11 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     private static final boolean enableSmallSegments =
             Boolean.parseBoolean(GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.SmallSegments", "true"));
 
-    final static int ACCESS_MASK = READ | WRITE | CLOSE | ACQUIRE;
+    final static int ACCESS_MASK = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
     final static int FIRST_RESERVED_FLAG = 1 << 16; // upper 16 bits are reserved
     final static int SMALL = FIRST_RESERVED_FLAG;
     final static long NONCE = new Random().nextLong();
-    final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE;
+    final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
 
     final static JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
@@ -174,6 +175,25 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
+    public MemorySegment withOwnerThread(Thread newOwner) {
+        Objects.requireNonNull(newOwner);
+        checkValidState();
+        if (!isSet(HANDOFF)) {
+            throw unsupportedAccessMode(HANDOFF);
+        }
+        if (owner == newOwner) {
+            throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
+        } else {
+            try {
+                return dup(0L, length, mask, newOwner, scope.dup());
+            } finally {
+                //flush read/writes to memory before returning the new segment
+                VarHandle.fullFence();
+            }
+        }
+    }
+
+    @Override
     public final void close() {
         if (!isSet(CLOSE)) {
             throw unsupportedAccessMode(CLOSE);
@@ -183,7 +203,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     private final void closeNoCheck() {
-        scope.close();
+        scope.close(true);
     }
 
     final AbstractMemorySegmentImpl acquire() {
@@ -274,6 +294,9 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         }
         if ((mode & ACQUIRE) != 0) {
             modes.add("ACQUIRE");
+        }
+        if ((mode & HANDOFF) != 0) {
+            modes.add("HANDOFF");
         }
         return modes;
     }
