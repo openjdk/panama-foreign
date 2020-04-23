@@ -76,13 +76,13 @@ public class HelloWorld {
 
 ```sh
 
-java -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign HelloWorld.java
+java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign HelloWorld.java
 
 ```
 
 ## Embedding Python interpreter in your Java program (Mac OS)
 
-### jextract a Jar file for Python.h
+### jextract Python.h
 
 ```sh
 
@@ -98,7 +98,6 @@ jextract -l python2.7 \
 
 ```java
 
-import jdk.incubator.foreign.Foreign;
 import org.python.Cstring;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 // import jextracted python 'header' class
@@ -124,8 +123,9 @@ public class PythonMain {
 
 ```sh
 
-java -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign \
-    -Djava.library.path=/System/Library/Frameworks/Python.framework/Versions/2.7/lib PythonMain.java
+java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+    -Djava.library.path=/System/Library/Frameworks/Python.framework/Versions/2.7/lib \
+    PythonMain.java
 
 ```
 
@@ -145,7 +145,6 @@ jextract -l readline -t org.unix \
 
 ```java
 
-import jdk.incubator.foreign.Foreign;
 import org.unix.Cstring;
 import static org.unix.RuntimeHelper.*;
 import static org.unix.readline_h.*;
@@ -170,7 +169,7 @@ public class Readline {
 ### Running the java code that uses readline
 
 ```
-java -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign \
+java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/local/opt/readline/lib/ Readline.java
 
 ```
@@ -192,7 +191,6 @@ jextract -t org.unix -lcurl \
 
 ```java
 
-import jdk.incubator.foreign.Foreign;
 import org.unix.Cstring;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.unix.RuntimeHelper.*;
@@ -224,8 +222,8 @@ public class CurlMain {
 ```sh
 
 # run this shell script by passing a URL as first argument
-java -Djdk.incubator.foreign.Foreign=permit --add-modules \
-    jdk.incubator.foreign -Djava.library.path=/usr/lib CurlMain.java $*
+java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+    -Djava.library.path=/usr/lib CurlMain.java $*
 
 ```
 
@@ -333,11 +331,11 @@ public class TestBlas {
 
 ```
 
-### Compiling and running the above LAPACK sample
+### Compiling and running the above BLAS sample
 
 ```sh
 
-java -Djdk.incubator.foreign.Foreign=permit --add-modules jdk.incubator.foreign \
+java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/local/opt/openblas/lib \
     TestBlas.java
 
@@ -422,7 +420,7 @@ public class TestLapack {
 
 ```sh
 
-java -Djdk.incubator.foreign.Foreign=permit \
+java -Dforeign.restricted=permit \
     --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/local/opt/lapack/lib \
     TestLapack.java
@@ -483,7 +481,7 @@ public class LibprocMain {
 
 ```sh
 
-java -Djdk.incubator.foreign.Foreign=permit \
+java -Dforeign.restricted=permit \
     --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/lib LibprocMain.java
 
