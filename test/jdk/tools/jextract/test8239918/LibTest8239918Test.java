@@ -32,7 +32,7 @@ import static test.jextract.test8239918.test8239918_h.*;
  * @bug 8239918
  * @summary jextract generates uncompilable code for no argument C function
  * @run driver JtregJextract -l Test8239918 -t test.jextract.test8239918 -- test8239918.h
- * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit LibTest8239918Test
+ * @run testng/othervm -Dforeign.restricted=permit LibTest8239918Test
  */
 public class LibTest8239918Test {
     @Test

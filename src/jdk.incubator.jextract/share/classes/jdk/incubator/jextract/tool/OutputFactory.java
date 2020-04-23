@@ -31,7 +31,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
-import jdk.internal.foreign.InternalForeign;
+import jdk.internal.foreign.abi.SharedUtils;
 
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
@@ -124,7 +124,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private static String getCLangConstantsHolder() {
         String prefix = "jdk.incubator.foreign.MemoryLayouts.";
-        String abi = InternalForeign.getInstancePrivileged().getSystemABI().name();
+        String abi = SharedUtils.getSystemABI().name();
         switch (abi) {
             case SystemABI.ABI_SYSV:
                 return prefix + "SysV";
@@ -184,7 +184,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private List<JavaFileObject> getPrimitiveTypeFiles(String pkgName) throws IOException, URISyntaxException {
-        var abi = InternalForeign.getInstancePrivileged().getSystemABI();
+        var abi = SharedUtils.getSystemABI();
         var cXJavaFile = OutputFactory.class.getResource("resources/C-X.java.template");
         var lines = Files.readAllLines(Paths.get(cXJavaFile.toURI()));
 

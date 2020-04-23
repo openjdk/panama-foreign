@@ -26,12 +26,11 @@
 
 package jdk.internal.clang;
 
-import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.clang.libclang.Index_h;
-import jdk.internal.foreign.InternalForeign;
+import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.jextract.impl.LayoutUtils;
 
 import java.io.IOException;
@@ -40,7 +39,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class TranslationUnit implements AutoCloseable {
-    private static final Foreign FOREIGN = InternalForeign.getInstancePrivileged();
 
     private MemoryAddress tu;
 
@@ -159,7 +157,7 @@ public class TranslationUnit implements AutoCloseable {
 
         public MemorySegment getTokenSegment(int idx) {
             MemoryAddress p = ar.addOffset(idx * Index_h.CXToken$LAYOUT.byteSize());
-            return FOREIGN.withSize(p, Index_h.CXToken$LAYOUT.byteSize()).segment();
+            return MemoryAddressImpl.ofLongUnchecked(p.toRawLongValue(), Index_h.CXToken$LAYOUT.byteSize()).segment();
         }
 
         public Token getToken(int index) {

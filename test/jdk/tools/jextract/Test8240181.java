@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
  * @library /test/lib
  * @build JextractToolRunner
  * @bug 8240181
- * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit -Duser.language=en --add-modules jdk.incubator.jextract Test8240181
+ * @run testng/othervm -Dforeign.restricted=permit -Duser.language=en --add-modules jdk.incubator.jextract Test8240181
  */
 public class Test8240181 extends JextractToolRunner {
     @Test

@@ -40,7 +40,7 @@ import static org.testng.Assert.assertTrue;
  * @modules jdk.incubator.jextract
  * @library /test/lib
  * @build JextractToolRunner
- * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit RepeatedDeclsTest
+ * @run testng/othervm -Dforeign.restricted=permit RepeatedDeclsTest
  */
 public class RepeatedDeclsTest extends JextractToolRunner {
     @Test

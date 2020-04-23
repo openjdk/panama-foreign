@@ -31,7 +31,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.SystemABI;
-import jdk.internal.foreign.InternalForeign;
+import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -44,7 +44,7 @@ import java.util.Optional;
 
 public class RuntimeHelper {
 
-    private final static SystemABI ABI = InternalForeign.getInstancePrivileged().getSystemABI();
+    private final static SystemABI ABI = SharedUtils.getSystemABI();
 
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();
 
