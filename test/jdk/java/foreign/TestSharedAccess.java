@@ -24,10 +24,9 @@
 
 /*
  * @test
- * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit TestSharedAccess
+ * @run testng/othervm -Dforeign.restricted=permit TestSharedAccess
  */
 
-import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -42,7 +41,6 @@ import java.util.List;
 import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.*;
@@ -102,7 +100,8 @@ public class TestSharedAccess {
             setInt(s.baseAddress(), 42);
             assertEquals(getInt(s.baseAddress()), 42);
             List<Thread> threads = new ArrayList<>();
-            MemorySegment sharedSegment = Foreign.getInstance().asUnconfined(s);
+            MemorySegment sharedSegment = MemorySegment.ofNativeRestricted(
+                    s.baseAddress(), s.byteSize(), null, null, null);
             for (int i = 0 ; i < 1000 ; i++) {
                 threads.add(new Thread(() -> {
                     assertEquals(getInt(sharedSegment.baseAddress()), 42);
@@ -140,7 +139,8 @@ public class TestSharedAccess {
     @Test(expectedExceptions=IllegalStateException.class)
     public void testBadCloseWithPendingAcquireBuffer() throws InterruptedException {
         MemorySegment segment = MemorySegment.allocateNative(16);
-        Spliterator<MemorySegment> spliterator = segment.spliterator(MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
+        Spliterator<MemorySegment> spliterator = MemorySegment.spliterator(segment,
+                MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
         Runnable r = () -> spliterator.forEachRemaining(s -> {
             try {
                 Thread.sleep(5000 * 100);

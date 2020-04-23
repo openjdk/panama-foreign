@@ -26,7 +26,7 @@
 
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.InternalForeign;
+import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
 import java.nio.ByteOrder;
@@ -224,7 +224,7 @@ public final class MemoryLayouts {
     public static final ValueLayout C_POINTER;
 
     static {
-        SystemABI abi = InternalForeign.getInstancePrivileged().getSystemABI();
+        SystemABI abi = SharedUtils.getSystemABI();
         switch (abi.name()) {
             case ABI_SYSV -> {
                 C_BOOL = SysV.C_BOOL;

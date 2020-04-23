@@ -22,7 +22,6 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign.points.support;
 
-import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -53,7 +52,7 @@ public class PanamaPoint implements AutoCloseable {
 
     static {
         try {
-            SystemABI abi = Foreign.getInstance().getSystemABI();
+            SystemABI abi = SystemABI.getSystemABI();
             LibraryLookup lookup = LibraryLookup.ofLibrary(MethodHandles.lookup(), "Point");
             MH_distance = abi.downcallHandle(
                 lookup.lookup("distance"),
