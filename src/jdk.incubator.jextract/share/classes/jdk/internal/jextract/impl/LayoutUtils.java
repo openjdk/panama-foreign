@@ -36,7 +36,7 @@ import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
-import jdk.internal.foreign.InternalForeign;
+import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.aarch64.AArch64ABI;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
@@ -47,7 +47,7 @@ import java.util.Optional;
  * General Layout utility functions
  */
 public final class LayoutUtils {
-    private static SystemABI abi = InternalForeign.getInstancePrivileged().getSystemABI();
+    private static SystemABI abi = SharedUtils.getSystemABI();
     private LayoutUtils() {}
 
     public static String getName(Type type) {

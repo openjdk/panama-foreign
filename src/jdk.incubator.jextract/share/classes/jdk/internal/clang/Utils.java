@@ -32,8 +32,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
-import jdk.internal.foreign.InternalForeign;
+import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.jextract.impl.LayoutUtils;
 
 import java.lang.invoke.MethodHandle;
@@ -53,12 +52,12 @@ public class Utils {
 
     static {
         try {
-            STRLEN = InternalForeign.getInstancePrivileged().getSystemABI().downcallHandle(
+            STRLEN = SharedUtils.getSystemABI().downcallHandle(
                     LibraryLookup.ofDefault().lookup("strlen"),
                     MethodType.methodType(int.class, MemoryAddress.class),
                     FunctionDescriptor.of(LayoutUtils.C_INT, LayoutUtils.C_POINTER));
 
-            STRCPY = InternalForeign.getInstancePrivileged().getSystemABI().downcallHandle(
+            STRCPY = SharedUtils.getSystemABI().downcallHandle(
                     LibraryLookup.ofDefault().lookup("strcpy"),
                     MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
                     FunctionDescriptor.of(LayoutUtils.C_POINTER, LayoutUtils.C_POINTER, LayoutUtils.C_POINTER));

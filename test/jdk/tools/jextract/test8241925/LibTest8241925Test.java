@@ -36,7 +36,7 @@ import static test.jextract.test8241925.test8241925_h.*;
  * @bug 8241925
  * @summary jextract should generate simple allocation, access API for C primitive types
  * @run driver JtregJextract -l Test8241925 -t test.jextract.test8241925 -- test8241925.h
- * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit LibTest8241925Test
+ * @run testng/othervm -Dforeign.restricted=permit LibTest8241925Test
  */
 public class LibTest8241925Test {
     @Test

@@ -30,10 +30,9 @@
  *          java.base/sun.security.action
  * @library .. /test/lib
  * @build JextractToolRunner
- * @run testng/othervm -Djdk.incubator.foreign.Foreign=permit -Duser.language=en TestClassGeneration
+ * @run testng/othervm -Dforeign.restricted=permit -Duser.language=en TestClassGeneration
  */
 
-import jdk.incubator.foreign.Foreign;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -61,8 +60,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 public class TestClassGeneration extends JextractToolRunner {
-
-    private static final Foreign FOREIGN = Foreign.getInstance();
 
     private static final VarHandle VH_bytes = MemoryLayout.ofSequence(C_CHAR).varHandle(byte.class, sequenceElement());
 
@@ -182,7 +179,10 @@ public class TestClassGeneration extends JextractToolRunner {
         assertEquals(layout_getter.invoke(null), expectedLayout);
 
         Method addr_getter = checkMethod(cls, name + "$ADDR", MemoryAddress.class);
-        MemoryAddress addr = FOREIGN.withSize((MemoryAddress) addr_getter.invoke(null), expectedLayout.byteSize());
+        MemoryAddress addr = MemorySegment.ofNativeRestricted(
+                (MemoryAddress)addr_getter.invoke(null),
+                expectedLayout.byteSize(),
+                null, null, null).baseAddress();
 
         Method vh_getter = checkMethod(cls, name + "$VH", VarHandle.class);
         VarHandle vh = (VarHandle) vh_getter.invoke(null);
