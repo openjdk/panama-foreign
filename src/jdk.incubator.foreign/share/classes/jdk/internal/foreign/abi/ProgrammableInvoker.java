@@ -72,10 +72,10 @@ public class ProgrammableInvoker {
     private final FunctionDescriptor function;
     private final CallingSequence callingSequence;
 
-    private final long addr;
+    private final MemoryAddress addr;
     private final long stubAddress;
 
-    public ProgrammableInvoker(ABIDescriptor abi, long addr, CallingSequence callingSequence) {
+    public ProgrammableInvoker(ABIDescriptor abi, MemoryAddress addr, CallingSequence callingSequence) {
         this.abi = abi;
         this.layout = BufferLayout.of(abi);
         this.stubAddress = adapterStubs.computeIfAbsent(abi, key -> generateAdapter(key, layout));
@@ -109,7 +109,7 @@ public class ProgrammableInvoker {
                 stackArgs = MemoryAddressImpl.NULL;
             }
 
-            VH_LONG.set(argsPtr.addOffset(layout.arguments_next_pc), addr);
+            VH_LONG.set(argsPtr.addOffset(layout.arguments_next_pc), addr.toRawLongValue());
             VH_LONG.set(argsPtr.addOffset(layout.stack_args_bytes), stackArgsBytes);
             VH_LONG.set(argsPtr.addOffset(layout.stack_args), stackArgs.toRawLongValue());
 
