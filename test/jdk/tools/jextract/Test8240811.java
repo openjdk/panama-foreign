@@ -49,31 +49,34 @@ public class Test8240811 extends JextractToolRunner {
             assertNotNull(cls);
 
             // check foo layout
-            MemoryLayout fooLayout = findLayout(cls, "foo");
+            Class<?> fooCls = loader.loadClass("Cfoo");
+            MemoryLayout fooLayout = findLayout(fooCls);
             assertNotNull(fooLayout);
             assertTrue(((GroupLayout)fooLayout).isStruct());
             checkFieldABIType(fooLayout, "x",  Type.INT);
             checkFieldABIType(fooLayout, "y",  Type.INT);
             checkFieldABIType(fooLayout, "z",  Type.INT);
 
-            MemoryLayout fooVarLayout = findLayout(cls, "var$foo");
+            MemoryLayout fooVarLayout = findLayout(cls, "foo");
             assertNotNull(fooVarLayout);
 
             // check foo2 layout
-            MemoryLayout foo2Layout = findLayout(cls, "foo2");
+            Class<?> foo2Cls = loader.loadClass("Cfoo2");
+            MemoryLayout foo2Layout = findLayout(foo2Cls);
             assertNotNull(foo2Layout);
             assertTrue(((GroupLayout)foo2Layout).isUnion());
             checkFieldABIType(foo2Layout, "i",  Type.INT);
             checkFieldABIType(foo2Layout, "l",  Type.LONG);
 
-            MemoryLayout foo2VarLayout = findLayout(cls, "var$foo2");
+            MemoryLayout foo2VarLayout = findLayout(cls, "foo2");
             assertNotNull(foo2VarLayout);
 
             MemoryLayout barVarLayout = findLayout(cls, "bar");
             assertNotNull(barVarLayout);
 
             // check bar layout
-            MemoryLayout barLayout = findLayout(cls, "struct$bar");
+            Class<?> barCls = loader.loadClass("Cbar");
+            MemoryLayout barLayout = findLayout(barCls);
             assertNotNull(barLayout);
             assertTrue(((GroupLayout)barLayout).isStruct());
             checkFieldABIType(barLayout, "f1",  Type.FLOAT);
@@ -83,7 +86,8 @@ public class Test8240811 extends JextractToolRunner {
             assertNotNull(bar2VarLayout);
 
             // check bar layout
-            MemoryLayout bar2Layout = findLayout(cls, "union$bar2");
+            Class<?> bar2Cls = loader.loadClass("Cbar2");
+            MemoryLayout bar2Layout = findLayout(bar2Cls);
             assertNotNull(bar2Layout);
             assertTrue(((GroupLayout)bar2Layout).isUnion());
             checkFieldABIType(bar2Layout, "f",  Type.FLOAT);
