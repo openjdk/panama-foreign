@@ -21,11 +21,13 @@
  * questions.
  */
 
-import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.SystemABI.Type;
 import org.testng.annotations.Test;
+import test.jextract.struct.CAllTypes;
+import test.jextract.struct.CPoint;
 
 import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
 import static org.testng.Assert.assertEquals;
@@ -42,8 +44,15 @@ public class LibStructTest {
     @Test
     public void testMakePoint() {
         try (var seg = makePoint(42, -39)) {
-            assertEquals(Point$x$get(seg), 42);
-            assertEquals(Point$y$get(seg), -39);
+            assertEquals(CPoint.x$get(seg), 42);
+            assertEquals(CPoint.y$get(seg), -39);
+        }
+
+        try (var seg2 = CPoint.allocate()) {
+            CPoint.x$set(seg2, 56);
+            CPoint.y$set(seg2, 65);
+            assertEquals(CPoint.x$get(seg2), 56);
+            assertEquals(CPoint.y$get(seg2), 65);
         }
     }
 
@@ -55,7 +64,7 @@ public class LibStructTest {
 
     @Test
     public void testFieldTypes() {
-        GroupLayout g = (GroupLayout)AllTypes$LAYOUT();
+        GroupLayout g = (GroupLayout)CAllTypes.$LAYOUT();
         checkFieldABIType(g, "sc",  Type.SIGNED_CHAR);
         checkFieldABIType(g, "uc",  Type.UNSIGNED_CHAR);
         checkFieldABIType(g, "s",   Type.SHORT);

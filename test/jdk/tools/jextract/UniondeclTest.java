@@ -46,8 +46,9 @@ public class UniondeclTest extends JextractToolRunner {
             Class<?> cls = loader.loadClass("uniondecl_h");
             // check a method for "void func(IntOrFloat*)"
             assertNotNull(findMethod(cls, "func", MemoryAddress.class));
-            // check Point layout
-            GroupLayout intOrFloatLayout = (GroupLayout)findLayout(cls, "IntOrFloat");
+            // check IntOrFloat layout
+            Class<?> intOrFloatCls = loader.loadClass("CIntOrFloat");
+            GroupLayout intOrFloatLayout = (GroupLayout)findLayout(intOrFloatCls);
             assertNotNull(intOrFloatLayout);
             assertTrue(intOrFloatLayout.isUnion());
             checkFieldABIType(intOrFloatLayout, "i",  Type.INT);

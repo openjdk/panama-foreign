@@ -244,6 +244,10 @@ public class JextractToolRunner {
         return null;
     }
 
+    protected MemoryLayout findLayout(Class<?> cls) {
+        return findLayout(cls, "");
+    }
+
     protected static void checkFieldABIType(MemoryLayout layout, String fieldName, Type expected) {
         assertEquals(layout.select(PathElement.groupElement(fieldName)).attribute(NATIVE_TYPE)
                                                                        .map(SystemABI.Type.class::cast)

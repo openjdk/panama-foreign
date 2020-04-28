@@ -196,17 +196,17 @@ public class TestClassGeneration extends JextractToolRunner {
     @Test(dataProvider = "structMembers")
     public void testStructMember(String structName, MemoryLayout memberLayout, Class<?> expectedType, Object testValue) throws Throwable {
         String memberName = memberLayout.name().orElseThrow();
-        String combinedName = structName + "$" + memberName;
 
-        Method layout_getter = checkMethod(cls, structName + "$LAYOUT", MemoryLayout.class);
+        Class<?> structCls = loader.loadClass("com.acme.C" + structName);
+        Method layout_getter = checkMethod(structCls, "$LAYOUT", MemoryLayout.class);
         MemoryLayout structLayout = (MemoryLayout) layout_getter.invoke(null);
         try (MemorySegment struct = MemorySegment.allocateNative(structLayout)) {
-            Method vh_getter = checkMethod(cls, combinedName + "$VH", VarHandle.class);
+            Method vh_getter = checkMethod(structCls, memberName + "$VH", VarHandle.class);
             VarHandle vh = (VarHandle) vh_getter.invoke(null);
             assertEquals(vh.varType(), expectedType);
 
-            Method getter = checkMethod(cls, combinedName + "$get", expectedType, MemorySegment.class);
-            Method setter = checkMethod(cls, combinedName + "$set", void.class, MemorySegment.class, expectedType);
+            Method getter = checkMethod(structCls, memberName + "$get", expectedType, MemorySegment.class);
+            Method setter = checkMethod(structCls, memberName + "$set", void.class, MemorySegment.class, expectedType);
 
             setter.invoke(null, struct, testValue);
             assertEquals(getter.invoke(null, struct), testValue);

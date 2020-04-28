@@ -36,49 +36,50 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A helper class to generate header interface class in source form.
- * After aggregating various constituents of a .java source, build
- * method is called to get overall generated source string.
+ * Superclass for .java source generator classes.
  */
-class JavaSourceBuilder {
-
-    private static final String PUB_CLS_MODS = "public final ";
-    private static final String PUB_MODS = "public static final ";
-
-    private final String pkgName;
-    private final String[] libraryNames;
+abstract class JavaSourceBuilder {
+    static final String PUB_CLS_MODS = "public final ";
+    static final String PUB_MODS = "public static final ";
+    protected final String className;
+    protected final String pkgName;
+    protected final ConstantHelper constantHelper;
     // buffer
-    protected StringBuffer sb;
+    protected final StringBuffer sb;
     // current line alignment (number of 4-spaces)
-    protected int align;
+    private int align;
 
-    private String className = null;
-    private ConstantHelper constantHelper;
-
-    JavaSourceBuilder(int align, String pkgName, String[] libraryNames) {
-        this.align = align;
-        this.libraryNames = libraryNames;
-        this.sb = new StringBuffer();
+    JavaSourceBuilder(String className, String pkgName, ConstantHelper constantHelper, int align) {
+        this.className = className;
         this.pkgName = pkgName;
+        this.constantHelper = constantHelper;
+        this.align = align;
+        this.sb = new StringBuffer();
     }
 
-    JavaSourceBuilder(String pkgName, String[] libraryNames) {
-        this(0, pkgName, libraryNames);
+    JavaSourceBuilder(String className, String pkgName, ConstantHelper constantHelper) {
+        this(className, pkgName, constantHelper, 0);
     }
 
-    public void classBegin(String name) {
-        className = name;
-        String qualName = pkgName.isEmpty() ? name : pkgName + "." + name;
-        constantHelper = new ConstantHelper(qualName,
-                ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of(pkgName, "Cstring"), libraryNames);
-
+    public void classBegin() {
         addPackagePrefix();
         addImportSection();
 
         indent();
         sb.append(PUB_CLS_MODS + "class ");
-        sb.append(name);
+        sb.append(className);
         sb.append(" {\n\n");
+        emitConstructor();
+    }
+
+    public void emitConstructor() {
+        incrAlign();
+        indent();
+        sb.append("private ");
+        sb.append(className);
+        sb.append("() {}");
+        sb.append('\n');
+        decrAlign();
     }
 
     public void classEnd() {
@@ -104,89 +105,6 @@ class JavaSourceBuilder {
 
     public void addConstantGetter(String javaName, Class<?> type, Object value) {
         emitForwardGetter(constantHelper.addConstant(javaName, type, value));
-    }
-
-    public void addFunctionalFactory(String className, MethodType mtype, FunctionDescriptor fDesc) {
-        incrAlign();
-        indent();
-        sb.append(PUB_MODS + "MemoryAddress " + className + "$make(" + className + " fi) {\n");
-        incrAlign();
-        indent();
-        sb.append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fDesc) + ", " +
-                "\"" + mtype.toMethodDescriptorString() + "\");\n");
-        decrAlign();
-        indent();
-        sb.append("}\n");
-        decrAlign();
-    }
-
-    public void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
-        incrAlign();
-        indent();
-        sb.append(PUB_MODS + mtype.returnType().getName() + " " + javaName + " (");
-        String delim = "";
-        List<String> pNames = new ArrayList<>();
-        final int numParams = paramNames.size();
-        for (int i = 0 ; i < numParams; i++) {
-            String pName = paramNames.get(i);
-            if (pName.isEmpty()) {
-                pName = "x" + i;
-            }
-            pNames.add(pName);
-            sb.append(delim + mtype.parameterType(i).getName() + " " + pName);
-            delim = ", ";
-        }
-        if (varargs) {
-            String lastArg = "x" + numParams;
-            if (numParams > 0) {
-                sb.append(", ");
-            }
-            sb.append("Object... " + lastArg);
-            pNames.add(lastArg);
-        }
-        sb.append(") {\n");
-        incrAlign();
-        indent();
-        sb.append("try {\n");
-        incrAlign();
-        indent();
-        if (!mtype.returnType().equals(void.class)) {
-            sb.append("return (" + mtype.returnType().getName() + ")");
-        }
-        sb.append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs) + ".invokeExact(" + String.join(", ", pNames) + ");\n");
-        decrAlign();
-        indent();
-        sb.append("} catch (Throwable ex) {\n");
-        incrAlign();
-        indent();
-        sb.append("throw new AssertionError(ex);\n");
-        decrAlign();
-        indent();
-        sb.append("}\n");
-        decrAlign();
-        indent();
-        sb.append("}\n");
-        decrAlign();
-    }
-
-    public void addFunctionalInterface(String name, MethodType mtype) {
-        incrAlign();
-        indent();
-        sb.append("public interface " + name + " {\n");
-        incrAlign();
-        indent();
-        sb.append(mtype.returnType().getName() + " apply(");
-        String delim = "";
-        for (int i = 0 ; i < mtype.parameterCount() ; i++) {
-            sb.append(delim + mtype.parameterType(i).getName() + " x" + i);
-            delim = ", ";
-        }
-        sb.append(");\n");
-        decrAlign();
-        indent();
-        sb.append("}\n");
-        decrAlign();
-        indent();
     }
 
     public void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
@@ -222,17 +140,9 @@ class JavaSourceBuilder {
         decrAlign();
     }
 
-    public List<JavaFileObject> build() {
-        String res = sb.toString();
-        this.sb = null;
-        List<JavaFileObject> outputs = new ArrayList<>(constantHelper.getClasses());
-        outputs.add(Utils.fileFromString(pkgName, className, res));
-        return outputs;
-    }
-
     // Utility
 
-    private void addPackagePrefix() {
+    protected void addPackagePrefix() {
         assert pkgName.indexOf('/') == -1 : "package name invalid: " + pkgName;
         sb.append("// Generated by jextract\n\n");
         if (!pkgName.isEmpty()) {
@@ -242,7 +152,7 @@ class JavaSourceBuilder {
         }
     }
 
-    private void addImportSection() {
+    protected void addImportSection() {
         sb.append("import java.lang.invoke.MethodHandle;\n");
         sb.append("import java.lang.invoke.VarHandle;\n");
         sb.append("import jdk.incubator.foreign.*;\n");
@@ -252,7 +162,7 @@ class JavaSourceBuilder {
         sb.append(".*;\n");
     }
 
-    private void emitForwardGetter(DirectMethodHandleDesc desc) {
+    protected void emitForwardGetter(DirectMethodHandleDesc desc) {
         incrAlign();
         indent();
         sb.append(PUB_MODS + displayName(desc.invocationType().returnType()) + " " + desc.methodName() + "() {\n");
@@ -265,42 +175,41 @@ class JavaSourceBuilder {
         decrAlign();
     }
 
-    private String getCallString(DirectMethodHandleDesc desc) {
+    protected String getCallString(DirectMethodHandleDesc desc) {
         return desc.owner().displayName() + "." + desc.methodName() + "()";
     }
 
-    private String displayName(ClassDesc returnType) {
+    protected String displayName(ClassDesc returnType) {
         return returnType.displayName(); // TODO shorten based on imports
     }
 
-    private String functionGetCallString(String javaName, FunctionDescriptor fDesc) {
+    protected String functionGetCallString(String javaName, FunctionDescriptor fDesc) {
         return getCallString(constantHelper.addFunctionDesc(javaName, fDesc));
     }
 
-    private String methodHandleGetCallString(String javaName, String nativeName, MethodType mt, FunctionDescriptor fDesc, boolean varargs) {
+    protected String methodHandleGetCallString(String javaName, String nativeName, MethodType mt, FunctionDescriptor fDesc, boolean varargs) {
         return getCallString(constantHelper.addMethodHandle(javaName, nativeName, mt, fDesc, varargs));
     }
 
-    private String varHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    protected String varHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         return getCallString(constantHelper.addVarHandle(javaName, nativeName, layout, type, parentLayout));
     }
 
-    private String addressGetCallString(String javaName, String nativeName) {
+    protected String addressGetCallString(String javaName, String nativeName) {
         return getCallString(constantHelper.addAddress(javaName, nativeName));
     }
 
-    private void indent() {
+    protected void indent() {
         for (int i = 0; i < align; i++) {
             sb.append("    ");
         }
     }
 
-    private void incrAlign() {
+    protected void incrAlign() {
         align++;
     }
 
-    private void decrAlign() {
+    protected void decrAlign() {
         align--;
     }
-
 }
