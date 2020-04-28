@@ -90,7 +90,7 @@ public final class LibrariesHelper {
     synchronized static LibraryLookupImpl lookup(Supplier<NativeLibrary> librarySupplier, String notFoundMsg) {
         NativeLibrary library = librarySupplier.get();
         if (library == null) {
-            throw new IllegalArgumentException("Library not found: " + notFoundMsg);
+            throw new IllegalArgumentException(notFoundMsg);
         }
         AtomicInteger refCount = loadedLibraries.computeIfAbsent(library, lib -> new AtomicInteger());
         refCount.incrementAndGet();

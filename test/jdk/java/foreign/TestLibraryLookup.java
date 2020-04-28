@@ -32,6 +32,10 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.internal.foreign.LibrariesHelper;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Field;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +50,7 @@ public class TestLibraryLookup {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testInvalidLookupPath() {
-        LibraryLookup.ofPath("/foo/bar/NonExistent");
+        LibraryLookup.ofPath(Path.of("NonExistent").toAbsolutePath().toString());
     }
 
     @Test
@@ -58,16 +62,11 @@ public class TestLibraryLookup {
         assertEquals(LibrariesHelper.numLoadedLibraries(), 1);
         lookup = null;
         symbol = null;
-        for (int i = 0 ; i < 1000 ; i++) {
-            System.gc();
-            Object o = new Object[1000];
-            Thread.sleep(1);
-        }
         waitUnload();
     }
 
     @Test
-    public void testMultiLookup() throws Throwable {
+    public void testMultiLookupSameLoader() throws Throwable {
         List<MemoryAddress> symbols = new ArrayList<>();
         List<LibraryLookup> lookups = new ArrayList<>();
         for (int i = 0 ; i < 5 ; i++) {
@@ -81,6 +80,66 @@ public class TestLibraryLookup {
         lookups = null;
         symbols = null;
         waitUnload();
+    }
+
+    @Test
+    public void testMultiLookupDifferentLoaders() throws Throwable {
+        List<URLClassLoader> loaders = new ArrayList<>();
+        for (int i = 0 ; i < 5 ; i++) {
+            URLClassLoader loader = new LocalLoader();
+            Class<?> clazz = loader.loadClass("TestLibraryLookup$Holder");
+            Field field = clazz.getField("lookup");
+            field.setAccessible(true);
+            field.get(null); //make sure <clinit> is run
+            loaders.add(loader);
+        }
+        loaders.forEach(loader -> {
+            try {
+                loader.close();
+            } catch (Throwable ex) {
+                throw new AssertionError(ex);
+            }
+        });
+        loaders = null;
+        waitUnload();
+    }
+
+    static class LocalLoader extends URLClassLoader {
+        public LocalLoader() throws Exception {
+            super(new URL[] { Path.of(System.getProperty("test.classes")).toUri().toURL() });
+        }
+
+        @Override
+        public Class<?> loadClass(String name) throws ClassNotFoundException {
+            Class clazz = findLoadedClass(name);
+            if (clazz == null) {
+                //try local first
+                try {
+                    clazz = findClass(name);
+                } catch (ClassNotFoundException e) {
+                    // Swallow exception - does not exist locally
+                }
+                //then try parent loader
+                if (clazz == null) {
+                    clazz = super.loadClass(name);
+                }
+            }
+            return clazz;
+        }
+    }
+
+    static class Holder {
+        public static LibraryLookup lookup;
+        public static MemoryAddress symbol;
+
+        static {
+            try {
+                lookup = LibraryLookup.ofLibrary("LookupTest");
+                symbol = lookup.lookup("f");
+            } catch (Throwable ex) {
+                throw new ExceptionInInitializerError();
+            }
+        }
     }
 
     private static void waitUnload() throws InterruptedException {
