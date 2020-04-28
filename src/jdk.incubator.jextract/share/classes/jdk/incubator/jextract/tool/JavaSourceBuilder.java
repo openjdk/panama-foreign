@@ -87,6 +87,12 @@ abstract class JavaSourceBuilder {
         sb.append("}\n\n");
     }
 
+    public JavaFileObject build() {
+        String res = sb.toString();
+        this.sb.delete(0, res.length());
+        return Utils.fileFromString(pkgName, className, res);
+    }
+
     public void addLayoutGetter(String javaName, MemoryLayout layout) {
         emitForwardGetter(constantHelper.addLayout(javaName, layout));
     }

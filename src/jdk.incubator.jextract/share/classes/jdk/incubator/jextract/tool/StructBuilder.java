@@ -26,7 +26,6 @@ package jdk.incubator.jextract.tool;
 
 import jdk.incubator.foreign.MemoryLayout;
 
-import javax.tools.JavaFileObject;
 import java.lang.constant.DirectMethodHandleDesc;
 
 /**
@@ -35,12 +34,6 @@ import java.lang.constant.DirectMethodHandleDesc;
 class StructBuilder extends JavaSourceBuilder {
     StructBuilder(String className, String pkgName, ConstantHelper constantHelper) {
         super(className, pkgName, constantHelper);
-    }
-
-    public JavaFileObject build() {
-        String res = sb.toString();
-        this.sb.delete(0, res.length());
-        return Utils.fileFromString(pkgName, className, res);
     }
 
     @Override

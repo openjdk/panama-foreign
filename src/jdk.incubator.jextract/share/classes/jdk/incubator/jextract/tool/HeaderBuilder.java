@@ -28,7 +28,6 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
-import javax.tools.JavaFileObject;
 
 /**
  * A helper class to generate header interface class in source form.
@@ -38,14 +37,6 @@ import javax.tools.JavaFileObject;
 class HeaderBuilder extends JavaSourceBuilder {
     HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper) {
         super(className, pkgName, constantHelper);
-    }
-
-    public List<JavaFileObject> build() {
-        String res = sb.toString();
-        this.sb.delete(0, res.length());
-        List<JavaFileObject> outputs = new ArrayList<>(constantHelper.getClasses());
-        outputs.add(Utils.fileFromString(pkgName, className, res));
-        return outputs;
     }
 
     public void addFunctionalFactory(String className, MethodType mtype, FunctionDescriptor fDesc) {

@@ -120,9 +120,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         decl.members().forEach(this::generateDecl);
 
         builder.classEnd();
-        List<JavaFileObject> outputs = builder.build();
         try {
-            List<JavaFileObject> files = new ArrayList<>(outputs);
+            List<JavaFileObject> files = new ArrayList<>();
+            files.add(builder.build());
+            files.addAll(constantHelper.getClasses());
             files.add(fileFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
             files.add(getCstringFile(pkgName));
             files.addAll(getPrimitiveTypeFiles(pkgName));
