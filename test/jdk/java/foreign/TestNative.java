@@ -149,6 +149,7 @@ public class TestNative {
     public static native long getCapacity(Buffer buffer);
 
     public static native long allocate(int size);
+    public static native long free(long address);
 
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
@@ -176,7 +177,7 @@ public class TestNative {
         MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
         assertNull(addr.segment());
         MemorySegment mallocSegment = MemorySegment.ofNativeRestricted(addr, 12, null,
-                () -> UNSAFE.freeMemory(addr.toRawLongValue()), null);
+                () -> free(addr.toRawLongValue()), null);
         assertEquals(mallocSegment.byteSize(), 12);
         mallocSegment.close(); //free here
         assertTrue(!mallocSegment.isAlive());
