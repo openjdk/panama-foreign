@@ -26,8 +26,6 @@ import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.SystemABI.Type;
 import org.testng.annotations.Test;
-import test.jextract.struct.CAllTypes;
-import test.jextract.struct.CPoint;
 
 import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
 import static org.testng.Assert.assertEquals;
@@ -44,15 +42,35 @@ public class LibStructTest {
     @Test
     public void testMakePoint() {
         try (var seg = makePoint(42, -39)) {
-            assertEquals(CPoint.x$get(seg), 42);
-            assertEquals(CPoint.y$get(seg), -39);
+            var addr = seg.baseAddress();
+            assertEquals(CPoint.x$get(addr), 42);
+            assertEquals(CPoint.y$get(addr), -39);
         }
+    }
 
-        try (var seg2 = CPoint.allocate()) {
-            CPoint.x$set(seg2, 56);
-            CPoint.y$set(seg2, 65);
-            assertEquals(CPoint.x$get(seg2), 56);
-            assertEquals(CPoint.y$get(seg2), 65);
+    @Test
+    public void testAllocate() {
+        try (var seg = CPoint.allocate()) {
+            var addr = seg.baseAddress();
+            CPoint.x$set(addr, 56);
+            CPoint.y$set(addr, 65);
+            assertEquals(CPoint.x$get(addr), 56);
+            assertEquals(CPoint.y$get(addr), 65);
+        }
+    }
+
+    @Test
+    public void testAllocateArray() {
+        try (var seg = CPoint.allocateArray(3)) {
+            var addr = seg.baseAddress();
+            for (int i = 0; i < 3; i++) {
+                CPoint.x$set(addr, i, 56 + i);
+                CPoint.y$set(addr, i, 65 + i);
+            }
+            for (int i = 0; i < 3; i++) {
+                assertEquals(CPoint.x$get(addr, i), 56 + i);
+                assertEquals(CPoint.y$get(addr, i), 65 + i);
+            }
         }
     }
 

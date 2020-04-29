@@ -24,6 +24,7 @@
  */
 package jdk.incubator.jextract.tool;
 
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 
 import java.lang.constant.DirectMethodHandleDesc;
@@ -37,10 +38,27 @@ class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
+    protected String getClassModifiers() {
+        return PUB_MODS;
+    }
+
+    @Override
+    protected void addPackagePrefix() {
+        // nested class. containing class has necessary package declaration
+    }
+
+    @Override
+    protected void addImportSection() {
+        // nested class. containing class has necessary imports
+    }
+
+    @Override
     public void classEnd() {
         emitSizeof();
         emitAllocate();
         emitScopeAllocate();
+        emitAllocateArray();
+        emitScopeAllocateArray();
         super.classEnd();
     }
 
@@ -57,6 +75,18 @@ class StructBuilder extends JavaSourceBuilder {
         indent();
         sb.append("}\n");
         decrAlign();
+    }
+
+    @Override
+    public void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+        super.addGetter(javaName, nativeName, layout, type, parentLayout);
+        addIndexGetter(javaName, nativeName, layout, type, parentLayout);
+    }
+
+    @Override
+    public void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+        super.addSetter(javaName, nativeName, layout, type, parentLayout);
+        addIndexSetter(javaName, nativeName, layout, type, parentLayout);
     }
 
     private void emitSizeof() {
@@ -80,6 +110,61 @@ class StructBuilder extends JavaSourceBuilder {
         indent();
         sb.append(PUB_MODS);
         sb.append("MemoryAddress allocate(NativeAllocationScope scope) { return scope.allocate($LAYOUT()); }\n");
+        decrAlign();
+    }
+
+    private void emitAllocateArray() {
+        incrAlign();
+        indent();
+        sb.append(PUB_MODS);
+        sb.append("MemorySegment allocateArray(int len) {\n");
+        incrAlign();
+        indent();
+        sb.append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));");
+        decrAlign();
+        sb.append("}\n");
+        decrAlign();
+    }
+
+    private void emitScopeAllocateArray() {
+        incrAlign();
+        indent();
+        sb.append(PUB_MODS);
+        sb.append("MemoryAddress allocateArray(int len, NativeAllocationScope scope) {\n");
+        incrAlign();
+        indent();
+        sb.append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));");
+        decrAlign();
+        sb.append("}\n");
+        decrAlign();
+    }
+
+    private void addIndexGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+        incrAlign();
+        indent();
+        String params = MemoryAddress.class.getName() + " addr, long index";
+        sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(" + params + ") {\n");
+        incrAlign();
+        indent();
+        sb.append("return (" + type.getName() + ")"
+                + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(addr.addOffset(index*sizeof()));\n");
+        decrAlign();
+        indent();
+        sb.append("}\n");
+        decrAlign();
+    }
+
+    private void addIndexSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+        incrAlign();
+        indent();
+        String params = MemoryAddress.class.getName() + " addr, long index, " + type.getName() + " x";
+        sb.append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
+        incrAlign();
+        indent();
+        sb.append(varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".set(addr.addOffset(index*sizeof()), x);\n");
+        decrAlign();
+        indent();
+        sb.append("}\n");
         decrAlign();
     }
 }

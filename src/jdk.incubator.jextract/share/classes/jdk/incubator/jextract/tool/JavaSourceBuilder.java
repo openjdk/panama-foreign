@@ -25,6 +25,7 @@
 package jdk.incubator.jextract.tool;
 
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 
@@ -61,12 +62,17 @@ abstract class JavaSourceBuilder {
         this(className, pkgName, constantHelper, 0);
     }
 
+    protected String getClassModifiers() {
+        return PUB_CLS_MODS;
+    }
+
     public void classBegin() {
         addPackagePrefix();
         addImportSection();
 
         indent();
-        sb.append(PUB_CLS_MODS + "class ");
+        sb.append(getClassModifiers());
+        sb.append("class ");
         sb.append(className);
         sb.append(" {\n\n");
         emitConstructor();
@@ -85,6 +91,14 @@ abstract class JavaSourceBuilder {
     public void classEnd() {
         indent();
         sb.append("}\n\n");
+    }
+
+    public String getSource() {
+        return sb.toString();
+    }
+
+    public void addContent(String src) {
+        sb.append(src);
     }
 
     public JavaFileObject build() {
@@ -116,12 +130,12 @@ abstract class JavaSourceBuilder {
     public void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        String param = parentLayout != null ? (MemorySegment.class.getName() + " seg") : "";
+        String param = parentLayout != null ? (MemoryAddress.class.getName() + " addr") : "";
         sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(" + param + ") {\n");
         incrAlign();
         indent();
         String vhParam = parentLayout != null ?
-                "seg.baseAddress()" : addressGetCallString(javaName, nativeName);
+                "addr" : addressGetCallString(javaName, nativeName);
         sb.append("return (" + type.getName() + ")"
                 + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(" + vhParam + ");\n");
         decrAlign();
@@ -133,12 +147,12 @@ abstract class JavaSourceBuilder {
     public void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        String param = parentLayout != null ? (MemorySegment.class.getName() + " seg, ") : "";
+        String param = parentLayout != null ? (MemoryAddress.class.getName() + " addr, ") : "";
         sb.append(PUB_MODS + "void " + javaName + "$set(" + param + type.getName() + " x) {\n");
         incrAlign();
         indent();
         String vhParam = parentLayout != null ?
-                "seg.baseAddress()" : addressGetCallString(javaName, nativeName);
+                "addr" : addressGetCallString(javaName, nativeName);
         sb.append(varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".set(" + vhParam + ", x);\n");
         decrAlign();
         indent();

@@ -69,7 +69,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final String clsName;
     private final String pkgName;
     private StructBuilder structBuilder;
-    private List<JavaFileObject> structFiles = new ArrayList<>();
+    private List<String> structSources = new ArrayList<>();
 
     // have we seen this Variable earlier?
     protected boolean variableSeen(Declaration.Variable tree) {
@@ -118,7 +118,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         builder.classBegin();
         //generate all decls
         decl.members().forEach(this::generateDecl);
-
+        for (String src : structSources) {
+            builder.addContent(src);
+        }
         builder.classEnd();
         try {
             List<JavaFileObject> files = new ArrayList<>();
@@ -127,7 +129,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             files.add(fileFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
             files.add(getCstringFile(pkgName));
             files.addAll(getPrimitiveTypeFiles(pkgName));
-            files.addAll(structFiles);
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -237,6 +238,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 case UNION: {
                     structClass = true;
                     this.structBuilder = new StructBuilder("C" + name, pkgName, constantHelper);
+                    structBuilder.incrAlign();
                     structBuilder.classBegin();
                     structBuilder.addLayoutGetter("C" + name, d.layout().get());
                     break;
@@ -246,7 +248,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         d.members().forEach(fieldTree -> fieldTree.accept(this, d.name().isEmpty() ? parent : d));
         if (structClass) {
             this.structBuilder.classEnd();
-            structFiles.add(structBuilder.build());
+            structSources.add(structBuilder.getSource());
             this.structBuilder = null;
         }
         return null;

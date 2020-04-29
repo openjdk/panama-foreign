@@ -197,7 +197,7 @@ public class TestClassGeneration extends JextractToolRunner {
     public void testStructMember(String structName, MemoryLayout memberLayout, Class<?> expectedType, Object testValue) throws Throwable {
         String memberName = memberLayout.name().orElseThrow();
 
-        Class<?> structCls = loader.loadClass("com.acme.C" + structName);
+        Class<?> structCls = loader.loadClass("com.acme.examples_h$C" + structName);
         Method layout_getter = checkMethod(structCls, "$LAYOUT", MemoryLayout.class);
         MemoryLayout structLayout = (MemoryLayout) layout_getter.invoke(null);
         try (MemorySegment struct = MemorySegment.allocateNative(structLayout)) {
@@ -205,11 +205,11 @@ public class TestClassGeneration extends JextractToolRunner {
             VarHandle vh = (VarHandle) vh_getter.invoke(null);
             assertEquals(vh.varType(), expectedType);
 
-            Method getter = checkMethod(structCls, memberName + "$get", expectedType, MemorySegment.class);
-            Method setter = checkMethod(structCls, memberName + "$set", void.class, MemorySegment.class, expectedType);
-
-            setter.invoke(null, struct, testValue);
-            assertEquals(getter.invoke(null, struct), testValue);
+            Method getter = checkMethod(structCls, memberName + "$get", expectedType, MemoryAddress.class);
+            Method setter = checkMethod(structCls, memberName + "$set", void.class, MemoryAddress.class, expectedType);
+            MemoryAddress addr = struct.baseAddress();
+            setter.invoke(null, addr, testValue);
+            assertEquals(getter.invoke(null, addr), testValue);
         }
     }
 
