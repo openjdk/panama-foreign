@@ -165,10 +165,6 @@ public interface Declaration {
              */
             BITFIELDS,
             /**
-             * Type definition declaration.
-             */
-            TYPEDEF,
-            /**
              * Toplevel declaration.
              */
             TOPLEVEL;
@@ -220,7 +216,11 @@ public interface Declaration {
             /**
              * Function parameter declaration.
              */
-            PARAMETER;
+            PARAMETER,
+            /**
+             * Type definition declaration.
+             */
+            TYPE;
         }
 
         /**
@@ -516,10 +516,10 @@ public interface Declaration {
      * Creates a new typedef declaration with given name and declared type.
      * @param pos the typedef declaration position.
      * @param name the typedef declaration name.
-     * @param decl the typedef declared type
-     * @return a new typedef declaration with given name and declared type.
+     * @param type the typedef type
+     * @return a new type declaration with given name and declared type.
      */
-    static Declaration.Scoped typedef(Position pos, String name, Declaration decl) {
-        return new DeclarationImpl.ScopedImpl(Scoped.Kind.TYPEDEF, List.of(decl), name, pos);
+    static Declaration.Variable typedef(Position pos, String name, Type type) {
+        return new DeclarationImpl.VariableImpl(type, Declaration.Variable.Kind.TYPE, name, pos);
     }
 }

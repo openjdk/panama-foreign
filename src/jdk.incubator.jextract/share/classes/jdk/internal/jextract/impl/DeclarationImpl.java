@@ -154,8 +154,13 @@ public abstract class DeclarationImpl implements Declaration {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Declaration.Variable)) return false;
-            if (!super.equals(o)) return false;
+
             Declaration.Variable variable = (Declaration.Variable) o;
+            if (variable.kind() == Kind.TYPE) {
+                if (!variable.name().equals(name())) return false;
+            } else {
+                if (!super.equals(o)) return false;
+            }
             return kind == variable.kind() &&
                     type.equals(variable.type());
         }
