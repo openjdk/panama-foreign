@@ -238,6 +238,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 case UNION: {
                     structClass = true;
                     this.structBuilder = new StructBuilder("C" + name, pkgName, constantHelper);
+                    structBuilder.incrAlign();
                     structBuilder.classBegin();
                     structBuilder.addLayoutGetter("C" + name, d.layout().get());
                     break;

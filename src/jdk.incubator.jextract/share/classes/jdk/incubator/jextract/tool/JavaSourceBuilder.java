@@ -97,10 +97,7 @@ abstract class JavaSourceBuilder {
     }
 
     public void addContent(String src) {
-        incrAlign();
-        indent();
         sb.append(src);
-        decrAlign();
     }
 
     public JavaFileObject build() {

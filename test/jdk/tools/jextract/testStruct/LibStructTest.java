@@ -45,12 +45,15 @@ public class LibStructTest {
             assertEquals(CPoint.x$get(seg), 42);
             assertEquals(CPoint.y$get(seg), -39);
         }
+    }
 
-        try (var seg2 = CPoint.allocate()) {
-            CPoint.x$set(seg2, 56);
-            CPoint.y$set(seg2, 65);
-            assertEquals(CPoint.x$get(seg2), 56);
-            assertEquals(CPoint.y$get(seg2), 65);
+    @Test
+    public void testAllocate() {
+        try (var seg = CPoint.allocate()) {
+            CPoint.x$set(seg, 56);
+            CPoint.y$set(seg, 65);
+            assertEquals(CPoint.x$get(seg), 56);
+            assertEquals(CPoint.y$get(seg), 65);
         }
     }
 
