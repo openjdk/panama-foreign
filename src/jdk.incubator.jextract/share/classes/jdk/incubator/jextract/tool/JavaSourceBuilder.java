@@ -25,6 +25,7 @@
 package jdk.incubator.jextract.tool;
 
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 
@@ -129,12 +130,12 @@ abstract class JavaSourceBuilder {
     public void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        String param = parentLayout != null ? (MemorySegment.class.getName() + " seg") : "";
+        String param = parentLayout != null ? (MemoryAddress.class.getName() + " addr") : "";
         sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(" + param + ") {\n");
         incrAlign();
         indent();
         String vhParam = parentLayout != null ?
-                "seg.baseAddress()" : addressGetCallString(javaName, nativeName);
+                "addr" : addressGetCallString(javaName, nativeName);
         sb.append("return (" + type.getName() + ")"
                 + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(" + vhParam + ");\n");
         decrAlign();
@@ -146,12 +147,12 @@ abstract class JavaSourceBuilder {
     public void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        String param = parentLayout != null ? (MemorySegment.class.getName() + " seg, ") : "";
+        String param = parentLayout != null ? (MemoryAddress.class.getName() + " addr, ") : "";
         sb.append(PUB_MODS + "void " + javaName + "$set(" + param + type.getName() + " x) {\n");
         incrAlign();
         indent();
         String vhParam = parentLayout != null ?
-                "seg.baseAddress()" : addressGetCallString(javaName, nativeName);
+                "addr" : addressGetCallString(javaName, nativeName);
         sb.append(varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".set(" + vhParam + ", x);\n");
         decrAlign();
         indent();
