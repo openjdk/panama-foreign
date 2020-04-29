@@ -61,12 +61,17 @@ abstract class JavaSourceBuilder {
         this(className, pkgName, constantHelper, 0);
     }
 
+    protected String getClassModifiers() {
+        return PUB_CLS_MODS;
+    }
+
     public void classBegin() {
         addPackagePrefix();
         addImportSection();
 
         indent();
-        sb.append(PUB_CLS_MODS + "class ");
+        sb.append(getClassModifiers());
+        sb.append("class ");
         sb.append(className);
         sb.append(" {\n\n");
         emitConstructor();
@@ -85,6 +90,17 @@ abstract class JavaSourceBuilder {
     public void classEnd() {
         indent();
         sb.append("}\n\n");
+    }
+
+    public String getSource() {
+        return sb.toString();
+    }
+
+    public void addContent(String src) {
+        incrAlign();
+        indent();
+        sb.append(src);
+        decrAlign();
     }
 
     public JavaFileObject build() {

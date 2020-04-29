@@ -26,8 +26,6 @@ import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.SystemABI.Type;
 import org.testng.annotations.Test;
-import test.jextract.struct.CAllTypes;
-import test.jextract.struct.CPoint;
 
 import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
 import static org.testng.Assert.assertEquals;

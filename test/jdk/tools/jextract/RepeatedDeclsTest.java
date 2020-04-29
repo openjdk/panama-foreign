@@ -83,7 +83,7 @@ public class RepeatedDeclsTest extends JextractToolRunner {
             checkIntGetter(cls, "Y", 2);
 
             // check Point layout
-            Class<?> pointCls = loader.loadClass("CPoint");
+            Class<?> pointCls = loader.loadClass("repeatedDecls_h$CPoint");
             MemoryLayout pointLayout = findLayout(pointCls);
             assertNotNull(pointLayout);
             assertTrue(((GroupLayout)pointLayout).isStruct());
@@ -91,7 +91,7 @@ public class RepeatedDeclsTest extends JextractToolRunner {
             checkFieldABIType(pointLayout, "j",  Type.INT);
 
             // check Point3D layout
-            Class<?> point3DCls = loader.loadClass("CPoint3D");
+            Class<?> point3DCls = loader.loadClass("repeatedDecls_h$CPoint3D");
             MemoryLayout point3DLayout = findLayout(point3DCls);
             assertNotNull(point3DLayout);
             assertTrue(((GroupLayout)point3DLayout).isStruct());

@@ -37,10 +37,27 @@ class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
+    protected String getClassModifiers() {
+        return PUB_MODS;
+    }
+
+    @Override
+    protected void addPackagePrefix() {
+        // nested class. containing class has necessary package declaration
+    }
+
+    @Override
+    protected void addImportSection() {
+        // nested class. containing class has necessary imports
+    }
+
+    @Override
     public void classEnd() {
         emitSizeof();
         emitAllocate();
         emitScopeAllocate();
+        emitAllocateArray();
+        emitScopeAllocateArray();
         super.classEnd();
     }
 
@@ -80,6 +97,32 @@ class StructBuilder extends JavaSourceBuilder {
         indent();
         sb.append(PUB_MODS);
         sb.append("MemoryAddress allocate(NativeAllocationScope scope) { return scope.allocate($LAYOUT()); }\n");
+        decrAlign();
+    }
+
+    private void emitAllocateArray() {
+        incrAlign();
+        indent();
+        sb.append(PUB_MODS);
+        sb.append("MemorySegment allocateArray(int len) {\n");
+        incrAlign();
+        indent();
+        sb.append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));");
+        decrAlign();
+        sb.append("}\n");
+        decrAlign();
+    }
+
+    private void emitScopeAllocateArray() {
+        incrAlign();
+        indent();
+        sb.append(PUB_MODS);
+        sb.append("MemoryAddress allocateArray(int len, NativeAllocationScope scope) {\n");
+        incrAlign();
+        indent();
+        sb.append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));");
+        decrAlign();
+        sb.append("}\n");
         decrAlign();
     }
 }

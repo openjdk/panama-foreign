@@ -49,7 +49,7 @@ public class Test8240811 extends JextractToolRunner {
             assertNotNull(cls);
 
             // check foo layout
-            Class<?> fooCls = loader.loadClass("Cfoo");
+            Class<?> fooCls = loader.loadClass("name_collision_h$Cfoo");
             MemoryLayout fooLayout = findLayout(fooCls);
             assertNotNull(fooLayout);
             assertTrue(((GroupLayout)fooLayout).isStruct());
@@ -61,7 +61,7 @@ public class Test8240811 extends JextractToolRunner {
             assertNotNull(fooVarLayout);
 
             // check foo2 layout
-            Class<?> foo2Cls = loader.loadClass("Cfoo2");
+            Class<?> foo2Cls = loader.loadClass("name_collision_h$Cfoo2");
             MemoryLayout foo2Layout = findLayout(foo2Cls);
             assertNotNull(foo2Layout);
             assertTrue(((GroupLayout)foo2Layout).isUnion());
@@ -75,7 +75,7 @@ public class Test8240811 extends JextractToolRunner {
             assertNotNull(barVarLayout);
 
             // check bar layout
-            Class<?> barCls = loader.loadClass("Cbar");
+            Class<?> barCls = loader.loadClass("name_collision_h$Cbar");
             MemoryLayout barLayout = findLayout(barCls);
             assertNotNull(barLayout);
             assertTrue(((GroupLayout)barLayout).isStruct());
@@ -86,7 +86,7 @@ public class Test8240811 extends JextractToolRunner {
             assertNotNull(bar2VarLayout);
 
             // check bar layout
-            Class<?> bar2Cls = loader.loadClass("Cbar2");
+            Class<?> bar2Cls = loader.loadClass("name_collision_h$Cbar2");
             MemoryLayout bar2Layout = findLayout(bar2Cls);
             assertNotNull(bar2Layout);
             assertTrue(((GroupLayout)bar2Layout).isUnion());
