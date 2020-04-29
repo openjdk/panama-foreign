@@ -57,7 +57,7 @@ public class CallOverhead {
         System.loadLibrary("CallOverheadJNI");
 
         try {
-            LibraryLookup ll = LibraryLookup.ofLibrary(MethodHandles.lookup(), "CallOverhead");
+            LibraryLookup ll = LibraryLookup.ofLibrary("CallOverhead");
             func = abi.downcallHandle(ll.lookup("func"),
                     MethodType.methodType(void.class),
                     FunctionDescriptor.ofVoid());
