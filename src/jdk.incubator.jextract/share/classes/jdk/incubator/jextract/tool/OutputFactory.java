@@ -284,9 +284,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 name = Utils.javaSafeIdentifier(name);
                 //generate functional interface
                 MethodType fitype = typeTranslator.getMethodType(f);
-                builder.addFunctionalInterface(name, fitype);
-                //generate helper
-                builder.addFunctionalFactory(name, fitype, Type.descriptorFor(f).orElseThrow());
+                builder.addFunctionalInterface(name, fitype, Type.descriptorFor(f).orElseThrow());
                 i++;
             }
         }
