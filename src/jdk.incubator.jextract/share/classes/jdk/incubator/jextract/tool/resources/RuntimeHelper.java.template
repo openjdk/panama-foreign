@@ -77,6 +77,10 @@ public class RuntimeHelper {
         }
     }
 
+    public static void freeUpcallStub(MemoryAddress addr) {
+        ABI.freeUpcallStub(addr);
+    }
+
     private static class VarargsInvoker {
         private static final MethodHandle INVOKE_MH;
         private final MemoryAddress symbol;

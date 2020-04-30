@@ -218,7 +218,7 @@ public class TestClassGeneration extends JextractToolRunner {
         Class<?> fiClass = findNestedClass(cls, name);
         assertNotNull(fiClass);
         checkMethod(fiClass, "apply", type);
-        checkMethod(cls, name + "$make", MemoryAddress.class, fiClass);
+        checkMethod(fiClass, "$make", MemoryAddress.class, fiClass);
     }
 
     @BeforeClass

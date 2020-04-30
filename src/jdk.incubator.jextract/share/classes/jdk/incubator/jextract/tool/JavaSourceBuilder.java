@@ -41,7 +41,7 @@ import java.util.List;
  */
 abstract class JavaSourceBuilder {
     static final String PUB_CLS_MODS = "public final ";
-    static final String PUB_MODS = "public static final ";
+    static final String PUB_MODS = "public static ";
     protected final String className;
     protected final String pkgName;
     protected final ConstantHelper constantHelper;

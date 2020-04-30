@@ -39,21 +39,7 @@ class HeaderBuilder extends JavaSourceBuilder {
         super(className, pkgName, constantHelper);
     }
 
-    public void addFunctionalFactory(String className, MethodType mtype, FunctionDescriptor fDesc) {
-        incrAlign();
-        indent();
-        sb.append(PUB_MODS + "MemoryAddress " + className + "$make(" + className + " fi) {\n");
-        incrAlign();
-        indent();
-        sb.append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fDesc) + ", " +
-                "\"" + mtype.toMethodDescriptorString() + "\");\n");
-        decrAlign();
-        indent();
-        sb.append("}\n");
-        decrAlign();
-    }
-
-    public void addFunctionalInterface(String name, MethodType mtype) {
+    public void addFunctionalInterface(String name, MethodType mtype,  FunctionDescriptor fDesc) {
         incrAlign();
         indent();
         sb.append("public interface " + name + " {\n");
@@ -66,6 +52,7 @@ class HeaderBuilder extends JavaSourceBuilder {
             delim = ", ";
         }
         sb.append(");\n");
+        addFunctionalFactory(name, mtype, fDesc);
         decrAlign();
         indent();
         sb.append("}\n");
@@ -120,5 +107,17 @@ class HeaderBuilder extends JavaSourceBuilder {
         indent();
         sb.append("}\n");
         decrAlign();
+    }
+
+    private void addFunctionalFactory(String className, MethodType mtype, FunctionDescriptor fDesc) {
+        indent();
+        sb.append(PUB_MODS + "MemoryAddress $make(" + className + " fi) {\n");
+        incrAlign();
+        indent();
+        sb.append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fDesc) + ", " +
+                "\"" + mtype.toMethodDescriptorString() + "\");\n");
+        decrAlign();
+        indent();
+        sb.append("}\n");
     }
 }
