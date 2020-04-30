@@ -55,7 +55,7 @@ public class AArch64ABI implements SystemABI {
 
     @Override
     public MethodHandle downcallHandle(MemoryAddress symbol, MethodType type, FunctionDescriptor function) {
-        return CallArranger.arrangeDowncall(symbol.toRawLongValue(), type, function);
+        return CallArranger.arrangeDowncall(symbol, type, function);
     }
 
     @Override

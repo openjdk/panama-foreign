@@ -70,7 +70,7 @@ public class TestVarArgs extends NativeTestHelper {
 
     static {
         try {
-            varargsAddr = LibraryLookup.ofLibrary(MethodHandles.lookup(), "VarArgs").lookup("varargs");
+            varargsAddr = LibraryLookup.ofLibrary("VarArgs").lookup("varargs");
         } catch (NoSuchMethodException e) {
             throw new BootstrapMethodError(e);
         }

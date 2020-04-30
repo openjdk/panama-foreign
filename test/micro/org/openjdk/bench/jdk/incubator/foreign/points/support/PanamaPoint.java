@@ -53,7 +53,7 @@ public class PanamaPoint implements AutoCloseable {
     static {
         try {
             SystemABI abi = SystemABI.getSystemABI();
-            LibraryLookup lookup = LibraryLookup.ofLibrary(MethodHandles.lookup(), "Point");
+            LibraryLookup lookup = LibraryLookup.ofLibrary("Point");
             MH_distance = abi.downcallHandle(
                 lookup.lookup("distance"),
                 methodType(double.class, MemorySegment.class, MemorySegment.class),

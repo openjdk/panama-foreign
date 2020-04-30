@@ -61,7 +61,7 @@ import static org.testng.Assert.assertEquals;
 
 public class TestUpcall extends CallGeneratorHelper {
 
-    static LibraryLookup lib = LibraryLookup.ofLibrary(MethodHandles.lookup(), "TestUpcall");
+    static LibraryLookup lib = LibraryLookup.ofLibrary("TestUpcall");
     static SystemABI abi = SystemABI.getSystemABI();
     static final MemoryAddress dummyAddress;
     static final Cleaner cleaner = Cleaner.create();
