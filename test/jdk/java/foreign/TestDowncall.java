@@ -51,7 +51,7 @@ import static org.testng.Assert.*;
 
 public class TestDowncall extends CallGeneratorHelper {
 
-    static LibraryLookup lib = LibraryLookup.ofLibrary(MethodHandles.lookup(), "TestDowncall");
+    static LibraryLookup lib = LibraryLookup.ofLibrary("TestDowncall");
     static SystemABI abi = SystemABI.getSystemABI();
 
 
