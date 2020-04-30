@@ -58,8 +58,8 @@ public class RuntimeHelper {
             return Arrays.stream(libNames).map(libName -> {
                 Optional<Path> absPath = findLibraryPath(paths, libName);
                 return absPath.isPresent() ?
-                        LibraryLookup.ofPath(MH_LOOKUP, absPath.get().toString()) :
-                        LibraryLookup.ofLibrary(MH_LOOKUP, libName);
+                        LibraryLookup.ofPath(absPath.get().toString()) :
+                        LibraryLookup.ofLibrary(libName);
             }).toArray(LibraryLookup[]::new);
         }
     }
