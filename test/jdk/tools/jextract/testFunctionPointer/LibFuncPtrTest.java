@@ -31,7 +31,7 @@ import static test.jextract.fp.funcPtr_h.*;
  * @test
  * @library ..
  * @modules jdk.incubator.jextract
- * @run driver JtregJextract -l Struct -t test.jextract.fp -- funcPtr.h
+ * @run driver JtregJextract -l FuncPtr -t test.jextract.fp -- funcPtr.h
  * @run testng/othervm -Dforeign.restricted=permit LibFuncPtrTest
  */
 public class LibFuncPtrTest {
