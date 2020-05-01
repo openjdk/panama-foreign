@@ -151,6 +151,8 @@ public class HelpFlagsTest extends TestHelper {
         new ToolHelpSpec("rmiregistry", 0,   0,   0,   0,         0,    0,     1),     // none, prints help message anyways.
         new ToolHelpSpec("serialver",   0,   0,   0,   0,         0,    0,     1),     // none, prints help message anyways.
         new ToolHelpSpec("jpackage",    0,   1,   1,   0,         0,    1,     1),     //     -h, --help,
+        // Panama
+        new ToolHelpSpec("jextract"    ,1,   1,   1,   0,         1,    1,   1),       // -?, -h, --help -help, Documents -help
     };
 
     // Returns corresponding object from jdkTools array.
