@@ -29,4 +29,3 @@ $(eval $(call SetupBuildLauncher, jextract,\
     CFLAGS := -DENABLE_ARG_FILES, \
     MAIN_CLASS := jdk.incubator.jextract.tool.Main, \
 ))
-
