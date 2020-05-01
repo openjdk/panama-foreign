@@ -305,6 +305,20 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     @Override
+    public Void visitTypedef(Declaration.Typedef tree, Declaration parent) {
+        Type type = tree.type();
+        if (type instanceof Type.Declared) {
+            Declaration.Scoped s = ((Type.Declared) type).tree();
+            // only generate unnamed for now
+            // skip typedef with different name
+            if (s.name().isEmpty()) {
+                return visitScoped(s, tree);
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Void visitVariable(Declaration.Variable tree, Declaration parent) {
         if (parent == null && variableSeen(tree)) {
             return null;
@@ -312,21 +326,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         String fieldName = tree.name();
         String symbol = tree.name();
-        Type type = tree.type();
-
-        if (tree.kind() == Declaration.Variable.Kind.TYPE) {
-            if (type instanceof Type.Declared) {
-                Declaration.Scoped s = ((Type.Declared) type).tree();
-                // only generate unnamed for now
-                // skip typedef with different name
-                if (!s.name().isEmpty()) return null;
-                return visitScoped(s, tree);
-            } else {
-                // skip for now
-                return null;
-            }
-        }
-
         assert !symbol.isEmpty();
         assert !fieldName.isEmpty();
 
@@ -336,6 +335,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
         fieldName = Utils.javaSafeIdentifier(fieldName);
 
+        Type type = tree.type();
         MemoryLayout layout = tree.layout().orElse(Type.layoutFor(type).orElse(null));
         if (layout == null) {
             //no layout - abort
@@ -379,17 +379,14 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     protected static MemoryLayout parentLayout(Declaration parent) {
-        Declaration.Scoped scope;
-        if (parent instanceof Declaration.Variable) {
-            Declaration.Variable v = (Declaration.Variable) parent;
-            assert v.kind() == Declaration.Variable.Kind.TYPE;
-            scope = ((Type.Declared)(v.type())).tree();
+        if (parent instanceof Declaration.Typedef) {
+            Declaration.Typedef alias = (Declaration.Typedef) parent;
+            return Type.layoutFor(alias.type()).orElseThrow();
         } else if (parent instanceof Declaration.Scoped) {
-            scope = (Declaration.Scoped) parent;
+            return ((Declaration.Scoped) parent).layout().orElseThrow();
         } else {
             throw new IllegalArgumentException("Unexpected parent declaration");
         }
         // case like `typedef struct { ... } Foo`
-        return scope.layout().orElseThrow();
     }
 }

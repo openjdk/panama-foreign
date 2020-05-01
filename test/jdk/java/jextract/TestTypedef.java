@@ -55,18 +55,16 @@ public class TestTypedef extends JextractApiTestBase {
     }
 
     public static Type getTypedefType(Declaration.Scoped scope, String name) {
-        Declaration.Variable variable = findDecl(scope, name, Declaration.Variable.class);
-        assertEquals(variable.kind(), Declaration.Variable.Kind.TYPE);
-        Type type = variable.type();
+        Declaration.Typedef d = findDecl(scope, name, Declaration.Typedef.class);
+        Type type = d.type();
         // Typedef declaration should return canonical type
         if (type instanceof Type.Delegated) {
             assertNotEquals(((Type.Delegated) type).kind(), Type.Delegated.Kind.TYPEDEF);
         }
-        return variable.type();
+        return d.type();
     }
 
-    private Declaration.Scoped assertDeclaredTypedef(Declaration.Variable decl) {
-        assertEquals(decl.kind(), Declaration.Variable.Kind.TYPE);
+    private Declaration.Scoped assertDeclaredTypedef(Declaration.Typedef decl) {
         Type type = decl.type();
         assertTrue(type instanceof Type.Declared, "Expecting Type.Declared, got " + type.getClass());
         return ((Type.Declared) type).tree();
@@ -75,8 +73,8 @@ public class TestTypedef extends JextractApiTestBase {
     private Declaration.Scoped assertAnonymousRecord(Declaration.Scoped scope, String name) {
         Declaration[] ar = findAllWithName(scope, name);
         assertEquals(ar.length, 1);
-        assertTrue(ar[0] instanceof Declaration.Variable, "Expectint Declaration.Variable, but got " + ar[0].getClass());
-        Declaration.Scoped record = assertDeclaredTypedef((Declaration.Variable) ar[0]);
+        assertTrue(ar[0] instanceof Declaration.Typedef, "Expectint Declaration.Typedef, but got " + ar[0].getClass());
+        Declaration.Scoped record = assertDeclaredTypedef((Declaration.Typedef) ar[0]);
         return record;
     }
 

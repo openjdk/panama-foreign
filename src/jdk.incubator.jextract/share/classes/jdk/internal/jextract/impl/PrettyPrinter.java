@@ -49,7 +49,7 @@ class PrettyPrinter implements Declaration.Visitor<Void, Void> {
     void indent() {
         builder.append("                                                                                           ".substring(0, align));
     }
-    
+
     StringBuilder builder = new StringBuilder();
 
     private void getAttributes(Declaration decl) {
@@ -114,6 +114,15 @@ class PrettyPrinter implements Declaration.Visitor<Void, Void> {
         indent();
         builder.append("Constant: " + d.name() + " " + d.value() + " type = " + d.type().accept(typeVisitor, null));
         builder.append("\n");
+        getAttributes(d);
+        return null;
+    }
+
+    @Override
+    public Void visitTypedef(Declaration.Typedef d, Void aVoid) {
+        indent();
+        builder.append("Typedef: ").append(d.name()).append(" = ")
+               .append(d.type().accept(typeVisitor, null)).append("\n");
         getAttributes(d);
         return null;
     }

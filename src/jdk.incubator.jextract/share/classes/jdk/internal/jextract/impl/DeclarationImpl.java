@@ -99,6 +99,50 @@ public abstract class DeclarationImpl implements Declaration {
         return Objects.hash(name);
     }
 
+    public static final class TypedefImpl extends DeclarationImpl implements Declaration.Typedef {
+        final Type type;
+
+        public TypedefImpl(Type type, String name, Position pos, Map<String, List<Constable>> attrs) {
+            super(name, pos, attrs);
+            this.type = Objects.requireNonNull(type);
+        }
+
+        @Override
+        public <R, D> R accept(Visitor<R, D> visitor, D data) {
+            return visitor.visitTypedef(this, data);
+        }
+
+        @Override
+        public Type type() {
+            return type;
+        }
+
+        @Override
+        public Typedef withAttributes(Map<String, List<Constable>> attrs) {
+            return new TypedefImpl(type, name(), pos(), attrs);
+        }
+
+        @Override
+        public Typedef stripAttributes() {
+            return new TypedefImpl(type, name(), pos(), null);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Declaration.Typedef)) return false;
+
+            Declaration.Typedef other = (Declaration.Typedef) o;
+            return name().equals(other.name()) &&
+                    type.equals(other.type());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), type);
+        }
+    }
+
     public static final class VariableImpl extends DeclarationImpl implements Declaration.Variable {
 
         final Variable.Kind kind;

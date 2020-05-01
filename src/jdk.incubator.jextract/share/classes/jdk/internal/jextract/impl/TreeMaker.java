@@ -250,7 +250,7 @@ class TreeMaker {
                 .collect(Collectors.toList());
     }
 
-    private Declaration.Variable createTypedef(Cursor c) {
+    private Declaration.Typedef createTypedef(Cursor c) {
         Type.Delegated typedef = (Type.Delegated) toType(c);
         Type canonicalType = typedef.type();
         if (canonicalType instanceof Type.Declared) {

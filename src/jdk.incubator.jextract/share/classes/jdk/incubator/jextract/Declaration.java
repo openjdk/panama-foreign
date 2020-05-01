@@ -194,6 +194,17 @@ public interface Declaration {
     }
 
     /**
+     * A typedef declaration
+     */
+    interface Typedef extends Declaration {
+        /**
+         * The canonical type associated with this typedef declaration.
+         * @return The canonical type associated with this typedef declaration.
+         */
+        Type type();
+    }
+
+    /**
      * A variable declaration.
      */
     interface Variable extends Declaration {
@@ -296,6 +307,14 @@ public interface Declaration {
          * @return the result of visiting the given constant declaration through this visitor object.
          */
         default R visitConstant(Constant d, P p) { return visitDeclaration(d, p); }
+
+        /**
+         * Visit a typedef declaration.
+         * @param d the typedef declaration.
+         * @param p the visitor parameter.
+         * @return the result of visiting the given typedef declaration through this visitor object.
+         */
+        default R visitTypedef(Typedef d, P p) { return visitDeclaration(d, p); }
 
         /**
          * Visit a declaration.
@@ -519,7 +538,7 @@ public interface Declaration {
      * @param type the typedef type
      * @return a new type declaration with given name and declared type.
      */
-    static Declaration.Variable typedef(Position pos, String name, Type type) {
-        return new DeclarationImpl.VariableImpl(type, Declaration.Variable.Kind.TYPE, name, pos);
+    static Declaration.Typedef typedef(Position pos, String name, Type type) {
+        return new DeclarationImpl.TypedefImpl(type, name, pos, null);
     }
 }
