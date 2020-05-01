@@ -200,11 +200,7 @@ public abstract class DeclarationImpl implements Declaration {
             if (!(o instanceof Declaration.Variable)) return false;
 
             Declaration.Variable variable = (Declaration.Variable) o;
-            if (variable.kind() == Kind.TYPE) {
-                if (!variable.name().equals(name())) return false;
-            } else {
-                if (!super.equals(o)) return false;
-            }
+            if (!super.equals(o)) return false;
             return kind == variable.kind() &&
                     type.equals(variable.type());
         }

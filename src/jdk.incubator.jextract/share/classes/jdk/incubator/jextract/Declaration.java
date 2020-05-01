@@ -227,11 +227,7 @@ public interface Declaration {
             /**
              * Function parameter declaration.
              */
-            PARAMETER,
-            /**
-             * Type definition declaration.
-             */
-            TYPE;
+            PARAMETER;
         }
 
         /**
