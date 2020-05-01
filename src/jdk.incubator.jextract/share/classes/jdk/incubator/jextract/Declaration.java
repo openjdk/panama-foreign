@@ -165,10 +165,6 @@ public interface Declaration {
              */
             BITFIELDS,
             /**
-             * Type definition declaration.
-             */
-            TYPEDEF,
-            /**
              * Toplevel declaration.
              */
             TOPLEVEL;
@@ -195,6 +191,17 @@ public interface Declaration {
          * @return The scoped declaration kind.
          */
         Kind kind();
+    }
+
+    /**
+     * A typedef declaration
+     */
+    interface Typedef extends Declaration {
+        /**
+         * The canonical type associated with this typedef declaration.
+         * @return The canonical type associated with this typedef declaration.
+         */
+        Type type();
     }
 
     /**
@@ -296,6 +303,14 @@ public interface Declaration {
          * @return the result of visiting the given constant declaration through this visitor object.
          */
         default R visitConstant(Constant d, P p) { return visitDeclaration(d, p); }
+
+        /**
+         * Visit a typedef declaration.
+         * @param d the typedef declaration.
+         * @param p the visitor parameter.
+         * @return the result of visiting the given typedef declaration through this visitor object.
+         */
+        default R visitTypedef(Typedef d, P p) { return visitDeclaration(d, p); }
 
         /**
          * Visit a declaration.
@@ -516,10 +531,10 @@ public interface Declaration {
      * Creates a new typedef declaration with given name and declared type.
      * @param pos the typedef declaration position.
      * @param name the typedef declaration name.
-     * @param decl the typedef declared type
-     * @return a new typedef declaration with given name and declared type.
+     * @param type the typedef type
+     * @return a new type declaration with given name and declared type.
      */
-    static Declaration.Scoped typedef(Position pos, String name, Declaration decl) {
-        return new DeclarationImpl.ScopedImpl(Scoped.Kind.TYPEDEF, List.of(decl), name, pos);
+    static Declaration.Typedef typedef(Position pos, String name, Type type) {
+        return new DeclarationImpl.TypedefImpl(type, name, pos, null);
     }
 }

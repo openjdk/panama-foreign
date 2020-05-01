@@ -23,8 +23,11 @@
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.JextractTask;
 import jdk.incubator.jextract.Type;
@@ -46,13 +49,44 @@ public class JextractApiTestBase {
         return task.parse(parseOptions);
     }
 
+    public static void checkNames(List<Declaration> members, String... fields) {
+        assertEquals(members.size(), fields.length);
+        for (int i = 0; i < fields.length; i++) {
+            assertEquals(members.get(i).name(), fields[i]);
+        }
+    }
+
     public static Declaration.Scoped checkScoped(Declaration.Scoped toplevel, String name, Declaration.Scoped.Kind kind,  String... fields) {
         Declaration.Scoped scoped = findDecl(toplevel, name, Declaration.Scoped.class);
-        assertEquals(scoped.members().size(), fields.length);
         assertTrue(scoped.kind() == kind);
-        for (int i = 0; i < fields.length; i++) {
-            assertEquals(scoped.members().get(i).name(), fields[i]);
-        }
+        checkNames(scoped.members(), fields);
+        return scoped;
+    }
+
+    private static List<Declaration> getNamedFields(Declaration.Scoped scoped) {
+        List<Declaration> fields = new ArrayList<>();
+        scoped.members().forEach(d -> {
+            if (d instanceof Declaration.Variable) {
+                Declaration.Variable v = (Declaration.Variable) d;
+                if (v.kind() == Declaration.Variable.Kind.FIELD) {
+                    assert (!v.name().isEmpty());
+                    fields.add(v);
+                }
+            } else if (d instanceof Declaration.Scoped) {
+                Declaration.Scoped record = (Declaration.Scoped) d;
+                if (record.name().isEmpty()) {
+                    fields.addAll(getNamedFields(record));
+                } else {
+                    fields.add(record);
+                }
+            }
+        });
+        return fields;
+    }
+
+    public static Declaration.Scoped checkRecord(Declaration.Scoped scoped, String name, Declaration.Scoped.Kind kind,  String... fields) {
+        assertTrue(scoped.kind() == kind);
+        checkNames(getNamedFields(scoped), fields);
         return scoped;
     }
 
@@ -68,26 +102,26 @@ public class JextractApiTestBase {
         return checkScoped(toplevel, name, Declaration.Scoped.Kind.UNION, fields);
     }
 
-    public static Declaration.Variable checkConstant(Declaration.Scoped scope, String name, Type type) {
+    public static Declaration.Variable checkVariable(Declaration.Scoped scope, String name, Type type) {
         Declaration.Variable var = findDecl(scope, name, Declaration.Variable.class);
         assertTypeEquals(type, var.type());
         return var;
     }
 
     public static Declaration.Variable checkGlobal(Declaration.Scoped toplevel, String name, Type type) {
-        Declaration.Variable global = checkConstant(toplevel, name, type);
+        Declaration.Variable global = checkVariable(toplevel, name, type);
         assertEquals(global.kind(), Declaration.Variable.Kind.GLOBAL);
         return global;
     }
 
     public static Declaration.Variable checkField(Declaration.Scoped record, String name, Type type) {
-        Declaration.Variable global = checkConstant(record, name, type);
+        Declaration.Variable global = checkVariable(record, name, type);
         assertEquals(global.kind(), Declaration.Variable.Kind.FIELD);
         return global;
     }
 
     public static Declaration.Variable checkBitField(Declaration.Scoped record, String name, Type type, int size) {
-        Declaration.Variable global = checkConstant(record, name, type);
+        Declaration.Variable global = checkVariable(record, name, type);
         assertEquals(global.kind(), Declaration.Variable.Kind.BITFIELD);
         assertEquals(global.layout().get().bitSize(), size);
         return global;
@@ -163,6 +197,74 @@ public class JextractApiTestBase {
             for (int i = 0 ; i < ((Type.Function)expected).argumentTypes().size() ; i++) {
                 assertTypeEquals(((Type.Function)expected).argumentTypes().get(i), ((Type.Function)found).argumentTypes().get(i));
             }
+        }
+    }
+
+    public static Type unwrapDelegatedType(Type type, Type.Delegated.Kind kind) {
+        assertTrue(type instanceof Type.Delegated,
+                "Expecting Type.Delegated, got " + type.getClass());
+        Type.Delegated delegated = (Type.Delegated) type;
+        assertEquals(delegated.kind(), kind);
+        return delegated.type();
+    }
+
+    public static Type unwrapPointerType(Type type) {
+        return unwrapDelegatedType(type, Type.Delegated.Kind.POINTER);
+    }
+
+    public static Type unwrapTypedefType(Type type) {
+        return unwrapDelegatedType(type, Type.Delegated.Kind.TYPEDEF);
+    }
+
+    public static Type unwrapArrayType(Type type, long size) {
+        assertTrue(type instanceof Type.Array,
+                "Expecting Type.Array, got " + type.getClass());
+        Type.Array arType = (Type.Array) type;
+        assertEquals(arType.elementCount().getAsLong(), size);
+        return arType.elementType();
+    }
+
+    public static Type unwrapArrayType(Type type) {
+        assertTrue(type instanceof Type.Array,
+                "Expecting Type.Array, got " + type.getClass());
+        Type.Array arType = (Type.Array) type;
+        assertTrue(arType.elementCount().isEmpty());
+        return arType.elementType();
+    }
+
+    static class TypeUnwrapper {
+        private Type type;
+
+        private TypeUnwrapper(Type type) {
+            this.type = type;
+        }
+
+        public static TypeUnwrapper of(Type type) {
+            return new TypeUnwrapper(type);
+        }
+
+        public TypeUnwrapper unwrapPointer() {
+            type = unwrapPointerType(type);
+            return this;
+        }
+
+        public TypeUnwrapper unwrapTypedef() {
+            type = unwrapTypedefType(type);
+            return this;
+        }
+
+        public TypeUnwrapper unwrapArray(long size) {
+            type = unwrapArrayType(type, size);
+            return this;
+        }
+
+        public TypeUnwrapper unwrapArray() {
+            type = unwrapArrayType(type);
+            return this;
+        }
+
+        public Type get() {
+            return type;
         }
     }
 }

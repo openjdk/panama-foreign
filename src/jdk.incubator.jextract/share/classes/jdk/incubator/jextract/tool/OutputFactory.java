@@ -218,9 +218,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitScoped(Declaration.Scoped d, Declaration parent) {
-        if (d.kind() == Declaration.Scoped.Kind.TYPEDEF) {
-            return d.members().get(0).accept(this, d);
-        }
         if (d.layout().isEmpty()) {
             //skip decl-only
             return null;
@@ -308,6 +305,20 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     @Override
+    public Void visitTypedef(Declaration.Typedef tree, Declaration parent) {
+        Type type = tree.type();
+        if (type instanceof Type.Declared) {
+            Declaration.Scoped s = ((Type.Declared) type).tree();
+            // only generate unnamed for now
+            // skip typedef with different name
+            if (s.name().isEmpty()) {
+                return visitScoped(s, tree);
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Void visitVariable(Declaration.Variable tree, Declaration parent) {
         if (parent == null && variableSeen(tree)) {
             return null;
@@ -339,8 +350,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         MemoryLayout treeLayout = tree.layout().orElseThrow();
         if (parent != null) { //struct field
-            Declaration.Scoped parentC = (Declaration.Scoped) parent;
-            MemoryLayout parentLayout = parentLayout(parentC);
+            MemoryLayout parentLayout = parentLayout(parent);
             structBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
             structBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
             structBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
@@ -368,10 +378,15 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
     }
 
-    protected static MemoryLayout parentLayout(Declaration.Scoped parent) {
+    protected static MemoryLayout parentLayout(Declaration parent) {
+        if (parent instanceof Declaration.Typedef) {
+            Declaration.Typedef alias = (Declaration.Typedef) parent;
+            return Type.layoutFor(alias.type()).orElseThrow();
+        } else if (parent instanceof Declaration.Scoped) {
+            return ((Declaration.Scoped) parent).layout().orElseThrow();
+        } else {
+            throw new IllegalArgumentException("Unexpected parent declaration");
+        }
         // case like `typedef struct { ... } Foo`
-        return (parent.kind() == Declaration.Scoped.Kind.TYPEDEF
-            ? (Declaration.Scoped) parent.members().get(0)
-            : parent).layout().orElseThrow();
     }
 }
