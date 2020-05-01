@@ -40,10 +40,10 @@ import jdk.incubator.jextract.Type;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 
-import static jdk.internal.jextract.impl.LayoutUtils.*; 
-        
+import static jdk.internal.jextract.impl.LayoutUtils.*;
+
 public final class Index_h {
-    
+
     private static String libName() {
         if (System.getProperty("os.name").startsWith("Windows")) {
             return "libclang";
