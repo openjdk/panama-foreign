@@ -55,7 +55,7 @@ public class LibClang {
                         "_putenv" : "putenv";
                 MethodHandle PUT_ENV = abi.downcallHandle(LibraryLookup.ofDefault().lookup(putenv),
                                 MethodType.methodType(int.class, MemoryAddress.class),
-                                FunctionDescriptor.of(LayoutUtils.C_INT, LayoutUtils.C_POINTER));
+                                FunctionDescriptor.of(SystemABI.C_INT, SystemABI.C_POINTER));
                 int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.baseAddress());
             } catch (Throwable ex) {
                 throw new ExceptionInInitializerError(ex);

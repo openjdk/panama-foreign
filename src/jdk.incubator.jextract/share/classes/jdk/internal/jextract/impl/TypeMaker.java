@@ -122,48 +122,48 @@ class TypeMaker {
                 return Type.void_();
             case Char_S:
             case Char_U:
-                return Type.primitive(Primitive.Kind.Char, LayoutUtils.C_CHAR);
+                return Type.primitive(Primitive.Kind.Char);
             case Short:
-                return Type.primitive(Primitive.Kind.Short, LayoutUtils.C_SHORT);
+                return Type.primitive(Primitive.Kind.Short);
             case Int:
-                return Type.primitive(Primitive.Kind.Int, LayoutUtils.C_INT);
+                return Type.primitive(Primitive.Kind.Int);
             case Long:
-                return Type.primitive(Primitive.Kind.Long, LayoutUtils.C_LONG);
+                return Type.primitive(Primitive.Kind.Long);
             case LongLong:
-                return Type.primitive(Primitive.Kind.LongLong, LayoutUtils.C_LONGLONG);
+                return Type.primitive(Primitive.Kind.LongLong);
             case SChar: {
-                Type chType = Type.primitive(Primitive.Kind.Char, LayoutUtils.C_SCHAR);
+                Type chType = Type.primitive(Primitive.Kind.Char);
                 return Type.qualified(Delegated.Kind.SIGNED, chType);
             }
             case UShort: {
-                Type chType = Type.primitive(Primitive.Kind.Short, LayoutUtils.C_USHORT);
+                Type chType = Type.primitive(Primitive.Kind.Short);
                 return Type.qualified(Delegated.Kind.UNSIGNED, chType);
             }
             case UInt: {
-                Type chType = Type.primitive(Primitive.Kind.Int, LayoutUtils.C_UINT);
+                Type chType = Type.primitive(Primitive.Kind.Int);
                 return Type.qualified(Delegated.Kind.UNSIGNED, chType);
             }
             case ULong: {
-                Type chType = Type.primitive(Primitive.Kind.Long, LayoutUtils.C_ULONG);
+                Type chType = Type.primitive(Primitive.Kind.Long);
                 return Type.qualified(Delegated.Kind.UNSIGNED, chType);
             }
             case ULongLong: {
-                Type chType = Type.primitive(Primitive.Kind.LongLong, LayoutUtils.C_ULONGLONG);
+                Type chType = Type.primitive(Primitive.Kind.LongLong);
                 return Type.qualified(Delegated.Kind.UNSIGNED, chType);
             }
             case UChar: {
-                Type chType = Type.primitive(Primitive.Kind.Char, LayoutUtils.C_UCHAR);
+                Type chType = Type.primitive(Primitive.Kind.Char);
                 return Type.qualified(Delegated.Kind.UNSIGNED, chType);
             }
 
             case Bool:
-                return Type.primitive(Primitive.Kind.Bool, LayoutUtils.C_BOOL);
+                return Type.primitive(Primitive.Kind.Bool);
             case Double:
-                return Type.primitive(Primitive.Kind.Double, LayoutUtils.C_DOUBLE);
+                return Type.primitive(Primitive.Kind.Double);
             case LongDouble:
-                return Type.primitive(Primitive.Kind.LongDouble, LayoutUtils.C_LONGDOUBLE);
+                return Type.primitive(Primitive.Kind.LongDouble);
             case Float:
-                return Type.primitive(Primitive.Kind.Float, LayoutUtils.C_FLOAT);
+                return Type.primitive(Primitive.Kind.Float);
             case Unexposed:
             case Elaborated:
                 jdk.internal.clang.Type canonical = t.canonicalType();

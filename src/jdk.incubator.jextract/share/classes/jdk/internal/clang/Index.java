@@ -29,6 +29,7 @@ package jdk.internal.clang;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SystemABI;
 import jdk.internal.clang.libclang.Index_h;
 
 import java.lang.invoke.VarHandle;
@@ -36,8 +37,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
-import static jdk.internal.jextract.impl.LayoutUtils.C_POINTER;
 
 public class Index implements AutoCloseable {
     // Pointer to CXIndex
@@ -77,13 +76,13 @@ public class Index implements AutoCloseable {
     }
 
     private static final VarHandle VH_MemoryAddress =
-            MemoryHandles.asAddressVarHandle(C_POINTER.varHandle(long.class));
+            MemoryHandles.asAddressVarHandle(SystemABI.C_POINTER.varHandle(long.class));
 
     public TranslationUnit parseTU(String file, Consumer<Diagnostic> dh, int options, String... args)
     throws ParsingFailedException {
         try (MemorySegment src = Utils.toNativeString(file) ;
              MemorySegment cargs = Utils.toNativeStringArray(args);
-             MemorySegment outAddress = MemorySegment.allocateNative(C_POINTER)) {
+             MemorySegment outAddress = MemorySegment.allocateNative(SystemABI.C_POINTER)) {
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_parseTranslationUnit2(
                     ptr,
                     src.baseAddress(),
