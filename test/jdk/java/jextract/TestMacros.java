@@ -31,6 +31,7 @@
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 import org.testng.annotations.BeforeClass;
@@ -40,7 +41,7 @@ public class TestMacros extends JextractApiTestBase {
     Declaration.Scoped badMacro;
     Declaration.Scoped foo;
     Declaration.Scoped bar;
-    private final static Type C_INT = Type.primitive(Type.Primitive.Kind.Int, MemoryLayouts.C_INT);
+    private final static Type C_INT = Type.primitive(Type.Primitive.Kind.Int);
 
     @BeforeClass
     public void parse() {

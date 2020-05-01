@@ -24,7 +24,7 @@
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.foreign.SystemABI.Type;
+import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;
 
 import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
@@ -74,27 +74,27 @@ public class LibStructTest {
         }
     }
 
-    private static void checkFieldABIType(GroupLayout group, String fieldName, Type expected) {
-        assertEquals(group.select(PathElement.groupElement(fieldName)).attribute(NATIVE_TYPE)
-                                                                      .map(SystemABI.Type.class::cast)
+    private static void checkFieldABIType(GroupLayout group, String fieldName, Type.Primitive.Kind expected) {
+        assertEquals(group.select(PathElement.groupElement(fieldName)).attribute(Type.Primitive.Kind.JEXTRACT_TYPE)
+                                                                      .map(Type.Primitive.Kind.class::cast)
                                                                       .orElseThrow(), expected);
     }
 
     @Test
     public void testFieldTypes() {
         GroupLayout g = (GroupLayout)CAllTypes.$LAYOUT();
-        checkFieldABIType(g, "sc",  Type.SIGNED_CHAR);
-        checkFieldABIType(g, "uc",  Type.UNSIGNED_CHAR);
-        checkFieldABIType(g, "s",   Type.SHORT);
-        checkFieldABIType(g, "us",  Type.UNSIGNED_SHORT);
-        checkFieldABIType(g, "i",   Type.INT);
-        checkFieldABIType(g, "ui",  Type.UNSIGNED_INT);
-        checkFieldABIType(g, "l",   Type.LONG);
-        checkFieldABIType(g, "ul",  Type.UNSIGNED_LONG);
-        checkFieldABIType(g, "ll",  Type.LONG_LONG);
-        checkFieldABIType(g, "ull", Type.UNSIGNED_LONG_LONG);
-        checkFieldABIType(g, "f", Type.FLOAT);
-        checkFieldABIType(g, "d", Type.DOUBLE);
-        checkFieldABIType(g, "ld", Type.LONG_DOUBLE);
+        checkFieldABIType(g, "sc", Type.Primitive.Kind.Char);
+        checkFieldABIType(g, "uc", Type.Primitive.Kind.Char);
+        checkFieldABIType(g, "s",  Type.Primitive.Kind.Short);
+        checkFieldABIType(g, "us", Type.Primitive.Kind.Short);
+        checkFieldABIType(g, "i",  Type.Primitive.Kind.Int);
+        checkFieldABIType(g, "ui", Type.Primitive.Kind.Int);
+        checkFieldABIType(g, "l",  Type.Primitive.Kind.Long);
+        checkFieldABIType(g, "ul", Type.Primitive.Kind.Long);
+        checkFieldABIType(g, "ll", Type.Primitive.Kind.LongLong);
+        checkFieldABIType(g, "ull",Type.Primitive.Kind.LongLong);
+        checkFieldABIType(g, "f",  Type.Primitive.Kind.Float);
+        checkFieldABIType(g, "d",  Type.Primitive.Kind.Double);
+        checkFieldABIType(g, "ld", Type.Primitive.Kind.LongDouble);
     }
 }

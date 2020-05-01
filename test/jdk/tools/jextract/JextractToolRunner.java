@@ -41,7 +41,7 @@ import java.util.spi.ToolProvider;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.foreign.SystemABI.Type;
+import jdk.incubator.jextract.Type;
 import jdk.test.lib.util.FileUtils;
 
 import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
@@ -152,7 +152,8 @@ public class JextractToolRunner {
             for (int i = 0; i < paths.length; i++) {
                 urls[i] = paths[i].toUri().toURL();
             }
-            URLClassLoader ucl = new URLClassLoader(urls, null);
+            URLClassLoader ucl = new URLClassLoader(urls,
+                    JextractToolRunner.class.getClassLoader());
             return new Loader(ucl);
         } catch (RuntimeException re) {
             throw re;
@@ -248,9 +249,9 @@ public class JextractToolRunner {
         return findLayout(cls, "");
     }
 
-    protected static void checkFieldABIType(MemoryLayout layout, String fieldName, Type expected) {
-        assertEquals(layout.select(PathElement.groupElement(fieldName)).attribute(NATIVE_TYPE)
-                                                                       .map(SystemABI.Type.class::cast)
+    protected static void checkFieldABIType(MemoryLayout layout, String fieldName, Type.Primitive.Kind expected) {
+        assertEquals(layout.select(PathElement.groupElement(fieldName)).attribute(Type.Primitive.Kind.JEXTRACT_TYPE)
+                                                                       .map(Type.Primitive.Kind.class::cast)
                                                                        .orElseThrow(), expected);
     }
 

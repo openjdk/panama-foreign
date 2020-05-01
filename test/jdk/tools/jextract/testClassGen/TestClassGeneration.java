@@ -36,6 +36,7 @@
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.jextract.Type.Primitive;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -50,12 +51,12 @@ import java.nio.file.Path;
 
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
-import static jdk.incubator.foreign.MemoryLayouts.C_CHAR;
-import static jdk.incubator.foreign.MemoryLayouts.C_DOUBLE;
-import static jdk.incubator.foreign.MemoryLayouts.C_FLOAT;
-import static jdk.incubator.foreign.MemoryLayouts.C_INT;
-import static jdk.incubator.foreign.MemoryLayouts.C_LONGLONG;
-import static jdk.incubator.foreign.MemoryLayouts.C_SHORT;
+import static jdk.incubator.foreign.SystemABI.C_CHAR;
+import static jdk.incubator.foreign.SystemABI.C_DOUBLE;
+import static jdk.incubator.foreign.SystemABI.C_FLOAT;
+import static jdk.incubator.foreign.SystemABI.C_INT;
+import static jdk.incubator.foreign.SystemABI.C_LONGLONG;
+import static jdk.incubator.foreign.SystemABI.C_SHORT;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -66,6 +67,10 @@ public class TestClassGeneration extends JextractToolRunner {
     private Path outputDir;
     private Loader loader;
     private Class<?> cls;
+
+    static MemoryLayout typed(MemoryLayout layout, Primitive.Kind kind) {
+        return layout.withAttribute(Primitive.Kind.JEXTRACT_TYPE, kind);
+    }
 
     @DataProvider
     public static Object[][] simpleConstants() {
@@ -112,26 +117,26 @@ public class TestClassGeneration extends JextractToolRunner {
     @DataProvider
     public static Object[][] globals() {
         return new Object[][]{
-            { "global_byte",   byte.class,   C_CHAR,   (byte) 1  },
-            { "global_short",  short.class,  C_SHORT, (short) 2  },
-            { "global_int",    int.class,    C_INT,           3  },
-            { "global_long",   long.class,   C_LONGLONG,      4L },
-            { "global_float",  float.class,  C_FLOAT,         5F },
-            { "global_double", double.class, C_DOUBLE,        6D },
+            { "global_byte",   byte.class,   typed(C_CHAR,  Primitive.Kind.Char),         (byte) 1  },
+            { "global_short",  short.class,  typed(C_SHORT,  Primitive.Kind.Short),      (short) 2  },
+            { "global_int",    int.class,    typed(C_INT,  Primitive.Kind.Int),                  3  },
+            { "global_long",   long.class,   typed(C_LONGLONG,  Primitive.Kind.LongLong),        4L },
+            { "global_float",  float.class,  typed(C_FLOAT,  Primitive.Kind.Float),              5F },
+            { "global_double", double.class, typed(C_DOUBLE,  Primitive.Kind.Double),            6D },
         };
     }
 
     @DataProvider
     public static Object[][] structMembers() {
         return new Object[][] {
-            { "Foo", C_CHAR.withName("c"),      byte.class,   (byte) 10  },
-            { "Foo", C_SHORT.withName("s"),     short.class, (short) 10  },
-            { "Foo", C_INT.withName("i"),       int.class,           10  },
-            { "Foo", C_LONGLONG.withName("ll"), long.class,          10L },
-            { "Foo", C_FLOAT.withName("f"),     float.class,         10F },
-            { "Foo", C_DOUBLE.withName("d"),    double.class,        10D },
-            { "Bar", C_INT.withName("a"),       int.class,           10 },
-            { "Bar", C_INT.withName("b"),       int.class,           10 },
+            { "Foo", typed(C_CHAR.withName("c"), Primitive.Kind.Char),          byte.class,   (byte) 10  },
+            { "Foo", typed(C_SHORT.withName("s"), Primitive.Kind.Short),        short.class, (short) 10  },
+            { "Foo", typed(C_INT.withName("i"),  Primitive.Kind.Int),           int.class,           10  },
+            { "Foo", typed(C_LONGLONG.withName("ll"), Primitive.Kind.LongLong), long.class,          10L },
+            { "Foo", typed(C_FLOAT.withName("f"),  Primitive.Kind.Float),       float.class,         10F },
+            { "Foo", typed(C_DOUBLE.withName("d"),  Primitive.Kind.Double),     double.class,        10D },
+            { "Bar", typed(C_INT.withName("a"),  Primitive.Kind.Int),           int.class,           10 },
+            { "Bar", typed(C_INT.withName("b"),   Primitive.Kind.Int),          int.class,           10 },
         };
     }
 

@@ -43,7 +43,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 public class TestAttributes extends JextractApiTestBase {
-    private final static Type C_INT = Type.primitive(Type.Primitive.Kind.Int, MemoryLayouts.C_INT);
+    private final static Type C_INT = Type.primitive(Type.Primitive.Kind.Int);
     private final static String ASMLABEL = "AsmLabelAttr";
 
     private void validateAsmLabel(Declaration d, boolean isAdd) {

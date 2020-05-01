@@ -111,15 +111,15 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private static String getCLangConstantsHolder() {
-        String prefix = "jdk.incubator.foreign.MemoryLayouts.";
+        String prefix = "jdk.incubator.foreign.SystemABI.";
         String abi = SharedUtils.getSystemABI().name();
         switch (abi) {
             case SystemABI.ABI_SYSV:
                 return prefix + "SysV";
             case SystemABI.ABI_WINDOWS:
-                return prefix + "WinABI";
+                return prefix + "Win64";
             case SystemABI.ABI_AARCH64:
-                return prefix + "AArch64ABI";
+                return prefix + "AArch64";
             default:
                 throw new UnsupportedOperationException("Unsupported ABI: " + abi);
         }
