@@ -107,16 +107,6 @@ public interface SystemABI {
     ValueLayout C_BOOL = Utils.pick(SysV.C_BOOL, Win64.C_BOOL, AArch64.C_BOOL);
 
     /**
-     * The {@code unsigned char} native type.
-     */
-    ValueLayout C_UCHAR = Utils.pick(SysV.C_UCHAR, Win64.C_UCHAR, AArch64.C_UCHAR);
-
-    /**
-     * The {@code signed char} native type.
-     */
-    ValueLayout C_SCHAR = Utils.pick(SysV.C_SCHAR, Win64.C_SCHAR, AArch64.C_SCHAR);
-
-    /**
      * The {@code char} native type.
      */
     ValueLayout C_CHAR = Utils.pick(SysV.C_CHAR, Win64.C_CHAR, AArch64.C_CHAR);
@@ -127,19 +117,9 @@ public interface SystemABI {
     ValueLayout C_SHORT = Utils.pick(SysV.C_SHORT, Win64.C_SHORT, AArch64.C_SHORT);
 
     /**
-     * The {@code unsigned short} native type.
-     */
-    ValueLayout C_USHORT = Utils.pick(SysV.C_USHORT, Win64.C_USHORT, AArch64.C_USHORT);
-
-    /**
      * The {@code int} native type.
      */
     ValueLayout C_INT = Utils.pick(SysV.C_INT, Win64.C_INT, AArch64.C_INT);
-
-    /**
-     * The {@code unsigned int} native type.
-     */
-    ValueLayout C_UINT = Utils.pick(SysV.C_UINT, Win64.C_UINT, AArch64.C_UINT);
 
     /**
      * The {@code long} native type.
@@ -147,19 +127,9 @@ public interface SystemABI {
     ValueLayout C_LONG = Utils.pick(SysV.C_LONG, Win64.C_LONG, AArch64.C_LONG);
 
     /**
-     * The {@code unsigned long} native type.
-     */
-    ValueLayout C_ULONG = Utils.pick(SysV.C_ULONG, Win64.C_ULONG, AArch64.C_ULONG);
-
-    /**
      * The {@code long long} native type.
      */
     ValueLayout C_LONGLONG = Utils.pick(SysV.C_LONGLONG, Win64.C_LONGLONG, AArch64.C_LONGLONG);
-
-    /**
-     * The {@code unsigned long long} native type.
-     */
-    ValueLayout C_ULONGLONG = Utils.pick(SysV.C_ULONGLONG, Win64.C_ULONGLONG, AArch64.C_ULONGLONG);
 
     /**
      * The {@code float} native type.
@@ -210,21 +180,6 @@ public interface SystemABI {
         public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
-
-        /**
-         * The {@code unsigned char} native type.
-         */
-        public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-
-        /**
-         * The {@code signed char} native type.
-         */
-        public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-
         /**
          * The {@code char} native type.
          */
@@ -238,21 +193,9 @@ public interface SystemABI {
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
-         * The {@code unsigned short} native type.
-         */
-        public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
          * The {@code int} native type.
          */
         public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
-         * The {@code unsigned int} native type.
-         */
-        public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
@@ -262,22 +205,9 @@ public interface SystemABI {
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
-         * The {@code unsigned long} native type.
-         */
-        public static final ValueLayout C_ULONG = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-
-        /**
          * The {@code long long} native type.
          */
         public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
-         * The {@code unsigned long long} native type.
-         */
-        public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
@@ -342,18 +272,6 @@ public interface SystemABI {
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
-         * The {@code unsigned char} native type.
-         */
-        public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
-         * The {@code signed char} native type.
-         */
-        public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
          * The {@code char} native type.
          */
         public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
@@ -366,21 +284,9 @@ public interface SystemABI {
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
-         * The {@code unsigned short} native type.
-         */
-        public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
          * The {@code int} native type.
          */
         public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
-         * The {@code unsigned int} native type.
-         */
-        public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
@@ -390,21 +296,9 @@ public interface SystemABI {
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
-         * The {@code unsigned long} native type.
-         */
-        public static final ValueLayout C_ULONG = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
          * The {@code long long} native type.
          */
         public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
-         * The {@code unsigned long long} native type.
-         */
-        public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
@@ -465,18 +359,6 @@ public interface SystemABI {
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
-         * The {@code unsigned char} native type.
-         */
-        public static final ValueLayout C_UCHAR = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
-         * The {@code signed char} native type.
-         */
-        public static final ValueLayout C_SCHAR = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
          * The {@code char} native type.
          */
         public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
@@ -489,21 +371,9 @@ public interface SystemABI {
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
-         * The {@code unsigned short} native type.
-         */
-        public static final ValueLayout C_USHORT = MemoryLayouts.BITS_16_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
          * The {@code int} native type.
          */
         public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
-         * The {@code unsigned int} native type.
-         */
-        public static final ValueLayout C_UINT = MemoryLayouts.BITS_32_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
@@ -513,21 +383,9 @@ public interface SystemABI {
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
-         * The {@code unsigned long} native type.
-         */
-        public static final ValueLayout C_ULONG = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
          * The {@code long long} native type.
          */
         public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
-         * The {@code unsigned long long} native type.
-         */
-        public static final ValueLayout C_ULONGLONG = MemoryLayouts.BITS_64_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**

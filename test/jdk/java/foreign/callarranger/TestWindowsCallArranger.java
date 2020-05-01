@@ -209,7 +209,7 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
      */
     @Test
     public void testStructRegister() {
-        MemoryLayout struct = MemoryLayout.ofStruct(C_ULONGLONG);
+        MemoryLayout struct = MemoryLayout.ofStruct(C_LONGLONG);
 
         MethodType mt = MethodType.methodType(void.class, MemorySegment.class);
         FunctionDescriptor fd = FunctionDescriptor.ofVoid(struct);
@@ -238,7 +238,7 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
      */
     @Test
     public void testStructReference() {
-        MemoryLayout struct = MemoryLayout.ofStruct(C_ULONGLONG, C_ULONGLONG);
+        MemoryLayout struct = MemoryLayout.ofStruct(C_LONGLONG, C_LONGLONG);
 
         MethodType mt = MethodType.methodType(void.class, MemorySegment.class);
         FunctionDescriptor fd = FunctionDescriptor.ofVoid(struct);
@@ -289,7 +289,7 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
     @Test
     public void testReturnRegisterStruct() {
-        MemoryLayout struct = MemoryLayout.ofStruct(C_ULONGLONG);
+        MemoryLayout struct = MemoryLayout.ofStruct(C_LONGLONG);
 
         MethodType mt = MethodType.methodType(MemorySegment.class);
         FunctionDescriptor fd = FunctionDescriptor.of(struct);
@@ -311,7 +311,7 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
     @Test
     public void testIMR() {
-        MemoryLayout struct = MemoryLayout.ofStruct(C_ULONGLONG, C_ULONGLONG);
+        MemoryLayout struct = MemoryLayout.ofStruct(C_LONGLONG, C_LONGLONG);
 
         MethodType mt = MethodType.methodType(MemorySegment.class);
         FunctionDescriptor fd = FunctionDescriptor.of(struct);
