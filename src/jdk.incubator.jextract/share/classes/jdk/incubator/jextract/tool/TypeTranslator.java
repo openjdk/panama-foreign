@@ -56,29 +56,29 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
         }
     }
 
-    static String typeToLayoutName(SystemABI.Type type) {
-        return switch (type) {
-            case BOOL -> "C_BOOL";
-            case SIGNED_CHAR -> "C_SCHAR";
-            case UNSIGNED_CHAR -> "C_UCHAR";
-            case CHAR -> "C_CHAR";
-            case SHORT -> "C_SHORT";
-            case UNSIGNED_SHORT -> "C_USHORT";
-            case INT -> "C_INT";
-            case UNSIGNED_INT -> "C_UINT";
-            case LONG -> "C_LONG";
-            case UNSIGNED_LONG -> "C_ULONG";
-            case LONG_LONG -> "C_LONGLONG";
-            case UNSIGNED_LONG_LONG -> "C_ULONGLONG";
-            case FLOAT -> "C_FLOAT";
-            case DOUBLE -> "C_DOUBLE";
-            case LONG_DOUBLE -> "C_LONGDOUBLE";
-            case POINTER -> "C_POINTER";
-            default -> {
-                throw new RuntimeException("should not reach here: " + type);
-            }
-        };
-    }
+//    static String typeToLayoutName(SystemABI.Type type) {
+//        return switch (type) {
+//            case BOOL -> "C_BOOL";
+//            case SIGNED_CHAR -> "C_SCHAR";
+//            case UNSIGNED_CHAR -> "C_UCHAR";
+//            case CHAR -> "C_CHAR";
+//            case SHORT -> "C_SHORT";
+//            case UNSIGNED_SHORT -> "C_USHORT";
+//            case INT -> "C_INT";
+//            case UNSIGNED_INT -> "C_UINT";
+//            case LONG -> "C_LONG";
+//            case UNSIGNED_LONG -> "C_ULONG";
+//            case LONG_LONG -> "C_LONGLONG";
+//            case UNSIGNED_LONG_LONG -> "C_ULONGLONG";
+//            case FLOAT -> "C_FLOAT";
+//            case DOUBLE -> "C_DOUBLE";
+//            case LONG_DOUBLE -> "C_LONGDOUBLE";
+//            case POINTER -> "C_POINTER";
+//            default -> {
+//                throw new RuntimeException("should not reach here: " + type);
+//            }
+//        };
+//    }
 
     static Class<?> layoutToClass(boolean fp, MemoryLayout layout) {
         switch ((int)layout.bitSize()) {

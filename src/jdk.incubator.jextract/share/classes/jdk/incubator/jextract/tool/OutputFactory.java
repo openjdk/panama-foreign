@@ -182,32 +182,32 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         List<JavaFileObject> files = new ArrayList<>();
         String pkgPrefix = pkgName.isEmpty()? "" : "package " + pkgName + ";\n";
-        for (SystemABI.Type type : SystemABI.Type.values()) {
-            // FIXME: ignore pointer and complex type
-            if (type == SystemABI.Type.POINTER || type == SystemABI.Type.COMPLEX_LONG_DOUBLE) {
-                continue;
-            }
-
-            String typeName = type.name().toLowerCase();
-            MemoryLayout layout = abi.layoutFor(type).get();
-            String contents =  pkgPrefix +
-                    lines.stream().collect(Collectors.joining("\n")).
-                            replace("-X", typeName).
-                            replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER).
-                            replace("${LAYOUT}", TypeTranslator.typeToLayoutName(type)).
-                            replace("${CARRIER}", classForType(type, layout).getName());
-            files.add(fileFromString(pkgName,"C" + typeName, contents));
-        }
+//        for (SystemABI.Type type : SystemABI.Type.values()) {
+//            // FIXME: ignore pointer and complex type
+//            if (type == SystemABI.Type.POINTER || type == SystemABI.Type.COMPLEX_LONG_DOUBLE) {
+//                continue;
+//            }
+//
+//            String typeName = type.name().toLowerCase();
+//            MemoryLayout layout = abi.layoutFor(type).get();
+//            String contents =  pkgPrefix +
+//                    lines.stream().collect(Collectors.joining("\n")).
+//                            replace("-X", typeName).
+//                            replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER).
+//                            replace("${LAYOUT}", TypeTranslator.typeToLayoutName(type)).
+//                            replace("${CARRIER}", classForType(type, layout).getName());
+//            files.add(fileFromString(pkgName,"C" + typeName, contents));
+//        }
         return files;
     }
 
-    private static Class<?> classForType(SystemABI.Type type, MemoryLayout layout) {
-        boolean isFloat = switch(type) {
-            case FLOAT, DOUBLE, LONG_DOUBLE -> true;
-            default-> false;
-        };
-        return TypeTranslator.layoutToClass(isFloat, layout);
-    }
+//    private static Class<?> classForType(SystemABI.Type type, MemoryLayout layout) {
+//        boolean isFloat = switch(type) {
+//            case FLOAT, DOUBLE, LONG_DOUBLE -> true;
+//            default-> false;
+//        };
+//        return TypeTranslator.layoutToClass(isFloat, layout);
+//    }
 
     private JavaFileObject fileFromString(String pkgName, String clsName, String contents) {
         String pkgPrefix = pkgName.isEmpty() ? "" : pkgName.replaceAll("\\.", "/") + "/";
