@@ -184,12 +184,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if (owner == newOwner) {
             throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
         } else {
-            try {
-                return dup(0L, length, mask, newOwner, scope.dup());
-            } finally {
-                //flush read/writes to memory before returning the new segment
-                VarHandle.fullFence();
-            }
+            return dup(0L, length, mask, newOwner, scope.dup());
         }
     }
 
@@ -203,7 +198,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     private final void closeNoCheck() {
-        scope.close(true);
+        scope.close();
     }
 
     final AbstractMemorySegmentImpl acquire() {
@@ -421,7 +416,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             modes = bufferSegment.mask;
             owner = bufferSegment.owner;
         } else {
-            bufferScope = new MemoryScope(bb, null);
+            bufferScope = MemoryScope.create(bb, null);
             modes = defaultAccessModes(size);
             owner = Thread.currentThread();
         }
