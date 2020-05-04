@@ -83,23 +83,32 @@ public class RepeatedDeclsTest extends JextractToolRunner {
             checkIntGetter(cls, "Y", 2);
 
             // check Point layout
-            Class<?> pointCls = loader.loadClass("repeatedDecls_h$CPoint");
-            MemoryLayout pointLayout = findLayout(pointCls);
-            assertNotNull(pointLayout);
-            assertTrue(((GroupLayout)pointLayout).isStruct());
-            checkFieldABIType(pointLayout, "i",  Type.INT);
-            checkFieldABIType(pointLayout, "j",  Type.INT);
+            checkPoint(loader.loadClass("repeatedDecls_h$CPoint"));
+            checkPoint(loader.loadClass("repeatedDecls_h$CPoint_t"));
+            checkPoint(loader.loadClass("repeatedDecls_h$CPOINT$0"));
 
             // check Point3D layout
-            Class<?> point3DCls = loader.loadClass("repeatedDecls_h$CPoint3D");
-            MemoryLayout point3DLayout = findLayout(point3DCls);
-            assertNotNull(point3DLayout);
-            assertTrue(((GroupLayout)point3DLayout).isStruct());
-            checkFieldABIType(point3DLayout, "i",  Type.INT);
-            checkFieldABIType(point3DLayout, "j",  Type.INT);
-            checkFieldABIType(point3DLayout, "k",  Type.INT);
+            checkPoint3D(loader.loadClass("repeatedDecls_h$CPoint3D"));
+            checkPoint3D(loader.loadClass("repeatedDecls_h$CPoint3D_t"));
         } finally {
             deleteDir(repeatedDeclsOutput);
         }
+    }
+
+    private void checkPoint(Class<?> pointCls) {
+        MemoryLayout pointLayout = findLayout(pointCls);
+        assertNotNull(pointLayout);
+        assertTrue(((GroupLayout)pointLayout).isStruct());
+        checkFieldABIType(pointLayout, "i",  Type.INT);
+        checkFieldABIType(pointLayout, "j",  Type.INT);
+    }
+
+    private void checkPoint3D(Class<?> point3DCls) {
+        MemoryLayout point3DLayout = findLayout(point3DCls);
+        assertNotNull(point3DLayout);
+        assertTrue(((GroupLayout)point3DLayout).isStruct());
+        checkFieldABIType(point3DLayout, "i",  Type.INT);
+        checkFieldABIType(point3DLayout, "j",  Type.INT);
+        checkFieldABIType(point3DLayout, "k",  Type.INT);
     }
 }
