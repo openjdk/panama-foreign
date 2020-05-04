@@ -61,14 +61,16 @@ struct Point {
 };
 
 typedef struct Point POINT;
+typedef struct Point Point_t;
+
 double distance(struct Point p);
 double distance(POINT p);
 
-struct Point3D {
+typedef struct Point3D {
     int i;
     int j;
     int k;
-};
+} Point3D_t;
 struct Point3D;
 
 enum RGBColor;
