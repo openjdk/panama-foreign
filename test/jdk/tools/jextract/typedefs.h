@@ -23,3 +23,4 @@
 
 typedef char byte_t;
 typedef long size_t;
+typedef long SIZE_T;

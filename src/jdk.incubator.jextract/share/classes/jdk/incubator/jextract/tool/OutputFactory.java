@@ -70,10 +70,19 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final String pkgName;
     private StructBuilder structBuilder;
     private List<String> structSources = new ArrayList<>();
-    private Set<String> structClassNames = new HashSet<>();
-    private int structClassNameCount = 0;
-    private String uniqueStructClassName(String name) {
-        return structClassNames.add(name.toLowerCase())? name : (name + "$" + structClassNameCount++);
+    private Set<String> nestedClassNames = new HashSet<>();
+    private int nestedClassNameCount = 0;
+    /*
+     * We may have case-insensitive name collision! A C program may have
+     * defined structs/unions/typedefs with the names FooS, fooS, FoOs, fOOs.
+     * Because we map structs/unions/typedefs to nested classes of header classes,
+     * such a case-insensitive name collision is problematic. This is because in
+     * a case-insensitive file system javac will overwrite classes for
+     * Header$CFooS, Header$CfooS, Header$CFoOs and so on! We solve this by
+     * generating unique case-insensitive names for nested classes.
+     */
+    private String uniqueNestedClassName(String name) {
+        return nestedClassNames.add(name.toLowerCase())? name : (name + "$" + nestedClassNameCount++);
     }
 
     // have we seen this Variable earlier?
@@ -239,16 +248,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 case STRUCT:
                 case UNION: {
                     structClass = true;
-                    /*
-                     * We may have case-insensitive name collision! A C program may have
-                     * defined structs with the names FooS, fooS, FoOs, fOOs. Because we
-                     * map structs and unions to nested classes of header classes, such
-                     * a case-insensitive name collision is problematic. This is because in
-                     * a case-insensitive file system javac will overwrite classes for
-                     * Header$CFooS, Header$CfooS, Header$CFoOs and so on! We solve this by
-                     * generating unique case-insensitive names for classes.
-                     */
-                    String structClassName = uniqueStructClassName("C" + name);
+                    String structClassName = uniqueNestedClassName("C" + name);
                     this.structBuilder = new StructBuilder(structClassName, pkgName, constantHelper);
                     structBuilder.incrAlign();
                     structBuilder.classBegin();
@@ -328,7 +328,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 return visitScoped(s, tree);
             }
         } else if (type instanceof Type.Primitive) {
-             builder.emitPrimitiveTypedef((Type.Primitive)type, tree.name());
+             builder.emitPrimitiveTypedef((Type.Primitive)type, uniqueNestedClassName("C" + tree.name()));
         }
         return null;
     }

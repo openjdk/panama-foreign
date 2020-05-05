@@ -22,3 +22,4 @@
  */
 
 typedef long mysize_t;
+typedef long MYSIZE_T;
