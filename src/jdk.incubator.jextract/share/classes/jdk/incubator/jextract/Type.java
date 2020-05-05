@@ -157,6 +157,7 @@ public interface Type {
             private final MemoryLayout layout;
 
             Kind(String typeName, MemoryLayout layout) {
+                this.typeName = typeName;
                 this.layout = layout;
             }
 
