@@ -327,6 +327,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             if (!s.name().equals(tree.name())) {
                 return visitScoped(s, tree);
             }
+        } else if (type instanceof Type.Primitive) {
+             builder.emitPrimitiveTypedef((Type.Primitive)type, tree.name());
         }
         return null;
     }
