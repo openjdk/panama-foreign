@@ -38,6 +38,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.spi.ToolProvider;
+
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SystemABI;
@@ -249,10 +251,8 @@ public class JextractToolRunner {
         return findLayout(cls, "");
     }
 
-    protected static void checkFieldABIType(MemoryLayout layout, String fieldName, Type.Primitive.Kind expected) {
-        assertEquals(layout.select(PathElement.groupElement(fieldName)).attribute(Type.Primitive.Kind.JEXTRACT_TYPE)
-                                                                       .map(Type.Primitive.Kind.class::cast)
-                                                                       .orElseThrow(), expected);
+    protected static void checkField(MemoryLayout group, String fieldName, MemoryLayout expected) {
+        assertEquals(group.select(PathElement.groupElement(fieldName)), expected.withName(fieldName));
     }
 
     protected static class Loader implements AutoCloseable {

@@ -24,6 +24,7 @@
 import java.nio.file.Path;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertNotNull;
@@ -53,9 +54,9 @@ public class Test8240811 extends JextractToolRunner {
             MemoryLayout fooLayout = findLayout(fooCls);
             assertNotNull(fooLayout);
             assertTrue(((GroupLayout)fooLayout).isStruct());
-            checkFieldABIType(fooLayout, "x",  Type.Primitive.Kind.Int);
-            checkFieldABIType(fooLayout, "y",  Type.Primitive.Kind.Int);
-            checkFieldABIType(fooLayout, "z",  Type.Primitive.Kind.Int);
+            checkField(fooLayout, "x",  SystemABI.C_INT);
+            checkField(fooLayout, "y",  SystemABI.C_INT);
+            checkField(fooLayout, "z",  SystemABI.C_INT);
 
             MemoryLayout fooVarLayout = findLayout(cls, "foo");
             assertNotNull(fooVarLayout);
@@ -65,8 +66,8 @@ public class Test8240811 extends JextractToolRunner {
             MemoryLayout foo2Layout = findLayout(foo2Cls);
             assertNotNull(foo2Layout);
             assertTrue(((GroupLayout)foo2Layout).isUnion());
-            checkFieldABIType(foo2Layout, "i",  Type.Primitive.Kind.Int);
-            checkFieldABIType(foo2Layout, "l",  Type.Primitive.Kind.Long);
+            checkField(foo2Layout, "i",  SystemABI.C_INT);
+            checkField(foo2Layout, "l",  SystemABI.C_LONG);
 
             MemoryLayout foo2VarLayout = findLayout(cls, "foo2");
             assertNotNull(foo2VarLayout);
@@ -79,8 +80,8 @@ public class Test8240811 extends JextractToolRunner {
             MemoryLayout barLayout = findLayout(barCls);
             assertNotNull(barLayout);
             assertTrue(((GroupLayout)barLayout).isStruct());
-            checkFieldABIType(barLayout, "f1",  Type.Primitive.Kind.Float);
-            checkFieldABIType(barLayout, "f2",  Type.Primitive.Kind.Float);
+            checkField(barLayout, "f1",  SystemABI.C_FLOAT);
+            checkField(barLayout, "f2",  SystemABI.C_FLOAT);
 
             MemoryLayout bar2VarLayout = findLayout(cls, "bar2");
             assertNotNull(bar2VarLayout);
@@ -90,8 +91,8 @@ public class Test8240811 extends JextractToolRunner {
             MemoryLayout bar2Layout = findLayout(bar2Cls);
             assertNotNull(bar2Layout);
             assertTrue(((GroupLayout)bar2Layout).isUnion());
-            checkFieldABIType(bar2Layout, "f",  Type.Primitive.Kind.Float);
-            checkFieldABIType(bar2Layout, "d",  Type.Primitive.Kind.Double);
+            checkField(bar2Layout, "f",  SystemABI.C_FLOAT);
+            checkField(bar2Layout, "d",  SystemABI.C_DOUBLE);
         } finally {
             deleteDir(nameCollisionOutput);
         }

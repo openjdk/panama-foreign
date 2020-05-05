@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;
 
@@ -99,16 +100,16 @@ public class RepeatedDeclsTest extends JextractToolRunner {
         MemoryLayout pointLayout = findLayout(pointCls);
         assertNotNull(pointLayout);
         assertTrue(((GroupLayout)pointLayout).isStruct());
-        checkFieldABIType(pointLayout, "i",  Type.Primitive.Kind.Int);
-        checkFieldABIType(pointLayout, "j",  Type.Primitive.Kind.Int);
+        checkField(pointLayout, "i", SystemABI.C_INT);
+        checkField(pointLayout, "j", SystemABI.C_INT);
     }
 
     private void checkPoint3D(Class<?> point3DCls) {
         MemoryLayout point3DLayout = findLayout(point3DCls);
         assertNotNull(point3DLayout);
         assertTrue(((GroupLayout)point3DLayout).isStruct());
-        checkFieldABIType(point3DLayout, "i",  Type.Primitive.Kind.Int);
-        checkFieldABIType(point3DLayout, "j",  Type.Primitive.Kind.Int);
-        checkFieldABIType(point3DLayout, "k",  Type.Primitive.Kind.Int);
+        checkField(point3DLayout, "i", SystemABI.C_INT);
+        checkField(point3DLayout, "j", SystemABI.C_INT);
+        checkField(point3DLayout, "k", SystemABI.C_INT);
     }
 }

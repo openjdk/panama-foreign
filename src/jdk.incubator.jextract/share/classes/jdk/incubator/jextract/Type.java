@@ -172,10 +172,8 @@ public interface Type {
             public Optional<MemoryLayout> layout() {
                 return layout == null ?
                         Optional.empty() :
-                        Optional.of(layout.withAttribute(JEXTRACT_TYPE, this));
+                        Optional.of(layout);
             }
-
-            public static String JEXTRACT_TYPE = "jextract/type";
         }
 
         /**
