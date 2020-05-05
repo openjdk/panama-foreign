@@ -133,20 +133,14 @@ abstract class MemoryScope {
     }
 
     private static final class Root extends MemoryScope {
-        private final LongAdder acquires;
-        private final LongAdder releases;
+        private final LongAdder acquires = new LongAdder();
+        private final LongAdder releases = new LongAdder();
         private final Object ref;
         private final Runnable cleanupAction;
 
-        private Root(LongAdder acquires, LongAdder releases, Object ref, Runnable cleanupAction) {
-            this.acquires = acquires;
-            this.releases = releases;
+        private Root(Object ref, Runnable cleanupAction) {
             this.ref = ref;
             this.cleanupAction = cleanupAction;
-        }
-
-        private Root(Object ref, Runnable cleanupAction) {
-            this(new LongAdder(), new LongAdder(), ref, cleanupAction);
         }
 
         @Override
@@ -154,14 +148,13 @@ abstract class MemoryScope {
             // increment acquires 1st
             acquires.increment();
             // check state 2nd
-            int state = (int) STATE.getVolatile(this);
-            while (state > STATE_OPEN) {
+            int state;
+            while ((state  = (int) STATE.getVolatile(this)) > STATE_OPEN) {
                 if (state == STATE_CLOSED) {
                     releases.increment();
                     throw new IllegalStateException("This scope is already closed");
                 }
                 Thread.onSpinWait();
-                state = (int) STATE.getVolatile(this);
             }
             return new Child();
         }
@@ -180,10 +173,8 @@ abstract class MemoryScope {
             if (state == STATE_CLOSED) {
                 throw new IllegalStateException("This scope is already closed");
             }
-            // pre-allocate duped scope so we don't get OOME later and be left with this scope closed;
-            // we only return this instance if releases.sum() == acquires.sum(), so both LongAdder(s)
-            // can be reused...
-            var duped = close ? null : new Root(acquires, releases, ref, cleanupAction);
+            // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
+            var duped = close ? null : new Root(ref, cleanupAction);
             // modify state to STATE_CLOSING 1st
             STATE.setVolatile(this, STATE_CLOSING);
             // check for absence of active acquired children 2nd
@@ -201,7 +192,6 @@ abstract class MemoryScope {
                 }
                 return null;
             } else {
-                // assert releases.sum() == acquires.sum() && state == STATE_CLOSED;
                 return duped;
             }
         }
