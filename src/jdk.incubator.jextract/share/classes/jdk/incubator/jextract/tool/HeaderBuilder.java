@@ -28,6 +28,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
+import jdk.incubator.jextract.Type;
 
 /**
  * A helper class to generate header interface class in source form.
@@ -107,6 +108,37 @@ class HeaderBuilder extends JavaSourceBuilder {
         indent();
         sb.append("}\n");
         decrAlign();
+    }
+
+    public void emitPrimitiveTypedef(Type.Primitive primType, String name) {
+        Type.Primitive.Kind kind = primType.kind();
+        if (primitiveKindSupported(kind)) {
+            incrAlign();
+            indent();
+            sb.append(PUB_MODS);
+            String className = "C" + name;
+            sb.append("class ");
+            sb.append(className);
+            sb.append(" extends ");
+            sb.append("C" + kind.typeName().replace(" ", "_"));
+            sb.append(" {\n");
+            incrAlign();
+            indent();
+            // private constructor
+            sb.append("private ");
+            sb.append(className);
+            sb.append("() {}");
+            decrAlign();
+            sb.append("}\n");
+            decrAlign();
+        }
+    }
+
+    private boolean primitiveKindSupported(Type.Primitive.Kind kind) {
+        return switch(kind) {
+            case Short, Int, Long, LongLong, Float, Double, LongDouble, Char -> true;
+            default -> false;
+        };
     }
 
     private void addFunctionalFactory(String className, MethodType mtype, FunctionDescriptor fDesc) {

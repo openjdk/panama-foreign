@@ -90,67 +90,76 @@ public interface Type {
             /**
              * {@code void} type.
              */
-            Void,
+            Void("void"),
             /**
              * {@code Bool} type.
              */
-            Bool,
+            Bool("_Bool"),
             /**
              * {@code char} type.
              */
-            Char,
+            Char("char"),
             /**
              * {@code char16} type.
              */
-            Char16,
+            Char16("char16"),
             /**
              * {@code char32} type.
              */
-            Char32,
+            Char32("char32"),
             /**
              * {@code short} type.
              */
-            Short,
+            Short("short"),
             /**
              * {@code int} type.
              */
-            Int,
+            Int("int"),
             /**
              * {@code long} type.
              */
-            Long,
+            Long("long"),
             /**
              * {@code long long} type.
              */
-            LongLong,
+            LongLong("long long"),
             /**
              * {@code int128} type.
              */
-            Int128,
+            Int128("__int128"),
             /**
              * {@code float} type.
              */
-            Float,
+            Float("float"),
             /**
              * {@code double} type.
              */
-            Double,
+            Double("double"),
             /**
              * {@code long double} type.
              */
-            LongDouble,
+            LongDouble("long double"),
             /**
              * {@code float128} type.
              */
-            Float128,
+            Float128("float128"),
             /**
              * {@code float16} type.
              */
-            HalfFloat,
+            HalfFloat("__fp16"),
             /**
              * {@code wchar} type.
              */
-            WChar
+            WChar("wchar_t");
+
+            private String typeName;
+            Kind(String typeName) {
+                this.typeName = typeName;
+            }
+
+            public String typeName() {
+                return typeName;
+            }
         }
 
         /**

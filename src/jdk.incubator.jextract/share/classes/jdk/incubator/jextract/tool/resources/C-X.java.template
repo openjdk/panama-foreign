@@ -8,9 +8,9 @@ import jdk.incubator.foreign.MemorySegment;
 
 import static ${C_LANG}.*;
 
-public final class C-X {
+public class C-X {
     // don't create!
-    private C-X() {
+    C-X() {
     }
 
     private static VarHandle arrayHandle(MemoryLayout elemLayout, Class<?> elemCarrier) {
