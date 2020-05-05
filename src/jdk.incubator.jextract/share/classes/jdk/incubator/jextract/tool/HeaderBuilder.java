@@ -110,13 +110,12 @@ class HeaderBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
-    public void emitPrimitiveTypedef(Type.Primitive primType, String name) {
+    public void emitPrimitiveTypedef(Type.Primitive primType, String className) {
         Type.Primitive.Kind kind = primType.kind();
         if (primitiveKindSupported(kind)) {
             incrAlign();
             indent();
             sb.append(PUB_MODS);
-            String className = "C" + name;
             sb.append("class ");
             sb.append(className);
             sb.append(" extends ");
