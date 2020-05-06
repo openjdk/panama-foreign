@@ -242,6 +242,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         boolean structClass = false;
+        StructBuilder oldStructBuilder = this.structBuilder;
         if (!d.name().isEmpty() || !isRecord(parent)) {
             //only add explicit struct layout if the struct is not to be flattened inside another struct
             switch (d.kind()) {
@@ -261,7 +262,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         if (structClass) {
             this.structBuilder.classEnd();
             structSources.add(structBuilder.getSource());
-            this.structBuilder = null;
+            this.structBuilder = oldStructBuilder;
         }
         return null;
     }
