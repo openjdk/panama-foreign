@@ -28,20 +28,14 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.MemoryLayouts.SysV;
-import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.foreign.ValueLayout;
+import jdk.incubator.jextract.Type.Primitive;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
-import jdk.internal.clang.TypeKind;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.foreign.abi.aarch64.AArch64ABI;
-import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
-import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * General Layout utility functions
@@ -63,45 +57,42 @@ public final class LayoutUtils {
     }
 
     public static MemoryLayout getLayout(Type t) {
+        Supplier<UnsupportedOperationException> unsupported = () ->
+                new UnsupportedOperationException("unsupported: " + t.kind());
         switch(t.kind()) {
             case UChar, Char_U:
-                return C_UCHAR;
             case SChar, Char_S:
-                return C_SCHAR;
+                return Primitive.Kind.Char.layout().orElseThrow(unsupported);
             case Short:
-                return C_SHORT;
             case UShort:
-                return C_USHORT;
+                return Primitive.Kind.Short.layout().orElseThrow(unsupported);
             case Int:
-                return C_INT;
             case UInt:
-                return C_UINT;
+                return Primitive.Kind.Int.layout().orElseThrow(unsupported);
             case ULong:
-                return C_ULONG;
             case Long:
-                return C_LONG;
+                return Primitive.Kind.Long.layout().orElseThrow(unsupported);
             case ULongLong:
-                return C_ULONGLONG;
             case LongLong:
-                return C_LONGLONG;
+                return Primitive.Kind.LongLong.layout().orElseThrow(unsupported);
             case UInt128:
             case Int128:
-                throw new UnsupportedOperationException();
+                return Primitive.Kind.Int128.layout().orElseThrow(unsupported);
             case Enum:
-                return valueLayoutForSize(t.size() * 8);
+                return valueLayoutForSize(t.size() * 8).layout().orElseThrow(unsupported);
             case Bool:
-                return C_BOOL;
+                return Primitive.Kind.Bool.layout().orElseThrow(unsupported);
             case Float:
-                return C_FLOAT;
+                return Primitive.Kind.Float.layout().orElseThrow(unsupported);
             case Double:
-                return C_DOUBLE;
+                return Primitive.Kind.Double.layout().orElseThrow(unsupported);
             case LongDouble:
-                return C_LONGDOUBLE;
+                return Primitive.Kind.LongDouble.layout().orElseThrow(unsupported);
             case Complex:
                 if (!abi.name().equals(SystemABI.ABI_SYSV)) {
                     throw new UnsupportedOperationException("unsupported: " + t.kind());
                 }
-                return SysV.C_COMPLEX_LONGDOUBLE;
+                return SystemABI.SysV.C_COMPLEX_LONGDOUBLE;
             case Record:
                 return getRecordLayout(t);
             case Vector:
@@ -121,7 +112,7 @@ public final class LayoutUtils {
                 return getLayout(t.canonicalType());
             case Pointer:
             case BlockPointer:
-                return C_POINTER;
+                return SystemABI.C_POINTER;
             default:
                 throw new UnsupportedOperationException("unsupported: " + t.kind());
         }
@@ -142,13 +133,13 @@ public final class LayoutUtils {
     private static jdk.incubator.jextract.Type.Visitor<MemoryLayout, Void> layoutMaker = new jdk.incubator.jextract.Type.Visitor<>() {
         @Override
         public MemoryLayout visitPrimitive(jdk.incubator.jextract.Type.Primitive t, Void _ignored) {
-            return t.layout().orElseThrow(UnsupportedOperationException::new);
+            return t.kind().layout().orElseThrow(UnsupportedOperationException::new);
         }
 
         @Override
         public MemoryLayout visitDelegated(jdk.incubator.jextract.Type.Delegated t, Void _ignored) {
             if (t.kind() == jdk.incubator.jextract.Type.Delegated.Kind.POINTER) {
-                return C_POINTER;
+                return SystemABI.C_POINTER;
             } else {
                 return t.type().accept(this, null);
             }
@@ -200,107 +191,15 @@ public final class LayoutUtils {
         }
     }
 
-    public static ValueLayout valueLayoutForSize(long size) {
+    public static Primitive.Kind valueLayoutForSize(long size) {
         switch ((int)size) {
-            case 8: return INT8;
-            case 16: return INT16;
-            case 32: return INT32;
-            case 64: return INT64;
+            case 8: return Primitive.Kind.Char;
+            case 16: return Primitive.Kind.Short;
+            case 32: return Primitive.Kind.Int;
+            case 64: return SystemABI.getSystemABI().name().equals(SystemABI.Win64.NAME) ?
+                    Primitive.Kind.LongLong : Primitive.Kind.Long;
             default:
                 throw new IllegalStateException("Cannot infer container layout");
-        }
-    }
-
-    // platform-dependent layouts
-
-    public static final ValueLayout C_BOOL;
-    public static final ValueLayout C_CHAR;
-    public static final ValueLayout C_UCHAR;
-    public static final ValueLayout C_SCHAR;
-    public static final ValueLayout C_SHORT;
-    public static final ValueLayout C_USHORT;
-    public static final ValueLayout C_INT;
-    public static final ValueLayout C_UINT;
-    public static final ValueLayout C_LONG;
-    public static final ValueLayout C_ULONG;
-    public static final ValueLayout C_LONGLONG;
-    public static final ValueLayout C_ULONGLONG;
-    public static final ValueLayout C_FLOAT;
-    public static final ValueLayout C_DOUBLE;
-    public static final ValueLayout C_LONGDOUBLE;
-    public static final ValueLayout C_POINTER;
-
-    public static final ValueLayout INT8;
-    public static final ValueLayout INT16;
-    public static final ValueLayout INT32;
-    public static final ValueLayout INT64;
-
-    static {
-        if (abi instanceof SysVx64ABI) {
-            C_BOOL = MemoryLayouts.SysV.C_BOOL;
-            C_CHAR = MemoryLayouts.SysV.C_CHAR;
-            C_UCHAR = MemoryLayouts.SysV.C_UCHAR;
-            C_SCHAR = MemoryLayouts.SysV.C_SCHAR;
-            C_SHORT = MemoryLayouts.SysV.C_SHORT;
-            C_USHORT = MemoryLayouts.SysV.C_USHORT;
-            C_INT = MemoryLayouts.SysV.C_INT;
-            C_UINT = MemoryLayouts.SysV.C_UINT;
-            C_LONG = MemoryLayouts.SysV.C_LONG;
-            C_ULONG = MemoryLayouts.SysV.C_ULONG;
-            C_LONGLONG = MemoryLayouts.SysV.C_LONGLONG;
-            C_ULONGLONG = MemoryLayouts.SysV.C_ULONGLONG;
-            C_FLOAT = MemoryLayouts.SysV.C_FLOAT;
-            C_DOUBLE = MemoryLayouts.SysV.C_DOUBLE;
-            C_LONGDOUBLE = MemoryLayouts.SysV.C_LONGDOUBLE;
-            C_POINTER = MemoryLayouts.SysV.C_POINTER;
-            INT8 = C_BOOL;
-            INT16 = C_SHORT;
-            INT32 = C_INT;
-            INT64 = C_LONG;
-        } else if (abi instanceof Windowsx64ABI) {
-            C_BOOL = MemoryLayouts.WinABI.C_BOOL;
-            C_CHAR = MemoryLayouts.WinABI.C_CHAR;
-            C_UCHAR = MemoryLayouts.WinABI.C_UCHAR;
-            C_SCHAR = MemoryLayouts.WinABI.C_SCHAR;
-            C_SHORT = MemoryLayouts.WinABI.C_SHORT;
-            C_USHORT = MemoryLayouts.WinABI.C_USHORT;
-            C_INT = MemoryLayouts.WinABI.C_INT;
-            C_UINT = MemoryLayouts.WinABI.C_UINT;
-            C_LONG = MemoryLayouts.WinABI.C_LONG;
-            C_ULONG = MemoryLayouts.WinABI.C_ULONG;
-            C_LONGLONG = MemoryLayouts.WinABI.C_LONGLONG;
-            C_ULONGLONG = MemoryLayouts.WinABI.C_ULONGLONG;
-            C_FLOAT = MemoryLayouts.WinABI.C_FLOAT;
-            C_DOUBLE = MemoryLayouts.WinABI.C_DOUBLE;
-            C_LONGDOUBLE = MemoryLayouts.WinABI.C_LONGDOUBLE;
-            C_POINTER = MemoryLayouts.WinABI.C_POINTER;
-            INT8 = C_BOOL;
-            INT16 = C_SHORT;
-            INT32 = C_INT;
-            INT64 = C_LONGLONG;
-        } else if (abi instanceof AArch64ABI) {
-            C_BOOL = MemoryLayouts.AArch64ABI.C_BOOL;
-            C_CHAR = MemoryLayouts.AArch64ABI.C_CHAR;
-            C_UCHAR = MemoryLayouts.AArch64ABI.C_UCHAR;
-            C_SCHAR = MemoryLayouts.AArch64ABI.C_SCHAR;
-            C_SHORT = MemoryLayouts.AArch64ABI.C_SHORT;
-            C_USHORT = MemoryLayouts.AArch64ABI.C_USHORT;
-            C_INT = MemoryLayouts.AArch64ABI.C_INT;
-            C_UINT = MemoryLayouts.AArch64ABI.C_UINT;
-            C_LONG = MemoryLayouts.AArch64ABI.C_LONG;
-            C_ULONG = MemoryLayouts.AArch64ABI.C_ULONG;
-            C_LONGLONG = MemoryLayouts.AArch64ABI.C_LONGLONG;
-            C_ULONGLONG = MemoryLayouts.AArch64ABI.C_ULONGLONG;
-            C_FLOAT = MemoryLayouts.AArch64ABI.C_FLOAT;
-            C_DOUBLE = MemoryLayouts.AArch64ABI.C_DOUBLE;
-            C_LONGDOUBLE = MemoryLayouts.AArch64ABI.C_LONGDOUBLE;
-            C_POINTER = MemoryLayouts.AArch64ABI.C_POINTER;
-            INT8 = C_BOOL;
-            INT16 = C_SHORT;
-            INT32 = C_INT;
-            INT64 = C_LONG;
-        } else {
-            throw new ExceptionInInitializerError();
         }
     }
 }

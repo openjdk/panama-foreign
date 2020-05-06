@@ -26,6 +26,7 @@
 package jdk.incubator.jextract.tool;
 
 import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.jextract.Type.Primitive;
 import jdk.incubator.jextract.Type;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -36,10 +37,10 @@ import java.lang.invoke.MethodType;
 public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
     @Override
     public Class<?> visitPrimitive(Type.Primitive t, Void aVoid) {
-        if (t.layout().isEmpty()) {
+        if (t.kind().layout().isEmpty()) {
             return void.class;
         } else {
-            return layoutToClass(isFloatingPoint(t), t.layout().orElseThrow(UnsupportedOperationException::new));
+            return layoutToClass(isFloatingPoint(t), t.kind().layout().orElseThrow(UnsupportedOperationException::new));
         }
     }
 
@@ -56,27 +57,18 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
         }
     }
 
-    static String typeToLayoutName(SystemABI.Type type) {
+    static String typeToLayoutName(Primitive.Kind type) {
         return switch (type) {
-            case BOOL -> "C_BOOL";
-            case SIGNED_CHAR -> "C_SCHAR";
-            case UNSIGNED_CHAR -> "C_UCHAR";
-            case CHAR -> "C_CHAR";
-            case SHORT -> "C_SHORT";
-            case UNSIGNED_SHORT -> "C_USHORT";
-            case INT -> "C_INT";
-            case UNSIGNED_INT -> "C_UINT";
-            case LONG -> "C_LONG";
-            case UNSIGNED_LONG -> "C_ULONG";
-            case LONG_LONG -> "C_LONGLONG";
-            case UNSIGNED_LONG_LONG -> "C_ULONGLONG";
-            case FLOAT -> "C_FLOAT";
-            case DOUBLE -> "C_DOUBLE";
-            case LONG_DOUBLE -> "C_LONGDOUBLE";
-            case POINTER -> "C_POINTER";
-            default -> {
-                throw new RuntimeException("should not reach here: " + type);
-            }
+            case Bool -> "C_BOOL";
+            case Char -> "C_CHAR";
+            case Short -> "C_SHORT";
+            case Int -> "C_INT";
+            case Long -> "C_LONG";
+            case LongLong -> "C_LONGLONG";
+            case Float -> "C_FLOAT";
+            case Double -> "C_DOUBLE";
+            case LongDouble -> "C_LONGDOUBLE";
+            default -> throw new RuntimeException("should not reach here: " + type);
         };
     }
 

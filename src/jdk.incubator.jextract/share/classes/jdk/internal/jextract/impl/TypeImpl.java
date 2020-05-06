@@ -64,20 +64,9 @@ public abstract class TypeImpl implements Type {
     public static final class PrimitiveImpl extends TypeImpl implements Type.Primitive {
 
         private final Primitive.Kind kind;
-        private final Optional<MemoryLayout> layoutOpt;
-
-        public PrimitiveImpl(Kind kind, MemoryLayout layout) {
-            this(kind, Optional.of(layout));
-        }
 
         public PrimitiveImpl(Kind kind) {
-            this(kind, Optional.empty());
-        }
-
-        private PrimitiveImpl(Kind kind, Optional<MemoryLayout> layoutOpt) {
-            super();
             this.kind = Objects.requireNonNull(kind);
-            this.layoutOpt = Objects.requireNonNull(layoutOpt);
         }
 
         @Override
@@ -88,11 +77,6 @@ public abstract class TypeImpl implements Type {
         @Override
         public Kind kind() {
             return kind;
-        }
-
-        @Override
-        public Optional<MemoryLayout> layout() {
-            return layoutOpt;
         }
 
         @Override

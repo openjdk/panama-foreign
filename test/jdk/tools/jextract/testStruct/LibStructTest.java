@@ -22,9 +22,10 @@
  */
 
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.foreign.SystemABI.Type;
+import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;
 
 import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
@@ -74,27 +75,25 @@ public class LibStructTest {
         }
     }
 
-    private static void checkFieldABIType(GroupLayout group, String fieldName, Type expected) {
-        assertEquals(group.select(PathElement.groupElement(fieldName)).attribute(NATIVE_TYPE)
-                                                                      .map(SystemABI.Type.class::cast)
-                                                                      .orElseThrow(), expected);
+    private static void checkField(GroupLayout group, String fieldName, MemoryLayout expected) {
+        assertEquals(group.select(PathElement.groupElement(fieldName)), expected.withName(fieldName));
     }
 
     @Test
     public void testFieldTypes() {
         GroupLayout g = (GroupLayout)CAllTypes.$LAYOUT();
-        checkFieldABIType(g, "sc",  Type.SIGNED_CHAR);
-        checkFieldABIType(g, "uc",  Type.UNSIGNED_CHAR);
-        checkFieldABIType(g, "s",   Type.SHORT);
-        checkFieldABIType(g, "us",  Type.UNSIGNED_SHORT);
-        checkFieldABIType(g, "i",   Type.INT);
-        checkFieldABIType(g, "ui",  Type.UNSIGNED_INT);
-        checkFieldABIType(g, "l",   Type.LONG);
-        checkFieldABIType(g, "ul",  Type.UNSIGNED_LONG);
-        checkFieldABIType(g, "ll",  Type.LONG_LONG);
-        checkFieldABIType(g, "ull", Type.UNSIGNED_LONG_LONG);
-        checkFieldABIType(g, "f", Type.FLOAT);
-        checkFieldABIType(g, "d", Type.DOUBLE);
-        checkFieldABIType(g, "ld", Type.LONG_DOUBLE);
+        checkField(g, "sc", SystemABI.C_CHAR);
+        checkField(g, "uc", SystemABI.C_CHAR);
+        checkField(g, "s",  SystemABI.C_SHORT);
+        checkField(g, "us", SystemABI.C_SHORT);
+        checkField(g, "i",  SystemABI.C_INT);
+        checkField(g, "ui", SystemABI.C_INT);
+        checkField(g, "l",  SystemABI.C_LONG);
+        checkField(g, "ul", SystemABI.C_LONG);
+        checkField(g, "ll", SystemABI.C_LONGLONG);
+        checkField(g, "ull",SystemABI.C_LONGLONG);
+        checkField(g, "f",  SystemABI.C_FLOAT);
+        checkField(g, "d",  SystemABI.C_DOUBLE);
+        checkField(g, "ld", SystemABI.C_LONGDOUBLE);
     }
 }

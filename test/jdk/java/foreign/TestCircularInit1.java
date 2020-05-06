@@ -27,7 +27,7 @@
  * @run testng/othervm TestCircularInit1
  */
 
-import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.SystemABI;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertNotNull;
@@ -36,8 +36,8 @@ public class TestCircularInit1 {
 
     @Test
     public void testCircularInit() {
-        System.out.println(MemoryLayouts.WinABI.C_BOOL); // trigger clinit
-        assertNotNull(MemoryLayouts.C_BOOL); // should not be null
+        System.out.println(SystemABI.C_BOOL); // trigger clinit
+        assertNotNull(SystemABI.C_BOOL); // should not be null
     }
 
 }

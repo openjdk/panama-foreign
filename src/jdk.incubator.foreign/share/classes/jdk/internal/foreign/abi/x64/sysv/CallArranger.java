@@ -29,7 +29,6 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
@@ -44,7 +43,6 @@ import jdk.internal.foreign.abi.ProgrammableInvoker;
 import jdk.internal.foreign.abi.ProgrammableUpcallHandler;
 import jdk.internal.foreign.abi.VMStorage;
 import jdk.internal.foreign.abi.x64.X86_64Architecture;
-import jdk.internal.foreign.abi.x64.ArgumentClassImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.invoke.MethodHandle;
@@ -60,6 +58,7 @@ import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 import static jdk.internal.foreign.abi.x64.sysv.SysVx64ABI.MAX_INTEGER_ARGUMENT_REGISTERS;
 import static jdk.internal.foreign.abi.x64.sysv.SysVx64ABI.MAX_VECTOR_ARGUMENT_REGISTERS;
+import static jdk.internal.foreign.abi.x64.sysv.SysVx64ABI.argumentClassFor;
 
 /**
  * For the SysV x64 C ABI specifically, this class uses the ProgrammableInvoker API, namely CallingSequenceBuilder2
@@ -104,7 +103,7 @@ public class CallArranger {
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
             Class<?> carrier = MemoryAddress.class;
-            MemoryLayout layout = MemoryLayouts.SysV.C_POINTER;
+            MemoryLayout layout = SystemABI.SysV.C_POINTER;
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
         } else if (cDesc.returnLayout().isPresent()) {
             Class<?> carrier = mt.returnType();
@@ -120,7 +119,7 @@ public class CallArranger {
 
         if (!forUpcall) {
             //add extra binding for number of used vector registers (used for variadic calls)
-            csb.addArgumentBindings(long.class, MemoryLayouts.SysV.C_LONG,
+            csb.addArgumentBindings(long.class, SystemABI.SysV.C_LONG,
                     List.of(move(rax, long.class)));
         }
 
@@ -429,11 +428,8 @@ public class CallArranger {
 
     private static List<ArgumentClassImpl> classifyValueType(ValueLayout type) {
         ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
-        ArgumentClassImpl clazz = SysVx64ABI.argumentClassFor(SystemABI.Type.fromLayout(type));
-        if (clazz == null) {
-            //padding not allowed here
-            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
-        }
+        ArgumentClassImpl clazz = SysVx64ABI.argumentClassFor(type)
+                .orElseThrow(() -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
         classes.add(clazz);
         if (clazz == ArgumentClassImpl.INTEGER) {
             // int128
@@ -517,10 +513,8 @@ public class CallArranger {
     // TODO: handle zero length arrays
     // TODO: Handle nested structs (and primitives)
     private static List<ArgumentClassImpl> classifyStructType(GroupLayout type) {
-        if (type.attribute(SystemABI.NATIVE_TYPE)
-                .map(SystemABI.Type.class::cast)
-                .map(SysVx64ABI::argumentClassFor)
-                .filter(ArgumentClassImpl.COMPLEX_X87::equals)
+        if (argumentClassFor(type)
+                .filter(argClass -> argClass == ArgumentClassImpl.COMPLEX_X87)
                 .isPresent()) {
             return COMPLEX_X87_CLASSES;
         }

@@ -27,7 +27,7 @@ import jdk.incubator.foreign.NativeAllocationScope;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import static jdk.incubator.foreign.MemoryLayouts.C_CHAR;
+import static jdk.incubator.foreign.SystemABI.C_CHAR;
 
 public final class Cstring {
     // don't create!
