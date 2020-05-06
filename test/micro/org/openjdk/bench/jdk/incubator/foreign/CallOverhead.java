@@ -39,7 +39,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.concurrent.TimeUnit;
 
-import static jdk.incubator.foreign.MemoryLayouts.C_INT;
+import static jdk.incubator.foreign.SystemABI.C_INT;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)

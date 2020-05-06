@@ -51,7 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.*;
-import static jdk.incubator.foreign.MemoryLayouts.*;
+import static jdk.incubator.foreign.SystemABI.*;
 import static org.testng.Assert.assertEquals;
 
 public class TestVarArgs extends NativeTestHelper {
