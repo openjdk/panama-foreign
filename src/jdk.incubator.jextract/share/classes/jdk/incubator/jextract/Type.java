@@ -170,9 +170,7 @@ public interface Type {
              * @return The primitive type (optional) layout.
              */
             public Optional<MemoryLayout> layout() {
-                return layout == null ?
-                        Optional.empty() :
-                        Optional.of(layout);
+                return Optional.ofNullable(layout);
             }
         }
 
