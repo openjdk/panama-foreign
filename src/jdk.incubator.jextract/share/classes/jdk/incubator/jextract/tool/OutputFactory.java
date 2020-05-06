@@ -183,7 +183,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         String pkgPrefix = pkgName.isEmpty()? "" : "package " + pkgName + ";\n";
         for (Primitive.Kind type : Primitive.Kind.values()) {
             if (type.layout().isEmpty()) continue;
-            String typeName = type.name().toLowerCase();
+            String typeName = type.typeName().toLowerCase().replace(' ', '_');
             MemoryLayout layout = type.layout().get();
             String contents =  pkgPrefix +
                     lines.stream().collect(Collectors.joining("\n")).
