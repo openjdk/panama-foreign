@@ -59,7 +59,7 @@ public class SharedUtils {
     static {
         try {
             var lookup = MethodHandles.lookup();
-            MH_ALLOC_BUFFER = lookup.findStatic(MemorySegment.class, "allocateNative",
+            MH_ALLOC_BUFFER = lookup.findStatic(SharedUtils.class, "allocateNative",
                     methodType(MemorySegment.class, MemoryLayout.class));
             MH_BASEADDRESS = lookup.findVirtual(MemorySegment.class, "baseAddress",
                     methodType(MemoryAddress.class));
@@ -68,6 +68,11 @@ public class SharedUtils {
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
+    }
+
+    // workaround for https://bugs.openjdk.java.net/browse/JDK-8239083
+    private static MemorySegment allocateNative(MemoryLayout layout) {
+        return MemorySegment.allocateNative(layout);
     }
 
     /**
