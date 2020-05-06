@@ -25,26 +25,29 @@
 package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
 
 public class UpcallStubs {
 
-    public static MemoryAddress upcallAddress(UpcallHandler handler) {
-        long addr = handler.entryPoint();
-        return MemoryAddress.ofLong(addr);
-    }
+    public static MemorySegment upcallAddress(UpcallHandler handler) {
+        long stubAddress = handler.entryPoint();
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(stubAddress),
+                0, null, () -> freeUpcallStub(stubAddress), null)
+                .withAccessModes(MemorySegment.CLOSE);
+    };
 
-    public static void freeUpcallStub(MemoryAddress address) {
-        MemoryAddressImpl ma = (MemoryAddressImpl) address;
-        if (ma.unsafeGetBase() != null || !freeUpcallStub(ma.unsafeGetOffset())) {
-            throw new IllegalArgumentException("Not a stub address: " + address);
+    private static void freeUpcallStub(long stubAddress) {
+        if (!freeUpcallStub0(stubAddress)) {
+            throw new IllegalStateException("Not a stub address: " + stubAddress);
         }
     }
 
     // natives
 
     // returns true if the stub was found (and freed)
-    private static native boolean freeUpcallStub(long addr);
+    private static native boolean freeUpcallStub0(long addr);
 
     private static native void registerNatives();
     static {

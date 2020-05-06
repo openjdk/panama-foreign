@@ -74,25 +74,17 @@ public interface SystemABI {
     MethodHandle downcallHandle(MemoryAddress symbol, MethodType type, FunctionDescriptor function);
 
     /**
-     * Obtain the pointer to a native stub which
-     * can be used to upcall into a given method handle.
+     * Allocates a native stub segment which contains executable code to upcall into a given method handle.
+     * As such, the base address of the returned stub segment can be passed to other foreign functions
+     * (as a function pointer). The returned segment is <em>not</em> thread-confined, and it only features
+     * the {@link MemorySegment#CLOSE} access mode. When the returned segment is closed,
+     * the corresponding native stub will be deallocated.
      *
      * @param target the target method handle.
      * @param function the function descriptor.
-     * @return the upcall symbol.
+     * @return the native stub segment.
      */
-    MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function);
-
-    /**
-     * Frees an upcall stub given it's memory address.
-     *
-     * @param address the memory address of the upcall stub, returned from
-     *                {@link SystemABI#upcallStub(MethodHandle, FunctionDescriptor)}.
-     * @throws IllegalArgumentException if the given address is not a valid upcall stub address.
-     */
-    default void freeUpcallStub(MemoryAddress address) {
-        UpcallStubs.freeUpcallStub(address);
-    }
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
 
     /**
      * Returns the name of this ABI.

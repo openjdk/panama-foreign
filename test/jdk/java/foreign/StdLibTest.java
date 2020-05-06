@@ -308,9 +308,9 @@ public class StdLibTest extends NativeTestHelper {
                         .forEach(i -> intArrHandle.set(nativeArr.baseAddress(), i, arr[i]));
 
                 //call qsort
-                MemoryAddress qsortUpcallAddr = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction);
-                qsort.invokeExact(nativeArr.baseAddress(), seq.elementCount().getAsLong(), C_INT.byteSize(), qsortUpcallAddr);
-                abi.freeUpcallStub(qsortUpcallAddr);
+                try (MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction)) {
+                    qsort.invokeExact(nativeArr.baseAddress(), seq.elementCount().getAsLong(), C_INT.byteSize(), qsortUpcallStub.baseAddress());
+                }
 
                 //convert back to Java array
                 return LongStream.range(0, arr.length)
