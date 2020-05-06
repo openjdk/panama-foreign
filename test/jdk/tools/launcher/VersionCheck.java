@@ -81,6 +81,7 @@ public class VersionCheck extends TestHelper {
         "javadoc",
         "javacpl",
         "javaws",
+        "jextract",
         "jcmd",
         "jconsole",
         "jcontrol",
