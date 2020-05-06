@@ -21,5 +21,5 @@
  * questions.
  */
 
-typedef long mysize_t;
-typedef long MYSIZE_T;
+typedef long long mysize_t;
+typedef long long MYSIZE_T;

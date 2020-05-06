@@ -43,7 +43,7 @@ public class Test8244412 extends JextractToolRunner {
         try(Loader loader = classLoader(typedefsOutput)) {
             Class<?> bytetCls = loader.loadClass("typedefs_h$Cbyte_t");
             assertNotNull(bytetCls);
-            Class<?> sizetCls = loader.loadClass("typedefs_h$Csize_t");
+            Class<?> sizetCls = loader.loadClass("typedefs_h$Cmysize_t");
             assertNotNull(sizetCls);
         } finally {
             deleteDir(typedefsOutput);
