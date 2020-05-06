@@ -66,7 +66,7 @@ class MacroParserImpl {
             //check for fast path
             Integer num = toNumber(tokens[1]);
             if (num != null) {
-                return Optional.of(Macro.longMacro(Type.primitive(Type.Primitive.Kind.Int, LayoutUtils.C_INT), num));
+                return Optional.of(Macro.longMacro(Type.primitive(Type.Primitive.Kind.Int), num));
             }
         }
         //slow path

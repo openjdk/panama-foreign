@@ -28,6 +28,7 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
 
@@ -140,7 +141,10 @@ final class StructLayoutComputer extends RecordLayoutComputer {
             pendingFields.add(l);
             if (!pendingFields.isEmpty() && offset == storageSize) {
                 //emit new
-                newFields.add(bitfield(LayoutUtils.valueLayoutForSize(storageSize), pendingFields));
+                newFields.add(bitfield(
+                        (ValueLayout)LayoutUtils.valueLayoutForSize(storageSize)
+                                .layout().orElseThrow(() -> new IllegalStateException("Unsupported size: " + storageSize)),
+                        pendingFields));
                 pendingFields.clear();
                 offset = 0L;
             } else if (offset > storageSize) {

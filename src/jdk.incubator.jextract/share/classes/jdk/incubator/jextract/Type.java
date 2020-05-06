@@ -28,6 +28,7 @@ package jdk.incubator.jextract;
 
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.SystemABI;
 import jdk.internal.jextract.impl.LayoutUtils;
 import jdk.internal.jextract.impl.TypeImpl;
 
@@ -90,75 +91,86 @@ public interface Type {
             /**
              * {@code void} type.
              */
-            Void("void"),
+            Void("void", null),
             /**
              * {@code Bool} type.
              */
-            Bool("_Bool"),
+            Bool("_Bool", SystemABI.C_BOOL),
             /**
              * {@code char} type.
              */
-            Char("char"),
+            Char("char", SystemABI.C_CHAR),
             /**
              * {@code char16} type.
              */
-            Char16("char16"),
+            Char16("char16", null),
             /**
              * {@code char32} type.
              */
-            Char32("char32"),
+            Char32("char32", null),
             /**
              * {@code short} type.
              */
-            Short("short"),
+            Short("short", SystemABI.C_SHORT),
             /**
              * {@code int} type.
              */
-            Int("int"),
+            Int("int", SystemABI.C_INT),
             /**
              * {@code long} type.
              */
-            Long("long"),
+            Long("long", SystemABI.C_LONG),
             /**
              * {@code long long} type.
              */
-            LongLong("long long"),
+            LongLong("long long", SystemABI.C_LONGLONG),
             /**
              * {@code int128} type.
              */
-            Int128("__int128"),
+            Int128("__int128", null),
             /**
              * {@code float} type.
              */
-            Float("float"),
+            Float("float", SystemABI.C_FLOAT),
             /**
              * {@code double} type.
              */
-            Double("double"),
+            Double("double",SystemABI.C_DOUBLE),
             /**
              * {@code long double} type.
              */
-            LongDouble("long double"),
+            LongDouble("long double", SystemABI.C_LONGDOUBLE),
             /**
              * {@code float128} type.
              */
-            Float128("float128"),
+            Float128("float128", null),
             /**
              * {@code float16} type.
              */
-            HalfFloat("__fp16"),
+            HalfFloat("__fp16", null),
             /**
              * {@code wchar} type.
              */
-            WChar("wchar_t");
+            WChar("wchar_t", null);
 
-            private String typeName;
-            Kind(String typeName) {
+            private final String typeName;
+            private final MemoryLayout layout;
+
+            Kind(String typeName, MemoryLayout layout) {
                 this.typeName = typeName;
+                this.layout = layout;
             }
 
             public String typeName() {
                 return typeName;
+            }
+
+            /**
+             * The primitive type (optional) layout.
+             * @return The primitive type (optional) layout.
+             */
+            public Optional<MemoryLayout> layout() {
+                return Optional.ofNullable(layout);
             }
         }
 
@@ -167,12 +179,6 @@ public interface Type {
          * @return The primitive type kind.
          */
         Kind kind();
-
-        /**
-         * The primitive type (optional) layout.
-         * @return The primitive type (optional) layout.
-         */
-        Optional<MemoryLayout> layout();
     }
 
     /**
@@ -398,13 +404,12 @@ public interface Type {
     }
 
     /**
-     * Creates a new primitive type given kind and layout.
+     * Creates a new primitive type given kind.
      * @param kind the primitive type kind.
-     * @param layout the primitive type layout.
-     * @return a new primitive type with given kind and layout.
+     * @return a new primitive type with given kind.
      */
-    static Type.Primitive primitive(Type.Primitive.Kind kind, MemoryLayout layout) {
-        return new TypeImpl.PrimitiveImpl(kind, layout);
+    static Type.Primitive primitive(Type.Primitive.Kind kind) {
+        return new TypeImpl.PrimitiveImpl(kind);
     }
 
     /**

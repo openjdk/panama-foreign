@@ -31,6 +31,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.jextract.Type.Primitive;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import javax.tools.JavaFileObject;
@@ -45,10 +46,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -112,15 +111,15 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private static String getCLangConstantsHolder() {
-        String prefix = "jdk.incubator.foreign.MemoryLayouts.";
+        String prefix = "jdk.incubator.foreign.SystemABI.";
         String abi = SharedUtils.getSystemABI().name();
         switch (abi) {
             case SystemABI.ABI_SYSV:
                 return prefix + "SysV";
             case SystemABI.ABI_WINDOWS:
-                return prefix + "WinABI";
+                return prefix + "Win64";
             case SystemABI.ABI_AARCH64:
-                return prefix + "AArch64ABI";
+                return prefix + "AArch64";
             default:
                 throw new UnsupportedOperationException("Unsupported ABI: " + abi);
         }
@@ -182,14 +181,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         List<JavaFileObject> files = new ArrayList<>();
         String pkgPrefix = pkgName.isEmpty()? "" : "package " + pkgName + ";\n";
-        for (SystemABI.Type type : SystemABI.Type.values()) {
-            // FIXME: ignore pointer and complex type
-            if (type == SystemABI.Type.POINTER || type == SystemABI.Type.COMPLEX_LONG_DOUBLE) {
-                continue;
-            }
-
-            String typeName = type.name().toLowerCase();
-            MemoryLayout layout = abi.layoutFor(type).get();
+        for (Primitive.Kind type : Primitive.Kind.values()) {
+            if (type.layout().isEmpty()) continue;
+            String typeName = type.typeName().toLowerCase().replace(' ', '_');
+            MemoryLayout layout = type.layout().get();
             String contents =  pkgPrefix +
                     lines.stream().collect(Collectors.joining("\n")).
                             replace("-X", typeName).
@@ -201,9 +196,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return files;
     }
 
-    private static Class<?> classForType(SystemABI.Type type, MemoryLayout layout) {
+    private static Class<?> classForType(Primitive.Kind type, MemoryLayout layout) {
         boolean isFloat = switch(type) {
-            case FLOAT, DOUBLE, LONG_DOUBLE -> true;
+            case Float, Double, LongDouble -> true;
             default-> false;
         };
         return TypeTranslator.layoutToClass(isFloat, layout);

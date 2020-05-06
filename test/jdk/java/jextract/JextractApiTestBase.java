@@ -179,8 +179,7 @@ public class JextractApiTestBase {
     public static void assertTypeEquals(Type expected, Type found) {
         assertEquals(expected.getClass(), found.getClass());
         if (expected instanceof Type.Primitive) {
-            assertEquals(((Type.Primitive)expected).kind(), ((Type.Primitive)found).kind());
-            assertEquals(((Type.Primitive)expected).layout(), ((Type.Primitive)found).layout());
+            assertEquals(expected, found);
         } else if (expected instanceof Type.Delegated) {
             assertEquals(((Type.Delegated)expected).kind(), ((Type.Delegated)found).kind());
             assertTypeEquals(((Type.Delegated)expected).type(), ((Type.Delegated)found).type());

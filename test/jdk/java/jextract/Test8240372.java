@@ -31,14 +31,12 @@ import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;
 
-import static jdk.incubator.foreign.MemoryLayouts.C_INT;
-
 public class Test8240372 extends JextractApiTestBase {
     @Test
     public void test8239490() {
         Declaration.Scoped d = parse("Test8240372.h");
 
-        Type funcType = Type.function(false, Type.void_(), Type.primitive(Type.Primitive.Kind.Int, C_INT));
+        Type funcType = Type.function(false, Type.void_(), Type.primitive(Type.Primitive.Kind.Int));
         Type typedefType = Type.typedef("CB", funcType);
         checkFunction(d, "func_cb", Type.void_(), typedefType);
     }
