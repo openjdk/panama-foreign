@@ -61,7 +61,7 @@ import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.MemoryLayouts.*;
+import static jdk.incubator.foreign.SystemABI.*;
 import static org.testng.Assert.*;
 
 @Test
@@ -200,7 +200,7 @@ public class StdLibTest extends NativeTestHelper {
 
                 qsort = abi.downcallHandle(lookup.lookup("qsort"),
                         MethodType.methodType(void.class, MemoryAddress.class, long.class, long.class, MemoryAddress.class),
-                        FunctionDescriptor.ofVoid(C_POINTER, C_ULONG, C_ULONG, C_POINTER));
+                        FunctionDescriptor.ofVoid(C_POINTER, C_LONG, C_LONG, C_POINTER));
 
                 //qsort upcall handle
                 qsortCompar = MethodHandles.lookup().findStatic(StdLibTest.StdLibHelper.class, "qsortCompare",

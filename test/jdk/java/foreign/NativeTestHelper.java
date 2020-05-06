@@ -23,32 +23,32 @@
  */
 
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts.WinABI;
 import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.foreign.SystemABI.Type;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.Utils;
-import java.util.function.Predicate;
-
-import static jdk.incubator.foreign.SystemABI.ABI_WINDOWS;
 
 public class NativeTestHelper {
 
     public static final SystemABI ABI = SystemABI.getSystemABI();
 
     public static boolean isIntegral(MemoryLayout layout) {
-        return switch(SystemABI.Type.fromLayout(layout)) {
-            case BOOL, UNSIGNED_CHAR, SIGNED_CHAR, CHAR, SHORT, UNSIGNED_SHORT,
-                INT, UNSIGNED_INT, LONG, UNSIGNED_LONG, LONG_LONG, UNSIGNED_LONG_LONG -> true;
-            default -> false;
+        return switch (ABI.name()) {
+            case SystemABI.SysV.NAME -> layout.attribute(SystemABI.SysV.CLASS_ATTRIBUTE_NAME).get() == SystemABI.SysV.ArgumentClass.INTEGER;
+            case SystemABI.Win64.NAME -> layout.attribute(SystemABI.Win64.CLASS_ATTRIBUTE_NAME).get() == SystemABI.Win64.ArgumentClass.INTEGER;
+            case SystemABI.AArch64.NAME -> layout.attribute(SystemABI.AArch64.CLASS_ATTRIBUTE_NAME).get() == SystemABI.AArch64.ArgumentClass.INTEGER;
+            default -> throw new AssertionError("unexpected ABI: " + ABI.name());
         };
     }
 
     public static boolean isPointer(MemoryLayout layout) {
-        return SystemABI.Type.fromLayout(layout) == Type.POINTER;
+        return switch (ABI.name()) {
+            case SystemABI.SysV.NAME -> layout.attribute(SystemABI.SysV.CLASS_ATTRIBUTE_NAME).get() == SystemABI.SysV.ArgumentClass.POINTER;
+            case SystemABI.Win64.NAME -> layout.attribute(SystemABI.Win64.CLASS_ATTRIBUTE_NAME).get() == SystemABI.Win64.ArgumentClass.POINTER;
+            case SystemABI.AArch64.NAME -> layout.attribute(SystemABI.AArch64.CLASS_ATTRIBUTE_NAME).get() == SystemABI.AArch64.ArgumentClass.POINTER;
+            default -> throw new AssertionError("unexpected ABI: " + ABI.name());
+        };
     }
 
     public static ValueLayout asVarArg(ValueLayout layout) {
-        return ABI.name().equals(ABI_WINDOWS) ? WinABI.asVarArg(layout) : layout;
+        return ABI.name().equals(SystemABI.Win64.NAME) ? SystemABI.Win64.asVarArg(layout) : layout;
     }
 }
