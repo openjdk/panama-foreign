@@ -41,6 +41,8 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -63,8 +65,6 @@ public class TestUpcall extends CallGeneratorHelper {
 
     static LibraryLookup lib = LibraryLookup.ofLibrary("TestUpcall");
     static SystemABI abi = SystemABI.getSystemABI();
-    static final MemoryAddress dummyAddress;
-    static final Cleaner cleaner = Cleaner.create();
 
     static MethodHandle DUMMY;
     static MethodHandle PASS_AND_SAVE;
@@ -73,14 +73,22 @@ public class TestUpcall extends CallGeneratorHelper {
         try {
             DUMMY = MethodHandles.lookup().findStatic(TestUpcall.class, "dummy", MethodType.methodType(void.class));
             PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcall.class, "passAndSave", MethodType.methodType(Object.class, Object[].class, AtomicReference.class));
-
-            dummyAddress = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid());
-            cleaner.register(dummyAddress, () -> abi.freeUpcallStub(dummyAddress));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
     }
 
+    static MemoryAddress dummyAddress;
+
+    @BeforeClass
+    void setup() {
+        dummyAddress = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid()).baseAddress();
+    }
+
+    @AfterClass
+    void teardown() {
+        dummyAddress.segment().close();
+    }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcalls(String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
@@ -96,7 +104,9 @@ public class TestUpcall extends CallGeneratorHelper {
             returnChecks.forEach(c -> c.accept(res));
         }
         for (Object arg : args) {
-            cleanup(arg);
+            if (arg != dummyAddress) {
+                cleanup(arg);
+            }
         }
     }
 
@@ -168,8 +178,7 @@ public class TestUpcall extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
-        MemoryAddress stub = abi.upcallStub(mh, func);
-        cleaner.register(stub, () -> abi.freeUpcallStub(stub));
+        MemoryAddress stub = abi.upcallStub(mh, func).baseAddress();
         return stub;
     }
 
