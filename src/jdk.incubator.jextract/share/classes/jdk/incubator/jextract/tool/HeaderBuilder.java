@@ -142,7 +142,7 @@ class HeaderBuilder extends JavaSourceBuilder {
 
     private void addFunctionalFactory(String className, MethodType mtype, FunctionDescriptor fDesc) {
         indent();
-        sb.append(PUB_MODS + "MemoryAddress allocate(" + className + " fi) {\n");
+        sb.append(PUB_MODS + "MemorySegment allocate(" + className + " fi) {\n");
         incrAlign();
         indent();
         sb.append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fDesc) + ", " +
