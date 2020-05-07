@@ -25,7 +25,7 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 
-JVM_ENTRY(static jboolean, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
+JVM_ENTRY(static jboolean, UH_FreeUpcallStub0(JNIEnv *env, jobject _unused, jlong addr))
   //acquire code cache lock
   MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   //find code blob
@@ -47,7 +47,7 @@ JVM_END
 
 // These are the native methods on jdk.internal.foreign.NativeInvoker.
 static JNINativeMethod UH_methods[] = {
-  {CC "freeUpcallStub",     CC "(J)Z",                FN_PTR(UH_FreeUpcallStub)}
+  {CC "freeUpcallStub0",     CC "(J)Z",                FN_PTR(UH_FreeUpcallStub0)}
 };
 
 /**

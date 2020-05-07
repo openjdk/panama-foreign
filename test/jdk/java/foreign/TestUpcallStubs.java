@@ -39,6 +39,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
+import static org.testng.Assert.assertFalse;
 
 public class TestUpcallStubs {
 
@@ -54,40 +55,30 @@ public class TestUpcallStubs {
         }
     }
 
-    private static MemoryAddress getStub() {
+    private static MemorySegment getStub() {
         return abi.upcallStub(MH_dummy, FunctionDescriptor.ofVoid());
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testNoAccess() {
-        MemoryAddress stub = getStub();
-        try {
+        try (MemorySegment stub = getStub()) {
             VarHandle vh = JAVA_INT.varHandle(int.class);
-            vh.set(stub, 10);
-        } finally {
-            abi.freeUpcallStub(stub);
+            vh.set(stub.baseAddress(), 10);
         }
     }
 
     @Test
     public void testFree() {
-        MemoryAddress stub = getStub();
-        abi.freeUpcallStub(stub);
+        MemorySegment stub = getStub();
+        stub.close();
+        assertFalse(stub.isAlive());
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = ".*Not a stub address: .*")
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testAlreadyFreed() {
-        MemoryAddress stub = getStub();
-        abi.freeUpcallStub(stub);
-        abi.freeUpcallStub(stub); // should fail
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = ".*Not a stub address: .*",
-          dataProvider = "badAddresses")
-    public void testCanNotFree(MemoryAddress ma) {
-        abi.freeUpcallStub(ma);
+        MemorySegment stub = getStub();
+        stub.close();
+        stub.close(); // should fail
     }
 
     @DataProvider

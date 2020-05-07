@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi.x64.sysv;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 import jdk.internal.foreign.abi.*;
 
@@ -59,7 +60,7 @@ public class SysVx64ABI implements SystemABI {
     }
 
     @Override
-    public MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function) {
+    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
     }
 

@@ -28,6 +28,7 @@ package jdk.internal.foreign.abi.aarch64;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 import jdk.internal.foreign.abi.*;
 
@@ -54,7 +55,7 @@ public class AArch64ABI implements SystemABI {
     }
 
     @Override
-    public MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function) {
+    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
     }
 
