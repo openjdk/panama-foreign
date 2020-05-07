@@ -96,7 +96,7 @@ public class RuntimeHelper {
     }
 
     public static final MemoryAddress upcallStub(MethodHandle handle, FunctionDescriptor fdesc) {
-        return ABI.upcallStub(handle, fdesc);
+        return ABI.upcallStub(handle, fdesc).baseAddress();
     }
 
     public static final <Z> MemoryAddress upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
