@@ -103,7 +103,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl implements 
         if (bytesSize <= 0) throw new IllegalArgumentException("Requested bytes size must be > 0.");
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, 0L, bytesSize);
-            MemoryScope scope = new MemoryScope(null, unmapperProxy::unmap);
+            MemoryScope scope = MemoryScope.create(null, unmapperProxy::unmap);
             return new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
                     defaultAccessModes(bytesSize), Thread.currentThread(), scope);
         }
