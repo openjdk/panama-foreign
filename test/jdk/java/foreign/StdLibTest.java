@@ -200,7 +200,7 @@ public class StdLibTest extends NativeTestHelper {
 
                 qsort = abi.downcallHandle(lookup.lookup("qsort"),
                         MethodType.methodType(void.class, MemoryAddress.class, long.class, long.class, MemoryAddress.class),
-                        FunctionDescriptor.ofVoid(C_POINTER, C_LONG, C_LONG, C_POINTER));
+                        FunctionDescriptor.ofVoid(C_POINTER, C_LONGLONG, C_LONGLONG, C_POINTER));
 
                 //qsort upcall handle
                 qsortCompar = MethodHandles.lookup().findStatic(StdLibTest.StdLibHelper.class, "qsortCompare",
@@ -404,7 +404,7 @@ public class StdLibTest extends NativeTestHelper {
     enum PrintfArg {
         INTEGRAL(int.class, asVarArg(C_INT), "%d", 42, 42),
         STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", toCString("str").baseAddress(), "str"),
-        CHAR(char.class, asVarArg(C_CHAR), "%c", 'h', 'h'),
+        CHAR(byte.class, asVarArg(C_CHAR), "%c", (byte) 'h', 'h'),
         DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", 1.2345d, 1.2345d);
 
         final Class<?> carrier;

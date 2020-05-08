@@ -47,6 +47,8 @@ public class SysVx64ABI implements SystemABI {
 
     private static SysVx64ABI instance;
 
+    static final long ADDRESS_SIZE = 64; // bits
+
     public static SysVx64ABI getInstance() {
         if (instance == null) {
             instance = new SysVx64ABI();

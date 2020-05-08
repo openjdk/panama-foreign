@@ -42,6 +42,8 @@ import java.lang.invoke.MethodType;
 public class AArch64ABI implements SystemABI {
     private static AArch64ABI instance;
 
+    static final long ADDRESS_SIZE = 64; // bits
+
     public static AArch64ABI getInstance() {
         if (instance == null) {
             instance = new AArch64ABI();

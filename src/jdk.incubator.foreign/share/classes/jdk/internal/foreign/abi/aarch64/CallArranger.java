@@ -98,7 +98,7 @@ public class CallArranger {
     }
 
     public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
-        SharedUtils.checkFunctionTypes(mt, cDesc);
+        SharedUtils.checkFunctionTypes(mt, cDesc, AArch64ABI.ADDRESS_SIZE);
 
         CallingSequenceBuilder csb = new CallingSequenceBuilder(forUpcall);
 

@@ -49,6 +49,8 @@ public class Windowsx64ABI implements SystemABI {
 
     private static Windowsx64ABI instance;
 
+    static final long ADDRESS_SIZE = 64; // bits
+
     public static Windowsx64ABI getInstance() {
         if (instance == null) {
             instance = new Windowsx64ABI();

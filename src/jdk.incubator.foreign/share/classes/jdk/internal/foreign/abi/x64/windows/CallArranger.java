@@ -83,7 +83,7 @@ public class CallArranger {
     }
 
     public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
-        SharedUtils.checkFunctionTypes(mt, cDesc);
+        SharedUtils.checkFunctionTypes(mt, cDesc, Windowsx64ABI.ADDRESS_SIZE);
 
         class CallingSequenceBuilderHelper {
             final CallingSequenceBuilder csb = new CallingSequenceBuilder(forUpcall);
