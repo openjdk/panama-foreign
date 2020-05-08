@@ -187,7 +187,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             try {
                 return dup(0L, length, mask, newOwner, scope.dup());
             } finally {
-                //flush read/writes to memory before returning the new segment
+                //flush read/writes to segment memory before returning the new segment
                 VarHandle.fullFence();
             }
         }
@@ -203,7 +203,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     private final void closeNoCheck() {
-        scope.close(true);
+        scope.close();
     }
 
     final AbstractMemorySegmentImpl acquire() {
@@ -421,7 +421,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             modes = bufferSegment.mask;
             owner = bufferSegment.owner;
         } else {
-            bufferScope = new MemoryScope(bb, null);
+            bufferScope = MemoryScope.create(bb, null);
             modes = defaultAccessModes(size);
             owner = Thread.currentThread();
         }
