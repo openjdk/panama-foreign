@@ -26,7 +26,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.NativeAllocationScope;
 
 import org.testng.annotations.Test;
-import test.jextract.test8244412.Clong;
+import test.jextract.test8244412.Clong_long;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static test.jextract.test8244412.test8244412_h.*;
@@ -48,7 +48,7 @@ public class LibTest8244412Test {
             assertEquals(Cmysize_t.get(addr), 0L);
             Cmysize_t.set(addr, 13455566L);
             assertEquals(Cmysize_t.get(addr), 13455566L);
-            assertTrue(Cmysize_t.sizeof() == Clong.sizeof());
+            assertTrue(Cmysize_t.sizeof() == Clong_long.sizeof());
         }
     }
 }
