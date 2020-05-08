@@ -294,7 +294,7 @@ public class TestByteBuffer {
                 Throwable cause = ex.getCause();
                 if (cause instanceof IllegalStateException) {
                     //all get/set buffer operation should fail because of the scope check
-                    assertTrue(ex.getCause().getMessage().contains("not alive"));
+                    assertTrue(ex.getCause().getMessage().contains("already closed"));
                 } else {
                     //all other exceptions were unexpected - fail
                     assertTrue(false);
@@ -331,7 +331,7 @@ public class TestByteBuffer {
                 handle.invoke(e.getValue());
                 fail();
             } catch (IllegalStateException ex) {
-                assertTrue(ex.getMessage().contains("not alive"));
+                assertTrue(ex.getMessage().contains("already closed"));
             } catch (UnsupportedOperationException ex) {
                 //skip
             } catch (Throwable ex) {
