@@ -46,11 +46,14 @@ import jdk.incubator.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Spliterator;
 import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.StreamSupport;
 
@@ -148,6 +151,47 @@ public class ParallelSum {
             res += (int)VH_int.get(base, (long) i);
         }
         return res;
+    };
+
+    @Benchmark
+    public Optional<MemorySegment> segment_stream_findany_serial() {
+        return StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), false)
+                .filter(FIND_SINGLE)
+                .findAny();
+    }
+
+    @Benchmark
+    public Optional<MemorySegment> segment_stream_findany_parallel() {
+        return StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
+                .filter(FIND_SINGLE)
+                .findAny();
+    }
+
+    @Benchmark
+    public Optional<MemorySegment> segment_stream_findany_serial_bulk() {
+        return StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT_BULK), false)
+                .filter(FIND_BULK)
+                .findAny();
+    }
+
+    @Benchmark
+    public Optional<MemorySegment> segment_stream_findany_parallel_bulk() {
+        return StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT_BULK), true)
+                .filter(FIND_BULK)
+                .findAny();
+    }
+
+    final static Predicate<MemorySegment> FIND_SINGLE = slice ->
+            (int)VH_int.get(slice.baseAddress(), 0L) == (ELEM_SIZE - 1);
+
+    final static Predicate<MemorySegment> FIND_BULK = slice -> {
+        MemoryAddress base = slice.baseAddress();
+        for (int i = 0; i < BULK_FACTOR ; i++) {
+            if ((int)VH_int.get(base, (long)i) == (ELEM_SIZE - 1)) {
+                return true;
+            }
+        }
+        return false;
     };
 
     @Benchmark
