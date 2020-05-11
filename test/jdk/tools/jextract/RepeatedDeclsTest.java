@@ -84,13 +84,20 @@ public class RepeatedDeclsTest extends JextractToolRunner {
             checkIntGetter(cls, "Y", 2);
 
             // check Point layout
-            checkPoint(loader.loadClass("repeatedDecls_h$CPoint"));
-            checkPoint(loader.loadClass("repeatedDecls_h$CPoint_t"));
-            checkPoint(loader.loadClass("repeatedDecls_h$CPOINT$0"));
+            Class<?> pointCls = loader.loadClass("repeatedDecls_h$CPoint");
+            checkPoint(pointCls);
+            Class<?> point_tCls = loader.loadClass("repeatedDecls_h$CPoint_t");
+            checkPoint(point_tCls);
+            pointCls.isAssignableFrom(point_tCls);
+            Class<?> point$0Cls = loader.loadClass("repeatedDecls_h$CPOINT$0");
+            checkPoint(point$0Cls);
 
             // check Point3D layout
-            checkPoint3D(loader.loadClass("repeatedDecls_h$CPoint3D"));
-            checkPoint3D(loader.loadClass("repeatedDecls_h$CPoint3D_t"));
+            Class<?> point3DCls = loader.loadClass("repeatedDecls_h$CPoint3D");
+            checkPoint3D(point3DCls);
+            Class<?> point3D_tCls = loader.loadClass("repeatedDecls_h$CPoint3D_t");
+            checkPoint3D(point3D_tCls);
+            assertTrue(point3DCls.isAssignableFrom(point3D_tCls));
         } finally {
             deleteDir(repeatedDeclsOutput);
         }

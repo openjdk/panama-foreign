@@ -46,8 +46,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -68,6 +70,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final String clsName;
     private final String pkgName;
     private StructBuilder structBuilder;
+    private Map<Declaration, String> structClassNames = new HashMap<>();
     private List<String> structSources = new ArrayList<>();
     private Set<String> nestedClassNames = new HashSet<>();
     private int nestedClassNameCount = 0;
@@ -82,6 +85,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
      */
     private String uniqueNestedClassName(String name) {
         return nestedClassNames.add(name.toLowerCase())? name : (name + "$" + nestedClassNameCount++);
+    }
+
+    private String structClassName(Declaration decl) {
+        return structClassNames.computeIfAbsent(decl, d -> uniqueNestedClassName("C" + d.name()));
     }
 
     // have we seen this Variable earlier?
@@ -231,11 +238,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             //skip decl-only
             return null;
         }
-        String name = d.name();
-        if (parent instanceof Declaration.Typedef) {
-            name = parent.name();
-        }
-
         boolean structClass = false;
         StructBuilder oldStructBuilder = this.structBuilder;
         if (!d.name().isEmpty() || !isRecord(parent)) {
@@ -244,11 +246,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 case STRUCT:
                 case UNION: {
                     structClass = true;
-                    String structClassName = uniqueNestedClassName("C" + name);
-                    this.structBuilder = new StructBuilder(structClassName, pkgName, constantHelper);
+                    String className = structClassName(d.name().isEmpty() ? parent : d);
+                    this.structBuilder = new StructBuilder(className, pkgName, constantHelper);
                     structBuilder.incrAlign();
                     structBuilder.classBegin();
-                    structBuilder.addLayoutGetter(structClassName, d.layout().get());
+                    structBuilder.addLayoutGetter(className, d.layout().get());
                     break;
                 }
             }
@@ -321,7 +323,19 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         if (type instanceof Type.Declared) {
             Declaration.Scoped s = ((Type.Declared) type).tree();
             if (!s.name().equals(tree.name())) {
-                return visitScoped(s, tree);
+                switch (s.kind()) {
+                    case STRUCT:
+                    case UNION: {
+                        if (s.name().isEmpty()) {
+                            visitScoped(s, tree);
+                        } else {
+                            builder.emitTypedef(uniqueNestedClassName("C" + tree.name()), structClassName(s));
+                        }
+                    }
+                    break;
+                    default:
+                        visitScoped(s, tree);
+                }
             }
         } else if (type instanceof Type.Primitive) {
              builder.emitPrimitiveTypedef((Type.Primitive)type, uniqueNestedClassName("C" + tree.name()));
