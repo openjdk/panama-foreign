@@ -170,13 +170,23 @@ abstract class MemoryScope {
         }
 
         private MemoryScope closeOrDup(boolean close) {
-            if (state == STATE_CLOSED) {
-                throw new IllegalStateException("This scope is already closed");
-            }
             // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
             var duped = close ? null : new Root(ref, cleanupAction);
-            // modify state to STATE_CLOSING 1st
-            STATE.setVolatile(this, STATE_CLOSING);
+            // try to modify state from STATE_OPEN -> STATE_CLOSING 1st (atomically)
+            int state;
+            if ((state = (int) STATE.compareAndExchange(this, STATE_OPEN, STATE_CLOSING)) != STATE_OPEN) {
+                while (state == STATE_CLOSING) {
+                    Thread.onSpinWait();
+                    state = (int) STATE.getVolatile(this);
+                }
+                if (state == STATE_CLOSED) {
+                    throw new IllegalStateException("This scope is already closed");
+                } else {
+                    // assert state == STATE_OPEN;
+                    throw new IllegalStateException("Cannot close this scope as it has active acquired children");
+                }
+            }
+            // if we get this far, we are the winner of a closing race (only relevant in non-confined segments)
             // check for absence of active acquired children 2nd
             // IMPORTANT: 1st sum releases, then sum acquires !!!
             if (releases.sum() != acquires.sum()) {
