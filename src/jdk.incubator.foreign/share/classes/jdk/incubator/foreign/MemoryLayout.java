@@ -114,7 +114,7 @@ SequenceLayout seq = MemoryLayout.ofSequence(5,
  *
  * We can obtain the offset, in bits, of the member layout named <code>value</code> from <code>seq</code>, as follows:
  * <blockquote><pre>{@code
-long valueOffset = seq.bitOOffset(PathElement.sequenceElement(), PathElement.groupElement("value"));
+long valueOffset = seq.bitOffset(PathElement.sequenceElement(), PathElement.groupElement("value"));
  * }</pre></blockquote>
  *
  * Similarly, we can select the member layout named {@code value}, as follows:
