@@ -79,7 +79,7 @@ public class TestIllegalLink {
             {
                 MethodType.methodType(void.class, boolean.class),
                 FunctionDescriptor.ofVoid(MemoryLayouts.BITS_8_LE),
-                "Unsupported primitive carrier"
+                "Unsupported carrier"
             },
             {
                 MethodType.methodType(void.class, int.class),

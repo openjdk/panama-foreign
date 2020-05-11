@@ -26,13 +26,16 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.VM;
+import sun.invoke.util.Wrapper;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -111,5 +114,28 @@ public final class Utils {
             case SystemABI.AArch64.NAME -> aarch64;
             default -> throw new ExceptionInInitializerError("Unexpected ABI: " + abi.name());
         };
+    }
+
+    public static void checkPrimitiveCarrierCompat(Class<?> carrier, MemoryLayout layout) {
+        checkLayoutType(layout, ValueLayout.class);
+        if (!isValidPrimitiveCarrier(carrier))
+            throw new IllegalArgumentException("Unsupported carrier: " + carrier);
+        if (Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitSize())
+            throw new IllegalArgumentException("Carrier size mismatch: " + carrier + " != " + layout);
+    }
+
+    public static boolean isValidPrimitiveCarrier(Class<?> carrier) {
+        return carrier == byte.class
+            || carrier == short.class
+            || carrier == char.class
+            || carrier == int.class
+            || carrier == long.class
+            || carrier == float.class
+            || carrier == double.class;
+    }
+
+    public static void checkLayoutType(MemoryLayout layout, Class<? extends MemoryLayout> layoutType) {
+        if (!layoutType.isInstance(layout))
+            throw new IllegalArgumentException("Expected a " + layoutType.getSimpleName() + ": " + layout);
     }
 }

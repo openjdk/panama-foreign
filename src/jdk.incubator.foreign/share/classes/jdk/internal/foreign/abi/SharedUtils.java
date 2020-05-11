@@ -25,20 +25,18 @@
 package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
-
-import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.abi.aarch64.AArch64ABI;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
-import sun.invoke.util.Wrapper;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -188,32 +186,15 @@ public class SharedUtils {
         return dest;
     }
 
-    private static boolean isPrimitiveSupported(Class<?> carrier) {
-        return carrier == byte.class
-            || carrier == short.class
-            || carrier == char.class
-            || carrier == int.class
-            || carrier == long.class
-            || carrier == float.class
-            || carrier == double.class;
-    }
-
     private static void checkCompatibleType(Class<?> carrier, MemoryLayout layout, long addressSize) {
         if (carrier.isPrimitive()) {
-            if (!(layout instanceof ValueLayout))
-                throw new IllegalArgumentException("Expected a ValueLayout: " + layout);
-            if (!isPrimitiveSupported(carrier))
-                throw new IllegalArgumentException("Unsupported primitive carrier: " + carrier);
-            if (Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitSize())
-                throw new IllegalArgumentException("Carrier size mismatch: " + carrier + " != " + layout);
+            Utils.checkPrimitiveCarrierCompat(carrier, layout);
         } else if (carrier == MemoryAddress.class) {
-            if (!(layout instanceof ValueLayout))
-                throw new IllegalArgumentException("Expected a ValueLayout: " + layout);
+            Utils.checkLayoutType(layout, ValueLayout.class);
             if (layout.bitSize() != addressSize)
                 throw new IllegalArgumentException("Address size mismatch: " + addressSize + " != " + layout.bitSize());
         } else if(carrier == MemorySegment.class) {
-           if (!(layout instanceof GroupLayout))
-                throw new IllegalArgumentException("Expected a GroupLayout: " + layout);
+           Utils.checkLayoutType(layout, GroupLayout.class);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + carrier);
         }
