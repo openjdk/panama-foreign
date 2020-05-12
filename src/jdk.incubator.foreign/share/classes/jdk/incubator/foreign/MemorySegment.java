@@ -196,6 +196,32 @@ public interface MemorySegment extends AutoCloseable {
     }
 
     /**
+     * Fills a value into the given memory segment.
+     * <p>
+     * More specifically, the given value is filled into each address of the
+     * segment. Equivalent to (but likely more efficient than) the following code:
+     *
+     * <blockquote><pre>
+     * byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+     *         .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
+     * for (long l = 0; l < segment.byteSize(); l++) {
+     *     byteHandle.set(segment.baseAddress(), l, value);
+     * }</pre></blockquote>
+     * <p>
+     * Fill can be useful to initialize or reset the memory of a segment.
+     *
+     * @param segment the segment to fill
+     * @param value the value to fill into the segment
+     * @throws IllegalStateException if the segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment
+     * @throws UnsupportedOperationException if this segment does not support the {@link #WRITE} access mode
+     * @throws NullPointerException if {@code segment == null}
+     */
+    static void fill(MemorySegment segment, byte value) {
+        AbstractMemorySegmentImpl.fill(segment, value);
+    }
+
+    /**
      * The thread owning this segment.
      * @return the thread owning this segment.
      */

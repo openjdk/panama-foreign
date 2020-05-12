@@ -32,6 +32,7 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
+import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
@@ -54,6 +55,8 @@ import java.util.function.Consumer;
  * {@link MappedMemorySegmentImpl}.
  */
 public abstract class AbstractMemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
+
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
     private static final boolean enableSmallSegments =
             Boolean.parseBoolean(GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.SmallSegments", "true"));
@@ -111,6 +114,15 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         }
         return (Spliterator<S>)new SegmentSplitter(sequenceLayout.elementLayout().byteSize(), sequenceLayout.elementCount().getAsLong(),
                 (AbstractMemorySegmentImpl)segment.withAccessModes(segment.accessModes() & ~CLOSE));
+    }
+
+    public static void fill(MemorySegment segment, byte value) {
+        AbstractMemorySegmentImpl segmentImpl = (AbstractMemorySegmentImpl) segment;
+        segmentImpl.checkValidState();
+        if (!segmentImpl.isSet(WRITE)) {
+            throw segmentImpl.unsupportedAccessMode(WRITE);
+        }
+        UNSAFE.setMemory(segmentImpl.base(), segmentImpl.min(), segmentImpl.length, value);
     }
 
     @Override
