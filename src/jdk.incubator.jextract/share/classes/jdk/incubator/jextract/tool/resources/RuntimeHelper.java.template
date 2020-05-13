@@ -180,9 +180,13 @@ public class RuntimeHelper {
         }
 
         private MemoryLayout variadicLayout(Class<?> c) {
-            if (c == char.class || c == byte.class || c == short.class || c == int.class || c == long.class) {
-                //it is ok to approximate with a machine word here; numerics arguments in a prototype-less
-                //function call are always rounded up to a register size anyway.
+            if (c == byte.class) {
+                return C_CHAR;
+            } else if (c == char.class || c == short.class) {
+                return C_SHORT;
+            } else if (c == int.class) {
+                return C_INT;
+            } else if (c == long.class) {
                 return C_LONGLONG;
             } else if (c == float.class || c == double.class) {
                 return C_DOUBLE;
