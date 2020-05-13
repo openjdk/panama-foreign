@@ -207,6 +207,8 @@ public interface MemorySegment extends AutoCloseable {
      * for (long l = 0; l < segment.byteSize(); l++) {
      *     byteHandle.set(segment.baseAddress(), l, value);
      * }</pre></blockquote>
+     * without any regard or guarantees on the ordering of particular memory
+     * elements being set.
      * <p>
      * Fill can be useful to initialize or reset the memory of a segment.
      *

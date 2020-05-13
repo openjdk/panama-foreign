@@ -118,10 +118,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     public static void fill(MemorySegment segment, byte value) {
         AbstractMemorySegmentImpl segmentImpl = (AbstractMemorySegmentImpl) segment;
-        segmentImpl.checkValidState();
-        if (!segmentImpl.isSet(WRITE)) {
-            throw segmentImpl.unsupportedAccessMode(WRITE);
-        }
+        segmentImpl.checkRange(0, segmentImpl.length, true);
         UNSAFE.setMemory(segmentImpl.base(), segmentImpl.min(), segmentImpl.length, value);
     }
 
