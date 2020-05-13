@@ -254,7 +254,7 @@ public class TestSegments {
     }
 
     @Test(expectedExceptions = NullPointerException.class)
-    public void testFillWithNull() {
+    public void testFillNull() {
         MemorySegment.fill(null, (byte) 0xFF);
     }
 
