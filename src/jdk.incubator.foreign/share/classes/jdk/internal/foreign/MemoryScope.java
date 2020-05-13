@@ -151,11 +151,11 @@ abstract class MemoryScope {
                 for (; ; stamp = lock.readLock()) {
                     if (stamp == 0L)
                         continue;
-                    checkAliveConfined(); // plain read is enough here (either successful optimistic read, or ful read lock)
+                    checkAliveConfined(); // plain read is enough here (either successful optimistic read, or full read lock)
 
                     // increment acquires
                     acquired.increment();
-                    // did a call to close() occurred since we acquired the lock?
+                    // did a call to close() occur since we acquired the lock?
                     if (lock.validate(stamp)) {
                         // no, just return the acquired scope
                         return new Child();
