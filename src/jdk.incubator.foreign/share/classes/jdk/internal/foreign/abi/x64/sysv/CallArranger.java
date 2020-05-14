@@ -172,23 +172,21 @@ public class CallArranger {
             this.classes = classes;
         }
 
-        public static TypeClass ofValue(List<ArgumentClassImpl> classes) {
-            if (classes.size() != 1) {
-                throw new IllegalStateException("Multiple classes not supported: " + classes);
-            }
+        public static TypeClass ofValue(ValueLayout layout) {
             final Kind kind;
-            switch (classes.get(0)) {
+            ArgumentClassImpl argClass = classifyValueType(layout);
+            switch (argClass) {
                 case POINTER: kind = Kind.POINTER; break;
                 case INTEGER: kind = Kind.INTEGER; break;
                 case SSE: kind = Kind.FLOAT; break;
                 default:
                     throw new IllegalStateException();
             }
-            return new TypeClass(kind, classes);
+            return new TypeClass(kind, List.of(argClass));
         }
 
-        public static TypeClass ofStruct(List<ArgumentClassImpl> classes) {
-            return new TypeClass(Kind.STRUCT, classes);
+        public static TypeClass ofStruct(GroupLayout layout) {
+            return new TypeClass(Kind.STRUCT, classifyStructType(layout));
         }
 
         boolean inMemory() {
@@ -418,100 +416,23 @@ public class CallArranger {
         COMPLEX_X87_CLASSES.add(ArgumentClassImpl.X87UP);
     }
 
-
     private static List<ArgumentClassImpl> createMemoryClassArray(long size) {
         return IntStream.range(0, (int)size)
                 .mapToObj(i -> ArgumentClassImpl.MEMORY)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-
-    private static List<ArgumentClassImpl> classifyValueType(ValueLayout type) {
-        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
+    // TODO: handle '__int128' and 'long double'
+    private static ArgumentClassImpl classifyValueType(ValueLayout type) {
+        if (type.byteSize() > 8) {
+            throw new IllegalStateException("");
+        }
         ArgumentClassImpl clazz = SysVx64ABI.argumentClassFor(type)
                 .orElseThrow(() -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
-        classes.add(clazz);
-        if (clazz == ArgumentClassImpl.INTEGER) {
-            // int128
-            long left = (type.byteSize()) - 8;
-            while (left > 0) {
-                classes.add(ArgumentClassImpl.INTEGER);
-                left -= 8;
-            }
-            return classes;
-        } else if (clazz == ArgumentClassImpl.X87) {
-            classes.add(ArgumentClassImpl.X87UP);
-        }
-
-        return classes;
-    }
-
-    private static List<ArgumentClassImpl> classifyArrayType(SequenceLayout type) {
-        long nWords = Utils.alignUp((type.byteSize()), 8) / 8;
-        if (nWords > MAX_AGGREGATE_REGS_SIZE) {
-            return createMemoryClassArray(nWords);
-        }
-
-        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
-
-        for (long i = 0; i < nWords; i++) {
-            classes.add(ArgumentClassImpl.NO_CLASS);
-        }
-
-        long offset = 0;
-        final long count = type.elementCount().orElseThrow();
-        for (long idx = 0; idx < count; idx++) {
-            MemoryLayout t = type.elementLayout();
-            offset = SharedUtils.align(t, false, offset);
-            List<ArgumentClassImpl> subclasses = classifyType(t);
-            if (subclasses.isEmpty()) {
-                return classes;
-            }
-
-            for (int i = 0; i < subclasses.size(); i++) {
-                int pos = (int)(offset / 8);
-                ArgumentClassImpl newClass = classes.get(i + pos).merge(subclasses.get(i));
-                classes.set(i + pos, newClass);
-            }
-
-            offset += t.byteSize();
-        }
-
-        for (int i = 0; i < classes.size(); i++) {
-            ArgumentClassImpl c = classes.get(i);
-
-            if (c == ArgumentClassImpl.MEMORY) {
-                return createMemoryClassArray(classes.size());
-            }
-
-            if (c == ArgumentClassImpl.X87UP) {
-                if (i == 0) {
-                    throw new IllegalArgumentException("Unexpected leading X87UP class");
-                }
-
-                if (classes.get(i - 1) != ArgumentClassImpl.X87) {
-                    return createMemoryClassArray(classes.size());
-                }
-            }
-        }
-
-        if (classes.size() > 2) {
-            if (classes.get(0) != ArgumentClassImpl.SSE) {
-                return createMemoryClassArray(classes.size());
-            }
-
-            for (int i = 1; i < classes.size(); i++) {
-                if (classes.get(i) != ArgumentClassImpl.SSEUP) {
-                    return createMemoryClassArray(classes.size());
-                }
-            }
-        }
-
-        return classes;
+        return clazz;
     }
 
     // TODO: handle zero length arrays
-    // TODO: Handle nested structs (and primitives)
     private static List<ArgumentClassImpl> classifyStructType(GroupLayout type) {
         if (argumentClassFor(type)
                 .filter(argClass -> argClass == ArgumentClassImpl.COMPLEX_X87)
@@ -519,53 +440,26 @@ public class CallArranger {
             return COMPLEX_X87_CLASSES;
         }
 
-        long nWords = Utils.alignUp((type.byteSize()), 8) / 8;
+        List<ArgumentClassImpl>[] eightbytes = groupByEightBytes(type);
+        long nWords = eightbytes.length;
         if (nWords > MAX_AGGREGATE_REGS_SIZE) {
             return createMemoryClassArray(nWords);
         }
 
         ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
 
-        for (long i = 0; i < nWords; i++) {
-            classes.add(ArgumentClassImpl.NO_CLASS);
-        }
-
-        long offset = 0;
-        final int count = type.memberLayouts().size();
-        for (int idx = 0; idx < count; idx++) {
-            MemoryLayout t = type.memberLayouts().get(idx);
-            if (t.isPadding()) {
-                continue;
-            }
-            // ignore zero-length array for now
-            // TODO: handle zero length arrays here
-            if (t instanceof SequenceLayout) {
-                if (((SequenceLayout) t).elementCount().orElseThrow() == 0) {
-                    continue;
-                }
-            }
-            offset = SharedUtils.align(t, false, offset);
-            List<ArgumentClassImpl> subclasses = classifyType(t);
-            if (subclasses.isEmpty()) {
-                return classes;
-            }
-
-            for (int i = 0; i < subclasses.size(); i++) {
-                int pos = (int)(offset / 8);
-                ArgumentClassImpl newClass = classes.get(i + pos).merge(subclasses.get(i));
-                classes.set(i + pos, newClass);
-            }
-
-            // TODO: validate union strategy is sound
-            if (type.isStruct()) {
-                offset += t.byteSize();
-            }
+        for (int idx = 0; idx < nWords; idx++) {
+            List<ArgumentClassImpl> subclasses = eightbytes[idx];
+            ArgumentClassImpl result = subclasses.stream()
+                    .reduce(ArgumentClassImpl.NO_CLASS, ArgumentClassImpl::merge);
+            classes.add(result);
         }
 
         for (int i = 0; i < classes.size(); i++) {
             ArgumentClassImpl c = classes.get(i);
 
             if (c == ArgumentClassImpl.MEMORY) {
+                // if any of the eightbytes was passed in memory, pass the whole thing in memory
                 return createMemoryClassArray(classes.size());
             }
 
@@ -595,14 +489,12 @@ public class CallArranger {
         return classes;
     }
 
-    private static List<ArgumentClassImpl> classifyType(MemoryLayout type) {
+    private static TypeClass classifyLayout(MemoryLayout type) {
         try {
             if (type instanceof ValueLayout) {
-                return classifyValueType((ValueLayout) type);
-            } else if (type instanceof SequenceLayout) {
-                return classifyArrayType((SequenceLayout) type);
+                return TypeClass.ofValue((ValueLayout)type);
             } else if (type instanceof GroupLayout) {
-                return classifyStructType((GroupLayout) type);
+                return TypeClass.ofStruct((GroupLayout)type);
             } else {
                 throw new IllegalArgumentException("Unhandled type " + type);
             }
@@ -612,19 +504,51 @@ public class CallArranger {
         }
     }
 
-    private static TypeClass classifyLayout(MemoryLayout type) {
-        List<ArgumentClassImpl> classes = classifyType(type);
-        try {
-            if (type instanceof ValueLayout) {
-                return TypeClass.ofValue(classes);
-            } else if (type instanceof GroupLayout) {
-                return TypeClass.ofStruct(classes);
-            } else {
-                throw new IllegalArgumentException("Unhandled type " + type);
+    private static List<ArgumentClassImpl>[] groupByEightBytes(GroupLayout group) {
+        long offset = 0L;
+        int nEightbytes = (int)Utils.alignUp(group.byteSize(), 8) / 8;
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        List<ArgumentClassImpl>[] groups = new List[nEightbytes];
+        for (MemoryLayout l : group.memberLayouts()) {
+            groupByEightBytes(l, offset, groups);
+            if (group.isStruct()) {
+                offset += l.byteSize();
             }
-        } catch (UnsupportedOperationException e) {
-            System.err.println("Failed to classify layout: " + type);
-            throw e;
+        }
+        return groups;
+    }
+
+    private static void groupByEightBytes(MemoryLayout l, long offset, List<ArgumentClassImpl>[] groups) {
+        if (l instanceof GroupLayout) {
+            GroupLayout group = (GroupLayout)l;
+            for (MemoryLayout m : group.memberLayouts()) {
+                groupByEightBytes(m, offset, groups);
+                if (group.isStruct()) {
+                    offset += m.byteSize();
+                }
+            }
+        } else if (l.isPadding()) {
+            return;
+        } else if (l instanceof SequenceLayout) {
+            SequenceLayout seq = (SequenceLayout)l;
+            MemoryLayout elem = seq.elementLayout();
+            for (long i = 0 ; i < seq.elementCount().getAsLong() ; i++) {
+                groupByEightBytes(elem, offset, groups);
+                offset += elem.byteSize();
+            }
+        } else if (l instanceof ValueLayout) {
+            List<ArgumentClassImpl> layouts = groups[(int)offset / 8];
+            if (layouts == null) {
+                layouts = new ArrayList<>();
+                groups[(int)offset / 8] = layouts;
+            }
+            // if the aggregate contains unaligned fields, it has class MEMORY
+            ArgumentClassImpl argumentClass = (offset % l.byteAlignment()) == 0 ?
+                    classifyValueType((ValueLayout)l) :
+                    ArgumentClassImpl.MEMORY;
+            layouts.add(argumentClass);
+        } else {
+            throw new IllegalStateException("Unexpected layout: " + l);
         }
     }
 }
