@@ -41,10 +41,10 @@ public class Test8244959 {
     public void testsPrintf() {
         try (MemorySegment s = MemorySegment.allocateNative(1024)) {
             sprintf(s.baseAddress(),
-                toCString("%hhd %hd %d %ld %lld %c").baseAddress(),
-                (byte) 1, (short) 2, 3, 4l, 5l, 'a');
+                toCString("%hhd %c %.2f %.2f %ld %ld %d %hd %d %d %lld %c").baseAddress(),
+                (byte) 1, 'b', -1.25f, 5.5d, -200l, Long.MAX_VALUE, (byte) -2, (short) 2, 3, (short) -4, 5l, 'a');
             String str = toJavaString(s.baseAddress());
-            assertEquals(str, "1 2 3 4 5 a");
+            assertEquals(str, "1 b -1.25 5.50 -200 " + Long.MAX_VALUE + " -2 2 3 -4 5 a");
         }
     }
 }
