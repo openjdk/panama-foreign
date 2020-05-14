@@ -26,6 +26,7 @@
 
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.clang.Cursor;
@@ -103,10 +104,12 @@ abstract class RecordLayoutComputer {
     }
 
     void addFieldLayout(long offset, Type parent, Cursor c) {
-        MemoryLayout MemoryLayout = c.isAnonymousStruct()?
-            compute(offset, parent, c.type()) :
-            fieldLayout(c);
-        addFieldLayout(MemoryLayout);
+        if (c.isAnonymousStruct()) {
+            GroupLayout layout = (GroupLayout) compute(offset, parent, c.type());
+            fieldLayouts.addAll(layout.memberLayouts());
+        } else {
+            addFieldLayout(fieldLayout(c));
+        }
     }
 
     MemoryLayout fieldLayout(Cursor c) {

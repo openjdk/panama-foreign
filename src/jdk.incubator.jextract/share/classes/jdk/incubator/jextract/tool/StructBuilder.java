@@ -79,14 +79,54 @@ class StructBuilder extends JavaSourceBuilder {
 
     @Override
     public void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
-        super.addGetter(javaName, nativeName, layout, type, parentLayout);
+        incrAlign();
+        indent();
+        sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(MemoryAddress addr) {\n");
+        incrAlign();
+        indent();
+        sb.append("return (" + type.getName() + ")"
+                + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(addr);\n");
+        decrAlign();
+        indent();
+        sb.append("}\n");
+        decrAlign();
+
         addIndexGetter(javaName, nativeName, layout, type, parentLayout);
     }
 
     @Override
     public void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
-        super.addSetter(javaName, nativeName, layout, type, parentLayout);
+        incrAlign();
+        indent();
+        String param = MemoryAddress.class.getName() + " addr";
+        sb.append(PUB_MODS + "void " + javaName + "$set(" + param + ", " + type.getName() + " x) {\n");
+        incrAlign();
+        indent();
+        sb.append(varHandleGetCallString(javaName, nativeName, layout, type, null) + ".set(addr, x);\n");
+        decrAlign();
+        indent();
+        sb.append("}\n");
+        decrAlign();
+
         addIndexSetter(javaName, nativeName, layout, type, parentLayout);
+    }
+
+    @Override
+    public void addAddressOf(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+        incrAlign();
+        indent();
+        sb.append(PUB_MODS + "MemoryAddress " + javaName + "$addressof(MemoryAddress addr) {\n");
+        incrAlign();
+        indent();
+        sb.append("return addr.segment().asSlice(");
+        sb.append(parentLayout.byteOffset(MemoryLayout.PathElement.groupElement(nativeName)));
+        sb.append(", ");
+        sb.append(layout.byteSize());
+        sb.append(").baseAddress();\n");
+        decrAlign();
+        indent();
+        sb.append("}\n");
+        decrAlign();
     }
 
     private void emitSizeof() {

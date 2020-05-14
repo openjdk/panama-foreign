@@ -25,16 +25,12 @@
 package jdk.incubator.jextract.tool;
 
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
 
 import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Superclass for .java source generator classes.
@@ -130,14 +126,12 @@ abstract class JavaSourceBuilder {
     public void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        String param = parentLayout != null ? (MemoryAddress.class.getName() + " addr") : "";
-        sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(" + param + ") {\n");
+        sb.append(PUB_MODS + type.getName() + " " + javaName + "$get() {\n");
         incrAlign();
         indent();
-        String vhParam = parentLayout != null ?
-                "addr" : addressGetCallString(javaName, nativeName);
+        String vhParam = addressGetCallString(javaName, nativeName);
         sb.append("return (" + type.getName() + ")"
-                + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(" + vhParam + ");\n");
+                + varHandleGetCallString(javaName, nativeName, layout, type, null) + ".get(" + vhParam + ");\n");
         decrAlign();
         indent();
         sb.append("}\n");
@@ -147,13 +141,29 @@ abstract class JavaSourceBuilder {
     public void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        String param = parentLayout != null ? (MemoryAddress.class.getName() + " addr, ") : "";
-        sb.append(PUB_MODS + "void " + javaName + "$set(" + param + type.getName() + " x) {\n");
+        sb.append(PUB_MODS + "void " + javaName + "$set(" + type.getName() + " x) {\n");
         incrAlign();
         indent();
-        String vhParam = parentLayout != null ?
-                "addr" : addressGetCallString(javaName, nativeName);
-        sb.append(varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".set(" + vhParam + ", x);\n");
+        String vhParam = addressGetCallString(javaName, nativeName);
+        sb.append(varHandleGetCallString(javaName, nativeName, layout, type, null) + ".set(" + vhParam + ", x);\n");
+        decrAlign();
+        indent();
+        sb.append("}\n");
+        decrAlign();
+    }
+
+    public void addAddressOf(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+        DirectMethodHandleDesc desc = constantHelper.addAddress(javaName, nativeName);
+        incrAlign();
+        indent();
+        sb.append(PUB_MODS + "MemoryAddress " + javaName + "$addressof() {\n");
+        incrAlign();
+        indent();
+        sb.append("return MemorySegment.ofNativeRestricted(" + getCallString(desc));
+        sb.append(", ");
+        sb.append(layout.byteSize());
+        sb.append(", ");
+        sb.append("Thread.currentThread(), null, null).baseAddress();\n");
         decrAlign();
         indent();
         sb.append("}\n");
