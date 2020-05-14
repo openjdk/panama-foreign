@@ -459,6 +459,7 @@ public class CallArranger {
             ArgumentClassImpl c = classes.get(i);
 
             if (c == ArgumentClassImpl.MEMORY) {
+                // if any of the eightbytes was passed in memory, pass the whole thing in memory
                 return createMemoryClassArray(classes.size());
             }
 
@@ -541,7 +542,11 @@ public class CallArranger {
                 layouts = new ArrayList<>();
                 groups[(int)offset / 8] = layouts;
             }
-            layouts.add(classifyValueType((ValueLayout)l));
+            // if the aggregate contains unaligned fields, it has class MEMORY
+            ArgumentClassImpl argumentClass = (offset % l.byteAlignment()) == 0 ?
+                    classifyValueType((ValueLayout)l) :
+                    ArgumentClassImpl.MEMORY;
+            layouts.add(argumentClass);
         } else {
             throw new IllegalStateException("Unexpected layout: " + l);
         }
