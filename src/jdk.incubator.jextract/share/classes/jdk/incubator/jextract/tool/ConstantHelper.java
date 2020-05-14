@@ -146,7 +146,8 @@ class ConstantHelper {
                 methodType(
                         MemoryAddress.class,
                         LibraryLookup[].class,
-                        String.class)
+                        String.class,
+                        MemoryLayout.class)
         );
         this.MH_makeCString = findRuntimeHelperBootstrap(
                 cString,
@@ -188,8 +189,8 @@ class ConstantHelper {
         return emitCondyGetter(javaName + "$MH", MethodHandle.class, methodHandleDesc(nativeName, mtype, desc, varargs));
     }
 
-    public DirectMethodHandleDesc addAddress(String javaName, String nativeName) {
-        return emitCondyGetter(javaName + "$ADDR", MemoryAddress.class, globalVarAddressDesc(nativeName));
+    public DirectMethodHandleDesc addAddress(String javaName, String nativeName, MemoryLayout layout) {
+        return emitCondyGetter(javaName + "$ADDR", MemoryAddress.class, globalVarAddressDesc(nativeName, layout));
     }
 
     public DirectMethodHandleDesc addFunctionDesc(String javaName, FunctionDescriptor fDesc) {
@@ -419,8 +420,8 @@ class ConstantHelper {
         }
     }
 
-    private ConstantDesc globalVarAddressDesc(String name) {
-        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "ADDR_" + name, CD_MemoryAddress, MH_lookupGlobalVariable, LIBRARIES, name);
+    private ConstantDesc globalVarAddressDesc(String name, MemoryLayout layout) {
+        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "ADDR_" + name, CD_MemoryAddress, MH_lookupGlobalVariable, LIBRARIES, name, desc(layout));
     }
 
     private ConstantDesc addressDesc(long value) {

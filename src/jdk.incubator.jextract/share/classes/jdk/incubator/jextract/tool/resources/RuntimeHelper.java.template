@@ -48,8 +48,11 @@ public class RuntimeHelper {
         }
     }
 
-    public static final MemoryAddress lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name) {
-        return lookup(LIBRARIES, name).orElse(null);
+    public static final MemoryAddress lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
+        return lookup(LIBRARIES, name).map(a ->
+            MemorySegment.ofNativeRestricted(
+                 a, layout.byteSize(), null, null, a
+            ).withAccessModes(MemorySegment.READ | MemorySegment.WRITE).baseAddress()).orElse(null);
     }
 
     public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {

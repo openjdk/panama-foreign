@@ -24,13 +24,9 @@
  */
 package jdk.incubator.jextract.tool;
 
+import jdk.incubator.foreign.*;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.internal.foreign.abi.SharedUtils;
 
@@ -353,11 +349,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         String symbol = tree.name();
         assert !symbol.isEmpty();
         assert !fieldName.isEmpty();
-
-        // FIXME: we need tree transformer. The mangling should be a separate tree transform phase
-        if (parent == null) {
-            fieldName = tree.name();
-        }
         fieldName = Utils.javaSafeIdentifier(fieldName);
 
         Type type = tree.type();
@@ -368,23 +359,32 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
         Class<?> clazz = typeTranslator.getJavaType(type);
         if (tree.kind() == Declaration.Variable.Kind.BITFIELD || clazz == MemoryAddress.class ||
-                clazz == MemorySegment.class || layout.byteSize() > 8) {
+                (layout instanceof ValueLayout && layout.byteSize() > 8)) {
             //skip
             return null;
         }
 
+        boolean isSegment = clazz == MemorySegment.class;
         MemoryLayout treeLayout = tree.layout().orElseThrow();
         if (parent != null) { //struct field
             MemoryLayout parentLayout = parentLayout(parent);
-            structBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
-            structBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
-            structBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
+            if (isSegment) {
+                structBuilder.addAddressOf(fieldName, tree.name(), treeLayout, clazz, parentLayout);
+            } else {
+                structBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
+                structBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
+                structBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
+            }
         } else {
-            builder.addLayoutGetter(fieldName, layout);
-            builder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz, null);
-            builder.addAddressGetter(fieldName, tree.name());
-            builder.addGetter(fieldName, tree.name(), treeLayout, clazz, null);
-            builder.addSetter(fieldName, tree.name(), treeLayout, clazz, null);
+            if (isSegment) {
+                builder.addAddressOf(fieldName, tree.name(), treeLayout, clazz, null);
+            } else {
+                builder.addLayoutGetter(fieldName, layout);
+                builder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz,null);
+                builder.addAddressGetter(fieldName, tree.name(), treeLayout);
+                builder.addGetter(fieldName, tree.name(), treeLayout, clazz, null);
+                builder.addSetter(fieldName, tree.name(), treeLayout, clazz, null);
+            }
         }
 
         return null;
