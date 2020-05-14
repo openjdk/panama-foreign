@@ -24,21 +24,22 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
+import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
-import jdk.internal.foreign.abi.x64.sysv.ArgumentClassImpl;
-import jdk.internal.foreign.abi.*;
+import jdk.internal.foreign.abi.UpcallStubs;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
+import static jdk.incubator.foreign.C.*;
+
 /**
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
  */
-public class Windowsx64ABI implements SystemABI {
+public class Windowsx64Linker implements ForeignLinker {
 
     public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 4;
     public static final int MAX_INTEGER_RETURN_REGISTERS = 1;
@@ -47,13 +48,13 @@ public class Windowsx64ABI implements SystemABI {
     public static final int MAX_REGISTER_ARGUMENTS = 4;
     public static final int MAX_REGISTER_RETURNS = 1;
 
-    private static Windowsx64ABI instance;
+    private static Windowsx64Linker instance;
 
     static final long ADDRESS_SIZE = 64; // bits
 
-    public static Windowsx64ABI getInstance() {
+    public static Windowsx64Linker getInstance() {
         if (instance == null) {
-            instance = new Windowsx64ABI();
+            instance = new Windowsx64Linker();
         }
         return instance;
     }

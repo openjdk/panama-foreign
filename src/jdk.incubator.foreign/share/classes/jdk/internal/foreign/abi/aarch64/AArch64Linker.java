@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,36 +23,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi.x64.sysv;
+package jdk.internal.foreign.abi.aarch64;
 
+import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
-import jdk.internal.foreign.abi.*;
+import jdk.internal.foreign.abi.UpcallStubs;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.Optional;
+
+import static jdk.incubator.foreign.C.*;
 
 /**
- * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
+ * ABI implementation based on ARM document "Procedure Call Standard for
+ * the ARM 64-bit Architecture".
  */
-public class SysVx64ABI implements SystemABI {
-    public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
-    public static final int MAX_INTEGER_RETURN_REGISTERS = 2;
-    public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
-    public static final int MAX_VECTOR_RETURN_REGISTERS = 2;
-    public static final int MAX_X87_RETURN_REGISTERS = 2;
-
-    private static SysVx64ABI instance;
+public class AArch64Linker implements ForeignLinker {
+    private static AArch64Linker instance;
 
     static final long ADDRESS_SIZE = 64; // bits
 
-    public static SysVx64ABI getInstance() {
+    public static AArch64Linker getInstance() {
         if (instance == null) {
-            instance = new SysVx64ABI();
+            instance = new AArch64Linker();
         }
         return instance;
     }
@@ -68,20 +65,10 @@ public class SysVx64ABI implements SystemABI {
 
     @Override
     public String name() {
-        return SysV.NAME;
+        return AArch64.NAME;
     }
 
-    static Optional<ArgumentClassImpl> argumentClassFor(MemoryLayout layout) {
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        Optional<SysV.ArgumentClass> argClassOpt =
-                (Optional<SysV.ArgumentClass>)(Optional)layout.attribute(SysV.CLASS_ATTRIBUTE_NAME);
-        return argClassOpt.map(argClass -> switch (argClass) {
-            case INTEGER -> ArgumentClassImpl.INTEGER;
-            case SSE -> ArgumentClassImpl.SSE;
-            case X87 -> ArgumentClassImpl.X87;
-            case COMPLEX_87 -> ArgumentClassImpl.COMPLEX_X87;
-            case POINTER -> ArgumentClassImpl.POINTER;
-            default -> null;
-        });
+    static AArch64.ArgumentClass argumentClassFor(MemoryLayout layout) {
+        return (AArch64.ArgumentClass)layout.attribute(AArch64.CLASS_ATTRIBUTE_NAME).get();
     }
 }

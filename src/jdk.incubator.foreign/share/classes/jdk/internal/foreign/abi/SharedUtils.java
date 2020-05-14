@@ -24,19 +24,19 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.aarch64.AArch64ABI;
-import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
-import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
+import jdk.internal.foreign.abi.aarch64.AArch64Linker;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -228,17 +228,17 @@ public class SharedUtils {
         throw new IllegalArgumentException("Size too large: " + size);
     }
 
-    public static SystemABI getSystemABI() {
+    public static ForeignLinker getSystemLinker() {
         String arch = System.getProperty("os.arch");
         String os = System.getProperty("os.name");
         if (arch.equals("amd64") || arch.equals("x86_64")) {
             if (os.startsWith("Windows")) {
-                return Windowsx64ABI.getInstance();
+                return Windowsx64Linker.getInstance();
             } else {
-                return SysVx64ABI.getInstance();
+                return SysVx64Linker.getInstance();
             }
         } else if (arch.equals("aarch64")) {
-            return AArch64ABI.getInstance();
+            return AArch64Linker.getInstance();
         }
         throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
     }

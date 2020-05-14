@@ -27,7 +27,7 @@
  * @run testng/othervm TestCircularInit2
  */
 
-import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.C;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertNotNull;
@@ -36,10 +36,10 @@ public class TestCircularInit2 {
 
     @Test
     public void testCircularInit() {
-        System.out.println(SystemABI.C_BOOL); // trigger clinit
-        assertNotNull(SystemABI.C_BOOL);
-        assertNotNull(SystemABI.C_BOOL);
-        assertNotNull(SystemABI.C_BOOL);
+        System.out.println(C.C_BOOL); // trigger clinit
+        assertNotNull(C.C_BOOL);
+        assertNotNull(C.C_BOOL);
+        assertNotNull(C.C_BOOL);
     }
 
 }
