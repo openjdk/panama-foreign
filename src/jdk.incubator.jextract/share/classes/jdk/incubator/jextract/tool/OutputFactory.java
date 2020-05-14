@@ -381,7 +381,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             } else {
                 builder.addLayoutGetter(fieldName, layout);
                 builder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz,null);
-                builder.addAddressGetter(fieldName, tree.name());
+                builder.addAddressGetter(fieldName, tree.name(), treeLayout);
                 builder.addGetter(fieldName, tree.name(), treeLayout, clazz, null);
                 builder.addSetter(fieldName, tree.name(), treeLayout, clazz, null);
             }

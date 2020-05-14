@@ -115,8 +115,8 @@ abstract class JavaSourceBuilder {
         emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs));
     }
 
-    public void addAddressGetter(String javaName, String nativeName) {
-        emitForwardGetter(constantHelper.addAddress(javaName, nativeName));
+    public void addAddressGetter(String javaName, String nativeName, MemoryLayout layout) {
+        emitForwardGetter(constantHelper.addAddress(javaName, nativeName, layout));
     }
 
     public void addConstantGetter(String javaName, Class<?> type, Object value) {
@@ -129,7 +129,7 @@ abstract class JavaSourceBuilder {
         sb.append(PUB_MODS + type.getName() + " " + javaName + "$get() {\n");
         incrAlign();
         indent();
-        String vhParam = addressGetCallString(javaName, nativeName);
+        String vhParam = addressGetCallString(javaName, nativeName, layout);
         sb.append("return (" + type.getName() + ")"
                 + varHandleGetCallString(javaName, nativeName, layout, type, null) + ".get(" + vhParam + ");\n");
         decrAlign();
@@ -144,7 +144,7 @@ abstract class JavaSourceBuilder {
         sb.append(PUB_MODS + "void " + javaName + "$set(" + type.getName() + " x) {\n");
         incrAlign();
         indent();
-        String vhParam = addressGetCallString(javaName, nativeName);
+        String vhParam = addressGetCallString(javaName, nativeName, layout);
         sb.append(varHandleGetCallString(javaName, nativeName, layout, type, null) + ".set(" + vhParam + ", x);\n");
         decrAlign();
         indent();
@@ -153,17 +153,13 @@ abstract class JavaSourceBuilder {
     }
 
     public void addAddressOf(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
-        DirectMethodHandleDesc desc = constantHelper.addAddress(javaName, nativeName);
+        DirectMethodHandleDesc desc = constantHelper.addAddress(javaName, nativeName, layout);
         incrAlign();
         indent();
         sb.append(PUB_MODS + "MemoryAddress " + javaName + "$addressof() {\n");
         incrAlign();
         indent();
-        sb.append("return MemorySegment.ofNativeRestricted(" + getCallString(desc));
-        sb.append(", ");
-        sb.append(layout.byteSize());
-        sb.append(", ");
-        sb.append("Thread.currentThread(), null, null).baseAddress();\n");
+        sb.append("return " + getCallString(desc) + ";\n");
         decrAlign();
         indent();
         sb.append("}\n");
@@ -225,8 +221,8 @@ abstract class JavaSourceBuilder {
         return getCallString(constantHelper.addVarHandle(javaName, nativeName, layout, type, parentLayout));
     }
 
-    protected String addressGetCallString(String javaName, String nativeName) {
-        return getCallString(constantHelper.addAddress(javaName, nativeName));
+    protected String addressGetCallString(String javaName, String nativeName, MemoryLayout layout) {
+        return getCallString(constantHelper.addAddress(javaName, nativeName, layout));
     }
 
     protected void indent() {

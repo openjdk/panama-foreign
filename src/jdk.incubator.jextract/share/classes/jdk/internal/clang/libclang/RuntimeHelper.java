@@ -30,6 +30,8 @@ package jdk.internal.clang.libclang;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SystemABI;
 import jdk.internal.foreign.abi.SharedUtils;
 
@@ -84,8 +86,11 @@ public class RuntimeHelper {
         }
     }
 
-    public static final MemoryAddress lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name) {
-        return lookup(LIBRARIES, name).orElse(null);
+    public static final MemoryAddress lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
+        return lookup(LIBRARIES, name).map(a ->
+            MemorySegment.ofNativeRestricted(
+                a, layout.byteSize(), null, null, a
+            ).withAccessModes(MemorySegment.READ | MemorySegment.WRITE).baseAddress()).orElse(null);
     }
 
     public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc) {
