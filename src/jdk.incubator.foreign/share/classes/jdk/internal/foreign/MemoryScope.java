@@ -92,7 +92,7 @@ abstract class MemoryScope {
     }
 
     private final Thread owner;
-    boolean closed; // = false
+    private boolean closed; // = false
     private static final VarHandle CLOSED;
 
     static {
@@ -188,20 +188,18 @@ abstract class MemoryScope {
             if (owner != Thread.currentThread()) {
                 throw new IllegalStateException("Attempted access outside owning thread");
             }
-            checkAliveConfined();
+            checkAliveConfined(this);
         }
     }
 
     /**
      * Checks that this scope is still alive.
-     * This method is a MemoryScope internal API and is package-private only
-     * as an implementation detail. Not for direct consumption from other classes.
      *
      * @throws IllegalStateException if this scope is already closed
      */
     @ForceInline
-    final void checkAliveConfined() {
-        if (closed) {
+    private static void checkAliveConfined(MemoryScope scope) {
+        if (scope.closed) {
             throw new IllegalStateException("This scope is already closed");
         }
     }
@@ -226,7 +224,7 @@ abstract class MemoryScope {
                 for (; ; stamp = lock.readLock()) {
                     if (stamp == 0L)
                         continue;
-                    checkAliveConfined(); // plain read is enough here (either successful optimistic read, or full read lock)
+                    checkAliveConfined(this); // plain read is enough here (either successful optimistic read, or full read lock)
 
                     // increment acquires
                     acquired.increment();
@@ -267,13 +265,13 @@ abstract class MemoryScope {
             // enter critical section - no acquires are possible past this point
             long stamp = lock.writeLock();
             try {
-                checkAliveConfined(); // plain read is enough here (full write lock)
+                checkAliveConfined(this); // plain read is enough here (full write lock)
                 // check for absence of active acquired children
                 if (acquired.sum() > 0) {
                     throw new IllegalStateException("Cannot close this scope as it has active acquired children");
                 }
                 // now that we made sure there's no active acquired children, we can mark scope as closed
-                closed = true; // plain write is enough here (full write lock)
+                CLOSED.set(this, true); // plain write is enough here (full write lock)
             } finally {
                 // leave critical section
                 lock.unlockWrite(stamp);
@@ -303,7 +301,7 @@ abstract class MemoryScope {
             @Override
             void close() {
                 checkValidState(); // child scope is always checked
-                closed = true;
+                CLOSED.set(this, true);
                 // following acts as a volatile write after plain write above so
                 // plain write gets flushed too (which is important for isAliveThreadSafe())
                 Root.this.acquired.decrement();
