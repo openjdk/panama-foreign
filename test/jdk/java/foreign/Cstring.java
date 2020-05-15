@@ -42,7 +42,7 @@ public final class Cstring {
 
     private static void copy(MemoryAddress addr, byte[] bytes) {
         var heapSegment = MemorySegment.ofArray(bytes);
-        MemoryAddress.copy(heapSegment.baseAddress(), addr, bytes.length);
+        addr.segment().copyFrom(heapSegment);
         byteArrHandle.set(addr, (long)bytes.length, (byte)0);
     }
 
