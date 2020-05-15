@@ -69,13 +69,13 @@ public class BulkOps {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void unsafe_fill() {
-        unsafe.setMemory(unsafe_addr, ALLOC_SIZE, (byte)0);
+        unsafe.setMemory(unsafe_addr, ALLOC_SIZE, (byte)42);
     }
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void segment_fill() {
-        segment.fill((byte)0);
+        segment.fill((byte)42);
     }
 
     @Benchmark
