@@ -29,6 +29,7 @@ package jdk.internal.foreign;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.StampedLock;
 
 /**
  * This class manages the temporal bounds associated with a memory segment. A scope has a liveness bit, which is updated
@@ -56,16 +57,12 @@ abstract class MemoryScope {
         return new Root(ref, cleanupAction);
     }
 
-    private static final int STATE_OPEN = 0;
-    private static final int STATE_CLOSING = 1;
-    private static final int STATE_CLOSED = 2;
-
-    int state; // = STATE_OPEN
-    private static final VarHandle STATE;
+    boolean closed = false;
+    private static final VarHandle CLOSED;
 
     static {
         try {
-            STATE = MethodHandles.lookup().findVarHandle(MemoryScope.class, "state", int.class);
+            CLOSED = MethodHandles.lookup().findVarHandle(MemoryScope.class, "closed", boolean.class);
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -117,7 +114,7 @@ abstract class MemoryScope {
      * @return {@code true} if this scope is not closed yet.
      */
     final boolean isAliveThreadSafe() {
-        return ((int) STATE.getVolatile(this)) < STATE_CLOSED;
+        return !((boolean)CLOSED.getVolatile(this));
     }
 
     /**
@@ -127,16 +124,19 @@ abstract class MemoryScope {
      * @throws IllegalStateException if this scope is already closed
      */
     final void checkAliveConfined() {
-        if (state == STATE_CLOSED) {
+        if (closed) {
             throw new IllegalStateException("This scope is already closed");
         }
     }
 
     private static final class Root extends MemoryScope {
-        private final LongAdder acquires = new LongAdder();
-        private final LongAdder releases = new LongAdder();
+        private final LongAdder acquired = new LongAdder();
         private final Object ref;
         private final Runnable cleanupAction;
+
+        private final StampedLock lock = new StampedLock();
+
+
 
         private Root(Object ref, Runnable cleanupAction) {
             this.ref = ref;
@@ -145,18 +145,29 @@ abstract class MemoryScope {
 
         @Override
         MemoryScope acquire() {
-            // increment acquires 1st
-            acquires.increment();
-            // check state 2nd
-            int state;
-            while ((state  = (int) STATE.getVolatile(this)) > STATE_OPEN) {
-                if (state == STATE_CLOSED) {
-                    releases.increment();
-                    throw new IllegalStateException("This scope is already closed");
+            //try to optimistically acquire the lock
+            long stamp = lock.tryOptimisticRead();
+            try {
+                for (; ; stamp = lock.readLock()) {
+                    if (stamp == 0L)
+                        continue;
+                    checkAliveConfined(); // plain read is enough here (either successful optimistic read, or full read lock)
+
+                    // increment acquires
+                    acquired.increment();
+                    // did a call to close() occur since we acquired the lock?
+                    if (lock.validate(stamp)) {
+                        // no, just return the acquired scope
+                        return new Child();
+                    } else {
+                        // yes, just back off and retry (close might have failed, after all)
+                        acquired.decrement();
+                    }
                 }
-                Thread.onSpinWait();
+            } finally {
+                if (StampedLock.isReadLockStamp(stamp))
+                    lock.unlockRead(stamp);
             }
-            return new Child();
         }
 
         @Override
@@ -170,21 +181,23 @@ abstract class MemoryScope {
         }
 
         private MemoryScope closeOrDup(boolean close) {
-            if (state == STATE_CLOSED) {
-                throw new IllegalStateException("This scope is already closed");
-            }
             // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
             var duped = close ? null : new Root(ref, cleanupAction);
-            // modify state to STATE_CLOSING 1st
-            STATE.setVolatile(this, STATE_CLOSING);
-            // check for absence of active acquired children 2nd
-            // IMPORTANT: 1st sum releases, then sum acquires !!!
-            if (releases.sum() != acquires.sum()) {
-                STATE.setVolatile(this, STATE_OPEN); // revert back to STATE_OPEN
-                throw new IllegalStateException("Cannot close this scope as it has active acquired children");
+            // enter critical section - no acquires are possible past this point
+            long stamp = lock.writeLock();
+            try {
+                checkAliveConfined(); // plain read is enough here (full write lock)
+                // check for absence of active acquired children
+                if (acquired.sum() > 0) {
+                    throw new IllegalStateException("Cannot close this scope as it has active acquired children");
+                }
+                // now that we made sure there's no active acquired children, we can mark scope as closed
+                closed = true; // plain write is enough here (full write lock)
+            } finally {
+                // leave critical section
+                lock.unlockWrite(stamp);
             }
-            // now that we made sure there's no active acquired children, we modify to STATE_CLOSED
-            STATE.setVolatile(this, STATE_CLOSED);
+
             // do close or dup
             if (close) {
                 if (cleanupAction != null) {
@@ -208,24 +221,20 @@ abstract class MemoryScope {
 
             @Override
             MemoryScope dup() { // always called in owner thread
-                if (state == STATE_CLOSED) {
-                    throw new IllegalStateException("This scope is already closed");
-                }
+                checkAliveConfined();
                 // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
                 var duped = new Child();
-                STATE.setVolatile(this, STATE_CLOSED);
+                CLOSED.setVolatile(this, true);
                 return duped;
             }
 
             @Override
             void close() { // always called in owner thread
-                if (state == STATE_CLOSED) {
-                    throw new IllegalStateException("This scope is already closed");
-                }
-                state = STATE_CLOSED;
+                checkAliveConfined();
+                closed = true;
                 // following acts as a volatile write after plain write above so
                 // plain write gets flushed too (which is important for isAliveThreadSafe())
-                Root.this.releases.increment();
+                Root.this.acquired.decrement();
             }
         }
     }
