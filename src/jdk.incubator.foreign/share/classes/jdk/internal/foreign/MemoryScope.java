@@ -265,7 +265,7 @@ abstract class MemoryScope {
             // enter critical section - no acquires are possible past this point
             long stamp = lock.writeLock();
             try {
-                checkAliveConfined(this); // plain read is enough here (full write lock)
+                checkValidState(); // plain read is enough here (full write lock)
                 // check for absence of active acquired children
                 if (acquired.sum() > 0) {
                     throw new IllegalStateException("Cannot close this scope as it has active acquired children");
