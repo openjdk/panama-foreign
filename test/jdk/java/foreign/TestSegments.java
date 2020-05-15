@@ -186,14 +186,17 @@ public class TestSegments {
 
         for (byte value : new byte[] {(byte) 0xFF, (byte) 0x00, (byte) 0x45}) {
             try (MemorySegment segment = memorySegmentSupplier.get()) {
-                MemorySegment.fill(segment, value);
+                segment.fill(value);
                 for (long l = 0; l < segment.byteSize(); l++) {
                     assertEquals((byte) byteHandle.get(segment.baseAddress(), l), value);
                 }
 
                 // fill a slice
-                MemorySegment sliceSegment = segment.asSlice(1, segment.byteSize() - 2);
-                MemorySegment.fill(sliceSegment, (byte) ~value);
+                var sliceSegment = segment.asSlice(1, segment.byteSize() - 2).fill((byte) ~value);
+                for (long l = 0; l < sliceSegment.byteSize(); l++) {
+                    assertEquals((byte) byteHandle.get(sliceSegment.baseAddress(), l), ~value);
+                }
+                // assert enclosing slice
                 assertEquals((byte) byteHandle.get(segment.baseAddress(), 0L), value);
                 for (long l = 1; l < segment.byteSize() - 2; l++) {
                     assertEquals((byte) byteHandle.get(segment.baseAddress(), l), (byte) ~value);
@@ -207,14 +210,13 @@ public class TestSegments {
     public void testFillClosed(Supplier<MemorySegment> memorySegmentSupplier) {
         MemorySegment segment = memorySegmentSupplier.get();
         segment.close();
-        MemorySegment.fill(segment, (byte) 0xFF);
+        segment.fill((byte) 0xFF);
     }
 
     @Test(dataProvider = "segmentFactories", expectedExceptions = UnsupportedOperationException.class)
     public void testFillIllegalAccessMode(Supplier<MemorySegment> memorySegmentSupplier) {
         try (MemorySegment segment = memorySegmentSupplier.get()) {
-            var readOnlySegment = segment.withAccessModes(segment.accessModes() & ~WRITE);
-            MemorySegment.fill(readOnlySegment, (byte) 0xFF);
+            segment.withAccessModes(segment.accessModes() & ~WRITE).fill((byte) 0xFF);
         }
     }
 
@@ -224,7 +226,7 @@ public class TestSegments {
             AtomicReference<RuntimeException> exception = new AtomicReference<>();
             Runnable action = () -> {
                 try {
-                    MemorySegment.fill(segment, (byte) 0xBA);
+                    segment.fill((byte) 0xBA);
                 } catch (RuntimeException e) {
                     exception.set(e);
                 }
@@ -242,20 +244,9 @@ public class TestSegments {
 
     @Test
     public void testFillEmpty() {
-        try (MemorySegment segment = MemorySegment.ofArray(new byte[] { })) {
-            MemorySegment.fill(segment, (byte) 0xFF);
-        }
-        try (MemorySegment segment = MemorySegment.ofArray(new byte[2]).asSlice(0, 0)) {
-            MemorySegment.fill(segment, (byte) 0xFF);
-        }
-        try (MemorySegment segment = MemorySegment.ofByteBuffer(ByteBuffer.allocateDirect(0))) {
-            MemorySegment.fill(segment, (byte) 0xFF);
-        }
-    }
-
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testFillNull() {
-        MemorySegment.fill(null, (byte) 0xFF);
+        MemorySegment.ofArray(new byte[] { }).fill((byte) 0xFF);
+        MemorySegment.ofArray(new byte[2]).asSlice(0, 0).fill((byte) 0xFF);
+        MemorySegment.ofByteBuffer(ByteBuffer.allocateDirect(0)).fill((byte) 0xFF);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -329,6 +320,7 @@ public class TestSegments {
 
         final static List<String> CONFINED_NAMES = List.of(
                 "close",
+                "fill",
                 "toByteArray",
                 "withOwnerThread"
         );

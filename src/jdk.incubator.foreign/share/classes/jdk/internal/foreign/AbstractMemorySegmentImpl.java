@@ -116,10 +116,11 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
                 (AbstractMemorySegmentImpl)segment.withAccessModes(segment.accessModes() & ~CLOSE));
     }
 
-    public static void fill(MemorySegment segment, byte value) {
-        AbstractMemorySegmentImpl segmentImpl = (AbstractMemorySegmentImpl) segment;
-        segmentImpl.checkRange(0, segmentImpl.length, true);
-        UNSAFE.setMemory(segmentImpl.base(), segmentImpl.min(), segmentImpl.length, value);
+    @Override
+    public final MemorySegment fill(byte value){
+        checkRange(0, length, true);
+        UNSAFE.setMemory(base(), min(), length, value);
+        return this;
     }
 
     @Override
