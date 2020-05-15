@@ -335,9 +335,11 @@ public final class MemoryHandles {
      * about the overall magnitude of a numeric value. Conversely, when calling
      * e.g. {@link VarHandle#get(Object...)} on the resulting var handle, the
      * returned value obtained from the {@code target} var handle is converted
-     * by a <i>widening primitive conversion</i> before being returned to the
-     * caller. A widening primitive conversion does not lose information about
-     * the overall magnitude of a numeric value.
+     * by a <i>unsigned widening conversion</i> before being returned to the
+     * caller. In an unsigned widening conversion the high-order bits greater
+     * than that of the {@code target} carrier type are zero, and the low-order
+     * bits (equal to the width of the {@code target} carrier type) are equal to
+     * the bits of the value obtained from the {@code target} var handle.
      * <p>
      * The returned var handle will feature the variable type {@code adaptedType},
      * and the same access coordinates, the same access modes (see {@link
@@ -355,7 +357,6 @@ public final class MemoryHandles {
      * @throws NullPointerException if either of {@code target} or {@code
      * adaptedType} is null
      *
-     * @jls 5.1.2 Widening Primitive Conversion
      * @jls 5.1.3 Narrowing Primitive Conversion
      */
     public static VarHandle asUnsigned(VarHandle target, final Class<?> adaptedType) {

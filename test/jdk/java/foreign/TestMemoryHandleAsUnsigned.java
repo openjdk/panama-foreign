@@ -44,16 +44,16 @@ import static org.testng.Assert.*;
 
 public class TestMemoryHandleAsUnsigned {
 
-    @DataProvider(name = "unsignedByteFromIntData")
-    public Object[][] unsignedByteFromIntData() {
+    @DataProvider(name = "unsignedIntToByteData")
+    public Object[][] unsignedIntToByteData() {
         // some boundary values
         int[] l = new int[] { Integer.MAX_VALUE, Integer.MIN_VALUE };
         return IntStream.concat(IntStream.range(0, 512), Arrays.stream(l))
                 .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
     }
 
-    @Test(dataProvider = "unsignedByteFromIntData")
-    public void testUnsignedByteFromInt(int intValue) {
+    @Test(dataProvider = "unsignedIntToByteData")
+    public void testUnsignedIntToByte(int intValue) {
         byte byteValue = (byte) (intValue & 0xFF);
 
         MemoryLayout layout = MemoryLayouts.BITS_8_BE;
@@ -68,16 +68,16 @@ public class TestMemoryHandleAsUnsigned {
         }
     }
 
-    @DataProvider(name = "unsignedByteFromLongData")
-    public Object[][] unsignedByteFromLongData() {
+    @DataProvider(name = "unsignedLongToByteData")
+    public Object[][] unsignedLongToByteData() {
         // some boundary values
         long[] l = new long[] { Long.MAX_VALUE, Long.MIN_VALUE };
         return LongStream.concat(LongStream.range(0L, 512L), Arrays.stream(l))
                 .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
     }
 
-    @Test(dataProvider = "unsignedByteFromLongData")
-    public void testUnsignedByteFromLong(long longValue) {
+    @Test(dataProvider = "unsignedLongToByteData")
+    public void testUnsignedLongToByte(long longValue) {
         byte byteValue = (byte) (longValue & 0xFFL);
 
         MemoryLayout layout = MemoryLayouts.BITS_8_BE;
@@ -92,8 +92,8 @@ public class TestMemoryHandleAsUnsigned {
         }
     }
 
-    @DataProvider(name = "unsignedShortFromIntData")
-    public Object[][] unsignedShortFromIntData() {
+    @DataProvider(name = "unsignedIntToShortData")
+    public Object[][] unsignedIntToShortData() {
         // some boundary values
         int[] l = new int[] { Integer.MAX_VALUE, Integer.MIN_VALUE,
                 Short.MAX_VALUE - 1, Short.MAX_VALUE, Short.MAX_VALUE + 1,
@@ -102,8 +102,8 @@ public class TestMemoryHandleAsUnsigned {
                 .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
     }
 
-    @Test(dataProvider = "unsignedShortFromIntData")
-    public void testUnsignedShortFromInt(int intValue) {
+    @Test(dataProvider = "unsignedIntToShortData")
+    public void testUnsignedIntToShort(int intValue) {
         short shortValue = (short) (intValue & 0xFFFF);
 
         MemoryLayout layout = MemoryLayouts.BITS_16_BE;
@@ -118,8 +118,8 @@ public class TestMemoryHandleAsUnsigned {
         }
     }
 
-    @DataProvider(name = "unsignedShortFromLongData")
-    public Object[][] unsignedShortFromLongData() {
+    @DataProvider(name = "unsignedLongToShortData")
+    public Object[][] unsignedLongToShortData() {
         // some boundary values
         long[] l = new long[] { Long.MAX_VALUE, Long.MIN_VALUE,
                 Short.MAX_VALUE - 1L, Short.MAX_VALUE, Short.MAX_VALUE + 1L,
@@ -128,8 +128,8 @@ public class TestMemoryHandleAsUnsigned {
                 .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
     }
 
-    @Test(dataProvider = "unsignedShortFromLongData")
-    public void testUnsignedSortFromLong(long longValue) {
+    @Test(dataProvider = "unsignedLongToShortData")
+    public void testUnsignedLongToShort(long longValue) {
         short shortValue = (short) (longValue & 0xFFFFL);
 
         MemoryLayout layout = MemoryLayouts.BITS_16_BE;
@@ -144,8 +144,8 @@ public class TestMemoryHandleAsUnsigned {
         }
     }
 
-    @DataProvider(name = "unsignedIntFromLongData")
-    public Object[][] unsignedIntFromLongData() {
+    @DataProvider(name = "unsignedLongToIntData")
+    public Object[][] unsignedLongToIntData() {
         // some boundary values
         long[] l = new long[] { Long.MAX_VALUE, Long.MIN_VALUE,
                 Short.MAX_VALUE - 1L, Short.MAX_VALUE, Short.MAX_VALUE + 1L,
@@ -154,8 +154,8 @@ public class TestMemoryHandleAsUnsigned {
                 .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
     }
 
-    @Test(dataProvider = "unsignedIntFromLongData")
-    public void testUnsignedIntFromLong(long longValue) {
+    @Test(dataProvider = "unsignedLongToIntData")
+    public void testUnsignedLongToInt(long longValue) {
         int intValue = (int) (longValue & 0xFFFF_FFFFL);
 
         MemoryLayout layout = MemoryLayouts.BITS_32_BE;
