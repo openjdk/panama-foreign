@@ -320,8 +320,6 @@ public final class MemoryHandles {
     private static int numberOfBits(Class<?> type) {
         if (type == byte.class)
             return Byte.SIZE;
-        else if (type == char.class)
-            return Character.SIZE;
         else if (type == short.class)
             return Short.SIZE;
         else if (type == int.class)
@@ -333,42 +331,64 @@ public final class MemoryHandles {
     }
 
     /**
-     * primitive widening narrowing conversation as per , etc ....
+     * Adapts a target var handle by narrowing incoming values and widening outgoing values, to the given type.
+     * <p>
+     * The returned var handle can be used to conveniently treat unsigned primitive types as if they were a
+     * wider signed primitive type. For example, it is often convenient to model an <i>unsigned short</i> as
+     * a Java {@code int} to avoid dealing with negative values, which would be the case if modeled as a Java
+     * {@code short}. The returned var handle converts to and from wider primitive types, to a more narrow
+     * unsigned primitive type.
+     * <p>
+     * When calling e.g. {@link VarHandle#set(Object...)} on the resulting var handle, the incoming value
+     * (of type {@code fromType}) is converted by a <i>narrowing primitive conversion</i> and then passed
+     * to the {@code target} var handle. A narrowing primitive conversion may lose information about the
+     * overall magnitude of a numeric value.
+     * Conversely, when calling e.g. {@link VarHandle#get(Object...)} on the resulting var handle, the
+     * returned value obtained from the {@code target} var handle is converted by a <i>widening primitive
+     * conversion</i> before being returned to the caller. A widening primitive conversion does not lose
+     * information about the overall magnitude of a numeric value.
+     * <p>
+     * The returned var handle will feature the variable type {@code fromType}, and the same access
+     * coordinates, the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode}, and
+     * the same atomic access guarantees, as those featured by the {@code target} var handle.
      *
      * @param target
-     * @param targetType
+     * @param fromType
      * @throws IllegalArgumentException if the carrier type of {@code varHandle} is not one of
-     * {@code byte} or {@code char} or {@code short} or {@code int}.
-     * @throws NullPointerException if either of {@code target} or {@code targetType} is null
+     * {@code byte} or {@code short} or {@code int}.
+     * @throws NullPointerException if either of {@code target} or {@code fromType} is null
      * @return
+     * @jls 5.1.2 Widening Primitive Conversion
+     * @jls 5.1.3 Narrowing Primitive Conversion
      */
-    public static VarHandle asUnsigned(VarHandle target, final Class<?> targetType) {
+    public static VarHandle asUnsigned(VarHandle target, final Class<?> fromType) {
         Objects.requireNonNull(target);
-        Objects.requireNonNull(targetType);
+        Objects.requireNonNull(fromType);
         final Class<?> carrier = target.varType();
-        if (!(carrier == byte.class || carrier == char.class || carrier == short.class || carrier == int.class)) {
+        if (!(carrier == byte.class || carrier == short.class || carrier == int.class)) {
             throw new IllegalArgumentException("Unsupported carrier type: " + carrier.getName());
         }
-        if (!(targetType == char.class || targetType == short.class || targetType == int.class || targetType == long.class)) {
-            throw new IllegalArgumentException("Unsupported target type " + targetType.getName());
+        if (!(fromType == short.class || fromType == int.class || fromType == long.class)) {
+            throw new IllegalArgumentException("Unsupported target type " + fromType.getName());
         }
-        //TODO; what about arrays type? check
 
-        if (!(numberOfBits(targetType) > numberOfBits(carrier)))
-            throw new IllegalArgumentException("targetType (%s) bits not greater than carrier type (%s) bits".formatted(targetType, carrier));
+        if (!(numberOfBits(fromType) > numberOfBits(carrier)))
+            throw new IllegalArgumentException("fromType (%s) bits not greater than carrier type (%s) bits".formatted(fromType, carrier));
 
         if (carrier == byte.class) {
-            if (targetType == char.class) {
-
-            } else if (targetType == short.class) {
-
-            } else if (targetType == int.class) {
-                return MemoryHandleUnsignedByteFromInt.from(target);
-            } else if (targetType == long.class) {
-                return MemoryHandleUnsignedByteFromLong.from(target);
+            if (fromType == int.class) {
+                return MemoryHandleUnsignedByteFromInt.varHandle(target);
+            } else if (fromType == long.class) {
+                return MemoryHandleUnsignedByteFromLong.varHandle(target);
             }
-        } else if (carrier == char.class){
-
+        } else if (carrier == short.class) {
+            if (fromType == int.class) {
+                return MemoryHandleUnsignedShortFromInt.varHandle(target);
+            } else if (fromType == long.class) {
+                return MemoryHandleUnsignedShortFromLong.varHandle(target);
+            }
+        } else if (carrier == int.class) {
+            return MemoryHandleUnsignedIntFromLong.varHandle(target);
         }
 
         return null;
@@ -590,6 +610,10 @@ public final class MemoryHandles {
         return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
     }
 
+    private static void checkWidenable(Class<?> carrier) {
+
+    }
+
     private static MemoryAddress longToAddress(long value) {
         return MemoryAddress.ofLong(value);
     }
@@ -604,267 +628,5 @@ public final class MemoryHandles {
 
     private static MemoryAddress addStride(MemoryAddress address, long index, long stride) {
         return address.addOffset(index * stride);
-    }
-
-    static final class UnsignedByteFromChar {
-        private static final MethodHandle TO_TARGET;
-        private static final MethodHandle FROM_TARGET;
-
-        static {
-            try {
-                TO_TARGET = MethodHandles.lookup().findStatic(UnsignedByteFromChar.class, "toTarget",
-                        MethodType.methodType(byte.class, char.class));
-                FROM_TARGET = MethodHandles.lookup().findStatic(UnsignedByteFromChar.class, "fromTarget",
-                        MethodType.methodType(char.class, byte.class));
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
-            }
-        }
-
-        private UnsignedByteFromChar() { } // no instances
-
-        static VarHandle of(VarHandle target) {
-            if (target.varType() != byte.class)
-                throw new InternalError("expected byte carrier type, but got " + target.varType());
-            return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
-        }
-
-        private static byte toTarget(char value) {
-            return (byte) value;
-        }
-
-        private static char fromTarget(byte value) {
-            return (char) (value & 0xFF);
-        }
-    }
-
-    static final class UnsignedByteFromShort {
-        private static final MethodHandle TO_TARGET;
-        private static final MethodHandle FROM_TARGET;
-
-        static {
-            try {
-                TO_TARGET = MethodHandles.lookup().findStatic(UnsignedByteFromShort.class, "toTarget",
-                        MethodType.methodType(byte.class, char.class));
-                FROM_TARGET = MethodHandles.lookup().findStatic(UnsignedByteFromShort.class, "fromTarget",
-                        MethodType.methodType(char.class, byte.class));
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
-            }
-        }
-
-        private UnsignedByteFromShort() { } // no instances
-
-        static VarHandle of(VarHandle target) {
-            if (target.varType() != byte.class)
-                throw new InternalError("expected byte carrier type, but got " + target.varType());
-            return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
-        }
-
-        private static byte toTarget(short value) {
-            return (byte) value;
-        }
-
-        private static short fromTarget(byte value) {
-            return (short) (value & 0xFF);
-        }
-    }
-
-    static final class UnsignedByteFromInt {
-        private static final MethodHandle TO_TARGET;
-        private static final MethodHandle FROM_TARGET;
-
-        static {
-            try {
-                TO_TARGET = MethodHandles.lookup().findStatic(UnsignedByteFromInt.class, "toTarget",
-                        MethodType.methodType(byte.class, int.class));
-                FROM_TARGET = MethodHandles.lookup().findStatic(UnsignedByteFromInt.class, "fromTarget",
-                        MethodType.methodType(int.class, byte.class));
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
-            }
-        }
-
-        private UnsignedByteFromInt() { } // no instances
-
-        static VarHandle of(VarHandle target) {
-            if (target.varType() != byte.class)
-                throw new InternalError("expected byte carrier type, but got " + target.varType());
-            return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
-        }
-
-        private static byte toTarget(int value) {
-            return (byte) value;
-        }
-
-        private static int fromTarget(byte value) {
-            return value & 0xFF;
-        }
-    }
-
-
-
-    // --- char
-
-    static final class UnsignedCharFromInt {
-        private static final MethodHandle TO_TARGET;
-        private static final MethodHandle FROM_TARGET;
-
-        static {
-            try {
-                TO_TARGET = MethodHandles.lookup().findStatic(UnsignedCharFromInt.class, "toTarget",
-                        MethodType.methodType(char.class, int.class));
-                FROM_TARGET = MethodHandles.lookup().findStatic(UnsignedCharFromInt.class, "fromTarget",
-                        MethodType.methodType(int.class, char.class));
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
-            }
-        }
-
-        private UnsignedCharFromInt() { } // no instances
-
-        static VarHandle of(VarHandle target) {
-            if (target.varType() != char.class)
-                throw new InternalError("expected char carrier type, but got " + target.varType());
-            return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
-        }
-
-        private static char toTarget(int value) {
-            return (char) value;
-        }
-
-        private static int fromTarget(char value) {
-            return value & 0xFFFF;
-        }
-    }
-
-    static final class UnsignedCharFromLong {
-        private static final MethodHandle TO_TARGET;
-        private static final MethodHandle FROM_TARGET;
-
-        static {
-            try {
-                TO_TARGET = MethodHandles.lookup().findStatic(UnsignedCharFromLong.class, "toTarget",
-                        MethodType.methodType(char.class, long.class));
-                FROM_TARGET = MethodHandles.lookup().findStatic(UnsignedCharFromLong.class, "fromTarget",
-                        MethodType.methodType(long.class, char.class));
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
-            }
-        }
-
-        private UnsignedCharFromLong() { } // no instances
-
-        static VarHandle of(VarHandle target) {
-            if (target.varType() != char.class)
-                throw new InternalError("expected char carrier type, but got " + target.varType());
-            return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
-        }
-
-        private static char toTarget(long value) {
-            return (char) value;
-        }
-
-        private static long fromTarget(char value) {
-            return value & 0xFFFFL;
-        }
-    }
-
-    // short
-    static final class UnsignedShortFromInt {
-        private static final MethodHandle TO_TARGET;
-        private static final MethodHandle FROM_TARGET;
-
-        static {
-            try {
-                TO_TARGET = MethodHandles.lookup().findStatic(UnsignedShortFromInt.class, "toTarget",
-                        MethodType.methodType(short.class, int.class));
-                FROM_TARGET = MethodHandles.lookup().findStatic(UnsignedShortFromInt.class, "fromTarget",
-                        MethodType.methodType(int.class, short.class));
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
-            }
-        }
-
-        private UnsignedShortFromInt() { } // no instances
-
-        static VarHandle of(VarHandle target) {
-            if (target.varType() != short.class)
-                throw new InternalError("expected short carrier type, but got " + target.varType());
-            return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
-        }
-
-        private static short toTarget(int value) {
-            return (short) value;
-        }
-
-        private static int fromTarget(short value) {
-            return value & 0xFFFF;
-        }
-    }
-
-    static final class UnsignedShortFromLong {
-        private static final MethodHandle TO_TARGET;
-        private static final MethodHandle FROM_TARGET;
-
-        static {
-            try {
-                TO_TARGET = MethodHandles.lookup().findStatic(UnsignedShortFromLong.class, "toTarget",
-                        MethodType.methodType(short.class, long.class));
-                FROM_TARGET = MethodHandles.lookup().findStatic(UnsignedShortFromLong.class, "fromTarget",
-                        MethodType.methodType(long.class, short.class));
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
-            }
-        }
-
-        private UnsignedShortFromLong() { } // no instances
-
-        static VarHandle of(VarHandle target) {
-            if (target.varType() != short.class)
-                throw new InternalError("expected short carrier type, but got " + target.varType());
-            return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
-        }
-
-        private static short toTarget(long value) {
-            return (short) value;
-        }
-
-        private static long fromTarget(short value) {
-            return value & 0xFFFFL;
-        }
-    }
-    
-    // int
-    static final class UnsignedIntFromLong {
-        private static final MethodHandle TO_TARGET;
-        private static final MethodHandle FROM_TARGET;
-
-        static {
-            try {
-                TO_TARGET = MethodHandles.lookup().findStatic(UnsignedIntFromLong.class, "toTarget",
-                        MethodType.methodType(int.class, long.class));
-                FROM_TARGET = MethodHandles.lookup().findStatic(UnsignedIntFromLong.class, "fromTarget",
-                        MethodType.methodType(long.class, int.class));
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
-            }
-        }
-
-        private UnsignedIntFromLong() { } // no instances
-
-        static VarHandle of(VarHandle target) {
-            if (target.varType() != int.class)
-                throw new InternalError("expected int carrier type, but got " + target.varType());
-            return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
-        }
-
-        private static int toTarget(long value) {
-            return (int) value;
-        }
-
-        private static long fromTarget(int value) {
-            return value & 0xFFFFL;
-        }
     }
 }

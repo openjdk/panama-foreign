@@ -22,14 +22,19 @@
  *
  */
 
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import org.testng.annotations.*;
+import static java.nio.ByteOrder.BIG_ENDIAN;
 import static org.testng.Assert.*;
 
 /*
@@ -39,37 +44,19 @@ import static org.testng.Assert.*;
 
 public class TestMemoryHandleAsUnsigned {
 
-    @DataProvider(name = "byteToLongData")
-    public Object[][] byteToLongData() {
-        return LongStream.range(0, 512).mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
+    @DataProvider(name = "unsignedByteFromIntData")
+    public Object[][] unsignedByteFromIntData() {
+        // some boundary values
+        int[] l = new int[] { Integer.MAX_VALUE, Integer.MIN_VALUE };
+        return IntStream.concat(IntStream.range(0, 512), Arrays.stream(l))
+                .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
     }
 
-    @Test(dataProvider = "byteToLongData")
-    public void testUnsignedByteFromLong(long longValue) {
-        byte byteValue = (byte) (longValue & 0xFFL);
-
-        MemoryLayout layout = MemoryLayouts.JAVA_BYTE;
-        VarHandle byteHandle = layout.varHandle(byte.class);
-        VarHandle longHandle = MemoryHandles.asUnsigned(byteHandle, long.class);
-
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            longHandle.set(segment.baseAddress(), longValue);
-            long expectedLongValue = Byte.toUnsignedLong(byteValue);
-            assertEquals((long) longHandle.get(segment.baseAddress()), expectedLongValue);
-            assertEquals((byte) byteHandle.get(segment.baseAddress()), byteValue);
-        }
-    }
-
-    @DataProvider(name = "byteToIntData")
-    public Object[][] byteToIntData() {
-        return IntStream.range(0, 512).mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
-    }
-
-    @Test(dataProvider = "byteToIntData")
+    @Test(dataProvider = "unsignedByteFromIntData")
     public void testUnsignedByteFromInt(int intValue) {
         byte byteValue = (byte) (intValue & 0xFF);
 
-        MemoryLayout layout = MemoryLayouts.JAVA_BYTE;
+        MemoryLayout layout = MemoryLayouts.BITS_8_BE;
         VarHandle byteHandle = layout.varHandle(byte.class);
         VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
 
@@ -81,5 +68,176 @@ public class TestMemoryHandleAsUnsigned {
         }
     }
 
+    @DataProvider(name = "unsignedByteFromLongData")
+    public Object[][] unsignedByteFromLongData() {
+        // some boundary values
+        long[] l = new long[] { Long.MAX_VALUE, Long.MIN_VALUE };
+        return LongStream.concat(LongStream.range(0L, 512L), Arrays.stream(l))
+                .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
+    }
+
+    @Test(dataProvider = "unsignedByteFromLongData")
+    public void testUnsignedByteFromLong(long longValue) {
+        byte byteValue = (byte) (longValue & 0xFFL);
+
+        MemoryLayout layout = MemoryLayouts.BITS_8_BE;
+        VarHandle byteHandle = layout.varHandle(byte.class);
+        VarHandle longHandle = MemoryHandles.asUnsigned(byteHandle, long.class);
+
+        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+            longHandle.set(segment.baseAddress(), longValue);
+            long expectedLongValue = Byte.toUnsignedLong(byteValue);
+            assertEquals((long) longHandle.get(segment.baseAddress()), expectedLongValue);
+            assertEquals((byte) byteHandle.get(segment.baseAddress()), byteValue);
+        }
+    }
+
+    @DataProvider(name = "unsignedShortFromIntData")
+    public Object[][] unsignedShortFromIntData() {
+        // some boundary values
+        int[] l = new int[] { Integer.MAX_VALUE, Integer.MIN_VALUE,
+                Short.MAX_VALUE - 1, Short.MAX_VALUE, Short.MAX_VALUE + 1,
+                Short.MIN_VALUE - 1, Short.MIN_VALUE, Short.MIN_VALUE + 1, };
+        return IntStream.concat(IntStream.range(0, 512), Arrays.stream(l))
+                .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
+    }
+
+    @Test(dataProvider = "unsignedShortFromIntData")
+    public void testUnsignedShortFromInt(int intValue) {
+        short shortValue = (short) (intValue & 0xFFFF);
+
+        MemoryLayout layout = MemoryLayouts.BITS_16_BE;
+        VarHandle shortHandle = layout.varHandle(short.class);
+        VarHandle intHandle = MemoryHandles.asUnsigned(shortHandle, int.class);
+
+        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+            intHandle.set(segment.baseAddress(), intValue);
+            int expectedIntValue = Short.toUnsignedInt(shortValue);
+            assertEquals((int) intHandle.get(segment.baseAddress()), expectedIntValue);
+            assertEquals((short) shortHandle.get(segment.baseAddress()), shortValue);
+        }
+    }
+
+    @DataProvider(name = "unsignedShortFromLongData")
+    public Object[][] unsignedShortFromLongData() {
+        // some boundary values
+        long[] l = new long[] { Long.MAX_VALUE, Long.MIN_VALUE,
+                Short.MAX_VALUE - 1L, Short.MAX_VALUE, Short.MAX_VALUE + 1L,
+                Short.MIN_VALUE - 1L, Short.MIN_VALUE, Short.MIN_VALUE + 1L, };
+        return LongStream.concat(LongStream.range(0L, 512L), Arrays.stream(l))
+                .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
+    }
+
+    @Test(dataProvider = "unsignedShortFromLongData")
+    public void testUnsignedSortFromLong(long longValue) {
+        short shortValue = (short) (longValue & 0xFFFFL);
+
+        MemoryLayout layout = MemoryLayouts.BITS_16_BE;
+        VarHandle shortHandle = layout.varHandle(short.class);
+        VarHandle longHandle = MemoryHandles.asUnsigned(shortHandle, long.class);
+
+        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+            longHandle.set(segment.baseAddress(), longValue);
+            long expectedLongValue = Short.toUnsignedLong(shortValue);
+            assertEquals((long) longHandle.get(segment.baseAddress()), expectedLongValue);
+            assertEquals((short) shortHandle.get(segment.baseAddress()), shortValue);
+        }
+    }
+
+    @DataProvider(name = "unsignedIntFromLongData")
+    public Object[][] unsignedIntFromLongData() {
+        // some boundary values
+        long[] l = new long[] { Long.MAX_VALUE, Long.MIN_VALUE,
+                Short.MAX_VALUE - 1L, Short.MAX_VALUE, Short.MAX_VALUE + 1L,
+                Short.MIN_VALUE - 1L, Short.MIN_VALUE, Short.MIN_VALUE + 1L, };
+        return LongStream.concat(LongStream.range(-256L, 256L), Arrays.stream(l))
+                .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
+    }
+
+    @Test(dataProvider = "unsignedIntFromLongData")
+    public void testUnsignedIntFromLong(long longValue) {
+        int intValue = (int) (longValue & 0xFFFF_FFFFL);
+
+        MemoryLayout layout = MemoryLayouts.BITS_32_BE;
+        VarHandle intHandle = layout.varHandle(int.class);
+        VarHandle longHandle = MemoryHandles.asUnsigned(intHandle, long.class);
+
+        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+            longHandle.set(segment.baseAddress(), longValue);
+            long expectedLongValue = Integer.toUnsignedLong(intValue);
+            assertEquals((long) longHandle.get(segment.baseAddress()), expectedLongValue);
+            assertEquals((int) intHandle.get(segment.baseAddress()), intValue);
+        }
+    }
+
+    @Test
+    public void testCoordinatesSequenceLayout() {
+        MemoryLayout layout = MemoryLayout.ofSequence(2, MemoryLayouts.BITS_8_BE);
+        VarHandle byteHandle = layout.varHandle(byte.class, PathElement.sequenceElement());
+        VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
+
+        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+            intHandle.set(segment.baseAddress(), 0L, (int) -1);
+            assertEquals((int) intHandle.get(segment.baseAddress(), 0L), 255);
+            intHandle.set(segment.baseAddress(), 1L, (int) 200);
+            assertEquals((int) intHandle.get(segment.baseAddress(), 1L), 200);
+        }
+    }
+
+    @Test
+    public void testCoordinatesStride() {
+        byte[] arr = { 0, 0, (byte) 129, 0 };
+        MemorySegment segment = MemorySegment.ofArray(arr);
+        MemoryAddress addr = segment.baseAddress();
+
+        {
+            VarHandle byteHandle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
+            VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
+            VarHandle strideHandle = MemoryHandles.withStride(intHandle, 1);
+            assertEquals((int) strideHandle.get(addr, 2L), 129);
+        }
+        {
+            VarHandle byteHandle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
+            VarHandle strideHandle = MemoryHandles.withStride(byteHandle, 1);
+            VarHandle intHandle = MemoryHandles.asUnsigned(strideHandle, int.class);
+            assertEquals((int) intHandle.get(addr, 2L), 129);
+        }
+    }
+
+    static final Class<NullPointerException> NPE = NullPointerException.class;
+
+    @Test
+    public void testNull() {
+        VarHandle handle = MemoryHandles.varHandle(byte.class, BIG_ENDIAN);
+        assertThrows(NPE, () -> MemoryHandles.asUnsigned(handle, null));
+        assertThrows(NPE, () -> MemoryHandles.asUnsigned(null, short.class));
+        assertThrows(NPE, () -> MemoryHandles.asUnsigned(null, null));
+    }
+
+    static final Class<IllegalArgumentException> IAE = IllegalArgumentException.class;
+
+    static VarHandle withCarrier(Class<?> carrier) {
+        return MemoryHandles.varHandle(carrier, BIG_ENDIAN);
+    }
+    @Test
+    public void testIllegalArgumentException() {
+        //
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(char.class), int.class));
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(double.class), int.class));
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(float.class), int.class));
+        // TODO ...
+
+        // array types
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(byte[].class), int.class));
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(char[].class), int.class));
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(short[].class), int.class));
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(int[].class), int.class));
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(long[].class), int.class));
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(double[].class), int.class));
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(float[].class), int.class));
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(Object[].class), int.class));
+        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(Integer[].class), int.class));
+        // TODO: other cases ...
+    }
 
 }

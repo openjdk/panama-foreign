@@ -36,9 +36,9 @@ final class MemoryHandleUnsignedByteFromLong {
 
     static {
         try {
-            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleUnsignedByteFromLong.class, "toTarget",
+            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleUnsignedByteFromLong.class, "byteValue",
                     MethodType.methodType(byte.class, long.class));
-            FROM_TARGET = MethodHandles.lookup().findStatic(MemoryHandleUnsignedByteFromLong.class, "fromTarget",
+            FROM_TARGET = MethodHandles.lookup().findStatic(Byte.class, "toUnsignedLong",
                     MethodType.methodType(long.class, byte.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
@@ -47,17 +47,14 @@ final class MemoryHandleUnsignedByteFromLong {
 
     private MemoryHandleUnsignedByteFromLong() { } // no instances
 
-    static VarHandle from(VarHandle target) {
+    static VarHandle varHandle(VarHandle target) {
         checkCarrierType(target.varType());
         return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
     }
 
-    private static byte toTarget(long value) {
+    private static byte byteValue(long value) {
+        // checkValue() // throw if greater than FF Byte.MAX_VALUE
         return (byte) value;
-    }
-
-    private static long fromTarget(byte value) {
-        return value & 0xFFL;
     }
 
     private static final Class<?> CARRIER_TYPE = byte.class;
