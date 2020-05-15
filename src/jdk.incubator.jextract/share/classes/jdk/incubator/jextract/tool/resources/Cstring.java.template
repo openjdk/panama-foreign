@@ -19,12 +19,6 @@ public final class Cstring {
     }
     private final static VarHandle byteArrHandle = arrayHandle(C_CHAR, byte.class);
 
-    private static void copy(MemoryAddress addr, byte[] bytes) {
-        var heapSegment = MemorySegment.ofArray(bytes);
-        addr.segment().copyFrom(heapSegment);
-        byteArrHandle.set(addr, (long)bytes.length, (byte)0);
-    }
-
     private static MemorySegment toCString(byte[] bytes) {
         MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
         MemorySegment segment = MemorySegment.allocateNative(strLayout);
@@ -36,7 +30,7 @@ public final class Cstring {
     private static MemoryAddress toCString(byte[] bytes, NativeAllocationScope scope) {
         MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
         MemoryAddress addr = scope.allocate(strLayout);
-        copy(addr, bytes);
+        addr.segment().copyFrom(MemorySegment.ofArray(bytes));
         return addr;
     }
 
@@ -47,6 +41,15 @@ public final class Cstring {
     public static void copy(MemoryAddress addr, String str, Charset charset) {
         copy(addr, str.getBytes(charset));
     }
+
+    //where
+    private static void copy(MemoryAddress addr, byte[] bytes) {
+            var heapSegment = MemorySegment.ofArray(bytes);
+            addr.segment()
+                    .asSlice(addr.segmentOffset(), bytes.length)
+                    .copyFrom(heapSegment);
+            byteArrHandle.set(addr, (long)bytes.length, (byte)0);
+        }
 
     public static MemorySegment toCString(String str) {
          return toCString(str.getBytes());
